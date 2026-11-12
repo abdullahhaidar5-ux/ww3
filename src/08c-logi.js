@@ -1,12 +1,12 @@
 /* ---------- LOGISTICS interface: supply overlay (key L), roads being built, craters, cut-off towns (orch/logistics) ---------- */
 const LGU={on:false,btn:null};
-function lgToggle(){LGU.on=!LGU.on;lgBtnSync();}
+function lgToggle(){if(G&&G.battle){LGU.on=false;return;}LGU.on=!LGU.on;lgBtnSync();}   /* Battle has no supply lines (Abdullah 2026-11-11 19:41) */
 function lgBtnSync(){if(LGU.btn){LGU.btn.className=LGU.on?'on':'';}}
-function lgWanted(){return LGU.on||(G.sel&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME))||(typeof TP!=='undefined'&&TP.ti>=0);}
+function lgWanted(){if(G&&G.battle)return false;return LGU.on||(G.sel&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME))||(typeof TP!=='undefined'&&TP.ti>=0);}
 function lgEdgeState(e,i){const L=G.lg,D=G.lgd;if(D.cr[i]&&D.cr[i].t>G.t)return 2;if(D.mn&&lgBlk(i,ME))return 2;const r=L.reach&&L.reach[ME];if(!r)return 0;return r[e.a]&&r[e.b]?1:0;}
 function lgStroke(c,pts,sc){let on=false;c.beginPath();for(const p of pts){const q=toScreen(p[0],groundH(p[0],p[1])+3,p[1]);if(q.z>1){on=false;continue;}if(!on){c.moveTo(q.x,q.y);on=true;}else c.lineTo(q.x,q.y);}c.stroke();}
 function lgDensify(pts,step){const o=[pts[0]];for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],L=Math.hypot(b[0]-a[0],b[1]-a[1]),k=Math.max(1,Math.ceil(L/step));for(let j=1;j<=k;j++)o.push([a[0]+(b[0]-a[0])*j/k,a[1]+(b[1]-a[1])*j/k]);}return o;}
-function drawLogiWorld(c){if(!G||!G.lg||!G.lgd||G.over)return;
+function drawLogiWorld(c){if(!G||G.battle||!G.lg||!G.lgd||G.over)return;
   lgUiTick();
   if(G.roadV!==G.roadVS){G.roadVS=G.roadV;try{roadTexRefresh();}catch(e){}}
   const L=G.lg,D=G.lgd,me=G.teams[ME];if(!me)return;c.save();c.lineCap='round';c.lineJoin='round';
@@ -35,7 +35,7 @@ function drawLogiWorld(c){if(!G||!G.lg||!G.lgd||G.over)return;
     c.font='bold 11px system-ui,sans-serif';c.textAlign='center';const txt=t.al?'AIRLIFTED':t.cut?'CUT OFF':(t.trade?'TRADE ROUTE +25%':'')+((t.sk||t.dl>G.t)?(t.trade?' · ':'')+'STOCKED':'');c.fillStyle='rgba(0,0,0,.78)';const w=c.measureText(txt).width+12;c.fillRect(p.x-w/2,p.y+4,w,16);c.fillStyle=t.cut?'#ff6a55':'#7ee88f';c.fillText(txt,p.x,p.y+16);}
   try{drawLogi2(c);}catch(e){}
   c.restore();}
-function drawLogiMini(c,sx,sy){if(!G||!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;c.save();c.lineCap='round';
+function drawLogiMini(c,sx,sy){if(!G||G.battle||!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;c.save();c.lineCap='round';
   {const T=terrUpdate();if(T&&T.own){const cw=T.cw,ch=T.ch;
     if(!LGU.tc||LGU.tcv!==T.v||LGU.tcw!==cw){LGU.tc=LGU.tc||document.createElement('canvas');LGU.tc.width=cw;LGU.tc.height=ch;LGU.tcv=T.v;LGU.tcw=cw;const x=LGU.tc.getContext('2d'),im=x.createImageData(cw,ch);
       for(let i=0;i<cw*ch;i++){const o=T.own[i];if(o<0)continue;const col=G.teams[o]&&G.teams[o].color||'#888',m=/^#([0-9a-f]{6})$/i.exec(col);const v=m?parseInt(m[1],16):0x888888;im.data[i*4]=v>>16;im.data[i*4+1]=(v>>8)&255;im.data[i*4+2]=v&255;im.data[i*4+3]=62;}x.putImageData(im,0,0);}

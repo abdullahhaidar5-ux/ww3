@@ -7580,7 +7580,7 @@ function physImpulse(e,nx,ny,J){if(e.isB||e.dead||!e.s||e.s.dom!=='ground')retur
 function physTick(u,dt){if(!u.kx&&!u.ky)return;const d=u.s.dom==='ground'?(massOf(u)<2?5.5:7.5):6,k=Math.exp(-d*dt);const nx=u.x+u.kx*dt,ny=u.y+u.ky*dt;
   if(passXY(u.s.dom,nx,ny)){u.x=nx;u.y=ny;}else{u.kx*=-.3;u.ky*=-.3;}u.kx*=k;u.ky*=k;if(Math.abs(u.kx)+Math.abs(u.ky)<2){u.kx=u.ky=0;}}
 function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.crT&&G.t>u.crT&&!u.inTun){u.dead=true;G.byId.delete(u.id);FXE('gone',[u.id,u.x|0,u.y|0,-1,1]);return;}if(u.crit)critTick(u,dt);if(u.aband)return updAband(u,dt);if(G.dugN&&u.s.armor==='heavy'&&u.s.dom==='ground'&&G.t>(u.dgT||0)){u.dgT=G.t+.25;dugVeh(u);}if(u.order&&u.order.type==='wall'&&u.kind!=='dozer'&&dozeWall(u,dt))return;if(u.dig)digTick(u,dt);else if(G.teams[u.team].ai&&u.s.armor==='light'&&u.s.dom==='ground')aiDig(u,dt);if(u.hp<u.max*.2&&u.s.armor==='heavy'&&bailCheck(u))return;const s=u.s,T=G.teams[u.team],m=T.F.mods;if(u.stun>G.t){u.cd=Math.max(u.cd,.5);return;}u.cd-=dt;if(T.dummy&&!T.fight){const o=u.order;u.target=null;if(o&&(o.type==='move'||o.type==='amove')&&u.kind!=='jet'){if(Math.hypot(o.x-u.x,o.y-u.y)<14)u.order=null;else navTo(u,o.x,o.y,dt,true);}return;}if(u.supp)u.supp=Math.max(0,u.supp-dt*(u.mz?.36:.22)*ldSupp(u));
-  if(G.t-u.lastHit>5&&u.hp<u.max&&!(u.supT!=null&&G.t-u.supT>60)){let rg=(m.regen||0)+(u.rank>=3?5:0)+upgK(T,u.kind,'regen');if(rg)u.hp=Math.min(u.max,u.hp+rg*dt);}
+  if(G.t-u.lastHit>5&&u.hp<u.max&&!(!G.battle&&u.supT!=null&&G.t-u.supT>60)){let rg=(m.regen||0)+(u.rank>=3?5:0)+upgK(T,u.kind,'regen');if(rg)u.hp=Math.min(u.max,u.hp+rg*dt);}
   if(u.kind==='harv')return u.cv?updConvoy(u,dt):updHarv(u,dt);if(u.kind==='dozer')return updDozer(u,dt);if(u.kind==='jet')return updJet(u,dt);if(u.kind==='hacker')return updHacker(u,dt);
   if(canRout(u)&&moraleTick(u,dt))return;
   let o=u.order;if(o&&o.type==='demo')return updDemo(u,dt);
@@ -11932,7 +11932,7 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
     const w=Math.max(18,Math.min(90,(e.isB?e.size:e.r*2.6)*PPU));
     if(sel||e.hp<e.max||SET.hp==='all'){const f=Math.max(0,e.hp/e.max);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,p.y-1,w+2,5);c.fillStyle=f>.5?'#74d08f':f>.25?'#e3b341':'#ea5a40';c.fillRect(p.x-w/2,p.y,w*f,3);c.fillStyle='rgba(0,0,0,.45)';for(let i=1;i<5;i++)c.fillRect(p.x-w/2+w*i/5,p.y,1,3);}
     if(e.crit&&!e.isB)critIcons(c,p.x-w/2-8,p.y+2,e.crit);
-    if(e.am!==undefined&&e.amx&&!e.isB&&ally(e.team,ME)){const fa=e.am/e.amx,low=fa<.3,oos=!e.sup&&G.t-(e.supT??G.t)>20;
+    if(e.am!==undefined&&e.amx&&!e.isB&&ally(e.team,ME)){const fa=e.am/e.amx,low=fa<.3,oos=!G.battle&&!e.sup&&G.t-(e.supT??G.t)>20;
       if(sel||low){const y=p.y+(sel||e.hp<e.max||SET.hp==='all'?9:4);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,y-1,w+2,4);const fl=e.am<=0&&((performance.now()/260)|0)%2;c.fillStyle=e.am<=0?(fl?'#ff5a40':'#8a2a20'):low?'#f2d14a':'#c9b784';c.fillRect(p.x-w/2,y,Math.max(e.am<=0?w:2,w*fa),2);}
       if(oos){const ix=p.x+w/2+7,iy=p.y+(sel?3:2);c.fillStyle='rgba(0,0,0,.7)';c.beginPath();c.arc(ix,iy,6,0,7);c.fill();c.strokeStyle='#ff8a5a';c.lineWidth=1.6;c.strokeRect(ix-3,iy-2.5,6,5);c.beginPath();c.moveTo(ix-5,iy+5);c.lineTo(ix+5,iy-5);c.stroke();}}
     if(e.aband&&!e.isB){c.font='bold 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='rgba(0,0,0,.7)';c.fillText('ABANDONED',p.x+1,p.y-4);c.fillStyle=ally(e.team,ME)?'#e3b341':'#ffd166';c.fillText('ABANDONED',p.x,p.y-5);c.textAlign='left';}
@@ -12221,7 +12221,7 @@ const KEYTAB=[
   {id:'p_bb',ctx:'battle',grp:'General\'s powers',name:'Bunker Buster',def:'n'},
   {id:'p_sanc',ctx:'battle',grp:'General\'s powers',name:'Sanctions / open the auto-build list',def:'u'},
   {id:'p_reinf',ctx:'battle',grp:'General\'s powers',name:'Reinforcements',def:'k'},
-  {id:'p_flare',ctx:'battle',grp:'General\'s powers',name:'Flares / show supply lines',def:'l'},
+  {id:'p_flare',ctx:'battle',grp:'General\'s powers',name:'Flares / show supply lines (Conquest)',def:'l'},
   {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
   {id:'p_hack',ctx:'battle',grp:'General\'s powers',name:'Cyber attack',def:'['},
   {id:'p_emp',ctx:'battle',grp:'General\'s powers',name:'EMP',def:']'},
@@ -13667,7 +13667,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='o'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)fmCycle();
   if(k==='i'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)tactKey();
   if(k==='z'&&!e.ctrlKey&&!e.metaKey&&!e.altKey)resupplySel();
-  if(k==='l'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.lgd)lgToggle();
+  if(k==='l'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.lgd&&!G.battle)lgToggle();
   if((k==='Backspace'||k==='Delete')&&doCancel(e.shiftKey))e.preventDefault();
   if(k==='e'||k==='E'){const lu=G.sel.find(u=>!u.isB&&u.kind==='cleric'&&u.team===ME&&!u.dead);if(lu){ldrKey(e.shiftKey||k==='E');return;}}
   if(k==='e'){const hu=G.sel.find(u=>!u.isB&&u.kind==='champ'&&u.team===ME&&!u.dead);if(hu)doAct({t:'hab',tid:hu.id});else{const ps=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead&&u.s&&u.s.dom==='naval'&&u.s.sonar);if(ps.length)doAct({t:'ping',ids:ps.map(u=>u.id)});}}
@@ -13791,9 +13791,9 @@ function resupplySel(){if(!G||G.over)return;const ids=G.sel.filter(u=>!u.isB&&u.
 function ammoRowHTML(s){const us=s.filter(u=>!u.isB&&u.team===ME&&u.am!==undefined&&u.amx&&!u.dead);if(!us.length)return '';
   const mm=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),oosT=u=>u.sup?0:Math.max(0,G.t-(u.supT??G.t));
   if(us.length===1){const u=us[0],f=u.am/u.amx,col=u.am<=0?'#ff6a50':f<.3?'#f2d14a':'#c9b784',o=oosT(u);
-    return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.ceil(u.am)}/${u.amx} · ${u.sup?'In supply':'Out of supply '+mm(o)}</span>`;}
+    return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.ceil(u.am)}/${u.amx}${G.battle?'':' · '+(u.sup?'In supply':'Out of supply '+mm(o))}</span>`;}
   let sum=0,mx=0,low=0,zero=0,oos=0;for(const u of us){sum+=u.am;mx+=u.amx;if(u.am<=0)zero++;else if(u.am<u.amx*.3)low++;if(!u.sup)oos++;}const f=sum/mx,col=zero?'#ff6a50':f<.3?'#f2d14a':'#c9b784';
-  return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.round(f*100)}%${zero?' · '+zero+' empty':''}${low?' · '+low+' low':''}${oos?' · '+oos+' no supply':' · in supply'}</span>`;}
+  return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.round(f*100)}%${zero?' · '+zero+' empty':''}${low?' · '+low+' low':''}${G.battle?'':oos?' · '+oos+' no supply':' · in supply'}</span>`;}
 let AMT=0;function ammoRowTick(){if(performance.now()-AMT<400)return;AMT=performance.now();const el=document.getElementById('ammoRow');if(el&&G)el.innerHTML=ammoRowHTML(G.sel.filter(e=>!e.dead));}
 function cycleStance(){const us=stUnits();if(!us.length)return;const c=stDisp(us[0]),n=c===1?2:c===2?3:1;doAct({t:'stance',ids:us.map(u=>u.id),v:n});sfxUI(480+n*40);if(typeof updateUI==='function')updateUI();}
 function tcOwn(){return G?G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead):[];}
@@ -13975,7 +13975,7 @@ function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [
 // texture, 3D world, shader warm-up) then runs in steps with a frame in between, so the screen shows the theatre, the
 // nations, a progress bar and a tip instead of freezing. The battle clock is held until the battlefield is on screen.
 const LOAD={tok:0,tipI:0,tipT:null,cv:null};
-const LOAD_TIPS=['Supply: your troops carry limited ammo and refill it inside the faint blue circles around your HQ, Supply Depots, supply trucks and towns you hold. Out of supply for a minute also stops healing - hunt enemy trucks and cut the route.','Armor is thickest at the front: hits on a vehicle\'s side do 20% more damage, from behind 60% more. Flank them.',
+const LOAD_TIPS=['Supply: your troops carry limited ammo and refill it inside the faint blue circles around your HQ, Supply Depots and supply trucks (in Conquest also towns you hold). Hunt enemy supply trucks to starve the front.','Armor is thickest at the front: hits on a vehicle\'s side do 20% more damage, from behind 60% more. Flank them.',
   'Infantry in woods or beside buildings take less damage. Fight from cover.',
   'Firing downhill helps and firing uphill hurts. Take the high ground.',
   'Infantry under heavy fire get suppressed: they shoot and move slower until it wears off.',
@@ -15593,13 +15593,13 @@ function drawRefugeesMini(c,sx,sy){if(!G||!G.refs||!G.refs.length)return;c.save(
     const e=r.t0+r.dur,q=[r.x0+r.dx*REF_SP*r.dur,r.y0+r.dy*REF_SP*r.dur];c.strokeStyle='rgba(242,239,224,.5)';c.setLineDash([2,2]);c.beginPath();c.moveTo(p[0]*sx,p[1]*sy);c.lineTo(q[0]*sx,q[1]*sy);c.stroke();c.setLineDash([]);}c.restore();}
 /* ---------- LOGISTICS interface: supply overlay (key L), roads being built, craters, cut-off towns (orch/logistics) ---------- */
 const LGU={on:false,btn:null};
-function lgToggle(){LGU.on=!LGU.on;lgBtnSync();}
+function lgToggle(){if(G&&G.battle){LGU.on=false;return;}LGU.on=!LGU.on;lgBtnSync();}   /* Battle has no supply lines (Abdullah 2026-11-11 19:41) */
 function lgBtnSync(){if(LGU.btn){LGU.btn.className=LGU.on?'on':'';}}
-function lgWanted(){return LGU.on||(G.sel&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME))||(typeof TP!=='undefined'&&TP.ti>=0);}
+function lgWanted(){if(G&&G.battle)return false;return LGU.on||(G.sel&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME))||(typeof TP!=='undefined'&&TP.ti>=0);}
 function lgEdgeState(e,i){const L=G.lg,D=G.lgd;if(D.cr[i]&&D.cr[i].t>G.t)return 2;if(D.mn&&lgBlk(i,ME))return 2;const r=L.reach&&L.reach[ME];if(!r)return 0;return r[e.a]&&r[e.b]?1:0;}
 function lgStroke(c,pts,sc){let on=false;c.beginPath();for(const p of pts){const q=toScreen(p[0],groundH(p[0],p[1])+3,p[1]);if(q.z>1){on=false;continue;}if(!on){c.moveTo(q.x,q.y);on=true;}else c.lineTo(q.x,q.y);}c.stroke();}
 function lgDensify(pts,step){const o=[pts[0]];for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],L=Math.hypot(b[0]-a[0],b[1]-a[1]),k=Math.max(1,Math.ceil(L/step));for(let j=1;j<=k;j++)o.push([a[0]+(b[0]-a[0])*j/k,a[1]+(b[1]-a[1])*j/k]);}return o;}
-function drawLogiWorld(c){if(!G||!G.lg||!G.lgd||G.over)return;
+function drawLogiWorld(c){if(!G||G.battle||!G.lg||!G.lgd||G.over)return;
   lgUiTick();
   if(G.roadV!==G.roadVS){G.roadVS=G.roadV;try{roadTexRefresh();}catch(e){}}
   const L=G.lg,D=G.lgd,me=G.teams[ME];if(!me)return;c.save();c.lineCap='round';c.lineJoin='round';
@@ -15628,7 +15628,7 @@ function drawLogiWorld(c){if(!G||!G.lg||!G.lgd||G.over)return;
     c.font='bold 11px system-ui,sans-serif';c.textAlign='center';const txt=t.al?'AIRLIFTED':t.cut?'CUT OFF':(t.trade?'TRADE ROUTE +25%':'')+((t.sk||t.dl>G.t)?(t.trade?' · ':'')+'STOCKED':'');c.fillStyle='rgba(0,0,0,.78)';const w=c.measureText(txt).width+12;c.fillRect(p.x-w/2,p.y+4,w,16);c.fillStyle=t.cut?'#ff6a55':'#7ee88f';c.fillText(txt,p.x,p.y+16);}
   try{drawLogi2(c);}catch(e){}
   c.restore();}
-function drawLogiMini(c,sx,sy){if(!G||!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;c.save();c.lineCap='round';
+function drawLogiMini(c,sx,sy){if(!G||G.battle||!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;c.save();c.lineCap='round';
   {const T=terrUpdate();if(T&&T.own){const cw=T.cw,ch=T.ch;
     if(!LGU.tc||LGU.tcv!==T.v||LGU.tcw!==cw){LGU.tc=LGU.tc||document.createElement('canvas');LGU.tc.width=cw;LGU.tc.height=ch;LGU.tcv=T.v;LGU.tcw=cw;const x=LGU.tc.getContext('2d'),im=x.createImageData(cw,ch);
       for(let i=0;i<cw*ch;i++){const o=T.own[i];if(o<0)continue;const col=G.teams[o]&&G.teams[o].color||'#888',m=/^#([0-9a-f]{6})$/i.exec(col);const v=m?parseInt(m[1],16):0x888888;im.data[i*4]=v>>16;im.data[i*4+1]=(v>>8)&255;im.data[i*4+2]=v&255;im.data[i*4+3]=62;}x.putImageData(im,0,0);}
@@ -16665,12 +16665,12 @@ function hudTick(force){try{hudDeclutter();}catch(e){}if(!G||!G.teams||!G.teams[
   const b=hudBuild();b.hidden=false;const T=G.teams[ME];
   let cut=0;if(G.towns)for(const t of G.towns)if(t.cut&&townsMine(t))cut++;
   const inc=T.terr||0,op=(typeof opOf==='function'&&G.conq&&!T.reb)?Math.round(opOf(T)):null;
-  const gb=!!G.grand;const sig=[gb?1:0,Math.floor(T.credits),inc.toFixed(1),cut,op,HUDS.unread,HUDS.open?1:0,HUDS.al.length,HD_KEYS.map(hudOn).join('')].join('|');if(sig===HUDS.sig)return;HUDS.sig=sig;
+  const gb=!!G.grand,bt=!!G.battle;const sig=[gb?1:0,bt?1:0,Math.floor(T.credits),inc.toFixed(1),cut,op,HUDS.unread,HUDS.open?1:0,HUDS.al.length,HD_KEYS.map(hudOn).join('')].join('|');if(sig===HUDS.sig)return;HUDS.sig=sig;
   b.querySelector('#hudM').hidden=gb;b.querySelector('#hudM').textContent='$'+Math.floor(T.credits).toLocaleString('en-US')+(inc>.05?'  +$'+inc.toFixed(1)+'/s':'');b.querySelector('#hudM').title='Money and territory income (tax from your towns and hamlets).';
-  const s=b.querySelector('#hudS');s.textContent=cut?'Supply: '+cut+' cut off':'Supply OK';s.style.color=cut?'#ff9a8a':'#9be39b';s.title='Towns you hold that the supply network cannot reach.';
+  const s=b.querySelector('#hudS');s.textContent=cut?'Supply: '+cut+' cut off':'Supply OK';s.style.color=cut?'#ff9a8a':'#9be39b';s.title='Towns you hold that the supply network cannot reach.';s.hidden=bt;   /* Battle: no supply lines, no Supply chip */
   const o=b.querySelector('#hudO');if(gb||op==null||!hudOn('opinion'))o.hidden=true;else{o.hidden=false;const m=polMul(T);o.textContent='Opinion '+op+(m<1?'  SANCTIONS -'+Math.round((1-m)*100)+'%':'');o.style.color=op<POL.SANC_BELOW?'#ff8a7a':op>=POL.AID_ABOVE?'#9be39b':'#e8e2c8';o.title='World opinion of you. Low opinion brings sanctions (less income); high opinion brings foreign aid.';}
   const a=b.querySelector('#hudAl');a.textContent='\u26A0 '+(HUDS.unread||HUDS.al.length);a.className=HUDS.unread?'hot':'';
-  for(const x of b.querySelectorAll('#hudOv button'))x.className=hudOn(x.dataset.o)?'on':'';
+  for(const x of b.querySelectorAll('#hudOv button')){x.className=hudOn(x.dataset.o)?'on':'';if(x.dataset.o==='supply')x.hidden=bt;}
   let f=document.getElementById('hudFeed');if(!HUDS.open){if(f)f.remove();}else{if(!f){f=document.createElement('div');f.id='hudFeed';document.body.appendChild(f);}
     f.innerHTML='';if(!HUDS.al.length){const d=document.createElement('div');d.textContent='No alerts yet.';f.appendChild(d);}
     for(const q of HUDS.al.slice(0,12)){const d=document.createElement('div');d.className=q.k;const m=Math.max(0,Math.floor(G.t-q.t));d.textContent=(m<60?m+'s':Math.floor(m/60)+'m')+' ago · '+q.m;f.appendChild(d);}}}

@@ -615,7 +615,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='o'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)fmCycle();
   if(k==='i'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)tactKey();
   if(k==='z'&&!e.ctrlKey&&!e.metaKey&&!e.altKey)resupplySel();
-  if(k==='l'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.lgd)lgToggle();
+  if(k==='l'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.lgd&&!G.battle)lgToggle();
   if((k==='Backspace'||k==='Delete')&&doCancel(e.shiftKey))e.preventDefault();
   if(k==='e'||k==='E'){const lu=G.sel.find(u=>!u.isB&&u.kind==='cleric'&&u.team===ME&&!u.dead);if(lu){ldrKey(e.shiftKey||k==='E');return;}}
   if(k==='e'){const hu=G.sel.find(u=>!u.isB&&u.kind==='champ'&&u.team===ME&&!u.dead);if(hu)doAct({t:'hab',tid:hu.id});else{const ps=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead&&u.s&&u.s.dom==='naval'&&u.s.sonar);if(ps.length)doAct({t:'ping',ids:ps.map(u=>u.id)});}}
@@ -739,9 +739,9 @@ function resupplySel(){if(!G||G.over)return;const ids=G.sel.filter(u=>!u.isB&&u.
 function ammoRowHTML(s){const us=s.filter(u=>!u.isB&&u.team===ME&&u.am!==undefined&&u.amx&&!u.dead);if(!us.length)return '';
   const mm=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),oosT=u=>u.sup?0:Math.max(0,G.t-(u.supT??G.t));
   if(us.length===1){const u=us[0],f=u.am/u.amx,col=u.am<=0?'#ff6a50':f<.3?'#f2d14a':'#c9b784',o=oosT(u);
-    return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.ceil(u.am)}/${u.amx} · ${u.sup?'In supply':'Out of supply '+mm(o)}</span>`;}
+    return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.ceil(u.am)}/${u.amx}${G.battle?'':' · '+(u.sup?'In supply':'Out of supply '+mm(o))}</span>`;}
   let sum=0,mx=0,low=0,zero=0,oos=0;for(const u of us){sum+=u.am;mx+=u.amx;if(u.am<=0)zero++;else if(u.am<u.amx*.3)low++;if(!u.sup)oos++;}const f=sum/mx,col=zero?'#ff6a50':f<.3?'#f2d14a':'#c9b784';
-  return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.round(f*100)}%${zero?' · '+zero+' empty':''}${low?' · '+low+' low':''}${oos?' · '+oos+' no supply':' · in supply'}</span>`;}
+  return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.round(f*100)}%${zero?' · '+zero+' empty':''}${low?' · '+low+' low':''}${G.battle?'':oos?' · '+oos+' no supply':' · in supply'}</span>`;}
 let AMT=0;function ammoRowTick(){if(performance.now()-AMT<400)return;AMT=performance.now();const el=document.getElementById('ammoRow');if(el&&G)el.innerHTML=ammoRowHTML(G.sel.filter(e=>!e.dead));}
 function cycleStance(){const us=stUnits();if(!us.length)return;const c=stDisp(us[0]),n=c===1?2:c===2?3:1;doAct({t:'stance',ids:us.map(u=>u.id),v:n});sfxUI(480+n*40);if(typeof updateUI==='function')updateUI();}
 function tcOwn(){return G?G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead):[];}
@@ -923,7 +923,7 @@ function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [
 // texture, 3D world, shader warm-up) then runs in steps with a frame in between, so the screen shows the theatre, the
 // nations, a progress bar and a tip instead of freezing. The battle clock is held until the battlefield is on screen.
 const LOAD={tok:0,tipI:0,tipT:null,cv:null};
-const LOAD_TIPS=['Supply: your troops carry limited ammo and refill it inside the faint blue circles around your HQ, Supply Depots, supply trucks and towns you hold. Out of supply for a minute also stops healing - hunt enemy trucks and cut the route.','Armor is thickest at the front: hits on a vehicle\'s side do 20% more damage, from behind 60% more. Flank them.',
+const LOAD_TIPS=['Supply: your troops carry limited ammo and refill it inside the faint blue circles around your HQ, Supply Depots and supply trucks (in Conquest also towns you hold). Hunt enemy supply trucks to starve the front.','Armor is thickest at the front: hits on a vehicle\'s side do 20% more damage, from behind 60% more. Flank them.',
   'Infantry in woods or beside buildings take less damage. Fight from cover.',
   'Firing downhill helps and firing uphill hurts. Take the high ground.',
   'Infantry under heavy fire get suppressed: they shoot and move slower until it wears off.',
