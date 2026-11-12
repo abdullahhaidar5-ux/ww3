@@ -1,3 +1,64 @@
+# STATE — conductor run 14 on 2026-11-12, 10:50–12:30 UTC: **train 11 LANDED** — main = 5f22d184
+
+**Went live (5 pieces, one push, 27 of 27 tests green on the landed commit, same set as main had):**
+army tokens on the campaign map · main menu shows your war · commander's radio + edge alerts · building fix (nothing floats) · fortification lines.
+Local: build + --check after every merge, SMOKE PASS on the final train, DECISIONS PASS; campaign test green on GitHub (`gate/grand`).
+
+**Taken out: Kheibar freeze fix (orch/freezefix).** First test run of this train (`train/20261112-1052`, d1253a70, with the freeze fix)
+came back 25 green, `smooth-pc` and `audio` red (PC smoothness: slowest frames 519 / 732 ms against a limit of 474 / 614, twice in a row).
+Evidence it is the freeze fix and not a slow test machine:
+| run | has freeze fix | slow-frame p95 / p99 (ms) | result |
+|---|---|---|---|
+| main 7b4baa29 | no | 378 / 564 | green |
+| building fix 349759bd | no | 231 / 290 | green |
+| fortification lines a05a942b | no | 233 / 291 | green |
+| **train 11 as landed 5f22d184** | **no** | **238 / 316** | **green** |
+| freeze fix 172b31e5 | yes | 479 / 551 | green, barely |
+| freeze fix 4e92b695 (README-only commit) | yes | 417 / 626 | **red** (+ audio red) |
+| train 10 a6a4902f | yes | 253 / 376 | green |
+| train 11 first try d1253a70 | yes | 519 / 732 | **red** (+ audio red) |
+Three of four runs with the freeze fix have a much longer slow-frame tail; median frame time is unchanged (~180–200 ms on the test machine).
+The one allowed re-test was the train without it (`train/20261112-1150`, 5f22d184): all green → landed.
+**Freeze-fix helper:** the fix removes the big strike freeze but seems to add periodic slow frames in a normal 450-unit battle
+(look at what now runs every frame or every few frames for the corner picture / warm-up / performance log `src/08o-perflog.js`);
+`audio` went red in both red runs too (crossfade timing; AU.err) — probably the same stalls. Needs a clean `smooth-pc` twice before the next train.
+Note for whoever merges it later: `train/20261112-0835` and `-1052` are dead; merge `orch/freezefix` fresh onto main.
+
+Deviation, stated plainly: on the re-built train smoke was run once on the final result (not after each of the 5 merges) — the same five pieces
+had passed smoke merge-by-merge in the first train of this run and the only difference was removing the freeze fix.
+
+## Finished and waiting for the next train
+| idea (branch) | own test run | result | waits for |
+|---|---|---|---|
+| Campaign battles fought on the map by days (nofightit) | 6cdd9f53 | **all green**, already on top of train 9 | next train (big: 60 files; needs a merge with train 11, then campaign pieces slot) |
+| Conquest full base + $10,000, Battle clean-up (battleclean) — helper stopped (handoff) | 4a81f05a | all green alone; branch head 97c47063 is newer and untested; was the culprit on train 10 (tutorial) | next train, LAST (changes battle rules); test head first |
+| Kheibar freeze fix (freezefix) — helper stopped (handoff) | 4e92b695 | smooth-pc + audio red | a fix for the slow-frame tail (see above) |
+
+## In progress / not ready (nobody has saved anything in the last 100 minutes)
+| idea (branch) | last save | state |
+|---|---|---|
+| Bundled fonts (finish-menu-fonts) | 8.5 h | its run had smooth-pc red; nobody is updating it |
+| Infiltrators look like spies (spylook) | 8.5 h | cfclient + migrate-down red, 180+ commits behind main; nobody is updating it |
+| Battle report card + front lines (finish-report) — helper stopped (handoff) | 9 h | tutorial + migrate-down red on its run; handoff asks for a re-run, nobody is doing it |
+| Trees on the campaign map (maptrees) — helper stopped (handoff) | 15 h | old green run; needs a fresh run on today's main |
+| PLAN-75 (plan75) | 11 h | document only |
+| Campaign real supply (c-supply) — helper stopped (handoff) | 25 h | parked |
+
+## Not started by anyone (reported by the freeze-fix helper)
+- **Fight-it battle hangs at "PREPARING GRAPHICS… 78%"** on Abdullah's Windows laptop (Chrome "Page Unresponsive"): shader warm-up is one long
+  blocking step on PC. Suggested fix is written in `orch/HANDOFF-freezefix.md` on orch/freezefix. No helper owns it.
+
+## Locks with nothing saved (90+ min, no work branch of that name)
+- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Seamless flow**, **Army standards** (`taken/army-standards`) — 33 h old, stale.
+- **Faster game speed** (`taken/q-speed`), **Escalation** (`taken/c-escalation`), **War support** (`taken/c-war-support`), **Stockpiles**, **Map coast / scale**, **Calm map 3 / 4**, **languages (battle / campaign)** — 16–33 h old, no branch of that name with unlanded work.
+- `taken/c-real-supply` saves as c-supply; `taken/finish-tokens` saved as armytokens2 (landed) — not lost.
+
+## Flaky tests — still nobody owns these
+`cfclient` group, `tutorial`, `mpsync`, `migrate*`. (`audio` and the `smooth-pc` tail were on this list; today's table says they follow the freeze fix.)
+
+---
+(previous runs below)
+
 # STATE — conductor run 12, RESULT at 09:30 UTC: **nothing landed** (train 10 was one test short, twice) — run 12 is OVER
 
 **Main is still 7b4baa29** (train 9, 28 of 28 green). Nothing was pushed to main.
@@ -620,51 +681,4 @@ progress or ORCH; not pushed alone (main is for landings only).
 
 ## Helpers with unlanded work (pushed in the last 30 h), read 10:55 UTC
 
-Reds are from each helper's own newest test run. Main is green now, so every red below is that piece's own problem or a flaky
-test (audio and cfclient have been flaky) — each needs a fresh run on today's main before it can ride a train.
-
-| idea (branch) | last save | ahead | stopped note | newest own test run | red tests |
-|---|---|---|---|---|---|
-| Calm map 4 (calmmap4) | 15 min ago | 6 | yes | none of its own | - |
-| Real supply (c-supply) | 1.4 h | 2 | yes | 8d9cac556d | cfclient |
-| Map fix 3 (mapfix3) — IN TRAIN 1037 | 1.6 h | 4 | - | 7d2ba3e0ba | audio |
-| Calm map (calmmap, leftovers) | 1.7 h | 2 | yes | 0fa0b84f28 | cfclient, tutorial |
-| Softer mountains (mtnfix) — IN TRAIN 1037 | 2.6 h | 3 | - | none of its own | - |
-| Extras: battle (extras-battle) | 8 h | 1 | - | 60d5e246b5 | grandlive, migrate-down |
-| One language: campaign (lang-campaign) | 8 h | 3 | - | 0aee49223e | check (build check fails) |
-| Army tokens (armytokens) | 8 h | 6 | yes | 4eeb0c339c | decisions, mpsync, tutorial |
-| greenK4 notes | 8 h | 4 | yes | 7f9d5a1c86 | none |
-| Seamless flow (seamless-flow) | 8 h | 1 | - | e1c344c7d8 | audio, **smooth-pc** (look change: blocked) |
-| Calm map 3 (calmmap3) | 8 h | 2 | - | none of its own | - |
-| Extras: command (extras-command) | 8.4 h | 1 | - | 4a7c989031 | audio, cfclient, **smooth-pc** (blocked) |
-| Speed S (speedS) | 8.5 h | 3 | yes | cf33e78fb7 | cfclient |
-| One language: battle (lang-battle) | 8.5 h | 2 | - | 59e1b4a184 | cfclient |
-| Escalation (c-escalation) | 8.6 h | 3 | yes | f2c87c9246 | tutorial |
-| greenK3 notes | 8.6 h | 3 | yes | 7f9d5a1c86 | none |
-| Extras: story (extras-story) | 8.9 h | 1 | - | d1aef6c3d2 | cfclient, controls |
-| Proxy warfare leftovers (c-proxy-warfare) | 8.9 h | 1 | yes | landed piece 7ba01be | - |
-| One language spec (onelanguage) | 9 h | 5 | - | none | - |
-| Stockpiles (c-stockpiles) | 9.6 h | 4 | yes | 1e83008733 | audio, cfclient, tutorial |
-| Voices V (voicesV) | 15 h | 3 | yes | d19894f02f | cfclient, audio (old main) |
-| Polish P2 (polishP2) | 17 h | 1 | - | 1e53c43f14 | measured on old red main |
-| greenK | 19 h | 1 | yes | none | - |
-| Safety H (safetyH) | 21 h | 3 | yes | 5dfef609ec | measured on old red main |
-| Proxy (c-proxy, old) | 21 h | 1 | yes | none | - |
-| Dashboard J (dashJ) | 21 h | 2 | yes | 673e996495 | measured on old red main |
-| greenK-qfeel / greenK-snap | 21 h | 9 / 6 | - | none | - |
-| Win fix (winfix) | 22 h | 1 | - | effcba30a0 | measured on old red main |
-| Grand snapshot loop, Sound, Autosave loop, Leaders C, Dashboard I, Speed D | 25–30 h | 1–3 | some | old or none | - |
-
-Fully landed (0 ahead): q-feel, q-look, q-american, loop-playtest, c-war-support, q-words, q-ai.
-
-## Locks with nothing saved (90+ min, no work branch)
-
-- **Real war** (`taken/realwar`, 9 h) — nothing saved.
-- **Seamless HUD** (`taken/seamless-hud`, 9 h) — nothing saved.
-- **Army standards** (`taken/army-standards`, 9.5 h) — only a concept sheet saved on the lock itself, no work branch.
-
-## For the next conductor run
-
-1. If train 1037 has not landed and is older than 110 min, pick it up: gate it, land if clean, and remove the stale "RIGHT NOW" bullet.
-2. Candidates worth a fresh gate on today's main (own reds were only flaky audio/cfclient): c-supply, lang-battle, speedS, calmmap4, calmmap3.
-3. Not ready: lang-campaign (build check), armytokens (decisions/mpsync/tutorial), seamless-flow and extras-command (smooth-pc), extras-battle, extras-story, c-escalation, c-stockpiles (tutorial).
+Reds are from each helper's own newest test run. Main is
