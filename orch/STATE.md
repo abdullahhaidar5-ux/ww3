@@ -1,3 +1,48 @@
+# STATE — conductor run 15 on 2026-11-12, started 12:50 UTC: train 12 (`train/20261112-1253`, 77b4ee84) is **being tested** — main = 5f22d184
+
+(This top block is rewritten at the end of the run with the result.)
+
+**On the train (1 piece):** Conquest full base + $10,000, Battle without supply lines / dotted roads, Conquest roads green / red / gray, rally flag goes away (orch/battleclean, own run 4a81f05a 28 of 28). Merged clean (only DECISIONS / HISTORY kept both sides); the page rebuilt identical; `build.py --check` OK.
+
+**Left out: campaign battles fought on the map by days (orch/nofightit, own run 6cdd9f53 28 of 28, but 43 commits behind main).**
+It does not fit on today's main without real work, so the merge was aborted (not a conductor job):
+- It deletes the old auto-resolve (`grAuto`). The **army tokens** that landed in train 11 show a "Good odds / Even fight / Bad odds" pill built on that old estimate (`gtkEst` / `gtkOdds` in `src/13e3-gtokens.js`), and the campaign test checks the pill against `grAuto` — after the merge that test calls a function that no longer exists.
+- The new battles have their own odds (`gwOddsAt` / `gwuOddsHint` in `src/13a-gwar.js`, `13ab-gwarui.js`). Two odds for the same fight = a leftover of the old way. **The helper must point the token pill (and its test in `orch/grandtest.mjs`) at `gwOddsAt`** — mind the cost (12 play-throughs per call: cache per army/province/day so `grandsmooth` stays green).
+- Other conflicts are small and listed here so the helper is quick: `src/13e-grand3d.js` (`g3HitAt` keep main's x0/x1 box + `gtkHover`; `g3Click` add `gwuClick` first), `src/08d-save.js` (keep main's `svFront`, take the branch's `svCanSave`), `src/08l-firsthint.js` (main's token wording + the branch's last sentence), `orch/smoke.mjs` (keep bldfix + fortline guards, drop the old Fight-it signature check), `orch/grandtest.mjs` (keep the armytokens guards, then the branch's new battle flow), index / grand bundle / sw.js → rebuild.
+- Then one `orch/cigate.sh` run; the next train takes it in the campaign slot.
+
+## Finished and waiting
+| idea (branch) | own test run | result | waits for |
+|---|---|---|---|
+| Campaign battles on the map by days (nofightit) | 6cdd9f53 | all green, but on an old main | its helper: merge today's main + token odds (above), one test run |
+| Kheibar freeze fix (freezefix) — helper stopped (handoff) | 4e92b695 | smooth-pc + audio red; newer head c18b9467 untested | a fix for the slow-frame tail (see run 14 below), two clean smooth-pc runs |
+
+## In progress / not ready
+| idea (branch) | last save | state |
+|---|---|---|
+| PLAN-75 + handover note for a fresh ORCH (plan75) | 20 min | documents only (not for main on their own) |
+| Battle report card + front lines (finish-report) — helper stopped (handoff) | 11 h | tutorial + migrate-down red on its run; nobody is re-running it |
+| Infiltrators look like spies (spylook) | 10.5 h | cfclient + migrate-down red, 226 commits behind main; nobody is updating it |
+| Trees on the campaign map (maptrees) — helper stopped (handoff) | 17 h | old green run; needs a fresh run on today's main |
+| Campaign real supply (c-supply) — helper stopped (handoff) | 27 h | parked |
+| Old parked (safetyH, dashJ, greenK-*, lang-campaign, onelanguage, seamless-flow, c-proxy-warfare) | 34–45 h | unchanged, conflict with main, helpers gone |
+
+**Nobody has saved any game work in the last 3.5 hours** (last: nofightit 221 min, freezefix 237 min, battleclean 262 min ago). No helper appears to be building right now.
+
+## Not started by anyone
+- **Fight-it battle hangs at "PREPARING GRAPHICS… 78%"** (moot for the campaign once nofightit lands; still check Conquest / Battle loads on his Windows laptop).
+
+## Locks with nothing saved (90+ min, no work branch of that name)
+- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Army standards** (`taken/army-standards`) — 35 h old, stale.
+- `taken/c-real-supply` saves as c-supply; `taken/finish-tokens` saved as armytokens2 (landed) — not lost.
+- All other locks (q-speed, c-escalation, c-war-support, c-stockpiles, mapcoast, mapscale, calmmap3/4, lang-*, extras-*) have a branch of the same name with nothing unlanded, 18–36 h old.
+
+## Flaky tests — still nobody owns these
+`cfclient` group, `tutorial`, `mpsync`, `migrate*`.
+
+---
+(previous runs below)
+
 # STATE — conductor run 14 on 2026-11-12, 10:50–12:30 UTC: **train 11 LANDED** — main = 5f22d184
 
 **Went live (5 pieces, one push, 27 of 27 tests green on the landed commit, same set as main had):**
