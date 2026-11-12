@@ -264,6 +264,31 @@ try {
   ck(cq.rot && cq.rot.q45 && !cq.rot.qSel && cq.rot.home && cq.rot.drag < -0.3, 'Q tap must turn the camera 45° clockwise (and not select), hold Q + mouse right turns it, Home back to north: ' + JSON.stringify(cq.rot));
   ck(cq.rot && cq.rot.caSel > 0, 'Ctrl+A did not select the army in battle: ' + JSON.stringify(cq.rot));
   await shot('conquest-ir');
+  // fixes1 (2026-11-11): the hover card of a build button must really show what the unit beats and what it is weak to: at least one
+  // picture + name in each row (a stale screenshot showed the two row labels with nothing in them). Real mouse hover on a button.
+  { await ev(() => { window.__tab0 = TAB; showTab('units'); }); await page.waitForTimeout(300);
+    const bx = await ev(() => { const b = document.getElementById('u_at') || document.getElementById('u_inf'); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+    await page.mouse.move(bx.x - 20, bx.y); await page.mouse.move(bx.x, bx.y, { steps: 3 }); await page.waitForTimeout(500);
+    const hc = await ev(() => { const d = document.getElementById('ctip'), out = { hover: !!d && !d.hidden, bad: [] }; const rows = () => [...d.querySelectorAll('.uk-mu .mr')].map(r => { const q = d.getBoundingClientRect();
+        return r.querySelector('b').textContent + ':' + [...r.querySelectorAll('.mi')].filter(m => { const im = m.querySelector('img'), i = m.querySelector('i'), a = im && im.getBoundingClientRect(), t = i && i.getBoundingClientRect();
+          return a && t && a.width > 8 && a.height > 8 && i.textContent.trim().length > 1 && t.width > 8 && t.height > 4 && t.right <= q.right + 1 && t.bottom <= q.bottom + 1 && getComputedStyle(m).visibility !== 'hidden' && +getComputedStyle(m).opacity > .5; }).length; });
+      out.first = out.hover ? rows() : [];
+      for (const k of ['inf', 'at', 'tank', 'aa', 'arty']) { const b = document.getElementById('u_' + k); if (!b) continue; ctipShow(b); const r = rows(); if (!(r.length === 2 && r.every(x => +x.split(':')[1] >= 1))) out.bad.push(k + ' ' + r.join(' ')); } ctipHide(); return out; });
+    ck(hc.hover && hc.first.length === 2 && hc.first.every(x => +x.split(':')[1] >= 1), 'hovering a unit button does not show a card with at least one named unit under BEATS and under WEAK TO: ' + JSON.stringify(hc.first));
+    ck(!hc.bad.length, 'hover card of a combat unit has an empty BEATS or WEAK TO row: ' + hc.bad.join(' | ')); await page.mouse.move(640, 300); await ev(() => showTab(window.__tab0)); }
+  // fixes1 (2026-11-11): a friendly soldier standing in front of a house must not swallow the order: with infantry selected, a real
+  // right-click on him over a house sends the squad INTO the house (it used to become a plain move; the tutorial's "retake the town" step hung on it).
+  { const hs = await ev(() => { const cells = G.towns.flatMap(t => t.cells).filter(c => !c.dead && !c.g).sort((a, b) => { const h = G.ents.find(e => e.team === ME && e.kind === 'hq'); return Math.hypot(a.x - h.x, a.y - h.y) - Math.hypot(b.x - h.x, b.y - h.y); });
+      for (const c of cells.slice(0, 6)) for (const [dx, dy] of [[0, 24], [24, 0], [0, -24], [-24, 0], [0, 34], [34, 0]]) { const p = nearestPassXY('ground', c.x + dx, c.y + dy); if (!p || Math.hypot(p[0] - c.x, p[1] - c.y) > 60) continue;
+        const q = nearestPassXY('ground', c.x + dx * 3, c.y + dy * 3); if (!q) continue; const blk = addUnit(ME, 'inf', p[0], p[1]), u = addUnit(ME, 'inf', q[0], q[1]); if (!blk || !u) continue; return { c: c.i, cx: c.x, cy: c.y, blk: blk.id, u: u.id }; } return null; });
+    if (!hs) fails.push('house-click guard: no free house with walkable ground next to it'); else {
+      await ev((h) => { centerOn(h.cx, h.cy, true); G.sel = [G.ents.find(e => e.id === h.u)]; }, hs); await ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const pt = await ev((h) => { const b = G.ents.find(e => e.id === h.blk); for (const k of [.6, .3, .9, 0]) { const p = toScreen(b.x, unitH(b) + entHeightMid(b) * k, b.y), t = pickAt(p.x, p.y, false), c = civUnder(p.x, p.y, screenToWorld(p.x, p.y)); if (t === b && c && c.i === h.c) return { x: p.x, y: p.y }; } return null; }, hs);
+      if (!pt) console.log('  (house-click guard skipped: the soldier at the door is not in front of the house from this camera)'); else {
+        await page.mouse.move(pt.x, pt.y); await page.mouse.click(pt.x, pt.y, { button: 'right' }); await page.waitForTimeout(400);
+        const r = await ev((h) => { const u = G.ents.find(e => e.id === h.u), c = G.civ[h.c]; return { order: u && u.order ? u.order.type : '', inside: !!(c.occ && c.occ.some(o => o.id === h.u)) }; }, hs);
+        ck(r.order === 'garrison' || r.inside, 'right-click on a house with a friendly soldier standing in front of it does not send the selected infantry into the house: ' + JSON.stringify(r)); }
+      await ev((h) => { for (const id of [h.blk, h.u]) { const e = G.ents.find(x => x.id === id); if (e) { e.dead = true; G.byId.delete(id); } } const c = G.civ[h.c]; if (c.g && c.occ.some(o => o.id === h.u)) { try { leaveGarrison(c); } catch (e) {} } G.sel = []; }, hs); } }
   // Balance toggle (Abdullah 2026-11-06 21:31): Balanced must stay equal for everyone; Realistic must tier fire support
   // (superpower strikes come faster/harder and its vehicles are cheaper; a small power's strikes are weaker but its
   // infantry cheaper). Read as data on both settings, with the battle's own setting put back afterwards.
@@ -300,6 +325,29 @@ try {
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
   ck(!bt.setupEnd, 'Battle has a no-fire setup phase'); ck(!bt.tax, 'Battle has town taxes'); ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');
   await shot('battle-us');
+  // ---- fixes1 (2026-11-11, "white streaks in Arabia", "oversized palms"): what a PLAYER gets on the first campaign map of a session.
+  // The map must wait for the real land data (it used to be drawn on the hand-shaped stand-in and stay on it: chalk-white cliffs along the Red Sea);
+  // snow only where snow can lie (never in Arabia; still on the Alps, the Himalaya and Greenland); palms no taller than the towns (one instanced draw).
+  await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
+  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+  { const { proj } = await import('./grandproj.mjs');
+    const P = { hejaz: [41, 21], asir: [42.5, 18.5], rub: [50, 20], alps: [7.9, 46.0], himalaya: [86.9, 28.0], greenland: [-40, 72] }, pts = Object.entries(P).map(([n, [lo, la]]) => [n, ...proj(lo, la)]);
+    const box = [proj(36, 26), proj(56, 26), proj(36, 14), proj(56, 14)], bx = [Math.min(...box.map(q => q[0])), Math.min(...box.map(q => q[1])), Math.max(...box.map(q => q[0])), Math.max(...box.map(q => q[1]))];
+    const w0 = await ev(() => { window.__grandWait = 1; grNew({ me: 'IR', seed: 99, len: 'quick' }); grandOpen(); return { card: !!document.getElementById('gRealWait'), scr: !!document.getElementById('grandScreen') }; });
+    const opened = await page.waitForFunction(() => document.getElementById('grandScreen') && !document.getElementById('gRealWait'), null, { timeout: 240000, polling: 200 }).then(() => true).catch(() => false);
+    ck(w0.card && !w0.scr, 'grand map: the first map of a session no longer waits for the real land data: ' + JSON.stringify(w0)); ck(opened, 'grand map: the map never opened after waiting for the real land data');
+    if (opened) { const r = await ev(([pts, bx]) => { const F = G3.F, W = F.W, o = { real: !!G3.real, hm: !!F.hm, v: {} };
+        for (const [n, X, Z] of pts) { const x = Math.round(X / 2), y = Math.round(Z / 2); let sn = 0, hh = 0; for (let dy = -7; dy <= 7; dy++) for (let dx = -7; dx <= 7; dx++) { const k = (y + dy) * W + x + dx; if (Math.abs(dx) < 4 && Math.abs(dy) < 4 || n === 'alps') sn = Math.max(sn, F.bw[k * 4 + 1]); hh = Math.max(hh, F.Hh[k]); } o.v[n] = [sn, +hh.toFixed(1)]; }
+        let am = 0; for (let y = Math.floor(bx[1] / 2); y <= bx[3] / 2; y++) for (let x = Math.floor(bx[0] / 2); x <= bx[2] / 2; x++) am = Math.max(am, F.bw[(y * W + x) * 4 + 1]); o.arabia = am;
+        const fm = G3.static.children.filter(c => c.material && c.material.uniforms && c.material.uniforms.uTS), vs = fm[0] ? fm[0].material.vertexShader : '', sz = k => { const m = new RegExp('k==' + k + '\\?vec2\\(([\\d.]+),([\\d.]+)\\)').exec(vs); return m ? [+m[1], +m[2]] : null; };
+        o.trees = { meshes: fm.length, inst: !!(fm[0] && fm[0].geometry.isInstancedBufferGeometry), conifer: sz(0), palm: sz(2) }; return o; }, [pts, bx]);
+      console.log('real map', JSON.stringify(r));
+      ck(r.real && r.hm, 'grand map: the first map of a session is drawn on the stand-in terrain although the real land data loaded');
+      ck(r.v.hejaz[0] <= 10 && r.v.asir[0] <= 10 && r.v.rub[0] <= 10 && r.arabia <= 10, 'grand map: snow paint in Arabia (Hejaz/Asir/Rub al Khali/whole peninsula south of 26N): ' + JSON.stringify([r.v.hejaz, r.v.asir, r.v.rub, r.arabia]));
+      ck(r.v.alps[0] >= 80 && r.v.himalaya[0] >= 200 && r.v.greenland[0] >= 200, 'grand map: snow is gone from the Alps, the Himalaya or Greenland: ' + JSON.stringify([r.v.alps, r.v.himalaya, r.v.greenland]));
+      ck(r.trees.meshes === 1 && r.trees.inst, 'grand map: forests/palms are no longer ONE instanced draw: ' + JSON.stringify(r.trees));
+      ck(r.trees.palm && r.trees.conifer && r.trees.palm[1] <= r.trees.conifer[1] * .7 && r.trees.palm[0] <= r.trees.conifer[0] * .7, 'grand map: palms are drawn at forest-clump size again (each palm taller than a town): ' + JSON.stringify(r.trees)); }
+    await ev(() => { window.__grandWait = 0; }); }
   // ---- grand map: no turn buttons / turn wording; real-time clock controls exist
   await ev(() => { try { endBattle && 0; } catch (e) {} });
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });

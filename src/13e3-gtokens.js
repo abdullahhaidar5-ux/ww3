@@ -89,8 +89,8 @@ function gtkNudge(q,rel,far,wide,placed,own){const o0=gtkOver(gtkBox(q,rel,far,w
   let bx=q[0],by=q[1],ba=o0.ar;
   if(!far)for(let r=12;r<=GTK_NUDGE;r+=12)for(const d of GTK_DIR){const x=q[0]+d[0]*r,y=q[1]+d[1]*r,a=gtkOver(gtkBox([x,y],rel,far,wide),placed).ar;if(!a)return {x,y,free:true};if(a<ba*.8){ba=a;bx=x;by=y;}}   /* the nearest free spot, at most GTK_NUDGE px from the pin; no free spot = the one that covers least */
   return {x:bx,y:by,free:false,same:o0.same};}
-// screen boxes of the map's own controls (minimap, unit cards, round buttons, map-mode switch), in label-layer pixels; re-measured a few times a second
-const GTK_HUD=['g3mini','g3cards','g3btns','g3modes','gmCards','gmPrev'];
+// screen boxes of the map's own controls (minimap, unit cards, round buttons, map-mode switch, monthly report, map key), in label-layer pixels; re-measured a few times a second
+const GTK_HUD=['g3mini','g3cards','g3btns','g3modes','g3news','g3leg','gmCards','gmPrev'];
 function gtkHud(){const T=G3.tok,now=performance.now();if(T.hud&&now-T.hudT<350)return T.hud;const R=[];T.hudT=now;T.hud=R;if(!G3.lab||!G3.lab.getBoundingClientRect)return R;const o=G3.lab.getBoundingClientRect();
   for(const id of GTK_HUD){const el=document.getElementById(id);if(!el)continue;const L=el.children.length&&getComputedStyle(el).pointerEvents==='none'?[...el.children]:[el];   /* a click-through wrapper counts by its children, not its whole box */
     for(const c of L){const r=c.getBoundingClientRect();if(r.width<8||r.height<8||r.width>o.width*.8&&r.height>o.height*.8)continue;R.push([r.left-o.left-4,r.top-o.top-4,r.right-o.left+4,r.bottom-o.top+4]);}}

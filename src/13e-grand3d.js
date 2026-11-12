@@ -294,12 +294,14 @@ function g3ForestAtlas(){const S=128,V=G3F_VAR,W=S*4,H=S*V,cv=document.createEle
 function g3TreeLook(){const T=G3.treeU&&G3.treeU.uTex.value,im=T&&T.image;if(!im||!im.data)return null;const S=im.width/4,out={rows:Math.round(im.height/S),gain:G3F_GAIN};
   G3F_KINDS.forEach((nm,ki)=>{let r=0,g=0,b=0,n=0;for(let y=0;y<im.height;y++)for(let x=ki*S;x<(ki+1)*S;x++){const i=(y*im.width+x)*4;if(im.data[i+3]>127){r+=im.data[i];g+=im.data[i+1];b+=im.data[i+2];n++;}}
     r=r/n/255;g=g/n/255;b=b/n/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);out[nm]={s:+((mx-mn)/(mx||1)).toFixed(3),v:+(Math.pow(mx,2.2)*G3F_GAIN).toFixed(3),cover:+(n/(S*im.height)).toFixed(3)};});return out;}
+/* fixes1: the palm quad is drawn at 55% of its old size (1.05 x 1.2, was 1.9 x 2.1). A forest quad shows a clump of six or seven small trees, a palm quad one to three
+   single palms - at forest size every palm along the Tigris and the Gulf stood taller than the towns beside it. Same single instanced draw, same count. */
 function g3ForestMesh(){const U=G3.treeU={uTS:{value:1},uT:{value:0},uTex:{value:g3ForestAtlas()}},N=G3F_MAX,g=new THREE.InstancedBufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute([-.5,0,0,.5,0,0,.5,1,0,-.5,1,0],3));g.setIndex([0,1,2,0,2,3]);
   const iP=new THREE.InstancedBufferAttribute(new Float32Array(N*3),3),iD=new THREE.InstancedBufferAttribute(new Float32Array(N*4),4),iC=new THREE.InstancedBufferAttribute(new Float32Array(N*3),3);
   for(const a of [iP,iD,iC])a.setUsage(THREE.DynamicDrawUsage);g.setAttribute('iP',iP);g.setAttribute('iD',iD);g.setAttribute('iC',iC);g.instanceCount=0;
   const m=new THREE.ShaderMaterial({uniforms:U,vertexShader:`uniform float uTS,uT;attribute vec3 iP,iC;attribute vec4 iD;varying vec2 vU;varying vec3 vC;varying float vY;
-    void main(){int k=int(iD.z+.5);vec2 sz=k==0?vec2(1.7,2.0):k==1?vec2(2.0,1.5):k==2?vec2(1.9,2.1):vec2(1.6,1.6);sz*=iD.x*uTS;sz.y*=iD.y;
+    void main(){int k=int(iD.z+.5);vec2 sz=k==0?vec2(1.7,2.0):k==1?vec2(2.0,1.5):k==2?vec2(1.05,1.2):vec2(1.6,1.6);sz*=iD.x*uTS;sz.y*=iD.y;
       vec3 cr=vec3(viewMatrix[0][0],viewMatrix[1][0],viewMatrix[2][0]),up=normalize(mix(vec3(0.,1.,0.),vec3(viewMatrix[0][1],viewMatrix[1][1],viewMatrix[2][1]),.55));
       float sw=sin(uT*1.2+iP.x*.37+iP.z*.29)*.05*position.y;
       vec3 w=iP+cr*(position.x+sw)*sz.x+up*position.y*sz.y;
