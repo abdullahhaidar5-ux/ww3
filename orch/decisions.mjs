@@ -320,6 +320,27 @@ try {
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
   ck(!bt.setupEnd, 'Battle has a no-fire setup phase'); ck(!bt.tax, 'Battle has town taxes'); ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');
   await shot('battle-us');
+  // ---- fixes1 (2026-11-11, "white streaks in Arabia", "oversized palms"): what a PLAYER gets on the first campaign map of a session.
+  // The map must wait for the real land data (it used to be drawn on the hand-shaped stand-in and stay on it: chalk-white cliffs along the Red Sea);
+  // snow only where snow can lie (never in Arabia; still on the Alps, the Himalaya and Greenland); palms no taller than the towns (one instanced draw).
+  await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
+  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+  { const { proj } = await import('./grandproj.mjs');
+    const P = { hejaz: [41, 21], asir: [42.5, 18.5], rub: [50, 20], alps: [7.9, 46.0], himalaya: [86.9, 28.0], greenland: [-40, 72] }, pts = Object.entries(P).map(([n, [lo, la]]) => [n, ...proj(lo, la)]);
+    const box = [proj(36, 26), proj(56, 26), proj(36, 14), proj(56, 14)], bx = [Math.min(...box.map(q => q[0])), Math.min(...box.map(q => q[1])), Math.max(...box.map(q => q[0])), Math.max(...box.map(q => q[1]))];
+    const w0 = await ev(() => { window.__grandWait = 1; grNew({ me: 'IR', seed: 99, len: 'quick' }); grandOpen(); return { card: !!document.getElementById('gRealWait'), scr: !!document.getElementById('grandScreen') }; });
+    const opened = await page.waitForFunction(() => document.getElementById('grandScreen') && !document.getElementById('gRealWait'), null, { timeout: 240000, polling: 200 }).then(() => true).catch(() => false);
+    ck(w0.card && !w0.scr, 'grand map: the first map of a session no longer waits for the real land data: ' + JSON.stringify(w0)); ck(opened, 'grand map: the map never opened after waiting for the real land data');
+    if (opened) { const r = await ev(([pts, bx]) => { const F = G3.F, W = F.W, o = { real: !!G3.real, hm: !!F.hm, v: {} };
+        for (const [n, X, Z] of pts) { const x = Math.round(X / 2), y = Math.round(Z / 2); let sn = 0, hh = 0; for (let dy = -7; dy <= 7; dy++) for (let dx = -7; dx <= 7; dx++) { const k = (y + dy) * W + x + dx; if (Math.abs(dx) < 4 && Math.abs(dy) < 4 || n === 'alps') sn = Math.max(sn, F.bw[k * 4 + 1]); hh = Math.max(hh, F.Hh[k]); } o.v[n] = [sn, +hh.toFixed(1)]; }
+        let am = 0; for (let y = Math.floor(bx[1] / 2); y <= bx[3] / 2; y++) for (let x = Math.floor(bx[0] / 2); x <= bx[2] / 2; x++) am = Math.max(am, F.bw[(y * W + x) * 4 + 1]); o.arabia = am;
+        const fm = G3.static.children.filter(c => c.material && c.material.uniforms && c.material.uniforms.uTS), vs = fm[0] ? fm[0].material.vertexShader : '', sz = k => { const m = new RegExp('k==' + k + '\\?vec2\\(([\\d.]+),([\\d.]+)\\)').exec(vs); return m ? [+m[1], +m[2]] : null; };
+        o.trees = { meshes: fm.length, inst: !!(fm[0] && fm[0].geometry.isInstancedBufferGeometry), conifer: sz(0), palm: sz(2) }; return o; }, [pts, bx]);
+      console.log('real map', JSON.stringify(r));
+      ck(r.real && r.hm, 'grand map: the first map of a session is drawn on the stand-in terrain although the real land data loaded');
+      ck(r.v.hejaz[0] <= 10 && r.v.asir[0] <= 10 && r.v.rub[0] <= 10 && r.arabia <= 10, 'grand map: snow paint in Arabia (Hejaz/Asir/Rub al Khali/whole peninsula south of 26N): ' + JSON.stringify([r.v.hejaz, r.v.asir, r.v.rub, r.arabia]));
+      ck(r.v.alps[0] >= 80 && r.v.himalaya[0] >= 200 && r.v.greenland[0] >= 200, 'grand map: snow is gone from the Alps, the Himalaya or Greenland: ' + JSON.stringify([r.v.alps, r.v.himalaya, r.v.greenland])); }
+    await ev(() => { window.__grandWait = 0; }); }
   // ---- grand map: no turn buttons / turn wording; real-time clock controls exist
   await ev(() => { try { endBattle && 0; } catch (e) {} });
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
