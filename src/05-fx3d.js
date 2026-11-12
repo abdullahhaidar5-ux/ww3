@@ -181,7 +181,7 @@ const FXH={
     if(snd&&typeof sfxAlarm==='function')sfxAlarm();else if(typeof martyrSwell==='function'){AU.swellT=0;martyrSwell(team);}}catch(_){}},
   heal(x,y,r){PINGS.push({x,y,r,t:0,d:1.2,c:0x74d08f});for(let i=0;i<40;i++){const a=rnd(0,6.28),d=rnd(0,r);part({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,h:groundH(x,y)+rnd(2,20),vh:rnd(15,40),add:true,c:[.4,1,.55],s:rnd(2,4),d:rnd(.8,1.4)});}},
   plane(sx,sy,tx,ty,team){mats();const T=G.teams[team],o=mesh(geoFor('plane',T.fac,T,'body'));o.scale.setScalar(1.2);SCN.add(o);const a=Math.atan2(ty-sy,tx-sx),L=Math.hypot(tx-sx,ty-sy);PLANES.push({o,sx,sy,a,v:L/2.6,t:0,tx,ty,dropped:false});},
-  log(team,msg,kind){if(team===ME)pushLog(msg,kind);},
+  log(team,msg,kind,x,y){if(team===ME)pushLog(msg,kind,x,y);},
   end(winner){showEnd(winner);},
   elim(team){if(team===ME&&G&&!G.over)showElim();},
   oilDry(i){const o=G.oil&&G.oil[i];if(!o)return;if(MODE==='client'){o.res=0;}if(o.owner===ME||MODE==='client')try{pushLog('An oil derrick has run dry.','w');}catch(_){}},
