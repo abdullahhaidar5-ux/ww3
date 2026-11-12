@@ -350,3 +350,35 @@ P['MA'], C['MA'] = _ar(
  ['طاح واحد!', 'خسرنا واحد!', 'خسرنا الوحدة.', 'جريح، بغينا الإسعاف!'],
  ['سالا البناء.', 'المبنى واجد سيدي.', 'تم البناء.', 'سالات الإنشاءات.'],
  [['عاش المغرب!', 'الله أكبر!'], ['يلا يلا!', 'عاش المغرب!'], ['الله أكبر! عليهم!', 'فدا المغرب!', 'يا الله!', 'عاش المغرب!'], ['واجدين، عاش المغرب!']])
+
+# voicesV 2026-11-10: English-speaking nations, own wording and casts (XTTS 'en' has one accent, so identity comes from speakers + idiom)
+P['GB'] = [
+ ['Ready, sir.', 'Standing by.', 'Right you are, sir.', 'Sir.'],
+ ['Moving up.', 'Wilco.', 'On the move.', 'Understood, advancing.'],
+ ['Engaging!', 'Contact, open fire!', 'Fire!', 'Target, go firm and fire!'],
+ ['Section ready.', 'Troop ready, sir.', 'All present and correct.', 'Ready to go, sir.'],
+ ['Base under attack!', 'Enemy at the wire!', 'We are being hit at base, need support!'],
+ ['Contact! We are pinned down!', 'Taking fire, need support!', 'Incoming, get down!', 'Contact front!'],
+ ['Man down!', 'Casualty!', 'We have lost the section.', 'One down, medic!'],
+ ['Construction complete.', 'Building is up, sir.', 'Structure is ready.', 'Works finished.']]
+C['GB'] = [['For King and country!', 'Who dares wins!'], ['Up and at them!', 'Advance!'], ['Who dares wins! Fire!', 'For the Crown!', 'Stand firm!', 'Give them hell!'], ['Ready, sir. Let us go!']]
+P['AU'] = [
+ ['Ready, mate.', 'Standing by, boss.', 'Yep, go ahead.', 'Righto, sir.'],
+ ['Moving out.', 'No worries, on the move.', 'Righto, going.', 'Copy that, moving.'],
+ ['Engaging!', 'Contact, let them have it!', 'Open fire!', 'Got him, firing!'],
+ ['Section is ready.', 'Good to go, sir.', 'All set, boss.', 'Ready when you are.'],
+ ['Base is under attack!', 'They are in the base, we need help!', 'Base is getting hammered!'],
+ ['Taking fire!', 'We are pinned, need support!', 'Incoming, get down!', 'Contact, we need help here!'],
+ ['Man down!', 'We have lost one!', 'Section is gone.', 'Digger down, need a medic!'],
+ ['Build is done.', 'Building is finished, sir.', 'All built, boss.', 'Structure is ready.']]
+C['AU'] = [['Aussie, Aussie, Aussie!', 'Lest we forget!'], ['Let us go, boys!', 'No worries!'], ['Lest we forget! Fire!', 'Give them heaps!', 'Stand your ground!', 'For Australia!'], ['Ready, boss. Let us go!']]
+P['CA'] = [
+ ['Ready, sir.', 'Standing by.', 'Go ahead, sir.', 'Roger, sir.'],
+ ['Moving out, eh.', 'Roger, on the move.', 'Copy that, advancing.', 'Moving up.'],
+ ['Engaging!', 'Contact, open fire!', 'Weapons free!', 'Target in sight, firing!'],
+ ['Section ready.', 'Ready for tasking, sir.', 'All set, sir.', 'Good to go.'],
+ ['Base is under attack!', 'Enemy at the base, need support!', 'We are taking fire at base!'],
+ ['Taking fire!', 'We are pinned down, need support!', 'Incoming, get down!', 'Contact, need help!'],
+ ['Man down!', 'We lost one!', 'Section is down.', 'Casualty, need a medic!'],
+ ['Construction complete.', 'Building is ready, sir.', 'Structure is up.', 'Build finished.']]
+C['CA'] = [['For Canada!', 'We stand on guard!'], ['Let us go!', 'Advance, eh!'], ['We stand on guard! Fire!', 'For Canada!', 'Hold the line!', 'Give them everything!'], ['Ready, sir. Let us go!']]

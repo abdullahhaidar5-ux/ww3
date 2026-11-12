@@ -86,9 +86,11 @@ try {
     { const [N] = set('CN'); N.pp.pol = 100; o.cen = wsCensor('CN'); o.pol = N.pp.pol; o.cen2 = wsCensor('CN'); N.wsE = -8; month(N); o.lCen = why(N, /Bad news/); GC.turn = N.wsCn - 1; month(N); o.back = why(N, /casualty lists/); o.saved = JSON.parse(JSON.stringify(GC.nat.CN)).wsCn === N.wsCn; }
     { const [N, foe] = set('US'); const a = GC.armies.find(x => x.o === foe && !x.fl && x.u.length); if (a) { a.at = N.cap; a.path = []; month(N); o.rally = why(N, /Attacked at home/); GC.turn += 7; a.at = N.cap; month(N); o.later = why(N, /Enemy troops on our soil/); } }
     { const j = ['SD', 'MM', 'ML', 'BF', 'NE'].find(c => GC.nat[c] && !GC.nat[c].dead); if (j) { const [N] = set(j); const E = gsN(j).est.army; if (E) { const l0 = E.loy; N.ws = 15; month(N); o.split = l0 - E.loy; } else o.split = 'no army estate'; } else o.split = 'no junta nation'; }
+    { const sh = (c, k) => { const [N] = set(c); N.e.ration = 0; N.e.dry = 0; N.e.starve = 0; N.e[k] = 1; month(N); return why(N, /Shortages at home/); }; o.short = [sh('US', 'ration'), sh('CN', 'ration'), sh('IR', 'ration'), sh('CN', 'starve')].join(','); const [N] = set('CN'); N.e.ration = 0; N.e.dry = 0; N.e.starve = 0; month(N); o.shortNone = why(N, /Shortages/); GC.war = {}; N.e.ration = 1; month(N); o.shortPeace = why(N, /Shortages/); }
     { const [N] = set('SA'); N.ws = 15; N.wsW = 3; o.strike = GMOD_COND.wsgov('SA', 'strike'); const [M] = set('US'); M.ws = 15; M.wsW = 3; o.strikeDem = GMOD_COND.wsgov('US', 'strike'); }
     return o; });
   console.log('war support by government', JSON.stringify(wsg));
+  if (!(wsg.short === '-1.5,-1,-0.5,-3' && wsg.shortNone === null && wsg.shortPeace === null)) fails.push('war support: wartime shortages should cost support by government and style (rationing: democracy -1.5, party state -1, Zealous -0.5; hunger -3; nothing without shortages or in peace): ' + wsg.short + ' / ' + wsg.shortNone + ' / ' + wsg.shortPeace);
   if (!(wsg.gov === 'dem,party,mon,theo,junta,auth' && wsg.lDem === -12 && wsg.lParty === -4 && wsg.cenDem !== '' && wsg.cen === '' && wsg.pol === 70 && wsg.cen2 !== '' && wsg.lCen === -2 && wsg.back === -5 && wsg.saved && wsg.rally === 4 && wsg.later < 0 && wsg.split === 2 && wsg.strike === true && wsg.strikeDem === false)) fails.push('war support by government: ' + JSON.stringify(wsg));
   // Escalation ladder: rungs before war, surprise-attack penalty, mediated and unmediated off-ramps, nuclear deterrence in the AI war gate, determinism, saved
   const esc = await ev(() => { const o = {}; const rl = (x, y) => (GC.rel && GC.rel[grWk(x, y)]) || 0;
@@ -107,6 +109,23 @@ try {
     return o; });
   console.log('escalation', JSON.stringify(esc));
   if (!(esc.up === ',1,,,3,false' && esc.rel === -24 && esc.saved === 3 && esc.alert && esc.noMed === '' && esc.face === -3 && esc.r1 === 1 && esc.med === 'CN' && esc.medErr === '' && esc.face2 === 0 && esc.r2 === 0 && esc.paid === 100 && esc.surprise - esc.signalled === -10 && esc.cleared && esc.gate === 'false,false,true' && esc.nk && esc.nukeWars <= 8 && esc.nukeRung === 2 && esc.det)) fails.push('escalation ladder: ' + JSON.stringify(esc));
+  // Escalation inside a war: rung 4 by default, first crosser pays and the answer is free, limits pact (breaking it costs double), cooling, nuclear alert, AI restraint, last-resort strike needs a month on alert
+  const escw = await ev(() => { const o = {}; const rl = (x, y) => (GC.rel && GC.rel[grWk(x, y)]) || 0;
+    const set = () => { grNew({ me: 'IR', seed: 31, len: 'quick' }); GC.war = {}; GC.alz = []; GC.tr = {}; GC.esc = {}; GC.rel = {}; GC.armies = GC.armies.filter(x => !x.fl); };
+    set(); const A = 'IR', B = 'SA'; grDeclare(A, B); GC.rel = {}; o.r0 = gescWarOf(A, B); wsN(B).wsE = 0; o.x = gescWar(A, B, 6); o.r1 = gescWarOf(A, B); o.op = rl(A, 'CN'); o.rally = wsN(B).wsE; o.match = gescWar(B, A, 6); o.free = rl(B, 'CN');
+    o.saved = JSON.parse(JSON.stringify(GC)).esc[grWk(A, B)].r; o.warnNoNuke = gdChance('warn', A, B).ok;
+    GC.nat[A].cash = 5000; GC.rel[grWk('TR', A)] = 30; GC.rel[grWk('TR', B)] = 30; o.lim = gdAct('deesc', A, B) || ''; o.r2 = gescWarOf(A, B); o.paid = 5000 - GC.nat[A].cash; const p0 = rl(A, 'CN'); gescWar(A, B, 6); o.broke = rl(A, 'CN') - p0;
+    for (let i = 0; i < 7; i++) { GC.turn++; gescMonth(); } o.cool = gescWarOf(A, B);
+    // nuclear alert by the player (given a warhead for the test)
+    set(); grDeclare(A, B); gnkN(A).w = 1; GC.nat[A].cash = 5000; o.na = gdAct('warn', A, B) || ''; o.r7 = gescWarOf(A, B); o.naPaid = 5000 - GC.nat[A].cash; o.again = gdChance('warn', A, B).ok;
+    // AI restraint: opening strategic strikes first is rare; answering them is free
+    set(); grDeclare('TR', 'GR'); const R = grRng(9); let n = 0; for (let i = 0; i < 200; i++) if (gescWarAI('TR', 'GR', 6, R)) n++; o.aiFirst = n; gescWar('GR', 'TR', 6); o.aiAnswer = gescWarAI('TR', 'GR', 6, R);
+    // an AI nuclear power whose capital is occupied: alert first, the strike only a month later
+    set(); const N = ['IL', 'PK', 'RU'].find(c => GC.nat[c] && !GC.nat[c].dead); o.nn = !!N; if (N) { grDeclare(A, N); const cap = GC.nat[N].cap; GC.prov[cap].o = A; const ar = GC.armies.find(x => x.o === A && !x.fl); ar.at = cap; ar.path = []; GC.nat[N].ai = true; const w0 = gnkN(N).w; gnkN(N).last = -99; gnkMonth(); o.w1 = w0 - gnkN(N).w; o.al = gescWarOf(N, A); GC.turn++; gnkMonth(); o.w2 = w0 - gnkN(N).w; }
+    const run = () => { set(); grDeclare(A, B); gescWar(A, B, 6); for (let i = 0; i < 8; i++) { GC.turn++; gescMonth(); } return JSON.stringify(GC.esc) + '|' + rl(A, B); }; o.det = run() === run();
+    return o; });
+  console.log('escalation in war', JSON.stringify(escw));
+  if (!(escw.r0 === 4 && escw.x === true && escw.r1 === 6 && escw.op === -6 && escw.rally === 3 && escw.match === false && escw.free === 0 && escw.saved === 6 && escw.warnNoNuke === false && escw.lim === '' && escw.r2 === 5 && escw.paid === 100 && escw.broke === -12 && escw.cool < 6 && escw.na === '' && escw.r7 === 7 && escw.naPaid === 200 && escw.again === false && escw.aiFirst > 0 && escw.aiFirst <= 30 && escw.aiAnswer === true && escw.nn && escw.w1 === 0 && escw.al === 7 && escw.w2 === 1 && escw.det)) fails.push('escalation in war: ' + JSON.stringify(escw));
   if (!fl.under || !fl.over || Math.abs(fl.up - 1.5) > .01 || !(fl.t1 > fl.t0) || !fl.allUnder || !fl.chip) fails.push('force limit/tradition: ' + JSON.stringify(fl));
   // ---- MILITARY (grand3): generals, front lines, map strikes, fleets & sea zones; determinism over 20 turns with all of it active
   {
@@ -165,7 +184,20 @@ try {
         const fr = Object.keys(GC.nat).sort().find(x => x !== A && x !== B && !GC.nat[x].dead && !grAtWar(A, x) && grAllied(A, x)); if (!fr) out.push('skip: IR has no ally for the shipment check'); else { QA.ic = 6; QA.sent = 0; const r0 = (GC.rel || {})[grWk(A, B)] || 0, i0 = gmilN(fr).ic; GC.war[grWk(fr, B)] = 1; ok(gmilSend(A, fr, 'ic') === '' && QA.ic === 4, 'shipment to an ally refused'); ok(gmilSend(A, fr, 'ic') !== '', 'second shipment in one month not refused'); GC.turn++; gmilStockMonth(); ok(gmilN(fr).ic >= i0 + 2, 'shipment did not arrive'); delete GC.war[grWk(fr, B)]; }
         ok(gmilSendCheck(A, B, 'ic') !== '', 'could ship interceptors to an enemy');
         const ai = Object.keys(GC.nat).sort().find(x => GC.nat[x].ai && !GC.nat[x].dead && Object.keys(GC.war).some(k => k.split('|').includes(x)) && gmilStkMax(x, 'ic') > 4); if (ai) { const Q = gmilN(ai); Q.ic = 0; Q.oq = []; GC.nat[ai].cash = 5000; gmilAIStock(ai, () => .99); ok(Q.oq.some(o => o.k === 'ic'), 'AI at war with empty air defence did not order interceptors'); }
-        const old = gmilN(B); delete old.ic; delete old.oq; delete old.pa; ok(gmilN(B).ic === gmilStkRow(B)[3] && Array.isArray(gmilN(B).oq), 'older save did not get its interceptor stock'); const rt = JSON.parse(JSON.stringify(GC.mil.n[A])); ok(rt.ic === QA.ic && Array.isArray(rt.oq) && rt.pa.length === 2, 'stockpile state does not survive a save');
+        const old = gmilN(B); delete old.ic; delete old.oq; delete old.pa; ok(gmilN(B).ic === gmilStkRow(B)[3] && Array.isArray(gmilN(B).oq), 'older save did not get its interceptor stock'); const rt = JSON.parse(JSON.stringify(GC.mil.n[A])); ok(rt.ic === QA.ic && Array.isArray(rt.oq) && rt.pa.length >= 2 && rt.sh === QA.sh && rt.pb === QA.pb, 'stockpile state does not survive a save');
+        // slice 2: shells and precision bombs on the same counters
+        const o2 = gmilN(B); delete o2.sh; delete o2.pb; ok(gmilN(B).sh === gmilStkAt(B, 'sh', 0) && gmilN(B).pb === gmilStkAt(B, 'pb', 0), 'older save did not get its shell and bomb stock');
+        ok(gmilStkYr('RU', 'sh') > gmilStkYr('US', 'sh') && gmilStkYr('SA', 'pb') === 0 && gmilStkMax('RS', 'pb') === 0, 'shell/bomb table does not follow REAL-2026 (Russia out-produces the US in shells; Gulf imports bombs; militias have no air force)');
+        const ar = GC.armies.find(a => a.o === A && !a.fl && a.u.length); if (!ar) out.push('skip: no army for the shell check'); else {
+          QA.sh = 3; QA.sa = 0; ar.fo = GC.turn; const n = Math.ceil(1000 / (ar.u.length * GMIL_SH_BURN)); let d = 0; for (let i = 0; i < n; i++) d = gmilShell(ar, 20); ok(QA.sh === 2 && d === 20, 'a fighting army did not burn shells from the national stock (' + QA.sh + ')');
+          QA.sh = 1; QA.sa = 999; const w0 = GC.log.length; d = gmilShell(ar, 20); ok(QA.sh === 0 && d === 20 * GMIL_SH_DRY && GC.log.slice(w0).some(l => /running out of artillery shells/.test(l[1])), 'shell hunger: no quarter-rate refill or no world news');
+          ok(gmilShell(ar, -9) === -9, 'shell hunger changed an ammunition loss'); ar.fo = 0; ok(gmilShell(ar, 20) === 20 * GMIL_SH_DRY, 'a resting army refilled at full rate from an empty stock');
+          const c1 = GC.nat[A].cash; GC.nat[A].cash = 5000; QA.oq = []; ok(gmilOrder(A, 'sh') === '' && QA.oq.length === 1 && QA.oq[0].k === 'sh' && QA.sh === 0 && GC.nat[A].cash === 5000 - GMIL_ORD.sh.cost, 'shell order is not paid-now, delivered-later'); GC.nat[A].cash = c1; QA.oq = []; QA.sh = gmilStkAt(A, 'sh', 0); QA.sa = 0; }
+        const fac = () => { geBl(near.i).length = 0; geBl(near.i).push(['factory', 0]); };
+        fac(); QA.so = [{ t: 'a', pi: near.i, k: 'b', pb: 0 }]; gmilStrikes(); const ug = geBl(near.i)[0][1]; fac(); QA.so = [{ t: 'a', pi: near.i, k: 'b', pb: 1 }]; gmilStrikes(); const gd = geBl(near.i)[0][1];
+        ok(ug > 0 && gd > ug, 'an air raid with unguided bombs should do less damage than one with precision bombs (' + ug + ' vs ' + gd + ')');
+        QA.so = []; QA.pb = 1; GC.nat[A].cash += 1000; if (GC.nat[A].e) GC.nat[A].e.fuel += 60; const eA = gmilStrikeCheck(A, 'a', near.i, 'b');
+        if (eA) out.push('skip: no air raid possible for the bomb check: ' + eA); else { gmilStrike(A, 'a', near.i, 'b'); ok(QA.pb === 0 && QA.so[0].pb === 1, 'an air raid did not spend a precision bomb load'); ok(gmilStrike(A, 'a', near.i, 'a') === '' && QA.so[1].pb === 0, 'an air raid without bombs should still fly (unguided)'); QA.so = []; }
 }
       // fleets
       const ports = GCM.P.filter(p => p.land && GC.prov[p.i].o === A && p.port); ok(ports.length > 0, 'IR has no port'); const n0 = GC.mil.fq.length; GC.nat.IR.e.man = 200; const bf = gmilBuyFleet(A, ports[0].i, 'boat'); ok(bf === '' && GC.mil.fq.length === n0 + 1, 'fleet order failed ' + bf);
@@ -198,7 +230,7 @@ try {
     // UI: Military panel
     await ev(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); GC.nat.IR.cash = 6000; for (let i = 0; i < 3; i++) grEndTurn(true); GV.sel = GC.nat.IR.cap; grandOpen(); });
     await page.waitForTimeout(2500);
-    const mu = await ev(() => { const o = {}; gmilUiPanel(); o.panel = !!document.getElementById('gMil'); for (const t of ['gen', 'fr', 'st', 'sk', 'fl']) { GMILUI.tab = t; gmilUiPanel(true); const pe = document.getElementById('gMil'); o[t] = pe.textContent.length; if (/Buy missile|every 3 months/.test(pe.textContent)) o.old = t; if (t === 'sk') o.skOk = !!(document.getElementById('gSk_ic') && document.getElementById('gSk_ms') && /Interceptor loads/.test(pe.textContent) && /Ship to an ally/.test(pe.textContent)); } GMILUI.tab = 'gen'; gmilUiPanel(true); return o; });
+    const mu = await ev(() => { const o = {}; gmilUiPanel(); o.panel = !!document.getElementById('gMil'); for (const t of ['gen', 'fr', 'st', 'sk', 'fl']) { GMILUI.tab = t; gmilUiPanel(true); const pe = document.getElementById('gMil'); o[t] = pe.textContent.length; if (/Buy missile|every 3 months/.test(pe.textContent)) o.old = t; if (t === 'sk') o.skOk = !!(document.getElementById('gSk_ic') && document.getElementById('gSk_ms') && document.getElementById('gSk_sh') && document.getElementById('gSkK_sh') && /Artillery shell loads/.test(pe.textContent) && /Interceptor loads/.test(pe.textContent) && /Ship to an ally/.test(pe.textContent)); } GMILUI.tab = 'gen'; gmilUiPanel(true); return o; });
     console.log('military ui', JSON.stringify(mu)); if (!mu.panel || mu.gen < 150 || mu.fr < 100 || mu.st < 100 || mu.fl < 100) fails.push('military ui: panel tabs empty ' + JSON.stringify(mu)); if (!mu.skOk) fails.push('military ui: Stockpiles window missing or incomplete'); if (mu.old) fails.push('military ui: old instant-missile wording still on tab ' + mu.old);
     await shot3('military-generals');
     await ev(() => { GMILUI.tab = 'fr'; gmilUiPanel(true); }); await shot3('military-fronts');
@@ -354,12 +386,39 @@ try {
     const woods = () => { const au = g3TreeAudit(); return au ? ['LY', 'EG', 'SA'].map(k => au[k] ? au[k].conifer + au[k].broad : 0).concat([au.dryWoods || 0, au.DE ? au.DE.conifer + au.DE.broad : 0]) : null; };
     const R = G3.real; out.hasReal = !!R; G3.real = null; g3ForestRefresh(true); out.standIn = woods(); out.standInReal = G3.forest.real;
     if (R) { G3.real = R; g3ForestRefresh(true); out.real = woods(); out.realFlag = G3.forest.real; }
-    const vis = () => { let pl = 0; for (const b of G3.bn) if (b.el._v === 'block') pl++; const at = [], dup = []; let foreign = 0; for (const [k, e] of G3.pl) if (e._v === 'block') { const a = k.split('|')[0], o = k.split('|')[1]; if (at.includes(a)) dup.push(a); at.push(a); if (o !== GC.me && !grAtWar(GC.me, o)) foreign++; }
-      g3Batch(); let figs = 0; for (const p of G3.bat.b.values()) figs += p.n || 0; return { plates: pl, badges: at.length, dup: dup.length, foreign, figs }; };
+    const vis = () => { let pl = 0; for (const b of G3.bn) if (b.el._v === 'block') pl++; let foreign = 0; for (const e of G3.pl.values()) if (e._v === 'block' && / oth/.test(e.className) && !/ sel/.test(e.className)) foreign++;   /* armytokens: the badges are the army tokens now (src/13e3-gtokens.js) */
+      const au = gtkAudit(); return { plates: pl, badges: au.tokens, dup: au.perProv > 1 ? au.perProv : 0, foreign, figs: au.figs }; };
+    // calmmap4: map colours — countries that face each other across a narrow sea count as neighbours and never look alike, for every playable nation
+    { const A = grPalAdj(); out.seaMiss = [['EG', 'SA'], ['IR', 'SA'], ['IR', 'AE'], ['IR', 'KW'], ['GR', 'TR'], ['IT', 'HR'], ['IT', 'AL'], ['ES', 'MA'], ['GB', 'FR'], ['SA', 'SD'], ['SA', 'ER']].filter(p => !(A.get(p[0]) && A.get(p[0]).has(p[1]))).map(p => p.join('-'));
+      out.palBad = []; for (const me of GM_NATS.map(r => r[0]).filter(c => FACTIONS[c] && c !== 'EU').concat([''])) { const b = grPaletteBad(me); if (b.length) out.palBad.push((me || 'none') + ':' + b.join(',')); } }
     const mine = GC.armies.filter(a => a.o === GC.me).length;
-    set(2300); out.far = { tier: G3.tier, trees: G3.trees, mine, ...vis() }; set(350); out.mid = { tier: G3.tier, trees: G3.trees, ...vis() }; set(150); out.close = { tier: G3.tier, trees: G3.trees, figs: vis().figs }; set(900); return out; });
+    set(2300); out.far = { tier: G3.tier, trees: G3.trees, mine, ...vis() }; set(350); out.mid = { tier: G3.tier, trees: G3.trees, ...vis() }; set(150); out.close = { tier: G3.tier, trees: G3.trees, figs: vis().figs }; { let pnBad = 0, plateBad = 0, pn = 0; for (const b of G3.bn) if (b.el._v === 'block') { const st = GC.prov[b.pi], capOf = GC.nat[st.o] && GC.nat[st.o].cap === b.pi, plain = /\bpn\b/.test(b.el.className); if (plain) { pn++; if (capOf || b.el.querySelector('.em') || !(b.pi === GV.sel || b.pi === GV.hov || st.o === GC.me)) pnBad++; } else if (!capOf) plateBad++; } out.close.pn = pn; out.close.pnBad = pnBad; out.close.plateBad = plateBad; } set(900); return out; });
   console.log('calmmap', JSON.stringify(calm));
-  if (!calm.legShut) fails.push('calmmap: the map key is not folded on a new campaign'); if (calm.coachLegend) fails.push('calmmap: tips and the map key are open together'); if (calm.coachH > 90) fails.push('calmmap: the first-minute tips are a big box again (' + calm.coachH + ' px high)');
+  // ---- maptrees guard (Abdullah 2026-11-11 "the trees look too cartoony in the grand map"): the tree pictures stay muted and dark (no lime, no neon), with several variants per kind in ONE texture, and trees stay small
+  { const lk = await ev(() => ({ look: typeof g3TreeLook === 'function' ? g3TreeLook() : null, ts: (() => { G3.camera.d = G3.cc.d = 240; g3ForestTick(true); const v = G3.treeU.uTS.value; G3.camera.d = G3.cc.d = 900; g3ForestTick(true); return v; })(), max: G3F_MAX }));
+    console.log('maptrees', JSON.stringify(lk));
+    if (!lk.look) fails.push('maptrees: no tree picture to check (g3TreeLook)'); else { if (lk.look.rows < 3) fails.push('maptrees: only ' + lk.look.rows + ' variant(s) per tree kind (repetition shows)');
+      for (const k of ['conifer', 'broad', 'palm', 'scrub']) { const t = lk.look[k]; if (!t || !(t.cover > .04)) fails.push('maptrees: the ' + k + ' picture is empty'); else if (k !== 'scrub' && (t.s > .47 || t.v > .33)) fails.push('maptrees: ' + k + ' trees are lime/neon again (saturation ' + t.s + ' > 0.47 or brightness ' + t.v + ' > 0.33)'); else if (t.v > .5) fails.push('maptrees: scrub is too bright (' + t.v + ')'); } }
+    if (lk.ts > 1.7) fails.push('maptrees: trees grow to ' + lk.ts + 'x when zoomed out (toy trees taller than towns again)'); if (lk.max > 30000) fails.push('maptrees: tree budget raised to ' + lk.max); }
+  // mapscale (Abdullah 2026-11-11 "Visually it looks off"): towns are small clusters inside their province, no two touch, and no land army is drawn standing in the sea
+  const scale = await ev(() => { const T = g3Towns(), ar = g3PArea(), out = { towns: T.length, big: [], spill: [], overlap: 0, sample: {}, sea: [], ships: 0, tall: [], plate: !!G3_GEO().disc };
+    const lim = t => Math.sqrt(ar[t.pi]) * (t.cap || t.mega && !t.t ? 1 / 4 : 1 / 6);   // rule of thumb: an ordinary town is at most 1/6 of its province's width, a capital or metropolis 1/4
+    for (let i = 0; i < T.length; i++) { const t = T[i], n = GCM.P[t.pi].n; if (2 * t.R > Math.max(lim(t), 2 * G3_TOWN_MIN) + 1e-6) out.big.push(n); if (t.dry && t.R > G3_TOWN_MIN && !g3Fits(t.x, t.z, t.R, t.pi)) out.spill.push(n);
+      for (let j = i + 1; j < T.length; j++) { const u = T[j]; if (Math.hypot(u.x - t.x, u.z - t.z) < u.R + t.R) out.overlap++; } }
+    for (const n of ['Rome', 'Athens', 'Kuwait', 'Beirut', 'Tehran', 'Riyadh']) { const p = GCM.P.find(p => p.land && p.n === n), t = p && g3Main(p.i); out.sample[n] = t ? [+(2 * t.R).toFixed(2), +lim(t).toFixed(2), t.dry && g3Fits(t.x, t.z, t.R, t.pi) ? 1 : 0] : null; }
+    const d0 = G3.cc.d; for (const d of [40, 150, 300, 900]) { G3.cc.d = d; const s = Math.max(.45, Math.min(3.6, d / 330)), A = g3Anchors(s);
+      for (const a of GC.armies) { if (GCM.P[a.at].sea) continue; if (g3Afloat(a.at)) { if (d === 40) out.ships++; continue; } const q = A.get(a.id); if (!g3OnLand(q[0], q[1])) out.sea.push(GCM.P[a.at].n + '@' + d);
+        if (d <= 150) { const t = g3Main(a.at), h = g3FigScale(a.at, s, d) * G3_FIG_H; if (h > Math.max(2 * t.R, G3_FIG_MIN * G3_FIG_H) + 1e-6) out.tall.push(GCM.P[a.at].n + '@' + d); } } }
+    G3.cc.d = d0; return out; });
+  console.log('mapscale', JSON.stringify({ ...scale, big: scale.big.length, spill: scale.spill.length, sea: scale.sea.length, tall: scale.tall.length }));
+  if (scale.plate) fails.push('mapscale: the beige ground plate under towns is back');
+  if (scale.big.length) fails.push('mapscale: towns wider than 1/6 of their province (capitals and metropolises 1/4): ' + scale.big.slice(0, 6).join(', '));
+  if (scale.spill.length) fails.push('mapscale: town footprints spill over their province border or into the sea: ' + scale.spill.slice(0, 6).join(', '));
+  if (scale.overlap) fails.push('mapscale: ' + scale.overlap + ' pairs of towns overlap');
+  for (const [n, v] of Object.entries(scale.sample)) if (!v || v[0] > v[1] + 1e-6 || !v[2]) fails.push('mapscale: ' + n + ' town footprint ' + JSON.stringify(v) + ' (width, allowed width, inside its province)');
+  if (scale.sea.length) fails.push('mapscale: land armies drawn in the sea: ' + scale.sea.slice(0, 6).join(', '));
+  if (scale.tall.length) fails.push('mapscale: close-view army figures taller than their town is wide: ' + scale.tall.slice(0, 6).join(', '));
+  if (!calm.legShut) fails.push('calmmap: the map key is not folded on a new campaign'); if (calm.close.plateBad || calm.close.pnBad) fails.push('calmmap4: close view shows province name plates again (only capitals keep a plate; other names are plain text for your own provinces near the selection) ' + JSON.stringify(calm.close)); if (calm.seaMiss.length) fails.push('calmmap4: sea neighbours missing from the colour rule: ' + calm.seaMiss.join(' ')); if (calm.palBad.length) fails.push('calmmap4: neighbours (land or narrow sea) with look-alike colours: ' + calm.palBad.join(' ')); if (calm.coachLegend) fails.push('calmmap: tips and the map key are open together'); if (calm.coachH > 90) fails.push('calmmap: the first-minute tips are a big box again (' + calm.coachH + ' px high)');
   if (!calm.hasReal) fails.push('calmmap: the real land data (grand/color.jpg) did not load');
   if (!calm.standIn || calm.standInReal || calm.standIn[3] !== 0 || calm.standIn.slice(0, 3).some(n => n > 250) || calm.standIn[4] < 50) fails.push('calmmap: stand-in land cover puts woods in the deserts (LY, EG, SA, dry belts, DE for contrast) ' + JSON.stringify(calm.standIn));
   if (calm.hasReal && (!calm.real || !calm.realFlag || calm.real.slice(0, 3).some(n => n > 25) || calm.real[4] < 50)) fails.push('calmmap: real land cover puts woods in desert countries (LY, EG, SA; DE for contrast) ' + JSON.stringify(calm.real));
@@ -376,6 +435,29 @@ try {
     return { foe, from: GCM.P[pair[0]].n, to: GCM.P[pair[1]].n, aid: a.id, ok: !!r.ok, units: a.u.length, to_i: pair[1] }; });
   console.log('scenario', JSON.stringify(sc)); if (sc.err || !sc.ok) { fails.push('scenario: ' + JSON.stringify(sc)); throw new Error('no scenario'); }
   await shot('army-ordered');
+  // ---- armytokens guards (Army Standards, orch/concepts/ARMY-STANDARDS.md): one token per army or stack, never two markers in one province, no figures at far / middle zoom, a waving flag only on the selected army, far = dots only, odds = the auto-resolve estimate
+  const tk = await ev(() => { const out = {}; const set = d => { G3.camera.d = G3.cc.d = d; G3.moved = true; cancelAnimationFrame(G3.raf); g3Frame(performance.now()); g3Labels(true); return gtkAudit(); };
+    out.gone = ['g3FarGeo', 'g3FarCol', 'g3FarHide', 'gtkMinis', 'gtkFigures'].filter(n => typeof window[n] === 'function');
+    const me = GC.me, a = GC.armies.find(x => x.id === GV.selA), to = a.path[a.path.length - 1], foe = GC.armies.find(x => grAtWar(me, x.o) && !GCM.P[x.at].sea && !x.fl), old = foe ? foe.at : -1; if (foe) { foe.at = to; foe.path = []; } g3SyncArmies(); const d0 = G3.camera.d;
+    out.far = set(2300); out.farNum = [...G3.pl.values()].filter(e => e._v === 'block').every(e => / far/.test(e.className));
+    out.mid = set(350); { const sv = GV.selA; GV.selA = 0; out.midNoSel = set(350); GV.selA = sv; set(350); } const on = q => [...document.querySelectorAll(q)].filter(e => { for (let p = e; p && p.id !== 'g3ui'; p = p.parentNode) if (p._v === 'none') return false; return true; });
+    out.march = on('#g3ui .tk.me .ar').length; out.eta = on('#g3ui .eta').map(e => e.textContent); out.pill = on('#g3ui .tk.war .od').map(e => e.textContent);
+    out.close = set(150); out.make = on('#g3ui .tk.me .pt small').length; out.foe = !!foe;
+    // the pill's numbers against the real auto-resolve with the dice at zero (then every unit is put back)
+    const o = gtkOdds([a.id], to); if (o) { const sv = GC.armies.map(x => JSON.stringify(x.u)), sg = JSON.stringify(GC.prov[to].gar), r = grAuto(o.b, () => 0);
+      GC.armies.forEach((x, i) => { x.u.length = 0; x.u.push(...JSON.parse(sv[i])); }); const g = GC.prov[to].gar; g.length = 0; g.push(...JSON.parse(sg)); out.est = [Math.round(o.sa), Math.round(o.sd), r.sa, r.sd, o.t]; }
+    if (foe) foe.at = old; g3SyncArmies(); set(d0); return out; });
+  console.log('armytokens', JSON.stringify(tk));
+  if (tk.gone.length) fails.push('armytokens: old army drawing code is still there: ' + tk.gone.join(','));
+  for (const k of ['far', 'mid', 'close']) { if (tk[k].old) fails.push('armytokens: ' + k + ' view still has old shield badges (' + tk[k].old + ')'); if (tk[k].flags > tk[k].sel) fails.push('armytokens: ' + k + ' view flies ' + tk[k].flags + ' flags (only the selected army may fly one)'); if (tk[k].hud) fails.push('armytokens: ' + k + ' view draws ' + tk[k].hud + ' army tokens on top of the minimap, unit cards or round buttons'); if (tk[k].dup) fails.push('armytokens: ' + k + ' view draws an army twice (' + tk[k].dup + ')'); if (!tk[k].tokens) fails.push('armytokens: ' + k + ' view draws no army at all'); }
+  if (tk.far.tier !== 0 || !tk.far.dotsOn || !tk.far.dots || !tk.farNum || tk.far.figs > tk.far.sel || tk.far.rings) fails.push('armytokens: far view is not dots and numbers only ' + JSON.stringify(tk.far));
+  if (tk.mid.tier !== 1 || tk.mid.dotsOn || tk.mid.far || tk.mid.figs > tk.mid.sel) fails.push('armytokens: middle view is not tokens only ' + JSON.stringify(tk.mid));
+  if (tk.mid.perProv > 1 || tk.midNoSel.perProv > 1) fails.push('armytokens: middle view draws more than one army marker in a province (' + tk.mid.perProv + ')');
+  if (tk.midNoSel.flags || tk.midNoSel.figs) fails.push('armytokens: middle view with no army selected still draws ' + tk.midNoSel.figs + ' figures / ' + tk.midNoSel.flags + ' flags');
+  if (!tk.march || !tk.eta.some(t => /^\d+ days?$/.test(t))) fails.push('armytokens: marching army shows no arrow nose / arrival in days ' + JSON.stringify(tk.eta));
+  if (tk.close.tier !== 2 || !tk.make) fails.push('armytokens: close view shows no make-up counts'); if (!tk.close.figs) fails.push('armytokens: close view shows no on-land army figures');
+  if (tk.foe && (!tk.pill.length || !tk.pill.every(t => /^(Good odds|Even fight|Bad odds)$/.test(t)))) fails.push('armytokens: no odds pill on the enemy army in reach ' + JSON.stringify(tk.pill));
+  if (!tk.est || tk.est[0] !== tk.est[2] || tk.est[1] !== tk.est[3]) fails.push('armytokens: odds are not the auto-resolve estimate ' + JSON.stringify(tk.est));
   await ev(() => { GC.armies.filter(a => a.o !== 'IR').forEach(a => { a.path = []; }); guEndTurn(); });   // (foe armies stay put so the fight is predictable)
   for (let k = 0; k < 3; k++) { await page.waitForTimeout(2500); if (await ev(() => !!document.getElementById('gModal') || GC.ph !== 'plan')) break; await ev(() => { GC.armies.filter(a => a.o !== 'IR').forEach(a => { a.path = []; }); guEndTurn(); }); }   // a 2-turn march needs a second end-turn (realstart: no ring war to force contact)
   await page.waitForFunction(() => !!document.getElementById('gModal'), null, { timeout: 90000 }); await shot('fight-it-prompt');

@@ -60,7 +60,7 @@ function decal(m,i,x,y,s,r){TMPM.compose(TMP.set(x,groundH(x,y)+.6,y),TMPQ.setFr
 function scorch(x,y,s){if(!SCORCH)return;decal(SCORCH,decI++%320,x,y,s*2.4,Math.random()*6);}
 function crater(x,y,s){if(!CRATER)return;decal(CRATER,crI++%160,x,y,s,Math.random()*6);}
 function track(x,y,a){if(!TRACKS)return;const i=trkI++%1600;TMPM.compose(TMP.set(x,groundH(x,y)+.6,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),-(a||0)+Math.PI/2),new THREE.Vector3(4.2,1,9.5));TRACKS.setMatrixAt(i,TMPM);TRACKS.instanceMatrix.needsUpdate=true;}
-function pBudget(){const lv=(typeof QUAL!=='undefined'&&QUAL.lv)||0;return [1700,1400,1100,850,650,500][lv]||500;}
+function pBudget(){const lv=(typeof QUAL!=='undefined'&&fxLv())||0;return [1700,1400,1100,850,650,500][lv]||500;}
 // particles that would start well off-screen are skipped (smoke and exhaust from units across the map used CPU and
 // ate the particle budget meant for what the player is looking at)
 function part(o){if(!inView(o.x,o.y,.4))return;const B=pBudget(),n=PARTS.length;if(n>B){if(!o.add||n>B*1.35)return;}else if(n>B*.6&&!o.add&&Math.random()<(n-B*.6)/(B*.4))return;PARTS.push(Object.assign({vx:0,vy:0,vh:0,t:0,d:1,s:6,g:0,a:1,h:0,c:[.4,.39,.36],add:false,f:.25,rise:0},o));}
@@ -181,7 +181,7 @@ const FXH={
     if(snd&&typeof sfxAlarm==='function')sfxAlarm();else if(typeof martyrSwell==='function'){AU.swellT=0;martyrSwell(team);}}catch(_){}},
   heal(x,y,r){PINGS.push({x,y,r,t:0,d:1.2,c:0x74d08f});for(let i=0;i<40;i++){const a=rnd(0,6.28),d=rnd(0,r);part({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,h:groundH(x,y)+rnd(2,20),vh:rnd(15,40),add:true,c:[.4,1,.55],s:rnd(2,4),d:rnd(.8,1.4)});}},
   plane(sx,sy,tx,ty,team){mats();const T=G.teams[team],o=mesh(geoFor('plane',T.fac,T,'body'));o.scale.setScalar(1.2);SCN.add(o);const a=Math.atan2(ty-sy,tx-sx),L=Math.hypot(tx-sx,ty-sy);PLANES.push({o,sx,sy,a,v:L/2.6,t:0,tx,ty,dropped:false});},
-  log(team,msg,kind){if(team===ME)pushLog(msg,kind);},
+  log(team,msg,kind,x,y){if(team===ME)pushLog(msg,kind,x,y);},
   end(winner){showEnd(winner);},
   elim(team){if(team===ME&&G&&!G.over)showElim();},
   oilDry(i){const o=G.oil&&G.oil[i];if(!o)return;if(MODE==='client'){o.res=0;}if(o.owner===ME||MODE==='client')try{pushLog('An oil derrick has run dry.','w');}catch(_){}},
@@ -447,7 +447,7 @@ function wakeQ(x,z,ca,sa,w0,sp,len,a0,c,L){const N=NWAKE.n-NWAKE.NB,q=NWAKE.Q[NW
 function shipWake(e,o,dt){if(!NWAKE.m||!o||!o.visible||!(dt>0)||!e.s)return;const ud=o.userData,px=o.position.x,pz=o.position.z;
   const raw=ud.kpx==null?0:Math.min(300,Math.hypot(px-ud.kpx,pz-ud.kpz)/dt);ud.kpx=px;ud.kpz=pz;ud.ksp=(ud.ksp||0)+(raw-(ud.ksp||0))*Math.min(1,dt*3);
   const sp=ud.ksp,top=Math.max(30,e.s.spd||60),k=Math.max(0,Math.min(1,(sp/top-.08)/.55));if(k<=0){ud.kod=0;return;}
-  const a=e.va||0,ca=Math.cos(a),sa=Math.sin(a),r=e.r||14,big=r>20,lv=(typeof QUAL!=='undefined'&&QUAL.lv)||0,near=inView(px,pz,.35);
+  const a=e.va||0,ca=Math.cos(a),sa=Math.sin(a),r=e.r||14,big=r>20,lv=(typeof QUAL!=='undefined'&&fxLv())||0,near=inView(px,pz,.35);
   // bow wave: a pooled slot that follows this boat (the same one each frame)
   if(near){let B=null;for(let i=0;i<NWAKE.NB;i++){const q=NWAKE.Q[i];if(q.id===e.id&&q.fr!==NWAKE.fr){B=q;break;}}if(!B)for(let i=0;i<NWAKE.NB;i++){const q=NWAKE.Q[i];if(q.fr<NWAKE.fr-1){B=q;break;}}
     if(B){B.id=e.id;B.fr=NWAKE.fr;B.on=1;B.c=2;B.f=0;B.t=0;B.L=1e9;B.sp=0;const bl=r*(1.05+.35*k);B.x=px+ca*(r*.95-bl*.5);B.z=pz+sa*(r*.95-bl*.5);B.ca=ca;B.sa=sa;B.w0=r*(.95+.5*k);B.len=bl;B.a0=(.45+.4*k)*(.9+.1*Math.sin(G.t*9+e.id));}}

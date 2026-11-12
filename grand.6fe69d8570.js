@@ -95,7 +95,7 @@ function grGenUnits(fac,value,gen){const us=[];const ks=GR_MIX.filter(m=>grHasKi
 function grKindName(fac,k){try{return stats(fac,k).name;}catch(e){return k;}}
 
 // ---------- new campaign ----------
-function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(seed);
+function grNew(o){GR_LASTB=null;grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(seed);
   GC={v:1,ms:grMapSig(),seed,len:quick?'quick':'std',maxTurn:quick?25:60,turn:1,m0:(typeof GR_REAL==='object'&&GR_REAL.asof)?(GR_REAL.asof[0]-2026)*12+GR_REAL.asof[1]-1:10,me:o.me===undefined?'IR':o.me,nat:{},prov:[],armies:[],aid:1,war:{},log:[],q:[],qi:0,ph:'plan',over:null,res:null};
   const codes=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))];
   GM_P.slice(0,GM_LAND).forEach((r,i)=>{GC.prov.push({o:r[1],o0:r[1],gar:[],tax:1,un:15,cv:0,rq:[]});});
@@ -210,7 +210,7 @@ function grBattleAuto(b){if(!b.att.some(id=>GC.armies.some(a=>a.id===id))){b.don
 function grBattleDone(b,win,how){grSettle(b,win,how||'live');GC.qi++;grSave();return grQueue(false);}
 // who stays, who falls back, who dies. `win` is 'att' or 'def'; losers with a province to fall back to keep their survivors, the rest are lost
 function grZealArmy(a){try{return msOf(grNat(a.o).fac).rout===0;}catch(e){return false;}}
-function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{glBattle(b,win);}catch(e){console.error('glBattle',e);}try{gfBattle(b,win);}catch(e){console.error('gfBattle',e);}try{GC.mil.foe=win==='att'?b.an:b.dn;gmilBattle(b,win);}catch(e){console.error('gmilBattle',e);}   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
+function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{grLastB(b,win);}catch(e){}try{glBattle(b,win);}catch(e){console.error('glBattle',e);}try{gfBattle(b,win);}catch(e){console.error('gfBattle',e);}try{GC.mil.foe=win==='att'?b.an:b.dn;gmilBattle(b,win);}catch(e){console.error('gmilBattle',e);}   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
   b.done=1;const pn=P[b.p].n;
   const losers=win==='att'?def:att,winners=win==='att'?att:def;
   for(const a of losers){a.path=[];if(!a.u.length){grDrop(a);continue;}
@@ -337,7 +337,27 @@ function grM0(){return (typeof GC==='object'&&GC&&GC.m0|0)||0;}
 function grMonStr(turn){const m=Math.max(0,(turn|0)-1)+grM0();return GR_MON[m%12]+' '+(2026+Math.floor(m/12));}   /* A2c: month label for former 'turn N' wording */
 function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1)+grM0();return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
 /* grInfo: a tiny note next to the save (when, who, which month) so the main menu can offer "Continue" without loading the campaign code */
-function grInfo(){try{if(!GC)return;localStorage.setItem(GR_KEY+'.i',JSON.stringify({ts:Date.now(),me:GC.me||'',n:GC.me?((GCM&&GCM.nats&&GCM.nats.get(GC.me)||{}).name||GC.me):'Observer',d:grMonStr(GC.turn),over:GC.over?1:0}));}catch(e){}}   // lint-ok (save timestamp, not simulation)
+/* grWarTable (living main menu): a small sketch of the map around the player's nation - who owns each cell of a 480x270 window, run-length packed - plus the place of the last battle.
+   It rides in the save's note so the main menu can draw the war table without loading the campaign code. Display only. */
+function grWarTable(lb){try{if(!GC||!GC.me||typeof guCols!=='function'||typeof document==='undefined')return null;const idx=guCols(),P=GCM.P,me=GC.me,W=480,H=270;
+  const xs=[],ys=[];for(const p of P)if(p.land&&GC.prov[p.i]&&GC.prov[p.i].o===me){xs.push(p.x);ys.push(p.y);}const n=xs.length;if(!n)return null;xs.sort((a,b)=>a-b);ys.sort((a,b)=>a-b);
+  const lo=Math.floor(n*.1),hi=Math.ceil(n*.9)-1,x0=xs[lo],x1=xs[Math.max(lo,hi)],y0=ys[lo],y1=ys[Math.max(lo,hi)];   /* the middle 80% of your provinces: far-off islands and exclaves do not drag the view away from the homeland */
+  const cx=(x0+x1)/2,cy=(y0+y1)/2,vw=Math.min(GM_W,Math.max(340,(x1-x0+110)/.4,(y1-y0+110)/.55*16/9)),vh=vw*9/16;
+  const vx=Math.max(0,Math.min(GM_W-vw,cx-vw*.66)),vy=vh>=GM_H?(GM_H-vh)/2:Math.max(0,Math.min(GM_H-vh,cy-vh*.5));
+  const pal=new Map(),out=[];let pv=-1,run=0;const put=()=>{if(run<1)return;out.push(pv);let r=run;while(r>127){out.push((r&127)|128);r>>=7;}out.push(r);};
+  for(let j=0;j<H;j++){const y=Math.floor((vy+(j+.5)*vh/H)/GU_K);for(let i=0;i<W;i++){const x=Math.floor((vx+(i+.5)*vw/W)/GU_K);let v=0;
+    if(y>=0&&y<GU_RH&&x>=0&&x<GU_RW){const p=P[idx[y*GU_RW+x]];if(p&&!p.sea){const o=GC.prov[p.i]?GC.prov[p.i].o:'';if(o===me)v=1;else{v=pal.get(o);if(!v){v=2+pal.size%250;pal.set(o,v);}}}}
+    if(v===pv)run++;else{put();pv=v;run=1;}}}put();
+  let d='';for(let i=0;i<out.length;i+=8192)d+=String.fromCharCode.apply(null,out.slice(i,i+8192));
+  const sc=lb&&P[lb.p]?lb:null;
+  const fx=p=>+((p.x-vx)/vw).toFixed(4),fy=p=>+((p.y-vy)/vh).toFixed(4);let b=null;if(sc&&P[sc.p]){const q=P[sc.p],X=fx(q),Y=fy(q);if(X>.03&&X<.97&&Y>.05&&Y<.95)b=[X,Y,q.n,grMonStr(sc.t),sc.w?1:0];}
+  return {w:W,h:H,d:btoa(d),c:(typeof grNatRgb==='function'?grNatRgb(me):[200,170,80]).map(v=>Math.round(v)),b};}catch(e){return null;}}
+/* grLastB: where and when YOUR nation last fought, and whether it won. Display only: it lives in a module variable and in the save's small note (GR_KEY+'.i'),
+   never in GC, so it is not part of the campaign state, the saves' simulation data or the multiplayer checkpoint. */
+let GR_LASTB=null;
+function grLastB(b,win){if(!GC||!GC.me||!b||(b.an!==GC.me&&b.dn!==GC.me))return;GR_LASTB={p:b.p,t:GC.turn,w:((win==='att')===(b.an===GC.me))?1:0,me:GC.me,s:GC.seed|0};}
+function grLastBGet(){let lb=GR_LASTB;const ok=o=>o&&o.me===GC.me&&(o.s|0)===(GC.seed|0)&&o.t<=GC.turn;if(!ok(lb)){lb=null;try{const o=JSON.parse(localStorage.getItem(GR_KEY+'.i'));if(o&&ok(o.lb))lb=o.lb;}catch(e){}}return lb;}
+function grInfo(){try{if(!GC)return;const lb=grLastBGet(),wt=grWarTable(lb),o={ts:Date.now(),me:GC.me||'',n:GC.me?((GCM&&GCM.nats&&GCM.nats.get(GC.me)||{}).name||GC.me):'Observer',d:grMonStr(GC.turn),over:GC.over?1:0};if(lb){o.lb=lb;o.lbn=(GCM.P[lb.p]||{}).n||'';o.lbd=grMonStr(lb.t);}if(wt)o.wt=wt;localStorage.setItem(GR_KEY+'.i',JSON.stringify(o));}catch(e){}}   // lint-ok (save timestamp, not simulation)
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));GR_AUTO.t=Date.now();grInfo();}catch(e){}}   // lint-ok (save timestamp, not simulation)
 /* rolling safety copies before every Fight-it battle (queue "Never lose progress"): newest = GR_KEY+'.b1', then .b2, .b3; grLoad falls back to them if the main save is damaged */
 function grSnap(){try{if(!GC||(typeof GNT!=='undefined'&&GNT.on&&!GNT.host))return;const js=JSON.stringify(GC),K=GR_KEY+'.b';
@@ -1449,7 +1469,18 @@ function guRedraw(){if(GV.g3){g3Refresh();return;}if(!GV.raf)GV.raf=requestAnima
 // ---------- screen ----------
 function grandScreenShow(v){G3.last=0;const e=document.getElementById('grandScreen');if(e)e.style.display=v?'flex':'none';if(v)guResize();}
 function guResize(){const cv=GV.cv,w=document.getElementById('gMapWrap');if(!cv||!w)return;const r=w.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);GV.w=r.width;GV.h=r.height;if(GV.g3){g3Resize();return;}cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);cv.style.width=r.width+'px';cv.style.height=r.height+'px';GV.ctx=cv.getContext('2d');GV.ctx.setTransform(dpr,0,0,dpr,0,0);guClamp();guRedraw();}
-function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElementById('grandScreen');if(e)e.remove();
+/* fixes1 (2026-11-11): the first map of a session was drawn before the real land data (grand/elev.png + color.jpg, ~6 MB) had arrived and then
+   stayed on the hand-shaped stand-in terrain for the whole campaign: chalk-white cliffs along Arabia's Red Sea coast, no Alps, wrong rivers of palms.
+   The campaign menu now starts the download (guRealPre) and the map waits for it behind a short "Loading the world map" card (at most 10 s, then
+   the stand-in as before; a failed download does not wait). Automated browsers open the map at once unless window.__grandWait is set, because the
+   tests call grandOpen() and use the map in the same step. */
+function guRealOn(){return typeof g3LoadReal==='function'&&!(navigator.webdriver&&!window.__grandWait);}
+function guRealPre(){if(guRealOn())try{g3LoadReal();}catch(e){}}
+function guRealWait(){if(!guRealOn())return false;try{g3LoadReal();}catch(e){return false;}
+  if(G3.real||G3.realFail||GV.rw===2)return false;if(GV.rw===1)return true;GV.rw=1;const t0=performance.now();
+  const c=guEl('div','position:fixed;inset:0;z-index:8001;background:#0b141d;color:#e8e4d8;display:flex;align-items:center;justify-content:center;font-size:17px;letter-spacing:.04em');c.id='gRealWait';c.textContent='Loading the world map…';document.body.appendChild(c);
+  const tick=()=>{if(!(G3.real||G3.realFail)&&performance.now()-t0<10000){setTimeout(tick,100);return;}GV.rw=(G3.real||G3.realFail)?0:2;c.remove();if(GC)grandOpen();};setTimeout(tick,100);return true;}
+function grandOpen(){grMap();if(!GC)return;if(guRealWait())return;campClose();let e=document.getElementById('grandScreen');if(e)e.remove();
   e=guEl('div','position:fixed;inset:0;z-index:8000;background:#0b141d;color:#e8e4d8;display:flex;flex-direction:column;font-size:15px;user-select:none;');e.id='grandScreen';
   e.innerHTML=`<div id="gTop" style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#101c28;border-bottom:1px solid #2c4358;flex-wrap:wrap"></div>
   <div style="flex:1;display:flex;min-height:0"><div id="gMapWrap" style="flex:1;position:relative;min-width:0"><canvas id="gMap" style="display:block"></canvas><div id="gTip" style="position:absolute;pointer-events:none;display:none;background:rgba(10,16,22,.94);border:1px solid #4a6580;border-radius:6px;padding:6px 9px;font-size:14px;line-height:1.4;max-width:260px;z-index:3"></div><div id="gHint" style="position:absolute;left:10px;bottom:8px;font-size:13px;opacity:.75;pointer-events:none;text-shadow:0 1px 2px #000"></div></div>
@@ -1584,7 +1615,7 @@ function guBindArmies(s,pi){s.querySelectorAll('.gArmy').forEach(e=>{e.onclick=(
 function guLog(){const l=document.getElementById('gLog');if(!l||!GC)return;const rows=GC.log.slice(-60).reverse().filter((r,i)=>i<45);l.innerHTML='<div style="font-weight:bold;margin-bottom:3px">War diary</div>'+rows.map(r=>'<div style="'+(r[2]&&r[2]===GC.me?'color:#ffe9a6':'opacity:.82')+'"><span style="opacity:.55">'+grDateStr(r[0],0)+'</span> '+r[1]+'</div>').join('');}
 function guConfirm(title,body,yes,no){guModal('<h2 style="margin:0 0 8px;font-size:21px">'+title+'</h2><div style="line-height:1.5;margin-bottom:12px">'+body+'</div>',[['Yes',yes,1],['No',no||null,0]]);}
 function guModal(html,btns){const old=document.getElementById('gModal');if(old)old.remove();const m=guEl('div','position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;');m.id='gModal';const c=guEl('div','background:#142231;border:1px solid #4a6580;border-radius:10px;padding:16px 20px;max-width:min(560px,92vw);color:#e8e4d8;font-size:16px;');c.innerHTML=html;
-  const row=guEl('div','display:flex;gap:8px;flex-wrap:wrap');for(const [t,fn,pri] of btns){const b=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid '+(pri?'#7aa84f':'#6b7a8a')+';background:'+(pri?'#4f6b32':'transparent')+';color:#fff;cursor:pointer;font-size:16px',t);b.type='button';b.onclick=()=>{m.remove();if(fn)fn();};row.appendChild(b);}c.appendChild(row);m.appendChild(c);document.body.appendChild(m);return m;}
+  const row=guEl('div','display:flex;gap:8px;flex-wrap:wrap');for(const [t,fn,pri] of btns){const b=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid '+(pri?'#7aa84f':'#6b7a8a')+';background:'+(pri?'#4f6b32':'transparent')+';color:#fff;cursor:pointer;font-size:16px',t);b.type='button';if(!fn)b.dataset.esc='1';b.onclick=()=>{m.remove();if(fn)fn();};row.appendChild(b);}c.appendChild(row);m.appendChild(c);document.body.appendChild(m);return m;}
 
 // ---------- battle prompt: Fight it / Auto-resolve / Withdraw ----------
 function grBattlePrompt(b){grandScreenShow(true);guCentre(b.p,2.2);GV.sel=b.p;GV.selA=0;grandMapRefresh();
@@ -1606,7 +1637,7 @@ function guOver(){if(document.getElementById('gOver'))return;const win=GC.over==
 function grandClose(){g3Dispose();GV.g3=false;const e=document.getElementById('grandScreen');if(e)e.remove();const m=document.getElementById('gModal');if(m)m.remove();GV.cv=null;GV.img=null;try{$('menu').hidden=false;}catch(e){}}
 
 // ---------- menu: Grand campaign (Continue / New) ----------
-function grandMenu(){grMap();const saved=(()=>{try{return JSON.parse(localStorage.getItem(GR_KEY));}catch(e){return null;}})(),root=campEl('div');
+function grandMenu(){grMap();guRealPre();const saved=(()=>{try{return JSON.parse(localStorage.getItem(GR_KEY));}catch(e){return null;}})(),root=campEl('div');
   root.appendChild(campEl('h1','margin:6px 0 4px;font-size:30px;letter-spacing:.04em;','GRAND CAMPAIGN'));
   root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;line-height:1.5','Run a nation on the world map. Time runs like EU4: play, pause at any moment and give orders. When armies meet you can fight the battle yourself, with exactly the units you brought, or let the generals auto-resolve it.'));
   const usable=saved&&!saved.over&&grSaveOk(saved);
@@ -1645,7 +1676,7 @@ function gmIds(){return GV.selM&&GV.selM.size>1?[...GV.selM].filter(gmMine):(GV.
 function gmSet(ids){const L=[...new Set(ids)].filter(gmMine);GV.selM=L.length>1?new Set(L):new Set();GV.selA=L[0]||0;if(L[0])GV.sel=gmMine(L[0]).at;gmPaint();guSide();guRedraw();}
 function gmPts(){const o=[];if(GV.g3&&typeof G3!=='undefined'&&G3.hit)for(const h of G3.hit)o.push({aid:h.aid,x:h.x,y:h.y});else for(const c of GV.chips||[])o.push({aid:c.aid,x:c.x+c.w/2,y:c.y+c.h/2});return o;}
 function gmPaint(){try{if(!document.getElementById('gmCss')){const s=document.createElement('style');s.id='gmCss';s.textContent='#gMapWrap .p.gmsel{outline:2px solid #ffe27a;outline-offset:1px;border-radius:3px}#gmCards{position:absolute;left:8px;top:44px;max-height:62%;overflow:auto;display:flex;flex-direction:column;gap:3px;z-index:40;font-size:13px}#gmCards .c{background:rgba(10,16,22,.9);border:1px solid #4a6580;border-left:4px solid #ffe27a;border-radius:5px;padding:3px 8px;cursor:pointer;min-width:170px}#gmCards .c:hover{background:#18293a}#gmCards button{padding:3px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;font-size:12px;margin-right:4px}';document.head.appendChild(s);}
-  const ids=new Set(gmIds());if(typeof G3!=='undefined'&&G3.pl)for(const [id,el] of G3.pl)el.classList.toggle('gmsel',ids.size>1&&(el._ids||[id]).some(x=>ids.has(x)));   /* gclarity: one shield per stack */
+  const ids=new Set(gmIds());if(typeof G3!=='undefined'&&G3.pl)for(const [id,el] of G3.pl)el.classList.toggle('gmsel',ids.size>1&&(el._ids||[id]).some(x=>ids.has(x)));   /* one token per stack (13e3-gtokens.js) */
   const w=document.getElementById('gMapWrap');if(!w)return;gmOutliner(w);let c=document.getElementById('gmCards');if(!c){c=document.createElement('div');c.id='gmCards';w.appendChild(c);}
   if(ids.size<2){c.style.display='none';return;}c.style.display='flex';c.innerHTML='';
   const hd=document.createElement('div');hd.innerHTML='<b>'+ids.size+' armies</b> <button data-k="m">Merge</button><button data-k="s">Split</button>';hd.style.cssText='background:rgba(10,16,22,.9);padding:3px 6px;border-radius:5px';c.appendChild(hd);
@@ -1700,7 +1731,7 @@ const GT_RIV=[[1473,177,1469,173,1465,169,1468,165,1473,165,1478,163,1482,166,14
    Data: coastlines/lakes/rivers = Natural Earth (public domain) baked into 13d-grandterrain.js by orch/grand3d-gen.mjs.
    Layers: relief + painted ground (biome blur, hillshade, snow) | overlay texture (soft owner tint + subtle borders, map modes) |
    sea shader (depth colour, ripples, foam, sea-zone lines) | instanced forests/palms/scrub | instanced settlements |
-   army figures (one soldier + national flag per army, ship for armies at sea) | move arrows | DOM banners/plates/cards/minimap. */
+   army tokens (Army Standards, 13e3-gtokens.js) + small on-land figures / ships in the close view | move arrows | DOM banners/plates/cards/minimap. */
 const G3={keys:new Set(),F:null,R:null,sc:null,cam:null,cv:null,t0:0,raf:0,mode:'political',news:null,dirty:true,hit:[],mini:null,pos:new Map(),hot:new Map(),camera:{x:1200,z:600,d:1900,yaw:0,pitch:.86},cc:null};
 const G3_MODES=[['political','Political'],['terrain','Terrain'],['trade','Trade & resources'],['supply','Supply'],['unrest','Unrest'],['culture','Culture / regions'],['alliances','Alliances & wars'],['development','Development']];
 const G3_BIOME={d:[206,180,126],m:[126,116,102],f:[116,152,78],u:[150,146,130],j:[56,116,62],s:[214,222,230],c:[158,172,116],r:[122,158,96]};
@@ -1719,11 +1750,30 @@ function g3Idx(){const s=guCols();if(GU_RW===GT_W)return s;if(G3.idx2)return G3.
   const o=new Uint16Array(GT_W*GT_H);for(let y=0;y<GT_H;y++)for(let x=0;x<GT_W;x++){let b=s[y*f*GU_RW+x*f];for(let dy=0;dy<f;dy++)for(let dx=0;dx<f;dx++){const v=s[(y*f+dy)*GU_RW+x*f+dx];const bs=b>=GM_LAND,vs=v>=GM_LAND;if((bs&&!vs)||(bs===vs&&n[v]<n[b]))b=v;}o[y*GT_W+x]=b;}
   return G3.idx2=o;}
 function g3PArea(){if(G3.parea)return G3.parea;const s=guCols(),a=new Float32Array(GM_P.length);for(let k=0;k<s.length;k++)a[s[k]]++;for(let i=0;i<a.length;i++)a[i]=Math.max(1,a[i]);return G3.parea=a;}
-function g3Fields(){if(G3.F)return G3.F;grMap();const W=GT_W,H=GT_H,idx=g3Idx(),P=GCM.P;
-  const b=atob(GT_MASK),land=new Float32Array(W*H);{let p=0,i=0,v=0;while(i<b.length){let n=0,sh=0,c;do{c=b.charCodeAt(i++);n|=(c&127)<<sh;sh+=7;}while(c&128);if(v)land.fill(1,p,p+n);p+=n;v^=1;}}
-  for(const q of P)if(q.land){const cx=Math.round(q.x/2),cy=Math.round(q.y/2);let any=false;for(let dy=-2;dy<=2&&!any;dy++)for(let dx=-2;dx<=2;dx++)if(land[(cy+dy)*W+cx+dx]){any=true;break;}
-    if(!any)for(let dy=-6;dy<=6;dy++)for(let dx=-6;dx<=6;dx++)if(dx*dx+dy*dy<=30&&cx+dx>=0&&cx+dx<W&&cy+dy>=0&&cy+dy<H)land[(cy+dy)*W+cx+dx]=1;}   // every land province keeps at least a small island under its town
-  const Ls=g3Blur(land,W,H,3,3),Lw=g3Blur(Ls,W,H,14,2);
+// mapcoast: the true coast at the full province-raster resolution (2400x1200, ~16 km per pixel). Land = province-raster land, trimmed where the real
+// elevation says sea right next to open water (the raster is about a pixel fat), minus the big lakes of the coarse mask (water cells no sea province
+// touches). Tiny provinces keep their raster shape and every land province keeps a small island under its town. Without grand/elev.png: raster + lakes only.
+const G3_SHORE=.22;   // land where the smoothed fine mask (F.fs/255, green of uSea) is above this - a single 16 km pixel stays a visible dot
+function g3Fine(gt){const s=guCols(),FW=GU_RW,FH=(s.length/FW)|0,N=FW*FH,W=GT_W,H=GT_H,f=Math.round(FW/W),P=GCM.P,fm=new Uint8Array(N),R=G3.real,E=R&&R.EW===FW&&R.EH===FH?R.E:null;
+  for(let k=0;k<N;k++)fm[k]=s[k]<GM_LAND?1:0;
+  if(E){const cut=[];for(let y=0;y<FH;y++)for(let x=0;x<FW;x++){const k=y*FW+x;if(!fm[k]||E[k]>0)continue;const r=E[k]<-12?3:1;let hit=false;
+      for(let dy=-r;dy<=r&&!hit;dy++){const yy=y+dy;if(yy<0||yy>=FH)continue;for(let dx=-r;dx<=r;dx++){const xx=x+dx;if(xx>=0&&xx<FW&&s[yy*FW+xx]>=GM_LAND){hit=true;break;}}}
+      if(hit)cut.push(k);}
+    const cnt=new Int32Array(GM_P.length);for(const k of cut)fm[k]=0;for(let k=0;k<N;k++)cnt[s[k]]+=fm[k];for(const k of cut)if(cnt[s[k]]<10)fm[k]=1;}   // a province trimmed to almost nothing keeps its raster shape
+  {const oc=new Uint8Array(W*H),st=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=y*W+x;if(gt[c])continue;let sea=false;for(let dy=0;dy<f&&!sea;dy++)for(let dx=0;dx<f;dx++)if(s[(y*f+dy)*FW+x*f+dx]>=GM_LAND){sea=true;break;}if(sea){oc[c]=1;st.push(c);}}
+    while(st.length){const c=st.pop(),x=c%W;if(x>0&&!gt[c-1]&&!oc[c-1]){oc[c-1]=1;st.push(c-1);}if(x<W-1&&!gt[c+1]&&!oc[c+1]){oc[c+1]=1;st.push(c+1);}if(c>=W&&!gt[c-W]&&!oc[c-W]){oc[c-W]=1;st.push(c-W);}if(c<W*H-W&&!gt[c+W]&&!oc[c+W]){oc[c+W]=1;st.push(c+W);}}
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=y*W+x;if(gt[c]||oc[c])continue;for(let dy=0;dy<f;dy++)for(let dx=0;dx<f;dx++)fm[(y*f+dy)*FW+x*f+dx]=0;}}   // lakes
+  for(const q of P)if(q.land){const cx=Math.round(q.x),cy=Math.round(q.y);let any=false;for(let dy=-2;dy<=2&&!any;dy++)for(let dx=-2;dx<=2;dx++){const x=cx+dx,y=cy+dy;if(x>=0&&x<FW&&y>=0&&y<FH&&fm[y*FW+x]){any=true;break;}}
+    if(!any)for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const x=cx+dx,y=cy+dy;if(dx*dx+dy*dy<=14&&x>=0&&x<FW&&y>=0&&y<FH)fm[y*FW+x]=1;}}   // every land province keeps at least a small island under its town
+  const t=new Uint8Array(N),fs=new Uint8Array(N);for(let y=0;y<FH;y++){const o=y*FW;for(let x=0;x<FW;x++)t[o+x]=fm[o+(x?x-1:0)]+2*fm[o+x]+fm[o+(x<FW-1?x+1:x)];}
+  for(let y=0;y<FH;y++){const o=y*FW,u=y?o-FW:o,d=y<FH-1?o+FW:o;for(let x=0;x<FW;x++)fs[o+x]=(t[u+x]+2*t[o+x]+t[d+x])*255>>4;}   // light anti-aliasing: one 3x3 tent
+  const land=new Float32Array(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++){let a=0;for(let dy=0;dy<f;dy++)for(let dx=0;dx<f;dx++)a+=fm[(y*f+dy)*FW+x*f+dx];land[y*W+x]=a/(f*f);}
+  return {fm,fs,FW,FH,land};}
+function g3FineLand(x,z){const F=G3.F;if(!F||!F.fs)return false;const X=Math.max(0,Math.min(F.FW-1,Math.floor(x))),Z=Math.max(0,Math.min(F.FH-1,Math.floor(z)));return F.fs[Z*F.FW+X]>=G3_SHORE*255;}   // is this map point land on the drawn coast?
+function g3Fields(){if(G3.F)return G3.F;const tF0=performance.now();grMap();const W=GT_W,H=GT_H,idx=g3Idx(),P=GCM.P;
+  const b=atob(GT_MASK),gt=new Uint8Array(W*H);{let p=0,i=0,v=0;while(i<b.length){let n=0,sh=0,c;do{c=b.charCodeAt(i++);n|=(c&127)<<sh;sh+=7;}while(c&128);if(v)gt.fill(1,p,p+n);p+=n;v^=1;}}
+  const FN=g3Fine(gt),land=FN.land,Lb=g3Blur(land,W,H,1,1),Ls=new Float32Array(W*H);for(let k=0;k<W*H;k++)Ls[k]=Math.max(land[k],Lb[k]);   // mapcoast: the coarse fields follow the fine coast (was a +-150 km blur that melted Italy and the Aegean)
+  const Lw=g3Blur(Ls,W,H,14,2);
   const mw0=new Float32Array(W*H),sn0=new Float32Array(W*H),cr=new Float32Array(W*H),cg=new Float32Array(W*H),cb=new Float32Array(W*H);
   for(let k=0;k<W*H;k++){const q=P[idx[k]],t=q.t;if(t==='m')mw0[k]=1;else if(t==='s')sn0[k]=1;const c=G3_BIOME[t]||G3_BIOME.d;cr[k]=c[0];cg[k]=c[1];cb[k]=c[2];}
   const mw=g3Blur(mw0,W,H,9,2),sw=g3Blur(sn0,W,H,8,2),R=g3Blur(cr,W,H,7,2),Gc=g3Blur(cg,W,H,7,2),B=g3Blur(cb,W,H,7,2);
@@ -1731,7 +1781,7 @@ function g3Fields(){if(G3.F)return G3.F;grMap();const W=GT_W,H=GT_H,idx=g3Idx(),
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ls=Ls[k],coast=g3Smooth(.4,.8,ls),n=g3Fbm(x*.02,y*.02,4);
     const rg=1-Math.abs(2*g3Fbm(x*.04+7,y*.04,4)-1);
     const landH=coast*(1.2+n*5.5)+mw[k]*coast*(6+rg*rg*58)+sw[k]*coast*n*6;
-    const sea=-.8-9*Math.pow(1-Lw[k],2);Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);}
+    const sea=-.8-9*Math.pow(1-Lw[k],2);Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);if(ls>=.5&&Hh[k]<.45)Hh[k]=.45;}
   // painted ground (RGBA bytes): biome blur + noise + hillshade + snow/rock by height + beaches + rivers
   const px=new Uint8ClampedArray(W*H*4);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,h=Hh[k];
@@ -1749,9 +1799,9 @@ function g3Fields(){if(G3.F)return G3.F;grMap();const W=GT_W,H=GT_H,idx=g3Idx(),
   const dw=g3Blur(dd0,W,H,6,2),vw=g3Blur(vg0,W,H,6,2),bw=new Uint8Array(W*H*4);
   for(let k=0;k<W*H;k++){const h=Hh[k],coast=g3Smooth(.4,.8,Ls[k]),rock=Math.max(mw[k]*coast*.55,g3Smooth(24,40,h)),snow=Math.max(sw[k]>.3?g3Smooth(.3,.6,sw[k]):0,g3Smooth(46,60,h)),beach=g3Smooth(.5,.58,Ls[k])*(1-g3Smooth(.62,.8,Ls[k]));
     const o=k*4;bw[o]=Math.min(255,rock*255);bw[o+1]=Math.min(255,snow*255);bw[o+2]=Math.min(255,Math.max(dw[k],beach)*255);bw[o+3]=Math.min(255,vw[k]*255);}
-  G3.F={W,H,idx,land,Ls,Lw,mw,Hh,px,bw};
+  G3.F={W,H,idx,land,Ls,Lw,mw,Hh,px,bw,fm:FN.fm,fs:FN.fs,FW:FN.FW,FH:FN.FH,cd:g3CoastDist(FN.fm,FN.FW,FN.FH)};
   if(G3.real){try{const t0=performance.now();g3RealFields(G3.F);G3.tReal=Math.round(performance.now()-t0);}catch(e){console.error('real terrain failed, procedural fallback',e);G3.F=null;G3.real=null;G3.realFail=1;return g3Fields();}}
-  return G3.F;}
+  G3.tFields=Math.round(performance.now()-tF0);return G3.F;}
 function g3HeightAt(x,z){const F=G3.F;if(!F)return 0;const fx=Math.max(0,Math.min(F.W-1.001,x/2)),fy=Math.max(0,Math.min(F.H-1.001,z/2)),x0=fx|0,y0=fy|0,tx=fx-x0,ty=fy-y0,H=F.Hh,W=F.W;
   return (H[y0*W+x0]*(1-tx)+H[y0*W+x0+1]*tx)*(1-ty)+(H[(y0+1)*W+x0]*(1-tx)+H[(y0+1)*W+x0+1]*tx)*ty;}
 // ---- overlay texture: soft owner tint + subtle borders (political), or the data of the chosen map mode
@@ -1777,12 +1827,14 @@ function g3PaintOverlay(){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls;if(
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,i=idx[k],p=P[i],o=k*4;let r=0,g=0,b=0,a=0;
     const R=x+1<W?idx[k+1]:i,D=y+1<H?idx[k+W]:i;
     if(p.sea){a=0;}
-    else if(Ls[k]>.5){const c=col[i],ed=g3Smooth(.5,.64,Ls[k]);let t=c[3];
+    else{const c=col[i],ed=1;let t=c[3];
       if(pol)t=.24+Math.min(.42,glow[k]*1.7);
       if(G3.mode==='culture'&&GC.prov[i].o!==GC.prov[i].o0&&((x+y)&7)<3)t*=.3;
       r=c[0];g=c[1];b=c[2];a=t*255*ed;
       }
     d[o]=r;d[o+1]=g;d[o+2]=b;d[o+3]=a;}
+  for(let it=0;it<2;it++){const add=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x;if(d[k*4+3])continue;const n=d[k*4-1]?k-1:d[k*4+7]?k+1:d[(k-W)*4+3]?k-W:d[(k+W)*4+3]?k+W:-1;if(n>=0)add.push(k,n);}
+    for(let q=0;q<add.length;q+=2){const o=add[q]*4,n=add[q+1]*4;d[o]=d[n];d[o+1]=d[n+1];d[o+2]=d[n+2];d[o+3]=d[n+3];}}   // mapcoast: owner colour runs out two cells past the coast so the per-pixel shoreline (terrain shader) cuts it crisp - never any colour on water
   if(G3.lines)g3LineColors();
   return d;}
 function g3IdxPixels(){const F=G3.F,n=F.W*F.H,d=new Uint8Array(n*4);for(let k=0;k<n;k++){const i=F.idx[k];d[k*4]=i&255;d[k*4+1]=i>>8;d[k*4+3]=255;}return d;}
@@ -1808,7 +1860,6 @@ const G3_GEO=()=>{if(G3.geo)return G3.geo;const cyl=(a,b,h,s)=>new THREE.Cylinde
   A.tower=g3Merge([[box(),g3M(0,1.2,0,.7,2.4,.7),grey],[box(),g3M(0,2.6,0,.5,.4,.5),[.55,.58,.64]],[cyl(.025,.025,1.2,4),g3M(0,3.4,0),[.3,.3,.3]]]);
   A.mosque=g3Merge([[box(),g3M(0,.3,0,1.3,.6,1.3),plaster],[new THREE.SphereGeometry(.6,10,6,0,Math.PI*2,0,Math.PI/2),g3M(0,.6,0),teal],[cyl(.07,.1,2.4,6),g3M(.75,1.2,.75),plaster],[cyl(.07,.1,2.4,6),g3M(-.75,1.2,-.75),plaster],[cone(.14,.5,6),g3M(.75,2.65,.75),teal],[cone(.14,.5,6),g3M(-.75,2.65,-.75),teal]]);
   A.spire=g3Merge([[box(),g3M(0,.3,0,.8,.6,1.4),wall],[g3Prism(),g3M(0,.86,.1,.8,.5,1.1),roof],[box(),g3M(0,1.1,-.6,.5,1.7,.5),wall],[cone(.42,1.4,4),g3M(0,2.65,-.6),roof]]);
-  A.disc=g3Merge([[cyl(1,1,.14,14),g3M(0,.07,0),[.52,.47,.38]]]);
   A.wall=g3Merge([[new THREE.CylinderGeometry(1,1,.9,28,1,true),g3M(0,.45,0),[.7,.64,.52]],[new THREE.CylinderGeometry(1,1,.12,28,1,true),g3M(0,.95,0),[.5,.44,.36]]]);
   {const st=[.62,.63,.66],dk=[.2,.2,.22],rd=[.8,.2,.15],lg=[];for(const [sx,sz] of [[1,1],[1,-1],[-1,1],[-1,-1]])lg.push([box(),g3M(sx*.42,2.4,sz*.42,.1,4.8,.1,0,-sz*.085,sx*.085),st]);
   const br=[];for(const y of [1,2,3,4]){const w=.9-y*.15;for(const q of [-1,1]){br.push([box(),g3M(0,y,q*w*.5,w,.07,.07),st],[box(),g3M(q*w*.5,y,0,.07,.07,w),st]);}}
@@ -1818,75 +1869,94 @@ const G3_GEO=()=>{if(G3.geo)return G3.geo;const cyl=(a,b,h,s)=>new THREE.Cylinde
   A.spoil=g3Merge([[cone(1.2,1.6,7),g3M(0,.8,0),[.34,.32,.3]]]);
   A.pier=g3Merge([[box(),g3M(0,.15,0,1,.3,.14),[.45,.38,.3]],[box(),g3M(.3,.7,.4,.12,1.4,.12),[.8,.3,.2]],[box(),g3M(.3,1.35,.2,.06,.06,.5),[.8,.3,.2]]]);
   return G3.geo=A;};
-function g3Land(x,z,rad){let best=null;for(let r=0;r<=rad;r+=3)for(let a=0;a<(r?12:1);a++){const t=a/12*6.283+r*.7,X=x+Math.cos(t)*r,Z=z+Math.sin(t)*r;if(g3HeightAt(X,Z)>1.3&&G3.F.Ls[Math.round(Z/2)*G3.F.W+Math.round(X/2)]>.66)return [X,Z];}return [x,z];}
+/* mapscale (Abdullah 2026-11-11 "Visually it looks off" — close zoom looked like a toy board): towns are small tight clusters INSIDE their province.
+   One rule for every town: footprint radius R <= province width * G3_TOWN_W (width = sqrt of its area in map units) and <= G3_TOWN_R map units, by size class
+   [capital, megacity, main town, village]; it shrinks further until the whole footprint is on land inside its own province and touches no other town. */
+const G3_TOWN_W=[1/8,1/9,1/12,1/16],G3_TOWN_R=[3.6,3.2,2.4,1.6],G3_TOWN_MIN=.3,G3_TOWN_MID=2.2;   /* G3_TOWN_MID: the core cluster is drawn this much bigger in the middle view so towns stay findable */
+function g3ProvAt(x,z){return x<0||z<0||x>=GM_W||z>=GM_H?-1:guCols()[Math.min(GU_RH-1,Math.round(z/GU_K))*GU_RW+Math.min(GU_RW-1,Math.round(x/GU_K))];}
+function g3OnLand(x,z){const F=G3.F;return g3HeightAt(x,z)>.5&&F.Ls[Math.max(0,Math.min(F.H-1,Math.round(z/2)))*F.W+Math.max(0,Math.min(F.W-1,Math.round(x/2)))]>.4;}
+function g3Fits(x,z,r,pi){if(!g3OnLand(x,z)||g3ProvAt(x,z)!==pi)return false;if(r>0)for(let a=0;a<8;a++){const X=x+Math.cos(a*.7854)*r,Z=z+Math.sin(a*.7854)*r;if(!g3OnLand(X,Z)||g3ProvAt(X,Z)!==pi)return false;}return true;}
+function g3Spot(x,z,rad,pi,clear){const st=Math.max(.5,rad/24);for(const c of [clear,clear*.5,0])for(let r=0;r<=rad;r+=st){const na=r?Math.max(12,Math.ceil(r*6.283/st)):1;for(let a=0;a<na;a++){const t=a/na*6.283+r*.7,X=x+Math.cos(t)*r,Z=z+Math.sin(t)*r;if(g3Fits(X,Z,c,pi))return [X,Z];}}return [x,z];}   /* nearest spot inside the province with clear land around it */
 const G3_MEGA=new Set(['Tehran','Tel Aviv','Riyadh','Dubai','Cairo','Istanbul','Moscow','Beijing','Shanghai','Tokyo','Seoul','New York','London','Paris','Delhi','Mumbai','Karachi','Baghdad','Hong Kong','Singapore','Sao Paulo','Mexico City','Lagos']);
 const G3_STYLE={ME:'flat',AF:'flat',SA:'flat'};
-function g3Towns(){if(G3.towns)return G3.towns;const L=[],ar=g3PArea();
-  for(const p of GCM.P){if(!p.land)continue;const reg=(GCM.nats.get(p.o)||{}).reg,flat=G3_STYLE[reg]==='flat',sc=Math.max(.3,Math.min(1,Math.sqrt(ar[p.i])/28)),base=g3Land(p.x,p.y,Math.round(50*sc));   // realmap: towns scale with the real province size
-    for(let t=0;t<p.tw;t++){let X=base[0],Z=base[1];if(t){const a=g3Hash(p.i,t)*6.283,r=(15+g3Hash(t,p.i)*14)*sc,q=g3Land(base[0]+Math.cos(a)*r,base[1]+Math.sin(a)*r,10);X=q[0];Z=q[1];}
-      const cap=p.cap&&t===0;L.push({pi:p.i,x:X,z:Z,cap,n:Math.max(3,Math.round((cap?24:t===0?9:5)*Math.max(.5,sc))),sc,mega:G3_MEGA.has(p.n),flat,east:reg==='EA'||reg==='SEA',t});}}
-  return G3.towns=L;}
-function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],row:[],court:[],flat:[],tower:[],mosque:[],spire:[],disc:[],wall:[],derrick:[],field:[],spoil:[],pier:[]};
+function g3LandCell(p){if(!G3.landCell){const C=guCols(),M=G3.landCell=new Map();for(let k=0;k<C.length;k++){const q=GCM.P[C[k]];if(!q||!q.land)continue;const x=(k%GU_RW)*GU_K,z=((k/GU_RW)|0)*GU_K;if(!g3OnLand(x,z))continue;const d=(x-q.x)*(x-q.x)+(z-q.y)*(z-q.y),b=M.get(q.i);if(!b||d<b[2])M.set(q.i,[x,z,d]);}}return G3.landCell.get(p.i)||null;}   /* the piece of drawn land inside a province that is nearest to its centre (one pass over the province raster, dropped after the towns are placed) */
+function g3Towns(){if(G3.towns)return G3.towns;const L=[],ar=g3PArea(),main=new Map();
+  for(const p of GCM.P){if(!p.land)continue;const reg=(GCM.nats.get(p.o)||{}).reg,flat=G3_STYLE[reg]==='flat',W=Math.sqrt(ar[p.i]),sc=Math.max(.3,Math.min(1,W/28)),mega=G3_MEGA.has(p.n);   // sc: house count and forest clearing follow the real province size
+    const want=c=>Math.max(G3_TOWN_MIN,Math.min(W*G3_TOWN_W[c],G3_TOWN_R[c])),c0=p.cap?0:mega?1:2,mine=[];let base=g3Spot(p.x,p.y,W*.7,p.i,want(c0));if(!g3Fits(base[0],base[1],0,p.i)){const c=g3LandCell(p);if(c)base=g3Spot(c[0],c[1],W*.4,p.i,want(c0));}   // long thin provinces: start from their nearest piece of land
+    for(let t=0;t<p.tw;t++){const c=t?3:c0;let X=base[0],Z=base[1],R=want(c);
+      if(t){let q=null;for(let k=0;k<6&&!q;k++){const a=g3Hash(p.i,t+k*17)*6.283,r=W*(.2+g3Hash(t+k*5,p.i)*.22),x=base[0]+Math.cos(a)*r,z=base[1]+Math.sin(a)*r;if(g3Fits(x,z,R,p.i)&&!mine.some(m=>Math.hypot(m.x-x,m.z-z)<m.R+R+.4))q=[x,z];}if(!q)continue;X=q[0];Z=q[1];}   // a village with no free land of its own is not drawn (the province keeps its town count)
+      while(R>G3_TOWN_MIN&&!g3Fits(X,Z,R,p.i))R=Math.max(G3_TOWN_MIN,R*.8);
+      const cap=p.cap&&t===0,n=Math.max(3,Math.round((cap?24:t===0?9:5)*Math.max(.5,sc))),tw={pi:p.i,x:X,z:Z,cap,n,sc,R,ds:0,dry:g3OnLand(X,Z),mega,flat,east:reg==='EA'||reg==='SEA',t};L.push(tw);mine.push(tw);if(!t)main.set(p.i,tw);}}
+  {const G=new Map(),key=(x,z)=>(x>>3)+'|'+(z>>3);for(const t of L){const k=key(t.x,t.z);if(!G.has(k))G.set(k,[]);G.get(k).push(t);}   // neighbours across a border: both shrink until they no longer touch
+   for(const t of L)for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)for(const u of G.get(((t.x>>3)+i)+'|'+((t.z>>3)+j))||[]){if(u===t)continue;const d=Math.hypot(u.x-t.x,u.z-t.z);if(d<t.R+u.R+.2){const f=Math.max(0,d-.2)/(t.R+u.R);t.R=Math.max(G3_TOWN_MIN*.5,t.R*f);u.R=Math.max(G3_TOWN_MIN*.5,u.R*f);}}}
+  for(const t of L)t.ds=t.R/(4.5*Math.sqrt(t.n/3.14)*1.15+1.6);   /* ds = drawing scale of this town's houses and props: n houses on a 4.5*ds grid fill the footprint R */
+  G3.landCell=null;G3.townMain=main;return G3.towns=L;}
+function g3Main(pi){g3Towns();return G3.townMain.get(pi)||null;}   /* the province's main town (armies, rings, smoke and the camera anchor on it) */
+function g3Afloat(pi){const p=GCM.P[pi];if(p.sea)return true;const t=g3Main(pi);return !t||!t.dry;}   /* an army at sea — or on an island too small for the map to draw any land — is shown as a ship, never as soldiers standing on water */
+function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],row:[],court:[],flat:[],tower:[],mosque:[],spire:[],wall:[],derrick:[],field:[],spoil:[],pier:[]};
   const SHK={house:1,gable:1,row:1,court:1,flat:1,tower:1,mosque:1,spire:1},SHD=[],sl=Math.hypot(G3L.sun[0],G3L.sun[2])||1,sdx=-G3L.sun[0]/sl,sdz=-G3L.sun[2]/sl,sth=Math.atan2(sdx,sdz);
-  let TI=0;   /* gclarity (Abdullah 2026-11-07 19:52 "way too busy"): tier 0 = the one core cluster per province (more for capitals/megacities), tier 1 = ground pads, fields and outlying houses/towns — shown only at close zoom (g3TownLOD) */
-  const push=(k,x,z,sx,sy,sz,ry,col)=>{const h=g3HeightAt(x,z),ti=(k==='disc'||k==='field')?1:TI;by[k].push([x,h,z,sx,sy,sz,ry,col,ti]);if(SHK[k]){const len=sy*2*(k==='tower'||k==='spire'?1.2:1)+sx*.6;SHD.push([x+sdx*len*.4,h+.2,z+sdz*len*.4,sx*.95,1,len,sth,[1,1,1],ti]);}};
-  for(const t of T){const p=GCM.P[t.pi],sc=t.sc||1,SP=4.5*sc,R=Math.sqrt(t.n*SP*SP/3.14)+3.5*sc;push('disc',t.x,t.z,R*.82,1,R*.82,0,[1.22,1.18,1.08]);
-    if(t.cap||p.wg&&t.t===0)by.wall.push([t.x,g3HeightAt(t.x,t.z),t.z,R+2,1,R+2,0,[1,1,1],1]);const CORE=t.mega?99:t.cap?10:4;
+  let TI=0,CX=0,CZ=0;   /* gclarity (Abdullah 2026-11-07 19:52 "way too busy"): tier 0 = the one core cluster per province (more for capitals/megacities), tier 1 = fields and outlying houses/towns — shown only at close zoom (g3TownLOD) */
+  const push=(k,x,z,sx,sy,sz,ry,col)=>{const ti=k==='field'?1:TI;by[k].push([x,0,z,sx,sy,sz,ry,col,ti,CX,CZ,0]);if(SHK[k]){const len=sy*2*(k==='tower'||k==='spire'?1.2:1)+sx*.6;SHD.push([x+sdx*len*.4,0,z+sdz*len*.4,sx*.95,1,len,sth,[1,1,1],ti,CX,CZ,.04]);}};   /* row = [x,-,z, scale xyz, turn, tint, tier, town centre x z, lift] */
+  for(const t of T){const p=GCM.P[t.pi],sc=t.ds,SP=4.5*sc,R=t.R;CX=t.x;CZ=t.z;   /* mapscale: no beige ground plate — the land colour shows between the houses */
+    if(t.cap||p.wg&&t.t===0)by.wall.push([t.x,0,t.z,R,sc*1.3,R,0,[1,1,1],1,CX,CZ,0]);const CORE=t.mega?99:t.cap?10:4;
     const th=g3Hash(t.pi,t.t+31)*3.1416,ct=Math.cos(th),st=Math.sin(th),R2=Math.ceil(R/SP)+1,cells=[];
-    for(let i=-R2;i<=R2;i++)for(let j=-R2;j<=R2;j++){if(i%4===0&&j%4===0&&(i||j))continue;if(i===0&&j!==0&&Math.abs(j)%2===1)continue;const d=Math.hypot(i,j)+(g3Hash(i+9,j+t.pi)-.5)*1.1;if(d*SP>R)continue;cells.push([i,j,d]);}
+    for(let i=-R2;i<=R2;i++)for(let j=-R2;j<=R2;j++){if(i%4===0&&j%4===0&&(i||j))continue;if(i===0&&j!==0&&Math.abs(j)%2===1)continue;const d=Math.hypot(i,j)+(g3Hash(i+9,j+t.pi)-.5)*1.1;if(d*SP>R-1.6*sc)continue;cells.push([i,j,d]);}
     cells.sort((u,v)=>u[2]-v[2]);let k=0;
-    for(const [i,j] of cells){if(k>=t.n)break;TI=(t.t>0&&!t.mega)||k>=CORE?1:0;if(g3Hash(i*7+3,j+t.pi)<.1)continue;const lx=(i+(g3Hash(i,j+4)-.5)*.35)*SP,lz=(j+(g3Hash(j,i+5)-.5)*.35)*SP+(i%2?SP*.2:0),x=t.x+lx*ct-lz*st,z=t.z+lx*st+lz*ct;if(g3HeightAt(x,z)<.7)continue;
+    for(const [i,j] of cells){if(k>=t.n)break;TI=(t.t>0&&!t.mega)||k>=CORE?1:0;if(g3Hash(i*7+3,j+t.pi)<.1)continue;const lx=(i+(g3Hash(i,j+4)-.5)*.35)*SP,lz=(j+(g3Hash(j,i+5)-.5)*.35)*SP+(i%2?SP*.2:0),x=t.x+lx*ct-lz*st,z=t.z+lx*st+lz*ct;if(!g3OnLand(x,z))continue;
       const TN=[[1,1,1],[.96,.9,.8],[.86,.94,1],[1,.88,.84],[.9,1,.9],[1.06,1.06,1.08],[1,.84,.62],[.9,.78,.68]][Math.floor(g3Hash(k+5,t.pi+2)*8)],hv=g3Hash(i+k,t.pi+4),s=(2.5+g3Hash(k,t.pi)*1.1)*sc,ry=-th+(g3Hash(k,k+i)-.5)*.14+(g3Hash(i,j)<.5?0:Math.PI),v=.86+g3Hash(k+3,t.t)*.28;
       let kind=t.flat?(hv<.5?'court':'flat'):(hv<.4?'house':hv<.75?'gable':'row'),sy=s*(t.flat?.45+hv*.35:.85+hv*.3);const fw=.82+g3Hash(k+11,t.pi+7)*.46,fd=.8+g3Hash(k+13,t.pi+9)*.42;
       if(k===0&&(t.cap||t.t===0)){kind=t.flat?'mosque':'spire';sy=s*.8;}else if(t.mega&&t.t===0&&k<4&&k%2===1){kind='tower';sy=s*1.05;}else if(t.cap&&k%7===4){kind=t.flat?'court':'row';sy=s*1.5;}
       push(kind,x,z,kind==='mosque'?s*.8:s*fw,sy,kind==='mosque'?s*.8:s*fd,ry,[v*TN[0],v*TN[1],v*TN[2]]);k++;}
-    TI=0;if(p.oil&&t.t===0)for(let k=0;k<3;k++)push('derrick',t.x+(20+k*8)*sc,t.z+(-18+k*4)*sc,1.7*sc,1.7*sc,1.7*sc,k*.7,[1,1,1]);
-    if(p.farm&&t.t===0)for(let k=0;k<4;k++)push('field',t.x+(-24+(k%2)*11)*sc,t.z+(18+(k>>1)*8)*sc,5*sc,1,5*sc,0,[.7+g3Hash(k,p.i)*.4,1,.8]);
-    if(p.mine&&t.t===0)for(let k=0;k<2;k++)push('spoil',t.x+(8+k*7)*sc,t.z+24*sc,2.4*sc,2*sc,2.4*sc,0,[1,1,1]);
-    if(p.port&&t.t===0){for(let a=0;a<16;a++){const ang=a/16*6.283;let ok=false;for(let r=8*sc;r<46*sc;r+=3*sc){const X=t.x+Math.cos(ang)*r,Z=t.z+Math.sin(ang)*r;if(g3HeightAt(X,Z)<-.2){push('pier',X-Math.cos(ang)*3*sc,Z-Math.sin(ang)*3*sc,10*sc,1,6*sc,-ang,[1,1,1]);ok=true;break;}}if(ok)break;}}}
-  const col=new THREE.Color();G3.townIM=[];G3.townLod=-1;
-  for(const k of Object.keys(by)){const L=by[k];if(!L.length)continue;L.sort((u,v)=>u[8]-v[8]);const m=new THREE.InstancedMesh(A[k],G3.matLit,L.length),M=new THREE.Matrix4();m.userData.n0=L.filter(r=>!r[8]).length;m.userData.nAll=L.length;G3.townIM.push(m);
-    L.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[6]),new THREE.Vector3(r[3],r[4],r[5]));m.setMatrixAt(i,M);col.setRGB(r[7][0],r[7][1],r[7][2]);m.setColorAt(i,col);});
-    m.instanceMatrix.needsUpdate=true;m.castShadow=false;grp.add(m);}
+    TI=0;if(p.oil&&t.t===0)for(let k=0;k<3;k++){const x=t.x+R+(2.5+k*4.5)*sc,z=t.z+(-5+k*3)*sc;if(g3OnLand(x,z))push('derrick',x,z,1.1*sc,1.1*sc,1.1*sc,k*.7,[1,1,1]);}   /* props sit just outside the houses, in the same scale family */
+    if(p.farm&&t.t===0)for(let k=0;k<4;k++){const x=t.x-R-(3+(k%2)*5.5)*sc,z=t.z+(2+(k>>1)*4.5)*sc;if(g3OnLand(x,z))push('field',x,z,2.6*sc,sc,2.6*sc,0,[.7+g3Hash(k,p.i)*.4,1,.8]);}
+    if(p.mine&&t.t===0)for(let k=0;k<2;k++){const x=t.x+(2+k*3.5)*sc,z=t.z+R+2.5*sc;if(g3OnLand(x,z))push('spoil',x,z,1.3*sc,1.1*sc,1.3*sc,0,[1,1,1]);}
+    if(p.port&&t.t===0){for(let a=0;a<16;a++){const ang=a/16*6.283;let ok=false;for(let r=R*.6;r<R+30*sc;r+=1.5*sc){const X=t.x+Math.cos(ang)*r,Z=t.z+Math.sin(ang)*r;if(g3HeightAt(X,Z)<-.2){push('pier',X-Math.cos(ang)*1.5*sc,Z-Math.sin(ang)*1.5*sc,4.5*sc,2.2*sc,2.8*sc,-ang,[1,1,1]);ok=true;break;}}if(ok)break;}}}
+  const col=new THREE.Color();G3.townIM=[];G3.townLod=-1;G3.townK=1;
+  for(const k of Object.keys(by)){const L=by[k];if(!L.length)continue;L.sort((u,v)=>u[8]-v[8]);const m=new THREE.InstancedMesh(A[k],G3.matLit,L.length),M=new THREE.Matrix4();m.userData.n0=L.filter(r=>!r[8]).length;m.userData.nAll=L.length;m.userData.rows=L;G3.townIM.push(m);
+    L.forEach((r,i)=>{col.setRGB(r[7][0],r[7][1],r[7][2]);m.setColorAt(i,col);});g3TownPlace(m,1,L.length);m.castShadow=false;grp.add(m);}
   SHD.sort((u,v)=>u[8]-v[8]);
-  if(SHD.length){const sm=new THREE.InstancedMesh(new THREE.BoxGeometry(1,.05,1),new THREE.MeshBasicMaterial({color:0x1a1208,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),SHD.length),M=new THREE.Matrix4();
-    SHD.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[6]),new THREE.Vector3(r[3],r[4],r[5]));sm.setMatrixAt(i,M);});
-    sm.instanceMatrix.needsUpdate=true;sm.castShadow=false;sm.renderOrder=2;sm.userData.n0=SHD.filter(r=>!r[8]).length;sm.userData.nAll=SHD.length;G3.townIM.push(sm);grp.add(sm);}}
-/* gclarity: what the towns show per zoom — close (< G3_CLOSE): everything; region and above: one core cluster per province, no ground pads / walls / fields */
+  if(SHD.length){const sm=new THREE.InstancedMesh(new THREE.BoxGeometry(1,.05,1),new THREE.MeshBasicMaterial({color:0x1a1208,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),SHD.length);
+    sm.userData.rows=SHD;g3TownPlace(sm,1,SHD.length);sm.castShadow=false;sm.renderOrder=2;sm.userData.n0=SHD.filter(r=>!r[8]).length;sm.userData.nAll=SHD.length;G3.townIM.push(sm);grp.add(sm);}}
+/* mapscale: one place writes the town instances — k = how much bigger than true scale they are drawn, growing out from their own town centre (1 in the close view, G3_TOWN_MID for the core clusters in the middle view) */
+function g3TownPlace(m,k,n){const L=m.userData.rows,M=new THREE.Matrix4(),P=new THREE.Vector3(),Q=new THREE.Quaternion(),S=new THREE.Vector3(),Y=new THREE.Vector3(0,1,0);
+  for(let i=0;i<n;i++){const r=L[i],x=r[9]+(r[0]-r[9])*k,z=r[10]+(r[2]-r[10])*k;M.compose(P.set(x,g3HeightAt(x,z)+r[11],z),Q.setFromAxisAngle(Y,r[6]),S.set(r[3]*k,r[4]*k,r[5]*k));m.setMatrixAt(i,M);}m.instanceMatrix.needsUpdate=true;}
+/* gclarity: what the towns show per zoom — close (< G3_CLOSE): everything at true scale; middle: one core cluster per province drawn G3_TOWN_MID bigger, no walls / fields */
 const G3_CLOSE=200,G3_T_FAR=600,G3_T_NEAR=250,G3_T_TOWN=400;   /* far = the world view and anything wider than a region button; the region buttons (d 430-575) open in the middle view; town clusters and the small countries' capital plates join below G3_T_TOWN */
 /* calmmap (Abdullah 2026-11-10 "too busy"): ONE zoom tier (g3Zoom) for the whole grand view — 0 far (world: owner colours, country names, few capitals, no trees/flags/towns), 1 middle (merged army badges, small plates that avoid each other), 2 close (trees, towns, flags, every plate) */
+const G3_PN_NEAR=60;   // calmmap4: how far (map units) around the selected province your own province names show at close zoom
 function g3Zoom(d){return d>=G3_T_FAR?0:d>=G3_T_NEAR?1:2;}
-function g3TownLOD(d){const close=d>=G3_T_TOWN?0:d<G3_CLOSE?2:1;if(G3.townLod===close||!G3.townIM)return;G3.townLod=close;for(const m of G3.townIM){const n=close===2?m.userData.nAll:close===1?m.userData.n0:0;m.count=n;m.visible=n>0;}}
+function g3TownLOD(d){const close=d>=G3_T_TOWN?0:d<G3_CLOSE?2:1;if(G3.townLod===close||!G3.townIM)return;G3.townLod=close;const k=close===1?G3_TOWN_MID:1,re=close&&k!==G3.townK;if(re)G3.townK=k;for(const m of G3.townIM){const n=close===2?m.userData.nAll:close===1?m.userData.n0:0;if(re)g3TownPlace(m,k,m.userData.n0);m.count=n;m.visible=n>0;}}
 // life: chimney smoke from every town (besieged provinces use g3BuildSmoke below) (GPU-animated points, one draw call)
 function g3BuildChim(grp){const T=g3Towns(),pos=[],ph=[],sz=[],pid=[],kind=[];
-  for(const t of T){const nS=t.cap?5:t.t===0?3:1;for(let s=0;s<nS;s++){const a=g3Hash(t.pi*3+s,t.t+7)*6.283,r=g3Hash(s+2,t.pi+t.t)*(t.cap?16:9)*(t.sc||1),x=t.x+Math.cos(a)*r,z=t.z+Math.sin(a)*r,y=g3HeightAt(x,z)+4;
+  for(const t of T){const nS=t.cap?5:t.t===0?3:1;for(let s=0;s<nS;s++){const a=g3Hash(t.pi*3+s,t.t+7)*6.283,r=g3Hash(s+2,t.pi+t.t)*t.R*.8,x=t.x+Math.cos(a)*r,z=t.z+Math.sin(a)*r,y=g3HeightAt(x,z)+2.5*t.ds;
     for(let k=0;k<7;k++){pos.push(x,y,z);ph.push((k+g3Hash(k,s+t.pi))/7);sz.push(.7+g3Hash(k+5,s)*.5);pid.push(t.pi);kind.push(s===0?1:0);}}}
   if(!pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('aPh',new THREE.Float32BufferAttribute(ph,1));g.setAttribute('aSz',new THREE.Float32BufferAttribute(sz,1));
   const war=new Float32Array(pid.length);g.setAttribute('aWar',new THREE.BufferAttribute(war,1));
   const U=G3.chimU={uT:{value:0},uPx:{value:900}};
   const m=new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,vertexShader:`uniform float uT,uPx;attribute float aPh,aSz,aWar;varying float vA;varying float vW;
-    void main(){float life=fract(aPh+uT*(.05+.05*aWar));float h=life*(34.+aWar*34.);vec3 p=position+vec3(h*.55+life*life*10.,h,h*.18);vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
-    float base=(3.2+aWar*9.)*aSz*(.5+life*1.4);gl_PointSize=clamp(base*uPx/-mv.z,0.,90.);vA=smoothstep(0.,.2,life)*(1.-life)*(1.-life)*(.85+.9*aWar);vW=aWar;}`,
+    void main(){float life=fract(aPh+uT*(.05+.05*aWar));float h=life*(5.+aWar*11.);vec3 p=position+vec3(h*.55+life*life*1.6,h,h*.18);vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+    float base=(.7+aWar*2.6)*aSz*(.5+life*1.4);gl_PointSize=clamp(base*uPx/-mv.z,0.,90.);vA=smoothstep(0.,.2,life)*(1.-life)*(1.-life)*(.85+.9*aWar);vW=aWar;}`,
     fragmentShader:`varying float vA;varying float vW;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);if(d>.5)discard;float a=vA*(1.-smoothstep(.0,.5,d));vec3 c=mix(vec3(.62,.6,.57),vec3(.14,.12,.1),vW);gl_FragColor=vec4(c,a);}`});
   const pts=new THREE.Points(g,m);pts.frustumCulled=false;pts.renderOrder=6;grp.add(pts);G3.chim=pts;}
 // life: warm city lights (lamp glow in every town, bigger halos on capitals/megacities; additive points, one draw call, twinkle in the shader)
 function g3BuildLights(grp){const T=g3Towns(),pos=[],ph=[],sz=[];
-  for(const t of T){const n=t.cap?9:t.mega?8:t.t===0?4:2,R=(t.cap?15:t.mega?13:8)*(t.sc||1);
+  for(const t of T){const n=t.cap?9:t.mega?8:t.t===0?4:2,R=t.R*.9;
     for(let k=0;k<n;k++){const a=g3Hash(t.pi*5+k,t.t+3)*6.283,r=Math.sqrt(g3Hash(k+9,t.pi+t.t))*R,x=t.x+Math.cos(a)*r,z=t.z+Math.sin(a)*r;
-      pos.push(x,g3HeightAt(x,z)+2.2,z);ph.push(g3Hash(k,t.pi*7+t.t)*6.283);sz.push(.6+g3Hash(k+2,t.pi)*.5);}
-    if(t.cap||t.mega){pos.push(t.x,g3HeightAt(t.x,t.z)+3,t.z);ph.push(0);sz.push(t.cap?5.5:4);}}   // big soft halo (size > 3 = halo)
+      pos.push(x,g3HeightAt(x,z)+2.2*t.ds,z);ph.push(g3Hash(k,t.pi*7+t.t)*6.283);sz.push(.6+g3Hash(k+2,t.pi)*.5);}
+    if(t.cap||t.mega){pos.push(t.x,g3HeightAt(t.x,t.z)+3*t.ds,t.z);ph.push(0);sz.push(t.cap?5.5:4);}}   // big soft halo (size > 3 = halo)
   if(!pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('aPh',new THREE.Float32BufferAttribute(ph,1));g.setAttribute('aSz',new THREE.Float32BufferAttribute(sz,1));
   const U=G3.lightU={uT:{value:0},uPx:{value:900},uFar:{value:0},uNight:{value:0}};
   const m=new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,vertexShader:`uniform float uT,uPx,uFar,uNight;attribute float aPh,aSz;varying float vA;varying float vH;
     void main(){vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;float halo=step(3.,aSz);vH=halo;float tw=.8+.2*sin(uT*(1.3+aPh*.3)+aPh*9.);
-    float s=halo>.5?aSz*(7.+uFar*5.):aSz*2.2;gl_PointSize=clamp(s*uPx/-mv.z,halo>.5?6.:2.5,halo>.5?150.:14.);vA=(halo>.5?(.3+.2*uFar)*(.5+1.8*uNight):.55+.6*uNight)*tw;}`,
+    float s=halo>.5?aSz*(2.+uFar*10.):aSz*(.5+1.7*uFar);gl_PointSize=clamp(s*uPx/-mv.z,halo>.5?6.:2.5,halo>.5?150.:14.);vA=(halo>.5?(.3+.2*uFar)*(.5+1.8*uNight):.55+.6*uNight)*tw;}`,
     fragmentShader:`varying float vA;varying float vH;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);if(d>.5)discard;float f=1.-smoothstep(0.,.5,d);f=vH>.5?f*f:f*f*f;gl_FragColor=vec4(vec3(1.,.74,.38)*(vH>.5?.9:1.1),f*vA);}`});
   const pts=new THREE.Points(g,m);pts.frustumCulled=false;pts.renderOrder=7;grp.add(pts);G3.lights=pts;}
 // ---- chunked terrain LOD (gterrain): 4x2 chunks of 600 units (few draw calls), step 3 near / 6 mid / 8 far, analytic smooth normals, skirts hide LOD cracks, off-screen chunks are culled
 const G3_CH=600,G3_LODS=[3,6,8],G3_LODR=[380,950];
 function g3TerrChunk(ci,cj,step){const n=G3_CH/step,V=n+1,ox=ci*G3_CH,oz=cj*G3_CH,e=5,nsk=4*n+4,NV=V*V+nsk*2;
   const pos=new Float32Array(NV*3),nor=new Float32Array(NV*3),uv=new Float32Array(NV*2),ix=new Uint32Array((n*n+4*n)*6);
-  const put=(q,x,z,drop)=>{const h=(4*g3HeightAt(x,z)+g3HeightAt(x-2,z)+g3HeightAt(x+2,z)+g3HeightAt(x,z-2)+g3HeightAt(x,z+2))/8,nx=g3HeightAt(x-e,z)-g3HeightAt(x+e,z),nz=g3HeightAt(x,z-e)-g3HeightAt(x,z+e),l=Math.hypot(nx,2*e,nz);
+  const F_=G3.F,cd=F_.cd,FW=F_.FW,FH=F_.FH;   /* mapcoast: within 12 px of real land the mesh never dips under the water plane, so the per-pixel coast always has ground to draw on (the rest is cut away in the shader) */
+  const put=(q,x,z,drop)=>{let h=(4*g3HeightAt(x,z)+g3HeightAt(x-2,z)+g3HeightAt(x+2,z)+g3HeightAt(x,z-2)+g3HeightAt(x,z+2))/8;if(h<.4&&cd&&cd[Math.min(FH-1,z|0)*FW+Math.min(FW-1,x|0)]<147)h=.4;const nx=g3HeightAt(x-e,z)-g3HeightAt(x+e,z),nz=g3HeightAt(x,z-e)-g3HeightAt(x,z+e),l=Math.hypot(nx,2*e,nz);
     pos[q*3]=x;pos[q*3+1]=h-drop;pos[q*3+2]=z;nor[q*3]=nx/l;nor[q*3+1]=2*e/l;nor[q*3+2]=nz/l;uv[q*2]=x/2400;uv[q*2+1]=z/1200;};
   for(let j=0;j<V;j++)for(let i=0;i<V;i++)put(j*V+i,ox+i*step,oz+j*step,0);
   let t=0;for(let j=0;j<n;j++)for(let i=0;i<n;i++){const a=j*V+i,b=a+1,c=a+V,d=c+1;ix[t++]=a;ix[t++]=c;ix[t++]=b;ix[t++]=b;ix[t++]=c;ix[t++]=d;}
@@ -1907,43 +1977,63 @@ function g3TerrLOD(maxBuild){const cam=G3.cam,C=G3.terrCh;if(!cam||!C)return;let
 // and room around towns. Every few frames the trees in view near the
 // camera are streamed into ONE instanced impostor mesh (1 draw call, 2 triangles a tree; thinned evenly with distance/zoom so
 // there is never a hard edge), capped at G3F_MAX. Trees grow a little when zoomed out and sway slightly. Tree art painted in code.
-const G3F_KINDS=['conifer','broad','palm','scrub'],G3F_MAX=30000,G3F_CAP={conifer:20000,broad:20000,palm:8000,scrub:8000},G3F_CELL=32;
-// tree impostor atlas (painted in code, original): 4 cells - conifer, broadleaf, date palm, scrub; lit from the sun side (west/north)
-function g3ForestAtlas(){const S=256,cv=document.createElement('canvas');cv.width=S*4;cv.height=S;const x=cv.getContext('2d');
-  const blob=(cx,cy,r,c0,c1)=>{const g=x.createRadialGradient(cx-r*.38,cy-r*.42,r*.08,cx,cy,r);g.addColorStop(0,c0);g.addColorStop(1,c1);x.fillStyle=g;x.beginPath();x.arc(cx,cy,r,0,6.283);x.fill();};
-  const rnd=(i=>()=>(i=(i*16807)%2147483647)/2147483647)(7);
-  // conifer: stacked drooping tiers
-  {const o=0;x.fillStyle='#3b2a19';x.fillRect(o+S/2-7,S-46,14,46);
-    for(let t=0;t<6;t++){const y0=S-34-t*31,w=(98-t*15),top=y0-58;const g=x.createLinearGradient(o+S/2-w,0,o+S/2+w,0);g.addColorStop(0,'#6fa85a');g.addColorStop(.45,'#3f7a3e');g.addColorStop(1,'#1f4826');x.fillStyle=g;
-      x.beginPath();x.moveTo(o+S/2,top);x.quadraticCurveTo(o+S/2-w*.45,y0-24,o+S/2-w,y0);x.quadraticCurveTo(o+S/2,y0+12,o+S/2+w,y0);x.quadraticCurveTo(o+S/2+w*.45,y0-24,o+S/2,top);x.fill();}
-    x.fillStyle='rgba(10,25,12,.35)';for(let i=0;i<60;i++){const yy=40+rnd()*170,ww=(S-yy)*.32;x.fillRect(o+S/2-ww+rnd()*ww*2,yy,3,2);}}
-  // broadleaf: cluster of round leaf masses
-  {const o=S;x.fillStyle='#3d2b1a';x.fillRect(o+S/2-8,S-80,16,80);
-    const P=[[0,150,72],[-52,128,56],[52,132,58],[-30,88,58],[34,86,56],[0,62,54],[-62,170,40],[62,172,42],[0,112,62]];
-    for(const [dx,dy,r] of P){blob(o+S/2+dx+4,dy+6,r,'#2a4e20','#18321a');}
-    for(const [dx,dy,r] of P){blob(o+S/2+dx,dy,r,'#93c463','#326328');}
-    for(let i=0;i<70;i++){const a=rnd()*6.283,rr=rnd()*86;blob(o+S/2+Math.cos(a)*rr,118+Math.sin(a)*rr*.85,6+rnd()*8,rnd()<.5?'rgba(130,170,80,.55)':'rgba(20,45,18,.45)','rgba(20,45,18,0)');}}
-  // date palm: slim curved trunk + drooping fronds
-  {const o=S*2;x.strokeStyle='#7a6142';x.lineWidth=11;x.lineCap='round';x.beginPath();x.moveTo(o+S/2+6,S-2);x.quadraticCurveTo(o+S/2-10,S-120,o+S/2,92);x.stroke();
-    x.strokeStyle='rgba(60,45,30,.6)';x.lineWidth=2;for(let y=100;y<S;y+=9){x.beginPath();x.moveTo(o+S/2-6,y);x.lineTo(o+S/2+6,y+2);x.stroke();}
-    for(let i=0;i<11;i++){const a=-Math.PI+i/10*Math.PI+(rnd()-.5)*.2,L=78+rnd()*26,ex=o+S/2+Math.cos(a)*L,ey=92+Math.sin(a)*L*.55+L*.55;
-      x.strokeStyle=i%2?'#2f5a26':'#4d7d36';x.lineWidth=13;x.beginPath();x.moveTo(o+S/2,92);x.quadraticCurveTo(o+S/2+Math.cos(a)*L*.55,92+Math.sin(a)*L*.55-24,ex,ey);x.stroke();}
-    blob(o+S/2,92,16,'#5a7a34','#2a4419');}
-  // scrub: low olive bushes
-  {const o=S*3;for(const [dx,dy,r] of [[-40,206,40],[30,212,36],[0,190,44],[60,220,24],[-70,224,22]])blob(o+S/2+dx,dy,r,'#a7a46a','#5d5b36');}
-  const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;t.generateMipmaps=true;t.minFilter=THREE.LinearMipmapLinearFilter;t.anisotropy=4;return t;}
+const G3F_KINDS=['conifer','broad','palm','scrub'],G3F_MAX=30000,G3F_CAP={conifer:20000,broad:20000,palm:8000,scrub:8000},G3F_CELL=32,G3F_EDGE=.4;
+// tree impostor atlas (painted in code, original; maptrees, Abdullah 2026-11-11 "the trees look too cartoony in the grand map"): 4 kinds across (conifer, broadleaf, date palm,
+// scrub) x G3F_VAR variants up (variant 0 = one small tree for thin forest edges, 1-3 = small groves of 2-6 crowns) so a forest reads as one dark, uneven canopy and no shape repeats.
+// Crowns are ragged noisy dabs in muted natural greens, lit from the map sun side (G3L.sun), dark underneath, with a dark patch on the ground. No smooth gradients, no outlines, no lime.
+const G3F_VAR=4,G3F_GAIN=2.5,G3F_PAL={conifer:[[34,50,42],[64,86,65],[106,124,92]],broad:[[37,49,30],[72,90,51],[118,130,79]],palm:[[44,54,33],[82,95,56],[126,131,85]],scrub:[[66,62,45],[106,100,71],[146,138,101]]};
+const G3F_LAY={conifer:[[[.5,.93,.7,.13]],[[.28,.8,.62,.12],[.7,.82,.56,.115],[.5,.84,.5,.11],[.5,.93,.8,.135],[.2,.93,.42,.1],[.8,.93,.46,.1]],[[.2,.82,.5,.105],[.42,.78,.7,.125],[.66,.8,.6,.115],[.84,.86,.46,.095],[.56,.93,.72,.125],[.3,.93,.54,.11],[.78,.93,.4,.09]],[[.62,.8,.74,.13],[.36,.84,.56,.115],[.38,.93,.66,.125],[.8,.92,.44,.1],[.18,.92,.4,.09]]],
+  broad:[[[.5,.62,.24,.21,.92]],[[.5,.46,.24,.2,.8],[.27,.64,.2,.18,.9],[.72,.64,.22,.19,.92],[.5,.72,.2,.16,.93]],[[.32,.44,.2,.17,.76],[.66,.46,.21,.18,.78],[.18,.68,.15,.14,.9],[.48,.68,.22,.18,.93],[.8,.7,.16,.15,.92]],[[.62,.5,.25,.21,.84],[.3,.62,.22,.19,.92],[.6,.74,.18,.15,.93]]],
+  palm:[[[.5,.93,.6]],[[.36,.86,.5],[.62,.93,.68]],[[.28,.88,.46],[.52,.84,.62],[.74,.93,.52]],[[.42,.93,.72],[.68,.9,.44]]],
+  scrub:[[[.5,.93,.2,.2]],[[.3,.9,.17,.17],[.64,.93,.2,.2]],[[.22,.9,.14,.15],[.5,.87,.17,.18],[.78,.93,.15,.15]],[[.4,.93,.22,.21],[.74,.9,.14,.14]]]};
+function g3ForestAtlas(){const S=128,V=G3F_VAR,W=S*4,H=S*V,cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+  const rnd=(i=>()=>(i=(i*16807)%2147483647)/2147483647)(11),sx=G3L.sun[0]<0?-1:1;   // sx: the sun side on the picture (north-up view)
+  const shade=(P,l)=>{l=Math.max(0,Math.min(1,l));const a=l<.5?P[0]:P[1],b=l<.5?P[1]:P[2],t=l<.5?l*2:l*2-1;return 'rgb('+((a[0]+(b[0]-a[0])*t)|0)+','+((a[1]+(b[1]-a[1])*t)|0)+','+((a[2]+(b[2]-a[2])*t)|0)+')';};
+  const dab=(cx,cy,r,fill,sq)=>{x.fillStyle=fill;x.beginPath();const n=6+(rnd()*3|0),a0=rnd()*6.283;for(let i=0;i<n;i++){const a=a0+i/n*6.283,rr=r*(.55+rnd()*.6);x[i?'lineTo':'moveTo'](cx+Math.cos(a)*rr,cy+Math.sin(a)*rr*(sq||.85));}x.closePath();x.fill();};
+  const ground=(cx,by,rx)=>{for(let i=0;i<5;i++)dab(cx-sx*rx*.25+(rnd()-.5)*rx*1.1,by+(rnd()-.5)*S*.016,rx*.42,'rgb(33,38,27)',.3);};
+  // broadleaf crown: a few lobes, each a cloud of leaf dabs; dark ones first, sunlit ones on top
+  const crown=(P,cx,cy,rx,ry,by)=>{ground(cx,by,rx);x.fillStyle='rgb(44,36,27)';x.fillRect(cx-1.5,cy,3,by-cy);
+    const L=[];for(let i=0,n=4+(rnd()*3|0);i<n;i++){const a=rnd()*6.283,d=rnd()*.55;L.push([cx+Math.cos(a)*rx*d,cy+Math.sin(a)*ry*d,.45+rnd()*.3]);}
+    const D=[];for(let i=0,n=Math.round(rx*ry*.55)+14;i<n;i++){const l=L[(rnd()*L.length)|0],a=rnd()*6.283,d=Math.sqrt(rnd())*l[2],px=l[0]+Math.cos(a)*rx*d,py=l[1]+Math.sin(a)*ry*d,li=.42+.5*(sx*(px-cx)/rx*.5-(py-cy)/ry*.7)+(rnd()-.5)*.4;D.push([px,py,li,li+(rnd()-.5)*.5]);}
+    D.sort((a,b)=>a[3]-b[3]);for(const d of D)dab(d[0],d[1],Math.max(2.2,rx*(.16+rnd()*.12)),shade(P,d[2]));};
+  // conifer: a narrow uneven spire of drooping branch tufts, sunlit on one side
+  const spire=(P,bx,by,h,w)=>{ground(bx,by,w*1.3);x.fillStyle='rgb(40,33,25)';x.fillRect(bx-1,by-h*.16,2,h*.16);const lean=(rnd()-.5)*w*.5;
+    for(let y=0,n=Math.round(h/2.6);y<n;y++){const t=y/n,yy=by-h*(.08+.92*t),cx=bx+lean*t,hw=w*Math.pow(1-t,.8)*(.7+rnd()*.55)+1;
+      for(const s of [-1,1]){if(rnd()<.1)continue;const e=hw*(.75+rnd()*.5);x.fillStyle=shade(P,(s===sx?.5:.12)+rnd()*.3+t*.12);
+        x.beginPath();x.moveTo(cx-s*.6,yy-3.2-rnd()*1.5);x.lineTo(cx+s*e,yy+1.5+rnd()*2.2);x.lineTo(cx+s*e*.45,yy+.6+rnd());x.lineTo(cx-s*.6,yy+1.4);x.closePath();x.fill();}}};
+  // date palm: thin bent trunk, drooping fronds with hanging leaflets
+  const palm=(P,bx,by,h)=>{ground(bx,by,h*.16);const tx=bx+(rnd()-.5)*h*.2,ty=by-h;x.lineCap='round';x.strokeStyle='rgb(92,78,58)';x.lineWidth=Math.max(2.2,h*.035);x.beginPath();x.moveTo(bx,by);x.quadraticCurveTo(bx+(tx-bx)*.2+(rnd()-.5)*6,by-h*.5,tx,ty);x.stroke();
+    const n=9+(rnd()*3|0);for(let i=0;i<n;i++){const a=-Math.PI*1.08+i/(n-1)*Math.PI*1.16+(rnd()-.5)*.25,Lf=h*(.3+rnd()*.12),ca=Math.cos(a),sa=Math.sin(a),lit=(ca*sx>0?.3:0)+.25;let qx=tx,qy=ty;
+      for(let k=1;k<=7;k++){const t=k/7,px=tx+ca*Lf*t,py=ty+sa*Lf*t*.6+Lf*.55*t*t;x.strokeStyle=shade(P,lit+rnd()*.3-t*.1);x.lineWidth=Math.max(2.2,h*.046*(1.15-t*.6));x.beginPath();x.moveTo(qx,qy);x.lineTo(px,py);x.lineTo(px-ca*1.5,py+h*.075*(1.1-t));x.stroke();qx=px;qy=py;}}
+    dab(tx,ty,h*.045,shade(P,.2));};
+  // scrub: low dusty bushes
+  const bush=(P,cx,by,rx,ry)=>{ground(cx,by,rx*.9);for(let i=0,n=Math.round(rx*ry*.5)+8;i<n;i++){const a=rnd()*6.283,d=Math.sqrt(rnd()),nx=Math.cos(a)*d,ny=Math.sin(a)*d;if(ny>.4)continue;dab(cx+nx*rx,by-ry*.7+ny*ry,Math.max(2,rx*.26),shade(P,.42+.5*(sx*nx*.5-ny*.7)+(rnd()-.5)*.4));}};
+  G3F_KINDS.forEach((nm,ki)=>{const P=G3F_PAL[nm];for(let v=0;v<V;v++){const ox=ki*S,oy=(V-1-v)*S;x.save();x.beginPath();x.rect(ox+2,oy+2,S-4,S-4);x.clip();
+    for(const a of G3F_LAY[nm][v]){if(ki===0)spire(P,ox+a[0]*S,oy+a[1]*S,a[2]*S,a[3]*S);else if(ki===1)crown(P,ox+a[0]*S,oy+a[1]*S,a[2]*S,a[3]*S,oy+a[4]*S);else if(ki===2)palm(P,ox+a[0]*S,oy+a[1]*S,a[2]*S);else bush(P,ox+a[0]*S,oy+a[1]*S,a[2]*S,a[3]*S);}x.restore();}});
+  // grain on every leaf pixel, hard cut-out edges; see-through pixels carry the kind's own dark green so far-away trees get no black or white rim
+  const d=x.getImageData(0,0,W,H).data,o=new Uint8Array(W*H*4);
+  for(let y=0;y<H;y++)for(let xx=0;xx<W;xx++){const i=(y*W+xx)*4,j=((H-1-y)*W+xx)*4;
+    if(d[i+3]>100){const v=.84+.32*g3Hash(xx*3+1,y*7+2);o[j]=Math.min(255,d[i]*v);o[j+1]=Math.min(255,d[i+1]*v);o[j+2]=Math.min(255,d[i+2]*v);o[j+3]=255;}
+    else{const m=G3F_PAL[G3F_KINDS[(xx/S)|0]][1];o[j]=m[0];o[j+1]=m[1];o[j+2]=m[2];}}
+  const t=new THREE.DataTexture(o,W,H,THREE.RGBAFormat);t.colorSpace=THREE.SRGBColorSpace;t.generateMipmaps=true;t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.anisotropy=4;t.needsUpdate=true;return t;}
+// guard helper (orch/grandtest.mjs): average colour of the tree pictures per kind - s = saturation 0..1, v = brightness as drawn (linear light x shader gain); lime/neon trees fail the caps there
+function g3TreeLook(){const T=G3.treeU&&G3.treeU.uTex.value,im=T&&T.image;if(!im||!im.data)return null;const S=im.width/4,out={rows:Math.round(im.height/S),gain:G3F_GAIN};
+  G3F_KINDS.forEach((nm,ki)=>{let r=0,g=0,b=0,n=0;for(let y=0;y<im.height;y++)for(let x=ki*S;x<(ki+1)*S;x++){const i=(y*im.width+x)*4;if(im.data[i+3]>127){r+=im.data[i];g+=im.data[i+1];b+=im.data[i+2];n++;}}
+    r=r/n/255;g=g/n/255;b=b/n/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);out[nm]={s:+((mx-mn)/(mx||1)).toFixed(3),v:+(Math.pow(mx,2.2)*G3F_GAIN).toFixed(3),cover:+(n/(S*im.height)).toFixed(3)};});return out;}
+/* fixes1: the palm quad is drawn at 55% of its old size (1.05 x 1.2, was 1.9 x 2.1). A forest quad shows a clump of six or seven small trees, a palm quad one to three
+   single palms - at forest size every palm along the Tigris and the Gulf stood taller than the towns beside it. Same single instanced draw, same count. */
 function g3ForestMesh(){const U=G3.treeU={uTS:{value:1},uT:{value:0},uTex:{value:g3ForestAtlas()}},N=G3F_MAX,g=new THREE.InstancedBufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute([-.5,0,0,.5,0,0,.5,1,0,-.5,1,0],3));g.setIndex([0,1,2,0,2,3]);
   const iP=new THREE.InstancedBufferAttribute(new Float32Array(N*3),3),iD=new THREE.InstancedBufferAttribute(new Float32Array(N*4),4),iC=new THREE.InstancedBufferAttribute(new Float32Array(N*3),3);
   for(const a of [iP,iD,iC])a.setUsage(THREE.DynamicDrawUsage);g.setAttribute('iP',iP);g.setAttribute('iD',iD);g.setAttribute('iC',iC);g.instanceCount=0;
   const m=new THREE.ShaderMaterial({uniforms:U,vertexShader:`uniform float uTS,uT;attribute vec3 iP,iC;attribute vec4 iD;varying vec2 vU;varying vec3 vC;varying float vY;
-    void main(){int k=int(iD.z+.5);vec2 sz=k==0?vec2(1.35,2.5):k==1?vec2(2.1,2.1):k==2?vec2(2.3,2.7):vec2(1.6,.8);sz*=iD.x*uTS;sz.y*=iD.y;
+    void main(){int k=int(iD.z+.5);vec2 sz=k==0?vec2(1.7,2.0):k==1?vec2(2.0,1.5):k==2?vec2(1.05,1.2):vec2(1.6,1.6);sz*=iD.x*uTS;sz.y*=iD.y;
       vec3 cr=vec3(viewMatrix[0][0],viewMatrix[1][0],viewMatrix[2][0]),up=normalize(mix(vec3(0.,1.,0.),vec3(viewMatrix[0][1],viewMatrix[1][1],viewMatrix[2][1]),.55));
       float sw=sin(uT*1.2+iP.x*.37+iP.z*.29)*.05*position.y;
       vec3 w=iP+cr*(position.x+sw)*sz.x+up*position.y*sz.y;
-      vU=vec2((position.x+.5+float(k))/4.,position.y);vC=iC;vY=position.y;gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);}`,
-    fragmentShader:`uniform sampler2D uTex;varying vec2 vU;varying vec3 vC;varying float vY;void main(){vec4 t=texture2D(uTex,vU);if(t.a<.5)discard;
-      vec3 c=t.rgb*vC*1.6*(.72+.4*vY);gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
+      vU=vec2((position.x+.5+float(k))/4.,(position.y+iD.w)/${G3F_VAR}.);vC=iC;vY=position.y;gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);}`,
+    fragmentShader:`uniform sampler2D uTex;varying vec2 vU;varying vec3 vC;varying float vY;void main(){vec4 t=texture2D(uTex,vU);if(t.a<.3)discard;
+      vec3 c=t.rgb*vC*${G3F_GAIN.toFixed(2)}*(.8+.28*vY);gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
   const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;return {mesh,iP,iD,iC,g};}
 // one land-cover sample per 2x2 texel: [density 0..1, kind index] - real data (satellite colour + DEM + rivers) or the province biome fallback
 /* calmmap: trees follow real land cover. ONE source: the satellite colour + height + rivers (grand/color.jpg, the branch above). Only while that file has not arrived (or cannot load, e.g. the one-file edition)
@@ -1992,19 +2082,20 @@ function g3BuildForests(grp){const F=G3.F,W=F.W,H=F.H,t0=performance.now();let c
   for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x,n=nOf(k);if(!n)continue;const c=((y*2/G3F_CELL)|0)*CX+((x*2/G3F_CELL)|0);cnt[kd[k]][c+1]+=n;}
   G3F_KINDS.forEach((nm,ki)=>{const c=cnt[ki];for(let i=1;i<=NC;i++)c[i]+=c[i-1];pool[nm]={st:c.slice(),d:new Float32Array(c[NC]*8)};});
   const fill=G3F_KINDS.map(nm=>pool[nm].st.slice());let total=0;
-  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x,n=nOf(k);if(!n)continue;const ki=kd[k],c=((y*2/G3F_CELL)|0)*CX+((x*2/G3F_CELL)|0),D=pool[G3F_KINDS[ki]].d;
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x,n=nOf(k);if(!n)continue;const ki=kd[k],c=((y*2/G3F_CELL)|0)*CX+((x*2/G3F_CELL)|0),D=pool[G3F_KINDS[ki]].d,la=90-180*(y+.5)/H,lo=-180+360*(x+.5)/W,al=Math.abs(la),cl=g3Arid(la,lo)>.12||(al>29&&al<44&&lo>-12&&lo<62)?3:al<24?2:al>55?1:0;
     for(let q=0;q<n;q++){const wx=(x+g3Hash(x*31+q,y*17))*2,wz=(y+g3Hash(y*29+q,x*11+5))*2,o=(fill[ki][c]++)*8,big=ki===3?.8:1;
-      D[o]=wx;D[o+1]=hAt(wx,wz)-.06;D[o+2]=wz;D[o+3]=(.75+g3Hash(x+q*3,y*5)*.55)*big*(1+.15*cov2[k]);D[o+4]=g3Hash(x*3+q,y)*6.283;D[o+5]=g3Hash(x+q*7,y*3+1);D[o+6]=g3Hash(y+q,x*9);D[o+7]=cov2[k];total++;}}
+      D[o]=wx;D[o+1]=hAt(wx,wz)-.06;D[o+2]=wz;D[o+3]=(.75+g3Hash(x+q*3,y*5)*.55)*big*(1+.15*cov2[k]);D[o+4]=g3Hash(x*3+q,y)*6.283;D[o+5]=g3Hash(x+q*7,y*3+1);D[o+6]=cl+Math.min(.999,g3Hash(y+q,x*9));D[o+7]=cov2[k];total++;}}
   G3.forest={pool,CX,CY,NC,last:null,frame:0,total,bb:g3ForestMesh(),real:!!(F.bw&&G3.real)};grp.add(G3.forest.bb.mesh);
   G3.trees=0;G3.treePool=total;G3.tForest=Math.round(performance.now()-t0);}
 /* calmmap: the real land data arrived after the map was drawn (first campaign of a session on a slow line) -> replant the trees from it, once, without rebuilding the screen (forests no longer stand on the Sahara) */
 function g3ForestRefresh(force){const Fo=G3.forest;if(!G3.R||!G3.static||!Fo||!G3.F||(!force&&(Fo.real||!G3.real)))return false;G3.static.remove(Fo.bb.mesh);try{Fo.bb.g.dispose();Fo.bb.mesh.material.dispose();}catch(e){}
   G3.forest=null;g3BuildForests(G3.static);if(G3.forest)g3ForestTick(true);return true;}
 // stream the trees near the camera into the 4 meshes (called every frame; does work only when the view changed)
-const G3F_TINT={conifer:[[.86,.95,.95],[1,1,1],[.8,.9,1]],broad:[[1,1,1],[.85,1,.8],[1.15,1.05,.8],[.9,.95,.9]],palm:[[1,1,1],[1.1,1.05,.85]],scrub:[[1,1,1],[1.15,1.05,.85],[.9,.95,.9]]};
+// tree colour by climate (stored per tree at planting): 0 temperate, 1 cold north, 2 tropical, 3 dry / Mediterranean (dusty olive)
+const G3F_TINT={conifer:[[1,1,1],[.86,.97,1.05],[.98,1.04,.9],[1.08,1.03,.92]],broad:[[1,1,1],[.92,.98,.98],[.88,1,.84],[1.1,1.03,.9]],palm:[[1,1,1],[1,1,1],[.92,1.02,.88],[1.06,1.02,.92]],scrub:[[1,1,1],[.95,1,1],[.9,1,.88],[1.1,1.04,.92]]};
 // calmmap guard helper: trees per owner nation and kind, read from the pool (deserts must be bare of woods)
 function g3TreeAudit(){const Fo=G3.forest,F=G3.F;if(!Fo||!F)return null;const W=F.W,H=F.H,out={};for(const nm of G3F_KINDS){const D=Fo.pool[nm].d;for(let i=0;i+7<D.length;i+=8){const k=Math.min(H-1,Math.floor(D[i+2]/2))*W+Math.min(W-1,Math.floor(D[i]/2)),p=GCM.P[F.idx[k]];if(!p||!GC.prov[p.i])continue;const o=GC.prov[p.i].o,r=out[o]||(out[o]={conifer:0,broad:0,palm:0,scrub:0,n:0});r[nm]++;r.n++;if(nm!=='palm'&&nm!=='scrub'){const la=90-180*(Math.floor(D[i+2]/2)+.5)/H,lo=-180+360*(Math.floor(D[i]/2)+.5)/W;if(g3Arid(la,lo)>.3)out.dryWoods=(out.dryWoods||0)+1;}}}return out;}
-function g3ForestTick(force){const Fo=G3.forest,cc=G3.cc,cam=G3.cam;if(!Fo||!cc||!cam)return;Fo.frame++;if(G3.treeU){G3.treeU.uT.value=G3.time||0;G3.treeU.uTS.value=Math.max(.9,Math.min(3.2,cc.d/130));}
+function g3ForestTick(force){const Fo=G3.forest,cc=G3.cc,cam=G3.cam;if(!Fo||!cc||!cam)return;Fo.frame++;if(G3.treeU){G3.treeU.uT.value=G3.time||0;G3.treeU.uTS.value=Math.max(.85,Math.min(1.6,cc.d/75));}
   const L=Fo.last,ch=!L||Math.hypot(cc.x-L.x,cc.z-L.z)>cc.d*.05||Math.abs(cc.d-L.d)>L.d*.06||Math.abs(cc.yaw-L.yaw)>.05||Math.abs(cc.pitch-L.pitch)>.04;
   if(!force&&L&&(!ch||Fo.frame-(Fo.lf||0)<5))return;Fo.lf=Fo.frame;Fo.last={x:cc.x,z:cc.z,d:cc.d,yaw:cc.yaw,pitch:cc.pitch};
   const B=Fo.bb,zf=1-g3Smooth(G3_CLOSE,G3_T_NEAR,cc.d);if(zf<=0){B.g.instanceCount=0;G3.trees=0;return;}   /* calmmap: trees belong to the close view only — none in the far and middle views, thinning in between G3_T_NEAR and G3_CLOSE */
@@ -2018,8 +2109,9 @@ function g3ForestTick(force){const Fo=G3.forest,cc=G3.cc,cam=G3.cam;if(!Fo||!cc|
   const cnt={},pa=B.iP.array,da=B.iD.array,ca=B.iC.array;let n=0;
   for(let ki=0;ki<4;ki++){const nm=G3F_KINDS[ki],P=Fo.pool[nm],D=P.d,TI=G3F_TINT[nm],n0=n,cap=Math.min(G3F_MAX,n+G3F_CAP[nm]);
     for(const [c,dn] of cells){const a=P.st[c],b=P.st[c+1];if(a===b)continue;const th=dn*f*zf;
-      for(let i=a;i<b&&n<cap;i++){const o=i*8;if(D[o+5]>th)continue;const q=n*3,w=n*4;pa[q]=D[o];pa[q+1]=D[o+1];pa[q+2]=D[o+2];da[w]=D[o+3];da[w+1]=.88+D[o+6]*.3;da[w+2]=ki;da[w+3]=0;
-        const t=TI[Math.min(TI.length-1,(D[o+6]*TI.length)|0)],v=.82+D[o+5]*.3+D[o+7]*.05;ca[q]=t[0]*v;ca[q+1]=t[1]*v;ca[q+2]=t[2]*v;n++;}
+      for(let i=a;i<b&&n<cap;i++){const o=i*8;if(D[o+5]>th)continue;const q=n*3,w=n*4;pa[q]=D[o];pa[q+1]=D[o+1];pa[q+2]=D[o+2];const e=D[o+6],cl=e|0,h=e-cl,ed=D[o+7]<G3F_EDGE;   /* thin cover (forest edge) = single small trees, thick cover = groves */
+        da[w]=D[o+3]*(ed?.85:1);da[w+1]=.88+h*.3;da[w+2]=ki;da[w+3]=ed?0:1+((h*977)%3|0);
+        const t=TI[cl],v=.84+D[o+5]*.26,hu=h-.5;ca[q]=t[0]*v*(1+hu*.22);ca[q+1]=t[1]*v;ca[q+2]=t[2]*v*(1-hu*.16);n++;}
       if(n>=cap)break;}
     cnt[nm]=n-n0;}
   for(const [A,k] of [[B.iP,3],[B.iD,4],[B.iC,3]]){A.clearUpdateRanges();A.addUpdateRange(0,n*k);A.needsUpdate=true;}B.g.instanceCount=n;const tot=n;
@@ -2047,10 +2139,10 @@ function g3CatRom(q,closed,n){if(q.length<3)return q;const m=q.length,out=[q[0]]
     if(k===n){out.push(p2);continue;}
     out.push([.5*((2*p1[0])+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)]);}}
   return out;}
-function g3Chains(kind){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls,W1=W+1,E=[];   // E: [nodeA,nodeB,i,j]
+function g3Chains(kind){const F=G3.F,fine=kind==='land'&&F.fm&&F.FW===GU_RW,W=fine?F.FW:F.W,H=fine?F.FH:F.H,idx=fine?guCols():F.idx,P=GCM.P,Ls=F.Ls,fm=F.fm,SC=2400/W,W1=W+1,E=[];   // mapcoast: land borders are traced on the full 2400 raster and only where the drawn coast says land   // E: [nodeA,nodeB,i,j]
   for(let y=0;y<H-1;y++)for(let x=0;x<W-1;x++){const k=y*W+x,i=idx[k];
     for(let q=0;q<2;q++){const nb=q?k+W:k+1,j=idx[nb];if(j===i)continue;
-      if(kind==='land'){if(!P[i].land||!P[j].land||Ls[k]<.5||Ls[nb]<.5)continue;}else{if(!P[i].sea||!P[j].sea||Ls[k]>.3||Ls[nb]>.3)continue;}
+      if(kind==='land'){if(!P[i].land||!P[j].land||(fine?!fm[k]||!fm[nb]:Ls[k]<.5||Ls[nb]<.5))continue;}else{if(!P[i].sea||!P[j].sea||Ls[k]>.3||Ls[nb]>.3)continue;}
       E.push(q?[(y+1)*W1+x,(y+1)*W1+x+1,i,j]:[y*W1+x+1,(y+1)*W1+x+1,i,j]);}}
   const adj=new Map();E.forEach((e,n)=>{for(const c of [e[0],e[1]]){let a=adj.get(c);if(!a)adj.set(c,a=[]);a.push(n);}});
   const key=e=>Math.min(e[2],e[3])*4096+Math.max(e[2],e[3]),used=new Uint8Array(E.length),out=[];
@@ -2058,9 +2150,9 @@ function g3Chains(kind){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls,W1=W+
   const walk=(c0,n0)=>{const pts=[c0],e0=E[n0];let n=n0,c=c0;for(;;){used[n]=1;const e=E[n];c=e[0]===c?e[1]:e[0];pts.push(c);if(stop(c))break;const a=adj.get(c),nn=a[0]===n?a[1]:a[0];if(used[nn])break;n=nn;}return {pts,i:e0[2],j:e0[3]};};
   for(const [c,a] of adj)if(stop(c))for(const n of a)if(!used[n])out.push(walk(c,n));
   for(let n=0;n<E.length;n++)if(!used[n])out.push(walk(E[n][0],n));
-  for(const ch of out){let q=ch.pts.map(c=>[(c%W1)*2,Math.floor(c/W1)*2]);const closed=ch.pts[0]===ch.pts[ch.pts.length-1];
+  for(const ch of out){let q=ch.pts.map(c=>[(c%W1)*SC,Math.floor(c/W1)*SC]);const closed=ch.pts[0]===ch.pts[ch.pts.length-1];
     for(let pass=0;pass<3;pass++){const r=q.map((p,a)=>{if(!closed&&(a<2||a>q.length-3))return p;let sx=0,sz=0;for(let d=-2;d<=2;d++){const t=q[(a+d+q.length-1)%(q.length-(closed?1:0)||1)]||q[Math.max(0,Math.min(q.length-1,a+d))];sx+=t[0];sz+=t[1];}return [sx/5,sz/5];});if(closed)r[r.length-1]=r[0];q=r;}
-    const dec=q.filter((p,a)=>a%3===0||a===q.length-1);ch.xy=g3CatRom(dec,closed,3);}
+    const dec=q.filter((p,a)=>a%(fine?4:3)===0||a===q.length-1);ch.xy=g3CatRom(dec,closed,fine?2:3);}
   return out;}
 function g3RiverChains(){const out=[],Ls=G3.F.Ls,W=G3.F.W;for(const l of GT_RIV){let q=[];for(let i=0;i+1<l.length;i+=2)q.push([l[i],l[i+1]]);
     for(let it=0;it<2;it++){const r=[q[0]];for(let a=0;a<q.length-1;a++){const A=q[a],B=q[a+1];r.push([A[0]*.75+B[0]*.25,A[1]*.75+B[1]*.25],[A[0]*.25+B[0]*.75,A[1]*.25+B[1]*.75]);}r.push(q[q.length-1]);q=r;}
@@ -2088,8 +2180,8 @@ function g3SetLine(mesh,ch,r,g,b,a,wpx,wwd){const A=mesh.geometry.attributes,Co=
 function g3LineColors(){const L=G3.lines;if(!L||!GC)return;const pol=G3.mode==='political';
   for(const ch of L.land){const fr=GC.prov[ch.i].o!==GC.prov[ch.j].o;
     if(fr){const oc=pol?grNatRgb(GC.prov[ch.i].o):[60,60,60],oc2=pol?grNatRgb(GC.prov[ch.j].o):[60,60,60];
-      g3SetLine(L.land_m,ch,.09+oc[0]/255*.2,.09+oc[1]/255*.2,.09+oc[2]/255*.2,.95,2.1,0);g3SetLine(L.cas_m,ch,.99,.97,.9,.28,5.2,0);}
-    else{g3SetLine(L.land_m,ch,.12,.11,.1,.7,1.5,0);g3SetLine(L.cas_m,ch,1,1,1,0,1,0);}}
+      g3SetLine(L.land_m,ch,.09+oc[0]/255*.2,.09+oc[1]/255*.2,.09+oc[2]/255*.2,.92,1.9,0);g3SetLine(L.cas_m,ch,.99,.97,.9,.22,4.4,0);}
+    else{g3SetLine(L.land_m,ch,.12,.11,.1,.4,1.,0);g3SetLine(L.cas_m,ch,1,1,1,0,1,0);}}
   L.land_m.geometry.attributes.aCol.needsUpdate=L.land_m.geometry.attributes.aW.needsUpdate=true;L.cas_m.geometry.attributes.aCol.needsUpdate=L.cas_m.geometry.attributes.aW.needsUpdate=true;}
 function g3BuildLines(sc){const L={};G3.LU={uRes:{value:new THREE.Vector2(1600,900)},uPx:{value:1}};
   L.land=g3Chains('land');L.sea=g3Chains('sea');L.riv=g3RiverChains();
@@ -2108,14 +2200,13 @@ function g3NoiseTex(){const n=128,d=new Uint8Array(n*n*4);for(let y=0;y<n;y++)fo
   const t=new THREE.DataTexture(d,n,n);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.generateMipmaps=true;t.needsUpdate=true;return t;}
 function g3Tex(data,w,h,mip,nearest){const t=new THREE.DataTexture(data,w,h,THREE.RGBAFormat);t.flipY=false;t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;
   if(nearest){t.minFilter=t.magFilter=THREE.NearestFilter;t.generateMipmaps=false;}else{t.magFilter=THREE.LinearFilter;t.minFilter=mip?THREE.LinearMipmapLinearFilter:THREE.LinearFilter;t.generateMipmaps=!!mip;t.anisotropy=G3.aniso||8;}t.needsUpdate=true;return t;}
-// gsea: signed distance to the coastline (land = Ls>=.5), two-pass chamfer on the 1200x600 field, baked once at load.
-// byte = 127.5 + signed texels*3.2 (sea +, land -; first texel each side = +-.5; saturates at 40 texels) -> linear filtering makes it a smooth SDF crossing 0 on the coast.
-function g3CoastDist(Ls,W,H){const N=W*H,I=1e9,ds=new Float32Array(N),dl=new Float32Array(N),out=new Uint8Array(N);
-  for(let k=0;k<N;k++){const l=Ls[k]>=.5;ds[k]=l?0:I;dl[k]=l?I:0;}
-  const pass=d=>{const a=1,b=1.4142;for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x;let v=d[k];if(x>0)v=Math.min(v,d[k-1]+a);if(y>0){v=Math.min(v,d[k-W]+a);if(x>0)v=Math.min(v,d[k-W-1]+b);if(x<W-1)v=Math.min(v,d[k-W+1]+b);}d[k]=v;}
-    for(let y=H-1;y>=0;y--)for(let x=W-1;x>=0;x--){const k=y*W+x;let v=d[k];if(x<W-1)v=Math.min(v,d[k+1]+a);if(y<H-1){v=Math.min(v,d[k+W]+a);if(x<W-1)v=Math.min(v,d[k+W+1]+b);if(x>0)v=Math.min(v,d[k+W-1]+b);}d[k]=v;}};
-  pass(ds);pass(dl);
-  for(let k=0;k<N;k++){const sea=ds[k]>0,v=127.5+(sea?ds[k]-.5:.5-dl[k])*3.2;out[k]=Math.max(0,Math.min(255,Math.round(v)));}return out;}
+// gsea/mapcoast: signed distance to the true coastline (the fine land mask F.fm), one two-sweep chamfer on the 2400x1200 raster, baked once at load.
+// byte = 127.5 + signed fine pixels*1.6 (sea +, land -; first pixel each side = +-.5; saturates at 80 pixels) -> the shaders read it as "coarse texels" (/3.2) as before.
+function g3CoastDist(fm,W,H){const N=W*H,d=new Float32Array(N).fill(1e9),out=new Uint8Array(N),a=1,b=1.4142;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,v=fm[k];if((x>0&&fm[k-1]!==v)||(x<W-1&&fm[k+1]!==v)||(y>0&&fm[k-W]!==v)||(y<H-1&&fm[k+W]!==v))d[k]=.5;}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x;let v=d[k];if(x>0&&d[k-1]+a<v)v=d[k-1]+a;if(y>0){if(d[k-W]+a<v)v=d[k-W]+a;if(x>0&&d[k-W-1]+b<v)v=d[k-W-1]+b;if(x<W-1&&d[k-W+1]+b<v)v=d[k-W+1]+b;}d[k]=v;}
+  for(let y=H-1;y>=0;y--)for(let x=W-1;x>=0;x--){const k=y*W+x;let v=d[k];if(x<W-1&&d[k+1]+a<v)v=d[k+1]+a;if(y<H-1){if(d[k+W]+a<v)v=d[k+W]+a;if(x<W-1&&d[k+W+1]+b<v)v=d[k+W+1]+b;if(x>0&&d[k+W-1]+b<v)v=d[k+W-1]+b;}d[k]=v;}
+  for(let k=0;k<N;k++){const v=127.5+(fm[k]?-d[k]:d[k])*1.6;out[k]=v<0?0:v>255?255:Math.round(v);}return out;}
 const G3_DETAIL=`vec3 g3detail(vec3 c){vec2 wp=vWp.xz;vec4 bw=texture2D(uBW,vG3);float rock=bw.r,snow=bw.g,sand=bw.b,veg=bw.a,ls=texture2D(uSea,vG3).g;
   vec2 p1=wp/20.,p2=wp/91.+.37,p3=wp/540.+.11;vec4 a1=texture2D(uDet,p1),a2=texture2D(uDet,p2),a3=texture2D(uDet,p3);
   float e=1./512.;vec2 L=vec2(-.84,-.54);
@@ -2127,7 +2218,7 @@ const G3_DETAIL=`vec3 g3detail(vec3 c){vec2 wp=vWp.xz;vec4 bw=texture2D(uBW,vG3)
   c*=clamp(lum*(1.-clamp(sl,-.45,.45)),.45,1.6);
   c=mix(c,c*vec3(.82,1.06,.76),veg*(a2.r-.3)*1.2);c=mix(c,c*vec3(1.1,.98,.84),(a3.g-.5)*.9*(1.-snow));                        // patchy field / grass tint
   {float dL=-(texture2D(uSea,vG3).a*255.-127.5)/3.2;   // gsea: bright sand beach band on every coast (dL = texels inland), wet sand at the waterline
-   float bch=(1.-smoothstep(.45,1.3,dL+(a2.r-.5)*.5))*(1.-rock*.8)*(1.-snow);vec3 sc_=vec3(.95,.86,.66)*(.88+.24*a1.b+.1*(a3.r-.5));c=mix(c,sc_,bch*.88);
+   float bch=(1.-smoothstep(.12,.55,dL+(a2.r-.5)*.2))*(1.-rock*.8)*(1.-snow);vec3 sc_=vec3(.95,.86,.66)*(.88+.24*a1.b+.1*(a3.r-.5));c=mix(c,sc_,bch*.88);
    float wet=1.-smoothstep(-.1,.25,dL);c*=1.-.16*wet*bch;}
   return c;}`;
 function g3FlagUrl(o){G3.fu=G3.fu||new Map();let u=G3.fu.get(o);if(u!==undefined)return u;try{const n=grNat(o),im=n.major&&typeof esFlag==='function'?esFlag(o):null;if(im&&im.complete===false)return '';const c=(n.major&&typeof esFlagEl==='function')?esFlagEl(o,28,28):null;if(c)u=c.toDataURL();else{const k=document.createElement('canvas');k.width=k.height=32;const x=k.getContext('2d');x.fillStyle=n.color||'#888';x.fillRect(0,0,32,32);x.fillStyle='rgba(255,255,255,.9)';x.font='bold 13px Georgia';x.textAlign='center';x.fillText(String(o).slice(0,2),16,21);u=k.toDataURL();}}catch(e){u='';}G3.fu.set(o,u);return u;}   /* one cached flag image per nation for nameplates */
@@ -2138,14 +2229,16 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
   try{G3.vigS=new THREE.Scene();G3.vigC=new THREE.OrthographicCamera(-1,1,1,-1,0,1);G3.vigS.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.ShaderMaterial({uniforms:(G3.vigU={uN:{value:0}}),transparent:true,depthTest:false,depthWrite:false,vertexShader:'varying vec2 u;void main(){u=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:'uniform float uN;varying vec2 u;void main(){vec2 d=(u-vec2(.5,.52))*vec2(1.,.9);float v=smoothstep(.34,.82,length(d));vec3 c=mix(vec3(1.,.88,.66),vec3(.1,.18,.4),1.-u.y);vec4 g=vec4(mix(c,vec3(.02,.05,.1),v),v*.46+.055);float a=g.a+uN*.36;gl_FragColor=vec4(mix(g.rgb,vec3(.03,.06,.16),uN*.36/max(a,.001)),a);}'})));}catch(e){G3.vigS=null;}  // studio grade: vignette + warm-top/cool-bottom wash, drawn in-canvas so HUD stays crisp
   if(!R.getContext())return false;R.outputColorSpace=THREE.LinearSRGBColorSpace;G3.R=R;G3.cv=cv;G3.aniso=Math.min(16,R.capabilities.getMaxAnisotropy?R.capabilities.getMaxAnisotropy():8);
   const F=g3Fields(),W=F.W,H=F.H,sc=new THREE.Scene(),haze=0x9db8c9;sc.background=new THREE.Color(haze);sc.fog=new THREE.Fog(haze,2200,6200);G3.sc=sc;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.02;g3Sky(sc);
-  G3.cam=new THREE.PerspectiveCamera(36,1.6,8,9000);G3.cc=Object.assign({},G3.camera);G3.time=0;G3.last=0;G3.keys.clear();G3.pos=new Map();G3.arm=new Map();G3.sig='';G3.batG=null;G3.bat=null;
+  G3.cam=new THREE.PerspectiveCamera(36,1.6,8,9000);G3.cc=Object.assign({},G3.camera);G3.time=0;G3.last=0;G3.keys.clear();G3.pos=new Map();G3.arm=new Map();G3.sig='';G3.batG=null;G3.bat=null;G3.tok=null;
   sc.add(new THREE.HemisphereLight(0xcfe0f2,0x8a7a5e,2.0));const sun=new THREE.DirectionalLight(0xfff0d2,3.5);sun.position.set(G3L.sun[0],G3L.sun[1],G3L.sun[2]);sc.add(sun);
   G3.matLit=new THREE.MeshLambertMaterial({vertexColors:true});
   // terrain
   g3PaintOverlay();
   const tGround=g3Tex(new Uint8Array(F.px.buffer),F.PW||W,F.PH||H,true),tOv=g3Tex(G3.ov,W,H,true),tIdx=g3Tex(g3IdxPixels(),W,H,false,true),tDet=g3DetailTex(),tBW=g3Tex(F.bw,W,H,true);tDet.anisotropy=G3.aniso||8;G3.tOv=tOv;
-  const G3cd=F.cd||(F.cd=g3CoastDist(F.Ls,W,H));   /* gsea: signed distance to the coast, baked once per field set (alpha of uSea) */
-  const sd=new Uint8Array(W*H*4);for(let k=0;k<W*H;k++){sd[k*4]=Math.min(255,F.Lw[k]*255);sd[k*4+1]=Math.min(255,F.Ls[k]*255);sd[k*4+2]=Math.round(255*g3SeaDepth(F,k));sd[k*4+3]=G3cd[k];}const tSea=g3Tex(sd,W,H,false);const tLit=F.lit?g3Tex(F.lit,F.LW,F.LH,true):null;
+  const FW=F.FW,FH=F.FH,G3cd=F.cd||(F.cd=g3CoastDist(F.fm,FW,FH));   /* gsea: signed distance to the coast, baked once per field set (alpha of uSea) */
+  /* mapcoast: uSea is the one 2400x1200 shore texture - r wide land blur, g the fine land mask (lightly smoothed), b water depth, a coast distance */
+  const sd=new Uint8Array(FW*FH*4);{const fx=Math.round(FW/W),E=G3.real&&G3.real.EW===FW&&G3.real.EH===FH?G3.real.E:null,Lw=F.Lw,fs=F.fs;for(let y=0;y<FH;y++){const cy=Math.min(H-1,(y/fx)|0)*W;for(let x=0;x<FW;x++){const k=y*FW+x,c=cy+Math.min(W-1,(x/fx)|0),o=k*4;
+    sd[o]=Math.min(255,Lw[c]*255);sd[o+1]=fs[k];sd[o+2]=E?Math.max(0,Math.min(255,-E[k]*(255/3800))):Math.round(255*g3SeaDepth(F,c));sd[o+3]=G3cd[k];}}}const tSea=g3Tex(sd,FW,FH,true);const tLit=F.lit?g3Tex(F.lit,F.LW,F.LH,true):null;
   const tHi=G3.hi?g3Tex(new Uint8Array(G3.hi.d.buffer),G3.hi.w,G3.hi.h,true):null;if(tHi)tHi.anisotropy=G3.aniso||8;
   const U={uHi:{value:tHi},uHasHi:{value:tHi?1:0},uHiR:{value:new THREE.Vector4(...(G3.hi?G3.hi.r:[0,0,1,1]))},uOv:{value:tOv},uIdx:{value:tIdx},uDet:{value:tDet},uSel:{value:-1},uHov:{value:-1},uRim:{value:2},uTime:{value:0},uSea:{value:tSea},uBW:{value:tBW},uLit:{value:tLit},uHasLit:{value:tLit?1:0},uOvK:{value:1}};G3.U=U;
   const rim=`float g3id(vec2 u){vec4 t=texture2D(uIdx,u);return floor(t.r*255.+.5)+256.*floor(t.g*255.+.5);}
@@ -2161,7 +2254,8 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
     s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vG3;varying vec3 vWp;').replace('#include <uv_vertex>','#include <uv_vertex>\nvG3=uv;vWp=(modelMatrix*vec4(position,1.)).xyz;');
     s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vG3;varying vec3 vWp;uniform sampler2D uOv,uIdx,uDet,uBW,uSea,uLit,uHi;uniform vec4 uHiR;uniform float uSel,uHov,uRim,uHasLit,uHasHi,uOvK;float g3sh=1.,g3ao=1.;uniform float uTime;\n'+G3_CLOUD+rim+G3_DETAIL)
       .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n if(uHasLit>.5){vec4 L=texture2D(uLit,vG3);vec3 nw=normalize(vec3((L.r-.5)*4.,1.,(L.g-.5)*4.));normal=normalize((viewMatrix*vec4(nw,0.)).xyz);g3sh=L.b;g3ao=L.a*1.08;}').replace('#include <lights_fragment_end>','#include <lights_fragment_end>\n reflectedLight.directDiffuse*=g3sh*g3cloud(vWp.xz,uTime);reflectedLight.indirectDiffuse*=g3ao;')
-      .replace('#include <map_fragment>','#include <map_fragment>\n if(uHasHi>.5){vec2 hu=(vG3-uHiR.xy)/uHiR.zw;float hm_=smoothstep(0.,.02,hu.x)*smoothstep(0.,.02,1.-hu.x)*smoothstep(0.,.02,hu.y)*smoothstep(0.,.02,1.-hu.y);if(hm_>0.)diffuseColor.rgb=mix(diffuseColor.rgb,texture2D(uHi,clamp(hu,0.,1.)).rgb,hm_);}\n diffuseColor.rgb=g3detail(diffuseColor.rgb);vec4 ov=texture2D(uOv,vG3);diffuseColor.rgb=mix(diffuseColor.rgb,ov.rgb,min(.85,ov.a*uOvK));diffuseColor.rgb=g3rim(diffuseColor.rgb,vG3);');};
+      .replace('#include <map_fragment>','#include <map_fragment>\n if(uHasHi>.5){vec2 hu=(vG3-uHiR.xy)/uHiR.zw;float hm_=smoothstep(0.,.02,hu.x)*smoothstep(0.,.02,1.-hu.x)*smoothstep(0.,.02,hu.y)*smoothstep(0.,.02,1.-hu.y);if(hm_>0.)diffuseColor.rgb=mix(diffuseColor.rgb,texture2D(uHi,clamp(hu,0.,1.)).rgb,hm_);}\n diffuseColor.rgb=g3detail(diffuseColor.rgb);vec4 ov=texture2D(uOv,vG3);diffuseColor.rgb=mix(diffuseColor.rgb,ov.rgb,min(.85,ov.a*uOvK));diffuseColor.rgb=g3rim(diffuseColor.rgb,vG3);\n {float lm=texture2D(uSea,vG3).g,aw=clamp(fwidth(lm),.004,.14);diffuseColor.a=smoothstep('+G3_SHORE+'-aw,'+G3_SHORE+'+aw,lm);if(diffuseColor.a<.004)discard;diffuseColor.rgb*=1.-.42*(1.-smoothstep('+G3_SHORE+'+aw,'+G3_SHORE+'+aw*3.2,lm));}');};   /* mapcoast: land or sea is decided per pixel from the fine mask (anti-aliased edge, one thin dark shoreline) */
+  tm.alphaToCoverage=true;
   g3TerrInit(sc,tm);
   // sea
   const sm=new THREE.ShaderMaterial({uniforms:U,transparent:false,vertexShader:'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
@@ -2172,7 +2266,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
       vec2 p=vW.xz;float w=sin(p.x*.31+uTime*1.1)+sin(p.y*.47-uTime*.8)+sin((p.x+p.y)*.19+uTime*.6)+sin((p.x-p.y)*.63-uTime*1.3)*.5;c*=1.+w*.028*(1.-smoothstep(500.,2400.,length(cameraPosition-vW)));{float nz=sin(p.x*.0093+sin(p.y*.0141)*1.9)*sin(p.y*.0117+cos(p.x*.0087)*1.7)+.5*sin(p.x*.021+p.y*.017+2.);c=mix(c,c*vec3(.82,.96,1.12),clamp(nz*.5+.15,0.,1.)*smoothstep(.25,.6,dp)*.55);c*=1.+nz*.05*smoothstep(.3,.7,dp);}
       float dT=max(0.,(s.a*255.-127.5)/3.2)+max(oo,0.)*4000.;   // gsea: texels from the coast (baked SDF) -> turquoise shallows fading to deep blue
       float nz2=sin(p.x*.23+sin(p.y*.19)*2.)*sin(p.y*.21+cos(p.x*.17)*2.),dj=dT+nz2*.12;
-      {vec3 turq=mix(vec3(.2,.7,.68),vec3(.05,.4,.55),smoothstep(.1,3.,dj));float sh_=(1.-smoothstep(.5,5.,dj))*(1.-.6*smoothstep(.015,.12,dp));c=mix(c,turq*(1.+w*.03),sh_*.8);}
+      {vec3 turq=mix(vec3(.2,.7,.68),vec3(.05,.4,.55),smoothstep(.1,3.,dj));float sh_=(1.-smoothstep(.3,2.8,dj))*(1.-.6*smoothstep(.015,.12,dp));c=mix(c,turq*(1.+w*.03),sh_*.8);}
       vec3 V=normalize(cameraPosition-vW);vec3 N=normalize(vec3(cos(p.x*.31+uTime*1.1)*.05+cos((p.x-p.y)*.63-uTime*1.3)*.03,1.,cos(p.y*.47-uTime*.8)*.05+cos((p.x+p.y)*.19+uTime*.6)*.03));
       N=normalize(N+vec3(sin(p.x*1.7+uTime*2.1)*cos(p.y*1.3-uTime*1.7),0.,cos(p.x*1.1-uTime*1.9)*sin(p.y*1.9+uTime*1.4))*.022*(1.-smoothstep(300.,1400.,length(cameraPosition-vW))));
       float fdd=length(cameraPosition-vW);
@@ -2189,10 +2283,10 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
       float cap=smoothstep(.72,.95,cr)*smoothstep(.25,.6,dp)*(.55+.45*sin(p.x*.9+p.y*1.3+uTime*.7))*(.35+.65*wfade);c=mix(c,vec3(.93,.97,1.),clamp(cap*.5,0.,.55));
       float fw=fwidth(s.g)+.004;
       {   // gsea: sandy lagoon edge + rolling foam ring hugging every coast and island
-       float ring=1.-smoothstep(.12,.85,dj);float bands=smoothstep(.55,.95,sin(dj*10.-uTime*1.5+nz2*1.4))*ring;float brk=.5+.5*sin(p.x*.7+p.y*.9+uTime*.4+nz2*3.);
-       float fo=clamp(bands*brk*.7+(1.-smoothstep(.0,.22,dj))*.75,0.,1.);c=mix(c,vec3(.95,.98,1.),fo*(.6+.4*(1.-smoothstep(600.,2400.,fdd))));}
-      float crest=1.-smoothstep(fw*.6,fw*1.8,abs(s.g-(.52+.02*sin(uTime*.9+p.x*.2+p.y*.17))));c=mix(c,vec3(.96,.99,1.),crest*.8);   // crisp shoreline foam line, constant width on screen
-      if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){vec4 ov=texture2D(uOv,cu);c=mix(c,ov.rgb,ov.a*.55);c=g3rimS(c,cu);}
+       float ring=1.-smoothstep(.1,.6,dj);float bands=smoothstep(.55,.95,sin(dj*10.-uTime*1.5+nz2*1.4))*ring;float brk=.5+.5*sin(p.x*.7+p.y*.9+uTime*.4+nz2*3.);
+       float fo=clamp(bands*brk*.6+(1.-smoothstep(.0,.18,dj))*.6,0.,1.);c=mix(c,vec3(.95,.98,1.),fo*(.6+.4*(1.-smoothstep(600.,2400.,fdd))));}
+      float crest=1.-smoothstep(fw*.6,fw*1.8,abs(s.g-(${(G3_SHORE-.05).toFixed(3)}+.015*sin(uTime*.9+p.x*.2+p.y*.17))));c=mix(c,vec3(.96,.99,1.),crest*.8);   // crisp shoreline foam line, constant width on screen
+      if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){c=g3rimS(c,cu);}
       float dist=length(cameraPosition-vW);c*=mix(g3cloud(vW.xz,uTime),1.,smoothstep(1500.,4200.,dist));c=mix(c,vec3(.616,.722,.788),smoothstep(2200.,6200.,dist));gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
   const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);g3BuildRoads(sc);
   const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);g3BuildChim(grp);g3BuildLights(grp);G3.static=grp;
@@ -2201,9 +2295,9 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
   g3UI();G3.miniDirty=true;g3ApplyQuality();try{cv.style.filter='contrast(1.06) saturate(1.18)';const w=document.getElementById('gMapWrap');if(w&&!document.getElementById('g3vig')){const v=document.createElement('div');v.id='g3vig';v.style.cssText='position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 58%,rgba(4,10,18,.34) 100%)';w.insertBefore(v,cv.nextSibling);}}catch(e){}
   if(!G3.raf)G3.raf=requestAnimationFrame(g3Frame);return true;}
 function g3Dispose(){if(G3.raf){cancelAnimationFrame(G3.raf);G3.raf=0;}if(G3.sc){G3.sc.traverse(o=>{if(o.geometry&&o.geometry!==undefined&&!Object.values(G3.geo||{}).includes(o.geometry))o.geometry.dispose();});}
-  if(G3.R){try{G3.R.dispose();G3.R.forceContextLoss();}catch(e){}}G3.R=null;G3.sc=null;G3.cam=null;G3.cv=null;G3.arm=new Map();G3.batG=null;G3.bat=null;G3.matLit=null;G3.tOv=null;}
+  if(G3.R){try{G3.R.dispose();G3.R.forceContextLoss();}catch(e){}}G3.R=null;G3.sc=null;G3.cam=null;G3.cv=null;G3.arm=new Map();G3.batG=null;G3.bat=null;G3.tok=null;G3.matLit=null;G3.tOv=null;}
 function g3Resize(){if(!G3.R||!GV.cv)return;const w=GV.w||GV.cv.clientWidth||800,h=GV.h||GV.cv.clientHeight||500;G3.R.setSize(w,h,false);if(G3.LU){const b=G3.R.getDrawingBufferSize(new THREE.Vector2());G3.LU.uRes.value.copy(b);G3.LU.uPx.value=G3.R.getPixelRatio();}GV.cv.style.width=w+'px';GV.cv.style.height=h+'px';G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.moved=true;}
-// ---- armies: one soldier (the general) with a big national flag; a ship with a flag for armies at sea
+// ---- armies: ONE round token per army (Army Standards, src/13e3-gtokens.js). G3.arm keeps where each army stands (x, y, z) and its small on-land figure, which g3Batch draws in the close view only (and for the selected army)
 function g3Uniform(o){const c=grNatRgb(o);return [Math.min(1,(c[0]*.72+44)/255),Math.min(1,(c[1]*.72+42)/255),Math.min(1,(c[2]*.68+34)/255)];}
 function g3Tier(n){return n<5?0:n<12?1:2;}
 function g3FlagMat(tex,inst){const m=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}),mx=inst?'instanceMatrix[3].x':'modelMatrix[3].x';
@@ -2218,48 +2312,53 @@ function g3FlagMesh(o,sx){const fac=grNat(o).fac,tex=flagTex(fac),m=new THREE.Me
 function g3PoolMesh(map,key,geo,mat,lst,col){let p=map.get(key);if(!p){p={im:null,cap:0,n:0,geo,mat};map.set(key,p);}
   if(p.n>=p.cap){const old=p.im;p.cap=Math.max(16,p.cap*2);p.im=new THREE.InstancedMesh(p.geo,p.mat,p.cap);p.im.frustumCulled=false;p.im.count=0;if(col){p.im.setColorAt(0,col);}if(old){p.im.instanceMatrix.array.set(old.instanceMatrix.array);if(old.instanceColor)p.im.instanceColor.array.set(old.instanceColor.array);G3.batG.remove(old);old.dispose();}G3.batG.add(p.im);}
   if(col)p.im.setColorAt(p.n,col);p.im.setMatrixAt(p.n++,lst);}
-/* far zoom: one generic token per size (tinted per nation by instance colour) so 300 armies need ~5 body draws, not one per nation */
-function g3FarGeo(tier,sea){G3.farG=G3.farG||{};const k=tier+(sea?'s':'');if(G3.farG[k])return G3.farG[k];const R=sea?5:(tier>=2?5.2:tier>=1?4.4:3.2),a=sea?new THREE.BoxGeometry(R*1.9,2.6,R*.8).translate(0,1.8,0):new THREE.CylinderGeometry(R*.9,R,1.1,10).translate(0,.55,0),b=sea?new THREE.BoxGeometry(R*.7,2.4,R*.5).translate(-R*.2,4,0):new THREE.ConeGeometry(R*.62,8+tier*1.5,8).translate(0,1.1+(8+tier*1.5)/2,0);
-  const pl=new THREE.CylinderGeometry(.22,.28,22,5).translate(R*.62,11,-R*.42);const g=g3MergeCol([a,b,pl].map(q=>{q=q.index?q.toNonIndexed():q;const n=q.attributes.position.count,c=new Float32Array(n*3).fill(1);q.setAttribute('color',new THREE.BufferAttribute(c,3));return q;}));return G3.farG[k]=g;}
-function g3FarCol(o){G3.farC=G3.farC||{};if(!G3.farC[o]){const c=typeof grNatRgb==='function'?grNatRgb(o):[90,100,60];G3.farC[o]=new THREE.Color(Math.min(1,c[0]/255*1.25+.06),Math.min(1,c[1]/255*1.25+.06),Math.min(1,c[2]/255*1.25+.06));}return G3.farC[o];}
 function g3Batch(){if(!G3.ents||!G3.sc)return;if(!G3.batG){G3.batG=new THREE.Group();G3.sc.add(G3.batG);G3.bat={b:new Map(),f:new Map(),w:new Map()};}
   for(const m of [G3.bat.b,G3.bat.f,G3.bat.w])for(const p of m.values())p.n=0;
-  G3.ents.updateMatrixWorld(true);const far=G3.cc&&G3.cc.d>1400;
-  for(const e of G3.arm.values()){if(!e.g.visible||(G3.tier<2&&g3FarHide(e.o,e.aid,G3.tier)))continue;const c=e.g.children,bd=c[0];let fl=null,wk=null,sh=null;for(let i=1;i<c.length;i++){if(c[i].userData.wk)wk=c[i];else if(c[i].userData.sh)sh=c[i];else fl=c[i];}
-    if(far||(!e.sea&&e.o!==GC.me&&e.aid!==GV.selA&&G3.cc&&G3.cc.d>650)){const fg=g3FarGeo(e.tier,e.sea);g3PoolMesh(G3.bat.b,'far'+fg.uuid,fg,bd.material,bd.matrixWorld,g3FarCol(e.o));}else g3PoolMesh(G3.bat.b,bd.geometry.uuid,bd.geometry,bd.material,bd.matrixWorld);
-    if(fl&&fl.visible&&(G3.tier!==0||e.aid===GV.selA))g3PoolMesh(G3.bat.f,fl.material.map.uuid,fl.geometry,G3.bat.fm&&G3.bat.fm.get(fl.material.map.uuid)||g3FlagInstMat(fl.material.map),fl.matrixWorld);
+  G3.ents.updateMatrixWorld(true);
+  /* armytokens: far and middle view = tokens only (13e3-gtokens.js). The small on-land figures are drawn in the close view, and for the selected army; a flag only on the selected army */
+  for(const e of G3.arm.values()){const sel=e.aid===GV.selA;if(!e.g.visible||e.seen===false||!(G3.tier===2||sel))continue;const c=e.g.children,bd=c[0];let fl=null,wk=null,sh=null;for(let i=1;i<c.length;i++){if(c[i].userData.wk)wk=c[i];else if(c[i].userData.sh)sh=c[i];else fl=c[i];}
+    g3PoolMesh(G3.bat.b,bd.geometry.uuid,bd.geometry,bd.material,bd.matrixWorld);
+    if(fl&&fl.visible&&sel)g3PoolMesh(G3.bat.f,fl.material.map.uuid,fl.geometry,G3.bat.fm&&G3.bat.fm.get(fl.material.map.uuid)||g3FlagInstMat(fl.material.map),fl.matrixWorld);
     if(wk)g3PoolMesh(G3.bat.w,'w',wk.geometry,wk.material,wk.matrixWorld);if(sh)g3PoolMesh(G3.bat.w,'sh',sh.geometry,sh.material,sh.matrixWorld);}
   for(const m of [G3.bat.b,G3.bat.f,G3.bat.w])for(const p of m.values())if(p.im){p.im.count=p.n;p.im.instanceMatrix.needsUpdate=true;}}
-/* calmmap: in the far view only your armies, armies at war with you and the selected army are on the map (no figure, no badge, no click target for the rest);
-   in the middle view your allies' figures join them and everyone else is a small faint badge only (still clickable); close view = every army's figure */
-function g3FarHide(o,aid,tier){return !!GC.me&&o!==GC.me&&aid!==GV.selA&&!grAtWar(GC.me,o)&&!(tier===1&&typeof grAllied==='function'&&grAllied(GC.me,o));}
 function g3FlagInstMat(tex){const M=G3.bat.fm||(G3.bat.fm=new Map());let m=M.get(tex.uuid);if(!m){m=g3FlagMat(tex,true);M.set(tex.uuid,m);}return m;}
 function g3ShadowMesh(r){if(!G3.shG){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,2,32,32,31);gr.addColorStop(0,'rgba(0,0,0,.55)');gr.addColorStop(.6,'rgba(0,0,0,.3)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);G3.shG=new THREE.PlaneGeometry(2,2).rotateX(-Math.PI/2).translate(0,.2,0);G3.shM=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false});}const m=new THREE.Mesh(G3.shG,G3.shM);m.scale.setScalar(r);return m;}
-function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea,tier=g3Tier(a.u.length),mg=sea?g3NavyGeo(a.o):g3MiniGeo(a.o,tier);   /* grandlook: baked soldier/ship miniature when the models are loaded */
+function g3Ent(a){let e=G3.arm.get(a.id);const sea=g3Afloat(a.at),tier=g3Tier(a.u.length),mg=sea?g3NavyGeo(a.o):g3MiniGeo(a.o,tier);   /* grandlook: baked soldier/ship miniature when the models are loaded */
   if(e&&e.sea===sea&&e.o===a.o&&(sea||e.tier===tier)&&!!e.mini===!!mg)return e;if(e){G3.ents.remove(e.g);}
   const g=new THREE.Group(),body=new THREE.Mesh(mg||(G3.noGeo||(G3.noGeo=new THREE.BufferGeometry())),(mg&&typeof g3ArmyMat==='function')?g3ArmyMat():G3.matLit),fl=g3FlagMesh(a.o);
   body.scale.setScalar(1);body.visible=false;fl.visible=false;g.add(body);
   if(mg){const R=tier>=2?5.2:tier>=1?4.4:3.2;fl.scale.setScalar(1);if(sea){fl.position.set(-3.4,5.5,0);{const wk=g3WakeMesh();wk.visible=false;wk.userData.wk=1;g.add(wk);}}else{fl.position.set(R*.62+.1,19.9,-R*.42);const sd=g3ShadowMesh(R*1.7);sd.userData.sh=1;sd.visible=false;g.add(fl);g.add(sd);}}
   if(!fl.parent)g.add(fl);
   const old=e;e={g,sea,tier,mini:!!mg,hi:mg,lod:-1,o:a.o,pi:a.at,x:0,z:0,fx:0,fz:0,mv:1,tt:1,face:0,aid:a.id,plate:old?old.plate:null};G3.ents.add(g);G3.arm.set(a.id,e);return e;}
-function g3Anchors(s){const by=new Map();for(const a of GC.armies){if(!by.has(a.at))by.set(a.at,[]);by.get(a.at).push(a);}
-  const out=new Map();for(const [pi,L] of by){L.sort((a,b)=>(b.o===GC.me)-(a.o===GC.me)||a.id-b.id);const p=GCM.P[pi],tw=!p.sea?g3Towns().find(t=>t.pi===pi):null,bx=tw?tw.x:p.x,bz=(tw?tw.z:p.y)+(p.sea?0:(tw&&tw.cap?30:20)*Math.min(1.6,Math.max(1,s*.6)));
-    L.forEach((a,k)=>out.set(a.id,[bx+(k-(L.length-1)/2)*(p.sea?20:13)*s,bz]));}
-  for(const a of GC.armies){const f=typeof grSlide==='function'?grSlide(a):0;if(f>0){const A=out.get(a.id),q=GCM.P[a.path[0]],tw=!q.sea?g3Towns().find(t=>t.pi===q.i):null,bx=tw?tw.x:q.x,bz=tw?tw.z:q.y;out.set(a.id,[A[0]+(bx-A[0])*f,A[1]+(bz-A[1])*f]);}}   /* laneA hook: marching armies slide along the road as days pass */
+/* mapscale: how big a land army's figure is drawn. From the middle view outwards nothing changes; in the close view the whole figure with its flag pole
+   (G3_FIG_H map units tall at scale 1) is no taller than its province's main town is wide (never below G3_FIG_MIN so it stays visible in tiny provinces). */
+const G3_FIG_H=24,G3_FIG_MIN=.14;
+function g3FigBig(s,d){return s*(1+.8*Math.max(0,Math.min(1,(800-d)/400)));}   /* armies3: big hero up close (before the town-size limit) */
+function g3FigScale(pi,s,d){const big=g3FigBig(s,d),tw=g3Main(pi);if(!tw)return big;const cap=Math.max(G3_FIG_MIN,tw.R*2/G3_FIG_H);return cap>=big?big:cap+(big-cap)*g3Smooth(G3_CLOSE,G3_T_TOWN,d);}
+function g3ArmyDir(tw){if(tw.ad)return tw.ad;const off=tw.R+5.5*Math.max(G3_FIG_MIN,tw.R*2/G3_FIG_H);let best=null;   /* which side of its town an army stands on: south if that is land inside the province, else the first side that is */
+  for(const a of [0,-.785,.785,-1.571,1.571,-2.356,2.356,3.1416]){const dx=Math.sin(a),dz=Math.cos(a),x=tw.x+dx*off,z=tw.z+dz*off;if(g3Fits(x,z,0,tw.pi)){best=[dx,dz];break;}}
+  return tw.ad=best||[0,1];}
+function g3Anchors(s){const d=G3.cc?G3.cc.d:900,kb=g3Smooth(G3_CLOSE,G3_T_TOWN,d),by=new Map();for(const a of GC.armies){if(!by.has(a.at))by.set(a.at,[]);by.get(a.at).push(a);}
+  const out=new Map();for(const [pi,L] of by){L.sort((a,b)=>(b.o===GC.me)-(a.o===GC.me)||a.id-b.id);const p=GCM.P[pi],tw=g3Afloat(pi)?null:g3Main(pi),bx=tw?tw.x:p.x,bz=tw?tw.z:p.y;
+    if(!tw){L.forEach((a,k)=>out.set(a.id,[bx+(k-(L.length-1)/2)*20*s,bz]));continue;}
+    /* land armies stand beside their town: a figure's width from its edge in the close view, the old wide spacing from the middle view out — and always on land, never in the sea */
+    const fs=g3FigScale(pi,s,d),dir=g3ArmyDir(tw),far=(tw.cap?30:20)*Math.min(1.6,Math.max(1,s*.6)),near=tw.R+5.5*fs,off=near+(far-near)*kb,gap=13*s*fs/g3FigBig(s,d),dx=dir[0]+(0-dir[0])*kb,dz=dir[1]+(1-dir[1])*kb;
+    L.forEach((a,k)=>{const u=(k-(L.length-1)/2)*gap;let X=bx+dx*off+dz*u,Z=bz+dz*off-dx*u;for(let i=0;i<5&&!g3OnLand(X,Z);i++){X=i<4?(X+bx)/2:bx;Z=i<4?(Z+bz)/2:bz;}out.set(a.id,[X,Z]);});}
+  for(const a of GC.armies){const f=typeof grSlide==='function'?grSlide(a):0;if(f>0){const A=out.get(a.id),q=GCM.P[a.path[0]],tw=!q.sea?g3Main(q.i):null,bx=tw?tw.x:q.x,bz=tw?tw.z:q.y;out.set(a.id,[A[0]+(bx-A[0])*f,A[1]+(bz-A[1])*f]);}}   /* laneA hook: marching armies slide along the road as days pass */
   return out;}
-function g3SyncArmies(){if(!G3.ents||!GC)return;const ids=new Set(GC.armies.map(a=>a.id));for(const [id,e] of G3.arm)if(!ids.has(id)){G3.ents.remove(e.g);if(e.plate)e.plate.remove();G3.arm.delete(id);}
+function g3SyncArmies(){if(!G3.ents||!GC)return;const ids=new Set(GC.armies.map(a=>a.id));for(const [id,e] of G3.arm)if(!ids.has(id)){G3.ents.remove(e.g);G3.arm.delete(id);}
   for(const a of GC.armies){const had=G3.arm.has(a.id),e=g3Ent(a);if(had&&e.pi!==a.at&&G3.animOK){e.fx=e.x;e.fz=e.z;e.tt=0;e.mv=1;}e.pi=a.at;e.n=a.u.length;e.o=a.o;}
   G3.hot.clear();for(const p of GCM.P)if(p.land){const st=GC.prov[p.i];if(st.hot!=null&&GC.turn-st.hot<=1)G3.hot.set(p.i,1);if(st.burn>0)G3.hot.set(p.i,2);}
   g3BuildSmoke();G3.sig='';}
 function g3BuildSmoke(){if(G3.smoke){G3.sc.remove(G3.smoke);G3.smoke.geometry.dispose();G3.smoke=null;}if(!G3.hot.size)return;const P=[],S=[],T=[];
-  for(const [pi,k] of G3.hot){const tw=g3Towns().find(t=>t.pi===pi),x=tw?tw.x:GCM.P[pi].x,z=tw?tw.z:GCM.P[pi].y,y=g3HeightAt(x,z);for(let i=0;i<(k===2?22:16);i++){P.push(x+(g3Hash(i,pi)-.5)*26,y+1,z+(g3Hash(pi,i)-.5)*26);S.push(g3Hash(i,pi+5));T.push(k);}}
+  for(const [pi,k] of G3.hot){const tw=g3Main(pi),x=tw?tw.x:GCM.P[pi].x,z=tw?tw.z:GCM.P[pi].y,y=g3HeightAt(x,z),sp=tw?Math.max(3,tw.R*2.5):26;for(let i=0;i<(k===2?22:16);i++){P.push(x+(g3Hash(i,pi)-.5)*sp,y+1,z+(g3Hash(pi,i)-.5)*sp);S.push(g3Hash(i,pi+5));T.push(k);}}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aSeed',new THREE.Float32BufferAttribute(S,1));g.setAttribute('aK',new THREE.Float32BufferAttribute(T,1));
   const m=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{uT:G3.flagT||(G3.flagT={value:0}),uPx:{value:(G3.R?G3.R.domElement.height:800)/900}},
     vertexShader:'attribute float aSeed;attribute float aK;uniform float uT;uniform float uPx;varying float vL;varying float vK;void main(){float l=fract(uT*.16+aSeed);vL=l;vK=aK;vec3 p=position;p.y+=l*46.;p.x+=l*9.*(aSeed-.5);vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;gl_PointSize=(8.+l*34.)*uPx*(700./-mv.z)*1.6;}',
     fragmentShader:'varying float vL;varying float vK;void main(){vec2 c=gl_PointCoord-.5;float r=length(c);if(r>.5)discard;float a=(1.-vL)*smoothstep(.5,.1,r)*.55;vec3 col=mix(vec3(1.,.55,.15),vec3(.16,.15,.15),smoothstep(0.,.28,vL));if(vK<1.5)col=mix(vec3(1.,.6,.2),vec3(.28,.27,.26),smoothstep(0.,.18,vL));gl_FragColor=vec4(col,a);}'});
   G3.smoke=new THREE.Points(g,m);G3.smoke.frustumCulled=false;G3.sc.add(G3.smoke);}
 // move arrows: green along the ground for marches, red when the target is hostile
-function g3PathPts(a){const P=GCM.P,pts=[];const q=(i)=>{const p=P[i],tw=!p.sea?g3Towns().find(t=>t.pi===i):null;return [tw?tw.x:p.x,tw?tw.z:p.y];};pts.push(q(a.at));for(const j of a.path)pts.push(q(j));return pts;}
+function g3PathPts(a){const P=GCM.P,pts=[];const q=(i)=>{const p=P[i],tw=!p.sea?g3Main(i):null;return [tw?tw.x:p.x,tw?tw.z:p.y];};{const e=G3.arm&&G3.arm.get(a.id);pts.push(e&&(e.x||e.z)?[e.x,e.z]:q(a.at));}   /* the route starts at the army's token */for(const j of a.path)pts.push(q(j));return pts;}
 /* g3BuildArrows lives in src/13e2-groads.js (groads 2026-11-08) */
 /* (armies3 thick flat arrows superseded by the outlined 3D arrows in 13e2-groads.js; same rule: own = green, seen enemies at war = red) */
 // ---- HUD: mode chips, round buttons, army cards, minimap, news, banners
@@ -2267,19 +2366,13 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 #g3ui{position:absolute;inset:0;pointer-events:none;overflow:hidden;font-family:inherit}
 #g3ui .mid .b .em{width:18px;height:18px;margin-right:5px}#g3ui .mid .b .t b{font-size:10.5px}#g3ui .mid .b.cap .em{width:20px;height:20px}#g3ui .mid .b.cap .t b{font-size:11.5px}#g3ui .mid .b{padding:2px 9px 2px 2px}
 #g3ui .mid .s{opacity:.6;font-size:12px}
-#g3ui .p.fa{opacity:.55;font-size:10px;height:13px;line-height:13px;padding-left:15px}#g3ui .p.fa .fw{transform:scale(.8)}
-#g3ui .b{position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:none;white-space:nowrap;padding:3px 13px 3px 3px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(0,0,0,.2)),var(--nc,#27394b);border:1px solid rgba(255,240,200,.55);box-shadow:0 2px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.25);color:#fff8e6;text-shadow:0 1px 2px #000a}
+#g3ui .b{position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:none;white-space:nowrap;padding:3px 13px 3px 3px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(0,0,0,.2)),var(--nc,#27394b);border:1px solid rgba(255,240,200,.55);box-shadow:0 2px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.25);color:#fff8e6;text-shadow:0 1px 2px #000a}#g3ui .b.pn{padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:#f1e8cf;text-shadow:0 1px 2px #000,0 0 5px #000,0 0 2px #000;pointer-events:none}#g3ui .b.pn .t b{font:600 11px/1.1 system-ui,sans-serif;letter-spacing:.02em}#g3ui .b.pn.hot .t b{font-size:12.5px;color:#fff}
 .b .em{display:inline-block;vertical-align:middle;width:24px;height:24px;border-radius:50%;margin-right:7px;background:#ddd center/cover no-repeat;border:2px solid #f3e3b0;box-shadow:0 1px 3px #0008}
 .b .t{display:inline-block;vertical-align:middle}.b .t b{display:block;font:700 12.5px/1.1 Georgia,'Times New Roman',serif;letter-spacing:.04em}.b .t small{display:block;font:500 10px/1.15 Georgia,serif;opacity:.88}
 .b.cap .em{width:28px;height:28px;border-color:#ffd24a}.b.cap .t b{font-size:14px}.b.cap{border-color:#ffd24a}
 #g3ui .co{position:absolute;left:0;top:0;font:700 11px/1 system-ui,'Segoe UI',sans-serif;letter-spacing:.04em;color:#fff6de;text-shadow:0 1px 2px #000,0 0 3px #000,0 0 6px #000a;white-space:nowrap;display:none;pointer-events:none}
 #g3ui .col{position:absolute;left:0;top:0;height:1px;width:0;background:rgba(255,246,222,.8);box-shadow:0 0 2px #000;transform-origin:0 50%;display:none;pointer-events:none}
 #g3ui .n{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font:700 18px/1 Georgia,'Times New Roman',serif;letter-spacing:.2em;color:rgba(255,246,222,.9);text-shadow:0 1px 2px #000c,0 0 10px #0009;display:none;white-space:nowrap}
-#g3ui .p{position:absolute;left:0;top:0;display:none;white-space:nowrap;height:16px;padding:0 4px 3px 19px;font:700 12px/16px system-ui,sans-serif;color:#fff;text-shadow:0 1px 1px #000c;border:1px solid #000a;border-radius:2px 3px 3px 2px;box-shadow:0 1px 3px #000b;background:linear-gradient(#ffffff22,#0000 60%),var(--rc,#5d646c)}
-#g3ui .p.me{--rc:#2d8a3c}#g3ui .p.war{--rc:#b0322a}#g3ui .p.oth{--rc:#5d646c}#g3ui .p.sel{border-color:#ffe27a;box-shadow:0 0 0 1px #ffe27a,0 0 8px #ffe27aaa}
-#g3ui .p::after{content:'';position:absolute;left:19px;right:2px;bottom:1px;height:2px;background:linear-gradient(90deg,#9cf08a var(--st,100%),#000a var(--st,100%))}
-#g3ui .p .fw{position:absolute;left:-4px;top:-4px;width:20px;height:24px;background:#e9d9a0;clip-path:polygon(0 0,100% 0,100% 64%,50% 100%,0 64%)}#g3ui .p .fl{position:absolute;inset:1.5px 1.5px 2.5px;background:#777 center/cover no-repeat;clip-path:polygon(0 0,100% 0,100% 63%,50% 100%,0 63%)}
-#g3ui .p b{font-weight:700}#g3ui .p .mp{display:inline-block;width:4px;height:10px;margin-left:4px;vertical-align:-1px;border:1px solid #000a;background:linear-gradient(to top,var(--mc,#7fdc6a) var(--mv,100%),#0008 var(--mv,100%))}
 #g3ui .s{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font:italic 13px/1 Georgia,'Times New Roman',serif;letter-spacing:.22em;color:rgba(225,240,255,.85);text-shadow:0 1px 2px #000a;display:none;white-space:nowrap}
 #g3ui .k{pointer-events:auto}
 #g3modes{position:absolute;left:10px;top:10px;width:150px;display:flex;flex-direction:column;gap:2px;padding:6px 5px 5px;border:1px solid #6b5a33;border-radius:6px;background:linear-gradient(#162433,#0b141f);box-shadow:0 4px 14px #000a,inset 0 1px 0 #ffffff18;z-index:3}#g3modes:before{content:'MAP MODE';font:700 10px/12px system-ui,sans-serif;letter-spacing:.16em;color:#d8b865;padding:1px 4px 4px;border-bottom:1px solid #6b5a3380;margin-bottom:3px}
@@ -2307,7 +2400,6 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 #g3leg>.hd{display:flex;align-items:center;gap:6px;padding:4px 9px;cursor:pointer;font:700 11px/16px system-ui,sans-serif;letter-spacing:.08em;color:#d8b865;user-select:none}#g3leg>.hd:after{content:'▾';margin-left:auto;opacity:.7}#g3leg.shut>.hd:after{content:'▸'}
 #g3leg.shut{width:auto}#g3leg.shut>.bd{display:none}#g3leg>.bd{padding:2px 9px 7px;border-top:1px solid #6b5a3355}#g3leg .r{display:flex;align-items:center;gap:7px;margin-top:3px}#g3leg .r>i:first-child{flex:0 0 26px;display:flex;justify-content:center;font-style:normal}
 #g3leg .md{color:#fff;margin:3px 0 1px;font-weight:600}#g3leg .sw{width:22px;height:12px;border-radius:2px;border:1px solid #0008}#g3leg .ln{width:24px;height:0;border-top:2px solid #f2e6c0}#g3leg .ln.th{border-top:1px solid #f2e6c088}#g3leg .rg{width:14px;height:14px;border-radius:50%;border:2px solid #46e86c;box-sizing:border-box}
-#g3leg .p{position:relative;display:inline-block;height:14px;padding:0 4px 2px 16px;font:700 11px/14px system-ui,sans-serif;color:#fff;border:1px solid #000a;border-radius:2px;background:var(--rc)}#g3leg .p.me{--rc:#2d8a3c}#g3leg .p.war{--rc:#b0322a}#g3leg .p.oth{--rc:#5d646c}#g3leg .p:before{content:'';position:absolute;left:-1px;top:-2px;width:13px;height:17px;background:#e9d9a0;clip-path:polygon(0 0,100% 0,100% 64%,50% 100%,0 64%)}
 `;document.head.appendChild(s);}
 function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return;let u=document.getElementById('g3ui');if(u)u.remove();u=guEl('div','');u.id='g3ui';w.appendChild(u);
   G3.lab=guEl('div','position:absolute;inset:0');u.appendChild(G3.lab);const md=guEl('div','');md.id='g3modes';G3_MODES.forEach(([k,n])=>{const b=guEl('button','',n);b.type='button';b.dataset.m=k;b.onclick=ev=>{ev.stopPropagation();if(!md.classList.contains('open')){md.classList.add('open');return;}g3SetMode(k);md.classList.remove('open');};md.appendChild(b);});u.appendChild(md);   /* map mode menu folds away (Abdullah 2026-11-07 16:14 "Hide the map menu don't make it stay visible"): only the current mode shows; click it to open the list */
@@ -2337,9 +2429,13 @@ function g3Legend(){const L=G3.leg;if(!L)return;const shut=SET.g3leg!=='open'||!
    +r('<i class="sw" style="background:'+me+'"></i>','Land color = who owns it','Political map: each country is painted in its own color. Switch the map mode (bottom right) to see supply, unrest, trade…')
    +r('<span style="font:700 12px Georgia,serif;letter-spacing:.15em">IRAN</span>','Country names, painted on the land','Zoom in and they fade so towns and armies stand out.')
    +r('<i class="ln"></i>','Country border','Thick line = border between two countries.')+r('<i class="ln th"></i>','Province border','Thin line = border between provinces of one country.')
-   +r('<i class="p me">12</i>','Your army (number = units)','Green shield = yours. Bar under it = strength, small upright bar = morale. Armies in one province share one shield. Click to select, Shift+drag to box-select.')
-   +r('<i class="p war">8</i>','Enemy army (at war with you)','Red shield = a nation you are at war with.')+r('<i class="p oth">5</i>','Other army (not at war)','Gray shield = a nation you are not at war with.')
-   +r('<i class="rg"></i>','Selection ring','Green = yours, red = enemy, gold = others.')
+   +r('<i class="tk me"><i class="ou"></i><i class="in"></i><i class="fl"></i></i>','Army token: flag = whose army','One round token per army. Flag in the middle = whose army. Green ring = strength left (men and machines; red when under 35%). Thin gold ring = supply, fuel and ammunition (red when under 30%). The pin under it = the exact spot. The number = units, stars = its general.')
+   +r('<i class="tk me"><i class="ou"></i><i class="in"></i><i class="fl"></i></i> <i class="tk war"><i class="ou"></i><i class="in"></i><i class="fl"></i></i> <i class="tk ally"><i class="ou"></i><i class="in"></i><i class="fl"></i></i>','Rim: white = yours · red = enemy · blue = ally','Everyone else is small and faint, with no number.')
+   +r('<span style="font-size:11px">▲ ⌜⌟ ◌ ⚡</span>','Shape = what it is doing','Plain circle = holding. Arrow nose + arrival in days = marching. Gold corner brackets = dug in behind forts. Dashed red ring round a town = besieging it. Two tokens touching with a lightning mark = fighting; the bar under them shows who is winning.')
+   +r('<i class="tk far"></i> 12','Zoomed out: a dot and a number','Far away each army is a dot in its owner\'s color; yours, your enemies\' and your allies\' show their unit count. Zoom in for the token, closer still for the army itself in miniature.')
+   +r('<span style="font:700 10px system-ui;background:#f4f4ef;color:#111;border-radius:7px;padding:0 4px">3</span>','Stack: several armies in one place','Hover or click the stack to fan the armies out, then click the one you want.')
+   +r('<span style="font:700 10px system-ui;background:#5bd66a;color:#111;border-radius:7px;padding:0 5px">Good odds</span>','Odds, when your army is selected','Every enemy army your selected army can reach shows Good odds, Even fight or Bad odds — the same strength estimate the auto-resolve uses.')
+   +r('<i class="rg"></i>','Selection ring','On the ground = the selected province\'s town (green = yours, red = enemy, gold = others). A selected army has a dotted ring round its token.')
    +r('★','Capital','Star on a nameplate = that country\'s capital. Losing it hurts morale and stability.')
    +r('<span style="font-size:11px">🏘</span>','Town (zoom in for all towns)','Each province shows one town cluster; big cities show more. Zoom in close to see every town with its fields and walls.')
    +'<div style="margin-top:4px;opacity:.75;font-size:11px">Hover a province to see its buildings. ◆ on a sea = chokepoint.</div></div>';
@@ -2372,13 +2468,13 @@ function g3CamApply(c){const cam=G3.cam,cp=Math.cos(c.pitch),y0=Math.max(0,g3Hei
 function g3Ground(sx,sy){const cam=G3.cam;if(!cam)return null;const v=new THREE.Vector3(sx/GV.w*2-1,-(sy/GV.h)*2+1,.5).unproject(cam),o=cam.position,d=v.sub(o).normalize();if(d.y>=-1e-4)return null;let y=1,X=0,Z=0;
   for(let i=0;i<4;i++){const t=(y-o.y)/d.y;X=o.x+d.x*t;Z=o.z+d.z*t;y=Math.max(0,g3HeightAt(X,Z));}return [X,Z];}
 function g3Fit(R){const c=G3.camera,r=R||[0,0,2400,1200],asp=GV.w/Math.max(1,GV.h),th=Math.tan(18*Math.PI/180);c.x=r[0]+r[2]/2;c.z=r[1]+r[3]/2+r[3]*.12;c.d=Math.max(40,Math.min(2300,Math.max(r[2]/(2*th*asp)*.82,r[3]/(2*th)*1.25)));}
-function g3Centre(pi,z){const p=GCM.P[pi],c=G3.camera,tw=!p.sea?g3Towns().find(t=>t.pi===pi):null;c.x=tw?tw.x:p.x;c.z=(tw?tw.z:p.y)+10;if(z)c.d=Math.max(90,Math.min(2300,z>=2?360:z>=1?520:900));}
+function g3Centre(pi,z){const p=GCM.P[pi],c=G3.camera,tw=!p.sea?g3Main(pi):null;c.x=tw?tw.x:p.x;c.z=(tw?tw.z:p.y)+10;if(z)c.d=Math.max(90,Math.min(2300,z>=2?360:z>=1?520:900));}
 function g3Wheel(ev){const c=G3.camera,r=GV.cv.getBoundingClientRect(),g=g3Ground(ev.clientX-r.left,ev.clientY-r.top),f=Math.exp(ev.deltaY*.0013),nd=Math.max(70,Math.min(2300,c.d*f));
   if(g){const k=1-nd/c.d;c.x+=(g[0]-c.x)*k*.9;c.z+=(g[1]-c.z)*k*.9;}c.d=nd;G3.moved=true;}
 function g3Drag(ev,mx,my){const d=GV.drag;if(!d)return;if(d.btn===1){const c=G3.camera,cc=G3.cc;c.yaw=cc.yaw=d.yaw-(ev.clientX-d.x)*.006;c.pitch=cc.pitch=Math.max(.45,Math.min(1.3,d.pitch+(ev.clientY-d.y)*.004));G3.moved=true;return;}
   const g=g3Ground(mx,my);if(!g||!d.g)return;const c=G3.camera,cc=G3.cc;c.x=cc.x=Math.max(0,Math.min(2400,cc.x+d.g[0]-g[0]));c.z=cc.z=Math.max(0,Math.min(1200,cc.z+d.g[1]-g[1]));G3.moved=true;}
-function g3HitAt(mx,my){let best=null,bd=1e9;for(const h of G3.hit){const inBox=h.y0!=null&&Math.abs(mx-h.x)<=h.w&&my>=h.y0&&my<=h.y1;const dd=Math.hypot(mx-h.x,my-h.y);if((inBox||dd<h.r)&&dd<bd){bd=dd;best=h;}}return best;}
-function g3Click(mx,my){const best=g3HitAt(mx,my);
+function g3HitAt(mx,my){let best=null,bd=1e9;for(const h of G3.hit){const inBox=h.y0!=null&&mx>=h.x0&&mx<=h.x1&&my>=h.y0&&my<=h.y1;const dd=Math.hypot(mx-h.x,my-h.y);if((inBox||dd<h.r)&&dd<bd){bd=dd;best=h;}}if(typeof gtkHover==='function')gtkHover(best);return best;}
+function g3Click(mx,my){const best=g3HitAt(mx,my);if(typeof gtkClicked==='function')gtkClicked(best);
   if(best){const a=GC.armies.find(x=>x.id===best.aid);GV.selA=best.aid;if(a)GV.sel=a.at;guSide();g3Refresh();return;}
   const g=g3Ground(mx,my);if(!g)return;const h=guProvAt(g[0],g[1]);GV.sel=h;if(GV.selA){const a=GC.armies.find(x=>x.id===GV.selA);if(!a||a.at!==h)GV.selA=0;}guSide();g3Refresh();}
 function g3Refresh(){G3.sig='';G3.arrowDirty=true;}
@@ -2422,20 +2518,26 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
   // province banners
   const cand=[];
   /* gclarity: close zoom = every province plate; region zoom = only capitals (nation capitals up to mid zoom), your capital, the selected and the hovered province */
-  const close=d<G3_CLOSE;
+  const close=d<G3_CLOSE,selP=close&&GV.sel!=null&&GV.sel>=0?GCM.P[GV.sel]:null;   /* calmmap4: close zoom is calm too - capitals keep their plate; other provinces are plain small names, only for the province under the cursor, the selected one and your own provinces around the selection */
   for(const b of G3.bn){const p=GCM.P[b.pi],st=GC.prov[b.pi];let q=null;const hot=b.pi===GV.sel||b.pi===GV.hov,myCap=GC.me&&st.o===GC.me&&GC.nat[GC.me]&&GC.nat[GC.me].cap===b.pi,natCap=GC.nat[st.o]&&GC.nat[st.o].cap===b.pi;
     const atw=!!(GC.me&&st.o!==GC.me&&grAtWar(GC.me,st.o)),mj=!!grNat(st.o).major,nbr=!!(GC.me&&st.o!==GC.me&&g3Nbr().has(st.o));
-    if(hot||myCap||(close&&d<1700)||(natCap&&((tier>=1&&d<G3_T_TOWN)||atw||mj||(tier>=1&&nbr)))){const tw=g3Towns().find(t=>t.pi===b.pi),x=tw?tw.x:p.x,z=tw?tw.z:p.y;q=proj(x,g3HeightAt(x,z)+9+(p.cap?3:0),z);}
+    if(hot||myCap||(close&&(natCap||selP&&st.o===GC.me&&Math.hypot(p.x-selP.x,p.y-selP.y)<G3_PN_NEAR))||(natCap&&((tier>=1&&d<G3_T_TOWN)||atw||mj||(tier>=1&&nbr)))){const tw=g3Main(b.pi),x=tw?tw.x:p.x,z=tw?tw.z:p.y;q=proj(x,g3HeightAt(x,z)+(tw?tw.R*1.2+1.5:4)+(p.cap?1:0),z);}
     if(!q){vis(b.el,false);continue;}
     const own=GC.nat[st.o]&&GC.nat[st.o].cap===b.pi,pri=(b.pi===GV.sel||st.o===GC.me&&p.cap)?6:own?(atw?5:nbr?4.5:mj?4:3):p.cap?3:p.wg?2:p.tw>=3?1:0;   /* plate priority: you, enemies, neighbours, majors, the rest */
-    cand.push({b,q,p,st,own,pri});}
-  for(const a of GC.armies){if(a.o!==GC.me||!grSeen(a))continue;const e=G3.arm.get(a.id);if(!e)continue;const q=proj(e.g.position.x,e.g.position.y+3*G3.sc_s,e.g.position.z);if(q)rects.push([q[0]-22,q[1]-4,q[0]+22,q[1]+26]);}   // your army badges are never covered by a plate
+    cand.push({b,q,p,st,own,pri,plain:!own,hot});}
+  G3.plR=[];
+  for(const a of GC.armies){if(a.o!==GC.me||!grSeen(a))continue;const e=G3.arm.get(a.id);if(!e)continue;const q=proj(e.x,e.y,e.z);if(q)rects.push([q[0]-20,q[1]-46,q[0]+52,q[1]+4]);}   // your army tokens are never covered by a plate
   let nplate=0;
-  cand.sort((u,w)=>w.pri-u.pri);
-  for(const c of cand){const {b,q,p,st,own}=c,pn=own?grCapName(b.pi):p.n,wd=((pn.length+(own?2:0))*8.2+52)*(tier<2?.8:1);
+  cand.sort((u,w)=>(u.plain-w.plain)||w.pri-u.pri);let armR=false;
+  for(const c of cand){const {b,q,p,st,own}=c;
+    if(c.plain){if(!armR){armR=true;for(const a of GC.armies){if(a.o===GC.me||!grSeen(a))continue;const e=G3.arm.get(a.id);if(!e||!e.g.visible)continue;const k=proj(e.g.position.x,e.g.position.y+3*G3.sc_s,e.g.position.z);if(k)rects.push([k[0]-22,k[1]-4,k[0]+22,k[1]+26]);}}   // army tokens always win against a province name
+      const wd=p.n.length*6.6+10;let dy=null;for(const o of [0,36,-30])if(!hit(q[0]-wd/2,q[1]+o-15,q[0]+wd/2,q[1]+o+2)){dy=o;break;}if(dy===null){vis(b.el,false);continue;}
+      const html='<span class="t"><b>'+p.n+(GC.me&&st.o===GC.me&&st.un>55?' <span style="color:#ffb0a0">!</span>':'')+'</b>'+(c.hot?'<small>'+geIcons(b.pi)+'</small>':'')+'</span>',cn='b pn'+(c.hot?' hot':'');if(b.el.className!==cn)b.el.className=cn;if(b.h!==html){b.h=html;b.el.innerHTML=html;}put(b.el,q,0,dy);vis(b.el,true);continue;}
+    {const cn='b'+(p.cap?' cap':'');if(b.el.className!==cn)b.el.className=cn;}
+    const pn=own?grCapName(b.pi):p.n,wd=((pn.length+(own?2:0))*8.2+52)*(tier<2?.8:1);
     if(c.pri<6&&hit(q[0]-wd/2,q[1]-34,q[0]+wd/2,q[1]+2)){vis(b.el,false);continue;}if(c.pri>=6)rects.push([q[0]-wd/2,q[1]-34,q[0]+wd/2,q[1]+2]);else if(tier===0&&++nplate>12){vis(b.el,false);continue;}   // far view: at most a dozen capitals besides yours
     const N=grNat(st.o),full=close||b.pi===GV.sel||b.pi===GV.hov,html='<i class="em" style="background-image:url('+g3FlagUrl(st.o)+')"></i><span class="t"><b>'+(own?'★ ':'')+pn+(GC.me&&st.o===GC.me&&st.un>55?' <span style="color:#ffb0a0">!</span>':'')+'</b>'+(full?'<small>'+(N.name||st.o)+' '+(b.pi===GV.sel||b.pi===GV.hov?geIcons(b.pi):'')+'</small>':'')+'</span>';   /* gclarity: building chips only on hover/selection; the nation line only up close (the country name is painted on the land) */if(b.h!==html){b.h=html;b.el.innerHTML=html;b.el.style.setProperty('--nc',N.color);}   /* Rome-style nameplate (Abdullah 19:33 reference): owner-colour pill, round flag emblem, city + nation */
-    put(b.el,q);vis(b.el,true);}
+    put(b.el,q);vis(b.el,true);G3.plR.push([q[0],q[1]-16,wd/2,18]);}   /* armytokens: army tokens step aside from the capital plates (gtkNudge) */
   /* calmmap3 (Abdullah 2026-11-10 "Armenia is missing"): every country is findable. A nation whose painted name does not fit on its land at this zoom gets a small
      callout instead of nothing: short name, thin leader line to its land; collision-avoided against plates, your badges, painted names and each other
      (priority: you, your enemies, your neighbours, then by size). Same shared pool/element pattern as the names; nothing at close zoom (plates carry the nation line). */
@@ -2457,29 +2559,8 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
         if(e.ln._t!==t){e.ln._t=t;e.ln.style.transform=t;}const wpx=Math.round(len)+'px';if(e.ln._w!==wpx){e.ln._w=wpx;e.ln.style.width=wpx;}vis(e.ln,true);}else vis(e.ln,false);}
     for(let i=nco;i<G3.co.length;i++){vis(G3.co[i].el,false);vis(G3.co[i].ln,false);}G3.ncall=nco;}
   for(const s of G3.sl){const p=GCM.P[s.pi],f=s.ck?d<1500:d<650;let q=f?proj(p.x,1,p.y):null;if(!q){vis(s.el,false);continue;}putC(s.el,q);vis(s.el,true);}
-  // army plates + click targets
-  G3.hit=[];const s=G3.sc_s;
-  /* gclarity (EU4 reference, Abdullah 2026-11-07 20:01): one compact shield per stack — nation flag + total unit count, green = yours, red = at war with you, grey = others,
-     strength bar underneath, morale pip; every army in the same province with the same owner merges into one shield. Click targets stay per army (G3.hit). */
-  const grp=new Map();
-  for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const q=proj(e.g.position.x,e.g.position.y+(e.sea?6:3)*s,e.g.position.z),top=proj(e.g.position.x,e.g.position.y+13*s,e.g.position.z);
-    if(!q||!grSeen(a)){e.g.visible=!!q&&grSeen(a);continue;}e.g.visible=true;   /* laneA RG3 fog hook */if(tier===0&&g3FarHide(a.o,a.id,0))continue;
-    {const ft=proj(e.g.position.x,e.g.position.y+28*s,e.g.position.z),yT=ft?ft[1]:(top?top[1]:q[1]-40);   // whole figure is the target: flag top → number badge (Abdullah 19:58 "not being able to click on armies or navies")
-     G3.hit.push({aid:a.id,x:q[0],y:top?(q[1]+top[1])/2:q[1],r:Math.max(16,top?Math.abs(q[1]-top[1])*.7:16),y0:Math.min(yT,q[1])-10,y1:q[1]+30,w:Math.max(24,top?Math.abs(q[1]-top[1])*.6:24)});}
-    const k=a.at+'|'+a.o;let g=grp.get(k);if(!g){g={k,a,q,L:[]};grp.set(k,g);}g.L.push(a);if(a.id===GV.selA){g.a=a;g.q=q;}}
-  let gv=[...grp.values()];
-  const relOf=g=>g.a.o===GC.me?3:(GC.me&&grAtWar(GC.me,g.a.o))?2:(GC.me&&typeof grAllied==='function'&&grAllied(GC.me,g.a.o))?1:0;
-  if(tier<2){const by=new Map();for(const g of gv){const k=g.a.at,o=by.get(k);if(!o||g.L.some(x=>x.id===GV.selA)||(!o.L.some(x=>x.id===GV.selA)&&(relOf(g)>relOf(o)||(relOf(g)===relOf(o)&&g.L.length>o.L.length))))by.set(k,g);}gv=[...by.values()];}   /* calmmap: middle and far view = one badge per province (yours first, then enemies, allies, the rest) */
-  const gl=gv.map(g=>({g,r:g.a.id===GV.selA||g.L.some(x=>x.id===GV.selA)?2:g.a.o===GC.me?1:0})).sort((u,w)=>w.r-u.r),pq=[],used=new Set();
-  for(const {g,r} of gl){const mine=g.a.o===GC.me,sel=r===2;if(!(tier>=1||mine||sel||relOf(g)===2))continue;let bad=false;if(r<1)for(const o of pq)if(Math.abs(o[0]-g.q[0])<34&&Math.abs(o[1]-g.q[1])<20){bad=true;break;}if(bad)continue;pq.push(g.q);
-    let pl=G3.pl.get(g.k);if(!pl){pl=guEl('div','');pl.className='p';G3.lab.appendChild(pl);G3.pl.set(g.k,pl);}used.add(g.k);pl._ids=g.L.map(x=>x.id);
-    let n=0,hs=0,ms=0,mo=0;for(const a of g.L){n+=a.u.length;for(const u of a.u){hs+=u.hp||0;ms+=u.max||0;}mo+=(typeof gmMor==='function'?gmMor(a):100)*a.u.length;}mo=n?mo/n:100;
-    const st=ms>0?Math.max(0,Math.min(100,Math.round(100*hs/ms))):100,war=!mine&&GC.me&&typeof grAtWar==='function'&&grAtWar(GC.me,g.a.o),rel=mine?'me':war?'war':'oth',fa=tier<2&&rel==='oth'&&!(GC.me&&typeof grAllied==='function'&&grAllied(GC.me,g.a.o)),h=n+'|'+rel+'|'+sel+'|'+st+'|'+Math.round(mo/5)+'|'+g.a.o+'|'+(fa?1:0);
-    if(pl._h!==h){pl._h=h;pl.className='p '+rel+(sel?' sel':'')+(fa&&!sel?' fa':'');pl.style.setProperty('--st',st+'%');pl.style.setProperty('--mv',Math.round(mo)+'%');pl.style.setProperty('--mc',mo>66?'#7fdc6a':mo>33?'#f0c040':'#ff5a4a');
-      if(typeof gmIds==='function'){const I=gmIds();pl.classList.toggle('gmsel',I.length>1&&g.L.some(x=>I.includes(x.id)));}pl.innerHTML='<i class="fw"><i class="fl" style="background-image:url('+g3FlagUrl(g.a.o)+')"></i></i><b>'+(n>=1000?(n/1000).toFixed(1)+'k':n)+'</b><i class="mp"></i>';}
-    const t='translate('+Math.round(g.q[0])+'px,'+Math.round(g.q[1]+8)+'px) translate(-50%,0)';if(pl._t!==t){pl._t=t;pl.style.transform=t;}vis(pl,true);}
-  for(const [k,pl] of G3.pl)if(!used.has(k))vis(pl,false);
-  if(G3.pl.size>400)for(const [k,pl] of G3.pl)if(!used.has(k)){pl.remove();G3.pl.delete(k);}}
+  // armies: Army Standards tokens + click targets (src/13e3-gtokens.js)
+  g3Tokens(tier);}
 function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!document.body.contains(GV.cv)||!GC){if(!GV.cv||!document.body.contains(GV.cv))g3Dispose();return;}
   const scr=document.getElementById('grandScreen');if(!scr||scr.style.display==='none'){G3.last=0;return;}
   const dt=G3.last?Math.min(.1,(ts-G3.last)/1000):.016;G3.last=ts;G3.time+=dt;g3Adapt(dt);if(!G3.miniSync&&G3.miniReady){G3.miniSync=1;try{g3SyncArmies();}catch(e){console.warn(e);}}
@@ -2491,22 +2572,22 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   g3TownLOD(cc.d);G3.U.uOvK.value=G3.mode==='political'?1+1.7*g3Smooth(G3_CLOSE,520,cc.d):1;   /* gclarity: flat EU4-style political colours from region zoom out */
   G3.U.uSel.value=GV.sel>=0?GV.sel:-1;G3.U.uHov.value=GV.hov>=0&&GV.hov!==GV.sel?GV.hov:-1;
   // armies
-  const anc=g3Anchors(s);let anim=0;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const t=anc.get(a.id);if(!t)continue;
+  const anc=g3Anchors(s);let anim=0,slid=0;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const t=anc.get(a.id);if(!t)continue;
     if(e.tt<1){e.tt=Math.min(1,e.tt+dt/.45);const k=1-(1-e.tt)*(1-e.tt);e.x=e.fx+(t[0]-e.fx)*k;e.z=e.fz+(t[1]-e.fz)*k;anim=1;e.face=Math.atan2(t[0]-e.fx,t[1]-e.fz);}
-    else if(e.mv){e.x=t[0];e.z=t[1];e.mv=0;}else{e.x+=(t[0]-e.x)*Math.min(1,dt*8);e.z+=(t[1]-e.z)*Math.min(1,dt*8);}
-    const y=e.sea?.5+Math.sin(G3.time*1.4+e.aid)*.35:Math.max(.3,g3HeightAt(e.x,e.z))+(e.tt<1?Math.abs(Math.sin(G3.time*9))*.5:0);e.g.position.set(e.x,y,e.z);e.g.scale.setScalar(s*(e.sea?1.1:1+.8*Math.max(0,Math.min(1,(800-cc.d)/400))));   /* armies3: big hero up close */e.g.rotation.y=cc.yaw;{const f=e.g.children[1];if(f&&!e.sea){const fs=Math.max(1,Math.min(1.8,cc.d/300));f.scale.setScalar(fs);f.position.y=22-2.4*fs;}const mine=a.o===GC.me||a.id===GV.selA;e.g.visible=e.mini;{const lo=cc.d>480||Math.hypot(e.x-cc.x,e.z-cc.z)>cc.d*.8+30?1:0;if(e.mini&&e.lod!==lo){e.lod=lo;const m0=e.g.children[0],hg=e.hi;if(hg)m0.geometry=lo&&hg.userData.lo?hg.userData.lo:hg;}}   /* detail LOD: ~3k-tri hero up close, ~0.7k from region zoom */if(f)f.visible=e.mini&&(cc.d<G3_CLOSE||(mine&&G3.tier!==0)||a.id===GV.selA);}   /* calmmap: no waving flags in the far view (the badge says whose army it is) */   /* gclarity: from region zoom other nations' flags live on their army shields (EU4 look); yours and the selected army keep the big flag */   /* smooth first (Abdullah 14:15): at world zoom other nations' armies are shown by their count plates only (2 draw calls each saved) */
+    else if(e.mv){e.x=t[0];e.z=t[1];e.mv=0;}else{if(Math.abs(t[0]-e.x)+Math.abs(t[1]-e.z)>.05)anim=1;e.x+=(t[0]-e.x)*Math.min(1,dt*8);e.z+=(t[1]-e.z)*Math.min(1,dt*8);}   /* anim: badges follow a figure that is still sliding to its spot */
+    const y=e.sea?.5+Math.sin(G3.time*1.4+e.aid)*.35:Math.max(.3,g3HeightAt(e.x,e.z))+(e.tt<1?Math.abs(Math.sin(G3.time*9))*.5:0);e.g.position.set(e.x,y,e.z);e.g.scale.setScalar(e.sea?s*1.1:g3FigScale(a.at,s,cc.d));e.g.rotation.y=cc.yaw;{const f=e.g.children[1];if(f&&!e.sea){const fs=Math.max(1,Math.min(1.8,cc.d/300));f.scale.setScalar(fs);f.position.y=22-2.4*fs;}e.y=e.sea?.5:Math.max(.3,g3HeightAt(e.x,e.z));if(Math.abs(e.x-e.px)+Math.abs(e.z-e.pz)>.02){slid=1;e.px=e.x;e.pz=e.z;}e.g.visible=e.mini;{const lo=cc.d>480||Math.hypot(e.x-cc.x,e.z-cc.z)>cc.d*.8+30?1:0;if(e.mini&&e.lod!==lo){e.lod=lo;const m0=e.g.children[0],hg=e.hi;if(hg)m0.geometry=lo&&hg.userData.lo?hg.userData.lo:hg;}}   /* detail LOD: ~3k-tri hero up close, ~0.7k from region zoom */if(f)f.visible=e.mini&&a.id===GV.selA;}   /* armytokens (Abdullah 2026-11-10 "why so many flags?"): the token's flag disc says whose army it is; only the selected army flies a flag */
     if(e.sea)e.g.children[0].rotation.y=Math.PI/2*0;}
   g3ForestTick();g3Batch();
   // selection ring
   /* Total War-style selection ring (Abdullah 19:29 reference shot): four soft segments, green = yours, red = enemy at war, gold = others; on the selected army, else on the selected province's main town */
-  {const sa=GV.selA&&G3.arm.get(GV.selA);let X,Y,Z,R,o;if(sa){X=sa.x;Y=sa.g.position.y+.4;Z=sa.z;R=s*(sa.sea?7:5);o=sa.o;}else if(GV.sel>=0&&GCM.P[GV.sel]&&GCM.P[GV.sel].land){const tw=g3Towns().find(t=>t.pi===GV.sel&&t.t===0);if(tw){X=tw.x;Z=tw.z;Y=g3HeightAt(X,Z)+.4;R=Math.max(6,Math.min(30,14*tw.sc));o=GCM.P[GV.sel].o;}}
+  {const sa=GV.selA&&G3.arm.get(GV.selA);let X,Y,Z,R,o;if(sa){X=sa.x;Y=sa.g.position.y+.4;Z=sa.z;R=sa.sea?s*7:Math.max(s*2.4,sa.g.scale.x*5.5);o=sa.o;}else if(GV.sel>=0&&GCM.P[GV.sel]&&GCM.P[GV.sel].land){const tw=g3Main(GV.sel);if(tw){X=tw.x;Z=tw.z;Y=g3HeightAt(X,Z)+.4;R=Math.max(s*3,tw.R*(G3.townLod===1?G3_TOWN_MID:1)*1.15);o=GCM.P[GV.sel].o;}}
    if(X!==undefined){const m=G3.ringM;m.visible=true;m.position.set(X,Y,Z);m.scale.setScalar(R*(1+.04*Math.sin(G3.time*3)));m.rotation.y=G3.time*.25;m.material.color.setHex(o===GC.me?0x46e86c:(GC.me&&typeof grAtWar==='function'&&grAtWar(GC.me,o))?0xff4a3d:0xffd04a);}else G3.ringM.visible=false;}
   const sig=GV.selA+'|'+GV.sel+'|'+GC.turn+'|'+GC.armies.length+'|'+GC.armies.reduce((a,x)=>a+x.u.length+x.path.length,0);
   if(sig!==G3.sig||G3.arrowDirty){G3.sig=sig;G3.arrowDirty=false;g3BuildArrows();g3Cards();G3.miniDirty=G3.miniDirty||0;}
   if(G3.ship)g3ShipTick(dt,s);
   G3.R.render(G3.sc,G3.cam);if(G3.vigS){const ac=G3.R.autoClear;G3.R.autoClear=false;G3.R.render(G3.vigS,G3.vigC);G3.R.autoClear=ac;}
   if(G3.lHov!==GV.hov+'|'+GV.sel){G3.lHov=GV.hov+'|'+GV.sel;G3.lblDirty=true;}
-  if(mv||anim||G3.lblDirty||(G3.lf=(G3.lf||0)+1)%20===0){g3Labels(false);G3.lblDirty=false;}
+  if(mv||anim||G3.lblDirty||(G3.lf=(G3.lf||0)+1)%20===0){g3Labels(false);G3.lblDirty=false;}else if(slid)g3Tokens(G3.tier);   /* armytokens: tokens follow a sliding column every frame without redoing every plate */
   if(mv||(G3.lf%12===0)||G3.miniDirty)g3Mini();}
 if(!window._g3Keys){window._g3Keys=1;const ok=ev=>{const t=ev.target&&ev.target.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT')return false;const sc=document.getElementById('grandScreen');return !!sc&&sc.style.display!=='none'&&GV.g3&&!G;};
   addEventListener('keydown',ev=>{if(!ok(ev)||ev.ctrlKey||ev.metaKey||ev.altKey)return;const k=ev.key.toLowerCase();if('wasdqerf'.includes(k)&&k.length===1||k.startsWith('arrow'))G3.keys.add(k);if(k==='home'){const m=GC&&GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);}});
@@ -2551,8 +2632,8 @@ function g3BuildRoads(sc){try{if(!G3.F||!G3.LU)return;const P=GCM.P,T=g3Towns(),
   for(const p of P){if(!p.land)continue;const a=main.get(p.i);if(!a)continue;
     for(const j of p.adj){if(j<=p.i||!P[j].land)continue;const b=main.get(j);if(!b)continue;if(Math.hypot(b.x-a.x,b.z-a.z)>170)continue;
       const xy=grRoadPts([a.x,a.z],[b.x,b.z],p.i*977+j);if(!xy)continue;const maj=big(p)&&big(P[j]);
-      R.push({xy,c:maj?[.96,.8,.42,.92]:[.84,.68,.38,.72],w:maj?[2,1.7]:[1.1,.8]});}
-    for(const t of T)if(t.pi===p.i&&t.t>0){const xy=grRoadPts([t.x,t.z],[a.x,a.z],p.i*31+t.t);if(xy)R.push({xy,c:[.78,.64,.38,.5],w:[.7,.5]});}}
+      R.push({xy,c:maj?[.96,.8,.42,.92]:[.84,.68,.38,.72],w:maj?[2,.55]:[1.1,.3]});}   /* mapscale: world width in the towns' scale family (a road is narrower than a house row); the pixel minimum keeps roads readable from afar */
+    for(const t of T)if(t.pi===p.i&&t.t>0){const xy=grRoadPts([t.x,t.z],[a.x,a.z],p.i*31+t.t);if(xy)R.push({xy,c:[.78,.64,.38,.5],w:[.7,.2]});}}
   const S=[];for(const p of P){if(!p.sea)continue;for(const j of p.adj){if(j<=p.i||!P[j].sea)continue;const q=P[j],L=Math.hypot(q.x-p.x,q.y-p.y);if(L>420)continue;
       const n=Math.max(2,Math.ceil(L/6)),xy=[];let dry=0;for(let i=0;i<=n;i++){const t=i/n,x=p.x+(q.x-p.x)*t,z=p.y+(q.y-p.y)*t;if(grLandAt(x,z)>.6)dry++;xy.push([x,z,.35]);}
       if(dry>n*.15)continue;S.push({xy,c:[.93,.96,1,.55],w:[1.3,0]});}}
@@ -2571,7 +2652,8 @@ function g3BuildArrows(){if(!G3.arrows)return;while(G3.arrows.children.length){c
     const Y=S.map(s=>Math.max(.8,g3HeightAt(s[0],s[1]))),hl=w*2.7,hk=Math.max(1,Math.min(S.length-2,Math.round(hl/(len/n))));
     const ol=[base[0]*.22,base[1]*.22,base[2]*.22,.95],ed=[base[0]*.7,base[1]*.7,base[2]*.7,.95],ce=[Math.min(1,base[0]*1.18+.08),Math.min(1,base[1]*1.12+.06),Math.min(1,base[2]*1.15+.06),.95],sh=[0,0,0,.3];
     const end=S.length-1-hk,sd=w*.35;
-    for(let i=0;i<end;i++){const A=S[i],B=S[i+1],ya=Y[i],yb=Y[i+1],fa=Math.min(1,i/3);   // tail fades in
+    for(let i=0;i<end;i++){if((i&3)>1&&i<end-1)continue;   /* Army Standards: the route is dotted (two steps drawn, two skipped), the arrow head stays solid */
+      const A=S[i],B=S[i+1],ya=Y[i],yb=Y[i+1],fa=Math.min(1,i/3);   // tail fades in
       quad(A,B,ya+.25,yb+.25,-w*1.05,w*1.05,sh,sh,sd,sd);
       const ta=ya+1.4,tb=yb+1.4,o=[ol[0],ol[1],ol[2],.95*(.35+.65*fa)];
       quad(A,B,ta,tb,-w*1.12,-w*.82,o,o);quad(A,B,ta,tb,w*.82,w*1.12,o,o);
@@ -2583,6 +2665,175 @@ function g3BuildArrows(){if(!G3.arrows)return;while(G3.arrows.children.length){c
     v(L0[0],hy,L0[1],ed);v(H[0],hy,H[1],ce);v(tip[0],hy,tip[1],ce);v(H[0],hy,H[1],ce);v(R0[0],hy,R0[1],ed);v(tip[0],hy,tip[1],ce);}
   if(!Pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(Pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(Col,4));
   const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,depthTest:false,depthWrite:false}));m.renderOrder=4;m.frustumCulled=false;G3.arrows.add(m);}
+// ARMY STANDARDS (armytokens, Abdullah 2026-11-10 19:17 "Go" to orch/concepts/army-standards.jpg; spec orch/concepts/ARMY-STANDARDS.md).
+// CSS note: body gets the class 'tk' from the battle ticker (08-ui.js tkApply), so every rule here is scoped under #g3ui / #g3leg.
+// The ONE way an army is drawn on the grand map: a round token read like a watch face. It replaced the figure blobs (far and middle zoom), shield badges and
+// per-army waving flags. View only: nothing here writes campaign state. Zoom tier = the shared g3Zoom() value (G3.tier), never a second one.
+//   far (0)   = one owner-colour dot per stack (ONE THREE.Points draw) + a number for yours / enemies / allies
+//   middle (1)= the token: flag disc, green strength ring, gold supply ring, pin, number plate, general stars; rim = whose side
+//   close (2) = token with make-up counts + the small on-land figures (ships at sea and on islands) that 13e-grand3d.js draws at believable scale (g3Batch)
+// Tokens never pile up: armies in one province are one stack with a count, neighbouring tokens nudge apart (gtkNudge), yours and enemies stay on top.
+// Flags: the token's flag disc is the only flag; a waving flag flies only on the selected army.
+// Shape = what it is doing: plain = holding, arrow nose + arrival = marching, gold corner brackets = dug in, dashed ring round the town =
+// besieging, two tokens touching + lightning + tug bar = fighting. Several armies in one province = one stack with a count (hover/click fans out).
+const GTK_RIM={me:'#f4f4ef',war:'#e5483b',ally:'#5aa0ee',oth:'#51705c'};
+const GTK_ODDS=[1.25,.8];   // attacker/defender strength ratio: >= 1.25 Good odds, <= 0.8 Bad odds, between = Even fight
+function gtkCss(){if(document.getElementById('gtkcss'))return;const s=document.createElement('style');s.id='gtkcss';
+  const br="url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M2 13V2H13M27 2H38V13M38 27V38H27M13 38H2V27' fill='none' stroke='%23e8b23a' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E\")";
+  s.textContent=`
+:is(#g3ui,#g3leg) .tk{position:absolute;left:0;top:0;display:none;width:36px;height:36px;margin:-44px 0 0 -18px;border-radius:50%;--rim:#51705c;--st:100;--su:100;--sc:#5bd66a;--uc:#e8b23a;font-family:system-ui,sans-serif}
+:is(#g3ui,#g3leg) .tk>i{position:absolute;display:block;border-radius:50%;font-style:normal}
+:is(#g3ui,#g3leg) .tk .ou{inset:-2.5px;background:conic-gradient(var(--uc) calc(var(--su)*1%),#0d151c66 0)}
+:is(#g3ui,#g3leg) .tk .in{inset:-.5px;border:1.5px solid #0d151c;background:conic-gradient(var(--sc) calc(var(--st)*1%),#26323a 0) padding-box}
+:is(#g3ui,#g3leg) .tk .fl{inset:5px;background:#777 center/cover no-repeat;border:2.5px solid var(--rim);box-shadow:0 0 0 1px #0d151c}
+:is(#g3ui,#g3leg) .tk .pn{left:50%;top:100%;width:0;height:0;margin:1px 0 0 -4px;border:4px solid transparent;border-top:7px solid var(--rim);border-radius:0;filter:drop-shadow(0 1px 1px #000a)}
+:is(#g3ui,#g3leg) .tk .ct{right:-7px;top:-7px;min-width:15px;height:15px;padding:0 3px;box-sizing:border-box;border-radius:8px;background:#f4f4ef;color:#10161b;font:700 10px/15px system-ui,sans-serif;text-align:center;box-shadow:0 1px 2px #000a}
+:is(#g3ui,#g3leg) .tk .pt{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:7px;padding:1px 7px 1px 6px;border-radius:5px;background:#0d151ce8;border:1px solid var(--rim);color:#f2f0e8;white-space:nowrap;font:700 13px/17px system-ui,sans-serif;box-shadow:0 1px 3px #000a}
+:is(#g3ui,#g3leg) .tk .pt em{font-style:normal;color:#e8b23a;font-size:9px;letter-spacing:1px;margin-left:5px;vertical-align:1px}
+:is(#g3ui,#g3leg) .tk .pt small{display:block;font:600 10px/12px system-ui,sans-serif;color:#b9c2c6;margin-top:-1px;padding-bottom:1px}
+:is(#g3ui,#g3leg) .tk.me{--rim:#f4f4ef}:is(#g3ui,#g3leg) .tk.war{--rim:#e5483b}:is(#g3ui,#g3leg) .tk.ally{--rim:#5aa0ee}
+:is(#g3ui,#g3leg) .tk.me .pt{border-color:#56646e}
+:is(#g3ui,#g3leg) .tk.oth{width:22px;height:22px;margin:-29px 0 0 -11px;opacity:.62}:is(#g3ui,#g3leg) .tk.oth .fl{inset:3.5px;border-width:1.5px}:is(#g3ui,#g3leg) .tk.oth .pt,:is(#g3ui,#g3leg) .tk.oth .ou{display:none}:is(#g3ui,#g3leg) .tk.oth.sel,:is(#g3ui,#g3leg) .tk.oth.hv{opacity:1}:is(#g3ui,#g3leg) .tk.oth.sel .pt,:is(#g3ui,#g3leg) .tk.oth.hv .pt{display:block}
+:is(#g3ui,#g3leg) .tk.low{--sc:#ef5548}:is(#g3ui,#g3leg) .tk.dry{--uc:#ef5548}
+:is(#g3ui,#g3leg) .tk.ally{z-index:1}:is(#g3ui,#g3leg) .tk.war{z-index:2}:is(#g3ui,#g3leg) .tk.me{z-index:3}:is(#g3ui,#g3leg) .tk.hv{z-index:4}:is(#g3ui,#g3leg) .tk.sel{z-index:5}:is(#g3ui,#g3leg) .tk.ho{z-index:6}
+:is(#g3ui,#g3leg) .tk.sel::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px dotted #6fe07f}
+:is(#g3ui,#g3leg) .tk.gmsel::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px dotted #f4f4ef}
+:is(#g3ui,#g3leg) .tk .ar{inset:-10px;border-radius:0;transform:rotate(var(--dir,0deg))}:is(#g3ui,#g3leg) .tk .ar::before{content:'';position:absolute;left:50%;top:-7px;margin-left:-6px;border:6px solid transparent;border-bottom:10px solid #fff;filter:drop-shadow(0 0 1.5px #000)}
+:is(#g3ui,#g3leg) .tk .br{inset:-7px;border-radius:0;background:${br} center/100% 100% no-repeat;transform:rotate(45deg) scale(.9)}
+:is(#g3ui,#g3leg) .tk .zz{left:100%;top:50%;margin:-11px 0 0 -4px;z-index:3;border-radius:0;font:700 19px/22px system-ui,sans-serif;color:#ffd23a;text-shadow:0 0 2px #000,0 1px 2px #000}
+:is(#g3ui,#g3leg) .tk .tg{left:0;top:100%;margin-top:11px;width:70px;height:6px;border-radius:3px;border:1px solid #0d151c;background:linear-gradient(90deg,#5bd66a calc(var(--tw,50)*1%),#ef5548 0)}
+:is(#g3ui,#g3leg) .tk.fi .pt{display:none}:is(#g3ui,#g3leg) .tk.fi2 .pt{display:block;margin-left:19px}
+:is(#g3ui,#g3leg) .tk .od{left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:7px;padding:0 8px;border-radius:9px;white-space:nowrap;font:700 11px/16px system-ui,sans-serif;color:#10161b;box-shadow:0 1px 3px #000a}
+:is(#g3ui,#g3leg) .tk .od.g{background:#5bd66a}:is(#g3ui,#g3leg) .tk .od.e{background:#e8b23a}:is(#g3ui,#g3leg) .tk .od.b{background:#ef5548;color:#fff}
+:is(#g3ui,#g3leg) .tk.far{width:0;height:0;margin:0;opacity:1}:is(#g3ui,#g3leg) .tk.far>i{display:none}:is(#g3ui,#g3leg) .tk.far>i.od{display:block;bottom:9px}:is(#g3ui,#g3leg) .tk.far .pt{display:block;margin-left:8px;padding:0 3px;background:rgba(9,15,23,.74);border:0;border-radius:3px;box-shadow:none;font:800 12px/14px system-ui,sans-serif;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000,1px 0 2px #000}:is(#g3ui,#g3leg) .tk.far .pt em,:is(#g3ui,#g3leg) .tk.far .pt small{display:none}:is(#g3ui,#g3leg) .tk.far.sel::after{inset:-11px}
+#g3ui .eta{position:absolute;left:0;top:0;display:none;white-space:nowrap;margin:-30px 0 0 -6px;padding-left:15px;font:700 12px/16px system-ui,sans-serif;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000}
+#g3ui .eta::before{content:'';position:absolute;left:0;top:3px;width:7px;height:7px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 2px #000}
+#g3leg .tk{position:relative;display:inline-block;width:20px;height:20px;margin:0;vertical-align:middle}#g3leg .tk .fl{inset:3.5px;border-width:1.5px;background:linear-gradient(#2aa23c 33%,#f4f4ef 33% 66%,#d8261c 66%)}#g3leg .tk.far{width:10px;height:10px;border-radius:50%;background:#2aa23c;border:2px solid #f4f4ef;box-sizing:border-box}
+`;document.head.appendChild(s);}
+// ---- facts about one army, for drawing only
+function gtkRel(o){const me=GC.me;return o===me?'me':!me?'oth':grAtWar(me,o)?'war':(typeof grAllied==='function'&&grAllied(me,o))?'ally':'oth';}
+const GTK_RELN={me:3,war:2,ally:1,oth:0};
+function gtkFight(){const m=new Map();if(GC.q)for(const b of GC.q)if(!b.done&&!m.has(b.p))m.set(b.p,b);return m;}
+function gtkState(a,fights){const p=GCM.P[a.at],b=fights&&fights.get(a.at);if(b&&(b.att.includes(a.id)||b.def.includes(a.id)))return 'fight';
+  if(a.path&&a.path.length)return 'march';if(!p.land)return 'hold';const ow=GC.prov[a.at].o;
+  if(ow!==a.o&&grAtWar(a.o,ow))return 'siege';
+  if(grFriend(a.o,ow)&&gtkWarAny(a.o)&&typeof geCount==='function'&&(geCount(a.at,'fort')+geCount(a.at,'mfort')>0))return 'dug';return 'hold';}   // dug in = holding behind forts while its nation is at war
+function gtkWarAny(o){const k=GC.turn+'|'+Object.keys(GC.war||{}).length;let W=gtkWarAny.c;if(!W||W.k!==k)W=gtkWarAny.c={k,m:new Map()};let v=W.m.get(o);if(v===undefined){v=false;for(const c in GC.nat)if(c!==o&&grAtWar(o,c)){v=true;break;}W.m.set(o,v);}return v;}
+function gtkEta(a){if(!a.path||!a.path.length)return 0;let m=0,at=a.at;for(const j of a.path){m+=grEdge(at,j)||1;at=j;}const c=grEdge(a.at,a.path[0])||1;return Math.max(1,Math.round((m-grSlide(a)*c)*30));}
+function gtkMake(L){let n=0,hp=0,inf=0,arm=0,fs=0,su=0,fl=0,stars=0;for(const a of L){const fu=a.fu===undefined?100:a.fu;su+=(a.sup>0?Math.min(fu,25):fu)*a.u.length;if(a.fl)fl=1;
+    const g=typeof gmilGen==='function'?gmilGen(a):null;if(g)stars=Math.max(stars,1+(typeof gmilLv==='function'?gmilLv(g):0));
+    for(const r of a.u){n++;hp+=Math.max(0,Math.min(100,r[1]||0));const k=r[0];if(k==='inf'||k==='at'||k==='champ')inf++;else if(k==='tank')arm++;else fs++;}}
+  return {n,st:n?Math.round(hp/n):100,su:n?Math.round(su/n):100,inf,arm,fs,fl,stars};}
+/* ONE strength estimate: exactly the terms grAuto() (13-grand.js) multiplies before its dice — same grSideUnits / grSideVal / grDefMods / grIdeaMul calls,
+   no second formula. Used by the odds pills and the tug bar. Guard: orch/grandtest.mjs compares it with grAuto's own sa/sd. */
+function gtkEst(b){const sa=grSideVal(grSideUnits(b,'att'),0)*grIdeaMul(b.an,'attack'),sd=grSideVal(grSideUnits(b,'def'),1)*grDefMods(b)*grIdeaMul(b.dn,'defense');return {sa,sd,r:sd>0?sa/sd:99};}
+function gtkOdds(attIds,pi){const A=attIds.map(id=>GC.armies.find(x=>x.id===id)).filter(Boolean);if(!A.length)return null;const an=A[0].o,p=GCM.P[pi];
+  const def=GC.armies.filter(a=>a.at===pi&&a.o!==an&&grAtWar(an,a.o)),ow=p.land?GC.prov[pi].o:'',garr=!!(p.land&&ow!==an&&grAtWar(an,ow)&&GC.prov[pi].gar.length>0);if(!def.length&&!garr)return null;
+  const from=A[0].path&&A[0].path.length>1&&A[0].path[A[0].path.length-1]===pi?A[0].path[A[0].path.length-2]:A[0].at;
+  const b={p:pi,an,dn:garr?ow:def[0].o,att:A.map(a=>a.id),def:def.map(a=>a.id),garr,river:from!==pi&&grRiver(from,pi),mtn:p.t==='m',sea:!p.land,done:0},e=gtkEst(b);e.b=b;
+  e.k=e.r>=GTK_ODDS[0]?'g':e.r<=GTK_ODDS[1]?'b':'e';e.t=e.k==='g'?'Good odds':e.k==='b'?'Bad odds':'Even fight';return e;}
+function gtkReach(a,pi){if(a.at===pi)return true;const r=grPath(a.o,a.at,pi,a.fl);return !!r&&r.turns!=null&&r.turns<=2;}   // "in reach" = your selected army gets there within two months
+// ---- the far-tier dots: one THREE.Points for every stack on the map
+function gtkDots(){const T=G3.tok;if(T.pts&&T.pts.parent===G3.sc)return T.pts;const cap=1024,g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(cap*3),3));g.setAttribute('color',new THREE.BufferAttribute(new Float32Array(cap*3),3));g.setAttribute('aRel',new THREE.BufferAttribute(new Float32Array(cap),1));g.setDrawRange(0,0);
+  const m=new THREE.ShaderMaterial({transparent:true,depthTest:false,depthWrite:false,uniforms:{uPx:{value:1}},
+    vertexShader:'attribute vec3 color;attribute float aRel;uniform float uPx;varying vec3 vC;varying float vR;void main(){vC=color;vR=aRel;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);gl_PointSize=(aRel>.5?20.:10.)*uPx;}',
+    fragmentShader:'varying vec3 vC;varying float vR;void main(){float r=length(gl_PointCoord-.5)*2.;if(r>1.)discard;vec3 rim=vR>2.5?vec3(.96,.96,.94):vR>1.5?vec3(.9,.28,.23):vR>.5?vec3(.35,.63,.93):vec3(.05,.08,.1);float e=vR>.5?.62:.7;vec3 c=r>e?(r>.9?vec3(.05,.08,.1):rim):vC;gl_FragColor=vec4(c,(vR>.5?1.:.7)*smoothstep(1.,.92,r));}'});
+  T.pts=new THREE.Points(g,m);T.pts.frustumCulled=false;T.pts.renderOrder=40;T.cap=cap;G3.sc.add(T.pts);return T.pts;}
+// ---- besieging: a dashed ring on the ground round the town (one InstancedMesh for all sieges)
+function gtkRingGeo(N,w){const P=[],I=[],S=5;let vo=0;for(let i=0;i<N;i++){const a0=i/N*Math.PI*2,a1=(i+.55)/N*Math.PI*2;
+    for(let k=0;k<=S;k++){const a=a0+(a1-a0)*k/S,c=Math.cos(a),sn=Math.sin(a);P.push(c*(1-w),0,sn*(1-w),c*(1+w),0,sn*(1+w));if(k<S){const o=vo+k*2;I.push(o,o+2,o+1,o+1,o+2,o+3);}}vo+=(S+1)*2;}
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(P,3));geo.setIndex(I);return geo;}
+function gtkRings(){const T=G3.tok;if(T.rings&&T.rings.parent===G3.sc)return T.rings;
+  T.rings=new THREE.InstancedMesh(gtkRingGeo(22,.045),new THREE.MeshBasicMaterial({color:0xf04a3c,side:THREE.DoubleSide,transparent:true,opacity:.95,depthTest:false,depthWrite:false}),64);T.rings.count=0;T.rings.frustumCulled=false;T.rings.renderOrder=38;G3.sc.add(T.rings);return T.rings;}
+function gtkTown(pi){const p=GCM.P[pi],tw=p.land?g3Main(pi):null;return tw?[tw.x,tw.z]:[p.x,p.y];}
+/* neighbouring tokens nudge apart instead of piling up: boxes [cx,cy,halfW,halfH] in screen pixels; a token moves at most GTK_NUDGE px from its pin */
+const GTK_NUDGE=60;
+function gtkBox(q,rel,far,wide){return far?[q[0]+12,q[1],22,9]:rel==='oth'?[q[0],q[1]-18,14,16]:[q[0]+(wide?34:20),q[1]-24,wide?60:44,27];}
+const GTK_DIR=[[0,1],[1,0],[0,-1],[-1,0],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]];
+function gtkOver(b,placed,own){let ar=0,same=null;for(const o of placed){const px=b[2]+o[2]-Math.abs(b[0]-o[0]),py=b[3]+o[3]-Math.abs(b[1]-o[1]);if(px>0&&py>0){ar+=px*py*(o.g?1:.5);if(!same&&o.g&&own&&o.g.a.o===own&&!o.g.fb)same=o.g;}}return {ar,same};}   /* how much a token box covers what is already placed (a name plate counts half) */
+function gtkNudge(q,rel,far,wide,placed,own){const o0=gtkOver(gtkBox(q,rel,far,wide),placed,own);if(!o0.ar)return {x:q[0],y:q[1],free:true};
+  let bx=q[0],by=q[1],ba=o0.ar;
+  if(!far)for(let r=12;r<=GTK_NUDGE;r+=12)for(const d of GTK_DIR){const x=q[0]+d[0]*r,y=q[1]+d[1]*r,a=gtkOver(gtkBox([x,y],rel,far,wide),placed).ar;if(!a)return {x,y,free:true};if(a<ba*.8){ba=a;bx=x;by=y;}}   /* the nearest free spot, at most GTK_NUDGE px from the pin; no free spot = the one that covers least */
+  return {x:bx,y:by,free:false,same:o0.same};}
+// screen boxes of the map's own controls (minimap, unit cards, round buttons, map-mode switch, monthly report, map key), in label-layer pixels; re-measured a few times a second
+const GTK_HUD=['g3mini','g3cards','g3btns','g3modes','g3news','g3leg','gmCards','gmPrev'];
+function gtkHud(){const T=G3.tok,now=performance.now();if(T.hud&&now-T.hudT<350)return T.hud;const R=[];T.hudT=now;T.hud=R;if(!G3.lab||!G3.lab.getBoundingClientRect)return R;const o=G3.lab.getBoundingClientRect();
+  for(const id of GTK_HUD){const el=document.getElementById(id);if(!el)continue;const L=el.children.length&&getComputedStyle(el).pointerEvents==='none'?[...el.children]:[el];   /* a click-through wrapper counts by its children, not its whole box */
+    for(const c of L){const r=c.getBoundingClientRect();if(r.width<8||r.height<8||r.width>o.width*.8&&r.height>o.height*.8)continue;R.push([r.left-o.left-4,r.top-o.top-4,r.right-o.left+4,r.bottom-o.top+4]);}}
+  return R;}
+// ---- the tokens (called from g3Labels on every label pass, and from the frame loop while armies slide)
+function g3Tokens(tier){if(!G3.lab||!GC||!G3.cam)return;gtkCss();if(!G3.tok||G3.tok.sc!==G3.sc)G3.tok={sc:G3.sc,eta:new Map()};const T=G3.tok;if(tier===undefined)tier=G3.tier|0;
+  const cam=G3.cam,w=GV.w,h=GV.h,v=T.v||(T.v=new THREE.Vector3()),me=GC.me,selA=GV.selA;
+  const proj=(x,y,z)=>{v.set(x,y,z).project(cam);if(v.z>1||v.z<-1)return null;const X=(v.x*.5+.5)*w,Y=(-v.y*.5+.5)*h;if(X<-60||Y<-40||X>w+60||Y>h+40)return null;return [X,Y];};
+  const vis=(el,on)=>{const d=on?'block':'none';if(el._v!==d){el._v=d;el.style.display=d;}};
+  const fights=gtkFight(),grp=new Map(),I=typeof gmIds==='function'?gmIds():[];G3.hit=[];
+  // 1. stacks: armies standing on the same spot. middle/far = one per province (and one per column on the march); close = one per owner
+  for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const seen=grSeen(a);e.seen=seen;if(!seen)continue;
+    const st=gtkState(a,fights),fb=st==='fight'?fights.get(a.at):null,side=fb?(fb.att.includes(a.id)?'A':'D'):'';
+    const k=a.at+'|'+(st==='march'?'>'+a.path[0]+(tier===2?a.o:''):fb?side:tier===2?a.o:'');let g=grp.get(k);
+    if(!g){g={k,a,e,L:[],st,side,fb,rn:-1};grp.set(k,g);}g.L.push(a);const rn=(a.id===selA?10:0)+GTK_RELN[gtkRel(a.o)]+(st==='march'?0:.5);if(rn>g.rn||(rn===g.rn&&a.id<g.a.id)){g.rn=rn;g.a=a;g.e=e;g.st=st;}}
+  // 2. far dots (every stack, one draw) — world space, so only rebuilt here
+  {const P=gtkDots(),pa=P.geometry.attributes.position,ca=P.geometry.attributes.color,ra=P.geometry.attributes.aRel;let n=0;P.visible=tier===0;
+    if(tier===0){for(const g of grp.values()){if(n>=T.cap)break;const c=grNatRgb(g.a.o),e=g.e;pa.setXYZ(n,e.x,e.y+1,e.z);ca.setXYZ(n,c[0]/255,c[1]/255,c[2]/255);ra.setX(n,g.a.id===selA?3:GTK_RELN[gtkRel(g.a.o)]);n++;}
+      pa.needsUpdate=ca.needsUpdate=ra.needsUpdate=true;P.material.uniforms.uPx.value=(G3.R?G3.R.domElement.height:h)/Math.max(1,h);}P.geometry.setDrawRange(0,n);T.dots=n;}
+  // 3. odds: only while one of your armies is selected
+  const sa=selA&&GC.armies.find(x=>x.id===selA),mySel=sa&&sa.o===me&&GC.ph==='plan'?sa:null,ok=mySel?I.join(',')+'|'+GC.turn+'|'+(GC.day|0)+'|'+mySel.at+'|'+GC.armies.length:'';if(T.ok!==ok){T.ok=ok;T.odds=new Map();}
+  const odds=g=>{if(!mySel||gtkRel(g.a.o)!=='war')return null;let o=T.odds.get(g.a.at);if(o===undefined){o=null;try{if(gtkReach(mySel,g.a.at))o=gtkOdds(I.length?I:[mySel.id],g.a.at);}catch(e){}T.odds.set(g.a.at,o);}return o;};
+  // 4. draw
+  const used=new Set(),placed=tier>0&&G3.plR?G3.plR.slice():[],shown=[],rings=gtkRings();let nr=0,ntok=0;const M4=T.m4||(T.m4=new THREE.Matrix4());
+  const order=[...grp.values()].sort((a,b)=>b.rn-a.rn);
+  const draw=(key,g,L,q,dx,fan)=>{const a=L.includes(g.a)?g.a:L[0],rel=gtkRel(a.o),sel=L.some(x=>x.id===selA),mk=gtkMake(L),st=g.st,hv=T.hov===g.k;
+    let pl=G3.pl.get(key);if(!pl){pl=document.createElement('div');pl.className='tk';G3.lab.appendChild(pl);G3.pl.set(key,pl);}used.add(key);pl._ids=L.map(x=>x.id);pl._k=g.k;
+    const far=tier===0,od=fan?null:odds(g),eta=st==='march'?gtkEta(a):0;let dir=0;
+    if(st==='march'&&!far){const t=gtkTown(a.path[0]),q2=proj(t[0],g.e.y,t[1])||(()=>{v.set(t[0],g.e.y,t[1]).project(cam);return [(v.x*.5+.5)*w,(-v.y*.5+.5)*h];})();dir=Math.round(Math.atan2(q2[0]-q[0],-(q2[1]-q[1]))*180/Math.PI/5)*5;}
+    let tw=50;if(st==='fight'&&g.fb){try{const e=gtkEst(g.fb),mineAtt=g.fb.an===me||(me&&grFriend(me,g.fb.an)),sh=e.sa/Math.max(1,e.sa+e.sd);tw=Math.round(100*(mineAtt||!(g.fb.dn===me||(me&&grFriend(me,g.fb.dn)))?sh:1-sh));}catch(e){}}
+    const cls='tk '+rel+(far?' far':'')+(sel?' sel':'')+(hv?' hv':'')+(mk.st<35?' low':'')+(mk.su<30?' dry':'')+(st==='fight'?' fi'+(g.side==='D'||!grp.has(a.at+'|D')?' fi2':''):'')+(!sel&&I.length>1&&L.some(x=>I.includes(x.id))?' gmsel':'')+(od?' ho':'');
+    const hsh=cls+'|'+mk.n+'|'+mk.st+'|'+mk.su+'|'+mk.stars+'|'+a.o+'|'+L.length+'|'+st+'|'+dir+'|'+tier+'|'+(od?od.k:'')+'|'+tw+'|'+(tier===2?mk.inf+','+mk.arm+','+mk.fs:'');
+    if(pl._h!==hsh){pl._h=hsh;pl.className=cls;pl.style.setProperty('--st',mk.st);pl.style.setProperty('--su',mk.su);if(st==='march')pl.style.setProperty('--dir',dir+'deg');if(st==='fight')pl.style.setProperty('--tw',tw);
+      const num=mk.n>=1000?(mk.n/1000).toFixed(1)+'k':mk.n,full=rel!=='oth'||sel||hv;
+      pl.innerHTML='<i class="ou"></i><i class="in"></i><i class="fl" style="background-image:url('+g3FlagUrl(a.o)+')"></i><i class="pn"></i>'
+        +(st==='march'?'<i class="ar"></i>':'')+(st==='dug'?'<i class="br"></i>':'')+(st==='fight'&&g.side==='A'?'<i class="zz">⚡</i><i class="tg"></i>':'')
+        +(L.length>1?'<i class="ct">'+L.length+'</i>':'')+(od?'<i class="od '+od.k+'">'+od.t+'</i>':'')
+        +(full||far?'<span class="pt"><b>'+num+'</b>'+(mk.stars?'<em>'+'★'.repeat(Math.min(5,mk.stars))+'</em>':'')
+          +(tier===2?'<small>'+(mk.fl?'⚓ '+mk.n+' ships':'<span title="infantry">♟ '+mk.inf+'</span> · <span title="armor">▰ '+mk.arm+'</span> · <span title="fire support">✸ '+mk.fs+'</span>')+'</small>':'')+'</span>':'');}
+    const X=Math.round(q[0]+dx),Y=Math.round(q[1]),t='translate('+X+'px,'+Y+'px)';if(pl._t!==t){pl._t=t;pl.style.transform=t;}vis(pl,true);ntok++;
+    const R=far?9:rel==='oth'?11:18,cy=far?Y:Y-(rel==='oth'?18:26),big=rel!=='oth'||sel||hv,hb=far?{x0:X-16,x1:X+(big?44:16),y0:Y-14,y1:Y+14}:{x0:X-R-8,x1:X+(big?R+52:R+8),y0:cy-R-10,y1:Y+8};   /* the whole token is the target: ring, number plate and pin (never smaller than the old figure + badge target) */
+    G3.hit.push({aid:a.id,x:X,y:cy,r:R+5,k:g.k,...hb});for(const x of L)if(x!==a)G3.hit.push({aid:x.id,x:X,y:cy,r:R+5,k:g.k,...hb});   // the stack's front army is hit first; the rest stay reachable for box-select
+    if(tier===2&&!fan)for(const x of L){const ex=G3.arm.get(x.id);if(!ex)continue;const qf=proj(ex.x,ex.y+2,ex.z);if(qf)G3.hit.push({aid:x.id,x:qf[0],y:qf[1],r:16,k:g.k});}   // close view: each figure on the ground is a click target too
+    return pl;};
+  /* 4a. find every token its place first: a token with no room joins the token of the same nation it would cover (one stack with a count, far and middle view),
+     faint ones (and far numbers) are left out, yours and enemies always show */
+  const todo=[],hud=gtkHud(),under=q=>{const hx=q[0],hy=q[1]-(tier===0?0:20);for(const r of hud)if(hx>r[0]&&hx<r[2]&&hy>r[1]&&hy<r[3])return true;return false;};
+  if(tier>0)for(const r of hud)placed.push([(r[0]+r[2])/2,(r[1]+r[3])/2,(r[2]-r[0])/2,(r[3]-r[1])/2]);   /* tokens next to the controls step aside from them like they do from name plates */
+  for(const g of order){const e=g.e,q=proj(e.x,e.y,e.z);if(!q)continue;const rel=gtkRel(g.a.o),sel=g.L.some(x=>x.id===selA);
+    if(under(q))continue;   /* the map runs on under the minimap, unit cards and round buttons: a token there is hidden like the land under it, never drawn on top of them */
+    if(g.st==='siege'&&tier>0&&nr<64){const t=gtkTown(g.a.at),r=Math.max(9,Math.hypot(e.x-t[0],e.z-t[1]));M4.makeScale(r,1,r);M4.setPosition(t[0],Math.max(.3,g3HeightAt(t[0],t[1]))+1.2,t[1]);rings.setMatrixAt(nr++,M4);}
+    if(tier===0&&!(rel!=='oth'||sel))continue;   /* far: everyone is a dot; only yours, enemies, allies and the selected one carry a number */
+    const wide=tier===2||!!g.fb,n=gtkNudge(q,rel,tier===0,wide,placed,g.a.o);
+    if(!n.free){const h=n.same;if(tier<2&&h&&!g.fb){for(const x of g.L)h.L.push(x);h.merged=1;continue;}if(!sel&&(rel==='oth'||(tier===0&&rel!=='me')))continue;}
+    if(tier>0){q[0]=n.x;q[1]=n.y;if(under(q))continue;}const bx=gtkBox(q,rel,tier===0,wide);bx.g=g;placed.push(bx);shown.push(g);todo.push([g,q,rel,sel]);}
+  for(const [g,q,rel,sel] of todo){const hv=T.hov===g.k||T.fan===g.k;let dx=0;if(g.fb&&tier>0)dx=g.side==='A'?-16:16;
+    if(tier>0&&hv&&g.L.length>1&&!g.fb){const n=g.L.length,sp=tier===2?96:66;g.L.forEach((a,i)=>draw(g.k+'#'+a.id,g,[a],q,(i-(n-1)/2)*sp,true));}   // stack fanned out: one token per army
+    else draw(g.k,g,g.L,q,dx,false);
+    // arrival: where and when the column gets there (yours, your allies' and the selected one)
+    if(g.st==='march'&&(rel==='me'||sel)&&tier>0){const a=g.a,t=gtkTown(a.path[a.path.length-1]),q2=proj(t[0],Math.max(.3,g3HeightAt(t[0],t[1])),t[1]);if(q2){let el=T.eta.get(g.k);if(!el){el=document.createElement('div');el.className='eta';G3.lab.appendChild(el);T.eta.set(g.k,el);}
+        const d=gtkEta(a),tx=d+(d===1?' day':' days');if(el._x!==tx){el._x=tx;el.textContent=tx;}const tr='translate('+Math.round(q2[0])+'px,'+Math.round(q2[1])+'px)';if(el._t!==tr){el._t=tr;el.style.transform=tr;}vis(el,true);used.add('eta'+g.k);}}}
+  rings.count=nr;rings.instanceMatrix.needsUpdate=true;rings.visible=nr>0;T.n=ntok;T.shown=shown.length;
+  for(const [k,pl] of G3.pl)if(!used.has(k))vis(pl,false);for(const [k,el] of T.eta)if(!used.has('eta'+k))vis(el,false);
+  if(G3.pl.size>400)for(const [k,pl] of G3.pl)if(!used.has(k)){pl.remove();G3.pl.delete(k);}
+  if(T.eta.size>120)for(const [k,el] of T.eta)if(!used.has('eta'+k)){el.remove();T.eta.delete(k);}}
+// hover/click fan-out: g3HitAt (13e) tells us which stack is under the mouse
+function gtkHover(hit){const T=G3.tok;if(!T)return;const k=hit?hit.k:null;if(T.hov!==k){T.hov=k;G3.lblDirty=true;}}
+function gtkClicked(hit){const T=G3.tok;if(!T)return;T.fan=hit?hit.k:null;G3.lblDirty=true;}
+// for tests and guards: what is drawn for armies right now
+function gtkAudit(){const T=G3.tok||{},out={tier:G3.tier,tokens:0,far:0,stacks:0,odds:0,dots:T.dots|0,dotsOn:!!(T.pts&&T.pts.visible),rings:T.rings?T.rings.count:0,figs:0,flags:0,old:0,dup:0,perProv:0,hud:0,sel:GV.selA?1:0};const seen=new Set(),pv=new Map(),hud=T.hud||[];
+  for(const [k,el] of G3.pl){if(el._v!=='block')continue;out.tokens++;if(/ far/.test(el.className))out.far++;if(el.querySelector('.ct'))out.stacks++;if(el.querySelector('.od'))out.odds++;for(const id of el._ids||[]){if(seen.has(id))out.dup++;seen.add(id);}
+    if(!k.includes('#')&&!/\|[AD]$/.test(k)){const m=/translate\((-?\d+)px,\s*(-?\d+)px\)/.exec(el._t||''),far=/ far/.test(el.className);if(m){const hx=+m[1],hy=+m[2]-(far?0:20);for(const r of hud)if(hx>r[0]&&hx<r[2]&&hy>r[1]&&hy<r[3]){out.hud++;break;}}   /* tokens drawn on top of the minimap, unit cards or round buttons (must be none) */
+      const pi=k.includes('>')?k:k.split('|')[0];pv.set(pi,(pv.get(pi)||0)+1);}}
+  for(const n of pv.values())out.perProv=Math.max(out.perProv,n);   /* most tokens standing in one province (marching columns and the two sides of a battle are counted apart) */
+  if(typeof g3Batch==='function'&&G3.bat){g3Batch();for(const p of G3.bat.b.values())out.figs+=p.n||0;for(const p of G3.bat.f.values())out.flags+=p.n||0;}
+  out.old=document.querySelectorAll('#g3ui .p').length;return out;}
 // ===== 13f-grandmirror: a "Fight it" battle MIRRORS the province it is fought in (Abdullah 2026-11-06 08:09 "full mirror") =====
 // One map system: the province's battle map is a CUSTOM MAP (the map-editor format in 02-map.js, key cm_<hash>) generated
 // deterministically from the grand-map data (seed = province id): terrain/biome, relief, sea side, river with a bridge and a ford,
@@ -2931,6 +3182,7 @@ function geSupplyStep(){for(const a of GC.armies){const c=a.o,E=GC.nat[c]&&GC.na
     let da=lv===3?35:lv===2?22:lv===1?8:-9,df=lv===0?-8:(E.dry?-6:(lv===3?30:lv===2?20:8));
     if(E.dry&&lv>0)da=Math.min(da,6);
     if(L){if(da>0)da*=L.eff;if(df>0)df*=L.eff;const fo=a.fo===GC.turn?1:0;df-=(a.path&&a.path.length?5:0)+fo*8;da-=fo*6;a.sl=Math.round(L.eff*100);a.sk=Math.round(L.km);}   /* marching and fighting burn extra */
+    if(typeof gmilShell==='function')da=gmilShell(a,da);   /* national shell stock (13i): fighting burns it, an empty stock slows every refill */
     for(const r of a.u)r[3]=Math.max(0,Math.min(100,Math.round(r[3]+da)));a.fu=Math.max(0,Math.min(100,Math.round(a.fu+df)));}}
 function geArmyFuel(a){return a.fu===undefined?1:a.fu/100;}
 function geDry(c){const N=GC.nat[c];return !!(N&&N.e&&N.e.dry);}
@@ -3047,22 +3299,32 @@ function g3GradeColor(col,n){const o=new Uint8ClampedArray(n*4);
 // Called at the end of g3Fields(): swaps the hand-shaped relief/colour for the real data and bakes sun shadows + valley AO + relief normals.
 function g3RealFields(F){const R=G3.real,W=F.W,H=F.H,E=R.E,EW=R.EW,Hh=F.Hh,Ls=F.Ls,Lw=F.Lw,N=W*H;
   const hm=new Float32Array(N);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const o=2*y*EW+2*x;hm[y*W+x]=(E[o]+E[o+1]+E[o+EW]+E[o+EW+1])/4;}
-  const SC=.0040,SK=.0078/SC,NG=.42;F.hm=hm; // relief height: 5,000 m = 20 map units (was 39 - ranges stood like walls); SK keeps the rock paint where it was; NG = shading steepness (was .7 on the taller relief: every slope lit like a cliff)
+  const SC=.0024,SK=.0078/SC,NG=.42,CE=m=>m<1800?m:1800+(m-1800)*.6;F.hm=hm; // relief height: gentle - 3,000 m = 6 map units, 8,000 m = 13 (was 12 and 32, before that 23 and 62: ranges stood like walls); CE flattens the highest ground so plateaus and peaks do not tower; SK keeps the rock paint where it was; NG = shading steepness
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ls=Ls[k],m=hm[k],coast=g3Smooth(.4,.8,ls),n=g3Fbm(x*.02,y*.02,4);
-    const landH=coast*(1+n*1.3)+Math.max(0,m)*SC;
-    const sea=Math.min(-.8+Math.min(0,Math.max(m,-4500))/500,-.8-4*Math.pow(1-Lw[k],2));Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);}
+    const landH=coast*(1+n*1.3)+CE(Math.max(0,m))*SC;
+    const sea=Math.min(-.8+Math.min(0,Math.max(m,-4500))/500,-.8-4*Math.pow(1-Lw[k],2));Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);if(ls>=.5&&Hh[k]<.45)Hh[k]=.45;}
   // flatten the ground around every land province's towns so cities stay readable even in real mountains (Tehran sits against the Alborz)
   {const fl=new Float32Array(N);for(const q of GCM.P){if(!q.land)continue;const cx=Math.round(q.x/2),cy=Math.round(q.y/2);
     for(let dy=-40;dy<=40;dy++){const y=cy+dy;if(y<0||y>=H)continue;for(let dx=-40;dx<=40;dx++){const x=cx+dx;if(x<0||x>=W)continue;const w=1-g3Smooth(12,38,Math.hypot(dx,dy));if(w>fl[y*W+x])fl[y*W+x]=w;}}}
-    const b2=g3Blur(Hh,W,H,10,2);for(let k=0;k<N;k++)if(Ls[k]>.5&&fl[k]>0)Hh[k]+=(b2[k]-Hh[k])*fl[k]*.92;F.fl=fl;}
+    const hc=new Float32Array(N);for(let k=0;k<N;k++)hc[k]=Hh[k]<.45?.45:Hh[k];   /* mapcoast: flatten towards the level of the land around, not the sea bed - towns on islands and thin peninsulas (Sicily, Crete, Italy's heel) no longer sink under water */
+    const b2=g3Blur(hc,W,H,10,2);for(let k=0;k<N;k++)if(Ls[k]>.5&&fl[k]>0)Hh[k]+=(b2[k]-Hh[k])*fl[k]*.92;F.fl=fl;}
   // colour: graded satellite base at its own resolution
   const CW=R.CW,CH=R.CH;F.PW=CW;F.PH=CH;F.px=g3GradeColor(R.col,CW*CH);
+  // mapcoast: the satellite picture's pale sea starts a little inside the drawn coast - pull the nearest inland ground colour out to the shoreline (and a pixel past it)
+  if(F.cd&&F.FW){const FW=F.FW,FH=F.FH,cd=F.cd,px=F.px,kx=CW/FW,ky=CH/FH,blue=o=>px[o+2]>px[o]+18&&px[o+2]>px[o+1]-12;
+    for(let y=3;y<FH-3;y++)for(let x=3;x<FW-3;x++){const k=y*FW+x,c=cd[k];if(c>131||c<121)continue;
+      let b=k,bc=c;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const n=k+dy*FW+dx;if(cd[n]<bc){bc=cd[n];b=n;}}
+      const so=(Math.min(CH-1,((((b/FW)|0)+.5)*ky)|0)*CW+Math.min(CW-1,((b%FW+.5)*kx)|0))*4,ok=b!==k&&!blue(so),r=ok?px[so]:132,g=ok?px[so+1]:138,bl=ok?px[so+2]:96,y1=Math.min(CH,Math.ceil((y+1)*ky)),x1=Math.min(CW,Math.ceil((x+1)*kx));
+      for(let ty=Math.floor(y*ky);ty<y1;ty++)for(let tx=Math.floor(x*kx);tx<x1;tx++){const o=(ty*CW+tx)*4;if(blue(o)){px[o]=r;px[o+1]=g;px[o+2]=bl;}}}}
   // biome weights for the detail shader from real data: rock (steep/high), snow (high/polar), sand (desert colour), vegetation (green)
   const bw=new Uint8Array(N*4),sx=CW/W,sy=CH/H,col=R.col;
+  // snow line (fixes1): bright colorless ground only counts as snow where snow can lie - above a height that falls with latitude
+  // (4,600 m up to 24 degrees, 1,500 m at 38, sea level from 60). Pale desert rock and salt flats in Arabia or the Sahara are never snow.
+  const snowLine=new Float32Array(H);for(let y=0;y<H;y++){const la=Math.abs(typeof gsupLat==='function'?gsupLat({y:(y+.5)*1200/H}):45);snowLine[y]=la<=24?4600:la<=38?4600-(la-24)/14*3100:Math.max(0,1500-(la-38)/22*1500);}
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ci=(Math.min(CH-1,Math.floor((y+.5)*sy))*CW+Math.min(CW-1,Math.floor((x+.5)*sx)))*4,r=col[ci]/255,g=col[ci+1]/255,b=col[ci+2]/255;
     const mx=Math.max(r,g,b),mn=Math.min(r,g,b),lum=.3*r+.59*g+.11*b,sat=mx>0?(mx-mn)/mx:0,coast=g3Smooth(.4,.8,Ls[k]),m=hm[k];
     const hl=Hh[y*W+Math.max(0,x-1)],hr=Hh[y*W+Math.min(W-1,x+1)],hu=Hh[Math.max(0,y-1)*W+x],hd=Hh[Math.min(H-1,y+1)*W+x],sl=Math.hypot(hr-hl,hd-hu)/4*SK;
-    const rock=Math.max(g3Smooth(.35,1.3,sl)*coast,g3Smooth(2600,4300,m)*.9),snow=Math.max(g3Smooth(3900,5200,m),g3Smooth(.82,.93,lum)*(1-g3Smooth(.07,.15,sat))*coast);
+    const rock=Math.max(g3Smooth(.35,1.3,sl)*coast,g3Smooth(2600,4300,m)*.9),snow=Math.max(g3Smooth(3900,5200,m),g3Smooth(.82,.93,lum)*(1-g3Smooth(.07,.15,sat))*coast*g3Smooth(snowLine[y]-700,snowLine[y],m));
     const sand=Math.max(g3Smooth(.12,.26,(r-b))*g3Smooth(.55,.72,lum)*(1-g3Smooth(.0,.06,g-r)),g3Smooth(.5,.58,Ls[k])*(1-g3Smooth(.62,.8,Ls[k])));
     const veg=g3Smooth(-.04,.05,g-r)*coast*(1-sand);
     const o=k*4;bw[o]=Math.min(255,rock*255);bw[o+1]=Math.min(255,snow*255);bw[o+2]=Math.min(255,sand*255);bw[o+3]=Math.min(255,veg*255);}
@@ -3271,12 +3533,24 @@ const GMIL_MISSILE_COST=450;
 const GMIL_STK={US:[5,8,3,14,40,14],RU:[6,8,10,24,36,10],CN:[8,8,8,30,36,12],IL:[4,6,3,8,24,7],IR:[2,6,5,3,12,2],UA:[1,3,2,4,16,1],KP:[4,6,3,4,10,1],IN:[4,6,3,12,20,4],
   PK:[3,5,2,6,12,2],SA:[2,4,0,6,20,0],AE:[1,3,0,5,16,0],TR:[2,4,2,5,10,2],EG:[2,4,1,6,12,1],FR:[2,4,2,6,12,3],DE:[1,3,1,6,12,3],PL:[1,3,1,6,12,2],GB:[2,4,2,5,10,2],
   JP:[2,5,2,10,16,3],KR:[4,6,4,10,16,3],RS:[1,3,1,0,2,0],DW:[2,4,1,0,2,0],RV:[1,2,1,0,2,0],OB:[0,2,1,0,1,0],BI:[0,1,0,0,1,0]},GMIL_STK_D=[1,2,1,2,6,1];
-const GMIL_ORD={ms:{n:1,cost:GMIL_MISSILE_COST,lead:4,nm:'missile salvo'},ic:{n:4,cost:600,lead:6,nm:'interceptor loads'}},GMIL_ORD_MAX=3,GMIL_IC_NEED={m:2,a:1};
+/* Shells and precision bombs (stockpiles slice 2) — the same counters, two more kinds. Units: 1 shell load = about 100,000 artillery rounds,
+   1 precision bomb load = about 2,500 guided bombs / kits (orch/REAL-2026.md "Shells and guided bombs"). Row = [shells now, depot, made per year, bombs now, depot, made per year].
+   Chain: an army that fought this month burns shells from the national stock (25 thousandths of a load per unit); with the stock at zero every army
+   refills its ammunition at a quarter of the normal rate ("shell hunger"), which is world news and costs a little war support; an air raid spends one
+   bomb load, without one it flies with unguided bombs (half the damage, easier to shoot down). Friends ship shells; AI orders early and holds raids back.
+   Counter-play: make the enemy fight every month, hit his factories and power (production halves), order before the war, ask friends. */
+const GMIL_STK2={US:[20,30,13,30,40,12],RU:[25,60,30,6,12,28],CN:[70,80,30,20,24,10],IL:[7,12,3,6,12,2],IR:[14,20,5,1,3,1],UA:[4,10,3,1,3,0],KP:[40,60,12,0,1,0],IN:[22,30,4,3,6,2],
+  PK:[10,15,2,2,4,1],SA:[7,10,1,5,8,0],AE:[4,6,0,4,6,0],TR:[10,15,4,3,6,2],EG:[14,20,2,2,4,0],FR:[3,6,3,2,4,1],DE:[5,12,8,1,3,1],PL:[6,10,4,1,3,0],GB:[2,5,2,2,4,1],
+  JP:[6,8,1,2,4,1],KR:[35,40,15,3,6,2],RS:[2,4,1,0,0,0],DW:[3,4,1,0,0,0],RV:[2,3,1,0,0,0],OB:[1,2,1,0,0,0],BI:[1,2,1,0,0,0]},GMIL_STK2_D=[3,5,1,1,2,0];
+const GMIL_SK={ms:[0,0],ic:[0,3],sh:[1,0],pb:[1,3]},GMIL_SKK=['ms','ic','sh','pb'],GMIL_SH_BURN=25,GMIL_SH_DRY=.25;
+const GMIL_ORD={ms:{n:1,cost:GMIL_MISSILE_COST,lead:4,nm:'missile salvo'},ic:{n:4,cost:600,lead:6,nm:'interceptor loads'},sh:{n:4,cost:400,lead:3,nm:'shell loads'},pb:{n:2,cost:300,lead:4,nm:'precision bomb loads'}},GMIL_ORD_MAX=3,GMIL_IC_NEED={m:2,a:1};
+function gmilStkAt(c,k,j){const s=GMIL_SK[k]||GMIL_SK.ms;return (s[0]?(GMIL_STK2[c]||GMIL_STK2_D):gmilStkRow(c))[s[1]+j];}
+function gmilStkNm(k,n){return n+' '+(k==='ms'?'missile salvo'+(n>1?'s':''):k==='ic'?'interceptor loads':k==='sh'?'shell load'+(n>1?'s':''):'precision bomb load'+(n>1?'s':''));}
 function gmilStkRow(c){return GMIL_STK[c]||GMIL_STK_D;}
-function gmilStkMax(c,k){return gmilStkRow(c)[k==='ms'?1:4];}
-function gmilStkYr(c,k){return gmilStkRow(c)[k==='ms'?2:5];}
+function gmilStkMax(c,k){return gmilStkAt(c,k,1);}
+function gmilStkYr(c,k){return gmilStkAt(c,k,2);}
 function gmilNew(){return {g:{},gid:1,fr:[],fid:1,zm:{},fq:[],n:{},bk:{},foe:'',nx:{}};}
-function gmilN(c){const M=GC.mil,q=M.n[c]||(M.n[c]={ms:gmilStkRow(c)[0],so:[],dr:0});if(q.ic===undefined){q.ic=gmilStkRow(c)[3];q.oq=[];q.pa=[0,0];}return q;}   // older saves get their interceptors on first use
+function gmilN(c){const M=GC.mil,q=M.n[c]||(M.n[c]={ms:gmilStkRow(c)[0],so:[],dr:0});if(q.ic===undefined){q.ic=gmilStkRow(c)[3];q.oq=[];q.pa=[0,0];}if(q.sh===undefined){q.sh=gmilStkAt(c,'sh',0);q.pb=gmilStkAt(c,'pb',0);q.pa[2]=0;q.pa[3]=0;q.sa=0;}return q;}   // older saves get their interceptors on first use
 function gmilDrStock(c){return GC.mil?gmilN(c).dr|0:0;}
 function gmilKm(a,b){return Math.round(grDist(a,b)*GMIL_KMU);}
 function gmilCul(c){return GMIL_CUL[c]||GMIL_REGCUL[(grNat(c)||{}).reg]||'en';}
@@ -3389,7 +3663,7 @@ function gmilStrikeCheck(c,type,pi,k,n){const N=GC.nat[c],E=N.e,S=GMIL_ST[type],
   return '';}
 function gmilStrike(c,type,pi,k,n){const e=gmilStrikeCheck(c,type,pi,k,n);if(e)return e;const N=GC.nat[c],S=GMIL_ST[type],M=gmilN(c);
   if(type==='d'){n=Math.min(M.dr|0,Math.max(1,n|0||GMIL_SALVO));M.dr-=n;M.so.push({t:type,pi,k,n});return '';}
-  if(type==='m')M.ms--;else{N.cash-=S.cost;if(N.e)N.e.fuel-=S.fuel;}M.so.push({t:type,pi,k});return '';}
+  if(type==='m'){M.ms--;M.so.push({t:type,pi,k});return '';}N.cash-=S.cost;if(N.e)N.e.fuel-=S.fuel;const pb=M.pb>0?1:0;M.pb-=pb;M.so.push({t:type,pi,k,pb});return '';}   // an air raid spends one precision bomb load; without one it flies with unguided bombs
 // launcher trucks: a mobile launcher joins an army in a province with a launch site or War Factory
 function gmilBuyLauncher(c,aid){const N=GC.nat[c],a=GC.armies.find(x=>x.id===aid&&x.o===c&&!x.fl);if(!a||!a.u.length)return 'Pick one of your armies.';if(!GMIL_DRN.includes(c))return 'Your nation does not field long-range one-way drones.';
   if(!(geEff(a.at,'dsite')>0||geEff(a.at,'factory')>0))return 'Needs a launch site or War Factory in the same province.';if((a.ln|0)>=GMIL_LN_MAX)return 'That army carries '+GMIL_LN_MAX+' launchers already.';if(N.cash<GMIL_LN_COST)return 'Costs $'+GMIL_LN_COST+'.';N.cash-=GMIL_LN_COST;a.ln=(a.ln|0)+1;return '';}
@@ -3406,21 +3680,31 @@ function gmilOrderCheck(c,k){const N=GC.nat[c],M=gmilN(c),O=GMIL_ORD[k];if(!O)re
   const open=M.oq.filter(o=>o.k===k&&!o.by).length;if(open>=GMIL_ORD_MAX)return 'The production lines are full ('+GMIL_ORD_MAX+' orders running).';if(M[k]+open*O.n>=gmilStkMax(c,k))return 'Depots are full.';if(N.cash<O.cost)return 'Costs $'+O.cost+'.';return '';}
 function gmilOrder(c,k){const e=gmilOrderCheck(c,k);if(e)return e;const O=GMIL_ORD[k];GC.nat[c].cash-=O.cost;gmilN(c).oq.push({k,n:O.n,t:GC.turn+gmilOrdLead(c,k)});return '';}
 // ship stock to an ally or close friend: arrives next month; every nation at war with the receiver resents the sender
-function gmilSendN(k){return k==='ms'?1:2;}
+function gmilSendN(k){return k==='ms'||k==='pb'?1:2;}
 function gmilSendCheck(c,to,k){if(!GMIL_ORD[k]||!GC.nat[to]||GC.nat[to].dead||to===c)return 'Pick a nation.';if(grAtWar(c,to))return 'You are at war with them.';if(!grAllied(c,to)&&gdOp(c,to)<25)return 'Only to allies and close friends.';
   const M=gmilN(c);if(M[k]<gmilSendN(k))return 'Nothing to spare.';if((M.sent|0)>=GC.turn)return 'One shipment a month.';return '';}
 function gmilSend(c,to,k){const e=gmilSendCheck(c,to,k);if(e)return e;const M=gmilN(c),n=gmilSendN(k);M[k]-=n;M.sent=GC.turn;gmilN(to).oq.push({k,n,t:GC.turn+1,by:c});gdRel(c,to,4);
   for(const w of Object.keys(GC.war).sort()){const ab=w.split('|');if(!ab.includes(to))continue;const foe=ab.find(x=>x!==to);if(foe&&foe!==c&&GC.nat[foe]&&!GC.nat[foe].dead)gdRel(c,foe,k==='ms'?-12:-6);}
-  grLog(GCM.nats.get(c).name+' ships '+(k==='ms'?'a missile salvo':n+' interceptor loads')+' to '+GCM.nats.get(to).name+'.','');return '';}
+  grLog(GCM.nats.get(c).name+' ships '+gmilStkNm(k,n)+' to '+GCM.nats.get(to).name+'.','');return '';}
+// shells: called once a month per army from the supply step (13g geSupplyStep). Fighting burns the national stock; an empty stock slows every refill.
+function gmilShOut(c){grLog(GCM.nats.get(c).name+' is running out of artillery shells: its armies now refill ammunition at a quarter of the normal rate.','');
+  if(typeof wsN==='function'){const W=wsN(c);if(W&&wsStyle(c)!=='zeal')W.wsE-=2;}}
+function gmilShell(a,da){if(!GC.mil||a.fl||!GC.nat[a.o])return da;const M=gmilN(a.o);
+  if(a.fo===GC.turn&&a.u.length&&M.sh>0){M.sa=(M.sa|0)+a.u.length*GMIL_SH_BURN;while(M.sa>=1000&&M.sh>0){M.sa-=1000;M.sh--;}if(M.sh<=0){M.sh=0;M.sa=0;gmilShOut(a.o);}}
+  return M.sh<=0&&da>0?da*GMIL_SH_DRY:da;}
 function gmilIcOut(c){grLog(GCM.nats.get(c).name+' has run out of air-defence interceptors: what flies in now gets through.','');
   if(typeof wsN==='function'){const W=wsN(c);if(W)W.wsE-=wsStyle(c)==='zeal'?1:4;}}   // the one war-support meter (13v): people feel exposed; Zealous nations shrug most of it off
 function gmilStockMonth(){for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead)continue;const M=gmilN(c),slow=N.e&&(N.e.dry||N.e.pw<.5)?2:1;
-    [['ms',0],['ic',1]].forEach(([k,i])=>{const mx=gmilStkMax(c,k);M.pa[i]+=Math.round(gmilStkYr(c,k)*1000/12/slow);while(M.pa[i]>=1000){M.pa[i]-=1000;if(M[k]<mx)M[k]++;}if(M[k]>=mx)M.pa[i]=0;});
+    GMIL_SKK.forEach((k,i)=>{const mx=gmilStkMax(c,k);M.pa[i]=(M.pa[i]|0)+Math.round(gmilStkYr(c,k)*1000/12/slow);while(M.pa[i]>=1000){M.pa[i]-=1000;if(M[k]<mx)M[k]++;}if(M[k]>=mx)M.pa[i]=0;});
     const due=M.oq.filter(o=>o.t<=GC.turn);if(!due.length)continue;M.oq=M.oq.filter(o=>o.t>GC.turn);
-    for(const o of due){M[o.k]+=o.n;if(c===GC.me)grLog((o.by?GCM.nats.get(o.by).name+' delivered ':'Delivered from the factories: ')+o.n+' '+(o.k==='ms'?'missile salvo'+(o.n>1?'s':''):'interceptor loads')+'.',c);}}}
+    for(const o of due){M[o.k]+=o.n;if(c===GC.me)grLog((o.by?GCM.nats.get(o.by).name+' delivered ':'Delivered from the factories: ')+gmilStkNm(o.k,o.n)+'.',c);}}}
 function gmilAIStock(c,R){const N=GC.nat[c],Q=gmilN(c),war=Object.keys(GC.war).some(k=>k.split('|').includes(c));
   if(Q.ic<gmilStkMax(c,'ic')*(war?.6:.35)&&N.cash>(war?1500:4000)&&!Q.oq.some(o=>o.k==='ic'&&!o.by)&&(war||R()<.15))gmilOrder(c,'ic');
   if(war&&Q.ms<2&&N.cash>2200&&!Q.oq.some(o=>o.k==='ms'&&!o.by))gmilOrder(c,'ms');
+  if(Q.sh<gmilStkMax(c,'sh')*(war?.5:.3)&&N.cash>(war?1200:3500)&&!Q.oq.some(o=>o.k==='sh'&&!o.by)&&(war||R()<.15))gmilOrder(c,'sh');
+  if(war&&Q.pb<1&&gmilStkMax(c,'pb')>0&&N.cash>1800&&!Q.oq.some(o=>o.k==='pb'&&!o.by))gmilOrder(c,'pb');
+  // a friend at war whose guns have fallen silent: a nation at peace with full depots sometimes ships shells (allies and close friends, as in real wars)
+  if(!war&&Q.sh>gmilStkMax(c,'sh')*.6&&Q.sh>=6&&R()<.25){const fr=Object.keys(GC.nat).sort().find(x=>x!==c&&!GC.nat[x].dead&&!grAtWar(c,x)&&(grAllied(c,x)||gdOp(c,x)>=25)&&gmilN(x).sh<=0&&Object.keys(GC.war).some(k=>k.split('|').includes(x)));if(fr)gmilSend(c,fr,'sh');}
   // an ally under fire with empty launchers: a nation at peace with deep depots sometimes ships a little (real resupply is rare, slow and political)
   if(!war&&Q.ic>gmilStkMax(c,'ic')*.6&&R()<.2){const al=Object.keys(GC.nat).sort().find(x=>x!==c&&!GC.nat[x].dead&&grAllied(c,x)&&gmilStkMax(x,'ic')>2&&gmilN(x).ic<=1&&Object.keys(GC.war).some(k=>k.split('|').includes(x)));if(al)gmilSend(c,al,'ic');}}
 function gmilAAUnits(pi){let n=0;const st=GC.prov[pi];if(st)for(const r of st.gar)if(r[0]==='aa')n++;for(const a of GC.armies)if(a.at===pi&&!a.fl)for(const r of a.u)if(r[0]==='aa')n++;return n;}
@@ -3429,10 +3713,10 @@ function gmilHit(L,hits,dmg){let got=0;for(let i=0;i<hits&&L.length;i++){let w=0
 function gmilStrikes(){const M=GC.mil;if(!M)return;const R=grRng(GC.seed*53+GC.turn*9);
   for(const c of Object.keys(GC.nat).sort()){const Q=gmilN(c);const ord=Q.so;Q.so=[];if(GC.nat[c].dead)continue;
     for(const o of ord){const p=GCM.P[o.pi],S=GMIL_ST[o.t];if(!p)continue;const cn=GCM.nats.get(c).name,vis=c===GC.me;
-      const tgtO=p.land?GC.prov[o.pi].o:'';if(p.land&&(tgtO===c||!grAtWar(c,tgtO)))continue;
+      const tgtO=p.land?GC.prov[o.pi].o:'';if(p.land&&(tgtO===c||!grAtWar(c,tgtO)))continue;if(p.land&&o.k==='b'&&typeof gescWar==='function')gescWar(c,tgtO,6);   // strikes on industry and cities: the war climbs to 'Strategic strikes' (first crosser pays)
       const raw=o.t==='a'?Math.min(4,Math.floor(geSortieStock(c,o.pi,S.rng)/1)||2):o.t==='d'?Math.max(1,o.n|0):1;
       let aaB=p.land?geCount(o.pi,'aa'):0,aaU=p.land?gmilAAUnits(o.pi):0;if(!p.land)for(const a of GC.armies)if(a.at===o.pi&&a.fl&&grAtWar(a.o,c))for(const r of a.u)if(r[0]==='ship'||r[0]==='boat')aaU+=.5;
-      let ic=Math.min(.8,(.26*aaB+.03*aaU)*S.ic),surv=0,site=-1,dkm=0,dry=0;const DQ=p.land&&GC.nat[tgtO]?gmilN(tgtO):null,ic0=DQ?DQ.ic:0;   // the defender's interceptor stock
+      const ung=o.t==='a'&&o.pb===0,dmg=Math.round(S.dmg*(ung?.5:1));let ic=Math.min(.8,(.26*aaB+.03*aaU)*S.ic*(ung?1.3:1)),surv=0,site=-1,dkm=0,dry=0;const DQ=p.land&&GC.nat[tgtO]?gmilN(tgtO):null,ic0=DQ?DQ.ic:0;   // the defender's interceptor stock
       if(o.t==='d'){   // one-way drones: each defence battery engages only so many per salvo, so big salvos saturate it (~185 km/h, hours of flight)
         site=gmilSites(c,o.pi,S.rng,'d');dkm=site>=0?gmilKm(site,o.pi):0;const cap0=Math.round(6*aaB+1.5*aaU),cap=DQ?Math.min(cap0,DQ.ic*4):cap0,pk=aaB+aaU>0?Math.min(.8,.5+.1*aaB):0;if(Math.min(raw,cap0)>cap)dry=1;
         for(let i=0;i<raw;i++)if(!(i<cap&&R()<pk))surv++;if(DQ&&pk>0)DQ.ic-=Math.ceil(Math.min(raw,cap)/4);
@@ -3443,14 +3727,14 @@ function gmilStrikes(){const M=GC.mil;if(!M)return;const R=grRng(GC.seed*53+GC.t
       if(!surv){grLog(cn+' '+(o.t==='d'?raw+' one-way drones':S.n.toLowerCase())+' on '+p.n+' were intercepted'+(aaB?' by air defense':'')+'.',inv);continue;}
       let msg='';
       if(o.k==='b'&&p.land){const bl=geBl(o.pi),tg=bl.filter(r=>['factory','refinery','power','port','airfield','mine','base','aa','fort','dsite'].includes(r[0]));
-        if(!tg.length){const n=gmilHit(GC.prov[o.pi].gar,surv,S.dmg*1.5);msg='hit the garrison ('+n+' units struck)';}
-        else{let names=[];for(let i=0;i<surv;i++){const r=tg[Math.floor(R()*tg.length)];r[1]=Math.min(100,(r[1]|0)+S.dmg);if(!names.includes(r[0]))names.push(r[0]);}
+        if(!tg.length){const n=gmilHit(GC.prov[o.pi].gar,surv,dmg*1.5);msg='hit the garrison ('+n+' units struck)';}
+        else{let names=[];for(let i=0;i<surv;i++){const r=tg[Math.floor(R()*tg.length)];r[1]=Math.min(100,(r[1]|0)+dmg);if(!names.includes(r[0]))names.push(r[0]);}
           msg='damaged '+names.map(k=>GE_B[k]?GE_B[k][0].toLowerCase():k).join(', ');GC.prov[o.pi].lt=GC.turn+2;}}
       else if(o.k==='a'&&p.land){let tot=0;const arm=GC.armies.filter(a=>a.at===o.pi&&!a.fl&&grAtWar(c,a.o)&&a.u.length).sort((x,y)=>x.id-y.id);
-        for(const a of arm)tot+=gmilHit(a.u,Math.ceil(surv/arm.length),S.dmg*(o.t==='m'?1.4:1));tot+=gmilHit(GC.prov[o.pi].gar,surv-Math.min(surv,tot)>0?1:0,S.dmg);msg='struck '+(arm.length?arm.length+' army(ies)':'the garrison');for(const a of arm)if((a.ln|0)>0&&gmilLnExposed(a)){const l=Math.min(a.ln,Math.ceil(surv/8));a.ln-=l;msg+=' (destroyed '+l+' launcher'+(l>1?'s':'')+')';}}
-      else if(!p.land){const fl=GC.armies.filter(a=>a.at===o.pi&&grAtWar(c,a.o)&&a.u.length).sort((x,y)=>(y.fl|0)-(x.fl|0)||x.id-y.id);let n=0;for(const a of fl)n+=gmilHit(a.u,Math.ceil(surv/fl.length),S.dmg*(o.t==='m'?1.6:1));msg='hit '+fl.length+' fleet(s) at sea';}
+        for(const a of arm)tot+=gmilHit(a.u,Math.ceil(surv/arm.length),dmg*(o.t==='m'?1.4:1));tot+=gmilHit(GC.prov[o.pi].gar,surv-Math.min(surv,tot)>0?1:0,dmg);msg='struck '+(arm.length?arm.length+' army(ies)':'the garrison');for(const a of arm)if((a.ln|0)>0&&gmilLnExposed(a)){const l=Math.min(a.ln,Math.ceil(surv/8));a.ln-=l;msg+=' (destroyed '+l+' launcher'+(l>1?'s':'')+')';}}
+      else if(!p.land){const fl=GC.armies.filter(a=>a.at===o.pi&&grAtWar(c,a.o)&&a.u.length).sort((x,y)=>(y.fl|0)-(x.fl|0)||x.id-y.id);let n=0;for(const a of fl)n+=gmilHit(a.u,Math.ceil(surv/fl.length),dmg*(o.t==='m'?1.6:1));msg='hit '+fl.length+' fleet(s) at sea';}
       else continue;
-      grLog(cn+' '+(o.t==='d'?raw+' one-way drones ('+dkm+' km, ~'+Math.round(dkm/GMIL_DKMH)+' h flight)':S.n.toLowerCase())+' on '+p.n+' ('+tn+'): '+msg+(surv<raw?' ('+(raw-surv)+' shot down)':'')+(dry?' Air defense there is out of interceptors.':'')+'.',inv);}}
+      grLog(cn+' '+(o.t==='d'?raw+' one-way drones ('+dkm+' km, ~'+Math.round(dkm/GMIL_DKMH)+' h flight)':S.n.toLowerCase()+(ung?' with unguided bombs':''))+' on '+p.n+' ('+tn+'): '+msg+(surv<raw?' ('+(raw-surv)+' shot down)':'')+(dry?' Air defense there is out of interceptors.':'')+'.',inv);}}
   for(const a of GC.armies.slice())if(!a.u.length)grDrop(a);}
 
 // ---------- front lines ----------
@@ -3506,10 +3790,11 @@ function gmilAIStrikes(c,R){const N=GC.nat[c],P=GCM.P,Q=gmilN(c);const foes=Obje
   if(GMIL_DRN.includes(c)){   // build launch sites toward the front and put a launcher truck with the biggest army that stands at one
     if(N.cash>1800&&R()<.35&&P.filter(p=>p.land&&GC.prov[p.i].o===c&&geCount(p.i,'dsite')).length<3){const cs=P.filter(p=>p.land&&GC.prov[p.i].o===c&&p.adj.some(j=>P[j].land&&foes.includes(GC.prov[j].o))).sort((a,b)=>b.dev-a.dev||a.i-b.i);for(const p of cs){if(!geBuild(c,p.i,'dsite'))break;}}
     if(N.cash>900&&R()<.3){const a=GC.armies.filter(x=>x.o===c&&!x.fl&&x.u.length&&(x.ln|0)<1).sort((x,y)=>grArmyVal(y)-grArmyVal(x)||x.id-y.id).find(x=>geEff(x.at,'dsite')>0||geEff(x.at,'factory')>0);if(a)gmilBuyLauncher(c,a.id);}}
-  let tries=0;while(Q.so.length<2&&tries++<8){const types=['m','a','d'];let t=types[Math.floor(R()*3)];if(Q.dr>=8&&R()<.6)t='d';if(t==='m'&&Q.ms<=1&&R()<.7)t='a';   // the last salvo is a reserve
+  const xo={},xg=f=>typeof gescWarAI!=='function'?true:xo[f]!==undefined?xo[f]:(xo[f]=gescWarAI(c,f,6,R));   // escalation ladder: an AI rarely opens strategic strikes first; it answers them freely
+  let tries=0;while(Q.so.length<2&&tries++<8){const types=['m','a','d'];let t=types[Math.floor(R()*3)];if(Q.dr>=8&&R()<.6)t='d';if(t==='m'&&Q.ms<=1&&R()<.7)t='a';if(t==='a'&&Q.pb<1&&R()<.6)continue;   // out of guided bombs: most raids are held back   // the last salvo is a reserve
     // target: the foe province with the best buildings in range, else a foe fleet
     let best=-1,bs=0;for(const p of P){if(!p.land||!foes.includes(GC.prov[p.i].o))continue;const bl=geBl(p.i).filter(r=>['factory','refinery','power','port','airfield','mine'].includes(r[0])&&(r[1]|0)<70).length;const s=bl*10+p.dev-(gmilN(GC.prov[p.i].o).ic>0?geCount(p.i,'aa')*8:0);if(s>bs&&gmilSites(c,p.i,GMIL_ST[t].rng,t)>=0){bs=s;best=p.i;}}
-    if(best>=0&&bs>=10){gmilStrike(c,t,best,'b');continue;}
+    if(best>=0&&bs>=10&&xg(GC.prov[best].o)){gmilStrike(c,t,best,'b');continue;}
     let ba=-1,bv=0;for(const p of P){if(!p.land||!foes.includes(GC.prov[p.i].o))continue;const v=GC.armies.filter(a=>a.at===p.i&&!a.fl&&foes.includes(a.o)).reduce((s,a)=>s+grArmyVal(a),0);if(v>bv&&gmilSites(c,p.i,GMIL_ST[t].rng,t)>=0){bv=v;ba=p.i;}}
     if(ba>=0&&bv>3000){gmilStrike(c,t,ba,'a');continue;}
     let bz=-1,zv=0;for(const a of GC.armies)if(a.fl&&foes.includes(a.o)&&a.u.length&&!a.path.length){const v=grArmyVal(a);if(v>zv&&gmilSites(c,a.at,GMIL_ST[t].rng,t)>=0){zv=v;bz=a.at;}}
@@ -3651,7 +3936,7 @@ function gmilCycleFront(id){const a=GC.armies.find(x=>x.id===id);if(!a||a.o!==GC
 function gmilMinesBtn(id){const a=GC.armies.find(x=>x.id===id);if(!a)return;const e=gmilMines(a);if(e){GV.hint=e;guHint();}}
 function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(old&&!refreshOnly){old.remove();return;}if(!old&&refreshOnly)return;if(!GC||!GC.me||!GC.mil)return;const me=GC.me,M=GC.mil;
   const host=document.getElementById('grandScreen');if(!host)return;let el=old;if(!el){el=guEl('div','position:absolute;top:56px;right:340px;bottom:12px;width:380px;max-width:52vw;z-index:8200;background:#101c28ee;border:1px solid #8aa6c9;border-radius:8px;padding:10px 12px;overflow:auto;font-size:14px;line-height:1.45;color:#e8e4d8');el.id='gMil';host.appendChild(el);}
-  el.innerHTML='';el.appendChild(guEl('div','display:flex;justify-content:space-between;align-items:center','<b style="font-size:17px;color:#d6e6ff">Military</b><span style="opacity:.7;margin-left:auto;margin-right:10px">'+GCM.nats.get(me).name+'</span><button type="button" id="gMilX" title="Close (Esc)" style="background:none;border:1px solid #5a7593;color:#d6e6ff;border-radius:5px;width:26px;height:26px;cursor:pointer;font-size:15px;line-height:1">✕</button>'));{const x=document.getElementById('gMilX');if(x)x.onclick=()=>el.remove();}
+  el.innerHTML='';el.appendChild(guEl('div','display:flex;justify-content:space-between;align-items:center','<b style="font-size:17px;color:#d6e6ff">Military</b><span style="opacity:.7;margin-left:auto;margin-right:10px">'+GCM.nats.get(me).name+'</span>'));
   const tabs=guEl('div','margin:6px 0');for(const [k,n] of [['gen','Generals'],['fr','Fronts'],['st','Strikes'],['sk','Stockpiles'],['fl','Fleets']])tabs.appendChild(gmilBtn(n,()=>{GMILUI.tab=k;gmilUiPanel(true);},GMILUI.tab===k));el.appendChild(tabs);
   const box=guEl('div');el.appendChild(box);const row=(h,css)=>box.appendChild(guEl('div',css||'border-bottom:1px solid #243a50;padding:4px 0',h));
   if(GMILUI.tab==='gen'){const mine=Object.values(M.g).filter(g=>g.o===me).sort((a,b)=>a.id-b.id);
@@ -3669,23 +3954,26 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
       box.appendChild(r);}
     if(!foes.length)row('<span style="opacity:.7">You are not at war.</span>');}
   else if(GMILUI.tab==='st'){const Q=gmilN(me);box.appendChild(guEl('div','opacity:.75;font-size:13px','Missiles, air raids and drone strikes hit an enemy province (buildings or armies) or an enemy fleet at sea. Click an enemy province or sea zone on the map and use its Strike buttons. Air defense in the target intercepts while it still has interceptors. Max 3 a month.'));
-    row('Missile salvos in stock: <b>'+Q.ms+'</b> · interceptor loads: <b>'+Q.ic+'</b> <span style="opacity:.7">(orders and deliveries: Stockpiles)</span>');
+    row('Missile salvos in stock: <b>'+Q.ms+'</b> · interceptor loads: <b>'+Q.ic+'</b> · precision bomb loads: <b>'+Q.pb+'</b>'+(Q.pb<1?' — air raids fly with unguided bombs (half the damage, easier to shoot down)':'')+' <span style="opacity:.7">(orders and deliveries: Stockpiles)</span>');
     if(GMIL_DRN.includes(me)){row('One-way drones in stock: <b>'+(Q.dr|0)+'</b>/'+GMIL_DR_MAX+' · launch sites make 6 a month ($'+GMIL_DR_COST+' each) · range ~2,000 km, ~10 h flight. Big salvos saturate air defense.');
       for(const a of GC.armies.filter(x=>x.o===me&&!x.fl&&x.u.length&&(geEff(x.at,'dsite')>0||geEff(x.at,'factory')>0||x.ln)).slice(0,6))box.appendChild(gmilBtn((a.nm||'Army')+' at '+GCM.P[a.at].n+': launchers '+(a.ln|0)+' · +1 ($'+GMIL_LN_COST+')',()=>gmilDone(gmilBuyLauncher(me,a.id))));}
     row('<b>Ordered this month</b>');for(const o of Q.so)box.appendChild(guEl('div','font-size:13px','• '+GMIL_ST[o.t].n+(o.t==='d'?' ×'+o.n:'')+' → '+GCM.P[o.pi].n+' ('+(o.k==='b'?'buildings':o.k==='a'?'armies':'fleet')+')'));
     if(!Q.so.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','Nothing yet.'));
-    if(Q.so.length)box.appendChild(gmilBtn('Cancel all (refund)',()=>{for(const o of Q.so){if(o.t==='m')Q.ms++;else if(o.t==='d')Q.dr=(Q.dr|0)+(o.n|0);else{GC.nat[me].cash+=GMIL_ST[o.t].cost;if(GC.nat[me].e)GC.nat[me].e.fuel+=GMIL_ST[o.t].fuel;}}Q.so=[];gmilDone('');}));}
-  else if(GMILUI.tab==='sk'){const Q=gmilN(me),nm=c=>GCM.nats.get(c).name,what=o=>o.n+' '+(o.k==='ms'?'missile salvo'+(o.n>1?'s':''):'interceptor loads');
+    if(Q.so.length)box.appendChild(gmilBtn('Cancel all (refund)',()=>{for(const o of Q.so){if(o.t==='m')Q.ms++;else if(o.t==='d')Q.dr=(Q.dr|0)+(o.n|0);else{if(o.pb)Q.pb++;GC.nat[me].cash+=GMIL_ST[o.t].cost;if(GC.nat[me].e)GC.nat[me].e.fuel+=GMIL_ST[o.t].fuel;}}Q.so=[];gmilDone('');}));}
+  else if(GMILUI.tab==='sk'){const Q=gmilN(me),nm=c=>GCM.nats.get(c).name,what=o=>gmilStkNm(o.k,o.n);
     box.appendChild(guEl('div','opacity:.75;font-size:13px','What you fire is gone until the factories replace it, and that takes months. Air defense spends interceptors on everything it engages; once they run out, the batteries stop nothing. Allies can ship you theirs.'));
     const line=(k,title,note)=>{const yr=gmilStkYr(me,k),O=GMIL_ORD[k],e=gmilOrderCheck(me,k);row('<b>'+title+'</b>: <b>'+Q[k]+'</b> of '+gmilStkMax(me,k)+' · factories make '+(yr>0?yr+' a year':'none (imports only)')+'<br><span style="opacity:.7;font-size:12px">'+note+'</span>');
       const b=gmilBtn('Order '+O.n+' · $'+O.cost+' · '+gmilOrdLead(me,k)+' months',()=>gmilDone(gmilOrder(me,k)),false,e||'Paid now, delivered later');b.id='gSk_'+k;if(e)b.style.opacity='.55';box.appendChild(b);};
     line('ms','Missile salvos','One salvo is one missile strike.');line('ic','Interceptor loads','Stopping a missile salvo takes 2, an air-raid sortie 1, four drones 1.');
+    line('sh','Artillery shell loads','Armies that fought this month burn shells. At zero, every army refills ammunition at a quarter of the normal rate.');
+    if(gmilStkMax(me,'pb')>0)line('pb','Precision bomb loads','One air raid spends 1. Without them a raid drops unguided bombs: half the damage, easier to shoot down.');
     if(GMIL_DRN.includes(me))row('<b>One-way drones</b>: <b>'+(Q.dr|0)+'</b> of '+GMIL_DR_MAX+' · each launch site makes 6 a month');
     row('<b>On order</b>');for(const o of Q.oq)box.appendChild(guEl('div','font-size:13px','• '+what(o)+' — due '+grMonStr(o.t)+(o.by?' (from '+nm(o.by)+')':'')));if(!Q.oq.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','Nothing.'));
     row('<b>Ship to an ally</b> <span style="opacity:.7;font-size:12px">arrives next month; their enemies will hold it against you</span>');
     const al=Object.keys(GC.nat).sort().filter(x=>x!==me&&!GC.nat[x].dead&&!grAtWar(me,x)&&(grAllied(me,x)||gdOp(me,x)>=25)).slice(0,8);
-    for(const x of al){const r=guEl('div','font-size:13px;padding:3px 0',nm(x)+' <span style="opacity:.7">(missiles '+gmilN(x).ms+', interceptors '+gmilN(x).ic+')</span> ');
-      for(const k of ['ic','ms']){const e=gmilSendCheck(me,x,k),b=gmilBtn(k==='ic'?'2 interceptor loads':'1 missile salvo',()=>gmilDone(gmilSend(me,x,k)),false,e||'Send');if(e)b.style.opacity='.55';r.appendChild(b);}box.appendChild(r);}
+    const KN={ic:'Interceptors',ms:'Missiles',sh:'Shells',pb:'Bombs'},sk=KN[GMILUI.sk]?GMILUI.sk:'ic',pick=guEl('div','padding:2px 0');for(const k of ['ic','ms','sh','pb']){const b=gmilBtn(KN[k],()=>{GMILUI.sk=k;gmilUiPanel(true);},k===sk);b.id='gSkK_'+k;pick.appendChild(b);}box.appendChild(pick);
+    for(const x of al){const r=guEl('div','font-size:13px;padding:3px 0',nm(x)+' <span style="opacity:.7">(has '+gmilN(x)[sk]+')</span> ');
+      const e=gmilSendCheck(me,x,sk),b=gmilBtn('Send '+gmilStkNm(sk,gmilSendN(sk)),()=>gmilDone(gmilSend(me,x,sk)),false,e||'Send');if(e)b.style.opacity='.55';r.appendChild(b);box.appendChild(r);}
     if(!al.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','No allies or close friends.'));}
   else{box.appendChild(guEl('div','opacity:.75;font-size:13px','Fleets sail between sea zones (select one, right-click a zone). A fleet at sea next to an enemy port blockades it: port income and sea trade stop. Armies crossing a sea held by an enemy fleet wait in port unless one of your fleets escorts them (same zone). Subs hide; patrol boats find them; mines hurt enemies.'));
     for(const a of gmilFleets(me)){row('<b>'+a.nm+'</b> at '+GCM.P[a.at].n+' · '+a.u.length+' ships · value '+Math.round(grArmyVal(a)/100)/10+'k'+(a.path.length?' → '+GCM.P[a.path[a.path.length-1]].n:'')+(a.mine?' · mines':''));}
@@ -3699,15 +3987,14 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
 // controls inside the province / sea-zone side panel
 function gmilUiProv(s,pi){if(!GC.me||!GC.mil||GC.over)return;const p=GCM.P[pi],me=GC.me,box=guEl('div','margin:8px 0;border-top:1px solid #243a50;padding-top:6px');let any=false;
   const strikeRow=(k)=>{box.appendChild(guEl('div','opacity:.75;font-size:13px','Strike '+(k==='f'?'the fleet':'this province')+' (missile salvos in stock: '+gmilN(me).ms+')'));
-    for(const t of ['m','a','d','D'])for(const kk of (k==='f'?['f']:['b','a'])){const ty=t==='D'?'d':t,sn=t==='D'?30:0;if(t==='D'&&!GMIL_DRN.includes(me))continue;const e=gmilStrikeCheck(me,ty,pi,kk,sn);const b=gmilBtn((t==='D'?'Drone salvo (up to 30)':GMIL_ST[t].n)+' · '+(kk==='b'?'buildings':kk==='a'?'armies':'ships'),()=>{if(GC.ph!=='plan')return;gmilDone(gmilStrike(me,ty,pi,kk,sn));},false,e||'Order it');if(e)b.style.opacity='.55';box.appendChild(b);}any=true;};
+    for(const t of ['m','a','d','D'])for(const kk of (k==='f'?['f']:['b','a'])){const ty=t==='D'?'d':t,sn=t==='D'?30:0;if(t==='D'&&!GMIL_DRN.includes(me))continue;const e=gmilStrikeCheck(me,ty,pi,kk,sn);const b=gmilBtn((t==='D'?'Drone salvo (up to 30)':GMIL_ST[t].n)+' · '+(kk==='b'?'buildings':kk==='a'?'armies':'ships'),()=>{if(GC.ph!=='plan')return;gmilDone(gmilStrike(me,ty,pi,kk,sn));},false,e||('Order it'+(kk==='b'&&typeof gescWarOf==='function'&&gescWarOf(me,GC.prov[pi].o)<6?' — first strike on industry and cities: the war climbs to Strategic strikes (every outside nation\'s opinion of you '+GESC_WOP[6]+', their public rallies)':'')));if(e)b.style.opacity='.55';box.appendChild(b);}any=true;};
   if(p.land&&GC.prov[pi].o!==me&&grAtWar(me,GC.prov[pi].o)){strikeRow('p');}
   else if(p.sea&&GC.armies.some(a=>a.at===pi&&a.fl&&grAtWar(a.o,me))){strikeRow('f');}
   if(p.sea){const z=GC.mil.zm[pi];if(z)box.appendChild(guEl('div','font-size:13px;margin-top:4px;color:#9fd3ff','Mines here: '+z.n+' ('+GCM.nats.get(z.o).name+')'));any=any||!!z;}
   if(p.land&&GC.prov[pi].o===me&&gmilHasPort(pi)){box.appendChild(guEl('div','font-size:13px;opacity:.8','Port: build ships in the Military panel (Fleets tab).'));any=true;if(gmilBk(pi))box.appendChild(guEl('div','font-size:13px;color:#ff9d8e','Under naval blockade: port income and sea trade stopped.'));}
   if(any)s.appendChild(box);}
 /* Abdullah 2026-11-07 20:31 "Should be able to exit this": Esc closes the open grand-map panel (Military, diplomatic web, news, TV, peace deal, economy) one step at a time, before anything else uses Esc. */
-if(typeof window!=='undefined'&&!window._gPanelEsc){window._gPanelEsc=1;addEventListener('keydown',ev=>{if(ev.key!=='Escape')return;const gs=document.getElementById('grandScreen');if(!gs||gs.style.display==='none')return;
-  for(const id of ['gpDeal','gTV','gWeb','gNews','gMil','gEco']){const el=document.getElementById(id);if(el&&el.offsetParent!==null&&getComputedStyle(el).display!=='none'){el.remove();ev.preventDefault();ev.stopImmediatePropagation();return;}}},true);}
+/* Esc for every grand panel lives in src/13zzz-gpanels.js (one handler, top-most panel first) */
 // THE NATION PANEL (lane B2): ONE tabbed window for running a nation, EU4-style. Later grand stages add their screen with a single
 // register call: npTab(id, icon, title, render(code, body, ctx)). Tabs are listed in `order`; a tab shows only if its `show(code)` (optional) is true.
 // Header on every tab: flag, name, power tier, morale style, stat grid. Own nation = full view; another nation's flag = read-only.
@@ -3733,14 +4020,14 @@ function npDraw(){npClose();if(!GC||!NP.code)return;const code=NP.code,own=code=
   stat('⚔','Army',S.army.toLocaleString()+' ('+S.men+' units)','Total value of your armies on the map');
   stat('🗺','Provinces',S.prov,'Provinces you hold');stat('★','Score',grScore(code),'Campaign score');
   for(const f of NP_HDR)try{f(code,stat);}catch(_){}
-  hd.appendChild(g);const x=guEl('button','padding:6px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:15px','Close ✕');x.type='button';x.onclick=npClose;hd.appendChild(x);w.appendChild(hd);
+  hd.appendChild(g);w.appendChild(hd);
   const tabs=NP.tabs.filter(t=>!t.show||t.show(code));if(!tabs.some(t=>t.id===NP.cur)&&tabs.length)NP.cur=tabs[0].id;
   const tb=guEl('div','display:flex;gap:4px;padding:8px 12px 0;border-bottom:1px solid #2c4258;flex-wrap:wrap');
   for(const t of tabs){const on=t.id===NP.cur;const b=guEl('button','padding:8px 14px;border-radius:7px 7px 0 0;border:1px solid '+(on?'#c9a35a':'#34506a')+';border-bottom:none;background:'+(on?'#2a3a4c':'#15222f')+';color:'+(on?'#ffe6a8':'#c8d4e0')+';cursor:pointer;font-size:15px','<span style="font-size:18px">'+t.icon+'</span> '+t.title);b.type='button';b.title=t.title;b.onclick=()=>{NP.cur=t.id;npDraw();};tb.appendChild(b);}
   w.appendChild(tb);const body=guEl('div','padding:14px 18px;overflow:auto;line-height:1.55;min-height:260px');w.appendChild(body);
   const cur=tabs.find(t=>t.id===NP.cur);try{if(cur)cur.render(code,body,{own,S});}catch(e){body.textContent='Tab error: '+e.message;console.error('npTab',e);}
   (document.getElementById('grandScreen')||document.body).appendChild(w);}
-if(!window._npKeys){window._npKeys=1;addEventListener('keydown',ev=>{if(ev.key==='Escape'&&document.getElementById('npWin')){ev.stopPropagation();ev.preventDefault();npClose();}},true);}
+/* Esc + the close X: src/13zzz-gpanels.js */
 // ---- helpers
 function npTable(body,head,rows,onRow){const t=guEl('table','width:100%;border-collapse:collapse;font-size:15px');t.innerHTML='<tr>'+head.map(h=>'<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #34506a;opacity:.8">'+h+'</th>').join('')+'</tr>';
   for(const r of rows){const tr=guEl('tr','cursor:'+(onRow?'pointer':'default'));tr.innerHTML=r.cells.map(c=>'<td style="padding:5px 8px;border-bottom:1px solid #1f3246">'+c+'</td>').join('');if(onRow)tr.onclick=()=>onRow(r);tr.onmouseenter=()=>{tr.style.background='#1d3248';};tr.onmouseleave=()=>{tr.style.background='';};t.appendChild(tr);}body.appendChild(t);}
@@ -3811,6 +4098,8 @@ alAdd('hoard','💰','Unspent cash',c=>{const N=GC.nat[c];return N.cash>=8000&&(
 alAdd('unrest','🔥','Unrest',c=>{const ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c&&GC.prov[p.i].un>=60);return ps.length?{n:ps.length,bad:1,tip:'provinces near revolt — lower the tax there',go:()=>alFly(ps[0].i)}:null;});
 alAdd('war','⚔','At war',c=>{const w=Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grAtWar(c,o));return w.length?{n:w.length,bad:1,tip:w.map(o=>GCM.nats.get(o).name).join(', '),go:()=>npOpen(c,'dip')}:null;});
 alAdd('supply','🚚','Out of supply',c=>{const as=my(c).filter(a=>a.sup);return as.length?{n:as.length,bad:1,tip:'armies cut off from supply',go:()=>alFly(as[0].at)}:null;});
+alAdd('shells','🎯','Shells running low',c=>{if(!GC.mil||typeof gmilN!=='function')return null;const Q=gmilN(c),war=Object.keys(GC.war).some(k=>k.split('|').includes(c));
+  return war&&Q.sh<=1?{n:1,bad:Q.sh<=0?1:0,tip:(Q.sh<=0?'Out of artillery shells: armies refill ammunition at a quarter of the normal rate':'One shell load left')+' — open Military → Stockpiles',go:()=>{GMILUI.tab='sk';if(document.getElementById('gMil'))gmilUiPanel(true);else gmilUiPanel();}}:null;});
 })();
 (function(){alAdd('truce','🕊','Truces ending',c=>{const k=Object.keys(GC.tr||{}).filter(x=>x.split('|').includes(c)&&GC.tr[x]===GC.turn+1);return k.length?{n:k.length,tip:'a truce ends next month',go:()=>npOpen(c,'dip')}:null;});})();
 // B3 POWER POINTS + NATIONAL IDEAS (lane B, EU4-style). Three pools — Political (pol), Diplomatic (dip), Military (mil) — grow every month
@@ -4115,12 +4404,12 @@ function gdWarscore(a,b){let s=0;const k=grWk(a,b);const t=GC.turn-((GC.wsT&&GC.
 //   AI: majors escalate against a hostile rival rarely (GESC_AI_P a month); AI wars now climb the ladder first (gescGate: warn, red line, then war), so wars are rarer and seen coming;
 //   two nuclear-armed nations stop at the red line and go to war only at GESC_NUKE_P a month (deterrence). An AI that is warned answers by strength: holds firm, counter-escalates, or backs down.
 //   Real base rates and sources: orch/REAL-2026.md "Escalation ladder". Deterministic (seed + turn); saved with GC.
-const GESC_R=['Normal relations','Public warning','Red line declared','Forces on alert'];
+const GESC_R=['Normal relations','Public warning','Red line declared','Forces on alert','Limited war','Blockade','Strategic strikes','Nuclear alert'];
 const GESC_ALERT=150,GESC_MED=100,GESC_AI_P=.02,GESC_NUKE_P=.01,GESC_COOL=12;
 function gescS(){return GC.esc||(GC.esc={});}
-function gescOf(a,b){const e=GC&&GC.esc&&GC.esc[grWk(a,b)];return e?e.r:0;}
+function gescOf(a,b){const e=GC&&GC.esc&&GC.esc[grWk(a,b)];return e?((e.r>=4&&!grAtWar(a,b))?0:e.r):0;}
 function gescWs(c,d){if(typeof wsN==='function'){const N=wsN(c);if(N)N.wsE+=d;}}
-function gescUp(a,b){if(!GC||a===b||!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAtWar(a,b)||grAllied(a,b))return false;const S=gescS(),k=grWk(a,b);const e=S[k]||(S[k]={r:0,by:'',t:0,st:{}});if(e.r>=3)return false;
+function gescUp(a,b){if(!GC||a===b||!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAtWar(a,b)||grAllied(a,b))return false;const S=gescS(),k=grWk(a,b);if(S[k]&&S[k].r>=4)delete S[k];const e=S[k]||(S[k]={r:0,by:'',t:0,st:{}});if(e.r>=3)return false;
   e.r++;e.by=a;e.t=GC.turn;e.an=-1;e.st[a]=1;gdRel(a,b,-8);gescWs(b,2);
   grLog(gdN(a)+(e.r===1?' publicly warns '+gdN(b)+'.':e.r===2?' declares a red line against '+gdN(b)+'.':' puts its forces on alert against '+gdN(b)+'.'),(b===GC.me||a===GC.me)?GC.me:a);return true;}
 function gdN(c){return GCM.nats.get(c).name;}
@@ -4135,8 +4424,55 @@ function gescDeclared(a,b){const S=gescS(),k=grWk(a,b),r=S[k]?S[k].r:0;delete S[
   if(r<2){for(const o of Object.keys(GC.nat))if(o!==a&&o!==b&&!GC.nat[o].dead)gdRel(a,o,-10);gescWs(b,6);grLog(gdN(a)+' attacked '+gdN(b)+' without warning. The world condemns the surprise attack.',(b===GC.me||a===GC.me)?GC.me:a);}}
 // AI war gate (13-grand grAIPlan): climb the ladder first; nuclear pairs stop at the red line
 function gescGate(c,b,R){const r=gescOf(c,b),nk=grNuk(c)&&grNuk(b);if(nk){if(r<2){gescUp(c,b);return false;}return R()<GESC_NUKE_P;}if(r<2){gescUp(c,b);return false;}return true;}
-function gescMonth(){if(!GC||!GC.nat)return;const S=gescS(),R=grRng((GC.seed|0)*389+GC.turn*23);
-  for(const k of Object.keys(S).sort()){const e=S[k],[a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAtWar(a,b)||grAllied(a,b)){delete S[k];continue;}
+// WARTIME RUNGS (queue "Escalation ladder", slice 2). The same GC.esc level goes on inside a war: 4 Limited war (armies, fleets and strikes on them) · 5 Blockade (a fleet closes the enemy's ports) ·
+//   6 Strategic strikes (missiles, raids or drones on industry, power, ports deep inside the country) · 7 Nuclear alert. A war with no entry stands at rung 4.
+//   The side that crosses a rung FIRST pays: every outside nation's opinion of it drops (GESC_WOP; its own allies half) and the victim's public rallies (GESC_WRALLY). Matching a rung the enemy already reached is free (tit for tat).
+//   Limits (act 'deesc' in a war): the enemy accepts when it is not clearly winning or a mediator is found ($GESC_MED) -> one rung down and a GESC_LIM-month pact; the side that crosses again inside the pact pays double.
+//   A rung nobody uses for GESC_WCOOL months cools by one. Nuclear alert (act 'warn' in a war, needs warheads): $GESC_NALERT a month; a nuclear enemy matches it; a non-nuclear enemy looks for a nuclear protector
+//   (who draws a red line against the alerter) or, when not winning, asks for a truce. AI: crosses to strategic strikes rarely (GESC_AI_X a month, GESC_AI_XL when losing, GESC_AI_XN between nuclear powers);
+//   its last-resort nuclear strike (13zz) now needs a month on nuclear alert first, so the occupier can leave the capital or make peace. Sources: orch/REAL-2026.md "Escalation inside a war".
+const GESC_WOP=[0,0,0,0,0,-3,-6,-12],GESC_WRALLY=[0,0,0,0,0,2,3,4],GESC_NALERT=200,GESC_WCOOL=6,GESC_LIM=6,GESC_AI_X=.06,GESC_AI_XL=.25,GESC_AI_XN=.02,GESC_AI_NA=.1;
+function gescWarOf(a,b){if(!GC||!grAtWar(a,b))return gescOf(a,b);const e=GC.esc&&GC.esc[grWk(a,b)];return e&&e.r>=4?e.r:4;}
+function gescMeSee(a,b){return (b===GC.me||a===GC.me)?GC.me:a;}
+// a crosses (or keeps using) rung r against b. Returns true when this was a first crossing.
+function gescWar(a,b,r){if(!GC||!GC.nat[a]||!GC.nat[b]||!grAtWar(a,b)||r<5||r>7)return false;const S=gescS(),k=grWk(a,b);if(S[k]&&S[k].r<4)delete S[k];const e=S[k]||(S[k]={r:4,by:'',t:GC.turn,st:{}});
+  if(e.r>=r){if(e.r===r)e.t=GC.turn;return false;}
+  const brk=(e.lim|0)>GC.turn,op=GESC_WOP[r]*(brk?2:1);delete e.lim;e.r=r;e.by=a;e.t=GC.turn;e.an=-1;
+  for(const o of Object.keys(GC.nat))if(o!==a&&o!==b&&!GC.nat[o].dead&&!grAtWar(o,b))gdRel(a,o,grAllied(o,a)?Math.round(op/2):op);
+  gescWs(b,GESC_WRALLY[r]);if(r===7)gescWs(a,-2);
+  grLog(gdN(a)+(r===5?' blockades the ports of ':r===6?' strikes industry and cities deep inside ':' puts its nuclear forces on alert against ')+gdN(b)+'. The war climbs to: '+GESC_R[r].toLowerCase()+(brk?' — breaking the limits both sides had agreed.':'.'),gescMeSee(a,b));return true;}
+// may AI nation c cross to rung r against b this month? (true at once when the war is already there)
+function gescWarAI(c,b,r,R){if(gescWarOf(c,b)>=r)return true;const e=GC.esc&&GC.esc[grWk(c,b)];let p=(grNuk(c)&&grNuk(b))?GESC_AI_XN:gdWarscore(c,b)<-10?GESC_AI_XL:GESC_AI_X;if(e&&(e.lim|0)>GC.turn)p*=.25;return R()<p;}
+// nuclear alert. force: an AI's last resort (pays what it can)
+function gescNAlert(a,b,force){if(!GC||!grAtWar(a,b))return 'Only against a nation you are at war with.';if(!grNuk(a))return 'No nuclear warheads.';if(gescWarOf(a,b)>=7&&((GC.esc[grWk(a,b)].na||{})[a]))return 'Already on nuclear alert.';
+  const N=GC.nat[a];if(!force&&N.cash<GESC_NALERT)return 'Costs $'+GESC_NALERT+' a month.';N.cash-=Math.min(Math.max(0,N.cash),GESC_NALERT);
+  if(!gescWar(a,b,7))grLog(gdN(a)+' answers with its own nuclear alert against '+gdN(b)+'.',gescMeSee(a,b));const e=GC.esc[grWk(a,b)];e.na=e.na||{};e.na[a]=1;e.t=GC.turn;return '';}
+// limits offered by a to b inside a war
+function gescLimit(a,b){const S=gescS(),k=grWk(a,b),e=S[k];if(!e||e.r<5)return 'The war is already limited.';const m=gescMediator(a,b);
+  if(!m&&b!==GC.me&&gdWarscore(b,a)>10)return gdN(b)+' refuses: it is winning and sees no reason to hold back.';
+  if(m){if(GC.nat[a].cash<GESC_MED)return 'Mediation costs $'+GESC_MED+'.';GC.nat[a].cash-=GESC_MED;gdRel(m,a,5);gdRel(m,b,5);}
+  e.r--;e.t=GC.turn;e.lim=GC.turn+GESC_LIM;if(e.r<7)delete e.na;
+  grLog((m?gdN(m)+' brokers limits between ':'Limits agreed between ')+gdN(a)+' and '+gdN(b)+': the war steps down to '+GESC_R[e.r].toLowerCase()+' for at least '+GESC_LIM+' months.',gescMeSee(a,b));return '';}
+// who blockades whom this month (ports with an enemy fleet next to them and no fleet of their own there)
+function gescBlockades(){if(!GC.armies||typeof gmilHasPort!=='function')return;const at={};for(const f of GC.armies){if(!f.fl||!f.u||!f.u.length)continue;(at[f.at]||(at[f.at]=[])).push(f.o);}
+  const seen={};for(const p of GCM.P){if(!p.land||!gmilHasPort(p.i))continue;const o=GC.prov[p.i].o;if(!GC.nat[o]||GC.nat[o].dead)continue;
+    for(const j of p.adj){const f=at[j];if(!f||!GCM.P[j].sea||f.includes(o))continue;for(const x of f)if(x!==o&&grAtWar(x,o)&&!seen[x+'>'+o]){seen[x+'>'+o]=1;}}}
+  for(const q of Object.keys(seen).sort()){const [x,o]=q.split('>');gescWar(x,o,5);}}
+function gescWarMonth(k,e,a,b,R){const S=gescS(),r1=R(),r2=R();
+  if(e.r===7){e.na=e.na||{};for(const c of [a,b]){if(!e.na[c])continue;const N=GC.nat[c];if(c===GC.me&&N.cash<GESC_NALERT){delete e.na[c];grLog(gdN(c)+' cannot pay for the nuclear alert and stands its forces down.',c);}else N.cash-=Math.min(Math.max(0,N.cash),GESC_NALERT);}
+    const x=e.by===a?b:a;
+    if(e.by&&x!==GC.me&&e.an!==e.t&&e.t<GC.turn&&!e.na[x]){e.an=e.t;   // the AI side answers a nuclear alert
+      if(grNuk(x))gescNAlert(x,e.by,1);
+      else{let pr='';for(const m of Object.keys(GC.nat).sort()){if(m===x||m===e.by||GC.nat[m].dead||!grNuk(m)||grAllied(m,e.by)||grAtWar(m,x))continue;if(((GC.rel&&GC.rel[grWk(m,x)])||0)>=20||grAllied(m,x)){pr=m;break;}}
+        if(pr&&!grAtWar(pr,e.by)){while(gescOf(pr,e.by)<2&&gescUp(pr,e.by)){}grLog(gdN(pr)+' warns '+gdN(e.by)+': a nuclear strike on '+gdN(x)+' would not go unanswered.',gescMeSee(e.by,x));}
+        else if(gdWarscore(x,e.by)<=0&&r1<.3){delete GC.war[k];GC.tr=GC.tr||{};GC.tr[k]=GC.turn+6;delete S[k];grLog(gdN(x)+' asks for a truce under the nuclear threat. '+gdN(e.by)+' gains nothing but the end of the fighting — truce for 6 months.',gescMeSee(e.by,x));return;}}}
+    if(!Object.keys(e.na).length){e.r=6;e.t=GC.turn;}}
+  else for(const c of [a,b]){const o=c===a?b:a;if(c!==GC.me&&grNuk(c)&&gdWarscore(c,o)<-30&&(c===a?r1:r2)<GESC_AI_NA){gescNAlert(c,o,1);return;}}   // a nuclear power that is losing badly rattles the sabre (rare)
+  if(GC.turn-e.t>=GESC_WCOOL){e.r--;e.t=GC.turn;delete e.na;if(k.split('|').includes(GC.me))grLog('The war between '+gdN(a)+' and '+gdN(b)+' cools to: '+GESC_R[e.r].toLowerCase()+'.',GC.me);}
+  if(e.r<=4&&!((e.lim|0)>GC.turn))delete S[k];}
+function gescMonth(){if(!GC||!GC.nat)return;const S=gescS(),R=grRng((GC.seed|0)*389+GC.turn*23);gescBlockades();
+  for(const k of Object.keys(S).sort()){const e=S[k],[a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAllied(a,b)||(e.r>=4)!==!!grAtWar(a,b)){delete S[k];continue;}
+    if(e.r>=4){gescWarMonth(k,e,a,b,R);continue;}
     if(e.r>=3){if(GC.nat[a].cash<GESC_ALERT||GC.nat[b].cash<GESC_ALERT)e.r=2;else{GC.nat[a].cash-=GESC_ALERT;GC.nat[b].cash-=GESC_ALERT;}}   // a side that cannot pay for the alert stands its forces down
     const x=e.by===a?b:a,r1=R(),r2=R();
     if(e.by&&x!==GC.me&&e.an!==e.t&&e.t<GC.turn){e.an=e.t;const sr=grMilOf(x)/Math.max(.05,grMilOf(e.by)),nk=grNuk(x)&&grNuk(e.by);   // the AI side answers last month's step
@@ -4164,7 +4500,9 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
     if(gdAllies(b).some(x=>grAtWar(a,x))){W.push(['Their ally is your enemy',-40]);s-=40;}
     if(s<10&&ok)no('They decline (need 10, have '+Math.round(s)+')');W.push(['Total',Math.round(s)]);}
   else if(act==='claim'){cost=GCL_COST;if(war)no('At war');else if(al)no('Already allied');else if(!gclPick(a,b))no('No province of theirs borders yours');else W.push(['Claim on '+gclPick(a,b).n+' ($'+GCL_COST+', lasts '+GCL_LEN+' months)',0]);W.push(['Justifies war and halves that province\'s price at peace',0]);W.push(['Their opinion of you -5',0]);}
+  else if(act==='warn'&&war){const r=gescWarOf(a,b);cost=GESC_NALERT;W.push(['Now: '+GESC_R[r]+' → Nuclear alert',0]);if(!grNuk(a))no('At war: the next rungs come from what you do (a blockade, strikes on industry). Nuclear alert needs warheads');else if(r>=7&&((GC.esc[grWk(a,b)].na||{})[a]))no('Already on nuclear alert');W.push(['$'+GESC_NALERT+' a month; every outside nation\'s opinion of you '+GESC_WOP[7]+' (allies half); their public rallies, yours is frightened',GESC_WOP[7]]);W.push(['A nuclear enemy answers in kind; others look for a nuclear protector or a truce',0]);}
   else if(act==='warn'){const r=gescOf(a,b);if(war)no('At war');else if(al)no('Allied');else if(r>=3)no('Already at the top rung short of war');W.push(['Now: '+GESC_R[r]+(r<3?' → next: '+GESC_R[r+1]:''),0]);W.push(['Their opinion of you -8; their public rallies; your word is at stake',-8]);if(r===2)W.push(['Forces on alert cost both sides $'+GESC_ALERT+' a month',0]);W.push(['A war after a red line is not a surprise attack (no -10 opinion everywhere)',0]);}
+  else if(act==='deesc'&&war){const r=gescWarOf(a,b);if(r<5)no('Already a limited war');else{const m=gescMediator(a,b);if(m)cost=GESC_MED;W.push(['Offer limits: '+GESC_R[r]+' → '+GESC_R[r-1]+' for '+GESC_LIM+' months'+(m?' ('+gdN(m)+' mediates)':''),0]);if(!m&&gdWarscore(b,a)>10)no('They are winning and will refuse (no mediator on good terms with both)');W.push(['Whoever crosses the rung again inside the pact pays double in world opinion',0]);}}
   else if(act==='deesc'){const r=gescOf(a,b);if(r<1)no('Already calm: no crisis with them');else{const m=gescMediator(a,b);if(m){cost=GESC_MED;W.push([gdN(m)+' mediates: two rungs down, nobody loses face',0]);}else W.push([(GC.esc[grWk(a,b)].st||{})[a]?'No mediator on good terms with both: backing down in public costs war support -3':'No mediator: one rung down',0]);}}
   else if(act==='war'){if(!war&&!al&&gescOf(a,b)<2)W.push(['No red line declared: a surprise attack, every nation\'s opinion of you -10',-10]);if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until '+grMonStr(GC.tr[grWk(a,b)]));
     else if(GC.ph!=='plan')no('Wait for the planning phase');if(gclJust(a,b))W.push(['Casus belli: your claim on '+gclList(a,b).map(x=>GCM.P[x[1]].n).join(', '),0]);else{W.push(['No casus belli: every nation\'s opinion of you -8, alarm +'+GCL_UNJUST_AE,0]);W.push(['Press a claim first to justify it',0]);}}
@@ -4187,7 +4525,9 @@ function gdAct(act,a,b){const c=gdChance(act,a,b);if(!c.ok)return c.note;const N
   else if(act==='alliance'){GC.alz=GC.alz||[];const g=GC.alz.find(x=>x[1].includes(a));if(g&&!g[1].includes(b))g[1].push(b);else if(!g)GC.alz.push([na+'–'+nb+' Pact',[a,b]]);gdRel(a,b,15);grLog(na+' and '+nb+' formed an alliance.',a);}
   else if(act==='break'){for(const g of GC.alz||[])if(g[1].includes(a)&&g[1].includes(b))g[1]=g[1].filter(x=>x!==b);GC.alz=(GC.alz||[]).filter(x=>x[1].length>1);gdRel(a,b,-25);grLog(na+' left its alliance with '+nb+'.',a);}
   else if(act==='claim'){const e=gclFab(a,b);if(e)return e;}
+  else if(act==='warn'&&grAtWar(a,b)){N.cash+=c.cost;const e=gescNAlert(a,b);if(e)return e;}
   else if(act==='warn'){N.cash+=c.cost;gescUp(a,b);}
+  else if(act==='deesc'&&grAtWar(a,b)){N.cash+=c.cost;const e=gescLimit(a,b);if(e)return e;}
   else if(act==='deesc'){N.cash+=c.cost;const e=gescDown(a,b);if(e)return e;}
   else if(act==='war'){const j=gclJust(a,b);grDeclare(a,b);GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;for(const o of Object.keys(GC.nat))if(o!==a&&o!==b)gdRel(a,o,j?-1:-8);if(!j)N.ae=(N.ae||0)+GCL_UNJUST_AE;gdRel(a,b,-30);}
   else if(act==='peace'){delete GC.war[grWk(a,b)];GC.tr=GC.tr||{};GC.tr[grWk(a,b)]=GC.turn+6;grLog('Peace between '+na+' and '+nb+' — truce for 6 months.',a);}
@@ -4198,7 +4538,7 @@ const chip=(c,onc)=>{const n=grNat(c),d=document.createElement('span');d.title=G
   d.innerHTML='<span style="width:18px;height:12px;border:1px solid #fff;background:'+n.color+'"></span>'+GCM.nats.get(c).name;d.onclick=onc;return d;};
 const sel=c=>{GD.sel=c;npDraw();};
 const col=v=>v>=25?'#9fe39f':v<=-25?'#ff9d8e':'#e8e4d8';
-const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['proxy','Arm a proxy militia'],['cyber','Cyber strike on banks'],['warn','Escalate (warn · red line · alert)'],['deesc','Step back from the crisis'],['war','Declare war']];
+const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['proxy','Arm a proxy militia'],['cyber','Cyber strike on banks'],['warn','Escalate'],['deesc','Step back'],['war','Declare war']];
 npTab('dip','🤝','Diplomacy',(code,body)=>{const me=GC.me;if(!GD.sel||GD.sel===code||!GC.nat[GD.sel])GD.sel=Object.keys(GC.nat).find(c=>c!==code&&!GC.nat[c].dead&&grNat(c).major)||'';
   const row=(t,L)=>{const d=document.createElement('div');d.style.cssText='margin-bottom:4px';d.innerHTML='<span style="display:inline-block;width:92px;opacity:.7;font-size:13px">'+t+'</span>';if(!L.length)d.innerHTML+='<span style="opacity:.4">—</span>';for(const c of L)d.appendChild(chip(c,()=>sel(c)));return d;};
   const top=document.createElement('div');top.style.cssText='margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #2c4258';
@@ -4226,6 +4566,7 @@ npTab('dip','🤝','Diplomacy',(code,body)=>{const me=GC.me;if(!GD.sel||GD.sel==
   const t=GD.sel;if(!t){R.textContent='Select a nation.';return;}
   R.innerHTML='<div style="font-size:19px;font-weight:bold;margin-bottom:2px">'+GCM.nats.get(t).name+'</div><div style="opacity:.75;font-size:13px;margin-bottom:6px">'+grRealClass(t)+' · opinion of '+GCM.nats.get(code).name+' <b style="color:'+col(gdOp(t,code))+'">'+gdOp(t,code)+'</b></div>';
   const ws=gdWhy(t,code),wl=document.createElement('div');wl.style.cssText='font-size:13px;margin-bottom:8px;line-height:1.5';for(const [x,v] of ws)wl.innerHTML+='<div><b style="color:'+(v>0?'#9fe39f':v<0?'#ff9d8e':'#aaa')+';display:inline-block;width:34px">'+(v>0?'+':'')+v+'</b>'+x+'</div>';if(!ws.length)wl.innerHTML='<div style="opacity:.5">No history yet.</div>';R.appendChild(wl);
+  {const lv=gescWarOf(code,t);if(lv>0){const d=document.createElement('div');d.style.cssText='font-size:13px;margin-bottom:8px';d.title='The ladder: '+GESC_R.join(' → ');d.innerHTML='<span style="opacity:.7">'+(lv>=4?'War level':'Crisis level')+'</span> <b style="color:'+(lv>=6?'#ff9d8e':'#f0c674')+'">'+GESC_R[lv]+'</b>'+(((GC.esc[grWk(code,t)]||{}).lim|0)>GC.turn?' <span style="opacity:.6">· limits agreed until '+grMonStr(GC.esc[grWk(code,t)].lim)+'</span>':'');R.appendChild(d);}}
   if(code!==me||GC.me===t){const n=document.createElement('div');n.style.cssText='opacity:.6;font-size:13px';n.textContent=code!==me?'Open your own panel to act.':'';R.appendChild(n);return;}
   const ab=document.createElement('div');ab.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
   for(const [k,n] of ACTS){const ch=gdChance(k,me,t);if(!ch.ok&&/^(Not allied|Not at war|Already)/.test(ch.note))continue;const b=document.createElement('button');b.type='button';b.textContent=n;
@@ -4610,7 +4951,6 @@ function gwebOpen(){if(!GC)return;const old=document.getElementById('gWeb');if(o
   draw();
   cv.onclick=e=>{const r=cv.getBoundingClientRect(),sx=W/r.width,x=(e.clientX-r.left)*sx,y=(e.clientY-r.top)*sx;let best=null,bd=22*22;for(const c of nodes){const d=(pos[c][0]-x)**2+(pos[c][1]-y)**2;if(d<bd){bd=d;best=c;}}if(best){m.remove();NP.code=best;if(typeof npDraw==='function'){NP.cur='dip';npDraw();}}};
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const esc=e=>{if(e.key==='Escape'){m.remove();document.removeEventListener('keydown',esc,true);}};document.addEventListener('keydown',esc,true);
   if(!nodes.length)box.appendChild(guEl('div','padding:20px;opacity:.7','No wars or alliances yet.'));}
 // MISSIONS (lane G, B7): a short list of national goals for the human nation, GENERATED from the current state (no hand-written trees).
 // Each template = {k, make(c)->{arg,text} or null, done(c,m)->bool, reward:[effects in the ONE event vocabulary of 13p]}. State GC.mis={code:{act:[{k,arg,text,t0,base}],done:n}}.
@@ -4761,6 +5101,10 @@ function wsMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){cons
       if(inv){if(N.wsIv==null)N.wsIv=GC.turn;N.wsIq=0;const fresh=GC.turn-N.wsIv<WS_RALLY_M;const x=sk==='home'?S.surge+(fresh?G.rally/2:0):fresh?G.rally:-Math.min(4,inv);d+=x;why.push([sk==='home'||fresh?'Attacked at home: the nation rallies':'Enemy troops on our soil',x]);}
       else if(N.wsIv!=null&&(N.wsIq=(N.wsIq|0)+1)>=6){N.wsIv=null;N.wsIq=0;}}
     else{N.wsW=0;N.wsIv=null;N.wsIq=0;}
+    /* prices and shortages (slice 2): in wartime empty shelves and pumps turn people against the war faster than the casualty lists do. Reads the one
+       economy state (13g: starve / dry / ration); voters punish it hardest, Zealous nations endure. Counter-play: end rationing, secure food and fuel, make peace. */
+    if(foes.length&&N.e){const E=N.e,ps=[];let h=0;if(E.starve){h+=3;ps.push('hunger');}if(E.dry){h+=1;ps.push('no fuel');}if(E.ration){h+=1;ps.push('rationing');}
+      if(h){h*=(gk==='dem'?1.5:1)*(sk==='zeal'?.5:1);d-=h;why.push(['Shortages at home: '+ps.join(', '),-h]);N.wsSh=(N.wsSh|0)+1;if(c===GC.me&&N.wsSh%4===1)grLog('Shortages at home ('+ps.join(', ')+') are turning people against the war.',c);}else N.wsSh=0;}
     if(N.cap>=0&&GC.prov[N.cap]&&GC.prov[N.cap].o!==c&&sk!=='zeal'){d-=3;why.push(['The capital has fallen',-3]);}
     const tgt=Math.max(10,Math.min(95,WS_BASE+100*gmod('nation',c,'warSupport')));const pull=(tgt-N.ws)*(foes.length?.1:.2);d+=pull;why.push(['Mood drifts toward '+Math.round(tgt)+'%',+pull.toFixed(1)]);
     N.ws=Math.max(0,Math.min(100,N.ws+d));N.wsWhy=why;
@@ -5285,7 +5629,7 @@ function gpOpen(a,b){const old=document.getElementById('gpDeal');if(old)old.remo
     c.appendChild(guEl('div','margin:8px 0;color:'+(e.ok?'#9fe39f':'#ffb3a8'),e.ok?(d.prov.length||d.trib||d.vas||d.pay||d.rep||d.dmz?'They will accept.':'White peace — nothing changes hands. Truce 6 months.'):e.why));
     const br=guEl('div','display:flex;gap:8px');const sg=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px','Sign peace');sg.type='button';sg.disabled=!e.ok;if(!e.ok)sg.style.opacity='.45';
     sg.onclick=()=>{const r=gpApply(a,b,d);if(r){draw();}else m.remove();};const cn=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid #6b7a8a;background:transparent;color:#fff;cursor:pointer;font-size:16px','Keep fighting');cn.type='button';cn.onclick=()=>m.remove();br.appendChild(sg);br.appendChild(cn);c.appendChild(br);}
-  m.addEventListener('keydown',ev=>{if(ev.key==='Escape')m.remove();});m.onclick=ev=>{if(ev.target===m)m.remove();};document.body.appendChild(m);draw();return m;}
+  m.onclick=ev=>{if(ev.target===m)m.remove();};document.body.appendChild(m);draw();return m;}
 // "Offer peace" in the Diplomacy tab opens the screen instead of a flat yes/no
 (function(){const _act=gdAct;gdAct=function(act,a,b){if(act==='peace'&&a===GC.me){const c=gdChance(act,a,b);if(!c.ok)return c.note;gpOpen(a,b);return '';}return _act(act,a,b);};
 if(typeof alAdd==='function')alAdd('peace','🕊','Peace terms',c=>{let best=null;for(const o of Object.keys(GC.nat)){if(o===c||GC.nat[o].dead||!grAtWar(c,o))continue;const s=gpScore(c,o);if(s>=30&&(!best||s>best.s))best={o,s};}
@@ -6365,7 +6709,7 @@ function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.l
     if(!A.ai)continue;
     if(N.st===0&&A.cash>2500&&alive.some(o=>o!==c&&GC.nat[o]&&(gnkN(o).w>0)&&grAtWar(c,o))&&R()<.03){N.st=1;N.p=0;grLog(gnkName(c)+' is reported to be starting a nuclear program.',c);}
     // last resort: the capital is held by an enemy army and the nation has warheads → strike the occupied capital
-    if(N.w>0&&N.st===3&&GC.turn-N.last>=GNK.aiGap){const cap=A.cap;if(cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c)))gnkLaunch(c,cap,true);}
+    if(N.w>0&&N.st===3&&GC.turn-N.last>=GNK.aiGap){const cap=A.cap;if(cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c))){const oc=GC.prov[cap].o;if(typeof gescWarOf!=='function'||gescWarOf(c,oc)>=7)gnkLaunch(c,cap,true);else gescNAlert(c,oc,1);}}   /* escalation ladder: a month on nuclear alert comes first, so the occupier can leave or make peace */
   }
   for(const pi of Object.keys(GC.nuk.fo))if(GC.nuk.fo[pi]<GC.turn)delete GC.nuk.fo[pi];else if(GC.prov[pi])GC.prov[pi].un=Math.min(100,(GC.prov[pi].un||0)+3);
 }
@@ -6721,3 +7065,65 @@ function gdrSide(L){let w=0,s=0;for(const x of L){const n=x.u.length;w+=n;s+=n*(
 function gdrApplyBattle(dr){if(!dr||typeof G==='undefined'||!G)return;G.teams.forEach((T,i)=>{const lv=Math.floor((dr[i]||0)/20);if(!T||lv<1)return;for(let k=1;k<=5;k++)delete T.upg['dr'+k];T.upg['dr'+Math.min(5,lv)]=1;T._uk=null;T._ut=null;});}
 function gdrTag(a){if(a.fl)return '';const d=gdrPct(a);return (a.dg||d)?' <span style="font-size:12px;color:#9fe0a0" title="Drill '+d+'%: up to +6% damage, +5% fire rate, +10% courage in Fight-it. '+(a.dg?'Drilling costs about $'+gdrCost(a)+'/month and the army stays put; ordering a move stops it.':'Fades 1.5%/month (3% at war).')+'">⚔ Drill '+d+'%'+(a.dg?' ▲':'')+'</span>':'';}
 function gdrBtn(a){return a.fl?'':'<button data-act="drill" title="Drill (T): the army stays put and trains — +drill each month for upkeep money">'+(a.dg?'Stop drill':'Drill')+'</button>';}
+/* ================= GRAND MAP: ONE STYLE FOR EVERY PANEL (queue "Campaign panels", orch/polishP2) =================
+   Every window / panel / dialog of the grand campaign is one row of GPAN (top-most first). gpxDress() gives each of them the
+   same frame: same font, same border and corner radius, same title style, and the same close X in the same (top-right) corner.
+   ONE Esc handler (gpxEsc) closes the top-most open panel, one per press; a dialog that needs an answer (battle prompt, event
+   with choices) is never skipped: Esc presses its plain "No / Close / Back" button when it has one, otherwise does nothing.
+   The old per-panel Esc handlers and per-panel close buttons are gone - a NEW PANEL = A NEW ROW HERE (list for people:
+   orch/reports/panels.md; guards: orch/decisions.mjs static + orch/polishtest.mjs opens every row and closes it with Esc).
+   kind: screen = full page before the map (Esc = its Back button) · dialog = centred question · window = centred, closable ·
+         side = docked next to the province column · note = small notice on the map (keeps its own theme, gets the X + Esc).
+   View only: nothing here touches the campaign state. */
+const GPAN=[
+  {id:'gOver',name:'Campaign over (victory / defeat)',kind:'dialog',card:1,title:'h1'},
+  {id:'gWeb',name:'Diplomatic web',kind:'window',card:1,title:'b'},
+  {id:'gpDeal',name:'Peace deal',kind:'window',card:1,title:'h2,b'},
+  {id:'gModal',name:'Dialog: confirm · event · battle prompt · auto-resolve result · strike target',kind:'dialog',card:1,title:'h1,h2'},
+  {id:'npWin',name:'Nation window (every tab: overview, diplomacy, economy, people, ideas, graphs …)',kind:'window',title:':scope>div>div:nth-child(2)>div',close:()=>{npClose();}},
+  {id:'gMil',name:'Military (generals · fronts · strikes · fleets)',kind:'side',title:'b'},
+  {id:'gEco',name:'Empire economy',kind:'side',title:'b'},
+  {id:'gTV',name:'TV news ticker',kind:'note'},
+  {id:'gNews',name:'Newspaper headline',kind:'note'},
+  {id:'gCoach',name:'First-steps coach',kind:'note'},
+  {id:'campScreen',name:'Grand campaign menu · New campaign · Campaign lobby',kind:'screen'},
+];
+function gpxCss(){if(document.getElementById('gpxCss'))return;const s=document.createElement('style');s.id='gpxCss';s.textContent=`
+.gpx{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif!important;border:1px solid #4a6580!important;border-top:2px solid #c9a35a!important;border-radius:8px!important;background:#101c2af5!important;color:#e8e4d8!important;box-shadow:0 8px 40px rgba(0,0,0,.55)!important}
+.gpx.gpx-rel{position:relative!important}
+.gpx .gpx-t{font-size:18px!important;font-weight:700!important;color:#ffe6a8!important;letter-spacing:.02em;margin-top:0!important}
+.gpx button{font-family:inherit!important;border-radius:6px!important}
+.gpx-x{width:28px;height:28px;padding:0;border-radius:6px!important;border:1px solid #5a7593;background:rgba(16,28,42,.9);color:#e8e4d8;font:15px/1 system-ui,sans-serif;cursor:pointer;z-index:9;opacity:.85}
+.gpx-x:hover{opacity:1;border-color:#c9a35a}
+.gpx-x.gpx-xa{position:absolute;top:10px;right:12px}
+.gpx-x.gpx-xs{position:sticky;top:10px;float:right;margin:0 0 4px 10px}
+.gpx-pad{padding-right:46px!important}`;document.head.appendChild(s);}
+function gpxShown(e){return !!(e&&e.isConnected&&e.getClientRects().length>0);}
+function gpxEl(p){return document.getElementById(p.id);}
+function gpxCard(p,e){return p.card?(e.firstElementChild||e):e;}
+function gpxEscBtn(e){return e.querySelector('button[data-esc="1"]')||[...e.querySelectorAll('button')].find(b=>/^(‹ )?(Back|Close|Cancel|No)$/.test((b.textContent||'').trim()));}
+/* can this panel be closed without answering it? dialogs / screens only through their own plain Back / No / Close button */
+function gpxClosable(p,e){return (p.kind==='dialog'||p.kind==='screen')?!!gpxEscBtn(e):true;}
+function gpxClose(id){const p=GPAN.find(x=>x.id===id),e=p&&gpxEl(p);if(!e)return false;
+  if(p.kind==='dialog'||p.kind==='screen'){const b=gpxEscBtn(e);if(!b)return false;b.click();return true;}
+  if(p.close)p.close();else e.remove();return true;}
+function gpxOpen(){return GPAN.filter(p=>gpxShown(gpxEl(p)));}
+/* the top-most open panel that Esc acts on; {p, blocked:true} when a dialog on top needs an answer first */
+function gpxTop(){for(const p of GPAN){const e=gpxEl(p);if(!gpxShown(e))continue;return {p,blocked:!gpxClosable(p,e)};}return null;}
+function gpxCloseTop(){const t=gpxTop();if(!t)return '';if(t.blocked)return 'blocked';return gpxClose(t.p.id)?t.p.id:'';}
+function gpxDress(){for(const p of GPAN){if(p.kind==='screen')continue;const e=gpxEl(p);if(!e)continue;const c=gpxCard(p,e);if(!c)continue;
+    if(p.kind!=='note'&&!c.classList.contains('gpx')){c.classList.add('gpx');if(getComputedStyle(c).position==='static')c.classList.add('gpx-rel');}
+    if(p.title&&p.kind!=='note'){const t=c.querySelector(p.title);if(t&&!t.classList.contains('gpx-t'))t.classList.add('gpx-t');}
+    let x=null;for(const k of c.children)if(k.classList&&k.classList.contains('gpx-x')){x=k;break;}
+    const can=gpxClosable(p,e);if(x&&!can){x.remove();continue;}if(x||!can)continue;
+    x=document.createElement('button');x.type='button';x.textContent='✕';x.title='Close (Esc)';x.setAttribute('aria-label','Close');x.onclick=ev=>{ev.stopPropagation();gpxClose(p.id);};
+    const scroll=/auto|scroll/.test(getComputedStyle(c).overflowY);x.className='gpx-x '+(scroll?'gpx-xs':'gpx-xa');
+    if(scroll){const cs=getComputedStyle(c);x.style.marginTop=x.style.top=(10-parseFloat(cs.paddingTop||0))+'px';x.style.marginRight=(12-parseFloat(cs.paddingRight||0))+'px';c.insertBefore(x,c.firstChild);}else{c.appendChild(x);if(getComputedStyle(c).position==='static')c.classList.add('gpx-rel');const h=c.firstElementChild;if(h&&h!==x&&p.kind!=='note')h.classList.add('gpx-pad');}}}
+function gpxEsc(ev){if(ev.key!=='Escape')return;if(typeof G!=='undefined'&&G&&!G.over)return;   // a battle is running: its own Esc rules apply
+  const gs=document.getElementById('grandScreen'),cs=document.getElementById('campScreen');if(!gpxShown(gs)&&!gpxShown(cs))return;
+  const r=gpxCloseTop();if(r){ev.preventDefault();ev.stopImmediatePropagation();}}
+try{gpxCss();if(!window._gpx){window._gpx=1;addEventListener('keydown',gpxEsc,true);
+  /* dressed in the same moment a panel appears (observer callbacks run before the next paint), so a panel is never seen without its frame.
+     Only the page's top level is watched all the time; the inside of the grand screen / of an open panel is watched while it exists - a battle's HUD updates cost nothing here. */
+  let busy=0;const run=()=>{if(busy)return;busy=1;try{for(const id of ['grandScreen'].concat(GPAN.map(p=>p.id))){const e=document.getElementById(id);if(e&&!e._gpxObs&&e.parentNode===document.body){e._gpxObs=new MutationObserver(run);e._gpxObs.observe(e,{childList:true,subtree:true});}}gpxDress();}catch(e){}busy=0;};
+  new MutationObserver(run).observe(document.body,{childList:true});run();}}catch(e){console.warn('gpanels',e);}

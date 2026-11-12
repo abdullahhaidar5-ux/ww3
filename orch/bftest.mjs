@@ -76,11 +76,11 @@ ck('vehicles are slowed but survive', r.tslow <= .5 && r.thp > .2, JSON.stringif
 W.step(150);
 r = JSON.parse(W.ev(`(()=>{const sp=window.__sp;return JSON.stringify({f:floodAt(sp[0],sp[1]),fin:G.dams[0].fin,fln:G.fln})})()`));
 ck('the water recedes after ~3 minutes', r.f === 0 && r.fin && r.fln === 0, JSON.stringify(r));
-// ---- infantry trench line
+// ---- fortification line: only Construction Vehicles build it; infantry just dig in
 console.log('trenches');
-r = JSON.parse(W.ev(`(()=>{const hq=G.ents.find(b=>b.team===0&&b.kind==='hq');G.teams[0].credits=5000;const x=hq.x+300,y=hq.y-300;const us=[];for(let i=0;i<4;i++)us.push(addUnit(0,'inf',x-60+i*8,y+20));
+r = JSON.parse(W.ev(`(()=>{const hq=G.ents.find(b=>b.team===0&&b.kind==='hq');G.teams[0].credits=5000;const x=hq.x+300,y=hq.y-300;const us=[];for(let i=0;i<4;i++)us.push(addUnit(0,'dozer',x-60+i*8,y+20));
   act(0,{t:'wall',ids:us.map(u=>u.id),k:'trench',x:x,y:y,x2:x+200,y2:y});window.__tr=us.map(u=>u.id);return JSON.stringify({n:us.filter(u=>u.order&&u.order.type==='wall').length,pcs:us.map(u=>u.wl.length)})})()`));
-ck('infantry take a dragged trench line, sharing the pieces', r.n === 4 && r.pcs.reduce((a, b) => a + b, 0) >= 6, JSON.stringify(r));
+ck('Construction Vehicles take a dragged trench line, sharing the pieces', r.n === 4 && r.pcs.reduce((a, b) => a + b, 0) >= 6, JSON.stringify(r));
 W.step(40);
 r = JSON.parse(W.ev(`JSON.stringify({tr:(G.dug||[]).filter(d=>d.k==='trench').length})`));
 ck('the trench pieces get dug', r.tr >= 5, JSON.stringify(r));

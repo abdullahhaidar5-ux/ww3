@@ -54,6 +54,10 @@ function wsMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){cons
       if(inv){if(N.wsIv==null)N.wsIv=GC.turn;N.wsIq=0;const fresh=GC.turn-N.wsIv<WS_RALLY_M;const x=sk==='home'?S.surge+(fresh?G.rally/2:0):fresh?G.rally:-Math.min(4,inv);d+=x;why.push([sk==='home'||fresh?'Attacked at home: the nation rallies':'Enemy troops on our soil',x]);}
       else if(N.wsIv!=null&&(N.wsIq=(N.wsIq|0)+1)>=6){N.wsIv=null;N.wsIq=0;}}
     else{N.wsW=0;N.wsIv=null;N.wsIq=0;}
+    /* prices and shortages (slice 2): in wartime empty shelves and pumps turn people against the war faster than the casualty lists do. Reads the one
+       economy state (13g: starve / dry / ration); voters punish it hardest, Zealous nations endure. Counter-play: end rationing, secure food and fuel, make peace. */
+    if(foes.length&&N.e){const E=N.e,ps=[];let h=0;if(E.starve){h+=3;ps.push('hunger');}if(E.dry){h+=1;ps.push('no fuel');}if(E.ration){h+=1;ps.push('rationing');}
+      if(h){h*=(gk==='dem'?1.5:1)*(sk==='zeal'?.5:1);d-=h;why.push(['Shortages at home: '+ps.join(', '),-h]);N.wsSh=(N.wsSh|0)+1;if(c===GC.me&&N.wsSh%4===1)grLog('Shortages at home ('+ps.join(', ')+') are turning people against the war.',c);}else N.wsSh=0;}
     if(N.cap>=0&&GC.prov[N.cap]&&GC.prov[N.cap].o!==c&&sk!=='zeal'){d-=3;why.push(['The capital has fallen',-3]);}
     const tgt=Math.max(10,Math.min(95,WS_BASE+100*gmod('nation',c,'warSupport')));const pull=(tgt-N.ws)*(foes.length?.1:.2);d+=pull;why.push(['Mood drifts toward '+Math.round(tgt)+'%',+pull.toFixed(1)]);
     N.ws=Math.max(0,Math.min(100,N.ws+d));N.wsWhy=why;
