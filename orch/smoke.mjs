@@ -140,6 +140,28 @@ try {
   const tLoad = Date.now();
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('loading screen did not finish within 10 minutes'));
   console.log(`loading screen finished after ${((Date.now() - tLoad) / 1000).toFixed(1)}s`);
+  // fortline (Abdullah 2026-11-11 19:02): only a Construction Vehicle builds a fortification line, the line follows a traced path; infantry only dig in
+  { const r = await page.evaluate(() => { try {
+      const hq = G.ents.find(b => b.team === 0 && b.kind === 'hq'), x = hq.x + 260, y = hq.y - 260, mk = (k, dx) => addUnit(0, k, x + dx, y + 30);
+      const inf = [mk('inf', 0), mk('inf', 8)], dz = mk('dozer', 30), out = {};
+      act(0, { t: 'wall', ids: inf.map(u => u.id), k: 'trench', pts: [x, y, x + 100, y] }); out.infWl = inf.some(u => u.wl && u.wl.length) || inf.some(u => u.order && u.order.type === 'wall');
+      act(0, { t: 'wall', ids: [dz.id], k: 'trench', x, y, x2: x + 100, y2: y }); out.oldForm = !!(dz.wl && dz.wl.length);
+      const pts = [x, y, x + 120, y, x + 120, y + 120, x + 240, y + 120, x + 240, y + 40], pl = wallPlan('trench', pts); out.n = pl.length; out.angs = [...new Set(pl.map(q => q.a.toFixed(2)))].length;
+      act(0, { t: 'wall', ids: [dz.id], k: 'trench', pts }); out.bent = !!(dz.wl && dz.wl.length > 8 && new Set(dz.wl.map(q => q.a.toFixed(2))).size >= 3);
+      dz.wl = null; dz.order = null; act(0, { t: 'wall', ids: [dz.id], k: 'trench', pts: [x, y, NaN, 4] }); out.bad = !!dz.wl;
+      const keep = G.sel; G.sel = inf.slice(); const row = document.createElement('div'); tactRow(row, G.sel); out.infBtns = [...row.querySelectorAll('button')].map(b => b.textContent);
+      G.sel = [dz]; const row2 = document.createElement('div'); tactRow(row2, G.sel); out.dzBtns = [...row2.querySelectorAll('button')].map(b => b.textContent); G.sel = keep;
+      for (const u of [...inf, dz]) { u.dead = true; u.order = null; u.wl = null; } return out; } catch (e) { return { err: String(e && e.stack || e) }; } });
+    console.log('fortline: ' + JSON.stringify(r));
+    if (r.err) fails.push('fortline guard crashed: ' + r.err);
+    else {
+      if (r.infWl) fails.push('fortline: infantry took a fortification line order (only a Construction Vehicle builds lines)');
+      if (!r.oldForm) fails.push('fortline: the old x,y,x2,y2 wall order no longer makes a work list for a Construction Vehicle');
+      if (!r.bent) fails.push('fortline: a bent traced path did not become segments that follow the bends ' + JSON.stringify([r.n, r.angs]));
+      if (r.bad) fails.push('fortline: a wall order with a non-finite point was accepted');
+      if (!r.infBtns.some(t => /Dig in/.test(t)) || r.infBtns.some(t => /Fortification/.test(t))) fails.push('fortline: an infantry-only selection must show Dig in and no line button: ' + r.infBtns.join('|'));
+      if (!r.dzBtns.some(t => /Fortification/.test(t))) fails.push('fortline: a Construction Vehicle selection lost the Fortification line button');
+    } }
   // leadersC (Abdullah 2026-11-07 22:38): the signature assets are in Conquest/Battle for their nations and OUT of grand Fight-it battles
   { const gm = await page.evaluate(() => { if (!G || !G.grand) return []; return ['u_cleric', 'b_fort', 'p_bb'].filter(id => { const e = document.getElementById(id); return e && !e.hidden; }); });
     if (gm.length) fails.push('signature assets offered in a grand Fight-it battle: ' + gm.join(', ')); }
