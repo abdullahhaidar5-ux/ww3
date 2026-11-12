@@ -68,3 +68,55 @@ function g3BuildArrows(){if(!G3.arrows)return;while(G3.arrows.children.length){c
     v(L0[0],hy,L0[1],ed);v(H[0],hy,H[1],ce);v(tip[0],hy,tip[1],ce);v(H[0],hy,H[1],ce);v(R0[0],hy,R0[1],ed);v(tip[0],hy,tip[1],ce);}
   if(!Pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(Pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(Col,4));
   const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,depthTest:false,depthWrite:false}));m.renderOrder=4;m.frustumCulled=false;G3.arrows.add(m);}
+
+/* ===== Front lines and supply veins (one-language idea 4, 2026-11-11) — drawing only: reads GC, never changes it =====
+   Front line: a glowing line along every border between you (or an ally fighting the same enemy) and a nation you are at war with.
+   Advance arrows: where the front moved since last month (green = you/allies took the province, red = the enemy did) — the view remembers who held what.
+   Supply veins: gold lines along the roads from your capital to each of your land armies; past the point where the supply system
+   (geArmySupply, 13g-grandeco) says the army gets nothing, the vein is dark and dashed and a red × marks the cut.
+   Three merged meshes at most (front+arrows+cut marks, gold veins, dashed veins). Zoom tiers (shared g3Zoom of the calm map):
+   front line in the far and middle view, veins in the middle and close view. */
+function grTier(){const d=G3.cc?G3.cc.d:0;return typeof g3Zoom==='function'?g3Zoom(d):d>=440?0:d>=250?1:2;}
+function grFrontSide(o,foe){const me=GC.me;return o===me||(typeof grAllied==='function'&&grAllied(me,o)&&grAtWar(o,foe));}
+function grFrontPair(a,b){return a!==b&&GC.me&&grAtWar(GC.me,b)&&grFrontSide(a,b);}   // a = our side, b = enemy
+function grFrontSig(){const P=GCM.P;let h=7;for(const p of P){if(!p.land)continue;const o=GC.prov[p.i].o||'';h=(Math.imul(h,33)^((o.charCodeAt(0)|0)*131+(o.charCodeAt(1)|0)))>>>0;}
+  let w=0;for(const k in GC.war)if(GC.war[k])w++;let a='';for(const x of GC.armies)if(x.o===GC.me)a+=x.at+'.'+geArmySupply(x)+',';return GC.me+'|'+GC.turn+'|'+h+'|'+w+'|'+a;}
+function grTownXZ(i){const p=GCM.P[i];let m=G3.fmain;if(!m){m=G3.fmain=new Map();for(const t of g3Towns())if(t.t===0)m.set(t.pi,t);}const t=m.get(i);return t?[t.x,t.z]:[p.x,p.y];}
+function grLift(xy,l){return xy.map(q=>[q[0],q[1],(q.length>2?q[2]:Math.max(.2,g3MeshH(q[0],q[1])))+l]);}
+function grLinkPts(i,j){const a=Math.min(i,j),b=Math.max(i,j),A=grTownXZ(a),B=grTownXZ(b);let xy=grRoadPts(A,B,a*977+b);   // the same curve as the road between the two towns
+  if(!xy){const L=Math.hypot(B[0]-A[0],B[1]-A[1]),n=Math.max(2,Math.ceil(L/6));xy=[];for(let k=0;k<=n;k++){const t=k/n,x=A[0]+(B[0]-A[0])*t,z=A[1]+(B[1]-A[1])*t;xy.push([x,z,Math.max(.2,g3MeshH(x,z))+.32]);}}
+  return i<=j?xy:xy.slice().reverse();}
+// what to draw, as plain data (also read by the tests): fr = border chains, adv = [from,to,ours], gold/dark = province links, cut = provinces
+function grFrontData(){const me=GC.me,P=GCM.P,out={fr:[],adv:[],gold:[],dark:[],cut:[]};if(!me||!GC.nat[me])return out;
+  for(const ch of (G3.lines&&G3.lines.land)||[]){const a=GC.prov[ch.i].o,b=GC.prov[ch.j].o;if(grFrontPair(a,b)||grFrontPair(b,a))out.fr.push(ch);}
+  // the front moved: compare with what the view saw before (kept for this month and the next)
+  const F=G3.front,key=me+'|'+(GC.seed||'')+'|'+P.length;if(F.key!==key){F.key=key;F.own=null;F.adv=new Map();}
+  const own=P.map(p=>p.land?GC.prov[p.i].o:'');if(F.own){let ch=0;const add=[];for(const p of P){if(!p.land||own[p.i]===F.own[p.i])continue;ch++;const n=own[p.i],o=F.own[p.i],ours=grFrontPair(n,o),theirs=grFrontPair(o,n);if(!ours&&!theirs)continue;
+      let from=-1,bd=1e9;const T=grTownXZ(p.i);for(const j of p.adj){if(!P[j].land||own[j]!==n||F.own[j]!==n)continue;const q=grTownXZ(j),d=Math.hypot(q[0]-T[0],q[1]-T[1]);if(d<bd){bd=d;from=j;}}if(from>=0)add.push([p.i,{from,turn:GC.turn,ours:ours?1:0}]);}
+    if(ch<=P.length*.3)for(const [i,v] of add)F.adv.set(i,v);}F.own=own;
+  for(const [i,v] of F.adv){if(GC.turn-v.turn>1||GC.turn<v.turn){F.adv.delete(i);continue;}out.adv.push([v.from,i,v.ours]);}
+  // supply veins: cheapest road route from the capital to each of your land armies (own land first)
+  const cap=GC.nat[me].cap;if(cap==null||cap<0||!GC.prov[cap]||GC.prov[cap].o!==me)return out;
+  const dist=new Map([[cap,0]]),prev=new Map(),open=[[0,cap]],done=new Set();
+  while(open.length){let bi=0;for(let k=1;k<open.length;k++)if(open[k][0]<open[bi][0]||(open[k][0]===open[bi][0]&&open[k][1]<open[bi][1]))bi=k;const [d,u]=open.splice(bi,1)[0];if(done.has(u))continue;done.add(u);
+    for(const j of P[u].adj){if(!P[j].land||done.has(j))continue;const o=GC.prov[j].o,nd=d+(o===me?1:(typeof grAllied==='function'&&grAllied(me,o))?2:8);if(!dist.has(j)||nd<dist.get(j)){dist.set(j,nd);prev.set(j,u);open.push([nd,j]);}}}
+  const seenG=new Set(),seenD=new Set(),cutS=new Set();
+  for(const a of GC.armies){if(a.o!==me||!P[a.at].land||!dist.has(a.at)||a.at===cap)continue;const path=[a.at];for(let c=a.at;c!==cap;){c=prev.get(c);path.unshift(c);}
+    const fed=geArmySupply(a)>0;let lastOwn=0;if(!fed)for(let k=0;k<path.length;k++)if(GC.prov[path[k]].o===me)lastOwn=k;else break;
+    for(let k=0;k+1<path.length;k++){const u=path[k],v=path[k+1],e=Math.min(u,v)+'_'+Math.max(u,v),dk=!fed&&k>=lastOwn;if(dk){if(!seenD.has(e)&&!seenG.has(e)){seenD.add(e);out.dark.push([u,v]);}}else if(!seenG.has(e)){seenG.add(e);out.gold.push([u,v]);}}
+    if(!fed&&!cutS.has(path[lastOwn])){cutS.add(path[lastOwn]);out.cut.push(path[lastOwn]);}}
+  out.dark=out.dark.filter(l=>!seenG.has(Math.min(l[0],l[1])+'_'+Math.max(l[0],l[1])));return out;}
+function grFrontBuild(){const F=G3.front,sc=G3.arrows.parent;for(const k of ['fm','vm','dm'])if(F[k]){sc.remove(F[k]);F[k].geometry.dispose();F[k].material.dispose();F[k]=null;}
+  const D=F.data=grFrontData(),A=[],V=[],K=[];
+  for(const ch of D.fr){A.push({xy:grLift(ch.xy,.75),c:[1,.8,.42,.42],w:[12,4.2]});}for(const ch of D.fr){A.push({xy:grLift(ch.xy,.8),c:[1,.99,.93,.98],w:[3.2,1.1]});}
+  for(const [f,t,ours] of D.adv){const a=grTownXZ(f),b=grTownXZ(t),dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz)||1,ux=dx/L,uz=dz/L,s=[a[0]+dx*.3,a[1]+dz*.3],e=[a[0]+dx*.78,a[1]+dz*.78],hl=Math.min(7,L*.16),col=ours?[.3,.86,.3,.96]:[.95,.24,.18,.96],dk=[.05,.07,.05,.8];
+    const pt=(x,z)=>[x,z,Math.max(.8,g3HeightAt(x,z))+1.6],sh=[pt(s[0],s[1]),pt((s[0]+e[0])/2,(s[1]+e[1])/2),pt(e[0],e[1])],h1=[pt(e[0]-ux*hl-uz*hl*.7,e[1]-uz*hl+ux*hl*.7),pt(e[0],e[1])],h2=[pt(e[0]-ux*hl+uz*hl*.7,e[1]-uz*hl-ux*hl*.7),pt(e[0],e[1])];
+    for(const q of [sh,h1,h2])A.push({xy:q,c:dk,w:[8,3.6]});for(const q of [sh,h1,h2])A.push({xy:q,c:col,w:[5,2.4]});}
+  for(const [u,v] of D.gold){const xy=grLift(grLinkPts(u,v),.22);V.push({xy,c:[.25,.16,.03,.6],w:[5,1.7]});}for(const [u,v] of D.gold){V.push({xy:grLift(grLinkPts(u,v),.26),c:[1,.8,.22,.97],w:[2.8,1]});}
+  for(const i of D.cut){const t=grTownXZ(i),y=Math.max(.8,g3HeightAt(t[0],t[1]))+2,r=2.6;for(const w of [[7,1.5,[.08,.04,.04,.9]],[3.6,.8,[.98,.25,.2,1]]]){V.push({xy:[[t[0]-r,t[1]-r,y],[t[0]+r,t[1]+r,y]],c:w[2],w:[w[0],w[1]]});V.push({xy:[[t[0]+r,t[1]-r,y],[t[0]-r,t[1]+r,y]],c:w[2],w:[w[0],w[1]]});}}
+  for(const [u,v] of D.dark)K.push({xy:grLift(grLinkPts(u,v),.26),c:[.2,.09,.07,.95],w:[3,1.1]});
+  const add=(L,mat,ro)=>{const m=L.length?grStripMesh(L,mat):null;if(m){m.renderOrder=ro;sc.add(m);}else mat.dispose();return m;};
+  const fmat=grRoadMat(0,5200,9000);fmat.depthTest=false;F.fm=add(A,fmat,4);F.vm=add(V,grRoadMat(0,2400,4200),3);F.dm=add(K,grRoadMat(3.2,2400,4200),3);F.builds=(F.builds|0)+1;}
+function grFrontTick(){if(!GC||!G3.arrows||!G3.arrows.parent||!G3.LU||!G3.lines||!G3.F)return;const F=G3.front||(G3.front={sig:'',at:0});
+  const now=performance.now();if(now-(F.at||0)>400){F.at=now;let s='';try{s=grFrontSig();}catch(e){return;}if(s!==F.sig){F.sig=s;try{grFrontBuild();}catch(e){console.warn('front',e);}}}
+  const t=grTier();if(F.fm)F.fm.visible=t<=1;if(F.vm)F.vm.visible=t>=1;if(F.dm)F.dm.visible=t>=1;}

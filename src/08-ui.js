@@ -27,7 +27,7 @@ function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams.filter(
 function showElim(){if(!G||G.over)return;   // (the 'out' list can arrive after the battle's end: keep the summary)
   const left=G.teams.filter(T=>!T.out&&!T.reb&&T.id!==ME).length;$('endt').textContent='Defeat';const why=G.teams[ME].whyOut;$('ends').textContent=`${G.teams[ME].F.name} has capitulated${why?': '+why:'.'} ${left} rival${left===1?'':'s'} still fighting. You can keep watching the battle.`;
   $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=false;try{esPage(null);}catch(e){}$('end').hidden=false;}
-/* ---------- end-of-match summary page: scoreboard, awards, army-strength graph and a Share picture ----------
+/* ---------- end-of-match summary page: scoreboard, awards, army-strength graph, and on top the battle report card with Copy picture ----------
    Every player sees the same numbers: the host (or the Cloudflare server) builds them in endStats() (03-sim) when the
    battle ends and sends them to the clients in one 'est' event just before 'end' (07-net applyEvents keeps G.endStats). */
 const ES={blob:null,S:null};
@@ -44,7 +44,7 @@ function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb,cnt=P.map(()=>0),cap=P.leng
   let i;
   i=best(p=>p.vd);if(i>=0&&P[i].vd>0)A.push(['MVP',i,esM(P[i].vd)+' of enemy forces destroyed']);
   i=best(K);if(i>=0&&K(P[i])>0)A.push(['Top Killer',i,K(P[i])+' kills']);
-  i=best(p=>p.bn);if(i>=0&&P[i].bn>1)A.push(['Best Unit',i,'One '+esUnit(P[i].f,P[i].bk)+' got '+P[i].bn+' kills']);
+  i=best(p=>p.bn);if(i>=0&&P[i].bn>1)A.push(['Best Unit',i,'One '+(P[i].bv?(VET[P[i].bv]||'')+' ':'')+esUnit(P[i].f,P[i].bk)+' got '+P[i].bn+' kills']);
   i=best(p=>p.lu,p=>p.b>=5,true);if(i>=0)A.push(['Iron Wall',i,'Only '+P[i].lu+' unit'+(P[i].lu===1?'':'s')+' lost']);
   i=best(p=>p.fk,p=>p.fk>=0,true);if(i>=0)A.push(['Quick Draw',i,'First kill at '+esT(P[i].fk)]);
   i=best(p=>p.ap);if(i>=0&&P[i].ap>0)A.push(['Biggest Army',i,P[i].ap+' units in the field at once']);
@@ -53,7 +53,7 @@ function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb,cnt=P.map(()=>0),cap=P.leng
   i=best(p=>p.pt);if(i>=0&&P[i].pt>0)A.push(['Power Player',i,P[i].pt+' general power'+(P[i].pt===1?'':'s')+' used'+(P[i].pk?' (most: '+esPow(P[i].f,P[i].pk)+')':'')]);
   return A;}
 const ES_ROWS=[['World opinion',p=>p.op==null?'-':p.op+' / 100 (low '+(p.ol==null?p.op:p.ol)+')'],['Units built',p=>p.b],['Units lost',p=>p.lu],['Enemy units destroyed',p=>p.ku],['Structures destroyed',p=>p.kb],['Structures lost',p=>p.lb],
-  ['Enemy value destroyed',p=>esM(p.vd)],['Money earned',p=>esM(p.me)],['Money spent',p=>esM(p.ms)],['General rank',p=>p.r],['Time alive',p=>esT(p.ta)]];
+  ['Damage dealt',p=>Math.round((p.dd||0)/10)*10],['Enemy value destroyed',p=>esM(p.vd)],['Money earned',p=>esM(p.me)],['Money spent',p=>esM(p.ms)],['General rank',p=>p.r],['Time alive',p=>esT(p.ta)]];
 // players in table order: winners first, then by value destroyed
 function esOrder(S){return S.p.map((p,i)=>i).sort((a,b)=>(esWin(S,b)-esWin(S,a))||(S.p[b].vd-S.p[a].vd)||a-b);}
 function esCss(){if($('esCss'))return;const st=document.createElement('style');st.id='esCss';st.textContent=`
@@ -71,13 +71,13 @@ function esCss(){if($('esCss'))return;const st=document.createElement('style');s
 .esAw b{display:block;color:#e3b341;font-size:13px;letter-spacing:.12em;text-transform:uppercase}.esAw .who{font-weight:700;font-size:17px;margin:2px 0}.esAw .what{font-size:15px;opacity:.88}
 #esGraph{width:100%;height:230px;display:block;background:rgba(255,255,255,.03);border-radius:8px}
 .esLeg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:15px;margin-top:8px}.esLeg i{display:inline-block;width:16px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle;background:var(--c)}
-#esPrev{max-width:100%;border-radius:8px;margin-top:6px}#esPrevBox p{font-size:14px;opacity:.8;margin:4px 0}
+#rcCard{display:block;width:100%;max-width:760px;height:auto;border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
 @media (max-width:560px){.esP{grid-template-columns:1fr}.esA{grid-template-columns:1fr 1fr}#esGraph{height:190px}.esAw .who{font-size:16px}}`;document.head.append(st);}
 function esFlagEl(f,w,h){const c=document.createElement('canvas');c.width=w*2;c.height=h*2;const im=esFlag(f);const x=c.getContext('2d');if(im)try{x.drawImage(im,0,0,c.width,c.height);}catch(e){}else{x.fillStyle=(FACTIONS[f]||{}).color||'#888';x.fillRect(0,0,c.width,c.height);}return c;}
-function esShareBtn(){let b=$('endShare');if(b)return b;const row=$('again')&&$('again').parentNode;if(!row)return null;b=document.createElement('button');b.id='endShare';b.className='big ghost';b.type='button';b.textContent='Share';b.hidden=true;b.onclick=esShare;row.insertBefore(b,$('change'));return b;}
+function esShareBtn(){let b=$('endShare');if(b)return b;b=document.createElement('button');b.id='endShare';b.className='ghost';b.style.cssText='margin-top:10px;padding:6px 14px;font-size:14px;color:#e3b341;border-color:#8a7a45';b.type='button';b.textContent='Copy picture';b.title='Copies the battle report picture - paste it into Discord';b.hidden=true;b.onclick=esShare;return b;}
 // fills (or with S=null hides) the summary under the result line
 function esPage(S){esCss();let box=$('endStats');if(!box){box=document.createElement('div');box.id='endStats';$('ends').after(box);}
-  const sb=esShareBtn();ES.S=S;ES.blob=null;box.innerHTML='';if(!S||!Array.isArray(S.p)||!S.p.length){box.hidden=true;if(sb)sb.hidden=true;return;}box.hidden=false;if(sb)sb.hidden=false;
+  const sb=esShareBtn();ES.S=S;ES.blob=null;ES.cv=null;ES.card=null;box.innerHTML='';if(!S||!Array.isArray(S.p)||!S.p.length){box.hidden=true;if(sb)sb.hidden=true;return;}box.hidden=false;if(sb)sb.hidden=false;
   const ord=esOrder(S),sec=t=>{const s=document.createElement('section'),h=document.createElement('h2');h.textContent=t;s.append(h);box.append(s);return s;};
   // awards
   const A=esAwards(S);if(A.length){const s=sec('Awards'),g=document.createElement('div');g.className='esA';for(const [t,i,w] of A){const d=document.createElement('div');d.className='esAw';d.style.setProperty('--c',S.p[i].c);d.innerHTML='<b></b><div class="who"></div><div class="what"></div>';d.querySelector('b').textContent=t;d.querySelector('.who').textContent=esWho(S,i);d.querySelector('.what').textContent=w;g.append(d);}s.append(g);}
@@ -91,8 +91,8 @@ function esPage(S){esCss();let box=$('endStats');if(!box){box=document.createEle
   if(S.a&&S.a.some(a=>a&&a.length>1)){const s=sec('Army strength over time');const c=document.createElement('canvas');c.id='esGraph';s.append(c);const lg=document.createElement('div');lg.className='esLeg';
     for(const i of ord){const sp=document.createElement('span'),k=document.createElement('i');k.style.setProperty('--c',S.p[i].c);sp.append(k,document.createTextNode(esWho(S,i)));lg.append(sp);}s.append(lg);
     const n=document.createElement('div');n.className='esTag';n.style.marginTop='4px';n.textContent='Value of each side\'s units in the field, every 10 seconds.';s.append(n);}
-  // the Share picture is drawn now, so tapping Share can open the share sheet straight away (iPhone needs that)
-  try{const cv=esImage(S);if(cv.toBlob)cv.toBlob(b=>{if(ES.S===S)ES.blob=b;},'image/png');}catch(e){console.warn('share image',e);}}
+  // the battle report card goes on top; its picture is made now so Copy picture works at once
+  try{const cv=esImage(S);ES.cv=cv;cv.id='rcCard';const s0=document.createElement('section');s0.append(cv);if(sb)s0.append(sb);box.prepend(s0);if(cv.toBlob)cv.toBlob(b=>{if(ES.S===S)ES.blob=b;},'image/png');}catch(e){console.warn('report card',e);}}
 function esDraw(){const c=$('esGraph'),S=ES.S;if(!c||!S||$('end').hidden)return;const r=c.getBoundingClientRect();if(!r.width||!r.height)return;const d=Math.min(2,window.devicePixelRatio||1);
   c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);esGraph(x,S,0,0,c.width,c.height,d);}
 addEventListener('resize',()=>{try{esDraw();}catch(e){}});
@@ -108,35 +108,9 @@ function esGraph(x,S,x0,y0,w,h,sc){const A=S.a||[],dt=S.dt||10,T=Math.max(1,S.t|
   for(const i of ord){const a=A[i];if(!a||!a.length)continue;x.strokeStyle=S.p[i].c||'#ccc';x.lineWidth=(i===ME?3.6:2.4)*sc;x.globalAlpha=i===ME?1:.9;x.beginPath();
     a.forEach((v,j)=>{const xx=gx+gw*Math.min(1,j*dt/T),yy=gy+gh-gh*Math.min(1,v*100/top);if(j)x.lineTo(xx,yy);else x.moveTo(xx,yy);});x.stroke();}
   x.restore();}
-// the whole summary as one picture (1080 px wide) for Discord
-function esImage(S){const W=1080,P=S.p,ord=esOrder(S),A=esAwards(S),rowH=74,awH=96,awRows=Math.ceil(A.length/2),grH=S.a&&S.a.some(a=>a&&a.length>1)?360:0;
-  const H=40+120+44+rowH*P.length+(A.length?60+awRows*(awH+12):0)+(grH?70+grH:0)+96;const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
-  const F=(wt,sz)=>`${wt} ${sz}px system-ui,-apple-system,"Segoe UI",sans-serif`;const fit=(t,mw)=>{t=String(t);if(x.measureText(t).width<=mw)return t;while(t.length>1&&x.measureText(t+'…').width>mw)t=t.slice(0,-1);return t+'…';};
-  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#141a15');g.addColorStop(1,'#0b0e0c');x.fillStyle=g;x.fillRect(0,0,W,H);
-  let y=40;x.textBaseline='alphabetic';x.fillStyle='#e3b341';x.font=F(800,24);x.fillText('WORLD WAR 3 · BATTLE REPORT',40,y+24);
-  const wi=P.map((p,i)=>i).filter(i=>esWin(S,i));x.fillStyle='#fff';x.font=F(800,50);x.fillText(fit(wi.length?wi.map(i=>esName(P[i])).join(' & ')+' won':'No winner',W-80),40,y+84);
-  x.font=F(500,24);x.fillStyle='rgba(255,255,255,.7)';x.fillText(P.length+' sides · battle lasted '+esT(S.t),40,y+118);y+=150;
-  const cols=[['Kills',p=>p.ku+p.kb],['Lost',p=>p.lu+p.lb],['Built',p=>p.b],['Destroyed',p=>esM(p.vd)],['Rank',p=>p.r]],cx=[560,660,760,900,1040];
-  x.font=F(700,18);x.fillStyle='rgba(255,255,255,.6)';x.textAlign='left';x.fillText('NATION',40,y+20);x.textAlign='right';cols.forEach((k,j)=>x.fillText(k[0].toUpperCase(),cx[j],y+20));y+=44;
-  for(const i of ord){const p=P[i],win=esWin(S,i);x.fillStyle=win?'rgba(227,179,65,.12)':i%2?'rgba(255,255,255,.03)':'rgba(255,255,255,.06)';x.fillRect(30,y,W-60,rowH-8);x.fillStyle=p.c;x.fillRect(30,y,8,rowH-8);
-    const fl=esFlag(p.f);if(fl)try{x.drawImage(fl,54,y+(rowH-8-34)/2,57,34);}catch(e){}
-    x.textAlign='left';x.fillStyle='#fff';x.font=F(700,26);x.fillText(fit(esName(p),330),126,y+32);x.font=F(500,18);x.fillStyle=win?'#e3b341':'rgba(255,255,255,.65)';
-    x.fillText([win?'WINNER':p.out?'Defeated':'',i===ME?'You':p.ai?'AI':'Player'].filter(Boolean).join(' · '),126,y+56);
-    x.textAlign='right';x.fillStyle='#fff';x.font=F(700,26);cols.forEach((k,j)=>x.fillText(String(k[1](p)),cx[j],y+42));y+=rowH;}
-  x.textAlign='left';
-  if(A.length){y+=24;x.fillStyle='#e3b341';x.font=F(800,22);x.fillText('AWARDS',40,y+22);y+=36;const bw=(W-80-16)/2;
-    A.forEach(([t,i,w],k)=>{const bx=40+(k%2)*(bw+16),by=y+Math.floor(k/2)*(awH+12);x.fillStyle='rgba(227,179,65,.09)';x.fillRect(bx,by,bw,awH);x.fillStyle=P[i].c;x.fillRect(bx,by,6,awH);
-      x.fillStyle='#e3b341';x.font=F(800,17);x.fillText(t.toUpperCase(),bx+20,by+26);x.fillStyle='#fff';x.font=F(700,24);x.fillText(fit(esWho(S,i),bw-36),bx+20,by+56);x.fillStyle='rgba(255,255,255,.8)';x.font=F(500,19);x.fillText(fit(w,bw-36),bx+20,by+82);});
-    y+=awRows*(awH+12);}
-  if(grH){y+=24;x.fillStyle='#e3b341';x.font=F(800,22);x.fillText('ARMY STRENGTH OVER TIME',40,y+22);y+=46;x.fillStyle='rgba(255,255,255,.04)';x.fillRect(40,y,W-80,grH);esGraph(x,S,40,y,W-80,grH,1.6);y+=grH;}
-  x.fillStyle='rgba(255,255,255,.5)';x.font=F(500,18);x.fillText('abdullahhaidar5-ux.github.io/ww3',40,H-28);return c;}
-async function esShare(){const S=ES.S;if(!S)return;let b=ES.blob;
-  if(!b){try{b=await new Promise(r=>esImage(S).toBlob(r,'image/png'));}catch(e){b=null;}}if(!b)return;
-  const f=typeof File==='function'?new File([b],'ww3-battle-report.png',{type:'image/png'}):null;
-  try{if(f&&navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'World War 3 battle report'});return;}}catch(e){if(e&&e.name==='AbortError')return;}
-  // no share sheet (most PCs, the claude.ai copy): download it, and show the picture under the buttons to save by hand
-  const u=URL.createObjectURL(b);try{const a=document.createElement('a');a.href=u;a.download='ww3-battle-report.png';document.body.append(a);a.click();a.remove();}catch(e){}
-  let bx=$('esPrevBox');if(!bx){bx=document.createElement('div');bx.id='esPrevBox';$('endStats').append(bx);}bx.innerHTML='<p>Battle report picture: '+(TOUCHUI?'press and hold':'right-click')+' it to save or copy.</p>';const im=document.createElement('img');im.id='esPrev';im.alt='Battle report';im.src=u;bx.append(im);im.scrollIntoView({block:'nearest'});}
+// the battle report card (08b-aar rcModel/rcDraw): shown on top of the end screen and copied by "Copy picture"
+function esImage(S,o){const M=rcModel(S,o);ES.card=M;return rcDraw(M);}
+async function esShare(){const S=ES.S;if(!S)return;ES.copied=await rcCopy(ES.blob||ES.cv||esImage(S),$('endShare'),'ww3-battle-report');}
 
 /* ---------- panels ---------- */
 /* One language, idea 3: every button says what it beats (matchUp in 01-data is the one source). foeFac = the nation the

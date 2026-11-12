@@ -35,7 +35,8 @@ try {
   if (!r.stats || r.cards !== 3) bug('scoreboard missing (cards ' + r.cards + ')');
   if (!r.awards.length) bug('no awards');
   if (!r.graph) bug('army graph not drawn');
-  if (!r.share || !r.blob) bug('Share picture not ready');
+  if (!r.share || !r.blob) bug('Copy picture not ready');
+  if (!(await page.evaluate(() => !!$('rcCard') && $('endShare').textContent === 'Copy picture' && ES.card && ES.card.how.length > 20))) bug('battle report card missing');
   if (r.me && !(r.me.b > 0 && r.me.ku > 0 && r.me.ms > 0)) bug('player numbers look empty');
   if (r.hscroll) bug('page scrolls sideways');
   await page.screenshot({ path: path.join(OUT, `endstats-${VP}-top.png`) });
@@ -43,9 +44,9 @@ try {
   await page.screenshot({ path: path.join(OUT, `endstats-${VP}-bottom.png`) });
   const png = await page.evaluate(async () => { const b = new Uint8Array(await ES.blob.arrayBuffer()); let s = ''; for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(s); });
   fs.writeFileSync(path.join(OUT, `endstats-${VP}-share.png`), Buffer.from(png, 'base64'));
-  // Share without a share sheet (headless): falls back to download + a picture on the page
+  // Copy picture: clipboard, or a PNG download when the browser refuses
   await page.evaluate(() => $('endShare').click()); await sleep(500);
-  if (!(await page.evaluate(() => !!$('esPrev')))) bug('Share fallback picture not shown');
+  if (!(await page.evaluate(() => ES.copied === 'copied' || ES.copied === 'saved'))) bug('Copy picture did nothing');
   note('shots: orch/out/endstats-' + VP + '-{top,bottom,share}.png');
 } catch (e) { bug('run aborted: ' + e.message.split('\n')[0]); }
 await browser.close(); server.close();

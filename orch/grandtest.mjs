@@ -426,6 +426,12 @@ try {
   if (calm.far.foreign || calm.far.figs > calm.far.mine) fails.push('calmmap: far view shows other nations\' armies (' + calm.far.foreign + ' badges, ' + calm.far.figs + ' figures for ' + calm.far.mine + ' own armies)');
   if (calm.mid.trees !== 0) fails.push('calmmap: middle view still draws trees (' + calm.mid.trees + ')'); if (calm.mid.tier !== 1 || calm.mid.dup) fails.push('calmmap: middle view draws two badges for one province (' + calm.mid.dup + ')'); if (calm.mid.badges <= calm.far.badges) fails.push('calmmap: middle view does not bring the other armies\' badges back'); if (calm.close.figs <= calm.mid.figs) fails.push('calmmap: close view does not bring every army figure back'); if (calm.close.tier !== 2) fails.push('calmmap: close tier not reached');
   // ---- scenario: IR army next to an enemy garrison, march, end turn -> Fight-it prompt
+  { const fr = await ev(() => { grDeclare('IR', 'IQ'); if (typeof grFrontBuild !== 'function' || !G3.arrows) return { skip: !G3.arrows };
+      G3.front = G3.front || { sig: '', at: 0 }; grFrontBuild(); const D = G3.front.data, away = GC.armies.filter(a => a.o === 'IR' && GCM.P[a.at].land && a.at !== GC.nat.IR.cap).length;
+      const w0 = JSON.stringify(GC.war) + GC.armies.length; grFrontBuild(); return { fr: D.fr.length, gold: D.gold.length, away, fm: !!G3.front.fm, same: w0 === JSON.stringify(GC.war) + GC.armies.length,
+        bad: D.fr.filter(ch => !(grAtWar(GC.prov[ch.i].o, GC.prov[ch.j].o))).length }; });
+    console.log('front lines', JSON.stringify(fr));
+    if (!fr.skip && (!(fr.fr > 0) || !fr.fm || fr.bad || !fr.same || (fr.away > 0 && !(fr.gold > 0)))) fails.push('front lines / supply veins not drawn for a war: ' + JSON.stringify(fr)); }
   const sc = await ev(() => { const me = 'IR', foe = 'IQ'; grDeclare(me, foe); let pair = null;
     for (const p of GCM.P) if (p.land && GC.prov[p.i].o === me) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === foe && GC.prov[j].gar.length) { pair = [p.i, j]; break; } else if (pair) break;
     if (!pair) for (const p of GCM.P) if (p.land && GC.prov[p.i].o === foe) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === me) { pair = [j, p.i]; break; }
@@ -480,6 +486,8 @@ try {
   if (JSON.stringify(flow.hp) !== JSON.stringify(fin.before.hp)) fails.push('flow-back: health differs');
   if (flow.n >= exp.nMine) fails.push('flow-back: no losses recorded (' + flow.n + ' of ' + exp.nMine + ')');
   await shot('battle-result');
+  { const rc = await ev(() => { const c = document.querySelector('#campScreen .rcBox canvas'), b = document.querySelector('#campScreen .rcBox .rcCopy'); let fp = null; try { fp = guFrontData(); } catch (e) { fp = { err: String(e) }; } return { card: !!c && c.width === 1200, btn: !!b && b.textContent === 'Copy picture', fp: !!(fp && fp.head && fp.date && rcFront(fp).width === 1200) }; });
+    if (!rc.card || !rc.btn) fails.push('battle result: report card / Copy picture missing ' + JSON.stringify(rc)); if (!rc.fp) fails.push('war diary front page cannot be built'); }
   await ev(() => { [...document.querySelectorAll('#campScreen button')].find(b => /Return to the map/.test(b.textContent)).click(); });
   await page.waitForTimeout(500);
   const after = await ev(() => { const to = GCM.byName.get ? 0 : 0; return { g: !!window.G, grand: document.getElementById('grandScreen') && document.getElementById('grandScreen').style.display, ph: GC.ph, turn: GC.turn, owner: GC.prov[GC.q[0] ? GC.q[0].p : 0].o }; });
