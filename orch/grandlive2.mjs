@@ -59,7 +59,7 @@ try {
   for (const round of [1, 2]) {   // round 2 = a SECOND battle after withdrawing from the first
   // march our army into an adjacent enemy province without a fort (war declared) - the order itself goes through the normal order function
   const sc = await ev((me) => { let pair = null, foe = null;
-    for (const fortOk of [0, 1]) { for (const p of GCM.P) { if (!p.land || GC.prov[p.i].o !== me) continue; for (const j of p.adj) { const o = GC.prov[j].o; if (GCM.P[j].land && o && o !== me && !GC.nat[o].dead && (fortOk || (!gwFort(j) && GC.prov[j].gar.length))) { pair = [p.i, j]; foe = o; break; } } if (pair) break; } if (pair) break; }
+    for (const fortOk of [0, 1]) { for (const p of GCM.P) { if (!p.land || GC.prov[p.i].o !== me) continue; for (const j of p.adj) { if (!GCM.P[j].land) continue; const o = GC.prov[j].o; if (o && o !== me && GC.nat[o] && !GC.nat[o].dead && (fortOk || (!gwFort(j) && GC.prov[j].gar.length))) { pair = [p.i, j]; foe = o; break; } } if (pair) break; } if (pair) break; }
     if (!pair) return { err: 'no border' };
     if (!grAtWar(me, foe)) grDeclare(me, foe);
     const a = GC.armies.filter(x => x.o === me && x.u.length && !x.fl && !x.bt).sort((x, y) => y.u.length - x.u.length)[0]; a.at = pair[0]; a.path = []; GV.sel = pair[0]; GV.selA = a.id; grandMapRefresh();
@@ -71,6 +71,7 @@ try {
   for (let i = 0; Date.now() - t0 < 150000; i++) { await page.waitForTimeout(400); await tick();
     st = await ev(([pi, aid]) => { const B = gwBattleAt(pi), S = gwSiegeAt(pi), a = GC.armies.find(x => x.id === aid); return { b: B ? B.d : -1, s: S ? S.d : -1, mine: !!(a && a.bt), r: (GC.br || []).filter(r => r.p === pi).length, modal: !!document.getElementById('gModal'), g: typeof G !== 'undefined' && !!G, L: !!window.LOADING, t: GC.turn, d: GC.day | 0 }; }, [sc.to_i, sc.aid]);
     if (st.modal || st.g || st.L) break; if (round === 1 ? (st.b >= 6 || st.s >= 3 || st.r) : st.r >= (sc.r0 | 0) + 1 || st.s >= 3) break; if (i === 0) sc.r0 = st.r; }
+  const card = await ev(() => [...document.querySelectorAll('#gwCards .c')].map(e => e.textContent.slice(0, 120)).join(' || '));   // read at once: a card goes away by itself after a while and screenshots are slow on test machines
   console.log('fight ' + round, ((Date.now() - t0) / 1000).toFixed(1) + 's', JSON.stringify(st)); await page.keyboard.press('Space'); await page.waitForTimeout(600); await shot('live2-battle' + round);
   if (!st || st.modal || st.g || st.L) { fails.push('round ' + round + ': a dialog, a loading screen or a real-time battle appeared: ' + JSON.stringify(st)); break; }
   if (st.b < 0 && st.s < 0 && !st.r) { fails.push('round ' + round + ': no battle or siege started on the map: ' + JSON.stringify(st)); break; }
@@ -80,8 +81,7 @@ try {
     if (!w || w.dis) fails.push('round 1: no usable Withdraw button in the battle window on day ' + st.b + ' ' + JSON.stringify(w));
     else { await page.click('#gwWin button[data-w]'); await page.waitForTimeout(600); const a = await ev(([pi, aid]) => { const x = GC.armies.find(q => q.id === aid); return { there: !!x, at: x ? x.at : -1, bt: x ? x.bt | 0 : -1, pi }; }, [sc.to_i, sc.aid]); console.log('after withdraw', JSON.stringify(a));
       if (!a.there || a.at === a.pi || a.bt) fails.push('round 1: the army did not leave the battle ' + JSON.stringify(a)); } }
-  if (round === 2 && st.r) { await page.waitForTimeout(500); const c = await ev(() => { const e = document.querySelector('#gwCards .c'); return e ? e.textContent.slice(0, 120) : ''; }); console.log('result card:', c); await shot('live2-result-card');
-    if (!/^(Victory|Defeat) · /.test(c)) fails.push('round 2: no result card for our own battle (' + c + ')'); }
+  if (round === 2 && st.r) { console.log('result card:', card); if (!/(Victory|Defeat) · /.test(card)) fails.push('round 2: no result card for our own battle (' + card + ')'); }
   await ev(() => { const e = document.getElementById('gwWin'); if (e) gwuClose(); });
   }
 } catch (e) { fails.push(String(e.message || e).split('\n')[0]); }

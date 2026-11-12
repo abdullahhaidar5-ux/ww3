@@ -266,4 +266,5 @@ function gwOddsAt(an,attIds,pi){const P=GCM.P[pi],st=P.land?GC.prov[pi]:null,her
   const a0=GC.armies.find(a=>a.id===attIds[0]),from=a0?a0.at:-1;
   const o=gwOdds({p:pi,an,dn:garr?st.o:here[0].o,att:attIds,def:here.map(a=>a.id),garr,river:from>=0&&P.land&&grRiver(from,pi),mtn:P.t==='m',sea:!P.land,amph:from>=0&&P.land&&GCM.P[from].sea?1:0},12);
   o.siege=st&&grAtWar(an,st.o)?gwFort(pi):0;return o;}
-function gwHashStr(){if(!GC||!GC.bt)return '';let s='|B';for(const B of GC.bt)s+=B.id+':'+B.p+':'+B.d+':'+B.ma+':'+B.md+';';for(const S of GC.sg||[])s+='S'+S.id+':'+S.p+':'+S.d+':'+S.st+':'+S.br+';';return s;}
+function gwHashStr(){if(!GC||!((GC.bt&&GC.bt.length)||(GC.sg&&GC.sg.length)))return '';let s='|B';   /* nothing running = nothing added, so a campaign that has the (empty) lists and one that does not yet hash the same */
+  for(const B of GC.bt||[])s+=B.id+':'+B.p+':'+B.d+':'+B.ma+':'+B.md+';';for(const S of GC.sg||[])s+='S'+S.id+':'+S.p+':'+S.d+':'+S.st+':'+S.br+';';return s;}

@@ -1478,7 +1478,8 @@ function gwOddsAt(an,attIds,pi){const P=GCM.P[pi],st=P.land?GC.prov[pi]:null,her
   const a0=GC.armies.find(a=>a.id===attIds[0]),from=a0?a0.at:-1;
   const o=gwOdds({p:pi,an,dn:garr?st.o:here[0].o,att:attIds,def:here.map(a=>a.id),garr,river:from>=0&&P.land&&grRiver(from,pi),mtn:P.t==='m',sea:!P.land,amph:from>=0&&P.land&&GCM.P[from].sea?1:0},12);
   o.siege=st&&grAtWar(an,st.o)?gwFort(pi):0;return o;}
-function gwHashStr(){if(!GC||!GC.bt)return '';let s='|B';for(const B of GC.bt)s+=B.id+':'+B.p+':'+B.d+':'+B.ma+':'+B.md+';';for(const S of GC.sg||[])s+='S'+S.id+':'+S.p+':'+S.d+':'+S.st+':'+S.br+';';return s;}
+function gwHashStr(){if(!GC||!((GC.bt&&GC.bt.length)||(GC.sg&&GC.sg.length)))return '';let s='|B';   /* nothing running = nothing added, so a campaign that has the (empty) lists and one that does not yet hash the same */
+  for(const B of GC.bt||[])s+=B.id+':'+B.p+':'+B.d+':'+B.ma+':'+B.md+';';for(const S of GC.sg||[])s+='S'+S.id+':'+S.p+':'+S.d+':'+S.st+':'+S.br+';';return s;}
 // ===== 13ab-gwarui: what the player sees of battles and sieges on the campaign map (prefix gwu*) =====
 // The fighting itself is src/13a-gwar.js. Here: crossed-swords / siege markers over the provinces (ONE points object =
 // one draw call for all of them), a compact BATTLE window and SIEGE window (opened by clicking the marker or the line in
@@ -1553,13 +1554,15 @@ function gwuResultText(R){const me=GC.me,won=R.win==='att'?R.an:R.dn,lost=R.win=
   if(R.sg)return '<b>'+gwuName(R.an)+' took '+R.pn+'</b> after a siege of '+R.d+' days. '+gwuHow(R);
   return '<b>'+gwuName(won)+' beat '+gwuName(lost)+'</b> at '+R.pn+' after '+R.d+' day'+(R.d>1?'s':'')+'. Losses: '+gwuName(R.an)+' '+R.la+' of '+R.na0+' units, '+gwuName(R.dn)+' '+R.ld+' of '+R.nd0+'. '+gwuHow(R);}
 function gwuResultHtml(R){const won=R.win==='att'?R.an:R.dn;return [(R.sg?'Siege of ':'Battle of ')+R.pn+' — over',grDateStr(R.t,Math.max(0,(R.day|0)-1)),'<div style="padding:8px 10px 10px">'+gwuFlag(won,26)+gwuResultText(R)+'</div>'];}
+/* the map opens (new campaign, a loaded save, a friend's world arriving): results already in the save are old news, only new ones get a card */
+function gwuInit(){if(!GC)return;GWU.seenC=GC.seed;GWU.seen=GC.brn|0;GWU.win=null;GWU.odds={};}
 /* result cards: fights the player was part of; nothing pops up for other nations' wars */
-function gwuCards(){if(!GC||!GC.br)return;const me=GC.me;if(GWU.seen<0||GWU.seenC!==GC.seed||(GC.brn|0)<GWU.seen){GWU.seenC=GC.seed;GWU.seen=GC.brn|0;return;}
+function gwuCards(){if(!GC||!GC.br)return;const me=GC.me;if(GWU.seen<0||GWU.seenC!==GC.seed||(GC.brn|0)<GWU.seen)gwuInit();
   const fresh=GC.br.filter(r=>(r.n|0)>GWU.seen);if(!fresh.length)return;GWU.seen=GC.brn|0;if(!me)return;gwuCss();const w=document.getElementById('gMapWrap');if(!w)return;
   let box=document.getElementById('gwCards');if(!box){box=document.createElement('div');box.id='gwCards';w.appendChild(box);}
   for(const R of fresh){if(!(R.who||[R.an,R.dn]).includes(me))continue;const won=(R.win==='att')===((R.wa||[R.an]).includes(me));const c=document.createElement('div');c.className='c '+(won?'':'l');
     c.innerHTML='<b>'+(won?'Victory':'Defeat')+' · '+R.pn+'</b><br>'+gwuResultText(R)+' <span class="dim" style="opacity:.6">click to close</span>';const gone=()=>{c.remove();if(!box.querySelector('.c'))box.remove();};c.onclick=()=>{gone();try{guCentre(R.p);GV.sel=R.p;grandMapRefresh();}catch(e){}};
-    box.appendChild(c);while(box.querySelectorAll('.c').length>3)box.querySelector('.c').remove();setTimeout(()=>{if(c.isConnected)gone();},25000);}
+    box.appendChild(c);while(box.querySelectorAll('.c').length>3)box.querySelector('.c').remove();setTimeout(()=>{if(c.isConnected)gone();},40000);}
   if(!box.querySelector('.c'))box.remove();}
 /* the line in the province panel: the way into the window without hunting for the marker */
 function gwuProvLine(pi){if(!GC||!GC.bt)return '';const B=gwBattleAt(pi),S=gwSiegeAt(pi);if(B)return '<span class="gwLink" data-p="'+pi+'">⚔ Battle in progress · day '+B.d+' · '+GW_PH[B.ph|0]+' phase <span style="opacity:.7">— open</span></span>';
@@ -1721,7 +1724,7 @@ function guRealWait(){if(!guRealOn())return false;try{g3LoadReal();}catch(e){ret
   if(G3.real||G3.realFail||GV.rw===2)return false;if(GV.rw===1)return true;GV.rw=1;const t0=performance.now();
   const c=guEl('div','position:fixed;inset:0;z-index:8001;background:#0b141d;color:#e8e4d8;display:flex;align-items:center;justify-content:center;font-size:17px;letter-spacing:.04em');c.id='gRealWait';c.textContent='Loading the world map…';document.body.appendChild(c);
   const tick=()=>{if(!(G3.real||G3.realFail)&&performance.now()-t0<10000){setTimeout(tick,100);return;}GV.rw=(G3.real||G3.realFail)?0:2;c.remove();if(GC)grandOpen();};setTimeout(tick,100);return true;}
-function grandOpen(){grMap();if(!GC)return;if(guRealWait())return;campClose();let e=document.getElementById('grandScreen');if(e)e.remove();
+function grandOpen(){grMap();if(!GC)return;try{gwuInit();}catch(e){}if(guRealWait())return;campClose();let e=document.getElementById('grandScreen');if(e)e.remove();
   e=guEl('div','position:fixed;inset:0;z-index:8000;background:#0b141d;color:#e8e4d8;display:flex;flex-direction:column;font-size:15px;user-select:none;');e.id='grandScreen';
   e.innerHTML=`<div id="gTop" style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#101c28;border-bottom:1px solid #2c4358;flex-wrap:wrap"></div>
   <div style="flex:1;display:flex;min-height:0"><div id="gMapWrap" style="flex:1;position:relative;min-width:0"><canvas id="gMap" style="display:block"></canvas><div id="gTip" style="position:absolute;pointer-events:none;display:none;background:rgba(10,16,22,.94);border:1px solid #4a6580;border-radius:6px;padding:6px 9px;font-size:14px;line-height:1.4;max-width:260px;z-index:3"></div><div id="gHint" style="position:absolute;left:10px;bottom:8px;font-size:13px;opacity:.75;pointer-events:none;text-shadow:0 1px 2px #000"></div></div>

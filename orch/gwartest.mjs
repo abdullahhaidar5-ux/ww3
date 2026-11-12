@@ -72,6 +72,15 @@ try {
   if (det.h1 !== det.h2) fails.push('8 AI months twice: different hashes ' + det.h1 + ' / ' + det.h2); if (!det.nb1) fails.push('8 AI months: no battle or siege was ever finished');
   if (!det.running) fails.push('save/load: no battle was running to save'); if (det.hA !== det.hB) fails.push('save/load in the middle of a battle changed the outcome ' + det.hA + ' / ' + det.hB);
 
+  // ---- 1b. saves: a fresh campaign hashes the same after save + load; a save made by an older build in the middle of a month close (its battle prompt
+  //      was waiting, no battle lists yet) loads, starts that fight on the map and finishes the month
+  const sv = await ev(() => { const o = {}; grNew({ me: 'IR', seed: 5, len: 'quick' }); const h2 = grHash(); grSave(); grLoad(); o.same = grHash() === h2;
+    grNew({ me: 'IR', seed: 9, len: 'quick' }); GC.war[grWk('IR', 'IQ')] = 1; const p = GCM.P.find(q => q.land && GC.prov[q.i].o === 'IQ' && !gwFort(q.i) && GC.prov[q.i].gar.length), a = grAddArmy('IR', p.i, grGenUnits('IR', 20000, true)), t = GC.turn;
+    delete GC.bt; delete GC.sg; delete GC.br; delete GC.bid; delete GC.bd; GC.ph = 'resolve'; GC.q = [{ p: p.i, an: 'IR', dn: 'IQ', att: [a.id], def: [], garr: true, river: false, mtn: false, sea: false, done: 0, v0: 1 }]; GC.qi = 0; GC.oldBattleTimeLimit = 60;
+    localStorage.setItem(GR_KEY, JSON.stringify(GC)); GC = null; o.loaded = !!grLoad(); o.ph = GC && GC.ph; o.next = !!GC && GC.turn === t + 1; o.fight = !!GC && !!(gwBattleAt(p.i) || (GC.br || []).some(r => r.p === p.i)); grClear(); return o; });
+  console.log('saves', JSON.stringify(sv));
+  if (!sv.same) fails.push('save + load of a fresh campaign changed its hash'); if (!sv.loaded || sv.ph !== 'plan' || !sv.next || !sv.fight) fails.push('an old save caught in a month close did not load and carry on: ' + JSON.stringify(sv));
+
   // ---- 2. Zealous never retreat by morale: Iran, Lebanese Shia, Yemen, Iraqi Shia Brigades, North Korea, OB, BI hold until destroyed (attacking and defending)
   const zeal = await ev(() => { grNew({ me: null, seed: 5, len: 'quick' }); const pi = GWT.prov('f').i, o = {};
     for (const z of ['IR', 'RS', 'DW', 'RV', 'KP', 'OB', 'BI']) { if (!GC.nat[z]) { o[z] = 'absent'; continue; } let bad = 0, n = 0;

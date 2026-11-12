@@ -72,13 +72,15 @@ function gwuResultText(R){const me=GC.me,won=R.win==='att'?R.an:R.dn,lost=R.win=
   if(R.sg)return '<b>'+gwuName(R.an)+' took '+R.pn+'</b> after a siege of '+R.d+' days. '+gwuHow(R);
   return '<b>'+gwuName(won)+' beat '+gwuName(lost)+'</b> at '+R.pn+' after '+R.d+' day'+(R.d>1?'s':'')+'. Losses: '+gwuName(R.an)+' '+R.la+' of '+R.na0+' units, '+gwuName(R.dn)+' '+R.ld+' of '+R.nd0+'. '+gwuHow(R);}
 function gwuResultHtml(R){const won=R.win==='att'?R.an:R.dn;return [(R.sg?'Siege of ':'Battle of ')+R.pn+' — over',grDateStr(R.t,Math.max(0,(R.day|0)-1)),'<div style="padding:8px 10px 10px">'+gwuFlag(won,26)+gwuResultText(R)+'</div>'];}
+/* the map opens (new campaign, a loaded save, a friend's world arriving): results already in the save are old news, only new ones get a card */
+function gwuInit(){if(!GC)return;GWU.seenC=GC.seed;GWU.seen=GC.brn|0;GWU.win=null;GWU.odds={};}
 /* result cards: fights the player was part of; nothing pops up for other nations' wars */
-function gwuCards(){if(!GC||!GC.br)return;const me=GC.me;if(GWU.seen<0||GWU.seenC!==GC.seed||(GC.brn|0)<GWU.seen){GWU.seenC=GC.seed;GWU.seen=GC.brn|0;return;}
+function gwuCards(){if(!GC||!GC.br)return;const me=GC.me;if(GWU.seen<0||GWU.seenC!==GC.seed||(GC.brn|0)<GWU.seen)gwuInit();
   const fresh=GC.br.filter(r=>(r.n|0)>GWU.seen);if(!fresh.length)return;GWU.seen=GC.brn|0;if(!me)return;gwuCss();const w=document.getElementById('gMapWrap');if(!w)return;
   let box=document.getElementById('gwCards');if(!box){box=document.createElement('div');box.id='gwCards';w.appendChild(box);}
   for(const R of fresh){if(!(R.who||[R.an,R.dn]).includes(me))continue;const won=(R.win==='att')===((R.wa||[R.an]).includes(me));const c=document.createElement('div');c.className='c '+(won?'':'l');
     c.innerHTML='<b>'+(won?'Victory':'Defeat')+' · '+R.pn+'</b><br>'+gwuResultText(R)+' <span class="dim" style="opacity:.6">click to close</span>';const gone=()=>{c.remove();if(!box.querySelector('.c'))box.remove();};c.onclick=()=>{gone();try{guCentre(R.p);GV.sel=R.p;grandMapRefresh();}catch(e){}};
-    box.appendChild(c);while(box.querySelectorAll('.c').length>3)box.querySelector('.c').remove();setTimeout(()=>{if(c.isConnected)gone();},25000);}
+    box.appendChild(c);while(box.querySelectorAll('.c').length>3)box.querySelector('.c').remove();setTimeout(()=>{if(c.isConnected)gone();},40000);}
   if(!box.querySelector('.c'))box.remove();}
 /* the line in the province panel: the way into the window without hunting for the marker */
 function gwuProvLine(pi){if(!GC||!GC.bt)return '';const B=gwBattleAt(pi),S=gwSiegeAt(pi);if(B)return '<span class="gwLink" data-p="'+pi+'">⚔ Battle in progress · day '+B.d+' · '+GW_PH[B.ph|0]+' phase <span style="opacity:.7">— open</span></span>';
