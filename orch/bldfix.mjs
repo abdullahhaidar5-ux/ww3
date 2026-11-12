@@ -36,7 +36,7 @@ if (process.env.SHOTS) {
   const tag = process.env.SHOTS;
   for (const p of (process.env.PLAYERS || 'US,IR').split(',')) {
     await start(p);
-    await page.evaluate(() => { const f = G.ents.find(e => e.team === ME && e.kind === 'factory') || G.ents.find(e => e.team === ME && e.isB); window.__F = f; cam.x = f.x; cam.y = f.y + 30; cam.dist = 210; });
+    await page.evaluate(() => { const f = G.ents.find(e => e.team === ME && e.kind === 'factory') || G.ents.find(e => e.team === ME && e.isB); window.__F = f; cam.x = f.x; cam.y = f.y - 28; cam.dist = 250; });
     await page.waitForTimeout(7000);
     await page.screenshot({ path: path.join(OUT, `${tag}-factory-${p}.png`), timeout: 300000 }); console.log('shot factory', p);
     if (!process.env.FACONLY) {
