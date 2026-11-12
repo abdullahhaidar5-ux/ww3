@@ -91,9 +91,10 @@ const G_LATE=['battle','grand','camp','pfTok','pfMs','pfN','wx','hash','bmaxH','
 // at second 0 every team already has HQ + Barracks + War Factory + Supply Depot + Airfield (+ Shipyard when water is near), built, free,
 // identical for all nations. Spots come from a fixed search (no random numbers), so every machine and every seed places them the same way.
 const CQ_BASE=[['barracks',-1.05,150],['factory',1.05,150],['airfield',3.14,170],['depot',-2.2,150],['shipyard',0,150]];
+/* never on top of the start troops (they would be pushed out and the tutorial's move lesson would complete by itself) */
 function conqBase(t,a){const hq=G.ents.find(e=>e.isB&&e.team===t&&e.kind==='hq');if(!hq)return;
   for(const [k,pa,r0] of CQ_BASE){if(!bldAllowed(G.teams[t].fac,k))continue;const shore=!!STRUCT[k].shore;let done=false;
-    for(let r=r0;r<=(shore?900:520)&&!done;r+=shore?30:22)for(let j=0;j<24&&!done;j++){const d=((j&1)?1:-1)*Math.ceil(j/2)*.3,an=a+pa+d,x=hq.x+Math.cos(an)*r,y=hq.y+Math.sin(an)*r;if(validSpot(t,k,x,y)===2){addBld(t,k,x,y,true);done=true;}}}}
+    for(let r=r0;r<=(shore?900:520)&&!done;r+=shore?30:22)for(let j=0;j<24&&!done;j++){const d=((j&1)?1:-1)*Math.ceil(j/2)*.3,an=a+pa+d,x=hq.x+Math.cos(an)*r,y=hq.y+Math.sin(an)*r;if(validSpot(t,k,x,y)===2&&!G.ents.some(u=>!u.isB&&!u.dead&&Math.hypot(u.x-x,u.y-y)<STRUCT[k].size/2+32)){addBld(t,k,x,y,true);done=true;}}}}
 function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],MAPW/2-b[0]);}
 // Fields units and buildings pick up as the battle runs, declared (as undefined: same meaning as missing) when each is
 // made, so every unit has the same shape. Units growing fields in different orders gave the engine dozens of shapes,
