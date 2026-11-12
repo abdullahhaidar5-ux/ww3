@@ -1,3 +1,27 @@
+# STATE — conductor run 12, RESULT at 09:30 UTC: **nothing landed** (train 10 was one test short, twice) — run 12 is OVER
+
+**Main is still 7b4baa29** (train 9, 28 of 28 green). Nothing was pushed to main.
+
+**Test run 1 — full train `train/20261112-0700` (121ad35b: freeze fix + army tokens + menu + radio + Conquest/Battle clean-up): 25 of 28.**
+- `tutorial` red: "step 14 never started (stuck on none)" — the tutorial ends before its last step.
+- `superfreeze` red: the Kheibar strike froze for 1.4 s again (4 shaders / 2 new "basic" programs compiled at the hit). Green on the freeze fix alone and on the train without the clean-up.
+- `cfclient` red: "the creator gets no fresh battle state from the server".
+- Culprit = **Conquest/Battle clean-up (orch/battleclean)**: its own three runs all had `tutorial` red (step 3, step 4, step 14), and both tutorial and superfreeze went green as soon as it was taken out.
+
+**Test run 2 (the one allowed re-test) — train without the clean-up, `train/20261112-0835` (a6a4902f: freeze fix + army tokens + menu + radio + history line): 27 of 28.**
+- smooth-pc, smooth-mp, grandsmooth, tutorial, superfreeze, audio, mpsync, migrate*: all green. Local: build, --check, SMOKE PASS after every merge, DECISIONS PASS, GRANDTEST PASS (on the full train).
+- Only red: `cfclient` — inside that group CFE2E said "the server did not start the battle after both loading screens closed" (the loading screens took 263 s on that runner); everything after it in the same test (orders, sync checks, reconnect, restart) passed, and CFOVER passed.
+  The same group failed on a *different* sub-test in every run tonight (CFCLIENT on run 1, CFSTARTPICK on the menu and spy branches, CFOVER on train 9's second run) — it is a flaky group, not this train.
+- Rule: "still red after one re-test → land nothing". Main has no red, so the train did not land. No test was skipped or re-run to get around it.
+
+**For the next conductor run (this run has stopped; `train/20261112-0700` is dead, `train/20261112-0835` is ready):**
+- If main is still 7b4baa29: `train/20261112-0835` (a6a4902f) needs nothing but one clean test run — run `orch/cigate.sh a6a4902f` as that run's one gate; green → push it to main as is (history line is already in it).
+- Helpers have saved newer commits since the merge (freeze fix c18b9467, army tokens ca6b3160, clean-up 97c47063, building fix 349759bd) — if a new train is built instead, use those.
+- **Clean-up helper (battleclean):** the tutorial test must pass on your own branch first (4 red runs out of 4), and check `superfreeze` together with the freeze fix (merge orch/freezefix into your branch): something new in a battle compiles two "basic" shader programs when the Kheibar strike hits.
+- **Someone must own the flaky online tests** (`cfclient` group, `migrate*`, `mpsync`, `tutorial`, `audio` timing): with ~1 flaky red per run and a "no red" rule, trains of several pieces rarely get through. This cost two trains tonight (9 and 10).
+
+---
+
 # STATE — conductor run 13 on 2026-11-12, 08:50–09:00 UTC (state only: another conductor run is still testing train 10)
 
 **Main = 7b4baa29** (train 9), 28 of 28 green. Nothing landed in this run, on purpose.
