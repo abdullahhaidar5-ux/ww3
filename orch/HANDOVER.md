@@ -68,3 +68,15 @@ No secrets/tokens/passwords ever; never force-push main, never delete others' br
 images; no real militant groups' names/flags/emblems/leaders, fictional leaders, neutral wording; keep "Radwan Training"; Zealous nations
 never rout; smooth first (never raise a budget); American spelling; Cloudflare changes only with his consent; tests never hit production.
 The old conversation's remaining reminders (camphud, battlemaps, eu4audit, morning state) are all folded into this note.
+
+## Details for "camphud" (he said "Go" 11-11 19:28 to this layout)
+ONE top bar in three zones — left: flag + nation + date + play/pause + speed; center: resources as icon chips (cash with monthly change,
+army strength, fuel, food, men, oil), score/provinces/stars move into the Nation window; right: Nation · Economy · Military in one style +
+a ☰ menu holding Save & exit and Settings. The ten region buttons leave the bar and become one "Go to ▾" control by the minimap. Alert
+chips: at most 5 shown, sorted by urgency (red = needs you now, amber = soon, gray = info), the rest behind "+N more ▾"; clicking a chip
+jumps to the thing. Same helper groups the Nation window's ~36 tabs into six groups. Use the EU4-screens table from eu4audit if it exists.
+
+## Small open items
+- Striped pink/green pattern over occupied land east of Tehran (his 19:25 photo): ask him whether it bothers him before spending on it.
+- Square sand-colored blocks in Gulf water along Iran's shore (photo `orch/concepts/bugs/map-ugly-arrows-blocky-coast.jpg`, now on main).
+- Finished one-shot helper triggers all have run_once_at 2026-12-30: disable them in one batch when convenient.
