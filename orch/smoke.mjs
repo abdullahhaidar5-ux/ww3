@@ -111,6 +111,25 @@ try {
     const pre = await page.evaluate(() => ({ g: typeof grandMenu, btn: !!document.getElementById('grandBtn'), file: typeof GRAND_FILE === 'string' && GRAND_FILE }));
     if (pre.g !== 'undefined' || !pre.btn || !pre.file) fails.push(`lazy grand: before opening, grandMenu is ${pre.g}, button ${pre.btn}, GRAND_FILE ${pre.file} (expected undefined, true, a file name)`);
     else console.log(`grand campaign is lazy: ${pre.file} not loaded at the menu`);
+    // living main menu (idea 9): the background shows your war - drawn from the saves' small notes WITHOUT loading the campaign code.
+    // Three cases: a saved campaign (war table + last battle), a saved battle that is newer (battlefield + front line), and no save (the calm picture, no caption).
+    const wt = await page.evaluate(async () => { if (typeof mxWarTable !== 'function') return { err: 'mxWarTable missing' }; const K = 'ww3grand1', old = [localStorage.getItem(K), localStorage.getItem(K + '.i')], oldL = svLatest, mx = document.getElementById('mx');
+      const d = btoa(String.fromCharCode(0, 16, 1, 8, 2, 8)), cap = () => (document.getElementById('mxwar') || {}).textContent || '', cv = () => !!mx.querySelector('#mxbg canvas#mxwt');
+      const top = () => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => b.textContent.trim()).join('|');
+      svLatest = null; localStorage.setItem(K, '{"v":1}'); localStorage.setItem(K + '.i', JSON.stringify({ ts: 5, me: 'IR', n: 'Iran', d: 'Mar 2027', over: 0, lb: { p: 1, t: 3, w: 1, me: 'IR' }, lbn: 'Testville', lbd: 'Feb 2027', wt: { w: 8, h: 4, d, c: [40, 160, 80], b: [.6, .5, 'Testville', 'Feb 2027', 1] } }));
+      mxWarTable(); const g = { on: cv(), lab: (mx.querySelector('.mxwtl.bat') || {}).textContent || '', cap: cap(), top: top() };
+      svLatest = { id: 'm:t', ts: 9, mapName: 'Testmap', facName: 'Testland', t: 125, wt: { w: 8, h: 4, d, c: [40, 160, 80], e: [150, 62, 50] } };
+      mxWarTable(); const b = { on: cv(), lab: !!mx.querySelector('.mxwtl.bat'), cap: cap(), top: top() };
+      svLatest = { id: 'm:old', ts: 10, mapName: 'Oldmap', facName: 'Testland', t: 5 }; mxWarTable(); const o = { on: cv(), cap: cap() };   // a save made before this feature: caption only, calm picture
+      svLatest = null; localStorage.removeItem(K); localStorage.removeItem(K + '.i'); mxWarTable(); const n = { on: cv(), cap: cap(), wt: mx.classList.contains('wt'), top: top() };
+      if (old[0] != null) localStorage.setItem(K, old[0]); if (old[1] != null) localStorage.setItem(K + '.i', old[1]); svLatest = oldL; mxWarTable();
+      return { g, b, o, n, grand: typeof grandMenu, GC: typeof GC === 'undefined' || !GC ? 'none' : 'loaded' }; });
+    const TOP = 'Single player|Multiplayer|Test range';
+    if (wt.err || !wt.g.on || !/Testville/.test(wt.g.lab) || !/won/.test(wt.g.lab) || !/Iran.*Mar 2027.*Testville.*won/.test(wt.g.cap) || wt.g.top !== TOP
+      || !wt.b.on || wt.b.lab || !/Testland.*Testmap.*2:05/.test(wt.b.cap) || wt.b.top !== TOP || wt.o.on || !/Oldmap/.test(wt.o.cap)
+      || wt.n.on || wt.n.cap || wt.n.wt || wt.n.top !== TOP || wt.grand !== 'undefined')
+      fails.push('living main menu: ' + JSON.stringify(wt) + ' (expected: campaign save -> war table + last battle + caption; newer battle save -> battlefield + caption, no battle marker; old save -> caption only; no save -> calm picture, no caption; top level unchanged; campaign code never loaded)');
+    else console.log('living main menu: your war drawn from the save notes (campaign, battle, none), campaign code not loaded');
   }
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
