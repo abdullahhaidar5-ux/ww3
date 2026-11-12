@@ -43,7 +43,7 @@ trees on the campaign map (maptrees, 25 h, stopped) · campaign real supply (c-s
 - **Flaky tests** (`audio`, `icons`, `cfclient`, `mpsync`, `grandrt` slide check, smooth tails on slow test machines): no owner.
 
 ## Locks with nothing saved (90+ min, no work branch of that name)
-- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Army standards** (`taken/army-standards`) — 2+ days old, stale. One new lock since run 18 (34 in all); none younger than 90 min without a branch.
+- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Army standards** (`taken/army-standards`) — 2+ days old, stale. 34 locks in all, newest 9 h old; no new ones.
 
 ---
 (previous runs below)
