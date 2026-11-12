@@ -3,10 +3,9 @@
 State: finished and pushed; NOT landed (conductor batches). Two usable commits:
 - **adfc9d8** (main train 7 + tokens): `gate/adfc9d88cf` **28 of 28 green**.
 - **e301b90** (adfc9d8 + merge of main train 9, 7b4baa2 + two more ids in the "keep tokens off the controls" list — monthly report, map key): `gate/e301b90b64`
-  24 green, 2 red, 2 never reported after an hour (GitHub's machines were slow on this run). Red: `tutorial` ("step 3 never started", battle tutorial, 451 s) and
-  `mpsync` (battle, delayed-network check: 4 units more than 25 m off). Both are battle tests; this branch changes no battle or net code
-  (src diff vs main: 13c, 13e, 13e2, 13e3, one sentence in 08l-firsthint), both passed on adfc9d8 and 6f1873c with the same token code, and main 7b4baa2 is green.
-  I read them as slow-runner flakes, but it is not proven — re-run those two when the train gates this branch.
+  **28 of 28 green** after re-running two jobs. First pass: `tutorial` ("step 3 never started") and `mpsync` (delayed-network check) were red on a slow run
+  (two other jobs took over an hour to report); both passed when re-run on the same commit with no change — flaky battle tests, not this branch
+  (it changes no battle or net code). LAND THIS ONE.
 Merging: e301b90 already contains main 7b4baa2. If main moves again: `index.html`, `grand.*.js`, `sw.js` → rebuild with `python3 orch/build.py`; `orch/HISTORY.md` → keep both sides.
 
 NOT DONE — new requests that reached this helper as a note on a manual re-run (not in this helper's stored job, so left for ORCH / Abdullah to confirm and queue):
