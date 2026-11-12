@@ -1,12 +1,22 @@
-# Handoff — orch/armytokens2 (army tokens on the grand map), helper finish-tokens, 2026-11-12 06:50 UTC
+# Handoff — orch/armytokens2 (army tokens on the grand map), helper finish-tokens, 2026-11-12 08:20 UTC
 
-State: finished, pushed, READY TO LAND; NOT landed (conductor batches). Based on main 1407bde (train 7) + this branch.
-Gated commit: adfc9d8 (`gate/adfc9d88cf`) — **28 of 28 green** (decisions, grand, grandsmooth, smooth-pc/mp, mpsync, tutorial, audio, migrate-dual, check all PASS).
-(The run before, 6f1873c, was 27 of 28: only `check` red, because an old `grand.<hash>.js` file was still in the commit; adfc9d8 removes it, nothing else.)
-Last night's red `migrate-dual`, `tutorial`, `audio` were flaky: all three passed on both runs today with the same token code.
+State: finished and pushed; NOT landed (conductor batches). Two usable commits:
+- **adfc9d8** (main train 7 + tokens): `gate/adfc9d88cf` **28 of 28 green**.
+- **e301b90** (adfc9d8 + merge of main train 9, 7b4baa2 + two more ids in the "keep tokens off the controls" list — monthly report, map key): `gate/e301b90b64`
+  24 green, 2 red, 2 never reported after an hour (GitHub's machines were slow on this run). Red: `tutorial` ("step 3 never started", battle tutorial, 451 s) and
+  `mpsync` (battle, delayed-network check: 4 units more than 25 m off). Both are battle tests; this branch changes no battle or net code
+  (src diff vs main: 13c, 13e, 13e2, 13e3, one sentence in 08l-firsthint), both passed on adfc9d8 and 6f1873c with the same token code, and main 7b4baa2 is green.
+  I read them as slow-runner flakes, but it is not proven — re-run those two when the train gates this branch.
+Merging: e301b90 already contains main 7b4baa2. If main moves again: `index.html`, `grand.*.js`, `sw.js` → rebuild with `python3 orch/build.py`; `orch/HISTORY.md` → keep both sides.
 
-For the conductor: main has moved on (trains 8-9). A trial merge with 7b4baa2 conflicts only in the built files and HISTORY —
-`index.html`, `grand.*.js`, `sw.js` → rebuild with `python3 orch/build.py`; `orch/HISTORY.md` → keep both sides. All `src/` files merge cleanly.
+NOT DONE — new requests that reached this helper as a note on a manual re-run (not in this helper's stored job, so left for ORCH / Abdullah to confirm and queue):
+1. Token SHAPES: land armies = shield, fleets = ship hull, air groups = swept wing; far dots = tiny versions; capitals stay round (note says Abdullah chose "Shield" 2026-11-11 17:37).
+2. Everything on the map stays under the HUD: tokens are done (this branch); still open = the yellow dashed sea lanes over the unit cards / news panel, and the
+   Political (map mode) button sitting on the selected army's unit cards (visible in orch/concepts/tokens/after-selected.jpg) — move it to the other map-mode controls.
+3. One route style instead of the chunky green 3D arrows (`g3BuildArrows`, src/13e2-groads.js) plus the yellow dotted line (picture orch/concepts/bugs/map-ugly-arrows-blocky-coast.jpg).
+4. Cargo ships on sea lanes too big; road web over Iran too loud, towns hard to spot.
+5. Blocky sand squares along the Gulf coast.
+Note: item 3 contradicts this helper's stored job ("movement arrows … still work"), which is why it was not started without confirmation.
 
 What changed (view only; no sim, sync hash or checkpoint change):
 - `src/13e3-gtokens.js` — the tokens. Far = one Points draw of dots + small number tags; middle = tokens only; close = token + main's small on-land figures.
