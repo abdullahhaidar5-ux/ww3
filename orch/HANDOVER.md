@@ -80,3 +80,15 @@ jumps to the thing. Same helper groups the Nation window's ~36 tabs into six gro
 - Striped pink/green pattern over occupied land east of Tehran (his 19:25 photo): ask him whether it bothers him before spending on it.
 - Square sand-colored blocks in Gulf water along Iran's shore (photo `orch/concepts/bugs/map-ugly-arrows-blocky-coast.jpg`, now on main).
 - Finished one-shot helper triggers all have run_once_at 2026-12-30: disable them in one batch when convenient.
+
+## Update Thu 2026-11-12 23:35Z (ORCH, new conversation)
+- Main = 77b4ee8 (train 12): trains 11+12 landed army tokens, living menu, radio + edge alerts, building fix, fortification lines,
+  battleclean (Conquest full base + $10,000, Battle without supply lines, road colors, rally flag). Next-jobs item 1 is DONE.
+- Fired 23:30Z: camphud = trig_01YL1QeUvXmQJcEbef3S6kPp (Fable, branch orch/camphud), eu4audit = trig_01Hn57TzJweAJ7TmYXavtye1
+  (Fable, report orch/reports/eu4-gap.md on orch/eu4audit). battleclean fix trigger was fired 12:45Z before ORCH saw train 12; no effect seen.
+- Not started: battlemaps (job 4; start when a Fable slot frees), nofightit (52 behind main, 12 conflicts, needs a helper: merge +
+  point the army-token odds pill at the new battle odds + step 3 removal), freezefix slow-frame tail (smooth-pc red), finish-report, spylook.
+- ORCH looked at orch/concepts/tokens/after-gulf-close.jpg: army pieces there are ROUND flag badges, not shields. Shield shape still
+  unverified on main - needs a fresh middle-zoom campaign picture (ask camphud's pictures or a small picture job). Told Abdullah so.
+- Conquest minimap road colors: proof picture too small to judge green/red/gray; needs a larger one.
+- camphud was fired with a simpler three-zone prompt BEFORE ORCH saw the "Details for camphud" section above; ORCH pushed orch/CAMPHUD-LAYOUT.md to branch orch/camphud with the approved layout. Check the helper followed it; if not, one follow-up run.
