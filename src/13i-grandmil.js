@@ -225,7 +225,7 @@ function gmilHit(L,hits,dmg){let got=0;for(let i=0;i<hits&&L.length;i++){let w=0
 function gmilStrikes(){const M=GC.mil;if(!M)return;const R=grRng(GC.seed*53+GC.turn*9);
   for(const c of Object.keys(GC.nat).sort()){const Q=gmilN(c);const ord=Q.so;Q.so=[];if(GC.nat[c].dead)continue;
     for(const o of ord){const p=GCM.P[o.pi],S=GMIL_ST[o.t];if(!p)continue;const cn=GCM.nats.get(c).name,vis=c===GC.me;
-      const tgtO=p.land?GC.prov[o.pi].o:'';if(p.land&&(tgtO===c||!grAtWar(c,tgtO)))continue;
+      const tgtO=p.land?GC.prov[o.pi].o:'';if(p.land&&(tgtO===c||!grAtWar(c,tgtO)))continue;if(p.land&&o.k==='b'&&typeof gescWar==='function')gescWar(c,tgtO,6);   // strikes on industry and cities: the war climbs to 'Strategic strikes' (first crosser pays)
       const raw=o.t==='a'?Math.min(4,Math.floor(geSortieStock(c,o.pi,S.rng)/1)||2):o.t==='d'?Math.max(1,o.n|0):1;
       let aaB=p.land?geCount(o.pi,'aa'):0,aaU=p.land?gmilAAUnits(o.pi):0;if(!p.land)for(const a of GC.armies)if(a.at===o.pi&&a.fl&&grAtWar(a.o,c))for(const r of a.u)if(r[0]==='ship'||r[0]==='boat')aaU+=.5;
       const ung=o.t==='a'&&o.pb===0,dmg=Math.round(S.dmg*(ung?.5:1));let ic=Math.min(.8,(.26*aaB+.03*aaU)*S.ic*(ung?1.3:1)),surv=0,site=-1,dkm=0,dry=0;const DQ=p.land&&GC.nat[tgtO]?gmilN(tgtO):null,ic0=DQ?DQ.ic:0;   // the defender's interceptor stock
@@ -302,10 +302,11 @@ function gmilAIStrikes(c,R){const N=GC.nat[c],P=GCM.P,Q=gmilN(c);const foes=Obje
   if(GMIL_DRN.includes(c)){   // build launch sites toward the front and put a launcher truck with the biggest army that stands at one
     if(N.cash>1800&&R()<.35&&P.filter(p=>p.land&&GC.prov[p.i].o===c&&geCount(p.i,'dsite')).length<3){const cs=P.filter(p=>p.land&&GC.prov[p.i].o===c&&p.adj.some(j=>P[j].land&&foes.includes(GC.prov[j].o))).sort((a,b)=>b.dev-a.dev||a.i-b.i);for(const p of cs){if(!geBuild(c,p.i,'dsite'))break;}}
     if(N.cash>900&&R()<.3){const a=GC.armies.filter(x=>x.o===c&&!x.fl&&x.u.length&&(x.ln|0)<1).sort((x,y)=>grArmyVal(y)-grArmyVal(x)||x.id-y.id).find(x=>geEff(x.at,'dsite')>0||geEff(x.at,'factory')>0);if(a)gmilBuyLauncher(c,a.id);}}
+  const xo={},xg=f=>typeof gescWarAI!=='function'?true:xo[f]!==undefined?xo[f]:(xo[f]=gescWarAI(c,f,6,R));   // escalation ladder: an AI rarely opens strategic strikes first; it answers them freely
   let tries=0;while(Q.so.length<2&&tries++<8){const types=['m','a','d'];let t=types[Math.floor(R()*3)];if(Q.dr>=8&&R()<.6)t='d';if(t==='m'&&Q.ms<=1&&R()<.7)t='a';if(t==='a'&&Q.pb<1&&R()<.6)continue;   // out of guided bombs: most raids are held back   // the last salvo is a reserve
     // target: the foe province with the best buildings in range, else a foe fleet
     let best=-1,bs=0;for(const p of P){if(!p.land||!foes.includes(GC.prov[p.i].o))continue;const bl=geBl(p.i).filter(r=>['factory','refinery','power','port','airfield','mine'].includes(r[0])&&(r[1]|0)<70).length;const s=bl*10+p.dev-(gmilN(GC.prov[p.i].o).ic>0?geCount(p.i,'aa')*8:0);if(s>bs&&gmilSites(c,p.i,GMIL_ST[t].rng,t)>=0){bs=s;best=p.i;}}
-    if(best>=0&&bs>=10){gmilStrike(c,t,best,'b');continue;}
+    if(best>=0&&bs>=10&&xg(GC.prov[best].o)){gmilStrike(c,t,best,'b');continue;}
     let ba=-1,bv=0;for(const p of P){if(!p.land||!foes.includes(GC.prov[p.i].o))continue;const v=GC.armies.filter(a=>a.at===p.i&&!a.fl&&foes.includes(a.o)).reduce((s,a)=>s+grArmyVal(a),0);if(v>bv&&gmilSites(c,p.i,GMIL_ST[t].rng,t)>=0){bv=v;ba=p.i;}}
     if(ba>=0&&bv>3000){gmilStrike(c,t,ba,'a');continue;}
     let bz=-1,zv=0;for(const a of GC.armies)if(a.fl&&foes.includes(a.o)&&a.u.length&&!a.path.length){const v=grArmyVal(a);if(v>zv&&gmilSites(c,a.at,GMIL_ST[t].rng,t)>=0){zv=v;bz=a.at;}}

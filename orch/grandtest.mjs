@@ -109,6 +109,23 @@ try {
     return o; });
   console.log('escalation', JSON.stringify(esc));
   if (!(esc.up === ',1,,,3,false' && esc.rel === -24 && esc.saved === 3 && esc.alert && esc.noMed === '' && esc.face === -3 && esc.r1 === 1 && esc.med === 'CN' && esc.medErr === '' && esc.face2 === 0 && esc.r2 === 0 && esc.paid === 100 && esc.surprise - esc.signalled === -10 && esc.cleared && esc.gate === 'false,false,true' && esc.nk && esc.nukeWars <= 8 && esc.nukeRung === 2 && esc.det)) fails.push('escalation ladder: ' + JSON.stringify(esc));
+  // Escalation inside a war: rung 4 by default, first crosser pays and the answer is free, limits pact (breaking it costs double), cooling, nuclear alert, AI restraint, last-resort strike needs a month on alert
+  const escw = await ev(() => { const o = {}; const rl = (x, y) => (GC.rel && GC.rel[grWk(x, y)]) || 0;
+    const set = () => { grNew({ me: 'IR', seed: 31, len: 'quick' }); GC.war = {}; GC.alz = []; GC.tr = {}; GC.esc = {}; GC.rel = {}; GC.armies = GC.armies.filter(x => !x.fl); };
+    set(); const A = 'IR', B = 'SA'; grDeclare(A, B); GC.rel = {}; o.r0 = gescWarOf(A, B); wsN(B).wsE = 0; o.x = gescWar(A, B, 6); o.r1 = gescWarOf(A, B); o.op = rl(A, 'CN'); o.rally = wsN(B).wsE; o.match = gescWar(B, A, 6); o.free = rl(B, 'CN');
+    o.saved = JSON.parse(JSON.stringify(GC)).esc[grWk(A, B)].r; o.warnNoNuke = gdChance('warn', A, B).ok;
+    GC.nat[A].cash = 5000; GC.rel[grWk('TR', A)] = 30; GC.rel[grWk('TR', B)] = 30; o.lim = gdAct('deesc', A, B) || ''; o.r2 = gescWarOf(A, B); o.paid = 5000 - GC.nat[A].cash; const p0 = rl(A, 'CN'); gescWar(A, B, 6); o.broke = rl(A, 'CN') - p0;
+    for (let i = 0; i < 7; i++) { GC.turn++; gescMonth(); } o.cool = gescWarOf(A, B);
+    // nuclear alert by the player (given a warhead for the test)
+    set(); grDeclare(A, B); gnkN(A).w = 1; GC.nat[A].cash = 5000; o.na = gdAct('warn', A, B) || ''; o.r7 = gescWarOf(A, B); o.naPaid = 5000 - GC.nat[A].cash; o.again = gdChance('warn', A, B).ok;
+    // AI restraint: opening strategic strikes first is rare; answering them is free
+    set(); grDeclare('TR', 'GR'); const R = grRng(9); let n = 0; for (let i = 0; i < 200; i++) if (gescWarAI('TR', 'GR', 6, R)) n++; o.aiFirst = n; gescWar('GR', 'TR', 6); o.aiAnswer = gescWarAI('TR', 'GR', 6, R);
+    // an AI nuclear power whose capital is occupied: alert first, the strike only a month later
+    set(); const N = ['IL', 'PK', 'RU'].find(c => GC.nat[c] && !GC.nat[c].dead); o.nn = !!N; if (N) { grDeclare(A, N); const cap = GC.nat[N].cap; GC.prov[cap].o = A; const ar = GC.armies.find(x => x.o === A && !x.fl); ar.at = cap; ar.path = []; GC.nat[N].ai = true; const w0 = gnkN(N).w; gnkN(N).last = -99; gnkMonth(); o.w1 = w0 - gnkN(N).w; o.al = gescWarOf(N, A); GC.turn++; gnkMonth(); o.w2 = w0 - gnkN(N).w; }
+    const run = () => { set(); grDeclare(A, B); gescWar(A, B, 6); for (let i = 0; i < 8; i++) { GC.turn++; gescMonth(); } return JSON.stringify(GC.esc) + '|' + rl(A, B); }; o.det = run() === run();
+    return o; });
+  console.log('escalation in war', JSON.stringify(escw));
+  if (!(escw.r0 === 4 && escw.x === true && escw.r1 === 6 && escw.op === -6 && escw.rally === 3 && escw.match === false && escw.free === 0 && escw.saved === 6 && escw.warnNoNuke === false && escw.lim === '' && escw.r2 === 5 && escw.paid === 100 && escw.broke === -12 && escw.cool < 6 && escw.na === '' && escw.r7 === 7 && escw.naPaid === 200 && escw.again === false && escw.aiFirst > 0 && escw.aiFirst <= 30 && escw.aiAnswer === true && escw.nn && escw.w1 === 0 && escw.al === 7 && escw.w2 === 1 && escw.det)) fails.push('escalation in war: ' + JSON.stringify(escw));
   if (!fl.under || !fl.over || Math.abs(fl.up - 1.5) > .01 || !(fl.t1 > fl.t0) || !fl.allUnder || !fl.chip) fails.push('force limit/tradition: ' + JSON.stringify(fl));
   // ---- MILITARY (grand3): generals, front lines, map strikes, fleets & sea zones; determinism over 20 turns with all of it active
   {
