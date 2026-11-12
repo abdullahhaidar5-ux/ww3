@@ -90,11 +90,12 @@ function guRealWait(){if(!guRealOn())return false;try{g3LoadReal();}catch(e){ret
   const tick=()=>{if(!(G3.real||G3.realFail)&&performance.now()-t0<10000){setTimeout(tick,100);return;}GV.rw=(G3.real||G3.realFail)?0:2;c.remove();if(GC)grandOpen();};setTimeout(tick,100);return true;}
 function grandOpen(){grMap();if(!GC)return;if(guRealWait())return;campClose();let e=document.getElementById('grandScreen');if(e)e.remove();
   e=guEl('div','position:fixed;inset:0;z-index:8000;background:#0b141d;color:#e8e4d8;display:flex;flex-direction:column;font-size:15px;user-select:none;');e.id='grandScreen';
-  e.innerHTML=`<div id="gTop" style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#101c28;border-bottom:1px solid #2c4358;flex-wrap:wrap"></div>
+  e.innerHTML=`<div id="gTop"></div>
   <div style="flex:1;display:flex;min-height:0"><div id="gMapWrap" style="flex:1;position:relative;min-width:0"><canvas id="gMap" style="display:block"></canvas><div id="gTip" style="position:absolute;pointer-events:none;display:none;background:rgba(10,16,22,.94);border:1px solid #4a6580;border-radius:6px;padding:6px 9px;font-size:14px;line-height:1.4;max-width:260px;z-index:3"></div><div id="gHint" style="position:absolute;left:10px;bottom:8px;font-size:13px;opacity:.75;pointer-events:none;text-shadow:0 1px 2px #000"></div></div>
   <div id="gSide" style="width:380px;max-width:40vw;background:#101c28;border-left:1px solid #2c4358;display:flex;flex-direction:column;min-height:0"><div id="gSel" style="padding:8px 10px;overflow:auto;flex:1.8;min-height:0"></div><div id="gLog" style="padding:6px 10px;overflow:auto;flex:.6;border-top:1px solid #2c4358;font-size:13px;line-height:1.45;min-height:0"></div></div></div>`;
   document.body.appendChild(e);GV.cv=document.getElementById('gMap');GV.idx=GV.idx||null;GV.dirty=true;guCols();
   const cv=GV.cv;GV.g3=false;try{GV.g3=g3Init(cv);}catch(e){console.error('3D grand map failed, using the flat map',e);g3Dispose();GV.g3=false;}
+  guGoUI();
   cv.addEventListener('contextmenu',ev=>{ev.preventDefault();guRight(ev);});
   cv.addEventListener('wheel',ev=>{ev.preventDefault();if(GV.g3){g3Wheel(ev);return;}const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top,[wx,wy]=guToWorld(mx,my),f=Math.exp(-ev.deltaY*.0015);GV.z*=f;guClamp();GV.ox=mx-wx*GV.z;GV.oy=my-wy*GV.z;guClamp();guRedraw();},{passive:false});
   cv.addEventListener('pointerdown',ev=>{if(GV.g3&&ev.button===1){ev.preventDefault();cv.setPointerCapture(ev.pointerId);GV.drag={x:ev.clientX,y:ev.clientY,btn:1,yaw:G3.camera.yaw,pitch:G3.camera.pitch,m:1};return;}if(ev.button!==0)return;cv.setPointerCapture(ev.pointerId);const r0=cv.getBoundingClientRect();GV.drag={x:ev.clientX,y:ev.clientY,ox:GV.ox,oy:GV.oy,m:0,g:GV.g3?g3Ground(ev.clientX-r0.left,ev.clientY-r0.top):null};});
@@ -104,7 +105,7 @@ function grandOpen(){grMap();if(!GC)return;if(guRealWait())return;campClose();le
     const ah=GV.g3&&typeof g3HitAt==='function'?g3HitAt(mx,my):null;cv.style.cursor=ah?'pointer':'';if(ah){guArmyTip(ah.aid,mx,my);return;}guTip(h,mx,my);});
   cv.addEventListener('pointerup',ev=>{const d=GV.drag;GV.drag=null;if(!d||d.m)return;const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;guClick(mx,my);});
   cv.addEventListener('pointerleave',()=>{GV.hov=-1;document.getElementById('gTip').style.display='none';guRedraw();});
-  addEventListener('resize',()=>{if(document.getElementById('grandScreen'))guResize();});
+  addEventListener('resize',()=>{if(document.getElementById('grandScreen')){guResize();guTopFit();}});
   gmInit(cv);guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();try{guCoach();}catch(e){}
   if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));}
     {const tg=ev.target&&ev.target.tagName;if(tg!=='INPUT'&&tg!=='TEXTAREA'&&tg!=='SELECT'&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&!document.getElementById('gModal')){   /* time keys (the grand map's key table): Space pause, + / − speed, 1–5 speed */
@@ -140,17 +141,98 @@ function guHint(){const e=document.getElementById('gHint');if(e)e.textContent=GV
 
 // ---------- top bar, side panel, log ----------
 function grandMapRefresh(){if(GV.g3)g3Refreshed();GV.dirty=true;guTop();guSide();guLog();guRedraw();if(typeof gmPaint==="function")gmPaint();if(GC&&GC.over)guOver();}
-function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const me=GC.me?GC.nat[GC.me]:null,N=GC.me?grNat(GC.me):null;
-  const score=GC.me?grScore(GC.me):0;
-  t.innerHTML='';if(N){t.appendChild(guEl('span','display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #fff;background:'+N.color));t.appendChild(guEl('b','font-size:17px',GCM.nats.get(GC.me).name));}
-  t.appendChild(guEl('span','opacity:.9','<b id="gDate">'+(GC.ph==='plan'?grDateStr(GC.turn,GC.day|0):grDateStr(GC.turn+1,0))+'</b> <span style="opacity:.65">month '+Math.min(GC.turn,GC.maxTurn)+'/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')+'</span>'));guClockUI(t);
-  if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/month)</span>'));if(me&&typeof gfChip==='function')t.appendChild(guEl('span','',gfChip()));   /* A5 force limit chip */
-  if(me)t.appendChild(guEl('span','opacity:.9','Score <b>'+score+'</b> · provinces <b>'+GCM.P.filter(p=>p.land&&GC.prov[p.i].o===GC.me).length+'</b>'));
-  try{geUiTop(t,me);}catch(e){console.error('geUiTop',e);}try{gmilUiTop(t,me);}catch(e){console.error('gmilUiTop',e);}
-  const rg=guEl('span','display:flex;gap:4px;flex-wrap:wrap;margin-left:auto');for(const [nm,r] of GR_REGIONS){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#dfe8f0;cursor:pointer;font-size:13px',nm);b.type='button';b.onclick=()=>{guFit(r);guRedraw();};rg.appendChild(b);}t.appendChild(rg);
-  /* No End turn button (Abdullah 2026-11-06 22:30 "Why do we still have end turn?"): time runs EU4-style; the clock's play/pause + speeds are the only control. */
-  if(me&&typeof npOpen==='function'){const nb=guEl('button','padding:7px 14px;border-radius:6px;border:1px solid #c9a35a;background:#2a3a4c;color:#ffe6a8;cursor:pointer;font-size:15px;font-weight:bold','Nation');nb.type='button';nb.title='Open your nation panel';nb.onclick=()=>npOpen();t.appendChild(nb);}
-  const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);try{alBar();}catch(e){console.error('alBar',e);}}  // hook: Lane G alerts bar (13l-galerts.js)
+/* ---------- THE top bar (camphud; Abdullah 2026-11-11 19:25 "The top tool bar is not intuitive" / "Or better it's ugly"; layout "Go" 19:28) ----------
+   ONE row, three zones, one style:
+   LEFT time (flag, nation, date, play/pause, speed 1-5) · CENTER resources (icon + number chips: hover = what it is and why it moves,
+   click = its window) · RIGHT windows (Nation · Economy · Military as equal text items, then the ☰ menu: Save & exit, Settings, Help).
+   Score, provinces and stars live in Nation › Overview. The region list is the ONE "Go to" control on the minimap (guGoUI);
+   the alert chips sit under the bar (alBar, 13l-galerts.js). Small menus are guPop (one open at a time; click away or Esc closes).
+   View only: nothing here touches the campaign state. Guards: orch/decisions.mjs (camphud). */
+function guCss(){if(document.getElementById('guCss'))return;const s=document.createElement('style');s.id='guCss';s.textContent=`
+#gTop{display:flex;align-items:center;flex-wrap:nowrap;height:46px;box-sizing:border-box;padding:0 12px;background:linear-gradient(#15232f,#0f1a26);border-bottom:1px solid #2c4358;font:15px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#e8e4d8;white-space:nowrap;overflow:hidden}
+#gTop .gz{display:flex;align-items:center;gap:10px;height:100%;flex:none}
+#gTop .gzc{flex:1 0 auto;justify-content:center;gap:2px;margin:0 12px;padding:0 10px}
+#gTop .gzl{padding-right:12px;border-right:1px solid #2c4358}#gTop .gzr{gap:2px;padding-left:10px;border-left:1px solid #2c4358}
+#gTop .gfl{width:30px;height:20px;border-radius:3px;border:1px solid #e8e4d8;flex:none;overflow:hidden;display:block}#gTop .gfl canvas{width:100%;height:100%;display:block}
+#gTop .gnm{font-size:17px;font-weight:700;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+#gDate{font-size:16px;font-weight:600;color:#ffe6a8;font-variant-numeric:tabular-nums;min-width:98px;text-align:center}
+#gClock{display:inline-flex;align-items:center;gap:6px}
+#gPlay{width:34px;height:28px;padding:0;border-radius:5px;border:1px solid #7aa84f;background:#18293a;color:#fff;cursor:pointer;font-size:13px;transition:background .15s}#gPlay.off{background:#4f6b32}#gPlay:hover{border-color:#b6e08a}
+.gsp{display:inline-flex;height:28px;box-sizing:border-box;border:1px solid #3d5a73;border-radius:5px;overflow:hidden}
+.gsp button{width:21px;height:100%;padding:0;border:0;border-left:1px solid #22384b;background:transparent;color:#8ea2b5;font:600 13px/1 system-ui,sans-serif;cursor:pointer;transition:background .15s,color .15s}
+.gsp button:first-child{border-left:0}.gsp button:hover{color:#fff}
+.gsp button.in{background:#5a4f30;color:#ffe6a8}.gsp button.on{background:#c9a35a;color:#14202c;font-weight:800}
+.gsp.pau button.in{background:#2a3038;color:#b9ad8a}.gsp.pau button.on{background:#4a4636;color:#ffe6a8;box-shadow:inset 0 0 0 1px #c9a35a}
+.gch{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 9px;border-radius:6px;border:1px solid transparent;background:transparent;color:#e8e4d8;font:inherit;cursor:pointer;transition:background .15s,border-color .15s}
+.gch:hover{background:#1d3248;border-color:#3d5a73}
+.gch i{font-style:normal;font-size:16px}.gch b{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}.gch .lim{font-size:13px;opacity:.7;font-weight:500;margin-left:-4px}
+.gch small{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}.gch .up{color:#9fd68a}.gch .dn{color:#ff9d8e}.gch .fl{color:#9fb2c4}.gch.bad b{color:#ff9d8e}
+.gwn{height:32px;padding:0 10px;border:0;border-bottom:2px solid transparent;border-top:2px solid transparent;border-radius:0;background:transparent;color:#dfe8f0;font:600 15px/1 system-ui,sans-serif;letter-spacing:.02em;cursor:pointer;transition:color .15s,border-color .15s}
+.gwn:hover{color:#ffe6a8;border-bottom-color:#c9a35a}
+#gTop.c1 .gz{gap:7px}#gTop.c1 .gzc{margin:0 6px;padding:0 4px;gap:0}#gTop.c1 .gch{padding:0 6px;gap:4px}#gTop.c1 .gwn{padding:0 7px}#gTop.c1 .gnm{max-width:120px}#gTop.c1 .gzl{padding-right:8px}#gTop.c1 .gzr{padding-left:6px}
+#gTop.c2 .gnm,#gTop.c2 .gch .lim{display:none}
+#gTop.c3 .gsp button:not(.on){display:none}#gTop.c3{padding:0 6px}#gTop.c3 .gch{padding:0 4px}#gTop.c3 .gch i{font-size:14px}
+#gAlerts{display:flex;align-items:center;flex-wrap:nowrap;gap:6px;height:30px;box-sizing:border-box;padding:0 12px;background:#0d1822;border-bottom:1px solid #22384b;font:13.5px/1 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;white-space:nowrap;overflow:hidden}
+.gal{height:22px;padding:0 10px;border-radius:11px;border:1px solid #3d5a73;background:#16263a;color:#b8c6d4;cursor:pointer;font:inherit;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;transition:background .15s}
+.gal:hover{background:#22384f}.gal u{text-decoration:none;font-size:9px;margin-right:5px;vertical-align:1px}.gal b{font-weight:700}
+.gal.l0{border-color:#c9665e;color:#ffb3a8;background:#2a1b1e}.gal.l1{border-color:#c9a35a;color:#ffe6a8}.gal.l2{border-color:#3d5a73;color:#b8c6d4}
+#gAlMore{flex:none;border-style:dashed;color:#dfe8f0}
+.gpop{position:fixed;z-index:8300;min-width:170px;max-height:80vh;overflow:auto;padding:5px;display:flex;flex-direction:column;gap:1px;background:#101c2af7;border:1px solid #4a6580;border-top:2px solid #c9a35a;border-radius:7px;box-shadow:0 8px 28px rgba(0,0,0,.55);font:15px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#e8e4d8;animation:gpopIn .12s ease-out}
+.gpop>button:not(.gal){text-align:left;padding:7px 12px;border:0;border-radius:5px;background:transparent;color:#dfe8f0;font:inherit;cursor:pointer;white-space:nowrap}
+.gpop>button:not(.gal):hover{background:#1d3248;color:#ffe6a8}
+.gpop .gal{flex:none;height:26px;text-align:left;margin:2px}
+@keyframes gpopIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+#gGoBtn{position:absolute;left:10px;bottom:34px;z-index:4;height:26px;padding:0 10px;border:1px solid #6b5a33;border-radius:6px;background:linear-gradient(#162433f2,#0b141ff2);color:#d8b865;font:700 12px/1 system-ui,sans-serif;letter-spacing:.08em;cursor:pointer;box-shadow:0 3px 8px #000a;pointer-events:auto}
+#gGoBtn.g3{bottom:138px}#gGoBtn:hover{color:#ffe9a6;border-color:#b99a45}
+`;document.head.appendChild(s);
+  if(!window._guPop){window._guPop=1;document.addEventListener('pointerdown',ev=>{const t=ev.target;if(t&&t.closest&&(t.closest('.gpop')||t.closest('[data-pop]')))return;guPopClose();},true);}}
+/* one small menu at a time: guPop(anchor button, id, items[{t,tip,fn}|{el}], {up,right}); a second click on its button closes it */
+function guPopClose(){const p=document.querySelector('.gpop');if(p){p.remove();return true;}return false;}
+function guPop(anchor,id,items,o){o=o||{};const was=document.getElementById(id);guPopClose();if(was||!anchor)return null;
+  const p=guEl('div','');p.id=id;p.className='gpop';
+  for(const it of items){if(it.el){p.appendChild(it.el);continue;}const b=guEl('button','');b.type='button';b.textContent=it.t;if(it.tip)b.title=it.tip;b.onclick=()=>{guPopClose();try{it.fn();}catch(e){console.error(e);}};p.appendChild(b);}
+  (document.getElementById('grandScreen')||document.body).appendChild(p);
+  const z=(typeof tsVal==='function'&&tsVal())||1,r=anchor.getBoundingClientRect(),pr=p.getBoundingClientRect(),W=innerWidth,H=innerHeight,pw=pr.width,ph=pr.height;
+  let x=o.right?r.right-pw:r.left,y=o.up?r.top-ph-6:r.bottom+6;x=Math.max(6,Math.min(W-pw-6,x));y=Math.max(6,Math.min(H-ph-6,y));p.style.left=(x/z)+'px';p.style.top=(y/z)+'px';return p;}
+/* change since last month for the stock chips (view only, lives in GV - never saved): the value the bar last showed in the month before */
+function guTrend(c,now){let T=GV.tr;if(!T||T.c!==c||T.turn>GC.turn)T=GV.tr={c,turn:GC.turn,cur:now,prev:null};else if(T.turn!==GC.turn){T.prev=T.cur;T.turn=GC.turn;}T.cur=now;
+  const o={};for(const k in now)o[k]=T.prev?now[k]-T.prev[k]:null;return o;}
+function guK(v){v=Math.round(v);const a=Math.abs(v);return a>=1e6?(v/1e6).toFixed(a>=1e7?0:1)+'M':a>=1e5?Math.round(v/1e3)+'k':v.toLocaleString();}
+function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;guCss();const c=GC.me,me=c?GC.nat[c]:null,N=c?grNat(c):null;
+  const cls=t.className;t.innerHTML='';const mk=(k)=>{const z=guEl('div','');z.className='gz '+k;t.appendChild(z);return z;},zl=mk('gzl'),zc=mk('gzc'),zr=mk('gzr');
+  /* LEFT: time */
+  if(N){const nm=GCM.nats.get(c).name,f=guEl('span','');f.className='gfl';f.style.background=N.color;f.title=nm;try{f.appendChild(esFlagEl(N.fac,30,20));}catch(e){}zl.appendChild(f);const b=guEl('b','',nm);b.className='gnm';b.title=nm;zl.appendChild(b);}
+  const d=guEl('b','',GC.ph==='plan'?grDateStr(GC.turn,GC.day|0):grDateStr(GC.turn+1,0));d.id='gDate';d.title='Month '+Math.min(GC.turn,GC.maxTurn)+' of '+GC.maxTurn+(GC.len==='quick'?' (Quick campaign)':'')+'. Time runs by itself: Space pauses, + / − or 1–5 set the speed.';zl.appendChild(d);guClockUI(zl);
+  /* CENTER: resources */
+  if(me){const E=me.e||{},inc=Math.round(me.inc||0),FC=(typeof gfChip==='function'&&gfChip())||{v:0,L:0,over:false},av=FC.v,fl=FC.L,over=FC.over,oil=GC.eco?GC.eco.oilIdx:0;
+    const tr=guTrend(c,{str:Math.round(av),fuel:Math.round(E.fuel||0),food:Math.round(E.food||0),man:Math.round(E.man||0),oil:+oil||0});
+    const why=v=>v===null?'':v>0?' Up '+guK(v)+' since last month.':v<0?' Down '+guK(-v)+' since last month.':' No change since last month.';
+    const arr=v=>!v?'':'<small class="'+(v>0?'up':'dn')+'">'+(v>0?'▲':'▼')+'</small>';
+    const chip=(id,ic,html,tip,fn,bad)=>{const b=guEl('button','','<i>'+ic+'</i>'+html);b.type='button';b.id='gR_'+id;b.className='gch'+(bad?' bad':'');b.title=tip;b.onclick=fn;zc.appendChild(b);};
+    const eco=()=>{if(typeof geUiPanel==='function')geUiPanel();},mil=()=>{if(GC.mil&&typeof gmilUiPanel==='function')gmilUiPanel();else npOpen(c,'mil');};
+    chip('cash','💰','<b>'+guK(me.cash)+'</b><small class="'+(inc<0?'dn':inc>0?'up':'fl')+'">'+(inc<0?'▼ −':inc>0?'▲ +':'+')+guK(Math.abs(inc))+'</small>',
+      'Cash: $'+Math.round(me.cash).toLocaleString()+' in the treasury, '+(inc<0?'shrinking by $'+Math.abs(inc).toLocaleString():'growing by $'+inc.toLocaleString())+' a month. Taxes, trade and oil sales come in; army upkeep, buildings and debt interest go out. Click: Economy.',eco,me.cash<0||inc<0);
+    chip('str','⚔','<b>'+Math.round(av/1000)+'k</b><span class="lim">/'+Math.round(fl/1000)+'k</span>'+arr(tr.str),
+      'Army strength: '+Math.round(av/1000)+'k of your '+Math.round(fl/1000)+'k force limit'+(over?' — over the limit, so upkeep costs 50% more':'')+'. Recruiting raises it, losses lower it; the limit grows with the land you hold.'+why(tr.str)+' Click: Military.',mil,over);
+    chip('fuel','⛽','<b>'+guK(E.fuel||0)+'</b>'+arr(tr.fuel),'Fuel: '+Math.round(E.fuel||0)+' in stock'+(E.dry?' — EMPTY: vehicles and aircraft stall':'')+'. Oil fields and refineries fill it; tanks, artillery, aircraft and marching armies burn it.'+why(tr.fuel)+' Click: Economy.',eco,!!E.dry);
+    chip('food','🌾','<b>'+guK(E.food||0)+'</b>'+arr(tr.food),'Food: '+Math.round(E.food||0)+' in stock'+(E.starve?' — HUNGER: you are losing troops and loyalty':'')+'. Farmland fills it; your people and your troops eat it.'+why(tr.food)+' Click: Economy.',eco,!!E.starve);
+    chip('man','👥','<b>'+guK(E.man||0)+'</b>'+arr(tr.man),'Manpower: '+Math.round(E.man||0)+' recruits ready. The towns you hold add recruits every month; raising and refilling units spends them.'+why(tr.man)+' Click: Nation › Military.',()=>npOpen(c,NP.tabs.some(x=>x.id==='mob'&&(!x.show||x.show(c)))?'mob':'mil'));
+    chip('oil','🛢','<b>'+oil+'</b>'+arr(tr.oil),'Oil price index: '+oil+' (100 = normal). World crises and closed straits push it up; a high price pays oil exporters and hurts importers.'+why(tr.oil)+' Click: Nation › Economy › World market.',()=>npOpen(c,NP.tabs.some(x=>x.id==='mkt'&&(!x.show||x.show(c)))?'mkt':'eco'));}
+  /* RIGHT: windows, then the menu. No End turn button (Abdullah 2026-11-06 22:30 "Why do we still have end turn?"): the clock is the only time control. */
+  const win=(id,txt,tip,fn)=>{const b=guEl('button','',txt);b.type='button';b.id=id;b.className='gwn';b.title=tip;b.onclick=fn;zr.appendChild(b);return b;};
+  if(me&&typeof npOpen==='function'){win('gNatBtn','Nation','Your nation: overview, government, economy, military, diplomacy and the world',()=>npOpen());
+    if(typeof geUiPanel==='function')win('gEcoBtn','Economy','Budget, bonds, buildings, trade and the home front',()=>geUiPanel());
+    if(GC.mil&&typeof gmilUiPanel==='function')win('gMilBtn','Military','Generals, fronts, strikes, fleets and stockpiles',()=>gmilUiPanel());}
+  const mb=win('gMenuBtn','☰','Menu: Save & exit, Settings, Help',()=>guPop(mb,'gMenuPop',[
+    {t:'Save & exit',tip:'Save the campaign and go back to the menu',fn:()=>{grSave();grandClose();}},
+    {t:'Settings',tip:'Sound, graphics, text size, color-blind mode',fn:()=>{const s=document.getElementById('settings');if(s)s.style.zIndex='9000';if(typeof openSettings==='function')openSettings();}},
+    {t:'Help',tip:'Show the first-minute tips again',fn:()=>{try{localStorage.removeItem('ww3_gcoach');}catch(e){}const o=document.getElementById('gCoach');if(o)o.remove();guCoach();}}],{right:1}));mb.dataset.pop='1';mb.style.fontSize='18px';
+  t.className=cls;guTopFit(t);try{alBar();}catch(e){console.error('alBar',e);}}  // hook: alert chips (13l-galerts.js)
+/* the bar never wraps: when the window is narrow (or the text size is raised) it tightens in three steps instead */
+function guTopFit(t){t=t||document.getElementById('gTop');if(!t)return;t.classList.remove('c1','c2','c3');for(const k of ['c1','c2','c3']){if(t.scrollWidth<=t.clientWidth+1)break;t.classList.add(k);}}
+/* the ONE "Go to" control, on the minimap: World, the regions, Levant & Iraq (the ten buttons that used to fill a bar row) */
+function guGoUI(){const w=document.getElementById('gMapWrap');if(!w)return;guCss();let b=document.getElementById('gGoBtn');if(b)b.remove();b=guEl('button','','GO TO ▾');b.type='button';b.id='gGoBtn';b.dataset.pop='1';if(GV.g3)b.className='g3';b.title='Jump the map to the whole world or to a region';
+  b.onclick=()=>guPop(b,'gGoPop',GR_REGIONS.map(([nm,r])=>({t:nm,fn:()=>{guFit(r);guRedraw();}})),{up:1});w.appendChild(b);}
 function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();try{gdNews();}catch(e){}try{gtvShow();}catch(e){}}
 /* ---------- real time with pause (EU4 feel, lane A A2 slice 1) ----------
    The calendar runs in days (30 a month); a month ending = the old End turn, so the simulation and its determinism are unchanged:
@@ -158,10 +240,10 @@ function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=
    Space = pause/resume, + / − or 1–5 = speed (grand-map keys; WASD stay camera-only). The clock waits while battles are pending,
    a modal is open or a battle is being fought, so a battle starting pauses the map. GV.spd is this player's UI speed. */
 const GU_SPD=[0,.5,1,2.5,5,10];   /* days per second at speeds 1..5 (speed 5: a month in 3 s) */
-function guClockUI(t){const w=guEl('span','display:inline-flex;align-items:center;gap:3px;margin-left:2px');w.id='gClock';
-  const pb=guEl('button','padding:3px 9px;border-radius:5px;border:1px solid #7aa84f;background:'+(GV.spd?'#18293a':'#4f6b32')+';color:#fff;cursor:pointer;font-size:14px;min-width:30px',GV.spd?'❚❚':'▶');pb.type='button';pb.id='gPlay';pb.title=GV.spd?'Pause (Space)':'Play: days pass in real time (Space)';pb.onclick=()=>guSpeed(GV.spd?0:(GV.lastSpd||2));w.appendChild(pb);
-  for(let i=1;i<=5;i++){const b=guEl('button','width:11px;height:'+(8+i*2)+'px;padding:0;border-radius:2px;border:1px solid #6d8aa3;cursor:pointer;align-self:flex-end;background:'+((GV.lastSpd||2)>=i?(GV.spd?'#ffd24a':'#8a7a4a'):'#18293a'),'');b.type='button';b.title='Speed '+i+' (key '+i+', or + / −)';b.onclick=()=>guSpeed(i);w.appendChild(b);}
-  t.appendChild(w);}
+function guClockUI(t){const w=guEl('span','');w.id='gClock';const ls=GV.lastSpd||2;
+  const pb=guEl('button','',GV.spd?'❚❚':'▶');pb.type='button';pb.id='gPlay';if(!GV.spd)pb.className='off';pb.title=GV.spd?'Pause (Space)':'Play: days pass in real time (Space)';pb.onclick=()=>guSpeed(GV.spd?0:(GV.lastSpd||2));w.appendChild(pb);
+  const sp=guEl('span','');sp.id='gSpd';sp.className='gsp'+(GV.spd?'':' pau');for(let i=1;i<=5;i++){const b=guEl('button','',''+i);b.type='button';b.className=i===ls?'on':i<ls?'in':'';b.title='Speed '+i+(i===5?' (a month in 3 seconds)':'')+' — key '+i+', or + / −';b.onclick=()=>guSpeed(i);sp.appendChild(b);}
+  w.appendChild(sp);t.appendChild(w);}
 function guSpeed(s){s=Math.max(0,Math.min(5,s|0));if(s)GV.lastSpd=s;GV.spd=s;GV.clkT=performance.now();guTop();}
 function guClockTick(){const now=performance.now(),dt=Math.min(1,(now-(GV.clkT||now))/1000);GV.clkT=now;
   if(!GV.spd||!GC||GC.over||GC.ph!=='plan'||GV.busy||G||document.getElementById('gModal'))return;const sc=document.getElementById('grandScreen');if(!sc||sc.style.display==='none'||document.hidden)return;

@@ -9,7 +9,7 @@
    COLOUR-BLIND MODE lives in 08b-identity.js (safe palette, shapes on the minimap and selection rings); this file adds the
    same team shape to the town / tower name plates and the allies list, so team identity never rests on colour alone. */
 const TS_STEPS=[1,1.15,1.3];
-const TS_ROOTS=['#side','#log','#hint','#mode','#wxchip','#net','#allyBox','#sbx','.overlay>.card','#mx','#campScreen>div','#kbWin .kbcard','#gTop','#gAlerts','#gSide','.gpx','#gCoach'];
+const TS_ROOTS=['#side','#log','#hint','#mode','#wxchip','#net','#allyBox','#sbx','.overlay>.card','#mx','#campScreen>div','#kbWin .kbcard','#gTop','#gAlerts','#gSide','.gpx','.gpop','#gCoach'];
 const TS_FIT='.gpx,#kbWin .kbcard,#gCoach';
 function tsVal(){const v=+(typeof SET!=='undefined'&&SET.ts);return TS_STEPS.includes(v)?v:1;}
 function tsCss(){if(document.getElementById('tsCss'))return;const s=document.createElement('style');s.id='tsCss';

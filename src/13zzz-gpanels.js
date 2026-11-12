@@ -13,7 +13,7 @@ const GPAN=[
   {id:'gWeb',name:'Diplomatic web',kind:'window',card:1,title:'b'},
   {id:'gpDeal',name:'Peace deal',kind:'window',card:1,title:'h2,b'},
   {id:'gModal',name:'Dialog: confirm · event · battle prompt · auto-resolve result · strike target',kind:'dialog',card:1,title:'h1,h2'},
-  {id:'npWin',name:'Nation window (every tab: overview, diplomacy, economy, people, ideas, graphs …)',kind:'window',title:':scope>div>div:nth-child(2)>div',close:()=>{npClose();}},
+  {id:'npWin',name:'Nation window (six groups: Overview · Government · Economy · Military · Diplomacy · World)',kind:'window',title:'.npn',close:()=>{npClose();},esc:()=>npBack()},
   {id:'gMil',name:'Military (generals · fronts · strikes · fleets)',kind:'side',title:'b'},
   {id:'gEco',name:'Empire economy',kind:'side',title:'b'},
   {id:'gTV',name:'TV news ticker',kind:'note'},
@@ -54,6 +54,9 @@ function gpxDress(){for(const p of GPAN){if(p.kind==='screen')continue;const e=g
     if(scroll){const cs=getComputedStyle(c);x.style.marginTop=x.style.top=(10-parseFloat(cs.paddingTop||0))+'px';x.style.marginRight=(12-parseFloat(cs.paddingRight||0))+'px';c.insertBefore(x,c.firstChild);}else{c.appendChild(x);if(getComputedStyle(c).position==='static')c.classList.add('gpx-rel');const h=c.firstElementChild;if(h&&h!==x&&p.kind!=='note')h.classList.add('gpx-pad');}}}
 function gpxEsc(ev){if(ev.key!=='Escape')return;if(typeof G!=='undefined'&&G&&!G.over)return;   // a battle is running: its own Esc rules apply
   const gs=document.getElementById('grandScreen'),cs=document.getElementById('campScreen');if(!gpxShown(gs)&&!gpxShown(cs))return;
+  const st=document.getElementById('settings');if(st&&!st.hidden&&gpxShown(st)){st.hidden=true;ev.preventDefault();ev.stopImmediatePropagation();return;}   /* Settings opened from the campaign menu */
+  if(typeof guPopClose==='function'&&guPopClose()){ev.preventDefault();ev.stopImmediatePropagation();return;}   /* a small menu (Go to, +N more, the bar menu) */
+  const top=gpxTop();if(top&&!top.blocked&&top.p.esc&&top.p.esc()){ev.preventDefault();ev.stopImmediatePropagation();return;}   /* one step back inside a window */
   const r=gpxCloseTop();if(r){ev.preventDefault();ev.stopImmediatePropagation();}}
 try{gpxCss();if(!window._gpx){window._gpx=1;addEventListener('keydown',gpxEsc,true);
   /* dressed in the same moment a panel appears (observer callbacks run before the next paint), so a panel is never seen without its frame.

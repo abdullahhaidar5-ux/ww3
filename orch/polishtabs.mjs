@@ -35,7 +35,7 @@ await page.waitForFunction(() => typeof npOpen === 'function' && typeof grNew ==
 const res = await page.evaluate(() => { const out = []; grNew({ me: 'IR', seed: 31, len: 'std' });
   for (const code of ['IR', 'US']) { const tabs = NP.tabs.filter(t => !t.show || t.show(code));
     for (const t of tabs) { NP.code = code; NP.cur = t.id; let err = ''; try { npDraw(); } catch (e) { err = e.message; }
-      const w = document.getElementById('npWin'); const body = w && w.children[2]; const txt = body ? body.innerText.trim() : '';
+      const body = document.getElementById('npBody'); const txt = body ? body.innerText.trim() : '';
       out.push({ code, id: t.id, title: t.title, len: txt.length, err: err || (/Tab error/.test(txt) ? txt.slice(0, 120) : ''), head: txt.slice(0, 70).replace(/\n/g, ' ') }); npClose(); } }
   return out; });
 for (const r of res) console.log((r.err || r.len < 40 ? 'BAD ' : 'ok  ') + r.code + ' ' + r.id + ' len=' + r.len + ' ' + r.err + ' | ' + r.head);

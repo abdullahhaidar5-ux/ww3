@@ -425,8 +425,47 @@ try {
   { const d = await ev(() => ({ s: grDateStr(GC.turn, 0), a: GR_REAL.asof }));
     ck(d.s === '1 ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.a[1] - 1] + ' ' + d.a[0], `grand campaign start date ${d.s} does not match GR_REAL as-of ${d.a}`); }
   // POLISH (Abdullah 2026-11-09 "polish freeze"): no visible nation-panel tab renders empty or errors (hide unfinished tabs with show(), never ship a stub)
-  { const tb = await ev(() => { const o = []; for (const t of NP.tabs.filter(t => !t.show || t.show(GC.me))) { NP.code = GC.me; NP.cur = t.id; try { npDraw(); } catch (e) { o.push(t.id + ': threw ' + e.message); continue; } const w = document.getElementById('npWin'), b = w && w.children[2], x = b ? b.innerText.trim() : ''; if (x.length < 30 || /Tab error/.test(x)) o.push(t.id + ': ' + (x.slice(0, 60) || 'empty')); npClose(); } return o; });
+  { const tb = await ev(() => { const o = []; for (const t of NP.tabs.filter(t => !t.show || t.show(GC.me))) { NP.code = GC.me; NP.cur = t.id; try { npDraw(); } catch (e) { o.push(t.id + ': threw ' + e.message); continue; } const b = document.getElementById('npBody'), x = b ? b.innerText.trim() : ''; if (x.length < 30 || /Tab error/.test(x)) o.push(t.id + ': ' + (x.slice(0, 60) || 'empty')); npClose(); } return o; });
     ck(!tb.length, 'empty or broken nation-panel tab(s): ' + tb.join('; ')); }
+  // CAMPHUD (Abdullah 2026-11-11 19:25 "The top tool bar is not intuitive" / "Or better it's ugly"; 19:28 Nation window "Ugly"; layout "Go"):
+  // ONE top bar row at 1280 wide (also at 130% text), no region buttons / Save & exit on it, one "Go to" list, at most five alert chips
+  // (most urgent first, the rest behind "+N more"), a Nation window of exactly six groups with every former tab still reachable in two clicks.
+  { const g = SRC['13c-grandui.js'] || '', np = SRC['13j-nationpanel.js'] || '', all13 = Object.keys(SRC).filter(k => k.startsWith('13')).map(k => SRC[k]).join('\n');
+    ck(!/of GR_REGIONS\)\{const b=guEl\('button','padding/.test(g) && !/function (geUiTop|gmilUiTop)\(/.test(all13) && !/id="gTop" style=/.test(g), 'camphud: an old top-bar row is back (region buttons / geUiTop / gmilUiTop / inline bar style)');
+    ck(/function guGoUI\(/.test(g) && /function guTopFit\(/.test(g) && (np.match(/\{id:'[a-z]+',t:'[A-Za-z]+',d:/g) || []).length === 6, 'camphud: Go to control, bar fit or the six Nation groups are gone');
+    await page.setViewportSize({ width: 1280, height: 720 }); await page.waitForTimeout(400);
+    const bar = async () => ev(() => { guTop(); const t = document.getElementById('gTop'), r = t.getBoundingClientRect(), kids = [...t.querySelectorAll('button,#gDate,.gnm')].filter(e => e.getClientRects().length);
+      const a = document.getElementById('gAlerts'), side = document.getElementById('gSide'), mw = document.getElementById('gMapWrap');
+      return { fit: t.scrollWidth <= t.clientWidth + 1, h: Math.round(r.height), out: kids.filter(e => { const k = e.getBoundingClientRect(); return k.top < r.top - 1 || k.bottom > r.bottom + 1 || k.right > r.right + 1; }).length, n: kids.length,
+        zones: t.querySelectorAll(':scope>.gz').length, chips: [...t.querySelectorAll('.gch')].map(e => e.id.slice(3)).join(','), tips: [...t.querySelectorAll('.gch')].every(e => (e.title || '').length > 40),
+        wins: [...t.querySelectorAll('.gwn')].map(e => e.textContent).join('|'), txt: t.textContent, below: a ? a.getBoundingClientRect().top >= r.bottom - 1 && mw.getBoundingClientRect().top >= a.getBoundingClientRect().bottom - 1 && side.getBoundingClientRect().top >= a.getBoundingClientRect().bottom - 1 : false }; });
+    const b1 = await bar();
+    ck(b1.fit && b1.out === 0 && b1.h <= 50 && b1.zones === 3, 'camphud: the top bar is not ONE row at 1280 wide ' + JSON.stringify({ fit: b1.fit, out: b1.out, h: b1.h, zones: b1.zones }));
+    ck(b1.chips === 'cash,str,fuel,food,man,oil' && b1.tips, 'camphud: resource chips are not cash, strength, fuel, food, manpower, oil each with a hover (' + b1.chips + ')');
+    ck(b1.wins === 'Nation|Economy|Military|☰', 'camphud: the right zone is not Nation · Economy · Military + menu (' + b1.wins + ')');
+    ck(!/North America|Levant|Save & exit|Score|provinces/i.test(b1.txt), 'camphud: region names, Save & exit, score or provinces are back on the top bar: ' + b1.txt.slice(0, 120));
+    ck(b1.below, 'camphud: the alert chips / map / province panel are not below the bar');
+    const b2 = await ev(() => { const o = SET.ts; SET.ts = 1.3; tsApply(); guTop(); const t = document.getElementById('gTop'), r = t.getBoundingClientRect(); const out = { fit: t.scrollWidth <= t.clientWidth + 1, chips: [...t.querySelectorAll('.gch')].filter(e => e.getClientRects().length && e.getBoundingClientRect().right <= r.right + 1).length, w: [...t.querySelectorAll('.gwn')].every(e => e.getBoundingClientRect().right <= innerWidth + 1) }; SET.ts = o; tsApply(); guTop(); return out; });
+    ck(b2.fit && b2.chips === 6 && b2.w, 'camphud: at 130% text size the top bar overflows at 1280 wide ' + JSON.stringify(b2));
+    const go = await ev(() => { const b = document.getElementById('gGoBtn'); if (!b) return null; b.click(); const p = document.getElementById('gGoPop'), n = p ? p.querySelectorAll('button').length : 0, r = p && p.getBoundingClientRect(); const o = { n, want: GR_REGIONS.length, in: !!r && r.top >= 0 && r.bottom <= innerHeight && r.left >= 0, one: document.querySelectorAll('#gGoBtn').length }; b.click(); o.shut = !document.getElementById('gGoPop'); return o; });
+    ck(go && go.n === go.want && go.in && go.one === 1 && go.shut, 'camphud: the "Go to" list on the minimap is missing or does not list every region ' + JSON.stringify(go));
+    const al = await ev(() => { const keep = AL.list.slice(); for (let i = 0; i < 9; i++) alAdd('zz' + i, '•', 'Test ' + i, () => ({ n: 1, bad: i % 3 === 0 ? 1 : 0, lv: i % 3 === 2 ? 2 : undefined })); alBar();
+      const a = document.getElementById('gAlerts'), chips = [...a.querySelectorAll('.gal:not(#gAlMore)')], lv = chips.map(e => +(/l(\d)/.exec(e.className) || [0, 9])[1]), m = document.getElementById('gAlMore'), total = alItems(GC.me).length;
+      const o = { n: chips.length, sorted: lv.every((v, i) => !i || lv[i - 1] <= v), more: m ? m.textContent : '', total, fit: a.scrollWidth <= a.clientWidth + 1 }; if (m) { m.click(); const p = document.getElementById('gAlPop'); o.rest = p ? p.querySelectorAll('.gal').length : -1; guPopClose(); }
+      AL.list.length = 0; AL.list.push(...keep); alBar(); return o; });
+    ck(al.n === 5 && al.sorted && al.fit && new RegExp('^\\+' + (al.total - 5) + ' more').test(al.more) && al.rest === al.total - 5, 'camphud: more than five alert chips are visible, they are not sorted by urgency, or "+N more" is wrong ' + JSON.stringify(al));
+    const FORMER = ['eco', 'dip', 'mil', 'prov', 'led', 'mods', 'idea', 'gov', 'stab', 'estates', 'ach', 'mis', 'gr', 'gp', 'ldr', 'home', 'dev', 'fin', 'prop', 'trade', 'coal', 'cor', 'mkt', 'res', 'sup', 'mob', 'au', 'pipe', 'subj', 'arms', 'cov', 'un', 'elect', 'nuke', 'dec'];
+    const nw = await ev(FORMER => { npClose(); npOpen(GC.me, 'ov'); const names = [...document.querySelectorAll('#npGroups button')].map(b => b.textContent).join('|'), bad = [], vis = NP.tabs.filter(t => !t.show || t.show(GC.me)).map(t => t.id);
+      for (const t of NP.tabs) if (NP_GROUPS.filter(g => g.tabs.includes(t.id)).length !== 1) bad.push(t.id + ' not in exactly one group');
+      for (const id of FORMER) { if (!NP.tabs.some(t => t.id === id)) { bad.push(id + ' is no longer registered'); continue; } if (!vis.includes(id)) continue;
+        const gb = document.querySelector('#npGroups button[data-g="' + npGrpOf(id) + '"]'); if (!gb) { bad.push(id + ': no group'); continue; } gb.click(); const lb = document.querySelector('#npList button[data-t="' + id + '"]'); if (!lb) { bad.push(id + ': not in its group list'); continue; } lb.click(); if (NP.cur !== id || !document.getElementById('npBody')) bad.push(id + ': did not open'); }
+      const o = { names, bad, tabsRow: document.querySelectorAll('#npWin>div').length }; npOpen(GC.me, 'led'); npClose(); npOpen(GC.me); o.remember = NP.cur === 'led' && !!document.getElementById('npWin');
+      const other = Object.keys(GC.nat).find(c => c !== GC.me && !GC.nat[c].dead); npGo(other); o.went = NP.code === other; dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); o.back = NP.code === GC.me && !!document.getElementById('npWin');
+      dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); o.closed = !document.getElementById('npWin'); NP.cur = 'ov'; return o; }, FORMER);
+    ck(nw.names === 'Overview|Government|Economy|Military|Diplomacy|World', 'camphud: the Nation window does not have exactly the six groups (' + nw.names + ')');
+    ck(!nw.bad.length, 'camphud: a former Nation tab is lost or not reachable in two clicks: ' + nw.bad.join('; '));
+    ck(nw.remember && nw.went && nw.back && nw.closed, 'camphud: the Nation window does not remember the last place, or Esc is not one step back ' + JSON.stringify({ remember: nw.remember, went: nw.went, back: nw.back, closed: nw.closed }));
+    await page.setViewportSize({ width: 1600, height: 900 }); await page.waitForTimeout(300); await ev(() => { guResize(); guTop(); }); }
   await page.waitForTimeout(2500); await shot('grand-map');
   const gv = [];
   gv.push(['map', await ev(SEEN)]);

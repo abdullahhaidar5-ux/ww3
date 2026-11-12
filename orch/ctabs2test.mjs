@@ -80,7 +80,7 @@ try {
   chk(r.load, 'save/load'); chk(r.aiDec + r.aiPol >= 0, 'ai');
   // the two tabs render; phone-size shots
   for (const [tab, re, shot] of [['dec', /National decisions[\s\S]*Policies|Policies[\s\S]*National decisions/, 'decisions-phone'], ['stab', /War exhaustion[\s\S]*Rebels and possible rebels/, 'stability-phone']]) {
-    const ok = await ev(([t, src]) => { if (typeof grandOpen === 'function') try { grandOpen(); } catch (e) {} npOpen('IR', t); const w = document.getElementById('npWin'); if (t === 'dec') { const b = w.lastChild, h = [...b.querySelectorAll('div')].find(d => /^National decisions/.test(d.textContent)); if (h) { h.scrollIntoView({ block: 'start' }); b.scrollTop -= 120; } } return !!w && new RegExp(src).test(w.textContent) && !/Tab error/.test(w.textContent); }, [tab, re.source]);
+    const ok = await ev(([t, src]) => { if (typeof grandOpen === 'function') try { grandOpen(); } catch (e) {} npOpen('IR', t); const w = document.getElementById('npWin'); if (t === 'dec') { const b = document.getElementById('npBody'), h = [...b.querySelectorAll('div')].find(d => /^National decisions/.test(d.textContent)); if (h) { h.scrollIntoView({ block: 'start' }); b.scrollTop -= 120; } } return !!w && new RegExp(src).test(w.textContent) && !/Tab error/.test(w.textContent); }, [tab, re.source]);
     chk(ok, 'tab ' + tab); await page.waitForTimeout(500);
     await page.screenshot({ path: path.join(SHOTS, shot + '.jpg'), type: 'jpeg', quality: 82, timeout: 120000 }).catch(e => console.log('  (screenshot skipped ' + shot + ')'));
   }
