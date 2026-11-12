@@ -1,6 +1,7 @@
 # STATE — conductor run 9 on 2026-11-12, 00:50–01:10 UTC (train 7 landed: 1 piece)
 
 **Main = 1407bde2** (train 7 on top of 1143f7c2). Main's head before this run (1143f7c2) was 28 of 28 green — the tutorial test recovered.
+Live site: the Pages build finished 01:04 UTC and https://abdullahhaidar5-ux.github.io/ww3/ serves train 7 (checked 01:11 UTC: page names the new campaign bundle grand.a7f5e0a1a6.js).
 
 **Landed, train 7** = `train/20261112-0052`:
 1. Campaign map: much gentler mountains (orch/mtnfix2, merge ae9a73ba) — Abdullah asked 2026-11-11 17:36 ("mountains are still way too steep").
