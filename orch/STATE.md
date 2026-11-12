@@ -1,3 +1,51 @@
+# STATE — conductor run 16 on 2026-11-12, 14:45–15:10 UTC: **nothing to land** — main is still 77b4ee84 (train 12)
+
+**No train was built this run: no helper has saved any game work since run 15.** Newest saves: PLAN-75 documents (plan75, 2 h 20 min ago, documents only),
+campaign battles (nofightit, 5 h 40 min), freeze fix (freezefix, 6 h), Conquest/Battle clean-up (battleclean, landed). No new `gate/*` test run, no new lock.
+All candidates were checked again against today's main (trial merge, nothing pushed):
+| idea (branch) | trial merge with main | why not on this train |
+|---|---|---|
+| Campaign battles on the map by days (nofightit, own run 6cdd9f53 28 of 28) | 12 conflicts in 60 files | unchanged since run 15: helper must merge today's main and point the army-token odds pill at the new battle odds (details in run 15 below) |
+| Kheibar freeze fix (freezefix) | 1 conflict | own run 4e92b695 has smooth-pc + audio red; head c18b9467 never tested; helper stopped |
+| Window fix (winfix) | - | already on main (`wallAt`) |
+| Proxy warfare, real supply, CPU speed (c-proxy-warfare, c-supply, speedD) | clean | only handoff notes ahead of main — no game change to land (docs-only never goes to main) |
+| Battle report card (finish-report), spies (spylook), map trees (maptrees), q-sound, dashJ, safetyH, greenK-snap / -qfeel, seamless-flow, leadersC | 2–10 conflicts each | old runs red or 1–2 days stale, helpers gone |
+
+**Main's tests: the landed commit 77b4ee84 passed 28 of 28 at 13:35 UTC (the conductor's run), then the automatic second run after the push
+came back 25 of 28 at 14:30 UTC:** `audio` ("second battle: battle music again"), `icons` (timeout), `cfclient` ("pages did not get back into the battle after the
+server restarted", 389 s). Same code, 40 minutes apart, so this reads as the known flaky tests on a slow test machine, not a new fault — but the
+status on main now says RED. Battle servers were already updated to this commit (servers-live = main, done after the first green run).
+Nobody owns the flaky tests (see below); the next train will be compared against "main has audio / icons / cfclient red".
+
+**Live site:** https://abdullahhaidar5-ux.github.io/ww3/ serves main 77b4ee84 (page checked byte for byte at 15:05 UTC).
+
+## Finished and waiting
+| idea (branch) | own test run | result | waits for |
+|---|---|---|---|
+| Campaign battles on the map by days (nofightit) | 6cdd9f53 | all green, on an old main | its helper (nobody active): merge main + token odds, one test run |
+| Kheibar freeze fix (freezefix) — helper stopped (handoff) | 4e92b695 | smooth-pc + audio red | a fix for the slow-frame tail, two clean smooth-pc runs |
+
+## In progress / not ready
+| idea (branch) | last save | state |
+|---|---|---|
+| PLAN-75 + handover note for a fresh ORCH (plan75) | 2 h 20 min | documents only |
+| Battle report card + front lines (finish-report) — stopped (handoff) | 13 h | tutorial + migrate-down red; nobody re-running |
+| Infiltrators look like spies (spylook) | 12.5 h | cfclient + migrate-down red, far behind main |
+| Trees on the campaign map (maptrees) — stopped (handoff) | 19 h | needs a fresh run on today's main |
+| Campaign real supply (c-supply) — stopped (handoff) | 29 h | parked, notes only ahead of main |
+
+**Nobody has saved any game work in the last 5.5 hours. No helper appears to be building.**
+
+## Not started by anyone
+- **Fight-it battle hangs at "PREPARING GRAPHICS… 78%"** on Abdullah's Windows laptop (suggested fix in `orch/HANDOFF-freezefix.md` on orch/freezefix).
+- **Flaky tests** (`cfclient` group, `tutorial`, `mpsync`, `migrate*`, `audio`, now `icons`): no owner; they have now turned main's own status red.
+
+## Locks with nothing saved (90+ min, no work branch of that name)
+- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Army standards** (`taken/army-standards`) — 37 h old, stale. No new locks.
+
+---
+(previous runs below)
+
 # STATE — conductor run 15 on 2026-11-12, 12:50–13:55 UTC: **train 12 LANDED** — main = 77b4ee84
 
 **Went live (1 piece, 28 of 28 tests green on the landed commit, same as main had):** Conquest starts with a full base and $10,000 · Battle has no supply lines or dotted roads · Conquest roads green (yours) / red (enemy) / gray (neutral) · rally flag goes away when you click away (orch/battleclean, merge 17babd26).
