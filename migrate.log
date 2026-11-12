@@ -1,0 +1,30 @@
+game servers running locally at http://127.0.0.1:44363
+[3s] three pages loaded
+[8s] host lobby open, code 8olkbc
+[45s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+    [net battle start] host: {"t":0,"loading":true,"paused":true,"fp":{"tx":21,"rx":15,"txB":2117,"rxB":1242,"dropped":0},"slots":[{"k":1,"peer":"ww3p-gc3oxbxo","seenAgo":80,"disc":0,"ai":false,"aiTook":false,"buf":0},{"k":2,"peer":"ww3p-dmd1s1qg","seenAgo":59,"disc":0,"ai":false,"aiTook":false,"buf":0}],"sb":null,"ckOut":false}
+    [net battle start] client A: {"me":1,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-gc3oxbxo","hostPeer":"ww3-8olkbc","sb":false,"ck":false,"ents":0,"fp":{"tx":8,"rx":12,"txB":645,"rxB":1246,"dropped":0},"trace":[]}
+    [net battle start] client B: {"me":2,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-dmd1s1qg","hostPeer":"ww3-8olkbc","sb":false,"ck":false,"ents":0,"fp":{"tx":7,"rx":9,"txB":597,"rxB":871,"dropped":0},"trace":[]}
+    [net t=5s] host: {"t":5,"loading":false,"paused":false,"fp":{"tx":129,"rx":24,"txB":58480,"rxB":2209,"dropped":0},"slots":[{"k":1,"peer":"ww3p-gc3oxbxo","seenAgo":137,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988},{"k":2,"peer":"ww3p-dmd1s1qg","seenAgo":-17372,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988}],"sb":2,"ckOut":false}
+    [net t=5s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":5,"snapT":4.9,"rxAgo":5,"recon":false,"myPeer":"ww3p-gc3oxbxo","hostPeer":"ww3-8olkbc","sb":false,"ck":false,"ents":5,"fp":{"tx":13,"rx":64,"txB":1184,"rxB":22196,"dropped":0},"trace":[]}
+    [net t=5s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":5,"snapT":4.7,"rxAgo":6,"recon":false,"myPeer":"ww3p-dmd1s1qg","hostPeer":"ww3-8olkbc","sb":true,"ck":true,"ents":5,"fp":{"tx":11,"rx":65,"txB":1025,"rxB":36284,"dropped":0},"trace":[]}
+    [net t=10s] host: {"t":10,"loading":false,"paused":false,"fp":{"tx":232,"rx":41,"txB":115000,"rxB":8216,"dropped":0},"slots":[{"k":1,"peer":"ww3p-gc3oxbxo","seenAgo":623,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076},{"k":2,"peer":"ww3p-dmd1s1qg","seenAgo":259,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076}],"sb":2,"ckOut":false}
+    [net t=10s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":10,"snapT":10,"rxAgo":4,"recon":false,"myPeer":"ww3p-gc3oxbxo","hostPeer":"ww3-8olkbc","sb":false,"ck":false,"ents":6,"fp":{"tx":21,"rx":115,"txB":3945,"rxB":49663,"dropped":0},"trace":[]}
+    [net t=10s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":10,"snapT":10,"rxAgo":5,"recon":false,"myPeer":"ww3p-dmd1s1qg","hostPeer":"ww3-8olkbc","sb":true,"ck":true,"ents":6,"fp":{"tx":20,"rx":117,"txB":4271,"rxB":65337,"dropped":0},"trace":[]}
+    [net t=30s] host: {"t":30,"loading":false,"paused":false,"fp":{"tx":651,"rx":58,"txB":424763,"rxB":12350,"dropped":0},"slots":[{"k":1,"peer":"ww3p-gc3oxbxo","seenAgo":237,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577},{"k":2,"peer":"ww3p-dmd1s1qg","seenAgo":237,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577}],"sb":2,"ckOut":false}
+    [net t=30s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":30,"snapT":30,"rxAgo":3,"recon":false,"myPeer":"ww3p-gc3oxbxo","hostPeer":"ww3-8olkbc","sb":false,"ck":false,"ents":6,"fp":{"tx":30,"rx":316,"txB":6223,"rxB":179363,"dropped":0},"trace":[]}
+    [net t=30s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":30,"snapT":30,"rxAgo":4,"recon":false,"myPeer":"ww3p-dmd1s1qg","hostPeer":"ww3-8olkbc","sb":true,"ck":true,"ents":9,"fp":{"tx":28,"rx":335,"txB":6127,"rxB":245400,"dropped":0},"trace":[]}
+[269s] before: client A @1 min t=60s: host 62 entities, slot 1 sees 7 (own 7); its screen has 7; missing 0, extra 0, off-position 0, mismatched 0; credits host 7285 client 7285
+[270s] before: client B @1 min t=60s: host 62 entities, slot 2 sees 16 (own 16); its screen has 16; missing 0, extra 0, off-position 0, mismatched 0; credits host 7260 client 7260
+    [net no checkpoint] host: {"t":150,"loading":false,"paused":false,"fp":{"tx":3219,"rx":171,"txB":3441254,"rxB":42268,"dropped":0},"slots":[{"k":1,"peer":"ww3p-gc3oxbxo","seenAgo":780,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":150.0000000000115},{"k":2,"peer":"ww3p-dmd1s1qg","seenAgo":531,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":150.0000000000115}],"sb":2,"ckOut":false}
+    [net no checkpoint] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":150.5,"snapT":150,"rxAgo":5,"recon":false,"myPeer":"ww3p-gc3oxbxo","hostPeer":"ww3-8olkbc","sb":false,"ck":false,"ents":20,"fp":{"tx":86,"rx":1525,"txB":21033,"rxB":1154863,"dropped":0},"trace":[]}
+    [net no checkpoint] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":150.5,"snapT":150,"rxAgo":6,"recon":false,"myPeer":"ww3p-dmd1s1qg","hostPeer":"ww3-8olkbc","sb":true,"ck":true,"ents":31,"fp":{"tx":85,"rx":1694,"txB":21235,"rxB":2286391,"dropped":0},"trace":[]}
+peak memory (node + browser, summed RSS): 5837 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console warning: p2p: no direct connection (peer-unavailable), using the server relay
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:44363/room/gc-8olkbc?role=client&id=ww3p-nivzodjy' failed: Error during WebSocket handshake: Unexpected response code: 400
+  warn: clientA console warning: p2p: server relay unavailable (network), trying the Nostr network
+
+MIGRATE FAIL: client A (the standby) never received a checkpoint from the host, so nobody can take over (273s)
