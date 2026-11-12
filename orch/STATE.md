@@ -1,3 +1,47 @@
+# STATE — conductor run 12 on 2026-11-12, 06:50–… UTC (train 10 is being tested; result line is added below when known)
+
+**Main = 7b4baa29** (train 9). Main's own test run finished **28 of 28 green**.
+Note on the "another conductor is working" check: `train/20261112-0505` is younger than 110 minutes and not in main, but run 11's state
+page (06:30 UTC) says that train is dead and replaced by `train/20261112-0640`, which IS main. So nobody else was working; this run went on.
+
+**Train 10 = `train/20261112-0700`** (head 121ad35b, test branch `gate/121ad35b8f`), merged in this order, build + --check + SMOKE PASS after each:
+1. Kheibar strike freeze fix (orch/freezefix, 172b31e5) — the freeze when the "breaking news" strike picture appears.
+2. Army tokens on the campaign map (orch/armytokens2, e301b90b) — dots far away, tokens in the middle, figures up close.
+3. Main menu shows your war (orch/finish-menu, 620b7e76).
+4. Commander's radio + edge alerts (orch/finish-radio, 54862c4d) — one hand-merge in the What's-new list (both entries kept).
+5. Conquest full base + $10,000, Battle without supply lines, road colors by owner, rally flag only while selected (orch/battleclean, 7f58999e) — changes battle rules, so last.
+
+## The pieces' own test runs (all on GitHub, finished)
+| idea (branch) | own run | result | reading |
+|---|---|---|---|
+| Freeze fix (freezefix) | 172b31e5 | 26 of 28: audio (crossfade timing), migrate-down (client never appeared in lobby) red | both on the flaky list |
+| Army tokens (armytokens2) | adfc9d88: 28 of 28 (on train 7); e301b90b (with trains 8-9): 26 of 28, tutorial + mpsync red | flaky list (mpsync was red on main 1407bde2 with the same words) |
+| Main menu shows your war (finish-menu) | 620b7e76 | 27 of 28: cfclient red | flaky list |
+| Commander's radio (finish-radio) | 54862c4d | 28 of 28 (on train 6) | clean, but old base |
+| Conquest/Battle clean-up (battleclean) | 7f58999e | 25 of 28: tutorial, audio, mpsync red; 0e53000f before it: tutorial + smooth-pc red | **tutorial red three runs in a row** — this piece changes the tutorial, so it is the first suspect if the train's tutorial test is red |
+
+## Not on the train
+| idea (branch) | last save | why not |
+|---|---|---|
+| Building fix — no floating roofs (bldfix, 1 commit) | 1 h | saved, but the helper has not run the tests on it yet |
+| Campaign battles fought on the map by days, step 1 of 3 (nofightit, 1 commit) | just now | in progress, no test run; changes campaign rules → last on a later train |
+| Fortification lines (fortline, 1 commit) | 2 h | no test run yet |
+| Bundled fonts (finish-menu-fonts) | 4.5 h | its run had smooth-pc red (look change) |
+| Infiltrators look like spies (spylook) | 4.5 h | cfclient + migrate-down red on its run, 183 commits behind main; nobody is updating it |
+| Battle report card + front lines (finish-report) — helper stopped (handoff) | 5 h | tutorial + migrate-down red on its run; handoff asks for a re-run, nobody is doing it |
+| Trees on the campaign map (maptrees) — helper stopped (handoff) | 11 h | no fresh run |
+| PLAN-75 (plan75) | 7 h | document only |
+
+## Locks with nothing saved (90+ min, no work branch of that name)
+- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Army standards** (`taken/army-standards`), **Real supply** (`taken/c-real-supply`) — over 20 h old, stale.
+- (`taken/finish-tokens` saves as armytokens2.) Battle clean-up, building fix and freeze fix, listed here last run, have all saved their work since.
+
+## Flaky tests (same game code, different results) — still nobody owns these
+`tutorial`, `audio`, `mpsync`, `migrate*`, `cfclient`, and the `smooth-pc` frame tail. Tonight every helper run had 1–3 of them red while main's own run was 28 of 28.
+
+---
+(previous runs below)
+
 # STATE — conductor run 11 on 2026-11-12, 04:55–06:30 UTC (train 9 landed: fixes + notes; the radio did NOT land)
 
 **Main = 7b4baa29** (train 9 on top of 1407bde2). Main's head before this run (1407bde2, train 7): 27 of 28 green, `gate/mpsync` red
