@@ -1,3 +1,53 @@
+# STATE — conductor run 19 on 2026-11-12, 20:50–22:30 UTC: **nothing landed** — main is still 77b4ee84 (train 12). Two finished pieces tried, test runs red twice
+
+**Helpers are back:** two finished pieces arrived with handoff notes ("ready for the conductor") around 20:15 UTC.
+| idea (branch) | own test run | result |
+|---|---|---|
+| Campaign battles fought on the map by days, no real-time campaign battle (nofightit, head 0c2f110d) — Abdullah's decision 2026-11-11 23:57 | bba4a87d | 27 of 28; only the flaky `audio` red |
+| Infiltrator: one plain-clothes spy look (spylook, head 978336f4) | 22157387 | 25 of 28; `cfclient` (flaky, red on main too), `mpsync` red once (main does not have it), mapsweep unfinished |
+
+**Train 13, first test run** (`train/20261112-2052`, commit e5e8b5c0 = main + spylook + nofightit; both merged clean, build + smoke + grandtest green here):
+23 results in, **`smooth-pc` red** — slowest 1% of frames 683 ms (allowed 614), worst-1% FPS 1.44 (allowed 1.7), failed twice inside the job. Everything else that finished was green (mpsync too).
+Culprit guess: the spy look (the only piece that touches how battle soldiers are drawn; its branch also swaps box figures for real models when they arrive) — taken out.
+
+**Train 13, the one re-run** (`train/20261112-2153`, commit df53290b = main + nofightit only; same game files as nofightit's own tested commit): **25 of 28, three red:**
+- `smooth-mp`: order latency p95 319 ms (baseline 111, allowed 215) — smooth gate red, so it cannot land. smooth-pc and grandsmooth were green this time.
+- `grandlive`: `GRANDRT FAIL` "marching army does not slide along its road as days pass" — the army moved 0.91 map units between two samples, the check wants more than 1 (orch/grandrt.mjs line 73). The same code passed this check on bba4a87d and on e5e8b5c0 an hour earlier, and passes in the sandbox (moved 1.7). Looks timing-dependent, not a rule fault.
+- `audio`: "second battle: battle music again" — same as on main.
+Rule: still red after one re-run → land nothing. No test was skipped or re-run to turn it green.
+
+**Reading:** the same campaign-battles code has now had three runs: 27/28, then (with the spy look) smooth-pc red, then smooth-mp + grandrt red. The smooth numbers that failed are
+"slowest frames" and "network latency" on the test machine, different ones each time, on code that does not touch battles' frame loop — the test machines look noisy this evening.
+So the spy look may be innocent of the smooth-pc red; it was not proven either way.
+**What each piece waits for:** one clean test run. Next conductor run (2 h) will try campaign battles alone again, then the spy look on its own run.
+For the helpers / ORCH: `grandrt` slide check margin is thin (0.9 vs 1.0 over 4 days) — the campaign-battles helper should make that check robust (sample further apart), not the conductor.
+
+**Conductor slip, fixed before anything was tested for landing:** my two "history marked" commits swept in screenshots that a local test run had rewritten (`git commit -a`); the second train has a follow-up commit df53290b that puts them back, so the tested tree differs from nofightit only by one HISTORY line. Run 43314750297 on the bad commit was cancelled. Nothing of this reached main.
+
+**Main's tests (unchanged):** 77b4ee84: 25 of 28 on its automatic run (`audio`, `icons`, `cfclient` — flaky; smooth gates green). Status on main reads RED. Nobody owns the flaky tests.
+**Live site:** nothing landed, so https://abdullahhaidar5-ux.github.io/ww3/ still serves main 77b4ee84 (verified byte for byte in run 18; main has not moved).
+
+## Finished and waiting
+| idea (branch) | waits for |
+|---|---|
+| Campaign battles on the map by days (nofightit) — helper stopped with handoff | one clean test run (conductor retries next run); open: a garrison card labelled "undefined", gate.yml comments |
+| Infiltrator spy look (spylook) — helper stopped with handoff | its own clean run incl. smooth-pc and mpsync (conductor retries after campaign battles) |
+| Kheibar freeze fix (freezefix) — stopped | smooth-pc + audio red on its run 4e92b695; head untested; nobody working on it |
+
+## In progress / not ready (unchanged since run 18)
+PLAN-75 documents (plan75, 8 h, documents only) · battle report card + front lines (finish-report, 19 h, stopped; its card was written for the old live battle — needs rework on top of campaign battles) ·
+trees on the campaign map (maptrees, 25 h, stopped) · campaign real supply (c-supply, 35 h, notes only).
+
+## Not started by anyone
+- **Fight-it hang at "PREPARING GRAPHICS… 78%"** on Abdullah's laptop — goes away for the campaign once campaign battles land (no live campaign battle any more); still open for Conquest/Battle if it happens there.
+- **Flaky tests** (`audio`, `icons`, `cfclient`, `mpsync`, `grandrt` slide check, smooth tails on slow test machines): no owner.
+
+## Locks with nothing saved (90+ min, no work branch of that name)
+- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Army standards** (`taken/army-standards`) — 2+ days old, stale. One new lock since run 18 (34 in all); none younger than 90 min without a branch.
+
+---
+(previous runs below)
+
 # STATE — conductor run 18 on 2026-11-12, 18:45–19:00 UTC: **nothing to land** — main is still 77b4ee84 (train 12)
 
 **No train was built: nothing has changed since runs 16 and 17.** No helper has saved game work for 9.5 hours; no new `gate/*` test run (newest is main's own, 13:12 UTC),
