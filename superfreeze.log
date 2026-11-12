@@ -1,0 +1,29 @@
+  page: shader warm-up 80541 ms, 213 objects
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 143 ms; firing
+IR {"sup":"Kheibar Missile Strike","working":true,"n":12,"crowd":36} launched=true frames=194 normal=143ms (quiet max 197) longest=314ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 314ms@9.4s {} ; 266ms@3.0s {} ; 264ms@1.0s {} ; 260ms@3.8s {} ; 238ms@10.2s {}
+  frames that made the GPU work (3):
+    3.18s 145ms {"aud":1} three geo/tex 556/182
+    3.30s 237ms {"aud":2} three geo/tex 556/182
+    4.02s 189ms {"aud":1} three geo/tex 556/182
+IR worst JS call (not drawing): simUpdate 130ms; ok
+  page: shader warm-up 94832 ms, 222 objects
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 150 ms; firing
+RU {"sup":"Iskander Strike","working":true,"n":2,"crowd":36} launched=true frames=145 normal=150ms (quiet max 225) longest=346ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 346ms@6.4s {} ; 315ms@3.0s {} ; 261ms@3.3s {"aud":2} ; 256ms@1.1s {} ; 248ms@1.7s {}
+  frames that made the GPU work (2):
+    3.18s 192ms {"aud":2} three geo/tex 656/252
+    3.30s 261ms {"aud":2} three geo/tex 656/252
+RU worst JS call (not drawing): simUpdate 166ms; ok
+  page: shader warm-up 73444 ms, 204 objects
+  [US +0s] battle loaded
+  [US +17s] normal frame 155 ms; firing
+US {"sup":"Tomahawk Salvo","working":true,"n":6,"crowd":36} launched=true frames=166 normal=155ms (quiet max 241) longest=278ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":3,"cnv":0}
+  worst frames: 278ms@1.5s {} ; 269ms@0.8s {} ; 264ms@2.6s {} ; 262ms@3.8s {} ; 255ms@3.7s {}
+  frames that made the GPU work (2):
+    3.12s 176ms {"aud":1} three geo/tex 543/151
+    3.42s 159ms {"aud":2} three geo/tex 543/151
+US worst JS call (not drawing): simUpdate 138ms; ok
+SUPERFREEZE PASS
