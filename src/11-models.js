@@ -910,25 +910,50 @@ function bkTex(kind){if(BKM[kind])return BKM[kind];{const rl=bkReal(kind);if(rl)
     ni.data[j]=(a*.5+.5)*255;ni.data[j+1]=(b*.5+.5)*255;ni.data[j+2]=(c*.5+.5)*255;ni.data[j+3]=255;const g=kind==='tin'?150+v*70:170+v*70-(kind==='plaster'&&y>N*.8?18:0);im.data[j]=g;im.data[j+1]=g;im.data[j+2]=g;im.data[j+3]=255;}
   cx.putImageData(im,0,0);nx.putImageData(ni,0,0);const t=new THREE.CanvasTexture(cv),n=new THREE.CanvasTexture(nm);for(const q of [t,n]){q.wrapS=q.wrapT=THREE.RepeatWrapping;}t.colorSpace=THREE.SRGBColorSpace;return BKM[kind]={t,n};}
 function bkMat(kind,col,rep){const T=bkTex(kind),t=T.t.clone(),n=T.n.clone();if(T.cl){T.cl[0].push(t);T.cl[1].push(n);}t.needsUpdate=n.needsUpdate=true;t.repeat.set(rep,rep);n.repeat.set(rep,rep);return new THREE.MeshStandardMaterial({color:col,map:t,normalMap:n,normalScale:new THREE.Vector2(.9,.9),roughness:kind==='tin'?.55:.93,metalness:kind==='tin'?.45:0});}
+// Roof survey (view only): a 15x15 grid of downward rays over the building BODY (largest child, never the kit / flag) tells where the real roof is.
+// The old code took the top of the body's bounding box, which for the factory is the chimney tops: the parapet frame and every roof prop then hung in the air up there.
+// Cached per kind + look (the model never changes). flatY = height of the highest sizeable flat roof (null: saw-tooth / pitched, no props there); roofY = what the guard measures against.
+const ROOFC={};
+function bldRoof(e,o,P){const key=e.kind+(o.userData.meWall?'m':'w');let r=ROOFC[key];
+  const fl=o.userData.parts&&o.userData.parts.flag,sz=new THREE.Vector3(),pv=o.userData.parts?Object.values(o.userData.parts):[];let body=null,bv=0,bb=null;
+  let mainBody=null,mv=0,mq=null;
+  for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;// not the kit or the flag
+    if(pv.includes(c)&&c!==o.userData.parts.main)continue;// not the dish/crane parts
+    const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz);const v=sz.x*sz.y*sz.z;if(c===o.userData.parts.main){mainBody=c;mq=q;mv=v;continue;}// the slab (its flag pole made it the 'biggest' on every modelled building) only counts when it is all there is (code-built depot etc.)
+    if(v>bv){bv=v;body=c;bb=q;}}
+  if(!body&&mainBody){body=mainBody;bb=mq;}
+  if(!body)return null;
+  if(!r){const N=15,rc=new THREE.Raycaster(),dn=new THREE.Vector3(0,-1,0),pt=new THREE.Vector3(),nm=new THREE.Vector3(),cells=[],ys=[];o.updateMatrixWorld(true);
+    for(let j=0;j<N;j++)for(let i=0;i<N;i++){const x=bb.min.x+(i+.5)/N*(bb.max.x-bb.min.x),z=bb.min.z+(j+.5)/N*(bb.max.z-bb.min.z);rc.set(pt.set(x,bb.max.y+4,z),dn);const h=rc.intersectObject(body,true)[0];
+      if(!h){cells.push(null);continue;}const up=h.face?nm.copy(h.face.normal).transformDirection(h.object.matrixWorld).y>.9:false;cells.push([h.point.y,up]);ys.push(h.point.y);}
+    ys.sort((a,b)=>a-b);const p85=ys.length?ys[Math.min(ys.length-1,Math.floor(ys.length*.85))]:BH[e.kind]/BSC,bins={};let tot=ys.length;
+    for(const c of cells)if(c&&c[1]){const k=Math.round(c[0]);bins[k]=(bins[k]||0)+1;}
+    let fy=null,best=-1;for(const k in bins){if(bins[k]>=Math.max(6,tot*.18)&&+k>best&&+k>6){best=+k;fy=+k;}}
+    r=ROOFC[key]={N,cells,bb,flatY:fy,roofY:fy!=null?fy:p85};}
+  return r;}
+// is there flat roof (at the flat roof height) under x,z and a small margin around it?
+function roofFlatAt(R,x,z,m){if(!R||R.flatY==null)return false;const bb=R.bb,N=R.N;for(const [a,b] of [[0,0],[m,0],[-m,0],[0,m],[0,-m]]){const i=Math.floor((x+a-bb.min.x)/(bb.max.x-bb.min.x)*N),j=Math.floor((z+b-bb.min.z)/(bb.max.z-bb.min.z)*N);if(i<0||j<0||i>=N||j>=N)return false;const c=R.cells[j*N+i];if(!c||!c[1]||Math.abs(c[0]-R.flatY)>1.3)return false;}return true;}
 function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',2),pl=bkMat('plaster','#b8a98a',2),tin=bkMat('tin','#8c9096',2),dk=new THREE.MeshStandardMaterial({color:0x2c2e2b,roughness:.8,metalness:.3});
-  let top=BH[k]/BSC;try{// roof height = the top of the BUILDING BODY (largest child), not of everything: the radar dish / crane / flag mast stand taller and made the parapet frame float above the roof
-    const fl=o.userData.parts&&o.userData.parts.flag,sz=new THREE.Vector3();let bv=0,bt=0;for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz);const v=sz.x*sz.y*sz.z;if(v>bv){bv=v;bt=q.max.y;}}if(bt>6)top=bt;}catch(_){}
-  const G2=new THREE.Group();P.add(G2);const bx=(w,hh,d,x,y,z,m,ry)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);q.position.set(x,y,z);if(ry)q.rotation.y=ry;q.castShadow=q.receiveShadow=true;G2.add(q);return q;};
-  const cy=(r1,r2,l,x,y,z,m,sg)=>{const q=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,l,sg||10),m);q.position.set(x,y,z);q.castShadow=q.receiveShadow=true;G2.add(q);return q;};
-  const w=h*.78;
-  for(const sd of [-1,1]){bx(w*2,1.6,1.1,0,top+.8,sd*w,rf);bx(1.1,1.6,w*2,sd*w,top+.8,0,rf);}
+  let R=null;try{R=bldRoof(e,o,P);}catch(_){}const top=R&&R.flatY!=null?R.flatY:null;if(R)o.userData.roofY=R.roofY;o.userData.roofFlat=top!=null;
+  if(o.userData.meWall)return;// Middle Eastern HQ/barracks/factory: meRoofKit already put real-roof clutter and the compound wall on this building (no second set)
+  const G2=new THREE.Group();P.add(G2);let pid=0;const bx=(w,hh,d,x,y,z,m,ry)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);q.position.set(x,y,z);if(ry)q.rotation.y=ry;q.castShadow=q.receiveShadow=true;q.userData.pid=pid;G2.add(q);return q;};
+  const cy=(r1,r2,l,x,y,z,m,sg)=>{const q=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,l,sg||10),m);q.position.set(x,y,z);q.castShadow=q.receiveShadow=true;q.userData.pid=pid;G2.add(q);return q;};// userData.pid: meshes of one roof prop share an id (the guard in orch/bldfix.mjs measures a prop by its lowest mesh)
+  const w=h*.78,ok=(x,z,m)=>top!=null&&roofFlatAt(R,x,z,m);
+  // parapet frame only when the roof really is flat all round it; props only where a flat roof really is under them
+  if(top!=null&&ok(-w,-w,1)&&ok(w,-w,1)&&ok(-w,w,1)&&ok(w,w,1))for(const sd of [-1,1]){bx(w*2,1.6,1.1,0,top+.8,sd*w,rf);bx(1.1,1.6,w*2,sd*w,top+.8,0,rf);}
   const r=((e.x|0)*31+(e.y|0)*17)&255,rn=i=>((r*(i+3)*2654435761)>>>0)/4294967296;
-  for(let i=0;i<3;i++){const x=-w*.6+i*w*.55,z=-w*.45+rn(i)*w*.5;bx(4.2,2.6,3.2,x,top+1.3,z,tin);bx(3.4,1.6,.2,x,top+1.5,z+1.65,dk);}
-  {const x=w*.45,z=-w*.35;for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])bx(.4,2.2,.4,x+a*1.3,top+1.1,z+b*1.3,dk);cy(2.1,2.1,3.4,x,top+3.9,z,tin,14);cy(.2,1.8,.9,x,top+6.1,z,tin,14);}
-  {const dsh=cy(2.4,.3,.7,-w*.55,top+3.4,w*.5,tin,14);dsh.rotation.set(.9,.5,0);cy(.15,.15,3,-w*.55,top+1.5,w*.5,dk,6);}
-  for(let i=0;i<2;i++){const x=w*.2+i*3,z=w*.45;cy(.12,.12,9+i*4,x,top+4.5+i*2,z,dk,5);bx(2.6,.15,.15,x,top+7+i*3,z,dk);}
-  if(k==='hq'||k==='factory'){bx(5,3,5,w*.1,top+1.5,-w*.1,pl);bx(5.4,.5,5.4,w*.1,top+3.2,-w*.1,rf);}
-  const R=h+(k==='hq'?30:22),gate=7,seg=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(-(z1-z0),x1-x0);return bx(L,5,1.1,(x0+x1)/2,2.5,(z0+z1)/2,rf,a);};
+  for(let i=0;i<3;i++){const x=-w*.6+i*w*.55,z=-w*.45+rn(i)*w*.5;if(!ok(x,z,3))continue;pid++;bx(4.2,2.6,3.2,x,top+1.3,z,tin);bx(3.4,1.6,.2,x,top+1.5,z+1.65,dk);}
+  {const x=w*.45,z=-w*.35;if(ok(x,z,2.5)){pid++;for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])bx(.4,2.2,.4,x+a*1.3,top+1.1,z+b*1.3,dk);cy(2.1,2.1,3.4,x,top+3.9,z,tin,14);cy(.2,1.8,.9,x,top+6.1,z,tin,14);}}
+  {const x=-w*.55,z=w*.5;if(ok(x,z,3)){pid++;const dsh=cy(2.4,.3,.7,x,top+3.4,z,tin,14);dsh.rotation.set(.9,.5,0);cy(.15,.15,3,x,top+1.5,z,dk,6);}}
+  for(let i=0;i<2;i++){const x=w*.2+i*3,z=w*.45;if(!ok(x,z,1.5))continue;pid++;cy(.12,.12,9+i*4,x,top+4.5+i*2,z,dk,5);bx(2.6,.15,.15,x,top+7+i*3,z,dk);}
+  if((k==='hq'||k==='factory')&&ok(w*.1,-w*.1,4)){pid++;bx(5,3,5,w*.1,top+1.5,-w*.1,pl);bx(5.4,.5,5.4,w*.1,top+3.2,-w*.1,rf);}
+  pid=-1;// ground yard wall meshes: no prop id (each one checked on its own)
+  const RR=h+(k==='hq'?30:22),gate=7,seg=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(-(z1-z0),x1-x0);bx(L,.5,1.7,(x0+x1)/2,5.2,(z0+z1)/2,rf,a);return bx(L,5,1.1,(x0+x1)/2,2.5,(z0+z1)/2,pl,a);};
   const post=(x,z)=>bx(2.2,6.4,2.2,x,3.2,z,rf);
-  seg(-R,-R,R,-R);seg(-R,-R,-R,R);seg(R,-R,R,R);seg(-R,R,-gate,R);seg(gate,R,R,R);
-  for(const [x,z] of [[-R,-R],[R,-R],[-R,R],[R,R],[-gate,R],[gate,R]])post(x,z);
-  bx(gate*2+2.2,1.2,2.2,0,6.4,R,rf);
-  bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
+  o.userData.rings=(o.userData.rings||0)+1;// ONE yard wall, on the ground
+  seg(-RR,-RR,RR,-RR);seg(-RR,-RR,-RR,RR);seg(RR,-RR,RR,RR);seg(-RR,RR,-gate,RR);seg(gate,RR,RR,RR);
+  for(const [x,z] of [[-RR,-RR],[RR,-RR],[-RR,RR],[RR,RR],[-gate,RR],[gate,RR]])post(x,z);
+  bx(gate*2+2.2,1.2,2.2,0,6.4,RR,rf);}
 // DE-BLOCK slice 7: facade detail — dark window recesses with lintel+sill, a door and a wall lamp on each wall of HQ/barracks/factory/depot (view only)
 function facadeKit(e,o,P){let bb=null,bv=0,body=null;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;body=c;}}if(!bb)return;
   if(!isFinite(bb.max.y)||bb.max.y<8)return;const sx=bb.max.x-bb.min.x,sz=bb.max.z-bb.min.z,hy=bb.max.y,cx=(bb.max.x+bb.min.x)/2,cz=(bb.max.z+bb.min.z)/2;if(sx<10||sz<10||sx>400)return;
@@ -1050,7 +1075,7 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     const m=mesh(B.geo());o.add(m);P.main=m;}
   const RT={...NATX_RT,US:'#bdb49c',EU:'#b5b2a6',FR:'#b5b2a6',DE:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',GB:'#b3ae98',AU:'#c3b48c',CA:'#a9ad96',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
   for(const q of cfg.list){const rc=q.col?{color:q.col}:(RT?{color:RT}:null);const m=instModel(q.m,rc,q.fit,q.size,q.ys,q.col?q.k:(RT?.42:undefined));if(!m)continue;m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
-    if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);if(MEFAC.has(T.fac)&&BME[e.kind]&&q===cfg.list[0])try{meRoofKit(o,m,e,T);}catch(er){}o.add(m);}}
+    if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);if(MEFAC.has(T.fac)&&BME[e.kind]&&q===cfg.list[0])try{o.userData.meWall=1;o.userData.rings=1;meRoofKit(o,m,e,T);}catch(er){o.userData.meWall=0;o.userData.rings=0;}o.add(m);}}
   if(e.kind==='coast'){// emplacement: sandbag walls round the launcher and a small radar / command truck beside the pad (visual only)
     const h=e.size/2,B=Bld();for(let i=-2;i<=2;i++){const sb=propObj('sandbag',-h*.92,i*h*.36,Math.PI/2,o);if(sb)sb.position.y=2.4;}
     for(const sd of [-1,1])for(let i=0;i<3;i++){const sb=propObj('sandbag',-h*.5+i*h*.42,sd*h*.97,0,o);if(sb)sb.position.y=2.4;}
