@@ -74,8 +74,10 @@ function g3BuildArrows(){if(!G3.arrows)return;while(G3.arrows.children.length){c
    Advance arrows: where the front moved since last month (green = you/allies took the province, red = the enemy did) — the view remembers who held what.
    Supply veins: gold lines along the roads from your capital to each of your land armies; past the point where the supply system
    (geArmySupply, 13g-grandeco) says the army gets nothing, the vein is dark and dashed and a red × marks the cut.
-   Three merged meshes at most (front+arrows+cut marks, gold veins, dashed veins). Zoom tiers (shared g3Zoom of the calm map):
-   front line in the far and middle view, veins in the middle and close view. */
+   Four merged meshes at most (front line, its glow + advance arrows, gold veins + cut marks, dashed veins). They are depth-tested
+   ground lines: army pieces, towns and mountains stand in front of them and the name plates / shields are drawn over them.
+   Zoom tiers (shared g3Zoom of the calm map): far (world view) = nothing; middle = front line with its glow, arrows and veins;
+   close = only a thin front line and the veins, so towns and armies stay readable. */
 function grTier(){const d=G3.cc?G3.cc.d:0;return typeof g3Zoom==='function'?g3Zoom(d):d>=440?0:d>=250?1:2;}
 function grFrontSide(o,foe){const me=GC.me;return o===me||(typeof grAllied==='function'&&grAllied(me,o)&&grAtWar(o,foe));}
 function grFrontPair(a,b){return a!==b&&GC.me&&grAtWar(GC.me,b)&&grFrontSide(a,b);}   // a = our side, b = enemy
@@ -106,17 +108,17 @@ function grFrontData(){const me=GC.me,P=GCM.P,out={fr:[],adv:[],gold:[],dark:[],
     for(let k=0;k+1<path.length;k++){const u=path[k],v=path[k+1],e=Math.min(u,v)+'_'+Math.max(u,v),dk=!fed&&k>=lastOwn;if(dk){if(!seenD.has(e)&&!seenG.has(e)){seenD.add(e);out.dark.push([u,v]);}}else if(!seenG.has(e)){seenG.add(e);out.gold.push([u,v]);}}
     if(!fed&&!cutS.has(path[lastOwn])){cutS.add(path[lastOwn]);out.cut.push(path[lastOwn]);}}
   out.dark=out.dark.filter(l=>!seenG.has(Math.min(l[0],l[1])+'_'+Math.max(l[0],l[1])));return out;}
-function grFrontBuild(){const F=G3.front,sc=G3.arrows.parent;for(const k of ['fm','vm','dm'])if(F[k]){sc.remove(F[k]);F[k].geometry.dispose();F[k].material.dispose();F[k]=null;}
+function grFrontBuild(){const F=G3.front,sc=G3.arrows.parent;for(const k of ['fm','hm','vm','dm'])if(F[k]){sc.remove(F[k]);F[k].geometry.dispose();F[k].material.dispose();F[k]=null;}
   const D=F.data=grFrontData(),A=[],V=[],K=[];
-  for(const ch of D.fr){A.push({xy:grLift(ch.xy,.75),c:[1,.8,.42,.42],w:[12,4.2]});}for(const ch of D.fr){A.push({xy:grLift(ch.xy,.8),c:[1,.99,.93,.98],w:[3.2,1.1]});}
+  const Hh=[];for(const ch of D.fr){Hh.push({xy:grLift(ch.xy,.75),c:[1,.8,.42,.42],w:[12,4.2]});}for(const ch of D.fr){A.push({xy:grLift(ch.xy,.8),c:[1,.99,.93,.98],w:[3,.3]});}
   for(const [f,t,ours] of D.adv){const a=grTownXZ(f),b=grTownXZ(t),dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz)||1,ux=dx/L,uz=dz/L,s=[a[0]+dx*.3,a[1]+dz*.3],e=[a[0]+dx*.78,a[1]+dz*.78],hl=Math.min(7,L*.16),col=ours?[.3,.86,.3,.96]:[.95,.24,.18,.96],dk=[.05,.07,.05,.8];
     const pt=(x,z)=>[x,z,Math.max(.8,g3HeightAt(x,z))+1.6],sh=[pt(s[0],s[1]),pt((s[0]+e[0])/2,(s[1]+e[1])/2),pt(e[0],e[1])],h1=[pt(e[0]-ux*hl-uz*hl*.7,e[1]-uz*hl+ux*hl*.7),pt(e[0],e[1])],h2=[pt(e[0]-ux*hl+uz*hl*.7,e[1]-uz*hl-ux*hl*.7),pt(e[0],e[1])];
-    for(const q of [sh,h1,h2])A.push({xy:q,c:dk,w:[8,3.6]});for(const q of [sh,h1,h2])A.push({xy:q,c:col,w:[5,2.4]});}
-  for(const [u,v] of D.gold){const xy=grLift(grLinkPts(u,v),.22);V.push({xy,c:[.25,.16,.03,.6],w:[5,1.7]});}for(const [u,v] of D.gold){V.push({xy:grLift(grLinkPts(u,v),.26),c:[1,.8,.22,.97],w:[2.8,1]});}
+    for(const q of [sh,h1,h2])Hh.push({xy:q,c:dk,w:[8,3.6]});for(const q of [sh,h1,h2])Hh.push({xy:q,c:col,w:[5,2.4]});}
+  for(const [u,v] of D.gold){const xy=grLift(grLinkPts(u,v),.22);V.push({xy,c:[.25,.16,.03,.6],w:[5,1]});}for(const [u,v] of D.gold){V.push({xy:grLift(grLinkPts(u,v),.26),c:[1,.8,.22,.97],w:[2.8,.55]});}
   for(const i of D.cut){const t=grTownXZ(i),y=Math.max(.8,g3HeightAt(t[0],t[1]))+2,r=2.6;for(const w of [[7,1.5,[.08,.04,.04,.9]],[3.6,.8,[.98,.25,.2,1]]]){V.push({xy:[[t[0]-r,t[1]-r,y],[t[0]+r,t[1]+r,y]],c:w[2],w:[w[0],w[1]]});V.push({xy:[[t[0]+r,t[1]-r,y],[t[0]-r,t[1]+r,y]],c:w[2],w:[w[0],w[1]]});}}
-  for(const [u,v] of D.dark)K.push({xy:grLift(grLinkPts(u,v),.26),c:[.2,.09,.07,.95],w:[3,1.1]});
+  for(const [u,v] of D.dark)K.push({xy:grLift(grLinkPts(u,v),.26),c:[.2,.09,.07,.95],w:[3,.6]});
   const add=(L,mat,ro)=>{const m=L.length?grStripMesh(L,mat):null;if(m){m.renderOrder=ro;sc.add(m);}else mat.dispose();return m;};
-  const fmat=grRoadMat(0,5200,9000);fmat.depthTest=false;F.fm=add(A,fmat,4);F.vm=add(V,grRoadMat(0,2400,4200),3);F.dm=add(K,grRoadMat(3.2,2400,4200),3);F.builds=(F.builds|0)+1;}
+  F.hm=add(Hh,grRoadMat(0,5200,9000),3);F.fm=add(A,grRoadMat(0,5200,9000),3);F.vm=add(V,grRoadMat(0,2400,4200),3);F.dm=add(K,grRoadMat(3.2,2400,4200),3);F.builds=(F.builds|0)+1;}
 function grFrontTick(){if(!GC||!G3.arrows||!G3.arrows.parent||!G3.LU||!G3.lines||!G3.F)return;const F=G3.front||(G3.front={sig:'',at:0});
   const now=performance.now();if(now-(F.at||0)>400){F.at=now;let s='';try{s=grFrontSig();}catch(e){return;}if(s!==F.sig){F.sig=s;try{grFrontBuild();}catch(e){console.warn('front',e);}}}
-  const t=grTier();if(F.fm)F.fm.visible=t<=1;if(F.vm)F.vm.visible=t>=1;if(F.dm)F.dm.visible=t>=1;}
+  const t=grTier();if(F.fm)F.fm.visible=t>=1;if(F.hm)F.hm.visible=t===1;if(F.vm)F.vm.visible=t>=1;if(F.dm)F.dm.visible=t>=1;}

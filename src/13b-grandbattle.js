@@ -94,20 +94,22 @@ try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{cons
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
   for(const s of grSideUnits(b,'att').concat(grSideUnits(b,'def')))strip(s.u);
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}
-/* Battle report card (one-language idea 6): the same card as every other battle's end screen (08b-aar rcModel/rcDraw),
-   with the province and the campaign date on it, and its Copy picture button. Read-only on battle state. */
+/* Battle report card (one-language idea 6): a battle fought live ends with the same card as an auto-resolved one (grReportShow,
+   13c-grandui: who won, why, losses of both sides, what changes on the map) plus the picture to post with its Copy picture button
+   (08b-aar rcModel/rcDraw - the same picture as every other battle's end screen). Read-only on battle state. */
 function grandCard(g,won,lost0,lost1){const S=endStats(g.res.win===0?0:1);const o={place:g.pn,date:grDateStr(GC.turn,GC.day),title:won?'VICTORY':g.res.how==='retreat'?'WITHDRAWN':'DEFEAT'};
   if(g.res.how==='retreat')o.how=esName(S.p[0])+' pulled its force out of '+g.pn+' after '+Math.max(1,Math.round(g.t0/60))+' minutes; the survivors march on the map.';
-  const M=rcModel(S,o);M.lost=lost0;M.destroyed=lost1;M.mode='Grand campaign';return rcEl(rcDraw(M),'ww3-battle-'+String(g.pn).toLowerCase().replace(/[^a-z0-9]+/g,'-'));}
-function grandBattleEnd(){const g=G.grand,c=GB_CUR;grandWriteBack();const T0=g.res.win===0,won=T0;
+  const M=rcModel(S,o);M.lost=lost0;M.destroyed=lost1;M.mode='Grand campaign';return{how:M.how,el:rcEl(rcDraw(M),'ww3-battle-'+String(g.pn).toLowerCase().replace(/[^a-z0-9]+/g,'-'))};}
+function grandBattleEnd(){const g=G.grand,c=GB_CUR;grandWriteBack();const won=g.res.win===0,how=g.res.how,side=(c.meAtt===won)?'att':'def';
   const lost0=g.n0[0]-G.ents.filter(e=>e.team===0&&!e.isB&&!e.dead).length,lost1=g.n0[1]-G.ents.filter(e=>e.team===1&&!e.isB&&!e.dead).length;
-  const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':g.res.how==='rout'?(won?'ENEMY ROUTED':'YOUR FORCE ROUTED'):'FORCE DESTROYED')));
-  root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),won?'Victory':g.res.how==='retreat'?'Withdrawn':'Defeat'));
-  root.appendChild(campEl('div','font-size:17px;line-height:1.6;margin-bottom:10px','Your losses: <b>'+lost0+'</b> of '+g.n0[0]+' units · Enemy losses: <b>'+lost1+'</b> of '+g.n0[1]+' units<br>Survivors keep their wounds and experience on the map; the dead are gone.'));
-  try{root.appendChild(grandCard(g,won,lost0,lost1));}catch(e){console.warn('report card',e);}
-  root.appendChild(campBtn('Return to the map',()=>{campClose();grandLeaveBattle();grBattleDone(c.b,(c.meAtt===won)?'att':'def',g.res.how==='retreat'?'retreat':'live');grandMapRefresh();}));
-  campShow(root);}
-function grandLeaveBattle(){try{if(MODE!=='single')leaveNet();}catch(e){}MODE='single';ME=0;G=null;try{kcReset();}catch(e){}try{$('end').hidden=true;}catch(e){}const h=document.getElementById('gbHud');if(h)h.hidden=true;grandScreenShow(true);}
+  let card=null;try{card=grandCard(g,won,lost0,lost1);}catch(e){console.warn('report card',e);}
+  const W=grRepN(side==='att'?c.b.an:c.b.dn),L=grRepN(side==='att'?c.b.dn:c.b.an),mn=Math.max(1,Math.round(g.t0/60));
+  const why=(card&&card.how)||(how==='time'?'Time ran out after '+mn+' minutes with '+W+' holding the field.':how==='retreat'?L+' pulled its force out after '+mn+' minutes.':how==='rout'?L+'\'s force broke and ran after '+mn+' minutes.':W+' destroyed the enemy force in '+mn+' minutes.');
+  const m=c.meAtt?[0,1]:[1,0],n0=[g.n0[m[0]],g.n0[m[1]]],lost=[[lost0,lost1][m[0]],[lost0,lost1][m[1]]];
+  const R=grRepFacts(c.b,side,how==='retreat'?'retreat':'live',n0,lost,why+' Survivors keep their wounds and experience; the dead are gone.',card&&card.el);
+  grReportShow(R,()=>{grandLeaveBattle();grBattleDone(c.b,side,how==='retreat'?'retreat':'live');grandMapRefresh();});}
+function grandLeaveBattle(){try{const r=document.getElementById('gReport');if(r){r._after=null;r.remove();}}catch(e){}   /* left another way (friend's host, tests): the open report card goes without settling twice */
+  try{if(MODE!=='single')leaveNet();}catch(e){}MODE='single';ME=0;G=null;try{kcReset();}catch(e){}try{$('end').hidden=true;}catch(e){}const h=document.getElementById('gbHud');if(h)h.hidden=true;grandScreenShow(true);}
 function grandRetreat(){const g=G&&G.grand;if(!g||g.fin)return;g.fin=1;g.res={win:1,how:'retreat'};G.over=true;grandBattleEnd();}
 // test hook: end the live battle now with team `win` winning (survivors are whatever is alive)
 function grandTestFinish(win){const g=G.grand;if(!g||g.fin)return false;g.fin=1;g.res={win,how:'wipe'};G.over=true;grandBattleEnd();return true;}

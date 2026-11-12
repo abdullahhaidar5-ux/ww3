@@ -9,6 +9,7 @@
          side = docked next to the province column · note = small notice on the map (keeps its own theme, gets the X + Esc).
    View only: nothing here touches the campaign state. */
 const GPAN=[
+  {id:'gReport',name:'Battle report card (after an auto-resolved or a live battle)',kind:'window',card:1,title:'h2',close:()=>{grReportClose();}},
   {id:'gOver',name:'Campaign over (victory / defeat)',kind:'dialog',card:1,title:'h1'},
   {id:'gWeb',name:'Diplomatic web',kind:'window',card:1,title:'b'},
   {id:'gpDeal',name:'Peace deal',kind:'window',card:1,title:'h2,b'},
@@ -53,7 +54,7 @@ function gpxDress(){for(const p of GPAN){if(p.kind==='screen')continue;const e=g
     const scroll=/auto|scroll/.test(getComputedStyle(c).overflowY);x.className='gpx-x '+(scroll?'gpx-xs':'gpx-xa');
     if(scroll){const cs=getComputedStyle(c);x.style.marginTop=x.style.top=(10-parseFloat(cs.paddingTop||0))+'px';x.style.marginRight=(12-parseFloat(cs.paddingRight||0))+'px';c.insertBefore(x,c.firstChild);}else{c.appendChild(x);if(getComputedStyle(c).position==='static')c.classList.add('gpx-rel');const h=c.firstElementChild;if(h&&h!==x&&p.kind!=='note')h.classList.add('gpx-pad');}}}
 function gpxEsc(ev){if(ev.key!=='Escape')return;if(typeof G!=='undefined'&&G&&!G.over)return;   // a battle is running: its own Esc rules apply
-  const gs=document.getElementById('grandScreen'),cs=document.getElementById('campScreen');if(!gpxShown(gs)&&!gpxShown(cs))return;
+  const gs=document.getElementById('grandScreen'),cs=document.getElementById('campScreen');if(!gpxShown(gs)&&!gpxShown(cs)&&!gpxShown(document.getElementById('gReport')))return;   // the report card of a live battle is shown over the battlefield
   const r=gpxCloseTop();if(r){ev.preventDefault();ev.stopImmediatePropagation();}}
 try{gpxCss();if(!window._gpx){window._gpx=1;addEventListener('keydown',gpxEsc,true);
   /* dressed in the same moment a panel appears (observer callbacks run before the next paint), so a panel is never seen without its frame.

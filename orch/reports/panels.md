@@ -16,6 +16,7 @@ Guards: `orch/polishtest.mjs` section 3 (opens each, checks frame + ✕ position
 | [x] | Confirm dialogs (declare war, etc.) | `#gModal` | dialog | yes | yes | = "No" |
 | [x] | Event with choices · battle prompt (Fight it live / Auto-resolve) · strike target | `#gModal` | dialog | yes | none on purpose | does nothing — it needs an answer |
 | [x] | Auto-resolve result / notices with one plain button | `#gModal` | dialog | yes | yes | = that button |
+| [x] | Battle report card (after an auto-resolved or a live battle: who won, why, losses, what changes on the map) | `#gReport` | window | yes | yes | closes (= Return to the map) |
 | [x] | Campaign over (victory / defeat) | `#gOver` | dialog | yes | none on purpose | needs an answer |
 | [x] | TV news ticker | `#gTV` | note (keeps its TV look) | own theme | yes | closes |
 | [x] | Newspaper headline | `#gNews` | note (keeps its paper look) | own theme | yes | closes |

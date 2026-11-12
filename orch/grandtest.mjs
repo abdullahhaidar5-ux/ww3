@@ -430,8 +430,26 @@ try {
       G3.front = G3.front || { sig: '', at: 0 }; grFrontBuild(); const D = G3.front.data, away = GC.armies.filter(a => a.o === 'IR' && GCM.P[a.at].land && a.at !== GC.nat.IR.cap).length;
       const w0 = JSON.stringify(GC.war) + GC.armies.length; grFrontBuild(); return { fr: D.fr.length, gold: D.gold.length, away, fm: !!G3.front.fm, same: w0 === JSON.stringify(GC.war) + GC.armies.length,
         bad: D.fr.filter(ch => !(grAtWar(GC.prov[ch.i].o, GC.prov[ch.j].o))).length }; });
+    if (!fr.skip) { const pc = await ev(() => { const keep = JSON.stringify(GC.war); for (const k of Object.keys(GC.war)) delete GC.war[k]; grFrontBuild(); const n = G3.front.data.fr.length, fm = !!G3.front.fm, hm = !!G3.front.hm;
+        GC.war = JSON.parse(keep); grFrontBuild(); const F = G3.front, vis = d => { const o = G3.cc.d; G3.cc.d = d; G3.front.at = performance.now(); grFrontTick(); const r = [F.fm.visible, F.hm.visible]; G3.cc.d = o; return r; };
+        return { n, fm, hm, far: vis(G3_T_FAR + 50), mid: vis((G3_T_FAR + G3_T_NEAR) / 2), close: vis(G3_T_NEAR - 50), depth: F.fm.material.depthTest && F.hm.material.depthTest }; });
+      console.log('front lines at peace / by zoom', JSON.stringify(pc));
+      if (pc.n || pc.fm || pc.hm) fails.push('front lines stay on the map after peace ' + JSON.stringify(pc));
+      if (pc.far[0] || pc.far[1] || !pc.mid[0] || !pc.mid[1] || !pc.close[0] || pc.close[1] || !pc.depth) fails.push('front lines must be hidden far, clear in the middle, thin close, and sit under armies and labels ' + JSON.stringify(pc)); }
     console.log('front lines', JSON.stringify(fr));
     if (!fr.skip && (!(fr.fr > 0) || !fr.fm || fr.bad || !fr.same || (fr.away > 0 && !(fr.gold > 0)))) fails.push('front lines / supply veins not drawn for a war: ' + JSON.stringify(fr)); }
+  // ---- report card after an AUTO-RESOLVED battle: the same card as after a live one (who won, why, both losses, what changes on the map); X / Esc close it
+  { const ar = await ev(() => { const pi = GCM.P.findIndex(p => p.land && GC.prov[p.i].o === 'IQ' && p.adj.some(j => GCM.P[j].land && GC.prov[j].o === 'IR')), from = GCM.P[pi].adj.find(j => GCM.P[j].land && GC.prov[j].o === 'IR');
+      const A = grAddArmy('IR', from, grGenUnits(grNat('IR').fac, 3000, true)), D = grAddArmy('IQ', pi, grGenUnits(grNat('IQ').fac, 1500, true)); A.from = from; A.at = pi;
+      const b = { p: pi, an: 'IR', dn: 'IQ', att: [A.id], def: [D.id], garr: true, river: false, mtn: false, done: 0 }, n0 = A.u.length + D.u.length, keep = window.grBattleDone; let done = null;
+      window.grBattleDone = (bb, w, h) => { done = [w, h]; }; try { grBattleAutoShow(b); } catch (e) { done = ['err', String(e)]; } finally { window.grBattleDone = keep; }
+      const e = document.getElementById('gReport'), R = e && e._rep, q = s => e && e.querySelector(s); GC.armies = GC.armies.filter(a => a !== A && a !== D);
+      return { done, shown: !!e, frame: !!e && e.firstElementChild.classList.contains('gpx') && !!q('.gpx-x'), why: (q('#gRepWhy') || {}).textContent || '', sides: e ? e.querySelectorAll('.gRepSide').length : 0, map: (q('#gRepMap') || {}).textContent || '',
+        auto: !!R && !R.live, lost: R ? R.lost : null, n0: R ? R.n0 : null, sum: n0, pic: !!q('canvas'), prov: GCM.P[pi].n }; });
+    console.log('report card (auto)', JSON.stringify(ar)); await shot('report-card-auto');
+    if (!ar.shown || !ar.frame || !ar.done || ar.done[1] !== 'auto' || ar.why.length < 20 || ar.sides !== 2 || !/ON THE MAP/.test(ar.map) || !ar.map.includes(ar.prov) || !ar.auto || !ar.lost || ar.lost[0] + ar.lost[1] < 1 || ar.n0[0] + ar.n0[1] !== ar.sum)
+      fails.push('auto-resolved battle: the report card (who won, why, both losses, what changes on the map) is missing or wrong ' + JSON.stringify(ar));
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300); if (await ev(() => !!document.getElementById('gReport'))) { fails.push('Esc did not close the auto-resolve report card'); await ev(() => { grReportClose(); }); } }
   const sc = await ev(() => { const me = 'IR', foe = 'IQ'; grDeclare(me, foe); let pair = null;
     for (const p of GCM.P) if (p.land && GC.prov[p.i].o === me) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === foe && GC.prov[j].gar.length) { pair = [p.i, j]; break; } else if (pair) break;
     if (!pair) for (const p of GCM.P) if (p.land && GC.prov[p.i].o === foe) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === me) { pair = [j, p.i]; break; }
@@ -486,9 +504,15 @@ try {
   if (JSON.stringify(flow.hp) !== JSON.stringify(fin.before.hp)) fails.push('flow-back: health differs');
   if (flow.n >= exp.nMine) fails.push('flow-back: no losses recorded (' + flow.n + ' of ' + exp.nMine + ')');
   await shot('battle-result');
-  { const rc = await ev(() => { const c = document.querySelector('#campScreen .rcBox canvas'), b = document.querySelector('#campScreen .rcBox .rcCopy'); let fp = null; try { fp = guFrontData(); } catch (e) { fp = { err: String(e) }; } return { card: !!c && c.width === 1200, btn: !!b && b.textContent === 'Copy picture', fp: !!(fp && fp.head && fp.date && rcFront(fp).width === 1200) }; });
-    if (!rc.card || !rc.btn) fails.push('battle result: report card / Copy picture missing ' + JSON.stringify(rc)); if (!rc.fp) fails.push('war diary front page cannot be built'); }
-  await ev(() => { [...document.querySelectorAll('#campScreen button')].find(b => /Return to the map/.test(b.textContent)).click(); });
+  { const rc = await ev(() => { const q = s => document.querySelector('#gReport ' + s), c = q('.rcBox canvas'), b = q('.rcBox .rcCopy'), e = document.getElementById('gReport'), R = e && e._rep; let fp = null; try { fp = guFrontData(); } catch (e) { fp = { err: String(e) }; }
+      return { card: !!c && c.width === 1200, btn: !!b && b.textContent === 'Copy picture', fp: !!(fp && fp.head && fp.date && rcFront(fp).width === 1200), frame: !!e && e.firstElementChild.classList.contains('gpx') && !!q('.gpx-x'),
+        why: (q('#gRepWhy') || {}).textContent || '', sides: document.querySelectorAll('#gReport .gRepSide').length, map: (q('#gRepMap') || {}).textContent || '', live: !!R && R.live, lost: R ? R.lost : null, old: !!document.getElementById('campScreen') }; });
+    console.log('report card (live)', JSON.stringify(rc));
+    if (!rc.card || !rc.btn) fails.push('battle result: report card picture / Copy picture missing ' + JSON.stringify(rc)); if (!rc.fp) fails.push('war diary front page cannot be built');
+    if (!rc.frame || rc.why.length < 20 || rc.sides !== 2 || !/ON THE MAP/.test(rc.map) || !rc.live || rc.old) fails.push('Fight-it result: the one report card (who won, why, both losses, what changes on the map) is missing or the old result screen is back ' + JSON.stringify(rc));
+    // Esc closes the card and only then the battle is settled
+    await page.keyboard.press('Escape'); await page.waitForTimeout(500);
+    if (await ev(() => !!document.getElementById('gReport') || !!(window.G && G.grand))) { fails.push('Esc did not close the Fight-it report card'); await ev(() => { grReportClose(); }); await page.waitForTimeout(300); } }
   await page.waitForTimeout(500);
   const after = await ev(() => { const to = GCM.byName.get ? 0 : 0; return { g: !!window.G, grand: document.getElementById('grandScreen') && document.getElementById('grandScreen').style.display, ph: GC.ph, turn: GC.turn, owner: GC.prov[GC.q[0] ? GC.q[0].p : 0].o }; });
   console.log('after', JSON.stringify(after));

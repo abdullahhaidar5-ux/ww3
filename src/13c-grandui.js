@@ -230,7 +230,39 @@ function grBattlePrompt(b){grandScreenShow(true);guCentre(b.p,2.2);GV.sel=b.p;GV
   const html='<div style="opacity:.7;font-size:13px">BATTLE · '+(b.river?'river crossing · ':'')+(b.mtn?'mountain pass · ':'')+guTerrName(P.t)+'</div><h2 style="margin:2px 0 8px;font-size:24px">'+P.n+'</h2>'
    +'<div style="display:flex;gap:14px;margin-bottom:8px"><div style="flex:1"><b style="color:#ffb59a">Attackers</b> — '+GCM.nats.get(b.an).name+'<br>'+nUnits(S)+' units<br><span style="font-size:13px;opacity:.8">'+cnt(S)+'</span></div><div style="flex:1"><b style="color:#9fd0ff">Defenders</b> — '+GCM.nats.get(b.dn).name+'<br>'+nUnits(D)+' units'+(b.garr?' (incl. garrison)':'')+'<br><span style="font-size:13px;opacity:.8">'+cnt(D)+'</span></div></div>'
    +'<div style="height:10px;border-radius:5px;background:#3b6ea8;overflow:hidden;margin:4px 0 2px"><div style="width:'+pct+'%;height:100%;background:#d0583d"></div></div><div style="font-size:13px;opacity:.8;margin-bottom:10px">Attackers '+pct+'% · Defenders '+(100-pct)+'% (terrain, river and home-turf bonuses included). Fight it live: you command exactly these units; nothing can be built.</div>';
-  guModal(html,[['Fight it live',()=>{grandFightLive(b);},1],['Auto-resolve',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},0],...(canWithdraw?[['Withdraw',()=>{guWithdraw(b);},0]]:[])]);}
+  guModal(html,[['Fight it live',()=>{grandFightLive(b);},1],['Auto-resolve',()=>{grBattleAutoShow(b);},0],...(canWithdraw?[['Withdraw',()=>{guWithdraw(b);},0]]:[])]);}
+/* ===== BATTLE REPORT CARD (one-language idea 6): ONE card after every campaign battle you are part of, auto-resolved or fought live =====
+   Who won · why in one line · the losses of both sides · what changes on the map. grRepFacts gathers the facts BEFORE the battle is
+   settled on the map (so both ways read the same state), grReportShow is the panel: #gReport, a row of GPAN (13zzz-gpanels) - the
+   shared frame, X / Esc / its one button all close it, text size 100/115/130 % through .gpx. A battle fought live adds the picture
+   to post (08b-aar) under the same four lines. View only: nothing here changes the campaign. */
+function grRepN(c){return (GCM.nats.get(c)||{}).name||c;}
+function grRepCount(b){const n=s=>grSideUnits(b,s).reduce((a,x)=>a+x.u.length,0);return [n('att'),n('def')];}
+function grRepChange(b,win,how){const P=GCM.P[b.p],o=P.land?GC.prov[b.p].o:'',an=grRepN(b.an),dn=grRepN(b.dn);
+  if(!P.land)return 'The waters of '+P.n+' are held by '+(win==='att'?an:dn)+'. The beaten ships fall back to port or are lost.';
+  if(win==='att')return o&&o!==b.an?P.n+' lies open: '+an+' takes it from '+grRepN(o)+' when the month ends, unless it is retaken first.':P.n+' is cleared and stays with '+an+'.';
+  return P.n+' stays with '+grRepN(o||b.dn)+'. '+(how==='retreat'?an+' pulled its army back.':an+'\'s army falls back, or is lost if it has nowhere to go.');}
+function grRepWhy(b,r){const an=grRepN(b.an),dn=grRepN(b.dn),cv=[];if(b.river)cv.push('river crossing');if(b.mtn)cv.push('mountain pass');if(b.garr)cv.push('garrison');
+  const f=n=>Math.round(n).toLocaleString('en-US'),c=cv.length>1?cv.slice(0,-1).join(', ')+' and '+cv[cv.length-1]:cv[0]||'';
+  return r.win==='att'?an+' broke through with the stronger force'+(c?' in spite of the '+c:'')+' (strength '+f(r.sa)+' against '+f(r.sd)+').'
+    :dn+' held'+(c?' behind the '+c:' as the stronger side')+' (strength '+f(r.sd)+' against '+f(r.sa)+' attacking).';}
+function grRepFacts(b,win,how,n0,lost,why,pic){const me=GC.me,meSide=b.an===me||grSideUnits(b,'att').some(s=>s.arr&&s.arr.o===me)?'att':'def';
+  return{p:b.p,pn:GCM.P[b.p].n,date:grDateStr(GC.turn,GC.day),live:how!=='auto',how,win,me:meSide,an:b.an,dn:b.dn,n0,lost:lost.map(x=>Math.max(0,x|0)),why,change:grRepChange(b,win,how),pic:pic||null};}
+function grReportClose(){const e=document.getElementById('gReport');if(!e)return false;e.remove();const f=e._after;e._after=null;if(f)f();return true;}
+function grReportShow(R,after){grReportClose();const won=R.win===R.me,wd=!won&&R.how==='retreat',col=won?'#9fd36b':'#e07a6a';
+  const m=guEl('div','position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;');m.id='gReport';m._after=after||null;m._rep=R;
+  const c=guEl('div','padding:16px 20px;width:min(640px,94vw);max-height:92vh;overflow:auto;box-sizing:border-box;font-size:16px;line-height:1.5;');
+  const side=(k,i)=>{const pc=R.n0[i]?Math.min(100,Math.round(R.lost[i]/R.n0[i]*100)):0;return '<div class="gRepSide" style="flex:1;min-width:0;padding:8px 10px;border:1px solid #3d5a73;border-radius:6px;background:rgba(20,34,48,.6)"><div style="font-size:12px;letter-spacing:.08em;opacity:.75">'+(k==='att'?'ATTACKERS':'DEFENDERS')+(R.me===k?' · YOU':'')+(R.win===k?' · <span style="color:#9fd36b">WON</span>':'')+'</div><b>'+grRepN(k==='att'?R.an:R.dn)+'</b>'
+    +'<div>Lost <b>'+R.lost[i]+'</b> of '+R.n0[i]+' units</div><div style="height:6px;border-radius:3px;background:#2c4257;overflow:hidden;margin-top:4px"><div style="width:'+pc+'%;height:100%;background:#d0583d"></div></div></div>';};
+  c.innerHTML='<div style="font-size:12px;letter-spacing:.08em"><b style="color:'+col+'">'+(won?'VICTORY':wd?'WITHDRAWN':'DEFEAT')+'</b><span style="opacity:.7"> · BATTLE REPORT · '+R.date+' · '+(R.live?'FOUGHT LIVE':'AUTO-RESOLVED')+'</span></div>'
+   +'<h2 style="margin:2px 0 8px;font-size:22px">'+(won?'Victory at ':wd?'Withdrawal from ':'Defeat at ')+R.pn+'</h2>'
+   +'<div id="gRepWhy" style="margin-bottom:10px">'+R.why+'</div><div style="display:flex;gap:10px;margin-bottom:10px">'+side('att',0)+side('def',1)+'</div>'
+   +'<div id="gRepMap" style="margin-bottom:12px;padding-left:10px;border-left:3px solid #c9a35a"><span style="font-size:12px;letter-spacing:.08em;opacity:.75">ON THE MAP</span><br>'+R.change+'</div>';
+  if(R.pic)c.appendChild(R.pic);
+  const b=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px','Return to the map');b.type='button';b.dataset.esc='1';b.onclick=()=>grReportClose();c.appendChild(b);
+  m.appendChild(c);document.body.appendChild(m);try{b.focus();}catch(e){}return m;}
+function grBattleAutoShow(b){const n0=grRepCount(b),r=grAuto(b,grRng(GC.seed*7+GC.turn*131+b.p)),n1=grRepCount(b),rep=grRepFacts(b,r.win,'auto',n0,[n0[0]-n1[0],n0[1]-n1[1]],grRepWhy(b,r));
+  grBattleDone(b,r.win,'auto');grandMapRefresh();grReportShow(rep);}
 function grBattleAuto2(b){const R=grRng(GC.seed*7+GC.turn*131+b.p);return grAuto(b,R).win;}
 function guWithdraw(b){const me=GC.me;if(b.an===me){grBattleDone(b,'def','retreat');}
   else{for(const a of GC.armies.filter(x=>b.def.includes(x.id)&&x.o===me)){const to=grRetreatTo(a,b.p);if(to>=0){a.at=to;a.path=[];grLog(a.nm+' withdrew from '+GCM.P[b.p].n+'.',me);}}b.def=b.def.filter(id=>GC.armies.some(a=>a.id===id&&a.at===b.p));
