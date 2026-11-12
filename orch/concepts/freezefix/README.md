@@ -55,3 +55,9 @@ Performance log as "detail 0/0→1/0".
 
 No test machine here has his graphics card. Fire one Kheibar strike as Iran. If it still freezes:
 Settings → Graphics → Performance log… → Copy → paste to ORCH.
+
+## Gate on GitHub's runners
+
+Run 1 (commit 172b31e): 25 of 27 green, including `superfreeze` (IR, RU, US, 4× CPU slowdown), `smooth-pc`, `smooth-mp`,
+`grandsmooth`, `smoke4`, `decisions`. Red: `audio` (music crossfade timing check) and `migrate-down` (timed out waiting
+for a client in the lobby) — neither touches code changed here and both are green on main; run 2 below re-checks them.
