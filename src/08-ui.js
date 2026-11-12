@@ -2,15 +2,16 @@
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse',HINTDEV='mouse';
-function pushLog(m,k){if(!G)return;try{hlLog(m,k);}catch(e){}try{hudAlert(m,k);}catch(e){}
-  /* commander radio (2026-11-05): kind 'r:<key>' = a log line that also triggers the callout (subtitle + voice, see 09b-radio.js) */
-  if(k&&k[1]===':'&&k[0]==='r'){const rk=k.slice(2);k=RADCLS[rk]||'';let ok=false;try{ok=radioCall(rk);}catch(e){}if(!m)return;
+function pushLog(m,k,x,y){if(!G)return;try{hlLog(m,k);}catch(e){}try{hudAlert(m,k);}catch(e){}if(x!=null)try{edgeAlert(m,k,x,y);}catch(e){}
+  /* commander radio (2026-11-05): kind 'r:<key>' = a log line that also triggers the callout (voice, see 09b-radio.js).
+     Every line goes to the ONE commander's radio feed (radFeed, 09b-radio.js): icon + text, click / Space = look there. */
+  let nat='';
+  if(k&&k[1]===':'&&k[0]==='r'){const rk=k.slice(2);k=RADCLS[rk]||'';let ok=false;RADS.nat='';try{ok=radioCall(rk);}catch(e){}nat=RADS.nat;RADS.nat='';
+    if(!m){if(nat&&RADF.last&&RADF.last.isConnected&&!RADF.last.querySelector('small')&&performance.now()-RADF.last._t<400){const sm=document.createElement('small');sm.textContent=nat;RADF.last.append(sm);}return;}
     if(!ok)try{const sp={base:4,lost:6,hero:3}[rk];if(sp)speak(sp);}catch(e){}
-    try{tkFeed(m,k);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);const el0=$('log');if(!el0)return;const d0=document.createElement('div');d0.className=k;d0.textContent=m;setTimeout(()=>{d0.classList.add('out');setTimeout(()=>d0.remove(),700);},7000);el0.append(d0);while(el0.children.length>4)el0.firstChild.remove();return;}
-  try{tkFeed(m,k);}catch(e){}if(k&&k.length===2&&k[0]==='v'){try{speak(+k[1]);}catch(e){}return;}try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
-  // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
-  // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
-  const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
+    try{tkFeed(m,k);}catch(e){}}
+  else{try{tkFeed(m,k);}catch(e){}if(k&&k.length===2&&k[0]==='v'){try{speak(+k[1]);}catch(e){}return;}try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}}
+  G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);try{radFeed(m,k,x,y,nat);}catch(e){}}
 function rivals(){return G.teams.filter(T=>!T.reb&&!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
 /* the mode's name for the HUD, pause and end screens */
@@ -617,13 +618,14 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='o'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)fmCycle();
   if(k==='i'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)tactKey();
   if(k==='z'&&!e.ctrlKey&&!e.metaKey&&!e.altKey)resupplySel();
-  if(k==='l'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.lgd)lgToggle();
+  if(k==='l'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.lgd&&!G.battle)lgToggle();
   if((k==='Backspace'||k==='Delete')&&doCancel(e.shiftKey))e.preventDefault();
   if(k==='e'||k==='E'){const lu=G.sel.find(u=>!u.isB&&u.kind==='cleric'&&u.team===ME&&!u.dead);if(lu){ldrKey(e.shiftKey||k==='E');return;}}
   if(k==='e'){const hu=G.sel.find(u=>!u.isB&&u.kind==='champ'&&u.team===ME&&!u.dead);if(hu)doAct({t:'hab',tid:hu.id});else{const ps=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead&&u.s&&u.s.dom==='naval'&&u.s.sonar);if(ps.length)doAct({t:'ping',ids:ps.map(u=>u.id)});}}
   if(k==='x'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
   if(k==='r'&&!e.ctrlKey&&!e.metaKey){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length){doAct({t:'ret',ids});speak(2);}}
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
+  if(k===' '&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.repeat&&!G.over)radJump();
   if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(zmax(),cam.td*1.15);}
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
 window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;if(k==='q')camRotUp(e);MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
@@ -741,9 +743,9 @@ function resupplySel(){if(!G||G.over)return;const ids=G.sel.filter(u=>!u.isB&&u.
 function ammoRowHTML(s){const us=s.filter(u=>!u.isB&&u.team===ME&&u.am!==undefined&&u.amx&&!u.dead);if(!us.length)return '';
   const mm=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),oosT=u=>u.sup?0:Math.max(0,G.t-(u.supT??G.t));
   if(us.length===1){const u=us[0],f=u.am/u.amx,col=u.am<=0?'#ff6a50':f<.3?'#f2d14a':'#c9b784',o=oosT(u);
-    return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.ceil(u.am)}/${u.amx} · ${u.sup?'In supply':'Out of supply '+mm(o)}</span>`;}
+    return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.ceil(u.am)}/${u.amx}${G.battle?'':' · '+(u.sup?'In supply':'Out of supply '+mm(o))}</span>`;}
   let sum=0,mx=0,low=0,zero=0,oos=0;for(const u of us){sum+=u.am;mx+=u.amx;if(u.am<=0)zero++;else if(u.am<u.amx*.3)low++;if(!u.sup)oos++;}const f=sum/mx,col=zero?'#ff6a50':f<.3?'#f2d14a':'#c9b784';
-  return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.round(f*100)}%${zero?' · '+zero+' empty':''}${low?' · '+low+' low':''}${oos?' · '+oos+' no supply':' · in supply'}</span>`;}
+  return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.round(f*100)}%${zero?' · '+zero+' empty':''}${low?' · '+low+' low':''}${G.battle?'':oos?' · '+oos+' no supply':' · in supply'}</span>`;}
 let AMT=0;function ammoRowTick(){if(performance.now()-AMT<400)return;AMT=performance.now();const el=document.getElementById('ammoRow');if(el&&G)el.innerHTML=ammoRowHTML(G.sel.filter(e=>!e.dead));}
 function cycleStance(){const us=stUnits();if(!us.length)return;const c=stDisp(us[0]),n=c===1?2:c===2?3:1;doAct({t:'stance',ids:us.map(u=>u.id),v:n});sfxUI(480+n*40);if(typeof updateUI==='function')updateUI();}
 function tcOwn(){return G?G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead):[];}
@@ -925,7 +927,7 @@ function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [
 // texture, 3D world, shader warm-up) then runs in steps with a frame in between, so the screen shows the theatre, the
 // nations, a progress bar and a tip instead of freezing. The battle clock is held until the battlefield is on screen.
 const LOAD={tok:0,tipI:0,tipT:null,cv:null};
-const LOAD_TIPS=['Supply: your troops carry limited ammo and refill it inside the faint blue circles around your HQ, Supply Depots, supply trucks and towns you hold. Out of supply for a minute also stops healing - hunt enemy trucks and cut the route.','Armor is thickest at the front: hits on a vehicle\'s side do 20% more damage, from behind 60% more. Flank them.',
+const LOAD_TIPS=['Supply: your troops carry limited ammo and refill it inside the faint blue circles around your HQ, Supply Depots and supply trucks (in Conquest also towns you hold). Hunt enemy supply trucks to starve the front.','Armor is thickest at the front: hits on a vehicle\'s side do 20% more damage, from behind 60% more. Flank them.',
   'Infantry in woods or beside buildings take less damage. Fight from cover.',
   'Firing downhill helps and firing uphill hurts. Take the high ground.',
   'Infantry under heavy fire get suppressed: they shoot and move slower until it wears off.',

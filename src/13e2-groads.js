@@ -56,7 +56,8 @@ function g3BuildArrows(){if(!G3.arrows)return;while(G3.arrows.children.length){c
     const Y=S.map(s=>Math.max(.8,g3HeightAt(s[0],s[1]))),hl=w*2.7,hk=Math.max(1,Math.min(S.length-2,Math.round(hl/(len/n))));
     const ol=[base[0]*.22,base[1]*.22,base[2]*.22,.95],ed=[base[0]*.7,base[1]*.7,base[2]*.7,.95],ce=[Math.min(1,base[0]*1.18+.08),Math.min(1,base[1]*1.12+.06),Math.min(1,base[2]*1.15+.06),.95],sh=[0,0,0,.3];
     const end=S.length-1-hk,sd=w*.35;
-    for(let i=0;i<end;i++){const A=S[i],B=S[i+1],ya=Y[i],yb=Y[i+1],fa=Math.min(1,i/3);   // tail fades in
+    for(let i=0;i<end;i++){if((i&3)>1&&i<end-1)continue;   /* Army Standards: the route is dotted (two steps drawn, two skipped), the arrow head stays solid */
+      const A=S[i],B=S[i+1],ya=Y[i],yb=Y[i+1],fa=Math.min(1,i/3);   // tail fades in
       quad(A,B,ya+.25,yb+.25,-w*1.05,w*1.05,sh,sh,sd,sd);
       const ta=ya+1.4,tb=yb+1.4,o=[ol[0],ol[1],ol[2],.95*(.35+.65*fa)];
       quad(A,B,ta,tb,-w*1.12,-w*.82,o,o);quad(A,B,ta,tb,w*.82,w*1.12,o,o);
