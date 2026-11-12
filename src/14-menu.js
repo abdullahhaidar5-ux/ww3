@@ -265,7 +265,7 @@ function menuHome(){for(const k in MX.screens)MX.screens[k].classList.remove('on
 function mxEnter(id){if(id==='c-map')mxMapCards();if(id==='c-nation'){mxNatFilter();mxNatShow();}if(id==='c-players'||id==='c-opts'){mxStartSync();mxPlayersSync();try{if(typeof renderTeams==='function')renderTeams();}catch(_){}}
   if(id==='online')mxOnline();if(id==='title')mxContSync();}
 /* The war table (living main menu): the background shows YOUR war - whatever "Continue" would resume.
-   Grand campaign saved: its map around your nation, your borders lit in your colour, your last battle marked (sketch from the save's small note, grWarTable in 13-grand.js).
+   Grand campaign saved: its map around your nation, your borders lit in your color, your last battle marked (sketch from the save's small note, grWarTable in 13-grand.js).
    Battle saved: that battlefield with the front line between your forces and the enemy you could see (sketch in the save's list entry, svFront in 08d-save.js).
    Nothing saved (or an old save without a sketch): the calm world-map picture. Drawn once per save; the campaign code is NOT loaded for it. */
 function mxWarSrc(){let g=null,b=null;try{g=typeof svGrandInfo==='function'?svGrandInfo():null;}catch(_){}try{b=typeof svLatest!=='undefined'?svLatest:null;}catch(_){}

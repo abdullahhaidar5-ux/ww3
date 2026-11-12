@@ -134,6 +134,7 @@ try {
     else console.log('living main menu: your war drawn from the save notes (campaign, battle, none), campaign code not loaded');
     if (fontReq.length) fails.push('fonts: the page asked another host for a font / stylesheet: ' + [...new Set(fontReq)].join(', ') + ' (fonts are bundled in the shell, orch/fonts/README.md)');
     else console.log('fonts: bundled, no font or stylesheet request to another host');
+  }
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
       return { room: !!NET.room, peer: typeof Peer, p2p: !!window.WW3_P2P, three: THREE.REVISION, host: !document.getElementById('host').disabled }; });
