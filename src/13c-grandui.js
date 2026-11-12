@@ -156,6 +156,8 @@ function guClockTick(){const now=performance.now(),dt=Math.min(1,(now-(GV.clkT||
   if(!GV.spd||!GC||GC.over||GC.ph!=='plan'||GV.busy||G||document.getElementById('gModal'))return;const sc=document.getElementById('grandScreen');if(!sc||sc.style.display==='none'||document.hidden)return;
   GV.dayF=(GV.dayF||0)+dt*GU_SPD[GV.spd];if(GV.dayF<1)return;const n=Math.floor(GV.dayF);GV.dayF-=n;const d0=GC.day|0;GC.day=d0+n;
   if(GC.day>=30){GC.day=0;GV.dayF=0;guEndTurn();return;}
+  /* battles and sieges are fought day by day while the map runs (13a-gwar.js) */
+  {const nb=(GC.bt?GC.bt.length:0)+(GC.sg?GC.sg.length:0),nr=GC.br?GC.br.length:0;try{gwTo(GC.day);}catch(e){console.error('gwTo',e);}if(nb||(GC.bt&&GC.bt.length)){try{if(typeof gwUiDay==='function')gwUiDay();}catch(e){}if(nb!==(GC.bt.length+GC.sg.length)||nr!==GC.br.length){try{grandMapRefresh();}catch(e){}}}}
   /* A2: AI generals act on day ticks (10, 20) — enemy columns set off mid-month and can be seen coming */
   for(const k of [10,20])if(d0<k&&GC.day>=k&&grAIMid(k)){try{grandMapRefresh();}catch(e){}}
   const d=document.getElementById('gDate');if(d)d.textContent=grDateStr(GC.turn,GC.day);}
@@ -224,7 +226,7 @@ function grBattlePrompt(b){grandScreenShow(true);guCentre(b.p,2.2);GV.sel=b.p;GV
    +'<div style="display:flex;gap:14px;margin-bottom:8px"><div style="flex:1"><b style="color:#ffb59a">Attackers</b> — '+GCM.nats.get(b.an).name+'<br>'+nUnits(S)+' units<br><span style="font-size:13px;opacity:.8">'+cnt(S)+'</span></div><div style="flex:1"><b style="color:#9fd0ff">Defenders</b> — '+GCM.nats.get(b.dn).name+'<br>'+nUnits(D)+' units'+(b.garr?' (incl. garrison)':'')+'<br><span style="font-size:13px;opacity:.8">'+cnt(D)+'</span></div></div>'
    +'<div style="height:10px;border-radius:5px;background:#3b6ea8;overflow:hidden;margin:4px 0 2px"><div style="width:'+pct+'%;height:100%;background:#d0583d"></div></div><div style="font-size:13px;opacity:.8;margin-bottom:10px">Attackers '+pct+'% · Defenders '+(100-pct)+'% (terrain, river and home-turf bonuses included). Fight it live: you command exactly these units; nothing can be built.</div>';
   guModal(html,[['Fight it live',()=>{grandFightLive(b);},1],['Auto-resolve',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},0],...(canWithdraw?[['Withdraw',()=>{guWithdraw(b);},0]]:[])]);}
-function grBattleAuto2(b){const R=grRng(GC.seed*7+GC.turn*131+b.p);return grAuto(b,R).win;}
+function grBattleAuto2(b){return '';}   /* '' = the battle is fought on the map by days (grBattleDone -> gwOpen, 13a-gwar.js) */
 function guWithdraw(b){const me=GC.me;if(b.an===me){grBattleDone(b,'def','retreat');}
   else{for(const a of GC.armies.filter(x=>b.def.includes(x.id)&&x.o===me)){const to=grRetreatTo(a,b.p);if(to>=0){a.at=to;a.path=[];grLog(a.nm+' withdrew from '+GCM.P[b.p].n+'.',me);}}b.def=b.def.filter(id=>GC.armies.some(a=>a.id===id&&a.at===b.p));
     if(b.garr)grBattleDone(b,grBattleAuto2(b),'auto');else grBattleDone(b,'att','retreat');}
