@@ -1,3 +1,46 @@
+# STATE — conductor run 18 on 2026-11-12, 18:45–19:00 UTC: **nothing to land** — main is still 77b4ee84 (train 12)
+
+**No train was built: nothing has changed since runs 16 and 17.** No helper has saved game work for 9.5 hours; no new `gate/*` test run (newest is main's own, 13:12 UTC),
+no new lock (newest 01:01 UTC), no new work branch. Newest saves: PLAN-75 documents (plan75, 6 h 20 min, documents only), campaign battles (nofightit, 9 h 40 min),
+freeze fix (freezefix, 10 h, stopped with handoff).
+Candidates by the rule (own test run in the last 8 h, not on main): only the old train 11 commit d1253a70 — its content landed in trains 11b/12 except the
+**Kheibar freeze fix**, whose run there has `smooth-pc` red (+ `audio`), so it is skipped (look change with a smooth gate red).
+**Campaign battles on the map by days** (nofightit, run 6cdd9f53, 28 of 28 on an old main) is now older than 8 h and unchanged: 52 commits behind main,
+12 conflicts in 60 files, needs the army-token odds pill pointed at the new battle odds (run 15 below) — a helper's job, not conflict resolution.
+All other parked branches: unchanged (table in run 16 below still holds).
+
+**Main's tests (unchanged):** 77b4ee84 passed 28 of 28 at 13:35 UTC, automatic re-run 25 of 28 at 14:30 UTC (`audio`, `icons`, `cfclient` — the known flaky tests;
+smooth-pc, smooth-mp, grandsmooth green). Status on main reads RED. Nobody owns the flaky tests.
+
+**Live site:** https://abdullahhaidar5-ux.github.io/ww3/ serves main 77b4ee84 (page checked byte for byte at 18:51 UTC).
+
+## Finished and waiting
+| idea (branch) | own test run | result | waits for |
+|---|---|---|---|
+| Campaign battles on the map by days (nofightit) | 6cdd9f53 | all green, on an old main (52 commits behind) | a helper (nobody active): merge main + token odds, one test run |
+| Kheibar freeze fix (freezefix) — helper stopped (handoff) | 4e92b695 | smooth-pc + audio red; head c18b9467 untested | a fix for the slow-frame tail, two clean smooth-pc runs |
+
+## In progress / not ready
+| idea (branch) | last save | state |
+|---|---|---|
+| PLAN-75 + handover note for a fresh ORCH (plan75) | 6 h 20 min | documents only |
+| Battle report card + front lines (finish-report) — stopped (handoff) | 17 h | tutorial + migrate-down red; nobody re-running |
+| Infiltrators look like spies (spylook) | 16.5 h | cfclient + migrate-down red, far behind main |
+| Trees on the campaign map (maptrees) — stopped (handoff) | 23 h | needs a fresh run on today's main |
+| Campaign real supply (c-supply) — stopped (handoff) | 33 h | parked, notes only ahead of main |
+
+**Nobody has saved any game work in the last 9.5 hours. No helper appears to be building.** Open queue items are untaken.
+
+## Not started by anyone
+- **Fight-it battle hangs at "PREPARING GRAPHICS… 78%"** on Abdullah's Windows laptop (suggested fix in `orch/HANDOFF-freezefix.md` on orch/freezefix).
+- **Flaky tests** (`cfclient` group, `tutorial`, `mpsync`, `migrate*`, `audio`, `icons`): no owner; main's own status is red because of them.
+
+## Locks with nothing saved (90+ min, no work branch of that name)
+- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Army standards** (`taken/army-standards`) — 2+ days old, stale. No new locks (33 in all, newest 01:01 UTC).
+
+---
+(previous runs below)
+
 # STATE — conductor run 17 on 2026-11-12, 16:49–17:05 UTC: **nothing to land** — main is still 77b4ee84 (train 12)
 
 **No train was built: nothing has changed since run 16.** No helper has saved game work for 7.5 hours; no new `gate/*` test run, no new lock, no new work branch.
