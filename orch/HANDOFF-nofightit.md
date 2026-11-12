@@ -1,12 +1,12 @@
-# Handoff: orch/nofightit (campaign battles fought on the map by days, no real-time battle in the grand campaign) — ready for the conductor, NOT landed
+# Handoff: orch/nofightit (campaign battles fought on the map by days, no real-time battle in the grand campaign) — ready for the conductor (28/28 green), NOT landed
 
 Decision: Abdullah Wed 2026-11-11 23:57 Chicago "Abandon battles in grand campaign. Turn it into eu 4 rules", 23:58 "No and now" (orch/DECISIONS.md).
 All three steps are in: rules (`src/13a-gwar.js`), battle / siege windows, result cards and map markers (`src/13ab-gwarui.js`), removal of the live battle with its leftovers + docs + guards.
 
 State (Thu 2026-11-12, second run)
 - Merged main 77b4ee8 (trains 10-12). Tested commit: `bba4a87` (branch `gate/bba4a87d07`). Commits after it: pictures only (`49d60ba`) and this note.
-- GitHub test run on bba4a87: **27 of 28 green** (grand, grandlive, grandsmooth, smooth-pc, smooth-mp, decisions, save, smoke all green).
-  Red: `audio` only - known flaky on main; it failed on a different check in each run ("sound sprite sheet loads", then "a voice ducks music") and this branch touches no sound. Re-run audio before landing.
+- GitHub test run on bba4a87: **28 of 28 green** (third run, Thu 23:56 UTC: only the failed sound check was re-run twice; it passed - AUDIO PASS).
+  The sound check is flaky on main too (same main commit 77b4ee8 passed and failed): `orch/audio.mjs` waits 20 s for the sound sheet, slow runners miss it. This branch touches no sound.
   (First run on 159b8b1 had `decisions` red from two merge leftovers - fixed in bba4a87.) Both allowed test runs are used.
 
 What the merge changed (one source of truth for odds)
