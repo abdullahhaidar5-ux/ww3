@@ -18,11 +18,11 @@ function vohPlay(fac,key,over){const buf=VOHB[fac],M=VOH[fac];if(!buf||typeof bu
    small print. At most 3 lines, each fades after ~6 s. A line that knows where it happened (log(team,msg,kind,x,y) from the sim, or the
    town ping raised next to it) can be clicked to move the camera there; Space jumps to the newest such place. View only. ===== */
 const RADF={pos:null,tp:null,last:null,n:0};
-const RAD_KIND=[[/under attack|assault|inbound|incoming|REVOLT|turn on us|take cover/i,'atk','⚠'],[/spotted|sighted|detected|flank|moving out|contact/i,'eye','◉'],[/\blost\b|destroyed|killed|CUT OFF|casualt|shrinking/i,'lost','✖'],[/ ready\.$|complete\.|secured|captured|is ours|taken up arms/i,'done','✔'],[/reinforcement|arrived|airborne|drop/i,'plus','✚']];
+const RAD_KIND=[[/under attack|under fire|assault|inbound|incoming|REVOLT|turn on us|take cover/i,'atk','⚠'],[/spotted|sighted|detected|flank|moving out|contact/i,'eye','◉'],[/\blost\b|destroyed|killed|CUT OFF|casualt|shrinking/i,'lost','✖'],[/ ready\.$|complete\.|secured|captured|is ours|taken up arms/i,'done','✔'],[/reinforcement|arrived|airborne|drop/i,'plus','✚']];
 function radKind(m){for(const r of RAD_KIND)if(r[0].test(m))return r;return [null,'msg','›'];}
 function radCss(){if(document.getElementById('radCss'))return;const st=document.createElement('style');st.id='radCss';
   st.textContent='#log div{display:flex;align-items:baseline;gap:6px;font-size:12.5px;padding:3px 9px 3px 6px}#log div i{font-style:normal;flex:none;width:13px;text-align:center;font-size:11px;color:#9fb0a6}#log div i.atk{color:#ff8a70}#log div i.eye{color:#ffd27a}#log div i.lost{color:#ff8a70}#log div i.done{color:#8fe3a4}#log div i.plus{color:#8fc7ff}#log div small{font:500 11px/1.2 system-ui,sans-serif;color:#9aa79f;margin-left:4px}#log div.go{pointer-events:auto;cursor:pointer}#log div.go:hover,#log div.go.vhov{background:rgba(30,40,34,.9);color:#fff}#log div.go:after{content:"\\25B8";color:#c9a227;margin-left:2px;font-size:10px}';document.head.append(st);}
-function radFeed(m,k,x,y,nat){const el=document.getElementById('log');if(!el||!m)return null;radCss();const now=performance.now();
+function radFeed(m,k,x,y,nat){const el=document.getElementById('log');if(!el||!m||SET.radio===0)return null;radCss();const now=performance.now();
   if(x==null&&RADF.tp&&now-RADF.tp.t<400&&(k==='bad'||k==='w'||k==='g')){x=RADF.tp.x;y=RADF.tp.y;}
   const d=document.createElement('div'),K=radKind(m),i=document.createElement('i');d.className=k||'';i.className=K[1];i.textContent=K[2];d.append(i,document.createTextNode(m));d._t=now;d._k=k;
   if(nat&&nat!==m){const sm=document.createElement('small');sm.textContent=nat;d.append(sm);}
