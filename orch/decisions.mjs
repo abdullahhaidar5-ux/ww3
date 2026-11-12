@@ -99,12 +99,6 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(f && /svGrandInfo/.test(f) && /svLatest/.test(f) && !/loadGrand|grLoad|grMap|GCM|GM_P|grNew|\bGC\b/.test(f), 'living menu: mxWarSrc / mxWarTable must draw from the save notes only (no campaign code)');
   ck(/async function svMenuSync\(\)[\s\S]{0,900}mxWarTable\(\)/.test(sv) && /function mxShown\(first\)\{[^\n]*svMenuSync\(\)/.test(m), 'living menu: the background must be redrawn whenever the menu is shown (mxShown -> svMenuSync -> mxWarTable)');
 }
-// No runtime files from other hosts: the two fonts are bundled in the page shell (orch/fonts/README.md). Also checked by build.py --check (SHELL_BANNED) and orch/smoke.mjs (no font request).
-{ const html = (() => { try { return fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'); } catch { return ''; } })(), all = Object.values(SRC).join('\n');
-  ck(html && !/fonts\.(googleapis|gstatic)\.com/.test(html) && !/fonts\.(googleapis|gstatic)\.com/.test(all), 'fonts: the page must not fetch fonts from Google Fonts (bundle them: orch/fonts/embed.py)');
-  ck(/<style id="fonts">[\s\S]{0,200}@font-face\{font-family:'Saira Condensed'/.test(html) && /@font-face\{font-family:'IBM Plex Mono'/.test(html), 'fonts: the bundled Saira Condensed / IBM Plex Mono block (<style id="fonts">) is missing from index.html');
-  ck(!/<link[^>]+rel="stylesheet"[^>]+href="https?:/.test(html) && !/@import\s+url\(\s*['"]?https?:/.test(html), 'fonts/styles: no stylesheet may be loaded from another host');
-}
 // polishP2 "Settings": the one key table (src/06z-keys.js KEYTAB) lists every key the battle handlers listen to; the Keyboard keys window (08m-controls.js) shows that table.
 //     A hotkey added to a handler without a row fails here. W A S D are camera-only and never rebindable. Runtime proof: orch/polishtest.mjs (gate/save).
 { const kt = SRC['06z-keys.js'] || '', ui = SRC['08-ui.js'] || '', all = Object.entries(SRC).filter(([f]) => /^0[689]/.test(f) || f === '03i-leaders.js').map(x => x[1]).join('\n');

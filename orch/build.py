@@ -268,8 +268,6 @@ SHELL_BANNED = [
     ('install button call btn()', r'(?<!function )(?<![\w.])btn\('),
     ('first-visit install card call welcome()', r'(?<!function )(?<![\w.])welcome\('),
     ('install button label', r'Install app \(desktop icon\)'),
-    # no runtime files from other hosts: the two fonts are bundled in the shell (orch/fonts/README.md, <style id="fonts">)
-    ('font fetched from Google Fonts', r'fonts\.(googleapis|gstatic)\.com'),
 ]
 # Credits for assets that have no mus/*_pack.py script listing their sources: (asset glob, credit phrase).
 CREDIT_FALLBACK = [

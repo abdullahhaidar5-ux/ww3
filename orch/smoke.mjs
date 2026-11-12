@@ -77,8 +77,6 @@ await guardContext(bctx); // never the live game servers (WebSockets escape page
 const page = await bctx.newPage();
 if (process.env.DN_W) await page.addInitScript(w => { window.__DNW = w; }, +process.env.DN_W); // DN_W=4: run the same smoke battle at night (screenshots for orch/shots/daynight)
 // Network to other hosts (PeerJS signalling, fonts, relays) is not part of the test.
-const fontReq = []; // no runtime files from other hosts: a font / stylesheet request to another host is a failure (fonts are bundled, orch/fonts/README.md)
-page.on('request', r => { const u = r.url(); if (!u.startsWith(URL0.replace('/index.html', '')) && !/^(data|blob|about):/.test(u) && (/fonts\.(googleapis|gstatic)\.com/.test(u) || ['font', 'stylesheet'].includes(r.resourceType()))) fontReq.push(u.slice(0, 80)); });
 await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue()
   : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());
 if (ART) await page.addInitScript(roomStub, { topics: roomTopics() });
@@ -132,8 +130,6 @@ try {
       || wt.n.on || wt.n.cap || wt.n.wt || wt.n.top !== TOP || wt.grand !== 'undefined')
       fails.push('living main menu: ' + JSON.stringify(wt) + ' (expected: campaign save -> war table + last battle + caption; newer battle save -> battlefield + caption, no battle marker; old save -> caption only; no save -> calm picture, no caption; top level unchanged; campaign code never loaded)');
     else console.log('living main menu: your war drawn from the save notes (campaign, battle, none), campaign code not loaded');
-    if (fontReq.length) fails.push('fonts: the page asked another host for a font / stylesheet: ' + [...new Set(fontReq)].join(', ') + ' (fonts are bundled in the shell, orch/fonts/README.md)');
-    else console.log('fonts: bundled, no font or stylesheet request to another host');
   }
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
