@@ -155,15 +155,17 @@ function gwJoin(B,a){if(!a.u.length||a.bt)return false;const hostA=grAtWar(a.o,B
   else{B.md=Math.round((B.md*B.vd+m*v)/Math.max(1,B.vd+v));B.vd0+=Math.round(v);B.nd0+=n;B.def.push(a.id);}
   B.v0=(B.v0||0)+v;a.bt=B.id;a.path=[];a.pg=0;
   grLog(a.nm+' ('+GCM.nats.get(a.o).name+') joins the battle of '+GCM.P[B.p].n+'.',a.o===GC.me||B.an===GC.me||B.dn===GC.me?GC.me:a.o);return true;}
+/* keep the last results for the result cards; n = running number (cards show each result once) */
+function gwCard(R){GC.brn=(GC.brn|0)+1;R.n=GC.brn;GC.br.push(R);if(GC.br.length>12)GC.br.shift();return R;}
 function gwClose(B){const i=GC.bt.indexOf(B);if(i>=0)GC.bt.splice(i,1);for(const a of GC.armies)if(a.bt===B.id)a.bt=0;B.done=1;}
 /* the battle is over: write morale back, record the result card, then the ONE settle (grSettle: retreats, logs, tradition, war support, generals, salvage) */
 function gwEnd(B,win,how){const P=GCM.P[B.p],att=GC.armies.filter(a=>B.att.includes(a.id)),def=GC.armies.filter(a=>B.def.includes(a.id)),losers=win==='att'?def:att;
   for(const a of att)a.mor=Math.max(0,Math.min(gmMorMax(a),Math.round(B.ma)));for(const a of def)a.mor=Math.max(0,Math.min(gmMorMax(a),Math.round(B.md)));
   if(how==='wipe'||how==='sunk')for(const a of losers)a.u.length=0;
   const gen=side=>{const g=gwLead(grSideUnits(B,side));return g?gwGenName(g):'';};
-  const R={id:B.id,p:B.p,pn:P.n,an:B.an,dn:B.dn,win,how,d:B.d,t:GC.turn,day:GC.bd|0,na0:B.na0,nd0:B.nd0,la:B.la,ld:B.ld,va0:B.va0,vd0:B.vd0,va:B.va|0,vd:B.vd|0,ga:gen('att'),gd:gen('def'),sea:B.sea?1:0};
+  const R={id:B.id,p:B.p,pn:P.n,an:B.an,dn:B.dn,win,how,d:B.d,t:GC.turn,day:GC.bd|0,na0:B.na0,nd0:B.nd0,la:B.la,ld:B.ld,va0:B.va0,vd0:B.vd0,va:B.va|0,vd:B.vd|0,ga:gen('att'),gd:gen('def'),sea:B.sea?1:0,wa:[...new Set([B.an,...att.map(a=>a.o)])],who:[...new Set([B.an,B.dn,...att.map(a=>a.o),...def.map(a=>a.o)])]};
   if(how==='wipe'||how==='sunk'){if(win==='att')R.ld=B.nd0;else R.la=B.na0;}
-  GC.br.push(R);if(GC.br.length>12)GC.br.shift();
+  gwCard(R);
   gwClose(B);grSettle(B,win,how);
   if(how==='shatter')for(const a of losers){if(GC.armies.includes(a)){a.mor=0;for(const r of a.u)r[1]=Math.max(13,Math.round(r[1]*.9));}}
   gwScanAt(B.p);return R;}
@@ -180,7 +182,7 @@ function gwTick(){gwS();for(const B of GC.bt.slice().sort((x,y)=>x.id-y.id)){if(
     B.att=B.att.filter(id=>GC.armies.some(a=>a.id===id&&a.at===B.p&&a.u.length));B.def=B.def.filter(id=>GC.armies.some(a=>a.id===id&&a.at===B.p&&a.u.length));
     if(B.garr&&GC.prov[B.p]&&GC.prov[B.p].o!==B.dn)B.garr=false;
     if(!B.att.length){gwEnd(B,'def','left');continue;}if(!B.def.length&&!(B.garr&&GC.prov[B.p].gar.length)){gwEnd(B,'att','left');continue;}
-    const r=gwStep(B,gwCtx(B,0),gwRng(B.id,B.d+1,0));if(r)gwEnd(B,r.win,r.how);}
+    if(GC.prov[B.p])GC.prov[B.p].hot=GC.turn;const r=gwStep(B,gwCtx(B,0),gwRng(B.id,B.d+1,0));if(r)gwEnd(B,r.win,r.how);}
   for(const S of GC.sg.slice().sort((x,y)=>x.id-y.id))if(GC.sg.includes(S))gwSiegeDay(S);}
 /* run the battle days of this month up to `day` (1..30): the real-time clock calls it as days pass, the month end catches up the rest */
 function gwTo(day){gwS();day=Math.max(0,Math.min(30,day|0));while(GC.bd<day){GC.bd++;gwTick();}}
@@ -230,7 +232,7 @@ function gwSiegeDay(S){const st=GC.prov[S.p],P=GCM.P[S.p];
   const lead=L.find(a=>a.o===S.an);if(lead&&GC.nat[S.an]&&GC.nat[S.an].ai){const q=gwAssaultOdds(S);if(q.ok&&(q.ratio>=3||(S.br>=1&&q.ratio>=1.6)))gwAssaultDo(S);}}
 function gwSiegeEnd(S,txt){const st=GC.prov[S.p],L=gwBesiegers(S),me=S.dn===GC.me||L.some(a=>a.o===GC.me)?GC.me:S.an;const i=GC.sg.indexOf(S);if(i>=0)GC.sg.splice(i,1);
   st.gar=[];st.sf=1;grLog(txt,me);for(const a of L)for(const r of a.u)r[2]+=30;
-  GC.br.push({id:S.id,p:S.p,pn:GCM.P[S.p].n,an:S.an,dn:S.dn,win:'att',how:'siege',d:S.d,t:GC.turn,day:GC.bd|0,na0:gwCount(L.map(a=>({u:a.u}))),nd0:0,la:0,ld:0,ga:'',gd:'',sg:1,txt});if(GC.br.length>12)GC.br.shift();
+  gwCard({id:S.id,p:S.p,pn:GCM.P[S.p].n,an:S.an,dn:S.dn,win:'att',how:'siege',d:S.d,t:GC.turn,day:GC.bd|0,na0:gwCount(L.map(a=>({u:a.u}))),nd0:0,la:0,ld:0,ga:'',gd:'',sg:1,txt,wa:[...new Set([S.an,...L.map(a=>a.o)])],who:[...new Set([S.an,S.dn,...L.map(a=>a.o)])]});
   try{gfBattle({an:S.an,dn:S.dn},'att');}catch(e){}try{wsBattle({an:S.an,dn:S.dn,p:S.p,att:L.map(a=>a.id),def:[]},'att');}catch(e){}
   grCapture(S.p);}
 /* storming the walls: only line troops (not the support row) go in; the garrison fights from cover, breaches help */
