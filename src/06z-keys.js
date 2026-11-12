@@ -16,6 +16,7 @@ const KEYTAB=[
   {ctx:'battle',grp:'Camera',name:'Tilt the camera',fix:'Page Up · Page Down'},
   {ctx:'battle',grp:'Camera',name:'Zoom in / out',fix:'+ · −'},
   {id:'hq',ctx:'battle',grp:'Camera',name:'Jump to your headquarters',def:'h'},
+  {ctx:'battle',grp:'Camera',name:'Look at the place of the last radio report',fix:'Space'},
   {ctx:'battle',grp:'Selection',name:'Select your whole army',fix:'Ctrl + A'},
   {id:'seltype',ctx:'battle',grp:'Selection',name:'Select every unit of the same type',def:'t'},
   {ctx:'battle',grp:'Selection',name:'Select squad / make the selection a squad',fix:'1 – 9 · Ctrl + 1 – 9'},
