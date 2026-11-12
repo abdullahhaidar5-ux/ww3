@@ -45,7 +45,9 @@ function SET_POSTURE(){return !window.NOPOSTURE;}
 function squadPost(e,o){if((e.supp||0)>.5)return 1;if(G.t-(e.lastFire||-9)>3)return 0;const ud=o.userData;if(!(G.t-(ud.cvT||-9)<1)){ud.cvT=G.t;try{ud.cv=coverAt(e.x,e.y)?1:0;}catch(_){ud.cv=0;}}return ud.cv?.5:0;}
 function syncScene(dt){const live=new Set();
   // one object that fails to update must never freeze the whole picture: skip it (logged once) and draw the rest
-  for(const e of G.ents){try{if(e.dead)continue;live.add(e.id);let o=OBJ.get(e.id);if(o&&o.userData.tm!==undefined&&o.userData.tm!==e.team){SCN.remove(o);o=null;}if(!o){o=makeObj(e);o.userData.tm=e.team;OBJ.set(e.id,o);}
+  for(const e of G.ents){try{if(e.dead)continue;live.add(e.id);let o=OBJ.get(e.id);if(o&&o.userData.tm!==undefined&&o.userData.tm!==e.team){SCN.remove(o);o=null;}if(!o){o=makeObj(e);o.userData.tm=e.team;if(!e.isB&&!o.userData.model)o.userData.bg=MODELS.gen|0;OBJ.set(e.id,o);}
+    // a unit that had to start as a simple box figure (its 3D model was still loading - slow PC or connection) gets the real model as soon as it lands
+    else if(o.userData.bg!==undefined&&o.userData.bg!==(MODELS.gen|0)){o.userData.bg=MODELS.gen|0;const m2=makeObj(e);if(m2&&m2.userData.model){SCN.remove(o);o=m2;o.userData.tm=e.team;OBJ.set(e.id,o);}else if(m2)SCN.remove(m2);}
     const v=vis(e);
     // off-screen units and buildings are neither drawn nor have their 3D parts (49 bones per soldier) recomputed; the
     // margin keeps shadows cast from just outside the view

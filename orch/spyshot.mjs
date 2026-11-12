@@ -123,6 +123,10 @@ try {
     console.log('spy hid', JSON.stringify(await page.evaluate(() => window.__spies.map(u => !!u.hid))));
     await frames(page, 4); await page.screenshot({ path: path.join(dir, `spy-${P}-hidden.png`), timeout: 300000, clip: CLIP });
   }
+  if (argS('late', '')) { // a soldier built while the models were still loading starts as a box figure and must switch to the real model once it lands
+    const r = await page.evaluate(async () => { const [x, y] = window.__at; MODELS.ready = false; const u = addUnit(0, 'inf', x + 60, y + 40); u.ox = u.x; u.oy = u.y; renderFrame(1 / 60); const box = !OBJ.get(u.id).userData.model;
+      MODELS.ready = true; MODELS.gen = (MODELS.gen | 0) + 1; renderFrame(1 / 60); return { box, swapped: !!OBJ.get(u.id).userData.model }; });
+    console.log('spy late-model', JSON.stringify(r), r.box && r.swapped ? 'OK' : 'FAIL'); if (!(r.box && r.swapped)) process.exitCode = 1; }
   await ctx.close();
 } catch (e) { console.error(e); process.exitCode = 1; }
 if (errs.length) console.log(errs.slice(0, 20).join('\n'));

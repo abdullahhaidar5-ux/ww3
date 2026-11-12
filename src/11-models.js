@@ -107,7 +107,7 @@ function parseModel(k){if(MQ.parsed[k])return MQ.parsed[k];return MQ.parsed[k]=(
     const g=await new Promise((res,rej)=>{try{ld.parse(b,'',res,rej);}catch(e){rej(e);}});const P={scene:g.scene,anims:g.animations};
     P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);if(m.userData.sgGloss!=null){m.roughness=Math.min(1,Math.max(.35,1-m.userData.sgGloss*.7));m.metalness=.15;}if(m.transmission>0){m.opacity*=1-m.transmission;m.transmission=0;}}}});
     try{mergeProto(P);}catch(e){console.warn('merge',k,e);}
-    MODELS.proto[k]=P;MODELS.ready=true;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
+    MODELS.proto[k]=P;MODELS.ready=true;MODELS.gen=(MODELS.gen|0)+1;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
     // the effects module keeps a list of model geometry it must never free; a model added later must join it
     try{GC_PROTO=null;}catch(e){}return true;}
   catch(e){MODELS.err=String(e&&e.message||e);if(!MODELS.failed.includes(k))MODELS.failed.push(k);delete MQ.bytes[MODEL_FILES[k]];setTimeout(()=>{delete MQ.parsed[k];},0);console.warn('3D model '+k+' failed to load:',e);return false;}})();}
@@ -609,8 +609,8 @@ function spyPaint(geo,skel,L,tex){const C=SPYC[L]||SPYC[0],pa=geo.attributes.pos
   const col={};for(const r of['top','arm','fore','leg','shoe','skin','head'])col[r]=lin(r==='skin'||r==='head'||(r==='fore'&&!C.fore)?SPYSKIN:C[r]);
   for(let i=0;i<n;i++){const r=R[i];if(!r)continue;const c=col[r],m=lum?Math.max(.55,Math.min(1.4,Lm[i]/Math.max(.02,sum[r]/cnt[r]))):1;ca.setXYZ(i,c.r*m,c.g*m,c.b*m);ua.setXY(i,-4,-4);}
   // no helmet: whatever the soldier wears on its head is pulled in under the hair / cap (top of the head only, the face stays)
-  {const bp=nm=>{const i=skel.bones.findIndex(b=>b.name===nm);return i<0?null:new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(skel.boneInverses[i]).invert());},hb=bp('head'),ht=bp('HeadTop_End'),hi=bp('hips');
-    if(hb&&hi){const kb=hb.distanceTo(hi)/5.2,up=ht&&ht.distanceTo(hb)>1e-6?ht.clone().sub(hb).normalize():hb.clone().sub(hi).normalize(),c=hb.clone().add(up.clone().multiplyScalar(1.35*kb)),v=new THREE.Vector3(),rm=.9*kb;
+  {const bp=nm=>{const i=skel.bones.findIndex(b=>b.name===nm);return i<0?null:new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(skel.boneInverses[i]).invert());},hb=bp('head'),hi=bp('hips');
+    if(hb&&hi){const kb=hb.distanceTo(hi)/5.2,up=hb.clone().sub(hi).normalize()/* hips to neck: the rigs' head-top joints are not reliable */,c=hb.clone().add(up.clone().multiplyScalar(1.35*kb)),v=new THREE.Vector3(),rm=.9*kb;
       for(let i=0;i<n;i++){if(R[i]!=='head')continue;v.fromBufferAttribute(pa,i).sub(c);if(v.dot(up)<.12*kb)continue;const d=v.length();if(d>rm){v.multiplyScalar(rm/d).add(c);pa.setXYZ(i,v.x,v.y,v.z);}}pa.needsUpdate=true;}}
   ca.needsUpdate=true;ua.needsUpdate=true;}
 // the owner's "this one is hidden" mark: a small eye above the spy (one instanced draw for every spy on the map; 06-view shows it)
