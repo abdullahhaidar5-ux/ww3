@@ -16,7 +16,7 @@ function wallHintEl(){let h=document.getElementById('wallHint');if(!h){h=documen
 function tactRow(el,s){
   const h=wallHintEl();
   if(G.wallM&&!tactBuilders().length){G.wallM=null;G.wallP=null;}
-  if(G.wallM){const k='Fortification line';h.hidden=false;h.textContent=(G.wallP?`${k}: ${TOUCHUI?'tap':'click'} where it ends (or drag)`:`${k}: drag to trace a line, or ${TOUCHUI?'tap':'click'} where it starts`)+` · costs ${DUG[G.wallM].cost} per piece · ${TOUCHUI?'tap ✕':'right-click'} to cancel`;}else h.hidden=true;
+  if(G.wallM){const k='Fortification line';h.hidden=false;h.textContent=(G.wallDn?`${k}: keep dragging along the path, release to build`:G.wallP?`${k}: ${TOUCHUI?'tap':'click'} where it ends`:`${k}: drag to trace a line, or ${TOUCHUI?'tap':'click'} where it starts`)+` · costs ${DUG[G.wallM].cost} per piece · ${TOUCHUI?'tap ✕':'right-click'} to cancel`;}else h.hidden=true;
   if(s.length===1&&!s[0].isB&&s[0].crit){const d=document.createElement('div');d.className='morale';d.innerHTML='<span class="ml" style="color:#ea8a5a">Damaged</span><span style="font-size:12px;opacity:.9">'+critText(s[0].crit)+'</span>';d.title='A Construction Vehicle (or the War Factory yard) repairs these.';el.append(d);}
   const own=tactOwn(),inf=own.some(digCan),doz=own.filter(u=>u.kind==='dozer'),air=own.filter(u=>u.s.dom==='air'&&(u.s.cls==='heli'||u.s.cls==='jet'));if(!inf&&!doz.length&&!air.length)return;
   const r=document.createElement('div');r.className='cmdrow tact';const mk=(t,ti,fn,on)=>{const b=document.createElement('button');b.textContent=t;b.title=ti;b.onclick=fn;if(on)b.classList.add('on');r.append(b);return b;};
@@ -54,6 +54,6 @@ cv.addEventListener('contextmenu',e=>{if(G&&G.wallM){e.preventDefault();}});
 // live preview while tracing: the path, the pieces it will become and the total supply cost (drawn on the HUD canvas)
 function wallPreview(c){if(!G||!G.wallM||!G.wallP)return;const w=screenToWorld(mouse.x,mouse.y);const P=wallPts(w);if(!P)return;
   const pl=wallPlan(G.wallM,P),cost=pl.length*DUG[G.wallM].cost,T=G.teams[ME],ok=T.credits>=cost,col=ok?'rgba(217,185,122,.95)':'rgba(234,90,64,.95)',sc=(x,y)=>toScreen(x,groundH(x,y)+2,y);
-  c.save();c.lineWidth=3;c.strokeStyle=col;c.lineJoin='round';c.beginPath();for(let i=0;i<P.length;i+=2){const p=sc(P[i],P[i+1]);if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);}c.stroke();
+  c.save();c.textAlign='left';c.lineWidth=3;c.strokeStyle=col;c.lineJoin='round';c.beginPath();for(let i=0;i<P.length;i+=2){const p=sc(P[i],P[i+1]);if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);}c.stroke();
   c.fillStyle=col;for(const q of pl){const p=sc(q.x,q.y),dx=Math.cos(q.a)*14,dy=Math.sin(q.a)*14,a=sc(q.x-dx,q.y-dy),b=sc(q.x+dx,q.y+dy);c.lineWidth=7;c.strokeStyle='rgba(60,45,25,.85)';c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();c.lineWidth=3;c.strokeStyle=col;c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();}
   const e=sc(P[P.length-2],P[P.length-1]);c.font='600 14px system-ui,sans-serif';c.fillStyle='rgba(24,32,28,.9)';const t=pl.length+' pieces · '+cost+' supplies'+(ok?'':' (not enough)');const tw=c.measureText(t).width;c.fillRect(e.x+12,e.y-28,tw+14,24);c.fillStyle=ok?'#f0e3c4':'#ff9a80';c.fillText(t,e.x+19,e.y-11);c.restore();}
