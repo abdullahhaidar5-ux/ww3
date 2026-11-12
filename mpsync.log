@@ -1,0 +1,92 @@
+[11s] both pages loaded (menu model downloads done after 10s / 10s)
+[11s] host lobby open, code v0ggeb
+[11s] client joining
+[38s] battle: US vs RU on strait; client is slot 1
+[212s] both pages finished loading
+[212s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[212s] client owns hq,harv,dozer,barracks,factory,airfield,depot,inf,inf; ordering 2 units to attack-move on the host base
+[215s] client order: 2/2 of the client's units moved on the host
+[217s] check @1.0 min t=60s: host 56 entities, client side sees 18 (own 18); client has 18 (own 18); missing 0, extra 0, off-position 0, mismatched 0; credits host 4959 client 4959
+[217s] --reconnect: the client's connection is cut for 12 game-s
+[217s] --reconnect: the client (now showing 0 entities, 0 own) thinks it lost the host and reconnects
+[217s] --reconnect: after 0.2 s the client is reconnected
+[218s] right after reconnecting t=77s: host 61 entities, client side sees 22 (own 22); client has 22 (own 22); missing 0, extra 0, off-position 0, mismatched 0; credits host 2813 client 2813
+[221s] check @2.5 min t=150s: host 68 entities, client side sees 31 (own 29); client has 31 (own 29); missing 0, extra 0, off-position 0, mismatched 0; credits host 1163 client 1163
+[249s] check @4.0 min t=240s: host 72 entities, client side sees 31 (own 31); client has 31 (own 31); missing 0, extra 0, off-position 0, mismatched 0; credits host 1338 client 1338
+[264s] traffic host->client 2286 KB in 2566 messages, client->host 20 KB in 118; client lag max 0.00 game-s; 18 ms per 0.5 s step
+[264s] 23 live checks, 0 out of tolerance; up to 2 enemy entities were in the client's view at once
+[264s] --reconnect: at t=240s the client's side is still the player's
+peak memory (node + browser, summed RSS): 4366 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: client console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/v0ggeb?role=host&key=tr9vkn0n1r60cann6n' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: client console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/gc-v0ggeb?role=client&id=ww3p-nvhwr91m' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MPSYNC PASS (264s) — screenshots orch/out/mp-host.png, orch/out/mp-client.png (this run: orch/out/runs/20261112-193121-mpsync/)
+[16s] both pages loaded (menu model downloads done after 13s / 13s)
+[16s] host lobby open, code lbroop
+[16s] client joining
+[19s] spectator waiting in the lobby (players in lobby: 1; lobby shows "watching": true)
+[51s] battle: US vs RU on strait; client is slot 1
+[312s] both pages finished loading
+[312s] spectator is watching (host has 1 spectator; 2 sides)
+[312s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[313s] client owns hq,harv,dozer,barracks,factory,airfield,depot,inf,inf; ordering 2 units to attack-move on the host base
+[316s] client order: 2/2 of the client's units moved on the host
+[318s] check @1.0 min t=60s: host 52 entities, client side sees 18 (own 18); client has 18 (own 18); missing 0, extra 0, off-position 0, mismatched 0; credits host 4875 client 4875
+[319s] check @1.0 min spectator: host 52 entities, spectator 52 (sides 0,1,2); missing 0, off 0, extra 0
+[320s] spectator's forged order was ignored by the host
+[322s] spectator left; host now has 0 spectators
+[323s] right after the spectator left t=91s: host 57 entities, client side sees 22 (own 22); client has 22 (own 22); missing 0, extra 0, off-position 0, mismatched 0; credits host 2931 client 2931
+[366s] spectator rejoined mid-battle after 43 s
+[367s] after the spectator rejoined t=93s: host 57 entities, client side sees 22 (own 22); client has 22 (own 22); missing 0, extra 0, off-position 0, mismatched 0; credits host 2937 client 2937
+[368s] after the spectator rejoined spectator: host 57 entities, spectator 57 (sides 0,1,2); missing 0, off 0, extra 0
+[371s] check @2.5 min t=150s: host 70 entities, client side sees 26 (own 26); client has 26 (own 26); missing 0, extra 0, off-position 0, mismatched 0; credits host 1562 client 1562
+[371s] check @2.5 min spectator: host 70 entities, spectator 70 (sides 0,1,2); missing 0, off 0, extra 0
+[402s] check @4.0 min t=240s: host 78 entities, client side sees 33 (own 32); client has 33 (own 32); missing 0, extra 0, off-position 0, mismatched 0; credits host 1363 client 1363
+[403s] check @4.0 min spectator: host 78 entities, spectator 78 (sides 0,1,2); missing 0, off 0, extra 0
+[419s] traffic host->client 2485 KB in 2734 messages, client->host 25 KB in 179; client lag max 0.00 game-s; 25 ms per 0.5 s step
+[419s] 22 live checks, 0 out of tolerance; up to 1 enemy entities were in the client's view at once
+[419s] client replay: 3787 frames, 150 KB, 242 s, own view
+[420s] spectator replay: 2161 frames, 217 KB, 242 s, everything
+peak memory (node + browser, summed RSS): 5810 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: spec console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: spec console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/lbroop?role=host&key=6pw4ek55ep9g6u94jv' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: client console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/gc-lbroop?role=client&id=ww3p-ujqpwh6b' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: spec console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/gc-lbroop?role=client&id=ww3p-nwl41ozc' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: spec console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/gc-lbroop?role=client&id=ww3p-s9973p60' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MPSYNC PASS (420s) — screenshots orch/out/mp-host.png, orch/out/mp-client.png (this run: orch/out/runs/20261112-193546-mpsync/)
+[12s] both pages loaded (menu model downloads done after 10s / 10s)
+[12s] host lobby open, code rdx4g5
+[12s] client joining
+[36s] battle: US vs RU on strait; client is slot 1
+[209s] both pages finished loading
+[209s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[211s] client owns harv,dozer,inf,inf,hq,barracks,factory,airfield,depot; ordering 2 units to attack-move on the host base
+[233s] client order: 2/2 of the client's units moved on the host
+[271s] check @1.0 min t=60s: host 55 entities, client side sees 18 (own 18); client has 18 (own 18); missing 0, extra 0, off-position 0, mismatched 0; credits host 4959 client 4959
+[276s] --reconnect: the client's connection is cut for 12 game-s
+[323s] --reconnect: the client (now showing 0 entities, 0 own) thinks it lost the host and reconnects
+[325s] --reconnect: after 2.5 s the client is reconnected
+[327s] right after reconnecting t=78s: host 58 entities, client side sees 22 (own 22); client has 22 (own 22); missing 0, extra 0, off-position 0, mismatched 0; credits host 2732 client 2732
+[373s] check @2.0 min t=121s: host 62 entities, client side sees 26 (own 26); client has 26 (own 26); missing 0, extra 0, off-position 0, mismatched 0; credits host 1070 client 1070
+[396s] traffic host->client 941 KB in 1332 messages, client->host 34 KB in 185; client lag max 0.70 game-s; network: 1333 messages delayed, avg 189 ms, worst 1312 ms; 9 ms per 0.1 s step
+[396s] 11 live checks, 2 out of tolerance; up to 0 enemy entities were in the client's view at once
+[396s] --reconnect: at t=121s the client's side is still the player's
+peak memory (node + browser, summed RSS): 4251 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: client console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/rdx4g5?role=host&key=w0z698vojlmcntlr9s' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: client console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/gc-rdx4g5?role=client&id=ww3p-21k035hi' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MPSYNC FAIL: client view diverged from the host in 2/11 live checks, e.g. t=121s: 13/26 visible entities missing, 0 more than 25 m off (396s)
