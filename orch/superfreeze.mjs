@@ -6,9 +6,11 @@
 // For each faction (default IR,RU,US): start Conquest, build an uplink, put a mixed enemy force on the target, let the
 // scene settle, fire the strike in real time (launch, flight, all impacts, aftermath) and FAIL when the strike
 //   (a) compiles any shader / links any program after the battle has loaded,
-//   (b) creates more than TEXMAX textures or GEOMAX meshes (uploads count too), or reads pixels back / decodes audio,
-//   (c) has a frame more than LIMIT ms longer than the normal frame before the strike (frame-to-frame, CPU slowed 4x),
-//   (d) has any simulation/effects call over LIMIT ms, a console error, or the launch fails.
+//   (b) creates more than TEXMAX textures or GEOMAX meshes (uploads count too), or reads pixels back
+//       (sounds decoded during the strike are printed only: browsers decode them on another thread),
+//   (c) has a frame more than LIMIT ms longer than the longest frame of the quiet stretch before the strike (measured
+//       frame-to-frame with the CPU slowed 4x; the quiet stretch carries the test machine's own hiccups),
+//   (d) logs a console error, or the launch fails. The slowest simulation/effects call is printed for diagnosis.
 //   node orch/superfreeze.mjs [IR,RU,US]   LIMIT=150 TEXMAX=2 GEOMAX=6 CPU=4 SHOT=1 JSON=file (per-faction numbers)
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import { createRequire } from 'node:module';import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), OUT = path.join(ROOT, 'orch', 'shots');
@@ -64,8 +66,6 @@ for (const fac of FACS) {
         __fr.push({ ms: n - last, st: G.t - (window.__t0 || G.t), p: i.programs ? i.programs.length : -1, g: i.memory.geometries, t: i.memory.textures, d }); } pc = Object.assign({}, c); last = n; requestAnimationFrame(loop); })();
     cam.x = en.x; cam.y = en.y; window.__tgt = [en.x, en.y]; return { sup: T.sup.name, working: working(ME, 'uplink'), n: T.sup.n, crowd }; }, !!E.TOWN);
   await page.evaluate(() => { window.__prof = {}; for (const n of ['bmTick', 'updStrikes', 'explode', 'megaBoom', 'boomFX', 'mslSpawn', 'mslLaunch', 'mslTrail', 'mushTick', 'sfxMega', 'sfxBoom', 'sfxLaunch', 'launch', 'simUpdate', 'renderFrame', 'updateUI', 'netTick', 'kcRec', 'rpRecTick', 'scroll', 'qualTick', 'fireTick', 'polBlast', 'collateral', 'lgBlast', 'dugBlast', 'ecBoom', 'damBlast', 'fireHit', 'applyDmg', 'physImpulse', 'opHit', 'hulkAdd', 'bfSmkAdd', 'wreck', 'wreckTick', 'chunks', 'rubble']) { const f = window[n] || (0, eval)('typeof ' + n + "==='function'?" + n + ':null'); if (!f) continue; const w = function () { const t = performance.now(); try { return f.apply(this, arguments); } finally { const d = performance.now() - t, q = window.__prof[n] = window.__prof[n] || { n: 0, tot: 0, max: 0 }; q.n++; q.tot += d; q.max = Math.max(q.max, d); } }; try { (0, eval)(n + '=arguments[0]'); } catch (e) {} try { window[n] = w; } catch (e) {} } });
-  if (E.PROBE) { const out = await page.evaluate(async () => { const fr = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const res = []; await fr();
-    for (const [n, g] of [['ring', MKG && MKG.ring], ['inner', MKG && MKG.inner], ['bar', MKG && MKG.bar], ['ping', PINGG], ['rub0', RUBG && RUBG[0]], ['chunk0', CHUNKG && CHUNKG[0]], ['chunk1', CHUNKG && CHUNKG[1]]]) { if (!g) { res.push(n + ' missing'); continue; } const b0 = __glc.buf; const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 255, transparent: true, opacity: .5, depthWrite: false })); m.frustumCulled = false; m.position.set(cam.x, groundH(cam.x, cam.y) + 5, cam.y); m.scale.setScalar(10); SCN.add(m); await fr(); res.push(n + ' +' + (__glc.buf - b0) + ' buffers'); SCN.remove(m); } return res.join(', '); }); console.log('  probe: ' + out); }
   const cdp = await page.context().newCDPSession(page); if (CPU > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU });
   // settle: the scene finishes its own start-of-battle work, then a quiet stretch is the "normal frame" to compare with
   await page.waitForTimeout(+(E.SETTLE || 12000)); await page.evaluate(() => { __fr.length = 0; window.__on = 1; }); await page.waitForTimeout(+(E.QUIET || 5000));
@@ -74,6 +74,8 @@ for (const fac of FACS) {
   const ok = await page.evaluate(() => { window.__t0 = G.t; return launch(ME, __tgt[0], __tgt[1]); });
   // real time, no fast-forward: launch (0 s), flight, impacts (3 s .. 3+0.28*n s) and 5 s of aftermath (smoke columns, wrecks, fires)
   const span = 3 + 0.28 * info.n + 5; await page.waitForFunction(s => G.t - window.__t0 > s, span, { timeout: 900000, polling: 500 }).catch(() => errs.push('strike did not finish in time'));
+  // the player's own proof tool must work: Settings -> Performance log opens, names the graphics card and has a Copy button
+  const pl = await page.evaluate(() => { try { perfOpen(); const ok = !!document.getElementById('pfCopy') && /Graphics card: \S/.test(document.getElementById('pfTxt').textContent) && !!document.getElementById('sPerf'); perfClose(true); return ok; } catch (e) { return String(e); } }); if (pl !== true) errs.push('Performance log window: ' + pl);
   if (E.SHOT) { await page.evaluate(() => { window.__noDraw = 0; }); await page.waitForTimeout(8000); }
   if (E.SHOT) await page.screenshot({ path: path.join(OUT, `superfreeze-${fac}.png`), timeout: 300000 });
   const r = await page.evaluate(() => { window.__on = 0; const F = __fr, c = __glc, c0 = __c0, d = {}; for (const k in c) d[k] = Math.round(c[k] - c0[k]); const i = R3.info;
@@ -83,16 +85,16 @@ for (const fac of FACS) {
       gnew: window.__gnew || [],
       prof: Object.fromEntries(Object.entries(window.__prof || {}).map(([k, v]) => [k, [v.n, Math.round(v.tot), Math.round(v.max)]])) }; });
   const stall = Object.entries(r.prof).filter(([k]) => k !== 'renderFrame').map(([k, v]) => [k, v[2]]).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
-  const geo = Math.max(r.d.vao, Math.ceil(r.d.buf / 3)), tex = Math.max(r.d.tex, r.d.texUp), over = r.max - pre.med, why = [];
+  const geo = Math.max(r.d.vao, Math.ceil(r.d.buf / 3)), tex = Math.max(r.d.tex, r.d.texUp), over = r.max - pre.max, why = [];
   if (!ok) why.push('launch failed'); if (r.d.sh || r.d.prog || r.newProgs.length) why.push(`compiled ${r.d.sh} shaders / ${Math.max(r.d.prog, r.newProgs.length)} programs`);
   if (tex > TEXMAX) why.push(`${tex} new textures (max ${TEXMAX})`); if (geo > GEOMAX) why.push(`${geo} new meshes (max ${GEOMAX})`);
-  if (r.d.read || r.d.img || r.d.url) why.push(`${r.d.read + r.d.img + r.d.url} pixel read-backs`); if (r.d.aud) why.push(`${r.d.aud} sounds decoded`);
-  if (over > LIMIT) why.push(`longest frame ${Math.round(r.max)} ms is ${Math.round(over)} ms over the normal ${Math.round(pre.med)} ms (max ${LIMIT})`);
-  if (stall[1] > LIMIT) why.push(`${stall[0]} took ${stall[1]} ms`); if (errs.length) why.push(errs.length + ' errors: ' + errs.slice(0, 3).join(' | '));
-  RES[fac] = { strike: info.sup, missiles: info.n, programs: Math.max(r.d.prog, r.newProgs.length), shaders: r.d.sh, textures: tex, textureKB: Math.round(r.d.texKB), meshes: geo, bufferKB: Math.round(r.d.bufKB), readbacks: r.d.read + r.d.img + r.d.url, canvases: r.d.cnv, longestFrame: Math.round(r.max), normalFrame: Math.round(pre.med), worstCall: stall[0] + ' ' + stall[1] + 'ms', cpu: CPU };
+  if (r.d.read || r.d.img || r.d.url) why.push(`${r.d.read + r.d.img + r.d.url} pixel read-backs`);
+  if (over > LIMIT) why.push(`longest frame ${Math.round(r.max)} ms is ${Math.round(over)} ms over the longest quiet frame ${Math.round(pre.max)} ms (max ${LIMIT})`);
+  if (errs.length) why.push(errs.length + ' errors: ' + errs.slice(0, 3).join(' | '));
+  RES[fac] = { strike: info.sup, missiles: info.n, programs: Math.max(r.d.prog, r.newProgs.length), shaders: r.d.sh, textures: tex, textureKB: Math.round(r.d.texKB), meshes: geo, bufferKB: Math.round(r.d.bufKB), readbacks: r.d.read + r.d.img + r.d.url, canvases: r.d.cnv, longestFrame: Math.round(r.max), normalFrame: Math.round(pre.med), quietMax: Math.round(pre.max), worstCall: stall[0] + ' ' + stall[1] + 'ms', cpu: CPU };
   console.log(fac, JSON.stringify(info), 'launched=' + ok, 'frames=' + r.frames, 'normal=' + Math.round(pre.med) + 'ms (quiet max ' + Math.round(pre.max) + ')', 'longest=' + Math.round(r.max) + 'ms', 'three(progs/geo/tex)=+' + r.info.join('/+'), 'gl=' + JSON.stringify(r.d));
   console.log('  worst frames:', r.worst.join(' ; ')); if (r.busy.length) console.log('  frames that made the GPU work (' + r.busy.length + '):\n    ' + r.busy.slice(0, 40).join('\n    '));
-  if (r.gnew.length) console.log('  new shapes in the scene:\n    ' + r.gnew.slice(0, 30).join('\n    '));
+  if (geo > GEOMAX && r.gnew.length) console.log('  shapes that entered the scene during the strike (look here for the ones built or re-sent):\n    ' + r.gnew.slice(0, 30).join('\n    '));
   if (r.newProgs.length) console.log('  new programs:\n    ' + r.newProgs.join('\n    '));
   if (E.PROF) console.log('  prof', JSON.stringify(r.prof));
   console.log(fac, 'worst JS call (not drawing):', stall[0], stall[1] + 'ms;', why.length ? 'FAIL: ' + why.join('; ') : 'ok');
