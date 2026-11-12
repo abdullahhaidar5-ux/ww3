@@ -27,9 +27,9 @@ function mslGeo(kind){MSL_GEO=MSL_GEO||{};if(MSL_GEO[kind])return MSL_GEO[kind];
   for(let k=0;k<nF;k++)list.push(fin(R*(kind==='ball'?1.9:1.5),L*.2,L*.05,h0,fc,k*Math.PI/2+Math.PI/4));
   if(kind==='cruise')for(let k=0;k<2;k++)list.push(fin(R*5.2,L*.12,L*.05,-L*.05,'#555955',k*Math.PI));       // pop-out wings
   if(kind==='bomb')for(let k=0;k<4;k++)list.push(fin(R*1.2,L*.1,L*.04,h1+L*.1,'#464a3c',k*Math.PI/2));         // guidance canards
-  return MSL_GEO[kind]=Object.assign(mslMerge(list),{userData:{L,R}});}
+  return MSL_GEO[kind]=gcKeep(Object.assign(mslMerge(list),{userData:{L,R}}));}
 function mslFlameGeo(){if(MSL_FL)return MSL_FL;const mk=(c,op)=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
-  return MSL_FL={outer:new THREE.ConeGeometry(1,1,10,1,true).rotateX(Math.PI).translate(0,-.5,0),mo:mk(new THREE.Color(2.4,1.15,.35),.75),mi:mk(new THREE.Color(3.2,2.8,1.8),.9)};}
+  return MSL_FL={outer:gcKeep(new THREE.ConeGeometry(1,1,10,1,true).rotateX(Math.PI).translate(0,-.5,0)),mo:mk(new THREE.Color(2.4,1.15,.35),.75),mi:mk(new THREE.Color(3.2,2.8,1.8),.9)};}
 // build one missile object: smooth body + (optional) motor flame; returns {g,fl:[outer,inner]|null,L,R}
 function mslMake(kind,flame){mats();const geo=mslGeo(kind),L=geo.userData.L,R=geo.userData.R,g=new THREE.Group(),m=new THREE.Mesh(geo,MAT.std);m.castShadow=false;g.add(m);let fl=null;
   if(flame){const F=mslFlameGeo(),o=new THREE.Mesh(F.outer,F.mo),i=new THREE.Mesh(F.outer,F.mi);o.position.y=i.position.y=-L/2+R*.2;g.add(o,i);fl=[o,i];}
