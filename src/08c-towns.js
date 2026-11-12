@@ -26,7 +26,7 @@ function drawTownsWorld(c){if(!G||!G.towns||G.over||OVL.towns===false)return;con
     else if(t.ow>=0&&G.teams[t.ow]){c.fillStyle='rgba(8,12,10,.7)';const w=c.measureText(t.name).width+16,h=18;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle=G.teams[t.ow].color;c.fillRect(p.x-w/2,p.y-h,4,h);c.fillStyle='#e8f2e8';c.fillText(t.name,p.x+2,p.y-5);if(SET.cb){try{idMiniMark(c,p.x-w/2-7,p.y-h/2,t.ow,true);}catch(_){}}}
     else{c.fillStyle='rgba(8,12,10,.55)';const w=c.measureText(t.name).width+12,h=16;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle='#c9d2c6';c.fillText(t.name,p.x,p.y-4);}
     c.restore();}}
-function drawTownsMini(c,sx,sy,now){if(!G||!G.towns||OVL.towns===false)return;
+function drawTownsMini(c,sx,sy,now){if(!G||!G.towns||G.battle||OVL.towns===false)return;   /* Battle: no town/road-node circles on the minimap (Abdullah 2026-11-11 19:41) */
   for(const t of G.towns){const x=t.x*sx,y=t.y*sy,s=t.ham?3.2:4.6,mine=townsMine(t),reb=t.reb>G.t;
     c.save();
     if(reb){c.fillStyle='#000';c.beginPath();c.moveTo(x,y-s-2);c.lineTo(x+s+2,y);c.lineTo(x,y+s+2);c.lineTo(x-s-2,y);c.closePath();c.fill();c.fillStyle='#d9693a';c.beginPath();c.moveTo(x,y-s);c.lineTo(x+s,y);c.lineTo(x,y+s);c.lineTo(x-s,y);c.closePath();c.fill();c.strokeStyle='#000';c.lineWidth=1.3;c.beginPath();c.moveTo(x-s*.6,y-s*.6);c.lineTo(x+s*.6,y+s*.6);c.moveTo(x+s*.6,y-s*.6);c.lineTo(x-s*.6,y+s*.6);c.stroke();}
@@ -52,7 +52,7 @@ function drawTownsMini(c,sx,sy,now){if(!G||!G.towns||OVL.towns===false)return;
   if(G.tpings&&G.tpings.length){const n=performance.now();G.tpings=G.tpings.filter(q=>n-q.t<4500);for(const q of G.tpings){const a=(n-q.t)/4500,r=4+a*22;c.strokeStyle=q.k===2?'rgba(255,90,60,'+(1-a)+')':q.k===1?'rgba(255,170,60,'+(1-a)+')':'rgba(255,224,90,'+(1-a)+')';c.lineWidth=2;c.beginPath();c.arc(q.x*sx,q.y*sy,r,0,7);c.stroke();}}}
 function townAt(w,pad){if(!G||!G.towns||!w)return null;let b=null,bd=1e9;for(const t of G.towns){const d=Math.hypot(t.x-w.x,t.y-w.y);if(d<(t.ham?CELL*3.4:Math.max(CELL*3,t.r))+(pad||0)&&d<bd){bd=d;b=t;}}return b;}
 function townMiniAt(e){if(!G||!G.towns)return null;const r=mm.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*MAPW,py=(e.clientY-r.top)/r.height*MAPH,tol=(innerWidth<561?14:9)/r.width*MAPW;let b=null,bd=1e9;for(const t of G.towns){const d=Math.hypot(t.x-px,t.y-py);if(d<tol&&d<bd){bd=d;b=t;}}return b;}
-FXH.tping=(team,x,y,k)=>{if(team!==ME||!G)return;(G.tpings=G.tpings||[]).push({x,y,k,t:performance.now()});};
+FXH.tping=(team,x,y,k)=>{if(team!==ME||!G)return;try{radAt(x,y);}catch(e){}(G.tpings=G.tpings||[]).push({x,y,k,t:performance.now()});};
 function townClose(){TP.ti=-1;if(TP.el)TP.el.style.display='none';}
 function townPick(sx,sy){if(!G||!G.towns)return false;const w=screenToWorld(sx,sy);const t=townAt(w,10);if(t){townOpen(t.i);return true;}townClose();return false;}
 function townOpen(i){if(G&&G.grand)return;TP.ti=i;if(!TP.el)townBuild();TP.el.style.display='block';TP.t=0;townPanelTick(true);}

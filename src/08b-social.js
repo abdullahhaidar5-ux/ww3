@@ -70,10 +70,10 @@ const TUTC=[
  {k:'atk',t:'Red soldiers are enemies. Your men also shoot on their own, but you choose the targets. (After an order they deselect: pick them again.)',a:'Select your soldiers, then right-click a red enemy to attack.',
   enter:()=>{TUTS.k0=G.teams[ME].kills|0;if(!tutFoe()){const s=tutSquad()||tutHQ();if(s)for(let i=0;i<2;i++){const p=nearestPassXY('ground',s.x+330+i*30,s.y+i*25);const u=p&&Math.hypot(p[0]-s.x,p[1]-s.y)<700&&addUnit(1,'inf',p[0],p[1]);if(u)u.hp*=.7;}}},
   hl:()=>({w:tutFoe()}),cam:()=>tutFoe(),ok:()=>(G.teams[ME].kills|0)>TUTS.k0},
- {k:'setup',t:'Setup phase: in every match nobody can shoot for the first 90 seconds (timer at the top). Spend it building your base.',a:'Open Build, click Barracks, then click the ground next to your base.',
+ {k:'setup',t:'Setup phase: in every match nobody can shoot for the first 90 seconds (timer at the top), and you start with a full base: Barracks, War Factory, Supply Depot and $10,000. Spend the time adding to it.',a:'Open Build, click Defense Gun, then click the ground next to your base.',
   enter:()=>{G.setupEnd=Math.max(G.setupEnd||0,G.t+75);},
-  hl:()=>{if(tutBld('barracks'))return{w:tutBld('barracks')};if(G.place==='barracks'){const h=tutHQ();return{w:h?{x:h.x+120,y:h.y+90}:null};}return{d:'#b_barracks'};},cam:()=>tutHQ(),
-  ok:()=>G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1)},
+  hl:()=>{if(tutBld('turret'))return{w:tutBld('turret')};if(G.place==='turret'){const h=tutHQ();return{w:h?{x:h.x+120,y:h.y+90}:null};}return{d:'#b_turret'};},cam:()=>tutHQ(),
+  ok:()=>G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='turret'&&!e.dead&&e.built>=1)},
  {k:'trn',t:'The Barracks trains soldiers. Training takes a few seconds.',a:'Click your Barracks, open the Units tab, then click the first soldier.',
   enter:()=>{TUTS.n0=tutInf();},
   hl:()=>{const b=tutBld('barracks');if(!b)return{w:tutHQ()};if(G.sel.includes(b)){const k=roster(G.teams[ME].fac).barracks[0];return{d:'#u_'+k};}return{w:b};},cam:()=>tutBld('barracks')||tutHQ(),
@@ -174,7 +174,7 @@ function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&
     if(performance.now()-TUTS.e0>8000){for(const u of G.ents.slice())if(!u.isB&&!u.dead&&u.team===G.reb&&Math.hypot(u.x-TUTS.town.x,u.y-TUTS.town.y)<600){try{kill(u,ME,null);}catch(e){u.dead=true;}}}}   /* after a few seconds the last rebels give up, so nothing contests the town */   /* rebels never hole up in the houses during the tutorial: they fight in the open and the houses stay free to take */
   if(k==='unrest'){const t=tutTown();if(t&&t.ow===ME&&t.rate>=3)t.un=Math.min(100,t.un+6);}
   let ok=false;try{ok=!!TUT[TUTS.i].ok();}catch(e){}
-  if(ok)tutAdvance(false);}
+  if(ok&&performance.now()-(TUTS.e0||0)>=1500)tutAdvance(false);}   /* every tip stays up at least 1.5 s before it is ticked off: a step your men finish on their own (they shoot by themselves) used to flash by unread */
 setInterval(()=>{try{tutCheck();}catch(e){}},400);setInterval(()=>{try{tutHLTick();}catch(e){}},120);
 function startBattleTutorial(){TUT=TUTB;MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
   const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';

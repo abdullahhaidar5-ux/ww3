@@ -42,7 +42,7 @@ function ctPlanCancel(){if(CT.mode==='plan'){CT.mode=null;CT.draft=null;ctUI();r
 function ctGoAll(){let n=0;for(const pl of CT.plans)if(pl.st==='wait'&&pl.steps[pl.i+1]&&pl.steps[pl.i+1].trig==='go'){pl.go=true;n++;}if(n)sfxUI(660);ctPlanTick();ctUI();}
 /* ---- pings, drawings, quick lines (received) ---- */
 function ctMark(m){m.t0=performance.now()/1000;m.life=10;CT.marks.push(m);if(CT.marks.length>40)CT.marks.shift();}
-FXH.mping=function(team,k,x,y){if(!G||!sameTm(team,ME))return;ctMark({k,x,y,team,kind:'ping'});sfxUI(k===2?440:700);};
+FXH.mping=function(team,k,x,y){if(!G||!sameTm(team,ME))return;ctMark({k,x,y,team,kind:'ping'});if(team!==ME)try{edgeAlert('Ally ping','ping',x,y);}catch(e){}sfxUI(k===2?440:700);};
 FXH.mdraw=function(team,c,p){if(!G||!sameTm(team,ME))return;const pts=[];for(let i=0;i+1<p.length;i+=2)pts.push([p[i],p[i+1]]);ctMark({kind:c?'circle':'line',pts,team});};
 FXH.say=function(team,i){if(!G||!sameTm(team,ME)||!CF.LINES[i])return;pushLog(`${team===ME?'You':ctName(team)}: ${CF.LINES[i]}`,team===ME?'':'g');if(team!==ME)sfxUI(600);};
 FXH.cfo=function(f,t,d){};FXH.cfs=function(a,b,d){if(G&&(a===ME||b===ME))sfxUI(520);};FXH.cfb=function(a,b){if(G&&b===ME)sfxUI(300);};
