@@ -1,6 +1,6 @@
 // A5b NAMED BATTLES (laneA 2026-11-07): a clash of big armies becomes a legend. Rows in the ONE modifier engine (13k), no second system.
 // Chain: who reacts = the winner's people (war support up, army max morale up), the loser's nation remembers (smaller "never again" rally);
-// second order = war support feeds recruits/income/peace pressure (13v), army morale feeds Fight-it starts (13b gmMorMax);
+// second order = war support feeds recruits/income/peace pressure (13v), army morale is what an army brings into a battle (13b gmMorMax, 13a-gwar);
 // counter-play = take the province back or win a bigger battle (the legend row is per battle, expires); cost = needs a real battle (both
 // sides >= 3000 army value and the weaker >= 30% of the stronger), 1 legend per province per year, so no cheap farming.
 // Style flavour (name only, EQUAL value for all four styles): Zealous martyr shrine · Professional regimental honours ·

@@ -1,4 +1,4 @@
-// Grand campaign test (stage 1): determinism (10 AI turns twice, same hash), world map + menu, a Fight-it battle launched
+// gair: jets are limited sorties from airfields in range (they add to the Fires die of a battle on the map and burn fuel); drones travel with the army.   node orch/gairtest.mjs
 // from the map holds EXACTLY the army's units (types and counts) and no production, survivors/losses flow back exactly,
 // the province is captured. Screenshots: orch/shots/grand1/.   node orch/grandtest.mjs
 import http from 'node:http';
@@ -49,23 +49,15 @@ try {
     grOrderMove(a.id, pair[1]); return { sel, stock, aid: a.id, fuel: GC.nat[me].e.fuel, recruit: GR_RECRUIT.some(r => r[0] === 'drone') }; });
   console.log('setup', JSON.stringify(sc)); if (sc.err) throw new Error(sc.err);
   if (!sc.recruit) fails.push('drone not recruitable'); if (!sc.sel) fails.push('Ctrl+D helper did not select the drone army'); if (sc.stock < 1) fails.push('no sorties: ' + sc.stock);
-  await ev(() => { GC.armies.filter(a => a.o !== 'IR').forEach(a => { a.path = []; }); guEndTurn(); });
-  for (let k = 0; k < 3; k++) { await page.waitForTimeout(2500); if (await ev(() => !!document.getElementById('gModal') || GC.ph !== 'plan')) break; await ev(() => { GC.armies.filter(a => a.o !== 'IR').forEach(a => { a.path = []; }); guEndTurn(); }); }
-  await page.waitForFunction(() => !!document.getElementById('gModal'), null, { timeout: 90000 });
-  await ev(() => { [...document.querySelectorAll('#gModal button')].find(b => /Fight it live/.test(b.textContent)).click(); });
-  await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !!G.grand, null, { timeout: 60000 });
-  await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('battle: loading never finished'));
-  const bt = await ev(() => { const c = (t, k) => G.ents.filter(e => e.team === t && !e.isB && !e.dead && e.kind === k).length; const jw = G.grand.waves.filter(w => w.jet).map(w => [w.side, w.recs.length]);
-    const d0 = c(0, 'drone'); for (let i = 0; i < 60 * 50 && !G.over; i++) simUpdate(1 / 60); return { d0, jw, jets: [c(0, 'jet'), c(1, 'jet')], over: G.over }; });
+  // the march ends in a battle or a siege ON the map; in a battle the air sorties add to the Fires die and burn fuel, the drones fight in the support row
+  const bt = await ev((aid) => { for (let k = 0; k < 4 && !GC.bt.length && !GC.sg.length; k++) { GC.armies.filter(a => a.o !== 'IR').forEach(a => { a.path = []; }); grEndTurn(true); }
+    const a = GC.armies.find(x => x.id === aid), B = a && gwOf(a); if (!B) { // a fort: lay a field battle next to it so the sorties are under test
+      const pi = a.at, D = grAddArmy('IQ', pi, grGenUnits(grNat('IQ').fac, 9000, true)); gwOpen({ p: pi, an: 'IR', dn: 'IQ', att: [a.id], def: [D.id], garr: false, river: false, mtn: false, sea: false, done: 0 }); }
+    const B2 = gwOf(a), f0 = GC.nat.IR.e.fuel; gwTick(); const side = B2.att.includes(a.id) ? 0 : 1, L = gwLine(gwCtx(B2, 1)[side ? 'D' : 'A'], B2, side);
+    return { mods: (B2.mo[side] || []).map(x => x[0] + ' ' + x[1]), drones: L.back.filter(e => e.r[0] === 'drone').length, fuel0: f0, fuel1: GC.nat.IR.e.fuel, live: typeof G !== 'undefined' && !!G }; }, sc.aid);
   console.log('battle', JSON.stringify(bt));
-  if (bt.d0 < 2) fails.push('battle: drones not carried in (' + bt.d0 + ')'); if (!bt.jw.some(w => w[0] === 0 && w[1] >= 1)) fails.push('battle: no jet sorties for you ' + JSON.stringify(bt.jw));
-  const fin = await ev(() => { const n0 = G.ents.filter(e => e.team === 0 && !e.isB && !e.dead && e.kind === 'drone').length; for (const u of G.ents.filter(e => e.team === 0 && e.kind === 'drone' && !e.dead)) { try { kill(u, 1, null); } catch (e) { u.hp = 0; u.dead = true; } }
-    for (let i = 0; i < 20; i++) simUpdate(1 / 60); return { n0, res: grandTestFinish(0) }; });
-  await page.waitForFunction(() => !!document.getElementById('campScreen'), null, { timeout: 90000 });
-  const fl = await ev(() => { const a = GC.armies.find(x => x.id === GB_CUR.b.att.concat(GB_CUR.b.def)[0]) || GC.armies.find(x => x.o === 'IR'); return { drones: GC.armies.filter(x => x.o === 'IR').reduce((n, x) => n + x.u.filter(r => r[0] === 'drone').length, 0), fuel: GC.nat.IR.e.fuel }; });
-  console.log('flow', JSON.stringify(fl), 'before-fuel', sc.fuel);
-  if (fl.drones > 0 && fin.n0 > 0 && bt.d0 > 0) { /* other armies may hold drones */ }
-  if (!(fl.fuel < sc.fuel + 40)) fails.push('sorties not spent: fuel ' + sc.fuel + ' -> ' + fl.fuel);
+  if (!bt.mods.some(m => /air sorties/.test(m))) fails.push('battle: no air sorties on the Fires die ' + JSON.stringify(bt.mods)); if (bt.drones < 2) fails.push('battle: the army\'s drones are not in the support row (' + bt.drones + ')');
+  if (!(bt.fuel1 < bt.fuel0)) fails.push('sorties not spent: fuel ' + bt.fuel0 + ' -> ' + bt.fuel1); if (bt.live) fails.push('a real-time battle was started');
 } catch (e) { if (String(e.message) !== '__done') { fails.push(String(e.message || e).split('\n')[0]); console.log('ERRS', errs.join('\n')); console.log(String(e.stack).split('\n').slice(0, 7).join('\n')); } }
 for (const e of [...new Set(errs)].slice(0, 6)) fails.push(e);
 await browser.close(); server.close();

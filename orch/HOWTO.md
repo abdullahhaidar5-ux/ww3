@@ -26,7 +26,9 @@ Names: `pplRoster(code)` -> {leader, heir|null, cab[4]}; `pplName(p)` -> "Ayatol
 ## Add a monthly system / an idea
 Push a fn onto `GMOD_HOOKS` (13k) — called by `gmodMonth` each turn. New idea = one row in `GID_GROUPS` (13l); its effect is a modifier row on an existing stat (income, upkeep, manpower, ppPol/Dip/Mil, warSupport…).
 
-## Middle East map templates for the Fight-it generator (memaps, for Lane F)
+## Middle East map templates (memaps, for Lane F)
+
+(Written for the province battle-map generator, which was removed on 2026-11-12 together with real-time campaign battles; the maps themselves remain Conquest maps.)
 `src/02c-memaps.js` holds one data row per real-geography Conquest map (`MAPS[key]`, `home` = nations). No grand-map province→template hook exists yet
 (grep `MAPS[` in `src/13-grand.js` finds none); to mirror a province, pick `Object.keys(MAPS).filter(k=>MAPS[k].home.includes(nationCode))` and match the row's `tag` (coast, river, desert, mountains, urban, marsh).
 

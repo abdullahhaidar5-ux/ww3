@@ -2,11 +2,10 @@
 // drill 0-100 each month: +8 base, x1.5 on own-held ground with a base/airfield or the capital, x.5 when understrength (<70% hp)
 // or when the nation is out of fuel. It costs training money, fuel and ammo (0.5% of the army's value per month). Not drilling,
 // drill fades 1.5/month, 3/month while the nation is at war (attrition). Moving cancels it (player order or the move phase).
-// Drill pays in Fight-it: every 20% = one synthetic upgrade row (UPG.dr1..dr5: damage, rate of fire, courage up to +6/+5/+10%)
+// Drill pays in battle (src/13a-gwar.js): a fully drilled army fights 8% stronger and loses morale 10% slower,
 // and drilling armies lift army tradition (the professionalism the morale system already reads). The AI drills idle armies in peacetime.
 // State: a.dr (0-100) and a.dg (1 = drilling) on the army record, so saves, host migration and the sync hash keep working.
 const GDR_MAX=100;
-for(let i=1;i<=5;i++)UPG['dr'+i]={name:'Drilled troops '+i*20+'%',at:'barracks',cost:0,time:0,desc:'Grand-map drill',fx:[['dmg','all',1+.012*i],['rof','all',1+.01*i],['courage','all',1+.02*i]]};
 function gdrOk(a){return !!a&&!a.fl&&a.u&&a.u.length>0&&!(a.path&&a.path.length);}
 function gdrAtWar(c){return Object.keys(GC.war||{}).some(k=>GC.war[k]&&k.split('|').includes(c));}
 function gdrBase(a){const N=GC.nat[a.o];if(!N||!GC.prov[a.at]||GC.prov[a.at].o!==a.o)return false;if(N.cap===a.at)return true;try{return geCount(a.at,'base')+geCount(a.at,'airfield')>0;}catch(e){return false;}}
@@ -27,8 +26,5 @@ GMOD_HOOKS.push(()=>{if(!GC)return;const seen={};
   for(const c in seen)if(GC.nat[c].trad!==undefined)GC.nat[c].trad=Math.min(100,GC.nat[c].trad+.3*Math.min(3,seen[c]));});
 /* a drilling army that is given a path (AI planners, fronts) gives the drill up and marches */
 function gdrMove(a){if(a.dg&&a.path&&a.path.length)a.dg=0;}
-/* Fight-it: unit-weighted drill of each side's armies -> a synthetic upgrade level on that team */
-function gdrSide(L){let w=0,s=0;for(const x of L){const n=x.u.length;w+=n;s+=n*(x.arr&&x.arr.dr||0);}return w?s/w:0;}
-function gdrApplyBattle(dr){if(!dr||typeof G==='undefined'||!G)return;G.teams.forEach((T,i)=>{const lv=Math.floor((dr[i]||0)/20);if(!T||lv<1)return;for(let k=1;k<=5;k++)delete T.upg['dr'+k];T.upg['dr'+Math.min(5,lv)]=1;T._uk=null;T._ut=null;});}
-function gdrTag(a){if(a.fl)return '';const d=gdrPct(a);return (a.dg||d)?' <span style="font-size:12px;color:#9fe0a0" title="Drill '+d+'%: up to +6% damage, +5% fire rate, +10% courage in Fight-it. '+(a.dg?'Drilling costs about $'+gdrCost(a)+'/month and the army stays put; ordering a move stops it.':'Fades 1.5%/month (3% at war).')+'">⚔ Drill '+d+'%'+(a.dg?' ▲':'')+'</span>':'';}
+function gdrTag(a){if(a.fl)return '';const d=gdrPct(a);return (a.dg||d)?' <span style="font-size:12px;color:#9fe0a0" title="Drill '+d+'%: at 100% the army fights 8% stronger and its morale holds 10% longer in battle. '+(a.dg?'Drilling costs about $'+gdrCost(a)+'/month and the army stays put; ordering a move stops it.':'Fades 1.5%/month (3% at war).')+'">⚔ Drill '+d+'%'+(a.dg?' ▲':'')+'</span>':'';}
 function gdrBtn(a){return a.fl?'':'<button data-act="drill" title="Drill (T): the army stays put and trains — +drill each month for upkeep money">'+(a.dg?'Stop drill':'Drill')+'</button>';}

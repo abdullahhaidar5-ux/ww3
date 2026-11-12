@@ -25,13 +25,13 @@ Rules: `src/13a-gwar.js`. "Value lost" = share of the army's worth (price x heal
 | Attacker 1.5x but cut off | 58% | 36 | 26% / 24% | 27% / 28% |
 | Equal, attacker has 4 air sorties | 74% | 22 | 21% / 25% | 24% / 27% |
 | Equal, attacker has a one-way drone salvo | 62% | 23 | 22% / 24% | 25% / 27% |
-| Zealous Iran attacks the United States, equal | 51% | 43 | 61% / 50% | 63% / 50% |
-| United States attacks Zealous Iran, equal | 44% | 41 | 47% / 56% | 47% / 58% |
-| Zealous Iran attacks Russia, equal | 56% | 42 | 58% / 49% | 59% / 49% |
-| Russia attacks Zealous Iran, equal | 36% | 38 | 45% / 51% | 45% / 53% |
-| Zealous Lebanese Shia attack the United States, equal | 44% | 45 | 66% / 51% | 68% / 51% |
-| United States attacks the Zealous Lebanese Shia, equal | 49% | 43 | 48% / 61% | 48% / 63% |
-| Zealous Iran vs Zealous North Korea | 52% | 62 | 89% / 90% | 88% / 89% |
+| Zealous Iran attacks the United States, equal | 52% | 35 | 61% / 50% | 63% / 50% |
+| United States attacks Zealous Iran, equal | 43% | 34 | 47% / 56% | 47% / 58% |
+| Zealous Iran attacks Russia, equal | 56% | 34 | 57% / 49% | 59% / 48% |
+| Russia attacks Zealous Iran, equal | 37% | 32 | 45% / 51% | 45% / 53% |
+| Zealous Lebanese Shia attack the United States, equal | 45% | 37 | 66% / 51% | 68% / 51% |
+| United States attacks the Zealous Lebanese Shia, equal | 49% | 35 | 48% / 61% | 48% / 63% |
+| Zealous Iran vs Zealous North Korea | 50% | 47 | 89% / 90% | 88% / 89% |
 | Firepower-reliant Saudi Arabia attacks the United States | 45% | 21 | 18% / 23% | 22% / 25% |
 | United States attacks Firepower-reliant Saudi Arabia | 40% | 21 | 24% / 17% | 26% / 21% |
 | Home defender India attacks the United States (abroad) | 44% | 24 | 25% / 23% | 27% / 25% |
@@ -45,4 +45,4 @@ Rules: `src/13a-gwar.js`. "Value lost" = share of the army's worth (price x heal
 - Terrain and generals matter: attacking into mountains 4%, with a level-4 general 91%.
 - Numbers and supply matter more: 1.5x the numbers 99% (still 100% into mountains and 79% against a top general), 2x 100%; cut off from supply 1%, and 1.5x the numbers but cut off only 58%.
 - Styles at equal price, average of attacking and defending against the United States: Firepower-reliant 52.5%, Home defenders abroad 47.5%; China against Russia 56%.
-- Zealous sides (never retreat): win 53.7% of equal fights, lose 60.7% of their value against 48.3% for the other side, and 58.8% of their units against 48.3%.
+- Zealous sides (never retreat): win 54% of equal fights, lose 60.7% of their value against 48.2% for the other side, and 58.7% of their units against 48.3%.

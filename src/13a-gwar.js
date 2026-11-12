@@ -1,7 +1,7 @@
 // ===== 13a-gwar: battles, sieges and sea fights resolved ON the campaign map, day by day (prefix gw*) =====
 // Abdullah 2026-11-11 23:57 "Abandon battles in grand campaign. Turn it into eu 4 rules" (23:58 "No and now"): the grand
-// campaign never opens the real-time battle. This file is the ONE resolver for every land, sea and air fight (it replaces
-// the old instant auto-resolve grAuto; orch/SYSTEMS.md "Auto-resolve"). Rules and ideas in the style of Europa Universalis IV,
+// campaign never opens the real-time battle. This file is the ONE resolver for every land, sea and air fight (orch/SYSTEMS.md
+// "Campaign battles"). Rules and ideas in the style of Europa Universalis IV,
 // translated to 2026 - no text, names, art or layouts are taken from that game.
 //
 // BATTLE  Armies at war in one province fight for DAYS on the campaign clock; the map keeps running. Days alternate in
@@ -28,7 +28,7 @@ const GW_W={f:20,d:20,r:18,c:16,s:14,j:12,u:12,m:10,w:16};   /* combat width by 
 const GW_TB={m:2,u:1,j:1,s:1};                               /* defender's die bonus by terrain */
 const GW_TN={m:'Mountains',u:'Urban ground',j:'Jungle',s:'Snow and tundra'};
 const GW_SLOT=300;                                           /* one place in the line = this much unit price, so cheap and costly armies field equal fronts */
-const GW_K=.05,GW_MK=3.4,GW_MINDAY=6,GW_SG_DAYS=10,GW_WIPE=1/6,GW_LAST=1.4,GW_LASTX=1.6,GW_SG_WIN=14;
+const GW_K=.05,GW_MK=3.4,GW_MINDAY=6,GW_SG_DAYS=10,GW_WIPE=1/6,GW_LAST=2.6,GW_LASTX=3,GW_SG_WIN=14;
 const GW_PH=['Fires','Assault'];
 const GW_RC={};
 function gwS(){if(!GC.bt)GC.bt=[];if(!GC.sg)GC.sg=[];if(!GC.bid)GC.bid=1;if(!GC.br)GC.br=[];if(GC.bd===undefined)GC.bd=0;return GC;}
@@ -74,7 +74,9 @@ function gwFuel(L){let s=0,n=0;for(const g of L){if(!g.arr||g.arr.fl)continue;s+
 /* everything added to one side's die this phase, as [plain words, number] rows (the battle window lists them); real = spend the sorties and drones */
 function gwMods(B,X,side,ph,real){const isDef=side==='def',L=isDef?X.D:X.A,F=isDef?X.A:X.D,nat=isDef?B.dn:B.an,foe=isDef?B.an:B.dn,p=GCM.P[B.p],st=GC.prov[B.p],M=[];
   const g=gwLead(L);if(g){const v=gwPips(g)[ph];if(v)M.push([gwGenName(g)+' ('+GW_PH[ph].toLowerCase()+' skill)',v]);}
-  if(B.sea){if(isDef){let m=0;try{m=Math.round((gmilSeaDef(B)-1)*8);}catch(e){}if(m>0)M.push(['Home waters and hidden submarines',Math.min(2,m)]);}}
+  if(B.sea){if(isDef){let m=0;try{m=Math.round((gmilSeaDef(B)-1)*8);}catch(e){}if(m>0)M.push(['Home waters and hidden submarines',Math.min(2,m)]);}
+    /* at sea positioning takes the place of maneuver: the fleet with more fast craft gets the better position */
+    const fc=Q=>{let n=0;for(const q of Q)for(const r of q.u){const ro=gwRole(q.fac,r[0]);if(ro.nav&&ro.mv)n++;}return n;};if(fc(L)>fc(F))M.push(['Better position (more fast craft)',1]);}
   else if(isDef&&!B.relief){const t=GW_TB[p.t]|0;if(t)M.push([GW_TN[p.t],t]);if(B.river)M.push(['Enemy crossing a river',1]);if(B.amph)M.push(['Enemy landing from the sea',2]);
     if(st&&st.o===nat&&gwFort(B.p)>0)M.push(['Fort guns',1]);}
   if(!B.sea){const am=gwAmmo(L);if(gwCut(L))M.push(['Cut off from supply',-3]);else if(am<35)M.push(['Ammunition nearly gone',-3]);else if(am<60)M.push(['Short of ammunition',-1]);
@@ -107,7 +109,7 @@ function gwStep(B,X,R){B.d++;const ph=Math.floor((B.d-1)/3)%2;B.ph=ph;
   if(!LA.n||(B.sea&&!LA.nav))return {win:'def',how:'wipe'};if(!LD.n||(B.sea&&!LD.nav))return {win:'att',how:'wipe'};
   let pa=gwPow(LA,ph,LD.aa)*gwNatMul(B,'att',ph),pd=gwPow(LD,ph,LA.aa)*gwNatMul(B,'def',ph);
   /* outflanking: the fuller line with more fast units wraps a front that cannot fill the width */
-  B.fl=0;if(!B.sea){if(LD.fu<LD.cap*.85&&LA.fu>LD.fu*1.15&&LA.mv>LD.mv){pa*=1.2;B.fl=1;}else if(LA.fu<LA.cap*.85&&LD.fu>LA.fu*1.15&&LD.mv>LA.mv){pd*=1.2;B.fl=2;}}
+  B.fl=0;if(!B.sea){if(LD.fu<LD.cap*.85&&LA.fu>LD.fu*1.15&&LA.mv>LD.mv){pa*=1.2+.05*gwPips(gwLead(X.A))[2];B.fl=1;}else if(LA.fu<LA.cap*.85&&LD.fu>LA.fu*1.15&&LD.mv>LA.mv){pd*=1.2+.05*gwPips(gwLead(X.D))[2];B.fl=2;}   /* +20%, and 5% more per point of the general's Maneuver skill */}
   const floor=.004*Math.min(B.va0,B.vd0),za=gwZeal(B.an),zd=gwZeal(B.dn),sa=gwMS(B.an),sd=gwMS(B.dn);
   if(ph===0){pa*=sa.sup||1;pd*=sd.sup||1;}
   /* a Zealous side whose morale is spent makes its LAST STAND: it never leaves the field, hits harder, and is ground down where it stands */
