@@ -14781,9 +14781,9 @@ function rcMoves(){const D=Math.hypot(MAPW,MAPH),cl=new Map();
     let c=cl.get(key);if(!c)cl.set(key,c={tm:r.tm,n:0,P:[0,0,0,0,0,0,0,0,0,0]});c.n++;for(let q=0;q<5;q++){const v=at(q/4);c.P[q*2]+=v[0];c.P[q*2+1]+=v[1];}}
   const out=[],cnt={};for(const c of [...cl.values()].sort((a,b)=>b.n-a.n)){if(c.n<2)continue;const mine=ally(c.tm,ME)?1:0;cnt[mine]=(cnt[mine]|0)+1;if(cnt[mine]>2)continue;
     const pts=[];for(let q=0;q<5;q++)pts.push([c.P[q*2]/c.n,c.P[q*2+1]/c.n]);const hor=Math.abs(pts[4][0]-pts[0][0])>=Math.abs(pts[4][1]-pts[0][1]),f=hor?pts[2][1]/MAPH:pts[2][0]/MAPW;
-    out.push({tm:c.tm,mine,n:c.n,pts,lane:f<.37?(hor?'north':'west'):f>.63?(hor?'south':'east'):'centre'});}
+    out.push({tm:c.tm,mine,n:c.n,pts,lane:f<.37?(hor?'north':'west'):f>.63?(hor?'south':'east'):'center'});}
   return out;}
-function rcLane(m){return m.lane==='centre'?'through the centre':'round the '+m.lane;}
+function rcLane(m){return m.lane==='center'?'through the center':'round the '+m.lane;}
 // one line "how it was won", built only from what happened
 function rcHow(S,mv){const P=S.p,w=S.w;if(w==null||w<0||!P[w])return 'Neither side could break the other before the fighting stopped.';
   const win=i=>esWin(S,i),W=esWin(S,ME)?esName(P[ME]):esName(P[w]),wm=mv.filter(m=>win(m.tm)),lm=mv.filter(m=>!win(m.tm)),cl=[];

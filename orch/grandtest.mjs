@@ -444,10 +444,11 @@ try {
       const b = { p: pi, an: 'IR', dn: 'IQ', att: [A.id], def: [D.id], garr: true, river: false, mtn: false, done: 0 }, n0 = A.u.length + D.u.length, keep = window.grBattleDone; let done = null;
       window.grBattleDone = (bb, w, h) => { done = [w, h]; }; try { grBattleAutoShow(b); } catch (e) { done = ['err', String(e)]; } finally { window.grBattleDone = keep; }
       const e = document.getElementById('gReport'), R = e && e._rep, q = s => e && e.querySelector(s); GC.armies = GC.armies.filter(a => a !== A && a !== D);
-      return { done, shown: !!e, frame: !!e && e.firstElementChild.classList.contains('gpx') && !!q('.gpx-x'), why: (q('#gRepWhy') || {}).textContent || '', sides: e ? e.querySelectorAll('.gRepSide').length : 0, map: (q('#gRepMap') || {}).textContent || '',
+      return { done, shown: !!e, why: (q('#gRepWhy') || {}).textContent || '', sides: e ? e.querySelectorAll('.gRepSide').length : 0, map: (q('#gRepMap') || {}).textContent || '',
         auto: !!R && !R.live, lost: R ? R.lost : null, n0: R ? R.n0 : null, sum: n0, pic: !!q('canvas'), prov: GCM.P[pi].n }; });
-    console.log('report card (auto)', JSON.stringify(ar)); await shot('report-card-auto');
-    if (!ar.shown || !ar.frame || !ar.done || ar.done[1] !== 'auto' || ar.why.length < 20 || ar.sides !== 2 || !/ON THE MAP/.test(ar.map) || !ar.map.includes(ar.prov) || !ar.auto || !ar.lost || ar.lost[0] + ar.lost[1] < 1 || ar.n0[0] + ar.n0[1] !== ar.sum)
+    await shot('report-card-auto'); ar.frame = await ev(() => { const e = document.getElementById('gReport'); return !!e && e.firstElementChild.classList.contains('gpx') && !!e.querySelector('.gpx-x'); });   // the shared frame is put on as the panel appears (13zzz-gpanels)
+    console.log('report card (auto)', JSON.stringify(ar));
+    if (!ar.shown || !ar.frame || !ar.done || ar.done[1] !== 'auto' || ar.why.length < 20 || ar.sides !== 2 || !/ON THE MAP/.test(ar.map) || !ar.map.includes(ar.prov) || !ar.auto || !ar.lost || ar.lost[0] + ar.lost[1] < 1 || ar.n0[0] + ar.n0[1] < ar.sum)
       fails.push('auto-resolved battle: the report card (who won, why, both losses, what changes on the map) is missing or wrong ' + JSON.stringify(ar));
     await page.keyboard.press('Escape'); await page.waitForTimeout(300); if (await ev(() => !!document.getElementById('gReport'))) { fails.push('Esc did not close the auto-resolve report card'); await ev(() => { grReportClose(); }); } }
   const sc = await ev(() => { const me = 'IR', foe = 'IQ'; grDeclare(me, foe); let pair = null;
@@ -497,7 +498,7 @@ try {
     const hp = alive.map(u => Math.max(1, Math.round(u.hp / u.max * 100))).sort((a, b) => a - b); const b = GB_CUR.b;
     const before = { alive: alive.length, kinds, hp }; const meAtt = GB_CUR.meAtt; const res = grandTestFinish(0); return { res, before, meAtt, bi: GC.qi }; });
   console.log('finish', JSON.stringify(fin).slice(0, 300));
-  await page.waitForFunction(() => !!document.getElementById('campScreen'), null, { timeout: 90000 });
+  await page.waitForFunction(() => !!document.getElementById('gReport'), null, { timeout: 90000 });
   const flow = await ev(() => { const b = GC.q[GC.qi]; const meAtt = b.an === 'IR'; const mineArr = [].concat(...grSideUnits(b, meAtt ? 'att' : 'def').map(s => s.u)); const kinds = {}; for (const r of mineArr) kinds[r[0]] = (kinds[r[0]] || 0) + 1; return { n: mineArr.length, kinds, hp: mineArr.map(r => r[1]).sort((a, b) => a - b) }; });
   console.log('flowback', JSON.stringify(flow).slice(0, 240));
   if (flow.n !== fin.before.alive || !sameMap(flow.kinds, fin.before.kinds)) fails.push('flow-back: army has ' + flow.n + ' ' + JSON.stringify(flow.kinds) + ' but ' + fin.before.alive + ' survived ' + JSON.stringify(fin.before.kinds));

@@ -61,7 +61,7 @@ try {
   if (bt.d0 < 2) fails.push('battle: drones not carried in (' + bt.d0 + ')'); if (!bt.jw.some(w => w[0] === 0 && w[1] >= 1)) fails.push('battle: no jet sorties for you ' + JSON.stringify(bt.jw));
   const fin = await ev(() => { const n0 = G.ents.filter(e => e.team === 0 && !e.isB && !e.dead && e.kind === 'drone').length; for (const u of G.ents.filter(e => e.team === 0 && e.kind === 'drone' && !e.dead)) { try { kill(u, 1, null); } catch (e) { u.hp = 0; u.dead = true; } }
     for (let i = 0; i < 20; i++) simUpdate(1 / 60); return { n0, res: grandTestFinish(0) }; });
-  await page.waitForFunction(() => !!document.getElementById('campScreen'), null, { timeout: 90000 });
+  await page.waitForFunction(() => !!document.getElementById('gReport'), null, { timeout: 90000 });
   const fl = await ev(() => { const a = GC.armies.find(x => x.id === GB_CUR.b.att.concat(GB_CUR.b.def)[0]) || GC.armies.find(x => x.o === 'IR'); return { drones: GC.armies.filter(x => x.o === 'IR').reduce((n, x) => n + x.u.filter(r => r[0] === 'drone').length, 0), fuel: GC.nat.IR.e.fuel }; });
   console.log('flow', JSON.stringify(fl), 'before-fuel', sc.fuel);
   if (fl.drones > 0 && fin.n0 > 0 && bt.d0 > 0) { /* other armies may hold drones */ }

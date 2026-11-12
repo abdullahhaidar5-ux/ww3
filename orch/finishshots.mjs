@@ -67,6 +67,6 @@ await page.waitForFunction(() => typeof G !== 'undefined' && G && G.grand && !G.
 await page.waitForTimeout(20000);
 await page.evaluate(() => { for (let i = 0; i < 1500; i++) simUpdate(1 / 30); const foes = G.ents.filter(e => e.team === 1 && !e.isB); for (const e of foes.slice(0, Math.ceil(foes.length * .8))) kill(e, 0, null); const mine = G.ents.filter(e => e.team === 0 && !e.isB); for (const e of mine.slice(0, Math.ceil(mine.length * .25))) kill(e, 1, null); window.__done = 0; const keep = window.grBattleDone; window.grBattleDone = (b, w, h) => { window.__done = [w, h]; window.grBattleDone = keep; }; grandTestFinish(0); });
 await page.waitForTimeout(3000); await jpg('card-live');
-await page.evaluate(() => { document.querySelector('#gReport .gpx-x').click(); }); await page.waitForTimeout(2500);
-console.log('X closed live card', JSON.stringify(await page.evaluate(() => ({ gone: !document.getElementById('gReport'), settled: window.__done, battle: !!(window.G && G.grand), map: document.getElementById('grandScreen').style.display }))));
+await page.keyboard.press('Escape'); await page.waitForTimeout(2500);
+console.log('Esc closed live card', JSON.stringify(await page.evaluate(() => ({ gone: !document.getElementById('gReport'), settled: window.__done, battle: !!(window.G && G.grand), map: document.getElementById('grandScreen').style.display }))));
 console.log('done'); await browser.close(); server.close(); process.exit(0);
