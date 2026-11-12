@@ -38,7 +38,7 @@ function gtkCss(){if(document.getElementById('gtkcss'))return;const s=document.c
 :is(#g3ui,#g3leg) .tk.fi .pt{display:none}:is(#g3ui,#g3leg) .tk.fi2 .pt{display:block;margin-left:19px}
 :is(#g3ui,#g3leg) .tk .od{left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:7px;padding:0 8px;border-radius:9px;white-space:nowrap;font:700 11px/16px system-ui,sans-serif;color:#10161b;box-shadow:0 1px 3px #000a}
 :is(#g3ui,#g3leg) .tk .od.g{background:#5bd66a}:is(#g3ui,#g3leg) .tk .od.e{background:#e8b23a}:is(#g3ui,#g3leg) .tk .od.b{background:#ef5548;color:#fff}
-:is(#g3ui,#g3leg) .tk.far{width:0;height:0;margin:0;opacity:1}:is(#g3ui,#g3leg) .tk.far>i{display:none}:is(#g3ui,#g3leg) .tk.far>i.od{display:block;bottom:9px}:is(#g3ui,#g3leg) .tk.far .pt{display:block;margin-left:9px;padding:0;background:none;border:0;box-shadow:none;font:800 13px/14px system-ui,sans-serif;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000,1px 0 2px #000}:is(#g3ui,#g3leg) .tk.far .pt em,:is(#g3ui,#g3leg) .tk.far .pt small{display:none}:is(#g3ui,#g3leg) .tk.far.sel::after{inset:-11px}
+:is(#g3ui,#g3leg) .tk.far{width:0;height:0;margin:0;opacity:1}:is(#g3ui,#g3leg) .tk.far>i{display:none}:is(#g3ui,#g3leg) .tk.far>i.od{display:block;bottom:9px}:is(#g3ui,#g3leg) .tk.far .pt{display:block;margin-left:8px;padding:0 3px;background:rgba(9,15,23,.74);border:0;border-radius:3px;box-shadow:none;font:800 12px/14px system-ui,sans-serif;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000,1px 0 2px #000}:is(#g3ui,#g3leg) .tk.far .pt em,:is(#g3ui,#g3leg) .tk.far .pt small{display:none}:is(#g3ui,#g3leg) .tk.far.sel::after{inset:-11px}
 #g3ui .eta{position:absolute;left:0;top:0;display:none;white-space:nowrap;margin:-30px 0 0 -6px;padding-left:15px;font:700 12px/16px system-ui,sans-serif;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000}
 #g3ui .eta::before{content:'';position:absolute;left:0;top:3px;width:7px;height:7px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 2px #000}
 #g3leg .tk{position:relative;display:inline-block;width:20px;height:20px;margin:0;vertical-align:middle}#g3leg .tk .fl{inset:3.5px;border-width:1.5px;background:linear-gradient(#2aa23c 33%,#f4f4ef 33% 66%,#d8261c 66%)}#g3leg .tk.far{width:10px;height:10px;border-radius:50%;background:#2aa23c;border:2px solid #f4f4ef;box-sizing:border-box}
@@ -89,6 +89,12 @@ function gtkNudge(q,rel,far,wide,placed,own){const o0=gtkOver(gtkBox(q,rel,far,w
   let bx=q[0],by=q[1],ba=o0.ar;
   if(!far)for(let r=12;r<=GTK_NUDGE;r+=12)for(const d of GTK_DIR){const x=q[0]+d[0]*r,y=q[1]+d[1]*r,a=gtkOver(gtkBox([x,y],rel,far,wide),placed).ar;if(!a)return {x,y,free:true};if(a<ba*.8){ba=a;bx=x;by=y;}}   /* the nearest free spot, at most GTK_NUDGE px from the pin; no free spot = the one that covers least */
   return {x:bx,y:by,free:false,same:o0.same};}
+// screen boxes of the map's own controls (minimap, unit cards, round buttons, map-mode switch), in label-layer pixels; re-measured a few times a second
+const GTK_HUD=['g3mini','g3cards','g3btns','g3modes','gmCards','gmPrev'];
+function gtkHud(){const T=G3.tok,now=performance.now();if(T.hud&&now-T.hudT<350)return T.hud;const R=[];T.hudT=now;T.hud=R;if(!G3.lab||!G3.lab.getBoundingClientRect)return R;const o=G3.lab.getBoundingClientRect();
+  for(const id of GTK_HUD){const el=document.getElementById(id);if(!el)continue;const L=el.children.length&&getComputedStyle(el).pointerEvents==='none'?[...el.children]:[el];   /* a click-through wrapper counts by its children, not its whole box */
+    for(const c of L){const r=c.getBoundingClientRect();if(r.width<8||r.height<8||r.width>o.width*.8&&r.height>o.height*.8)continue;R.push([r.left-o.left-4,r.top-o.top-4,r.right-o.left+4,r.bottom-o.top+4]);}}
+  return R;}
 // ---- the tokens (called from g3Labels on every label pass, and from the frame loop while armies slide)
 function g3Tokens(tier){if(!G3.lab||!GC||!G3.cam)return;gtkCss();if(!G3.tok||G3.tok.sc!==G3.sc)G3.tok={sc:G3.sc,eta:new Map()};const T=G3.tok;if(tier===undefined)tier=G3.tier|0;
   const cam=G3.cam,w=GV.w,h=GV.h,v=T.v||(T.v=new THREE.Vector3()),me=GC.me,selA=GV.selA;
@@ -131,13 +137,15 @@ function g3Tokens(tier){if(!G3.lab||!GC||!G3.cam)return;gtkCss();if(!G3.tok||G3.
     return pl;};
   /* 4a. find every token its place first: a token with no room joins the token of the same nation it would cover (one stack with a count, far and middle view),
      faint ones (and far numbers) are left out, yours and enemies always show */
-  const todo=[];
+  const todo=[],hud=gtkHud(),under=q=>{const hx=q[0],hy=q[1]-(tier===0?0:20);for(const r of hud)if(hx>r[0]&&hx<r[2]&&hy>r[1]&&hy<r[3])return true;return false;};
+  if(tier>0)for(const r of hud)placed.push([(r[0]+r[2])/2,(r[1]+r[3])/2,(r[2]-r[0])/2,(r[3]-r[1])/2]);   /* tokens next to the controls step aside from them like they do from name plates */
   for(const g of order){const e=g.e,q=proj(e.x,e.y,e.z);if(!q)continue;const rel=gtkRel(g.a.o),sel=g.L.some(x=>x.id===selA);
+    if(under(q))continue;   /* the map runs on under the minimap, unit cards and round buttons: a token there is hidden like the land under it, never drawn on top of them */
     if(g.st==='siege'&&tier>0&&nr<64){const t=gtkTown(g.a.at),r=Math.max(9,Math.hypot(e.x-t[0],e.z-t[1]));M4.makeScale(r,1,r);M4.setPosition(t[0],Math.max(.3,g3HeightAt(t[0],t[1]))+1.2,t[1]);rings.setMatrixAt(nr++,M4);}
     if(tier===0&&!(rel!=='oth'||sel))continue;   /* far: everyone is a dot; only yours, enemies, allies and the selected one carry a number */
     const wide=tier===2||!!g.fb,n=gtkNudge(q,rel,tier===0,wide,placed,g.a.o);
     if(!n.free){const h=n.same;if(tier<2&&h&&!g.fb){for(const x of g.L)h.L.push(x);h.merged=1;continue;}if(!sel&&(rel==='oth'||(tier===0&&rel!=='me')))continue;}
-    if(tier>0){q[0]=n.x;q[1]=n.y;}const bx=gtkBox(q,rel,tier===0,wide);bx.g=g;placed.push(bx);shown.push(g);todo.push([g,q,rel,sel]);}
+    if(tier>0){q[0]=n.x;q[1]=n.y;if(under(q))continue;}const bx=gtkBox(q,rel,tier===0,wide);bx.g=g;placed.push(bx);shown.push(g);todo.push([g,q,rel,sel]);}
   for(const [g,q,rel,sel] of todo){const hv=T.hov===g.k||T.fan===g.k;let dx=0;if(g.fb&&tier>0)dx=g.side==='A'?-16:16;
     if(tier>0&&hv&&g.L.length>1&&!g.fb){const n=g.L.length,sp=tier===2?96:66;g.L.forEach((a,i)=>draw(g.k+'#'+a.id,g,[a],q,(i-(n-1)/2)*sp,true));}   // stack fanned out: one token per army
     else draw(g.k,g,g.L,q,dx,false);
@@ -152,9 +160,10 @@ function g3Tokens(tier){if(!G3.lab||!GC||!G3.cam)return;gtkCss();if(!G3.tok||G3.
 function gtkHover(hit){const T=G3.tok;if(!T)return;const k=hit?hit.k:null;if(T.hov!==k){T.hov=k;G3.lblDirty=true;}}
 function gtkClicked(hit){const T=G3.tok;if(!T)return;T.fan=hit?hit.k:null;G3.lblDirty=true;}
 // for tests and guards: what is drawn for armies right now
-function gtkAudit(){const T=G3.tok||{},out={tier:G3.tier,tokens:0,far:0,stacks:0,odds:0,dots:T.dots|0,dotsOn:!!(T.pts&&T.pts.visible),rings:T.rings?T.rings.count:0,figs:0,flags:0,old:0,dup:0,perProv:0,sel:GV.selA?1:0};const seen=new Set(),pv=new Map();
+function gtkAudit(){const T=G3.tok||{},out={tier:G3.tier,tokens:0,far:0,stacks:0,odds:0,dots:T.dots|0,dotsOn:!!(T.pts&&T.pts.visible),rings:T.rings?T.rings.count:0,figs:0,flags:0,old:0,dup:0,perProv:0,hud:0,sel:GV.selA?1:0};const seen=new Set(),pv=new Map(),hud=T.hud||[];
   for(const [k,el] of G3.pl){if(el._v!=='block')continue;out.tokens++;if(/ far/.test(el.className))out.far++;if(el.querySelector('.ct'))out.stacks++;if(el.querySelector('.od'))out.odds++;for(const id of el._ids||[]){if(seen.has(id))out.dup++;seen.add(id);}
-    if(!k.includes('#')&&!/\|[AD]$/.test(k)){const pi=k.includes('>')?k:k.split('|')[0];pv.set(pi,(pv.get(pi)||0)+1);}}
+    if(!k.includes('#')&&!/\|[AD]$/.test(k)){const m=/translate\((-?\d+)px,\s*(-?\d+)px\)/.exec(el._t||''),far=/ far/.test(el.className);if(m){const hx=+m[1],hy=+m[2]-(far?0:20);for(const r of hud)if(hx>r[0]&&hx<r[2]&&hy>r[1]&&hy<r[3]){out.hud++;break;}}   /* tokens drawn on top of the minimap, unit cards or round buttons (must be none) */
+      const pi=k.includes('>')?k:k.split('|')[0];pv.set(pi,(pv.get(pi)||0)+1);}}
   for(const n of pv.values())out.perProv=Math.max(out.perProv,n);   /* most tokens standing in one province (marching columns and the two sides of a battle are counted apart) */
   if(typeof g3Batch==='function'&&G3.bat){g3Batch();for(const p of G3.bat.b.values())out.figs+=p.n||0;for(const p of G3.bat.f.values())out.flags+=p.n||0;}
   out.old=document.querySelectorAll('#g3ui .p').length;return out;}
