@@ -18,6 +18,7 @@ import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
 import { guardContext } from './serverdev.mjs';
 import { artifactHtml, artifactHandler, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
 import { newRun } from './runs.mjs';
+import { PAGE_CHECK, judge as judgeBld } from './bldfix-check.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
@@ -159,6 +160,8 @@ try {
   const tLoad = Date.now();
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('loading screen did not finish within 10 minutes'));
   console.log(`loading screen finished after ${((Date.now() - tLoad) / 1000).toFixed(1)}s`);
+  // bldfix (2026-11-12): nothing floats on production buildings (roof props sit on a roof, one yard wall; the factory's chimney tops used to carry a frame and roof props in mid-air)
+  { const bres = await page.evaluate(PAGE_CHECK).catch(e => [String(e.message || e)]); const bb = judgeBld(bres); if (bb.length) fails.push('floating building dressing: ' + bb.slice(0, 6).join('; ')); else console.log(`building dressing: ${bres.length} building looks checked, nothing floats`); }
   // leadersC (Abdullah 2026-11-07 22:38): the signature assets are in Conquest/Battle for their nations and OUT of grand Fight-it battles
   { const gm = await page.evaluate(() => { if (!G || !G.grand) return []; return ['u_cleric', 'b_fort', 'p_bb'].filter(id => { const e = document.getElementById(id); return e && !e.hidden; }); });
     if (gm.length) fails.push('signature assets offered in a grand Fight-it battle: ' + gm.join(', ')); }
