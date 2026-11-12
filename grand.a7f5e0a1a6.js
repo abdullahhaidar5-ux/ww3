@@ -3125,9 +3125,9 @@ function g3GradeColor(col,n){const o=new Uint8ClampedArray(n*4);
 // Called at the end of g3Fields(): swaps the hand-shaped relief/colour for the real data and bakes sun shadows + valley AO + relief normals.
 function g3RealFields(F){const R=G3.real,W=F.W,H=F.H,E=R.E,EW=R.EW,Hh=F.Hh,Ls=F.Ls,Lw=F.Lw,N=W*H;
   const hm=new Float32Array(N);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const o=2*y*EW+2*x;hm[y*W+x]=(E[o]+E[o+1]+E[o+EW]+E[o+EW+1])/4;}
-  const SC=.0040,SK=.0078/SC,NG=.42;F.hm=hm; // relief height: 5,000 m = 20 map units (was 39 - ranges stood like walls); SK keeps the rock paint where it was; NG = shading steepness (was .7 on the taller relief: every slope lit like a cliff)
+  const SC=.0024,SK=.0078/SC,NG=.42,CE=m=>m<1800?m:1800+(m-1800)*.6;F.hm=hm; // relief height: gentle - 3,000 m = 6 map units, 8,000 m = 13 (was 12 and 32, before that 23 and 62: ranges stood like walls); CE flattens the highest ground so plateaus and peaks do not tower; SK keeps the rock paint where it was; NG = shading steepness
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ls=Ls[k],m=hm[k],coast=g3Smooth(.4,.8,ls),n=g3Fbm(x*.02,y*.02,4);
-    const landH=coast*(1+n*1.3)+Math.max(0,m)*SC;
+    const landH=coast*(1+n*1.3)+CE(Math.max(0,m))*SC;
     const sea=Math.min(-.8+Math.min(0,Math.max(m,-4500))/500,-.8-4*Math.pow(1-Lw[k],2));Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);if(ls>=.5&&Hh[k]<.45)Hh[k]=.45;}
   // flatten the ground around every land province's towns so cities stay readable even in real mountains (Tehran sits against the Alborz)
   {const fl=new Float32Array(N);for(const q of GCM.P){if(!q.land)continue;const cx=Math.round(q.x/2),cy=Math.round(q.y/2);
