@@ -61,3 +61,8 @@ Settings → Graphics → Performance log… → Copy → paste to ORCH.
 Run 1 (commit 172b31e): 25 of 27 green, including `superfreeze` (IR, RU, US, 4× CPU slowdown), `smooth-pc`, `smooth-mp`,
 `grandsmooth`, `smoke4`, `decisions`. Red: `audio` (music crossfade timing check) and `migrate-down` (timed out waiting
 for a client in the lobby) — neither touches code changed here and both are green on main; run 2 below re-checks them.
+Run 2 (commit 4e92b69, same code, only this README changed): 25 of 27 green, `superfreeze` and `migrate-down` green.
+Red: `audio` again, on a different check ("menu-02 did not start (slow or no connection)" — the soundtrack player's
+start timeout), and `smooth-pc` (green in run 1 with the identical code). Across both runs every gate except `audio`
+was green at least once; `audio` failed on two different music-timing checks that this branch does not touch.
+Not landed — the conductor's own gate run decides.
