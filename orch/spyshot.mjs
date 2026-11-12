@@ -1,4 +1,4 @@
-// Infiltrator look proof (helper spylook): a rifleman and the three plain-clothes outfits A / B / C side by side, close and at
+// Infiltrator look proof (helper spylook): a rifleman and the plain-clothes Infiltrator side by side, close and at
 // normal battle zoom, for a given nation.  node orch/spyshot.mjs --p IR [--a IL] [--map golan] [--out dir]  -> spy-<P>-close.png, spy-<P>-zoom.png
 // Also prints whether the real soldier models loaded ("3D models for ..." line, MODELS.proto keys) - see orch/reports/spylook.md.
 import http from 'node:http';
@@ -98,11 +98,11 @@ try {
     const put = (kd, dx) => { const u = addUnit(0, kd, x + dx, y + 40); u.ox = u.x; u.oy = u.y; if (u.vs) u.vs[0] = true; u.ang = u.va = Math.PI / 2; return u; };
     put('inf', -30); window.__ui = on => { const cvs = document.querySelector('canvas'); for (let n = cvs; n && n !== document.documentElement; n = n.parentElement) for (const q of n.parentElement.children) if (q !== n && q.tagName !== 'SCRIPT' && q.tagName !== 'STYLE' && q.tagName !== 'HEAD') q.style.visibility = on ? '' : 'hidden'; }; window.__spies = [];
     window.__at = [x, y]; return { x, y }; });
-  // one spy per outfit: the look is read when the figure is first built, so build them one at a time
+  // the Infiltrator (one look)
   await page.evaluate(() => { window.__respawn = () => { for (const u of window.__spies) { u.dead = true; } G.ents = G.ents.filter(e => !window.__spies.includes(e)); window.__spies = []; for (const k in SOLM) if (/\|spy\|/.test(k)) delete SOLM[k]; for (const k in GEARG) if (/\|spy\|/.test(k)) delete GEARG[k]; }; });
-  const spawn = async () => { for (const [i, L] of ['A', 'B', 'C'].entries()) {
-    await page.evaluate(([i, L]) => { if (typeof SPYLOOK !== 'undefined') SPYLOOK = L; const [x, y] = window.__at; const u = addUnit(0, 'spy', x - 9 + i * 15, y + 40); u.ox = u.x; u.oy = u.y; if (u.vs) u.vs[0] = true; u.ang = u.va = Math.PI / 2; window.__spies.push(u); }, [i, L]);
-    await frames(page, 2); } await page.evaluate(() => { if (typeof SPYLOOK !== 'undefined') SPYLOOK = 'A'; }); };
+  const spawn = async () => { for (const i of [1]) {
+    await page.evaluate(i => { const [x, y] = window.__at; const u = addUnit(0, 'spy', x - 9 + i * 15, y + 40); u.ox = u.x; u.oy = u.y; if (u.vs) u.vs[0] = true; u.ang = u.va = Math.PI / 2; window.__spies.push(u); }, i);
+    await frames(page, 2); } };
   if (argS('repl', '')) { // developer loop: drop go-N.js (page code; may return a value) into the folder, get out-N.png back; file "quit" ends it
     const RD = path.resolve(argS('repl', '')); fs.mkdirSync(RD, { recursive: true }); await spawn(); console.log('repl ready');
     for (let n = 1; !fs.existsSync(path.join(RD, 'quit')); ) { const f = path.join(RD, `go-${n}.js`); if (!fs.existsSync(f)) { await new Promise(r => setTimeout(r, 500)); continue; }

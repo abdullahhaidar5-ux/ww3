@@ -1,8 +1,8 @@
 # spylook — Infiltrators look like actual spies (branch `orch/spylook`, 2026-11-12)
 
-**What a player sees:** the Infiltrator is a plain-clothes operative: dark jacket, cap, a satchel on a strap, phone at the
-ear, hand on the bag — no rifle, no helmet, no combat kit, no camouflage, no nation tint. While it is hidden, its owner (only)
-sees a small eye above it. Pictures: `orch/concepts/spy/` (A = shipped; B coat + scarf + binoculars, C polo + vest + radio).
+**What a player sees:** the Infiltrator is a plain-clothes operative: long plain coat with a belt, a red scarf, binoculars at the
+eyes — no rifle, no helmet, no combat kit, no camouflage, no nation tint. While it is hidden, its owner (only)
+sees a small eye above it. Pictures: `orch/concepts/spy/` (one look, outfit B chosen by Abdullah 2026-11-12 12:45 "Go with B").
 
 **Before:** the spy had no model entry at all, so it was the fallback box figure (green box, ball head, stick).
 
@@ -25,4 +25,4 @@ Small fix included: a unit that started as a box figure is rebuilt with the real
 (`MODELS.gen`, 06-view; check `node orch/spyshot.mjs --late 1`).
 
 **Known limits:** on the helmeted soldier bodies (US and most nations) the torso keeps the bulk of the old chest rig under
-the jacket; at the far default zoom outfit A is a single dark figure (C's blue reads better from far); faces are flat-colored.
+the jacket; at the far default zoom the coat reads as one muted-brown figure; faces are flat-colored.

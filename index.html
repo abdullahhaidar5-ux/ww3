@@ -18663,7 +18663,7 @@ function newSoldierKit(m,fac,kind,key,vr){vr=vr|0;const inner=m.userData.inner;i
   const palm=sd=>{const ha=B['hand'+sd],mid=B[(sd==='R'?'Right':'Left')+'HandMiddle1'];const p=mid?mid.position.clone().multiplyScalar(.5):new THREE.Vector3(0,ha.position.length()*.17,0);p.z+=p.length()*.25;return p;};
   const hand=(sd,T,pole,face)=>{const ha=B['hand'+sd];if(!ha||!B['arm'+sd]||!B['forearm'+sd])return;const P=palm(sd),W=T.clone(),c=new THREE.Vector3();
     for(let i=0;i<6;i++){solArm(B,sd,W,pole);solTwist(ha,face);c.copy(P).applyMatrix4(ha.matrixWorld);W.add(T.clone().sub(c));}return P;};
-  if(kind==='spy'){spyKit(B,attach,hand,hp,hv,cp,V,k,vr);mergeGear(B,key+'|spy|'+k.toFixed(3)+'|v'+vr);return;}
+  if(kind==='spy'){spyKit(B,attach,hand,hp,hv,cp,V,k);mergeGear(B,key+'|spy|'+k.toFixed(3));return;}
   const rf=solRifle(k);attach(B.chest,rf,cp.clone().add(V(-.18*k,-1.0*k,.15*k)),rq);rf.updateMatrixWorld(true);const RP=a=>rf.localToWorld(new THREE.Vector3(a[0]*k,a[1]*k,a[2]*k)),TR=RP(RGRIP),TL=RP(RFORE);
   const PR=hand('R',TR,V(-.5,-1,-.35),V(1,.15,0)),PL=hand('L',TL,V(.7,-1,-.1),V(-.15,1,0));
   solCurl(B,'R',1.15);solCurl(B,'L',.95);
@@ -18680,38 +18680,25 @@ function newSoldierKit(m,fac,kind,key,vr){vr=vr|0;const inner=m.userData.inner;i
 // ---- Infiltrator (spy): a plain-clothes operative, not a rifleman (Abdullah 2026-11-11 "Make them look like actual spies") ----
 // Same soldier body and skeleton as everyone else (so it walks, merges and is drawn exactly like other infantry: ONE skinned
 // mesh, shapes shared by every spy of the same look), but: no rifle, no helmet, no combat kit; the uniform is re-painted in
-// civilian colours (spyPaint, by which bone a vertex follows) and a few code-made props say "spy". Three outfits:
-// A dark jacket + cap + satchel, phone at the ear (default) · B long plain coat + scarf, binoculars · C polo + vest + sunglasses, hand radio.
-// View only: nothing here touches the simulation. SPYLOOK picks the outfit for spies built from now on.
-let SPYLOOK='A';
-const SPYC=[{top:'#2e3035',arm:'#2e3035',fore:'#2e3035',leg:'#46536a',shoe:'#1d1b19',hair:'#22252a'},
- {top:'#6d6455',arm:'#6d6455',fore:'#6d6455',leg:'#2c2d31',shoe:'#1d1b19',hair:'#241c15'},
- {top:'#3f6d8e',arm:'#3f6d8e',fore:null,leg:'#8c7c5e',shoe:'#3a2c20',hair:'#1c1713'}];
+// civilian colours (spyPaint, by which bone a vertex follows) and a few code-made props say "spy". One look (Abdullah 2026-11-12
+// "Go with B"): long plain coat + scarf, binoculars at the eyes. View only: nothing here touches the simulation.
+const SPYC={top:'#6d6455',arm:'#6d6455',fore:'#6d6455',leg:'#2c2d31',shoe:'#1d1b19',hair:'#241c15'};
 const SPYSKIN='#b98a66';
-function spyKit(B,attach,hand,hp,hv,cp,V,k,L){const HC=hp.clone().add(V(0,1.35*k,0)),C=SPYC[L]||SPYC[0],H=new THREE.Group(),Cg=new THREE.Group(),Hp=new THREE.Group();
+function spyKit(B,attach,hand,hp,hv,cp,V,k){const HC=hp.clone().add(V(0,1.35*k,0)),C=SPYC,H=new THREE.Group(),Cg=new THREE.Group(),Hp=new THREE.Group();
   const mk=(geo,col,x,y,z,g)=>{const o=new THREE.Mesh(geo,gearMat(col));o.position.set(x*k,y*k,z*k);g.add(o);return o;};
   const box=(w,h,d)=>new THREE.BoxGeometry(w*k,h*k,d*k),at=(x,y,z)=>HC.clone().add(V(x*k,y*k,z*k)),hip=(x,y,z)=>hv.clone().add(V(x*k,y*k,z*k));
   // bare head: hair (or the cap) covers where the helmet was
-  {const d=mk(new THREE.SphereGeometry(1.0*k,12,7,0,Math.PI*2,0,Math.PI*(L===0?.5:.55)),C.hair,0,.12,-.05,H);d.scale.set(1,.95,1.1);}
-  if(L===0){mk(box(1.4,.1,.95),C.hair,0,.02,1.3,H);/* cap peak */
-    mk(box(.14,.95,.5),'#101114',-1.05,-.75,.3,H);/* phone at the right ear */
-    const bag=mk(box(.6,1.5,2.0),'#6a4a2f',1.5,-.45,.1,Hp);mk(box(.64,.5,2.04),'#573b24',1.5,.1,.1,Hp);/* satchel + flap on the left hip */
-    for(const z of[1.42,-1.02]){const s=mk(box(.26,5.3,.1),'#4a3220',.1,-.75,z,Cg);s.rotation.z=z>0?.62:-.62;s.rotation.y=z>0?0:Math.PI;}/* strap across the chest and back */
-    hand('R',at(-1.28,-.9,.35),V(-.55,-1,.5),V(1,0,0));solCurl(B,'R',.8);hand('L',hip(1.75,.75,.55),V(.6,-.2,-1),V(-1,0,0));solCurl(B,'L',.7);}
-  else if(L===1){{const t=mk(new THREE.TorusGeometry(.98*k,.3*k,6,12),'#8a2f2a',0,-1.25,.05,H);t.rotation.x=Math.PI/2;}mk(box(.6,1.9,.22),'#8a2f2a',.4,-2.3,.95,H);/* scarf + hanging end */
+  {const d=mk(new THREE.SphereGeometry(1.0*k,12,7,0,Math.PI*2,0,Math.PI*.55),C.hair,0,.12,-.05,H);d.scale.set(1,.95,1.1);}
+  {{const t=mk(new THREE.TorusGeometry(.98*k,.3*k,6,12),'#8a2f2a',0,-1.25,.05,H);t.rotation.x=Math.PI/2;}mk(box(.6,1.9,.22),'#8a2f2a',.4,-2.3,.95,H);/* scarf + hanging end */
     for(const x of[-.34,.34]){const c=mk(new THREE.CylinderGeometry(.3*k,.36*k,1.0*k,8),'#15161a',x,-.5,1.5,H);c.rotation.x=Math.PI/2;}mk(box(.5,.3,.4),'#15161a',0,-.5,1.3,H);/* binoculars at the eyes */
     const sk=mk(new THREE.CylinderGeometry(1.5*k,1.95*k,3.3*k,12,1,true),C.top,0,-1.45,0,Hp);sk.scale.z=.82;mk(box(.16,3.2,.1),'#4b4438',0,-1.45,1.52,Hp);/* long coat below the waist, front seam */
     {const T=new THREE.Group(),t=mk(new THREE.CylinderGeometry(1.42*k,1.62*k,4.1*k,12,1,true),C.top,0,0,0,T);t.scale.z=.9;mk(box(.16,4.0,.1),'#4b4438',0,0,1.42,T);const b=mk(new THREE.CylinderGeometry(1.66*k,1.66*k,.34*k,12,1,true),'#3b352c',0,-1.75,0,T);b.scale.z=.9;attach(B.chest,T,hip(0,2.25,.12));}/* the coat's body: closed front, belt */
     hand('R',at(-.8,-.62,1.55),V(-1,-.8,.2),V(1,0,0));solCurl(B,'R',.9);hand('L',at(.8,-.62,1.55),V(1,-.8,.2),V(-1,0,0));solCurl(B,'L',.9);}
-  else{mk(box(1.36,.32,.16),'#0c0d10',0,-.5,.95,H);for(const x of[-.7,.7])mk(box(.08,.12,.9),'#0c0d10',x,-.46,.5,H);/* sunglasses */
-    mk(box(.46,1.05,.34),'#1a1c1f',-.7,-1.3,1.15,H);mk(new THREE.CylinderGeometry(.05*k,.05*k,1.1*k,5),'#1a1c1f',-.86,-.3,1.15,H);/* hand radio + antenna at the mouth */
-    {const T=new THREE.Group();const t=mk(new THREE.CylinderGeometry(1.5*k,1.72*k,3.6*k,14,1,true,.3,Math.PI*2-.6),'#5a5642',0,0,0,T);t.scale.z=.98;t.material.side=THREE.DoubleSide;for(const x of[-.95,.95]){mk(box(.75,.65,.14),'#45422e',x,-1.05,1.3,T);mk(box(.55,.45,.14),'#45422e',x,.7,1.2,T);}attach(B.chest,T,hip(0,2.5,.1));}/* open vest: two front panels, back, pockets */
-    hand('R',at(-.85,-1.5,1.3),V(-.8,-1,.3),V(1,0,-.3));solCurl(B,'R',.9);hand('L',hip(1.45,.2,.3),V(1,.1,-.7),V(-1,0,0));solCurl(B,'L',.5);}
   if(H.children.length)attach(B.head,H,HC);if(Cg.children.length)attach(B.chest,Cg,cp.clone().add(V(0,.2*k,0)));if(Hp.children.length)attach(B.hips,Hp,hv.clone());}
 // Civilian colours for the soldier body: every body vertex is painted by the bone it follows most (legs = trousers, feet =
 // shoes, trunk = jacket / coat / shirt, arms = sleeves, hands and face = skin). The cloth keeps the folds and shading of the
 // original uniform texture (its brightness, sampled once per vertex), but none of its camouflage or nation tint.
-function spyPaint(geo,skel,L,tex){const C=SPYC[L]||SPYC[0],pa=geo.attributes.position,ca=geo.attributes.color,ua=geo.attributes.uv,si=geo.attributes.skinIndex,sw=geo.attributes.skinWeight,n=pa.count;
+function spyPaint(geo,skel,tex){const C=SPYC,pa=geo.attributes.position,ca=geo.attributes.color,ua=geo.attributes.uv,si=geo.attributes.skinIndex,sw=geo.attributes.skinWeight,n=pa.count;
   const reg=skel.bones.map(b=>{const nm=b.name;return /foot|toe/i.test(nm)?'shoe':/upleg|^leg|leg[LR]?$/i.test(nm)?'leg':/hand/i.test(nm)?'skin':/forearm/i.test(nm)?'fore':/arm|shoulder/i.test(nm)?'arm':/head|neck/i.test(nm)?'head':'top';});
   let lum=null;try{const im=tex&&tex.image;if(im&&ua&&im.width){const cv=document.createElement('canvas'),w=cv.width=Math.min(256,im.width),h=cv.height=Math.min(256,im.height),x=cv.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,w,h);const d=x.getImageData(0,0,w,h).data;
       lum=(u,v)=>{u-=Math.floor(u);v-=Math.floor(v);if(tex.flipY)v=1-v;const i=(Math.min(h-1,v*h|0)*w+Math.min(w-1,u*w|0))*4;return(d[i]*.3+d[i+1]*.59+d[i+2]*.11)/255;};}}catch(er){lum=null;}
@@ -18765,7 +18752,7 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
       if(g.index){const ix=g.index.array;for(let i=0;i<ix.length;i++)I[oi+i]=ix[i]+ov;oi+=ix.length;}else{for(let i=0;i<n;i++)I[oi+i]=ov+i;oi+=n;}ov+=n;}
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(P,3));geo.setAttribute('normal',new THREE.BufferAttribute(N,3));geo.setAttribute('color',new THREE.BufferAttribute(C,3));if(UV)geo.setAttribute('uv',new THREE.BufferAttribute(UV,2));
     geo.setAttribute('skinIndex',new THREE.BufferAttribute(SI,4));geo.setAttribute('skinWeight',new THREE.BufferAttribute(SW,4));geo.setIndex(new THREE.BufferAttribute(I,1));
-    if(/\|spy\|v\d$/.test(key))try{spyPaint(geo,skel,+key.slice(-1),tex);}catch(er){console.warn('spyPaint',er);}
+    if(/\|spy\|v\d$/.test(key))try{spyPaint(geo,skel,tex);}catch(er){console.warn('spyPaint',er);}
     // one material for the whole soldier: the uniform's (most triangles among the coloured parts), white so the baked
     // vertex colours show, keeping its weathering shader hook
     let src=sk[0].material,best=-1;for(const o of sk){const c=o.material.color,t=o.geometry.index?o.geometry.index.count:o.geometry.attributes.position.count;if(c&&c.r*.3+c.g*.59+c.b*.11>.02&&t>best){best=t;src=o.material;}}
@@ -19007,7 +18994,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
-  for(const [px,pz] of sq){const VR=e.kind==='spy'?Math.max(0,'ABC'.indexOf(SPYLOOK)):Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,c.dy||0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK,VR);else if(e.kind!=='spy')soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind+'|v'+(SK?VR:0));}catch(err){console.warn('mergeSoldier',err);}}
+  for(const [px,pz] of sq){const VR=e.kind==='spy'?0:Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,c.dy||0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK,VR);else if(e.kind!=='spy')soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind+'|v'+(SK?VR:0));}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
   if(e.kind==='spy'){const ey=decal('eye');ey.position.y=c.size+7;ey.scale.setScalar(5.2);ey.visible=false;o.add(ey);o.userData.parts.eye=ey;}
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
