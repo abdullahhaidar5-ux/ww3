@@ -1,19 +1,40 @@
 /* ---------- LOGISTICS interface: supply overlay (key L), roads being built, craters, cut-off towns (orch/logistics) ---------- */
-const LGU={on:false,btn:null};
+const LGU={on:false,btn:null,rs:null,rk:''};
 function lgToggle(){if(G&&G.battle){LGU.on=false;return;}LGU.on=!LGU.on;lgBtnSync();}   /* Battle has no supply lines (Abdullah 2026-11-11 19:41) */
 function lgBtnSync(){if(LGU.btn){LGU.btn.className=LGU.on?'on':'';}}
 function lgWanted(){if(G&&G.battle)return false;return LGU.on||(G.sel&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME))||(typeof TP!=='undefined'&&TP.ti>=0);}
-function lgEdgeState(e,i){const L=G.lg,D=G.lgd;if(D.cr[i]&&D.cr[i].t>G.t)return 2;if(D.mn&&lgBlk(i,ME))return 2;const r=L.reach&&L.reach[ME];if(!r)return 0;return r[e.a]&&r[e.b]?1:0;}
 function lgStroke(c,pts,sc){let on=false;c.beginPath();for(const p of pts){const q=toScreen(p[0],groundH(p[0],p[1])+3,p[1]);if(q.z>1){on=false;continue;}if(!on){c.moveTo(q.x,q.y);on=true;}else c.lineTo(q.x,q.y);}c.stroke();}
 function lgDensify(pts,step){const o=[pts[0]];for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],L=Math.hypot(b[0]-a[0],b[1]-a[1]),k=Math.max(1,Math.ceil(L/step));for(let j=1;j<=k;j++)o.push([a[0]+(b[0]-a[0])*j/k,a[1]+(b[1]-a[1])*j/k]);}return o;}
+/* ROAD COLORS (Abdullah 2026-11-11 20:12 "a neutral road is one color. Captured road one color. Enemy road another color", 20:13 "Green for your team"):
+   every road stretch is colored by who holds the ground under it (the territory owner map, terrUpdate): yours and allies' green, enemy red, neutral light gray;
+   a stretch cut off from its owner's supply (or cratered/mined) is dashed in its owner's color. Same sets feed the minimap and the ground. View only. */
+const LG_COL={mine:'#4ddc6a',foe:'#ff5a4a',neu:'#c9ced2'},LG_CLS=['mine','foe','neu'];
+function lgRoadCol(k){if(typeof SET!=='undefined'&&SET.cb&&typeof ID_CB!=='undefined')return k==='mine'?ID_CB[6]:k==='foe'?ID_CB[3]:LG_COL.neu;return LG_COL[k];}   // colour-blind mode: Okabe-Ito bluish green vs vermillion
+function lgTeamCls(o){return o==null||o<0||o>=G.teams.length?2:(!G.teams[o].reb&&ally(o,ME))?0:1;}
+function lgCellOwner(T,x,y){const i=Math.floor(x/TR_CELL),j=Math.floor(y/TR_CELL);return i<0||j<0||i>=T.cw||j>=T.ch?-1:T.own[j*T.cw+i];}
+function lgRoadSets(){const L=G.lg,D=G.lgd,T=terrUpdate();if(!L||!D||!T||!T.own)return null;
+  const key=T.v+'|'+L.sig+'|'+L.E.length+'|'+(G.t/2|0)+'|'+ME;if(LGU.rs&&LGU.rk===key)return LGU.rs;
+  const S=[[],[],[],[],[],[]];
+  L.E.forEach((e,i)=>{const P=e.pts;let cur=null,ck=-1;
+    for(let j=1;j<P.length;j++){const a=P[j-1],b=P[j],ow=lgCellOwner(T,(a[0]+b[0])/2,(a[1]+b[1])/2),cl=lgTeamCls(ow);
+      let dash=0;if(D.cr[i]&&D.cr[i].t>G.t)dash=1;else if(cl===0&&D.mn&&lgBlk(i,ME))dash=1;else if(ow>=0&&L.reach){const r=L.reach[ow];dash=r&&r[e.a]&&r[e.b]?0:1;}
+      const k=cl*2+dash;if(k!==ck){cur={p:[a],bb:[a[0],a[1],a[0],a[1]]};S[k].push(cur);ck=k;}
+      cur.p.push(b);const q=cur.bb;q[0]=Math.min(q[0],b[0]);q[1]=Math.min(q[1],b[1]);q[2]=Math.max(q[2],b[0]);q[3]=Math.max(q[3],b[1]);}});
+  const dots=[];for(const n of L.N){const o=n.e?n.tm:n.b>=0?n.b:n.t>=0?G.towns[n.t].ow:-1;dots.push([n.x,n.y,lgTeamCls(o)]);}
+  LGU.rs={S,dots};LGU.rk=key;return LGU.rs;}
+function lgDrawRoadsMini(c,sx,sy){const R=lgRoadSets();if(!R)return;c.lineCap='round';c.lineJoin='round';
+  for(let k=0;k<6;k++){if(!R.S[k].length)continue;c.strokeStyle=lgRoadCol(LG_CLS[k>>1]);c.lineWidth=1.2;c.setLineDash(k&1?[3,3]:[]);c.beginPath();for(const pl of R.S[k])pl.p.forEach((p,i)=>i?c.lineTo(p[0]*sx,p[1]*sy):c.moveTo(p[0]*sx,p[1]*sy));c.stroke();}
+  c.setLineDash([]);for(const d of R.dots){c.fillStyle=lgRoadCol(LG_CLS[d[2]]);c.beginPath();c.arc(d[0]*sx,d[1]*sy,2.2,0,7);c.fill();}}
+function lgDrawRoadsWorld(c){const R=lgRoadSets();if(!R)return;
+  for(let k=0;k<6;k++){const col=lgRoadCol(LG_CLS[k>>1]),dash=k&1?[10,8]:[];
+    for(const pl of R.S[k]){const b=pl.bb,p=pl.p;if(!inView((b[0]+b[2])/2,(b[1]+b[3])/2,.9)&&!inView(p[0][0],p[0][1],.4)&&!inView(p[p.length-1][0],p[p.length-1][1],.4))continue;
+      const P=lgDensify(p,140);c.setLineDash([]);c.strokeStyle='rgba(0,0,0,.5)';c.lineWidth=4;lgStroke(c,P);c.setLineDash(dash);c.strokeStyle=col;c.lineWidth=2;lgStroke(c,P);}}
+  c.setLineDash([]);for(const d of R.dots){if(!inView(d[0],d[1],.1))continue;const q=toScreen(d[0],groundH(d[0],d[1])+3,d[1]);if(q.z>1)continue;c.fillStyle=lgRoadCol(LG_CLS[d[2]]);c.strokeStyle='rgba(0,0,0,.6)';c.lineWidth=1.5;c.beginPath();c.arc(q.x,q.y,5,0,7);c.fill();c.stroke();}}
 function drawLogiWorld(c){if(!G||G.battle||!G.lg||!G.lgd||G.over)return;
   lgUiTick();
   if(G.roadV!==G.roadVS){G.roadVS=G.roadV;try{roadTexRefresh();}catch(e){}}
   const L=G.lg,D=G.lgd,me=G.teams[ME];if(!me)return;c.save();c.lineCap='round';c.lineJoin='round';
-  if(lgWanted()){L.E.forEach((e,i)=>{const b=e.bb;if(!inView((b[0]+b[2])/2,(b[1]+b[3])/2,.9)&&!inView(e.pts[0][0],e.pts[0][1],.4)&&!inView(e.pts[e.pts.length-1][0],e.pts[e.pts.length-1][1],.4))return;
-    const s=lgEdgeState(e,i);const P=lgDensify(e.pts,140);
-    if(s===1){c.setLineDash([]);c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=6;lgStroke(c,P);c.strokeStyle='#5fe07a';c.lineWidth=3;lgStroke(c,P);}
-    else{c.setLineDash([12,9]);c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=6;lgStroke(c,P);c.strokeStyle='#ff5a4a';c.lineWidth=3;lgStroke(c,P);}});c.setLineDash([]);}
+  if(lgWanted())lgDrawRoadsWorld(c);
   // front line: where enemy territories meet (red/white dashes) - always on in Conquest
   {const T=terrUpdate();if(T&&T.seg.length){c.lineWidth=5;c.strokeStyle='rgba(0,0,0,.55)';c.setLineDash([]);const vis=[];for(const g of T.seg){if(inView((g[0]+g[2])/2,(g[1]+g[3])/2,.15))vis.push(g);}
     if(vis.length){const run=(w,col,dash)=>{c.lineWidth=w;c.strokeStyle=col;c.setLineDash(dash);c.beginPath();for(const g of vis){const a=toScreen(g[0],groundH(g[0],g[1])+4,g[1]),b=toScreen(g[2],groundH(g[2],g[3])+4,g[3]);if(a.z>1||b.z>1)continue;c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);}c.stroke();};
@@ -41,9 +62,8 @@ function drawLogiMini(c,sx,sy){if(!G||G.battle||!G.lg||!G.lgd)return;const L=G.l
       for(let i=0;i<cw*ch;i++){const o=T.own[i];if(o<0)continue;const col=G.teams[o]&&G.teams[o].color||'#888',m=/^#([0-9a-f]{6})$/i.exec(col);const v=m?parseInt(m[1],16):0x888888;im.data[i*4]=v>>16;im.data[i*4+1]=(v>>8)&255;im.data[i*4+2]=v&255;im.data[i*4+3]=62;}x.putImageData(im,0,0);}
     c.imageSmoothingEnabled=false;c.drawImage(LGU.tc,0,0,cw*TR_CELL*sx,ch*TR_CELL*sy);
     c.strokeStyle='#ff5a4a';c.lineWidth=1.8;c.beginPath();for(const g of T.seg){c.moveTo(g[0]*sx,g[1]*sy);c.lineTo(g[2]*sx,g[3]*sy);}c.stroke();}}
-  L.E.forEach((e,i)=>{const s=lgEdgeState(e,i);if(s===1){c.setLineDash([]);c.strokeStyle='rgba(95,224,122,.75)';c.lineWidth=1.6;}else{c.setLineDash([4,3]);c.strokeStyle='rgba(255,90,74,.9)';c.lineWidth=1.6;}
-    c.beginPath();e.pts.forEach((p,k)=>k?c.lineTo(p[0]*sx,p[1]*sy):c.moveTo(p[0]*sx,p[1]*sy));c.stroke();});c.setLineDash([]);
-  for(const t of G.towns)if(t.cut&&townsMine(t)){c.strokeStyle='#ff5a4a';c.lineWidth=2;c.beginPath();c.arc(t.x*sx,t.y*sy,8,0,7);c.stroke();}
+  lgDrawRoadsMini(c,sx,sy);
+  for(const t of G.towns)if(t.cut&&townsMine(t)){c.strokeStyle=lgRoadCol('mine');c.lineWidth=1.4;c.setLineDash([3,3]);c.beginPath();c.arc(t.x*sx,t.y*sy,7,0,7);c.stroke();c.setLineDash([]);}
   for(const e of G.ents){if(e.dead||!((e.cv&&!e.cv.cav)||(G.lgCv&&G.lgCv.has(e.id))))continue;c.fillStyle=ally(e.team,ME)?'#ffe45a':'#ff4a3a';c.fillRect(e.x*sx-2.5,e.y*sy-2.5,5,5);}
   try{drawLogiMini2(c,sx,sy);}catch(e){}
   c.restore();}

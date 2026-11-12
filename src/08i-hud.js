@@ -2,7 +2,7 @@
    overlay switcher for the map / minimap layers. View-only: no sim state, nothing here is saved or synced. Every alert comes from pushLog()
    (the one log entry point), every overlay flag is read by the draw code it switches (OVL.*), so no second panel is ever needed. ---------- */
 const OVL={towns:true,opinion:true,sonar:true,mines:true};   // 'supply' mirrors the logistics overlay (LGU.on, key L)
-const HUD_OV=[['towns','Towns','Town markers, loyalty and tax, unrest and cut-off warnings (map and minimap)'],['supply','Supply','Supply roads, convoys and cut-off towns (also key L)'],['opinion','Opinion','World opinion meter in this bar'],['sonar','Sonar','Submarine contacts on the map and minimap'],['mines','Mines','Mine markers on the map and minimap']];
+const HUD_OV=[['towns','Towns','Town markers, loyalty and tax, unrest and cut-off warnings (map and minimap)'],['supply','Supply','Roads colored by who holds them (green yours, red enemy, gray neutral, dashed = cut off), convoys and cut-off towns (also key L)'],['opinion','Opinion','World opinion meter in this bar'],['sonar','Sonar','Submarine contacts on the map and minimap'],['mines','Mines','Mine markers on the map and minimap']];
 const HUDS={al:[],unread:0,open:false,el:null,g:null,t:0,sig:''};
 function hudAlert(m,k){if(!G||!m||(k!=='bad'&&k!=='w'))return;if(HUDS.g!==G){HUDS.g=G;HUDS.al.length=0;HUDS.unread=0;}
   const last=HUDS.al[0];if(last&&last.m===m&&G.t-last.t<2)return;HUDS.al.unshift({m,k,t:G.t});if(HUDS.al.length>30)HUDS.al.length=30;if(!HUDS.open)HUDS.unread=Math.min(99,HUDS.unread+1);HUDS.t=0;}
