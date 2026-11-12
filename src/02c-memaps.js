@@ -7,10 +7,13 @@
    No holy sites are objectives (they live on the grand map). */
 {
 const QS=[[420,300],[2780,1900],[2780,300],[420,1900],[420,1100],[2780,1100]];
+// 5/6-player starts for maps whose river/strait runs along the middle row (the side bases at 420,1100 / 2780,1100 would sit in it):
+// the extra bases go on the middle of the north and south edges instead (S.sl5 / S.sl6)
+const NS5=[[420,300],[2780,1900],[2780,300],[420,1900],[1600,260]],NS6=NS5.concat([[[1600,1940]][0]]);
 const Q4=L=>mirrorList(mirrorList(L,'x'),'y');
 const pl=(a,b,amp,ph)=>{const n=Math.max(2,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/40)),dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,p=[];for(let i=0;i<=n;i++){const t=i/n,w=amp*(Math.sin(t*9+ph)+.4*Math.sin(t*23+ph*2));p.push([a[0]+dx*t-dy/L*w,a[1]+dy*t+dx/L*w]);}return p;};
 const ME=S=>[S.k,{name:S.n,min:2,max:S.max||6,sym:'quad',theme:S.th||'desert',rough:S.rg||1.2,ssn:S.ssn||1,home:S.home,tag:S.tag,desc:S.desc,fieldMinB:S.fmb,
-  slots:QS,cities:Q4(S.c).concat([S.cc||[1600,1100,130,'mideast']]),
+  slots:QS,sl5:S.ns?NS5:undefined,sl6:S.ns?NS6:undefined,cities:Q4(S.c).concat([S.cc||[1600,1100,130,'mideast']]),
   water(M,R){const ph=R()*6.28;
     for(const [ax,ay,bx,by,am,hw] of S.riv||[])M.rivers.push({pts:pl([ax,ay],[bx,by],am,ph),hw:()=>hw});
     if(S.br){M.bridgeAt=S.br.slice();M.bridgeFrac=true;}
@@ -67,7 +70,7 @@ add([
 {k:'marshes',n:'Southern Marshes',th:'green',rg:1.0,home:['IQ','RV','IR'],tag:'reed marsh · lagoons · causeways · villages',
  desc:'The great southern marshes: reed islands and shallow lagoons, canoe villages and narrow causeways. Few roads, many ambush lanes; the island market town in the middle supplies the winner.',
  c:[[700,480,85,'mideast'],[1050,820,80,'mideast'],[1250,360,70,'mideast']],cc:[1600,1100,120,'mideast'],
- lk:[[1000,560,150,1.3],[700,960,120,1.4],[1280,820,90,1.2],[1400,420,80,1.2]],riv:[[200,180,1500,1000,60,34]],br:[[0,.35],[0,.7]]},
+ lk:[[1000,560,150,1.3],[700,960,120,1.4],[1280,820,90,1.2],[1400,420,80,1.2]],riv:[[760,100,1500,1000,60,34]],br:[[0,.35],[0,.7]]},
 /* ---------- SYRIA (5 new; with aleppo = 6) ---------- */
 {k:'euphratesvalley',n:'Euphrates Valley and Dam',th:'desert',rg:1.2,home:['SY','IQ','TR'],tag:'river valley · dam lake · steppe',
  desc:'The Syrian Euphrates: a green valley under a huge dam lake, steppe towns on the plateau above it and few crossings. The dam crossing is the objective every army wants.',
@@ -76,7 +79,7 @@ add([
 {k:'homsgap',n:'Homs Gap',th:'green',rg:1.25,home:['SY','RS','IL'],tag:'mountain gap · orchards · highway',
  desc:'The wide gap between the coastal mountains and the Lebanese mountains: orchards and a river valley, the highway from the coast to the interior and a lake and an old fortress hill. A classic invasion route.',
  c:[[760,470,100,'lebanon'],[1150,300,80,'mideast'],[560,900,75,'lebanon']],cc:[1600,1100,140,'mideast'],
- rd:[[900,-60,980,620,90],[820,800,1000,1000,80]],lk:[[1280,760,90,1.4]],riv:[[300,620,1500,700,50,34]],br:[[0,.4],[0,.8]],pk:[[1200,420,60,1.4,-.3]]},
+ rd:[[900,-60,950,420,90],[840,880,1000,1000,80]],lk:[[1280,760,90,1.4]],riv:[[300,620,1500,700,50,34]],br:[[0,.4],[0,.8]],pk:[[1200,420,60,1.4,-.3]]},
 {k:'latakiamtns',n:'Latakia: Coastal Mountains',th:'green',rg:1.55,home:['SY','TR'],fmb:300,tag:'forested mountains · coast · port',
  desc:'Forested coastal mountains tumbling into the sea, a port city on the shore and winding valley roads. Hard to see and hard to move: ambush country.',
  c:[[700,520,100,'gulfcity'],[1100,300,70,'lebanon'],[1000,900,70,'lebanon']],cc:[1600,1100,120,'lebanon'],
@@ -136,8 +139,8 @@ add([
  desc:'The Hajar range: bare mountains cut by deep wadis, oasis villages with old forts and a single paved pass over the top. Pass control is everything.',
  c:[[760,480,85,'mideast'],[1150,820,80,'mideast'],[560,950,70,'mideast']],cc:[1600,1100,120,'mideast'],
  rd:[[820,100,980,560,92],[1200,700,1400,900,90],[560,720,720,860,76]],pk:[[1050,1000,100,1.6,.3],[1400,400,80,1.5,-.3]]},
-{k:'muscatbay',n:'Muscat: Harbour Coast',th:'desert',rg:1.3,home:['OM','AE','IR'],fmb:300,tag:'rocky coast · harbour · forts · navies',
- desc:'A rocky harbour capital: steep brown mountains drop straight into the sea, old watchtower forts guard the coves and the coast road is the only land route. Navies and coastal guns.',
+{k:'muscatbay',n:'Muscat: Harbor Coast',th:'desert',rg:1.3,home:['OM','AE','IR'],fmb:300,tag:'rocky coast · harbor · forts · navies',
+ desc:'A rocky harbor capital: steep brown mountains drop straight into the sea, old watchtower forts guard the coves and the coast road is the only land route. Navies and coastal guns.',
  c:[[760,480,105,'gulfcity'],[1100,820,80,'gulfcity'],[1200,300,70,'mideast']],cc:[1600,1100,120,'gulfcity'],
  sea:[-340,1100,640,.72],rd:[[900,60,1100,420,84],[1050,780,1300,900,80]],pk:[[1250,560,80,1.5,.4]]},
 {k:'rubalkhali',n:'Empty Quarter Edge',th:'desert',rg:1.2,home:['OM','SA','AE','DW'],tag:'giant dunes · sabkha flats · oil road',
@@ -146,7 +149,7 @@ add([
  rd:[[880,360,1180,560,100],[1250,860,1400,1000,90]],pk:[[1000,980,110,1.9,.4],[1450,430,90,1.7,-.3]]},
 /* ---------- YEMEN / DW (4 new; yemen + tihama cover 2) ---------- */
 {k:'sanaa',n:'Sanaa: Highland Basin',th:'desert',rg:1.45,home:['DW','SA'],tag:'high basin · tower-house city · mountain rim',
- desc:'A high mountain basin at 2,000 metres: a dense tower-house city in the middle, terraced farmland and a rim of dry mountains with a few road passes. Thin air, long sight lines.',
+ desc:'A high mountain basin at 2,000 meters: a dense tower-house city in the middle, terraced farmland and a rim of dry mountains with a few road passes. Thin air, long sight lines.',
  c:[[760,520,115,'yemen'],[1100,860,85,'yemen'],[1200,330,75,'yemen']],cc:[1600,1100,150,'yemen'],
  rd:[[880,60,1020,500,88],[1000,760,1250,940,82]],pk:[[1350,420,80,1.5,.3],[600,820,60,1.4,-.2]]},
 {k:'hodeidah',n:'Hodeidah: Red Sea Port',th:'desert',rg:1.1,home:['DW','SA','EG'],fmb:300,tag:'hot coast · port · mangrove flats · navies',
@@ -161,11 +164,11 @@ add([
  desc:'The high northern mountains on the Saudi border: steep terraced slopes, cave tunnels and mountain villages. Brutal climbing, deadly ambushes and few ways through.',
  c:[[760,470,85,'yemen'],[1150,820,75,'yemen'],[580,950,65,'yemen']],cc:[1600,1100,110,'yemen'],
  rd:[[880,-40,1000,560,92],[1050,700,1280,900,90],[540,760,700,940,80]],pk:[[1350,420,90,1.5,.3],[700,380,70,1.4,-.4]]},
-{k:'adenport',n:'Aden: Volcano Harbour',th:'desert',rg:1.3,home:['DW','OM','SA'],fmb:300,tag:'crater harbour · port · coast road · navies',
- desc:'A port inside an extinct volcano crater: a natural harbour, a narrow isthmus to the mainland, salt pans and old British-era forts. The isthmus road and the port decide it.',
+{k:'adenport',n:'Aden: Volcano Harbor',th:'desert',rg:1.3,home:['DW','OM','SA'],fmb:300,tag:'crater harbor · port · coast road · navies',
+ desc:'A port inside an extinct volcano crater: a natural harbor, a narrow isthmus to the mainland, salt pans and old British-era forts. The isthmus road and the port decide it.',
  c:[[760,500,110,'gulfcity'],[1100,860,80,'gulfcity'],[1200,330,70,'mideast']],cc:[1600,1100,130,'gulfcity'],
  sea:[-340,1100,640,.72],rd:[[800,680,1000,860,74]],pk:[[900,300,110,1.4,.3],[1300,620,60,1.4,.2]]},
-{k:'babmandeb',n:'Bab el-Mandeb: Strait Gate',th:'desert',rg:1.2,home:['DW','EG','SA'],fmb:300,tag:'narrow strait · island · two coasts · navies',
+{k:'babmandeb',ns:1,n:'Bab el-Mandeb: Strait Gate',th:'desert',rg:1.2,home:['DW','EG','SA'],fmb:300,tag:'narrow strait · island · two coasts · navies',
  desc:'The "Gate of Tears": a narrow strait between two continents with a volcanic island in the narrows. Ships and missiles fight for the water; ferries and bridges hop the island.',
  c:[[1000,450,95,'gulfcity'],[560,820,75,'mideast'],[1250,800,70,'mideast']],cc:[1600,1000,100,'gulfcity'],
  riv:[[-200,1100,1600,1100,0,150]],br:[[0,.5],[0,.7]],pk:[[900,300,70,1.4,.2]]},
@@ -191,7 +194,7 @@ add([
  c:[[760,500,90,'gulfcity'],[1100,850,75,'mideast'],[1200,330,70,'mideast']],cc:[1600,1100,110,'mideast'],
  sea:[-340,1100,640,.72],rd:[[820,60,1000,520,90],[1000,760,1220,940,86]],pk:[[1300,560,90,1.6,.3]]},
 /* ---------- TURKEY (6 new; anatolia cover) ---------- */
-{k:'bosphorus',n:'Bosphorus: City on Two Continents',th:'temperate',rg:1.15,home:['TR','GR','UA','RU'],fmb:300,tag:'strait city · bridges · hills · navies',
+{k:'bosphorus',ns:1,n:'Bosphorus: City on Two Continents',th:'temperate',rg:1.15,home:['TR','GR','UA','RU'],fmb:300,tag:'strait city · bridges · hills · navies',
  desc:'A giant city split by a narrow strait: tall bridges between two continents, hills and old walls on both sides, ferries and warships in the water. The bridges are the whole war.',
  c:[[760,470,130,'turkey'],[1100,820,100,'turkey'],[1200,300,80,'turkey']],cc:[1600,1100,150,'turkey'],
  riv:[[-200,1100,1600,1100,0,95]],br:[[0,.3],[0,.55],[0,.85]],rd:[[700,640,860,780,60]],pk:[[1000,380,60,1.4,.3]]},
@@ -208,7 +211,7 @@ add([
  c:[[760,500,120,'gulfcity'],[1100,820,85,'turkey'],[1200,330,75,'turkey']],cc:[1600,1100,140,'turkey'],
  sea:[-340,1100,640,.72],rd:[[1000,300,1200,560,76]],pk:[[1350,820,60,1.4,.3]],lk:[[500,820,45,1.3]]},
 {k:'konyaplain',n:'Konya: Anatolian Steppe',th:'desert',rg:1.1,home:['TR'],tag:'dry steppe · salt lake · farm towns',
- desc:'The central Anatolian steppe: endless wheat and dry grass, a great salt lake, farm towns and a railway line. Open ground for armour, with no cover but villages.',
+ desc:'The central Anatolian steppe: endless wheat and dry grass, a great salt lake, farm towns and a railway line. Open ground for armor, with no cover but villages.',
  c:[[760,470,100,'turkey'],[1100,860,85,'turkey'],[560,950,70,'turkey']],cc:[1600,1100,130,'turkey'],
  lk:[[1300,560,140,1.5]],rd:[[560,640,700,800,60]],pk:[[1000,1000,50,1.5,.3]]},
 {k:'blacksea',n:'Black Sea Coast: Green Mountains',th:'green',rg:1.5,home:['TR','RU','UA'],fmb:300,tag:'wet green mountains · tea slopes · coast road · navies',
@@ -225,7 +228,7 @@ add([
  c:[[760,500,95,'turkey'],[1150,780,80,'turkey'],[600,930,70,'turkey']],cc:[1600,1100,125,'turkey'],
  lk:[[1250,420,150,1.6],[900,1000,100,1.3]],riv:[[1000,-100,1100,1100,40,34]],br:[[0,.5],[0,.85]],rd:[[560,640,720,800,56]]},
 {k:'samawa',n:'Samawa: Euphrates Farmland',th:'desert',rg:1.05,home:['RV','IQ','SA'],tag:'irrigated strip · desert both sides · highway',
- desc:'A thin green strip of irrigated fields along the Euphrates with open desert on both sides and one long highway. Fast armour in the desert, tough fighting for the farm villages.',
+ desc:'A thin green strip of irrigated fields along the Euphrates with open desert on both sides and one long highway. Fast armor in the desert, tough fighting for the farm villages.',
  c:[[820,470,90,'mideast'],[1100,900,80,'mideast'],[580,880,65,'mideast']],cc:[1600,1100,120,'mideast'],
  riv:[[1100,-200,1180,1100,60,40]],br:[[0,.35],[0,.7]],rd:[[560,640,700,780,64]],pk:[[1400,500,60,1.4,.2]]},
 {k:'rumaila',n:'Rumaila: Oilfield Flats',th:'desert',rg:.9,home:['RV','IQ','IR','SA'],tag:'oil wells · pipelines · flat desert · border berms',
@@ -240,8 +243,8 @@ add([
  desc:'Packed housing blocks fringed by citrus orchards and farm plots, with one coastal highway. Orchards give cover for flanking; the blocks are slow and costly to clear.',
  c:[[700,500,120,'gulfcity'],[1050,800,95,'mideast'],[1250,350,80,'mideast'],[560,980,75,'mideast']],cc:[1600,1100,145,'gulfcity'],
  sea:[-340,1100,640,.72],rd:[[1300,700,1420,1000,60]],pk:[[1450,560,50,1.3,.2]]},
-{k:'gazaharbour',n:'Gaza: Harbour Quarter',th:'temperate',rg:.95,home:['OB','IL','EG'],fmb:300,tag:'fishing harbour · old quarter · seafront',
- desc:'A small fishing harbour and a tight old quarter behind a long seafront road. Naval fire from the sea, rooftop fights and a bridge over a stream through the middle.',
+{k:'gazaharbour',n:'Gaza: Harbor Quarter',th:'temperate',rg:.95,home:['OB','IL','EG'],fmb:300,tag:'fishing harbor · old quarter · seafront',
+ desc:'A small fishing harbor and a tight old quarter behind a long seafront road. Naval fire from the sea, rooftop fights and a bridge over a stream through the middle.',
  c:[[700,520,115,'gulfcity'],[1000,860,85,'mideast'],[1200,320,75,'mideast']],cc:[1600,1100,135,'gulfcity'],
  sea:[-340,1100,640,.72],riv:[[700,300,1600,600,36,28]],br:[[0,.4],[0,.8]]},
 {k:'deirez',n:'Euphrates: Desert River Towns',th:'desert',rg:1.1,home:['BI','SY','IQ'],tag:'river towns · desert both banks · bridges',
@@ -257,7 +260,7 @@ add([
  c:[[760,500,85,'mideast'],[1150,820,75,'mideast'],[560,950,60,'mideast']],cc:[1600,1100,115,'mideast'],
  rd:[[900,300,1150,900,80]],pk:[[1050,600,90,2.2,.9]]},
 {k:'gazanorth',n:'Gaza: Northern Farms',th:'temperate',rg:1.05,home:['OB','IL'],tag:'greenhouses · open farmland · built-up edge',
- desc:'Flat farmland and greenhouse rows north of the city, with a built-up edge and a few sandy tracks. Open ground for armour, cover in the glasshouses and orchard walls.',
+ desc:'Flat farmland and greenhouse rows north of the city, with a built-up edge and a few sandy tracks. Open ground for armor, cover in the glasshouses and orchard walls.',
  c:[[760,470,95,'mideast'],[1150,820,85,'gulfcity'],[580,950,70,'mideast']],cc:[1600,1100,135,'gulfcity'],
  sea:[-340,1100,640,.72],rd:[[1250,640,1430,900,56]],pk:[[1430,480,50,1.3,.2]]},
 {k:'gazawadi',n:'Gaza: Wadi and Dunes',th:'desert',rg:1.15,home:['OB','IL','EG'],tag:'dry wadi · dunes · camps · one bridge',

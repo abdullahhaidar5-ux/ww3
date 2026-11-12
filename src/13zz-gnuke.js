@@ -7,17 +7,17 @@
 // Effects are GMOD rows + relations + the event log (grLog) — no separate battle code. State: GC.nuk (saved with the campaign).
 // Neutral: no real places' casualty figures, no real leaders. Equal rules for every nation.
 const GNK={start:{US:3,RU:3,CN:2,GB:1,FR:1,IN:1,PK:1,KP:1,IL:1},pre:{IR:2},
-  names:['No programme','Enrichment','Test-ready','Warhead (tested)'],months:[0,6,6,0],
+  names:['No program','Enrichment','Test-ready','Warhead (tested)'],months:[0,6,6,0],
   cost:1500,upkeep:150,cap:6,fallout:36,strikeCost:0,aiGap:24,flight:0};   // real ICBMs/IRBMs land in ~10-30 minutes: impact is immediate on the map; the target gets a launch-detected alert (Abdullah 2026-11-07 10:22 "Not realistic" about a month-long flight)
 function gnkN(c){if(!GC.nuk)GC.nuk={n:{},fo:{},pend:[]};const S=GC.nuk;if(!S.n[c]){const w=GNK.start[c]||0;S.n[c]={st:w?3:(GNK.pre[c]||0),p:0,w:w,last:-99};}return S.n[c];}
 function gnkName(c){return typeof gdNatName==='function'?gdNatName(c):c;}
-function gnkStart(c){const N=gnkN(c),A=GC.nat[c];if(N.st!==0)return 'The programme is already running.';if(A.cash<GNK.cost)return 'Costs $'+GNK.cost+'.';
-  A.cash-=GNK.cost;N.st=1;N.p=0;grLog(gnkName(c)+' starts a nuclear programme.',c);return '';}
+function gnkStart(c){const N=gnkN(c),A=GC.nat[c];if(N.st!==0)return 'The program is already running.';if(A.cash<GNK.cost)return 'Costs $'+GNK.cost+'.';
+  A.cash-=GNK.cost;N.st=1;N.p=0;grLog(gnkName(c)+' starts a nuclear program.',c);return '';}
 // RG10 follow-on: the programme's site is the capital's province. While an enemy army holds it, enrichment/test work stalls
 // (the work is seized or buried; no progress that month). Logged once when the occupation starts and once when it ends.
 function gnkOccupied(c,N){const A=GC.nat[c],cap=A&&A.cap;const occ=cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c));
-  if(occ&&!N.occ){N.occ=1;grLog(gnkName(c)+': the programme site is under occupation. Work has stopped.',c);}
-  else if(!occ&&N.occ){N.occ=0;grLog(gnkName(c)+': the programme site is back under national control.',c);}
+  if(occ&&!N.occ){N.occ=1;grLog(gnkName(c)+': the program site is under occupation. Work has stopped.',c);}
+  else if(!occ&&N.occ){N.occ=0;grLog(gnkName(c)+': the program site is back under national control.',c);}
   return !!occ;}
 // one month: programme stages, tests, warhead growth, upkeep, fallout, AI decisions
 function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.length){const due=GC.nuk.pend.filter(x=>x[2]<=GC.turn);GC.nuk.pend=GC.nuk.pend.filter(x=>x[2]>GC.turn);for(const x of due)gnkImpact(x[0],x[1],x[3]);}
@@ -32,9 +32,9 @@ function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.l
     if(N.st>=1&&N.st<3)for(const o of alive)if(o!==c)gdRel(o,c,-1);
     // AI nations at war with a nuclear power may start their own programme (cascade); rare and seeded
     if(!A.ai)continue;
-    if(N.st===0&&A.cash>2500&&alive.some(o=>o!==c&&GC.nat[o]&&(gnkN(o).w>0)&&grAtWar(c,o))&&R()<.03){N.st=1;N.p=0;grLog(gnkName(c)+' is reported to be starting a nuclear programme.',c);}
+    if(N.st===0&&A.cash>2500&&alive.some(o=>o!==c&&GC.nat[o]&&(gnkN(o).w>0)&&grAtWar(c,o))&&R()<.03){N.st=1;N.p=0;grLog(gnkName(c)+' is reported to be starting a nuclear program.',c);}
     // last resort: the capital is held by an enemy army and the nation has warheads → strike the occupied capital
-    if(N.w>0&&N.st===3&&GC.turn-N.last>=GNK.aiGap){const cap=A.cap;if(cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c)))gnkLaunch(c,cap,true);}
+    if(N.w>0&&N.st===3&&GC.turn-N.last>=GNK.aiGap){const cap=A.cap;if(cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c))){const oc=GC.prov[cap].o;if(typeof gescWarOf!=='function'||gescWarOf(c,oc)>=7)gnkLaunch(c,cap,true);else gescNAlert(c,oc,1);}}   /* escalation ladder: a month on nuclear alert comes first, so the occupier can leave or make peace */
   }
   for(const pi of Object.keys(GC.nuk.fo))if(GC.nuk.fo[pi]<GC.turn)delete GC.nuk.fo[pi];else if(GC.prov[pi])GC.prov[pi].un=Math.min(100,(GC.prov[pi].un||0)+3);
 }
@@ -78,11 +78,11 @@ function gnkBtn(label,fn){const b=document.createElement('button');b.textContent
 if(typeof npTab==='function')npTab('nuke','☢','Nuclear',(code,body,c)=>{const own=code===GC.me,N=gnkN(code),A=GC.nat[code];
   const stage=GNK.names[N.st]||'';const nextM=N.st>=1&&N.st<=2?' (next stage in '+Math.max(0,GNK.months[N.st]-N.p)+' months)':'';
   body.innerHTML='<div style="font-size:17px;margin-bottom:6px"><b>Nuclear status</b></div><div style="max-width:520px">'
-   +gnkRow('Programme',stage+nextM)+gnkRow('Warheads',N.w)+gnkRow('Upkeep per month',N.w||N.st>=1?'$'+(N.w*GNK.upkeep):'—')
+   +gnkRow('Program',stage+nextM)+gnkRow('Warheads',N.w)+gnkRow('Upkeep per month',N.w||N.st>=1?'$'+(N.w*GNK.upkeep):'—')
    +gnkRow('Fallout zones',Object.keys(GC.nuk.fo).length)+'</div>'
    +'<div style="margin-top:10px;opacity:.8;max-width:520px">Every nuclear power pays upkeep for its warheads. A strike brings sanctions, world anger and fallout; a nuclear victim can answer. AI nations use a strike only as a last resort.</div>';
   if(own){const row=document.createElement('div');body.appendChild(row);
-    if(N.st===0)row.appendChild(gnkBtn('Start a nuclear programme ($'+GNK.cost+')',()=>{const e=gnkStart(code);if(e)grLog(e,code);npOpen(code,'nuke');}));
+    if(N.st===0)row.appendChild(gnkBtn('Start a nuclear program ($'+GNK.cost+')',()=>{const e=gnkStart(code);if(e)grLog(e,code);npOpen(code,'nuke');}));
     if(N.w>0&&N.st>=0)row.appendChild(gnkBtn('Launch a strike…',()=>gnkPickTarget(code)));}
 });
 GMOD_HOOKS.push(gnkMonth);

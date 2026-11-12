@@ -21,7 +21,7 @@ Object.assign(MAPS,{
     water(M,R){const ph=R()*6.28;const rg=[];for(let y=-200;y<=960;y+=40)rg.push([1280+34*Math.sin(y*.006+ph),y]);M.ridges.push({pts:rg,hw:()=>88});
       M.peaks.push({x:1600,y:180,r:150,rx:2.2,rot:0},{x:760,y:760,r:70,rx:1.4,rot:.5});M.lakes.push({x:60,y:1100,r:230,rx:.8,wob:q=>.1*Math.sin(q*3+ph)});mirrorMap(M,'x');mirrorMap(M,'y');}},
   dmziron:{name:'Korean DMZ: Iron Triangle',min:2,max:6,sym:'quad',theme:'green',rough:1.35,ssn:3,home:['KR','KP'],tag:'hills · two rivers · fortified strip · winter',
-    desc:'The narrow demilitarised strip between two rivers, studded with fortified hills, and a wooded ridge on each flank. Armies cross by a few bridges under artillery cover. Best in winter snow.',
+    desc:'The narrow demilitarized strip between two rivers, studded with fortified hills, and a wooded ridge on each flank. Armies cross by a few bridges under artillery cover. Best in winter snow.',
     slots:QS,cities:Q4([[1000,430,100,'korea'],[560,980,75,'asia']]).concat([[1600,1100,120,'korea']]),
     water(M,R){const ph=R()*6.28;M.rivers.push({pts:wig(-200,1600,x=>870+45*Math.sin(x*.0048+ph)+18*Math.sin(x*.014)),hw:()=>46});M.bridgeAt=[[0,.46],[0,.84]];M.bridgeFrac=true;
       M.peaks.push({x:1350,y:1010,r:62,rx:1.5,rot:.3},{x:900,y:1040,r:50,rx:1.4,rot:-.4},{x:640,y:520,r:66,rx:1.6,rot:.6},{x:1300,y:400,r:56,rx:1.3,rot:.1});

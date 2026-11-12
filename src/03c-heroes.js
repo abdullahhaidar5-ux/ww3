@@ -7,7 +7,7 @@ function heroOk(team,s){const T=G.teams[team];
   if((T.hrb||0)>G.t){if(!T.ai)log(team,`A new ${s.name} can be trained in ${rebuyFmt(T.hrb-G.t)}.`,'w');return false;}
   return true;}
 function heroFell(e){const T=G.teams[e.team];if(!T)return;T.hrb=G.t+HERO_REBUY;log(e.team,`${e.s.name} lost. A new squad can be trained in ${rebuyFmt(HERO_REBUY)}.`,'bad');}
-function heroSpawned(u){u.habT=G.t+20;if(G.t>5)log(u.team,`${u.s.name} ready.`,'r:hero');}
+function heroSpawned(u){u.habT=G.t+20;if(G.t>5)log(u.team,`${u.s.name} ready.`,'r:hero',u.x,u.y);}
 
 /* nearest enemy (seen by us) matching f within R of (x,y) */
 function heroFoe(u,R,f){let b=null,bd=R;for(const e of G.ents){if(e.dead||e.civ||!e.s||ally(e.team,u.team)||e.team===G.reb||!seenBy(u.team,e)||(f&&!f(e)))continue;const d=Math.hypot(e.x-u.x,e.y-u.y);if(d<bd){bd=d;b=e;}}return b;}
@@ -54,10 +54,10 @@ function radioScan(){
     if(G.t-(last.any||-99)<6)continue;
     // axis from our HQ toward the enemy: "left"/"right" flank is seen from our side looking at them
     let foe=null,fd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='hq'&&!e.dead&&!ally(e.team,T.id)&&e.team!==G.reb){const d=Math.hypot(e.x-hq.x,e.y-hq.y);if(d<fd){fd=d;foe=e;}}
-    const ax=foe?(foe.x-hq.x)/fd:1,ay=foe?(foe.y-hq.y)/fd:0;let air=0,armL=0,armR=0;
+    const ax=foe?(foe.x-hq.x)/fd:1,ay=foe?(foe.y-hq.y)/fd:0;let air=0,armL=0,armR=0,pA=null,pL=null,pR=null;
     for(const e of G.ents){if(e.dead||e.isB||!e.s||ally(e.team,T.id)||e.team===G.reb||!seenBy(T.id,e))continue;
       const dx=e.x-hq.x,dy=e.y-hq.y,dd=Math.hypot(dx,dy);
-      if(e.s.dom==='air'&&!e.landed&&e.kind!=='drone'&&dd<900)air++;
-      else if(e.s.cls==='tank'&&dd<760){const cr=ax*dy-ay*dx;if(cr<0)armL++;else armR++;}}
+      if(e.s.dom==='air'&&!e.landed&&e.kind!=='drone'&&dd<900){air++;pA=pA||e;}
+      else if(e.s.cls==='tank'&&dd<760){const cr=ax*dy-ay*dx;if(cr<0){armL++;pL=pL||e;}else{armR++;pR=pR||e;}}}
     const key=air>=2?'air':(armL>=2||armR>=2)?(armL>=armR?'armL':'armR'):null;
-    if(key&&G.t-(last[key]||-99)>=RAD_GAP[key]){last[key]=last.any=G.t;log(T.id,key==='air'?'Enemy aircraft inbound!':key==='armL'?'Enemy armour on the left flank!':'Enemy armour on the right flank!','r:'+key);}}}
+    if(key&&G.t-(last[key]||-99)>=RAD_GAP[key]){last[key]=last.any=G.t;log(T.id,key==='air'?'Enemy aircraft inbound!':key==='armL'?'Enemy armor on the left flank!':'Enemy armor on the right flank!','r:'+key,(key==='air'?pA:key==='armL'?pL:pR).x,(key==='air'?pA:key==='armL'?pL:pR).y);}}}

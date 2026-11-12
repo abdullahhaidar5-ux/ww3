@@ -197,8 +197,8 @@ function weather(m,amt,camo){if(!m||m.userData.wx)return;m.userData.wx=1;amt=amt
        else{/*ground: sun-faded top, rust streaks, mud on lower hull, snow settling on up-facing*/diffuseColor.rgb=mix(diffuseColor.rgb,vec3(l0)*1.08+vec3(.03,.025,.015),smoothstep(.55,1.,vWN.y)*.18*wAmt);float rs=wn(vec3(vOP.x*4.,vOP.y*.5,vOP.z*4.));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.30,.16,.09)*(.7+.5*gn),smoothstep(.72,.9,rs)*.28*wAmt*step(.04,l0));float dl=(1.-smoothstep(.0,1.25,hq))*(.55+.45*wn(vec3(vOP.x*5.,vOP.y*1.5,vOP.z*5.)));diffuseColor.rgb=mix(diffuseColor.rgb,wEnv.rgb*(.8+.35*gn)*.9,dl*(.45+.3*wAmt)*step(.04,l0));float sp=smoothstep(.66,.88,wn(vec3(vOP.x*9.,vOP.y*3.,vOP.z*9.)));diffuseColor.rgb*=1.-.22*sp*(1.-smoothstep(0.,1.8,hq));float ed=smoothstep(.8,.96,1.-abs(vWN.y))*smoothstep(.6,.8,wn(vOP*13.));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.46,.45,.42)*(.8+.4*gn),ed*.35*step(.04,l0));if(wEnv.w>.5)diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.86,.88,.92),smoothstep(.62,.95,vWN.y)*.42*wAmt);}}`).replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n{vec3 bp=vWP*2.3;float b0=wn(bp);vec3 bg=vec3(wn(bp+vec3(.35,0.,0.))-b0,wn(bp+vec3(0.,.35,0.))-b0,wn(bp+vec3(0.,0.,.35))-b0);float bs=(wAmt>.9&&wAmt<1.2)?.55:.18;normal=normalize(normal+(viewMatrix*vec4(bg,0.)).xyz*bs);}').replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor+(.5-gn)*.25*wAmt,.3,1.);').replace('#include <dithering_fragment>','#include <dithering_fragment>\n{vec3 vv=normalize(vViewPosition);float rim=pow(1.-clamp(dot(normalize(normal),vv),0.,1.),3.);gl_FragColor.rgb+=vec3(.55,.62,.75)*rim*.22*wAmt*(1.-.6*wRefl);if(wRefl>0.){vec3 Vw=normalize(cameraPosition-vWP),Nw=normalize(vWN+vec3(0.,1e-4,0.));float ndv=clamp(dot(Nw,Vw),0.,1.);vec3 Rw=reflect(-Vw,Nw);vec3 env=Rw.y>0.?mix(vec3(.6,.64,.68),vec3(.33,.48,.74),smoothstep(0.,.6,Rw.y)):vec3(.23,.2,.16);float fr=.04+.96*pow(1.-ndv,5.);float sp=pow(max(dot(Rw,vec3(-.66,.57,-.46)),0.),70.);float lu=dot(gl_FragColor.rgb,vec3(.33));gl_FragColor.rgb=mix(gl_FragColor.rgb,env*(.5+.5*lu),clamp(fr*.5*wRefl,0.,.6))+vec3(1.,.93,.8)*sp*.5*wRefl;}if(wCamo>0.){float up=clamp(vWN.y/max(length(vWN),1e-4),0.,1.);gl_FragColor.rgb+=vec3(.42,.5,.62)*rim*.18+vec3(.06,.07,.08)*up*up;}}');
     // DE-BLOCK 4b: vehicle hulls get a fine hammered-steel / dent bump (screen-derivative normal perturbation of a noise height) so they stop reading as smooth plastic
     sh.fragmentShader=sh.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
-      if(wCamo>0.&&wKind<1.5){float bh=wn(vOP*2.3)*.55+wn(vOP*7.1)*.3+wn(vOP*19.)*.15;vec3 bx=dFdx(-vViewPosition),by=dFdy(-vViewPosition);float bdx=dFdx(bh),bdy=dFdy(bh);vec3 r1=cross(by,normal),r2=cross(normal,bx);float dt=dot(bx,r1);if(abs(dt)>1e-12){vec3 gr=sign(dt)*(bdx*r1+bdy*r2);normal=normalize(abs(dt)*normal-.15*gr);}}`);};
-  m.customProgramCacheKey=()=>'wxb'+(m.userData.wk||0)+amt+'_'+camo+'_'+(m.userData.camoP||0)+'_'+(m.userData.wall||0);}
+      if(wCamo>0.&&wKind<1.5){float bh=wn(vOP*2.3)*.55+wn(vOP*7.1)*.3+wn(vOP*19.)*.15;vec3 bx=dFdx(-vViewPosition),by=dFdy(-vViewPosition);float bdx=dFdx(bh),bdy=dFdy(bh);vec3 r1=cross(by,normal),r2=cross(normal,bx);float dt=dot(bx,r1);if(abs(dt)>1e-12){vec3 gr=sign(dt)*(bdx*r1+bdy*r2);normal=normalize(abs(dt)*normal-.15*gr);}}`);if(typeof lookShader==='function')lookShader(m,sh);};
+  m.customProgramCacheKey=()=>'wxb'+(m.userData.wk||0)+amt+'_'+camo+'_'+(m.userData.camoP||0)+'_'+(m.userData.wall||0)+(typeof LOOK!=='undefined'&&LOOK.on&&m.userData.look?'L':'');}
 function normScale(obj,fit,size){obj.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(obj),sz=bb.getSize(new THREE.Vector3());const dim=fit==='y'?sz.y:fit==='x'?sz.x:(fit==='xz'||fit==='long')?Math.max(sz.x,sz.z):sz.z;const s=size/Math.max(.001,dim);const c=bb.getCenter(new THREE.Vector3());return{s,cx:c.x,cz:c.z,my:bb.min.y,xl:sz.x>sz.z};}
 const CAMOK={};function camoFreq(key){if(CAMOK[key]!==undefined)return;if(!['tank','tankE','tankW','truck','technical','toontank'].includes(key)){CAMOK[key]=0;return;}const P=MODELS.proto[key];P.scene.updateMatrixWorld(true);let mx=0;P.scene.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const b=o.geometry.boundingBox,sz=b.getSize(new THREE.Vector3());mx=Math.max(mx,sz.x,sz.y,sz.z);}});CAMOK[key]=mx>0?4/mx:0;}
 /* ---------- per-country looks: vehicle paint, camo blotches, uniform colour and national flag ---------- */
@@ -383,7 +383,7 @@ function tintedProto(key,team,kk){wxEnv();camoFreq(key);const LK=team&&team.fac?
         if(c.map)c.color.lerp(bc.multiplyScalar(Math.min(4,(.35+lum*.65)/bl)),.7);else c.color.lerp(bc.multiplyScalar(Math.min(1.6,.6+lum*1.4)),.82);
         if(AS.p!==3){c.userData.camoA=new THREE.Color(AS.a).convertSRGBToLinear();c.userData.camoB=new THREE.Color(AS.m).convertSRGBToLinear();c.userData.camoC=new THREE.Color(AS.c).convertSRGBToLinear();c.userData.camoP=AS.p;c.userData.camoS=AS.s||1;}}}
       if(tc&&c.color&&!['tree1','tree2','tree3','tree4'].includes(key))c.color.lerp(tc,LK&&(isSol(key)||VK.includes(key)||AS)?Math.min(k,AS?.03:.06):k);if(isB&&c.color){c.color.multiply(new THREE.Color(1.08,1.0,.84));const rg=team&&team.fac&&FACTIONS[team.fac]?FACTIONS[team.fac].music:null,BW={west:'#9aa3a8',mideast:'#d2b48a',slavic:'#8f9686',southasia:'#c9a27a',eastasia:'#a8a196',latin:'#d9c9a8'}[rg];if(BW){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.05&&lum<.85)c.color.lerp(new THREE.Color(BW).convertSRGBToLinear().multiplyScalar(.6+lum*.9),.32);}}{if(c.isMeshStandardMaterial&&['tank','tankE','tankW','truck','technical','toontank','heli','jet','ship','boat','drone','sam'].includes(key)){c.metalness=Math.min(Math.max(c.metalness||0,.12),.3);c.roughness=Math.min(Math.max(c.roughness??.7,.5),.7);c.userData.sheen=1;}}
-      if(isB&&team&&team.fac&&CAMOX[team.fac]){const X=CAMOX[team.fac];c.userData.trimC=new THREE.Color(X.t).convertSRGBToLinear();c.userData.wall=X.w||0;}map.set(m,c);}return map.get(m);});o.material=Array.isArray(o.material)?nm:nm[0];});
+      if(isB&&team&&team.fac&&CAMOX[team.fac]){const X=CAMOX[team.fac];c.userData.trimC=new THREE.Color(X.t).convertSRGBToLinear();c.userData.wall=X.w||0;}if(typeof lookApply==='function')lookApply(c,key,team,m);map.set(m,c);}return map.get(m);});o.material=Array.isArray(o.material)?nm:nm[0];});
   if(!(P.anims&&P.anims.length))try{mergeTinted(clone);}catch(err){console.warn('mergeTinted',key,err);}
   MODELS.tinted[id]={scene:clone,anims:P.anims};return MODELS.tinted[id];}
 // Graphics Phase 5: a vehicle model still drew one mesh per paint colour (hull, tracks, wheels, hatches, lights... each
@@ -396,7 +396,7 @@ function matSig(m){if(!m||!m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||!
   for(const t of ['map','normalMap','roughnessMap','metalnessMap','aoMap','emissiveMap','alphaMap','bumpMap','lightMap','displacementMap','envMap'])if(m[t])return null;
   const u=m.userData,cc=c=>c&&c.isColor?c.getHexString():'';
   return [m.side,m.alphaTest,+m.roughness.toFixed(4),+m.metalness.toFixed(4),m.emissive.getHexString(),m.emissiveIntensity,m.flatShading?1:0,m.depthWrite?1:0,m.depthTest?1:0,m.fog?1:0,m.polygonOffset?m.polygonOffsetFactor+'/'+m.polygonOffsetUnits:0,m.envMapIntensity,
-    m.customProgramCacheKey?m.customProgramCacheKey():'',u.wx||0,u.refl||0,u.sheen||0,cc(u.camoA),cc(u.camoB),cc(u.camoC),u.camoP||0,u.camoS||0,cc(u.trimC),u.wall||0].join('|');}
+    m.customProgramCacheKey?m.customProgramCacheKey():'',u.wx||0,u.refl||0,u.sheen||0,cc(u.camoA),cc(u.camoB),cc(u.camoC),u.camoP||0,u.camoS||0,cc(u.trimC),u.wall||0,u.look||'',u.lookTx||0].join('|');}
 // Only rotors and propellers are animated by name (main_rotor / tail_rotor); a model's turret and gun nodes never move
 // on their own (the whole vehicle turns to its target), so they merge too. A future turret animation must keep them.
 const MOVE_KEEP=/rotor|prop/i;
@@ -442,12 +442,12 @@ const TANKBOX={};function tankBox(key,yaw){if(TANKBOX[key]!==undefined)return TA
 // Kit on every soldier so squads read like real infantry: a national helmet (rounded western, flared Soviet-style,
 // or a militia cap / shemagh), a field pack with bedroll, ammo pouches and a canteen. Pieces ride on the skeleton's
 // head and chest bones so they move with the walk; sizes are given in world units and converted to bone space.
-const GEARM={};function gearMat(c){return GEARM[c]||(GEARM[c]=(()=>{const m=new THREE.MeshStandardMaterial({color:lin(c),roughness:.8,metalness:.05});if(typeof weather==='function')weather(m,.8,0);return m;})());}
+const GEARM={};function gearMat(c){return GEARM[c]||(GEARM[c]=(()=>{const m=new THREE.MeshStandardMaterial({color:lin(c),roughness:.8,metalness:.05});if(typeof weather==='function')weather(m,.8,0);if(typeof lookTag==='function')lookTag(m,'canvas');return m;})());}
 // Each soldier's kit (helmet, pack, bedroll, pouches, canteen) was ~10 separate meshes - every one a draw call in every
 // pass, times 3 soldiers per squad. It is merged into one vertex-coloured mesh per bone (head, chest, hips), and the
 // merged shapes are shared by every soldier of the same nation and type.
 const GEARG={};let GEARVM=null;
-function gearVCMat(){return GEARVM||(GEARVM=(()=>{const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8,metalness:.05});if(typeof weather==='function')weather(m,.8,0);return m;})());}
+function gearVCMat(){return GEARVM||(GEARVM=(()=>{const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8,metalness:.05});if(typeof weather==='function')weather(m,.8,0);if(typeof lookTag==='function')lookTag(m,'canvas');return m;})());}
 function mergeGear(B,key){for(const bn of ['head','chest','hips']){const bone=B[bn];if(!bone)continue;const gear=bone.children.filter(c=>c.userData.gear);if(!gear.length)continue;
     let geo=GEARG[key+'|'+bn];
     if(!geo){bone.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(bone.matrixWorld).invert(),parts=[];for(const g of gear)g.traverse(q=>{if(q.isMesh&&q.geometry&&q.geometry.attributes.normal){const M=new THREE.Matrix4().multiplyMatrices(inv,q.matrixWorld);const fg=floatGeo(q.geometry,['position','normal']);fg.applyMatrix4(M);parts.push([fg,q.material.color||new THREE.Color(1,1,1)]);}});
@@ -966,34 +966,63 @@ function bkTex(kind){if(BKM[kind])return BKM[kind];{const rl=bkReal(kind);if(rl)
     ni.data[j]=(a*.5+.5)*255;ni.data[j+1]=(b*.5+.5)*255;ni.data[j+2]=(c*.5+.5)*255;ni.data[j+3]=255;const g=kind==='tin'?150+v*70:170+v*70-(kind==='plaster'&&y>N*.8?18:0);im.data[j]=g;im.data[j+1]=g;im.data[j+2]=g;im.data[j+3]=255;}
   cx.putImageData(im,0,0);nx.putImageData(ni,0,0);const t=new THREE.CanvasTexture(cv),n=new THREE.CanvasTexture(nm);for(const q of [t,n]){q.wrapS=q.wrapT=THREE.RepeatWrapping;}t.colorSpace=THREE.SRGBColorSpace;return BKM[kind]={t,n};}
 function bkMat(kind,col,rep){const T=bkTex(kind),t=T.t.clone(),n=T.n.clone();if(T.cl){T.cl[0].push(t);T.cl[1].push(n);}t.needsUpdate=n.needsUpdate=true;t.repeat.set(rep,rep);n.repeat.set(rep,rep);return new THREE.MeshStandardMaterial({color:col,map:t,normalMap:n,normalScale:new THREE.Vector2(.9,.9),roughness:kind==='tin'?.55:.93,metalness:kind==='tin'?.45:0});}
+// Roof survey (view only): a 15x15 grid of downward rays over the building BODY (largest child, never the kit / flag) tells where the real roof is.
+// The old code took the top of the body's bounding box, which for the factory is the chimney tops: the parapet frame and every roof prop then hung in the air up there.
+// Cached per kind + look (the model never changes). flatY = height of the highest sizeable flat roof (null: saw-tooth / pitched, no props there); roofY = what the guard measures against.
+const ROOFC={};
+function bldRoof(e,o,P){const key=e.kind+(o.userData.meWall?'m':'w');let r=ROOFC[key];
+  const fl=o.userData.parts&&o.userData.parts.flag,sz=new THREE.Vector3(),pv=o.userData.parts?Object.values(o.userData.parts):[];let body=null,bv=0,bb=null;
+  let mainBody=null,mv=0,mq=null;
+  for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;// not the kit or the flag
+    if(pv.includes(c)&&c!==o.userData.parts.main)continue;// not the dish/crane parts
+    const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz);const v=sz.x*sz.y*sz.z;if(c===o.userData.parts.main){mainBody=c;mq=q;mv=v;continue;}// the slab (its flag pole made it the 'biggest' on every modelled building) only counts when it is all there is (code-built depot etc.)
+    if(v>bv){bv=v;body=c;bb=q;}}
+  if(!body&&mainBody){body=mainBody;bb=mq;}
+  if(!body)return null;
+  if(!r){const N=15,rc=new THREE.Raycaster(),dn=new THREE.Vector3(0,-1,0),pt=new THREE.Vector3(),nm=new THREE.Vector3(),cells=[],ys=[];o.updateMatrixWorld(true);
+    for(let j=0;j<N;j++)for(let i=0;i<N;i++){const x=bb.min.x+(i+.5)/N*(bb.max.x-bb.min.x),z=bb.min.z+(j+.5)/N*(bb.max.z-bb.min.z);rc.set(pt.set(x,bb.max.y+4,z),dn);const h=rc.intersectObject(body,true)[0];
+      if(!h){cells.push(null);continue;}const up=h.face?nm.copy(h.face.normal).transformDirection(h.object.matrixWorld).y>.9:false;cells.push([h.point.y,up]);ys.push(h.point.y);}
+    ys.sort((a,b)=>a-b);const p85=ys.length?ys[Math.min(ys.length-1,Math.floor(ys.length*.85))]:BH[e.kind]/BSC,bins={};let tot=ys.length;
+    for(const c of cells)if(c&&c[1]){const k=Math.round(c[0]);bins[k]=(bins[k]||0)+1;}
+    let fy=null,best=-1;for(const k in bins){if(bins[k]>=Math.max(6,tot*.18)&&+k>best&&+k>6){best=+k;fy=+k;}}
+    r=ROOFC[key]={N,cells,bb,flatY:fy,roofY:fy!=null?fy:p85};}
+  return r;}
+// is there flat roof (at the flat roof height) under x,z and a small margin around it?
+function roofFlatAt(R,x,z,m){if(!R||R.flatY==null)return false;const bb=R.bb,N=R.N;for(const [a,b] of [[0,0],[m,0],[-m,0],[0,m],[0,-m]]){const i=Math.floor((x+a-bb.min.x)/(bb.max.x-bb.min.x)*N),j=Math.floor((z+b-bb.min.z)/(bb.max.z-bb.min.z)*N);if(i<0||j<0||i>=N||j>=N)return false;const c=R.cells[j*N+i];if(!c||!c[1]||Math.abs(c[0]-R.flatY)>1.3)return false;}return true;}
 function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',2),pl=bkMat('plaster','#b8a98a',2),tin=bkMat('tin','#8c9096',2),dk=new THREE.MeshStandardMaterial({color:0x2c2e2b,roughness:.8,metalness:.3});
-  let top=BH[k]/BSC;try{// roof height = the top of the BUILDING BODY (largest child), not of everything: the radar dish / crane / flag mast stand taller and made the parapet frame float above the roof
-    const fl=o.userData.parts&&o.userData.parts.flag,sz=new THREE.Vector3();let bv=0,bt=0;for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz);const v=sz.x*sz.y*sz.z;if(v>bv){bv=v;bt=q.max.y;}}if(bt>6)top=bt;}catch(_){}
-  const G2=new THREE.Group();P.add(G2);const bx=(w,hh,d,x,y,z,m,ry)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);q.position.set(x,y,z);if(ry)q.rotation.y=ry;q.castShadow=q.receiveShadow=true;G2.add(q);return q;};
-  const cy=(r1,r2,l,x,y,z,m,sg)=>{const q=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,l,sg||10),m);q.position.set(x,y,z);q.castShadow=q.receiveShadow=true;G2.add(q);return q;};
-  const w=h*.78;
-  for(const sd of [-1,1]){bx(w*2,1.6,1.1,0,top+.8,sd*w,rf);bx(1.1,1.6,w*2,sd*w,top+.8,0,rf);}
+  let R=null;try{R=bldRoof(e,o,P);}catch(_){}const top=R&&R.flatY!=null?R.flatY:null;if(R)o.userData.roofY=R.roofY;o.userData.roofFlat=top!=null;
+  if(o.userData.meWall)return;// Middle Eastern HQ/barracks/factory: meRoofKit already put real-roof clutter and the compound wall on this building (no second set)
+  const G2=new THREE.Group();P.add(G2);let pid=0;const bx=(w,hh,d,x,y,z,m,ry)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);q.position.set(x,y,z);if(ry)q.rotation.y=ry;q.castShadow=q.receiveShadow=true;q.userData.pid=pid;G2.add(q);return q;};
+  const cy=(r1,r2,l,x,y,z,m,sg)=>{const q=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,l,sg||10),m);q.position.set(x,y,z);q.castShadow=q.receiveShadow=true;q.userData.pid=pid;G2.add(q);return q;};// userData.pid: meshes of one roof prop share an id (the guard in orch/bldfix.mjs measures a prop by its lowest mesh)
+  const w=h*.78,ok=(x,z,m)=>top!=null&&roofFlatAt(R,x,z,m);
+  // parapet frame only when the roof really is flat all round it; props only where a flat roof really is under them
+  if(top!=null&&ok(-w,-w,1)&&ok(w,-w,1)&&ok(-w,w,1)&&ok(w,w,1))for(const sd of [-1,1]){bx(w*2,1.6,1.1,0,top+.8,sd*w,rf);bx(1.1,1.6,w*2,sd*w,top+.8,0,rf);}
   const r=((e.x|0)*31+(e.y|0)*17)&255,rn=i=>((r*(i+3)*2654435761)>>>0)/4294967296;
-  for(let i=0;i<3;i++){const x=-w*.6+i*w*.55,z=-w*.45+rn(i)*w*.5;bx(4.2,2.6,3.2,x,top+1.3,z,tin);bx(3.4,1.6,.2,x,top+1.5,z+1.65,dk);}
-  {const x=w*.45,z=-w*.35;for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])bx(.4,2.2,.4,x+a*1.3,top+1.1,z+b*1.3,dk);cy(2.1,2.1,3.4,x,top+3.9,z,tin,14);cy(.2,1.8,.9,x,top+6.1,z,tin,14);}
-  {const dsh=cy(2.4,.3,.7,-w*.55,top+3.4,w*.5,tin,14);dsh.rotation.set(.9,.5,0);cy(.15,.15,3,-w*.55,top+1.5,w*.5,dk,6);}
-  for(let i=0;i<2;i++){const x=w*.2+i*3,z=w*.45;cy(.12,.12,9+i*4,x,top+4.5+i*2,z,dk,5);bx(2.6,.15,.15,x,top+7+i*3,z,dk);}
-  if(k==='hq'||k==='factory'){bx(5,3,5,w*.1,top+1.5,-w*.1,pl);bx(5.4,.5,5.4,w*.1,top+3.2,-w*.1,rf);}
-  const R=h+(k==='hq'?30:22),gate=7,seg=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(-(z1-z0),x1-x0);return bx(L,5,1.1,(x0+x1)/2,2.5,(z0+z1)/2,rf,a);};
+  for(let i=0;i<3;i++){const x=-w*.6+i*w*.55,z=-w*.45+rn(i)*w*.5;if(!ok(x,z,3))continue;pid++;bx(4.2,2.6,3.2,x,top+1.3,z,tin);bx(3.4,1.6,.2,x,top+1.5,z+1.65,dk);}
+  {const x=w*.45,z=-w*.35;if(ok(x,z,2.5)){pid++;for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])bx(.4,2.2,.4,x+a*1.3,top+1.1,z+b*1.3,dk);cy(2.1,2.1,3.4,x,top+3.9,z,tin,14);cy(.2,1.8,.9,x,top+6.1,z,tin,14);}}
+  {const x=-w*.55,z=w*.5;if(ok(x,z,3)){pid++;const dsh=cy(2.4,.3,.7,x,top+3.4,z,tin,14);dsh.rotation.set(.9,.5,0);cy(.15,.15,3,x,top+1.5,z,dk,6);}}
+  for(let i=0;i<2;i++){const x=w*.2+i*3,z=w*.45;if(!ok(x,z,1.5))continue;pid++;cy(.12,.12,9+i*4,x,top+4.5+i*2,z,dk,5);bx(2.6,.15,.15,x,top+7+i*3,z,dk);}
+  if((k==='hq'||k==='factory')&&ok(w*.1,-w*.1,4)){pid++;bx(5,3,5,w*.1,top+1.5,-w*.1,pl);bx(5.4,.5,5.4,w*.1,top+3.2,-w*.1,rf);}
+  pid=-1;// ground yard wall meshes: no prop id (each one checked on its own)
+  const RR=h+(k==='hq'?30:22),gate=7,seg=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(-(z1-z0),x1-x0);bx(L,.5,1.7,(x0+x1)/2,5.2,(z0+z1)/2,rf,a);return bx(L,5,1.1,(x0+x1)/2,2.5,(z0+z1)/2,pl,a);};
   const post=(x,z)=>bx(2.2,6.4,2.2,x,3.2,z,rf);
-  seg(-R,-R,R,-R);seg(-R,-R,-R,R);seg(R,-R,R,R);seg(-R,R,-gate,R);seg(gate,R,R,R);
-  for(const [x,z] of [[-R,-R],[R,-R],[-R,R],[R,R],[-gate,R],[gate,R]])post(x,z);
-  bx(gate*2+2.2,1.2,2.2,0,6.4,R,rf);
-  bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
+  o.userData.rings=(o.userData.rings||0)+1;// ONE yard wall, on the ground
+  seg(-RR,-RR,RR,-RR);seg(-RR,-RR,-RR,RR);seg(RR,-RR,RR,RR);seg(-RR,RR,-gate,RR);seg(gate,RR,RR,RR);
+  for(const [x,z] of [[-RR,-RR],[RR,-RR],[-RR,RR],[RR,RR],[-gate,RR],[gate,RR]])post(x,z);
+  bx(gate*2+2.2,1.2,2.2,0,6.4,RR,rf);}
 // DE-BLOCK slice 7: facade detail — dark window recesses with lintel+sill, a door and a wall lamp on each wall of HQ/barracks/factory/depot (view only)
-function facadeKit(e,o,P){let bb=null,bv=0;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;}}if(!bb)return;
+function facadeKit(e,o,P){let bb=null,bv=0,body=null;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;body=c;}}if(!bb)return;
   if(!isFinite(bb.max.y)||bb.max.y<8)return;const sx=bb.max.x-bb.min.x,sz=bb.max.z-bb.min.z,hy=bb.max.y,cx=(bb.max.x+bb.min.x)/2,cz=(bb.max.z+bb.min.z)/2;if(sx<10||sz<10||sx>400)return;
   if(!window.BKFW){window.BKFW={g:new THREE.BoxGeometry(1,1,1),w:new THREE.MeshStandardMaterial({color:0x14181b,roughness:.35,metalness:.4}),t:new THREE.MeshStandardMaterial({color:0x8d8776,roughness:.9}),l:new THREE.MeshBasicMaterial({color:0xffd9a0})};}
   const F=window.BKFW,G=new THREE.Group();P.add(G);const by=Math.max(5,hy*.5);const add=(m,w,h,d,x,y,z)=>{const q=new THREE.Mesh(F.g,m);q.scale.set(w,h,d);q.position.set(x,y,z);G.add(q);return q;};
+  // a window / door / lamp is only drawn where the building really has a wall at its outline: models with a wide ground-floor terrace or a
+  // set-back tower used to get windows floating in the air along the outline (Abdullah 2026-11-10 "floating windows here without walls")
+  const rc=new THREE.Raycaster(),ro=new THREE.Vector3(),rd=new THREE.Vector3(),wallAt=(x,y,z,dx,dz)=>{try{ro.set(x+dx*3,y,z+dz*3);rd.set(-dx,0,-dz);rc.set(ro,rd);rc.near=0;rc.far=4.1;const h=rc.intersectObject(body,true);return h.length>0&&h[0].distance>=2;}catch(_){return true;}};
   for(const [ax,sg] of [[0,1],[0,-1],[1,1],[1,-1]]){const L=ax?sz:sx,n=Math.max(2,Math.floor(L/13)),off=ax?(sg>0?bb.max.x:bb.min.x):(sg>0?bb.max.z:bb.min.z);
     for(let i=0;i<n;i++){const u=(i+.5)/n*L-L/2;if(ax===0&&sg>0&&Math.abs(u)<5)continue;const x=ax?off+sg*.12:cx+u,z=ax?cz+u:off+sg*.12;
+      if(!wallAt(x,by,z,ax?sg:0,ax?0:sg))continue;
       const ww=ax?.5:5,wd=ax?5:.5;add(F.w,ww,3.4,wd,x,by,z);add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by-2,z+(ax?0:sg*.2));add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by+2,z+(ax?0:sg*.2));}}
-  add(F.w,5.5,6.5,.6,cx,3.3,bb.max.z+.15);add(F.t,7,.7,1.2,cx,6.8,bb.max.z+.3);add(F.l,.9,.9,.5,cx+4.6,7.6,bb.max.z+.35);}
+  if(wallAt(cx,3.3,bb.max.z,0,1)){add(F.w,5.5,6.5,.6,cx,3.3,bb.max.z+.15);add(F.t,7,.7,1.2,cx,6.8,bb.max.z+.3);add(F.l,.9,.9,.5,cx+4.6,7.6,bb.max.z+.35);}}
 // DE-BLOCK slice 3: tyre tracks out of the gate, scattered rocks and debris round the base (view only, shared geometry/material)
 let BKTRK=null,BKROCK=null;
 let BKAO=null,BKOIL=null,BKBLO=null,BKSCR=null;
@@ -1102,7 +1131,7 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     const m=mesh(B.geo());o.add(m);P.main=m;}
   const RT={...NATX_RT,US:'#bdb49c',EU:'#b5b2a6',FR:'#b5b2a6',DE:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',GB:'#b3ae98',AU:'#c3b48c',CA:'#a9ad96',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
   for(const q of cfg.list){const rc=q.col?{color:q.col}:(RT?{color:RT}:null);const m=instModel(q.m,rc,q.fit,q.size,q.ys,q.col?q.k:(RT?.42:undefined));if(!m)continue;m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
-    if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);if(MEFAC.has(T.fac)&&BME[e.kind]&&q===cfg.list[0])try{meRoofKit(o,m,e,T);}catch(er){}o.add(m);}}
+    if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);if(MEFAC.has(T.fac)&&BME[e.kind]&&q===cfg.list[0])try{o.userData.meWall=1;o.userData.rings=1;meRoofKit(o,m,e,T);}catch(er){o.userData.meWall=0;o.userData.rings=0;}o.add(m);}}
   if(e.kind==='coast'){// emplacement: sandbag walls round the launcher and a small radar / command truck beside the pad (visual only)
     const h=e.size/2,B=Bld();for(let i=-2;i<=2;i++){const sb=propObj('sandbag',-h*.92,i*h*.36,Math.PI/2,o);if(sb)sb.position.y=2.4;}
     for(const sd of [-1,1])for(let i=0;i<3;i++){const sb=propObj('sandbag',-h*.5+i*h*.42,sd*h*.97,0,o);if(sb)sb.position.y=2.4;}
@@ -1132,7 +1161,7 @@ function folGeo(cards,cx,cy,cz){const n=cards.length,P=new Float32Array(n*12),N=
     for(let q=0;q<4;q++){N[i*12+q*3]=mx/ml*.8;N[i*12+q*3+1]=my/ml*.8+.45;N[i*12+q*3+2]=mz/ml*.8;const sh=q<2?.78:1;C[i*12+q*3]=r*sh;C[i*12+q*3+1]=g*sh;C[i*12+q*3+2]=b*sh;}
     {const a=FOLREAL?(i%2)*.5:0,b=FOLREAL?a+.5:1;U.set(FOLREAL?[a,1,b,1,b,0,a,0]:[0,0,1,0,1,1,0,1],i*8);}I.set([i*4,i*4+1,i*4+2,i*4,i*4+2,i*4+3],i*6);});
   const G2=new THREE.BufferGeometry();G2.setAttribute('position',new THREE.BufferAttribute(P,3));G2.setAttribute('normal',new THREE.BufferAttribute(N,3));G2.setAttribute('uv',new THREE.BufferAttribute(U,2));G2.setAttribute('color',new THREE.BufferAttribute(C,3));G2.setIndex(new THREE.BufferAttribute(I,1));return G2;}
-function folMat(kind){const tm=new THREE.MeshStandardMaterial({map:folTex(kind),vertexColors:true,alphaTest:.42,side:THREE.DoubleSide,roughness:1,metalness:0});weather(tm,.35);
+function folMat(kind){const tm=new THREE.MeshStandardMaterial({map:folTex(kind),vertexColors:true,alphaTest:.42,side:THREE.DoubleSide,roughness:1,metalness:0});weather(tm,.35);if(typeof lookTag==='function')lookTag(tm,'foliage',1);
   const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.uniforms.ws=WINDS;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;uniform float ws;').replace('#include <begin_vertex>','#include <begin_vertex>\n{/* whole canopy leans together (phase per tree, none per leaf: no shearing), slow and small, rises with height */vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);k*=k;float ph=ip.x*.013+ip.z*.011;float a=(sin(wt*.55+ph)*.7+sin(wt*.95+ph*1.6+.8)*.18)*k*.8*ws;transformed.x+=a;transformed.z+=a*.4;transformed.y-=a*a*.6/max(transformed.y,2.);}');}};
   tm.customProgramCacheKey=()=>'folt'+kind;return tm;}
 function folPlace(list,geos,mats2,shadowG,yoff,sx,sy,snow){ // one InstancedMesh per part, same transforms
@@ -1196,19 +1225,19 @@ function modelTrees(){if(!MODELS.ready||!G.treePos)return false;const keys=['tre
      else{
      for(let f=0;f<12;f++){const a=f/12*6.283+R()*.3,len=14+R()*5;for(let q=0;q<5;q++){const t=(q+.5)/5,d=t*len,droop=-Math.pow(t,1.7)*10+2.5;const g=new THREE.ConeGeometry(4.2*(1-t*.55),len/5+2,4);g.rotateZ(Math.PI/2);g.scale(1,.3,1);g.rotateY(-a);const c=new THREE.Color().setHSL(.22+R()*.04,.42,.2+t*.05);parts_add(B,g,px+Math.cos(a)*d,py+droop,Math.sin(a)*d,c);}}
      B.sph(1.6,px,py-.5,0,'#5d4a30');
-     const g=B.geo().toNonIndexed();g.computeVertexNormals();smoothNorm(g);const tm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,side:THREE.DoubleSide});weather(tm,.3);const im=new THREE.InstancedMesh(g,tm,palms.length);
+     const g=B.geo().toNonIndexed();g.computeVertexNormals();smoothNorm(g);const tm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,side:THREE.DoubleSide});weather(tm,.3);if(typeof lookTag==='function')lookTag(tm,'foliage',1);const im=new THREE.InstancedMesh(g,tm,palms.length);
      palms.forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)-.5,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*.95,s*(.9+((i*7)%5)*.06),s*.95));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.receiveShadow=true;WORLD.add(im);}}
    {const lo=gfxLow(),tkm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0});for(let v=0;v<VAR;v++){if(!lists[v].length)continue;const oak=v===2,[tr,fo]=broadleaf(oak?'oak':'acacia',v,lo);
     folPlace(lists[v],[tr,fo],[tkm,folMat('leaf')],oak?new THREE.IcosahedronGeometry(13,0).scale(1,.7,1).translate(0,27,0):new THREE.IcosahedronGeometry(12,0).scale(1,.32,1).translate(0,20,0),-.5,1.05,1.05);}}
    return true;}
   keys.forEach((k,ki)=>{const root=MODELS.proto[k].scene;const n=normScale(root,'y',40);root.updateMatrixWorld(true);const base=new THREE.Matrix4().compose(new THREE.Vector3(-n.cx*n.s,-n.my*n.s,-n.cz*n.s),new THREE.Quaternion(),new THREE.Vector3(n.s,n.s,n.s));
-    root.traverse(mm=>{if(!mm.isMesh)return;const tm=mm.material.clone();weather(tm,.5);if(tm.color){tm.color.offsetHSL(.02,-.2,.03);}tm.roughness=1;tm.metalness=0;const im=new THREE.InstancedMesh(mm.geometry,tm,per[ki].length);const local=new THREE.Matrix4().multiplyMatrices(base,mm.matrixWorld);
+    root.traverse(mm=>{if(!mm.isMesh)return;const tm=mm.material.clone();weather(tm,.5);if(typeof lookTag==='function')lookTag(tm,'foliage',1);if(tm.color){tm.color.offsetHSL(.02,-.2,.03);}tm.roughness=1;tm.metalness=0;const im=new THREE.InstancedMesh(mm.geometry,tm,per[ki].length);const local=new THREE.Matrix4().multiplyMatrices(base,mm.matrixWorld);
       per[ki].forEach(([x,y,s,r],i)=>{const M=new THREE.Matrix4().compose(new THREE.Vector3(x,groundH(x,y),y),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s,s*(.85+((i*7)%5)*.07),s));M.multiply(local);im.setMatrixAt(i,M);});
       im.castShadow=true;im.receiveShadow=true;WORLD.add(im);});});return true;}
 function scenery(){G.sceneryPos=[];if(!MODELS.ready||!G.map)return;mats();const R=mulberry((G.seed||1)*7+41),M=G.map,rm=G.roadMask;let placed=0;
   const ok=(x,y)=>{if(x<120||y<120||x>MAPW-120||y>MAPH-120)return false;if(Math.abs(M.depth(x,y))<M.hw(x)+120)return false;if(BASES.some(([bx,by])=>Math.hypot(x-bx,y-by)<520))return false;if(M.fields.some(f=>Math.hypot(f.x-x,f.y-y)<f.r+120))return false;if(M.oil.some(o=>Math.hypot(o.x-x,o.y-y)<140))return false;if(rm&&rm.f&&rm.f[(y/rm.C|0)*rm.w+(x/rm.C|0)]>.05)return false;
     const sl=Math.hypot(groundH(x+10,y)-groundH(x-10,y),groundH(x,y+10)-groundH(x,y-10))/20;return sl<.15;};
-  {const HB=Bld();const st='#3a3a36';for(const [rx,rz] of [[0,0],[Math.PI/2,0],[0,Math.PI/2]]){HB.box(2.6,26,2.6,0,0,0,st,rx+.5,0,rz);}const hg=HB.geo();const hm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.55});weather(hm,.9);const HP=[];
+  {const HB=Bld();const st='#3a3a36';for(const [rx,rz] of [[0,0],[Math.PI/2,0],[0,Math.PI/2]]){HB.box(2.6,26,2.6,0,0,0,st,rx+.5,0,rz);}const hg=HB.geo();const hm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.55});weather(hm,.9);if(typeof lookTag==='function')lookTag(hm,'metal');const HP=[];
    for(let k=0;k<60&&HP.length<34;k++){const cx=R()*MAPW,cy=R()*MAPH;if(!ok(cx,cy))continue;for(let j=0;j<3+(R()*3|0);j++){const x=cx+(R()-.5)*90,y=cy+(R()-.5)*40;if(ok(x,y))HP.push([x,y,R()*6.28]);}}
    const im=new THREE.InstancedMesh(hg,hm,HP.length);HP.forEach(([x,y,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)+6,y),TMPQ.setFromEuler(new THREE.Euler(0,r,0)),new THREE.Vector3(1.1,1.1,1.1));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.receiveShadow=true;WORLD.add(im);G.hedgePos=HP;
    G.craters=[];for(let k=0;k<45;k++){const x=R()*MAPW,y=R()*MAPH;if(ok(x,y))G.craters.push([x,y,8+R()*10]);}}
@@ -1369,7 +1398,7 @@ function kitMat(){if(KIT.mat)return KIT.mat;const c=document.createElement('canv
   sten(68,'شاهد','bold 34px Tahoma, "Noto Sans Arabic", sans-serif','#262624');sten(69,'قاصف','bold 34px Tahoma, "Noto Sans Arabic", sans-serif','#262624');sten(70,'أبابيل','bold 30px Tahoma, "Noto Sans Arabic", sans-serif','#262624');
   sten(71,'조국을 위하여','bold 17px "Noto Sans KR", "Malgun Gothic", sans-serif','#e8e2d0','#6e2a24');sten(72,'Б-21','bold 40px Arial, sans-serif','#ecebe4');
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;KIT.tex=t;
-  const m=new THREE.MeshStandardMaterial({map:t,vertexColors:true,alphaTest:.5,roughness:.75,metalness:.1});if(typeof weather==='function')weather(m,.8,0);KIT.mat=m;return m;}
+  const m=new THREE.MeshStandardMaterial({map:t,vertexColors:true,alphaTest:.5,roughness:.75,metalness:.1});if(typeof weather==='function')weather(m,.8,0);if(typeof lookTag==='function')lookTag(m,'canvas',1);KIT.mat=m;return m;}
 function kitBuilder(){const P=[],N=[],C=[],U=[],AUD=[],Wc=kitUV('white',.4,.4,.6,.6),wu=(Wc.u0+Wc.u1)/2,wv=(Wc.vt+Wc.vb)/2,E=new THREE.Euler(),Q=new THREE.Quaternion(),V=new THREE.Vector3(),S=new THREE.Vector3(1,1,1);
   const push=(g,M,col,rect)=>{g=g.index?g.toNonIndexed():g;g.applyMatrix4(M);const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
     for(let i=0;i<p.count;i++){P.push(p.getX(i),p.getY(i),p.getZ(i));N.push(n.getX(i),n.getY(i),n.getZ(i));C.push(col.r,col.g,col.b);

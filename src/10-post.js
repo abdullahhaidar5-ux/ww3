@@ -75,16 +75,20 @@ function shadowSnap(){if(typeof SUN==='undefined'||!SUN||!SUN.castShadow)return;
 // Shadow map refresh: the shadow pass redraws every shadow caster (~2000 in a big battle) and is the biggest single cost of a frame.
 // On phones, and whenever the frame-rate governor has already lowered the picture or frames run under ~45 FPS, it is redrawn every
 // other frame (a 1/60 s old shadow is not visible; the light, map and matrix stay consistent with each other). PCs at full speed redraw every frame.
-let _shN=0;function shadowDue(){_shN++;let lite=false;try{lite=(typeof GFX_PHONE!=='undefined'&&GFX_PHONE)||QUAL.lv>=2||QUAL.fps<45;}catch(e){}return !lite||(_shN&1)===0||_shN<4;}
+let _shN=0;function shadowDue(){_shN++;let lite=false;try{lite=(typeof GFX_PHONE!=='undefined'&&GFX_PHONE)||fxLv()>=2||QUAL.fps<45;}catch(e){}return !lite||(_shN&1)===0||_shN<4;}
 function softP(on){for(const P of [PN_,PA_]){if(!P)continue;const u=P.m.uniforms;u.soft.value=on?1:0;P.m.depthTest=!on;if(on){u.dep.value=POST.dRT.depthTexture;u.sres.value.set(POST.w,POST.h);u.nf.value.set(CAM.near,CAM.far);}}}
+// Ambient occlusion needs a second full pass over the scene (depth). A fast machine at full detail does it every frame; as soon as the
+// machine is struggling (under 50 FPS, or the frame-rate governor has lowered effects) it is redrawn every other frame and the
+// previous result is reused (a 1/60 s old soft shadow in the corners is not visible). View only. (speedS 2026-11-11)
+let _aoN=0,_aoRT=null;function aoDue(){_aoN++;if(_aoRT!==POST.dRT){_aoRT=POST.dRT;_aoN=0;return true;}let lite=false;try{lite=fxLv()>=1||QUAL.fps<50;}catch(e){}return !lite||(_shN&1)===0||_aoN<4;}   // on the frames the half-rate shadow pass skips (shadowDue runs later this frame and draws when _shN is odd here), so no frame pays for both
 function pass(mat,target){POST.quad.material=mat;R3.setRenderTarget(target);R3.render(POST.scn,POST.cam);}
 function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.setRenderTarget(null);R3.shadowMap.needsUpdate=shadowDue();R3.render(SCN,CAM);return;}
   sizePost();if(typeof visionTick==='function')try{visionTick(0);}catch(e){}
   const fogWas=FOGM?FOGM.visible:false;let postFog=false;
-  if(POST.mAO&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}const hid=[];SCN.traverse(o=>{if(!o.visible)return;const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
+  if(POST.mAO&&POST.aoOn!==false&&!(POST.aoLv!=null&&fxLv()>=POST.aoLv)){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}if(aoDue()){const hid=[];SCN.traverse(o=>{if(!o.visible)return;const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
     const bg=SCN.background;SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.clear();R3.render(SCN,CAM);SCN.overrideMaterial=null;for(const o of hid)o.visible=true;
-    const A=POST.mAO.uniforms;A.dep.value=POST.dRT.depthTexture;A.near.value=CAM.near;A.far.value=CAM.far;const ty=Math.tan(CAM.fov*Math.PI/360);A.tanF.value.set(ty*CAM.aspect,ty);A.res.value.set(POST.dRT.width,POST.dRT.height);A.pm.value=POST.dRT.height/(2*ty);A.cw.value.copy(CAM.matrixWorld);A.tt.value=performance.now()/1000;A.fogT.value=FOGT;A.cloudK.value=POST.cloud??1;A.mapS.value.set(MAPW,MAPH);POST.mFinal.uniforms.fogK.value=postFog?1:0;
-    pass(POST.mAO,POST.aA);const ab=(src,dst,x,y)=>{POST.mBlur.uniforms.tex.value=src.texture;POST.mBlur.uniforms.dir.value.set(x/src.width,y/src.height);pass(POST.mBlur,dst);};ab(POST.aA,POST.aB,1,0);ab(POST.aB,POST.aA,0,1);
+    const A=POST.mAO.uniforms;A.dep.value=POST.dRT.depthTexture;A.near.value=CAM.near;A.far.value=CAM.far;const ty=Math.tan(CAM.fov*Math.PI/360);A.tanF.value.set(ty*CAM.aspect,ty);A.res.value.set(POST.dRT.width,POST.dRT.height);A.pm.value=POST.dRT.height/(2*ty);A.cw.value.copy(CAM.matrixWorld);A.tt.value=performance.now()/1000;A.fogT.value=FOGT;A.cloudK.value=POST.cloud??1;A.mapS.value.set(MAPW,MAPH);
+    pass(POST.mAO,POST.aA);const ab=(src,dst,x,y)=>{POST.mBlur.uniforms.tex.value=src.texture;POST.mBlur.uniforms.dir.value.set(x/src.width,y/src.height);pass(POST.mBlur,dst);};ab(POST.aA,POST.aB,1,0);ab(POST.aB,POST.aA,0,1);}POST.mFinal.uniforms.fogK.value=postFog?1:0;
     POST.mFinal.uniforms.ao.value=POST.aA.texture;POST.mFinal.uniforms.aoK.value=.85;softP(true);}else if(POST.mFinal.uniforms.ao){softP(false);POST.mFinal.uniforms.aoK.value=0;POST.mFinal.uniforms.fogK.value=0;POST.mFinal.uniforms.ao.value=POST.bA.texture;}
   shadowSnap();R3.setRenderTarget(POST.rt);R3.clear();R3.shadowMap.needsUpdate=shadowDue();R3.render(SCN,CAM);if(FOGM)FOGM.visible=fogWas;
   POST.mBright.uniforms.tex.value=POST.rt.texture;pass(POST.mBright,POST.bA);
@@ -92,6 +96,6 @@ function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.se
   bl(POST.bA,POST.bB,POST.bA.width,POST.bA.height,1,0);bl(POST.bB,POST.bA,POST.bA.width,POST.bA.height,0,1);
   POST.mBlur.uniforms.tex.value=POST.bA.texture;POST.mBlur.uniforms.dir.value.set(0,0);pass(POST.mBlur,POST.bC);
   bl(POST.bC,POST.bD,POST.bC.width,POST.bC.height,1.5,0);bl(POST.bD,POST.bC,POST.bC.width,POST.bC.height,0,1.5);
-  const F=POST.mFinal.uniforms;F.tex.value=POST.rt.texture;F.b1.value=POST.bA.texture;F.b2.value=POST.bC.texture;F.t.value=performance.now()/1000%100;F.flash.value=flash;F.film.value=(!POST.phone&&QUAL.lv>=3)?1:0;postGrade(F);F.res.value.set(POST.w,POST.h);{let dv=0,fd=.1;try{if(QUAL.lv<1&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)&&cam.dist<520){dv=Math.max(0,Math.min(1,(520-cam.dist)/320))*.75;fd=Math.min(.6,cam.dist/2600);}}catch(e){}F.dof.value=dv;F.fd.value=fd;}
+  const F=POST.mFinal.uniforms;F.tex.value=POST.rt.texture;F.b1.value=POST.bA.texture;F.b2.value=POST.bC.texture;F.t.value=performance.now()/1000%100;F.flash.value=flash;F.film.value=(!POST.phone&&fxLv()>=3)?1:0;postGrade(F);F.res.value.set(POST.w,POST.h);{let dv=0,fd=.1;try{if(QUAL.lv<1&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)&&cam.dist<520){dv=Math.max(0,Math.min(1,(520-cam.dist)/320))*.75;fd=Math.min(.6,cam.dist/2600);}}catch(e){}F.dof.value=dv;F.fd.value=fd;}
   pass(POST.mFinal,null);}
 

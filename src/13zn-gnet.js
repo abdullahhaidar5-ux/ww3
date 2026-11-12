@@ -1,5 +1,5 @@
 /* ---------- A2b multiplayer grand campaign, slice 1 (lane A, 2026-11-07) ----------
-   Grand campaign → "Play online with friends": the host's browser runs the one authoritative campaign (the same real-time
+   Multiplayer → Grand campaign (the one online screen): the host's browser runs the one authoritative campaign (the same real-time
    clock, AI and month-end resolution as solo); friends join by code or from the list, each picks a free nation (the AI stops
    playing it), and see the world through their own fog. Every order a friend gives (march, recruit, split/merge, declare,
    economy, fleets, strikes, research, rallies…) runs on their own copy at once for instant feedback AND goes to the host,
@@ -14,7 +14,7 @@ const GNT={on:0,host:0,cl:0,code:'',g:null,nat:'',hum:{},orig:{},last:'',lastT:0
 /* name → index of the nation argument, or 'a' = first argument is an army id that must belong to the sender */
 const GNT_W={grOrderMove:'a',grSplit:'a',grMerge:'a',grDrill:'a',gmilAssign:'a',grRecruit:0,grDeclare:0,grSpy:0,gdAct:1,gdvBuy:0,geAutonomy:0,geAct:0,geBorrow:0,geBuild:0,
   geCity:0,geDeposit:0,geEmbargo:0,geMerchant:0,geRation:0,geRepay:0,geSellMode:0,geSetStrait:0,geTotalWar:0,geWithdraw:0,gidBuy:0,gidPick:0,gidDrop:0,ginCut:0,ginSet:0,gstRaise:0,
-  gtrPush:0,pgCounter:0,pgRun:0,rsBuy:0,wsRally:0,gcoEase:0,gmilBuyFleet:0,gmilStrike:0,gmilBuyMissile:0,gevChoose:0,grSetTax:0,ldrGo:'L'};
+  gtrPush:0,pgCounter:0,pgRun:0,rsBuy:0,wsRally:0,wsCensor:0,gcoEase:0,gmilBuyFleet:0,gmilStrike:0,gmilOrder:0,gmilSend:0,gevChoose:0,grSetTax:0,ldrGo:'L'};
 const GNT_PART=30000;
 function gnName(c){return (GCM&&GCM.nats.get(c)||{}).name||c;}
 function gnOk(nat,f,a){const w=GNT_W[f];if(w===undefined||!Array.isArray(a)||!GC||!GC.nat[nat])return false;
@@ -54,8 +54,9 @@ async function gnHost(){if(GNT.on||!GC||!GC.me)return 'busy';const R=await gnRoo
     if(d.k==='bgo'||d.k==='bres'){gnBatMsg(h[0],d);return;}
     if(d.k==='cmd'&&typeof d.f==='string')gnRun(h[0],d.f,d.a);});
   g.onPeers(ch=>{for(const q of ch.left){delete GNT.pend[q.peer];GNT.lsig='';const h=Object.entries(GNT.hum).find(([c,x])=>x.peer===q.peer);if(!h)continue;h[1].peer=null;if(GNT.lobby){delete GNT.hum[h[0]];if(GC&&GC.nat[h[0]])GC.nat[h[0]].ai=true;continue;}if(GC&&GC.nat[h[0]]){GC.nat[h[0]].ai=true;grLog(gnName(h[0])+'\'s leader left; the generals take over.',h[0]);}if(GNT.bw&&GNT.bw.nat===h[0])gnBatAuto('left');GNT.dirty=1;GNT.ui=1;gnChip();}});
-  try{await R.presence({gg:{c:code,n:gnName(GC.me),d:grMonStr(GC.turn)}});}catch(e){}
+  gnPresence();
   gnChip();return '';}
+function gnPresence(){try{if(typeof NET==='undefined'||!NET.room||!GNT.host||!GC)return;NET.room.presence({gg:{c:GNT.code,n:gnName(GC.me),d:grMonStr(GC.turn),s:(GR_SCEN.find(x=>x.id===GC.sc)||{}).n||'',fr:gnFree().length}}).catch(()=>{});}catch(e){}}
 function gnEmit(t,d){if(GNT.g)return GNT.g.emit(t,d).catch(()=>{});}
 async function gnPush(){const d=GC.day;GC.day=0;const js=JSON.stringify(GC);GC.day=d;if(js===GNT.last)return;GNT.last=js;
   const s=await ckPack(JSON.parse(js)),id=Math.random().toString(36).slice(2,8),n=Math.ceil(s.length/GNT_PART);
@@ -65,8 +66,8 @@ function gnHostTick(){if(!GNT.host||!GC||!GNT.g)return;const now=performance.now
   if(GNT.ui){GNT.ui=0;try{grandMapRefresh();}catch(e){}}
   if(Object.values(GNT.hum).some(h=>h.peer)&&(GNT.dirty||now-GNT.lastT>1500)&&!GNT.busy){GNT.dirty=0;GNT.lastT=now;GNT.busy=1;gnPush().catch(e=>console.error('gnPush',e)).finally(()=>{GNT.busy=0;});}}
 /* ---- client ---- */
-async function gnJoin(raw){if(GNT.on)return 'busy';const code=String(raw||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);if(code.length<4)return 'That is not a campaign code.';
-  const R=await gnRoom();if(!R)return 'Online play is not available here.';let g;try{g=await joinT('gc-'+code,20000,0);}catch(e){console.warn('gnJoin',e&&(e.message||e.type),e&&e.why);return 'No online campaign with code '+code.toUpperCase()+' was found.';}
+async function gnJoin(raw,to){if(GNT.on)return 'busy';const code=String(raw||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);if(code.length<4)return 'That is not a campaign code.';
+  const R=await gnRoom();if(!R)return 'Online play is not available here.';let g;try{g=await joinT('gc-'+code,to||20000,0);}catch(e){console.warn('gnJoin',e&&(e.message||e.type),e&&e.why);return 'No online campaign with code '+code.toUpperCase()+' was found.';}
   Object.assign(GNT,{on:1,host:0,cl:1,code,g,nat:'',parts:{},tok:joinTok('g'+code),free:null});
   g.on('gwel',m=>{const d=m.data||{};if(d.to&&d.to!==GNT.me)return;if(d.lobby){GNT.lobC=1;if(!GNT.hostPeer&&!m.sameTab)GNT.hostPeer=m.peer;}if(GNT.nat&&!(GNT.lobC&&(d.nat||d.free)))return;
     if(d.nat){GNT.nat=d.nat;if(GNT.lobC){gnLobbyClient();return;}gnHook(true);gnNote('Joined as '+gnName(d.nat)+'. Waiting for the world…');return;}
@@ -119,7 +120,7 @@ async function gnLobby(){GNT.wantHost=0;GNT.lobby=1;GNT.pend={};const e=await gn
   GNT.lsig='';gnLobbyTick();}
 function gnLobbyTick(){if(!GNT.lobby||!GC)return;const pl=gnLobbyRoster(),sig=JSON.stringify([pl,Object.keys(GNT.pend).length,GNT.code]),now=performance.now();
   if(sig!==GNT.lsig||now-(GNT.lT||0)>2500){GNT.lT=now;gnEmit('glob',{host:GC.me,date:grDateStr(GC.turn,GC.day|0),sc:(GR_SCEN.find(x=>x.id===GC.sc)||{}).n||'',len:GC.len==='std'?'Standard — 60 months':'Quick — 25 months',pl:pl.map(x=>[x[0],x[1],x[2]]),free:gnFree()});}
-  if(sig===GNT.lsig&&document.getElementById('gnLobbyHost'))return;GNT.lsig=sig;gnLobbyHostUI(pl);}
+  if(sig===GNT.lsig&&document.getElementById('gnLobbyHost'))return;GNT.lsig=sig;gnPresence();gnLobbyHostUI(pl);}
 function gnLobbyHostUI(pl){const root=campEl('div');root.id='gnLobbyHost';root.appendChild(campEl('h1','margin:6px 0 2px;font-size:28px;letter-spacing:.04em','CAMPAIGN LOBBY'));
   const sc=(GR_SCEN.find(x=>x.id===GC.sc)||{}).n||'';root.appendChild(campEl('div','opacity:.8;margin-bottom:10px;line-height:1.5','<b>'+sc+'</b> · '+(GC.len==='std'?'Standard, 60 months':'Quick, 25 months')+' · starts '+grDateStr(GC.turn,GC.day|0)));
   const inv=campEl('div','display:flex;align-items:center;gap:10px;margin:6px 0 12px;flex-wrap:wrap');inv.appendChild(campEl('span','opacity:.8','Invite code'));inv.appendChild(campEl('b','font-size:26px;letter-spacing:.15em;color:#ffd27a',GNT.code.toUpperCase()));
@@ -164,12 +165,12 @@ function gnChip(){const sc=document.getElementById('grandScreen');let c=document
   c.innerHTML=GNT.host?'Online · code <b>'+GNT.code.toUpperCase()+'</b> · '+(fr.length?'with '+fr.join(', '):'waiting for friends'):'Online · you lead <b>'+gnName(GNT.nat)+'</b>';
   {const b=GC&&GC.ph==='resolve'&&GC.q&&GC.q[GC.qi];   /* A2b: everyone sees which battle the map is waiting on */
    if(b&&!b.done&&GCM.P[b.p])c.innerHTML+='<div style="margin-top:3px;color:#ffb35c">&#9876; Battle for <b>'+GCM.P[b.p].n+'</b>: '+gnName(b.an)+' vs '+gnName(b.dn)+' — the map waits for the result</div>';}
-  c.title=GNT.host?'Click to copy the invite code':'';c.onclick=()=>{if(!GNT.host)return;const t='Join my World War 3 grand campaign: '+gnLink()+' (or Grand campaign → Join friends → code '+GNT.code.toUpperCase()+')';try{navigator.clipboard.writeText(t);GV.hint='Invite copied: code '+GNT.code.toUpperCase();guHint();}catch(e){}};}
+  c.title=GNT.host?'Click to copy the invite code':'';c.onclick=()=>{if(!GNT.host)return;const t='Join my World War 3 grand campaign: '+gnLink()+' (or Multiplayer → paste the code '+GNT.code.toUpperCase()+')';try{navigator.clipboard.writeText(t);GV.hint='Invite copied: code '+GNT.code.toUpperCase();guHint();}catch(e){}};}
 /* hooks: the menu gets the Online item; New campaign for friends hosts once the map opens; leaving the map leaves the room */
 (function(){const _gm=grandMenu;grandMenu=function(){_gm();const s=document.getElementById('campScreen');if(!s)return;const bs=[...s.querySelectorAll('button')],back=bs.find(b=>b.textContent==='Back');
-    const hint=campEl('div','opacity:.8;margin:10px 0 2px;font-size:15px','Play with friends — invite them with a code or link.');GNT.wantHost=0;
-    const p=campBtn('Play with friends',()=>{GNT.wantHost=1;grandSetup();});p.id='gnPlayBtn';const b=campBtn('Join friends',()=>gnMenu(),true);b.id='gnMenuBtn';
-    for(const e of [hint,p,b]){if(back)back.parentNode.insertBefore(e,back);else s.firstChild.appendChild(e);}};
+    /* online grand campaigns live in the one Multiplayer screen (Abdullah 2026-11-07 21:40 "Make it the same place") */
+    const p=campBtn('Play online →',()=>{campClose();if(typeof mxOnline==='function')mxOnline('campaign');},true);p.id='gnPlayBtn';p.title='Multiplayer: start or join an online campaign';GNT.wantHost=0;
+    if(back)back.parentNode.insertBefore(p,back);else s.firstChild.appendChild(p);};
   const _go=grandOpen;grandOpen=function(){_go();if(GNT.wantHost&&GC&&!GNT.on){GNT.wantHost=0;gnHost().then(e=>{if(e){GV.hint=e;try{guHint();}catch(_){}}});}gnChip();};
   const _gc=grandClose;grandClose=function(){_gc();if(GNT.on){const h=GNT.host;gnLeave();if(h)GNT.wantHost=0;}};
   if(!window._gnI)window._gnI=setInterval(()=>{try{gnHostTick();}catch(e){console.error('gnHostTick',e);}},250);})();
@@ -212,3 +213,23 @@ function gnBatDone(b,win,how){const B=GNT.bat;GNT.bat=null;const ids=new Set([..
   const arm=GC.armies.filter(a=>ids.has(a.id)).map(a=>({id:a.id,u:a.u,fu:a.fu,at:a.at}));
   gnSend({k:'bres',qi:B.qi,t:B.t,win,how,auto:how==='auto'?1:0,arm});GV.hint='Battle result sent — the world moves on.';try{guHint();}catch(e){}
   const s=GNT.stash;GNT.stash=null;if(s)gnApply(s[0],s[1]);else try{grandMapRefresh();}catch(e){}}
+
+/* Multiplayer screen: campaigns share the join box and the open-games list with battles (one place, labelled Campaign / Conquest / Battle) */
+(function(){const _jb=joinByCode;
+  const isGame=w=>{try{return NET.room.peers().some(p=>!p.sameTab&&p.presence&&p.presence.g&&String(p.presence.g.c).toLowerCase()===w);}catch(e){return false;}};
+  const isCamp=w=>gnList().some(p=>String(p.presence.gg.c).toLowerCase()===w);
+  joinByCode=function(raw,quiet,pw){const t=String(raw||''),m=/[#&?]gcamp=([a-z0-9]{4,8})/i.exec(t);let c=m&&m[1];const w=t.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+    const campJoin=cc=>{const st=document.getElementById('mpstatus');if(st)st.textContent='Joining the campaign…';return gnJoin(cc).then(e=>{if(e){if(st)st.textContent='';gnMenu(e);}else if(st)st.textContent='';});};
+    if(c)return campJoin(c);
+    if(w.length<4||w.length>8||t.trim()!==t.trim().replace(/\s+/g,'')||/\W/.test(t.trim()))return _jb(raw,quiet,pw);   // only a bare code can be a campaign code
+    if(isCamp(w))return campJoin(w);if(isGame(w))return _jb(raw,quiet,pw);
+    /* a code that is in neither list (typed straight after the screen opened, or no relay to list rooms): it may still be a campaign room, so look for that first (fast: the room either answers or is unknown) and only then take the battle path - a campaign code sent down the battle path ends in "no direct connection" */
+    const st=document.getElementById('mpstatus');if(st)st.textContent='Looking for that game…';
+    return gnJoin(w,8000).then(e=>{if(!e){if(st)st.textContent='';return;}if(/^No online campaign/.test(e)){if(st&&/Looking for that/.test(st.textContent))st.textContent='';return _jb(raw,quiet,pw);}if(st)st.textContent='';gnMenu(e);});};
+  const _rg=renderGames;renderGames=async function(){await _rg.apply(this,arguments);try{gnGameRows();}catch(e){console.warn('gnGameRows',e);}};})();
+function gnGameRows(){const el=document.getElementById('games');if(!el)return;for(const r of el.querySelectorAll('.gnrow'))r.remove();const L=gnList();if(!L.length)return;
+  const emp=el.querySelector('.empty');if(emp&&!el.querySelector('.game')&&!/Looking|unavailable|claude\.ai/.test(emp.textContent))emp.remove();
+  const hd=campEl('div','','');hd.className='empty gnrow';hd.textContent=L.length+' open campaign'+(L.length===1?'':'s');el.appendChild(hd);
+  for(const p of L){const g=p.presence.gg,row=document.createElement('div');row.className='game gnrow';const info=document.createElement('div'),b=document.createElement('b');b.textContent='Campaign';
+    const s=document.createElement('span');s.textContent=' · '+(g.s||'World')+' · led by '+(g.n||'')+' · '+(g.d||'')+' · '+(g.fr|0)+' free nations · code '+String(g.c).toUpperCase();info.append(b,s);
+    const btn=document.createElement('button');btn.textContent='Join';btn.disabled=!!(GNT.on||GNT.lobby);btn.onclick=async()=>{try{initAudio();}catch(_){}btn.disabled=true;const e=await gnJoin(g.c);if(e)gnMenu(e);};row.append(info,btn);el.appendChild(row);}}

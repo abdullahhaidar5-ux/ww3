@@ -18,6 +18,7 @@ import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
 import { guardContext } from './serverdev.mjs';
 import { artifactHtml, artifactHandler, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
 import { newRun } from './runs.mjs';
+import { PAGE_CHECK, judge as judgeBld } from './bldfix-check.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
@@ -100,10 +101,36 @@ try {
     console.log(`3D models: ${m.n} of ${m.of} ready=${m.ready} ${m.err} (page open to models ready: ${(m.t / 1000).toFixed(1)}s)`);
     if (!m.ready) warns.push('3D models did not load at the menu: ' + m.err); }
   await shot(page, 'menu.png');
+  { // Playtest card (Extras): 10 things to try, thumbs + note per row, and the saved file carries the votes
+    const pt = await page.evaluate(() => { if (typeof wwPlaytest !== 'function') return { no: 1 }; wwPlaytest(); const o = document.getElementById('idPlay');
+      const rows = o ? o.querySelectorAll('.ptrow').length : 0; const v = o && o.querySelector('.ptv'); if (v) v.click(); const d = wwPlaytestData(); if (v) v.click();
+      const menu = [...document.querySelectorAll('button.mxi')].some(b => b.textContent === 'Playtest card'); if (o) o.hidden = true;
+      return { rows, save: !!document.getElementById('ptSave'), vote: d.items[0] && d.items[0].vote, kind: d.kind, n: d.items.length, menu }; });
+    if (pt.no || pt.rows !== 10 || !pt.save || pt.vote !== 1 || pt.kind !== 'ww3-playtest' || pt.n !== 10 || !pt.menu) fails.push('Playtest card (Extras) is broken: ' + JSON.stringify(pt));
+    else console.log('Playtest card: 10 things to try, votes saved into the file'); }
   if (!ART) { // lazy grand campaign: not in the page at load, loads on the menu button, and the page then has the whole campaign
     const pre = await page.evaluate(() => ({ g: typeof grandMenu, btn: !!document.getElementById('grandBtn'), file: typeof GRAND_FILE === 'string' && GRAND_FILE }));
     if (pre.g !== 'undefined' || !pre.btn || !pre.file) fails.push(`lazy grand: before opening, grandMenu is ${pre.g}, button ${pre.btn}, GRAND_FILE ${pre.file} (expected undefined, true, a file name)`);
     else console.log(`grand campaign is lazy: ${pre.file} not loaded at the menu`);
+    // living main menu (idea 9): the background shows your war - drawn from the saves' small notes WITHOUT loading the campaign code.
+    // Three cases: a saved campaign (war table + last battle), a saved battle that is newer (battlefield + front line), and no save (the calm picture, no caption).
+    const wt = await page.evaluate(async () => { if (typeof mxWarTable !== 'function') return { err: 'mxWarTable missing' }; const K = 'ww3grand1', old = [localStorage.getItem(K), localStorage.getItem(K + '.i')], oldL = svLatest, mx = document.getElementById('mx');
+      const d = btoa(String.fromCharCode(0, 16, 1, 8, 2, 8)), cap = () => (document.getElementById('mxwar') || {}).textContent || '', cv = () => !!mx.querySelector('#mxbg canvas#mxwt');
+      const top = () => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => b.textContent.trim()).join('|');
+      svLatest = null; localStorage.setItem(K, '{"v":1}'); localStorage.setItem(K + '.i', JSON.stringify({ ts: 5, me: 'IR', n: 'Iran', d: 'Mar 2027', over: 0, lb: { p: 1, t: 3, w: 1, me: 'IR' }, lbn: 'Testville', lbd: 'Feb 2027', wt: { w: 8, h: 4, d, c: [40, 160, 80], b: [.6, .5, 'Testville', 'Feb 2027', 1] } }));
+      mxWarTable(); const g = { on: cv(), lab: (mx.querySelector('.mxwtl.bat') || {}).textContent || '', cap: cap(), top: top() };
+      svLatest = { id: 'm:t', ts: 9, mapName: 'Testmap', facName: 'Testland', t: 125, wt: { w: 8, h: 4, d, c: [40, 160, 80], e: [150, 62, 50] } };
+      mxWarTable(); const b = { on: cv(), lab: !!mx.querySelector('.mxwtl.bat'), cap: cap(), top: top() };
+      svLatest = { id: 'm:old', ts: 10, mapName: 'Oldmap', facName: 'Testland', t: 5 }; mxWarTable(); const o = { on: cv(), cap: cap() };   // a save made before this feature: caption only, calm picture
+      svLatest = null; localStorage.removeItem(K); localStorage.removeItem(K + '.i'); mxWarTable(); const n = { on: cv(), cap: cap(), wt: mx.classList.contains('wt'), top: top() };
+      if (old[0] != null) localStorage.setItem(K, old[0]); if (old[1] != null) localStorage.setItem(K + '.i', old[1]); svLatest = oldL; mxWarTable();
+      return { g, b, o, n, grand: typeof grandMenu, GC: typeof GC === 'undefined' || !GC ? 'none' : 'loaded' }; });
+    const TOP = 'Single player|Multiplayer|Test range';
+    if (wt.err || !wt.g.on || !/Testville/.test(wt.g.lab) || !/won/.test(wt.g.lab) || !/Iran.*Mar 2027.*Testville.*won/.test(wt.g.cap) || wt.g.top !== TOP
+      || !wt.b.on || wt.b.lab || !/Testland.*Testmap.*2:05/.test(wt.b.cap) || wt.b.top !== TOP || wt.o.on || !/Oldmap/.test(wt.o.cap)
+      || wt.n.on || wt.n.cap || wt.n.wt || wt.n.top !== TOP || wt.grand !== 'undefined')
+      fails.push('living main menu: ' + JSON.stringify(wt) + ' (expected: campaign save -> war table + last battle + caption; newer battle save -> battlefield + caption, no battle marker; old save -> caption only; no save -> calm picture, no caption; top level unchanged; campaign code never loaded)');
+    else console.log('living main menu: your war drawn from the save notes (campaign, battle, none), campaign code not loaded');
   }
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
@@ -133,6 +160,30 @@ try {
   const tLoad = Date.now();
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('loading screen did not finish within 10 minutes'));
   console.log(`loading screen finished after ${((Date.now() - tLoad) / 1000).toFixed(1)}s`);
+  // bldfix (2026-11-12): nothing floats on production buildings (roof props sit on a roof, one yard wall; the factory's chimney tops used to carry a frame and roof props in mid-air)
+  { const bres = await page.evaluate(PAGE_CHECK).catch(e => [String(e.message || e)]); const bb = judgeBld(bres); if (bb.length) fails.push('floating building dressing: ' + bb.slice(0, 6).join('; ')); else console.log(`building dressing: ${bres.length} building looks checked, nothing floats`); }
+  // fortline (Abdullah 2026-11-11 19:02): only a Construction Vehicle builds a fortification line, the line follows a traced path; infantry only dig in
+  { const r = await page.evaluate(() => { try {
+      const hq = G.ents.find(b => b.team === 0 && b.kind === 'hq'), x = hq.x + 260, y = hq.y - 260, mk = (k, dx) => addUnit(0, k, x + dx, y + 30);
+      const inf = [mk('inf', 0), mk('inf', 8)], dz = mk('dozer', 30), out = {};
+      act(0, { t: 'wall', ids: inf.map(u => u.id), k: 'trench', pts: [x, y, x + 100, y] }); out.infWl = inf.some(u => u.wl && u.wl.length) || inf.some(u => u.order && u.order.type === 'wall');
+      act(0, { t: 'wall', ids: [dz.id], k: 'trench', x, y, x2: x + 100, y2: y }); out.oldForm = !!(dz.wl && dz.wl.length);
+      const pts = [x, y, x + 120, y, x + 120, y + 120, x + 240, y + 120, x + 240, y + 40], pl = wallPlan('trench', pts); out.n = pl.length; out.angs = [...new Set(pl.map(q => q.a.toFixed(2)))].length;
+      act(0, { t: 'wall', ids: [dz.id], k: 'trench', pts }); out.bent = !!(dz.wl && dz.wl.length > 8 && new Set(dz.wl.map(q => q.a.toFixed(2))).size >= 3);
+      dz.wl = null; dz.order = null; act(0, { t: 'wall', ids: [dz.id], k: 'trench', pts: [x, y, NaN, 4] }); out.bad = !!dz.wl;
+      const keep = G.sel; G.sel = inf.slice(); const row = document.createElement('div'); tactRow(row, G.sel); out.infBtns = [...row.querySelectorAll('button')].map(b => b.textContent);
+      G.sel = [dz]; const row2 = document.createElement('div'); tactRow(row2, G.sel); out.dzBtns = [...row2.querySelectorAll('button')].map(b => b.textContent); G.sel = keep;
+      for (const u of [...inf, dz]) { u.dead = true; u.order = null; u.wl = null; } return out; } catch (e) { return { err: String(e && e.stack || e) }; } });
+    console.log('fortline: ' + JSON.stringify(r));
+    if (r.err) fails.push('fortline guard crashed: ' + r.err);
+    else {
+      if (r.infWl) fails.push('fortline: infantry took a fortification line order (only a Construction Vehicle builds lines)');
+      if (!r.oldForm) fails.push('fortline: the old x,y,x2,y2 wall order no longer makes a work list for a Construction Vehicle');
+      if (!r.bent) fails.push('fortline: a bent traced path did not become segments that follow the bends ' + JSON.stringify([r.n, r.angs]));
+      if (r.bad) fails.push('fortline: a wall order with a non-finite point was accepted');
+      if (!r.infBtns.some(t => /Dig in/.test(t)) || r.infBtns.some(t => /Fortification/.test(t))) fails.push('fortline: an infantry-only selection must show Dig in and no line button: ' + r.infBtns.join('|'));
+      if (!r.dzBtns.some(t => /Fortification/.test(t))) fails.push('fortline: a Construction Vehicle selection lost the Fortification line button');
+    } }
   // leadersC (Abdullah 2026-11-07 22:38): the signature assets are in Conquest/Battle for their nations and OUT of grand Fight-it battles
   { const gm = await page.evaluate(() => { if (!G || !G.grand) return []; return ['u_cleric', 'b_fort', 'p_bb'].filter(id => { const e = document.getElementById(id); return e && !e.hidden; }); });
     if (gm.length) fails.push('signature assets offered in a grand Fight-it battle: ' + gm.join(', ')); }

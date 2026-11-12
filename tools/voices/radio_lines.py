@@ -4,7 +4,7 @@ orch/vo/roles.py renders them (VO_LINES=radio_lines VO_SUF=_h): variant 0 = calm
 Keys (event -> when the game plays it): base armL armR air town_taken town_lost msl lost hero | hero lines: hsel hmove hatk hab.
 EN (below) are the subtitles' English lines, the same for every nation."""
 KEYS = ['base', 'air', 'armL', 'armR', 'town_taken', 'town_lost', 'msl', 'lost', 'hero', 'hsel', 'hmove', 'hatk', 'hab']
-EN = {'base': 'Base under attack!', 'air': 'Enemy aircraft inbound!', 'armL': 'Enemy armour on the left flank!', 'armR': 'Enemy armour on the right flank!',
+EN = {'base': 'Base under attack!', 'air': 'Enemy aircraft inbound!', 'armL': 'Enemy armor on the left flank!', 'armR': 'Enemy armor on the right flank!',
       'town_taken': 'Town secured. It is ours.', 'town_lost': 'We lost the town!', 'msl': 'Missile launch! Take cover!', 'lost': 'Unit lost.',
       'hero': 'Hero squad ready.', 'hsel': 'Squad standing by.', 'hmove': 'Moving out.', 'hatk': 'Contact! Engaging!', 'hab': 'Executing! Go!'}
 SHOUT = {'base', 'air', 'armL', 'armR', 'town_lost', 'msl', 'hatk', 'hab'}

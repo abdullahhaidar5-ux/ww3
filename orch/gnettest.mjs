@@ -1,4 +1,4 @@
-// Lane A2b gate: online grand campaign, as two players. HOST: menu → Grand campaign → Play with friends → lobby →
+// Lane A2b gate: online grand campaign, as two players. HOST: menu → Grand campaign → Multiplayer → Grand campaign → lobby →
 // friends → Begin (IR). FRIEND (second page): Grand campaign → Online campaign → types the code → Join → picks Saudi Arabia.
 // Checks: the friend's map opens as SA; the host's AI stops running SA; a march the friend orders reaches the host's world;
 // the host's clock carries the friend's map into the next month; the friend's Space pauses everyone; the friend leaving
@@ -53,15 +53,15 @@ try {
   // the host draws the flat map (SwiftShader can't run two 3D world maps at once in one process); the friend's page keeps 3D
   await host.evaluate(() => { window.g3Init = () => false; });
   await host.evaluate(() => localStorage.removeItem('ww3grand1'));
-  await click(host, '#grandBtn'); await click(host, 'button', '^Play with friends');
+  await host.evaluate(() => { menuGo('online'); mxOnline('campaign'); }); await click(host, '#mxCampNew');
   await host.evaluate(() => { const s = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => o.value === 'IR')); s.value = 'IR'; s.onchange && s.onchange(); });
   await click(host, 'button', '^Create lobby$');
   await wait(host, () => GNT.lobby && GNT.code && document.getElementById('gnLobbyHost'), null, 60000, 'host lobby');
   await shot(host, 'camplobby-host-1');
   const code = await host.evaluate(() => GNT.code); console.log(el(), 'lobby open, code', code);
   const cl = await open('friend');
-  await click(cl, '#grandBtn'); await click(cl, 'button', '^Join friends');
-  await cl.fill('#gnCode', code.toUpperCase()); await click(cl, '#gnJoinBtn');
+  await cl.evaluate(() => { menuGo('online'); });
+  await cl.fill('#jcode', code.toUpperCase()); await click(cl, '#jbtn');
   await wait(cl, () => !!document.getElementById('gnLobbyCl') && !!document.getElementById('gnNat'), null, 30000, 'friend lobby screen');
   const opts = await cl.evaluate(() => [...document.getElementById('gnNat').options].filter(o => !o.disabled).map(o => o.value));
   if (opts.includes('IR')) fails.push('the creator\'s nation is offered to the friend');

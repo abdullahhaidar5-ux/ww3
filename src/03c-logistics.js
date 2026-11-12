@@ -288,7 +288,7 @@ function lgMines(dt){const D=G.lgd;if(!D||!D.mn||!D.mn.length)return;for(let i=D
     if(hit){D.mn.splice(i,1);D.v++;const ht=hit.team;explode(m.x,m.y,34,230,m.team,'boom','mine');log(ht,'A vehicle hit a mine on the road!','bad');log(m.team,'One of our road mines hit an enemy vehicle.','g');}}}
 // ---- airlift ----
 function lgAirTick(){for(const u of G.ents){if(!u.alq)continue;if(u.dead){u.alq=null;continue;}const q=u.alq,o=u.order;if(Math.hypot(u.x-q.x,u.y-q.y)<170){u.alq=null;lgAirDrop(u,q);continue;}
-    if(!o||o.type!=='move'||Math.hypot(o.x-q.x,o.y-q.y)>90){u.alq=null;log(u.team,'Airlift cancelled.','w');}}}
+    if(!o||o.type!=='move'||Math.hypot(o.x-q.x,o.y-q.y)>90){u.alq=null;log(u.team,'Airlift canceled.','w');}}}
 function lgAirDrop(u,q){let tg=null,nm='';if(q.dp){const e=G.byId.get(q.dp);if(e&&!e.dead&&e.team===u.team){tg=e;nm='the forward depot';}}else{const t=G.towns[q.ti];if(t&&t.ow===u.team){tg=t;nm=t.name;}}
   if(!tg)return;const T=G.teams[u.team];if(T.credits<LG_AIRC){log(u.team,`Not enough supplies to unload the airlift ($${LG_AIRC}).`,'w');return;}T.credits-=LG_AIRC;
   tg.dl=G.t+CVY_STOCK;tg.air=G.t+LG_AIRT;G.lgd.v++;G.lg.sig='';for(const e of nearby(tg.x,tg.y,SUP_R.town,LG_N))if(!e.isB&&!e.dead&&e.team===u.team&&e.am!==undefined)e.am=e.amx;
@@ -342,6 +342,6 @@ function lgDone(u,o){const D=G.lgd,L=G.lg,team=u.team,k=o.k;
     for(const T of G.teams)if(!T.reb&&!T.out){const fr=ally(T.id,team);log(T.id,fr?`Charges set - the bridge blows in ${LG_CHG} s.`:`Enemy engineers have rigged a bridge to blow in ${LG_CHG} s! Put infantry or a Construction Vehicle on the charges to clear them.`,fr?'g':'bad');FXE('tping',[T.id,o.x|0,o.y|0,0]);}}
   else if(k==='fixb'){const b=G.map.bridges[o.bi];if(!b||!b.dead)return;D.bd[o.bi]={hp:lgBrMax(b)};D.bv++;D.v++;lgBrApply();for(const e of G.ents)if(!e.isB&&e.path&&e.s&&e.s.dom!=='air')e.path=null;
     for(const T of G.teams)if(!T.reb&&!T.out)log(T.id,'A bridge has been rebuilt - the crossing is open again.',ally(T.id,team)?'g':'w');}
-  else if(k==='pont'){const p=o.pb;if(G.map.bridges.some(b=>Math.hypot(b.x-p.x,b.y-p.y)<240)||D.pt.filter(q=>q.team===team).length>=LG_PONT_MAX){G.teams[team].credits+=LGC.pont;log(team,'Pontoon cancelled - the crossing is taken.','w');return;}
+  else if(k==='pont'){const p=o.pb;if(G.map.bridges.some(b=>Math.hypot(b.x-p.x,b.y-p.y)<240)||D.pt.filter(q=>q.team===team).length>=LG_PONT_MAX){G.teams[team].credits+=LGC.pont;log(team,'Pontoon canceled - the crossing is taken.','w');return;}
     D.pt.push({x:p.x,y:p.y,h:p.h,nx:p.n[0],ny:p.n[1],team});lgPontSync();D.bd[G.map.bridges.length-1]={hp:800};D.bv++;D.v++;lgSync();for(const e of G.ents)if(!e.isB&&e.path&&e.s&&e.s.dom!=='air')e.path=null;
     for(const T of G.teams)if(!T.reb&&!T.out){log(T.id,ally(T.id,team)?'Pontoon bridge laid - ground forces can cross here now.':'The enemy has laid a pontoon bridge across the river!',ally(T.id,team)?'g':'bad');if(!ally(T.id,team))FXE('tping',[T.id,p.x,p.y,0]);}}}
