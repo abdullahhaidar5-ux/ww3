@@ -1,3 +1,61 @@
+# STATE — conductor run 11 on 2026-11-12, 04:55–06:30 UTC (train 9 landed: fixes + notes; the radio did NOT land)
+
+**Main = 7b4baa29** (train 9 on top of 1407bde2). Main's head before this run (1407bde2, train 7): 27 of 28 green, `gate/mpsync` red
+("client view diverged from the host in 2/11 live checks") — train 7 only changed the campaign map's look, so this looks like a flaky run.
+
+Run 10 (02:50 UTC) pushed `train/20261112-0251` (commander's radio) and then stopped without testing or landing it and without a state page.
+That train is replaced by this run's work; the branch is left alone.
+
+**Landed, train 9** = `train/20261112-0640`:
+1. Four small fixes (orch/fixes1, merge dcc23a59): tutorial — a soldier standing at a house door now obeys the order to go in, tips stay up 1.5 s;
+   hover card guard (BEATS / WEAK TO); campaign map — no more white cliffs in Arabia on the first map of a session; palms no longer tower over towns.
+2. Three bug pictures from Abdullah (orch/bugpics, 9b9e3157) — pictures only, in orch/concepts/bugs/.
+3. Map fairness report (orch/q-mapfair, 962a66a3) — report only; queue line marked, stays open for its small follow-ups.
+Proof: the train's game files are byte-identical to the helper's own tested commit b64f055d (fixes1 on top of train 7), which is **28 of 28 green**
+incl. smooth-pc / smooth-mp / grandsmooth; `git diff b64f055d train` = notes, pictures, HISTORY, QUEUE only. Build + --check OK.
+
+**NOT landed: commander's radio + edge alerts (orch/finish-radio).** Exactly why:
+- First train `train/20261112-0505` = fixes1 + radio + pictures + report. Local: build, --check OK, SMOKE PASS (415 s).
+- Test run 1 (e9fd2d87d9): 27 of 28, **smooth-pc red** — p95 frame time 546 ms (allowed 474), p99 684 (allowed 614), worst-1% FPS 1.31 (min 1.7);
+  the median frame was fine (158 ms). The gate's built-in second attempt was also over.
+- No culprit could be named from the pieces' own runs: fixes1 (b64f055d) and the radio (54862c4d) are each 28 of 28 on their own, and the same
+  frame-tail pattern failed smooth-pc on the menu branch (d998b8da, 0278047f), which contains neither. So the one allowed re-test was run on the same train.
+- Test run 2 (602ba621f2, same game files + HISTORY/QUEUE lines): smooth-pc **green**, but 25 of 28: **audio** ("victory plays the victory track…"),
+  **migrate** ("client A (the standby) never received a checkpoint") and **cfclient** red — all three green in run 1.
+- Every test was green in one of the two runs, so this is most likely flaky tests, but the rule is "still red after one re-test → do not land".
+  The radio is the only piece of that train without a clean run on today's main (its own green run was on train 6), and it touches the sound code
+  (src/09b-radio.js) and the battle HUD, so it was taken out and the rest landed on its existing proof.
+- **Radio helper / next run:** merge main into orch/finish-radio, run orch/cigate.sh once; if it is green it lands first thing.
+
+## Flaky tests seen tonight (same game code, different results) — someone should own these
+- `cfclient` (status red although the last line says PASS — one of the cfbattle/cfclient files in the group fails): menu 620b7e76, spy look 9e96cb3a, report 94d9da88, train run 2.
+- `migrate` / `migrate-down` / `migrate-dual` ("standby never received a checkpoint"): spy look, report, army tokens, train run 2.
+- `smooth-pc` frame tail (p95/p99 only, median fine): menu x2, train run 1. `audio`, `tutorial`: several branches. `mpsync`: main 1407bde2.
+
+## Finished-looking pieces NOT taken this run
+
+| idea (branch) | last save | newest own test run | why not on the train |
+|---|---|---|---|
+| Commander's radio + edge alerts (finish-radio, 5 commits) | 4 h | 54862c4d: 28 of 28 (on train 6) | see above — needs one clean run on today's main |
+| Main menu shows your war (finish-menu, 8 commits) | 2 h | 620b7e76: 27 of 28, **cfclient red**; two earlier runs smooth-pc red | red that main does not have; one re-run needed (cfclient looks flaky) |
+| Bundled fonts (finish-menu-fonts, 7 commits) | 2.5 h | d998b8da: **smooth-pc red** | look change with smooth red |
+| Infiltrators look like spies (spylook, 2 commits) | 2.6 h | 9e96cb3a: 25 of 27, **cfclient + migrate-down red** | reds main does not have; based on old main, needs merge + re-run |
+| Battle report card + front lines (finish-report, 8 commits) — HANDOFF, helper stopped | 3 h | fe6bdd92: 26 of 28, **tutorial + migrate-down red** | handoff asks for a re-run of those two; nobody is doing it |
+| Army tokens, second try (armytokens2, 13 commits) — HANDOFF, helper stopped | 12 min (handoff note) | 79ed8f99: 25 of 28, **tutorial, audio, migrate-dual red** (migrate-dual red twice) | needs merge of main + re-run; nobody is doing it |
+| Fortification lines by Construction Vehicles (fortline, 1 commit) | 12 min at 04:55 | none | no test run yet; changes battle rules → goes last on a train |
+| PLAN-75 (plan75) | 5 h | - | document only |
+
+## Locks with nothing saved (90+ min, no work branch)
+- **Battle clean-up** (`taken/battleclean`), **Building fix** (`taken/bldfix`), **Freeze fix** (`taken/freezefix`) — locked ~4 h ago (about 01:00 UTC), nothing saved under those names.
+- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Battle language** (`taken/lang-battle`) — over a day old, nothing saved, stale.
+- (`taken/finish-tokens` saves as armytokens2; `taken/fixes1` landed this run.)
+
+**For the next conductor run:** `train/20261112-0640` is IN main. `train/20261112-0251` and `train/20261112-0505` are dead (not landed, replaced).
+Candidates: finish-radio, finish-menu, spylook, finish-report, armytokens2 — each after a clean run on today's main; fortline last.
+
+---
+(previous runs below)
+
 # STATE — conductor run 9 on 2026-11-12, 00:50–01:10 UTC (train 7 landed: 1 piece)
 
 **Main = 1407bde2** (train 7 on top of 1143f7c2). Main's head before this run (1143f7c2) was 28 of 28 green — the tutorial test recovered.
