@@ -31,3 +31,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-11 19:29Z 068b3146 **RED** (27 gates) failing: audio — Conductor train 4: real coastlines and real-looking forest on the camp
 - 2026-11-11 23:15Z aa8968fd **RED** (28 gates) failing: audio,tutorial — Put back two test pictures a local test run overwrote
 - 2026-11-12 02:05Z 1407bde2 **RED** (27 gates) failing: mpsync — Conductor train 7: gentler mountains on the campaign map — history mar
+- 2026-11-12 14:30Z 77b4ee84 **RED** (28 gates) failing: audio,cfclient,icons — Conductor train 12: Conquest full base + $10,000, Battle without suppl
