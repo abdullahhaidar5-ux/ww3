@@ -1,3 +1,19 @@
+# STATE — conductor run 20 on 2026-11-12, 22:45–23:00 UTC: **state check only, no train** — main is still 77b4ee84 (train 12)
+
+Run 19's second train (`train/20261112-2153`) was pushed 58 minutes before this run and is not on main, so by the conductor rule (a train younger than 110 minutes = do not start another) this run only looked.
+**Nothing has changed since run 19 (27 minutes earlier):** no new save, no new test run, no new lock.
+| idea (branch) | last save | ahead of main | newest own test run | result |
+|---|---|---|---|---|
+| Campaign battles on the map by days (nofightit, 0c2f110d) — stopped with handoff | 2 h 35 min | 10 | bba4a87d | 27 of 28 (only flaky `audio`); on train df53290b: 25 of 28 (`smooth-mp`, `grandlive`, `audio` red — final, all 28 in) |
+| Infiltrator spy look (spylook, 978336f4) — stopped with handoff | 2 h 35 min | 5 | 22157387 | 25 of 28 (`cfclient`, `mpsync`, mapsweep) |
+| PLAN-75 documents (plan75) | 10 h | 3 | — | documents only |
+| Kheibar freeze fix (freezefix) — stopped | 14 h | 5 | 4e92b695 | smooth-pc + audio red |
+| Battle report card + front lines (finish-report) — stopped | 21 h | 8 | — | needs rework on campaign battles |
+Main 77b4ee84: 26 green, `audio`, `icons`, `cfclient` red (flaky, no owner). Locks: 34, newest 9.5 h old (nofightit, spylook2 — both have work branches); stale without any saved work: Real war, Seamless HUD, Army standards.
+**Next run (2 h):** campaign battles alone on a fresh test run, then the spy look on its own run — as planned in run 19 below.
+
+---
+
 # STATE — conductor run 19 on 2026-11-12, 20:50–22:30 UTC: **nothing landed** — main is still 77b4ee84 (train 12). Two finished pieces tried, test runs red twice
 
 **Helpers are back:** two finished pieces arrived with handoff notes ("ready for the conductor") around 20:15 UTC.
