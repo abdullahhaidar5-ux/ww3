@@ -1,0 +1,91 @@
+[0s] pc: launching browser
+[2s] ctx
+[2s] guarded
+[3s] page
+[3s] pc: loading page
+[3s] pc: page loaded
+[3s] pc: menu ready
+[26s] pc: LOADING {"tok":1,"tipI":5,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",18765]]}
+[130s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",18765],["Loading 3D models…",3277
+[130s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",18765],["Loading 3D models…",3277
+[130s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",18765],["Loading 3D models…",3277
+[130s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",18765],["Loading 3D models…",3277
+[130s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",18765],["Loading 3D models…",3277
+[148s] pc: battle loaded in 144s
+[148s] pc: done {"tok":1,"tipI":6,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",18765],["Loading 3D models…",327
+[167s] pc: army in place
+[168s] pc: measuring 150 frames
+[172s] pc: warm-up done, 169 shaders
+[176s] pc: frame 10
+[179s] pc: frame 20
+[181s] pc: frame 30
+[184s] pc: frame 40
+[186s] pc: frame 50
+[189s] pc: frame 60
+[191s] pc: frame 70
+[193s] pc: frame 80
+[196s] pc: frame 90
+[198s] pc: frame 100
+[201s] pc: frame 110
+[203s] pc: frame 120
+[206s] pc: frame 130
+[208s] pc: frame 140
+[210s] pc: frame 150
+[216s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) p95 frame ms rose to 500.3 (baseline 246.7, allowed up to 474.06; +103%) | p99 frame ms rose to 787.4 (baseline 277, allowed up to 614; +184%) | worst-1% FPS fell to 1.16 (baseline 3.4, allowed down to 1.7)
+[216s] pc: launching browser
+[216s] ctx
+[216s] guarded
+[216s] page
+[216s] pc: loading page
+[217s] pc: page loaded
+[217s] pc: menu ready
+[240s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",16795],["Loading 3D models…",3431
+[343s] pc: LOADING {"tok":1,"tipI":7,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",16795],["Loading 3D models…",3431
+[343s] pc: LOADING {"tok":1,"tipI":7,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",16795],["Loading 3D models…",3431
+[343s] pc: LOADING {"tok":1,"tipI":7,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",16795],["Loading 3D models…",3431
+[343s] pc: LOADING {"tok":1,"tipI":7,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",16795],["Loading 3D models…",3431
+[343s] pc: LOADING {"tok":1,"tipI":7,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",16795],["Loading 3D models…",3431
+[361s] pc: battle loaded in 144s
+[361s] pc: done {"tok":1,"tipI":7,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",16795],["Loading 3D models…",343
+[377s] pc: army in place
+[377s] pc: measuring 150 frames
+[383s] pc: warm-up done, 168 shaders
+[387s] pc: frame 10
+[389s] pc: frame 20
+[392s] pc: frame 30
+[394s] pc: frame 40
+[396s] pc: frame 50
+[399s] pc: frame 60
+[401s] pc: frame 70
+[404s] pc: frame 80
+[406s] pc: frame 90
+[409s] pc: frame 100
+[411s] pc: frame 110
+[413s] pc: frame 120
+[416s] pc: frame 130
+[418s] pc: frame 140
+[421s] pc: frame 150
+[426s] pc attempt 2: REGRESSED
+
+                       pc        
+units on screen        465       
+load time s            144.07    
+median frame ms        179.6     
+p95 frame ms           519.3     
+p99 frame ms           732.5     
+worst 1% FPS           1.34      
+frames >50 ms          150       
+first boom x median    1.56      
+2nd boom x median      1.25      
+weather/night x median 1.63      
+sim step p95 ms        16.1      
+draw calls             1186      
+k triangles            6015      
+heap MB/min            -89.81    
+runtime 7.1 min
+
+SMOOTH FAIL: 3 problem(s)
+  - pc: p95 frame ms rose to 519.3 (baseline 246.7, allowed up to 474.06; +110%)
+  - pc: p99 frame ms rose to 732.5 (baseline 277, allowed up to 614; +164%)
+  - pc: worst-1% FPS fell to 1.34 (baseline 3.4, allowed down to 1.7)
