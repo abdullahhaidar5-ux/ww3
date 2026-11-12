@@ -1,6 +1,6 @@
 // NATIONAL LEADER FIGURES (lane G, AY): ONE shared Ayatollah leads IR+RS+DW (the Resistance bloc); KP has its own Dear Leader.
 // A leader stands in one province and tours: ~1 month per stop. While there: that province calms down (-3 unrest/month) and a
-// Fight-it battle there starts with fervour (units fearless). Nation-wide ("the people clamour for war"): +war support, faster manpower,
+// battle there is fought with fervour (+1 on the die in every Assault phase, 13a-gwar.js). Nation-wide ("the people clamour for war"): +war support, faster manpower,
 // slower weariness (modifier rows, cond 'ldr'). Cost: 24 months of peace builds war-fever unrest. State GC.ldr = {AY:{at,tgt,eta,since,req}, DL:{..}, pc:{nation:peaceMonths}}.
 const LDR_DEF={AY:{title:'Supreme Ayatollah',who:()=>(typeof RES_BLOC!=='undefined'?RES_BLOC:['IR','RS','DW']),home:'IR',own:'IR'},
                DL:{title:'Dear Leader',who:()=>['KP'],home:'KP',own:'KP'}};
@@ -14,7 +14,7 @@ function ldrName(k){try{const r=pplRoster(LDR_DEF[k].own);return LDR_DEF[k].titl
 function ldrPlayerRuns(k){return GC.me===LDR_DEF[k].own;}
 function ldrGo(k,pi){const L=ldrS(k);if(!ldrProvs(k).includes(pi)||pi===L.at)return false;L.tgt=pi;L.eta=GC.turn+1;grLog(ldrName(k)+' sets out for '+GCM.P[pi].n+'.',LDR_DEF[k].own);return true;}
 function ldrAt(c,pi){const k=ldrId(c);if(!k||!GC||!GC.ldr||!GC.ldr[k])return false;return GC.ldr[k].at===pi&&GC.ldr[k].tgt<0;}
-function ldrFervour(c,pi){return ldrAt(c,pi);}   // read by the Fight-it battle start
+function ldrFervour(c,pi){return ldrAt(c,pi);}   // read by the battle resolver (gwMods)
 GMOD_COND.ldr=(c)=>!!ldrId(c);
 GMOD_ROWS.push({id:'ldr_war',src:'The people clamor for war',scope:'nation',stat:'warSupport',add:.08,cond:'ldr'},
                {id:'ldr_man',src:'Volunteers rally to the leader',scope:'nation',stat:'manpower',mul:1.12,cond:'ldr'},
@@ -37,7 +37,7 @@ alAdd('ldr','🕌','Leader idle',(c)=>{const k=ldrId(c);if(!k||!ldrPlayerRuns(k)
 npTab('ldr','🕌','Leader',(code,body)=>{const k=ldrId(code);if(!k){body.textContent='';return;}const L=ldrS(k),mine=ldrPlayerRuns(k)&&code===GC.me,pc=(GC.ldr.pc[code]||0);
   const peaceLine=pc>24?'<span style="color:#ffb3a8">War-fever: '+pc+' months of peace is stirring unrest.</span>':'Months of peace: '+pc+' (war-fever builds after 24).';
   body.innerHTML='<div style="font-size:17px;margin-bottom:6px"><b>'+ldrName(k)+'</b></div><div>Stands in <b>'+GCM.P[L.at].n+'</b>'+(L.tgt>=0?' — traveling to <b>'+GCM.P[L.tgt].n+'</b>':'')+'.</div>'
-   +'<div style="margin:8px 0;opacity:.85">Where he stands: unrest falls each month and a battle there begins with fearless troops. Nation-wide: the people clamor for war (+8% war support, +12% manpower, weariness grows slower).</div><div>'+peaceLine+'</div>'
+   +'<div style="margin:8px 0;opacity:.85">Where he stands: unrest falls each month and his troops fighting a battle there get +1 on the die in every Assault phase. Nation-wide: the people clamor for war (+8% war support, +12% manpower, weariness grows slower).</div><div>'+peaceLine+'</div>'
    +(k==='AY'?'<div style="margin-top:6px;opacity:.8">One leader for the Resistance bloc: Iran, the Lebanese Shia and Yemen share him and his effects.</div>':'');
   const mk=(txt,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=txt;b.style.cssText='margin:4px 6px 0 0;padding:3px 10px;border-radius:12px;border:1px solid #3b556e;background:#16222e;color:#cfe3f5;cursor:pointer;font-size:14px';b.onclick=fn;return b;};
   const lst=ldrProvs(k).filter(i=>i!==L.at).sort((a,b)=>GC.prov[b].un-GC.prov[a].un).slice(0,12);

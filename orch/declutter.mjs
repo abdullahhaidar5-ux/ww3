@@ -1,5 +1,5 @@
-// Declutter screenshots: a Conquest battle and a grand-campaign Fight-it battle at 1920x1080 and 1600x900.
-//   node orch/declutter.mjs before|after      -> orch/shots/declutter/<tag>-{conquest,grand}-<w>.png
+// Declutter screenshots: a Conquest battle at 1920x1080 and 1600x900 (the grand campaign has no real-time battles since 2026-11-12).
+//   node orch/declutter.mjs before|after      -> orch/shots/declutter/<tag>-conquest-<w>.png
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url'; import { createRequire } from 'node:module';
 import { acquireBrowserLock } from './browserlock.mjs'; import { guardContext } from './serverdev.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), TAG = process.argv[2] || 'after', OUT = path.join(ROOT, 'orch', 'shots', 'declutter'); fs.mkdirSync(OUT, { recursive: true });
@@ -20,20 +20,4 @@ for (const [w, h] of SIZES) {   // ---- Conquest
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 900000, polling: 500 });
   await page.evaluate(() => { for (const el of document.querySelectorAll('div')) if (/Choose your General Doctrine/.test(el.textContent) && el.getBoundingClientRect().height < 200) el.style.display = 'none'; for (let i = 0; i < 120; i++) simUpdate(1 / 30); });
   await shot(page, `conquest-${w}`); await ctx.close(); }
-for (const [w, h] of SIZES) {   // ---- grand-campaign Fight-it
-  const { ctx, page } = await open(w, h);
-  await page.evaluate(() => { grNew({ me: 'IR', seed: 99, len: 'quick' }); grSave(); grandOpen(); });
-  const sc = await page.evaluate(() => { const me = 'IR', foe = 'IQ'; grDeclare(me, foe); let pair = null;
-    for (const p of GCM.P) if (p.land && GC.prov[p.i].o === me) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === foe && GC.prov[j].gar.length) { pair = [p.i, j]; break; } else if (pair) break;
-    if (!pair) for (const p of GCM.P) if (p.land && GC.prov[p.i].o === foe) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === me) { pair = [j, p.i]; break; }
-    if (!pair) return null; const a = GC.armies.find(x => x.o === me); a.at = pair[0]; a.path = []; GV.sel = pair[0]; GV.selA = a.id; grandMapRefresh(); return grOrderMove(a.id, pair[1]).ok; });
-  if (!sc) { console.log('no scenario'); await ctx.close(); continue; }
-  for (let k = 0; k < 4; k++) { await page.evaluate(() => { GC.armies.filter(a => a.o !== 'IR').forEach(a => { a.path = []; }); guEndTurn(); }); await page.waitForTimeout(2500); if (await page.evaluate(() => !!document.getElementById('gModal'))) break; }
-  await page.waitForFunction(() => !!document.getElementById('gModal'), null, { timeout: 90000 });
-  await page.evaluate(() => { [...document.querySelectorAll('#gModal button')].find(b => /Fight it live/.test(b.textContent)).click(); });
-  await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !!G.grand, null, { timeout: 60000 });
-  await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 });
-  await page.waitForTimeout(2500);
-  await page.evaluate(() => { const t = G.towns && G.towns.find(t => t.ow === ME) || (G.towns || [])[0]; if (t) { centerOn(t.x, t.y, true); try { townOpen(t.i); } catch (e) {} } for (let i = 0; i < 60; i++) simUpdate(1 / 30); });
-  await shot(page, `grand-${w}`); await ctx.close(); }
 await browser.close(); server.close(); console.log('DECLUTTER SHOTS', TAG);

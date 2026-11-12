@@ -20,6 +20,8 @@ Guards: `orch/polishtest.mjs` section 3 (opens each, checks frame + ✕ position
 | [x] | TV news ticker | `#gTV` | note (keeps its TV look) | own theme | yes | closes |
 | [x] | Newspaper headline | `#gNews` | note (keeps its paper look) | own theme | yes | closes |
 | [x] | First-steps coach | `#gCoach` | note | own theme | yes | closes |
+| [x] | Battle window · siege window (opened from the crossed-swords / tower marker or the province panel) | `#gwWin` | side | yes | yes | closes |
+| [x] | Battle result cards (your own battles and sieges) | `#gwCards` | note | own theme | yes | closes |
 | [x] | Grand campaign menu · New campaign · Campaign lobby | `#campScreen` | screen | page style | Back button | = Back (one step) |
 
 Not panels (fixed parts of the screen, nothing to close): top bar + alerts strip, province / army column on the right, map key

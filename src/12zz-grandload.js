@@ -20,7 +20,7 @@ function loadGrand(){
   const sb=document.getElementById('sandbox');
   if(sb&&!document.getElementById('grandBtn')){
     const b=document.createElement('button');b.className='big';b.id='grandBtn';b.type='button';b.textContent='Grand campaign';
-    b.title='The world map: run a nation, fight the battles yourself or auto-resolve them';
+    b.title='The world map: run a nation; battles, sea fights and sieges are decided on the map';
     b.onclick=()=>{try{initAudio();}catch(e){}
       const t=b.textContent;b.textContent='Loading the world map…';
       loadGrand().then(()=>{b.textContent=t;grandMenu();}).catch(()=>{b.textContent=t;

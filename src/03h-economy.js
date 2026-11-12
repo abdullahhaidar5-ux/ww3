@@ -55,7 +55,7 @@ function ecDamage(t,dt,T){let n=0,loss=0,nd=0;for(const c of t.cells){n++;if(c.d
   if(nd&&t.rbd<1)t.rbd=Math.min(1,t.rbd+k*1.4);}
 // ---- investing ----
 function ecInvCost(t,k){return Math.round(ECI_COST[k]*(t.ham?.6:t.lv>=2?1.4:1)*(G.bs||1));}
-function ecCmd(team,a){if(G.grand)return;const t=G.towns&&G.towns[a.ti|0],T=G.teams[team],k=a.k|0;if(!t||!T||T.out||T.reb||t.ow<0||!ally(t.ow,team)||t.reb>G.t||k<0||k>2||((t.inv|0)&(1<<k)))return;
+function ecCmd(team,a){const t=G.towns&&G.towns[a.ti|0],T=G.teams[team],k=a.k|0;if(!t||!T||T.out||T.reb||t.ow<0||!ally(t.ow,team)||t.reb>G.t||k<0||k>2||((t.inv|0)&(1<<k)))return;
   const c=ecInvCost(t,k);if(T.credits<c){if(!T.ai)log(team,`Not enough money for ${ECI_NAME[k].toLowerCase()} in ${t.name} ($${c}).`,'w');return;}
   T.credits-=c;t.inv=(t.inv|0)|(1<<k);G.ec.v++;log(team,`${t.name}: ${ECI_NAME[k]} built - more tax and faster growth from now on.`,'g');}
 // ---- mines, quarries, factories beside the fairly placed hamlets ----
@@ -114,7 +114,7 @@ function ecAI(st){const E=G.ec;E.aiT+=st;if(E.aiT<12)return;E.aiT=0;
     const hq=G.ents.find(e=>e.isB&&e.team===T.id&&e.kind==='hq'&&!e.dead);if(!hq)continue;let tg=null,td=1e9;for(const p of E.pts){if(p.ow>=0&&ally(p.ow,T.id))continue;const d=Math.hypot(p.x-hq.x,p.y-hq.y);if(d<td&&d<2600){td=d;tg=p;}}
     if(!tg)continue;let n=0;for(const u of G.ents){if(n>=2)break;if(u.dead||u.isB||u.team!==T.id||u.inTun||u.kind==='harv'||u.kind==='dozer'||!u.s||u.s.dom!=='ground'||u.s.noAttack||u.order||u.target)continue;setMove(u,tg.x+n*30,tg.y,'amove');n++;}}}
 // ---- one call per step from updTowns ----
-function ecTick(st){const E=G.ec;if(!E||G.grand)return;ecPoints(st);ecCaravans(st);ecAI(st);
+function ecTick(st){const E=G.ec;if(!E)return;ecPoints(st);ecCaravans(st);ecAI(st);
   E.sm=(E.sm||0)+st;if(E.sm>=1){E.sm=0;for(const T of G.teams){const dc=(T.ecC||0)-(T.ecCs||0);T.ecCs=T.ecC||0;T.eco=(T.eco||0)*.875+((T.ecM||0)+(T.seaR||0)+dc)*.125;}}}   /* money per second from mines + ports + caravans, smoothed, for the HUD */
 // ---- network: compact pack for clients (rides inside hmPack) ----
 function ecPack(){const E=G.ec;if(!E)return 0;const th=[];for(const t of G.towns){let m=0;if(t.fb)for(let k=0;k<t.fb.length&&k<8;k++)if(t.fb[k]>G.t)m|=1<<k;
