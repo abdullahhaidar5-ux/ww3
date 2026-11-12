@@ -1,3 +1,40 @@
+# STATE — conductor run 9 on 2026-11-12, 00:50–01:10 UTC (train 7 landed: 1 piece)
+
+**Main = 1407bde2** (train 7 on top of 1143f7c2). Main's head before this run (1143f7c2) was 28 of 28 green — the tutorial test recovered.
+
+**Landed, train 7** = `train/20261112-0052`:
+1. Campaign map: much gentler mountains (orch/mtnfix2, merge ae9a73ba) — Abdullah asked 2026-11-11 17:36 ("mountains are still way too steep").
+   Relief height cut by almost half again, softer slope shading. Changes only src/13g-grandlook.js.
+Gate: NOT re-run, on purpose — the train's files are byte-identical to the helper's own tested commit 475490b9 (it was built on main's head;
+`git diff 475490b9 train` is empty), and that commit is **28 of 28 green** incl. smooth-pc / smooth-mp / grandsmooth. Only a HISTORY line was
+added on top. Local: build + --check OK, SMOKE PASS (503 s). No QUEUE line existed for it. The push to main starts main's own full test run.
+
+## Finished-looking pieces NOT taken this run (helpers all still active, saved within the last hour)
+
+| idea (branch) | last save | newest own test run | why not on the train |
+|---|---|---|---|
+| Battle report card + front lines on the campaign map (finish-report, 6 commits) | 35 min | 94d9da88: 24 green, **grand + decisions red** | red tests main does not have; helper must fix |
+| Army tokens, second try (armytokens2, 12 commits; lock finish-tokens) | 5 min (new commit 58b00d5c, untested) | 79ed8f99: 25 green, **tutorial, audio, migrate-dual red**; earlier a2242b26: decisions + migrate-dual red | migrate-dual red twice in a row; main is green on all three |
+| Commander's radio + edge alerts (finish-radio, 5 commits) | 5 min | 54862c4d: just started (2 green so far) | test run not finished |
+| Main menu shows your war + bundled fonts (finish-menu, 4 commits) | 25 min | none | no test run pushed yet |
+| Map fairness proof — 1,532 computer battles on 116 maps (q-mapfair, 2 commits) | 2 h | not needed | report/notes only, no game change; must ride inside a code landing (docs never go to main alone). Handoff written = helper stopped |
+| PLAN-75 — plan and usage rules (plan75, 1 commit) | 1 h | - | document only |
+
+## Locks with nothing saved (90+ min, no work branch)
+
+- **Fixes 1** (`taken/fixes1`, ~1.7 h) — nothing saved under that name (may be the mountain fix, which landed; unclear).
+- **Real war** (`taken/realwar`, 23 h), **Seamless HUD** (`taken/seamless-hud`, 23 h) — nothing saved, stale.
+
+Old parked branches (extras-*, lang-campaign, seamless-flow, safetyH, dashJ, greenK-*, dashI, c-proxy, q-sound …): unchanged since run 8's table
+below; several are now being carried forward by the finish-* helpers (lang-campaign → finish-report, extras-story → finish-menu,
+extras-battle + extras-command → finish-radio).
+
+**For the next conductor run:** `train/20261112-0052` is IN main. Likely candidates: finish-radio, finish-menu, finish-report, armytokens2 —
+each once its own test run is finished and has no red that main lacks.
+
+---
+(previous runs below)
+
 # STATE — conductor run 8 on 2026-11-11, 22:48–23:35 UTC (train 6 landed: 1 piece)
 
 **Main = 1143f7c2** (train 6 on top of aa8968fd). Live site: the Pages build for 1143f7c2 finished successfully at 23:25 UTC, so https://abdullahhaidar5-ux.github.io/ww3/ serves train 6.
