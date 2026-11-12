@@ -273,7 +273,8 @@ function mxWarSrc(){let g=null,b=null;try{g=typeof svGrandInfo==='function'?svGr
   if(g)return {key:'g'+g.ts+'|'+g.d,wt:g.wt&&g.wt.d?g.wt:null,k:'Your war · Grand campaign',h:g.n+(g.d?' · '+g.d:''),l:g.lbn?'Last battle: '+g.lbn+(g.lbd?', '+g.lbd:'')+' — '+(g.lb&&g.lb.w?'won':'lost'):'No battle fought yet'};
   if(b)return {key:'b'+b.id+'|'+b.ts,wt:b.wt&&b.wt.d?b.wt:null,k:'Your war · '+(b.camp?'Mission':'Battle'),h:b.facName+' · '+b.mapName,l:clk(b.t)+' into the fight'+(b.wt&&b.wt.e?' — the bright line is your front':'')};
   return null;}
-function mxWarTable(){const bg=document.getElementById('mxbg');if(!bg)return;const src=mxWarSrc(),wt=src&&src.wt,key=src?src.key:'',mx=bg.parentNode,esc=t=>String(t).replace(/[&<>"]/g,ch=>'&#'+ch.charCodeAt(0)+';');
+function mxWarTable(){const bg=document.getElementById('mxbg'),mn=document.getElementById('menu');if(!bg||(mn&&mn.hidden))return;   /* never draw behind a running battle; the next time the menu shows it is drawn */
+  const src=mxWarSrc(),wt=src&&src.wt,key=src?src.key:'',mx=bg.parentNode,esc=t=>String(t).replace(/[&<>"]/g,ch=>'&#'+ch.charCodeAt(0)+';');
   if(MX.wtKey===key)return;MX.wtKey=key;for(const e of mx.querySelectorAll('#mxwt,.mxwtl,#mxwar'))e.remove();mx.classList.toggle('wt',!!wt);if(!src)return;
   const cap=mxEl('div');cap.id='mxwar';cap.innerHTML='<i>'+esc(src.k)+'</i><b>'+esc(src.h)+'</b><span>'+esc(src.l)+'</span>';(MX.screens.title||mx).appendChild(cap);if(!wt)return;
   try{const W=wt.w|0,H=wt.h|0,g=new Uint8Array(W*H),bin=atob(wt.d);let o=0,k=0;while(o<bin.length&&k<W*H){const v=bin.charCodeAt(o++);let run=0,sh=0,b;do{b=bin.charCodeAt(o++);run|=(b&127)<<sh;sh+=7;}while(b&128&&o<bin.length);g.fill(v,k,Math.min(W*H,k+run));k+=run;}

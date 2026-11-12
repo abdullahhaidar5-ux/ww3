@@ -16067,7 +16067,7 @@ function svCanSave(){return !!(G&&!G.over&&!G.rp&&MODE==='single'&&!window.LOADI
 /* svFront (living main menu): a small sketch of the battlefield at the moment of saving - water and land, and which side holds each part of the land, worked out from your own
    forces and the enemy forces you could see - run-length packed like the campaign's war table (13-grand.js grWarTable) so the main menu can draw where your front is.
    Display only: it rides in the save's list entry (meta), never in the checkpoint; nothing in the battle reads it. */
-function svFront(){try{if(!G||!G.map||!G.ents||!G.teams[ME])return null;const W=240,H=135,GW=48,GH=Math.max(8,Math.round(48*MAPH/MAPW)),dm=new Float32Array(GW*GH).fill(1e9),df=new Float32Array(GW*GH).fill(1e9);let foes=0;
+function svFront(){try{if(!G||!G.map||!G.ents||!G.teams[ME])return null;const W=240,H=135,GW=40,GH=Math.max(8,Math.round(40*MAPH/MAPW)),dm=new Float32Array(GW*GH).fill(1e9),df=new Float32Array(GW*GH).fill(1e9);let foes=0;
   /* each part of the land belongs to whoever is nearest: your forces (and allies) or an enemy you can see */
   for(const e of G.ents){if(e.dead||e.team==null||e.team<0||!G.teams[e.team])continue;const mine=ally(e.team,ME);if(!mine&&!vis(e))continue;if(!mine)foes++;
     const gx=e.x/MAPW*GW-.5,gy=e.y/MAPH*GH-.5,D=mine?dm:df;for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){const dx=i-gx,dy=j-gy,q=dx*dx+dy*dy,k=j*GW+i;if(q<D[k])D[k]=q;}}
@@ -20450,7 +20450,8 @@ function mxWarSrc(){let g=null,b=null;try{g=typeof svGrandInfo==='function'?svGr
   if(g)return {key:'g'+g.ts+'|'+g.d,wt:g.wt&&g.wt.d?g.wt:null,k:'Your war · Grand campaign',h:g.n+(g.d?' · '+g.d:''),l:g.lbn?'Last battle: '+g.lbn+(g.lbd?', '+g.lbd:'')+' — '+(g.lb&&g.lb.w?'won':'lost'):'No battle fought yet'};
   if(b)return {key:'b'+b.id+'|'+b.ts,wt:b.wt&&b.wt.d?b.wt:null,k:'Your war · '+(b.camp?'Mission':'Battle'),h:b.facName+' · '+b.mapName,l:clk(b.t)+' into the fight'+(b.wt&&b.wt.e?' — the bright line is your front':'')};
   return null;}
-function mxWarTable(){const bg=document.getElementById('mxbg');if(!bg)return;const src=mxWarSrc(),wt=src&&src.wt,key=src?src.key:'',mx=bg.parentNode,esc=t=>String(t).replace(/[&<>"]/g,ch=>'&#'+ch.charCodeAt(0)+';');
+function mxWarTable(){const bg=document.getElementById('mxbg'),mn=document.getElementById('menu');if(!bg||(mn&&mn.hidden))return;   /* never draw behind a running battle; the next time the menu shows it is drawn */
+  const src=mxWarSrc(),wt=src&&src.wt,key=src?src.key:'',mx=bg.parentNode,esc=t=>String(t).replace(/[&<>"]/g,ch=>'&#'+ch.charCodeAt(0)+';');
   if(MX.wtKey===key)return;MX.wtKey=key;for(const e of mx.querySelectorAll('#mxwt,.mxwtl,#mxwar'))e.remove();mx.classList.toggle('wt',!!wt);if(!src)return;
   const cap=mxEl('div');cap.id='mxwar';cap.innerHTML='<i>'+esc(src.k)+'</i><b>'+esc(src.h)+'</b><span>'+esc(src.l)+'</span>';(MX.screens.title||mx).appendChild(cap);if(!wt)return;
   try{const W=wt.w|0,H=wt.h|0,g=new Uint8Array(W*H),bin=atob(wt.d);let o=0,k=0;while(o<bin.length&&k<W*H){const v=bin.charCodeAt(o++);let run=0,sh=0,b;do{b=bin.charCodeAt(o++);run|=(b&127)<<sh;sh+=7;}while(b&128&&o<bin.length);g.fill(v,k,Math.min(W*H,k+run));k+=run;}
