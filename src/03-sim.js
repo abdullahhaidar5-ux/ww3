@@ -78,7 +78,7 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].
   G.todM=wB<0?(wxRandIdx(G.seed)===4?2:0):todMode(wB);G.flares=[];{const fx={6:'sandstorm',7:'rain',8:'snow'}[wB];if(fx){G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};}}
   if(o.sandbox)G.sandbox=true;
   if(MODE!=='client'){
-    if(o.camp)campSetup(o.camp);else if(o.grand)grandBattleSetup(o.grand);else for(let t=0;t<N;t++){const [bx,by]=BASES[t];const a=baseFacing(t),cx=Math.cos(a),cy=Math.sin(a);addBld(t,'hq',bx,by,true);addUnit(t,'harv',bx+cx*150-cy*60,by+cy*150+cx*60);addUnit(t,'dozer',bx+cx*120-cy*110,by+cy*120+cx*110);addUnit(t,'inf',bx+cx*130+cy*90,by+cy*130-cx*90);addUnit(t,'inf',bx+cx*150+cy*70,by+cy*150-cx*70);if(G.real&&!G.battle){const RR=realRow(G.teams[t].fac);let j=0;for(const [k,n] of (RR&&RR.st)||[])for(let i=0;i<n;i++,j++){const p=nearestPassXY('ground',bx+cx*(210+(j%4)*34)+cy*(-110+Math.floor(j/4)*44),by+cy*(210+(j%4)*34)-cx*(-110+Math.floor(j/4)*44));if(p)addUnit(t,k,p[0],p[1]);}}}
+    if(o.camp)campSetup(o.camp);else if(o.grand)grandBattleSetup(o.grand);else for(let t=0;t<N;t++){const [bx,by]=BASES[t];const a=baseFacing(t),cx=Math.cos(a),cy=Math.sin(a);addBld(t,'hq',bx,by,true);addUnit(t,'harv',bx+cx*150-cy*60,by+cy*150+cx*60);addUnit(t,'dozer',bx+cx*120-cy*110,by+cy*120+cx*110);if(G.conq)conqBase(t,a);addUnit(t,'inf',bx+cx*130+cy*90,by+cy*130-cx*90);addUnit(t,'inf',bx+cx*150+cy*70,by+cy*150-cx*70);if(G.real&&!G.battle){const RR=realRow(G.teams[t].fac);let j=0;for(const [k,n] of (RR&&RR.st)||[])for(let i=0;i<n;i++,j++){const p=nearestPassXY('ground',bx+cx*(210+(j%4)*34)+cy*(-110+Math.floor(j/4)*44),by+cy*(210+(j%4)*34)-cx*(-110+Math.floor(j/4)*44));if(p)addUnit(t,k,p[0],p[1]);}}}
     if(G.sandbox)sandboxSetup();
     wallCost();regions('ground');regions('naval');   // route caches built now, behind the loading screen, not by the first long route search mid-battle (a 10-30 ms hitch)
   }
@@ -87,6 +87,13 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].
 // code for the hot loops (which reads G everywhere) is not thrown away and rebuilt each time a new field appears.
 const GRAND_NOPROD=['q','dq','bld','cb','up','buy','dbuy','doc','tax','eco','road','lg','recruit','bribe'];
 const G_LATE=['battle','grand','camp','pfTok','pfMs','pfN','wx','hash','bmaxH','rmax','mines','aur','mban','mbanN','cbrTeams','mT','prT','bg','bgSig','sg','ecT','aiTT','vsT','vsN','vsB','vsD','hqC','bocc','boccV','dug','dugN','dugV','dugId','dugBd','lg','lgd','lgv'];
+// Conquest start base (Abdullah 2026-11-04 "same full base + money for all"; 2026-11-11 19:46 "I started conquest without a full base"):
+// at second 0 every team already has HQ + Barracks + War Factory + Supply Depot + Airfield (+ Shipyard when water is near), built, free,
+// identical for all nations. Spots come from a fixed search (no random numbers), so every machine and every seed places them the same way.
+const CQ_BASE=[['barracks',-1.05,150],['factory',1.05,150],['airfield',3.14,170],['depot',-2.2,150],['shipyard',0,150]];
+function conqBase(t,a){const hq=G.ents.find(e=>e.isB&&e.team===t&&e.kind==='hq');if(!hq)return;
+  for(const [k,pa,r0] of CQ_BASE){if(!bldAllowed(G.teams[t].fac,k))continue;const shore=!!STRUCT[k].shore;let done=false;
+    for(let r=r0;r<=(shore?900:520)&&!done;r+=shore?30:22)for(let j=0;j<24&&!done;j++){const d=((j&1)?1:-1)*Math.ceil(j/2)*.3,an=a+pa+d,x=hq.x+Math.cos(an)*r,y=hq.y+Math.sin(an)*r;if(validSpot(t,k,x,y)===2){addBld(t,k,x,y,true);done=true;}}}}
 function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],MAPW/2-b[0]);}
 // Fields units and buildings pick up as the battle runs, declared (as undefined: same meaning as missing) when each is
 // made, so every unit has the same shape. Units growing fields in different orders gave the engine dozens of shapes,
@@ -531,7 +538,7 @@ function physImpulse(e,nx,ny,J){if(e.isB||e.dead||!e.s||e.s.dom!=='ground')retur
 function physTick(u,dt){if(!u.kx&&!u.ky)return;const d=u.s.dom==='ground'?(massOf(u)<2?5.5:7.5):6,k=Math.exp(-d*dt);const nx=u.x+u.kx*dt,ny=u.y+u.ky*dt;
   if(passXY(u.s.dom,nx,ny)){u.x=nx;u.y=ny;}else{u.kx*=-.3;u.ky*=-.3;}u.kx*=k;u.ky*=k;if(Math.abs(u.kx)+Math.abs(u.ky)<2){u.kx=u.ky=0;}}
 function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.crT&&G.t>u.crT&&!u.inTun){u.dead=true;G.byId.delete(u.id);FXE('gone',[u.id,u.x|0,u.y|0,-1,1]);return;}if(u.crit)critTick(u,dt);if(u.aband)return updAband(u,dt);if(G.dugN&&u.s.armor==='heavy'&&u.s.dom==='ground'&&G.t>(u.dgT||0)){u.dgT=G.t+.25;dugVeh(u);}if(u.order&&u.order.type==='wall'&&u.kind!=='dozer'&&dozeWall(u,dt))return;if(u.dig)digTick(u,dt);else if(G.teams[u.team].ai&&u.s.armor==='light'&&u.s.dom==='ground')aiDig(u,dt);if(u.hp<u.max*.2&&u.s.armor==='heavy'&&bailCheck(u))return;const s=u.s,T=G.teams[u.team],m=T.F.mods;if(u.stun>G.t){u.cd=Math.max(u.cd,.5);return;}u.cd-=dt;if(T.dummy&&!T.fight){const o=u.order;u.target=null;if(o&&(o.type==='move'||o.type==='amove')&&u.kind!=='jet'){if(Math.hypot(o.x-u.x,o.y-u.y)<14)u.order=null;else navTo(u,o.x,o.y,dt,true);}return;}if(u.supp)u.supp=Math.max(0,u.supp-dt*(u.mz?.36:.22)*ldSupp(u));
-  if(G.t-u.lastHit>5&&u.hp<u.max&&!(u.supT!=null&&G.t-u.supT>60)){let rg=(m.regen||0)+(u.rank>=3?5:0)+upgK(T,u.kind,'regen');if(rg)u.hp=Math.min(u.max,u.hp+rg*dt);}
+  if(G.t-u.lastHit>5&&u.hp<u.max&&!(!G.battle&&u.supT!=null&&G.t-u.supT>60)){let rg=(m.regen||0)+(u.rank>=3?5:0)+upgK(T,u.kind,'regen');if(rg)u.hp=Math.min(u.max,u.hp+rg*dt);}
   if(u.kind==='harv')return u.cv?updConvoy(u,dt):updHarv(u,dt);if(u.kind==='dozer')return updDozer(u,dt);if(u.kind==='jet')return updJet(u,dt);if(u.kind==='hacker')return updHacker(u,dt);
   if(canRout(u)&&moraleTick(u,dt))return;
   let o=u.order;if(o&&o.type==='demo')return updDemo(u,dt);

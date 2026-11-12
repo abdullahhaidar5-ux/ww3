@@ -290,6 +290,12 @@ try {
     for (const k of ['IR', 'RS', 'DW', 'RV', 'KP', 'OB', 'BI']) ck(z[k], 'Zealous ' + k + ' can rout in battle (fearlessT false)'); ck(!z.US, 'a non-Zealous nation became unbreakable');
     for (const f of ['03-sim.js', '03b-tactics.js', '13-grand.js']) ck(/msOf\([^)]*\)\.rout[!=]==0|grZealArmy/.test(SRC[f]), 'no Zealous rout guard in ' + f); }
   ck(cq.conq, 'standalone Conquest battle did not start in Conquest mode');
+  { const cl = await ev(() => { let n = 0; const c = new Proxy({}, { get: (t, k) => k === 'canvas' ? document.createElement('canvas') : k === 'measureText' ? () => ({ width: 10 }) : (typeof k === 'string' && /^(stroke|fill|moveTo|lineTo|arc|drawImage|fillRect|fillText)$/.test(k)) ? () => { n++; } : () => {}, set: () => true }); try { drawLogiMini(c, .1, .1); } catch (e) {} return n; });
+    ck(cl > 0, 'Conquest lost its supply lines on the minimap (battleclean: only Battle drops them)'); }
+  // battleclean 2026-11-12 (Abdullah 2026-11-11 19:46 "I started conquest without a full base and 10k"): Conquest starts with a full base and $10,000 for every team
+  { const cb = await ev(() => G.teams.filter(t => !t.reb).map(t => ({ f: t.fac, c: Math.round(t.credits - (G.t * 2.5)), k: G.ents.filter(e => e.isB && e.team === t.id && e.built >= 1 && e.kind !== 'garrison').map(e => e.kind).sort().join('+'), air: bldAllowed(t.fac, 'airfield'), ai: !!t.ai })));   // AI teams start buying at once, so only a human's money is checked at second 0
+    for (const t of cb) { if (!t.ai) ck(Math.abs(t.c - 10000) <= 60, 'Conquest start money for ' + t.f + ' is not $10,000: ' + t.c); for (const k of ['hq', 'barracks', 'factory', 'depot']) ck(t.k.split('+').includes(k), 'Conquest start base of ' + t.f + ' misses ' + k + ': ' + t.k); if (t.air) ck(t.k.includes('airfield'), 'Conquest start base of ' + t.f + ' misses the airfield'); }
+    ck(cb.length >= 2 && cb.every(t => t.k.split('+').filter(x => x === 'hq').length === 1), 'Conquest teams must each start with one HQ'); }
   ck(cq.ban.cleric, 'Ayatollah (cleric) is missing from the Conquest roster for IR'); ck(cq.ban.fort, 'Mountain Fortress is not buildable in Conquest for IR'); ck(!cq.ban.bb, 'Bunker Buster is banned in Conquest');
   ck(cq.ban.bbIR && !cq.ban.bbUS && !cq.ban.fortUS, 'Bunker Buster only for US/IL/RU/CN, Mountain Fortress only for IR/RS/AF/KD/DW/KP: ' + JSON.stringify(cq.ban));
   ck(cq.wasd, 'W A S D changed selection/orders in a battle (camera only)');
@@ -353,6 +359,18 @@ try {
     for (let i = 0; i < 3600 && !G.over; i++) simUpdate(1 / 60);
     return { battle: !!G.battle, conq: !!G.conq, setupEnd: G.setupEnd, blds, kinds, c0, c1: T.credits, tax: (G.towns || []).some(t => t.tax > 0 && t.ow >= 0), name: typeof modeName === 'function' ? modeName() : '' }; });
   console.log('battle mode', JSON.stringify(bt));
+  // battleclean 2026-11-12 (Abdullah 2026-11-11 19:41 "for battle take out the concept the supply lines and the dotted roads"): Battle has no supply lines - nothing drawn on minimap or ground, no overlay, no Supply chip, no out-of-supply status; Conquest keeps them
+  { const sl = await ev(() => { const rec = () => { let n = 0; const c = new Proxy({}, { get: (t, k) => k === 'canvas' ? document.createElement('canvas') : k === 'measureText' ? () => ({ width: 10 }) : (typeof k === 'string' && /^(stroke|fill|moveTo|lineTo|arc|drawImage|fillRect|fillText|strokeRect)$/.test(k)) ? () => { n++; } : () => {}, set: () => true }); return { c, n: () => n }; };
+      const m = rec(), w = rec(); try { drawLogiMini(m.c, .1, .1); } catch (e) {} try { drawLogiWorld(w.c); } catch (e) {} try { drawTownsMini(m.c, .1, .1, 0); } catch (e) {}
+      try { lgToggle(); } catch (e) {} const on = !!LGU.on, wanted = lgWanted(), chip = document.getElementById('hudS'); try { hudTick(true); } catch (e) {}
+      const ui = (() => { try { return ammoRowHTML(G.ents.filter(u => u.team === ME && u.am !== undefined && u.amx).slice(0, 1)) || ''; } catch (e) { return ''; } })();
+      return { mini: m.n(), world: w.n(), on, wanted, chip: !chip || chip.hidden, ui: /supply/i.test(ui), hasLg: !!G.lgd }; });
+    console.log('battle supply lines', JSON.stringify(sl));
+    // battleclean 2026-11-12 (Abdullah 2026-11-11 19:45 "Once I click this should disappear"): the rally flag shows only while a production building is selected (or a 1.5 s flash after setting it)
+    const rf = await ev(() => { const T = G.teams[ME], hq = G.ents.find(e => e.team === ME && e.kind === 'hq' && !e.dead), vis = () => { try { syncScene(.016); } catch (e) {} return !!(RALLY && RALLY.visible); };
+      T.rally = { x: hq.x + 90, y: hq.y + 90 }; G.sel = []; vis(); RV.fl = 0; const away = vis(); G.sel = [hq]; const sel = vis(); G.sel = []; const gone = vis(); G.sel = []; return { away, sel, gone }; });
+    console.log('rally flag', JSON.stringify(rf)); ck(!rf.away && rf.sel && !rf.gone, 'rally flag must show only while a production building is selected: ' + JSON.stringify(rf));
+    ck(sl.mini === 0 && sl.world === 0, 'Battle draws supply lines (minimap ' + sl.mini + ', ground ' + sl.world + ' draw calls)'); ck(!sl.on && !sl.wanted, 'Battle supply overlay can be switched on'); ck(sl.chip, 'Battle shows the "Supply OK" chip'); ck(!sl.ui, 'Battle ammo row mentions in/out of supply'); }
   ck(bt.battle && !bt.conq, 'Battle game did not start in Battle mode');
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
   ck(!bt.setupEnd, 'Battle has a no-fire setup phase'); ck(!bt.tax, 'Battle has town taxes'); ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');

@@ -26,7 +26,7 @@ function drawTownsWorld(c){if(!G||!G.towns||G.over||OVL.towns===false)return;con
     else if(t.ow>=0&&G.teams[t.ow]){c.fillStyle='rgba(8,12,10,.7)';const w=c.measureText(t.name).width+16,h=18;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle=G.teams[t.ow].color;c.fillRect(p.x-w/2,p.y-h,4,h);c.fillStyle='#e8f2e8';c.fillText(t.name,p.x+2,p.y-5);if(SET.cb){try{idMiniMark(c,p.x-w/2-7,p.y-h/2,t.ow,true);}catch(_){}}}
     else{c.fillStyle='rgba(8,12,10,.55)';const w=c.measureText(t.name).width+12,h=16;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle='#c9d2c6';c.fillText(t.name,p.x,p.y-4);}
     c.restore();}}
-function drawTownsMini(c,sx,sy,now){if(!G||!G.towns||OVL.towns===false)return;
+function drawTownsMini(c,sx,sy,now){if(!G||!G.towns||G.battle||OVL.towns===false)return;   /* Battle: no town/road-node circles on the minimap (Abdullah 2026-11-11 19:41) */
   for(const t of G.towns){const x=t.x*sx,y=t.y*sy,s=t.ham?3.2:4.6,mine=townsMine(t),reb=t.reb>G.t;
     c.save();
     if(reb){c.fillStyle='#000';c.beginPath();c.moveTo(x,y-s-2);c.lineTo(x+s+2,y);c.lineTo(x,y+s+2);c.lineTo(x-s-2,y);c.closePath();c.fill();c.fillStyle='#d9693a';c.beginPath();c.moveTo(x,y-s);c.lineTo(x+s,y);c.lineTo(x,y+s);c.lineTo(x-s,y);c.closePath();c.fill();c.strokeStyle='#000';c.lineWidth=1.3;c.beginPath();c.moveTo(x-s*.6,y-s*.6);c.lineTo(x+s*.6,y+s*.6);c.moveTo(x+s*.6,y-s*.6);c.lineTo(x-s*.6,y+s*.6);c.stroke();}

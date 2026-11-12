@@ -37,7 +37,7 @@ const KEYTAB=[
   {id:'p_bb',ctx:'battle',grp:'General\'s powers',name:'Bunker Buster',def:'n'},
   {id:'p_sanc',ctx:'battle',grp:'General\'s powers',name:'Sanctions / open the auto-build list',def:'u'},
   {id:'p_reinf',ctx:'battle',grp:'General\'s powers',name:'Reinforcements',def:'k'},
-  {id:'p_flare',ctx:'battle',grp:'General\'s powers',name:'Flares / show supply lines',def:'l'},
+  {id:'p_flare',ctx:'battle',grp:'General\'s powers',name:'Flares / show supply lines (Conquest)',def:'l'},
   {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
   {id:'p_hack',ctx:'battle',grp:'General\'s powers',name:'Cyber attack',def:'['},
   {id:'p_emp',ctx:'battle',grp:'General\'s powers',name:'EMP',def:']'},

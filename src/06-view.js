@@ -1,5 +1,5 @@
 /* ================= VIEW: scene sync, camera, HUD, fog, minimap ================= */
-const OBJ=new Map();let RINGS=[],GHOST=null,GHOSTK=null,RALLY=null,fogT=0,PPU=1;
+const OBJ=new Map();let RINGS=[],GHOST=null,GHOSTK=null,RALLY=null,fogT=0,PPU=1;const RV={rc:'',ss:'',fl:0};
 const QUAL={lv:0,fx:0,t:0,wait:10,ema:1/60,bad:0,good:0,caps:[1,.85,.75,.67,.58,.5],hz:60,dts:[],cost:1/120,fps:60};  // resolution steps relative to the screen's own pixel density (the old absolute steps 2/1.5/1.25/1 changed nothing on ordinary screens)
 // Frame-rate governor: aims for the chosen target (default 120 FPS) or the screen's own refresh rate if lower (a 60 Hz
 // screen can never show more than 60). Missed frames step the render resolution and effects down; when frames are
@@ -141,7 +141,11 @@ function syncScene(dt){const live=new Set();
   while(RINGS.length<G.sel.length){const m=new THREE.Mesh(new THREE.RingGeometry(.86,1,40).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x8af0a6,transparent:true,opacity:.85,depthWrite:false}));m.renderOrder=3;SCN.add(m);RINGS.push(m);}
   RINGS.forEach((m,i)=>{const e=G.sel[i];if(!e||e.dead){m.visible=false;return;}if(SET.cb){const sg=idRingSeg(e.team);if(m.userData.sg!==sg){m.userData.sg=sg;m.geometry.dispose();m.geometry=new THREE.RingGeometry(.86,1,sg).rotateX(-Math.PI/2);}}else if(m.userData.sg){m.userData.sg=0;m.geometry.dispose();m.geometry=new THREE.RingGeometry(.86,1,40).rotateX(-Math.PI/2);}m.visible=true;m.material.color.setHex(e.isB?0x8af0a6:(e.st>=2?(e.st===2?0x6fb4ff:0xffb347):0x8af0a6));const r=e.isB?e.size*.75:e.r+6;m.scale.set(r,1,r);m.position.set(e.x,(e.isB?groundH(e.x,e.y):unitH(e))+1.2,e.y);});
   // rally flag
-  const T=G.teams[ME];if(T&&T.rally){if(!RALLY){RALLY=new THREE.Group();const pole=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,24,5),new THREE.MeshBasicMaterial({color:0x2a2b26}));pole.position.y=12;RALLY.add(pole);const fl=new THREE.Mesh(new THREE.PlaneGeometry(12,7),new THREE.MeshBasicMaterial({color:0x74d08f,side:THREE.DoubleSide}));fl.position.set(6,20,0);RALLY.add(fl);SCN.add(RALLY);}
+  // Abdullah 2026-11-11 19:45 "Once I click this should disappear": the rally flag (one per army, never two) stands only while a production building of yours is selected, plus a 1.5 s flash right after the point is set; clicking away or selecting something else takes it down at once
+  const T=G.teams[ME];const rcK=T&&T.rally?(T.rally.x|0)+','+(T.rally.y|0):'',ssK=G.sel.length+':'+(G.sel[0]?G.sel[0].id:0),nowR=performance.now();
+  if(rcK!==RV.rc){RV.rc=rcK;RV.ss=ssK;RV.fl=rcK?nowR+1500:0;}else if(ssK!==RV.ss){RV.ss=ssK;RV.fl=0;}
+  const rShow=!!(T&&T.rally&&(nowR<RV.fl||G.sel.some(b=>b.isB&&b.team===ME&&!b.dead&&b.built>=1&&CATS.includes(b.kind))));
+  if(rShow){if(!RALLY){RALLY=new THREE.Group();const pole=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,24,5),new THREE.MeshBasicMaterial({color:0x2a2b26}));pole.position.y=12;RALLY.add(pole);const fl=new THREE.Mesh(new THREE.PlaneGeometry(12,7),new THREE.MeshBasicMaterial({color:0x74d08f,side:THREE.DoubleSide}));fl.position.set(6,20,0);RALLY.add(fl);SCN.add(RALLY);}
     RALLY.visible=true;RALLY.position.set(T.rally.x,groundH(T.rally.x,T.rally.y),T.rally.y);RALLY.children[1].rotation.y=Math.sin(G.t*3)*.3;}else if(RALLY)RALLY.visible=false;
   // placement ghost
   if(G.place){if(GHOSTK!==G.place){if(GHOST)SCN.remove(GHOST);GHOST=makeGhost(G.place);GHOST.scale.setScalar(BSC);GHOSTK=G.place;}const w=screenToWorld(mouse.x,mouse.y);if(w){const ok=validSpot(ME,G.place,w.x,w.y);G.placeWhy=ok?(ok===2?'dz':''):validSpot.why;GHOST.visible=true;GHOST.position.set(w.x,groundH(w.x,w.y),w.y);
@@ -184,7 +188,7 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
     const w=Math.max(18,Math.min(90,(e.isB?e.size:e.r*2.6)*PPU));
     if(sel||e.hp<e.max||SET.hp==='all'){const f=Math.max(0,e.hp/e.max);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,p.y-1,w+2,5);c.fillStyle=f>.5?'#74d08f':f>.25?'#e3b341':'#ea5a40';c.fillRect(p.x-w/2,p.y,w*f,3);c.fillStyle='rgba(0,0,0,.45)';for(let i=1;i<5;i++)c.fillRect(p.x-w/2+w*i/5,p.y,1,3);}
     if(e.crit&&!e.isB)critIcons(c,p.x-w/2-8,p.y+2,e.crit);
-    if(e.am!==undefined&&e.amx&&!e.isB&&ally(e.team,ME)){const fa=e.am/e.amx,low=fa<.3,oos=!e.sup&&G.t-(e.supT??G.t)>20;
+    if(e.am!==undefined&&e.amx&&!e.isB&&ally(e.team,ME)){const fa=e.am/e.amx,low=fa<.3,oos=!G.battle&&!e.sup&&G.t-(e.supT??G.t)>20;
       if(sel||low){const y=p.y+(sel||e.hp<e.max||SET.hp==='all'?9:4);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,y-1,w+2,4);const fl=e.am<=0&&((performance.now()/260)|0)%2;c.fillStyle=e.am<=0?(fl?'#ff5a40':'#8a2a20'):low?'#f2d14a':'#c9b784';c.fillRect(p.x-w/2,y,Math.max(e.am<=0?w:2,w*fa),2);}
       if(oos){const ix=p.x+w/2+7,iy=p.y+(sel?3:2);c.fillStyle='rgba(0,0,0,.7)';c.beginPath();c.arc(ix,iy,6,0,7);c.fill();c.strokeStyle='#ff8a5a';c.lineWidth=1.6;c.strokeRect(ix-3,iy-2.5,6,5);c.beginPath();c.moveTo(ix-5,iy+5);c.lineTo(ix+5,iy-5);c.stroke();}}
     if(e.aband&&!e.isB){c.font='bold 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='rgba(0,0,0,.7)';c.fillText('ABANDONED',p.x+1,p.y-4);c.fillStyle=ally(e.team,ME)?'#e3b341':'#ffd166';c.fillText('ABANDONED',p.x,p.y-5);c.textAlign='left';}
