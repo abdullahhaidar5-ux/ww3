@@ -339,7 +339,9 @@ try {
       console.log('real map', JSON.stringify(r));
       ck(r.real && r.hm, 'grand map: the first map of a session is drawn on the stand-in terrain although the real land data loaded');
       ck(r.v.hejaz[0] <= 10 && r.v.asir[0] <= 10 && r.v.rub[0] <= 10 && r.arabia <= 10, 'grand map: snow paint in Arabia (Hejaz/Asir/Rub al Khali/whole peninsula south of 26N): ' + JSON.stringify([r.v.hejaz, r.v.asir, r.v.rub, r.arabia]));
-      ck(r.v.alps[0] >= 80 && r.v.himalaya[0] >= 200 && r.v.greenland[0] >= 200, 'grand map: snow is gone from the Alps, the Himalaya or Greenland: ' + JSON.stringify([r.v.alps, r.v.himalaya, r.v.greenland])); }
+      ck(r.v.alps[0] >= 80 && r.v.himalaya[0] >= 200 && r.v.greenland[0] >= 200, 'grand map: snow is gone from the Alps, the Himalaya or Greenland: ' + JSON.stringify([r.v.alps, r.v.himalaya, r.v.greenland]));
+      ck(r.trees.meshes === 1 && r.trees.inst, 'grand map: forests/palms are no longer ONE instanced draw: ' + JSON.stringify(r.trees));
+      ck(r.trees.palm && r.trees.conifer && r.trees.palm[1] <= r.trees.conifer[1] * .7 && r.trees.palm[0] <= r.trees.conifer[0] * .7, 'grand map: palms are drawn at forest-clump size again (each palm taller than a town): ' + JSON.stringify(r.trees)); }
     await ev(() => { window.__grandWait = 0; }); }
   // ---- grand map: no turn buttons / turn wording; real-time clock controls exist
   await ev(() => { try { endBattle && 0; } catch (e) {} });
