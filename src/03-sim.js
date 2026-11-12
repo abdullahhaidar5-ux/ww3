@@ -819,7 +819,9 @@ function act(team,a){if(!G||G.over)return;if(G.grand&&GRAND_NOPROD.includes(a.t)
     case 'low':{const v=a.v?1:0;for(const u of own(a.ids))if(!u.isB&&u.s.dom==='air'&&(u.s.cls==='heli'||u.s.cls==='jet'))u.low=v;break;}
     case 'stop':for(const u of own(a.ids)){u.order=null;u.target=null;u.path=null;u.dig=null;u.wl=null;}break;
     case 'dig':for(const u of own(a.ids))startDig(u);break;
-    case 'wall':{const k='trench';if(![a.x,a.y,a.x2,a.y2].every(Number.isFinite))break;wallOrder(team,own(a.ids),k,a.x,a.y,a.x2,a.y2);break;}
+    case 'wall':{const k='trench';let P=a.pts;if(P===undefined)P=[a.x,a.y,a.x2,a.y2];
+      if(!Array.isArray(P)||P.length<4||P.length>48||P.length%2||!P.every(v=>Number.isFinite(v)&&v>=0&&v<=Math.max(MAPW,MAPH)))break;
+      P=P.map((v,i)=>Math.max(0,Math.min(i%2?MAPH:MAPW,v)));wallOrder(team,own(a.ids),k,P);break;}
     case 'clr':for(const u of own(a.ids)){if(u.kind!=='dozer')continue;const k=rubFind(u,900);if(k>=0){u.order={type:'clr',k};u.path=null;}}break;
     case 'atkDam':{const d=G.dams&&G.dams[a.fi];if(!d||d.dead)break;for(const u of own(a.ids)){if(u.kind==='harv'||u.kind==='dozer'||u.kind==='hacker'||!canTarget(u.s,d.tg))continue;u.order={type:'attack',target:d.tg};u.guard=null;u.path=null;}break;}
     case 'fix':for(const u of own(a.ids)){if(u.kind!=='dozer')continue;const v=critNear(u,900);if(v){u.order={type:'fix',target:v};u.path=null;}}break;
