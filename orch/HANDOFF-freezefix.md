@@ -25,7 +25,19 @@
 - The old whole-scene draw at the end of the warm-up is gone (the "Deploying forces" step still draws the real first frame).
 
 ## Gate result
-See the cigate result recorded below (filled in at the end of the run).
+Four `orch/cigate.sh` runs (head c8e1cd75f4 → this commit). **Latest run (this head): everything green except
+`superfreeze` (red) and `cfclient` (known flaky, text says PASS).** `loadfreeze` PASS, `smooth-pc` PASS (p95 359 / p99 476 /
+worst-1% 1.89), `smooth-mp`, `grandsmooth`, `decisions`, `headless`, `mpsync*`, `migrate*` PASS.
+- **superfreeze RED (not landable yet):** IR passes; RU and US each show ONE ~1 s JavaScript-only frame 3.9–4.4 s after the
+  launch (no shader/texture/buffer work in it), quiet max 250–280 ms. Old branch head (3048ada0) had 313 ms in the same test.
+  Not found yet. What I learned: the stall is NOT the wound blobs (tried, removed), NOT shader compiles/new meshes (0 now;
+  IR/RU/US show 0–2 new vertex arrays vs limit 6). Suspect list for the next helper: (1) the strike-extras draw that runs the
+  depth (AO) pass unconditionally (`drawOnly(ex,1)` in warmShadersChunked) — making it conditional again brought the
+  "8 new meshes (max 6)" RU failure of the first run back, and running the AO pass for *all* models made `smooth-pc` red
+  (p95 565); (2) first wreck/hulk creation or first-time JS at impact now not covered by the old whole-scene draw.
+  Use `VAO=1 node orch/superfreeze.mjs RU` (prints which shapes get new vertex arrays) and `PROF=1`.
+- Earlier runs: first run red on smooth-pc (worst-1% FPS 1.67 vs 1.7) and RU 8 new meshes; second/third red on smooth-pc
+  (AO pass for all models) and superfreeze (the same 1 s frame).
 
 ## Before / after load trace (test browser, software GL, IR Conquest)
 | | before (one task) | after (chunked) |
