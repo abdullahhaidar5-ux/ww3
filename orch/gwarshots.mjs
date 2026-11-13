@@ -1,5 +1,5 @@
 // Proof pictures for campaign battles on the map (src/13a-gwar.js, 13ab-gwarui.js): node orch/gwarshots.mjs
-// -> orch/concepts/nofightit/{markers,battle,siege,result}.jpg (1280x720 JPEG). Not a gate test.
+// -> orch/concepts/nofightit/{markers,token,battle,siege,result}.jpg (1280x720 JPEG). Not a gate test.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -39,6 +39,13 @@ console.log(JSON.stringify(info));
 await page.waitForFunction(() => !!G3.real || !!G3.realFail, null, { timeout: 120000 }).catch(() => {}); await page.waitForTimeout(4000);
 const days = async to => page.evaluate(to => { for (let d = (GC.day | 0) + 1; d <= to; d++) { GC.day = d; gwTo(d); gwUiDay(); } grandMapRefresh(); return { day: GC.day, bt: GC.bt.map(B => [GCM.P[B.p].n, B.d, Math.round(B.ma), Math.round(B.md)]), sg: GC.sg.map(S => [GCM.P[S.p].n, S.d, S.st, S.last]), br: GC.br.map(r => [r.pn, r.win, r.how, r.d]) }; }, to);
 console.log(JSON.stringify(await days(8))); await shot('markers');
+// the army token's odds pill: select an Iranian army next to an Iraqi army (the pill is gwOddsAt, the same rules played forward)
+console.log(JSON.stringify(await page.evaluate(() => { const busy = new Set(GC.bt.map(B => B.p)); let best = null;
+  for (const e of GC.armies) { if (e.o !== 'IQ' || busy.has(e.at)) continue; const j = GCM.P[e.at].adj.find(j => GCM.P[j].land && GC.prov[j].o === 'IR' && !busy.has(j)); if (j != null) { best = [e, j]; break; } }
+  if (!best) return { token: 'no Iraqi army next to Iran' }; const M = grAddArmy('IR', best[1], grGenUnits('IR', 30000, true)); GC.ph = 'plan'; GV.sel = best[1]; GV.selA = M.id; guSide(); grandMapRefresh(); try { guCentre(best[0].at, 3.2); } catch (e) {}
+  const o = gtkOdds([M.id], best[0].at); return { token: GCM.P[best[0].at].n, pill: o && o.t, pct: o && o.pct, tmp: M.id }; })));
+await page.waitForTimeout(2500); await shot('token');
+await page.evaluate(() => { const i = GC.armies.findIndex(a => a.id === GV.selA); if (i >= 0) GC.armies.splice(i, 1); GV.selA = null; grandMapRefresh(); });
 await page.evaluate(pi => { GV.sel = pi; guSide(); gwuOpen(pi); }, info.mt); await shot('battle');
 console.log(JSON.stringify(await days(13)));
 await page.evaluate(pi => { gwuClose(); GV.sel = pi; guSide(); gwuOpen(pi); }, info.ft); await shot('siege');
