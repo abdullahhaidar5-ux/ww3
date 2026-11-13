@@ -1,3 +1,30 @@
+# STATE — conductor run 22 on 2026-11-13, 02:48–03:00 UTC: **state check only, no train** — main is still 77b4ee84 (train 12)
+
+Another conductor run is still working: its train `train/20261113-0240` (79efe068 = main + one campaign top bar + campaign battles on the map) was pushed 8 minutes before this run and is on its test run (4 results in, all green so far). Rule: a train younger than 110 minutes = look only. That run decides the landing and writes its own entry.
+Its earlier train `train/20261113-0051` (d459d9b8, same two pieces + the spy look) shows 27 green, none red, 3 results never arrived; it was not landed.
+
+| idea (branch) | last save | ahead of main | stopped with handoff | newest own test run | result |
+|---|---|---|---|---|---|
+| Kheibar freeze fix / warm-up (freezefix) | 14 min | 11 | yes (older note; work resumed) | b8b41216 | 24 green, `superfreeze` red, rest still running. Earlier tries tonight: 20168d1f `smooth-pc` + `superfreeze` red; c8e1cd75 and bd27648a `smooth-pc`, `superfreeze`, `cfclient` red — not ready (smooth gate red) |
+| PLAN-75 documents (plan75) | 18 min | 7 | no | — | documents only |
+| Battle map list for Battle setup + online lobby (battlemaps) | 30 min | 3 | no | 6a19dbfb | just started: 2 green, rest running |
+| Campaign map: armies as shields, fleets as hulls, air groups as wings (mapshapes) | 33 min | 1 | no | — | no test run yet |
+| Infiltrator spy look (spylook) | 2 h 15 min | 7 | yes | b426b995 | 27 green, none red (3 results missing) — finished, waiting |
+| One campaign top bar, Go to list, alert chips, Nation window (camphud) | 2 h 35 min | 7 | yes | 5c0eb06e | 28 green — on the running train |
+| EU4 gap audit report (eu4audit) | 2 h 45 min | 1 | no | — | report only, no game files |
+| Campaign battles on the map by days (nofightit; warpeace points at the same commit) | 2 h 50 min | 12 | yes | bba4a87d | 28 green — on the running train |
+| War and peace (warpeace) | 2 h 50 min | 12 (nothing of its own yet) | no | — | lock 2 h 50 min old, branch holds only the campaign-battles work — **nothing of its own saved** |
+| Battle report card + front lines (finish-report) | 25 h | 8 | yes | — | stopped; needs rework on campaign battles |
+| Trees on the campaign map (maptrees) | 31 h | 2 | yes | — | stopped |
+| Campaign real supply (c-supply) | 41 h | 1 | yes | — | notes only |
+
+**Main 77b4ee84:** 26 green, 4 red (`main`, `cfclient`, `icons`, `audio` — the known flaky ones; smooth gates green).
+**Locks with nothing saved (90+ min, no work branch of that name):** Freeze fix 2 (`taken/freezefix2`, 13.5 h — work is being saved on `freezefix` instead, so fine) · Spy look 2 (`taken/spylook2`, 13.5 h — saved on `spylook`, fine) · Finish tokens (30 h) · Campaign real supply (`c-real-supply`, 41 h) · Real war, Seamless HUD, Army standards (2+ days) — stale.
+**War and peace** is the one to watch: started 2 h 50 min ago, no commit of its own yet.
+**Live site:** nothing landed in this run; https://abdullahhaidar5-ux.github.io/ww3/ serves main 77b4ee84 unless the running conductor lands train 13.
+
+---
+
 # STATE — conductor run 20 on 2026-11-12, 22:45–23:00 UTC: **state check only, no train** — main is still 77b4ee84 (train 12)
 
 Run 19's second train (`train/20261112-2153`) was pushed 58 minutes before this run and is not on main, so by the conductor rule (a train younger than 110 minutes = do not start another) this run only looked.
