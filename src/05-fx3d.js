@@ -532,9 +532,9 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
   const BATCH=PH?4:1;let ts=performance.now();
   for(let i=0;i<keys.length;i+=BATCH){if(dead())break;const grp=mk(),tb0=performance.now();MK('build '+keys.slice(i,i+BATCH).join('+'));
     for(const k of keys.slice(i,i+BATCH)){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;W.models++;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);
-      // a burnt copy only for a kind of material not seen yet (most wrecks share a handful of burnt shaders)
+      // a burnt copy: phones only for a kind of material not seen yet (most wrecks share a handful of burnt shaders); PCs for every model (each shape needs its own burnt vertex array before the first wreck)
       let s='';o.traverse(c=>{if(c.isMesh&&!c.isSkinnedMesh){const m=Array.isArray(c.material)?c.material[0]:c.material;if(m)s+=m.type+(m.map?'m':'')+(m.normalMap?'n':'')+(m.vertexColors?'v':'')+'|';}});
-      if(s&&!sig.has(s)){sig.add(s);try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});grp.add(w);}catch(e){}}}
+      if(s&&(!PH||!sig.has(s))){sig.add(s);try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});grp.add(w);}catch(e){}}}
     nObj+=grp.children.length;{const tb=performance.now()-tb0;if(tb>100)(W.slow=W.slow||[]).push(['build '+keys.slice(i,i+BATCH).join('+'),Math.round(tb)]);}await step('models '+keys.slice(i,i+BATCH).join('+'),grp);
     if(onProg&&!isLate())try{onProg(Math.min(keys.length,i+BATCH),keys.length);}catch(e){}await frame();if(isLate()){W.late=1;await new Promise(r=>setTimeout(r,50));}}
   lap('models',ts);ts=performance.now();
