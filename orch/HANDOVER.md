@@ -135,3 +135,6 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
 - Other Conquest/Battle work in line: land battlemaps (6 maps) then Sonnet batches toward 24 maps; Kheibar freeze fix (smooth-pc tail);
   spylook mapsweep timeout; wave 2 battle items (one setup screen, unit rings + order preview, stuck-unit/controls, HUD trio).
 - Record this decision in orch/DECISIONS.md + CLAUDE.md ("Grand strategy layer": paused) inside the next code landing.
+- 06:17 Chicago: "Move campaign to settings and extras for now". menucamp = trig_01Hkgi9RSuQzFcwigHBEoRCY (Sonnet) fired 12:18Z: Grand campaign
+  out of Single player and Multiplayer, into Extras as "Grand campaign (preview, paused)"; menu background + Continue show Conquest/Battle;
+  guards, CLAUDE.md MENU STRUCTURE, DECISIONS inside the code commit. Read as Extras (Settings only a small pointer line if it fits).
