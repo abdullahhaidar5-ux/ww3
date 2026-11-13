@@ -17,7 +17,7 @@ function gdWhy(a,b){const L=[],base=(GC.rel&&GC.rel[grWk(a,b)])||0;if(base)L.pus
   return L;}
 function gdOp(a,b){if(grAtWar(a,b))return -100;const w=gdWhy(a,b);let v=0;for(const x of w)v+=x[1];return Math.max(-100,Math.min(100,v));}
 function gdWarscore(a,b){let s=0;const k=grWk(a,b);const t=GC.turn-((GC.wsT&&GC.wsT[k])||1);
-  for(const ar of GC.armies){if(ar.fl)continue;if(ar.o===a&&GC.prov[ar.at]&&GC.prov[ar.at].o===b)s+=12;if(ar.o===b&&GC.prov[ar.at]&&GC.prov[ar.at].o===a)s-=12;}
+  for(const ar of GC.armies){if(ar.fl)continue;const w=GC.prov[ar.at]?ocOwner(ar.at):'';if(ar.o===a&&w===b)s+=12;if(ar.o===b&&w===a)s-=12;}
   s+=Math.min(30,t*2);return s;}
 // chance(action,a,b) -> {ok:bool, why:[[text,v]], cost, note}  (a = actor, b = target)
 // ESCALATION LADDER (queue "Escalation ladder", slice 1: the rungs between peace and war). One crisis level per pair of nations, GC.esc[grWk(a,b)]={r,by,t,st:{}}:

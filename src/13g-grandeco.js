@@ -131,7 +131,7 @@ function geEnsure(){if(!GC)return;if(!GC.eco){const R=mulberry((GC.seed|0)*26544
   for(const p of GCM.P){if(!p.land)continue;const st=GC.prov[p.i];if(st.bq===undefined)st.bq=[];if(st.au===undefined){st.au=0;st.aut=0;st.auC=0;}if(st.tr===undefined){st.tr=0;st.cf=-1;st.ctp=0;}if(st.lt===undefined)st.lt=0;if(st.sc===undefined)st.sc=0;
     const bl=geBl(p.i);if(!st.mfd&&GE_MFORT.includes(st.o0||st.o)&&p.t==='m'&&!bl.some(r=>r[0]==='mfort'))bl.push(['mfort',0]);st.mfd=1;}
   for(const c of Object.keys(GC.nat)){const N=GC.nat[c],e=N.e;if(e.man<=0&&!e.mi){e.mi=1;e.man=Math.round(geManCap(c)*.6);}}}
-function geManCap(c){let t=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)t+=p.tw;return 60+t*14;}
+function geManCap(c){let t=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c&&!GC.prov[p.i].ow)t+=p.tw;return 60+t*14;}
 // ---------- world: oil price, crises, chokepoints ----------
 function geOilIdx(turn){const E=GC.eco;let v=100+20*Math.sin(.62*turn+E.ph1)+9*Math.sin(1.9*turn+E.ph2);
   for(const k of Object.keys(E.cl))if(E.cl[k]&&['Strait of Hormuz','Suez','Bab-el-Mandeb','Malacca Strait'].includes(GCM.P[+k].n))v+=8;

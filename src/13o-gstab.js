@@ -127,7 +127,7 @@ function gsCores(st){if(!st.cr)st.cr=[st.o0];return st.cr;}
 function gsIsCore(st){return gsCores(st).indexOf(st.o)>=0;}
 function gsNonCore(c){return GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c&&!gsIsCore(GC.prov[p.i]));}
 function gsCoreCost(c,pi){const n=gsNonCore(c).length;return Math.round((20+4*GCM.P[pi].dev)*(1+.05*n));}
-function gsCoreStart(c,pi){const st=GC.prov[pi],N=gsN(c);if(!st||st.o!==c)return 'Not your province.';if(gsIsCore(st))return 'Already a core province.';if(st.coring)return 'Already being converted.';
+function gsCoreStart(c,pi){const st=GC.prov[pi],N=gsN(c);if(!st||st.o!==c)return 'Not your province.';if(st.ow)return 'Occupied land — it can become a core province only after a peace deal.';if(gsIsCore(st))return 'Already a core province.';if(st.coring)return 'Already being converted.';
   const cost=gsCoreCost(c,pi);if(!N.pp||N.pp.pol<cost)return 'Needs '+cost+' Political points.';N.pp.pol-=cost;st.coring={o:c,t:GC.turn+GS_COREMONTHS};if(c===GC.me)grLog('Began making '+GCM.P[pi].n+' a core province ('+GS_COREMONTHS+' months).',c);return '';}
 // ---- monthly
 function gsMonth(){if(!GC)return;

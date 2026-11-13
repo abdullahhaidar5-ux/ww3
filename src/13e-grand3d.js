@@ -84,7 +84,7 @@ function g3HueRgb(h,s,l){return guRgb('hsl('+Math.round(h)+','+s+'%,'+l+'%)');}
 function g3ModeColors(){const P=GCM.P,out=new Array(P.length).fill(null),mode=G3.mode;let sup=null;if(mode==='supply')sup=g3SupplyOK();
   const regs=[...new Set(GM_NATS.map(r=>r[2]))];
   for(const p of P){if(!p.land)continue;const st=GC.prov[p.i];let c=null;
-    if(mode==='political')c=[...grNatRgb(st.o),.2];
+    if(mode==='political')c=[...grNatRgb(st.ow||st.o),.2];   /* the owner's colour; an occupier is hatched over it in g3PaintOverlay */
     else if(mode==='terrain')c=[0,0,0,0];
     else if(mode==='trade'){const v=(p.oil?2:0)+(p.farm?1:0)+(p.mine?1:0)+(p.port?1:0);c=v?[232,170,40,.2+.1*v]:[120,120,120,.08];}
     else if(mode==='supply'){c=sup[p.i]?[70,180,90,.3]:[210,70,60,.42];}
@@ -97,14 +97,14 @@ function g3ModeColors(){const P=GCM.P,out=new Array(P.length).fill(null),mode=G3
 function g3PaintOverlay(){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls;if(!G3.ov)G3.ov=new Uint8Array(W*H*4);const d=G3.ov,col=g3ModeColors();
   const bord=new Float32Array(W*H);const pol=G3.mode==='political';
   for(let y=0;y<H-1;y++)for(let x=0;x<W-1;x++){const k=y*W+x,i=idx[k];if(P[i].sea||Ls[k]<.5)continue;for(const j of [idx[k+1],idx[k+W]])if(j!==i&&P[j].land&&GC.prov[i].o!==GC.prov[j].o){bord[k]=1;}}
-  const glow=pol?g3Blur(bord,W,H,6,2):null;
+  const glow=pol?g3Blur(bord,W,H,6,2):null;let hat=null;if(pol){for(const p of P)if(p.land&&GC.prov[p.i].ow){hat=hat||{};hat[p.i]=grNatRgb(GC.prov[p.i].o);}}   /* occupied land: diagonal stripes in the occupier's colour, painted into the one overlay texture (no meshes) */
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,i=idx[k],p=P[i],o=k*4;let r=0,g=0,b=0,a=0;
     const R=x+1<W?idx[k+1]:i,D=y+1<H?idx[k+W]:i;
     if(p.sea){a=0;}
     else{const c=col[i],ed=1;let t=c[3];
       if(pol)t=.24+Math.min(.42,glow[k]*1.7);
       if(G3.mode==='culture'&&GC.prov[i].o!==GC.prov[i].o0&&((x+y)&7)<3)t*=.3;
-      r=c[0];g=c[1];b=c[2];a=t*255*ed;
+      r=c[0];g=c[1];b=c[2];if(hat&&hat[i]&&((x+y)%6)<3){const h=hat[i];r=h[0];g=h[1];b=h[2];t=Math.max(t,.62);}a=t*255*ed;
       }
     d[o]=r;d[o+1]=g;d[o+2]=b;d[o+3]=a;}
   for(let it=0;it<2;it++){const add=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x;if(d[k*4+3])continue;const n=d[k*4-1]?k-1:d[k*4+7]?k+1:d[(k-W)*4+3]?k-W:d[(k+W)*4+3]?k+W:-1;if(n>=0)add.push(k,n);}
@@ -715,7 +715,7 @@ function g3Legend(){const L=G3.leg;if(!L)return;const shut=SET.g3leg!=='open'||!
    +'<div style="margin-top:4px;opacity:.75;font-size:11px">Hover a province to see its buildings. ◆ on a sea = chokepoint.</div></div>';
   L.firstChild.onclick=ev=>{ev.stopPropagation();SET.g3leg=SET.g3leg==='open'?'shut':'open';try{saveSet();}catch(e){}g3Legend();};}
 function g3SetMode(m,quiet){G3.mode=m;document.querySelectorAll('#g3modes button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
-  const hint={political:'Owner colors at the borders; thin lines mark frontiers.',terrain:'Terrain only, no tint.',trade:'Amber = oil, farms, mines and ports.',supply:'Green = supplied from the capital; red = cut off.',unrest:'Red = restless provinces.',culture:'Color = culture region; striped = occupied land.',alliances:'Green = you, red = at war with you, gray = neutral.',development:'Darker blue = more developed.'}[m];
+  const hint={political:'Owner colors at the borders; thin lines mark frontiers. Stripes = land occupied in a war, in the occupier\'s color.',terrain:'Terrain only, no tint.',trade:'Amber = oil, farms, mines and ports.',supply:'Green = supplied from the capital; red = cut off.',unrest:'Red = restless provinces.',culture:'Color = culture region; striped = occupied land.',alliances:'Green = you, red = at war with you, gray = neutral.',development:'Darker blue = more developed.'}[m];
   G3.legHint=(G3_MODES.find(x=>x[0]===m)||[0,m])[1]+' — '+hint;g3Legend();if(!quiet&&G3.R){g3PaintOverlay();G3.tOv.needsUpdate=true;G3.miniDirty=true;}}
 function g3Icon(cv,k,o){const c=cv.getContext('2d'),W=cv.width,H=cv.height,col=grNat(o).color,rg=grNatRgb(o);const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgb('+rg.map(v=>Math.round(v*.55)).join(',')+')');g.addColorStop(1,'#101a24');c.fillStyle=g;c.fillRect(0,0,W,H);
   UK.drawUnit(c,k,W,H,col);}   /* ingameui: silhouettes live in the UI kit (08j) so battle cards use the same ones */

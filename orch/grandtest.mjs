@@ -434,6 +434,9 @@ try {
     const aiCrack = GC.log.some(l => /cracks down|breaks up/.test(l[1]));
     return { r1, same: r1.h === r2.h, cleared, aiN, aiCrack, known: typeof GPX_KNOWN === 'number' && GPX_KNOWN > 0 }; });
   if (!(pxr.r1.r0.t === 2 && pxr.r1.ended && pxr.same && pxr.cleared && pxr.aiN < 120 && pxr.aiCrack && pxr.known)) fails.push('proxy warfare: ' + JSON.stringify(pxr));
+  // ---- WAR & PEACE (helper warpeace 2026-11-13): occupied land is not yours until peace, war goals + score, reasons for war, the peace table.
+  //      The guards live in orch/wpguards.js (plain page code, one block per decision) and return a list of failures.
+  { const wp = await ev(fs.readFileSync(path.join(ROOT, 'orch', 'wpguards.js'), 'utf8')); console.log('war & peace guards', JSON.stringify(wp)); for (const f of wp) fails.push(f); }
 } catch (e) { if (String(e.message) !== '__done') { fails.push(String(e.message || e).split('\n')[0]); console.log('ERRS', errs.join('\n')); console.log(String(e.stack).split('\n').slice(0, 7).join('\n')); } }
 for (const e of [...new Set(errs)].slice(0, 6)) fails.push(e);
 await browser.close(); server.close();

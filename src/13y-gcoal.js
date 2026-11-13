@@ -3,7 +3,7 @@
 // cost: alarm also drops your opinion with everyone a little. Equal for every nation. State: N.ae (alarm), N.aeP (provinces seen last month), GC.coal={target:[members]}. Saved, deterministic.
 const AE_PER=3, AE_THR=8, AE_DECAY=.05, AE_EASE=40, AE_EASE_DIP=40;
 function aeN(c){const N=GC&&GC.nat[c];if(!N)return null;if(N.ae===undefined){N.ae=0;N.aeP=-1;}return N;}
-function aeCount(c){let n=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)n++;return n;}
+function aeCount(c){let n=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c&&!GC.prov[p.i].ow)n++;return n;}   /* land you only occupy alarms nobody yet: alarm comes when a peace deal signs it over */
 function gcoMembers(t){return (GC.coal&&GC.coal[t])||[];}
 function gcoForm(t){GC.coal=GC.coal||{};const mem=[];
   for(const o of Object.keys(GC.nat).sort()){const N=GC.nat[o];if(o===t||N.dead||!N.ai||grAllied(o,t)||grVasPair&&grVasPair(o,t))continue;
@@ -25,7 +25,7 @@ function gcoMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){con
 GMOD_HOOKS.push(gcoMonth);
 npTab('coal','⚔','Alarm & coalitions',(code,body,c)=>{const N=aeN(code),own=c.own&&code===GC.me,m=gcoMembers(code),a=Math.round(N.ae*10)/10;const col=a>=AE_THR?'#ff9a8a':a>=AE_THR/2?'#e8d28a':'#8fd18f';
   body.innerHTML='<div style="font-size:24px"><b style="color:'+col+'">Alarm '+a+'</b> <span style="opacity:.7;font-size:15px">(coalition forms at '+AE_THR+')</span></div>'+
-  '<div style="opacity:.85;margin:8px 0">Every province taken adds alarm, souring the world on you. Past the limit, nations that dislike you or border you form a coalition and join any war you start. Alarm fades slowly if you stop conquering.</div>'+
+  '<div style="opacity:.85;margin:8px 0">Every province signed over to you in a peace deal adds alarm, souring the world on you (land you only occupy does not, yet). Past the limit, nations that dislike you or border you form a coalition and join any war you start. Alarm fades slowly if you stop conquering.</div>'+
   '<div style="margin:8px 0"><b>Coalition:</b> '+(m.length?m.map(gdNatName).join(', '):'none')+'</div>';
   const inC=Object.keys(GC.coal||{}).filter(t=>GC.coal[t].includes(code));if(inC.length)body.insertAdjacentHTML('beforeend','<div style="margin:8px 0"><b>'+gdNatName(code)+' sits in the coalition against:</b> '+inC.map(gdNatName).join(', ')+'</div>');
   if(own){const b=document.createElement('button');b.textContent='Ease tensions (-'+AE_EASE_DIP+' Dip, -'+AE_EASE+' alarm)';b.style.cssText='font-size:15px;padding:4px 14px;cursor:pointer';b.disabled=!!(gcoEase&&(N.ae<=0||!N.pp||N.pp.dip<AE_EASE_DIP));b.onclick=()=>{const e=gcoEase(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);}});

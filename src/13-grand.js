@@ -16,7 +16,7 @@ const GR_HOLY=new Set(['Najaf']);   // provinces with a holy city (RV Call to th
 const GR_VBASE=42000;              // start strength (unit value) of every full nation - same for all (Abdullah: all nations equally strong)
 function grRng(s){return mulberry((s|0)^0x5bd1e995);}
 function grHash(){if(!GC)return '';let s=GC.turn+'|'+GC.seed;for(const c of Object.keys(GC.nat).sort()){const n=GC.nat[c];s+='|'+c+':'+Math.round(n.cash)+','+n.cap+','+(n.dead?1:0);}
-  for(const p of GC.prov)s+='|'+p.o+','+Math.round(p.un)+','+p.tax+','+p.gar.length+','+p.gar.reduce((a,r)=>a+r[1],0);
+  for(const p of GC.prov)s+='|'+p.o+(p.ow?'>'+p.ow:'')+','+Math.round(p.un)+','+p.tax+','+p.gar.length+','+p.gar.reduce((a,r)=>a+r[1],0);
   for(const a of GC.armies)s+='|'+a.id+a.o+'@'+a.at+','+a.u.length+','+a.u.reduce((q,r)=>q+r[1]+r[2],0);
   s+='|W'+Object.keys(GC.war).sort().join(',');try{s+=geHashStr();}catch(e){}try{s+=gmilHashStr();}catch(e){}try{s+=gwHashStr();}catch(e){}let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16);}
 
@@ -241,19 +241,21 @@ function grCapture(pi){const P=GCM.P,p=P[pi];if(!p||!p.land)return false;const s
     if(!occ.length||st.gar.length)return false;if(GC.armies.some(a=>a.at===p.i&&a.o===st.o&&a.u.length))return false;
     if(gwBattleAt(pi))return false;if(gwFort(pi)>0&&!st.sf)return false;delete st.sf;
     const by={};for(const a of occ)by[a.o]=(by[a.o]||0)+grArmyVal(a);const taker=Object.keys(by).sort((x,y)=>by[y]-by[x]||(x<y?-1:1))[0],prevO=st.o;
-    st.o=taker;st.un=Math.min(100,st.un+35);st.cv=3;st.rq=[];try{gmCaptured(p.i,taker);}catch(e){}try{hsCaptured(p.i,taker,prevO);}catch(e){}try{wsCaptured(prevO,taker);}catch(e){}try{geCaptured(p.i,taker);}catch(e){}grLog(GCM.nats.get(taker).name+' captured '+p.n+' from '+GCM.nats.get(prevO).name+'.',taker===GC.me||prevO===GC.me?GC.me:taker);
-    const pn=GC.nat[prevO];if(pn&&pn.cap===p.i){grLog(GCM.nats.get(prevO).name+' lost its capital! (peace talks come in stage 4)',prevO);try{geCapitalFell(prevO,taker);}catch(e){}const rest=P.filter(q=>q.land&&GC.prov[q.i].o===prevO).sort((x,y)=>y.dev-x.dev||x.i-y.i)[0];pn.cap=rest?rest.i:-1;}return true;}
+    st.o=taker;let held=true;try{held=ocTake(pi,taker,prevO);}catch(e){console.error('ocTake',e);}   /* occupied, not owned: the owner changes only in a peace deal (13y-goccupy.js) */
+    st.un=Math.min(100,st.un+(held?35:10));st.cv=held?3:1;st.rq=[];try{gmCaptured(p.i,taker);}catch(e){}try{hsCaptured(p.i,taker,prevO);}catch(e){}try{wsCaptured(prevO,taker);}catch(e){}try{geCaptured(p.i,taker);}catch(e){}grLog(GCM.nats.get(taker).name+(held?' captured ':' took back ')+p.n+' from '+GCM.nats.get(prevO).name+'.',taker===GC.me||prevO===GC.me?GC.me:taker);
+    const pn=GC.nat[prevO];if(pn&&pn.cap===p.i){try{geCapitalFell(prevO,taker);}catch(e){}const rest=P.filter(q=>q.land&&GC.prov[q.i].o===prevO).sort((x,y)=>y.dev-x.dev||x.i-y.i)[0];pn.cap=rest?rest.i:-1;if(st.ow===prevO)st.cp=prevO;grLog(GCM.nats.get(prevO).name+' lost its capital!'+(rest?' The government moves to '+rest.n+'.':''),prevO);}return true;}
 
 function grFinishTurn(){const P=GCM.P;try{gmMorTurn();}catch(e){}try{gmRepair();}catch(e){}try{gmilBlockRefresh();}catch(e){}
   // capture: a province whose garrison is gone and which holds only enemy armies changes hands (the strongest occupier takes it)
+  try{ocSweep();}catch(e){console.error('ocSweep',e);}
   for(const p of P)if(p.land)grCapture(p.i);
   // economy
   const R=grRng(GC.seed*13+GC.turn);const inc={};geTurnStart();
   for(const p of P){if(!p.land)continue;const st=GC.prov[p.i],c=st.o,N=grNat(c);
     const base=geProvInc(p,st,c);   /* resources + buildings + city tier x autonomy x crises (13g-grandeco.js) */
-    const core=gsIsCore(st);const inc1=Math.round(base*GR_TAXK[st.tax]*(1-Math.min(.8,st.un/160))*(core?1:.7));inc[c]=(inc[c]||0)+inc1;
+    const core=gsIsCore(st);const inc1=Math.round(base*GR_TAXK[st.tax]*(1-Math.min(.8,st.un/160))*(core?1:.7)*(st.ow?GOC_TAX:1));   /* occupied land: a military administration collects only part of the taxes */inc[c]=(inc[c]||0)+inc1;
     // unrest drifts toward a target set by the tax rate, recent conquest and being a foreign province
-    const tgt=18+GR_TAXU[st.tax]+GE_AUU[st.au|0]-(geFx(c,'calm')?3:0)-6*(st.tr|0)*(st.cf===3?1.5:.3)+(core?0:15)+gmod('nation',c,'unrest',0)+(st.cv>0?25:0)-(GC.nat[c]&&GC.nat[c].cap===p.i?10:0);
+    const tgt=18+GR_TAXU[st.tax]+GE_AUU[st.au|0]-(geFx(c,'calm')?3:0)-6*(st.tr|0)*(st.cf===3?1.5:.3)+(core?0:15)+(st.ow?GOC_UN:0)+gmod('nation',c,'unrest',0)+(st.cv>0?25:0)-(GC.nat[c]&&GC.nat[c].cap===p.i?10:0);
     if(st.aut!==undefined&&st.aut!==st.au){if(st.auC>0)st.auC--;else{if(st.aut<st.au){st.au=Math.max(st.aut,st.au-1);st.un=Math.min(100,st.un+10);st.auC=3;}else st.au=Math.min(st.aut,st.au+1);}}st.un+= (tgt-st.un)*.18;st.un=Math.max(0,Math.min(100,st.un));if(st.cv>0)st.cv--;
     if(st.un>72&&R()<.3){const n=Math.floor(st.gar.length/2);st.gar.length=st.gar.length-n;st.un=45;grLog('Revolt in '+p.n+'! The garrison lost '+n+' units.',c===GC.me?c:'');}
     // garrison regrows one unit a turn up to its share, recruits arrive
@@ -266,6 +268,7 @@ function grFinishTurn(){const P=GCM.P;try{gmMorTurn();}catch(e){}try{gmRepair();
   for(const a of GC.armies.slice())if(!a.u.length)grDrop(a);
   // elimination, victory, next turn
   for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;const has=P.some(p=>p.land&&GC.prov[p.i].o===c);const arm=GC.armies.some(a=>a.o===c);if(!has||(N.cap<0&&!arm)){N.dead=1;grLog(GCM.nats.get(c).name+' has been eliminated.',c);for(const a of GC.armies.slice())if(a.o===c)grDrop(a);for(const k of Object.keys(GC.war))if(k.split('|').includes(c))delete GC.war[k];}}
+  try{ocSweep();}catch(e){console.error('ocSweep',e);}   /* a collapsed nation's land goes to whoever holds it; land held without a war goes home */
   GC.turn++;GC.ph='plan';GC.q=[];GC.qi=0;try{gmodMonth(GC.turn);}catch(e){}grJudge();grSave();}
 function grArrive(c,pi,k,n){const a=GC.armies.find(x=>x.o===c&&x.at===pi&&!x.path.length&&x.nm==='Reserve');const us=[];for(let i=0;i<n;i++)us.push([k,100,0,100]);if(a)a.u.push(...us);else{const b=grAddArmy(c,pi,us,'Reserve');}}
 
@@ -284,7 +287,7 @@ function grJudge(){if(!GC.me||GC.over)return;const me=GC.me;if(GC.nat[me].dead){
 function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};if(a.bt&&gwOf(a))return {err:'This army is fighting. Withdraw it from the battle first.'};const r=grPath(a.o,a.at,to,a.fl);if(!r)return {err:a.fl?'Fleets sail between sea zones only.':'No route (check ports, seas and borders).'};
   if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;a.dg=0;return {ok:1,r};}
 function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;if(typeof grOverlord==='function'&&grOverlord(a))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);try{if(typeof gescDeclared==='function')gescDeclared(a,b);}catch(e){console.error('gescDeclared',e);}try{glgDeclare(a,b);}catch(e){console.error('glgDeclare',e);}}   // laneG: allies/guarantors join
-function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
+function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';if(st.ow)return 'Occupied land — no recruiting here until a peace deal makes it yours.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
   if(GC.nat[c].cash<cost)return 'Not enough money.';if(GC.nat[c].e.man<T.man)return 'Not enough manpower ('+Math.round(GC.nat[c].e.man)+' of '+T.man+').';GC.nat[c].cash-=cost;GC.nat[c].e.man-=T.man;st.rq.push([GC.turn+T.turns,k,rc[1]]);return '';}
 function grSetTax(c,pi,i){const st=GC.prov[pi];if(!st||st.o!==c)return 'Not your province.';st.tax=Math.max(0,Math.min(2,i|0));return '';}   /* A2b: one function so online friends' tax orders reach the host */
 function grSplit(aid){const a=GC.armies.find(x=>x.id===aid);if(!a||a.u.length<2||(a.bt&&gwOf(a)))return null;const h=Math.floor(a.u.length/2);const mv=a.u.splice(a.u.length-h,h);const b=grAddArmy(a.o,a.at,mv);if(a.fl)b.fl=1;return b;}

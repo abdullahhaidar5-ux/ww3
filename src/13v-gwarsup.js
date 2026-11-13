@@ -65,7 +65,7 @@ function wsMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){cons
     if(foes.length&&gk==='dem'&&N.ws<30&&N.ws>=20){let k=0;for(const p of GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c).sort((a,b)=>b.dev-a.dev||a.i-b.i)){if(k++>=3)break;if(GC.prov[p.i].un<60)GC.prov[p.i].un=Math.min(100,GC.prov[p.i].un+1);}
       if(c===GC.me&&N.wsA!==GC.turn&&GC.turn%3===0){N.wsA=GC.turn;grLog('Protests against the war fill the big cities.',c);}}
     if(foes.length&&G.split&&N.ws<25&&typeof gsN==='function'){const E=gsN(c).est.army;if(E){E.loy=Math.max(0,E.loy-2);if(c===GC.me&&GC.turn%3===0)grLog('Officers blame each other for the war. The loyalty of the army is falling.',c);}}
-    if(N.ws<10&&foes.length&&typeof glgPeace==='function'){glgPeace(c,foes[0]);N.ws=Math.max(N.ws,18);grLog('Forced peace talks: '+GCM.nats.get(c).name+' cannot go on and makes peace with '+GCM.nats.get(foes[0]).name+'.',c);}
+    if(N.ws<10&&foes.length&&typeof glgPeace==='function'){if(typeof gpAIDeal==='function')gpAIDeal(foes[0],c);else glgPeace(c,foes[0]);N.ws=Math.max(N.ws,18);grLog('Forced peace talks: '+GCM.nats.get(c).name+' cannot go on and makes peace with '+GCM.nats.get(foes[0]).name+'.',c);}
     if(c!==GC.me&&foes.length&&N.ws<40&&G.cens&&N.pp&&N.pp.pol>=WS_CEN_COST+WS_COST+40)wsCensor(c);
     if(c!==GC.me&&foes.length&&N.ws<45&&N.pp&&N.pp.pol>=WS_COST+40)wsRally(c);}
   GMOD_C.cache.clear();}

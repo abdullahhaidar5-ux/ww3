@@ -41,7 +41,7 @@ function gsupField(c){const sig=gsupSig();if(sig!==GSUP.sig){GSUP.sig=sig;GSUP.f
     else if(grAllied(c,o)&&GC.nat[o]&&!GC.nat[o].dead&&GC.nat[o].cap===p.i)seed(p.i,GSUP_ALLY);}
   const done=new Uint8Array(n);
   for(;;){let b=-1,bi=-1;for(let k=0;k<open.length;k++){const i=open[k];if(!done[i]&&(b<0||cost[i]<cost[b]||(cost[i]===cost[b]&&i<b))){b=i;bi=k;}}if(b<0)break;done[b]=1;open.splice(bi,1);
-    for(const j of P[b].adj){if(done[j]||!pass(j))continue;const d=cost[b]+grDist(b,j)*GSUP_KM*gsupStep(c,j)+(grRiver(b,j)?GSUP_RIVER:0);if(d<cost[j]){cost[j]=d;src[j]=src[b];if(open.indexOf(j)<0)open.push(j);}}}
+    for(const j of P[b].adj){if(done[j]||!pass(j))continue;const d=cost[b]+grDist(b,j)*GSUP_KM*gsupStep(c,j)*(GC.prov[j].ow?GOC_SUP:1)+(grRiver(b,j)?GSUP_RIVER:0);if(d<cost[j]){cost[j]=d;src[j]=src[b];if(open.indexOf(j)<0)open.push(j);}}}
   return GSUP.f[c]={cost,src};}
 function gsupEff(d){return d<=200?1:d<=600?1-.5*(d-200)/400:d<=1200?.5-.3*(d-600)/600:Math.max(.1,.2-(d-1200)/5000);}
 // the army's line: {eff 0..1 share of supplies arriving, km weighted length, src source province or -1, cut, seas, why[]}
