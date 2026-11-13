@@ -16,7 +16,7 @@ Abdullah 2026-11-13 06:15 / 06:17: pause the campaign, move it to Extras.
 - Tests that click the hidden `#grandBtn` directly (grandtest, gnettest, grandlive...) still work, so not edited.
 
 ## Checks
-build.py + --check OK, smoke PASS, decisions PASS (local). cigate: see below.
+build.py + --check OK, smoke PASS, decisions PASS (local). cigate on 4bcf8c2dc8: 27 of 28 green. smooth-pc failed once (150 frames >50 ms, runner noise) and passed on re-run. gate/audio failed twice at "d) second battle: battle music again" (known flaky; this change touches no audio code) - conductor please judge or compare with main.
 
 ## Pictures
 orch/concepts/menucamp/1-main-menu.jpg, 2-single-player, 3-multiplayer, 4-extras, 5-campaign-from-extras (all viewed).
