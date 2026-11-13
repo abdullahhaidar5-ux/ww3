@@ -159,3 +159,6 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
 - Conductor fired 23:30Z on Sonnet. Land order: menucamp, freezefix, battlemaps, sweepfixA, sweepfixB, spylook.
 - After those: 18 more Battle maps (Sonnet, kit), selection rings + order preview, stuck-unit/controls fixes, clearer battle goals, then
   PLAN-75 Phase 2 look test (three looks of one battle for Abdullah to pick).
+- 17:29 Chicago: "Make sure civilians on the maps look like humans and aren't blocky". Today they are 4-box figures (RE_CIVM, src/06b-realism.js:44).
+  civhumans = trig_014TTds5je3P6Qz1yDHBv7jF (Opus, look work) fired 23:31Z: reuse the infantry human mesh in civilian clothes, walk/run, instanced,
+  smooth gates green; also other box people. Add orch/civhumans to the conductor's candidates when its handoff says ready.
