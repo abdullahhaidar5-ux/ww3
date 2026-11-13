@@ -93,7 +93,7 @@ if (!MAIN) { /* imported (orch/decisions.mjs uses STATIC_FN, judge, countsOf) */
       if (!W) W = makeSim(undefined, { prof: [] }).W;
       if (m.list) { process.send({ list: P.ev('BM_KEYS.map(k=>bmInfo(k))') }); return; }
       if (m.static) { if (!globalThis.__bmStatic) P.ev(STATIC_FN); r = P.ev(`__bmStatic(${JSON.stringify(m.map)},${m.n},${m.seed},${m.dump ? 1 : 0})`); process.send(r); return; }
-      W.start({ seed: m.seed, map: m.map, facs: m.facs, tm: m.tm, diff: m.diff, battle: 1 });
+      W.start({ seed: m.seed, map: m.map, facs: m.facs, tm: m.tm, st: m.st, diff: m.diff, battle: 1 });
       let st = null;
       for (let t = 0; t < m.minutes * 60; t += 30) { st = W.step(30); if (st.over) break; }
       const info = W.info();
@@ -103,7 +103,8 @@ if (!MAIN) { /* imported (orch/decisions.mjs uses STATIC_FN, judge, countsOf) */
       if (info.over && info.winner != null && info.winner >= 0 && m.tm[info.winner] != null) { win = m.tm[info.winner]; result = 'kill'; }
       else if (side[0] >= side[1] * m.adj && side[0] > 0) { win = 0; result = 'timeout'; }
       else if (side[1] >= side[0] * m.adj && side[1] > 0) { win = 1; result = 'timeout'; }
-      r = { ...m, win, result, t: Math.round(info.t), score, wall: Date.now() - t0, battle: P.ev('G.battle?1:0') };
+      const at = P.ev('G.teams.filter(T=>!T.reb).map((T,i)=>{const h=G.ents.find(e=>e.isB&&e.team===T.id&&e.kind==="hq");return BASES[i]?BASE_SLOTS.indexOf(BASES[i]):-1})');
+      r = { ...m, win, result, t: Math.round(info.t), score, at, wall: Date.now() - t0, battle: P.ev('G.battle?1:0') };
     } catch (e) { r = { ...m, win: -1, result: 'error', err: String(e && e.stack || e).slice(0, 400) }; }
     process.send(r);
   });
@@ -138,9 +139,13 @@ if (!MAIN) { /* imported (orch/decisions.mjs uses STATIC_FN, judge, countsOf) */
     process.exit(fail ? 1 : 0);
   } else if (has('battles')) {
     const GAMES = +argS('games', 40), MIN = +argS('minutes', 22), ROUND = +argS('round', 1), jobs = [];
-    for (const m of maps) { const S = splits(m.players), per = Math.max(S.length, Math.ceil(GAMES / S.length) * S.length);
+    for (const m of maps) { const S = splits(m.players), per = Math.ceil(GAMES / (S.length * m.players)) * S.length * m.players;
       for (let g = 0; g < per; g++) { const f = NATIONS[(g + (ROUND - 1) * 5 + m.k.length) % NATIONS.length];
-        jobs.push({ map: m.k, n: m.players, g, seed: 9000 * ROUND + g * 131 + m.k.length * 7, facs: new Array(m.players).fill(f), tm: S[g % S.length], minutes: MIN + (m.players > 2 ? 6 : 0), diff: 1, adj: 1.15, round: ROUND }); } }
+        // seats rotate through the start positions (player i starts on spot st[i]), so a seat's own quirks (who moves first) cancel out
+        const rot = Math.floor(g / S.length) % m.players, st = Array.from({ length: m.players }, (_, i) => (i + rot) % m.players);
+        // ... and the two sides swap their team numbers every full cycle (and from round to round), so "team 1 moves first" cancels out too
+        const flip = (Math.floor(g / (S.length * m.players)) + ROUND) % 2;
+        jobs.push({ map: m.k, n: m.players, g, seed: 9000 * ROUND + g * 131 + m.k.length * 7, facs: new Array(m.players).fill(f), st, flip, v: 3, tm: st.map(p => S[g % S.length][p] ^ flip), minutes: MIN + (m.players > 2 ? 6 : 0), diff: 1, adj: 1.15, round: ROUND }); } }
     console.log(`battlemapfair: ${jobs.length} Battle games on ${maps.length} maps, ${JOBS} at a time`);
     let prev = []; try { prev = JSON.parse(fs.readFileSync(BATTLES_JSON, 'utf8')); } catch (e) { }
     const keep = prev.filter(r => !jobs.some(j => j.map === r.map && j.g === r.g && j.round === r.round));
@@ -154,22 +159,25 @@ if (!MAIN) { /* imported (orch/decisions.mjs uses STATIC_FN, judge, countsOf) */
       '## Structure', '', '| Map | Players | Supply sources / derricks | Nearest supply (each start) | Derricks in reach | Route to nearest enemy | 2+ attack routes | Verdict |', '|---|---|---|---|---|---|---|---|'];
     for (const r of st.filter(r => r.seed === 4242 || r.bad.length)) md.push(`| ${maps.find(m => m.k === r.k).name} | ${r.n} | ${r.F} / ${r.O} | ${r.b.map(b => b.sup).join(' / ')} | ${r.b.map(b => b.oil).join(' / ')} | ${r.b.map(b => b.eMin).join(' / ')} | ${r.routes.every(q => q[2] >= 2) ? 'yes' : 'NO'} | ${r.bad.length ? 'FAIL: ' + r.bad.join('; ') : 'pass'} |`);
     md.push('', 'Distances are driving distances on the ground grid, in map units. Tolerances and method: header of `orch/battlemapfair.mjs`.', '', '## Win rate per start position (AI vs AI, mirror matches)', '',
-      'Every player in a game is the same nation, so only the start position differs; the nation changes from game to game. 2 players: 1v1. 4 / 6 players: 2v2 / 3v3 over every split of the starts into two teams. Out of time: the side with 1.15x the value wins, else a draw (half a win each). Pass = every start between 40% and 60%.', '',
+      'Every player in a game is the same nation, so only the start position differs; the nation changes from game to game, and the seats rotate through the start positions and the two sides swap team numbers, so a seat\'s or a team number\'s own quirks cancel out. 2 players: 1v1. 4 / 6 players: 2v2 / 3v3 over every split of the starts into two teams. Out of time: the side with 1.15x the value wins, else a draw (half a win each). Pass = every start between 40% and 60%. The verdict uses rounds 4 and 5 (design and size fixed before they were run).', '',
       '| Map | Players | Games (decided by kill / on time / draws) | Win rate per start | Verdict |', '|---|---|---|---|---|');
     for (const m of maps) { const q = R.by[m.k]; md.push(q ? `| ${m.name} | ${m.players} | ${q.n} (${q.kill} / ${q.time} / ${q.draw}) | ${q.rate.map(v => Math.round(v * 100) + '%').join(' / ')} | ${q.ok ? 'pass' : 'FAIL'} |` : `| ${m.name} | ${m.players} | 0 | not run | NOT PROVEN |`); }
-    md.push('', 'Replay: `node orch/battlemapfair.mjs --battles --games 40` (same seeds, same games).', '');
+    md.push('', 'Replay: `node orch/battlemapfair.mjs --battles --games 40 --round 4` and `--round 5` (same seeds, same games).', '');
+    const R0 = rates(bt, maps, false); if (Object.keys(R0.by).length) { md.push('### Pilot runs (not used for the verdict)', '',
+      'Round 1 had no seat rotation (player 1 always on start 1), rounds 2-3 rotated seats but the side holding start 1 was always team 1. Start 1 won about 57% across maps in these runs, so the final design also swaps team numbers. Breakwater and Six Roads were changed after these runs (home supply moved closer), so their pilot numbers are for the old layout. Kept for the record.', '', '| Map | Games | Win rate per start |', '|---|---|---|');
+      for (const m of maps) { const q = R0.by[m.k]; if (q) md.push(`| ${m.name} | ${q.n} | ${q.rate.map(v => Math.round(v * 100) + '%').join(' / ')} |`); } md.push(''); }
     fs.writeFileSync(path.join(ROOT, 'orch/reports/battlemaps.md'), md.join('\n'));
     console.log(md.join('\n'));
     const bad = st.some(r => r.bad.length) || maps.some(m => !R.by[m.k] || !R.by[m.k].ok); process.exit(bad ? 1 : 0);
   } else { console.log('usage: --static | --battles | --report   (see the header of this file)'); }
 }
 
-function rates(res, maps) {
+function rates(res, maps, rot = true) {   // rot: the final design (v 3: seats rotate, sides swap numbers); false: the earlier pilot games
   const by = {}, lines = [];
-  for (const m of maps) { const G = res.filter(r => r.map === m.k && r.result !== 'error'); if (!G.length) continue;
+  for (const m of maps) { const G = res.filter(r => r.map === m.k && r.result !== 'error' && (rot ? r.v === 3 : r.v !== 3)); if (!G.length) continue;
     const w = new Array(m.players).fill(0), c = new Array(m.players).fill(0); let kill = 0, time = 0, draw = 0;
     for (const r of G) { if (r.result === 'kill') kill++; else if (r.result === 'timeout') time++; else draw++;
-      r.tm.forEach((t, i) => { c[i]++; w[i] += r.win < 0 ? .5 : r.win === t ? 1 : 0; }); }
+      r.tm.forEach((t, i) => { const p = r.st ? r.st[i] : i; c[p]++; w[p] += r.win < 0 ? .5 : r.win === t ? 1 : 0; }); }
     const rate = w.map((v, i) => v / c[i]), ok = rate.every(v => v >= .4 && v <= .6);
     by[m.k] = { n: G.length, kill, time, draw, rate, ok };
     lines.push(`${ok ? 'ok  ' : 'FAIL'} ${m.k.padEnd(16)} ${G.length} games (${kill} kill, ${time} on time, ${draw} draw)  win rate per start ${rate.map(v => Math.round(v * 100) + '%').join(' / ')}`); }

@@ -372,7 +372,7 @@ function DRIVER() {
     S = { rng: mul((o.seed ^ 0x9E3779B9) >>> 0), clock: 0, realClock: !!o.realClock, portMath: (o.portMath || []).filter(k => PM[k]), steps: 0, ms: 0 };
     MODE = o.mode || 'single'; ME = 0; setup.d = o.diff == null ? 1 : o.diff;
     const t0 = realNow();
-    sim(() => { TERR_DEFER = true; try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map(() => true), map: o.map, tm: o.tm || o.facs.map((_, i) => i), slot: -1, w: o.w | 0, battle: o.battle ? 1 : 0 }); } finally { TERR_DEFER = false; } });
+    sim(() => { TERR_DEFER = true; try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map(() => true), map: o.map, tm: o.tm || o.facs.map((_, i) => i), slot: -1, ...(Array.isArray(o.st) ? { st: o.st } : {}), w: o.w | 0, battle: o.battle ? 1 : 0 }); } finally { TERR_DEFER = false; } });
     G.headless = !o.fx; // the page runs no visual/audio effect handlers unless --render
     if (o.fx && !W.fxWrapped) { // effects on: they may use Math.random/performance.now, but never the battle's
       W.fxWrapped = true; const f = FXE;
