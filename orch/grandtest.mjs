@@ -74,7 +74,7 @@ try {
   const fl = await ev(() => { grNew({ me: 'IR', seed: 55, len: 'quick' }); const v0 = geArmyVal('IR'), L = grFL('IR'), under = !gfOver('IR'); const t0 = GC.nat.IR.trad;
     gfBattle({ an: 'IR', dn: 'AZ' }, 'att'); const t1 = GC.nat.IR.trad; const A = GC.armies.find(a => a.o === 'IR'); A.u = A.u.concat(grGenUnits(grNat('IR').fac, L, false)); GMOD_C.cache.clear();
     const over = gfOver('IR'), up = gmod('nation', 'IR', 'upkeep', 1); const allUnder = Object.keys(GC.nat).filter(c => c !== 'IR' && !GC.nat[c].dead).every(c => !gfOver(c));
-    return { v0, L, under, t0, t1, over, up, allUnder, chip: /⚔/.test(gfChip()) }; });
+    return { v0, L, under, t0, t1, over, up, allUnder, chip: (() => { const f = gfChip(); return !!f && f.L > 0 && f.over === (f.v > f.L); })() }; });
   console.log('forcelimit', JSON.stringify(fl));
   // War support at home: the same news moves a democracy, a party state and a military-led government differently; rally when attacked; restricted news and its backlash
   const wsg = await ev(() => { const why = (N, re) => { const w = (N.wsWhy || []).find(x => re.test(x[0])); return w ? +(+w[1]).toFixed(2) : null; };

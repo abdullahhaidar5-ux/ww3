@@ -9,4 +9,4 @@ function gpTurn(){if(!GC||!GC.nat)return;const r=gpRank(),top=r.slice(0,GP_N).ma
 GMOD_COND.great=(k)=>!!(GC&&GC.gp&&GC.gp.includes(k));
 GMOD_ROWS.push({id:'gp_bonus',src:'Great Power',scope:'nation',stat:'warSupport',add:.03,cond:'great'});
 npTab('gp','👑','Great powers',(code,body)=>{const r=gpRank();body.innerHTML='<div style="margin-bottom:8px">The top '+GP_N+' nations by prestige are Great Powers (+3% war support). Prestige = score + allies + achievements + missions.</div>';
-  npTable(body,['#','Nation','Prestige','Status'],r.slice(0,24).map(([c,v],i)=>({c,k:v,cells:[i+1,'<b>'+gdNatName(c)+(c===GC.me?' ◀':'')+'</b>',v,i<GP_N?'<span style="color:#ffe6a8">Great Power</span>':'Major']})),x=>{NP.code=x.c;npDraw();});});
+  npTable(body,['#','Nation','Prestige','Status'],r.slice(0,24).map(([c,v],i)=>({c,k:v,cells:[i+1,'<b>'+gdNatName(c)+(c===GC.me?' ◀':'')+'</b>',v,i<GP_N?'<span style="color:#ffe6a8">Great Power</span>':'Major']})),x=>npGo(x.c));});

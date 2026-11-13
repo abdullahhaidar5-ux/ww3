@@ -8,7 +8,7 @@ Guards: `orch/polishtest.mjs` section 3 (opens each, checks frame + ✕ position
 
 | ✓ | Panel | Element | Kind | Frame | ✕ top-right | Esc |
 |---|---|---|---|---|---|---|
-| [x] | Nation window — all tabs (Economy, Diplomacy, Military, Provinces, Ledger, Modifiers, Ideas, Government, Decisions & policies, Stability & expansion, Estates, Achievements, Missions, Graphs, Great powers, Leader, Home front, Development, Finance, Propaganda, Trade, Alarm & coalitions, Corruption, World market, Research & cabinet, Mobilisation, Autonomy, Pipelines & grids, Subjects, Arms trade, Intelligence, UN Security Council, Elections & refugees, Nuclear) | `#npWin` | window | yes | yes | closes |
+| [x] | Nation window — six groups (Overview · Government · Economy · Military · Diplomacy · World), every screen in a left-hand list; Esc = one step back, then close | `#npWin` | window | yes | yes | closes |
 | [x] | Military (Generals · Fronts · Strikes · Fleets) | `#gMil` | side | yes | yes (was its own button) | closes |
 | [x] | Empire economy | `#gEco` | side | yes | yes (had none) | closes |
 | [x] | Diplomatic web | `#gWeb` | window | yes | yes (had none) | closes |

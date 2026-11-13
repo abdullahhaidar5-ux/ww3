@@ -43,7 +43,7 @@ as a tab here** (never a separate pop-up window). The ART LOOP owns its final lo
   10. **Intelligence** — spies, known enemy forces (grand6)
   11. **Provinces** — sortable list: name, towns, tax, unrest, buildings, garrison; click = fly the map there
   12. **Ledger** — compare all nations: economy, army, navy, manpower, territory, tier (uses realstart's numbers)
-- One system: extend the existing grand UI (`guSide`/`guTop` in src/13c-grandui.js, `geUiPanel`/`geUiTop` in src/13h-grandecoui.js) — move screens into tabs, no duplicate panels.
+- One system: extend the existing grand UI (`guSide`/`guTop` in src/13c-grandui.js, `geUiPanel` in src/13h-grandecoui.js) — move screens into tabs, no duplicate panels.
 
 ## ALL stages — REALISTIC START (Abdullah 2026-11-06 17:49 "starting economic strength, military strength, and placement of armies is realistic"; picks 17:53: "Realistic and factor in real world alliances" + "Real hot spots + bases")
 Helper `realstart` builds it; later stages keep it true. Today (before): cash 2200 major / 900 minor, army value 1 / 0.5, same fuel/food for all, armies only at capital + 1 war-goal province, opening wars = a "ring" of majors per region.

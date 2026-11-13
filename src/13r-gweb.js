@@ -16,6 +16,6 @@ function gwebOpen(){if(!GC)return;const old=document.getElementById('gWeb');if(o
     for(const c of nodes){const [x,y]=pos[c];g.beginPath();g.arc(x,y,c===GC.me?11:8,0,7);g.fillStyle=grNat(c).color||'#888';g.fill();g.lineWidth=c===GC.me?3:1.5;g.strokeStyle=c===GC.me?'#ffe6a8':'#fff';g.stroke();
       g.fillStyle='#e8e4d8';g.textAlign=x<cx-8?'right':x>cx+8?'left':'center';g.fillText(gdNatName(c),x+(x<cx-8?-14:x>cx+8?14:0),y+(y<cy?-14:20));}};
   draw();
-  cv.onclick=e=>{const r=cv.getBoundingClientRect(),sx=W/r.width,x=(e.clientX-r.left)*sx,y=(e.clientY-r.top)*sx;let best=null,bd=22*22;for(const c of nodes){const d=(pos[c][0]-x)**2+(pos[c][1]-y)**2;if(d<bd){bd=d;best=c;}}if(best){m.remove();NP.code=best;if(typeof npDraw==='function'){NP.cur='dip';npDraw();}}};
+  cv.onclick=e=>{const r=cv.getBoundingClientRect(),sx=W/r.width,x=(e.clientX-r.left)*sx,y=(e.clientY-r.top)*sx;let best=null,bd=22*22;for(const c of nodes){const d=(pos[c][0]-x)**2+(pos[c][1]-y)**2;if(d<bd){bd=d;best=c;}}if(best){m.remove();if(typeof npOpen==='function')npOpen(best,'dip');}};
   m.onclick=e=>{if(e.target===m)m.remove();};
   if(!nodes.length)box.appendChild(guEl('div','padding:20px;opacity:.7','No wars or alliances yet.'));}
