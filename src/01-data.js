@@ -100,7 +100,7 @@ const STRUCT={
 };
 /* ---- POLITICS & INTEL (Abdullah 2026-11-05 18:55; orch/reports/politics-intel.md): spies, decoys, radio station, world opinion ---- */
 // Spy: disguised (hidden to the enemy like a stealth unit) until it acts or enemy infantry / a loyal town spots it. Same price for every nation.
-BASE.spy={name:'Infiltrator',cls:'inf',hp:70,spd:52,rng:0,dmg:0,rof:1,cost:1200,time:40,from:'barracks',armor:'light',r:7,dom:'ground',noAttack:true,stealth:true,spy:true,limit:2};
+BASE.spy={name:'Infiltrator',cls:'inf',hp:70,spd:52,rng:0,dmg:0,rof:1,cost:1200,time:40,from:'barracks',armor:'light',r:7,dom:'ground',noAttack:true,stealth:true,spy:true,limit:2,desc:'A plain-clothes operative, not a soldier: cap, dark jacket, a satchel on a strap and a phone at the ear - no uniform and no rifle. Hidden from the enemy until it acts or enemy infantry or a loyal town spots it; while it is hidden you see a small eye above it. Unarmed: select it, pick a job, then right-click a target.'};
 // Decoys: inflatable / plywood fakes. They keep the real unit's look, name, size and speed (see stats()) but die in one hit and never fire.
 for(const [k,real,nm,cost] of [['dtank','tank','Decoy Tank',150],['dsam','aa','Decoy SAM Truck',120],['darty','arty','Decoy Artillery',150]])
   BASE[k]=Object.assign({},BASE[real],{name:nm,hp:1,dmg:0,rng:0,rof:1,aa:0,ground:true,splash:0,minr:0,wpn:undefined,cost,time:5,from:'factory',noAttack:true,fake:real,limit:4});

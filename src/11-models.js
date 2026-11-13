@@ -6,7 +6,7 @@ const MCFG={
   mortar:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],extra:'mortar'},recon:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#4a5242',tk:.5},officer:{m:'soldier',fit:'y',size:15.7,tint:'#3d4a36',tk:.5},medic:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#e8e4da',tk:.35},
   commissar:{m:'soldier',fit:'y',size:15.7,tint:'#5b4a3a',tk:.5},sapper:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#6a5a3c',tk:.4},guer:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#4c5a3a',tk:.55},atk:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],tint:'#3c4434',tk:.5},
   idome:{m:'truck',fit:'z',size:36,extra:'samtruck'},ew:{m:'truck',fit:'z',size:35,extra:'dish'},cbr:{m:'truck',fit:'z',size:35,extra:'dish'},jeep:{m:'truck',fit:'z',size:26},atgm:{m:'truck',fit:'z',size:27,extra:'samtruck',tint:'#55603f',tk:.4},saka:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#a08a5c',tk:.5},raidlead:{m:'truck',fit:'z',size:28,extra:'mg'},
-  inf:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7],[-11,0]]},at:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]]},hacker:{m:'soldier',fit:'y',size:13.1,squad:[[3,-4],[-3,4]]},
+  inf:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7],[-11,0]]},spy:{m:'soldier',fit:'y',size:14.0},at:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]]},hacker:{m:'soldier',fit:'y',size:13.1,squad:[[3,-4],[-3,4]]},
   hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},champ:{m:'soldier',fit:'y',size:19.5,tint:'#262a26',tk:.62},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},fast:{m:'boat',fit:'z',size:30,tint:'#7a8590',tk:.9},minel:{m:'boat',fit:'z',size:50,tint:'#6d7570',tk:.9},sweep:{m:'boat',fit:'z',size:46,tint:'#7d8a82',tk:.9},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
 };
 // Realistic models (Objaverse / Sketchfab, CC-BY - authors credited in the menu): each nation fields the hardware it
@@ -107,7 +107,7 @@ function parseModel(k){if(MQ.parsed[k])return MQ.parsed[k];return MQ.parsed[k]=(
     const g=await new Promise((res,rej)=>{try{ld.parse(b,'',res,rej);}catch(e){rej(e);}});const P={scene:g.scene,anims:g.animations};
     P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);if(m.userData.sgGloss!=null){m.roughness=Math.min(1,Math.max(.35,1-m.userData.sgGloss*.7));m.metalness=.15;}if(m.transmission>0){m.opacity*=1-m.transmission;m.transmission=0;}}}});
     try{mergeProto(P);}catch(e){console.warn('merge',k,e);}
-    MODELS.proto[k]=P;MODELS.ready=true;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
+    MODELS.proto[k]=P;MODELS.ready=true;MODELS.gen=(MODELS.gen|0)+1;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
     // the effects module keeps a list of model geometry it must never free; a model added later must join it
     try{GC_PROTO=null;}catch(e){}return true;}
   catch(e){MODELS.err=String(e&&e.message||e);if(!MODELS.failed.includes(k))MODELS.failed.push(k);delete MQ.bytes[MODEL_FILES[k]];setTimeout(()=>{delete MQ.parsed[k];},0);console.warn('3D model '+k+' failed to load:',e);return false;}})();}
@@ -544,7 +544,7 @@ function newSoldierKit(m,fac,kind,key,vr){vr=vr|0;const inner=m.userData.inner;i
   const rq=mq.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),.16));
   const attach=(bone,obj,wp,q)=>{const bq=new THREE.Quaternion(),ws=new THREE.Vector3();bone.getWorldQuaternion(bq);bone.getWorldScale(ws);const p=wp.clone();bone.worldToLocal(p);obj.position.copy(p);obj.quaternion.copy(bq.invert().multiply(q||mq));obj.scale.set(1/ws.x,1/ws.y,1/ws.z);obj.userData.gear=1;bone.add(obj);};
   // the rifle goes on first; the palm spots are read back from it, so the hands follow wherever the rifle really is
-  const rf=solRifle(k);attach(B.chest,rf,cp.clone().add(V(-.18*k,-1.0*k,.15*k)),rq);rf.updateMatrixWorld(true);const RP=a=>rf.localToWorld(new THREE.Vector3(a[0]*k,a[1]*k,a[2]*k)),TR=RP(RGRIP),TL=RP(RFORE);
+  // (the Infiltrator carries no rifle: see spyKit; the rifle is made below, after the hand solver)
   // The hands are posed by their palms, not their wrists (the old pose put the wrists on the grip points, so the hands
   // floated in front of a rifle hidden under the forearms): a two-bone arm solve aims the wrist, the hand is turned so the
   // palm faces the rifle (right palm against the grip from the right, left palm up under the handguard), the fingers
@@ -552,6 +552,8 @@ function newSoldierKit(m,fac,kind,key,vr){vr=vr|0;const inner=m.userData.inner;i
   const palm=sd=>{const ha=B['hand'+sd],mid=B[(sd==='R'?'Right':'Left')+'HandMiddle1'];const p=mid?mid.position.clone().multiplyScalar(.5):new THREE.Vector3(0,ha.position.length()*.17,0);p.z+=p.length()*.25;return p;};
   const hand=(sd,T,pole,face)=>{const ha=B['hand'+sd];if(!ha||!B['arm'+sd]||!B['forearm'+sd])return;const P=palm(sd),W=T.clone(),c=new THREE.Vector3();
     for(let i=0;i<6;i++){solArm(B,sd,W,pole);solTwist(ha,face);c.copy(P).applyMatrix4(ha.matrixWorld);W.add(T.clone().sub(c));}return P;};
+  if(kind==='spy'){spyKit(B,attach,hand,hp,hv,cp,V,k);mergeGear(B,key+'|spy|'+k.toFixed(3));return;}
+  const rf=solRifle(k);attach(B.chest,rf,cp.clone().add(V(-.18*k,-1.0*k,.15*k)),rq);rf.updateMatrixWorld(true);const RP=a=>rf.localToWorld(new THREE.Vector3(a[0]*k,a[1]*k,a[2]*k)),TR=RP(RGRIP),TL=RP(RFORE);
   const PR=hand('R',TR,V(-.5,-1,-.35),V(1,.15,0)),PL=hand('L',TL,V(.7,-1,-.1),V(-.15,1,0));
   solCurl(B,'R',1.15);solCurl(B,'L',.95);
   // where the palms belong on the rifle (chest frame) and where the palm sits in each hand (hand frame): orch/walktest.mjs
@@ -564,6 +566,44 @@ function newSoldierKit(m,fac,kind,key,vr){vr=vr|0;const inner=m.userData.inner;i
 // 3 kit meshes on its bones - 10 draw calls per soldier in every pass (picture + shadow), ~30 per squad. They are merged
 // into ONE skinned, vertex-coloured mesh per soldier (kit rides its bone as a rigidly skinned part), so a squad costs 3.
 // The merged shape is built once per nation / team colour / unit type and shared by every soldier that looks the same.
+// ---- Infiltrator (spy): a plain-clothes operative, not a rifleman (Abdullah 2026-11-11 "Make them look like actual spies") ----
+// Same soldier body and skeleton as everyone else (so it walks, merges and is drawn exactly like other infantry: ONE skinned
+// mesh, shapes shared by every spy of the same look), but: no rifle, no helmet, no combat kit; the uniform is re-painted in
+// civilian colours (spyPaint, by which bone a vertex follows) and a few code-made props say "spy". One look (Abdullah 2026-11-12
+// "Go with B"): long plain coat + scarf, binoculars at the eyes. View only: nothing here touches the simulation.
+const SPYC={top:'#6d6455',arm:'#6d6455',fore:'#6d6455',leg:'#2c2d31',shoe:'#1d1b19',hair:'#241c15'};
+const SPYSKIN='#b98a66';
+function spyKit(B,attach,hand,hp,hv,cp,V,k){const HC=hp.clone().add(V(0,1.35*k,0)),C=SPYC,H=new THREE.Group(),Cg=new THREE.Group(),Hp=new THREE.Group();
+  const mk=(geo,col,x,y,z,g)=>{const o=new THREE.Mesh(geo,gearMat(col));o.position.set(x*k,y*k,z*k);g.add(o);return o;};
+  const box=(w,h,d)=>new THREE.BoxGeometry(w*k,h*k,d*k),at=(x,y,z)=>HC.clone().add(V(x*k,y*k,z*k)),hip=(x,y,z)=>hv.clone().add(V(x*k,y*k,z*k));
+  // bare head: hair (or the cap) covers where the helmet was
+  {const d=mk(new THREE.SphereGeometry(1.0*k,12,7,0,Math.PI*2,0,Math.PI*.55),C.hair,0,.12,-.05,H);d.scale.set(1,.95,1.1);}
+  {{const t=mk(new THREE.TorusGeometry(.98*k,.3*k,6,12),'#8a2f2a',0,-1.25,.05,H);t.rotation.x=Math.PI/2;}mk(box(.6,1.9,.22),'#8a2f2a',.4,-2.3,.95,H);/* scarf + hanging end */
+    for(const x of[-.34,.34]){const c=mk(new THREE.CylinderGeometry(.3*k,.36*k,1.0*k,8),'#15161a',x,-.5,1.5,H);c.rotation.x=Math.PI/2;}mk(box(.5,.3,.4),'#15161a',0,-.5,1.3,H);/* binoculars at the eyes */
+    const sk=mk(new THREE.CylinderGeometry(1.5*k,1.95*k,3.3*k,12,1,true),C.top,0,-1.45,0,Hp);sk.scale.z=.82;mk(box(.16,3.2,.1),'#4b4438',0,-1.45,1.52,Hp);/* long coat below the waist, front seam */
+    {const T=new THREE.Group(),t=mk(new THREE.CylinderGeometry(1.42*k,1.62*k,4.1*k,12,1,true),C.top,0,0,0,T);t.scale.z=.9;mk(box(.16,4.0,.1),'#4b4438',0,0,1.42,T);const b=mk(new THREE.CylinderGeometry(1.66*k,1.66*k,.34*k,12,1,true),'#3b352c',0,-1.75,0,T);b.scale.z=.9;attach(B.chest,T,hip(0,2.25,.12));}/* the coat's body: closed front, belt */
+    hand('R',at(-.8,-.62,1.55),V(-1,-.8,.2),V(1,0,0));solCurl(B,'R',.9);hand('L',at(.8,-.62,1.55),V(1,-.8,.2),V(-1,0,0));solCurl(B,'L',.9);}
+  if(H.children.length)attach(B.head,H,HC);if(Cg.children.length)attach(B.chest,Cg,cp.clone().add(V(0,.2*k,0)));if(Hp.children.length)attach(B.hips,Hp,hv.clone());}
+// Civilian colours for the soldier body: every body vertex is painted by the bone it follows most (legs = trousers, feet =
+// shoes, trunk = jacket / coat / shirt, arms = sleeves, hands and face = skin). The cloth keeps the folds and shading of the
+// original uniform texture (its brightness, sampled once per vertex), but none of its camouflage or nation tint.
+function spyPaint(geo,skel,tex){const C=SPYC,pa=geo.attributes.position,ca=geo.attributes.color,ua=geo.attributes.uv,si=geo.attributes.skinIndex,sw=geo.attributes.skinWeight,n=pa.count;
+  const reg=skel.bones.map(b=>{const nm=b.name;return /foot|toe/i.test(nm)?'shoe':/upleg|^leg|leg[LR]?$/i.test(nm)?'leg':/hand/i.test(nm)?'skin':/forearm/i.test(nm)?'fore':/arm|shoulder/i.test(nm)?'arm':/head|neck/i.test(nm)?'head':'top';});
+  let lum=null;try{const im=tex&&tex.image;if(im&&ua&&im.width){const cv=document.createElement('canvas'),w=cv.width=Math.min(256,im.width),h=cv.height=Math.min(256,im.height),x=cv.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,w,h);const d=x.getImageData(0,0,w,h).data;
+      lum=(u,v)=>{u-=Math.floor(u);v-=Math.floor(v);if(tex.flipY)v=1-v;const i=(Math.min(h-1,v*h|0)*w+Math.min(w-1,u*w|0))*4;return(d[i]*.3+d[i+1]*.59+d[i+2]*.11)/255;};}}catch(er){lum=null;}
+  const R=new Array(n),Lm=new Float32Array(n),sum={},cnt={};
+  for(let i=0;i<n;i++){if(!ua||ua.getX(i)<-2){R[i]=null;continue;}let b=0,bw=-1;for(let q=0;q<4;q++){const w=sw.getComponent(i,q);if(w>bw){bw=w;b=si.getComponent(i,q);}}const r=R[i]=reg[b]||'top';Lm[i]=lum?lum(ua.getX(i),ua.getY(i)):1;sum[r]=(sum[r]||0)+Lm[i];cnt[r]=(cnt[r]||0)+1;}
+  const col={};for(const r of['top','arm','fore','leg','shoe','skin','head'])col[r]=lin(r==='skin'||r==='head'||(r==='fore'&&!C.fore)?SPYSKIN:C[r]);
+  for(let i=0;i<n;i++){const r=R[i];if(!r)continue;const c=col[r],m=lum?Math.max(.55,Math.min(1.4,Lm[i]/Math.max(.02,sum[r]/cnt[r]))):1;ca.setXYZ(i,c.r*m,c.g*m,c.b*m);ua.setXY(i,-4,-4);}
+  // no helmet: whatever the soldier wears on its head is pulled in under the hair / cap (top of the head only, the face stays)
+  {const bp=nm=>{const i=skel.bones.findIndex(b=>b.name===nm);return i<0?null:new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(skel.boneInverses[i]).invert());},hb=bp('head'),hi=bp('hips');
+    if(hb&&hi){const kb=hb.distanceTo(hi)/5.2,up=hb.clone().sub(hi).normalize()/* hips to neck: the rigs' head-top joints are not reliable */,c=hb.clone().add(up.clone().multiplyScalar(1.35*kb)),v=new THREE.Vector3(),rm=.9*kb;
+      for(let i=0;i<n;i++){if(R[i]!=='head')continue;v.fromBufferAttribute(pa,i).sub(c);if(v.dot(up)<.12*kb)continue;const d=v.length();if(d>rm){v.multiplyScalar(rm/d).add(c);pa.setXYZ(i,v.x,v.y,v.z);}}pa.needsUpdate=true;}}
+  ca.needsUpdate=true;ua.needsUpdate=true;}
+// the owner's "this one is hidden" mark: a small eye above the spy (one instanced draw for every spy on the map; 06-view shows it)
+function spyEyeGeo(){const P=[],I=[],N=18,ring=(f,w)=>{const b=P.length/3;for(let i=0;i<=N;i++){const a=i/N*Math.PI*2,x=Math.cos(a),y=Math.sin(a);for(const s of[1,1-w]){const q=f(x,y);P.push(q[0]*s,q[1]*s,0);}}for(let i=0;i<N;i++){const a=b+i*2;I.push(a,a+1,a+2,a+1,a+3,a+2);}};
+  ring((x,y)=>[x,y*.5*(1-.45*Math.abs(x))],.2);ring((x,y)=>[x*.3,y*.3],1);
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(P),3));g.setIndex(I);g.computeVertexNormals();return g;}
 const SOLM={};
 // Distant soldier: the merged soldier mesh is thinned by vertex clustering (nearby vertices snap together, tiny triangles vanish)
 // into a cheap skinned mesh on the same skeleton. Shown instead of the full one when the camera is far (see 06-view), so big
@@ -601,6 +641,7 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
       if(g.index){const ix=g.index.array;for(let i=0;i<ix.length;i++)I[oi+i]=ix[i]+ov;oi+=ix.length;}else{for(let i=0;i<n;i++)I[oi+i]=ov+i;oi+=n;}ov+=n;}
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(P,3));geo.setAttribute('normal',new THREE.BufferAttribute(N,3));geo.setAttribute('color',new THREE.BufferAttribute(C,3));if(UV)geo.setAttribute('uv',new THREE.BufferAttribute(UV,2));
     geo.setAttribute('skinIndex',new THREE.BufferAttribute(SI,4));geo.setAttribute('skinWeight',new THREE.BufferAttribute(SW,4));geo.setIndex(new THREE.BufferAttribute(I,1));
+    if(/\|spy\|v\d$/.test(key))try{spyPaint(geo,skel,tex);}catch(er){console.warn('spyPaint',er);}
     // one material for the whole soldier: the uniform's (most triangles among the coloured parts), white so the baked
     // vertex colours show, keeping its weathering shader hook
     let src=sk[0].material,best=-1;for(const o of sk){const c=o.material.color,t=o.geometry.index?o.geometry.index.count:o.geometry.attributes.position.count;if(c&&c.r*.3+c.g*.59+c.b*.11>.02&&t>best){best=t;src=o.material;}}
@@ -815,6 +856,7 @@ const DECAL={sets:{}};
 function decalSet(k){let S=DECAL.sets[k];if(S)return S;let geo,mat,ro;
   if(k==='blob'){if(!window.BLOBTEX){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,4,32,32,31);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(.6,'rgba(0,0,0,.25)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);window.BLOBTEX=new THREE.CanvasTexture(c);}
     geo=new THREE.PlaneGeometry(1.5,1).rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({map:BLOBTEX,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});ro=1;}
+  else if(k==='eye'){geo=spyEyeGeo();mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.92,depthTest:false,depthWrite:false,side:THREE.DoubleSide});ro=6;}
   else{geo=k==='ringS'?new THREE.RingGeometry(.5,.56,28):new THREE.RingGeometry(.36,.41,28);geo.rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.24,depthWrite:false});ro=2;}
   return DECAL.sets[k]=S={geo,mat,ro,im:null,cap:0,list:new Set(),col:k!=='blob'};}
 // faction kit, ship radars and drone stencils are drawn as instances (one draw call per kit shape for the whole
@@ -841,8 +883,9 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
-  for(const [px,pz] of sq){const VR=Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,c.dy||0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK,VR);else soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind+'|v'+(SK?VR:0));}catch(err){console.warn('mergeSoldier',err);}}
+  for(const [px,pz] of sq){const VR=e.kind==='spy'?0:Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,c.dy||0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK,VR);else if(e.kind!=='spy')soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind+'|v'+(SK?VR:0));}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
+  if(e.kind==='spy'){const ey=decal('eye');ey.position.y=c.size+7;ey.scale.setScalar(5.2);ey.visible=false;o.add(ey);o.userData.parts.eye=ey;}
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
   {const ring=decal(c.squad?'ringS':'ringV',new THREE.Color(T.color));ring.scale.setScalar(c.size);ring.position.y=1.2;if(!['heli','jet'].includes(e.kind))o.add(ring);o.userData.parts.tring=ring;}
   // soft contact shadow so ground vehicles sit in the terrain instead of floating on it
