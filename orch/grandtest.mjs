@@ -455,6 +455,7 @@ try {
   if (tk.mid.perProv > 1 || tk.midNoSel.perProv > 1) fails.push('armytokens: middle view draws more than one army marker in a province (' + tk.mid.perProv + ')');
   if (tk.midNoSel.flags || tk.midNoSel.figs) fails.push('armytokens: middle view with no army selected still draws ' + tk.midNoSel.figs + ' figures / ' + tk.midNoSel.flags + ' flags');
   if (!tk.march || !tk.eta.some(t => /^\d+ days?$/.test(t))) fails.push('armytokens: marching army shows no arrow nose / arrival in days ' + JSON.stringify(tk.eta));
+  if (!tk.mid.shield || tk.mid.round || tk.close.round) fails.push('mapshapes: land-army tokens are not shield shaped at middle zoom ' + JSON.stringify({ shield: tk.mid.shield, hull: tk.mid.hull, round: tk.mid.round, closeRound: tk.close.round }));
   if (tk.close.tier !== 2 || !tk.make) fails.push('armytokens: close view shows no make-up counts'); if (!tk.close.figs) fails.push('armytokens: close view shows no on-land army figures');
   if (tk.foe && (!tk.pill.length || !tk.pill.every(t => /^(Good odds|Even fight|Bad odds)$/.test(t)))) fails.push('armytokens: no odds pill on the enemy army in reach ' + JSON.stringify(tk.pill));
   if (!tk.est || tk.est[0] !== tk.est[2] || tk.est[1] !== tk.est[3]) fails.push('armytokens: odds are not the auto-resolve estimate ' + JSON.stringify(tk.est));

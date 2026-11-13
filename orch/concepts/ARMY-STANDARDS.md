@@ -5,6 +5,7 @@ armies represented in a better way. Come up with something creative, clean, and 
 many flags?" · 19:17 "Go" to the concept sheet `orch/concepts/army-standards.jpg` (source: `army-standards.html`, inline SVG —
 copy shapes, colours and proportions from it).
 
+(2026-11-13 mapshapes: the token is no longer round — land army = shield, fleet = ship hull, air group = swept wing, Abdullah 2026-11-11 17:37 "Shield". Everything else below still holds.)
 One round token per army, read like a watch face. It REPLACES the figure blobs, the shield badges and the per-army waving flags.
 
 1. **Token:** round flag in the middle = whose army. Green ring around it = strength left (men and machines vs full; turns
