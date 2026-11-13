@@ -1,0 +1,28 @@
+  page: shader warm-up 12266 ms, 62 models, 120 objects in 632 steps (longest 1063 ms), 116 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 141 ms; firing
+IR {"sup":"Kheibar Missile Strike","working":true,"n":12,"crowd":36} launched=true frames=191 normal=141ms (quiet max 218) longest=311ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":3,"cnv":0}
+  worst frames: 311ms@9.5s {} ; 307ms@9.8s {} ; 290ms@5.9s {} ; 272ms@0.8s {} ; 272ms@3.0s {}
+  frames that made the GPU work (2):
+    3.18s 199ms {"aud":1} three geo/tex 572/167
+    3.30s 257ms {"aud":2} three geo/tex 572/167
+IR worst JS call (not drawing): simUpdate 135ms; ok
+  page: shader warm-up 5882 ms, 65 models, 125 objects in 662 steps (longest 769 ms), 123 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +18s] normal frame 136 ms; firing
+RU {"sup":"Iskander Strike","working":true,"n":2,"crowd":36} launched=true frames=143 normal=136ms (quiet max 234) longest=1048ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 1048ms@4.6s {} ; 396ms@0.4s {} ; 349ms@3.0s {} ; 334ms@3.3s {"aud":2} ; 300ms@6.2s {}
+  frames that made the GPU work (2):
+    3.18s 160ms {"aud":2} three geo/tex 671/236
+    3.30s 334ms {"aud":2} three geo/tex 671/236
+RU worst JS call (not drawing): simUpdate 213ms; FAIL: longest frame 1048 ms is 813 ms over the longest quiet frame 234 ms (max 150)
+  page: shader warm-up 4232 ms, 59 models, 114 objects in 640 steps (longest 715 ms), 107 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +18s] normal frame 146 ms; firing
+US {"sup":"Tomahawk Salvo","working":true,"n":6,"crowd":36} launched=true frames=167 normal=146ms (quiet max 250) longest=1286ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":3,"cnv":0}
+  worst frames: 1286ms@4.6s {} ; 316ms@7.0s {} ; 310ms@6.8s {} ; 286ms@3.3s {"aud":2} ; 284ms@3.0s {}
+  frames that made the GPU work (2):
+    3.18s 195ms {"aud":1} three geo/tex 556/136
+    3.30s 286ms {"aud":2} three geo/tex 556/136
+US worst JS call (not drawing): simUpdate 160ms; FAIL: longest frame 1286 ms is 1036 ms over the longest quiet frame 250 ms (max 150)
+SUPERFREEZE FAIL
