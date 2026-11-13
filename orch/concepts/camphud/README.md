@@ -11,8 +11,8 @@ save or sync change. Branch `orch/camphud`. Pictures: `node orch/camphudshots.mj
 |---|---|
 | ![before](before-map-1600.jpg) | ![after](after-map-1600.jpg) |
 
-Other sizes: [before 1280](before-map-1280.jpg) · [after 1280](after-map-1280.jpg) · [before 1920](before-map-1920.jpg) ·
-[after 1920](after-map-1920.jpg) · [after, 1280 at 130% text size with the menu open](after-text130-1280.jpg) ·
+Other sizes: [before 1280](before-map-1280.jpg) · [after 1280](after-map-1280.jpg) · [before 1920, shown at 1600](before-map-1920.jpg) ·
+[after 1920, shown at 1600](after-map-1920.jpg) · [after, 1280 at 130% text size with the menu open](after-text130-1280.jpg) ·
 [a few months later: change arrows on the chips](after-map-later-1600.jpg)
 
 Bar only: [1280](after-bar-1280.jpg) · [1600](after-bar-1600.jpg) · [1920](after-bar-1920.jpg) (before:
