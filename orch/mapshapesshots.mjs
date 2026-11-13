@@ -29,7 +29,7 @@ await pg.evaluate(()=>{const p=GCM.P.find(p=>p.land&&/Bushehr/.test(p.n));guCent
 // 4. a selected army on the march: route line, arrival, unit cards and the Political button
 console.log('route',JSON.stringify(await pg.evaluate(()=>{const me='IR',a=GC.armies.find(x=>x.o===me&&!x.fl&&x.u.length>20)||GC.armies.find(x=>x.o===me&&!x.fl);let to=-1,bd=0;
   for(const p of GCM.P){if(!p.land||GC.prov[p.i].o!==me||p.i===a.at)continue;const r=grPath(me,a.at,p.i,0);const n=r&&r.path?r.path.length:0;if(n>=3&&n<=4&&n>bd){bd=n;to=p.i;}}
-  GV.sel=a.at;GV.selA=a.id;grandMapRefresh();const r=to>=0?grOrderMove(a.id,to):null;g3SyncArmies();guCentre(a.at,2.4);G3.camera.d=300;guRedraw();const m=document.getElementById('g3modes');
+  GV.sel=a.at;GV.selA=a.id;grandMapRefresh();const r=to>=0?grOrderMove(a.id,to):null;g3SyncArmies();guCentre(a.path.length>1?a.path[a.path.length>>1]:a.at,2.4);G3.camera.d=300;G3.camera.z+=80;guRedraw();const m=document.getElementById('g3modes');
   return {army:a.nm,to:to>=0?GCM.P[to].n:null,err:r&&r.err,path:a.path.length,modes:m?(()=>{const q=m.getBoundingClientRect();return [q.left|0,q.top|0,q.right|0,q.bottom|0];})():null};})));await sh('selected-route');
 // 5. far view: tiny shields / hulls / wings
 await pg.evaluate(()=>{GV.selA=0;guFit(GR_REGIONS[4][1]);G3.camera.d=1500;guRedraw();});await sh('far');
