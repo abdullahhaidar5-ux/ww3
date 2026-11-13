@@ -1,0 +1,56 @@
+battle loaded: US vs RU vs DW
+sfx fetched: sfx/manifest.json, sfx/sfx.mp3, sfx/truck.mp3, sfx/wind.mp3, sfx/rumble.mp3
+music bus RMS (info): menu 0.0295, calm 0.0334, combat 0.0218
+fetched: mus/st/menu-02.mp3, mus/an_US.mp3, mus/st/calm-01.mp3, mus/st/combat-09.mp3, mus/st/calm-03.mp3, mus/st/victory-01.mp3, mus/st/menu-04.mp3, mus/st/calm-02.mp3, mus/st/defeat-02.mp3
+ok   0) nothing plays or downloads before the first tap
+ok   0) menu: a menu track plays after a tap — menu-02
+ok   0) menu: music bus is not silent
+ok   i) menu: no battle sound files downloaded yet
+ok   e) anthem requested at battle start (US) — mus/an_US.mp3
+ok   e) anthem plays
+ok   a) a calm track plays after the anthem — calm-01
+ok   a) calm is audible on the music bus
+ok   a) old sample sheets not fetched (smp/me/as/we)
+ok   a) old generated score is gone
+ok   f) only the menu (2 decks) + calm files fetched so far (streaming) — mus/st/menu-02.mp3, mus/st/calm-01.mp3
+ok   b) heat high switches to the combat pool — combat-09
+ok   b) crossfade done: combat deck up, calm deck faded and paused — [{"id":"combat-09","on":true,"started":true,"paused":false,"t":3.65,"g":2.6},{"id":"calm-01","on":false,"started":true,"paused":true,"t":11.56,"g":0}]
+ok   c) combat holds while its 60 s dwell runs (heat 0) — combat
+ok   c) after the dwell, back to calm
+ok   c) no ping-pong: calm holds for its dwell even with heat high — calm
+ok   f) no soundtrack file fetched that the player did not play
+ok   i) the sound sprite sheet loads and decodes — ["sfx/manifest.json","sfx/sfx.mp3","sfx/truck.mp3","sfx/wind.mp3","sfx/rumble.mp3"]
+ok   i) shots, rockets, cannons and explosions play from the recordings — sprite clips started: 10
+ok   i) simultaneous recorded sounds are capped — 28/28
+ok   i) a voice ducks music and effects, then they come back — [[0.5507591366767883,0.46085941791534424],0.9950665235519409,0.9940811991691589]
+ok   i) ambience loops (wind / distant rumble) are in place — truck,rumble,wind
+ok   i) only needed sound files downloaded, each once — sfx/manifest.json,sfx/sfx.mp3,sfx/truck.mp3,sfx/wind.mp3,sfx/rumble.mp3 dupes:
+ok   d) victory plays the victory track — victory-01
+ok   d) the anthem follows the victory track
+ok   d) then the menu pool — menu-04
+ok   d) second battle: battle music again — calm-02
+ok   d) defeat plays the defeat track — defeat-02
+ok   h) no audio error reported by the game (AU.err)
+ok   f) only needed music files downloaded (tracks that played + the anthem)
+ok   g) soundtrack unreachable: the player gives up quietly — {"mode":null,"pool":null,"id":null,"fail":1,"an":false,"anWait":false,"heat":0,"playing":false,"decks":[{"id":"menu-02","on":false,"started":false,"paused":true,"t":0,"g":0},{"id":"menu-04","on":false,"started":false,"paused":true,"t":0,"g":0}],"req":["mus/st/menu-02.mp3","mus/st/calm-01.mp3","mus/st/combat-09.mp3","mus/st/calm-03.mp3","mus/st/victory-01.mp3","mus/st/menu-04.mp3","mus/st/calm-02.mp3","mus/st/defeat-02.mp3","mus/st/menu-02.mp3","mus/st/menu-04.mp3"],"err":"soundtrack: track menu-04 media error 4","ctx":"running"}
+ok   g) back online: menu music returns — {"mode":"menu","pool":"menu","id":"menu-02","fail":0,"an":false,"anWait":false,"heat":0,"playing":true,"decks":[{"id":"menu-02","on":true,"started":true,"paused":false,"t":0.26,"g":0.201},{"id":"menu-04","on":false,"started":false,"paused":true,"t":0,"g":0}],"req":["mus/st/menu-02.mp3","mus/st/calm-01.mp3","mus/st/combat-09.mp3","mus/st/calm-03.mp3","mus/st/victory-01.mp3","mus/st/menu-04.mp3","mus/st/calm-02.mp3","mus/st/defeat-02.mp3","mus/st/menu-02.mp3","mus/st/menu-04.mp3","mus/st/menu-02.mp3"],"err":"","ctx":"running"}
+ok   h) no page errors / console audio errors
+AUDIO PASS
+battle: {"units":308,"theme":"desert","direct":["WaveShaperNode","AudioBufferSourceNode"],"vox":true,"lim":true}
+fight : {"out":{"peak":0.898,"rms":0.1989,"n":366,"hi":0},"sfx":{"peak":1.78,"rms":0.1874,"n":366,"hi":58},"mus":{"peak":0.166,"rms":0.0138,"n":366,"hi":0},"vox":{"peak":0.975,"rms":0.1177,"n":366,"hi":0},"gr":2.14,"grMax":7} {"heat":0.8,"nv":0,"cap":28,"st":"ok","err":"","units":76,"t":31,"calls":{"shot":868,"boom":669,"fx":3221,"log":135,"shout":13,"muz":868,"tr":480,"pj":388,"die":316,"txt":608,"flag":76,"rank":65,"tping":2},"near":20,"farH":0,"cam":[4691,2843,430,9160,6280],"sp":"{\"v\":0.9732985698052341,\"pan\":1,\"far\":0.3272417095985339}","on":[true,true,false]} in window: shots 335 booms 337
+calm  : {"out":{"peak":0.131,"rms":0.0311,"n":98,"hi":0},"sfx":{"peak":0.037,"rms":0.0066,"n":98,"hi":0},"mus":{"peak":0.132,"rms":0.0331,"n":98,"hi":0},"vox":{"peak":0,"rms":0,"n":98,"hi":0},"gr":0,"grMax":0} {"loops":"tank:0.000 wind:0.060 rumble:0.025","amb":"desert","bed":0.13}
+ok   6) a button with no sound of its own makes one UI click — {"one":1,"own":1,"off":0}
+ok   6) a button that already plays a UI sound does not double it — {"one":1,"own":1,"off":0}
+ok   1) no clipping in a 300-unit fight (output peak below full scale) — peak -0.9 dB, rms -14.0 dB
+ok   1) the fight is actually loud enough to be a test (effects bus active) — sfx rms -14.5 dB
+ok   2) limiter is a safety net (average hold-back under 6 dB) — avg 2.14 dB, max 7 dB
+ok   4) voices go through the mixer, nothing but the final stage feeds the output — direct: WaveShaperNode,AudioBufferSourceNode
+ok   3) a voice line ducks effects slightly and music more — effects/music 1/1 -> 0.72/0.55 -> 1/1
+ok   3) and they come back afterwards — 1/1
+ok   3) voices sit above the effects bed in the fight — voice peak -0.2 dB rms -18.6 dB vs effects rms -14.5 dB
+ok   5) quiet battlefield bed is present when nothing fires — effects rms -43.6 dB (tank:0.000 wind:0.060 rumble:0.025, biome bed 0.13)
+ok   5) and is well below the weapons (at least 12 dB under the fight, and under -34 dB) — -43.6 dB vs -14.5 dB
+ok   5) the bed follows the map biome — bed desert, map desert
+ok   7) no audio error reported by the game
+ok   7) no page errors
+MIX PASS
