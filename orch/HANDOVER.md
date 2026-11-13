@@ -94,3 +94,15 @@ jumps to the thing. Same helper groups the Nation window's ~36 tabs into six gro
 - camphud was fired with a simpler three-zone prompt BEFORE ORCH saw the "Details for camphud" section above; ORCH pushed orch/CAMPHUD-LAYOUT.md to branch orch/camphud with the approved layout. Check the helper followed it; if not, one follow-up run.
 - 11-12 17:32 Chicago: Infiltrator outfit = "B" (his answer). spylook-B = trig_01W3rqHEuaWAzb6iAkxKN157 (Sonnet) fired 23:35Z: merge main,
   B only, A/C removed, one gate. Running now: camphud, eu4audit (Fable), spylook-B (Sonnet).
+
+## Update Fri 2026-11-13 01:45Z (ORCH)
+- Finished, waiting for the conductor: camphud 5c0eb06 (27/28, only mpsync red - flaky, needs one re-run), nofightit c35a346 (28/28, merged with
+  train 12, Fight-it removed), spylook 339f3ab (outfit B only, 27/27 reported green, 28th not reported), eu4audit 26ecc7d (report only,
+  orch/reports/eu4-gap.md; top-10 shown to Abdullah). ORCH looked at camphud top bar + Nation window, battle window, Infiltrator B: all good.
+- FOUND: army tokens on main are ROUND. armytokens2 never built shield/hull/wing, the single route style, smaller cargo ships, quieter roads,
+  Gulf coast blocks, Political button off the unit cards (see its handoff "NOT DONE"). Earlier table row in this note was wrong.
+- Fired 01:44Z: mapshapes = trig_01N1MJ3hXM2oPntkWx9b9bmG (Fable, those six items, branch orch/mapshapes);
+  battlemaps = trig_01HfP3jrxUMqR5arYVcedEbU (Fable, kit + checker + list + first six maps, branch orch/battlemaps).
+- To tune later (seen in nofightit battle picture): "Expected: Iraq should win (100%) - about 82 more days" - an 82-day battle looks too long;
+  check against the EU4-style day phases. Next campaign builds follow eu4-gap.md order (1 occupation until peace, 2 war goals + war score, 3 reasons for war...).
+- Still open: freezefix slow-frame tail, finish-report (must fit on-the-map battles), 18 more Battle maps (Sonnet batches after the kit), wave 2 leftovers.
