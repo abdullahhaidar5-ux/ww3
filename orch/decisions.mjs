@@ -90,7 +90,7 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
 { const sv = SRC['08d-save.js'] || '', g = SRC['13-grand.js'] || '', m = SRC['14-menu.js'] || '';
   ck(/\['auto','auto2','auto3'\]/.test(sv) && /setInterval\(\(\)=>\{try\{svAutoTick\(\)/.test(sv), 'progress: battle autosave (3 rolling slots on a timer) is gone from 08d-save.js');
   ck(/function grSnap\(/.test(g) && /grSnap\(\);return grBattlePrompt\(b\)/.test(g) && /function grAutoTick\(/.test(g), 'progress: grand campaign timer autosave / safety copy before Fight-it is gone from 13-grand.js');
-  ck(/function svGrandInfo\(/.test(sv) && /MX\.cont=item\(/.test(m) && m.indexOf('MX.cont=item(') < m.indexOf("item('Grand campaign'") + (m.indexOf("item('Grand campaign'") < 0 ? 1e9 : 0) && m.indexOf('MX.cont=item(') < m.indexOf("item('Single player'") + (m.indexOf("item('Single player'") < 0 ? 1e9 : 0), 'progress: Continue must be the first item of the menu list and cover battles and the grand campaign');
+  ck(/function svGrandInfo\(/.test(sv) && /MX\.cont=item\(/.test(m) && m.indexOf('MX.cont=item(') < m.indexOf("item('Grand campaign'") + (m.indexOf("item('Grand campaign'") < 0 ? 1e9 : 0) && m.indexOf('MX.cont=item(') < m.indexOf("item('Single player'") + (m.indexOf("item('Single player'") < 0 ? 1e9 : 0), 'progress: Continue must be the first item of the menu list and cover Conquest/Battle saves, and the campaign save only when it is the only one');
 }
 // Living main menu (idea 9, Abdullah 2026-11-10 "Let's go all of them"; finished by helper finish-menu): the menu background shows YOUR war - whatever Continue would resume.
 //   campaign save -> the map around your nation + your last battle (grWarTable / grLastB -> the save's '.i' note); battle save -> that battlefield with the front line (svFront in the
@@ -254,13 +254,16 @@ try {
     for (const bad of ['Grand campaign', 'Conquest', 'Battle', 'Missions', 'Tutorial', 'Play online']) ck(!all.includes(bad), 'game mode "' + bad + '" must not be on the top level');
     await ev(() => menuGo('single'));
     const sp = await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).map(b => ((b.firstChild||{}).textContent||'').trim()));
-    ck(sp.slice(0, 3).join('|') === 'Grand campaign|Conquest|Battle' && sp.includes('Missions') && sp.includes('Tutorial'), 'Single player should list Grand campaign|Conquest|Battle then Missions, Tutorial, got ' + sp.join('|'));
+    ck(sp.filter(t => /^(Grand campaign|Conquest|Battle)$/.test(t)).join('|') === 'Conquest|Battle' && sp.includes('Missions') && sp.includes('Tutorial') && sp.includes('Load game') && !sp.some(t => /^Grand campaign/.test(t)), 'Single player should list Conquest|Battle then Missions, Tutorial, Load game and NO Grand campaign (paused 2026-11-13), got ' + sp.join('|'));
     ck(await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).every(b => b.querySelector('small'))), 'every Single player item needs a one-line description');
     await ev(() => menuGo('online'));
     const mpg = await ev(() => [...document.querySelectorAll('#ms-online #mxolg .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
-    ck(mpg.join('|') === 'Grand campaign|Conquest|Battle', 'Multiplayer should offer Grand campaign|Conquest|Battle first, got ' + mpg.join('|'));
+    ck(mpg.join('|') === 'Conquest|Battle', 'Multiplayer should offer Conquest|Battle only (campaign paused 2026-11-13), got ' + mpg.join('|'));
     ck(await ev(() => typeof mxOnline === 'function' && typeof gnLobbyStart === 'function' && !!document.getElementById('jcode')), 'Multiplayer needs the campaign lobby + join box');
-    await ev(() => mxOnline('campaign')); ck(await ev(() => !!document.getElementById('mxCampNew')), 'Multiplayer → Grand campaign must offer the campaign lobby');
+    await ev(() => mxOnline('campaign')); ck(await ev(() => !!document.getElementById('mxCampNew')), 'a campaign invite link must still open the campaign lobby (gnLobby)');
+    await ev(() => { menuGo('title'); }); await ev(() => menuGo('online')); ck(await ev(() => MX.olG !== 'campaign' && !document.getElementById('mxCampNew')), 'Multiplayer must open on Conquest/Battle, not the paused campaign');
+    await ev(() => menuGo('extras')); const ext = await ev(() => [...document.querySelectorAll('#ms-extras .mxi')].map(b => b.textContent.trim()));
+    ck(ext.some(t => /^Grand campaign \(preview, paused\)/.test(t)), 'Extras must list Grand campaign (preview, paused), got ' + ext.join('|'));
     await ev(() => { grandMenu(); }); await page.waitForTimeout(300);
     const gm = await ev(() => [...document.querySelectorAll('#campScreen button')].map(b => b.textContent.trim()));
     ck(!gm.some(t => /Play with friends|Join friends/i.test(t)), 'the grand campaign menu must not have its own online lobby, got ' + gm.join('|'));
