@@ -149,3 +149,13 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   sweepfixB = trig_01XJWwLgqU7T2nHg49Uk4BFv (Opus, batches 3-5: order buttons, build bar/nameplate, settings/overlays).
 - Land order when the conductor works again: menucamp, battlemaps (needs gate + handoff), sweepfixA/B, mapshapes; campaign pieces
   (camphud, nofightit) only if they do not block. spylook: mapsweep timeout - battlemaps' 3-shard mapsweep may fix it.
+
+## DECISION Fri 2026-11-13 17:26 Chicago — "Switch all from fable. Drop any development on campaign. Focus all effort on wrapping up conquest and battle."
+- Models: no helper or scheduled task runs on Fable any more. Conductor -> Sonnet (prompt rewritten: lands ONLY Conquest/Battle/menu/loading
+  work; menucamp first; campaign branches parked). battlemaps -> Sonnet, re-fired to finish (win rates, pictures, gate, handoff).
+  New helpers: Sonnet for mechanical work, Opus only for look/design judgment.
+- Campaign DROPPED: disabled the scheduled tasks warpeace, mapshapes, camphud, eu4audit, nofightit. Branches orch/camphud, orch/nofightit,
+  orch/mapshapes, orch/warpeace, orch/eu4audit stay parked, never landed. The campaign stays playable as-is from Extras (menucamp).
+- Conductor fired 23:30Z on Sonnet. Land order: menucamp, freezefix, battlemaps, sweepfixA, sweepfixB, spylook.
+- After those: 18 more Battle maps (Sonnet, kit), selection rings + order preview, stuck-unit/controls fixes, clearer battle goals, then
+  PLAN-75 Phase 2 look test (three looks of one battle for Abdullah to pick).
