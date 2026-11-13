@@ -23,10 +23,14 @@ function perfTick(){const now=performance.now(),c=perfCount();
   PERF.hid=0;PERF.prev=now;PERF.c0=PERF.c1;PERF.c1=c;}
 try{document.addEventListener('visibilitychange',()=>{PERF.hid=1;});}catch(e){}             // a frame that spans a tab switch is not a hitch
 {const _rf=renderFrame;renderFrame=function(dt){try{if(G&&G.terrain&&R3&&!window.GLLOST)perfTick();}catch(e){}return _rf.apply(this,arguments);};}
+// loading: browser "long tasks" (over 50 ms, the pieces that make a tab feel stuck) seen while the loading screen is up
+PERF.lt=[];try{new PerformanceObserver(l=>{if(!window.LOADING)return;for(const e of l.getEntries())PERF.lt.push([Math.round(e.startTime),Math.round(e.duration)]);if(PERF.lt.length>400)PERF.lt.splice(0,200);}).observe({entryTypes:['longtask']});}catch(e){}
+function perfLoad(){const t=LOAD.times;if(!t||!t.length)return '';const W=LOAD.warm,w=LOAD.wt,lt=w&&w[1]?PERF.lt.filter(x=>x[0]>=w[0]-50&&x[0]<=w[1]).map(x=>x[1]):[];
+  return 'Last battle load (ms per stage): '+t.map(x=>x[0].replace('…','')+' '+x[1]).join(', ')+'\n'+(W?'Shader warm-up: '+W.ms+' ms, '+W.models+' models, '+W.progs+' programs compiled, '+W.steps+' steps (longest '+W.maxStep+' ms)'+(W.stage.length?' ['+W.stage.map(x=>x[0]+' '+x[1]).join(', ')+']':'')+(W.late?', finished after the loading watchdog':'')+'\n'+(lt.length?'Long tasks while preparing graphics: '+lt.length+', longest '+Math.max(...lt)+' ms\n':'No long task while preparing graphics.\n'):'')+'\n';}
 function perfClock(t){t=Math.max(0,t|0);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
 function perfLine(e){return perfClock(e.t)+'  '+e.ms+' ms  programs '+e.p[0]+'→'+e.p[1]+'  textures '+e.x[0]+'→'+e.x[1]+'  shapes '+e.g[0]+'→'+e.g[1]+'  detail '+e.q[0]+'→'+e.q[1]+'  units '+e.u+'  events: '+e.ev;}
 function perfText(){let v='';try{v=typeof BUILD!=='undefined'?' build '+BUILD:'';}catch(e){}
-  return 'World War 3 performance log'+v+'\nGraphics card: '+perfGpu()+'\nScreen: '+Math.round(innerWidth)+'×'+Math.round(innerHeight)+' @'+(window.devicePixelRatio||1)+'  '+Math.round(QUAL.fps||0)+' FPS now\n'+
+  return 'World War 3 performance log'+v+'\nGraphics card: '+perfGpu()+'\nScreen: '+Math.round(innerWidth)+'×'+Math.round(innerHeight)+' @'+(window.devicePixelRatio||1)+'  '+Math.round(QUAL.fps||0)+' FPS now\n'+perfLoad()+
     (PERF.log.length?'Frames over '+PERF.slow+' ms (battle time, length, before→after):\n'+PERF.log.map(perfLine).join('\n'):'No frame over '+PERF.slow+' ms recorded in this session.');}
 function perfCss(){if(document.getElementById('pfCss'))return;const s=document.createElement('style');s.id='pfCss';s.textContent=`
 #pfWin{position:fixed;inset:0;z-index:960;background:rgba(8,11,10,.84);display:flex;align-items:center;justify-content:center}

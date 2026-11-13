@@ -41,7 +41,8 @@ const COUNT = () => { const c = window.__glc = { sh: 0, prog: 0, tex: 0, texUp: 
   // software GL needs seconds per drawn frame, so once the battle has loaded the draw commands themselves are swallowed (three.js still does
   // all its work: programs, textures, buffers, uniforms); what is timed per frame is everything except the pixels
   for (const P of [window.WebGL2RenderingContext && WebGL2RenderingContext.prototype, window.WebGLRenderingContext && WebGLRenderingContext.prototype]) if (P) for (const fn of ['drawElements', 'drawElementsInstanced', 'drawArrays', 'drawArraysInstanced', 'drawRangeElements']) { const o = P[fn]; if (o) P[fn] = function () { if (!window.__noDraw) return o.apply(this, arguments); }; }
-  wrap(Document.prototype, 'createElement', function (n) { if (String(n).toLowerCase() === 'canvas') c.cnv++; }); };
+  window.__noDraw = 1;   // (also while the battle loads: the loading warm-up draws in small pieces, which software GL needs seconds for; programs, shapes and buffers are still made)
+  wrap(Document.prototype, 'createElement', function (n) { if (String(n).toLowerCase() === 'canvas') { c.cnv++; if (window.__on) (window.__cnvS = window.__cnvS || []).push(new Error().stack.split('\n').slice(2, 7).map(l => l.trim().replace(/\(?http[^)]*\//, '(')).join(' < ')); } }); };
 let bad = 0; const RES = {};
 for (const fac of FACS) {
   const page = await (await browser.newContext({ viewport: { width: 480, height: 270 } })).newPage(); await page.addInitScript(COUNT);
@@ -82,7 +83,7 @@ for (const fac of FACS) {
     return { d, frames: F.length, max: Math.max(...F.map(f => f.ms)), worst: F.slice().sort((a, b) => b.ms - a.ms).slice(0, 5).map(f => Math.round(f.ms) + 'ms@' + f.st.toFixed(1) + 's ' + JSON.stringify(f.d)),
       busy: F.filter(f => f.d.sh || f.d.prog || f.d.tex || f.d.texUp || f.d.buf || f.d.read || f.d.img || f.d.url || f.d.aud || f.d.cnv).map(f => f.st.toFixed(2) + 's ' + Math.round(f.ms) + 'ms ' + JSON.stringify(f.d) + ' three geo/tex ' + f.g + '/' + f.t),
       info: [i.programs.length - __i0[0], i.memory.geometries - __i0[1], i.memory.textures - __i0[2]], newProgs: i.programs.filter(p => !__p0.has(p.cacheKey)).map(p => { const A = p.cacheKey.split(','); let best = null, bd = 1e9; for (const k of __p0) { const B = k.split(','); if (B.length !== A.length) continue; let d = 0; for (let q = 0; q < A.length; q++) if (A[q] !== B[q]) d++; if (d < bd) { bd = d; best = B; } } return A[0].replace(/\s+/g, ' ').slice(0, 24) + ' x' + p.usedTimes + (best ? ' differs from a loaded one in ' + A.map((v, q) => v !== best[q] ? q + ':' + String(best[q]).slice(0, 12) + '>' + String(v).slice(0, 12) : '').filter(Boolean).slice(0, 8).join(' ') : ' (no similar program loaded)'); }),
-      gnew: window.__gnew || [],
+      gnew: window.__gnew || [], cnvS: window.__cnvS || [],
       prof: Object.fromEntries(Object.entries(window.__prof || {}).map(([k, v]) => [k, [v.n, Math.round(v.tot), Math.round(v.max)]])) }; });
   const stall = Object.entries(r.prof).filter(([k]) => k !== 'renderFrame').map(([k, v]) => [k, v[2]]).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
   const geo = Math.max(r.d.vao, Math.ceil(r.d.buf / 3)), tex = Math.max(r.d.tex, r.d.texUp), over = r.max - pre.max, why = [];
@@ -95,6 +96,7 @@ for (const fac of FACS) {
   console.log(fac, JSON.stringify(info), 'launched=' + ok, 'frames=' + r.frames, 'normal=' + Math.round(pre.med) + 'ms (quiet max ' + Math.round(pre.max) + ')', 'longest=' + Math.round(r.max) + 'ms', 'three(progs/geo/tex)=+' + r.info.join('/+'), 'gl=' + JSON.stringify(r.d));
   console.log('  worst frames:', r.worst.join(' ; ')); if (r.busy.length) console.log('  frames that made the GPU work (' + r.busy.length + '):\n    ' + r.busy.slice(0, 40).join('\n    '));
   if (geo > GEOMAX && r.gnew.length) console.log('  shapes that entered the scene during the strike (look here for the ones built or re-sent):\n    ' + r.gnew.slice(0, 30).join('\n    '));
+  if (r.cnvS.length) console.log('  canvases created during the strike:\n    ' + r.cnvS.join('\n    '));
   if (r.newProgs.length) console.log('  new programs:\n    ' + r.newProgs.join('\n    '));
   if (E.PROF) console.log('  prof', JSON.stringify(r.prof));
   console.log(fac, 'worst JS call (not drawing):', stall[0], stall[1] + 'ms;', why.length ? 'FAIL: ' + why.join('; ') : 'ok');

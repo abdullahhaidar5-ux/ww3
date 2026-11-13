@@ -25,7 +25,11 @@ function mwPipDraw(c,x,y,w,h){const vp=MWV.vp||(MWV.vp=new THREE.Vector4());R3.g
   R3.setScissorTest(false);R3.setViewport(vp);}
 function mwPipCam(x,y,asp){const c=MWV.cam||(MWV.cam=CAM.clone());c.aspect=asp;c.updateProjectionMatrix();const gy=(typeof groundH==='function'?groundH(x,y):0)||0;c.position.set(x,gy+115,y+165);c.lookAt(x,gy,y);c.updateMatrixWorld();return c;}
 // called once by the shader warm-up while the battle loads: one corner picture is drawn (hidden behind the loading screen)
-function mwPipWarm(){try{if(!R3||!SCN||!CAM||!G||G.headless)return;const b=(typeof BASES!=='undefined'&&BASES[ME])||[MAPW/2,MAPH/2];mwPipDraw(mwPipCam(b[0],b[1],16/9),0,0,16,9);}catch(e){console.warn('corner picture warm-up',e);}}
+function mwPipWarm(){try{if(!R3||!SCN||!CAM||!G||G.headless)return;
+  // only the off-screen picture and its copy shader are made here; the battle's own shaders are the same ones the main view already
+  // has (same picture type), so no second draw of the whole battlefield is needed (that one task ran for seconds on slow machines)
+  if(POST.on&&POST.mFinal){const vp=MWV.vp||(MWV.vp=new THREE.Vector4());R3.getViewport(vp);const rt=mwPipRT();R3.setRenderTarget(rt);R3.clear();
+    POST.mPip.uniforms.tex.value=rt.texture;POST.quad.material=POST.mPip;R3.setRenderTarget(null);R3.setScissorTest(true);R3.setViewport(0,0,16,9);R3.setScissor(0,0,16,9);R3.render(POST.scn,POST.cam);R3.setScissorTest(false);R3.setViewport(vp);}}catch(e){console.warn('corner picture warm-up',e);}}
 function mwPipRender(){const P=MWV.pip;if(!P)return;try{if(P.G!==G||performance.now()>P.until||G.over){MWV.pip=null;mwPipEl(false);return;}
   const el=document.getElementById('mwPip'),r=el.getBoundingClientRect(),cr=R3.domElement.getBoundingClientRect();if(!r.width)return;
   mwPipDraw(mwPipCam(P.x,P.y,r.width/r.height),r.left-cr.left+2,cr.height-(r.bottom-cr.top)+2,r.width-4,r.height-4);}catch(e){MWV.pip=null;mwPipEl(false);}}
