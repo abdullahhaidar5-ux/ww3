@@ -1428,10 +1428,9 @@ function guDraw(){GV.raf=0;const cv=GV.cv;if(!cv||!GC)return;if(GV.dirty)guPaint
   const sx=x=>x*z+GV.ox,sy=y=>y*z+GV.oy;GV.chips=[];
   // selected province outline
   if(GV.sel>=0)guOutline(GV.sel,'#fff2a8',2.4);if(GV.hov>=0&&GV.hov!==GV.sel)guOutline(GV.hov,'rgba(255,255,255,.7)',1.4);
-  // sea lanes of the selected army / all own armies: dotted paths
-  c.lineWidth=2;c.setLineDash([6,5]);
-  for(const a of GC.armies){if(!a.path.length||(a.o!==GC.me&&GC.me))continue;const sel=a.id===GV.selA;c.strokeStyle=sel?'#ffe27a':'rgba(255,255,255,.55)';c.beginPath();let q=P[a.at];c.moveTo(sx(q.x),sy(q.y));for(const j of a.path){q=P[j];c.lineTo(sx(q.x),sy(q.y));}c.stroke();}
-  c.setLineDash([]);
+  // routes of your armies on the flat fallback map: the same thin calm line as on the 3D map (src/13e2-groads.js)
+  c.lineWidth=2;
+  for(const a of GC.armies){if(!a.path.length||(a.o!==GC.me&&GC.me))continue;const sel=a.id===GV.selA;c.strokeStyle=sel?'#fffae6':'rgba(242,235,209,.7)';c.beginPath();let q=P[a.at];c.moveTo(sx(q.x),sy(q.y));for(const j of a.path){q=P[j];c.lineTo(sx(q.x),sy(q.y));}c.stroke();}
   const fs=Math.max(10,Math.min(15,9+z*2.2));c.textAlign='center';c.textBaseline='middle';
   // nation names at overview zoom
   if(z<1.15){const by={};for(const p of P)if(p.land){const o=GC.prov[p.i].o;(by[o]=by[o]||[]).push(p);}c.font='bold '+Math.round(10+z*3)+'px sans-serif';
@@ -1683,11 +1682,14 @@ function gmPaint(){try{if(!document.getElementById('gmCss')){const s=document.cr
   hd.querySelector('[data-k=m]').onclick=()=>{const L=gmIds();const seen=new Set();for(const id of L){const a=gmMine(id);if(!a||seen.has(a.at))continue;seen.add(a.at);grMerge(id);}gmSet(L.filter(gmMine));grSave();grandMapRefresh();};
   hd.querySelector('[data-k=s]').onclick=()=>{const L=gmIds();for(const id of L)grSplit(id);gmSet(L.filter(gmMine));grSave();grandMapRefresh();};
   for(const id of ids){const a=gmMine(id);if(!a)continue;const d=document.createElement('div');d.className='c';const p=GCM.P[a.at],dest=a.path&&a.path.length?GCM.P[a.path[a.path.length-1]]:null;d.innerHTML='<b>'+a.nm+'</b> · '+a.u.length+' units'+(typeof gmMorBar==='function'?gmMorBar(a):'')+'<br><span style="opacity:.75">'+(p?p.n:'')+(dest?' → '+dest.n:'')+'</span>';d.title='Click: select only this army · Shift+click: add/remove · Double-click: go to it';d.onclick=ev=>{if(ev.shiftKey){const L=gmIds().slice(),i=L.indexOf(id);if(i>=0)L.splice(i,1);else L.push(id);gmSet(L);}else gmSet([id]);};d.ondblclick=()=>{try{const e=G3.arm&&G3.arm.get(id);if(e&&G3.camera){G3.camera.x=e.x;G3.camera.z=e.z;}}catch(_){}};c.appendChild(d);}}catch(e){console.error('gmPaint',e);}}
-/* A3 path preview (laneF): dashed route line from the selected army to the hovered province; one SVG, rebuilt only when the hovered province changes. */
-function gmPreview(path){try{const w=document.getElementById('gMapWrap');if(!w)return;let sv=document.getElementById('gmPrev');if(!path||path.length<2){if(sv)sv.style.display='none';return;}
-  if(!sv){sv=document.createElementNS('http://www.w3.org/2000/svg','svg');sv.id='gmPrev';sv.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4';sv.innerHTML='<polyline fill="none" stroke="#ffe27a" stroke-width="3" stroke-dasharray="9 6" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><circle r="6" fill="#ffe27a" stroke="#000" stroke-width="1.5"/>';w.appendChild(sv);}
-  const pts=[];for(const pi of path){const q=GCM.P[pi];if(!q)continue;if(GV.g3&&typeof G3!=='undefined'&&G3.cam){const v=new THREE.Vector3(q.x,2,q.y).project(G3.cam);pts.push([(v.x+1)/2*GV.w,(1-v.y)/2*GV.h]);}else pts.push([q.x*GV.z+GV.ox,q.y*GV.z+GV.oy]);}
-  if(pts.length<2){sv.style.display='none';return;}sv.style.display='';sv.firstChild.setAttribute('points',pts.map(q=>q[0].toFixed(0)+','+q[1].toFixed(0)).join(' '));const e=pts[pts.length-1],c=sv.lastChild;c.setAttribute('cx',e[0].toFixed(0));c.setAttribute('cy',e[1].toFixed(0));}catch(e){}}
+/* Path preview: the route from the selected army to the province under the mouse, in the ONE route style (thin calm line, small arrow head at the destination).
+   3D map = g3RoutePreview (src/13e2-groads.js) draws it on the map itself, so it never lies over the unit cards; flat fallback map = the same look as one SVG. */
+function gmPreview(path){try{if(GV.g3&&typeof g3RoutePreview==='function'){const sv=document.getElementById('gmPrev');if(sv)sv.style.display='none';g3RoutePreview(path&&path.length>1?path:null);return;}
+  const w=document.getElementById('gMapWrap');if(!w)return;let sv=document.getElementById('gmPrev');if(!path||path.length<2){if(sv)sv.style.display='none';return;}
+  if(!sv){sv=document.createElementNS('http://www.w3.org/2000/svg','svg');sv.id='gmPrev';sv.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4';sv.innerHTML='<polyline fill="none" stroke="#f2ebd1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/><polygon fill="#f2ebd1" stroke="#0a121a" stroke-width="1" opacity=".85"/>';w.appendChild(sv);}
+  const pts=[];for(const pi of path){const q=GCM.P[pi];if(q)pts.push([q.x*GV.z+GV.ox,q.y*GV.z+GV.oy]);}
+  if(pts.length<2){sv.style.display='none';return;}sv.style.display='';sv.firstChild.setAttribute('points',pts.map(q=>q[0].toFixed(0)+','+q[1].toFixed(0)).join(' '));
+  const e=pts[pts.length-1],p=pts[pts.length-2],l=Math.hypot(e[0]-p[0],e[1]-p[1])||1,dx=(e[0]-p[0])/l,dy=(e[1]-p[1])/l;sv.lastChild.setAttribute('points',[[e[0],e[1]],[e[0]-dx*8+dy*4,e[1]-dy*8-dx*4],[e[0]-dx*8-dy*4,e[1]-dy*8+dx*4]].map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' '));}catch(e){}}
 function gmInit(cv){const wrap=document.getElementById('gMapWrap');let box=null,bd=null,lastH=-2;
   const rel=ev=>{const r=cv.getBoundingClientRect();return [ev.clientX-r.left,ev.clientY-r.top];};
   cv.addEventListener('pointerdown',ev=>{if(ev.button!==0||!GC||GC.over)return;const [x,y]=rel(ev);if(!ev.shiftKey){bd={x,y,m:0,plain:1};return;}ev.stopImmediatePropagation();cv.setPointerCapture(ev.pointerId);bd={x,y,m:0};},true);   /* Abdullah 19:52 "I can't drag and select armies": plain left-drag = box select (like battles), Shift adds; a click without moving still selects as before; camera = WASD / edges / middle mouse */
@@ -1731,7 +1733,7 @@ const GT_RIV=[[1473,177,1469,173,1465,169,1468,165,1473,165,1478,163,1482,166,14
    Data: coastlines/lakes/rivers = Natural Earth (public domain) baked into 13d-grandterrain.js by orch/grand3d-gen.mjs.
    Layers: relief + painted ground (biome blur, hillshade, snow) | overlay texture (soft owner tint + subtle borders, map modes) |
    sea shader (depth colour, ripples, foam, sea-zone lines) | instanced forests/palms/scrub | instanced settlements |
-   army tokens (Army Standards, 13e3-gtokens.js) + small on-land figures / ships in the close view | move arrows | DOM banners/plates/cards/minimap. */
+   army tokens (Army Standards, 13e3-gtokens.js) + small on-land figures / ships in the close view | route lines | DOM banners/plates/cards/minimap. */
 const G3={keys:new Set(),F:null,R:null,sc:null,cam:null,cv:null,t0:0,raf:0,mode:'political',news:null,dirty:true,hit:[],mini:null,pos:new Map(),hot:new Map(),camera:{x:1200,z:600,d:1900,yaw:0,pitch:.86},cc:null};
 const G3_MODES=[['political','Political'],['terrain','Terrain'],['trade','Trade & resources'],['supply','Supply'],['unrest','Unrest'],['culture','Culture / regions'],['alliances','Alliances & wars'],['development','Development']];
 const G3_BIOME={d:[206,180,126],m:[126,116,102],f:[116,152,78],u:[150,146,130],j:[56,116,62],s:[214,222,230],c:[158,172,116],r:[122,158,96]};
@@ -2290,7 +2292,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
       float dist=length(cameraPosition-vW);c*=mix(g3cloud(vW.xz,uTime),1.,smoothstep(1500.,4200.,dist));c=mix(c,vec3(.616,.722,.788),smoothstep(2200.,6200.,dist));gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
   const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);g3BuildRoads(sc);
   const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);g3BuildChim(grp);g3BuildLights(grp);G3.static=grp;
-  G3.ents=new THREE.Group();sc.add(G3.ents);G3.arrows=new THREE.Group();sc.add(G3.arrows);
+  G3.ents=new THREE.Group();sc.add(G3.ents);G3.routes=new THREE.Group();sc.add(G3.routes);G3.routePrev=null;
   G3.ringM=new THREE.Mesh(new THREE.PlaneGeometry(2.6,2.6).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:g3RingTex(),color:0xffe27a,transparent:true,depthTest:false,depthWrite:false}));G3.ringM.renderOrder=5;G3.ringM.visible=false;sc.add(G3.ringM);try{g3ShipInit(sc);}catch(e){G3.ship=null;}
   g3UI();G3.miniDirty=true;g3ApplyQuality();try{cv.style.filter='contrast(1.06) saturate(1.18)';const w=document.getElementById('gMapWrap');if(w&&!document.getElementById('g3vig')){const v=document.createElement('div');v.id='g3vig';v.style.cssText='position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 58%,rgba(4,10,18,.34) 100%)';w.insertBefore(v,cv.nextSibling);}}catch(e){}
   if(!G3.raf)G3.raf=requestAnimationFrame(g3Frame);return true;}
@@ -2357,9 +2359,9 @@ function g3BuildSmoke(){if(G3.smoke){G3.sc.remove(G3.smoke);G3.smoke.geometry.di
     vertexShader:'attribute float aSeed;attribute float aK;uniform float uT;uniform float uPx;varying float vL;varying float vK;void main(){float l=fract(uT*.16+aSeed);vL=l;vK=aK;vec3 p=position;p.y+=l*46.;p.x+=l*9.*(aSeed-.5);vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;gl_PointSize=(8.+l*34.)*uPx*(700./-mv.z)*1.6;}',
     fragmentShader:'varying float vL;varying float vK;void main(){vec2 c=gl_PointCoord-.5;float r=length(c);if(r>.5)discard;float a=(1.-vL)*smoothstep(.5,.1,r)*.55;vec3 col=mix(vec3(1.,.55,.15),vec3(.16,.15,.15),smoothstep(0.,.28,vL));if(vK<1.5)col=mix(vec3(1.,.6,.2),vec3(.28,.27,.26),smoothstep(0.,.18,vL));gl_FragColor=vec4(col,a);}'});
   G3.smoke=new THREE.Points(g,m);G3.smoke.frustumCulled=false;G3.sc.add(G3.smoke);}
-// move arrows: green along the ground for marches, red when the target is hostile
+// where a route runs (the thin route lines themselves: g3Routes, src/13e2-groads.js)
 function g3PathPts(a){const P=GCM.P,pts=[];const q=(i)=>{const p=P[i],tw=!p.sea?g3Main(i):null;return [tw?tw.x:p.x,tw?tw.z:p.y];};{const e=G3.arm&&G3.arm.get(a.id);pts.push(e&&(e.x||e.z)?[e.x,e.z]:q(a.at));}   /* the route starts at the army's token */for(const j of a.path)pts.push(q(j));return pts;}
-/* g3BuildArrows lives in src/13e2-groads.js (groads 2026-11-08) */
+/* the route lines (g3Routes, g3RoutePreview) live in src/13e2-groads.js */
 /* (armies3 thick flat arrows superseded by the outlined 3D arrows in 13e2-groads.js; same rule: own = green, seen enemies at war = red) */
 // ---- HUD: mode chips, round buttons, army cards, minimap, news, banners
 function g3Css(){if(document.getElementById('g3css'))return;const s=document.createElement('style');s.id='g3css';s.textContent=`
@@ -2434,6 +2436,7 @@ function g3Legend(){const L=G3.leg;if(!L)return;const shut=SET.g3leg!=='open'||!
    +r('<i class="tk me sea"><i class="ou"></i><i class="in"></i><i class="fl"></i></i> <i class="tk me air"><i class="ou"></i><i class="in"></i><i class="fl"></i></i>','Ship hull = fleet · swept wing = air group','A fleet is a ship\'s hull, a group of only helicopters and drones is a swept wing. Same flag, number and edges as a shield; the small pin under it = the exact spot.')
    +r('<i class="tk me"><i class="ou"></i><i class="in"></i><i class="fl"></i></i> <i class="tk war"><i class="ou"></i><i class="in"></i><i class="fl"></i></i> <i class="tk ally"><i class="ou"></i><i class="in"></i><i class="fl"></i></i>','Rim: white = yours · red = enemy · blue = ally','Everyone else is small and faint, with no number.')
    +r('<span style="font-size:11px">▲ ⌜⌟ ◌ ⚡</span>','Shape = what it is doing','Plain = holding. Arrow nose + arrival in days = marching. Gold corner brackets = dug in behind forts. Dashed red ring round a town = besieging it. Two tokens touching with a lightning mark = fighting; the bar under them shows who is winning.')
+   +r('<span style="display:inline-block;width:20px;height:2px;background:#f2ebd1;vertical-align:middle"></span><span style="color:#f2ebd1;font-size:10px;margin-left:-3px">▶</span>','Route line','A thin line from an army to where it is going, with a small arrow head at the destination. Cream = yours, red = an enemy you can see, fainter = the route you are about to order with a right-click.')
    +r('<i class="tk far"></i> 12','Zoomed out: a tiny shape and a number','Far away each army is a tiny shield, hull or wing in its owner\'s color; yours, your enemies\' and your allies\' show their unit count. Zoom in for the token, closer still for the army itself in miniature.')
    +r('<span style="font:700 10px system-ui;background:#f4f4ef;color:#111;border-radius:7px;padding:0 4px">3</span>','Stack: several armies in one place','Hover or click the stack to fan the armies out, then click the one you want.')
    +r('<span style="font:700 10px system-ui;background:#5bd66a;color:#111;border-radius:7px;padding:0 5px">Good odds</span>','Odds, when your army is selected','Every enemy army your selected army can reach shows Good odds, Even fight or Bad odds — the same strength estimate the auto-resolve uses.')
@@ -2479,7 +2482,7 @@ function g3HitAt(mx,my){let best=null,bd=1e9;for(const h of G3.hit){const inBox=
 function g3Click(mx,my){const best=g3HitAt(mx,my);if(typeof gtkClicked==='function')gtkClicked(best);
   if(best){const a=GC.armies.find(x=>x.id===best.aid);GV.selA=best.aid;if(a)GV.sel=a.at;guSide();g3Refresh();return;}
   const g=g3Ground(mx,my);if(!g)return;const h=guProvAt(g[0],g[1]);GV.sel=h;if(GV.selA){const a=GC.armies.find(x=>x.id===GV.selA);if(!a||a.at!==h)GV.selA=0;}guSide();g3Refresh();}
-function g3Refresh(){G3.sig='';G3.arrowDirty=true;}
+function g3Refresh(){G3.sig='';G3.routeDirty=true;}
 function g3AfterTurn(){G3.animOK=true;G3.newsTurn=GC.turn-1;g3SyncArmies();G3.animOK=false;g3PaintOverlay();if(G3.tOv)G3.tOv.needsUpdate=true;G3.miniDirty=true;g3Refresh();g3News();}
 function g3Refreshed(){if(!G3.R)return;g3SyncArmies();g3PaintOverlay();if(G3.tOv)G3.tOv.needsUpdate=true;G3.miniDirty=true;g3Refresh();if(G3.endB)G3.endB.disabled=GC.ph!=='plan'||!!GC.over;}
 // short country names for the callouts (long official names do not fit next to a small country)
@@ -2585,7 +2588,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   {const sa=GV.selA&&G3.arm.get(GV.selA);let X,Y,Z,R,o;if(sa){X=sa.x;Y=sa.g.position.y+.4;Z=sa.z;R=sa.sea?s*7:Math.max(s*2.4,sa.g.scale.x*5.5);o=sa.o;}else if(GV.sel>=0&&GCM.P[GV.sel]&&GCM.P[GV.sel].land){const tw=g3Main(GV.sel);if(tw){X=tw.x;Z=tw.z;Y=g3HeightAt(X,Z)+.4;R=Math.max(s*3,tw.R*(G3.townLod===1?G3_TOWN_MID:1)*1.15);o=GCM.P[GV.sel].o;}}
    if(X!==undefined){const m=G3.ringM;m.visible=true;m.position.set(X,Y,Z);m.scale.setScalar(R*(1+.04*Math.sin(G3.time*3)));m.rotation.y=G3.time*.25;m.material.color.setHex(o===GC.me?0x46e86c:(GC.me&&typeof grAtWar==='function'&&grAtWar(GC.me,o))?0xff4a3d:0xffd04a);}else G3.ringM.visible=false;}
   const sig=GV.selA+'|'+GV.sel+'|'+GC.turn+'|'+GC.armies.length+'|'+GC.armies.reduce((a,x)=>a+x.u.length+x.path.length,0);
-  if(sig!==G3.sig||G3.arrowDirty){G3.sig=sig;G3.arrowDirty=false;g3BuildArrows();g3Cards();G3.miniDirty=G3.miniDirty||0;}
+  if(sig!==G3.sig||G3.routeDirty){G3.sig=sig;G3.routeDirty=false;g3Routes();g3Cards();G3.miniDirty=G3.miniDirty||0;}
   if(G3.ship)g3ShipTick(dt,s);
   G3.R.render(G3.sc,G3.cam);if(G3.vigS){const ac=G3.R.autoClear;G3.R.autoClear=false;G3.R.render(G3.vigS,G3.vigC);G3.R.autoClear=ac;}
   if(G3.lHov!==GV.hov+'|'+GV.sel){G3.lHov=GV.hov+'|'+GV.sel;G3.lblDirty=true;}
@@ -2600,7 +2603,7 @@ if(!window._g3Keys){window._g3Keys=1;const ok=ev=>{const t=ev.target&&ev.target.
    Roads: yellow-ochre ribbons between the main towns of neighbouring land provinces (Rome/Total War look), gentle curves that follow
    the terrain height, wider for routes between capitals/big cities, thin feeder roads from each province's smaller towns; ONE merged mesh.
    Sea routes: thin dashed white lines between neighbouring sea provinces; ONE merged mesh. Both fade out at world zoom.
-   Arrows: thick 3D green arrows along the planned route of your armies (red for visible enemies), dark outline + soft ground shadow. */
+   Routes: one thin calm line along the planned route of your armies (muted red for visible enemies) with a small arrow head at the destination (g3Routes below). */
 const GR_ROADV=`uniform vec2 uRes;uniform float uPx,uF0,uF1;attribute vec3 aP0,aP1;attribute vec2 aC;attribute vec4 aCol;attribute vec2 aW;attribute float aS;varying vec4 vCol;varying float vD,vH,vS,vDist;
   void main(){vec4 c0=projectionMatrix*viewMatrix*vec4(aP0,1.),c1=projectionMatrix*viewMatrix*vec4(aP1,1.);vec2 s0=c0.xy/c0.w*uRes*.5,s1=c1.xy/c1.w*uRes*.5,d=s1-s0;float l=length(d);d=l>1e-4?d/l:vec2(1.,0.);vec2 n=vec2(-d.y,d.x);
     vec3 pm=mix(aP0,aP1,aC.x);float dist=length(cameraPosition-pm);float hw=max(aW.x*uPx,aW.y*uRes.y/(.65*dist))*.5;hw=max(hw,.6*uPx);
@@ -2641,32 +2644,33 @@ function g3BuildRoads(sc){try{if(!G3.F||!G3.LU)return;const P=GCM.P,T=g3Towns(),
       if(dry>n*.15)continue;S.push({xy,c:[.93,.96,1,.55],w:[1.3,0]});}}
   const rm=grStripMesh(R,grRoadMat(0,750,1300)),sm=grStripMesh(S,grRoadMat(5,1600,2700));
   if(rm){rm.renderOrder=1;sc.add(rm);}if(sm){sm.renderOrder=1;sc.add(sm);}G3.roads={n:R.length,sea:S.length,rm,sm};}catch(e){console.warn('groads',e);}}
-// move arrows: thick raised ribbon along the route (dark outline, bright centre, soft ground shadow), arrow head at the destination
-function g3BuildArrows(){if(!G3.arrows)return;while(G3.arrows.children.length){const c=G3.arrows.children.pop();c.geometry.dispose();c.material.dispose();}if(!GC)return;const Pos=[],Col=[];
-  const v=(x,y,z,c)=>{Pos.push(x,y,z);Col.push(c[0],c[1],c[2],c[3]);},quad=(A,B,ya,yb,wa,wb,ca,cb,da,db)=>{   // strip between lateral offsets wa..wb of samples A,B
-    const a0=[A[0]+A[2]*wa+(da||0),ya,A[1]+A[3]*wa+(da||0)],a1=[A[0]+A[2]*wb+(da||0),ya,A[1]+A[3]*wb+(da||0)],b0=[B[0]+B[2]*wa+(db||0),yb,B[1]+B[3]*wa+(db||0)],b1=[B[0]+B[2]*wb+(db||0),yb,B[1]+B[3]*wb+(db||0)];
-    v(...a0,ca);v(...a1,cb);v(...b1,cb);v(...a0,ca);v(...b1,cb);v(...b0,ca);};
+// ROUTES (mapshapes; Abdullah's picture orch/concepts/bugs/map-ugly-arrows-blocky-coast.jpg): the ONE way a move is drawn on the campaign map — a thin, calm line along the
+// route with a small arrow head at the destination. It replaced the chunky green 3D ribbons and the yellow dotted hover line. The line keeps the same width on screen at every zoom
+// (the vertex shader pushes each vertex sideways in screen pixels), one mesh for every route, one more for the route you are about to order. View only.
+function g3RouteMat(){if(G3.routeMat)return G3.routeMat;return G3.routeMat=new THREE.ShaderMaterial({transparent:true,depthTest:false,depthWrite:false,side:THREE.DoubleSide,uniforms:{uRes:{value:new THREE.Vector2(1600,900)}},
+  vertexShader:'attribute vec3 aT;attribute vec2 aOff;attribute vec4 aC;uniform vec2 uRes;varying vec4 vC;void main(){vC=aC;mat4 m=projectionMatrix*modelViewMatrix;vec4 c=m*vec4(position,1.),d=m*vec4(position+aT,1.);vec2 t=(d.xy/d.w-c.xy/c.w)*uRes;float l=length(t);t=l>1e-4?t/l:vec2(1.,0.);c.xy+=(t*aOff.x+vec2(-t.y,t.x)*aOff.y)*2./uRes*c.w;gl_Position=c;}',
+  fragmentShader:'varying vec4 vC;void main(){gl_FragColor=vC;}'});}
+/* one mesh for a list of routes: [{pts:[[x,z],...],c:[r,g,b,a],w:line width in screen pixels}] */
+function g3RouteMesh(L){const Pos=[],Tan=[],Off=[],Col=[],dark=[.04,.07,.1];
+  const v=(p,ox,oy,c,al)=>{Pos.push(p[0],p[2],p[1]);Tan.push(p[3],0,p[4]);Off.push(ox,oy);Col.push(c[0],c[1],c[2],al);};
+  for(const R of L){if(R.pts.length<2)continue;const cv=new THREE.CatmullRomCurve3(R.pts.map(p=>new THREE.Vector3(p[0],0,p[1])),false,'catmullrom',.4),len=cv.getLength(),n=Math.max(6,Math.min(160,Math.round(len/5))),S=[];
+    for(let i=0;i<=n;i++){const q=cv.getPoint(i/n);S.push([q.x,q.z]);}
+    for(let i=0;i<S.length;i++){const pr=S[Math.max(0,i-1)],nx=S[Math.min(S.length-1,i+1)];let dx=nx[0]-pr[0],dz=nx[1]-pr[1];const l=Math.hypot(dx,dz)||1;S[i]=[S[i][0],S[i][1],Math.max(.8,g3HeightAt(S[i][0],S[i][1]))+1.3,dx/l,dz/l];}
+    const strip=(hw,c,al)=>{for(let i=0;i<n;i++){const A=S[i],B=S[i+1],fa=al*Math.min(1,.25+i/4),fb=al*Math.min(1,.25+(i+1)/4);   /* the start fades in under the army's own token */
+        v(A,0,-hw,c,fa);v(A,0,hw,c,fa);v(B,0,hw,c,fb);v(A,0,-hw,c,fa);v(B,0,hw,c,fb);v(B,0,-hw,c,fb);}},
+      head=(ln,hw,fw,c,al)=>{const T=S[n];v(T,fw,0,c,al);v(T,fw-ln,-hw,c,al);v(T,fw-ln,hw,c,al);};
+    const w=R.w,al=R.c[3];strip(w/2+1,dark,al*.55);head(w*3.2+3.5,w*1.6+2,2,dark,al*.6);strip(w/2,R.c,al);head(w*3.2,w*1.6,0,R.c,al);}   /* a soft dark edge so the line reads on sand, snow and sea alike */
+  if(!Pos.length)return null;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(Pos,3));g.setAttribute('aT',new THREE.Float32BufferAttribute(Tan,3));g.setAttribute('aOff',new THREE.Float32BufferAttribute(Off,2));g.setAttribute('aC',new THREE.Float32BufferAttribute(Col,4));
+  const m=new THREE.Mesh(g,g3RouteMat());m.renderOrder=4;m.frustumCulled=false;m.onBeforeRender=()=>{g3RouteMat().uniforms.uRes.value.set(Math.max(1,GV.w),Math.max(1,GV.h));};return m;}
+const G3_ROUTE={me:[.95,.92,.82,.9],sel:[1,.98,.9,1],foe:[.9,.42,.36,.85],prev:[.95,.92,.82,.6]};   // calm cream = yours, muted red = a visible enemy's; the selected army's is a little brighter and wider
+function g3Routes(){if(!G3.routes)return;for(const c of G3.routes.children.slice())if(c!==G3.routePrev){G3.routes.remove(c);c.geometry.dispose();}if(!GC)return;const L=[];
   for(const a of GC.armies){if(!a.path.length)continue;const mine=!GC.me||a.o===GC.me,enemy=!mine&&GC.me&&grAtWar(a.o,GC.me)&&grSeen(a);if(!mine&&!enemy&&a.id!==GV.selA)continue;
-    const pts=g3PathPts(a);if(pts.length<2)continue;const sel=a.id===GV.selA,base=mine?[.36,.9,.26]:[.95,.2,.16],w=(sel?5.2:mine?3.8:3)*(a.sea?.8:1);
-    const cv=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(p[0],0,p[1])),false,'catmullrom',.4),len=cv.getLength(),n=Math.max(8,Math.round(len/4));
-    const S=[];for(let i=0;i<=n;i++){const q=cv.getPoint(i/n);S.push([q.x,q.z]);}
-    for(let i=0;i<S.length;i++){const p=S[i],pr=S[Math.max(0,i-1)],nx=S[Math.min(S.length-1,i+1)];let dx=nx[0]-pr[0],dz=nx[1]-pr[1];const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;S[i]=[p[0],p[1],-dz/2,dx/2,dx,dz];}
-    const Y=S.map(s=>Math.max(.8,g3HeightAt(s[0],s[1]))),hl=w*2.7,hk=Math.max(1,Math.min(S.length-2,Math.round(hl/(len/n))));
-    const ol=[base[0]*.22,base[1]*.22,base[2]*.22,.95],ed=[base[0]*.7,base[1]*.7,base[2]*.7,.95],ce=[Math.min(1,base[0]*1.18+.08),Math.min(1,base[1]*1.12+.06),Math.min(1,base[2]*1.15+.06),.95],sh=[0,0,0,.3];
-    const end=S.length-1-hk,sd=w*.35;
-    for(let i=0;i<end;i++){if((i&3)>1&&i<end-1)continue;   /* Army Standards: the route is dotted (two steps drawn, two skipped), the arrow head stays solid */
-      const A=S[i],B=S[i+1],ya=Y[i],yb=Y[i+1],fa=Math.min(1,i/3);   // tail fades in
-      quad(A,B,ya+.25,yb+.25,-w*1.05,w*1.05,sh,sh,sd,sd);
-      const ta=ya+1.4,tb=yb+1.4,o=[ol[0],ol[1],ol[2],.95*(.35+.65*fa)];
-      quad(A,B,ta,tb,-w*1.12,-w*.82,o,o);quad(A,B,ta,tb,w*.82,w*1.12,o,o);
-      quad(A,B,ta,tb,-w*.82,0,[ed[0],ed[1],ed[2],.95*(.35+.65*fa)],[ce[0],ce[1],ce[2],.95*(.35+.65*fa)]);quad(A,B,ta,tb,0,w*.82,[ce[0],ce[1],ce[2],.95*(.35+.65*fa)],[ed[0],ed[1],ed[2],.95*(.35+.65*fa)]);}
-    const H=S[end],Tp=S[S.length-1],hy=Math.max(Y[end],Y[S.length-1])+1.45,hw=w*1.15,tip=[Tp[0]+Tp[4]*w*.6,Tp[1]+Tp[5]*w*.6],L0=[H[0]+H[2]*2*hw,H[1]+H[3]*2*hw],R0=[H[0]-H[2]*2*hw,H[1]-H[3]*2*hw];
-    v(L0[0]+sd,hy-1.15,L0[1]+sd,sh);v(R0[0]+sd,hy-1.15,R0[1]+sd,sh);v(tip[0]+sd,hy-1.15,tip[1]+sd,sh);   // head shadow
-    const g=1.18,Lg=[H[0]+H[2]*2*hw*g-H[4]*w*.25,H[1]+H[3]*2*hw*g-H[5]*w*.25],Rg=[H[0]-H[2]*2*hw*g-H[4]*w*.25,H[1]-H[3]*2*hw*g-H[5]*w*.25],tg=[tip[0]+Tp[4]*w*.45,tip[1]+Tp[5]*w*.45];
-    v(Lg[0],hy-.02,Lg[1],ol);v(Rg[0],hy-.02,Rg[1],ol);v(tg[0],hy-.02,tg[1],ol);   // head outline
-    v(L0[0],hy,L0[1],ed);v(H[0],hy,H[1],ce);v(tip[0],hy,tip[1],ce);v(H[0],hy,H[1],ce);v(R0[0],hy,R0[1],ed);v(tip[0],hy,tip[1],ce);}
-  if(!Pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(Pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(Col,4));
-  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,depthTest:false,depthWrite:false}));m.renderOrder=4;m.frustumCulled=false;G3.arrows.add(m);}
+    const pts=g3PathPts(a);if(pts.length<2)continue;const sel=a.id===GV.selA;L.push({pts,c:sel&&mine?G3_ROUTE.sel:mine?G3_ROUTE.me:G3_ROUTE.foe,w:sel?3:2.2});}
+  const m=g3RouteMesh(L);G3.routeN=L.length;if(m)G3.routes.add(m);}
+/* the route you are about to order (mouse over a province with your army selected): the same line, fainter. path = province numbers from the army's own province on; null = none */
+function g3RoutePreview(path){if(!G3.routes)return;if(G3.routePrev){G3.routes.remove(G3.routePrev);G3.routePrev.geometry.dispose();G3.routePrev=null;}if(!path||path.length<2||!GC)return;
+  const a=GC.armies.find(x=>x.id===GV.selA),P=GCM.P,q=i=>{const p=P[i],tw=!p.sea?g3Main(i):null;return [tw?tw.x:p.x,tw?tw.z:p.y];},pts=path.map(q);{const e=a&&a.at===path[0]&&G3.arm&&G3.arm.get(a.id);if(e&&(e.x||e.z))pts[0]=[e.x,e.z];}
+  const m=g3RouteMesh([{pts,c:G3_ROUTE.prev,w:2.2}]);if(m){G3.routePrev=m;G3.routes.add(m);}}
 // ARMY STANDARDS (armytokens, Abdullah 2026-11-10 19:17 "Go" to orch/concepts/army-standards.jpg; spec orch/concepts/ARMY-STANDARDS.md).
 // CSS note: body gets the class 'tk' from the battle ticker (08-ui.js tkApply), so every rule here is scoped under #g3ui / #g3leg.
 // The ONE way an army is drawn on the grand map: a token read like a watch face, whose SHAPE says what it is (mapshapes, Abdullah 2026-11-11 17:37 "Shield"): land army = heraldic shield, fleet = ship hull, air group = swept wing; capital plates stay round. It replaced the figure blobs (far and middle zoom), shield badges and

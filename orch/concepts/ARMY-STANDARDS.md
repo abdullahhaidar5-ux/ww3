@@ -12,7 +12,7 @@ One round token per army, read like a watch face. It REPLACES the figure blobs, 
    red under 35 %). Thin gold outer ring = supply (fuel + ammunition; red under 30 %). Small pin under it = exact map spot.
    Plate to the right: unit count, general's stars (level), and at close zoom the make-up: infantry · armour · fire support counts.
 2. **Rim = whose side:** white = yours, red = at war with you, blue = ally; everyone else small, faint, no number.
-3. **Shape = what it is doing:** plain circle = holding · arrow nose + dotted route + arrival ("4 days") = marching ·
+3. **Shape = what it is doing:** plain circle = holding · arrow nose + thin route line (mapshapes 2026-11-13: one route style, no dotted line or 3D arrows) + arrival ("4 days") = marching ·
    gold corner brackets = dug in / fortified · dashed ring closing round the town = besieging · two tokens touching with a
    lightning mark and a green/red tug bar = fighting (bar = who is winning).
 4. **Zoom tiers (the ONE shared zoom-tier value from the calm-map work):** far = owner-colour dot + number (yours/enemies

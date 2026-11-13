@@ -36,10 +36,9 @@ function guDraw(){GV.raf=0;const cv=GV.cv;if(!cv||!GC)return;if(GV.dirty)guPaint
   const sx=x=>x*z+GV.ox,sy=y=>y*z+GV.oy;GV.chips=[];
   // selected province outline
   if(GV.sel>=0)guOutline(GV.sel,'#fff2a8',2.4);if(GV.hov>=0&&GV.hov!==GV.sel)guOutline(GV.hov,'rgba(255,255,255,.7)',1.4);
-  // sea lanes of the selected army / all own armies: dotted paths
-  c.lineWidth=2;c.setLineDash([6,5]);
-  for(const a of GC.armies){if(!a.path.length||(a.o!==GC.me&&GC.me))continue;const sel=a.id===GV.selA;c.strokeStyle=sel?'#ffe27a':'rgba(255,255,255,.55)';c.beginPath();let q=P[a.at];c.moveTo(sx(q.x),sy(q.y));for(const j of a.path){q=P[j];c.lineTo(sx(q.x),sy(q.y));}c.stroke();}
-  c.setLineDash([]);
+  // routes of your armies on the flat fallback map: the same thin calm line as on the 3D map (src/13e2-groads.js)
+  c.lineWidth=2;
+  for(const a of GC.armies){if(!a.path.length||(a.o!==GC.me&&GC.me))continue;const sel=a.id===GV.selA;c.strokeStyle=sel?'#fffae6':'rgba(242,235,209,.7)';c.beginPath();let q=P[a.at];c.moveTo(sx(q.x),sy(q.y));for(const j of a.path){q=P[j];c.lineTo(sx(q.x),sy(q.y));}c.stroke();}
   const fs=Math.max(10,Math.min(15,9+z*2.2));c.textAlign='center';c.textBaseline='middle';
   // nation names at overview zoom
   if(z<1.15){const by={};for(const p of P)if(p.land){const o=GC.prov[p.i].o;(by[o]=by[o]||[]).push(p);}c.font='bold '+Math.round(10+z*3)+'px sans-serif';
@@ -291,11 +290,14 @@ function gmPaint(){try{if(!document.getElementById('gmCss')){const s=document.cr
   hd.querySelector('[data-k=m]').onclick=()=>{const L=gmIds();const seen=new Set();for(const id of L){const a=gmMine(id);if(!a||seen.has(a.at))continue;seen.add(a.at);grMerge(id);}gmSet(L.filter(gmMine));grSave();grandMapRefresh();};
   hd.querySelector('[data-k=s]').onclick=()=>{const L=gmIds();for(const id of L)grSplit(id);gmSet(L.filter(gmMine));grSave();grandMapRefresh();};
   for(const id of ids){const a=gmMine(id);if(!a)continue;const d=document.createElement('div');d.className='c';const p=GCM.P[a.at],dest=a.path&&a.path.length?GCM.P[a.path[a.path.length-1]]:null;d.innerHTML='<b>'+a.nm+'</b> · '+a.u.length+' units'+(typeof gmMorBar==='function'?gmMorBar(a):'')+'<br><span style="opacity:.75">'+(p?p.n:'')+(dest?' → '+dest.n:'')+'</span>';d.title='Click: select only this army · Shift+click: add/remove · Double-click: go to it';d.onclick=ev=>{if(ev.shiftKey){const L=gmIds().slice(),i=L.indexOf(id);if(i>=0)L.splice(i,1);else L.push(id);gmSet(L);}else gmSet([id]);};d.ondblclick=()=>{try{const e=G3.arm&&G3.arm.get(id);if(e&&G3.camera){G3.camera.x=e.x;G3.camera.z=e.z;}}catch(_){}};c.appendChild(d);}}catch(e){console.error('gmPaint',e);}}
-/* A3 path preview (laneF): dashed route line from the selected army to the hovered province; one SVG, rebuilt only when the hovered province changes. */
-function gmPreview(path){try{const w=document.getElementById('gMapWrap');if(!w)return;let sv=document.getElementById('gmPrev');if(!path||path.length<2){if(sv)sv.style.display='none';return;}
-  if(!sv){sv=document.createElementNS('http://www.w3.org/2000/svg','svg');sv.id='gmPrev';sv.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4';sv.innerHTML='<polyline fill="none" stroke="#ffe27a" stroke-width="3" stroke-dasharray="9 6" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><circle r="6" fill="#ffe27a" stroke="#000" stroke-width="1.5"/>';w.appendChild(sv);}
-  const pts=[];for(const pi of path){const q=GCM.P[pi];if(!q)continue;if(GV.g3&&typeof G3!=='undefined'&&G3.cam){const v=new THREE.Vector3(q.x,2,q.y).project(G3.cam);pts.push([(v.x+1)/2*GV.w,(1-v.y)/2*GV.h]);}else pts.push([q.x*GV.z+GV.ox,q.y*GV.z+GV.oy]);}
-  if(pts.length<2){sv.style.display='none';return;}sv.style.display='';sv.firstChild.setAttribute('points',pts.map(q=>q[0].toFixed(0)+','+q[1].toFixed(0)).join(' '));const e=pts[pts.length-1],c=sv.lastChild;c.setAttribute('cx',e[0].toFixed(0));c.setAttribute('cy',e[1].toFixed(0));}catch(e){}}
+/* Path preview: the route from the selected army to the province under the mouse, in the ONE route style (thin calm line, small arrow head at the destination).
+   3D map = g3RoutePreview (src/13e2-groads.js) draws it on the map itself, so it never lies over the unit cards; flat fallback map = the same look as one SVG. */
+function gmPreview(path){try{if(GV.g3&&typeof g3RoutePreview==='function'){const sv=document.getElementById('gmPrev');if(sv)sv.style.display='none';g3RoutePreview(path&&path.length>1?path:null);return;}
+  const w=document.getElementById('gMapWrap');if(!w)return;let sv=document.getElementById('gmPrev');if(!path||path.length<2){if(sv)sv.style.display='none';return;}
+  if(!sv){sv=document.createElementNS('http://www.w3.org/2000/svg','svg');sv.id='gmPrev';sv.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4';sv.innerHTML='<polyline fill="none" stroke="#f2ebd1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/><polygon fill="#f2ebd1" stroke="#0a121a" stroke-width="1" opacity=".85"/>';w.appendChild(sv);}
+  const pts=[];for(const pi of path){const q=GCM.P[pi];if(q)pts.push([q.x*GV.z+GV.ox,q.y*GV.z+GV.oy]);}
+  if(pts.length<2){sv.style.display='none';return;}sv.style.display='';sv.firstChild.setAttribute('points',pts.map(q=>q[0].toFixed(0)+','+q[1].toFixed(0)).join(' '));
+  const e=pts[pts.length-1],p=pts[pts.length-2],l=Math.hypot(e[0]-p[0],e[1]-p[1])||1,dx=(e[0]-p[0])/l,dy=(e[1]-p[1])/l;sv.lastChild.setAttribute('points',[[e[0],e[1]],[e[0]-dx*8+dy*4,e[1]-dy*8-dx*4],[e[0]-dx*8-dy*4,e[1]-dy*8+dx*4]].map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' '));}catch(e){}}
 function gmInit(cv){const wrap=document.getElementById('gMapWrap');let box=null,bd=null,lastH=-2;
   const rel=ev=>{const r=cv.getBoundingClientRect();return [ev.clientX-r.left,ev.clientY-r.top];};
   cv.addEventListener('pointerdown',ev=>{if(ev.button!==0||!GC||GC.over)return;const [x,y]=rel(ev);if(!ev.shiftKey){bd={x,y,m:0,plain:1};return;}ev.stopImmediatePropagation();cv.setPointerCapture(ev.pointerId);bd={x,y,m:0};},true);   /* Abdullah 19:52 "I can't drag and select armies": plain left-drag = box select (like battles), Shift adds; a click without moving still selects as before; camera = WASD / edges / middle mouse */

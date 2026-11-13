@@ -22,7 +22,7 @@ await sh('world');
 await pg.evaluate(()=>{guFit(GR_REGIONS[4][1]);guRedraw();});await sh('middle-east');
 await pg.evaluate(()=>{const i=GCM.P.findIndex(p=>p.n&&/Tehran|Isfahan/.test(p.n));guCentre(i<0?0:i,2.4);G3.camera.d=340;guRedraw();});await sh('middle');
 await pg.evaluate(()=>{const i=GCM.P.findIndex(p=>p.n&&/Tehran|Isfahan/.test(p.n));guCentre(i<0?0:i,2.4);G3.camera.d=175;guRedraw();});await sh('close');
-// the token states in one picture: at war with Iraq, your army selected and marching on Baghdad -> arrow nose, dotted route, arrival, odds pills, dug-in brackets
+// the token states in one picture: at war with Iraq, your army selected and marching on Baghdad -> arrow nose, thin route line, arrival, odds pills, dug-in brackets
 await pg.evaluate(()=>{const me='IR',foe='IQ';grDeclare(me,foe);let pair=null;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===me)for(const j of p.adj)if(GCM.P[j].land&&GC.prov[j].o===foe&&GC.armies.some(a=>a.at===j&&a.o===foe)){pair=[p.i,j];break;}
   if(!pair)for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===me)for(const j of p.adj)if(GCM.P[j].land&&GC.prov[j].o===foe){pair=[p.i,j];break;}
   const a=GC.armies.find(x=>x.o===me);a.at=pair[0];a.path=[];GV.sel=pair[0];GV.selA=a.id;grandMapRefresh();grOrderMove(a.id,pair[1]);g3SyncArmies();for(const e of G3.arm.values())e.mv=1;const c=document.getElementById('gCoach');if(c)c.remove();guCentre(pair[1],2.4);G3.camera.d=262;guRedraw();});await sh('odds');

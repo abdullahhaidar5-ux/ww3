@@ -443,6 +443,7 @@ try {
     out.mid = set(350); { const sv = GV.selA; GV.selA = 0; out.midNoSel = set(350); GV.selA = sv; set(350); } const on = q => [...document.querySelectorAll(q)].filter(e => { for (let p = e; p && p.id !== 'g3ui'; p = p.parentNode) if (p._v === 'none') return false; return true; });
     out.march = on('#g3ui .tk.me .ar').length; out.eta = on('#g3ui .eta').map(e => e.textContent); out.pill = on('#g3ui .tk.war .od').map(e => e.textContent);
     { const m = document.getElementById('g3modes'), r = m && m.getBoundingClientRect(); out.modeOver = !r || !r.width ? -1 : [...document.querySelectorAll('#g3cards .card,#g3mini,#g3btns>button')].filter(q => { const b = q.getBoundingClientRect(); return b.width > 0 && !(b.right <= r.left || b.left >= r.right || b.bottom <= r.top || b.top >= r.bottom); }).length; }
+    out.routeN = G3.routeN | 0; out.arrows = typeof window.g3BuildArrows === 'function' || !!G3.arrows;
     out.close = set(150); out.make = on('#g3ui .tk.me .pt small').length; out.foe = !!foe;
     // the pill's numbers against the real auto-resolve with the dice at zero (then every unit is put back)
     const o = gtkOdds([a.id], to); if (o) { const sv = GC.armies.map(x => JSON.stringify(x.u)), sg = JSON.stringify(GC.prov[to].gar), r = grAuto(o.b, () => 0);
@@ -458,6 +459,7 @@ try {
   if (!tk.march || !tk.eta.some(t => /^\d+ days?$/.test(t))) fails.push('armytokens: marching army shows no arrow nose / arrival in days ' + JSON.stringify(tk.eta));
   if (!tk.mid.shield || tk.mid.round || tk.close.round) fails.push('mapshapes: land-army tokens are not shield shaped at middle zoom ' + JSON.stringify({ shield: tk.mid.shield, hull: tk.mid.hull, round: tk.mid.round, closeRound: tk.close.round }));
   if (tk.modeOver !== 0) fails.push('mapshapes: the map-mode button lies on unit cards, minimap or round buttons (' + tk.modeOver + ')');
+  if (tk.arrows || !tk.routeN) fails.push('mapshapes: a marching army must show the one thin route line and no old arrows ' + JSON.stringify({ arrows: tk.arrows, routes: tk.routeN }));
   if (tk.close.tier !== 2 || !tk.make) fails.push('armytokens: close view shows no make-up counts'); if (!tk.close.figs) fails.push('armytokens: close view shows no on-land army figures');
   if (tk.foe && (!tk.pill.length || !tk.pill.every(t => /^(Good odds|Even fight|Bad odds)$/.test(t)))) fails.push('armytokens: no odds pill on the enemy army in reach ' + JSON.stringify(tk.pill));
   if (!tk.est || tk.est[0] !== tk.est[2] || tk.est[1] !== tk.est[3]) fails.push('armytokens: odds are not the auto-resolve estimate ' + JSON.stringify(tk.est));

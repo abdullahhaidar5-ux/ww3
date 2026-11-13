@@ -194,6 +194,11 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
 // mapshapes item 2: the map-mode ("Political") button sits above the round map buttons in the bottom-right corner and the unit cards keep to the strip between the minimap and those buttons, so the button never lies on the selected army's cards (picture of the old overlap: orch/concepts/tokens/after-selected.jpg). Behaviour guard in orch/grandtest.mjs.
 { const g = SRC['13e-grand3d.js'] || '';
   ck(/#g3btns #g3modes\{position:absolute;[^}]*bottom:calc\(100% \+ 8px\)/.test(g) && /#g3cards\{position:absolute;left:260px;right:348px;/.test(g) && /#g3cards \.row\{[^}]*flex-wrap:wrap/.test(g), 'mapshapes: the map-mode button must sit above the round map buttons and the unit cards must stay between the minimap and those buttons (src/13e-grand3d.js)'); }
+// mapshapes item 3: ONE route style on the campaign map — a thin calm line with a small arrow head at the destination (g3Routes / g3RoutePreview in src/13e2-groads.js). The chunky green 3D arrows (g3BuildArrows) and the yellow dotted hover line must not come back (Abdullah's picture orch/concepts/bugs/map-ugly-arrows-blocky-coast.jpg).
+{ const all = srcFiles.map(f => SRC[f]).join('\n'), r = SRC['13e2-groads.js'] || '', u = SRC['13c-grandui.js'] || '';
+  ck(!/g3BuildArrows|G3\.arrows\b|arrowDirty/.test(all), 'mapshapes: the old movement arrow builder is back (g3BuildArrows / G3.arrows / arrowDirty)');
+  ck(/function g3Routes\(/.test(r) && /function g3RoutePreview\(/.test(r) && /function g3RouteMesh\(/.test(r) && (r.match(/g3RouteMesh\(/g) || []).length === 3, 'mapshapes: routes must be drawn by the one route builder (g3RouteMesh, used by g3Routes and g3RoutePreview only)');
+  ck(!/setLineDash|stroke-dasharray/.test(u) && /g3RoutePreview\(/.test(u), 'mapshapes: the yellow dotted route line is back in src/13c-grandui.js (the hover route must use g3RoutePreview)'); }
 // mapshapes guards end
 
 // 2. Controls (2026-10-28): W A S D only scroll the camera; A is not attack-move; F is; X is stop.
