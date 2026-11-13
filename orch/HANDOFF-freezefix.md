@@ -1,25 +1,38 @@
-# Handoff — freezefix (2026-11-12 08:55 UTC)
+# Handoff — freezefix (updated 2026-11-13, helper freezefix2)
 
-**State:** branch `orch/freezefix` (0fd2bbb + this note) is finished and gated twice, NOT landed (conductor lands).
-What was found/changed and the before/after table: `orch/concepts/freezefix/README.md`.
+**Branch `orch/freezefix`** (merged with main of 2026-11-12; NOT landed — the conductor lands gated branches).
 
-**A second firing of this helper arrived at 08:54 UTC with new evidence; it stopped by its own rule (lock exists, branch
-pushed under 60 min ago). Nothing was done for it. What it said, and what is and is not covered:**
+## Done
+- Kheibar strike freeze fix + Performance log (from before, still green: `superfreeze` IR, RU, US pass).
+- Branch merged with current main (HISTORY keeps both sides, `build.py --check` passes).
+- **Load hang fixed ("PREPARING GRAPHICS… 78%", Page Unresponsive):** `warmShaders()` is gone; `warmShadersChunked()`
+  (src/05-fx3d.js) runs on every device: one model per frame on PC (4 on phones), only the nations in the battle, own team
+  variant, `compileAsync`, textures sent one at a time, battlefield compiled child by child, depth/shadow variants drawn
+  a slice at a time, strike warm-ups kept (missiles, flames, rock chunks, markers, rubble, banner, shock rings, jet plume,
+  corner picture), a frame given back every ~30 ms. Temporary groups no longer go through the scene's GPU clean-up queue.
+- Loading watchdog (20 s, already in 08-ui) now starts the battle; the warm-up then continues in the background through
+  the same queue, one batch per frame, off the scene.
+- Performance log shows per-stage load times, programs compiled, longest step, long tasks while preparing graphics.
+- New gate `loadfreeze` (orch/loadfreeze.mjs, wired in .github/workflows/gate.yml): 4× CPU slowdown, subtracts GL time
+  (software GL links synchronously; real GPUs do it in the background), fails above 2500 ms of own work without a break,
+  more than 20 stretches over 200 ms, or more than 12 programs linked between two breaks.
+- superfreeze harness now swallows draws during loading too (software GL needs seconds per draw).
 
-1. *"Kheibar strike still freezing" on Abdullah's Windows laptop (ROG, 240 Hz, Chrome, ANGLE/Direct3D).* Covered by
-   this branch: the cause was the "BREAKING NEWS" corner picture compiling a second copy of every shader in view 1.2 s
-   before the first hit (in flight, every strike that shows new things in the corner view). Light count was already
-   constant. The in-game recorder exists (Settings → Graphics → Performance log…, frames over 250 ms).
-2. *Fight-it battle from the grand campaign stuck at "PREPARING GRAPHICS… 78%" with Chrome "Page Unresponsive".*
-   **NOT covered — needs its own helper.** Known from this helper's runs: the 78% step is `warmShaders()`
-   (`src/05-fx3d.js`, called from the load step list in `src/08-ui.js` ~1121). On PC it is ONE synchronous task: it
-   instances every model (plus a burnt copy), then `R3.compile(SCN,CAM)` + one full draw. Even the test browser logs
-   "shader warm-up 25–33 s, ~210 objects"; on Direct3D each program link is far slower, hence "Page Unresponsive".
-   The phone path next to it (`warmShadersPhone`) already does the right thing: a few models per frame,
-   `compileAsync`, progress on the loading screen, a watchdog. Suggested fix: use that chunked path on PC too (only the
-   nations in the battle, keep the strike/marker/rubble/corner-picture warm-ups this branch added to `warmShaders`),
-   and add per-stage load timing to the Performance log. The Performance log deliberately ignores the first 3 s of a
-   battle and loading, so it does not record this stall yet.
+## Not done / honest limits
+- The 200 ms target is **measured, not enforced strictly**: on this slow test machine, 3–7 stretches of 200–1300 ms still
+  appear (texture decode/upload, first model builds, hiccups of the machine itself); the gate fails only above 2500 ms.
+  Only Abdullah's real Windows laptop can confirm.
+- The old whole-scene draw at the end of the warm-up is gone (the "Deploying forces" step still draws the real first frame).
 
-**For Abdullah (2 minutes, PC, once this branch is live):** fire one Kheibar strike as Iran. If it still freezes:
-Settings → Graphics → Performance log… → Copy → paste to ORCH. The 78% load hang is a separate fix, not in this branch.
+## Gate result
+See the cigate result recorded below (filled in at the end of the run).
+
+## Before / after load trace (test browser, software GL, IR Conquest)
+| | before (one task) | after (chunked) |
+|---|---|---|
+| Preparing graphics | 22–33 s in ONE task | ~7–10 s in ~600 pieces (4× CPU: longest own-work stretch ≈ 0.3–1.3 s, mostly texture upload / machine noise) |
+| Programs compiled | one burst | 100–120, never more than 12 between breaks |
+
+## Try for 2 minutes (PC): https://abdullahhaidar5-ux.github.io/ww3/
+Start one Conquest battle, watch the loading bar keep moving, then fire one Kheibar strike as Iran. If anything hangs:
+Settings → Graphics → Performance log… → Copy → paste to ORCH (it now includes the load timings).

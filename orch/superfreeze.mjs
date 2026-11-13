@@ -59,6 +59,9 @@ for (const fac of FACS) {
     // a mixed enemy force stands on the target, so the strike also kills many soldiers and vehicles in the same frames (wrecks, bodies, debris)
     const ET = G.teams.find(t => t.id !== ME && !t.reb && !ally(t.id, ME)); let crowd = 0;
     if (ET) for (let i = 0; i < 36; i++) { const k = ['inf', 'at', 'atk', 'jeep', 'aa', 'inf'][i % 6], a = i * 2.4, r = 30 + (i % 9) * 22; try { if (addUnit(ET.id, k, en.x + Math.cos(a) * r, en.y + Math.sin(a) * r)) crowd++; } catch (e) {} }
+    // diagnosis: which object (and shader) is being drawn when the card makes a new vertex array
+    { const rb = R3.renderBufferDirect.bind(R3); R3.renderBufferDirect = function (cam, sc, geo, mat, obj) { window.__cur = (sc && sc.overrideMaterial ? 'OVERRIDE ' : '') + (mat && mat.type) + ' ' + (geo && geo.type) + ' ' + (geo && geo.attributes && geo.attributes.position ? geo.attributes.position.count : 0) + 'v ' + (obj && (obj.name || (obj.parent && obj.parent.name) || '')) + (obj && obj.isInstancedMesh ? ' inst' : '') + (obj && obj.isSkinnedMesh ? ' skin' : '') + (mat && mat.userData && mat.userData.burnt ? ' burnt' : ''); return rb.apply(this, arguments); };
+      const cv = WebGL2RenderingContext.prototype.createVertexArray; WebGL2RenderingContext.prototype.createVertexArray = function () { if (window.__on) (window.__vaoS = window.__vaoS || []).push((window.__t0 ? (G.t - __t0).toFixed(1) : '-') + 's ' + window.__cur); return cv.apply(this, arguments); }; }
     window.__noDraw = 1; window.__fr = []; window.__on = 0; let last = performance.now(), pc = Object.assign({}, __glc);
     (function loop() { const n = performance.now(), c = __glc; if (window.__on) { const i = R3.info, d = {}; for (const k in c) if (c[k] !== pc[k]) d[k] = Math.round((c[k] - pc[k]) * 10) / 10;
         // which shapes are new in the scene since the launch (looked at every 6th frame): named in the report when the mesh count fails
@@ -83,7 +86,7 @@ for (const fac of FACS) {
     return { d, frames: F.length, max: Math.max(...F.map(f => f.ms)), worst: F.slice().sort((a, b) => b.ms - a.ms).slice(0, 5).map(f => Math.round(f.ms) + 'ms@' + f.st.toFixed(1) + 's ' + JSON.stringify(f.d)),
       busy: F.filter(f => f.d.sh || f.d.prog || f.d.tex || f.d.texUp || f.d.buf || f.d.read || f.d.img || f.d.url || f.d.aud || f.d.cnv).map(f => f.st.toFixed(2) + 's ' + Math.round(f.ms) + 'ms ' + JSON.stringify(f.d) + ' three geo/tex ' + f.g + '/' + f.t),
       info: [i.programs.length - __i0[0], i.memory.geometries - __i0[1], i.memory.textures - __i0[2]], newProgs: i.programs.filter(p => !__p0.has(p.cacheKey)).map(p => { const A = p.cacheKey.split(','); let best = null, bd = 1e9; for (const k of __p0) { const B = k.split(','); if (B.length !== A.length) continue; let d = 0; for (let q = 0; q < A.length; q++) if (A[q] !== B[q]) d++; if (d < bd) { bd = d; best = B; } } return A[0].replace(/\s+/g, ' ').slice(0, 24) + ' x' + p.usedTimes + (best ? ' differs from a loaded one in ' + A.map((v, q) => v !== best[q] ? q + ':' + String(best[q]).slice(0, 12) + '>' + String(v).slice(0, 12) : '').filter(Boolean).slice(0, 8).join(' ') : ' (no similar program loaded)'); }),
-      gnew: window.__gnew || [], cnvS: window.__cnvS || [],
+      gnew: window.__gnew || [], cnvS: window.__cnvS || [], vaoS: window.__vaoS || [],
       prof: Object.fromEntries(Object.entries(window.__prof || {}).map(([k, v]) => [k, [v.n, Math.round(v.tot), Math.round(v.max)]])) }; });
   const stall = Object.entries(r.prof).filter(([k]) => k !== 'renderFrame').map(([k, v]) => [k, v[2]]).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
   const geo = Math.max(r.d.vao, Math.ceil(r.d.buf / 3)), tex = Math.max(r.d.tex, r.d.texUp), over = r.max - pre.max, why = [];
@@ -96,6 +99,7 @@ for (const fac of FACS) {
   console.log(fac, JSON.stringify(info), 'launched=' + ok, 'frames=' + r.frames, 'normal=' + Math.round(pre.med) + 'ms (quiet max ' + Math.round(pre.max) + ')', 'longest=' + Math.round(r.max) + 'ms', 'three(progs/geo/tex)=+' + r.info.join('/+'), 'gl=' + JSON.stringify(r.d));
   console.log('  worst frames:', r.worst.join(' ; ')); if (r.busy.length) console.log('  frames that made the GPU work (' + r.busy.length + '):\n    ' + r.busy.slice(0, 40).join('\n    '));
   if (geo > GEOMAX && r.gnew.length) console.log('  shapes that entered the scene during the strike (look here for the ones built or re-sent):\n    ' + r.gnew.slice(0, 30).join('\n    '));
+  if (r.vaoS.length) console.log('  vertex arrays made during the strike (time, what was being drawn):\n    ' + r.vaoS.join('\n    '));
   if (r.cnvS.length) console.log('  canvases created during the strike:\n    ' + r.cnvS.join('\n    '));
   if (r.newProgs.length) console.log('  new programs:\n    ' + r.newProgs.join('\n    '));
   if (E.PROF) console.log('  prof', JSON.stringify(r.prof));

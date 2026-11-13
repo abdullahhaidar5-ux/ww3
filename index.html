@@ -11468,7 +11468,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
   // vertex array per shader program, made on its first draw, so compiling alone would leave those for the first sight of a unit/wreck
   const hidAll=[];
   const drawOnly=grps=>{hidAll.length=0;for(const c of SCN.children)if(!c.isLight&&c.visible&&!grps.includes(c)){c.visible=false;hidAll.push(c);}
-    try{CAM.updateMatrixWorld();if(post()){sizePost();if(POST.mAO&&POST.aoOn!==false&&POST.ovr&&POST.dRT){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}R3.setRenderTarget(POST.rt);}R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
+    try{CAM.updateMatrixWorld();if(post()){sizePost();if(POST.ovr&&POST.dRT){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}R3.setRenderTarget(POST.rt);}R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
     R3.setRenderTarget(null);for(const c of hidAll)c.visible=true;};
   const ex=[],step=async(name,grp,wait,keep)=>{MK('step '+name);const s0=performance.now(),lt=isLate();let tcomp=0,ttex=0;
     if(!lt)SCN.add(grp);
@@ -11509,6 +11509,11 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       if(!dead()&&!isLate()&&ex.length){MK('extras draw');for(const g of ex)g.traverse(c=>{c.frustumCulled=false;});drawOnly(ex);}
       for(const g of ex)unscene(g);ex.length=0;
       SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});await frame();}}
+  // the blood/wound blobs (instanced, none shown until the first hit): made now and drawn once with one instance, so the first
+  // impact doesn't send their shape to the card
+  if(!PH&&!dead()&&!isLate()&&typeof bfWoundInit==='function'&&typeof BFX!=='undefined'){MK('wounds');try{bfWoundInit();const ws=['wb','wh'].map(k=>BFX[k]).filter(Boolean);
+      for(const m of ws){m.count=1;m.setMatrixAt(0,new THREE.Matrix4().makeTranslation(bx,gy+1,by));m.instanceMatrix.needsUpdate=true;}
+      if(ws.length){await step('wounds',new THREE.Group());drawOnly(ws);}for(const m of ws)m.count=0;}catch(e){console.warn('warm-up',e);}await frame();}
   lap('extras',ts);ts=performance.now();
   // the battlefield itself (ground, scenery, buildings), child by child, drawn into the post-processing target as in the battle
   if(!dead()&&!isLate()){try{if(typeof placeCam==='function')placeCam();}catch(e){}
@@ -11529,7 +11534,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     // the depth pass (ambient occlusion) and the shadow pass have their own program variants: drawn a slice of the battlefield at a time,
     // everything else hidden for a moment (lights stay)
     if(!dead()&&!isLate()&&!PH&&post()){const vis=units.filter(u=>u.visible),SL=8;let tl2=performance.now();
-      const aoOn=POST.mAO&&POST.aoOn!==false&&POST.ovr&&POST.dRT;
+      const aoOn=POST.ovr&&POST.dRT;
       for(let i=0;i<vis.length&&!dead()&&!isLate();i+=SL){MK('slice '+i);const mine=new Set(vis.slice(i,i+SL));for(const u of vis)u.visible=mine.has(u);const s0=performance.now();
         try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}
           R3.setRenderTarget(POST.rt);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
