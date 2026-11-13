@@ -191,6 +191,11 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(/\.tk\.sea\{[^}]*--mk:polygon/.test(t) && /\.tk\.air\{[^}]*--mk:polygon/.test(t) && /function gtkKind\(/.test(t), 'mapshapes: fleets must be hull shaped and air groups wing shaped (gtkKind, .tk.sea / .tk.air)');
   ck(/attribute float aShape/.test(t) && (t.match(/new THREE\.Points\(/g) || []).length === 1, 'mapshapes: far-zoom marks must be tiny shield / hull / wing shapes in ONE Points draw (aShape)');
   ck(!/round token/i.test(srcFiles.map(f => SRC[f]).join('\n')), 'mapshapes: game text still says "round token" (armies are shields now)'); }
+// mapshapes item 2: the map-mode ("Political") button sits above the round map buttons in the bottom-right corner and the unit cards keep to the strip between the minimap and those buttons, so the button never lies on the selected army's cards (picture of the old overlap: orch/concepts/tokens/after-selected.jpg). Behaviour guard in orch/grandtest.mjs.
+{ const g = SRC['13e-grand3d.js'] || '';
+  ck(/#g3btns #g3modes\{position:absolute;[^}]*bottom:calc\(100% \+ 8px\)/.test(g) && /#g3cards\{position:absolute;left:260px;right:348px;/.test(g) && /#g3cards \.row\{[^}]*flex-wrap:wrap/.test(g), 'mapshapes: the map-mode button must sit above the round map buttons and the unit cards must stay between the minimap and those buttons (src/13e-grand3d.js)'); }
+// mapshapes guards end
+
 // 2. Controls (2026-10-28): W A S D only scroll the camera; A is not attack-move; F is; X is stop.
 { const hits = []; for (const f of srcFiles) SRC[f].split('\n').forEach((l, i) => { for (const m of l.matchAll(/\bkeys\.[wasd]\b/g)) hits.push([f, i + 1, l]); });
   for (const [f, n, l] of hits) ck(/cam\.t[xy]\s*[-+]=/.test(l) || /keys\.[wasd]\s*=/.test(l), `WASD used for something other than the camera: ${f}:${n}`);

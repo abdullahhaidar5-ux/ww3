@@ -25,6 +25,7 @@ console.log('gulf',JSON.stringify(await pg.evaluate(()=>{const me='IR',free=p=>p
   GV.selA=0;g3SyncArmies();guCentre(sea.i,2.4);G3.camera.d=230;guRedraw();return {air:ag.id,fleet:fl.id,sea:sea.n,at:bu.n};})));await sh('gulf-fleet-air');
 // 3. the Gulf coast (no army selected)
 await pg.evaluate(()=>{const p=GCM.P.find(p=>p.land&&/Bushehr/.test(p.n));guCentre(p?p.i:0,2.4);G3.camera.d=200;guRedraw();});await sh('gulf-coast',20000);
+await pg.evaluate(()=>{const p=GCM.P.find(p=>p.land&&/Bushehr/.test(p.n));guCentre(p?p.i:0,2.4);G3.camera.d=105;guRedraw();});await sh('gulf-coast-near',20000);
 // 4. a selected army on the march: route line, arrival, unit cards and the Political button
 console.log('route',JSON.stringify(await pg.evaluate(()=>{const me='IR',a=GC.armies.find(x=>x.o===me&&!x.fl&&x.u.length>20)||GC.armies.find(x=>x.o===me&&!x.fl);let to=-1,bd=0;
   for(const p of GCM.P){if(!p.land||GC.prov[p.i].o!==me||p.i===a.at)continue;const r=grPath(me,a.at,p.i,0);const n=r&&r.path?r.path.length:0;if(n>=3&&n<=4&&n>bd){bd=n;to=p.i;}}

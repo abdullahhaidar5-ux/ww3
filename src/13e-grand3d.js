@@ -651,7 +651,8 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 #g3ui .k{pointer-events:auto}
 #g3modes{position:absolute;left:10px;top:10px;width:150px;display:flex;flex-direction:column;gap:2px;padding:6px 5px 5px;border:1px solid #6b5a33;border-radius:6px;background:linear-gradient(#162433,#0b141f);box-shadow:0 4px 14px #000a,inset 0 1px 0 #ffffff18;z-index:3}#g3modes:before{content:'MAP MODE';font:700 10px/12px system-ui,sans-serif;letter-spacing:.16em;color:#d8b865;padding:1px 4px 4px;border-bottom:1px solid #6b5a3380;margin-bottom:3px}
 #g3modes button{pointer-events:auto;text-align:left;padding:4px 8px;border-radius:3px;border:1px solid transparent;background:transparent;color:#cfe0ee;font-size:12.5px;cursor:pointer;white-space:nowrap}#g3modes button:hover{background:#243a4e;border-color:#3d5a73}
-#g3btns #g3modes{position:relative;left:auto;top:auto;align-self:flex-end}#g3modes:not(.open) button:not(.on){display:none}#g3modes:not(.open){width:auto}#g3modes:not(.open) button.on:after{content:'  ▾';opacity:.7}#g3modes:not(.open):before{display:none}
+#g3btns #g3modes{position:absolute;left:auto;top:auto;right:0;bottom:calc(100% + 8px)}   /* mapshapes: the map-mode button sits in the corner ABOVE the round map buttons, so the unit cards can never run under it */
+#g3modes:not(.open) button:not(.on){display:none}#g3modes:not(.open){width:auto}#g3modes:not(.open) button.on:after{content:'  ▾';opacity:.7}#g3modes:not(.open):before{display:none}
 #g3modes button.on{background:linear-gradient(#3b5d7a,#2a4660);border-color:#d8b865;color:#fff;font-weight:600}
 #g3btns{position:absolute;right:14px;bottom:16px;display:flex;gap:10px;align-items:flex-end}
 #g3btns button{pointer-events:auto;width:46px;height:46px;border-radius:50%;border:2px solid #b99a45;background:radial-gradient(#33485d,#142130);color:#f3ecd8;font-size:20px;cursor:pointer;box-shadow:0 3px 8px #000a}
@@ -659,11 +660,11 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 #g3btns button:disabled{opacity:.45}
 #g3btns #g3modes button{width:auto;height:auto;border-radius:3px;border:1px solid transparent;background:transparent;box-shadow:none;font-size:12.5px;padding:4px 8px;text-align:left;line-height:1.3}#g3btns #g3modes button:hover{background:#243a4e;border-color:#3d5a73}#g3btns #g3modes button.on{background:linear-gradient(#3b5d7a,#2a4660);border-color:#d8b865;color:#fff;font-weight:600}   /* calmmap: the round-button rule no longer squashes the map-mode menu over its neighbor */
 #g3mini{position:absolute;left:10px;bottom:10px;border:2px solid #b99a45;border-radius:4px;background:#0a1620;pointer-events:auto;box-shadow:0 3px 8px #000a;cursor:crosshair}
-#g3cards{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:5px;max-width:calc(100% - 560px)}
-#g3cards .row{display:flex;gap:5px;flex-wrap:nowrap;overflow:visible}
+#g3cards{position:absolute;left:260px;right:348px;bottom:10px;display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none}   /* mapshapes: the cards keep to the strip between the minimap and the round map buttons; more cards than fit wrap onto a second row */
+#g3cards .row{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
 #g3cards .tabs button{pointer-events:auto;padding:3px 9px;border-radius:12px;border:1px solid #6b7a8a;background:#0f1b27e0;color:#e8e4d8;font-size:12px;cursor:pointer}
 #g3cards .tabs button.on{border-color:#ffe27a;background:#4a4012e8}
-#g3cards .card{pointer-events:auto;width:80px;background:linear-gradient(#22344a,#121e2b);border:1px solid #b99a45;border-radius:4px;padding:3px;color:#f3ecd8;font:600 12px/1.2 sans-serif;text-align:center;box-shadow:0 3px 8px #000a;position:relative}
+#g3cards .card{pointer-events:auto;width:82px;box-sizing:border-box;background:linear-gradient(#22344a,#121e2b);border:1px solid #b99a45;border-radius:4px;padding:3px;color:#f3ecd8;font:600 12px/1.2 sans-serif;text-align:center;box-shadow:0 3px 8px #000a;position:relative}
 #g3cards .card canvas{display:block;width:72px;height:53px;border-radius:2px}
 #g3cards .card .cnt{position:absolute;left:4px;top:4px;background:#000b;padding:0 4px;border-radius:3px;font-size:13px}
 #g3cards .card .hp{height:5px;background:#000a;border-radius:2px;margin:3px 0 2px;overflow:hidden}#g3cards .card .hp b{display:block;height:100%}
