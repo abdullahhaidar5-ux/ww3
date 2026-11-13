@@ -88,7 +88,7 @@ function guRealWait(){if(!guRealOn())return false;try{g3LoadReal();}catch(e){ret
   if(G3.real||G3.realFail||GV.rw===2)return false;if(GV.rw===1)return true;GV.rw=1;const t0=performance.now();
   const c=guEl('div','position:fixed;inset:0;z-index:8001;background:#0b141d;color:#e8e4d8;display:flex;align-items:center;justify-content:center;font-size:17px;letter-spacing:.04em');c.id='gRealWait';c.textContent='Loading the world map…';document.body.appendChild(c);
   const tick=()=>{if(!(G3.real||G3.realFail)&&performance.now()-t0<10000){setTimeout(tick,100);return;}GV.rw=(G3.real||G3.realFail)?0:2;c.remove();if(GC)grandOpen();};setTimeout(tick,100);return true;}
-function grandOpen(){grMap();if(!GC)return;if(guRealWait())return;campClose();let e=document.getElementById('grandScreen');if(e)e.remove();
+function grandOpen(){grMap();if(!GC)return;try{gwuInit();}catch(e){}if(guRealWait())return;campClose();let e=document.getElementById('grandScreen');if(e)e.remove();
   e=guEl('div','position:fixed;inset:0;z-index:8000;background:#0b141d;color:#e8e4d8;display:flex;flex-direction:column;font-size:15px;user-select:none;');e.id='grandScreen';
   e.innerHTML=`<div id="gTop"></div>
   <div style="flex:1;display:flex;min-height:0"><div id="gMapWrap" style="flex:1;position:relative;min-width:0"><canvas id="gMap" style="display:block"></canvas><div id="gTip" style="position:absolute;pointer-events:none;display:none;background:rgba(10,16,22,.94);border:1px solid #4a6580;border-radius:6px;padding:6px 9px;font-size:14px;line-height:1.4;max-width:260px;z-index:3"></div><div id="gHint" style="position:absolute;left:10px;bottom:8px;font-size:13px;opacity:.75;pointer-events:none;text-shadow:0 1px 2px #000"></div></div>
@@ -128,7 +128,7 @@ function guClick(mx,my){if(GV.g3){g3Click(mx,my);return;}for(const c of GV.chips
 function guRight(ev){if(GC.ph!=='plan'||GV.busy||!GV.selA)return;const r=GV.cv.getBoundingClientRect(),[wx,wy]=guToWorld(ev.clientX-r.left,ev.clientY-r.top),h=guProvAt(wx,wy);if(h<0)return;const ids=gmIds();for(const id of ids.slice(1))grOrderMove(id,h);guMoveTo(ids[0]||GV.selA,h);if(ids.length>1)gmPaint();}
 function guMoveTo(aid,h){const res=grOrderMove(aid,h);if(res.err){GV.hint=res.err;guHint();return;}
   if(res.decl){const w=GCM.nats.get(res.decl).name;guConfirm('Declare war on '+w+'?','Marching into '+GCM.P[h].n+' means war with '+w+'. Their allies and rivals may react.',()=>{const a=GC.armies.find(x=>x.id===aid);grDeclare(GC.me,res.decl);grOrderMove(aid,h);guSide();guRedraw();grSave();});return;}
-  GV.hint=GCM.P[h].n+': arrives ~'+grDateStr(GC.turn+res.r.turns,0)+' ('+res.r.turns+' month'+(res.r.turns>1?'s':'')+')'+(res.r.path.some(j=>GCM.P[j].sea)?' (by sea)':'');guHint();guSide();guRedraw();grSave();}
+  GV.hint=GCM.P[h].n+': arrives ~'+grDateStr(GC.turn+res.r.turns,0)+' ('+res.r.turns+' month'+(res.r.turns>1?'s':'')+')'+(res.r.path.some(j=>GCM.P[j].sea)?' (by sea)':'')+gwuOddsHint([aid],h);guHint();guSide();guRedraw();grSave();}
 // First-time coach card on the grand map (Lane D D5 campaign tutorial, 2026-11-07): shown once, closes with its button or any order.
 function guCoach(){let seen=0;try{seen=localStorage.getItem('ww3_gcoach');}catch(e){}if(seen||document.getElementById('gCoach'))return;
   /* calmmap: a compact strip, not a big box (same text); goes away on "Got it", on your first order (right-click on the map) or after 60 s */
@@ -140,7 +140,7 @@ function guCoach(){let seen=0;try{seen=localStorage.getItem('ww3_gcoach');}catch
 function guHint(){const e=document.getElementById('gHint');if(e)e.textContent=GV.hint||'';}
 
 // ---------- top bar, side panel, log ----------
-function grandMapRefresh(){if(GV.g3)g3Refreshed();GV.dirty=true;guTop();guSide();guLog();guRedraw();if(typeof gmPaint==="function")gmPaint();if(GC&&GC.over)guOver();}
+function grandMapRefresh(){if(GV.g3)g3Refreshed();GV.dirty=true;guTop();guSide();guLog();guRedraw();if(typeof gmPaint==="function")gmPaint();try{gwuSync();}catch(e){console.error('gwuSync',e);}if(GC&&GC.over)guOver();}
 /* ---------- THE top bar (camphud; Abdullah 2026-11-11 19:25 "The top tool bar is not intuitive" / "Or better it's ugly"; layout "Go" 19:28) ----------
    ONE row, three zones, one style:
    LEFT time (flag, nation, date, play/pause, speed 1-5) · CENTER resources (icon + number chips: hover = what it is and why it moves,
@@ -237,8 +237,8 @@ function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=
 /* ---------- real time with pause (EU4 feel, lane A A2 slice 1) ----------
    The calendar runs in days (30 a month); a month ending = the old End turn, so the simulation and its determinism are unchanged:
    the result depends only on state + the orders standing when each month closes + seed. Starts paused (= the classic turn game).
-   Space = pause/resume, + / − or 1–5 = speed (grand-map keys; WASD stay camera-only). The clock waits while battles are pending,
-   a modal is open or a battle is being fought, so a battle starting pauses the map. GV.spd is this player's UI speed. */
+   Space = pause/resume, + / − or 1–5 = speed (grand-map keys; WASD stay camera-only). The clock waits only while a
+   dialog is open; battles and sieges are fought day by day while it runs (13a-gwar.js) and never stop it. GV.spd is this player's UI speed. */
 const GU_SPD=[0,.5,1,2.5,5,10];   /* days per second at speeds 1..5 (speed 5: a month in 3 s) */
 function guClockUI(t){const w=guEl('span','');w.id='gClock';const ls=GV.lastSpd||2;
   const pb=guEl('button','',GV.spd?'❚❚':'▶');pb.type='button';pb.id='gPlay';if(!GV.spd)pb.className='off';pb.title=GV.spd?'Pause (Space)':'Play: days pass in real time (Space)';pb.onclick=()=>guSpeed(GV.spd?0:(GV.lastSpd||2));w.appendChild(pb);
@@ -249,6 +249,8 @@ function guClockTick(){const now=performance.now(),dt=Math.min(1,(now-(GV.clkT||
   if(!GV.spd||!GC||GC.over||GC.ph!=='plan'||GV.busy||G||document.getElementById('gModal'))return;const sc=document.getElementById('grandScreen');if(!sc||sc.style.display==='none'||document.hidden)return;
   GV.dayF=(GV.dayF||0)+dt*GU_SPD[GV.spd];if(GV.dayF<1)return;const n=Math.floor(GV.dayF);GV.dayF-=n;const d0=GC.day|0;GC.day=d0+n;
   if(GC.day>=30){GC.day=0;GV.dayF=0;guEndTurn();return;}
+  /* battles and sieges are fought day by day while the map runs (13a-gwar.js) */
+  {const nb=(GC.bt?GC.bt.length:0)+(GC.sg?GC.sg.length:0),nr=GC.br?GC.br.length:0;try{gwTo(GC.day);}catch(e){console.error('gwTo',e);}if(nb||(GC.bt&&GC.bt.length)){try{if(typeof gwUiDay==='function')gwUiDay();}catch(e){}if(nb!==(GC.bt.length+GC.sg.length)||nr!==GC.br.length){try{grandMapRefresh();}catch(e){}}}}
   /* A2: AI generals act on day ticks (10, 20) — enemy columns set off mid-month and can be seen coming */
   for(const k of [10,20])if(d0<k&&GC.day>=k&&grAIMid(k)){try{grandMapRefresh();}catch(e){}}
   const d=document.getElementById('gDate');if(d)d.textContent=grDateStr(GC.turn,GC.day);}
@@ -295,33 +297,18 @@ function guSpyRow(s,pi,o){const seenP=(grSeenSet()||new Set()).has(pi),sp=GC.spy
   const r=guEl('div','margin:6px 0 2px;font-size:13px;opacity:.85',sp?'🕵 Our spies report every '+GCM.nats.get(o).name+' army (until '+grMonStr(GC.turn+1+((GC.spy[GC.me+'>'+o]|0)-GC.turn))+').':seenP?'👁 In sight of our lines.':'🌫 Fog of war: armies here are hidden. Move closer or send spies.');s.appendChild(r);
   if(!sp){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;margin-top:2px','🕵 Send spies $'+GR_SPY_COST);b.type='button';b.title='Reveal every '+GCM.nats.get(o).name+' army on the map for '+GR_SPY_M+' months';b.onclick=()=>{const e=grSpy(GC.me,o);GV.hint=e||'Spies sent into '+GCM.nats.get(o).name+'.';guSide();guTop();if(typeof g3Refresh==='function')g3Refresh();guRedraw&&guRedraw();};s.appendChild(b);}}
 function guTopCash(){guTop();}
-function guArmyRows(pi){const L=guProvArmies(pi);if(!L.length)return '<div style="opacity:.6;margin-top:8px">No armies here.</div>';let h='<div class="uk-sec">Armies here</div>';
+function guArmyRows(pi){const L=guProvArmies(pi);if(!L.length)return '<div style="opacity:.6;margin-top:8px">No armies here.</div>';let h=gwuProvLine(pi)+'<div class="uk-sec">Armies here</div>';
   for(const a of L){const mine=a.o===GC.me,f=grNat(a.o).fac,counts={};for(const r of a.u)counts[r[0]]=(counts[r[0]]||0)+1;const txt=Object.keys(counts).map(k=>counts[k]+' '+grKindName(f,k)).join(', ');
     h+='<div class="gArmy" data-a="'+a.id+'" style="border:1px solid '+(a.id===GV.selA?'#ffe27a':'#2c4358')+';border-radius:6px;padding:5px 7px;margin:4px 0;background:'+(a.id===GV.selA?'#1d3045':'#14222f')+';cursor:pointer"><span style="display:inline-block;width:10px;height:10px;background:'+grNat(a.o).color+';border:1px solid #fff;margin-right:5px"></span><b>'+a.nm+'</b>'+gmilArmyTag(a)+' <span style="opacity:.75">('+GCM.nats.get(a.o).name+')</span><br><span style="font-size:13px;opacity:.9">'+a.u.length+' units · value '+Math.round(grArmyVal(a)/100)/10+'k'+(a.sup?' · <span style="color:#ff9d8e">out of supply</span>':(typeof gsupTag==='function'&&a.o===GC.me?gsupTag(a):''))+'</span><br><span style="font-size:12px;opacity:.7">'+txt+'</span>'+(a.path.length?'<br><span style="font-size:12px;color:#ffe27a">→ '+GCM.P[a.path[a.path.length-1]].n+'</span>':'')+'</div>';
     if(mine&&a.id===GV.selA)h+='<div class="gActs" data-a="'+a.id+'" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px"><button data-act="split">Split in half</button><button data-act="merge">Merge here</button><button data-act="stop">Cancel orders</button>'+gmilActBtns(a)+'</div>';}
   return h;}
-function guBindArmies(s,pi){s.querySelectorAll('.gArmy').forEach(e=>{e.onclick=()=>{GV.selA=+e.dataset.a;guSide();guRedraw();};});
+function guBindArmies(s,pi){try{gwuBind(s);}catch(e){}s.querySelectorAll('.gArmy').forEach(e=>{e.onclick=()=>{GV.selA=+e.dataset.a;guSide();guRedraw();};});
   s.querySelectorAll('.gActs button').forEach(b=>{b.style.cssText='padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;font-size:13px';b.onclick=()=>{const id=+b.parentNode.dataset.a;if(GC.ph!=='plan')return;if(b.dataset.act==='split'){const n=grSplit(id);if(n)GV.selA=n.id;}else if(b.dataset.act==='merge')grMerge(id);else if(b.dataset.act==='front')gmilCycleFront(id);else if(b.dataset.act==='mine')gmilMinesBtn(id);else if(b.dataset.act==='drill'){const e=grDrill(id);if(e){GV.hint=e;guHint();}}else{const a=GC.armies.find(x=>x.id===id);if(a){a.path=[];a.pg=0;}}grSave();guSide();guRedraw();};});}
 function guLog(){const l=document.getElementById('gLog');if(!l||!GC)return;const rows=GC.log.slice(-60).reverse().filter((r,i)=>i<45);l.innerHTML='<div style="font-weight:bold;margin-bottom:3px">War diary</div>'+rows.map(r=>'<div style="'+(r[2]&&r[2]===GC.me?'color:#ffe9a6':'opacity:.82')+'"><span style="opacity:.55">'+grDateStr(r[0],0)+'</span> '+r[1]+'</div>').join('');}
 function guConfirm(title,body,yes,no){guModal('<h2 style="margin:0 0 8px;font-size:21px">'+title+'</h2><div style="line-height:1.5;margin-bottom:12px">'+body+'</div>',[['Yes',yes,1],['No',no||null,0]]);}
 function guModal(html,btns){const old=document.getElementById('gModal');if(old)old.remove();const m=guEl('div','position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;');m.id='gModal';const c=guEl('div','background:#142231;border:1px solid #4a6580;border-radius:10px;padding:16px 20px;max-width:min(560px,92vw);color:#e8e4d8;font-size:16px;');c.innerHTML=html;
   const row=guEl('div','display:flex;gap:8px;flex-wrap:wrap');for(const [t,fn,pri] of btns){const b=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid '+(pri?'#7aa84f':'#6b7a8a')+';background:'+(pri?'#4f6b32':'transparent')+';color:#fff;cursor:pointer;font-size:16px',t);b.type='button';if(!fn)b.dataset.esc='1';b.onclick=()=>{m.remove();if(fn)fn();};row.appendChild(b);}c.appendChild(row);m.appendChild(c);document.body.appendChild(m);return m;}
 
-// ---------- battle prompt: Fight it / Auto-resolve / Withdraw ----------
-function grBattlePrompt(b){grandScreenShow(true);guCentre(b.p,2.2);GV.sel=b.p;GV.selA=0;grandMapRefresh();
-  const P=GCM.P[b.p],me=GC.me,S=grSideUnits(b,'att'),D=grSideUnits(b,'def'),sv=grSideVal(S),dv=grSideVal(D)*grDefMods(b);
-  const cnt=L=>{const o={};for(const s of L)for(const r of s.u){const k=s.fac+'|'+r[0];o[k]=(o[k]||0)+1;}return Object.keys(o).map(k=>o[k]+' '+grKindName(k.split('|')[0],k.split('|')[1])).join(', ')||'—';};
-  const nUnits=L=>L.reduce((a,s)=>a+s.u.length,0),pct=Math.round(sv/Math.max(1,sv+dv)*100);const meAtt=b.an===me;
-  const canWithdraw=meAtt||GC.armies.filter(a=>b.def.includes(a.id)&&a.o===me).every(a=>grRetreatTo(a,b.p)>=0)&&GC.armies.some(a=>b.def.includes(a.id)&&a.o===me);
-  const html='<div style="opacity:.7;font-size:13px">BATTLE · '+(b.river?'river crossing · ':'')+(b.mtn?'mountain pass · ':'')+guTerrName(P.t)+'</div><h2 style="margin:2px 0 8px;font-size:24px">'+P.n+'</h2>'
-   +'<div style="display:flex;gap:14px;margin-bottom:8px"><div style="flex:1"><b style="color:#ffb59a">Attackers</b> — '+GCM.nats.get(b.an).name+'<br>'+nUnits(S)+' units<br><span style="font-size:13px;opacity:.8">'+cnt(S)+'</span></div><div style="flex:1"><b style="color:#9fd0ff">Defenders</b> — '+GCM.nats.get(b.dn).name+'<br>'+nUnits(D)+' units'+(b.garr?' (incl. garrison)':'')+'<br><span style="font-size:13px;opacity:.8">'+cnt(D)+'</span></div></div>'
-   +'<div style="height:10px;border-radius:5px;background:#3b6ea8;overflow:hidden;margin:4px 0 2px"><div style="width:'+pct+'%;height:100%;background:#d0583d"></div></div><div style="font-size:13px;opacity:.8;margin-bottom:10px">Attackers '+pct+'% · Defenders '+(100-pct)+'% (terrain, river and home-turf bonuses included). Fight it live: you command exactly these units; nothing can be built.</div>';
-  guModal(html,[['Fight it live',()=>{grandFightLive(b);},1],['Auto-resolve',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},0],...(canWithdraw?[['Withdraw',()=>{guWithdraw(b);},0]]:[])]);}
-function grBattleAuto2(b){const R=grRng(GC.seed*7+GC.turn*131+b.p);return grAuto(b,R).win;}
-function guWithdraw(b){const me=GC.me;if(b.an===me){grBattleDone(b,'def','retreat');}
-  else{for(const a of GC.armies.filter(x=>b.def.includes(x.id)&&x.o===me)){const to=grRetreatTo(a,b.p);if(to>=0){a.at=to;a.path=[];grLog(a.nm+' withdrew from '+GCM.P[b.p].n+'.',me);}}b.def=b.def.filter(id=>GC.armies.some(a=>a.id===id&&a.at===b.p));
-    if(b.garr)grBattleDone(b,grBattleAuto2(b),'auto');else grBattleDone(b,'att','retreat');}
-  grandMapRefresh();}
 // ---------- end of campaign ----------
 function guOver(){if(document.getElementById('gOver'))return;const win=GC.over==='win';const m=guModal('<div style="opacity:.7;font-size:13px">GRAND CAMPAIGN · '+grMonStr(Math.min(GC.turn,GC.maxTurn)).toUpperCase()+'</div><h1 style="margin:2px 0 8px;font-size:30px;color:'+(win?'#9fd36b':'#e07a6a')+'">'+(win?'Victory':'Defeat')+'</h1><div style="line-height:1.5;margin-bottom:12px">'+GC.res+'</div>',[['Main menu',()=>{grClear();grandClose();},1],['Keep looking at the map',()=>{GC.me=null;grSave();},0]]);m.id='gModal';const d=guEl('span');d.id='gOver';m.appendChild(d);}
 function grandClose(){g3Dispose();GV.g3=false;const e=document.getElementById('grandScreen');if(e)e.remove();const m=document.getElementById('gModal');if(m)m.remove();GV.cv=null;GV.img=null;try{$('menu').hidden=false;}catch(e){}}
@@ -329,7 +316,7 @@ function grandClose(){g3Dispose();GV.g3=false;const e=document.getElementById('g
 // ---------- menu: Grand campaign (Continue / New) ----------
 function grandMenu(){grMap();guRealPre();const saved=(()=>{try{return JSON.parse(localStorage.getItem(GR_KEY));}catch(e){return null;}})(),root=campEl('div');
   root.appendChild(campEl('h1','margin:6px 0 4px;font-size:30px;letter-spacing:.04em;','GRAND CAMPAIGN'));
-  root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;line-height:1.5','Run a nation on the world map. Time runs like EU4: play, pause at any moment and give orders. When armies meet you can fight the battle yourself, with exactly the units you brought, or let the generals auto-resolve it.'));
+  root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;line-height:1.5','Run a nation on the world map. Time runs like EU4: play, pause at any moment and give orders. When armies meet they fight on the map for days - dice, generals, terrain, supply and morale decide; forts must be besieged. Click the crossed swords over a province to watch a battle.'));
   const usable=saved&&!saved.over&&grSaveOk(saved);
   if(saved&&!saved.over&&!usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campEl('div','margin:0 0 12px;padding:8px 10px;border:1px solid #8a6a3a;border-radius:6px;background:rgba(120,80,30,.25);line-height:1.5','Your saved campaign ('+n+', '+grMonStr(saved.turn)+') was made on an older world map and can\'t continue on the new one. Start a new campaign.'));}
   if(usable){const n=saved.me?((GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me):'Observer';root.appendChild(campBtn('Continue — '+n+', '+grMonStr(saved.turn)+' (month '+saved.turn+'/'+saved.maxTurn+')',()=>{grLoad();campClose();grandOpen();}));}
@@ -346,7 +333,7 @@ function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new 
   const sbs=GR_SCEN.map(S=>{const b=campBtn(S.n+(S.id==='me26'?' ★':''),()=>{sc=S.id;sbs.forEach(x=>x[0].style.background=x[1]===sc?'#4f6b32':'transparent');sinfo.textContent=S.d;},S.id!=='me26');b.title=S.d;return [b,S.id];});sbs.forEach(x=>srow.appendChild(x[0]));sinfo.textContent=GR_SCEN[0].d;root.appendChild(srow);root.appendChild(sinfo);
   root.appendChild(campBtn(GNT.wantHost?'Create lobby':'Begin',()=>{if(GNT.wantHost&&!nat){info.textContent='Pick a nation — friends need a lobby with someone leading.';return;}grNew({me:nat||null,len,sc,seed:(Math.floor(Math.random()*1e9)||7)});grSave();if(GNT.wantHost){gnLobby();return;}campClose();grandOpen();}));root.appendChild(campBtn('Back',grandMenu,true));campShow(root);}
 // main menu buttons: Grand campaign · Conquest · Missions · Tutorial (Abdullah 2026-11-06)
-(function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('grandBtn'))return;const b=document.createElement('button');b.className='big';b.id='grandBtn';b.type='button';b.textContent='Grand campaign';b.title='The world map: run a nation, fight the battles yourself or auto-resolve them';b.onclick=()=>{try{initAudio();}catch(e){}grandMenu();};
+(function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('grandBtn'))return;const b=document.createElement('button');b.className='big';b.id='grandBtn';b.type='button';b.textContent='Grand campaign';b.title='The world map: run a nation; battles, sea fights and sieges are decided on the map';b.onclick=()=>{try{initAudio();}catch(e){}grandMenu();};
   const camp=document.getElementById('campaign')||sb;camp.parentNode.insertBefore(b,camp);const st=document.getElementById('start');if(st)st.textContent='Conquest — deploy vs AI';})();
 
 /* ---------- A3 smooth army control (Lane F): multi-select, box, double-click, group orders, cards ----------

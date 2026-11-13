@@ -18,7 +18,7 @@ One round token per army, read like a watch face. It REPLACES the figure blobs, 
    bold, rest faint dots) · middle = the token · close = token + the real army in miniature on the ground (instanced
    models of its actual unit types, a few figures per type, inside a dashed footprint in the owner's colour).
 5. **Odds:** with one of your armies selected, every enemy army in reach shows a pill: Good odds (green) / Even fight
-   (gold) / Bad odds (red), from the same strength estimate the auto-resolve uses (one source, no second formula).
+   (gold) / Bad odds (red), from the forecast of the campaign battle rules themselves, gwOddsAt (one source, no second formula).
 6. Several armies in one province: one stack with a count; hover/click fans them out.
 
 Rules: one system (extend the grand-map army marker owner in `src/13e-grand3d.js` / the badge code; delete the old figure

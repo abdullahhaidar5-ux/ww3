@@ -1,7 +1,7 @@
 /* ================= GRAND MAP: ONE STYLE FOR EVERY PANEL (queue "Campaign panels", orch/polishP2) =================
    Every window / panel / dialog of the grand campaign is one row of GPAN (top-most first). gpxDress() gives each of them the
    same frame: same font, same border and corner radius, same title style, and the same close X in the same (top-right) corner.
-   ONE Esc handler (gpxEsc) closes the top-most open panel, one per press; a dialog that needs an answer (battle prompt, event
+   ONE Esc handler (gpxEsc) closes the top-most open panel, one per press; a dialog that needs an answer (an event
    with choices) is never skipped: Esc presses its plain "No / Close / Back" button when it has one, otherwise does nothing.
    The old per-panel Esc handlers and per-panel close buttons are gone - a NEW PANEL = A NEW ROW HERE (list for people:
    orch/reports/panels.md; guards: orch/decisions.mjs static + orch/polishtest.mjs opens every row and closes it with Esc).
@@ -12,8 +12,10 @@ const GPAN=[
   {id:'gOver',name:'Campaign over (victory / defeat)',kind:'dialog',card:1,title:'h1'},
   {id:'gWeb',name:'Diplomatic web',kind:'window',card:1,title:'b'},
   {id:'gpDeal',name:'Peace deal',kind:'window',card:1,title:'h2,b'},
-  {id:'gModal',name:'Dialog: confirm · event · battle prompt · auto-resolve result · strike target',kind:'dialog',card:1,title:'h1,h2'},
+  {id:'gModal',name:'Dialog: confirm · event · strike target',kind:'dialog',card:1,title:'h1,h2'},
   {id:'npWin',name:'Nation window (six groups: Overview · Government · Economy · Military · Diplomacy · World)',kind:'window',title:'.npn',close:()=>{npClose();},esc:()=>npBack()},
+  {id:'gwWin',name:'Battle window · siege window',kind:'side',title:'b',close:()=>{gwuClose();}},
+  {id:'gwCards',name:'Battle result cards',kind:'note'},
   {id:'gMil',name:'Military (generals · fronts · strikes · fleets)',kind:'side',title:'b'},
   {id:'gEco',name:'Empire economy',kind:'side',title:'b'},
   {id:'gTV',name:'TV news ticker',kind:'note'},

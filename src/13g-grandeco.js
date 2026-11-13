@@ -1,6 +1,6 @@
 /* ===== GRAND 2 - EMPIRE ECONOMY on the grand map (Abdullah 2026-11-05/06) =====
    One system (orch/SYSTEMS.md): everything about empire money lives here. Province buildings are the entries of GC.prov[i].bl
-   (the same list the battle mirror reads: gmBuildings/gmApply place fort/aa/airfield/factory/port/mfort in that province's battle).
+   (gmBuildings in 13f: the one list the economy, strikes and sieges read - a fort or Mountain Fortress here sets the province's fort level, gwFort).
    Nation economy state is GC.nat[c].e, world state GC.eco; both JSON-safe, deterministic (no Math.random / Date), saved with GC.
    Per turn: geBegin() -> province loop in grFinishTurn (geProvInc) -> geNation(c) for every living nation -> geWorld().
    Same numbers for every nation; the only per-nation difference is the signature table below (orch/SIGNATURES.md). */
@@ -81,17 +81,17 @@ function geSigName(c){const a=GE_SIG[c];return a?a.map(s=>s[1]).join(' + '):'-';
 // key: [name, cost, turns, letter, colour, help]
 const GE_B={
  base:['Military base',650,2,'B','#c9a35a','Recruits here arrive 1 month sooner, +2 garrison room, resupplies armies in and next to it.'],
- airfield:['Airfield',850,3,'A','#8fc4e8','Air wings live here: sorties reach battles in range, and the airfield stands in this province\'s battle.'],
- port:['Port',550,2,'P','#6fb0d8','+50 income, sea trade, a shipyard in this province\'s battle (coast only).'],
+ airfield:['Airfield',850,3,'A','#8fc4e8','Air wings live here: their sorties support your battles and sieges in range.'],
+ port:['Port',550,2,'P','#6fb0d8','+50 income and sea trade (coast only). A port that is not blockaded keeps a besieged fort supplied.'],
  factory:['War Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
  refinery:['Refinery',700,3,'R','#a58bd0','Makes 16 fuel a month from oil. Needs power and an oil province or oil stock.'],
  power:['Power plant',700,3,'E','#f2d95a','+14 on the power grid. Blackouts slow factories and recruiting.'],
- aa:['Air defense',380,2,'D','#9ad07f','A SAM site in this province\'s battle; halves bombing damage here.'],
+ aa:['Air defense',380,2,'D','#9ad07f','Halves bombing damage here and halves enemy air sorties over a battle in this province.'],
  farm:['Irrigation',450,2,'G','#b8d96a','+6 food (farm provinces only).'],
  mine:['Deep mine',550,3,'M','#b9bec6','+100 income (mining provinces only).'],
- fort:['Fort',500,2,'T','#d0a090','A Defense Gun in this province\'s battle.'],
- dsite:['Drone launch site',420,2,'S','#c9b86a','Ground racks and hangars for long-range one-way attack drones (about 2,000 km), no runway needed. Makes 6 drones a month; Drone strikes and battle Shahed salvos draw on the stock. Can be bombed. Only nations that field such drones.'],
- mfort:['Mountain Fortress',1000,4,'X','#e0c070','A bunker pre-built in the battle (mountain provinces of IR, RS, AF, KD, DW, KP).']};
+ fort:['Fort',500,2,'T','#d0a090','The province cannot be taken without a siege (two forts make it fort level 2); its guns help defenders in a battle here.'],
+ dsite:['Drone launch site',420,2,'S','#c9b86a','Ground racks and hangars for long-range one-way attack drones (about 2,000 km), no runway needed. Makes 6 drones a month; Drone strikes and the drone salvos that support battles draw on the stock. Can be bombed. Only nations that field such drones.'],
+ mfort:['Mountain Fortress',1000,4,'X','#e0c070','A mountain stronghold: +2 fort levels, so only a long siege or a costly assault takes the province (mountain provinces of IR, RS, AF, KD, DW, KP).']};
 const GE_BKEYS=['base','airfield','port','factory','refinery','power','aa','farm','mine','fort','dsite','mfort'];
 function geBl(pi){return gmBuildings(pi);}
 function geEff(pi,k){let e=0;for(const r of geBl(pi))if(r[0]===k)e+=Math.max(0,1-(r[1]|0)/100);return e;}
@@ -334,4 +334,3 @@ function geAfterProvinces(inc,R){   // called in grFinishTurn after the province
 function geAIAll(){geEnsure();geBegin();const R=mulberry((GC.seed*29+GC.turn*7)|0);for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead||!N.ai)continue;try{geAI(c,R);}catch(e){console.error('geAI',c,e);}}}
 // ---------- battles: what the empire stock gives the armies ----------
 // fuel fraction (0..1) a side starts the battle with: its armies' tanks as they stand on the map (a garrison drinks from the province: full unless the nation is dry)
-function geSideFuel(L,pi){let w=0,f=0;for(const s of L){const n=Math.max(1,s.u.length);w+=n;if(s.arr)f+=n*geArmyFuel(s.arr);else f+=n*(geDry(GC.prov[pi].o)?.3:1);}return w?f/w:1;}

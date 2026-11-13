@@ -184,9 +184,6 @@ try {
       if (!r.infBtns.some(t => /Dig in/.test(t)) || r.infBtns.some(t => /Fortification/.test(t))) fails.push('fortline: an infantry-only selection must show Dig in and no line button: ' + r.infBtns.join('|'));
       if (!r.dzBtns.some(t => /Fortification/.test(t))) fails.push('fortline: a Construction Vehicle selection lost the Fortification line button');
     } }
-  // leadersC (Abdullah 2026-11-07 22:38): the signature assets are in Conquest/Battle for their nations and OUT of grand Fight-it battles
-  { const gm = await page.evaluate(() => { if (!G || !G.grand) return []; return ['u_cleric', 'b_fort', 'p_bb'].filter(id => { const e = document.getElementById(id); return e && !e.hidden; }); });
-    if (gm.length) fails.push('signature assets offered in a grand Fight-it battle: ' + gm.join(', ')); }
   // every model this battle's nations need must have arrived (in the artifact edition they come in a different published form)
   { const m = await page.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.filter(T => !T.reb).map(T => T.fac)) : Object.keys(MODEL_FILES);
       return { of: ks.length, miss: ks.filter(k => !MODELS.proto[k]), err: MODELS.err || '' }; });

@@ -14,7 +14,7 @@ function drawTownsWorld(c){if(!G||!G.towns||G.over||OVL.towns===false)return;con
   for(const t of G.towns){if(!inView(t.x,t.y,.1))continue;const p=toScreen(t.x,groundH(t.x,t.y)+(t.ham?70:110),t.y);if(p.z>1)continue;
     const mine=townsMine(t),reb=t.reb>G.t;
     c.save();c.font=(ph?'bold 11px':'bold 12px')+' system-ui,sans-serif';c.textAlign='center';
-    if(mine&&!G.grand){const w=ph?96:112,h=ph?38:42,x=p.x-w/2,y=p.y-h;c.fillStyle='rgba(8,12,10,.78)';c.fillRect(x,y,w,h);c.strokeStyle=G.teams[t.ow].color;c.lineWidth=1.5;c.strokeRect(x,y,w,h);if(SET.cb){try{idMiniMark(c,x-7,y+9,t.ow,true);}catch(_){}}
+    if(mine){const w=ph?96:112,h=ph?38:42,x=p.x-w/2,y=p.y-h;c.fillStyle='rgba(8,12,10,.78)';c.fillRect(x,y,w,h);c.strokeStyle=G.teams[t.ow].color;c.lineWidth=1.5;c.strokeRect(x,y,w,h);if(SET.cb){try{idMiniMark(c,x-7,y+9,t.ow,true);}catch(_){}}
       const hot=t.un>=85&&((now*4)%1<.5);if(hot){c.strokeStyle='#ff3b30';c.lineWidth=3;c.strokeRect(x-2,y-2,w+4,h+4);}
       // tax-rate badge: letter in a shape (square Low/Normal, up-triangle High, diamond Extortionate)
       c.fillStyle=t.rate>=3?'#e5483c':t.rate===2?'#f0c040':t.rate===1?'#bcd0c4':'#5fcf72';const bx=x+11,by=y+11;c.beginPath();if(t.rate===2){c.moveTo(bx,by-8);c.lineTo(bx+8,by+7);c.lineTo(bx-8,by+7);}else if(t.rate===3){c.moveTo(bx,by-9);c.lineTo(bx+9,by);c.lineTo(bx,by+9);c.lineTo(bx-9,by);}else c.rect(bx-8,by-8,16,16);c.closePath();c.fill();
@@ -35,7 +35,7 @@ function drawTownsMini(c,sx,sy,now){if(!G||!G.towns||G.battle||OVL.towns===false
       if(own){c.fillStyle=G.teams[t.ow].color;shape();c.fill();}else{c.fillStyle='rgba(20,24,20,.9)';shape();c.fill();c.strokeStyle='#b9c2b3';c.lineWidth=1.3;shape();c.stroke();}
       // capture in progress: arc round the marker in the capturing side's colour
       let cpm=0,cpT=-1;for(const k of t.cells)if(k.key&&k.cp>cpm&&k.cpT>=0){cpm=k.cp;cpT=k.cpT;}if(cpm>0&&G.teams[cpT]){c.strokeStyle=G.teams[cpT].color;c.lineWidth=2.2;c.beginPath();c.arc(x,y,s+4,-1.57,-1.57+6.283*Math.min(1,cpm));c.stroke();}
-      if(mine&&!G.grand){// tax-rate pips and unrest rings
+      if(mine){// tax-rate pips and unrest rings
         c.fillStyle='#f4f4f4';for(let i=0;i<=t.rate;i++){c.fillRect(x-s+i*2.4,y+s+3,1.6,2.2);}
         if(t.un>50){const crit=t.un>=75,pulse=t.un>=90?.5+.5*Math.sin(now*9):1;c.strokeStyle=crit?'#ff4a3a':'#ffd24a';c.globalAlpha=crit?.55+.45*pulse:1;c.lineWidth=crit?2.2:1.6;if(!crit)c.setLineDash([2.4,1.8]);c.beginPath();c.arc(x,y,s+(crit?5.5:3.4),0,7);c.stroke();c.setLineDash([]);if(t.un>=90){c.lineWidth=1.2;c.beginPath();c.arc(x,y,s+8+pulse*2,0,7);c.stroke();}}}}
     c.restore();}
@@ -55,7 +55,7 @@ function townMiniAt(e){if(!G||!G.towns)return null;const r=mm.getBoundingClientR
 FXH.tping=(team,x,y,k)=>{if(team!==ME||!G)return;try{radAt(x,y);}catch(e){}(G.tpings=G.tpings||[]).push({x,y,k,t:performance.now()});};
 function townClose(){TP.ti=-1;if(TP.el)TP.el.style.display='none';}
 function townPick(sx,sy){if(!G||!G.towns)return false;const w=screenToWorld(sx,sy);const t=townAt(w,10);if(t){townOpen(t.i);return true;}townClose();return false;}
-function townOpen(i){if(G&&G.grand)return;TP.ti=i;if(!TP.el)townBuild();TP.el.style.display='block';TP.t=0;townPanelTick(true);}
+function townOpen(i){TP.ti=i;if(!TP.el)townBuild();TP.el.style.display='block';TP.t=0;townPanelTick(true);}
 function townBuild(){if(!document.getElementById('townCss')){const st=document.createElement('style');st.id='townCss';st.textContent=`#townp{position:fixed;left:8px;top:64px;width:min(280px,calc(100vw - 16px));z-index:60;background:rgba(10,16,12,.94);border:1px solid #4a6a52;border-radius:8px;color:#e8f2e8;font:14px/1.35 system-ui,sans-serif;padding:10px 12px;display:none;max-height:calc(100vh - 290px);overflow-y:auto;box-shadow:0 4px 18px rgba(0,0,0,.5)}
 #townp h4{margin:0 0 2px;font-size:16px}#townp .tm{color:#9fb5a4;font-size:12px}#townp .rb{display:flex;gap:6px;margin:8px 0}#townp .rb button{flex:1;min-height:44px;border-radius:6px;border:1px solid #4a6a52;background:#1c2a20;color:#e8f2e8;font-size:13px;font-weight:600;cursor:pointer}#townp .rb button.on{background:#3a6b46;border-color:#9be39b}#townp .rb button[disabled]{opacity:.45}
 #townp .bar{height:10px;background:rgba(255,255,255,.14);border-radius:5px;overflow:hidden;margin:4px 0}#townp .bar i{display:block;height:100%}#townp .x{position:absolute;right:6px;top:4px;width:34px;height:34px;background:none;border:0;color:#cfe0d2;font-size:22px;cursor:pointer}#townp .warn{color:#ffb4a8;font-weight:600}`;document.head.appendChild(st);}
@@ -80,7 +80,6 @@ function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){
   if(G.over){townClose();return;}
   const mine=townsMine(t),reb=t.reb>G.t,kind=EC_LV[t.lv==null?(t.ham?0:1):t.lv],ow=t.ow>=0&&G.teams[t.ow]?G.teams[t.ow].F.name:null;let h=`<h4>${t.name}</h4><div class="tm">${kind}${ow?' &middot; held by '+ow:reb?' &middot; in rebel hands':' &middot; neutral'}</div>`;
   const pk=TPERK[t.pk|0];
-  if(G.grand){h+=`<div style="margin-top:6px">Loyalty ${Math.round(100-Math.min(100,t.un))}%${t.cut?' &middot; <b style="color:#ff9a8a">cut off from supply</b>':''}</div>`;const tb2=TP.el.querySelector('#tpb');if(TP.h!==h){TP.h=h;tb2.innerHTML=h;}return;}
   if(mine){const ramp=Math.round(Math.min(1,(G.t-(t.hold||0))/T_RAMP)*50+50);
     h+=`<div style="margin-top:6px"><b>Tax +$${t.tax.toFixed(1)}/s</b> <span class="tm">${ramp<100?'(ramping '+ramp+'%)':''}${t.whole?' &middot; whole town +50%':''}</span></div>`;
     h+='<div class="rb">'+TAXN.map((n,i)=>`<button data-r="${i}" class="${t.rate===i?'on':''}">${n}<br><span style="font-weight:400;font-size:11px">${i===0?'-40% tax':i===1?'':i===2?'+50%':'+120%'}</span></button>`).join('')+'</div>';

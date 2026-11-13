@@ -1,6 +1,6 @@
 // DECISIONS guard (audit): Abdullah's standing decisions that can be checked automatically, so a leftover of something he
 // already decided cannot come back (he found "End turn" and the Ayatollah button by hand on 2026-11-06). Static checks read
-// src/ (no browser); runtime checks look at the real game as a player: menu, a Conquest battle as IR, the grand map, a Fight-it battle.
+// src/ (no browser); runtime checks look at the real game as a player: menu, a Conquest battle as IR, the grand map, a campaign battle resolved on the map.
 //   node orch/decisions.mjs          prints DECISIONS PASS / DECISIONS FAIL; screenshots in orch/shots/audit/
 import http from 'node:http';
 import fs from 'node:fs';
@@ -23,8 +23,8 @@ const ck = (c, m) => { if (!c) fails.push(m); };
   const KEYS = ['world simulator', 'what would really happen', 'no decorative or ambient aircraft', 'left-click selects', 'right-click moves', 'attack-move', 'w a s d', 'ctrl+a',
     'rotates the battle camera', 'pointer lock', 'no big ugly buttons', 'radwan training', 'lebanese shia', 'zaidi shia movement', 'iraqi shia brigades', 'palestine islamic brigade',
     'desert islamic faction', 'zealous', 'professional', 'home defenders', 'firepower-reliant', 'mountain fortress', 'bunker buster', 'dear leader', 'ayatollah', 'shared soundtrack',
-    'free art only', 'cloudflare', 'servers-live', 'autodeploy', 'play online', 'pc only', 'conquest', 'zero hour', 'supply lines', 'real time with pause', 'fight-it', 'army only',
-    'no production', 'realistic start', 'balanced', 'ai hard', 'smooth first', 'one system per idea', 'leftovers', 'grand campaign', 'missions', 'artifact', 'orch/brief.md',
+    'free art only', 'cloudflare', 'servers-live', 'autodeploy', 'play online', 'pc only', 'conquest', 'zero hour', 'supply lines', 'real time with pause', 'never opens the real-time battle', 'resolved on the campaign map',
+    'siege', 'combat width', 'realistic start', 'balanced', 'ai hard', 'smooth first', 'one system per idea', 'leftovers', 'grand campaign', 'missions', 'artifact', 'orch/brief.md',
     'orch/decisions.md', 'never read', 'cigate.sh', 'no new runtime dependencies', 'multiplayer', '300 units', 'phone', 'end turn', 'eu4'];
   const miss = KEYS.filter(k => !all.includes(k));
   if (miss.length) fails.push('decisions missing from CLAUDE.md + orch/DECISIONS.md: ' + miss.join(', '));
@@ -96,11 +96,11 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   if (bad > 8) ck(false, `american: ${bad} British spellings in player-facing text in all (python3 orch/american.py)`); }
 
 // ---------- static checks ----------
-// polishP2 "Never lose progress": one save system. Battles autosave into 3 rolling slots (08d-save.js), the grand campaign saves on a timer and before every
-// Fight-it battle into 3 rolling copies (13-grand.js grSnap), and the menu's Continue (first item) covers both. Runtime proof: orch/polishtest.mjs (gate/save).
+// polishP2 "Never lose progress": one save system. Battles autosave into 3 rolling slots (08d-save.js), the grand campaign saves on a timer
+// into 3 rolling copies (13-grand.js grSnap), and the menu's Continue (first item) covers both. Runtime proof: orch/polishtest.mjs (gate/save).
 { const sv = SRC['08d-save.js'] || '', g = SRC['13-grand.js'] || '', m = SRC['14-menu.js'] || '';
   ck(/\['auto','auto2','auto3'\]/.test(sv) && /setInterval\(\(\)=>\{try\{svAutoTick\(\)/.test(sv), 'progress: battle autosave (3 rolling slots on a timer) is gone from 08d-save.js');
-  ck(/function grSnap\(/.test(g) && /grSnap\(\);return grBattlePrompt\(b\)/.test(g) && /function grAutoTick\(/.test(g), 'progress: grand campaign timer autosave / safety copy before Fight-it is gone from 13-grand.js');
+  ck(/function grSnap\(/.test(g) && /function grAutoTick\(/.test(g), 'progress: grand campaign timer autosave / rolling safety copies are gone from 13-grand.js');
   ck(/function svGrandInfo\(/.test(sv) && /MX\.cont=item\(/.test(m) && m.indexOf('MX.cont=item(') < m.indexOf("item('Grand campaign'") + (m.indexOf("item('Grand campaign'") < 0 ? 1e9 : 0) && m.indexOf('MX.cont=item(') < m.indexOf("item('Single player'") + (m.indexOf("item('Single player'") < 0 ? 1e9 : 0), 'progress: Continue must be the first item of the menu list and cover battles and the grand campaign');
 }
 // Living main menu (idea 9, Abdullah 2026-11-10 "Let's go all of them"; finished by helper finish-menu): the menu background shows YOUR war - whatever Continue would resume.
@@ -195,7 +195,7 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
 { const all = srcFiles.filter(f => /^13/.test(f)).map(f => SRC[f]).join('\n'); for (const n of ['g3FarGeo', 'g3FarCol', 'g3FarHide', 'gtkMinis', 'gtkFigures']) ck(!new RegExp('\\b' + n + '\\b').test(all), 'Army Standards: old army drawing code is back in src/13*: ' + n);
   ck(!/#g3ui \.p[ .{:]/.test(all), 'Army Standards: the old shield-badge CSS (#g3ui .p) is back'); ck(/function g3Tokens\(/.test(SRC['13e3-gtokens.js'] || ''), 'Army Standards: src/13e3-gtokens.js (g3Tokens) is missing');
   ck(/G3\.tier===2\|\|sel\)\)continue/.test(SRC['13e-grand3d.js']) && /if\(fl&&fl\.visible&&sel\)/.test(SRC['13e-grand3d.js']), 'Army Standards: g3Batch must draw figures only in the close view (or for the selected army) and a flag only on the selected army');
-  ck(/gtkEst\(/.test(all) && /grSideVal\(grSideUnits\(b,'att'\),0\)\*grIdeaMul\(b\.an,'attack'\)/.test(all), 'Army Standards: odds pills must use the auto-resolve strength terms (gtkEst)'); }
+  ck(/function gtkOdds\(/.test(all) && /gwOddsAt\(A\[0\]\.o,/.test(all) && !/grSideVal\(/.test(SRC['13e3-gtokens.js'] || ''), 'Army Standards: odds pills must use the campaign battle rules\' own forecast (gtkOdds -> gwOddsAt), no second formula'); }
 // 2. Controls (2026-10-28): W A S D only scroll the camera; A is not attack-move; F is; X is stop.
 { const hits = []; for (const f of srcFiles) SRC[f].split('\n').forEach((l, i) => { for (const m of l.matchAll(/\bkeys\.[wasd]\b/g)) hits.push([f, i + 1, l]); });
   for (const [f, n, l] of hits) ck(/cam\.t[xy]\s*[-+]=/.test(l) || /keys\.[wasd]\s*=/.test(l), `WASD used for something other than the camera: ${f}:${n}`);
@@ -213,8 +213,20 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(m.join('|') === 'Single player|Multiplayer|Test range', 'main menu order is ' + m.join(' · '));
   for (const f of ['14-menu.js', '08d-lobby.js']) ck(!/['">]Classic[<'"]/.test(SRC[f]), 'Classic mode still named in ' + f); }
 // 4. Grand-map-only assets are banned from Conquest in the one place that decides it.
-// (leadersC 2026-11-07 22:38: flipped - they are back in Conquest/Battle for their nations, banned only in grand Fight-it battles: G.grand)
-ck(/function conqBan\(k\)\{return\(k==='cleric'\|\|k==='bb'\)[^}]*!!G\.grand;\}/.test(SRC['01-data.js']) && !/function conqBan[^\n]*G\.conq/.test(SRC['01-data.js']), 'conqBan must ban cleric and bb ONLY when G.grand (the pre-built grand Mountain Fortress stays)');
+// (leadersC 2026-11-07 22:38: they are in Conquest/Battle/Missions/sandbox for their nations - sigBan decides the nation; nothing bans them by game mode any more)
+ck(!/function conqBan\(/.test(SRC['01-data.js']) && /function sigBan\(fac,k\)/.test(SRC['01-data.js']), 'signature assets: sigBan (per nation) must be the one place that decides; the old per-mode conqBan is back');
+// 4b. NO REAL-TIME BATTLES IN THE GRAND CAMPAIGN (Abdullah 2026-11-11 23:57 "Abandon battles in grand campaign. Turn it into eu 4 rules", 23:58 "No and now"):
+//     every land, sea and air fight is resolved on the campaign map by src/13a-gwar.js. No campaign file may start a battle (newGame), the old bridge
+//     and its leftovers must stay gone from every file, and the battle code keeps no campaign branch (G.grand).
+{ const all = Object.entries(SRC), g13 = all.filter(([f]) => /^13/.test(f));
+  const starts = g13.filter(([f, t]) => /\b(newGame|afterStart)\s*\(/.test(t)).map(x => x[0]); ck(!starts.length, 'campaign battles: a grand-campaign file starts the real-time battle (newGame/afterStart): ' + starts.join(', '));
+  const old = /\b(grandBattleStart|grandBattleSetup|grandFightLive|grandLeaveBattle|grandTestFinish|grandTick|grandHud|grBattlePrompt|grBattleDone|gnBattleAsk|gnBattleFor|GB_CUR|GRAND_NOPROD|gmApply|gmWriteBack|gdrApplyBattle|gmilApplyPerks)\b|G\.grand\b|o\.grand\b|Fight it live|Fight-it|Auto-resolve|auto-resolve/;
+  const left = all.filter(([f, t]) => old.test(t)).map(x => x[0]); ck(!left.length, 'campaign battles: leftovers of the real-time campaign battle in ' + left.join(', '));
+  const w = SRC['13a-gwar.js'] || '', gr = SRC['13-grand.js'] || '';
+  ck(/function gwStep\(/.test(w) && /function gwSiegeDay\(/.test(w) && /function gwOpen\(/.test(w) && /grRng\(/.test(w) && !/Math\.random/.test(w), 'campaign battles: the map resolver (13a-gwar.js: gwOpen / gwStep / gwSiegeDay, seeded draws only) is gone or uses Math.random');
+  ck(/function grQueue\(auto\)\{for\(;GC\.qi<GC\.q\.length;GC\.qi\+\+\)grBattleAuto\(/.test(gr) && /function grBattleAuto\(b\)\{.*gwOpen\(b\)/.test(gr), 'campaign battles: the month close must hand every contested province to gwOpen (no prompt, no other path)');
+  ck(/if\(gwFort\(pi\)>0&&!st\.sf\)return false/.test(gr), 'campaign battles: a fort province must not change hands without a finished siege (grCapture)');
+  ck(/za=gwZeal\(B\.an\),zd=gwZeal\(B\.dn\)/.test(w) && /bd=!zd&&/.test(w) && /ba=!za&&/.test(w) && /function gwZeal\(nat\)\{try\{return msOf\(grNat\(nat\)\.fac\)\.rout===0/.test(w), 'campaign battles: Zealous sides (msOf(..).rout===0) must never break in gwStep'); }
 // 5. Names / identity that must not drift.
 ck(/Radwan Training/.test(SRC['01-data.js'] + Object.values(SRC).join('')), 'upgrade name "Radwan Training" is gone');
 // Shia sub-leader titles are lane AY's open work (PLAN-SAT): reported, not failed, until AY ships; then change warn -> ck.
@@ -288,7 +300,7 @@ try {
   await ev(() => { setup.p = 'IR'; setup.a = 'US'; setup.n = 1; try { initAudio(); } catch (e) {} startSingle(); });
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('conquest battle never finished loading'));
   await page.waitForTimeout(2500);
-  const cq = await ev(() => { const T = G.teams[ME]; const ban = { cleric: roster(T.fac).barracks.includes('cleric'), fort: bldAllowed(T.fac, 'fort'), bb: conqBan('bb'), bbIR: sigBan('IR', 'bb'), bbUS: sigBan('US', 'bb'), fortUS: bldAllowed('US', 'fort'), powIR: typeof POWERS.bb === 'object' };
+  const cq = await ev(() => { const T = G.teams[ME]; const ban = { cleric: roster(T.fac).barracks.includes('cleric'), fort: bldAllowed(T.fac, 'fort'), bb: false, bbIR: sigBan('IR', 'bb'), bbUS: sigBan('US', 'bb'), fortUS: bldAllowed('US', 'fort'), powIR: typeof POWERS.bb === 'object' };
     const shown = ['u_cleric', 'b_fort', 'p_bb', 'p_cleric'].filter(id => { const b = document.getElementById(id); if (!b) return false; return !b.hidden && b.offsetParent !== null; });
     const btns = [...document.querySelectorAll('#panel button, #side button, #bar button, #powers button, button.btn')].filter(b => b.offsetParent).map(b => b.id + ':' + b.textContent.trim().slice(0, 30));
     // WASD must not select, order or toggle anything
@@ -488,23 +500,24 @@ try {
   // ---- drones fly from the Airfield (Abdullah 2026-11-08); nations without an airfield keep them at the War Factory
   { const d = await ev(() => ['TR', 'UA', 'IR', 'RS'].map(f => [f, stats(f, 'drone').from, roster(f).airfield.includes('drone'), roster(f).factory.includes('drone'), !!FACTIONS[f].noAir]));
     for (const [f, from, inAir, inFac, noAir] of d) { const want = noAir ? 'factory' : 'airfield'; ck(from === want && inAir === (want === 'airfield') && inFac === (want === 'factory'), `drone for ${f} built from ${from} (want ${want})`); } }
-  // ---- Fight-it battle: the army you have, nothing to buy/build/tax
-  await ev(() => { const pi = GCM.P.findIndex(p => p.land && !p.map && GC.prov[p.i].o === 'IR'); const P = GCM.P[pi], st = GC.prov[pi], an = 'IQ'; const from = P.adj.find(j => GCM.P[j].land);
-    const A = grAddArmy(an, from, grGenUnits(grNat(an).fac, 3000, true)); const D = grAddArmy('IR', pi, grGenUnits('IR', 3000, true)); A.at = pi;
-    grandBattleStart({ p: pi, an, dn: 'IR', att: [A.id], def: [D.id], garr: true, river: false, mtn: P.t === 'm', done: 0 }); });
-  await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !!G.grand, null, { timeout: 60000 });
-  await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('fight-it battle never finished loading'));
-  await page.waitForTimeout(2500);
-  const fb = await ev(() => { const shown = [...document.querySelectorAll('button.btn')].filter(b => !b.hidden && b.offsetParent && !b.disabled && /^(b_|u_|g_)/.test(b.id)).map(b => b.id);
-    const txt = (document.body.innerText || ''); return { shown, tax: /\bTax\b.*(rate|High|Low)|Invest/i.test(txt) ? (/.{20}(Invest|Tax rate).{20}/i.exec(txt) || [''])[0] : '', money: /\$\s?\d{1,3}(,\d{3})+/.test(txt) ? (/.{15}\$\s?\d{1,3}(,\d{3})+.{10}/.exec(txt) || [''])[0] : '', cr: G.teams[ME].credits, txtA: /Ayatollah|Dear Leader|Bunker Buster/.exec(txt) }; });
-  { const g = await ev(() => ({ ban: ['cleric', 'bb'].every(k => conqBan(k)), fort: false, cl: roster('IR').barracks.includes('cleric'), made: G.ents.some(e => e.kind === 'cleric') }));
-    ck(g.ban && !g.fort && !g.made, 'signature assets must be OUT of grand Fight-it battles: ' + JSON.stringify(g)); }
-  console.log('fight-it', JSON.stringify(fb)); await shot('fightit-hud');
-  { const gg = await ev(() => { const tabs = document.querySelector('.tabs'); const T0 = G.teams[ME]; const c0 = T0.credits; return { tabs: !!tabs && tabs.offsetParent !== null, panel: !!document.getElementById('panel') && document.getElementById('panel').offsetParent !== null, enq: enqueue(ME, 'rifle'), enq2: enqueue(ME, 'infantry'), pb: typeof placeBld === 'function' ? placeBld(ME, 'barracks', 10, 10) : false, banner: /your army only/.test(document.body.innerText), cr: c0 === T0.credits }; });
-    ck(!gg.tabs && !gg.panel, 'campaign battle still shows the Build/Units tabs or panel'); ck(!gg.enq && !gg.enq2 && !gg.pb, 'campaign battle allows enqueue/placeBld'); ck(gg.banner, 'campaign battle lacks the "army only" banner'); }
-  ck(!fb.shown.length, 'Fight-it battle shows ENABLED build/train/upgrade buttons (army only): ' + fb.shown.slice(0, 8).join(','));
-  ck(!fb.tax, 'Fight-it battle shows tax/invest UI: ' + fb.tax);
-  ck(!fb.txtA, 'Fight-it battle text mentions a grand-map-only asset');
+  // ---- campaign battles are resolved ON the map (Abdullah 2026-11-11 23:57): nothing can start the real-time battle; the same state and seed give the same
+  //      battle twice; a Zealous army never falls back by morale; a fort province does not change hands without a finished siege
+  { const gb = await ev(() => { const o = {}; const G0 = G; grNew({ me: 'IR', seed: 21, len: 'quick' }); for (const k of Object.keys(GC.nat)) GC.nat[k].ai = false;
+      o.fns = ['grandFightLive', 'grandBattleStart', 'grandBattleSetup', 'grBattlePrompt', 'grBattleDone', 'grandTick', 'conqBan', 'gnBattleAsk', 'gmMap', 'gmApply'].filter(f => typeof window[f] === 'function');
+      const pi = GCM.P.find(p => p.land && p.t === 'f' && !gwFort(p.i) && !p.cap && !GC.armies.some(a => a.at === p.i)).i;
+      const fight = (an, dn, va, vd, seed) => { GC.seed = seed; GC.bid = 900; GC.war[grWk(an, dn)] = 1; GC.prov[pi].gar = []; const A = grAddArmy(an, pi, grGenUnits(grNat(an).fac, va, true)), D = grAddArmy(dn, pi, grGenUnits(grNat(dn).fac, vd, true)), at = D.at;
+        const B = gwOpen({ p: pi, an, dn, att: [A.id], def: [D.id], garr: false, river: false, mtn: false, sea: false, done: 0 }); let g = 0; while (GC.bt.includes(B) && g++ < 2000) gwTick(); const R = GC.br[GC.br.length - 1];
+        const r = { win: R.win, how: R.how, d: R.d, la: R.la, ld: R.ld, dAlive: GC.armies.includes(D), dMoved: GC.armies.includes(D) && D.at !== at }; GC.armies = GC.armies.filter(a => a !== A && a !== D); return r; };
+      const js = JSON.stringify(GC), a = JSON.stringify(fight('US', 'RU', 30000, 30000, 5)); GC = JSON.parse(js); const b = JSON.stringify(fight('US', 'RU', 30000, 30000, 5)); GC = JSON.parse(js); const c = JSON.stringify(fight('US', 'RU', 30000, 30000, 6)); GC = JSON.parse(js);
+      o.same = a === b; o.diff = a !== c; o.days = JSON.parse(a).d;
+      o.zeal = []; for (const z of ['IR', 'RS', 'DW', 'RV', 'KP', 'OB', 'BI']) if (GC.nat[z]) for (let sd = 1; sd <= 3; sd++) { const r = fight('US', z, 60000, 12000, sd); if (r.win !== 'att' || r.dAlive || r.dMoved || r.how === 'rout' || r.how === 'shatter') o.zeal.push(z + ':' + r.how); }
+      const fp = GCM.P.find(q => q.land && GC.prov[q.i].o === 'SA' && !q.cap && gwFort(q.i) > 0 && !GC.armies.some(x => x.at === q.i)); o.fort = !!fp;
+      if (fp) { GC.war[grWk('IR', 'SA')] = 1; GC.prov[fp.i].gar = []; grAddArmy('IR', fp.i, grGenUnits('IR', 40000, true)); grEndTurn(true); o.fortOwner = GC.prov[fp.i].o; o.siege = !!gwSiegeAt(fp.i); o.live = G !== G0; }
+      return o; });
+    console.log('campaign battles', JSON.stringify(gb));
+    ck(!gb.fns.length, 'campaign battles: real-time battle functions are back: ' + gb.fns.join(', ')); ck(gb.same && gb.diff && gb.days >= 3, 'campaign battles: same state + seed must give the same battle (and another seed another one): ' + JSON.stringify([gb.same, gb.diff, gb.days]));
+    ck(!gb.zeal.length, 'campaign battles: a Zealous army left the field by morale: ' + gb.zeal.join(', '));
+    ck(gb.fort && gb.fortOwner === 'SA' && gb.siege && !gb.live, 'campaign battles: an army walked into a fort province and took it without a siege (or a real-time battle started): ' + JSON.stringify(gb)); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
 await browser.close(); server.close();

@@ -23,7 +23,7 @@ function svDel(id){return svTx(['meta','data'],'readwrite',tx=>{tx.objectStore('
 function svStorageMsg(e){const m=String(e&&e.message||e||'');return 'Your browser is blocking game storage ('+(m||'unknown')+'). Use "Download save" instead, or allow site data for this page.';}
 /* ---------- capture ---------- */
 function svThumb(){try{if(typeof mm==='undefined'||!mm||!mm.width)return null;const c=document.createElement('canvas');c.width=160;c.height=Math.max(1,Math.round(160*mm.height/mm.width));c.getContext('2d').drawImage(mm,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.7);}catch(e){return null;}}
-function svCanSave(){return !!(G&&!G.over&&!G.rp&&MODE==='single'&&!window.LOADING&&G.ng&&!G.sandbox&&!G.grand);}
+function svCanSave(){return !!(G&&!G.over&&!G.rp&&MODE==='single'&&!window.LOADING&&G.ng&&!G.sandbox);}
 /* svFront (living main menu): a small sketch of the battlefield at the moment of saving - water and land, and which side holds each part of the land, worked out from your own
    forces and the enemy forces you could see - run-length packed like the campaign's war table (13-grand.js grWarTable) so the main menu can draw where your front is.
    Display only: it rides in the save's list entry (meta), never in the checkpoint; nothing in the battle reads it. */

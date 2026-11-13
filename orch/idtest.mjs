@@ -55,7 +55,7 @@ try {
     N.rs.gov = 2; out.slot3 = gidSlots('KR') === 3 && gidPick('KR', 'air') === ''; N.rs = { gov: 5, dip: 5, mil: 5 }; out.max8 = gidSlots('KR') === 8;
     N.pp.mil = 9999; for (let i = 0; i < 5; i++) gidBuy('KR', 'ca'); out.done = gidLevel('KR', 'ca') === 7 && GMOD_ROWS.some(x => x.id === 'idea_ca_done') && gmodRows('nation', 'KR', 'attack').some(x => x.id === 'idea_ca_done');
     const pm = N.pp.pol; out.drop = gidDrop('KR', 'tech') === '' && N.ig.indexOf('tech') < 0 && N.pp.pol === pm;
-    // auto-resolve uses the doctrine stats
+    // the doctrine stats scale army strength
     out.auto = grIdeaMul('KR', 'attack') > 1.1;
     // save/load round trip
     const js = JSON.stringify(GC); const G2 = JSON.parse(js); out.save = JSON.stringify(G2.nat.KR.ig) === JSON.stringify(N.ig) && G2.nat.KR.idea.length === N.idea.length;

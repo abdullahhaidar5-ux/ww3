@@ -5,7 +5,7 @@
 // and sea trade of 13g-grandeco), escorts for crossings, mines and subs. AI empires use all of it. Everything here is
 // deterministic: random draws come from grRng seeded with the campaign seed, the turn and a stable index.
 // State: GC.mil = {g:{id:general}, gid, fr:[fronts], fid, zm:{zone:{o,n}}, fq:[fleet queue], n:{nation:{ms,so}}, bk:{province:1}, foe}
-const GMIL_TR=[['Armor expert','Tanks, helicopters and the hero squad +10% tougher.'],['Defender','Whole army +9% tougher when it defends (+6% in auto-resolve).'],['Logistician','Ammo and fuel full at battle start; half the hunger losses.'],['Raider','Infantry and light units +10% tougher; fewer men lost in a won field battle.']];
+const GMIL_TR=[['Armor expert','Tanks, helicopters and the hero squad fight 10% stronger. +1 Assault and Maneuver skill.'],['Defender','The whole army fights 6% stronger when it defends. +1 Fires and Siege skill.'],['Logistician','The army fights 4% stronger and loses half as many men to hunger. +1 Maneuver and Siege skill.'],['Raider','Infantry and light units fight 10% stronger; the men recover a little after a won battle. +1 Assault and Maneuver skill.']];
 const GMIL_LVN=[60,150,280,450];   // experience for levels 1-4
 const GMIL_NM={   // fictional name pools per culture [first names, family names] - generic, no real commanders
  ar:[['Karim','Nabil','Samir','Hadi','Walid','Tariq','Salim','Rami','Fouad','Jamal'],['Haddadi','Mansour','Zayed','Rahal','Sabbagh','Khoury','Darwish','Najjar','Hakim','Farouk']],
@@ -117,14 +117,6 @@ function gmilMul(a,def){const g=gmilGen(a);if(!g)return 1;let m=1+.025*g.lv;
 function gmilBattle(b,win){const M=GC.mil;if(!M)return;for(const side of ['att','def']){const won=side===win;for(const id of (side==='att'?b.att:b.def)){const a=GC.armies.find(x=>x.id===id),g=gmilGen(a);if(!g)continue;
       g.xp+=(won?36:12)+(g.tr===3&&won?6:0)+(g.tr===1&&side==='def'?6:0);const L=gmilLv(g);if(L>g.lv){g.lv=L;if(g.o===GC.me)grLog(gmilTitle(g)+' '+g.nm+' reached level '+L+'.',g.o);}
       if(g.tr===3&&won&&a.u.length>2){for(const r of a.u)r[1]=Math.min(100,r[1]+3);}}}}
-// the hero squad that stands for the general in a Fight-it battle: the perk table the battle applies to that side's units
-function gmilPerk(L){let best=null;for(const s of L){const g=gmilGen(s.arr);if(g&&(!best||g.lv>best.lv))best={tr:g.tr,lv:g.lv,nm:gmilTitle(g)+' '+g.nm,gid:g.id};}return best;}
-function gmilApplyPerks(gr,gp){if(!gp)return;for(let t=0;t<2;t++){const p=gp[t];if(!p)continue;const defend=gr.att!==t;
-    for(const [rec,u,team] of gr.ents){if(team!==t||u.dead)continue;let m=1+.03*p.lv;const k=rec[0];
-      if(p.tr===0&&(k==='tank'||k==='heli'||k==='champ'))m+=.10;else if(p.tr===1&&defend)m+=.09;else if(p.tr===3&&(k==='inf'||k==='at'||k==='aa'))m+=.10;
-      if(p.tr===2){if(u.s&&u.s.ammo)u.ammo=u.s.ammo;}
-      if(m!==1){u.max=Math.round(u.max*m);u.hp=Math.min(u.max,Math.round(u.hp*m));}}}}
-function gmilHeroFell(gid){const M=GC.mil,g=M&&M.g[gid];if(!g||g.st)return;g.xp=Math.floor(g.xp*.85);const R=gmilRng(g.id,77);if(R()<.35){g.st=1;g.aid=0;const a=GC.armies.find(x=>x.gid===g.id);if(a)a.gid=0;grLog(gmilTitle(g)+' '+g.nm+' was killed leading the battle.',g.o);}}
 
 // ---------- fleets ----------
 function gmilFleets(c){return GC.armies.filter(a=>a.fl&&a.o===c&&a.u.length);}
@@ -183,9 +175,8 @@ function gmilBuyLauncher(c,aid){const N=GC.nat[c],a=GC.armies.find(x=>x.id===aid
 function gmilLnExposed(a){if((a.lx|0)>=GC.turn-1)return true;const P=GCM.P[a.at];if(!P)return false;return GC.armies.some(x=>!x.fl&&x.u.length&&x.o!==a.o&&grAtWar(x.o,a.o)&&(x.at===a.at||P.adj.includes(x.at)));}
 function gmilDrMonth(){for(const c of GMIL_DRN){const N=GC.nat[c];if(!N||N.dead)continue;const M=gmilN(c);let mk=0;for(const p of GCM.P){if(!p.land||GC.prov[p.i].o!==c)continue;mk+=Math.round(6*geEff(p.i,'dsite'))+Math.min(1,Math.round(geEff(p.i,'factory')));}
     if(N.e&&(N.e.dry||N.e.pw<.5))mk=Math.floor(mk/2);mk=Math.min(mk,GMIL_DR_MAX-(M.dr|0),Math.floor(Math.max(0,N.cash)/GMIL_DR_COST));if(mk>0){M.dr=(M.dr|0)+mk;N.cash-=mk*GMIL_DR_COST;}}}
-// grand-map Fight-it: drones a side can call = its stock, only if a launch site or launcher is within ~2,000 km of the battle
+// one-way drones a side can call on for a battle = its stock, only if a launch site or launcher is within ~2,000 km of it (gwMods spends them)
 function gmilDrAvail(c,pi){if(!GC||!GC.mil||!GMIL_DRN.includes(c))return 0;return gmilSites(c,pi,GMIL_ST.d.rng,'d')>=0?gmilDrStock(c):0;}
-function gmilDrBattleDone(gr,n0,n1){if(!gr||!gr.du)return;[n0,n1].forEach((c,t)=>{if(c&&gr.du[t]&&GC.mil){const M=gmilN(c);M.dr=Math.max(0,(M.dr|0)-gr.du[t]);}});}
 // stock orders: paid now, delivered months later (real lead times are years; the campaign compresses them, the order of magnitude between nations is real)
 function gmilOrdLead(c,k){return GMIL_ORD[k].lead+(gmilStkYr(c,k)>0?0:2);}
 function gmilOrderCheck(c,k){const N=GC.nat[c],M=gmilN(c),O=GMIL_ORD[k];if(!O)return 'Unknown order.';if(gmilStkYr(c,k)<=0&&typeof unSanctioned==='function'&&unSanctioned(c))return 'Under UN sanctions nobody sells you these.';
