@@ -146,7 +146,7 @@ try {
     else console.log(el(), 'friend live battle settled on host:', hf.log[0]);
     await host.evaluate(() => guSpeed(0)); }
   // the friend leaves: SA back to the AI
-  await click(cl, 'button', '^Save & exit');
+  await click(cl, '#gMenuBtn'); await click(cl, '#gMenuPop button', '^Save & exit');   /* camphud: Save & exit lives in the bar's ☰ menu */
   await wait(host, () => GC.nat.SA.ai === true, null, 15000, 'SA handed back to the AI');
   console.log(el(), 'friend left, AI took over');
   { const lp = await host.evaluate(() => { gevS().pend.push(['SA', 'trade']); gevTurn(); return (GC.ev.pend || []).some(p => p[0] === 'SA'); });
