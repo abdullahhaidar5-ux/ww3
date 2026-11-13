@@ -23,6 +23,24 @@
   // AI wars over 30 months: no province changes owner while its two nations are at war, except by collapse; same seed = same result
   { const run = () => { grNew({ me: null, seed: 4242, len: 'std' }); let bad = ''; const own = GCM.P.map(p => p.land ? ocOwner(p.i) : '');
       for (let m = 0; m < 30 && !GC.over; m++) { grEndTurn(true); for (const p of GCM.P) { if (!p.land) continue; const w = ocOwner(p.i), w0 = own[p.i]; if (w !== w0) { if (GC.nat[w0] && !GC.nat[w0].dead && grAtWar(w, w0) && !bad) bad = p.n + ' ' + w0 + '>' + w + ' month ' + m; own[p.i] = w; } } }
-      return { bad, h: grHash(), occ: GC.prov.filter(p => p.ow).length, deals: GC.log.filter(l => /^Peace between/.test(l[1])).length }; };
+      const sc = Object.keys(GC.war).sort().map(k => { const [a, b] = k.split('|'); if (gdWarscore(a, b) !== -gdWarscore(b, a)) bad = bad || 'war score of ' + k + ' is not the same number for both sides'; return k + gdWarscore(a, b); }).join(',');
+      return { bad, h: grHash() + sc + JSON.stringify(GC.wr || {}), occ: GC.prov.filter(p => p.ow).length, deals: GC.log.filter(l => /^Peace between/.test(l[1])).length }; };
     const r1 = run(), r2 = run(); ok(!r1.bad, 'a province changed owner in the middle of a war: ' + r1.bad); ok(r1.h === r2.h, 'same seed gave a different campaign with occupation'); ok(r1.deals > 0, 'AI wars must end in peace deals (none in 30 months)'); }
+  // ---- 2. WAR GOALS AND AN HONEST WAR SCORE
+  { grNew({ me: 'IR', seed: 5, len: 'std' }); const a = 'IR', [pi, pj, b] = border(a); GC.cl = [[a, pj, GC.turn + 24]]; grDeclare(a, b); const w = gdWarRec(a, b);
+    ok(w.by === a && w.g.t === 'prov' && w.g.p === pj, 'a declared war must record who declared it and ONE stated aim (a claimed province becomes the aim): ' + JSON.stringify(w));
+    ok(gdWarscore(a, b) === 0 && !gdAimHeld(a, b), 'a new war starts at score 0 with the aim not held');
+    gdWarBattle({ an: a, dn: b }, 'att'); gdWarBattle({ an: b, dn: a, how: 'wipe' }, 'def'); ok(gdWarscore(a, b) === GWS.bat + GWS.big, 'battles won must count: ' + gdWarscore(a, b));
+    const s1 = gdWarscore(a, b); occupy(a, pj); const s2 = gdWarscore(a, b); ok(s2 > s1, 'occupied land must raise the score'); ok(gdAimHeld(a, b), 'holding the named province = aim held');
+    for (let i = 0; i < 3; i++) { GC.turn++; gdWarMonth(); } const rows = gdWarRows(a, b), sum = rows.reduce((x, r) => x + r[1], 0); ok(gdWarscore(a, b) === s2 + 3 * GWS.aimUp && sum === gdWarscore(a, b), 'the aim held must tick +' + GWS.aimUp + ' a month and the rows must add up to the score');
+    ok(gdWarscore(b, a) === -gdWarscore(a, b), 'the score is the same number for both sides');
+    ok(JSON.parse(JSON.stringify(GC)).wr[grWk(a, b)].gt === 3 * GWS.aimUp, 'the war record must be saved with the campaign');
+    // why they say no, and what would make them say yes
+    const all = gpProvs(a, b).slice(0, 8).map(p => p.i), no = gpEval(a, b, { prov: all }); ok(!no.ok && /short/.test(no.why), 'a refused deal must say by how much: ' + no.why);
+    const R = gpWillRows(b, a); ok(R[0][0] === 'War score' && R.some(r => /war support/.test(r[0])), 'the reasons must list the war score and war support (the one exhaustion measure)'); ok(gpWill(b, a) === R.reduce((x, r) => x + r[1], 0), 'what they will sign = the sum of the shown reasons');
+    ok(/occupy|battle/.test(gpHow(a, b)), 'the table must say what would make them say yes');
+    const N = wsN(b), w0 = gpWill(b, a); N.ws = 10; ok(gpWill(b, a) > w0, 'low war support must make a nation readier to sign'); ok(!('we' in GC.nat[b]) && !('exh' in GC.nat[b]), 'no second exhaustion meter');
+    npOpen(a, 'wars'); ok(!!document.querySelector('#npWin .gpWar') && /War aim/.test(document.querySelector('#npWin .gpWar').textContent), 'the Wars screen must show the aim and the score split'); npClose();
+    gpOpen(a, b); ok(!!document.getElementById('gpWhy'), 'the peace table must show why they say yes or no'); document.getElementById('gpDeal').remove();
+    gpApply(a, b, { prov: [] }); GC.turn++; gdWarMonth(); ok(!GC.wr[grWk(a, b)], 'the war record ends with the war'); }
   return F; })()

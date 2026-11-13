@@ -16,9 +16,49 @@ function gdWhy(a,b){const L=[],base=(GC.rel&&GC.rel[grWk(a,b)])||0;if(base)L.pus
   if(GC.gu&&GC.gu.some(g=>g[0]===b&&g[1]===a))L.push(['They guarantee you',10]);
   return L;}
 function gdOp(a,b){if(grAtWar(a,b))return -100;const w=gdWhy(a,b);let v=0;for(const x of w)v+=x[1];return Math.max(-100,Math.min(100,v));}
-function gdWarscore(a,b){let s=0;const k=grWk(a,b);const t=GC.turn-((GC.wsT&&GC.wsT[k])||1);
-  for(const ar of GC.armies){if(ar.fl)continue;const w=GC.prov[ar.at]?ocOwner(ar.at):'';if(ar.o===a&&w===b)s+=12;if(ar.o===b&&w===a)s-=12;}
-  s+=Math.min(30,t*2);return s;}
+// ---- WAR RECORD, WAR AIM AND AN HONEST WAR SCORE (Abdullah 2026-11-12 20:29 "Go", item 2 of orch/reports/eu4-gap.md) ----
+// Every war has ONE record GC.wr[grWk(a,b)] = {by: who declared, g: the stated aim {t,p}, gt: aim clock, bw: {nation: battle points}} (start month stays in GC.wsT).
+// The score is counted, never rolled, and it is the same number for both sides with the sign flipped:
+//   battles won (GWS.bat each, GWS.big for a force destroyed or scattered, net capped at GWS.batCap) · land occupied (share of the enemy's development held,
+//   up to GWS.occ, +GWS.capB for his capital) · ports blockaded (GWS.port each, capped) · the stated aim (held: +GWS.aimUp a month up to GWS.aimCap for the
+//   attacker; not held after GWS.holdAfter months: the defender is holding out, -1 a month down to -GWS.holdCap).
+// Exhaustion is NOT in the score: war support (13v) is the one exhaustion measure and enters only when a side decides to sign (gpWill, 13z-gpeace.js).
+// Who reacts: the AI signs or refuses by these numbers, and the peace table shows them row by row. Counter-play: win battles, take or free land, break
+// a blockade, deny the aim. Cost: all of it costs men, money and war support. Saved in GC, deterministic.
+const GWS={bat:3,big:5,batCap:40,occ:60,capB:10,port:3,portCap:12,aimUp:2,aimCap:25,holdAfter:6,holdCap:15};
+const GWG={sup:['Show superiority','win clearly more battles than you lose'],prov:['Take a province','hold the named province'],cap:['Take the capital','hold the enemy capital'],def:['Defend the homeland','keep every enemy soldier off your land'],lib:['Free occupied land','drive the occupier out of the named nation\'s land']};
+const GD_NOWAR=Object.freeze({by:'',g:Object.freeze({t:'sup'}),gt:0,bw:Object.freeze({})});
+function gdWarRec(a,b){return (GC&&GC.wr&&GC.wr[grWk(a,b)])||GD_NOWAR;}
+function gdWarMk(a,b){GC.wr=GC.wr||{};const k=grWk(a,b);if(!GC.wr[k])GC.wr[k]={by:'',g:{t:'sup'},gt:0,bw:{}};return GC.wr[k];}
+// the aim a nation would state against b when nobody chose one: its claimed province, else land it once owned, else a show of superiority
+function gdAimPick(a,b){let c=null;try{c=gclList(a,b)[0];}catch(e){}if(c)return {t:'prov',p:c[1]};
+  const lost=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===b&&!GC.prov[p.i].ow&&GC.prov[p.i].o0===a).sort((x,y)=>y.dev-x.dev||x.i-y.i)[0];if(lost)return {t:'prov',p:lost.i};return {t:'sup'};}
+function gdWarStart(a,b,g){const w=gdWarMk(a,b);w.by=a;w.g=g||gdAimPick(a,b);w.gt=0;w.bw={};return w;}
+function gdAimText(a,b){const w=gdWarRec(a,b),g=w.g,by=w.by;if(!by)return 'No stated aim (the war grew out of another war)';
+  const nm=g.t==='prov'&&GCM.P[g.p]?'Take '+GCM.P[g.p].n:g.t==='lib'&&g.n&&GCM.nats.get(g.n)?'Free the occupied land of '+GCM.nats.get(g.n).name:GWG[g.t][0];return gdN(by)+': '+nm;}
+// is the declarer's aim met right now? (the defender's aim is always the mirror: deny it)
+function gdAimHeld(a,b){const w=gdWarRec(a,b),g=w.g,by=w.by;if(!by)return false;const foe=by===a?b:a;
+  if(g.t==='prov')return !!GC.prov[g.p]&&GC.prov[g.p].o===by;
+  if(g.t==='cap')return GC.prov.some(st=>st.cp===foe&&st.o===by);
+  if(g.t==='def')return !GC.prov.some(st=>st.ow===by&&st.o===foe);
+  if(g.t==='lib')return !GC.prov.some(st=>st.ow===g.n&&st.o===foe)&&GC.prov.some(st=>st.o===g.n||st.ow===g.n);
+  return ((w.bw[by]|0)-(w.bw[foe]|0))>=GWS.bat*3;}
+// a battle between the two nations of a war ended (from grSettle)
+function gdWarBattle(b,win){if(!b||!grAtWar(b.an,b.dn))return;const w=gdWarMk(b.an,b.dn),c=win==='att'?b.an:b.dn;w.bw[c]=(w.bw[c]|0)+((b.how==='wipe'||b.how==='shatter'||b.how==='sunk')?GWS.big:GWS.bat);}
+// monthly: the aim clock moves, records of finished wars are dropped
+function gdWarMonth(){if(!GC||!GC.wr)return;for(const k of Object.keys(GC.wr).sort()){if(!GC.war[k]){delete GC.wr[k];continue;}const w=GC.wr[k];if(!w.by)continue;const [a,b]=k.split('|'),len=GC.turn-((GC.wsT&&GC.wsT[k])||GC.turn);
+    if(gdAimHeld(a,b))w.gt=Math.min(GWS.aimCap,Math.max(0,w.gt)+GWS.aimUp);else if(w.gt>0)w.gt=Math.max(0,w.gt-GWS.aimUp);else if(len>=GWS.holdAfter)w.gt=Math.max(-GWS.holdCap,w.gt-1);}}
+if(typeof GMOD_HOOKS==='object')GMOD_HOOKS.push(gdWarMonth);
+// the score of a against b as rows [label, points, hint]; gdWarscore = their sum, -100..100
+function gdWarRows(a,b){const w=gdWarRec(a,b),R=[],P=GCM.P;
+  const net=Math.max(-GWS.batCap,Math.min(GWS.batCap,(w.bw[a]|0)-(w.bw[b]|0)));R.push(['Battles won',net,'+'+GWS.bat+' for each battle won, +'+GWS.big+' when the enemy force is destroyed or scattered (most '+GWS.batCap+')']);
+  let dA=0,dB=0,hA=0,hB=0,cA=0,cB=0;for(const p of P){if(!p.land)continue;const st=GC.prov[p.i],ow=st.ow||st.o,d=p.dev||1;if(ow===b){dB+=d;if(st.o===a&&st.ow===b){hA+=d;if(st.cp===b)cA=1;}}else if(ow===a){dA+=d;if(st.o===b&&st.ow===a){hB+=d;if(st.cp===a)cB=1;}}}
+  const occ=Math.round((dB?GWS.occ*hA/dB:0)+cA*GWS.capB-(dA?GWS.occ*hB/dA:0)-cB*GWS.capB);R.push(['Land occupied',occ,'the share of the enemy\'s land you hold (by development, most '+GWS.occ+'), +'+GWS.capB+' for his capital; minus what he holds of yours']);
+  let pa=0,pb=0;const M=GC.mil;if(M&&M.bk)for(const i of Object.keys(M.bk)){const o=GC.prov[i].o;if(o!==a&&o!==b)continue;const e=o===a?b:a;if(P[i].adj.some(j=>P[j].sea&&GC.armies.some(x=>x.fl&&x.at===j&&x.o===e&&x.u.length))){if(o===b)pa++;else pb++;}}
+  const port=Math.min(GWS.portCap,pa*GWS.port)-Math.min(GWS.portCap,pb*GWS.port);R.push(['Ports blockaded',port,'+'+GWS.port+' for each enemy port your fleets close (most '+GWS.portCap+')']);
+  if(w.by){const sg=w.by===a?1:-1,held=gdAimHeld(a,b);R.push([w.gt>=0?(held?'War aim held':'War aim (not held)'):'Time: the defender holds out',sg*w.gt,gdAimText(a,b)+' — held: +'+GWS.aimUp+' a month for the attacker (most '+GWS.aimCap+'); not held after '+GWS.holdAfter+' months: -1 a month (most -'+GWS.holdCap+')']);}
+  return R;}
+function gdWarscore(a,b){if(!grAtWar(a,b))return 0;let s=0;for(const r of gdWarRows(a,b))s+=r[1];return Math.max(-100,Math.min(100,s));}
 // chance(action,a,b) -> {ok:bool, why:[[text,v]], cost, note}  (a = actor, b = target)
 // ESCALATION LADDER (queue "Escalation ladder", slice 1: the rungs between peace and war). One crisis level per pair of nations, GC.esc[grWk(a,b)]={r,by,t,st:{}}:
 //   0 Normal relations · 1 Public warning · 2 Red line declared · 3 Forces on alert ($GESC_ALERT a month for both sides; a side that cannot pay stands down to rung 2). Each step up: opinion -8, the target's public rallies (+2 war support).
@@ -130,7 +170,7 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
   else if(act==='deesc'){const r=gescOf(a,b);if(r<1)no('Already calm: no crisis with them');else{const m=gescMediator(a,b);if(m){cost=GESC_MED;W.push([gdN(m)+' mediates: two rungs down, nobody loses face',0]);}else W.push([(GC.esc[grWk(a,b)].st||{})[a]?'No mediator on good terms with both: backing down in public costs war support -3':'No mediator: one rung down',0]);}}
   else if(act==='war'){if(!war&&!al&&gescOf(a,b)<2)W.push(['No red line declared: a surprise attack, every nation\'s opinion of you -10',-10]);if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until '+grMonStr(GC.tr[grWk(a,b)]));
     else if(GC.ph!=='plan')no('Wait for the planning phase');if(gclJust(a,b))W.push(['Casus belli: your claim on '+gclList(a,b).map(x=>GCM.P[x[1]].n).join(', '),0]);else{W.push(['No casus belli: every nation\'s opinion of you -8, alarm +'+GCL_UNJUST_AE,0]);W.push(['Press a claim first to justify it',0]);}}
-  else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
+  else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (battles, occupied land, blockades, the war aim)',s]);
     W.push(['Opens the peace-deal screen: war score buys provinces, tribute or a vassal',0]);}
   else if(act==='guarantee'){cost=300;if(war)no('At war');else if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))no('Already guaranteed');W.push(['Costs $300, +15 opinion, shows resolve',0]);}
   else if(act==='cyber'){cost=GPX_CYBER_COST;if(al)no('Allied: no hacking allies');else if(GC.cyT&&GC.turn-(GC.cyT[grWk(a,b)]??-99)<GPX_CYBER_CD)no('Cooling down: next strike in '+(GPX_CYBER_CD-(GC.turn-GC.cyT[grWk(a,b)]))+' month(s)');W.push(['Costs $'+GPX_CYBER_COST+'; their banks lose $'+GPX_CYBER_HIT+' this month',0]);W.push(['Attribution in 1 of 4 strikes: everyone\'s opinion of you -10, theirs -20 more',0]);}
@@ -153,7 +193,7 @@ function gdAct(act,a,b){const c=gdChance(act,a,b);if(!c.ok)return c.note;const N
   else if(act==='warn'){N.cash+=c.cost;gescUp(a,b);}
   else if(act==='deesc'&&grAtWar(a,b)){N.cash+=c.cost;const e=gescLimit(a,b);if(e)return e;}
   else if(act==='deesc'){N.cash+=c.cost;const e=gescDown(a,b);if(e)return e;}
-  else if(act==='war'){const j=gclJust(a,b);grDeclare(a,b);GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;for(const o of Object.keys(GC.nat))if(o!==a&&o!==b)gdRel(a,o,j?-1:-8);if(!j)N.ae=(N.ae||0)+GCL_UNJUST_AE;gdRel(a,b,-30);}
+  else if(act==='war'){const j=gclJust(a,b);grDeclare(a,b);for(const o of Object.keys(GC.nat))if(o!==a&&o!==b)gdRel(a,o,j?-1:-8);if(!j)N.ae=(N.ae||0)+GCL_UNJUST_AE;gdRel(a,b,-30);}
   else if(act==='peace'){delete GC.war[grWk(a,b)];GC.tr=GC.tr||{};GC.tr[grWk(a,b)]=GC.turn+6;grLog('Peace between '+na+' and '+nb+' — truce for 6 months.',a);}
   try{grSave();}catch(e){}try{grandMapRefresh();}catch(e){}return '';}
 // ---------- UI: replaces the Diplomacy tab of the nation panel ----------

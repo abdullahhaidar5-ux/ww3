@@ -18,10 +18,13 @@ function glgTurn(){if(!GC||!GC.nat)return;
   try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}try{gpTurn();}catch(e){console.error('gpTurn',e);}try{gcfTurn();}catch(e){console.error('gcfTurn',e);}try{gpxTurn();}catch(e){console.error('gpxTurn',e);}
   GC.off=GC.off||[];
   for(const k of Object.keys(GC.war).sort()){const [a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead){delete GC.war[k];continue;}
-    const len=glgWarLen(a,b);if(len<8)continue;const [x,y]=glgScore(a,b);const loser=x>y?b:y>x?a:null;if(!loser&&len<14)continue;const lo=loser||a,wi=loser?(loser===a?b:a):b;
-    if(wi===GC.me&&GC.nat[lo].ai){if(!GC.off.some(o=>o[0]===lo&&o[1]===wi))GC.off.push([lo,wi,GC.turn]);}
+    const len=glgWarLen(a,b);if(len<6)continue;const s=gdWarscore(a,b),wi=s>=0?a:b,lo=wi===a?b:a,S=Math.abs(s),will=gpWill(lo,wi);
+    const tired=wsOf(wi)<35||len>=30,held=gdWarRec(a,b).by===wi&&gdAimHeld(a,b);
+    if(wi===GC.me&&GC.nat[lo].ai){if((will>=10||len>=14)&&!GC.off.some(o=>o[0]===lo&&o[1]===wi))GC.off.push([lo,wi,GC.turn]);}   /* the AI asks the player for peace; the player may sign as is or open the peace table and name a price */
     else if(lo===GC.me||wi===GC.me){continue;}
-    else if(GC.nat[lo].ai&&GC.nat[wi].ai&&(GC.turn+len)%3===0)gpAIDeal(wi,lo);}   /* AI wars end in a deal: the winner keeps what its war score pays for, the rest goes home */
+    else if(!GC.nat[lo].ai||!GC.nat[wi].ai)continue;
+    else if(will>=12&&(held||tired||S>=50||len>=18))gpAIDeal(wi,lo);   /* AI wars end in a deal: the winner keeps what the loser will sign for, the rest goes home */
+    else if(len>=14&&S<12&&(wsOf(a)<45||wsOf(b)<45||len>=24))glgPeace(lo,wi);}   /* a stalemate both peoples are tired of ends where it began */
   GC.off=GC.off.filter(o=>grAtWar(o[0],o[1])&&GC.turn-o[2]<8);
   const R=grRng((GC.seed|0)*53+GC.turn*17);for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];const r=R(),r2=R();if(N.dead||!N.ai||!grNat(c).major||r>.06||gdAllies(c).length>=3)continue;
     const l=Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grNat(o).major&&!grAllied(c,o)&&!grAtWar(c,o)&&gdOp(o,c)>=20&&gdAllies(o).length<4).sort();if(!l.length)continue;const t=l[Math.floor(r2*l.length)];
