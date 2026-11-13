@@ -138,3 +138,14 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
 - 06:17 Chicago: "Move campaign to settings and extras for now". menucamp = trig_01Hkgi9RSuQzFcwigHBEoRCY (Sonnet) fired 12:18Z: Grand campaign
   out of Single player and Multiplayer, into Extras as "Grand campaign (preview, paused)"; menu background + Continue show Conquest/Battle;
   guards, CLAUDE.md MENU STRUCTURE, DECISIONS inside the code commit. Read as Extras (Settings only a small pointer line if it fits).
+
+## Update Fri 2026-11-13 23:25Z (ORCH)
+- NOTHING LANDS: Conductor (trig_01Cr6PwXooW5rLLWoinLF2fV, model fable[1m]) last run 14:49Z FAILED = usage limit reached. Main still 77b4ee8
+  (train 12, 34 h). warpeace (03:53Z) and battlemaps (04:07Z, no handoff) also stopped then - likely the same Fable limit.
+  Asked Abdullah whether to move the conductor to Sonnet until Fable resets (model change needs his explicit yes).
+- slicesweep DONE (81cfbf4): report orch/reports/slice-sweep.md, 45 pictures. Batch 6 (campaign front-and-center) = done by menucamp.
+- menucamp DONE (d9029b9): 27/28 (audio flaky). Pictures looked at: Single player = Conquest + Battle; Extras has the paused campaign. Sent.
+- Fired 23:23Z: sweepfixA = trig_01FwX9cg5vgJN7iSeye6rue9 (Sonnet, batches 1+2: nation tooltip, map tiles);
+  sweepfixB = trig_01XJWwLgqU7T2nHg49Uk4BFv (Opus, batches 3-5: order buttons, build bar/nameplate, settings/overlays).
+- Land order when the conductor works again: menucamp, battlemaps (needs gate + handoff), sweepfixA/B, mapshapes; campaign pieces
+  (camphud, nofightit) only if they do not block. spylook: mapsweep timeout - battlemaps' 3-shard mapsweep may fix it.
