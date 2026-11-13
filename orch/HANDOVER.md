@@ -162,3 +162,8 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
 - 17:29 Chicago: "Make sure civilians on the maps look like humans and aren't blocky". Today they are 4-box figures (RE_CIVM, src/06b-realism.js:44).
   civhumans = trig_014TTds5je3P6Qz1yDHBv7jF (Opus, look work) fired 23:31Z: reuse the infantry human mesh in civilian clothes, walk/run, instanced,
   smooth gates green; also other box people. Add orch/civhumans to the conductor's candidates when its handoff says ready.
+- 17:31 Chicago "Can we start on these now?": orderfeel = trig_012t3f1VMHmE2AzhFyom1cQs (Opus: selection rings, order markers, goal line),
+  unstuck = trig_01NsEr4T7N6ZqDoxVR4P3Tz1 (Sonnet: stuck-unit scan + fixes, controls check; sim change), both fired 23:33Z.
+  battlemaps2 = trig_01K1PsUC5d63NyXuENfmbggt (Sonnet) self-fires 02:30Z, stops if HANDOFF-battlemaps.md is missing.
+  Running: conductor, battlemaps, sweepfixA, sweepfixB, civhumans, orderfeel, unstuck = 7 (max 8). Add orderfeel/unstuck/civhumans/battlemaps2
+  to the conductor's candidate list when their handoffs say ready (its prompt already takes "any other Conquest/Battle branch with a ready HANDOFF").
