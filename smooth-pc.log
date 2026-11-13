@@ -1,0 +1,81 @@
+[0s] pc: launching browser
+[3s] ctx
+[3s] guarded
+[3s] page
+[3s] pc: loading page
+[3s] pc: page loaded
+[4s] pc: menu ready
+[27s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",16999],["Loading 3D models…",3511
+[47s] pc: LOADING {"tok":1,"tipI":10,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",16999],["Loading 3D models…",351
+[83s] pc: battle loaded in 79s
+[83s] pc: done {"tok":1,"tipI":11,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",16999],["Loading 3D models…",35
+[100s] pc: army in place
+[100s] pc: measuring 150 frames
+[110s] pc: warm-up done, 106 shaders
+[114s] pc: frame 10
+[117s] pc: frame 20
+[119s] pc: frame 30
+[121s] pc: frame 40
+[124s] pc: frame 50
+[127s] pc: frame 60
+[129s] pc: frame 70
+[132s] pc: frame 80
+[134s] pc: frame 90
+[137s] pc: frame 100
+[139s] pc: frame 110
+[142s] pc: frame 120
+[144s] pc: frame 130
+[146s] pc: frame 140
+[148s] pc: frame 150
+[153s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) p95 frame ms rose to 564.9 (baseline 246.7, allowed up to 540.52; +129%) | p99 frame ms rose to 995.6 (baseline 277, allowed up to 696.91; +259%) | worst-1% FPS fell to 0.95 (baseline 3.4, allowed down to 1.48) | sim step p95 ms rose to 22.8 (baseline 10.9, allowed up to 19.8; +109%)
+[153s] pc: launching browser
+[153s] ctx
+[153s] guarded
+[154s] page
+[154s] pc: loading page
+[154s] pc: page loaded
+[154s] pc: menu ready
+[178s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",14331],["Loading 3D models…",3427
+[197s] pc: LOADING {"tok":1,"tipI":10,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",14331],["Loading 3D models…",342
+[230s] pc: battle loaded in 75s
+[230s] pc: done {"tok":1,"tipI":11,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",14331],["Loading 3D models…",34
+[248s] pc: army in place
+[249s] pc: measuring 150 frames
+[257s] pc: warm-up done, 110 shaders
+[261s] pc: frame 10
+[263s] pc: frame 20
+[266s] pc: frame 30
+[269s] pc: frame 40
+[271s] pc: frame 50
+[274s] pc: frame 60
+[276s] pc: frame 70
+[279s] pc: frame 80
+[281s] pc: frame 90
+[283s] pc: frame 100
+[286s] pc: frame 110
+[287s] pc: frame 120
+[289s] pc: frame 130
+[291s] pc: frame 140
+[294s] pc: frame 150
+[299s] pc attempt 2: REGRESSED
+
+                       pc        
+units on screen        433       
+load time s            75.44     
+median frame ms        194.2     
+p95 frame ms           441.8     
+p99 frame ms           679.7     
+worst 1% FPS           1.38      
+frames >50 ms          150       
+first boom x median    1.89      
+2nd boom x median      1.66      
+weather/night x median 2.01      
+sim step p95 ms        15.8      
+draw calls             1172      
+k triangles            5853      
+heap MB/min            -67.14    
+runtime 5.0 min
+
+SMOOTH FAIL: 1 problem(s)
+  - pc: worst-1% FPS fell to 1.38 (baseline 3.4, allowed down to 1.49)
