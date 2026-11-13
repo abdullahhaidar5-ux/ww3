@@ -520,8 +520,8 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
   // draw only these groups once for real (everything else in the scene hidden for a moment, lights stay): a shape needs its own
   // vertex array per shader program, made on its first draw, so compiling alone would leave those for the first sight of a unit/wreck
   const hidAll=[];
-  const drawOnly=grps=>{hidAll.length=0;for(const c of SCN.children)if(!c.isLight&&c.visible&&!grps.includes(c)){c.visible=false;hidAll.push(c);}
-    try{CAM.updateMatrixWorld();if(post()){sizePost();if(POST.ovr&&POST.dRT){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}R3.setRenderTarget(POST.rt);}R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
+  const drawOnly=(grps,aoAlways)=>{hidAll.length=0;for(const c of SCN.children)if(!c.isLight&&c.visible&&!grps.includes(c)){c.visible=false;hidAll.push(c);}
+    try{CAM.updateMatrixWorld();if(post()){sizePost();if(POST.ovr&&POST.dRT&&(aoAlways||(POST.mAO&&POST.aoOn!==false))){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}R3.setRenderTarget(POST.rt);}R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
     R3.setRenderTarget(null);for(const c of hidAll)c.visible=true;};
   const ex=[],step=async(name,grp,wait,keep)=>{MK('step '+name);const s0=performance.now(),lt=isLate();let tcomp=0,ttex=0;
     if(!lt)SCN.add(grp);
@@ -561,7 +561,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
         grp.traverse(c=>{c.frustumCulled=false;c.visible=true;});await step('rings',grp,0,1);}
       // all of the above is drawn once for real (only these objects in view, everything else hidden for a moment), so their shapes are on the card
       // too: a strike would otherwise upload ~30 shapes in its first frames
-      if(!dead()&&!isLate()&&ex.length){MK('extras draw');for(const g of ex)g.traverse(c=>{c.frustumCulled=false;});drawOnly(ex);}
+      if(!dead()&&!isLate()&&ex.length){MK('extras draw');for(const g of ex)g.traverse(c=>{c.frustumCulled=false;});drawOnly(ex,1);}
       for(const g of ex)unscene(g);ex.length=0;
       SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});await frame();}}
   lap('extras',ts);ts=performance.now();
@@ -584,7 +584,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     // the depth pass (ambient occlusion) and the shadow pass have their own program variants: drawn a slice of the battlefield at a time,
     // everything else hidden for a moment (lights stay)
     if(!dead()&&!isLate()&&!PH&&post()){const vis=units.filter(u=>u.visible),SL=8;let tl2=performance.now();
-      const aoOn=POST.ovr&&POST.dRT;
+      const aoOn=POST.mAO&&POST.aoOn!==false&&POST.ovr&&POST.dRT;
       for(let i=0;i<vis.length&&!dead()&&!isLate();i+=SL){MK('slice '+i);const mine=new Set(vis.slice(i,i+SL));for(const u of vis)u.visible=mine.has(u);const s0=performance.now();
         try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}
           R3.setRenderTarget(POST.rt);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
