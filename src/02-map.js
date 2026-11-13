@@ -474,8 +474,8 @@ function mkMap(seed,mk,ssn){
   // fixed derricks a map asks for (a central oil field): symmetric by design, so fair to everyone
   for(const [ox,oy,sea] of (D.oilAt||[])){const X=ox*WK,Y=oy*WK;if((sea?(X>90&&Y>90&&X<MAPW-90&&Y<MAPH-90&&M.edge(X,Y)<-60&&M.mtn(X,Y)<-48):dry(X,Y,80))&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>150))M.oil.push(Object.assign({x:X,y:Y,owner:-1,cp:[0,0],inc:0},sea?{sea:1}:{}));}   // sea:1 = an offshore rig on a rock pad: ships beside it capture it too
   // fixed supply fields a custom map asks for (map editor)
-  for(const [ox,oy] of (D.fieldAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.fields.every(f=>Math.hypot(f.x-X,f.y-Y)>150)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>120))M.fields.push({x:X,y:Y,r:46,amt:9000});}
-  for(const [bx,by] of BASES){const a0=Math.atan2(MAPH/2-by,MAPW/2-bx);let put=false;for(let r of [390,430,350,470,300,250])for(let q=0;q<14&&!put;q++){const a=a0+(q%2?1:-1)*Math.ceil(q/2)*.35,fx=bx+Math.cos(a)*r,fy=by+Math.sin(a)*r;
+  for(const [ox,oy,am] of (D.fieldAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.fields.every(f=>Math.hypot(f.x-X,f.y-Y)>150)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>120))M.fields.push({x:X,y:Y,r:46,amt:am>0?am*100:9000});}   // a Battle map (02d-battlemaps) may give its own amount, in hundreds
+  if(!D.bm)for(const [bx,by] of BASES){const a0=Math.atan2(MAPH/2-by,MAPW/2-bx);let put=false;for(let r of [390,430,350,470,300,250])for(let q=0;q<14&&!put;q++){const a=a0+(q%2?1:-1)*Math.ceil(q/2)*.35,fx=bx+Math.cos(a)*r,fy=by+Math.sin(a)*r;
       if(!dry(fx,fy,110))continue;if(BASES.some(([qx,qy])=>(qx!==bx||qy!==by)&&Math.hypot(qx-fx,qy-fy)<380))continue;if(M.fields.some(f=>Math.hypot(f.x-fx,f.y-fy)<220))continue;M.fields.push({x:fx,y:fy,r:46,amt:9000});put=true;}}
   // Neutral supply and oil, placed fairly for whichever start positions are in play: every base gets the same
   // expansions at the same DRIVING distance inside its own part of the map, a contested field sits where the routes
@@ -565,7 +565,7 @@ function mkMap(seed,mk,ssn){
   // hamlets a custom map asks for (map editor)
   for(const [ox,oy] of (D.hamAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.hamlets.every(h=>Math.hypot(h.x-X,h.y-Y)>200))M.hamlets.push({x:X,y:Y});}
   // build the houses: 2-5 low buildings round each hamlet centre, in the map's local style
-  {const cnt={};for(const q of CITIES)cnt[q[3]]=(cnt[q[3]]||0)+1;let st='europe',bn=0;for(const k in cnt)if(cnt[k]>bn){bn=cnt[k];st=k;}
+  {const cnt={};for(const q of CITIES)cnt[q[3]]=(cnt[q[3]]||0)+1;let st=D.hstyle||'europe',bn=0;for(const k in cnt)if(cnt[k]>bn){bn=cnt[k];st=k;}
    st=({gulfcity:'yemen',america:'europe',latin:'latin',southasia:'southasia'})[st]||st;
    const OFF=[[0,0],[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,-2],[2,-2],[-2,2],[4,0],[0,4],[-4,0],[0,-4]];
    for(const h of M.hamlets){const HR=mulberry((seed|0)*17+Math.round(h.x*7+h.y*3)),want=2+Math.floor(HR()*4),i0=Math.floor(h.x/CELL),j0=Math.floor(h.y/CELL);let got=0;
