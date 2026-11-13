@@ -122,3 +122,16 @@ jumps to the thing. Same helper groups the Nation window's ~36 tabs into six gro
   Four Mills, Six Roads); also splits mapsweep into three shards - which may also fix spylook's mapsweep timeout. Handoff not written yet.
 - warpeace: items 1 (occupation until peace) + 2 (war goals + war score) committed 03:53Z; 3-4 pending.
 - Live site unchanged since train 12; Abdullah sent the shields/Gulf/route/map-list pictures 06:00 Chicago.
+
+## DECISION Fri 2026-11-13 06:15 Chicago — CAMPAIGN PAUSED
+Abdullah: "Can we pause campaign for now and just finish developing conquest and battle". Reverses 11-11 20:20 "keep it not park".
+- No NEW grand-campaign work. Do not fire warpeace again (it was running when he said this; its branch orch/warpeace stays parked, unlanded).
+  EU4 build order (orch/reports/eu4-gap.md) is on hold.
+- Finished campaign pieces (top bar camphud, campaign battles nofightit, shields mapshapes) may still land if green, but NEVER let them block a
+  Conquest/Battle landing: if a train with them is red, take them out and land the Conquest/Battle pieces alone. No helper time on their reds.
+- PLAN-75 Phase 1 slice = Conquest + Battle for IR, RS, DW, RV, IL, SA, US (no campaign start). Phases 2-4 unchanged (they are battle work).
+- 12:17Z slicesweep = trig_01SAPu1BYuDbhg6NJLPgArEn (Opus, audit only): first ten minutes of Conquest + Battle, pictures, ranked problem list,
+  up to 6 fix batches -> orch/reports/slice-sweep.md on orch/slicesweep. Then run the batches (Sonnet for mechanical, Opus/Fable for look).
+- Other Conquest/Battle work in line: land battlemaps (6 maps) then Sonnet batches toward 24 maps; Kheibar freeze fix (smooth-pc tail);
+  spylook mapsweep timeout; wave 2 battle items (one setup screen, unit rings + order preview, stuck-unit/controls, HUD trio).
+- Record this decision in orch/DECISIONS.md + CLAUDE.md ("Grand strategy layer": paused) inside the next code landing.
