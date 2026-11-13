@@ -1,0 +1,20 @@
+[0s] mp: opening 3 pages
+[9s] mp: pages open
+[10s] mp: lobby 9t6u2s
+[12s] mp: clients joined
+[206s] mp: battle loaded on all pages
+[206s] mp: playing 40s
+[246s] mp: checking sync
+[260s] mp attempt 1: ok
+
+                       mp        
+snap interval p95      152       
+snap jitter sd         88.88     
+order latency p95      114       
+client frame p95       468.1     
+client snaps           0         
+biggest snap (units)   0         
+desyncs                0         
+runtime 4.3 min
+
+SMOOTH PASS
