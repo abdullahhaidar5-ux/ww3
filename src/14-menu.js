@@ -187,7 +187,7 @@ function mxBuild(){
   /* --- single player (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range") --- */
   const SP=scr('single','<h2 class="mxh">Single player</h2><p class="mxsub">Three distinct games. Pick one.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
   const sitem=(t,d,fn,cls)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''));b.type='button';b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);sl.appendChild(b);return b;};
-  sitem('Grand campaign','Run a whole empire on a world map and fight the battles live',()=>mxClick('grandBtn'));
+  sitem('Grand campaign','Run a whole empire on a world map; battles and sieges are decided on the map',()=>mxClick('grandBtn'));
   sitem('Conquest','Take towns and collect their tax, destroy the enemy base - a full base and $10,000 from the start',()=>{mxSetMode('conquest');menuGo('c-map');});
   sitem('Battle','Generals-style skirmish: Command Center, supply trucks, tech up, destroy every enemy building',()=>{mxSetMode('battle');menuGo('c-map');});
   sitem('Missions','The story missions',()=>mxClick('campaign'),'dim sep');

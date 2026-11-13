@@ -47,7 +47,7 @@ try {
     out.errMove = (A.path = [1], grDrill(A.id, 1)); A.path = [];
     out.card = /Drill/.test(gdrBtn(A)) && /Drill \d+%/.test(gdrTag(A));
     out.ai = GC.armies.some(a => a.o !== 'IR' && a.dg === 1);
-    const oldG = G; G = { teams: [{ upg: {} }, { upg: {} }] }; gdrApplyBattle([65, 0]); out.team = [Object.keys(G.teams[0].upg).join(), Object.keys(G.teams[1].upg).join()]; G = oldG;
+    out.team = typeof gdrApplyBattle;   // (the campaign has no real-time battle any more: drill reaches the fight through the map battle rules, 13a-gwar.js)
     out.fx = UPG.dr3.fx.map(f => f[0] + f[2]).join();
     return out; });
   console.log('drill', JSON.stringify(r));
@@ -55,7 +55,7 @@ try {
   if (r.saved[0] !== r.r2 || r.saved[1] !== 1) fails.push('drill save: ' + JSON.stringify(r.saved));
   if (r.dgAfterMove !== 0 || !(r.decay > 0) || r.errMove === '') fails.push('drill move/decay: ' + JSON.stringify(r));
   if (!r.card) fails.push('drill card'); if (!r.ai) fails.push('AI never drills');
-  if (r.team[0] !== 'dr3' || r.team[1] !== '') fails.push('drill battle bonus: ' + JSON.stringify(r.team));
+  if (r.team !== 'undefined') fails.push('the old real-time drill hook gdrApplyBattle is back');
 } catch (e) { fails.push('crash ' + e.message); }
 if (errs.length) fails.push('errors: ' + errs.slice(0, 3).join(' || '));
 console.log(fails.length ? 'DRILL FAIL\n' + fails.join('\n') : 'DRILL PASS');

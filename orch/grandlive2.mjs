@@ -1,4 +1,5 @@
-// A1 follow-up: TWO live "Fight it" battles in a row (retreat from the first, back to the map, fight again: the 3D scene is reused), real render loop, draws swallowed (software GL).
+// A1 follow-up: TWO fights in a row on the campaign map through the real controls (real render loop, real buttons): march into an enemy, the battle
+// starts on the map; open its window, pull the army out with the Withdraw button after six days; march in again, a second battle starts and runs to its result card.   node orch/grandlive2.mjs
 //
 //   node orch/grandlive2.mjs
 import http from 'node:http';
@@ -54,51 +55,35 @@ try {
   await shot('live2-map');
   await shot('live2-map');
   page.on('dialog', d => d.accept());
-  let st = null;
-  for (const round of [1, 2]) {   // round 2 = a SECOND live battle after retreating from the first (the 3D scene is reused)
-  // march our army into an adjacent enemy province (war declared) — the order itself goes through the normal order function
+  const tick = () => ev(() => { GC.armies.filter(x => x.o !== GC.me).forEach(x => { x.path = []; }); });   // the enemy stays put so the fights are the ones under test
+  for (const round of [1, 2]) {   // round 2 = a SECOND battle after withdrawing from the first
+  // march our army into an adjacent enemy province without a fort (war declared) - the order itself goes through the normal order function
   const sc = await ev((me) => { let pair = null, foe = null;
-    for (const p of GCM.P) { if (!p.land || GC.prov[p.i].o !== me) continue; for (const j of p.adj) { const o = GC.prov[j].o; if (GCM.P[j].land && o && o !== me) { pair = [p.i, j]; foe = o; break; } } if (pair) break; }
+    for (const fortOk of [0, 1]) { for (const p of GCM.P) { if (!p.land || GC.prov[p.i].o !== me) continue; for (const j of p.adj) { if (!GCM.P[j].land) continue; const o = GC.prov[j].o; if (o && o !== me && GC.nat[o] && !GC.nat[o].dead && (fortOk || (!gwFort(j) && GC.prov[j].gar.length))) { pair = [p.i, j]; foe = o; break; } } if (pair) break; } if (pair) break; }
     if (!pair) return { err: 'no border' };
     if (!grAtWar(me, foe)) grDeclare(me, foe);
-    const a = GC.armies.filter(x => x.o === me && x.u.length && !x.path.length).sort((x, y) => y.u.length - x.u.length)[0]; a.at = pair[0]; a.path = []; GV.sel = pair[0]; GV.selA = a.id; grandMapRefresh();
+    const a = GC.armies.filter(x => x.o === me && x.u.length && !x.fl && !x.bt).sort((x, y) => y.u.length - x.u.length)[0]; a.at = pair[0]; a.path = []; GV.sel = pair[0]; GV.selA = a.id; grandMapRefresh();
     const r = grOrderMove(a.id, pair[1]); GC.armies.filter(x => x.o !== me).forEach(x => { x.path = []; });
-    return { foe, ok: !!r.ok, from: GCM.P[pair[0]].n, to: GCM.P[pair[1]].n, units: a.u.length }; }, NAT);
-  console.log('scenario', JSON.stringify(sc)); if (sc.err || !sc.ok) throw new Error('scenario ' + JSON.stringify(sc));
-  await page.click('#gPlay', { timeout: 10000 }).catch(() => ev(() => document.getElementById('gPlay').click()));   /* slow CI: a pop-up can sit over the button for a moment */ await page.keyboard.press('5'); // no End turn any more: play time at speed 5 like a player (month ≈ 3 s)
-
-  await page.waitForFunction(() => !!document.getElementById('gModal'), null, { timeout: 120000 });
-  // there may be several battles queued; take the first one live
-  await shot('live2-prompt' + round);
-  const t0 = Date.now();
-  await ev(() => { if (window.__gbw) return; window.__gbw = 1; const f = grandBattleStart; window.grandBattleStart = (b) => { const t = performance.now(); try { return f(b); } finally { console.log('grandlive: grandBattleStart sync ' + Math.round(performance.now() - t) + ' ms'); } }; });
-  await clickText('#gModal button', 'Fight it live');
-  // the battle must be RUNNING within 90 s: G exists, loading screen gone, game time advancing, a frame drawn, units on the field
-  const dl = Date.now() + 240000; for (let i = 0; Date.now() < dl; i++) { await page.waitForTimeout(1000);
-    st = await ev(() => { const g = typeof G !== 'undefined' && G; const ls = document.getElementById('loading') || document.getElementById('load');
-      return { g: !!g, grand: !!(g && g.grand), t: g ? +(g.t || g.time || 0).toFixed?.(2) ?? 0 : 0, tick: g ? (g.tick || g.frame || 0) : 0, LOADING: !!window.LOADING, ls: ls ? getComputedStyle(ls).display + '/' + (ls.hidden ? 'h' : 'v') : '-', ents: g ? g.ents.filter(e => !e.isB && !e.dead).length : 0, over: g ? !!g.over : null,
-        gs: (document.getElementById('grandScreen') || {}).style ? document.getElementById('grandScreen').style.display : '-', camp: !!document.getElementById('campScreen') }; });
-    if (i % 20 === 0) console.log('  t+' + i + 's', JSON.stringify(st));
-    if (process.env.PROFILE && st.g && !st.LOADING && !globalThis.__prof) { globalThis.__prof = 1; const cdp = await ctx.newCDPSession(page); await cdp.send('Profiler.enable'); await cdp.send('Profiler.start'); await page.waitForTimeout(25000); const { profile } = await cdp.send('Profiler.stop');
-      const self = new Map(), byId = new Map(profile.nodes.map(n => [n.id, n])); const dts = profile.timeDeltas; for (let k = 0; k < profile.samples.length; k++) { const n = byId.get(profile.samples[k]); const key = n.callFrame.functionName + ' ' + n.callFrame.url.split('/').pop() + ':' + n.callFrame.lineNumber; self.set(key, (self.get(key) || 0) + (dts[k] || 0)); }
-      const tot = [...self.values()].reduce((a, b) => a + b, 0); console.log('PROFILE self top (of ' + Math.round(tot / 1000) + ' ms):'); for (const [k, v] of [...self].sort((a, b) => b[1] - a[1]).slice(0, 25)) console.log('   ' + Math.round(v / 1000) + ' ms  ' + k.slice(0, 120)); }
-    if (st.g && st.grand && !st.LOADING && st.ents > 0) { const a = await ev(() => ({ t: G.t, p: !!G.paused, h: !!G.ldHold })); await page.waitForTimeout(3000); const b = await ev(() => ({ t: G.t, p: !!G.paused, h: !!G.ldHold, fs: typeof FPS !== 'undefined' ? FPS : null }));
-      st.clock = [a, b]; if (b.t - a.t > 0.5) { st.running = true; break; } }
+    return { foe, ok: !!r.ok, err: r.err, aid: a.id, from: GCM.P[pair[0]].n, to: GCM.P[pair[1]].n, to_i: pair[1], fort: gwFort(pair[1]), units: a.u.length }; }, NAT);
+  console.log('scenario ' + round, JSON.stringify(sc)); if (sc.err || !sc.ok) throw new Error('scenario ' + JSON.stringify(sc));
+  await page.click('#gPlay', { timeout: 10000 }).catch(() => ev(() => document.getElementById('gPlay').click()));   /* slow CI: a pop-up can sit over the button for a moment */ await page.keyboard.press('5');   // play time at speed 5 like a player (month ≈ 3 s)
+  const t0 = Date.now(); let st = null;
+  for (let i = 0; Date.now() - t0 < 150000; i++) { await page.waitForTimeout(400); await tick();
+    st = await ev(([pi, aid]) => { const B = gwBattleAt(pi), S = gwSiegeAt(pi), a = GC.armies.find(x => x.id === aid); return { b: B ? B.d : -1, s: S ? S.d : -1, mine: !!(a && a.bt), r: (GC.br || []).filter(r => r.p === pi).length, modal: !!document.getElementById('gModal'), g: typeof G !== 'undefined' && !!G, L: !!window.LOADING, t: GC.turn, d: GC.day | 0 }; }, [sc.to_i, sc.aid]);
+    if (st.modal || st.g || st.L) break; if (round === 1 ? (st.b >= 6 || st.s >= 3 || st.r) : st.r >= (sc.r0 | 0) + 1 || st.s >= 3) break; if (i === 0) sc.r0 = st.r; }
+  const card = await ev(() => [...document.querySelectorAll('#gwCards .c')].map(e => e.textContent.slice(0, 120)).join(' || '));   // read at once: a card goes away by itself after a while and screenshots are slow on test machines
+  console.log('fight ' + round, ((Date.now() - t0) / 1000).toFixed(1) + 's', JSON.stringify(st)); await page.keyboard.press('Space'); await page.waitForTimeout(600); await shot('live2-battle' + round);
+  if (!st || st.modal || st.g || st.L) { fails.push('round ' + round + ': a dialog, a loading screen or a real-time battle appeared: ' + JSON.stringify(st)); break; }
+  if (st.b < 0 && st.s < 0 && !st.r) { fails.push('round ' + round + ': no battle or siege started on the map: ' + JSON.stringify(st)); break; }
+  if (round === 1 && st.b >= 6 && st.mine) {   // the Withdraw button in the battle window pulls the army out; the battle is over for us and the map is free again
+    await ev(pi => { if (!document.getElementById('gwWin')) gwuOpen(pi); }, sc.to_i); await page.waitForTimeout(500); await shot('live2-window1');
+    const w = await ev(() => { const b = document.querySelector('#gwWin button[data-w]'); return b ? { dis: b.disabled, t: b.textContent } : null; }); console.log('withdraw button', JSON.stringify(w));
+    if (!w || w.dis) fails.push('round 1: no usable Withdraw button in the battle window on day ' + st.b + ' ' + JSON.stringify(w));
+    else { await page.click('#gwWin button[data-w]'); await page.waitForTimeout(600); const a = await ev(([pi, aid]) => { const x = GC.armies.find(q => q.id === aid); return { there: !!x, at: x ? x.at : -1, bt: x ? x.bt | 0 : -1, pi }; }, [sc.to_i, sc.aid]); console.log('after withdraw', JSON.stringify(a));
+      if (!a.there || a.at === a.pi || a.bt) fails.push('round 1: the army did not leave the battle ' + JSON.stringify(a)); } }
+  if (round === 2 && st.r) { console.log('result card:', card); if (!/(Victory|Defeat) · /.test(card)) fails.push('round 2: no result card for our own battle (' + card + ')'); }
+  await ev(() => { const e = document.getElementById('gwWin'); if (e) gwuClose(); });
   }
-  console.log('live ' + round, ((Date.now() - t0) / 1000).toFixed(1) + 's', JSON.stringify(st));
-  await shot('live2-battle' + round);
-  if (!st || !st.running) break;
-  if (process.env.PROFILE) { const pr = await ev(() => { const o = {}; let t = performance.now(); for (let i = 0; i < 3; i++) renderFrame(1 / 60); o.render = Math.round((performance.now() - t) / 3);
-      t = performance.now(); for (let i = 0; i < 10; i++) simUpdate(1 / 60); o.sim = Math.round((performance.now() - t) / 10); o.ents = G.ents.length; o.map = G.mapKey; o.W = MAPW + 'x' + MAPH;
-      try { o.calls = R3.info.render.calls; o.tris = R3.info.render.triangles; o.geo = R3.info.memory.geometries; } catch (e) {} o.FT = FT.slice(-10).map(x => Math.round(x * 1000)); return o; });
-    console.log('PROFILE', JSON.stringify(pr)); }
-  if (round === 1) { await page.click('#gbRet'); await page.waitForTimeout(300); await ev(() => { const b = [...document.querySelectorAll('#uiDlg button')].find(x => /^Retreat$/.test(x.textContent)); if (b) b.click(); });   /* Retreat asks first (game's own confirm) */
-    await page.waitForFunction(() => [...document.querySelectorAll('#campScreen button')].some(b => /Return to the map/.test(b.textContent)), null, { timeout: 60000 });
-    await clickText('#campScreen button', 'Return to the map'); await page.waitForTimeout(800);
-    for (let k = 0; k < 6 && await ev(() => !!document.getElementById('gModal')); k++) await clickText('#gModal button', 'Auto-resolve|OK|Continue|Close');
-    await page.waitForFunction(() => document.getElementById('grandScreen') && document.getElementById('grandScreen').style.display !== 'none' && GC.ph === 'plan', null, { timeout: 60000 }).catch(() => fails.push('map did not come back to planning after the battle')); }
-  }
-  if (!st || !st.running) fails.push('live battle never started running: ' + JSON.stringify(st));
 } catch (e) { fails.push(String(e.message || e).split('\n')[0]); }
 for (const e of [...new Set(errs)].slice(0, 8)) fails.push(e);
 await browser.close(); server.close();

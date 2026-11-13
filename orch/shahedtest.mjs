@@ -42,12 +42,11 @@ try {
     // launcher trucks: hidden until exposed, bought at a factory/site province
     const A = GC.armies.find(a => a.o === 'IR' && !a.fl && a.u.length); A.at = sp; const be = gmilBuyLauncher('IR', A.id); ok(!be, 'launcher refused: ' + be); ok(A.ln === 1, 'launcher not added');
     A.lx = GC.turn; ok(gmilLnExposed(A), 'launch did not expose the launcher'); A.lx = -9;
-    // battle salvo spends stock
-    M.dr = 20; const mp = sp; const Ar = grAddArmy(nO, GCM.P[mp].adj.find(j => GCM.P[j].land), grGenUnits(grNat(nO).fac, 3000, true)); Ar.from = Ar.at; Ar.at = mp;
-    const b = { p: mp, an: nO, dn: 'IR', att: [Ar.id], def: [], garr: true, river: false, mtn: false, done: 0 }; GC.war[grWk('IR', nO)] = 1; grandBattleStart(b);
-    ok(G.grand && G.grand.dro && G.grand.dro[0] === 20, 'battle did not see the stock ' + JSON.stringify(G.grand && G.grand.dro)); G.t = Math.max(G.t, 500); if (G.setupEnd) G.setupEnd = 0;
-    const ent = G.ents.find(e => e.team === 0 && !e.isB && !e.dead); const nb = G.ents.length; const T0 = G.teams[0]; info.pw = JSON.stringify({ w: T0.pw && T0.pw.nat, fac: T0.fac, pi: !!powInfo('nat', T0.fac), conq: !!G.conq, t: G.t, se: G.setupEnd, hq: !!hqOf(0) }); const used = usePower(0, 'nat', ent.x + 200, ent.y); ok(used, 'Shahed Swarm refused in battle'); ok(G.grand.dro[0] < 20 && G.grand.du[0] === 20 - G.grand.dro[0], 'battle salvo did not spend stock');
-    const spent = G.grand.du[0]; grandTestFinish(0); ok(M.dr === 20 - spent, 'stock not reduced after the battle: ' + M.dr + ' vs ' + (20 - spent)); info.battle = spent; grandLeaveBattle();
+    // a battle on the map within reach of a launch site: the one-way drone salvo adds +1 to the Fires die and spends 4 drones each Fires phase (13a-gwar gwMods)
+    M.dr = 20; const mp = sp; const Ar = grAddArmy(nO, mp, grGenUnits(grNat(nO).fac, 20000, true)), Dr = grAddArmy('IR', mp, grGenUnits('IR', 20000, true)); GC.war[grWk('IR', nO)] = 1;
+    const Bt = gwOpen({ p: mp, an: nO, dn: 'IR', att: [Ar.id], def: [Dr.id], garr: false, river: false, mtn: false, sea: false, done: 0 }); gwTick();
+    const mods = (Bt.mo && Bt.mo[1] || []).map(x => x[0]).join('|'); ok(/drone salvo/.test(mods), 'battle did not use the drone stock: ' + mods); ok(M.dr === 16, 'battle salvo did not spend 4 drones: ' + M.dr); info.battle = 20 - M.dr;
+    gwClose(Bt); GC.armies = GC.armies.filter(a => a !== Ar && a !== Dr);
     // save/load keeps the stock and launchers
     const js = JSON.stringify(GC), back = JSON.parse(js); ok(back.mil.n.IR.dr === M.dr && back.armies.some(a => a.ln === 1), 'save lost stock/launchers');
     // AI bloc and determinism

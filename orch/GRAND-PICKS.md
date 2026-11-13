@@ -1,5 +1,7 @@
 # Grand map — Abdullah's extra picks, by stage
 
+> **2026-11-12 — superseded in part.** Abdullah, 2026-11-11 23:57: "Abandon battles in grand campaign. Turn it into eu 4 rules" (23:58 "No and now"). Every pick below that speaks of a "Fight it" / live battle (army-only battle, province mirror, co-command, support into a live battle, battle time limit, auto-resolve) is replaced by battles, sieges and sea fights resolved on the campaign map (`src/13a-gwar.js`; orch/DECISIONS.md). The other picks stand.
+
 Abdullah picked these on 2026-11-05 19:38 after the stage helpers were already queued. **Each grand stage helper builds its section
 below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, no duplicates). Tick items off here when shipped.
 
