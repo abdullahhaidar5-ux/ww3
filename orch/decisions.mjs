@@ -264,7 +264,13 @@ try {
     await ev(() => { grandMenu(); }); await page.waitForTimeout(300);
     const gm = await ev(() => [...document.querySelectorAll('#campScreen button')].map(b => b.textContent.trim()));
     ck(!gm.some(t => /Play with friends|Join friends/i.test(t)), 'the grand campaign menu must not have its own online lobby, got ' + gm.join('|'));
-    await ev(() => { try { campClose(); } catch (e) {} menuHome(); }); }
+    await ev(() => { try { campClose(); } catch (e) {} menuHome(); });
+    // sweepfixA: the nation cards carry no native tooltip (the detail panel shows the doctrine); the battlefield picker never opens with a blank tile
+    await ev(() => { try { facCards(); } catch (e) {} });
+    ck(await ev(() => { const c = [...document.querySelectorAll('#pickP .fac')]; return c.length > 0 && c.every(b => !b.hasAttribute('title')); }), 'nation cards must have no title attribute (native tooltip duplicates the detail panel)');
+    await ev(() => { menuGo('c-map'); }); await page.waitForTimeout(150);
+    ck(await ev(() => { const c = [...document.querySelectorAll('.mxmap')]; return c.length > 0 && c.every(b => b.querySelector('.mxth .mxph') && b.querySelector('.mxth canvas')); }), 'every battlefield card needs a placeholder + thumbnail canvas right after opening');
+    await ev(() => { menuHome(); }); }
   { const seen = await ev(SEEN); ck(!/classic/i.test(seen), 'menu shows "Classic"'); ck(!/\bhost(ing)?\b/i.test(seen.replace(/ghost/gi, '')), 'menu shows hosting wording: ' + (/.{20}\bhost.{20}/i.exec(seen) || [''])[0]); }
   // ---- data decisions
   const d = await ev(() => { const o = {}; o.fk = FKEYS.slice(); o.ms = MORALE_STYLE; o.rout0 = Object.entries(MORALE_STYLE).filter(([k, s]) => MSTYLES[s].rout === 0).map(([k]) => k).sort().join(' ');
