@@ -106,3 +106,7 @@ jumps to the thing. Same helper groups the Nation window's ~36 tabs into six gro
 - To tune later (seen in nofightit battle picture): "Expected: Iraq should win (100%) - about 82 more days" - an 82-day battle looks too long;
   check against the EU4-style day phases. Next campaign builds follow eu4-gap.md order (1 occupation until peace, 2 war goals + war score, 3 reasons for war...).
 - Still open: freezefix slow-frame tail, finish-report (must fit on-the-map battles), 18 more Battle maps (Sonnet batches after the kit), wave 2 leftovers.
+- 11-12 20:29 Chicago: "Go" to the EU4 build order (orch/reports/eu4-gap.md Top 10). warpeace = trig_01GV2n9PzETb1uMbBv4S1wNb (Fable) fired
+  02:31Z: items 1-4 (occupation until peace, war goals + war score, reasons for war, peace table), based on orch/nofightit, branch orch/warpeace.
+  Next after it: 5 sieges/forts polish (partly in nofightit), 6 attrition + supply limits, 7 reserves + rebels, 8 allies with terms, 9 admin limit.
+  Running now: mapshapes, battlemaps, warpeace (3 Fable - one over the usual 2; start nothing else on Fable until one finishes).
