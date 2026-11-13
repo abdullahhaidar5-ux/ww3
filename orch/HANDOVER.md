@@ -110,3 +110,15 @@ jumps to the thing. Same helper groups the Nation window's ~36 tabs into six gro
   02:31Z: items 1-4 (occupation until peace, war goals + war score, reasons for war, peace table), based on orch/nofightit, branch orch/warpeace.
   Next after it: 5 sieges/forts polish (partly in nofightit), 6 attrition + supply limits, 7 reserves + rebels, 8 allies with terms, 9 admin limit.
   Running now: mapshapes, battlemaps, warpeace (3 Fable - one over the usual 2; start nothing else on Fable until one finishes).
+
+## Update Fri 2026-11-13 12:05Z (ORCH)
+- Main still 77b4ee8 (train 12). Conductor run 21: train 13 (top bar + campaign battles) 27/28 twice - first run mapsweep timed out
+  (spylook triggers it; spylook taken out), re-run mpsync red at t=121s (flaky? same failure seen on spylook's first run). Next conductor run
+  retries train/20261113-0240 (conflicts already solved there).
+- mapshapes DONE (6824741, 26/28 first pass, red only audio + cfclient flaky): shields / hulls / wings, Political button moved, one thin route
+  line, smaller ships, quieter roads, clean Gulf coast. ORCH looked: shields clearly readable at middle zoom. Sent to Abdullah.
+  Note: "air group" = an army made only of air units; there are no separate air pieces on the campaign map.
+- battlemaps (d5bb66d): kit, fairness checker, Battle map list (setup + lobby), six maps (Tar Basin, Split Ridge, Ferry Quarter, Breakwater,
+  Four Mills, Six Roads); also splits mapsweep into three shards - which may also fix spylook's mapsweep timeout. Handoff not written yet.
+- warpeace: items 1 (occupation until peace) + 2 (war goals + war score) committed 03:53Z; 3-4 pending.
+- Live site unchanged since train 12; Abdullah sent the shields/Gulf/route/map-list pictures 06:00 Chicago.
