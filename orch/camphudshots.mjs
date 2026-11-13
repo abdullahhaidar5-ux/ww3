@@ -41,10 +41,12 @@ try {
   if (TAG !== 'before') {
     await page.setViewportSize({ width: 1600, height: 900 }); await page.waitForTimeout(1500);
     await ev(() => { const b = document.getElementById('gGoBtn'); if (b) b.click(); }); await shot('goto-open'); await ev(() => { const b = document.getElementById('gGoBtn'); if (b) b.click(); });
-    await ev(() => { const b = document.getElementById('gAlMore'); if (b) b.click(); }); await shot('alerts-more', { x: 0, y: 0, width: 1600, height: 420 }); await ev(() => { const b = document.getElementById('gAlMore'); if (b) b.click(); });
     await ev(() => { const b = document.getElementById('gMenuBtn'); if (b) b.click(); }); await shot('menu-open', { x: 800, y: 0, width: 800, height: 300 }); await ev(() => { const b = document.getElementById('gMenuBtn'); if (b) b.click(); });
     for (const g of await ev(() => NP_GROUPS.map(g => g.id))) { await ev(g => { npOpen(GC.me); npGroup(g); }, g); await shot('nation-' + g); }
     await ev(() => npClose());
+    /* play months on until more than five things need the player, then open "+N more" */
+    const n = await ev(() => { let i = 0; while (alItems(GC.me).length <= AL.max && i++ < 14 && !GC.over) grEndTurn(true); const m = document.getElementById('gModal'); if (m) m.remove(); grandMapRefresh(); return alItems(GC.me).length; }); console.log('alerts after playing on:', n);
+    await page.waitForTimeout(3000); await ev(() => { const b = document.getElementById('gAlMore'); if (b) b.click(); }); await shot('alerts-more', { x: 0, y: 0, width: 1600, height: 420 }); await shot('map-later-1600');
   } else { await page.setViewportSize({ width: 1600, height: 900 }); await ev(() => npOpen(GC.me)); await shot('nation'); }
 } finally { await browser.close(); server.close(); }
 process.exit(0);
