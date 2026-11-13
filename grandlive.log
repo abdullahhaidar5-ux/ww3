@@ -1,0 +1,45 @@
+2.1s stale save in menu {"cont":false,"warn":true}
+28.1s map open
+42.2s march {"me":"IR","from":"Khuzestan","to":"Basra","to_i":64,"foe":"RV","ok":true,"units":25}
+54.3s {"b":false,"s":false,"r":false,"modal":"","L":false,"g":false,"t":1,"d":0,"ph":"plan","win":false}
+56.8s {"b":false,"s":false,"r":false,"modal":"","L":false,"g":false,"t":1,"d":20,"ph":"plan","win":false}
+57.3s {"b":false,"s":false,"r":false,"modal":"","L":false,"g":false,"t":1,"d":24,"ph":"plan","win":false}
+57.9s {"b":false,"s":false,"r":false,"modal":"","L":false,"g":false,"t":1,"d":29,"ph":"plan","win":false}
+67.8s {"b":false,"s":false,"r":false,"modal":"","L":false,"g":false,"t":2,"d":0,"ph":"plan","win":false}
+70.7s {"b":false,"s":false,"r":false,"modal":"","L":false,"g":false,"t":2,"d":10,"ph":"plan","win":false}
+75.6s {"b":true,"s":false,"r":false,"modal":"","L":false,"g":false,"t":3,"d":0,"ph":"plan","win":false}
+90.1s marker {"x":609.5,"y":432.77747043400313,"k":0}
+90.9s window: Battle of Basrathe armies are closing · coastIranAttacking · Sarhang Dariush Mirzaei Fires ○○ Assault ●○Morale 99 · 25 units22 in the line · 3 in supportIraqi S
+GRANDLIVE PASS
+scenario 1 {"foe":"IQ","ok":true,"aid":50,"from":"Zagros","to":"Diyala","to_i":467,"fort":0,"units":37}
+fight 1 8.0s {"b":-1,"s":-1,"mine":false,"r":1,"modal":false,"g":false,"L":false,"t":2,"d":10}
+scenario 2 {"foe":"PK","ok":true,"aid":50,"from":"Northwest Sistan and Baluchestan","to":"West Balochistan","to_i":601,"fort":0,"units":37}
+fight 2 11.6s {"b":-1,"s":-1,"mine":false,"r":1,"modal":false,"g":false,"L":false,"t":4,"d":20}
+result card: Victory · DiyalaIran beat Iraq at Diyala after 1 day. Losses: Iran 0 of 37 units, Iraq 2 of 2. The losing force was dest || Victory · West BalochistanIran beat Pakistan at West Balochistan after 1 day. Losses: Iran 0 of 37 units, Pakistan 5 of  || Defeat · Strait of HormuzPakistan beat Iran at Strait of Hormuz after 8 days. Losses: Pakistan 0 of 4 units, Iran 4 of 4
+
+GRANDLIVE2 PASS
+30.4s map open
+35.0s start {"turn":1,"day":0,"date":"1 Nov 2026","spd":0,"ph":"plan","modal":false}
+37.5s after Space {"turn":1,"day":1,"date":"2 Nov 2026","spd":2,"ph":"plan","modal":false}
+47.5s month rolled {"turn":2,"day":12,"date":"13 Dec 2026","spd":5,"ph":"plan","modal":false}
+49.4s paused {"turn":2,"day":12,"date":"13 Dec 2026","spd":0,"ph":"plan","modal":false}
+49.6s march {"ok":true,"hint":"Basra: arrives ~1 Feb 2027 (2 months) · as things stand: about 100% to win the battle, ~5 days, then a siege (fort level 2)","to":64}
+57.4s slide [{"x":1500,"z":392.0544912363294,"f":0.20571666666666472,"day":12},{"x":1497.8462466133333,"z":388.53997189739755,"f":0.28339999999999904,"day":17}]
+95.3s fight on the map [{"turn":4,"day":10,"date":"11 Feb 2027","spd":5,"ph":"plan","modal":false},{"turn":5,"day":0,"date":"1 Mar 2027","spd":5,"ph":"plan","modal":false}]
+106.8s AI mid-month {"n":0,"same":true,"cash":true,"f0":0}
+GRANDRT PASS
+occ {"cost":{"zeal":660,"prof":634,"home":587,"fire":608},"eff":{"zeal":24,"prof":0,"home":18,"fire":0},"ws":{"zeal":9,"prof":8.640909090909105,"home":8,"fire":8.290909090909082},"n":{"home":6,"prof":6,"zeal":6,"fire":6},"guard":3,"panel":true,"spread":1,"aiPath":[],"aiAns":true,"aiTo":57,"det":true}
+OCC PASS
+leg {"v":[32000,30000],"leg":true,"ws":4,"mor":2,"loserWs":true,"again":false,"tiny":false,"lop":false,"names":1,"style":"prof","expired":true,"saved":true}
+LEG PASS
+6.2s lobby open, code k0573k
+14.1s campaign started
+35.3s friend joined as SA
+35.3s friend march reached host
+47.1s friend answered their own event
+77.8s month rolled on the friend's map
+87.7s friend paused the world
+119.3s friend sees the fight on the map {"b":2,"s":-1,"r":0,"marks":1,"modal":"","g":false}
+138.2s online fight {"t":10,"d":11,"ph":"plan","b":-1,"s":8,"r":1,"modal":"","g":false}
+143.9s friend left, AI took over
+GNETTEST PASS
