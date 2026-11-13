@@ -52,6 +52,7 @@ for (const fac of FACS) {
   await page.waitForFunction(() => typeof startSingle === 'function', null, { timeout: 60000 });
   await page.evaluate(([f, m]) => { try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} setup.n = 1; setup.p = f; setup.mode = 'conquest'; if (m) setup.map = m; startSingle(); }, [fac, E.MAP || null]);
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 500 }); const T0 = Date.now(), say = m => console.log('  [' + fac + ' +' + Math.round((Date.now() - T0) / 1000) + 's] ' + m); say('battle loaded');
+  await page.evaluate(v => { window.__vaoDiag = !!v; }, E.VAO);
   const info = await page.evaluate(town => { const hq = G.ents.find(e => e.team === ME && e.kind === 'hq') || G.ents.find(e => e.team === ME && e.isB);
     let up = G.ents.find(e => e.team === ME && e.kind === 'uplink'); if (!up) up = addBld(ME, 'uplink', hq.x + 120, hq.y + 60, 1); up.built = 1; up.hp = up.max;
     QUAL.lock = 1; /* the frame-rate governor follows the test machine's speed (a detail step rebuilds the picture buffers): held still, the gate measures the strike */ const T = G.teams[ME]; T.credits = 50000; T.charge = T.sup.charge; G.t = Math.max(G.t, CQ_STRIKE_MIN + 5);
@@ -59,8 +60,8 @@ for (const fac of FACS) {
     // a mixed enemy force stands on the target, so the strike also kills many soldiers and vehicles in the same frames (wrecks, bodies, debris)
     const ET = G.teams.find(t => t.id !== ME && !t.reb && !ally(t.id, ME)); let crowd = 0;
     if (ET) for (let i = 0; i < 36; i++) { const k = ['inf', 'at', 'atk', 'jeep', 'aa', 'inf'][i % 6], a = i * 2.4, r = 30 + (i % 9) * 22; try { if (addUnit(ET.id, k, en.x + Math.cos(a) * r, en.y + Math.sin(a) * r)) crowd++; } catch (e) {} }
-    // diagnosis: which object (and shader) is being drawn when the card makes a new vertex array
-    { const rb = R3.renderBufferDirect.bind(R3); R3.renderBufferDirect = function (cam, sc, geo, mat, obj) { window.__cur = (sc && sc.overrideMaterial ? 'OVERRIDE ' : '') + (mat && mat.type) + ' ' + (geo && geo.type) + ' ' + (geo && geo.attributes && geo.attributes.position ? geo.attributes.position.count : 0) + 'v ' + (obj && (obj.name || (obj.parent && obj.parent.name) || '')) + (obj && obj.isInstancedMesh ? ' inst' : '') + (obj && obj.isSkinnedMesh ? ' skin' : '') + (mat && mat.userData && mat.userData.burnt ? ' burnt' : ''); return rb.apply(this, arguments); };
+    // diagnosis (VAO=1 only, it slows every draw): which object (and shader) is being drawn when the card makes a new vertex array
+    if (window.__vaoDiag) { const rb = R3.renderBufferDirect.bind(R3); R3.renderBufferDirect = function (cam, sc, geo, mat, obj) { window.__cur = (sc && sc.overrideMaterial ? 'OVERRIDE ' : '') + (mat && mat.type) + ' ' + (geo && geo.type) + ' ' + (geo && geo.attributes && geo.attributes.position ? geo.attributes.position.count : 0) + 'v ' + (obj && (obj.name || (obj.parent && obj.parent.name) || '')) + (obj && obj.isInstancedMesh ? ' inst' : '') + (obj && obj.isSkinnedMesh ? ' skin' : '') + (mat && mat.userData && mat.userData.burnt ? ' burnt' : ''); return rb.apply(this, arguments); };
       const cv = WebGL2RenderingContext.prototype.createVertexArray; WebGL2RenderingContext.prototype.createVertexArray = function () { if (window.__on) (window.__vaoS = window.__vaoS || []).push((window.__t0 ? (G.t - __t0).toFixed(1) : '-') + 's ' + window.__cur); return cv.apply(this, arguments); }; }
     window.__noDraw = 1; window.__fr = []; window.__on = 0; let last = performance.now(), pc = Object.assign({}, __glc);
     (function loop() { const n = performance.now(), c = __glc; if (window.__on) { const i = R3.info, d = {}; for (const k in c) if (c[k] !== pc[k]) d[k] = Math.round((c[k] - pc[k]) * 10) / 10;

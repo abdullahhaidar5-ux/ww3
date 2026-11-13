@@ -536,7 +536,9 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       let s='';o.traverse(c=>{if(c.isMesh&&!c.isSkinnedMesh){const m=Array.isArray(c.material)?c.material[0]:c.material;if(m)s+=m.type+(m.map?'m':'')+(m.normalMap?'n':'')+(m.vertexColors?'v':'')+'|';}});
       if(s&&(!PH||!sig.has(s))){sig.add(s);try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});grp.add(w);}catch(e){}}}
     nObj+=grp.children.length;{const tb=performance.now()-tb0;if(tb>100)(W.slow=W.slow||[]).push(['build '+keys.slice(i,i+BATCH).join('+'),Math.round(tb)]);}await step('models '+keys.slice(i,i+BATCH).join('+'),grp);
-    if(onProg&&!isLate())try{onProg(Math.min(keys.length,i+BATCH),keys.length);}catch(e){}await frame();if(isLate()){W.late=1;await new Promise(r=>setTimeout(r,50));}}
+    if(onProg&&!isLate())try{onProg(Math.min(keys.length,i+BATCH),keys.length);}catch(e){}await frame();if(isLate()){W.late=1;
+      // the rest runs in the background: gently, and not at all on a machine that is already struggling (what is left is prepared when first seen)
+      if(typeof QUAL!=='undefined'&&QUAL.fps&&QUAL.fps<20){W.dropped=keys.length-i-BATCH;break;}await new Promise(r=>setTimeout(r,120));}}
   lap('models',ts);ts=performance.now();
   // the merged one-mesh soldier and the shared plain materials
   if(!dead()){const grp=mk();
@@ -562,11 +564,6 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       if(!dead()&&!isLate()&&ex.length){MK('extras draw');for(const g of ex)g.traverse(c=>{c.frustumCulled=false;});drawOnly(ex);}
       for(const g of ex)unscene(g);ex.length=0;
       SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});await frame();}}
-  // the blood/wound blobs (instanced, none shown until the first hit): made now and drawn once with one instance, so the first
-  // impact doesn't send their shape to the card
-  if(!PH&&!dead()&&!isLate()&&typeof bfWoundInit==='function'&&typeof BFX!=='undefined'){MK('wounds');try{bfWoundInit();const ws=['wb','wh'].map(k=>BFX[k]).filter(Boolean);
-      for(const m of ws){m.count=1;m.setMatrixAt(0,new THREE.Matrix4().makeTranslation(bx,gy+1,by));m.instanceMatrix.needsUpdate=true;}
-      if(ws.length){await step('wounds',new THREE.Group());drawOnly(ws);}for(const m of ws)m.count=0;}catch(e){console.warn('warm-up',e);}await frame();}
   lap('extras',ts);ts=performance.now();
   // the battlefield itself (ground, scenery, buildings), child by child, drawn into the post-processing target as in the battle
   if(!dead()&&!isLate()){try{if(typeof placeCam==='function')placeCam();}catch(e){}
