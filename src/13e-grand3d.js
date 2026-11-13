@@ -75,7 +75,13 @@ function g3Fields(){if(G3.F)return G3.F;const tF0=performance.now();grMap();cons
     const o=k*4;bw[o]=Math.min(255,rock*255);bw[o+1]=Math.min(255,snow*255);bw[o+2]=Math.min(255,Math.max(dw[k],beach)*255);bw[o+3]=Math.min(255,vw[k]*255);}
   G3.F={W,H,idx,land,Ls,Lw,mw,Hh,px,bw,fm:FN.fm,fs:FN.fs,FW:FN.FW,FH:FN.FH,cd:g3CoastDist(FN.fm,FN.FW,FN.FH)};
   if(G3.real){try{const t0=performance.now();g3RealFields(G3.F);G3.tReal=Math.round(performance.now()-t0);}catch(e){console.error('real terrain failed, procedural fallback',e);G3.F=null;G3.real=null;G3.realFail=1;return g3Fields();}}
-  G3.tFields=Math.round(performance.now()-tF0);return G3.F;}
+  g3CoastRamp(G3.F);G3.tFields=Math.round(performance.now()-tF0);return G3.F;}
+/* mapshapes: the land comes down to the water at the coast. The ground used to stand several units high right at the shoreline (real elevation is not tapered to the coast), so seen at an angle
+   its edge sat away from the true coast and the strip between was painted by the sea as pale foam-coloured squares in the water (Gulf shore of Iran, orch/concepts/bugs/map-ugly-arrows-blocky-coast.jpg).
+   Now the height is capped by the distance to the coast (the baked coast-distance field F.cd, fine pixels): shore level at the waterline, rising at most .55 per pixel inland. One pass at load. */
+function g3CoastRamp(F){const cd=F.cd;if(!cd||!F.FW)return;const W=F.W,H=F.H,FW=F.FW,f=Math.max(1,Math.round(FW/W)),Hh=F.Hh;let n=0;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x;if(Hh[k]<=.45)continue;let m=255;for(let dy=0;dy<f;dy++){const o=(y*f+dy)*FW+x*f;for(let dx=0;dx<f;dx++)if(cd[o+dx]<m)m=cd[o+dx];}
+    if(m<96)continue;const cap=.45+.55*Math.max(0,(127.5-m)/1.6);if(Hh[k]>cap){Hh[k]=cap;n++;}}F.ramp=n;}
 function g3HeightAt(x,z){const F=G3.F;if(!F)return 0;const fx=Math.max(0,Math.min(F.W-1.001,x/2)),fy=Math.max(0,Math.min(F.H-1.001,z/2)),x0=fx|0,y0=fy|0,tx=fx-x0,ty=fy-y0,H=F.Hh,W=F.W;
   return (H[y0*W+x0]*(1-tx)+H[y0*W+x0+1]*tx)*(1-ty)+(H[(y0+1)*W+x0]*(1-tx)+H[(y0+1)*W+x0+1]*tx)*ty;}
 // ---- overlay texture: soft owner tint + subtle borders (political), or the data of the chosen map mode

@@ -201,6 +201,8 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(!/setLineDash|stroke-dasharray/.test(u) && /g3RoutePreview\(/.test(u), 'mapshapes: the yellow dotted route line is back in src/13c-grandui.js (the hover route must use g3RoutePreview)'); }
 // mapshapes item 4: cargo ships on the sea lanes are half their old size and the road web is quiet (thin, pale, see-through) so towns and army pieces read first.
 ck(/sc=Math\.max\(\.55,s\*\.38\)/.test(SRC['13w-gshipping.js'] || '') && /c:maj\?\[\.84,\.74,\.52,\.62\]:\[\.74,\.65,\.47,\.42\],w:maj\?\[1\.5,\.42\]:\[\.9,\.24\]/.test(SRC['13e2-groads.js'] || ''), 'mapshapes: cargo ships must stay half size (13w-gshipping.js) and the campaign road web quiet (13e2-groads.js)');
+// mapshapes item 5: the land comes down to the water at the coast (g3CoastRamp caps the ground height by the distance to the coast), so the shore is one clean line and the sea no longer paints pale squares between the true coast and a raised land edge (Gulf shore of Iran).
+{ const g = SRC['13e-grand3d.js'] || ''; ck(/function g3CoastRamp\(F\)/.test(g) && /g3CoastRamp\(G3\.F\);G3\.tFields=/.test(g), 'mapshapes: the coast ramp (g3CoastRamp, src/13e-grand3d.js) is missing — the Gulf coast gets pale squares in the water again'); }
 // mapshapes guards end
 
 // 2. Controls (2026-10-28): W A S D only scroll the camera; A is not attack-move; F is; X is stop.
