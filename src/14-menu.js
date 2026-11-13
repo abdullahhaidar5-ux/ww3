@@ -123,6 +123,7 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 #ms-online #mxolg{margin-bottom:6px}
 .mxlist{display:flex;flex-direction:column;align-items:flex-start;gap:0}
 .mxcred{max-width:860px}.mxcred p{margin:0 0 12px;color:#8a9a92;font:400 12px/1.6 var(--mono);max-width:none}
+#ms-online .gnrow{display:none!important}   /* campaign rows stay out of the open-games list while the campaign is paused (2026-11-13); a campaign link or code still joins */
 @media (max-width:1100px){.mxnat,.mxpl{grid-template-columns:1fr}#mxdet{position:static}}
 `;document.head.appendChild(s);}
 function mxModeName(){return typeof setup!=='undefined'&&setup.mode==='battle'?'Battle':'Conquest';}
@@ -146,9 +147,9 @@ function mxBuild(){
   const T=scr('title');T.innerHTML='<h1 id="mxlogo">World War <span>3</span></h1><p id="mxtag">Real-time modern warfare, from one battle to the whole world.</p>';
   const menu=mxEl('div');menu.id='mxmenu';T.appendChild(menu);
   const item=(t,fn,cls,tip)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''),t);b.type='button';b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);if(tip)b.title=tip;menu.appendChild(b);return b;};
-  MX.cont=item('',()=>mxClick('svContinue'),'','Pick up where you left off: your latest battle or grand campaign');MX.cont.hidden=true;
-  item('Single player',()=>menuGo('single'),'','Grand campaign, Conquest, Battle, missions and the tutorial');
-  item('Multiplayer',()=>menuGo('online'),'','Play online with friends: a grand campaign, Conquest or Battle');
+  MX.cont=item('',()=>mxClick('svContinue'),'','Pick up where you left off: your latest Conquest or Battle');MX.cont.hidden=true;
+  item('Single player',()=>menuGo('single'),'','Conquest, Battle, missions and the tutorial');
+  item('Multiplayer',()=>menuGo('online'),'','Play online with friends: Conquest or Battle');
   item('Test range',()=>mxClick('sandbox'),'','Unlimited money and every unit against a passive target');
   item('Settings',()=>mxClick('openSettings'),'sep dim','Graphics, sound and mouse');
   item('Extras',()=>menuGo('extras'),'dim','Replays, encyclopedia, medals, map editor and more');
@@ -185,9 +186,8 @@ function mxBuild(){
     const rs=mxEl('div','');rs.style.cssText='font-size:12px;opacity:.8;margin-top:4px;max-width:520px';const fill=()=>{rs.textContent=setup.real?[setup.p].concat(setup.a?[setup.a]:[]).filter(f=>FACTIONS[f]).map(f=>FACTIONS[f].name+' - '+realLine(f)).join('  ·  '):'';};r.addEventListener('click',()=>setTimeout(fill,0));r.addEventListener('mouseenter',fill);r.after(rs);fill();}
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
   /* --- single player (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range") --- */
-  const SP=scr('single','<h2 class="mxh">Single player</h2><p class="mxsub">Three distinct games. Pick one.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
+  const SP=scr('single','<h2 class="mxh">Single player</h2><p class="mxsub">Two games. Pick one.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
   const sitem=(t,d,fn,cls)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''));b.type='button';b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);sl.appendChild(b);return b;};
-  sitem('Grand campaign','Run a whole empire on a world map and fight the battles live',()=>mxClick('grandBtn'));
   sitem('Conquest','Take towns and collect their tax, destroy the enemy base - a full base and $10,000 from the start',()=>{mxSetMode('conquest');menuGo('c-map');});
   sitem('Battle','Generals-style skirmish: Command Center, supply trucks, tech up, destroy every enemy building',()=>{mxSetMode('battle');menuGo('c-map');});
   sitem('Missions','The story missions',()=>mxClick('campaign'),'dim sep');
@@ -195,20 +195,19 @@ function mxBuild(){
   sitem('Battle tutorial','First time in Battle? Supply Depot, Barracks, War Factory, attack',()=>{try{initAudio();startBattleTutorial();}catch(e){console.warn(e);}},'dim');
   sitem('Load game','Load a saved battle',()=>mxClick('svLoadBtn'),'dim');
   /* --- play online --- */
-  const OL=scr('online','<h2 class="mxh">Multiplayer</h2><p class="mxsub">One place to play online. Choose the game, then start one or join a friend: open games and invite codes or links for all three are below.</p>');
+  const OL=scr('online','<h2 class="mxh">Multiplayer</h2><p class="mxsub">One place to play online. Choose the game, then start one or join a friend: open games and invite codes or links for both are below.</p>');
   const gl=mxEl('div','mxlist');gl.id='mxolg';OL.appendChild(gl);MX.olBtns={};
   const gitem=(k,t,d)=>{const b=mxEl('button','mxi');b.type='button';b.dataset.g=k;b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);mxOnline(k);};b.onmouseenter=()=>mxTick(520);gl.appendChild(b);MX.olBtns[k]=b;};
-  gitem('campaign','Grand campaign','Lead a nation on the world map with friends - the lobby opens next');
   gitem('conquest','Conquest','Towns, tax and a full base for everyone');
   gitem('battle','Battle','Generals-style: Command Center, supply trucks, tech tree');
   MX.olGo=mxEl('div','mxolgo');OL.appendChild(MX.olGo);
   const mp=[...card.querySelectorAll('.mode')].find(x=>x.querySelector('#playOnline'));if(mp)OL.appendChild(mp);
-  {const lb=OL.querySelector('.label');if(lb)lb.textContent='Open games';const jc=OL.querySelector('#jcode');if(jc)jc.placeholder='Game code or invite link (battle or campaign)';}
+  {const lb=OL.querySelector('.label');if(lb)lb.textContent='Open games';const jc=OL.querySelector('#jcode');if(jc)jc.placeholder='Game code or invite link';}
   /* --- extras --- */
-  const E=scr('extras','<h2 class="mxh">Extras</h2><p class="mxsub">Practice, review and reference.</p>');const el=mxEl('div','mxlist');E.appendChild(el);
+  const E=scr('extras','<h2 class="mxh">Extras</h2><p class="mxsub">The Grand campaign preview (paused), practice, review and reference.</p>');const el=mxEl('div','mxlist');E.appendChild(el);
   const ex=(t,fn,tip)=>{const b=mxEl('button','mxi',t);b.type='button';b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);if(tip)b.title=tip;el.appendChild(b);};
   const byText=t=>()=>{const b=[...card.querySelectorAll('button')].find(x=>(x.textContent||'').trim().toLowerCase().replace(/\u2019/g,"'")===t);if(b){try{initAudio();}catch(_){}b.click();}};
-  ex('Watch a replay',()=>mxClick('rpOpen'),'Open a replay file');ex('Map editor',()=>mxClick('edBtn'),'Draw your own battlefield');
+  ex('Grand campaign (preview, paused)',()=>mxClick('grandBtn'),'In development - Conquest and Battle come first.');ex('Watch a replay',()=>mxClick('rpOpen'),'Open a replay file');ex('Map editor',()=>mxClick('edBtn'),'Draw your own battlefield');
   ex('My battles',()=>mxClick('openMyb'));ex('Encyclopedia',()=>mxClick('openEnc'));ex('Unit guide',byText('unit guide'));ex('Medals',byText('medals'));ex('Profile',byText('profile'));ex('What’s new',byText('what’s new')||byText("what's new"));ex('Report a problem',()=>mxClick('rpMenu'),'Opens a pre-filled bug report');ex('Playtest card',()=>{if(typeof wwPlaytest==='function')wwPlaytest();},'Ten new things to try this week - thumbs up or down, a short note, save the file');
   /* --- credits --- */
   const C=scr('credits','<h2 class="mxh">Credits</h2><p class="mxsub">Free art, sound and music only, every author credited.</p>');const cw=mxEl('div','mxcred');for(const p of card.querySelectorAll('p.credits'))cw.appendChild(p);C.appendChild(cw);
@@ -218,7 +217,7 @@ function mxBuild(){
   setInterval(mxPoll,500);
   MX.screens.title.classList.add('on');mxShown(true);}
 /* Multiplayer: which game the online screen is set for. Campaign opens the one campaign lobby (gnet); Conquest/Battle use the shared battle lobby. */
-function mxOnline(k){if(k==='campaign'||k==='conquest'||k==='battle')MX.olG=k;k=MX.olG||'conquest';
+function mxOnline(k){if(k==='campaign'||k==='conquest'||k==='battle'){MX.olG=k;if(k==='campaign'&&MX.cur!=='online')MX.campOnce=1;}k=MX.olG||'conquest';
   if(k!=='campaign')mxSetMode(k);
   for(const g in MX.olBtns)MX.olBtns[g].classList.toggle('on',g===k);
   const po=document.getElementById('playOnline'),h=document.getElementById('host');
@@ -263,14 +262,14 @@ function menuGo(id,back){if(!MX.screens[id]||MX.cur===id)return;const from=MX.sc
 function menuBack(){if(MX.stack.length<2)return;MX.stack.pop();const id=MX.stack[MX.stack.length-1];const from=MX.screens[MX.cur];from.classList.remove('on','left');const to=MX.screens[id];to.classList.add('left');void to.offsetWidth;to.classList.remove('left');to.classList.add('on');MX.cur=id;mxCrumb();mxEnter(id);mxTick(480);}
 function menuHome(){for(const k in MX.screens)MX.screens[k].classList.remove('on','left');MX.stack=['title'];MX.cur='title';MX.screens.title.classList.add('on');mxCrumb();}
 function mxEnter(id){if(id==='c-map')mxMapCards();if(id==='c-nation'){mxNatFilter();mxNatShow();}if(id==='c-players'||id==='c-opts'){mxStartSync();mxPlayersSync();try{if(typeof renderTeams==='function')renderTeams();}catch(_){}}
-  if(id==='online')mxOnline();if(id==='title')mxContSync();}
+  if(id==='online'){if(MX.campOnce)MX.campOnce=0;else if(MX.olG==='campaign')MX.olG='conquest';mxOnline();}if(id==='title')mxContSync();}
 /* The war table (living main menu): the background shows YOUR war - whatever "Continue" would resume.
    Grand campaign saved: its map around your nation, your borders lit in your color, your last battle marked (sketch from the save's small note, grWarTable in 13-grand.js).
    Battle saved: that battlefield with the front line between your forces and the enemy you could see (sketch in the save's list entry, svFront in 08d-save.js).
    Nothing saved (or an old save without a sketch): the calm world-map picture. Drawn once per save; the campaign code is NOT loaded for it. */
 function mxWarSrc(){let g=null,b=null;try{g=typeof svGrandInfo==='function'?svGrandInfo():null;}catch(_){}try{b=typeof svLatest!=='undefined'?svLatest:null;}catch(_){}
-  if(g&&b&&b.ts>g.ts)g=null;const clk=t=>{t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
-  if(g)return {key:'g'+g.ts+'|'+g.d,wt:g.wt&&g.wt.d?g.wt:null,k:'Your war · Grand campaign',h:g.n+(g.d?' · '+g.d:''),l:g.lbn?'Last battle: '+g.lbn+(g.lbd?', '+g.lbd:'')+' — '+(g.lb&&g.lb.w?'won':'lost'):'No battle fought yet'};
+  if(g&&b)g=null;   /* campaign paused 2026-11-13: the background shows the last Conquest/Battle; the campaign only when it is the only save */const clk=t=>{t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
+  if(g)return {key:'g'+g.ts+'|'+g.d,wt:g.wt&&g.wt.d?g.wt:null,k:'Grand campaign (preview)',h:g.n+(g.d?' · '+g.d:''),l:g.lbn?'Last battle: '+g.lbn+(g.lbd?', '+g.lbd:'')+' — '+(g.lb&&g.lb.w?'won':'lost'):'No battle fought yet'};
   if(b)return {key:'b'+b.id+'|'+b.ts,wt:b.wt&&b.wt.d?b.wt:null,k:'Your war · '+(b.camp?'Mission':'Battle'),h:b.facName+' · '+b.mapName,l:clk(b.t)+' into the fight'+(b.wt&&b.wt.e?' — the bright line is your front':'')};
   return null;}
 function mxWarTable(){const bg=document.getElementById('mxbg'),mn=document.getElementById('menu');if(!bg||(mn&&mn.hidden))return;   /* never draw behind a running battle; the next time the menu shows it is drawn */

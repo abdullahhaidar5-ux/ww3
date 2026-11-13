@@ -153,12 +153,12 @@ function svGrandInfo(){try{const K='ww3grand1';if(!localStorage.getItem(K))retur
   if(!i){const o=JSON.parse(localStorage.getItem(K));if(!o||o.v!==1)return null;i={ts:0,me:o.me||'',n:o.me?((typeof FACTIONS!=='undefined'&&FACTIONS[o.me]&&FACTIONS[o.me].name)||o.me):'Observer',d:'',over:o.over?1:0};}
   return i&&!i.over?i:null;}catch(e){return null;}}
 function svContinueGrand(){return loadGrand().then(()=>{if(grLoad()&&!GC.over){grandOpen();return true;}grandMenu();return false;});}
-/* Continue = the newest thing you were playing: a saved/autosaved battle or the grand campaign */
+/* Continue = the newest saved/autosaved Conquest or Battle (or mission); the grand campaign (preview, paused) only when it is the only save */
 async function svMenuSync(){const cb=$('svContinue');if(!cb)return;let L=[];try{L=await svList();}catch(e){}
   svLatest=L.find(m=>!svCheck(m))||null;svGrand=svGrandInfo();
-  if(svGrand&&svLatest&&svLatest.ts>svGrand.ts)svGrand=null;
+  if(svGrand&&svLatest)svGrand=null;   /* campaign paused 2026-11-13: Continue resumes the newest Conquest/Battle save; the campaign save only if it is the only one */
   cb.hidden=!svLatest&&!svGrand;cb.dataset.kind=svGrand?'grand':svLatest?'battle':'';
-  if(svGrand)cb.textContent='▶ Continue — Grand campaign · '+svGrand.n+(svGrand.d?' · '+svGrand.d:'');
+  if(svGrand)cb.textContent='▶ Continue — Grand campaign (preview) · '+svGrand.n+(svGrand.d?' · '+svGrand.d:'');
   else if(svLatest)cb.textContent='▶ Continue — '+svLatest.mapName+' · '+svLatest.facName+' · '+svClock(svLatest.t);
   const lb=$('svLoadBtn');if(lb)lb.hidden=false;try{if(typeof mxWarTable==='function')mxWarTable();}catch(e){}}
 function svInstall(){const rs=$('resumeBtn');if(rs&&!$('svSave')){const b=document.createElement('button');b.id='svSave';b.type='button';b.className='big ghost';b.textContent='Save game';b.onclick=()=>svSaveDialog();rs.after(b);}
