@@ -1,0 +1,78 @@
+menu {"g":"Grand campaign","c":"Missions","s":"Conquest — deploy vs AI","t":true}
+determinism {"a":"6b6b012c","b":"6b6b012c","c":"d8747ddd","h0":"bf290078","h1":"bf290078","ms":78461,"alive1":180,"provs":797,"seas":44}
+scenarios {"me26":{"sc":"me26","irsa":false,"dwil":false,"armies":314,"h":"b7be3a03"},"gulf":{"sc":"gulf","irsa":true,"dwil":false,"armies":321,"h":"6c8f5059"},"redsea":{"sc":"redsea","irsa":false,"dwil":true,"armies":317,"h":"ce0031a4"},"again":"6c8f5059"}
+real26 {"ruua":true,"ilrs":false,"ilrsTr":true,"usir":false,"usirTr":true,"dwsa":true,"syVas":"TR","donbas":["RU","UA"],"slb":["IL","RS"],"hz":0,"oil":146,"ruEmb":true,"es":1,"us":25,"sch":8,"mecca":true}
+fog {"foes":291,"seen":71,"e":"","after":true,"own":true,"cash":4600,"hashSame":true}
+forcelimit {"v0":35375,"L":40681,"under":true,"t0":10,"t1":16,"over":true,"up":1.5,"allUnder":true,"chip":true}
+war support by government {"gov":"dem,party,mon,theo,junta,auth","lDem":-12,"lParty":-4,"cenDem":"A free press cannot be told what to print.","cen":"","pol":70,"cen2":"War news is already restricted.","lCen":-2,"back":-5,"saved":true,"rally":4,"later":-1,"split":2,"short":"-1.5,-1,-0.5,-3","shortNone":null,"shortPeace":null,"strike":true,"strikeDem":false}
+escalation {"up":",1,,,3,false","rel":-24,"saved":3,"alert":true,"noMed":"","face":-3,"r1":1,"med":"CN","medErr":"","face2":0,"r2":0,"paid":100,"surprise":-10,"signalled":0,"cleared":true,"gate":"false,false,true","nukeWars":2,"nukeRung":2,"nk":true,"det":true}
+escalation in war {"r0":4,"x":true,"r1":6,"op":-6,"rally":3,"match":false,"free":0,"saved":6,"warnNoNuke":false,"lim":"","r2":5,"paid":100,"broke":-12,"cool":5,"na":"","r7":7,"naPaid":200,"again":false,"aiFirst":10,"aiAnswer":true,"nn":true,"w1":0,"al":7,"w2":1,"det":true}
+military determinism {"a":{"h":"f5089428","seen":{"strike":159,"intercept":8,"sea":9,"gen":28,"blockade":12},"gens":221,"alive":221,"fronts":30,"fleets":51,"framies":25,"mines":0,"turn":21,"dead":0,"capt":0,"lv":3},"b":"f5089428","c":"b896fdf8","fell":[],"ms":201023}
+military features []
+military strikes/fleets []
+military escort []
+military ui {"panel":true,"gen":960,"fr":311,"st":637,"sk":1303,"skOk":true,"fl":498}
+signatures {"n":57,"bad":[],"missing":[]}
+eco determinism true seed-diff true majors alive 57
+eco income/upkeep per empire per turn (nation:cash:net:upkeep:fuel:food:manpower:bank:bonds:totalwar)
+  t1: RU:6051:7421:1303:225:139:1259:0:1:0:65 | TR:3613:3042:728:73:139:404:0:0:0:22 | IR:3486:3735:844:217:150:625:0:0:0:34 | IN:3260:3402:1233:64:159:568:0:0:0:29 | CN:4895:4855:2145:72:126:838:1764:0:0:50 | US:11712:9221:3142:187:169:822:3380:0:0:46
+  t5: RU:5243:3270:3844:78:126:1138:0:1:0:64 | TR:2669:1859:1544:50:128:480:0:0:0:22 | IR:2806:3077:1853:130:181:676:0:0:0:34 | IN:1827:1227:2705:50:226:634:0:0:0:29 | CN:3232:3109:3390:26:55:956:1764:0:0:50 | US:4680:4846:6096:22:265:1194:7677:0:1:46
+  t10: RU:5410:2519:4458:33:97:1152:0:1:0:65 | TR:4370:2241:1722:50:103:480:1700:0:0:22 | IR:3938:2683:2168:32:205:676:3813:0:0:34 | IN:1278:969:2854:50:303:634:0:0:0:29 | CN:0:-69:5644:0:30:956:1764:0:0:50 | US:0:-3038:10080:0:320:1194:0:1:1:46
+  t15: RU:982:2363:4706:50:67:1152:2170:0:0:65 | TR:4011:1725:1730:50:79:480:7936:0:0:22 | IR:5402:2242:2181:50:227:676:5515:0:0:34 | IN:2492:1575:2871:50:320:634:0:0:0:29 | CN:241:-200:5650:35:40:956:1764:0:0:50 | US:0:-105:6873:50:320:1194:0:1:1:46
+eco top earners t15 GB:7511:4620:969:31:214:508:26327:0:0:14 | BR:4566:3629:820:39:320:620:16634:0:0:26 | CA:5581:3442:857:129:320:382:20406:0:0:12 | SD:6649:2758:260:43:221:438:17084:0:0:26 | MX:4239:2468:589:31:142:312:7449:0:0:14 | RU:982:2363:4706:50:67:1152:2170:0:0:65
+eco average net income per turn [1501,1442,1153,999,917,791,680,548,700,689,544,874,819,849,798]
+eco average upkeep per turn [420,480,631,724,763,866,893,923,945,948,959,923,860,865,912] positive-net share t10 0.82 net range t15 -789 4620
+eco net per province: median 76 max 337
+eco features []
+eco ui {"panel":true,"ptxt":1146,"side":true,"icons":3}
+calmmap {"legShut":true,"coachLegend":false,"coachH":0,"hasReal":true,"standIn":[155,131,79,0,300],"standInReal":false,"real":[12,1,2,3581,379],"realFlag":true,"seaMiss":[],"palBad":[],"far":{"tier":0,"trees":0,"mine":7,"plates":13,"badges":17,"dup":0,"foreign":0,"figs":1},"mid":{"tier":1,"trees":0,"plates":42,"badges":49,"dup":0,"foreign":36,"figs":1},"close":{"tier":2,"trees":0,"figs":94,"pn":3,"pnBad":0,"plateBad":0}}
+maptrees {"look":{"rows":4,"gain":2.5,"conifer":{"s":0.242,"v":0.189,"cover":0.239},"broad":{"s":0.416,"v":0.237,"cover":0.342},"palm":{"s":0.37,"v":0.229,"cover":0.108},"scrub":{"s":0.323,"v":0.322,"cover":0.205}},"ts":1.6,"max":30000}
+mapscale {"towns":1086,"big":0,"spill":0,"overlap":0,"sample":{"Rome":[5.74,5.74,1],"Athens":[5.39,5.39,1],"Kuwait":[2.54,2.54,1],"Beirut":[1.39,1.39,1],"Tehran":[3.47,3.47,1],"Riyadh":[5.07,5.07,1]},"sea":0,"ships":2,"tall":0,"plate":false}
+scenario {"foe":"IQ","from":"Ilam","to":"Baghdad","aid":50,"ok":true,"units":37,"to_i":63}
+armytokens {"gone":[],"far":{"tier":0,"tokens":6,"far":6,"stacks":4,"odds":0,"dots":64,"dotsOn":true,"rings":0,"figs":1,"flags":1,"old":0,"dup":0,"perProv":1,"hud":0,"sel":1},"farNum":true,"mid":{"tier":1,"tokens":49,"far":0,"stacks":17,"odds":1,"dots":0,"dotsOn":false,"rings":0,"figs":1,"flags":1,"old":0,"dup":0,"perProv":1,"hud":0,"sel":1},"midNoSel":{"tier":1,"tokens":49,"far":0,"stacks":17,"odds":0,"dots":0,"dotsOn":false,"rings":0,"figs":0,"flags":0,"old":0,"dup":0,"perProv":1,"hud":0,"sel":0},"march":1,"eta":["30 days"],"pill":["Even fight"],"close":{"tier":2,"tokens":35,"far":0,"stacks":6,"odds":1,"dots":0,"dotsOn":false,"rings":0,"figs":94,"flags":1,"old":0,"dup":0,"perProv":3,"hud":0,"sel":1},"make":5,"foe":true,"est":[42,42,16,16,"Even fight"]}
+contact {"b":true,"s":false,"r":false,"modal":false,"live":false,"ph":"plan","turn":2}
+battle window {"marks":1,"forced":false,"line":true,"open":true,"txt":"Battle of Baghdadday 4 · Assault phase (1 of 3) · urbanIranAttacking · Sarhang Kamran Karimzadeh Fires ○○ Assault ●○Morale 35 · 34 units · 3 lost16 in the line · 3 in support · 15 in reserveIraqDefending · Aqid Ali al-Nuaimi Fires ○○ Assault ○○Morale 63 · 35 units16 in the line · 3 in support · 16 in reserve2+1 Sarhang Kamran Karimzadeh (assault skill) · = 34+1 Urban ground · +1 Fort guns · = 6Exp","kind":"b"}
+battle end {"months":1,"n":1,"last":{"win":"def","how":"wipe","d":17,"la":37,"ld":14,"sg":0},"owner":"IQ","modal":false,"live":false,"ph":"plan","save":true,"log":["Bryansk: Ukraine beat Russia (the losing force was destroyed).","Baghdad: Iraq held against Iran (the losing force was destroyed).","Battle of Sanaa: Zaidi Shia Movement (Yemen) attacks Saudi Arabia.","Battle of Kabul: Pakistan attacks Afghanistan.","Battle of Voronezh: Ukraine attacks Russia."]}
+
+GRANDTEST PASS
+determinism {"same":true,"diff":true,"r":{"win":"att","how":"rout","d":20,"la":17,"ld":49,"na":144,"nd":177,"vla":5025,"vld":8821,"va":31175,"vd":31700,"movedA":false,"movedD":false,"aliveA":true,"aliveD":false,"hung":false},"h1":"cfdd8e6e","h2":"cfdd8e6e","nb1":12,"running":3,"hA":"8b2fca7a","hB":"8b2fca7a"}
+saves {"same":true,"loaded":true,"ph":"plan","next":true,"fight":true}
+zealous {"IR":"0/24","RS":"0/24","DW":"0/24","RV":"0/24","KP":"0/24","OB":"0/24","BI":"0/24","profFellBack":12,"guard":true}
+fort {"level":1,"ownerAfterWalkIn":"SA","siege":true,"ownerAfterRoll":"IR","siege2":true,"noBattle":true,"months":2,"flippedEarly":false,"owner2":"IR","card":true,"fewOwner":"SA","fewChance":0,"assault":"","assaultOwner":"IR","assaultLost":22}
+sea + joins {"fleet":{"win":"att","how":"shatter","d":6,"usLeft":12,"cnAt":true},"sunk":{"how":"sunk","win":"att","gone":true,"d":1},"early":"The army is locked in combat: it can break contact in 4 days.","moveErr":"This army is fighting. Withdraw it from the battle first.","joined":true,"late":"","left":true,"odds":true}
+  48% att wins   24 days  units lost att/def 24%/23%  value lost 26%/26%  Equal armies, open farmland
+  53% att wins   24 days  units lost att/def 25%/24%  value lost 26%/26%  Equal armies, sides swapped
+  20% att wins   36 days  units lost att/def 30%/26%  value lost 29%/26%  Equal, defender in a city
+   4% att wins   42 days  units lost att/def 30%/24%  value lost 29%/24%  Equal, defender in mountains
+  22% att wins   22 days  units lost att/def 25%/20%  value lost 28%/23%  Equal, attacker crosses a river
+   7% att wins   20 days  units lost att/def 26%/17%  value lost 28%/21%  Equal, attacker lands from the sea
+  91% att wins   20 days  units lost att/def 18%/25%  value lost 22%/28%  Equal, attacker has a level-4 general
+   3% att wins   19 days  units lost att/def 26%/15%  value lost 28%/19%  Equal, defender has a level-4 general
+  86% att wins   25 days  units lost att/def 21%/25%  value lost 23%/28%  Attacker 1.25x the numbers
+  99% att wins   26 days  units lost att/def 17%/26%  value lost 19%/28%  Attacker 1.5x the numbers
+ 100% att wins   26 days  units lost att/def 12%/26%  value lost 14%/29%  Attacker 2x the numbers
+ 100% att wins   52 days  units lost att/def 24%/30%  value lost 23%/29%  Attacker 1.5x into mountains
+ 100% att wins   50 days  units lost att/def 16%/30%  value lost 16%/29%  Attacker 2x into mountains
+  79% att wins   25 days  units lost att/def 24%/25%  value lost 25%/28%  Attacker 1.5x vs a level-4 general
+   1% att wins   22 days  units lost att/def 22%/13%  value lost 24%/18%  Equal, attacker short of ammunition (50%)
+   0% att wins   19 days  units lost att/def 19%/3%  value lost 22%/11%  Equal, attacker nearly out (25%)
+   1% att wins   25 days  units lost att/def 26%/13%  value lost 28%/18%  Equal, attacker cut off from supply
+  58% att wins   36 days  units lost att/def 26%/24%  value lost 27%/28%  Attacker 1.5x but cut off
+  74% att wins   22 days  units lost att/def 21%/25%  value lost 24%/27%  Equal, attacker has 4 air sorties
+  62% att wins   23 days  units lost att/def 22%/24%  value lost 25%/27%  Equal, attacker has a one-way drone salvo
+  52% att wins   35 days  units lost att/def 61%/50%  value lost 63%/50%  Zealous Iran attacks the United States, equal
+  43% att wins   34 days  units lost att/def 47%/56%  value lost 47%/58%  United States attacks Zealous Iran, equal
+  56% att wins   34 days  units lost att/def 57%/49%  value lost 59%/48%  Zealous Iran attacks Russia, equal
+  37% att wins   32 days  units lost att/def 45%/51%  value lost 45%/53%  Russia attacks Zealous Iran, equal
+  45% att wins   37 days  units lost att/def 66%/51%  value lost 68%/51%  Zealous Lebanese Shia attack the United States, equal
+  49% att wins   35 days  units lost att/def 48%/61%  value lost 48%/63%  United States attacks the Zealous Lebanese Shia, equal
+  50% att wins   47 days  units lost att/def 89%/90%  value lost 88%/89%  Zealous Iran vs Zealous North Korea
+  45% att wins   21 days  units lost att/def 18%/23%  value lost 22%/25%  Firepower-reliant Saudi Arabia attacks the United States
+  40% att wins   21 days  units lost att/def 24%/17%  value lost 26%/21%  United States attacks Firepower-reliant Saudi Arabia
+  44% att wins   24 days  units lost att/def 25%/23%  value lost 27%/25%  Home defender India attacks the United States (abroad)
+  49% att wins   24 days  units lost att/def 24%/24%  value lost 26%/26%  United States attacks Home defender India (abroad)
+  53% att wins   24 days  units lost att/def 25%/24%  value lost 26%/26%  China attacks Russia
+  41% att wins   23 days  units lost att/def 25%/24%  value lost 27%/25%  Russia attacks China
+zealous trade: wins 54%, value lost zealous 60.7% vs other 48.2%, units lost zealous 58.7% vs other 48.3%
+styles at equal price: {"fire":52.5,"home":47.5,"cnru":56}
+GWAR PASS
