@@ -1,3 +1,46 @@
+# STATE — conductor run 21 on 2026-11-13, 00:50–03:40 UTC: **nothing landed** — main is still 77b4ee84 (train 12). Train 13 was one flaky test away, twice
+
+**Helpers are active again** (five saves in the last 80 minutes before this run). Three finished pieces were ready:
+| idea (branch, head) | last save at 00:50 | own test run | result |
+|---|---|---|---|
+| Campaign battles on the map by days (nofightit, c35a3463) — stopped with handoff | 50 min | bba4a87d | 28 of 28 (helper re-ran the flaky sound check) |
+| One tidy campaign top bar, Go to list, five alert chips, Nation window in six groups (camphud, 5c0eb06e) — stopped with handoff | 36 min | 5ca98873 | 27 of 28, only flaky `icons` (red on main too); later picture-only commits: 71b00042 smooth-pc + tutorial red, 5c0eb06e green so far — same game code, test machines noisy |
+| Infiltrator spy look (spylook, 339f3ab7) — stopped with handoff | 17 min | b426b995 | 27 green, **map sweep never finished** (cancelled at the 45-minute limit) |
+| Freeze fix: chunked graphics warm-up on PC (freezefix, bd27648a) — being worked on | 25 min | bd27648a | `smooth-pc` red → skipped (look change with a smooth gate red) |
+| EU4 gap audit report (eu4audit, 26ecc7df) | 49 min | — | report only, no game change |
+| PLAN-75 / handover documents (plan75, 795163b5) | 77 min | — | documents only |
+| Battle report card + front lines (finish-report) — stopped | 23 h | — | needs rework on top of campaign battles |
+
+**Train 13, first test run** (`train/20261113-0051`, commit d459d9b8 = main + spy look + top bar + campaign battles; build, smoke, decisions, grandtest green here):
+27 of 28 green — including smooth-pc, smooth-mp, grandsmooth, mpsync, audio, icons, cfclient. **`mapsweep` gave no result**: the job ran 45 minutes and was cancelled by its time limit.
+The map sweep only runs when maps / graphics / models change; main and the other pieces skip it. The spy look is the only piece that triggers it, and the same thing
+happened on the spy look's own run (b426b995). Normal length is about 10 minutes. Not proven whether the spy look hangs it or the sweep itself has grown too slow since it last really ran — the spy look was taken out.
+
+**Train 13, the one re-run** (`train/20261113-0240`, commit 79efe068 = main + top bar + campaign battles; build, smoke, decisions, grandtest green here): **27 of 28, one red:**
+- `mpsync`: "client view diverged from the host in 2/11 live checks, e.g. t=121s: 0/26 visible entities missing, 5 more than 25 m off". Main does not have this red, so by the rule it cannot land.
+  The same check failed the same way at t=121s on the spy look's first run (22157387), and passed on campaign battles' own run (bba4a87d), on the top bar's run (5ca98873) and on the first train 13 run (d459d9b8, which contains all of this code) two hours earlier. It looks flaky, but campaign battles do touch simulation files (`src/03-sim.js`, removing the live campaign battle), so the conductor does not wave it through.
+Rule: still red after one re-run → land nothing. No test was skipped, weakened or re-run to turn it green.
+
+**Conflicts already solved (kept on `train/20261113-0240`, reusable):** top bar × campaign battles in `src/13c-grandui.js` (new bar kept + `gwuSync` hook in `grandMapRefresh`), `src/13zzz-gpanels.js` (six-group Nation window + battle window / result card entries), `src/08i-hud.js` (both what's-new notes); page and campaign bundle rebuilt (grand.fb001f17e7.js).
+
+**What each piece waits for**
+| idea | waits for |
+|---|---|
+| Campaign battles on the map + one campaign top bar (train 79efe068) | ONE clean test run — only `mpsync` was red. Next conductor run retries the same train. |
+| Infiltrator spy look | its helper: find out why the map sweep does not finish with it in (run `node orch/mapsweep.mjs --minutes 1` on GitHub with and without the branch) |
+| Freeze fix (78% load hang) | `smooth-pc` green on its own run |
+
+**Needs a decision / an owner (ORCH or Abdullah):** finished work has now been blocked for three conductor runs by a different flaky test each time (smooth-pc tail, smooth-mp latency, grandrt slide check, audio, now mpsync and the map sweep time limit). Nobody owns the flaky tests. Either a helper makes `mpsync` / `mapsweep` reliable, or the conductor rule is changed to allow re-running one single failed test once.
+
+**Main's tests (unchanged):** 77b4ee84: 26 green; `audio`, `icons`, `cfclient` red (flaky, no owner); smooth gates green.
+**Live site:** nothing landed, so https://abdullahhaidar5-ux.github.io/ww3/ still serves main 77b4ee84.
+
+## Locks with nothing saved (90+ min, no work branch of that name)
+- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Army standards** (`taken/army-standards`) — 2 days old, stale; **Real campaign supply** (`taken/c-real-supply`, 40 h) and **finish-tokens** (28 h) — old, their work landed or lives under another branch name. `taken/spylook2` and `taken/freezefix2` (12 h) save to `orch/spylook` / `orch/freezefix`. 37 locks in all, no new ones.
+
+---
+(previous runs below)
+
 # STATE — conductor run 22 on 2026-11-13, 02:48–03:00 UTC: **state check only, no train** — main is still 77b4ee84 (train 12)
 
 Another conductor run is still working: its train `train/20261113-0240` (79efe068 = main + one campaign top bar + campaign battles on the map) was pushed 8 minutes before this run and is on its test run (4 results in, all green so far). Rule: a train younger than 110 minutes = look only. That run decides the landing and writes its own entry.
