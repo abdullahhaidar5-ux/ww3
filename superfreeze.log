@@ -1,0 +1,72 @@
+newPrograms 21 264:physical,STANDARD,,highp,srgb-linear,false,,uv,false,false,false,false,uv,false,false,fals
+  248:0,1,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,fa
+  1370:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  451:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  6073:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  258:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  263:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  263:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  251:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  249:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  872:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  258:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  263:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  260:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  247:basic,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,
+  251:basic,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,
+  248:basic,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,false,false,fal
+  248:6,7,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,fa
+  248:basic,highp,srgb,false,,false,uv,false,false,false,false,false,false,false,false,false,fal
+  251:basic,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,
+  242:2,3,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,fa
+prof {"qualTick":[5,0,0],"updStrikes":[372,49,18],"simUpdate":[372,439,25],"netTick":[22,0,0],"kcRec":[22,0,0],"rpRecTick":[22,4,1],"scroll":[22,0,0],"bmTick":[22,2,1],"mushTick":[22,0,0],"renderFrame":[22,10694,5459],"updateUI":[4,6,2],"mslSpawn":[12,1,0],"launch":[1,15,15],"sfxLaunch":[3,0,0],"mslLaunch":[3,0,0],"mslTrail":[54,0,0],"fireTick":[18,1,0],"fireHit":[21,5,4],"polBlast":[21,0,0],"collateral":[21,0,0],"ecBoom":[21,0,0],"lgBlast":[21,18,16],"sfxBoom":[28,17,15],"boomFX":[28,39,16],"explode":[21,49,18],"applyDmg":[28,4,2],"megaBoom":[21,11,1],"sfxMega":[15,1,1],"bfSmkAdd":[144,0,0],"physImpulse":[2,0,0],"hulkAdd":[1,0,0]} preMedianGap=1461
+IR {"sup":"Kheibar Missile Strike","working":true,"n":12} launched=true simSecs=18 frames=14 maxGap=5649ms over150=10 ri(calls/tris/progs/geo/tex/parts)=1/2/143/697/182/0 1/2/143/697/182/0 176/878288/163/698/182/0 1/2/163/709/182/1510 1/2/163/714/182/1962 1/2/163/717/182/2237 1/2/163/718/182/2239 1/2/163/718/182/2246 1/2/163/718/182/2246 1/2/163/718/182/2202 1/2/163/718/182/2138 1/2/163/718/182/2057 1/2/163/718/182/1971 1/2/163/719/182/1905 gaps=5649,44,5645,65,70,1906,1624,134,1442,1494,1709,1587 errors=0 
+IR worst JS call (not drawing): simUpdate 25ms ok
+newPrograms 21 248:0,1,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,fa
+  1370:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  451:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  6073:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  253:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  258:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  263:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  263:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  251:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  249:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  872:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  258:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  263:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  260:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  247:basic,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,
+  251:basic,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,
+  248:basic,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,false,false,fal
+  248:6,7,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,fa
+  248:basic,highp,srgb,false,,false,uv,false,false,false,false,false,false,false,false,false,fal
+  251:basic,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,
+  242:2,3,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,fa
+prof {"qualTick":[5,0,0],"updStrikes":[425,36,20],"simUpdate":[425,425,37],"netTick":[25,0,0],"kcRec":[25,0,0],"rpRecTick":[25,5,2],"scroll":[25,0,0],"bmTick":[25,2,1],"mushTick":[25,0,0],"renderFrame":[25,7877,7016],"updateUI":[5,11,4],"mslSpawn":[2,0,0],"launch":[1,10,10],"sfxLaunch":[2,0,0],"mslLaunch":[2,0,0],"mslTrail":[60,1,0],"fireTick":[21,1,0],"fireHit":[11,5,5],"polBlast":[11,0,0],"collateral":[11,0,0],"ecBoom":[11,0,0],"lgBlast":[11,18,18],"sfxBoom":[17,15,14],"boomFX":[17,27,15],"explode":[11,35,20],"applyDmg":[20,2,1],"megaBoom":[11,5,2],"bfSmkAdd":[36,0,0],"sfxMega":[5,1,1]} preMedianGap=1323
+RU {"sup":"Iskander Strike","working":true,"n":2} launched=true simSecs=21 frames=16 maxGap=8383ms over150=13 ri(calls/tris/progs/geo/tex/parts)=1/2/168/700/252/1 1/2/168/709/252/1196 1/2/168/709/252/1222 1/2/168/709/252/1259 1/2/168/709/252/1289 1/2/168/709/252/1329 1/2/168/709/252/1356 1/2/168/709/252/1350 1/2/168/709/252/1358 1/2/168/709/252/1361 1/2/168/709/252/1362 1/2/168/709/252/1372 1/2/168/709/252/1377 1/2/168/709/252/1397 gaps=1301,8383,66,226,1355,1315,1272,1608,98,1298,1492,2599 errors=0 
+RU worst JS call (not drawing): simUpdate 37ms ok
+newPrograms 20 248:0,1,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,fa
+  1370:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  451:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  6073:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  253:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  263:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  251:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  249:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  872:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  258:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  263:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+  260:physical,STANDARD,,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,fa
+  247:basic,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,
+  251:basic,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,
+  248:basic,highp,srgb,false,,uv,false,false,false,false,false,false,false,false,false,false,fal
+  248:6,7,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,fa
+  248:basic,highp,srgb,false,,false,uv,false,false,false,false,false,false,false,false,false,fal
+  251:basic,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,
+  242:2,3,highp,srgb,false,,false,false,false,false,false,false,false,false,false,false,false,fa
+  263:physical,STANDARD,,highp,srgb,false,,false,false,false,false,false,false,false,false,false
+prof {"qualTick":[6,0,0],"updStrikes":[399,46,23],"simUpdate":[399,471,23],"netTick":[24,0,0],"kcRec":[24,1,1],"rpRecTick":[24,4,1],"scroll":[24,0,0],"bmTick":[24,1,1],"mushTick":[24,0,0],"renderFrame":[24,15486,6694],"updateUI":[5,8,2],"mslSpawn":[6,0,0],"launch":[1,13,13],"fireTick":[20,2,0],"mslTrail":[40,1,0],"fireHit":[15,5,4],"polBlast":[15,0,0],"collateral":[15,0,0],"ecBoom":[15,0,0],"lgBlast":[15,22,19],"sfxBoom":[21,21,18],"boomFX":[21,38,19],"explode":[15,45,23],"applyDmg":[30,2,1],"megaBoom":[15,9,2],"sfxMega":[9,2,1],"bfSmkAdd":[199,0,0],"sfxLaunch":[2,0,0],"mslLaunch":[2,0,0]} preMedianGap=1286
+US {"sup":"Tomahawk Salvo","working":true,"n":6} launched=true simSecs=20 frames=15 maxGap=7952ms over150=12 ri(calls/tris/progs/geo/tex/parts)=83/803432/143/617/151/2 1/2/143/617/151/1 190/854450/144/628/151/1526 1/2/144/630/151/1726 1/2/144/630/151/1728 1/2/144/631/151/1737 1/2/144/631/151/1738 1/2/144/631/151/1734 1/2/144/631/151/1698 1/2/144/631/151/1656 1/2/144/631/151/1625 1/2/144/631/151/1590 1/2/144/631/151/1569 1/2/144/631/151/1567 gaps=1090,7952,52,3583,43,203,1395,1934,97,1345,1307,1343 errors=0 
+US worst JS call (not drawing): updStrikes 23ms ok
+SUPERFREEZE PASS
