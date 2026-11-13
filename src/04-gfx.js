@@ -551,10 +551,11 @@ function meGeo(B,kp,tc,fac){const C=ME_C;let K;
     case 'uplink:door':B.box(18,2,36,0,0,0,'#9d978a');B.box(2,2.2,36,8,0,0,'#4a4639');B.box(14,.3,32,0,1.1,0,'#a89f8a');break;
     default:return false;}
   return true;}
-const GEO_ALIAS={champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',spy:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',cbr:'aa',jeep:'aa',raidlead:'aa'};
+const GEO_ALIAS={champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',cbr:'aa',jeep:'aa',raidlead:'aa'};
 function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];const key=kind+fac+team.color+part;if(GEO[key])return GEO[key];const tc=team.color,hc=camo(team),dk='#2b2d26',mt='#55574e',cn='#9a988c',cl='#7d7c70';const B=Bld();let s=FACTIONS[fac].units[kind]||{};
   if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=B.geo();
   switch(kind+':'+part){
+    case 'spy:body':{/* plain clothes, no helmet, no rifle: trousers, dark jacket, bare head with a cap, satchel on a strap */B.box(2.6,5,3.2,0,2.5,0,'#46536a');B.box(3,4.2,3.6,0,6.6,0,'#2e3035');B.sph(1.6,0,9.8,0,'#b98a66');B.sph(1.7,0,10.3,0,'#22252a',1,.5,1);B.box(1.6,.25,1.4,1.9,10.2,0,'#22252a');B.box(2,2,.9,0,5.2,2.3,'#6a4a2f');break;}
     case 'inf:body':case 'at:body':case 'hacker:body':case 'hero:body':{const n={inf:3,at:2,hacker:2,hero:1}[kind];const pos=[[3,0],[-4,-5],[-4,5]].slice(0,n);if(n===2){pos[0]=[2,-3.5];pos[1]=[-3,3.5];}if(n===1)pos[0]=[0,0];
       for(const [px,pz] of pos){const uni=kind==='hero'?'#2c3027':'#5d6146';const kneel=kind==='hacker';B.box(2.6,kneel?3:5,3.2,px,kneel?1.5:2.5,pz,uni);B.box(3,4.2,3.6,px,kneel?4.6:6.6,pz,tc);B.sph(1.6,px,kneel?7.6:9.8,pz,'#c7a27c');B.sph(1.85,px,kneel?8.2:10.4,pz,kind==='hero'?'#1e211b':'#4a4e36',1,.65,1);
         if(kind==='at'&&px>0)B.cyl(.9,.9,11,6,px+1,9.4,pz-1.6,'#3d4230',0,0,Math.PI/2);else if(kind==='hacker')B.box(5,.5,4,px+4,1,pz,'#202226');else B.box(7,.9,.9,px+3.5,6.6,pz+1.2,dk);}
