@@ -2637,8 +2637,8 @@ function g3BuildRoads(sc){try{if(!G3.F||!G3.LU)return;const P=GCM.P,T=g3Towns(),
   for(const p of P){if(!p.land)continue;const a=main.get(p.i);if(!a)continue;
     for(const j of p.adj){if(j<=p.i||!P[j].land)continue;const b=main.get(j);if(!b)continue;if(Math.hypot(b.x-a.x,b.z-a.z)>170)continue;
       const xy=grRoadPts([a.x,a.z],[b.x,b.z],p.i*977+j);if(!xy)continue;const maj=big(p)&&big(P[j]);
-      R.push({xy,c:maj?[.96,.8,.42,.92]:[.84,.68,.38,.72],w:maj?[2,.55]:[1.1,.3]});}   /* mapscale: world width in the towns' scale family (a road is narrower than a house row); the pixel minimum keeps roads readable from afar */
-    for(const t of T)if(t.pi===p.i&&t.t>0){const xy=grRoadPts([t.x,t.z],[a.x,a.z],p.i*31+t.t);if(xy)R.push({xy,c:[.78,.64,.38,.5],w:[.7,.2]});}}
+      R.push({xy,c:maj?[.84,.74,.52,.62]:[.74,.65,.47,.42],w:maj?[1.5,.42]:[.9,.24]});   /* mapshapes: the road web is quiet (thinner, paler, more see-through) so towns and army pieces read first */}   /* mapscale: world width in the towns' scale family (a road is narrower than a house row); the pixel minimum keeps roads readable from afar */
+    for(const t of T)if(t.pi===p.i&&t.t>0){const xy=grRoadPts([t.x,t.z],[a.x,a.z],p.i*31+t.t);if(xy)R.push({xy,c:[.7,.62,.45,.28],w:[.6,.16]});}}
   const S=[];for(const p of P){if(!p.sea)continue;for(const j of p.adj){if(j<=p.i||!P[j].sea)continue;const q=P[j],L=Math.hypot(q.x-p.x,q.y-p.y);if(L>420)continue;
       const n=Math.max(2,Math.ceil(L/6)),xy=[];let dry=0;for(let i=0;i<=n;i++){const t=i/n,x=p.x+(q.x-p.x)*t,z=p.y+(q.y-p.y)*t;if(grLandAt(x,z)>.6)dry++;xy.push([x,z,.35]);}
       if(dry>n*.15)continue;S.push({xy,c:[.93,.96,1,.55],w:[1.3,0]});}}
@@ -5241,7 +5241,7 @@ function g3ShipTick(dt,s){
     sh.t+=dt*sh.sp*(100/Math.max(40,Math.hypot(P[sh.b].x-P[sh.a].x,P[sh.b].y-P[sh.a].y)))*1.5;
     if(sh.t>=1){sh.t=0;const prev=sh.a;sh.a=sh.b;const L=S.nb.get(sh.a)||[],F=L.filter(j=>j!==prev),pool=F.length?F:L;sh.b=pool[(g3Hash(sh.seed*31+((G3.time*10)|0),sh.a)*pool.length)|0];}
     const A=P[sh.a],B=P[sh.b],dx=B.x-A.x,dz=B.y-A.y,len=Math.hypot(dx,dz)||1,nx=-dz/len,nz=dx/len;
-    const x=A.x+dx*sh.t+nx*sh.off,z=A.y+dz*sh.t+nz*sh.off,sc=Math.max(1.1,s*.75);
+    const x=A.x+dx*sh.t+nx*sh.off,z=A.y+dz*sh.t+nz*sh.off,sc=Math.max(.55,s*.38);   /* mapshapes: cargo ships are half the size they were, so they read as traffic and not as fleets */
     D.position.set(x,.35+Math.sin(G3.time*1.3+sh.seed)*.12,z);D.rotation.set(0,Math.atan2(dx,dz),0,'YXZ');D.scale.setScalar(sc);D.updateMatrix();S.m[sh.k].setMatrixAt(cnt[sh.k]++,D.matrix);
     D.position.y=.2;D.scale.set(sc*2.3,1,sc*(6+3*Math.sin(G3.time*2+sh.seed)));D.position.x=x-Math.sin(D.rotation.y)*sc*4.4;D.position.z=z-Math.cos(D.rotation.y)*sc*4.4;D.updateMatrix();S.wk.setMatrixAt(w++,D.matrix);}
   for(let k=0;k<2;k++){S.m[k].count=cnt[k];S.m[k].instanceMatrix.needsUpdate=true;}S.wk.count=w;S.wk.instanceMatrix.needsUpdate=true;}

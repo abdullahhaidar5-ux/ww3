@@ -199,6 +199,8 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(!/g3BuildArrows|G3\.arrows\b|arrowDirty/.test(all), 'mapshapes: the old movement arrow builder is back (g3BuildArrows / G3.arrows / arrowDirty)');
   ck(/function g3Routes\(/.test(r) && /function g3RoutePreview\(/.test(r) && /function g3RouteMesh\(/.test(r) && (r.match(/g3RouteMesh\(/g) || []).length === 3, 'mapshapes: routes must be drawn by the one route builder (g3RouteMesh, used by g3Routes and g3RoutePreview only)');
   ck(!/setLineDash|stroke-dasharray/.test(u) && /g3RoutePreview\(/.test(u), 'mapshapes: the yellow dotted route line is back in src/13c-grandui.js (the hover route must use g3RoutePreview)'); }
+// mapshapes item 4: cargo ships on the sea lanes are half their old size and the road web is quiet (thin, pale, see-through) so towns and army pieces read first.
+ck(/sc=Math\.max\(\.55,s\*\.38\)/.test(SRC['13w-gshipping.js'] || '') && /c:maj\?\[\.84,\.74,\.52,\.62\]:\[\.74,\.65,\.47,\.42\],w:maj\?\[1\.5,\.42\]:\[\.9,\.24\]/.test(SRC['13e2-groads.js'] || ''), 'mapshapes: cargo ships must stay half size (13w-gshipping.js) and the campaign road web quiet (13e2-groads.js)');
 // mapshapes guards end
 
 // 2. Controls (2026-10-28): W A S D only scroll the camera; A is not attack-move; F is; X is stop.

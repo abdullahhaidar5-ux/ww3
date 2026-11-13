@@ -36,8 +36,8 @@ function g3BuildRoads(sc){try{if(!G3.F||!G3.LU)return;const P=GCM.P,T=g3Towns(),
   for(const p of P){if(!p.land)continue;const a=main.get(p.i);if(!a)continue;
     for(const j of p.adj){if(j<=p.i||!P[j].land)continue;const b=main.get(j);if(!b)continue;if(Math.hypot(b.x-a.x,b.z-a.z)>170)continue;
       const xy=grRoadPts([a.x,a.z],[b.x,b.z],p.i*977+j);if(!xy)continue;const maj=big(p)&&big(P[j]);
-      R.push({xy,c:maj?[.96,.8,.42,.92]:[.84,.68,.38,.72],w:maj?[2,.55]:[1.1,.3]});}   /* mapscale: world width in the towns' scale family (a road is narrower than a house row); the pixel minimum keeps roads readable from afar */
-    for(const t of T)if(t.pi===p.i&&t.t>0){const xy=grRoadPts([t.x,t.z],[a.x,a.z],p.i*31+t.t);if(xy)R.push({xy,c:[.78,.64,.38,.5],w:[.7,.2]});}}
+      R.push({xy,c:maj?[.84,.74,.52,.62]:[.74,.65,.47,.42],w:maj?[1.5,.42]:[.9,.24]});   /* mapshapes: the road web is quiet (thinner, paler, more see-through) so towns and army pieces read first */}   /* mapscale: world width in the towns' scale family (a road is narrower than a house row); the pixel minimum keeps roads readable from afar */
+    for(const t of T)if(t.pi===p.i&&t.t>0){const xy=grRoadPts([t.x,t.z],[a.x,a.z],p.i*31+t.t);if(xy)R.push({xy,c:[.7,.62,.45,.28],w:[.6,.16]});}}
   const S=[];for(const p of P){if(!p.sea)continue;for(const j of p.adj){if(j<=p.i||!P[j].sea)continue;const q=P[j],L=Math.hypot(q.x-p.x,q.y-p.y);if(L>420)continue;
       const n=Math.max(2,Math.ceil(L/6)),xy=[];let dry=0;for(let i=0;i<=n;i++){const t=i/n,x=p.x+(q.x-p.x)*t,z=p.y+(q.y-p.y)*t;if(grLandAt(x,z)>.6)dry++;xy.push([x,z,.35]);}
       if(dry>n*.15)continue;S.push({xy,c:[.93,.96,1,.55],w:[1.3,0]});}}
