@@ -66,7 +66,10 @@ jobs:
             mapsweep)       # only when maps/terrain/rendering/models changed vs main (it is the slowest job, ~10 min)
                             if git diff --quiet origin/main...HEAD -- 'src/02*.js' src/04-gfx.js src/11-models.js models/ orch/mapsweep.mjs 2>/dev/null \
                                && [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then echo "SKIP mapsweep (no map/graphics/model changes vs main)"; \
-                            else node orch/mapsweep.mjs --minutes 1; fi ;;
+                            else # three shards side by side: one sweep of all 122 maps takes over an hour and was cut off by the 45-minute limit (2026-11-13)
+                              pids=""; for i in 1 2 3; do node orch/mapsweep.mjs --minutes 1 --no-lock --shard $i/3 > /tmp/mapsweep$i.log 2>&1 & pids="$pids $!"; done
+                              r=0; for p in $pids; do wait $p || r=1; done; cat /tmp/mapsweep1.log /tmp/mapsweep2.log /tmp/mapsweep3.log
+                              if [ $r = 0 ]; then echo "MAPSWEEP PASS (3 shards)"; else echo "MAPSWEEP FAIL (a shard failed, see above)"; fi; ( exit $r ); fi ;;
             controls)       # mouse/keyboard controls, then the infantry walk cycle (legs swing along the direction of travel)
                             ( [ -f orch/controls.mjs ] || { echo "FAIL: orch/controls.mjs missing - this branch predates it; merge origin/main"; exit 1; }
                               node orch/controls.mjs; a=$?; b=0; [ -f orch/walktest.mjs ] && { node orch/walktest.mjs 2>&1 | grep -v toNonIndexed; b=${PIPESTATUS[0]}; }

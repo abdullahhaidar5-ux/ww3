@@ -128,10 +128,13 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 `;document.head.appendChild(s);}
 function mxModeName(){return typeof setup!=='undefined'&&setup.mode==='battle'?'Battle':'Conquest';}
 /* The two skirmish modes share the setup screens (battlefield, nation, players, options); this retitles them for the mode chosen on the main menu. */
-function mxSetMode(m){if(typeof setup!=='undefined')setup.mode=m==='battle'?'battle':'conquest';const B=m==='battle',nm=mxModeName();
+function mxSetMode(m){const was=typeof setup!=='undefined'?setup.mode:'';if(typeof setup!=='undefined')setup.mode=m==='battle'?'battle':'conquest';const B=m==='battle',nm=mxModeName();
+  /* each game has its own map list (Battle maps / Conquest battlefields): rebuild the list when the game changes */
+  {const ms=document.getElementById('mapSel'),L=typeof mapListKeys==='function'?mapListKeys():null;if(ms&&L&&(was!==setup.mode||(ms.options[0]||{}).value!==L[0]))try{if(typeof mapCards==='function')mapCards();if(typeof mxMapCards==='function')mxMapCards();if(typeof renderTeams==='function')renderTeams();}catch(e){}}
   const sub=(id,t)=>{const e=document.querySelector('#ms-'+id+' .mxsub');if(e)e.textContent=t;};
-  sub('c-map',B?'Battle: a Command Center, a dozer and supply trucks - build your base and fight like Generals. Every map has at least two real attack routes.':'Conquest: towns pay the tax, a full base from the start. Every map has at least two real attack routes.');
+  sub('c-map',B?'Battle: a Command Center, a dozer and supply trucks - build your base and fight like Generals. Battle has its own maps: supply sources near every base, oil derricks to fight over, at least two attack routes.':'Conquest: towns pay the tax, a full base from the start. Every map has at least two real attack routes.');
   for(const b of [MX.startP,MX.startO])if(b)b.textContent='Start '+nm.toLowerCase();
+  {const hm=document.querySelector('#ms-c-map .mxh');if(hm)hm.textContent=B?'Choose a Battle map':'Choose a battlefield';}
   const h=document.querySelector('#ms-c-opts .mxh');if(h)h.textContent=nm+' options';}
 function mxBuild(){
   const m=document.getElementById('menu');if(!m||document.getElementById('mx'))return;mxCss();m.classList.add('m3');
@@ -231,9 +234,10 @@ function mxMapCards(){
   for(const o of sel.options){const k=o.value,D=(typeof MAPS!=='undefined'&&MAPS[k])||null;const b=mxEl('button','mxmap'+(k===sel.value?' on':''));b.type='button';b.dataset.k=k;
     let cv=MX.thumbs[k];if(!cv){cv=document.createElement('canvas');cv.width=384;cv.height=264;MX.thumbs[k]=cv;MX.thumbQ.push(k);}
     const hm=D&&(D.home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);
-    const facts=D?((D.min===D.max?D.max+' players':D.min+'–'+D.max+' players')+(D.theme==='snow'?' · snow & ice':D.theme?' · '+D.theme:'')+(D.tag?' · '+D.tag:'')):o.textContent;
+    const facts=D?(D.bm&&typeof mapFacts==='function'?mapFacts(k):(D.min===D.max?D.max+' players':D.min+'–'+D.max+' players')+(D.theme==='snow'?' · snow & ice':D.theme?' · '+D.theme:'')+(D.tag?' · '+D.tag:'')):o.textContent;
     b.append(cv,mxEl('div','t',D?D.name:o.textContent),mxEl('div','f',facts),mxEl('div','d',(D&&D.desc||'')+(hm&&hm.length?' Home turf: '+hm.join(' & ')+'.':'')));
     b.onclick=()=>{mxTick(700);sel.value=k;sel.onchange();mxMapMark();setTimeout(()=>{if(MX.cur==='c-map')menuGo('c-nation');},140);};g.appendChild(b);}
+  {const vis=new Set([...sel.options].map(o=>o.value));MX.thumbQ=MX.thumbQ.filter(k=>vis.has(k)).concat(MX.thumbQ.filter(k=>!vis.has(k)));}   /* the maps on screen get their pictures first */
   mxThumbRun();}
 function mxMapMark(){if(!MX.grid)return;const sel=document.getElementById('mapSel');for(const b of MX.grid.children)b.classList.toggle('on',sel&&b.dataset.k===sel.value);}
 function mxThumbRun(){if(MX.thumbRun)return;MX.thumbRun=1;const step=()=>{const k=MX.thumbQ.shift();if(!k){MX.thumbRun=0;return;}

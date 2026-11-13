@@ -212,6 +212,14 @@ for (const [w, why] of [['Secretary-General', 'RS leader'], ['Leader of the Revo
 // 6. No hosting wording in the multiplayer menu (2026-10-27): one "Play online" button.
 { const mm = SRC['14-menu.js']; ck(!/Host (a )?(game|battle|match)|Hosting\b/i.test(mm.replace(/\/\/.*$/gm, '')), 'hosting wording in the menu'); ck(/Play online/.test(mm), 'no "Play online" in the menu'); }
 
+// BATTLE MAPS (Abdullah 2026-11-11 19:40 / 20:14: Battle gets its own maps; every map fun and fair): every listed Battle map
+// passes the structural fairness checks (symmetric supply, derricks, routes; 2+ attack routes; all starts reachable), and the
+// Conquest list is the same list as before (Battle maps are never mixed into it).
+{ const { spawnSync } = await import('node:child_process'); const r = spawnSync(process.execPath, [path.join(ROOT, 'orch/battlemapfair.mjs'), '--static'], { encoding: 'utf8' });
+  ck(r.status === 0 && /BATTLEMAPFAIR STATIC PASS/.test(r.stdout || ''), 'a listed Battle map fails the structural fairness checks: ' + (r.stdout || r.stderr || '').trim().split('\n').filter(l => /FAIL|differ|fewer|only|cannot|not equally/.test(l)).slice(0, 6).join(' | '));
+  const bm = SRC['02d-battlemaps.js'] || ''; ck(/for\(const id in BMAPS\)bmRegister\(id,BMAPS\[id\]\)/.test(bm) && !/MAP_KEYS\.push/.test(bm), 'Battle maps must register through bmRegister and never join the Conquest list (MAP_KEYS)');
+  ck(/cmBuild\(c,key\)/.test(bm) && /cmCanon\(/.test(bm), 'Battle maps must load through the map editor loader (cmCanon / cmBuild): one map system'); }
+
 // ---------- runtime checks ----------
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 async function loadPW() { try { return await import('playwright'); } catch {} const r = createRequire(import.meta.url);
@@ -245,6 +253,12 @@ try {
   // ---- menus as a player
   const menu = await ev(() => [...document.querySelectorAll('#menu button, #menu .mx-item, .mx-item')].filter(b => b.offsetParent).map(b => b.textContent.trim()).filter(Boolean).slice(0, 12));
   console.log('menu items', JSON.stringify(menu)); await shot('menu');
+  // BATTLE MAP LIST (Abdullah 2026-11-11 19:40): Battle setup offers the Battle map list; Conquest keeps its own list untouched (116 battlefields on 2026-11-13)
+  { const L = await ev(() => { const opts = () => [...document.getElementById('mapSel').options].map(o => o.value).filter(k => !/^cm_/.test(k)); mxSetMode('conquest'); const c = opts(), cm = setup.map; mxSetMode('battle'); const b = opts(), bmap = setup.map, facts = BM_KEYS.map(k => bmInfo(k)); mxSetMode('conquest');
+      return { c, cm, b, bmap, back: setup.map, keys: MAP_KEYS.slice(), bk: BM_KEYS.slice(), facts }; });
+    ck(L.bk.length >= 1 && L.b.join() === L.bk.join() && /^bm_/.test(L.bmap), 'Battle setup must offer the Battle map list, got ' + L.b.slice(0, 8).join(',') + ' (chosen ' + L.bmap + ')');
+    ck(L.c.join() === L.keys.join() && L.keys.length >= 116 && !L.keys.some(k => /^bm_/.test(k)) && !/^bm_/.test(L.cm) && !/^bm_/.test(L.back), 'Conquest map list changed: ' + L.c.length + ' options, ' + L.keys.length + ' maps, chosen ' + L.cm + ' / ' + L.back);
+    ck(L.facts.every(f => f && f.name && f.players >= 2 && f.size && f.theme && f.desc && f.supply >= 2 * f.players && f.oil >= 2), 'every Battle map needs a name, player count, size, theme, one line, supply sources and oil derricks'); }
   // MENU STRUCTURE (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range", "These are distinct"; 21:38 three games): the top level is exactly Single player, Multiplayer, Test range (+ small extras)
   { const big = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => b.offsetParent && !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => ((b.firstChild||{}).textContent||'').trim()).filter(Boolean));
     ck(big.join('|') === 'Single player|Multiplayer|Test range', 'main menu top level should be exactly Single player|Multiplayer|Test range, got ' + big.join('|'));

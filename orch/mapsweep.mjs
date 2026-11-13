@@ -12,6 +12,7 @@
 //   node orch/mapsweep.mjs --batch 6              # battles: a fresh browser page every 6 maps (default), so memory stays flat
 //   node orch/mapsweep.mjs --static-only           # just the map-layout checks (about a minute; --static-seeds N, default 4)
 //   node orch/mapsweep.mjs --seed 7 --no-lock
+//   node orch/mapsweep.mjs --shard 1/3 --no-lock   # a third of the maps (run the three shards side by side, as the gate does)
 //   node orch/mapsweep.mjs --previews               # screenshot the map picker preview of every map, desktop + phone width
 //   node orch/mapsweep.mjs --full-start             # rebuild the 3D world for every battle (slow, like the Deploy button)
 import http from 'node:http';
@@ -254,8 +255,11 @@ async function openPage() {
 }
 // HELPERS is defined above openPage's first call
 await openPage();
-let keys = await page.evaluate(() => MAP_KEYS.map(k => [k, MAPS[k].max, MAPS[k].min || 2]));
+// every Conquest battlefield and every Battle map (src/02d-battlemaps.js)
+let keys = await page.evaluate(() => MAP_KEYS.concat(typeof BM_KEYS !== 'undefined' ? BM_KEYS : []).map(k => [k, MAPS[k].max, MAPS[k].min || 2]));
 if (ONLY) keys = keys.filter(([k]) => ONLY.includes(k));
+// --shard 2/3: every third map starting with the second (the gate runs the shards side by side: 122 maps no longer fit in one 45-minute job)
+{ const sh = String(argS('shard', '')).match(/^(\d+)\/(\d+)$/); if (sh) keys = keys.filter((_, i) => i % +sh[2] === +sh[1] - 1); }
 console.log(`map sweep: ${keys.length} maps, players ${PLAYERS.join('/')}, ${MINUTES} game-min each, seed ${SEED} (boot ${((Date.now() - t0) / 1000) | 0}s)`);
 
 // ---------------------------------------------------------------- 0. map-select previews (--previews: only this)
