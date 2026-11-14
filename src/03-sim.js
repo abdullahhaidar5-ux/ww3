@@ -999,7 +999,7 @@ function aiNavyPick(T,mine,opts,anchor){const D=DIFF[T.ai.d??1],P=(G._nvp||{})[T
   const fleet=mine.filter(e=>!e.isB&&e.s.dom==='naval'&&!e.s.noAttack),land=mine.filter(e=>!e.isB&&e.s.dom==='ground'&&!e.s.noAttack&&e.kind!=='harv').length;
   const cap=Math.max(1,Math.floor(Math.min(D.nvCap*(P.big?1:.5)*(G.bs||1),1+land*D.nvShare)));if(fleet.length+qItems(T,'shipyard').length>=cap)return null;
   {const n2=aiNavy2Pick(T,mine,opts,fleet);if(n2)return n2;}
-  const foeNav=G.ents.filter(e=>!e.dead&&!e.isB&&e.s.dom==='naval'&&!e.s.noAttack&&!ally(e.team,T.id)).length,ships=fleet.filter(e=>e.s.cls==='ship').length+T.q.shipyard.filter(i=>i.kind==='ship').length;
+  const foeNav=G.ents.filter(e=>!e.dead&&!e.isB&&e.s.dom==='naval'&&!e.s.noAttack&&!ally(e.team,T.id)).length,ships=fleet.filter(e=>e.s.cls==='ship').length+qItems(T,'shipyard').filter(i=>i.kind==='ship').length;
   const subs=fleet.filter(e=>e.s.sub).length+qItems(T,'shipyard').filter(i=>i.kind==='sub').length;if(opts.includes('sub')&&fleet.length>=2&&subs<Math.ceil(fleet.length*.25)&&(foeNav>0||G.t>600))return ['sub'];
   return [D.nvShip&&opts.includes('ship')&&ships<Math.floor((fleet.length+1)*(foeNav>fleet.length?.25:.45))?'ship':'boat'];}
 function aiNavyAct(T,mine){if(T.ai.t%2)return;aiNavy2(T,mine);const fleet=mine.filter(e=>!e.isB&&e.s.dom==='naval'&&!e.s.noAttack);if(!fleet.length)return;if(!(T.ai.st&&T.ai.st.fleetT))aiStat(T.ai,'fleetT',Math.round(G.t));
