@@ -12765,8 +12765,8 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   const el=$('mpstatus');el.innerHTML='';
   {const nm=['You'];NET.lobby.forEach((p,k)=>nm.push((p.by&&names[p.by]&&names[p.by].name)||'Friend '+(k+1)+' ('+((FACTIONS[p.f]||{}).name||p.f)+')'));LK.watch('b',nm.slice(1));}
   // ONE framed screen (08d-mplobby, Zero Hour skirmish layout): this function only describes the lobby and says what each control does
-  const rdys=cfb?(cfb.seats||[]).filter(s=>s.h).slice(1).map(s=>s.r):NET.lobby.map(p=>p.r?1:0),waitN=rdys.filter(v=>v===0).length,blocked0=nh<2||!teamsOk||!!cfb&&!cfb.ok&&!(NET.cf.pend);
-  const hint=cfb&&cfb.why&&!NET.cf.pend?String(cfb.why):nh<2?(NET.ais.length?'Waiting for at least one friend to join (to play only against the computer, use Deploy vs AI on the main menu).':'Waiting for at least one more player to join. Open slots can take a computer player.'):!teamsOk?'Everyone is on one team: put someone on another team to start.':waitN>0?`Waiting for ${waitN} friend${waitN>1?'s':''} to press Ready…`:rdys.length?'Everyone is ready: press PLAY GAME!':'Everyone ready? Press PLAY GAME. Players can still join until you do.';
+  const rdys=cfb?(cfb.seats||[]).filter(s=>s.h).slice(1).map(s=>s.r):NET.lobby.map(p=>p.r?1:0),waitN=rdys.filter(v=>v===0).length,blocked0=nh+NET.ais.length<2||!teamsOk||!!cfb&&!cfb.ok&&!(NET.cf.pend);
+  const hint=cfb&&cfb.why&&!NET.cf.pend?String(cfb.why):nh+NET.ais.length<2?'Add a computer player to an open slot, or wait for someone to join.':!teamsOk?'Everyone is on one team: put someone on another team to start.':waitN>0?`Waiting for ${waitN} friend${waitN>1?'s':''} to press Ready…`:rdys.length?'Everyone is ready: press PLAY GAME!':'Everyone ready? Press PLAY GAME. Players can still join until you do.';
   const rows=[],push=()=>{renderLobby();},setTm=(get)=>(v)=>{get(v);push();};
   const myF=f=>{setup.p=f;try{facCards();}catch(e){}if(cfb){try{GLB.me.f=f;glSend();}catch(e){}}push();};
   const hs=cfb?(cfb.seats||[]).filter(s=>s.h):null;
