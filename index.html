@@ -17732,7 +17732,12 @@ html body #side.zhpow .stat>.sup.sw{display:flex!important;grid-column:4!importa
 html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 #cmdP{bottom:auto!important;top:64px!important;left:10px!important;right:auto!important}
 html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
-#hudLyB{display:none!important}   /* Abdullah 2026-11-14 "Remove map layers" */
+#hudLyB{display:none!important}
+/* ▼ folds the whole bar down off the screen; only the ▼/★ tabs stay (Abdullah 16:33 "Make this down arrow minimize the entire bar") */
+html body #side{transition:transform .25s ease}
+html body #side.min{transform:translateY(100%)!important;height:var(--gbH)!important}
+html body #side.min #credits,html body #side.min #popCap{display:none!important}
+html body #side.min::before{display:none!important}   /* Abdullah 2026-11-14 "Remove map layers" */
 html body #side kbd,html body #side .hk,#tstrip .hk,.orddock kbd,.abc{display:none!important}
 }
 #zhTip{position:fixed;left:10px;z-index:60;width:clamp(240px,22vw,380px);pointer-events:none;padding:10px 14px;border-radius:4px;color:#e9efdc;font:14px/1.4 system-ui,sans-serif;
