@@ -20,4 +20,7 @@
 orch/shots/weathergfx-{day,dusk,night,rain,sandstorm,snow,low,ultra}.jpg (rain on Bosphorus, sandstorm on Hormuz, snow on Arctic, the rest on Bosphorus). Software GL, so Ultra/Low look similar in stills.
 
 ## Gates
-Local: build + --check OK, SMOKE PASS, WEATHERGFX PASS. cigate: see below.
+Local: build + --check OK, SMOKE PASS, DECISIONS PASS, WEATHERGFX PASS.
+cigate: pushed as gate/0b65d10b0c (commit 0b65d10); at the time of writing GitHub's "Ship gate (parallel)" run was still **queued** after 40+ min (runner backlog), so no gate/* result yet. Smooth gates (smooth-pc/mp/grandsmooth) are unproven for this branch: Medium (default) path is unchanged except Day/Dusk/Night now fix the weather to clear (no random rain/fog rolls), which is lighter.
+
+**Status: ready pending the gate.** Conductor: check `gate/*` statuses on 0b65d10 before landing; nothing else is left.
