@@ -5,9 +5,10 @@ Branch `orch/sweepfixB`, lock `taken/sweepfixB`. Battle + Conquest only, no `src
 
 ## Done (one commit each)
 1. **Order buttons readable** (finding 2) — `20d1ff7`. All order rows sit in ONE dock above the command bar
-   (`ordDock()` in `src/08-ui.js`): army orders as a 4-column grid, icon + whole word + hotkey chip (Attack F, Guard G,
-   Same type T, Stop X, Retreat R, stance V, Resupply Z, Cancel Del); Dig in / Fortification line / Fix vehicles row
-   above; road tools (Mine road … Pontoon) only with a Construction Vehicle selected. Same buttons/handlers, same key
+   (`ordDock()` in `src/08-ui.js`): army orders as a 5-column grid (two rows), icon + whole word + hotkey chip (Attack F,
+   Guard G, Same type T, Stop X, Retreat R, stance V, Resupply Z, Dig in I, Cancel Del); Fortification line / Fix
+   vehicles row above when a Construction Vehicle is selected, road tools (Mine road … Pontoon) above that. The dock's
+   empty padding lets clicks through to the battlefield. Follow-up commit compacted it from 3 rows to 2. Same buttons/handlers, same key
    table, no new system. Old per-row `bottom` offsets in `08c-tactui.js` / `08c-logi.js` removed. `orch/controls.mjs`
    reads the new label ("Same type (T)" via aria-label).
 2. **Build bar + nameplate** (finding 3) — `a752c13`. BEATS / WEAK TO chips moved onto the price line
@@ -31,7 +32,14 @@ before/after at 1280: `-army-` (IR army), `-allarmy-` (army + dozer + truck), `-
 `-settings-`, `-victory-`; after at 1920: army, allarmy, dozer, bar-IR, settings, victory. Script: `node orch/sweepfixB.mjs`.
 
 ## Not done / notes
-- 1600 wide not shot separately (1280 and 1920 both clean; the dock is fixed 640 px wide, so 1600 sits between).
+- 1600 wide not shot separately (1280 and 1920 both clean; the dock is at most 700 px wide, so 1600 sits between).
+  The 1920 dozer picture shows the first (3-row) dock; army/allarmy at 1280 and 1920 show the final 2-row dock.
+- Gate run 1 (c4248e1, 3-row dock): 25 of 28 green incl. smooth-pc / smooth-mp / grandsmooth; `audio` + `grandlive`
+  failed once and passed on re-run; `tutorial` failed twice ("step 14 never started") — it fails on most other recent
+  gate branches too (flaky, listed as such).
+- Gate run 2 for the final code (f2141d9, `gate/f2141d9d0c`) was still QUEUED when this run stopped: GitHub Actions
+  ran nothing repo-wide from ~02:50 to 03:40 UTC. Its statuses land on that commit when runners resume — the conductor
+  should check them (code after f2141d9 is pictures/docs only). Local re-check of f2141d9: DECISIONS PASS.
 - Nameplate now lives on the minimap: a design call — if Abdullah wants it back next to the cash, the header needs a
   second line (not enough width at 1280 for "Palestine Islamic Brigade").
 - The touch strip (`#tstrip`, phones) is untouched.
