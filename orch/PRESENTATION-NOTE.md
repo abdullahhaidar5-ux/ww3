@@ -48,3 +48,17 @@ Generals' powers move OUT of the grid into a small fixed column of power buttons
 
 
 Keep every function reachable. Update the tutorial steps and hints that say "Build tab", "Units tab" and so on (leftovers rule). Add a guard in orch/decisions.mjs: no command-bar tabs.
+
+## CHANGE (Abdullah, Sat 09:18): powers and Strike live OUTSIDE the bar
+
+"Strike and powers should show up as selectable options on the right of the window not in the command bar."
+
+- Take the Strike Center button and countdown, the generals' powers and the General rank / points button OUT of the bottom bar.
+
+- Show them as a vertical column of round or square clickable icons along the RIGHT edge of the game screen, above the bar, like the Generals power sidebar: each icon shows a cooldown sweep or timer and a tooltip with name, cost and effect; click it, then click a target.
+
+- Only powers you own and can use appear there.
+
+- Keep it compact so it does not cover the battlefield much.
+
+- The bottom bar is then: minimap | selected picture and info | context grid, plus money and power on its top edge.
