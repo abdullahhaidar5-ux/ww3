@@ -42,7 +42,7 @@ after-attack-move-marker, after-attack-marker, after-line-ghost, after-queued-pa
 after-building-selected, after-battle-goal. Script: `node orch/orderfeelshots.mjs --tag after` (ONLY=cq|bt).
 
 ## Gate
-See the end of this file (filled in after `orch/cigate.sh`).
+Local: build --check OK, SMOKE PASS, DECISIONS PASS. `orch/cigate.sh` on 317f203: **28 of 28 green** (smooth-pc, smooth-mp, grandsmooth included; no budget touched). This handoff commit only adds this file.
 
 ## Ask Abdullah (2 minutes on PC)
 Start a Conquest game, box-select a mix of soldiers and tanks, then right-click the ground, press F and right-click,
