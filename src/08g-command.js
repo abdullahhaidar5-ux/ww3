@@ -161,7 +161,7 @@ function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=nul
       h+='<div class="sec">Aid for teammates</div>';for(const O of oth.filter(O=>sameTm(O.id,ME)))h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b><button data-a="give" data-v="${O.id}" data-w="500" title="10% fee, arrives after 4 s">$500</button><button data-a="give" data-v="${O.id}" data-w="2000">$2000</button><button data-a="gift" data-v="${O.id}" ${sel?'':'disabled'} title="Give the selected units (up to 12, one gift per 20 s)">Give units</button></div>`;}
     if(ffa&&oth.length){h+='<div class="sec">Truce (free-for-all)</div>';
       for(const O of oth){const tr=truced(ME,O.id),k=ME<O.id?ME*32+O.id:O.id*32+ME,out=(G.tOff||[]).find(o=>o.f===ME&&o.t===O.id),oath=(O.oath||0)>G.t,me=(T.oath||0)>G.t;
-        h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b>${oath?'<small style="color:#ea5a40">oathbreaker</small>':''}`+(tr?`<small>truce ${ctFmt(G.truce[k]-G.t)}</small><button data-a="cfb" data-v="${O.id}" title="Breaking a truce: unrest in your towns and nobody trusts you for 4 minutes">Break</button>`
+        h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b>${oath?'<small style="color:#ea5a40">oathbreaker</small>':''}`+(tr?`<small>truce ${ctFmt(G.truce[k]-G.t)}</small><button data-a="cfb" data-v="${O.id}" title="Breaking a truce: nobody trusts you for 4 minutes">Break</button>`
           :out?`<small>offered · ${Math.ceil(out.e-G.t)} s</small>`:[60,120,180].map((d,di)=>`<button data-a="cf" data-v="${O.id}" data-w="${di}" ${me?'disabled':''}>${d/60} min</button>`).join(''))+'</div>';}
       if((T.oath||0)>G.t)h+=`<small style="color:#ea5a40">You are an oathbreaker for ${ctFmt(T.oath-G.t)}.</small>`;}
   }

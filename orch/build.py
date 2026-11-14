@@ -53,12 +53,11 @@ MODEL_NAME = re.compile(r'^([A-Za-z0-9_]+)\.([0-9a-f]{10})\.glb\.gz$')
 PACK_RE = re.compile(r'<script>const MODEL_PACK="([A-Za-z0-9+/=]*)";?</script>')  # the old inline pack (pre-2026-10-27)
 FILES_RE = re.compile(r'<script>const MODEL_FILES=\{[^<]*?\};</script>')
 SW_RE = re.compile(r'const MODELS=\[[^\]]*\];')
-GRAND_RE = re.compile(r'<script>const GRAND_FILE="[^"]*";</script>')   # shell line naming the lazy grand-campaign bundle
-GRAND_SW_RE = re.compile(r'const LAZY=\[[^\]]*\];')   # sw.js: files saved at install that load on demand (grand bundle, terrain textures)
+GRAND_RE = re.compile(r'<script>const GRAND_FILE="[^"]*";</script>\n?')   # old shell line naming the grand-campaign bundle: removed (grand campaign deleted 2026-11-14, orch/onegame)
+GRAND_SW_RE = re.compile(r'const LAZY=\[[^\]]*\];')   # sw.js: files saved at install that load on demand (terrain textures)
 TERR_RE = re.compile(r"const TERR_DET=\{a:'data:image/webp;base64,([A-Za-z0-9+/=]+)',n:'data:image/webp;base64,([A-Za-z0-9+/=]+)'\};")
 TERR_GLOB = re.compile(r'^terr_[an]\.[0-9a-f]{10}\.webp$')
-GRAND_GLOB = re.compile(r'^grand\.[0-9a-f]{10}\.js$')
-GRAND_PREFIX = '13'   # src/13*.js = the grand campaign: written to grand.<hash>.js, loaded when the player opens it
+GRAND_GLOB = re.compile(r'^grand\.[0-9a-f]{10}\.js$')   # old grand-campaign bundles: deleted by the build if any are left
 
 
 def gz(data):
@@ -154,12 +153,9 @@ def sw_with_models(files, grand=None, lazy=()):
     return sw, sw2
 
 
-def with_grand(html, name):
-    """index.html with its GRAND_FILE line naming the lazy grand bundle ('' = none)."""
-    line = '<script>const GRAND_FILE=' + json.dumps(name) + ';</script>'
-    if len(GRAND_RE.findall(html)) != 1:
-        sys.exit('index.html: expected exactly one <script>const GRAND_FILE="...";</script> line in the shell (after MODEL_FILES)')
-    return GRAND_RE.sub(lambda _: line, html)
+def with_grand(html, name=''):
+    """index.html without the old GRAND_FILE line (the grand campaign was removed 2026-11-14; there is no lazy bundle)."""
+    return GRAND_RE.sub('', html)
 
 
 def externalize_terrain(game):
@@ -176,13 +172,6 @@ def externalize_terrain(game):
         files[n] = b
         names.append(n)
     return TERR_RE.sub(lambda _: "const TERR_DET={a:'%s',n:'%s'};" % tuple(names), game, count=1), files
-
-
-def grand_bundle(grand_src):
-    """(file name, bytes) of grand.<hash>.js for this grand source text."""
-    import hashlib
-    b = grand_src.encode('utf-8')
-    return 'grand.' + hashlib.sha256(b).hexdigest()[:10] + '.js', b
 
 
 def game_span(html):
@@ -215,15 +204,10 @@ def _read_all(files):
 
 def concat(part='all'):
     """part 'all' = every module in order (artifact / --single); 'main' = menu + battle modules (inline in index.html);
-    'grand' = src/13*.js (lazy bundle grand.<hash>.js)."""
+    (the grand campaign's src/13*.js and its lazy bundle were removed 2026-11-14; 'main' and 'all' are now the same)."""
     files = sorted(glob.glob(os.path.join(SRC, '[0-9]*.js')))
     if not files:
         sys.exit('src/ is empty — run with --split first')
-    isg = lambda f: os.path.basename(f).startswith(GRAND_PREFIX)
-    if part == 'main':
-        files = [f for f in files if not isg(f)]
-    elif part == 'grand':
-        files = [f for f in files if isg(f)]
     return _read_all(files)
 
 
@@ -476,10 +460,8 @@ def build(check=False):
     html = open(HTML, encoding='utf-8', newline='').read()
     i, j = game_span(html)
     game, tfiles = externalize_terrain(concat('main'))
-    gsrc = concat('grand')
-    if '</script' in (game + gsrc).lower():
+    if '</script' in game.lower():
         sys.exit('src/ contains "</script" — escape it as "<\\/script" or the page breaks')
-    gname, gbytes = grand_bundle(gsrc)
     out = html[:i] + game + html[j:]
     if check:
         bad = False
@@ -487,25 +469,21 @@ def build(check=False):
             print('index.html still has the inline MODEL_PACK — run python3 orch/build.py')
             sys.exit(1)
         out, files = with_models(out)
-        out = with_grand(out, gname)
-        sw, sw2 = sw_with_models(files, gname, tfiles)
-        gp = os.path.join(ROOT, gname)
+        out = with_grand(out)
+        sw, sw2 = sw_with_models(files, '', tfiles)
         if out != html or sw != sw2:
             print(('index.html' if out != html else 'sw.js') + ' is OUT OF DATE with src/ + models/ — run python3 orch/build.py')
-            bad = True
-        elif not os.path.isfile(gp) or open(gp, 'rb').read() != gbytes:
-            print(f'{gname} is missing or differs from src/13*.js — run python3 orch/build.py')
             bad = True
         elif any(not os.path.isfile(os.path.join(ROOT, n)) or open(os.path.join(ROOT, n), 'rb').read() != b for n, b in tfiles.items()):
             print('terr_*.webp is missing or differs from the TERR_DET textures in src/04-gfx.js — run python3 orch/build.py')
             bad = True
         else:
-            stale = [n for n in os.listdir(ROOT) if (GRAND_GLOB.match(n) and n != gname) or (TERR_GLOB.match(n) and n not in tfiles)]
+            stale = [n for n in os.listdir(ROOT) if GRAND_GLOB.match(n) or (TERR_GLOB.match(n) and n not in tfiles)]
             if stale:
-                print(f'stale grand bundle(s) {stale} — run python3 orch/build.py')
+                print(f'stale files {stale} (old grand bundle / terrain) — run python3 orch/build.py')
                 bad = True
             else:
-                print(f'index.html, {gname} and sw.js are up to date with src/ and models/ ({len(files)} models)')
+                print(f'index.html and sw.js are up to date with src/ and models/ ({len(files)} models)')
         probs = check_shell(html, i, j)
         if probs:
             print(f'index.html page shell is BROKEN ({len(probs)} problem{"s" * (len(probs) > 1)}) — restore it from git history:')
@@ -519,7 +497,6 @@ def build(check=False):
         return
     # syntax check before writing
     syntax_check(game, 'index.html')
-    syntax_check(gsrc, 'grand bundle')
     for tn, tb in tfiles.items():
         tp = os.path.join(ROOT, tn)
         if not os.path.isfile(tp) or open(tp, 'rb').read() != tb:
@@ -527,28 +504,23 @@ def build(check=False):
             print(f'{tn} written ({len(tb)} bytes)')
     out = unpack_old_pack(out)
     out, files = with_models(out)
-    out = with_grand(out, gname)
+    out = with_grand(out)
     if not files:
         sys.exit('models/ is empty — the game would have no 3D models; index.html NOT written')
-    sw, sw2 = sw_with_models(files, gname, tfiles)
+    sw, sw2 = sw_with_models(files, '', tfiles)
     if sw != sw2:
         with open(SW, 'w', encoding='utf-8', newline='') as f:
             f.write(sw2)
-        print(f'sw.js model/grand list updated ({len(set(files.values()))} files)')
-    gp = os.path.join(ROOT, gname)
-    if not os.path.isfile(gp) or open(gp, 'rb').read() != gbytes:
-        with open(gp, 'wb') as f:
-            f.write(gbytes)
-        print(f'{gname} written ({len(gbytes)} bytes)')
+        print(f'sw.js model/lazy list updated ({len(set(files.values()))} files)')
     for n in os.listdir(ROOT):
-        if (GRAND_GLOB.match(n) and n != gname) or (TERR_GLOB.match(n) and n not in tfiles):
+        if GRAND_GLOB.match(n) or (TERR_GLOB.match(n) and n not in tfiles):
             os.remove(os.path.join(ROOT, n))
     if out == html:
         print('index.html already up to date')
         return
     with open(HTML, 'w', encoding='utf-8', newline='') as f:
         f.write(out)
-    print(f'index.html rebuilt ({len(out)} bytes, game {len(game)} chars + {gname}, {len(files)} models in models/)')
+    print(f'index.html rebuilt ({len(out)} bytes, game {len(game)} chars, {len(files)} models in models/)')
 
 
 def single():

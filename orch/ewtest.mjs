@@ -233,7 +233,7 @@ try {
   }
   // ---- Mountain Fortress + Bunker Buster ----
   const ft = await page.evaluate(() => {
-    G.sandbox = true;   // integrate1: fortress / bunker buster are banned in Conquest battles, still part of missions + sandbox
+    G.sandbox = true;   // the test range: everything unlocked
     const o = {}, me = ME, T = G.teams[me], en = G.teams.find(t => t.id !== me && !ally(t.id, me)); G.paused = true;
     T.fac = 'RS'; T.F = FACTIONS.RS; T.credits = 99999; const hq = hqOf(me);
     for (const k of ['factory']) if (!done(me, k)) addBld(me, k, hq.x + 200, hq.y, true);

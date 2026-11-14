@@ -4,7 +4,7 @@
    Row fields: n name, th theme, rg rough, ssn default season, home nations, tag, desc, c towns [x,y,r,style] (NW quarter; centre town last in cc),
    riv rivers [ax,ay,bx,by,wiggle,halfwidth], br bridges [riverIdx,t], rd ridges [ax,ay,bx,by,halfwidth], pk peaks [x,y,r,rx,rot],
    lk lakes [x,y,r,rx], sea [x,y,r,rx] (a big lake over the map edge). Real places inspire the layout; towns carry real nearby names in desc only.
-   No holy sites are objectives (they live on the grand map). */
+   No holy sites are objectives. */
 {
 const QS=[[420,300],[2780,1900],[2780,300],[420,1900],[420,1100],[2780,1100]];
 // 5/6-player starts for maps whose river/strait runs along the middle row (the side bases at 420,1100 / 2780,1100 would sit in it):

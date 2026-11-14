@@ -1,9 +1,9 @@
-// Regression: firing a nation's superweapon strike in Conquest must not freeze the game - on a REAL graphics card.
+// Regression: firing a nation's superweapon strike in a Battle must not freeze the game - on a REAL graphics card.
 // The test machines draw with a software renderer, which shrugs at exactly the things that stall a real GPU (compiling a
 // shader, uploading a texture, building a mesh). So this gate does not only time JavaScript: it counts what the page
 // asks the graphics card to do in every frame of the strike (WebGL calls are wrapped before the page loads).
 // (Draw commands are swallowed after the battle has loaded - software GL needs seconds per drawn frame.)
-// For each faction (default IR,RU,US): start Conquest, build an uplink, put a mixed enemy force on the target, let the
+// For each faction (default IR,RU,US): start a Battle, build an uplink, put a mixed enemy force on the target, let the
 // scene settle, fire the strike in real time (launch, flight, all impacts, aftermath) and FAIL when the strike
 //   (a) compiles any shader / links any program after the battle has loaded,
 //   (b) creates more than TEXMAX textures or GEOMAX meshes (uploads count too), or reads pixels back
@@ -50,7 +50,7 @@ for (const fac of FACS) {
   await page.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue() : r.abort());
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function', null, { timeout: 60000 });
-  await page.evaluate(([f, m]) => { try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} setup.n = 1; setup.p = f; setup.mode = 'conquest'; if (m) setup.map = m; startSingle(); }, [fac, E.MAP || null]);
+  await page.evaluate(([f, m]) => { try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} setup.n = 1; setup.p = f; if (m) setup.map = m; startSingle(); }, [fac, E.MAP || null]);
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 500 }); const T0 = Date.now(), say = m => console.log('  [' + fac + ' +' + Math.round((Date.now() - T0) / 1000) + 's] ' + m); say('battle loaded');
   await page.evaluate(v => { window.__vaoDiag = !!v; }, E.VAO);
   const info = await page.evaluate(town => { const hq = G.ents.find(e => e.team === ME && e.kind === 'hq') || G.ents.find(e => e.team === ME && e.isB);

@@ -1,4 +1,4 @@
-// Battle power test (battlepower, Abdullah 2026-11-13 20:11 + 20:13): a Generator for every nation, only electronic buildings use power, low power = those buildings offline and production unchanged, Conquest keeps its plants. node orch/powertest.mjs -> POWER PASS
+// Battle power test (battlepower, Abdullah 2026-11-13 20:11 + 20:13): a Generator for every nation, only electronic buildings use power, low power = those buildings offline and production unchanged. node orch/powertest.mjs -> POWER PASS
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -37,15 +37,8 @@ const SEEN = () => { const out = []; const vis = e => { if (!e.isConnected) retu
   for (const e of document.querySelectorAll('[title]')) if (vis(e)) out.push(e.title); return out.join(' ¶ '); };
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+  await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => {});
-  // Conquest first: its map power plants stay
-  await ev(() => { setup.p = 'IR'; setup.a = 'US'; setup.n = 1; setup.mode = 'conquest'; try { initAudio(); } catch (e) {} startSingle(); });
-  await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('conquest never loaded'));
-  await page.waitForTimeout(1000);
-  const cq = await ev(() => ({ conq: !!G.conq, plants: G.oil.filter(o => o.pw).length, gen: bldAllowed(G.teams[ME].fac, 'gen'), btn: !!document.getElementById('b_gen') && !document.getElementById('b_gen').hidden }));
-  ck(cq.conq && cq.plants >= 2, 'Conquest must keep its map power plants ' + JSON.stringify(cq));
-  ck(!cq.gen && !cq.btn, 'Conquest must not offer a Generator ' + JSON.stringify(cq));
   // Battle as a Shia nation
   await ev(() => { setup.p = 'RS'; setup.a = 'IL'; setup.n = 1; setup.mode = 'battle'; try { mxSetMode('battle'); } catch (e) {} setup.p = 'RS'; try { initAudio(); } catch (e) {} startSingle(); });
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING && G.battle, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('battle never loaded'));

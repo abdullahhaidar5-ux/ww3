@@ -23,10 +23,7 @@ for(const pass of ['cold','warm']){
  await pg.waitForFunction(()=>document.querySelector('#menu')&&getComputedStyle(document.querySelector('#menu')).display!=='none',null,{timeout:25000}).catch(()=>{});
  const tm=Date.now()-t0;
  await cdp.send('Network.setCacheDisabled',{cacheDisabled:false});
- const t1=Date.now();let tg='-';
- try{await pg.evaluate(()=>{initAudio&&0;document.getElementById('grandBtn').click();});
-  await pg.waitForFunction(()=>typeof grandMenu==='function'&&document.body.innerText.includes('Run a nation on the world map'),null,{timeout:25000});tg=Date.now()-t1;}catch(e){tg='ERR '+String(e).slice(0,60);}
- console.log(tag,pass,MBPS+'Mbps','load',tl,'ms; menu',tm,'ms; open grand',tg,'ms');
+ console.log(tag,pass,MBPS+'Mbps','load',tl,'ms; menu',tm,'ms');
  await pg.close();
 }
 await br.close();srv.close();

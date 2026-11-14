@@ -209,7 +209,7 @@ export class BattleHost {
       else this.note = `That battlefield holds only ${n} players: pick a bigger one.`;
     }
     if (typeof d.w === 'number') this.w = int(d.w, -1, 31, 0);
-    if (d.bm !== undefined) this.bm = d.bm ? 1 : 0;   // game mode: 0 = Conquest, 1 = Battle (Generals rules)
+    if (d.bm !== undefined) this.bm = d.bm ? 1 : 0;   // old lobby field (0 = Conquest): ignored since 2026-11-14 - every game is Battle
     if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, MAX_PLAYERS).map(a => ({ f: this.sim.facs.includes(a && a.f) ? a.f : this.sim.facs[0], d: int(a && a.d, 0, 2, 1), p: int(a && a.p, 0, 9, 0), tm: int(a && a.tm, 0, 7, 1), st: int(a && a.st, -1, 7, -1) }));
     if (Array.isArray(d.tm)) this.tm = this.order.map((_, i) => int(d.tm[i], 0, 7, this.tm[i] | 0));
     // start spots picked for the players (the owner always sends the whole setup: no 'st' = everyone on Random)

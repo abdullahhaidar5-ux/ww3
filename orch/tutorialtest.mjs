@@ -18,18 +18,18 @@ await ctx.addInitScript((sd) => { window.__tutSeed = sd; }, +process.env.TUT_SEE
 if (!BIG) await ctx.addInitScript(() => { try { localStorage.setItem('ww3_settings', JSON.stringify({ gfx: 'low' })); } catch (e) {} }); await guardContext(ctx);
 const page = await ctx.newPage(); await page.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue() : r.abort());
 let SHOTS = process.argv.includes('--shots'); const SHOTS_ON = SHOTS;
-const KEEP = /^(00|01a|0[1-9]-.*-tip|1[0-4]-.*-tip|03-atk-after|06-town-after|08-revolt-after|04b|07b|10b|11b|12b|14c|15|16)/;   // a real 1920x1080 frame costs minutes in software GL: keep the useful ones
+const KEEP = /^(00|01a|0[1-9]-.*-tip|0[1-6]-.*-after|04b|06b|06c|07|08)/;   // a real 1920x1080 frame costs minutes in software GL: keep the useful ones
 const problems = []; const bad = (m) => { problems.push(m); console.log('  FAIL', m); }; const ok = (c, m) => { if (!c) bad(m); else console.log('  ok  ', m); };
 const errs = []; page.on('pageerror', e => { errs.push(e.message); console.log('PAGEERR', e.message); });
 await page.goto(ORIGIN + '/index.html', { waitUntil: 'load', timeout: 120000 });
-await page.waitForFunction(() => typeof startTutorial === 'function', null, { timeout: 60000 });
+await page.waitForFunction(() => typeof startBattleTutorial === 'function', null, { timeout: 60000 });
 await page.evaluate(() => { try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} });
 if (BIG) await page.screenshot({ path: path.join(SH, '00-main-menu.jpg'), type: 'jpeg', quality: 78, timeout: 300000 });
 const info = await page.evaluate(() => ({ btn: document.getElementById('tutorial')?.textContent, vis: !!document.getElementById('tutorial')?.offsetParent }));
 console.log('menu', JSON.stringify(info));
 
 const wait = (ms) => page.waitForTimeout(ms);
-const diag = async (label) => console.log('  DIAG', label, JSON.stringify(await ev(() => { try { const t = tutTown(), h = tutHQ(); return { t: G.t | 0, step: TUTS && TUTS.i + 1, town: t && { n: t.name, ow: t.ow, reb: t.reb, d: h && Math.round(Math.hypot(t.x - h.x, t.y - h.y)), cells: t.cells.map(c => [!!c.key, c.ow, !!c.g, (c.occ || []).length, c.cap, c.dead ? 1 : 0]) }, units: G.ents.filter(u => !u.isB && u.team === ME && !u.dead).map(u => [u.kind, u.x | 0, u.y | 0, u.order ? u.order.type : '', u.inGar ? 1 : 0]), sel: G.sel.length }; } catch (e) { return String(e); } })));
+const diag = async (label) => console.log('  DIAG', label, JSON.stringify(await ev(() => { try { return { t: G.t | 0, step: TUTS && TUTS.i + 1, k: TUTS && TUT[TUTS.i] && TUT[TUTS.i].k, blds: G.ents.filter(e => e.isB && e.team === ME && !e.dead).map(e => e.kind + (e.built < 1 ? '?' : '')).join(','), cr: G.teams[ME].credits | 0 }; } catch (e) { return String(e); } })));
 // fast-forward the battle clock (software rendering and slow CI machines run the live loop at a fraction of real time); inputs stay real, only waiting is accelerated
 const ff = (sec) => page.evaluate((n) => { for (let k = 0; k < Math.ceil(n * 60) && G && !G.over; k++) simUpdate(1 / 60); }, sec);
 const shot = async (name) => { if (!SHOTS || !KEEP.test(name)) return; await ev(() => { R3.render = window.__realRender; }); await ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))))); await page.screenshot({ path: path.join(SH, name + '.jpg'), type: 'jpeg', quality: 78, timeout: 300000 }); await ev(() => { R3.render = () => {}; }); };
@@ -62,21 +62,6 @@ async function boxSelectSquad() {
   return ev(() => G.sel.filter(u => !u.isB).length);
 }
 
-// capture the town the way a player does: click a soldier, right-click a ringed house; repeat with other soldiers until the town is ours
-async function takeHouses(label) {
-  for (let k = 0; k < 30; k++) {
-    const st = await ev(() => { const t = tutTown(); if (t.ow === ME) return { done: true }; const c = t.cells.find(c => c.key && c.ow !== ME && !c.g && !c.dead) || t.cells.find(c => c.ow !== ME && !c.dead); const free = G.ents.filter(u => !u.isB && !u.dead && u.team === ME && u.kind === 'inf' && !u.order && !u.inGar);
-      return { cell: c && { x: c.x, y: c.y }, unit: free[0] && { x: free[0].x, y: free[0].y, id: free[0].id }, n: free.length }; });
-    if (k < 6 || k % 10 === 0) console.log('    takeHouses', k, JSON.stringify(st)); if (st.done) return true; if (!st.cell || !st.unit) { await ff(4); await wait(200); continue; }
-    await ev(([x, y]) => centerOn(x, y, true), [st.unit.x, st.unit.y]); // the soldier keeps walking/shuffling while the page waits for frames (slow runners: seconds), so aim at where he is NOW, right before the click
-    let p; for (let tries = 0; tries < 3; tries++) { await ev((id) => { const u = G.ents.find(e => e.id === id && !e.dead); if (u) centerOn(u.x, u.y, true); }, st.unit.id); await raf2(); p = await ev((id) => { const u = G.ents.find(e => e.id === id && !e.dead); if (!u) return null; const q = toScreen(u.x, unitH(u) + entHeightMid(u) * .6, u.y); return { x: q.x, y: q.y }; }, st.unit.id); if (!p) break;
-      await ev(() => { G.sel = []; }); await click(p.x, p.y); await page.waitForFunction(() => G.sel.length > 0, null, { timeout: 3000 }).catch(() => {}); if (await ev(() => G.sel.length)) break; }
-    if (!p) continue;
-    await ev(([x, y]) => centerOn(x, y, true), [st.cell.x, st.cell.y]); p = await scr(st.cell.x, st.cell.y, 6); await click(p.x, p.y, { button: 'right' }); await ff(6); await wait(200);
-    if (k === 1) await shot(label + '-garrisoning');
-  } return false;
-}
-const openTown = async () => { const m = await ev(() => { const t = tutTown(), r = mm.getBoundingClientRect(); return { x: r.left + t.x / MAPW * r.width, y: r.top + t.y / MAPH * r.height }; }); await click(m.x, m.y); await page.waitForFunction(() => TP.ti >= 0, null, { timeout: 8000 }).catch(() => {}); await wait(300); };
 const shotAfter = async (n, name) => { await wait(500); await shot(String(n).padStart(2, '0') + '-' + name + '-after'); };
 
 async function startTut() {
@@ -84,94 +69,65 @@ async function startTut() {
   await page.waitForFunction(() => !window.LOADING && G && G.tut && TUTS, null, { timeout: 900000, polling: 500 });
   await ev((big) => { try { MLOCK.broken = true; mlockOff(); } catch (e) {} window.__realRender = R3.render; R3.render = () => {}; SET.spd = 3; }, BIG);   // no GPU drawing between screenshots (software GL needs seconds per frame) - the game logic and the HUD run normally; --shots draws real frames just for each screenshot
 }
-async function reloadMenu() { await page.reload({ waitUntil: 'load', timeout: 120000 }); await page.waitForFunction(() => typeof startTutorial === 'function', null, { timeout: 60000 }); }
+async function reloadMenu() { await page.reload({ waitUntil: 'load', timeout: 120000 }); await page.waitForFunction(() => typeof startBattleTutorial === 'function', null, { timeout: 60000 }); }
+// place building kind k with a real click next to the HQ (Build tab button, then the ground); true when it stands (or is being built)
+async function placeNear(k, spots) { await page.click('.tabs button[data-tab="build"]').catch(() => {}); await wait(300); await page.click('#b_' + k); await wait(300);
+  const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; });
+  for (const [dx, dy] of spots) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); await wait(500); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y); await wait(500);
+    if (await ev((k) => G.ents.some(e => e.isB && e.team === ME && e.kind === k && !e.dead), k)) return true; if (!(await ev((k) => G.place === k, k))) { await page.click('#b_' + k); await wait(300); } }
+  return false; }
+const builtUp = async (k) => { for (let n = 0; n < 120 && !(await ev((k) => G.ents.some(e => e.isB && e.team === ME && e.kind === k && !e.dead && e.built >= 1), k)); n++) await ff(3); return ev((k) => G.ents.some(e => e.isB && e.team === ME && e.kind === k && e.built >= 1), k); };
+const SPOTS = [[-130, 90], [120, 90], [150, -60], [-150, -100], [0, 180], [220, 40], [-220, 30], [60, -190]];
 try {
-  // ---- part A: out-of-order play, Skip step, Exit tutorial, restart
-  console.log('-- out of order / skip / exit / restart'); SHOTS = false;
+  // ---- part A: Skip step, Exit tutorial, restart
+  console.log('-- skip / exit / restart'); SHOTS = false;
   await startTut(); await waitStep(0);
-  { await page.click('#b_turret'); const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; }); let placed = false;
-    for (const [dx, dy] of [[120, 90], [-140, 90], [150, -90], [-150, -100], [0, 170]]) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y); await wait(500);
-      if (await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'turret' && !e.dead))) { placed = true; break; } if (!(await ev(() => G.place === 'turret'))) await page.click('#b_turret'); }
-    ok(placed, 'out of order: Defense Gun placed during step 1');
-    for (let k = 0; k < 100 && !(await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'turret' && !e.dead && e.built >= 1))); k++) await ff(3); if (!(await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'turret' && !e.dead && e.built >= 1)))) bad('Defense Gun never finished');
-    ok(await ev(() => TUTS.i === 0), 'out of order: the tutorial stays on step 1 (no crash, no skipping ahead)');
-    for (let k = 0; k < 3; k++) { await page.click('#tutSkip'); await wait(250); }
-    ok(await ev(() => TUTS.i === 3), 'Skip step moves to the next step (3 clicks -> step 4)');
-    await page.waitForFunction(() => TUTS.i >= 4 || TUTS.wait, null, { timeout: 20000, polling: 300 }).then(() => ok(true, 'a step already done earlier completes by itself (Barracks built before step 4)')).catch(() => bad('step 4 did not notice the Barracks that already stood'));
-    await page.click('#tutExit'); await wait(500);
-    ok(await ev(() => G.tut === false && document.getElementById('tut').hidden && !(document.getElementById('tutHL') && document.getElementById('tutHL').style.display !== 'none')), 'Exit tutorial hides the tips and arrow and leaves the battle running'); }
+  ok(await ev(() => TUT === TUTB && TUT.length === 6 && TUT.map(s => s.k).join() === 'dep,bar,fac,sup,veh,atk'), 'the one tutorial is the Battle tutorial with a supply-lines step');
+  for (let k = 0; k < 3; k++) { await page.click('#tutSkip'); await wait(250); }
+  ok(await ev(() => TUTS.i === 3), 'Skip step moves to the next step (3 clicks -> step 4)');
+  await page.click('#tutExit'); await wait(500);
+  ok(await ev(() => G.tut === false && document.getElementById('tut').hidden && !(document.getElementById('tutHL') && document.getElementById('tutHL').style.display !== 'none')), 'Exit tutorial hides the tips and arrow and leaves the battle running');
   await reloadMenu();
-  ok(await ev(() => /Tutorial: learn/.test(document.getElementById('tutorial').textContent)), 'menu still offers the tutorial (not marked done after exiting)');
+  ok(await ev(() => /Tutorial: learn Battle/.test(document.getElementById('tutorial').textContent)), 'menu still offers the tutorial (not marked done after exiting)');
   // ---- part B: the full playthrough
   console.log('-- full playthrough'); SHOTS = SHOTS_ON;
   await startTut();
   await shot('01a-battle-start');
-  // 1 select
-  await waitStep(0); { const n = await boxSelectSquad(); ok(n > 0, 'drag-select picks up soldiers (' + n + ')'); } await done(0); await shotAfter(1, 'sel');
-  // 2 move
-  await waitStep(1); { const m = await ev(() => TUTS.mk); await boxSelectSquad(); await ev(() => { const q = TUT[TUTS.i].cam(); centerOn(q.x, q.y - 90, true); }); let p = await scr(m.x, m.y, 0); for (let n = 0; n < 12 && !(p.y > 215 && p.y < 520); n++) { await wait(400); await ev(() => { const q = TUT[TUTS.i].cam(); centerOn(q.x, q.y - 90, true); }); p = await scr(m.x, m.y, 0); } console.log('    marker at', Math.round(p.x), Math.round(p.y)); ok(p.x > 20 && p.x < 1260 && p.y > 215 && p.y < 520, 'the move marker is on screen below the tip box'); await click(p.x, p.y, { button: 'right' }); } await done(1); await shotAfter(2, 'move');
-  // 3 attack
-  await waitStep(2); { await boxSelectSquad(); const f = await ev(() => { const e = tutFoe(); return e ? { x: e.x, y: e.y } : null; }); ok(!!f || await ev(() => TUTS.wait || TUTS.i > 2), 'a red enemy exists to attack (or the squad already beat the scouts on its own while a slow machine drew frames)');
-    for (let k = 0; k < 6 && f; k++) { const fe = await ev(() => { const e = tutFoe(), q = tutSquad(); return e && q && Math.hypot(e.x - q.x, e.y - q.y) < 900 ? { x: e.x, y: e.y } : null; }); if (!fe) break;   /* only the nearby scouts, never the far enemy base */ await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p = await scr(fe.x, fe.y, 10); await boxSelectSquad().catch(() => 0); await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p2 = await scr(fe.x, fe.y, 10); await click(p2.x, p2.y, { button: 'right' }); await ff(8);
-      if (await ev(() => TUTS.wait || TUTS.i > 2)) break; } }
-  await done(2); await shotAfter(3, 'atk');
-  // 4 setup + defense gun
-  await waitStep(3); { await shot('04b-setup-banner'); await page.click('#b_turret'); await wait(300); const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; });
-    ok(await ev(() => G.place === 'turret'), 'clicking Defense Gun arms placement'); await shot('04c-placing');
-    let placed = false; for (const [dx, dy] of [[120, 90], [-140, 90], [150, -90], [-150, -100], [0, 170], [220, 40]]) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); await wait(500); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y); await wait(600);
-      if (await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'turret' && !e.dead))) { placed = true; break; } if (!(await ev(() => G.place === 'turret'))) await page.click('#b_turret'); }
-    ok(placed, 'Defense Gun placed with a click next to the base'); }
-  await done(3); await shotAfter(4, 'bar');
-  // 5 train
-  await waitStep(4); { const b = await ev(() => { const e = tutBld('barracks'); return { x: e.x, y: e.y }; }); await ev(([x, y]) => centerOn(x, y, true), [b.x, b.y]); await wait(600); const p = await scr(b.x, b.y, 10); await click(p.x, p.y); await wait(500);
-    ok(await ev(() => G.sel.some(e => e.kind === 'barracks')), 'left-click selects the Barracks'); await wait(700); await shot('05b-barracks-selected');
-    const hl0 = await ev(() => { const h = document.getElementById('tutHL'); const t = document.querySelector('.tabs button[data-tab="units"]').getBoundingClientRect(), r = h.getBoundingClientRect(); return TAB !== 'units' && Math.abs(r.left - t.left) < 12; }); ok(hl0, 'arrow points at the Units tab first'); await page.click('.tabs button[data-tab="units"]'); await wait(300); await shot('05c-units-tab');
-    const id = await ev(() => '#u_' + roster(G.teams[ME].fac).barracks[0]); await page.click(id); await wait(300); }
-  await done(4); await shotAfter(5, 'trn');
-  // 6 capture a town
-  await waitStep(5); await takeHouses('06b'); await done(5); await shotAfter(6, 'town');
-  // 7 tax High
-  await waitStep(6); { const t = await ev(() => ({ x: tutTown().x, y: tutTown().y })); await ev(([x, y]) => centerOn(x, y, true), [t.x, t.y]); await wait(800); await ev(() => { G.sel = []; }); await openTown(); ok(await ev(() => TP.ti >= 0), 'clicking the town marker on the minimap opens its tax panel'); await wait(700); await shot('07b-tax-panel');
-    await page.click('#townp button[data-r="2"]'); await wait(300); }
-  await done(6); await shotAfter(7, 'tax');
-  // 8 unrest -> revolt
-  await waitStep(7); { if (!(await ev(() => TP.ti >= 0))) await openTown(); await page.click('#townp button[data-r="3"]'); await wait(2500); await shot('08b-unrest-rising'); }
-  await done(7); await shotAfter(8, 'revolt');
-  // 9 retake
-  await waitStep(8); await takeHouses('09b'); await done(8); await shotAfter(9, 'retake');
-  // 10 civic
-  await waitStep(9); { await ev(() => { G.sel = []; }); if (!(await ev(() => TP.ti >= 0))) await openTown(); await wait(1000); await shot('10b-civic-panel');
-    await page.click('#townp button[data-r="0"]'); await wait(300); }
-  await done(9); await shotAfter(10, 'civic');
-  // 11 supply lines
-  await waitStep(10); { await page.keyboard.press('l'); await wait(800); ok(await ev(() => LGU.on), 'L key shows supply lines'); await shot('11b-supply-lines'); }
-  await done(10);
-  // 12 powers
-  await waitStep(11); { await page.click('.tabs button[data-tab="pow"]'); await wait(600); await shot('12b-powers-tab');
-    const id = await ev(() => { const b = [...document.querySelectorAll('#panel button[id^="p_"]')].find(x => x.offsetParent && !x.disabled); return b && b.id; }); ok(!!id, 'a power button is visible'); await page.click('#' + id); await wait(400); }
-  await done(11); await shotAfter(12, 'pow');
-  // 13 missile defence
-  await waitStep(12); { await page.click('.tabs button[data-tab="build"]'); await wait(500); await shot('13b-build-tab'); const enabled = await ev(() => { const b = document.getElementById('b_sam'); return b && !b.disabled && !/Not available/i.test(b.textContent); }); ok(enabled, 'Missile defence is buildable');
-    await page.click('#b_sam'); await wait(300); const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; }); let placed = false;
-    for (const [dx, dy] of [[-130, 80], [-160, -60], [150, 120], [0, -170], [200, -40]]) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); await wait(500); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y); await wait(500); if (await ev(() => !!tutBld('sam'))) { placed = true; break; } if (!(await ev(() => G.place === 'sam'))) await page.click('#b_sam'); }
-    ok(placed, 'missile defence placed'); }
-  await done(12); await shotAfter(13, 'md');
-  // 14 win: a real player trains an army; to keep the test short a strike force is added, then ordered with F + click
-  await waitStep(13); { await ev(() => { const e = tutFoeHQ(), h = tutHQ(), a = Math.atan2(h.y - e.y, h.x - e.x); for (let i = 0; i < 20; i++) { const p = nearestPassXY('ground', e.x + Math.cos(a) * 500 + (i % 5) * 24, e.y + Math.sin(a) * 500 + Math.floor(i / 5) * 24); if (p) addUnit(ME, 'inf', p[0], p[1]); } });   // test shortcut: the strike force a player would train and march (~4 min) starts 500 units from the enemy base
-    const en = await ev(() => { const q = tutFoeHQ(); return { x: q.x, y: q.y }; }); await shot('14b-enemy-base-far');
-    if (await ev(() => LGU.on)) await page.keyboard.press('l');   // supply lines off again (a player would too): cheaper frames for the big fight
-    const tEnd = Date.now() + 10 * 60 * 1000;   // the battle clock is fast-forwarded between orders; wall-time cap for slow machines
+  ok(await ev(() => G.battle && !G.towns), 'the tutorial is a Battle (no towns)');
+  // 1 Supply Depot
+  await waitStep(0); ok(await placeNear('depot', SPOTS), 'Supply Depot placed with a click next to the base'); await done(0); await shotAfter(1, 'dep');
+  // 2 Barracks
+  await waitStep(1); ok(await placeNear('barracks', SPOTS), 'Barracks placed'); await done(1); await shotAfter(2, 'bar');
+  ok(await builtUp('barracks'), 'the Dozer finishes the Barracks');
+  // 3 War Factory
+  await waitStep(2); ok(await placeNear('factory', SPOTS), 'War Factory placed'); await done(2); await shotAfter(3, 'fac');
+  // 4 supply lines: L shows them (green roads out of the Command Center)
+  await waitStep(3); { await page.keyboard.press('l'); await wait(800); ok(await ev(() => LGU.on), 'L key shows supply lines');
+    const cov = await ev(() => { const C = G.lg && G.lg.cov && G.lg.cov[ME]; return C ? Object.keys(C).length : 0; }); ok(cov > 0, 'your supply lines cover at least one road (' + cov + ')'); await shot('04b-supply-lines'); }
+  await done(3); await shotAfter(4, 'sup');
+  // 5 train a vehicle
+  await waitStep(4); { ok(await builtUp('factory'), 'the Dozer finishes the War Factory'); const b = await ev(() => { const e = tutBld('factory'); return { x: e.x, y: e.y }; }); await ev(([x, y]) => centerOn(x, y, true), [b.x, b.y]); await wait(600); const p = await scr(b.x, b.y, 10); await click(p.x, p.y); await wait(500);
+    ok(await ev(() => G.sel.some(e => e.kind === 'factory')), 'left-click selects the War Factory');
+    const id = await ev(() => '#u_' + roster(G.teams[ME].fac).factory.find(k => document.getElementById('u_' + k) && !document.getElementById('u_' + k).disabled)); await page.click(id); await wait(300);
+    for (let n = 0; n < 60 && !(await ev(() => TUTS.i > 4 || TUTS.wait)); n++) await ff(3); }
+  await done(4); await shotAfter(5, 'veh');
+  // 6 win: a real player trains an army; to keep the test short a strike force is added, then ordered with a right-click
+  await waitStep(5); { await ev(() => { const e = tutFoeHQ(), h = tutHQ(), a = Math.atan2(h.y - e.y, h.x - e.x); for (let i = 0; i < 20; i++) { const p = nearestPassXY('ground', e.x + Math.cos(a) * 500 + (i % 5) * 24, e.y + Math.sin(a) * 500 + Math.floor(i / 5) * 24); if (p) addUnit(ME, i % 3 ? 'inf' : 'tank', p[0], p[1]); } });
+    const en = await ev(() => { const q = tutFoeHQ(); return { x: q.x, y: q.y }; }); await shot('06b-enemy-base');
+    if (await ev(() => LGU.on)) await page.keyboard.press('l');
+    const tEnd = Date.now() + 10 * 60 * 1000;
     for (let k = 0; Date.now() < tEnd; k++) { if (await ev(() => G.over)) break;
-      const idle = await ev(() => tutUnits().filter(u => !u.order).length); if (k % 4 === 0 || idle > 3) { await ev(([x, y]) => centerOn(x, y, true), [en.x, en.y]); await ev(() => { G.sel = tutUnits(); }); const p = await scr(en.x, en.y, 0); await page.keyboard.press('f'); await click(p.x, p.y); }
+      const tg = await ev(() => { const b = G.ents.find(e => e.isB && e.team === 1 && !e.dead); return b ? { x: b.x, y: b.y } : null; }); if (!tg) { await ff(5); continue; }
+      await ev(([x, y]) => centerOn(x, y, true), [tg.x, tg.y]); await ev(() => { G.sel = tutUnits(); }); const p = await scr(tg.x, tg.y, 0); await click(p.x, p.y, { button: 'right' });
       if (k % 2 === 0) console.log('    attack round', k, JSON.stringify(await ev(() => ({ t: G.t | 0, mine: tutUnits().length, foe: G.ents.filter(e => e.team === 1 && !e.dead).length }))));
-      await ff(12); await wait(200); if (k === 1) await shot('14c-attack'); } }
+      await ff(12); await wait(200); if (k === 1) await shot('06c-attack'); } }
   await page.waitForFunction(() => document.getElementById('tutReady'), null, { timeout: 300000 }).catch(() => bad('no "You are ready" screen after the win'));
-  await wait(800); await shot('15-ready-screen');
-  ok(await ev(() => !!document.getElementById('tutReady') && /3|Three/.test(document.getElementById('tutReady').innerText) && document.querySelectorAll('#tutReady li').length === 3), 'ready screen shows 3 tips');
+  await wait(800); await shot('07-ready-screen');
+  ok(await ev(() => !!document.getElementById('tutReady') && /3|Three/.test(document.getElementById('tutReady').innerText) && document.querySelectorAll('#tutReady li').length === 3 && /supply lines/i.test(document.getElementById('tutReady').innerText)), 'ready screen shows 3 tips (supply lines among them)');
   ok(await ev(() => { try { return localStorage.getItem('ww3_tutdone') === '1'; } catch (e) { return false; } }), 'completion remembered');
-  await page.click('#tutGo'); await page.waitForFunction(() => !window.LOADING && G && !G.tut && G.conq, null, { timeout: 900000, polling: 500 }).catch(() => bad('Start a real match did not start a Conquest battle'));
+  await page.click('#tutGo'); await page.waitForFunction(() => !window.LOADING && G && !G.tut && G.battle, null, { timeout: 900000, polling: 500 }).catch(() => bad('Start a real match did not start a Battle'));
   ok(await ev(() => G.teams[ME].fac === setup.p && G.teams.some(T => T.ai)), 'real match starts with the same nation and an AI opponent');
-  await shot('16-real-match');
+  await shot('08-real-match');
   await reloadMenu(); ok(await ev(() => /replay/i.test(document.getElementById('tutorial').textContent)), 'after finishing, the menu button says Tutorial (replay)');
 } catch (e) { if (e.message !== 'stuck') { bad('exception: ' + e.message); } await shot('99-stuck').catch(() => {}); }
 console.log('step seconds:', JSON.stringify(stepTimes), 'total', Math.round((Date.now() - T0) / 1000), 's');

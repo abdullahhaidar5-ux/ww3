@@ -23,9 +23,9 @@ function svDel(id){return svTx(['meta','data'],'readwrite',tx=>{tx.objectStore('
 function svStorageMsg(e){const m=String(e&&e.message||e||'');return 'Your browser is blocking game storage ('+(m||'unknown')+'). Use "Download save" instead, or allow site data for this page.';}
 /* ---------- capture ---------- */
 function svThumb(){try{if(typeof mm==='undefined'||!mm||!mm.width)return null;const c=document.createElement('canvas');c.width=160;c.height=Math.max(1,Math.round(160*mm.height/mm.width));c.getContext('2d').drawImage(mm,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.7);}catch(e){return null;}}
-function svCanSave(){return !!(G&&!G.over&&!G.rp&&MODE==='single'&&!window.LOADING&&G.ng&&!G.sandbox&&!G.grand);}
+function svCanSave(){return !!(G&&!G.over&&!G.rp&&MODE==='single'&&!window.LOADING&&G.ng&&!G.sandbox);}
 /* svFront (living main menu): a small sketch of the battlefield at the moment of saving - water and land, and which side holds each part of the land, worked out from your own
-   forces and the enemy forces you could see - run-length packed like the campaign's war table (13-grand.js grWarTable) so the main menu can draw where your front is.
+   forces and the enemy forces you could see - run-length packed so the main menu can draw where your front is.
    Display only: it rides in the save's list entry (meta), never in the checkpoint; nothing in the battle reads it. */
 function svFront(){try{if(!G||!G.map||!G.ents||!G.teams[ME])return null;const W=240,H=135,GW=40,GH=Math.max(8,Math.round(40*MAPH/MAPW)),dm=new Float32Array(GW*GH).fill(1e9),df=new Float32Array(GW*GH).fill(1e9);let foes=0;
   /* each part of the land belongs to whoever is nearest: your forces (and allies) or an enemy you can see */
@@ -71,8 +71,8 @@ function svStateHash(){let h=2166136261>>>0;const mix=v=>{h^=v|0;h=Math.imul(h,1
     /* integrate1: new battle systems are part of the hash, so a save that forgets them fails savetest: locals' allegiance, knocked-out time left, morale fear / rout, suppression, rank */
     mix(e.loc?e.loc.charCodeAt(0):0);mix(Math.round(koLeft(e)*10));mix(Math.round((e.fear||0)*100));mix(Math.max(0,Math.round(((e.rout||0)-G.t)*10)));mix(Math.round((e.supp||0)*100));mix(e.rank|0);}
   mix((G.mban||[]).length);mix((G.smokes||[]).length);mix((G.wnd||[]).length);
-  for(const T of G.teams){mix(Math.round(T.credits));mix(T.kills|0);}for(const t of (G.towns||[])){mix(t.ow);mix(Math.round(t.un));mix(Math.round(t.rate*10));}
-  return {h,units:L.length,money:G.teams.map(T=>Math.round(T.credits)),towns:(G.towns||[]).map(t=>t.ow).join(',')};}
+  for(const T of G.teams){mix(Math.round(T.credits));mix(T.kills|0);}
+  return {h,units:L.length,money:G.teams.map(T=>Math.round(T.credits))};}
 /* ---------- load ---------- */
 function svCheck(meta){if(!meta||meta.fmt!==SV_FMT||meta.pv!==NET_PV)return 'This save is from an older version and can\'t be loaded.';return '';}
 async function svLoad(meta,packed){
@@ -147,22 +147,15 @@ async function svLoadDialog(){
         svDel(m.id).then(()=>{list=list.filter(x=>x.id!==m.id);render();svMenuSync();}).catch(e=>svMsg(c,svStorageMsg(e),true));},true);return [go,dl,del];}});box.classList.add('svlist');};
     render();});}
 /* ---------- buttons: pause menu + main menu ---------- */
-let svLatest=null,svGrand=null;
-/* the grand campaign's save lives in localStorage (src/13-grand.js grSave, key 'ww3grand1' + a small '.i' note: when / nation / month); read here without the grand code */
-function svGrandInfo(){try{const K='ww3grand1';if(!localStorage.getItem(K))return null;let i=null;try{i=JSON.parse(localStorage.getItem(K+'.i'));}catch(e){}
-  if(!i){const o=JSON.parse(localStorage.getItem(K));if(!o||o.v!==1)return null;i={ts:0,me:o.me||'',n:o.me?((typeof FACTIONS!=='undefined'&&FACTIONS[o.me]&&FACTIONS[o.me].name)||o.me):'Observer',d:'',over:o.over?1:0};}
-  return i&&!i.over?i:null;}catch(e){return null;}}
-function svContinueGrand(){return loadGrand().then(()=>{if(grLoad()&&!GC.over){grandOpen();return true;}grandMenu();return false;});}
-/* Continue = the newest saved/autosaved Conquest or Battle (or mission); the grand campaign (preview, paused) only when it is the only save */
+let svLatest=null;
+/* Continue = the newest saved/autosaved Battle (or mission). Old grand-campaign saves (localStorage 'ww3grand1') are ignored. */
 async function svMenuSync(){const cb=$('svContinue');if(!cb)return;let L=[];try{L=await svList();}catch(e){}
-  svLatest=L.find(m=>!svCheck(m))||null;svGrand=svGrandInfo();
-  if(svGrand&&svLatest)svGrand=null;   /* campaign paused 2026-11-13: Continue resumes the newest Conquest/Battle save; the campaign save only if it is the only one */
-  cb.hidden=!svLatest&&!svGrand;cb.dataset.kind=svGrand?'grand':svLatest?'battle':'';
-  if(svGrand)cb.textContent='▶ Continue — Grand campaign (preview) · '+svGrand.n+(svGrand.d?' · '+svGrand.d:'');
-  else if(svLatest)cb.textContent='▶ Continue — '+svLatest.mapName+' · '+svLatest.facName+' · '+svClock(svLatest.t);
+  svLatest=L.find(m=>!svCheck(m))||null;
+  cb.hidden=!svLatest;cb.dataset.kind=svLatest?'battle':'';
+  if(svLatest)cb.textContent='▶ Continue — '+svLatest.mapName+' · '+svLatest.facName+' · '+svClock(svLatest.t);
   const lb=$('svLoadBtn');if(lb)lb.hidden=false;try{if(typeof mxWarTable==='function')mxWarTable();}catch(e){}}
 function svInstall(){const rs=$('resumeBtn');if(rs&&!$('svSave')){const b=document.createElement('button');b.id='svSave';b.type='button';b.className='big ghost';b.textContent='Save game';b.onclick=()=>svSaveDialog();rs.after(b);}
   const st=$('start');if(st&&!$('svLoadBtn')){const l=document.createElement('button');l.id='svLoadBtn';l.type='button';l.className='big ghost';l.textContent='Load game';l.title='Load a saved battle (or a .ww3save file)';l.onclick=()=>svLoadDialog();
-    const c=document.createElement('button');c.id='svContinue';c.type='button';c.className='big';c.hidden=true;c.onclick=async()=>{if(svGrand){c.disabled=true;try{await svContinueGrand();}catch(e){uiDialog('The grand campaign could not be loaded. Check your connection and try again.',{yes:'OK',no:'Close'},()=>{});}c.disabled=false;return;}if(!svLatest)return;c.disabled=true;const r=await svLoadId(svLatest.id);c.disabled=false;if(!r.ok)uiDialog(r.msg,{yes:'OK',no:'Close'},()=>{});};
+    const c=document.createElement('button');c.id='svContinue';c.type='button';c.className='big';c.hidden=true;c.onclick=async()=>{if(!svLatest)return;c.disabled=true;const r=await svLoadId(svLatest.id);c.disabled=false;if(!r.ok)uiDialog(r.msg,{yes:'OK',no:'Close'},()=>{});};
     st.before(c);st.after(l);svMenuSync();}}
 try{svInstall();new MutationObserver(()=>{if(!$('menu').hidden)svMenuSync();}).observe($('menu'),{attributes:true,attributeFilter:['hidden']});}catch(e){console.warn('save buttons',e);}

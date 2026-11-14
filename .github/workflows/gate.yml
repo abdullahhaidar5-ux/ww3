@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, grand, grandsmooth, grandlive, decisions, superfreeze, loadfreeze, icons, stuckscan, controlscheck]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
+            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, decisions, superfreeze, loadfreeze, icons, stuckscan, controlscheck]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -48,10 +48,7 @@ jobs:
             stuckscan)      node orch/stuckscan.mjs --short ;;   # units with a move order must keep moving: seeded AI-vs-AI games on 4 maps x Conquest + Battle, fails when stuck episodes (no progress 10 s) exceed the limit (orch/stuckscan.mjs, orch/reports/stuck.md)
             controlscheck)  node orch/controlscheck.mjs ;;   # Ctrl+A whole army, Q camera rotation, W A S D scroll only, X/F/G, rally point by left-click (orch/controlscheck.mjs; the rest of the controls are in the controls job)
             icons)          TAG=gate node orch/bugsA-icons.mjs ;;   # command-bar pictures: every build/unit button of IR/US/RU/KP/RS/CN has its own picture class, nothing non-infantry draws the soldier (orch/bugsA-icons.mjs)
-            decisions)      node orch/decisions.mjs ;;   # audit: Abdullah's standing decisions as guards (no turn wording / End turn on the grand map, no Ayatollah/Fortress/Bunker Buster in Conquest, menu order, WASD camera-only, morale styles, Fight-it army-only)
-            grand)          node orch/grandtest.mjs ;;   # grand campaign: 10 AI turns twice = same hash, Fight-it battle holds exactly the army's units + no production, survivors flow back, save round trip (orch/grandtest.mjs)
-            grandsmooth)    node orch/grandsmooth.mjs ;;
-            grandlive)      ( r=0; node orch/grandlive.mjs || r=1; node orch/grandlive2.mjs || r=1; node orch/grandrt.mjs || r=1; node orch/occtest.mjs || r=1; node orch/legtest.mjs || r=1; node orch/gnettest.mjs || r=1; exit $r ) ;;   # Lane A1: menu -> Grand campaign -> New -> march -> End turn -> Fight it live loads and runs with no test hooks; old-map saves refused; failed battle start falls back   # 3D grand map (stage 5): draw calls / triangles / render-time budgets at wide, region and close views
+            decisions)      node orch/decisions.mjs ;;   # audit: Abdullah's standing decisions as guards (no Ayatollah/Fortress/Bunker Buster in Conquest, menu order, WASD camera-only, morale styles, Fight-it army-only)
             tutorial)       node orch/tutorialtest.mjs ;;   # plays the whole tutorial with real mouse/keyboard input (orch/tutorialtest.mjs)
             decals)         node orch/decalcheck.mjs --facs all ;;   # every marking on every unit type x all 18 nations lies on the model's surface and is not oversized (orch/decalcheck.mjs)
             save)           node orch/savetest.mjs && node orch/polishtest.mjs ;;   # save game: battle -> save -> load in a fresh page -> same state hash; Continue after a reload; file round trip; old saves refused (orch/savetest.mjs)

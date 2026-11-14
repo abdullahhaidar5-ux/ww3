@@ -6,7 +6,7 @@ window.addEventListener('error',e=>push((e&&e.message||'error')+(e&&e.filename?'
 window.addEventListener('unhandledrejection',e=>push('promise: '+(e&&e.reason&&e.reason.message||e&&e.reason||'')));
 const ce=console.error;console.error=function(){try{push(Array.prototype.map.call(arguments,a=>a&&a.message||String(a)).join(' '));}catch(e){}return ce.apply(console,arguments);};
 function info(){let g='menu';try{if(typeof G!=='undefined'&&G){g='mode='+MODE+' nation='+(G.pl&&G.pl[ME]&&G.pl[ME].fac||'?')+' map='+(G.map&&(G.map.name||G.map.id)||G.mapId||'?')+' t='+Math.round(G.t||0)+'s';}}catch(e){}
-  try{if(window.GC&&GC.on)g+=' grand-map day='+(GC.day||'?');}catch(e){}return g;}
+  return g;}
 function report(){
   const body='**What happened?** (write here)\n\n**What did you expect?**\n\n---\n_Auto-filled, no personal data:_\n- Page: '+location.pathname+'\n- State: '+info()+'\n- Browser: '+navigator.userAgent.slice(0,120)+'\n- Screen: '+innerWidth+'x'+innerHeight+'\n- Last errors:\n```\n'+(ERR.length?ERR.join('\n'):'none')+'\n```\n';
   const url='https://github.com/abdullahhaidar5-ux/ww3/issues/new?labels=player&title='+encodeURIComponent('Problem: ')+'&body='+encodeURIComponent(body).slice(0,6000);

@@ -88,7 +88,7 @@ const STRUCT={
   sam:{name:'Anti-Air Missile Site',hp:650,size:34,cost:700,time:7,req:'barracks',rng:400,dmg:80,rof:1.5,wpn:'missile',aa:2,ground:false},
   coast:{name:'Coastal Missile Battery',hp:800,size:34,cost:1000,time:12,req:'barracks',shore:true,rng:520,dmg:150,rof:3.4,wpn:'missile',aa:0,navalOnly:1,sonar:260,desc:'Anti-ship missiles for the shore: hits warships, boats and landing craft (and spots submarines nearby), nothing else. Build it on the coast.'},
   tunnel:{name:'Tunnel Network',hp:900,size:40,cost:600,time:9,req:'barracks',rng:220,dmg:14,rof:.45,wpn:'gun',aa:1},
-  radio:{name:'Radio & TV Station',hp:1100,size:44,cost:1500,time:14,req:'barracks',limit:2,desc:'Broadcasts to the towns around it: your towns grow more loyal, enemy towns in range grow restless. Unlocks Leaflet Drops on enemy towns. Fragile - bomb the enemy one.'},
+  radio:{name:'Radio & TV Station',hp:1100,size:44,cost:1500,time:14,req:'barracks',limit:2,desc:'Not built in Battle (a Conquest building, removed 2026-11-14). Broadcasts to the towns around it: your towns grow more loyal, enemy towns in range grow restless. Unlocks Leaflet Drops on enemy towns. Fragile - bomb the enemy one.'},
   uplink:{name:'Strike Center',hp:1800,size:70,cost:2500,time:20,req:'factory'},
   // Supply Depot: a forward drop-off point. Supply trucks unload at the nearest depot or HQ instead of driving home.
   depot:{name:'Supply Depot',hp:1000,size:54,cost:600,time:8,desc:'Supply trucks unload here instead of driving back to the HQ. Build one beside a far supply field. Also refills ammo of troops near it.'},
@@ -99,9 +99,9 @@ const STRUCT={
   econ:{name:'Revenue Center',hp:1100,size:58,cost:2000,time:25,req:'factory',inc:3.5,limit:4,desc:'Earns a slow, steady income: $210 a minute for the first, less for each extra one (max 4). Pays for itself in about 10 minutes.'},
   fort:{name:'Mountain Fortress',hp:5000,size:50,cost:2600,time:30,req:'factory',limit:1,rng:240,dmg:20,rof:.4,wpn:'gun',aa:1,desc:'One per player. A rock-cut bunker that works like a tunnel (units go in and come out of any tunnel) but holds 12 more units. Nothing can damage it except a Bunker Buster.'},
 };
-/* ---- POLITICS & INTEL (Abdullah 2026-11-05 18:55; orch/reports/politics-intel.md): spies, decoys, radio station, world opinion ---- */
-// Spy: disguised (hidden to the enemy like a stealth unit) until it acts or enemy infantry / a loyal town spots it. Same price for every nation.
-BASE.spy={name:'Infiltrator',cls:'inf',hp:70,spd:52,rng:0,dmg:0,rof:1,cost:1200,time:40,from:'barracks',armor:'light',r:7,dom:'ground',noAttack:true,stealth:true,spy:true,limit:2,desc:'A plain-clothes operative, not a soldier: cap, dark jacket, a satchel on a strap and a phone at the ear - no uniform and no rifle. Hidden from the enemy until it acts or enemy infantry or a loyal town spots it; while it is hidden you see a small eye above it. Unarmed: select it, pick a job, then right-click a target.'};
+/* ---- SPIES & DECOYS (Abdullah 2026-11-05 18:55; orch/reports/politics-intel.md) ---- */
+// Spy: disguised (hidden to the enemy like a stealth unit) until it acts or enemy infantry spots it. Same price for every nation.
+BASE.spy={name:'Infiltrator',cls:'inf',hp:70,spd:52,rng:0,dmg:0,rof:1,cost:1200,time:40,from:'barracks',armor:'light',r:7,dom:'ground',noAttack:true,stealth:true,spy:true,limit:2,desc:'A plain-clothes operative, not a soldier: cap, dark jacket, a satchel on a strap and a phone at the ear - no uniform and no rifle. Hidden from the enemy until it acts or enemy infantry spots it; while it is hidden you see a small eye above it. Unarmed: select it, pick a job, then right-click a target.'};
 // Decoys: inflatable / plywood fakes. They keep the real unit's look, name, size and speed (see stats()) but die in one hit and never fire.
 for(const [k,real,nm,cost] of [['dtank','tank','Decoy Tank',150],['dsam','aa','Decoy SAM Truck',120],['darty','arty','Decoy Artillery',150]])
   BASE[k]=Object.assign({},BASE[real],{name:nm,hp:1,dmg:0,rng:0,rof:1,aa:0,ground:true,splash:0,minr:0,wpn:undefined,cost,time:5,from:'factory',noAttack:true,fake:real,limit:4});
@@ -121,7 +121,7 @@ const ECON={US:'Arms Export Office',TR:'Grand Bazaar',IL:'Tech Startup Hub',EU:'
   SA:'Oil Ministry Office',AE:'Free Trade Zone',PK:'Textile Mill',IN:'IT Services Park',CN:'Export Factory',KP:'Overseas Labor Bureau',KR:'Electronics Plant',EG:'Suez Canal Toll House',
   CU:'Cigar Factory',RS:'Khums Treasury',DW:'Coffee Roastery'};
 const ECON_RATE=[1,.75,.55,.4];
-const BUILD_ORDER=['gen','barracks','depot','econ','factory','airfield','shipyard','coast','turret','sam','tunnel','fort','radio','uplink','hq'];
+const BUILD_ORDER=['gen','barracks','depot','econ','factory','airfield','shipyard','coast','turret','sam','tunnel','fort','uplink','hq'];
 
 /* BATTLE POWER (Abdullah 2026-11-13 20:11): ONE table. Battle has no map power plants - you build Generators. Same numbers for every nation; only the name differs.
    make = power a building gives (a captured map power plant adds POWER.plant through tbPlants), use = power it needs. ONLY electronic buildings use power (Abdullah 2026-11-13 20:13
@@ -152,7 +152,7 @@ const COURAGE={};   // derived below from MORALE_STYLE (integrate1) - one table 
 const MSTYLES={   // rout = campaign battles: the side breaks below this share of the enemy's strength for 10 s (0 = never; Abdullah 2026-11-06 20:12 "base routing on morale system, zealous never routes"); routHome = when defending its own province
  zeal:{n:'Zealous',rout:0,cour:1.6,loss:.2,ferv:.07,taken:1.07,zeal:1,desc:'Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses.'},
  prof:{n:'Professional',rout:.15,cour:1.25,loss:1.3,art:.7,off:1.9,desc:'Steady under artillery and quick to rally near officers; heavy losses sap them more than other armies.'},
- home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
+ home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver inside their own supply area (near their buildings, depots and supply lines); ordinary soldiers beyond it.'},
  fire:{n:'Firepower-reliant',rout:.25,cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armor, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
 const MORALE_STYLE={};
 for(const[st,l]of Object.entries({zeal:'IR RS DW KP RV OB BI',prof:'US RU GB FR DE JP KR AU CA IT GR PL TR CN PK ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA IN UA CU EG',fire:'AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
@@ -227,13 +227,13 @@ for(const k in SPEC){const F=FACTIONS[k];if(!F)continue;const [kind,o]=SPEC[k];F
 // HERO SQUADS (Abdullah 2026-11-04): one elite squad per nation ('champ' kind, Barracks), max one alive, 150 s wait after it falls,
 // unlocked by General rank (HERO_RANK), same cost and same ability cooldown for every nation. Each has ONE button ability (HAB).
 const HERO_RANK=3,HERO_REBUY=150,HERO_CD=90;
-const HAB={strike:{n:'Precision strike',d:'Calls three precision shells on the nearest enemy group in 500 m.'},demo:{n:'Plant charges',d:'Blows up the nearest enemy building within 150 m after 3 seconds (a third of its health).'},rally:{n:'Rally the line',d:'Friendly infantry within 300 m heal a quarter, shake off fear and hit 25% harder for 10 seconds.'},recon:{n:'See through the fog',d:'Reveals everything within 520 m for 12 seconds and marks it: your forces do 25% more damage to it.'},ambush:{n:'Ambush',d:'The squad and infantry within 220 m hit double for 8 seconds and take a third less damage.'},flip:{n:'Turn the town',d:'The nearest enemy or neutral town within 260 m switches sides at once; its garrison is sent out.'}};
+const HAB={strike:{n:'Precision strike',d:'Calls three precision shells on the nearest enemy group in 500 m.'},demo:{n:'Plant charges',d:'Blows up the nearest enemy building within 150 m after 3 seconds (a third of its health).'},rally:{n:'Rally the line',d:'Friendly infantry within 300 m heal a quarter, shake off fear and hit 25% harder for 10 seconds.'},recon:{n:'See through the fog',d:'Reveals everything within 520 m for 12 seconds and marks it: your forces do 25% more damage to it.'},ambush:{n:'Ambush',d:'The squad and infantry within 220 m hit double for 8 seconds and take a third less damage.'},cut:{n:'Cut the supply line',d:'Blows up the nearest enemy supply road within 260 m: the enemy line is cut behind it for about two and a half minutes.'}};
 const HEROES={US:['Delta Force Operators','strike'],EU:['Special Forces Détachement','strike'],UA:['SSO Special Operators','strike'],KR:['707th Special Mission Team','strike'],
   RU:['Spetsnaz Assault Group','demo'],PK:['SSG Commandos','demo'],CN:['PLA Special Forces','demo'],EG:['Unit 777 Commandos','demo'],
   IR:['IRGC Special Forces','rally'],TR:['Maroon Beret Commandos','rally'],KP:['Storm Corps Veterans','rally'],
   IL:['Sayeret Recon Team','recon'],SA:['Royal Special Forces','recon'],AE:['Presidential Guard SF','recon'],
   RS:['Radwan Commander Squad','ambush'],CU:['Black Wasps','ambush'],IN:['Para SF Commandos','ambush'],
-  DW:['Veteran Militia Commander','flip']};
+  DW:['Veteran Militia Commander','cut']};
 for(const k in HEROES){const F=FACTIONS[k];if(!F)continue;F.units=F.units||{};F.units.champ=Object.assign({},F.units.champ||{},{name:HEROES[k][0],hab:HEROES[k][1]});}
 // Electronic warfare beyond RU: nations with a real EW arm can also build the jamming/spoof truck from the War Factory (same stats, max 2, General rank gate in the UI).
 for(const [k,nm] of [['US','AN/ULQ EW Vehicle'],['CN','PLA EW Jamming Truck'],['IR','IRGC EW Truck'],['IL','IDF EW Truck']]){const F=FACTIONS[k];if(!F||F.special==='ew')continue;F.extra=[...(F.extra||[]),'ew'];F.units=F.units||{};F.units.ew=Object.assign({},F.units.ew||{},{name:nm});}
@@ -626,24 +626,21 @@ function matchE(a,b){if(!a||!b||a.noAttack||!(a.dmg>0)||!a.wpn)return 0;if(a.nav
 function matchR(a,b){const x=matchE(a,b),y=matchE(b,a);if(!x&&!y)return 1;
   const free=(p,q,e)=>q.armor==='bld'?(p.rng>q.rng*1.1?1:0):Math.min(.9,e*Math.max(0,p.rng-q.rng)/(q.spd||40));   /* share of q lost before it gets into its own range (a building never gets there) */
   const fx=free(a,b,x),fy=free(b,a,y);return Math.max(1/9,Math.min(9,(x*(1-fy)+.0004)/(y*(1-fx)+.0004)));}
-function matchUp(fac,kind,foe){foe=foe&&FACTIONS[foe]?foe:fac;const key=fac+'|'+kind+'|'+foe+(realRow(fac)?'|R':'');if(matchC[key])return matchC[key];
+function matchUp(fac,kind,foe){foe=foe&&FACTIONS[foe]?foe:fac;const key=fac+'|'+kind+'|'+foe;if(matchC[key])return matchC[key];
   const a=matchS(fac,kind),sea=a.dom==='naval'||a.navalOnly,have=allUnits(foe),beats=[],weak=[];
   for(const k of [...MATCH_K,...MATCH_B,...(sea?MATCH_SEA:[])]){if(!STRUCT[k]&&!have.includes(k))continue;if(STRUCT[k]&&!bldAllowed(foe,k))continue;const b=matchS(foe,k),r=matchR(a,b);
     if(r>=MATCH_WIN)beats.push({k,b:!!STRUCT[k],r,e:matchE(a,b),n:b.name});else if(r<=1/MATCH_WIN)weak.push({k,b:!!STRUCT[k],r,e:matchE(b,a),n:b.name});}
   beats.sort((p,q)=>q.e-p.e);weak.sort((p,q)=>q.e-p.e);return matchC[key]={beats,weak,armed:!!(a.dmg>0&&!a.noAttack)};}
 function matchText(fac,kind,foe,n){const m=matchUp(fac,kind,foe),L=l=>l.slice(0,n||3).map(x=>x.n).join(', ');return [m.beats.length?'Beats '+L(m.beats):m.armed?'':'Unarmed',m.weak.length?'Weak to '+L(m.weak):''].filter(Boolean).join(' · ');}
 /* which of my units beat this enemy (stats object of a unit; a building passes isB) */
-function matchBeaters(fac,es,isB){const b=isB?Object.assign({},es,{armor:'bld',dom:'ground',spd:0}):es,out=[];for(const k of allUnits(fac)){if(conqBan(k))continue;const a=stats(fac,k);if(a.fake)continue;const r=matchR(a,b);if(r>=MATCH_WIN)out.push({k,r,e:matchE(a,b),n:a.name});}return out.sort((p,q)=>q.e-p.e);}
+function matchBeaters(fac,es,isB){const b=isB?Object.assign({},es,{armor:'bld',dom:'ground',spd:0}):es,out=[];for(const k of allUnits(fac)){const a=stats(fac,k);if(a.fake)continue;const r=matchR(a,b);if(r>=MATCH_WIN)out.push({k,r,e:matchE(a,b),n:a.name});}return out.sort((p,q)=>q.e-p.e);}
 const SHIA={IR:1,RS:1,DW:1};
-/* leadersC (Abdullah 2026-11-07 22:38 "Keep ayatollah dear leader bunker buster and mountain fortress in conquest and battle" + "in campaign they don't play into the battles"): back in standalone Conquest, Battle, Missions and the sandbox; OUT of grand-campaign Fight-it battles (G.grand). Same nations only (orch/SIGNATURES.md). */
+/* Signature assets (orch/SIGNATURES.md): same nations only. */
 const BB_NAT={US:1,IL:1,RU:1,CN:1},FORT_NAT={IR:1,RS:1,AF:1,KD:1,DW:1,KP:1};
-/* (the grand map's own pre-built defender Mountain Fortress is spawned through bldAllowed, so 'fort' is NOT banned here; nothing can be built or bought in Fight-it anyway: GRAND_NOPROD) */
-function conqBan(k){return(k==='cleric'||k==='bb')&&typeof G!=='undefined'&&!!G&&!!G.grand;}
 function sigBan(fac,k){return(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
-function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')&&!conqBan('cleric')?['cleric']:[]),'spy'],factory:['aa','tank','arty',...(F.extra||[]).filter(k=>stats(fac,k).from!=='airfield'),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift',...(F.extra||[]).filter(k=>stats(fac,k).from==='airfield')],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
+function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')?['cleric']:[]),'spy'],factory:['aa','tank','arty',...(F.extra||[]).filter(k=>stats(fac,k).from!=='airfield'),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift',...(F.extra||[]).filter(k=>stats(fac,k).from==='airfield')],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
-function bldAllowed(fac,k){if(conqBan(k)||sigBan(fac,k))return false;if(k==='gen')return typeof G!=='undefined'&&!!G&&!!G.battle;if(k==='econ'&&typeof G!=='undefined'&&G&&G.conq)return false;   /* Conquest: the Revenue Center is gone - territory pays
-  */if(k==='fort')return !!FORT_NAT[fac];if(k==='tunnel')return !!FACTIONS[fac].tunnels;return !(k==='airfield'&&FACTIONS[fac].noAir);}
+function bldAllowed(fac,k){if(sigBan(fac,k))return false;if(k==='gen')return typeof G!=='undefined'&&!!G&&!!G.battle;if(k==='fort')return !!FORT_NAT[fac];if(k==='tunnel')return !!FACTIONS[fac].tunnels;return !(k==='airfield'&&FACTIONS[fac].noAir);}
 
 // Faction upgrades (generated by upgspec.py): every nation has its own nine, themed to its doctrine and scored so each
 // nation's set is worth the same overall (price follows strength). fx: [stat, unit group, value]
@@ -733,7 +730,7 @@ const NATPOW={US:{name:'Shock and Awe',type:'strafe',cd:200,r:140,desc:'A-10 gun
   EU:{name:'Coalition Supply Drop',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
   UA:{name:'Partisan Uprising',type:'partisans',n:6,cd:200,r:90,desc:'Six partisans rise up at the target and ambush the enemy'},
   RU:{name:'Thermobaric Strike',type:'thermo',cd:230,r:150,desc:'A single huge thermobaric warhead after 3 seconds'},
-  IR:{name:'Shahed Swarm',type:'drones',n:5,cd:200,r:120,ow:1,desc:'Five Shahed loitering munitions launch from your base toward the target (grand campaign: drawn from your launch-site stock)'},
+  IR:{name:'Shahed Swarm',type:'drones',n:5,cd:200,r:120,ow:1,desc:'Five Shahed loitering munitions launch from your base toward the target'},
   SA:{name:'Petrodollar Contract',type:'cash',cd:300,desc:'+$2000 immediately',self:true},
   AE:{name:'Mercenary Contract',type:'mercs',cd:230,desc:'Two tanks and two air-defence vehicles arrive at your HQ',self:true},
   PK:{name:'Nasr Tactical Strike',type:'emp',cd:220,r:200,desc:'Blast at the target that also disables enemy vehicles and buildings nearby for 10s'},
@@ -776,7 +773,7 @@ function gpowDesc(k,P,g){const f=(v,a,b)=>v&&Math.abs(v-1)>.01?(v>1?a:b)+' '+(v>
   const L=[f(g.m,'bounty','bounty'),f(g.rm,'radius','radius'),f(g.tm,'duration','duration'),f(g.nm,k==='barrage'?'shells':'troops',k==='barrage'?'shells':'troops'),f(g.dm,'shell damage','shell damage'),f(g.pm,'repair','repair'),f(g.cdm,'cooldown','cooldown'),g.mix===PARA_AT?'mostly anti-tank teams':g.mix===PARA_INF?'mostly riflemen':null].filter(Boolean);
   return P.desc+(L.length?' ('+L.join(', ')+')':'')+(g.fx?'. Special: '+GFX_TXT[g.fx]+(k!=='bounty'?' (cooldown +10%)':' (bounty −10%)'):'');}
 const GFX_TXT={vet:'troops arrive as veterans',dig:'troops arrive dug in (35% less damage until they move)',stealth:'troops land hidden and stay unseen until they move or fire',mark:'enemies in the area are marked - your forces do 25% more damage to them',detect:'also exposes hidden and stealthed enemy units in the area',fire:'leaves the ground burning for 8 seconds',emp:'disables enemy vehicles in the area for 4 seconds',smoke:'lays a smoke screen that hides your units inside it',rearm:'units in the area also fire 25% faster for 12 seconds',rally:'units in the area rally instantly and are fearless for 15 seconds',shield:'units in the area take 25% less damage for 12 seconds',salvage:'also refunds 15% of the cost of each unit you lose'};
-function powInfo(k,fac){const P0=POWERS[k];if(!P0)return null;const RT=realRow(fac);const P=RT?Object.assign({},P0,{cd:P0.cd?Math.max(30,Math.round(P0.cd*RT.pcd)):P0.cd,n:P0.n?Math.max(1,Math.round(P0.n*RT.pn)):P0.n}):P0;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N0=natPow(fac),N=RT?Object.assign({},N0,{cd:N0.cd?Math.max(30,Math.round(N0.cd*RT.pcd)):N0.cd,n:N0.n?Math.max(1,Math.round(N0.n*RT.pn)):N0.n}):N0;return Object.assign({},P,N);}
+function powInfo(k,fac){const P0=POWERS[k];if(!P0)return null;const P=P0;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}return Object.assign({},P,natPow(fac));}
 // General ranks get steadily harder to earn; each promotion gives a point. Powers unlock for 1 point and can be
 // raised to level 2 (2 more points) and level 3 (3 more): bigger effect, shorter cooldown.
 const RANKS=[0,2500,7000,14000,24000,38000,56000,80000];
@@ -838,39 +835,12 @@ for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
-/* ---------- REALISTIC balance tiers (Abdullah 2026-11-06 21:31 "Would this all realistically have the same fire support?") ----------
-   ONE data table, rows not code paths. The lobby's Balance toggle picks Balanced (every nation equally strong, the default and
-   the only mode the tourneys balance) or Realistic (a nation's fire support follows its real-world power tier). Tier comes from
-   the grand campaign's GR_REAL military figure, so the two layers agree. Columns: cash start money, pcd general-power cooldown,
-   pn drones/sorties per power, sch missile-strike charge time, sdmg missile-strike damage, inf infantry cost, hv vehicle/aircraft
-   cost. Small powers pay for weak fire support with cheaper, more numerous infantry (and keep their guerrilla tools and
-   home-turf morale). The AI reads the same rows, so Hard AI plays the mode it is in. */
-/* leadersC (Abdullah 2026-11-07 22:5x "Does conquest have realistic start?" -> "Yes but keep the game fair"): Realistic also changes how each nation STARTS, with equal win chances
-   through asymmetry. Extra columns: bt unit build-time x (big powers train slower, small nations recruit faster), up income x (upkeep of a big army), fort cost x of turrets / tunnels / coastal guns
-   (cheap home-defence works for small nations), atg cost x of AT teams, drones and rocket trucks (the small nation's answer to armour), st extra starting units (fewer but higher-tech for big powers,
-   more cheap infantry and AT for small ones). Zealous factions get the small-nation home-defence bonuses on top (realRowOf). Proven by orch/tourney.mjs --real --pairs (orch/reports/realstart.md). */
-const REAL_TIER=[['Superpower',1.8,{cash:1.3,pcd:.75,pn:1.4,sch:.75,sdmg:1.25,inf:1.25,hv:1.05,bt:1.5,up:.82,fort:1.2,atg:1.15,st:[['tank',1],['aa',1]],
-    sum:'Superpower: richer, with a high-tech start (tanks, anti-air) and strong air and missile support - but units cost more and train slowly, and a big army eats into income.'}],
-  ['Great power',.9,{cash:1.1,pcd:.88,pn:1.2,sch:.88,sdmg:1.12,inf:1.15,hv:1.05,bt:1.25,up:.92,fort:1.1,atg:1.1,st:[['tank',1],['inf',1]],
-    sum:'Great power: strong air and missile support and a mechanized start, with somewhat slower, dearer production.'}],
-  ['Regional power',.4,{cash:1,pcd:1,pn:1,sch:1,sdmg:1,inf:1,hv:1,bt:1,up:1,fort:1,atg:1,st:[['inf',4],['at',2]],
-    sum:'Regional power: a balanced start - some infantry and an AT team, normal costs and speed.'}],
-  ['Small power',0,{cash:.9,pcd:1.25,pn:.7,sch:1.3,sdmg:.8,inf:.7,hv:1.1,bt:.7,up:1.1,fort:.6,atg:.8,st:[['inf',8],['at',3]],
-    sum:'Small power: less cash and weak fire support, but many cheap infantry from the start, fast recruiting, cheap fortifications and cheap AT teams, drones and rockets.'}]];
-function realRowOf(fac){const t=realTierOf(fac);let r=t[2];try{if(msOf(fac).rout===0){r=Object.assign({},r,{inf:r.inf*.96,bt:Math.min(r.bt,.95),fort:Math.min(r.fort,.85),atg:Math.min(r.atg,.95)});}}catch(e){}return r;}
-function realLine(fac){const t=realTierOf(fac);let z='';try{if(msOf(fac).rout===0)z=' Zealous: never breaks; cheap fortifications and fast recruiting at home.';}catch(e){}return t[0]+': '+t[2].sum.replace(/^[A-Za-z ]+: /,'')+z;}
-function realTierOf(fac){let m=.4;try{if(typeof GR_REAL==='object'&&GR_REAL.n[fac])m=GR_REAL.n[fac][1];}catch(e){}return REAL_TIER.find(r=>m>=r[1])||REAL_TIER[REAL_TIER.length-1];}
-function realTierName(fac){return realTierOf(fac)[0];}
-// null unless this battle is in Realistic mode - every caller then falls back to the equal Balanced numbers.
-function realRow(fac){try{if(typeof G!=='object'||!G||!G.real)return null;}catch(e){return null;}return realRowOf(fac);}
-function realSup(fac){const R=realRow(fac),S=FACTIONS[fac].sup;if(!R)return S;
-  return Object.assign({},S,{charge:Math.round(S.charge*R.sch),dmg:Math.round(S.dmg*R.sdmg),n:Math.max(1,Math.round((S.n||1)*R.pn))});}
-function stats(fac,kind){const R=realRow(fac),k=fac+'|'+kind+(R?'|R':'');if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
+function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
   const s=Object.assign({},BASE[kind],(F.units||{})[kind]||{});s.kind=kind;if(kind==='drone'&&F.noAir)s.from='factory';   /* drones fly from the Airfield (Abdullah 2026-11-08); nations without one keep them at the War Factory */if(s.fake){const rs=stats(fac,s.fake);s.name=rs.name;s.r=rs.r;s.spd=rs.spd;s.cls=rs.cls;s.armor=rs.armor;s.hpShow=rs.hp;}if(kind==='cleric'&&fac==='KP')s.name='Dear Leader';{const X=(XL[fac]||{})[kind];if(X)for(const q in X)if(s[q]!=null)s[q]*=X[q];if(X)s.xl=1;}const inf=s.armor==='light',veh=s.armor==='heavy'||s.cls==='heli'||s.cls==='jet';
-  let c=s.cost*(m.cost||1);if(inf)c*=(m.infCost||1);const B=BAL[fac];if(B)c*=(B._||1)*(B[kind]||1);s.cost=Math.round(c/25)*25;if(R&&kind!=='champ')s.cost=Math.max(25,Math.round(s.cost*(inf?R.inf:R.hv)*((kind==='at'||kind==='drone'||(kind==='arty'&&s.rocket))?R.atg:1)/25)*25);if(kind==='champ')s.cost=BASE.champ.cost;if(inf)s.time*=(m.infTime||1);
+  let c=s.cost*(m.cost||1);if(inf)c*=(m.infCost||1);const B=BAL[fac];if(B)c*=(B._||1)*(B[kind]||1);s.cost=Math.round(c/25)*25;if(kind==='champ')s.cost=BASE.champ.cost;if(inf)s.time*=(m.infTime||1);
   s.hp=Math.max(1,Math.round(s.hp*(m.hp||1)*(veh?(m.vehHp||1):1)));if(m.spd&&s.dom!=='air')s.spd*=m.spd;{const D=DOCT[fac]||{};if(D.barrage&&s.cls==='arty'){s.rng*=1.15;if(s.splash)s.splash*=1.3;s.rof*=.85;s.cost=Math.round(s.cost*.85/25)*25;}if(D.covert&&(s.cls==='inf'||s.cls==='at')&&s.dom==='ground'&&kind!=='hacker')s.camo=1;if(D.shock&&s.armor==='heavy'&&s.dom==='ground')s.spd*=1.1;}s.dmg*=(m.dmg||1);s.aggro=kind==='drone'?290:s.rng+90;if(s.aa===undefined)s.aa=0;return sc[k]=s;}
-function bstats(fac,kind){const RB=realRow(fac),k=fac+'#'+kind+(RB?'|R':'');if(sc[k])return sc[k];const m=FACTIONS[fac].mods||{};const s=Object.assign({},STRUCT[kind]);s.kind=kind;if(kind==='coast'&&COASTN[fac])s.name=COASTN[fac];if(kind==='sam'&&MDN[fac])s.name=MDN[fac];{const X=(XLB[fac]||{})[kind];if(X){for(const q in X)if(s[q]!=null)s[q]*=X[q];s.xl=1;}}
-  if(kind==='econ'&&ECON[fac])s.name=ECON[fac];if(kind==='gen'&&GENN[fac])s.name=GENN[fac];if(kind==='uplink'&&UPLINK[fac])s.name=UPLINK[fac][0];s.hp=Math.round(s.hp*(m.bldHp||1));s.cost=kind==='econ'?s.cost:Math.round(s.cost*(m.cost||1)*(RB&&(kind==='turret'||kind==='tunnel'||kind==='coast'||kind==='fort')?RB.fort:1)/25)*25;if(s.dmg)s.dmg*=(m.dmg||1);s.aa=s.aa||0;s.armor='bld';return sc[k]=s;}
+function bstats(fac,kind){const k=fac+'#'+kind;if(sc[k])return sc[k];const m=FACTIONS[fac].mods||{};const s=Object.assign({},STRUCT[kind]);s.kind=kind;if(kind==='coast'&&COASTN[fac])s.name=COASTN[fac];if(kind==='sam'&&MDN[fac])s.name=MDN[fac];{const X=(XLB[fac]||{})[kind];if(X){for(const q in X)if(s[q]!=null)s[q]*=X[q];s.xl=1;}}
+  if(kind==='econ'&&ECON[fac])s.name=ECON[fac];if(kind==='gen'&&GENN[fac])s.name=GENN[fac];if(kind==='uplink'&&UPLINK[fac])s.name=UPLINK[fac][0];s.hp=Math.round(s.hp*(m.bldHp||1));s.cost=kind==='econ'?s.cost:Math.round(s.cost*(m.cost||1)/25)*25;if(s.dmg)s.dmg*=(m.dmg||1);s.aa=s.aa||0;s.armor='bld';return sc[k]=s;}
 const BH={gen:22,garrison:18,econ:30,depot:19,tunnel:12,fort:16,radio:30,hq:39,barracks:26,factory:34,airfield:19,shipyard:20,coast:12,turret:12,sam:12,uplink:30};
 function lerpA(a,b,t){const d=((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;return a+d*Math.min(1,t);}
 const KINDS=[...Object.keys(BASE),...Object.keys(STRUCT)];

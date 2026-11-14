@@ -28,8 +28,7 @@ function hlFx(type,args){if(!G||G.over)return;if(HL.G!==G)hlReset();const t=G.t;
   else if(type==='strike'){const [x,y,tl,r,sup]=args;if(sup||r>=80)hlNote('strike',t+(+tl||2)+.2,x,y,'Missile strike lands',2800+r*4);}}
 // log hook (called from pushLog, which only receives the local player's messages)
 function hlLog(m,k){if(!hlOn()||!m)return;const t=G.t;
-  if(/REVOLTED|revolted against/.test(m)){const tw=(G.towns||[]).find(w=>w&&w.name&&m.indexOf(w.name)>=0);if(tw)hlNote('revolt',t,tw.x,tw.y,(tw.name||'A town')+' revolts',3000);}
-  else if(k==='r:hab'){let u=null;for(const e of G.ents)if(e.habT&&!e.dead&&Math.abs(e.habT-HERO_CD-t)<.3){u=e;break;}if(u)hlNote('hero',t,u.x,u.y,'Hero ability: '+m.replace(/!$/,''),2400);}}
+  if(k==='r:hab'){let u=null;for(const e of G.ents)if(e.habT&&!e.dead&&Math.abs(e.habT-HERO_CD-t)<.3){u=e;break;}if(u)hlNote('hero',t,u.x,u.y,'Hero ability: '+m.replace(/!$/,''),2400);}}
 function hlTick(t){if(HL.G!==G||!HL.pend.length)return;
   for(let i=HL.pend.length-1;i>=0;i--){const h=HL.pend[i];if(t>=h.te+HL_POST)hlCut(h,t,i);}}
 function hlCut(h,t,i){HL.pend.splice(i,1);

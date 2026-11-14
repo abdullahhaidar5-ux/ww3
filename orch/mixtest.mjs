@@ -105,7 +105,7 @@ try {
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 900000, polling: 500 });
   await page.evaluate(() => { window.__stopLoop = true; }); await sleep(300);
   const info = await page.evaluate(() => {
-    const kinds = ['inf', 'inf', 'inf', 'at', 'tank', 'tank', 'aa', 'arty'], cx = MAPW / 2, cy = MAPH / 2; G.setupEnd = 0;
+    const kinds = ['inf', 'inf', 'inf', 'at', 'tank', 'tank', 'aa', 'arty'], cx = MAPW / 2, cy = MAPH / 2;
     for (const T of G.teams) { if (T.dead || T.reb) continue; const side = T.id % 2 ? 1 : -1;
       for (let i = 0; i < 150; i++) { const k = kinds[i % kinds.length]; const p = nearestPassXY('ground', cx + side * (150 + (i % 8) * 22), cy + Math.floor(i / 8) * 20 - 180) || [cx, cy];
         try { const u = addUnit(T.id, k, p[0], p[1]); if (u) setMove(u, cx - side * 400, p[1], 'amove'); } catch (e) {} } }
