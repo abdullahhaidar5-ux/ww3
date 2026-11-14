@@ -17621,7 +17621,7 @@ const ZH={star:false,sig:'',pow:0};
    ★ -> generals' powers + Strike; nothing that can act -> an empty grid (as in Zero Hour) */
 function zhWant(){if(!G)return null;if(ZH.star)return 'pow';const s=(G.sel||[]).filter(e=>e&&!e.dead&&e.team===ME);
   if(s.some(u=>u.kind==='dozer'))return 'build';const b=s.find(e=>e.isB);if(b){if(typeof CATS!=='undefined'&&CATS.includes(b.kind))return 'units';return 'upg';}return 'none';}
-function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
+function zhCtx(){if(!G)return;const sd=$('side');if(!sd)return;
   let star=$('zhStar');if(!star){star=document.createElement('button');star.id='zhStar';star.type='button';star.title='Generals\' powers and Strike';star.innerHTML='★★★<i class="dot" hidden></i>';
     star.onclick=()=>{ZH.star=!ZH.star;ZH.sig='';zhCtx();};sd.append(star);}
   {const T=G.teams[ME];if(T&&sd.dataset.tc!==T.color){sd.dataset.tc=T.color;sd.style.setProperty('--tc',T.color);}}
