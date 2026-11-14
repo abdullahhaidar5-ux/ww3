@@ -568,7 +568,8 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
       else{B.box(16,9,14,-6,4.5,0,hc);B.box(8,.6,14.2,-6,9.1,0,tc);B.cyl(1.3,1.6,28,8,14,7,0,mt,0,0,Math.PI/2-.2);B.cyl(2,2,3,8,27,9.8,0,dk,0,0,Math.PI/2-.2);}break;
     case 'aa:hull':B.box(28,5,6,0,3.5,-7.5,dk);B.box(28,5,6,0,3.5,7.5,dk);B.box(27,5,15,0,7.5,0,hc);B.box(24,.6,2,0,10.2,-6.6,tc);break;
     case 'aa:turret':B.box(12,7,11,0,3.5,0,hc);B.cyl(.8,.8,16,6,8,7,-4,mt,0,0,Math.PI/2-.6);B.cyl(.8,.8,16,6,8,7,4,mt,0,0,Math.PI/2-.6);B.cyl(4,4,.6,12,-4,10,0,cn,.3);B.box(1,4,1,-4,8,0,dk);break;
-    case 'harv:hull':for(const x of [-10,-2,9])for(const z of [-8,8])B.cyl(3,3,3,10,x,3,z,'#202119',Math.PI/2);B.box(24,4,15,-2,6,0,dk);B.box(17,7,15,-5,11,0,'#6c6a5c');B.box(8,9,15,11,10.5,0,hc);B.box(.5,4,12,15.2,12,0,'#7fa7b5');B.box(8,.6,15.2,11,15.2,0,tc);break;
+    case 'ammot:hull':case 'harv:hull':for(const x of [-10,-2,9])for(const z of [-8,8])B.cyl(3,3,3,10,x,3,z,'#202119',Math.PI/2);B.box(24,4,15,-2,6,0,dk);B.box(17,7,15,-5,11,0,'#6c6a5c');B.box(8,9,15,11,10.5,0,hc);B.box(.5,4,12,15.2,12,0,'#7fa7b5');B.box(8,.6,15.2,11,15.2,0,tc);break;
+    case 'ammot:cargo':B.box(17,8,15.5,-5,17.5,0,'#5d6048');B.box(18,1,16.5,-5,22,0,'#4c5039');for(const z of [-5,0,5])B.box(3,3,3,-14.5,17,z,'#8a6a3a');B.box(.8,4,12,-14,18,0,'#8a6a3a');break;
     case 'harv:cargo':for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,17,z,'#c99a2e');break;
     case 'drone:body':B.cone(11,24,3,0,0,0,'#c4bea9',0,0,-Math.PI/2);B.box(3,2.5,3,-10,0,0,'#7a7566');B.cone(2.5,6,3,-8,0,-8,tc,0,0,-Math.PI/2);B.cone(2.5,6,3,-8,0,8,tc,0,0,-Math.PI/2);break;
     case 'heli:body':B.sph(7,4,0,0,hc,1.5,.8,.8);B.cyl(1.6,3,22,8,-14,1,0,hc,0,0,Math.PI/2);B.box(5,7,1.2,-24,4,0,hc);B.box(6,1,9,-22,4,0,hc);B.sph(3.8,10,1.5,0,'#6f8fa0',1.2,.75,.8);
@@ -669,7 +670,7 @@ function makeObj(e){mats();if(e.kind==='cleric')return clericModel(e);if(!e.isB&
   else{const c=e.s.cls;o.scale.setScalar(c==='ship'?1.15:['inf','at','hacker','hero'].includes(c)?1.7:1.3);
     if(['inf','at','hacker','hero'].includes(c))add('body');
     else if(c==='tank'||c==='arty'||c==='aa'){add('hull');const t=add('turret');t.position.set(c==='arty'&&!e.s.rocket?-4:0,10,0);}
-    else if(c==='harv'){add('hull');add('cargo');}
+    else if(c==='harv'||c==='ammot'){add('hull');add('cargo');}
     else if(c==='dozer'){const h=new THREE.Mesh(geoFor('harv',f,T,'hull'),MAT.std);h.castShadow=true;o.add(h);P.hull=h;const B=Bld();B.box(2.4,6.5,20,15,3.2,0,'#d9a21f');B.box(20,2,2,-2,20,0,'#d9a21f');const cm=new THREE.Mesh(B.geo(),MAT.std);o.add(cm);}
     else if(c==='drone')add('body');
     else if(c==='heli'){add('body');const r=add('rotor');r.position.set(1,8.6,0);r.castShadow=false;}

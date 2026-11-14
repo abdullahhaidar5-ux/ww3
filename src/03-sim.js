@@ -1114,6 +1114,8 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   // then trucks up to 3-4.
   const harvs=mine.filter(e=>e.kind==='harv'&&!e.cv).length,dzN=mine.filter(e=>e.kind==='dozer').length;
   if(hq&&!T.q.hq.length){if(!harvs)enqueue(id,'harv');else if(!dzN)enqueue(id,'dozer');else if(harvs<3+(G.t>300?1:0))enqueue(id,'harv');}
+  /* Ammo trucks (Abdullah 2026-11-13 21:46 "Separate ammo truck"): one or two per army group, built at the War Factory once there is an army; they idle behind the front and drive to thirsty units (updAmmoTrucks). */
+  if(ammoOn()&&!G.grand&&done(id,'factory')&&T.ai.t%6===2&&!T.q.factory.some(i=>i.kind==='ammot')){const nA=mine.filter(e=>!e.isB&&!e.s.noAttack&&e.s.dom==='ground'&&!['harv','dozer','hacker'].includes(e.kind)).length,want=Math.min(2,nA>=8?1+(nA>=18?1:0):0);if(unitCount(id,'ammot')<want&&T.credits>=stats(T.fac,'ammot').cost+250)enqueue(id,'ammot');}
   aiExpand(T,mine,hq);
   {const fnd=mine.filter(e=>e.isB&&e.nd&&e.built<1);const dzs=mine.filter(e=>e.kind==='dozer');for(const b of fnd){if(dzs.some(u=>u.order&&u.order.type==='build'&&u.order.target===b))continue;const fr=dzs.filter(u=>!u.order||u.order.type!=='build').sort((p,q)=>dist(p,b)-dist(q,b))[0];if(fr){fr.order={type:'build',target:b};fr.path=null;}}}
   const ORD=aiPers(T).ord?[...aiPers(T).ord,...AIORDER]:AIORDER;
@@ -1149,7 +1151,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   // strike aircraft per 8 ground units (1 to 3, by battle size) - it buys the aircraft first and the other buildings
   // save for it, the same way it saves for vehicles. Same money as everyone: it only spends it in a different order.
   const airN=mine.filter(e=>!e.isB&&e.s.dom==='air'&&e.kind!=='drone'&&!e.s.noAttack).length,wantAir=!!DIFF[T.ai.d??1].air&&!thin&&G.t>300&&done(id,'airfield')&&armyN>=10&&airN<Math.max(1,Math.min(Math.round(3*(G.bs||1)),Math.floor(armyN/8)));let aSv=0;
-  for(const cat of wantAir?['airfield','shipyard','factory','barracks']:wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
+  for(const cat of wantAir?['airfield','shipyard','factory','barracks']:wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift'&&k!=='ammot').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
     if(cat==='factory'){opts=enemyAir>=2?['aa','aa',...opts]:opts.filter(k=>k!=='aa'||srand()<.2);
       // Heavy-barrage doctrine (RU, CN, KP): keep a real artillery park - about a fifth of the army, 2 to 8 guns
       if(DC.barrage&&opts.includes('arty')&&unitCount(id,'arty')<Math.min(Math.round(8*(G.bs||1)),Math.max(2,Math.round(armyN*.2))))opts=['arty','arty','arty',...opts];}
@@ -1407,10 +1409,11 @@ function oilTarget(o){const ALL=new Array(16).fill(true);return{oil:o,isB:true,k
 /* ---------- Ammo & supply (Abdullah 2026-11-03) ----------
    Ground combat units carry u.am shots (max u.amx); every shot spends one. At 0 vehicles can't fire and infantry only
    plink with a sidearm (12% damage). Units refill steadily while inside a friendly supply circle: HQ, Supply Depot,
-   supply trucks (harvesters) and captured towns (c.ow). NO timers: a unit outside the area keeps fighting until its ammo is 0, only then it needs resupply (vehicles can't fire, infantry plink at 12%). Healing no longer depends on supply.
+   captured towns (c.ow) - and Ammo Trucks (kind 'ammot', see updAmmoTrucks); the money truck (harv) never refills ammo. NO timers: a unit outside the area keeps fighting until its ammo is 0, only then it needs resupply (vehicles can't fire, infantry plink at 12%). Healing no longer depends on supply.
    Towns: infantry garrisoned in a civilian building capture it (c.cp 0..1 toward team c.cpT); owner c.ow earns money
    and gets a supply circle. All of it runs on the host only; clients get am/supply as bits of the unit snapshot and town owners in teamGlobals. */
-const SUP_R={hq:380,depot:320,harv:230,town:230,base:170};   // base = any finished base building in Battle
+const SUP_R={hq:380,depot:320,town:230,base:170};   // the money truck (harv) is NOT a supply point any more: ammo comes from the Ammo Truck (kind 'ammot', AMMOT_*)
+const AMMOT_R=170,AMMOT_CAP=800,AMMOT_FILL=.12,AMMOT_RATE=.22,AMMOT_N=6;   /* Ammo Truck: serve radius, stock (shots), refill per second inside your area (fraction of stock), share of a unit's magazine given per second (~5 s to fill), units served at once */   // base = any finished base building in Battle
 /* Ammo rule (Abdullah 2026-11-13 20:06; ORCH note 20:18: now for BATTLE too): ammo is tracked in Conquest, Battle and Missions; Test range (G.sandbox) is unlimited with no badge. */
 function ammoOn(){return !!G&&!G.sandbox;}
 function hasAmmo(u){const s=u.s;return ammoOn()&&!!s&&!u.isB&&s.dom==='ground'&&s.dmg>0&&s.rof>0&&!s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker';}
@@ -1419,17 +1422,31 @@ function ammoInit(u){u.amx=ammoCap(u.s);u.am=u.amx;}
 function supplyPoints(){const N=G.teams.length,P=[];for(let i=0;i<N;i++)P.push([]);
   const add=(o,p)=>{for(let t=0;t<N;t++)if(ally(o,t))P[t].push(p);};
   for(const e of G.ents){if(e.dead||e.inTun||e.team==null||e.team<0||e.team>=N)continue;let r=0;
-    if(e.isB){if(e.built<1)continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot*(e.lcut?.5:1):(G.battle&&!G.grand&&!G.sandbox&&!['wall','gate','mine','tunnel'].includes(e.kind)?SUP_R.base:0);}else if(e.kind==='harv')r=SUP_R.harv;
+    if(e.isB){if(e.built<1)continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot*(e.lcut?.5:1):(G.battle&&!G.grand&&!G.sandbox&&!['wall','gate','mine','tunnel'].includes(e.kind)?SUP_R.base:0);}
     if(r)add(e.team,{x:e.x,y:e.y,r});}
   if(G.civ)for(const c of G.civ)if(!c.dead&&c.ow>=0&&c.ow<N&&!(c.ti>=0&&G.towns&&G.towns[c.ti]&&G.towns[c.ti].cut))add(c.ow,{x:c.x,y:c.y,r:(c.ti>=0&&G.towns&&G.towns[c.ti]&&G.conq&&!(G.towns[c.ti].dl>G.t)&&!G.towns[c.ti].sk)?SUP_R.town*.5:SUP_R.town});
   return P;}
+/* Ammo Truck (kind 'ammot'): u.am = its stock of shots, u.amx = capacity (same fields the unit bar and snapshots already carry). Inside your area it reloads; units of its side within AMMOT_R get refilled over ~5 s, up to AMMOT_N at once, the thirstiest first. A unit it serves counts as supplied (no out-of-ammo badge). An idle truck drives to the nearest thirsty unit outside your area and parks 150 behind it (toward home), or back to the nearest supply point to reload when it is low. Host only; no RNG. */
+function updAmmoTrucks(P,st){if(!ammoOn())return;
+  for(const t of G.ents){if(t.dead||t.isB||t.kind!=='ammot'||t.inTun)continue;if(t.am===undefined){t.amx=AMMOT_CAP;t.am=AMMOT_CAP;}
+    if(t.sup&&t.am<t.amx)t.am=Math.min(t.amx,t.am+t.amx*AMMOT_FILL*st);
+    const need=[];let thirsty=null,td=1e9;
+    for(const u of G.ents){if(u.dead||u.isB||u.inTun||u.team!==t.team||u===t||u.am===undefined||u.kind==='ammot'||!(u.amx>0))continue;const d=Math.hypot(u.x-t.x,u.y-t.y);
+      if(u.am<u.amx&&d<AMMOT_R)need.push(u);
+      if(!u.sup&&u.am<u.amx*.5&&d<1100&&d<td){td=d;thirsty=u;}}
+    if(t.am>0){for(const u of need)u.sup=1;need.sort((a,b)=>a.am/a.amx-b.am/b.amx);
+      for(const u of need.slice(0,AMMOT_N)){const give=Math.min(u.amx-u.am,u.amx*AMMOT_RATE*st,t.am);if(give<=0)break;u.am+=give;t.am-=give;}}
+    if(!t.order&&!t.path&&!t.target){const pts=P[t.team]||[];let b=null,bd=1e9;for(const p of pts){const d=Math.hypot(p.x-t.x,p.y-t.y);if(d<bd){bd=d;b=p;}}
+      if(t.am<t.amx*.2&&b&&!t.sup)setMove(t,b.x,b.y,'move');
+      else if(thirsty&&t.am>t.amx*.1&&td>AMMOT_R*.6){const H=hqOf(t.team),hx=H?H.x-thirsty.x:0,hy=H?H.y-thirsty.y:0,hl=Math.max(1,Math.hypot(hx,hy));setMove(t,thirsty.x+hx/hl*150,thirsty.y+hy/hl*150,'move');}}}}
 function updSupply(dt){if(G.lgd)lgMines(dt);G.supT=(G.supT||0)+dt;if(G.supT<.5)return;const st=G.supT;G.supT=0;const P=supplyPoints();
   for(const u of G.ents){if(u.dead||u.isB||u.inTun)continue;const pts=P[u.team];if(!pts)continue;let ins=false;for(const p of pts){if(Math.abs(p.x-u.x)<p.r&&Math.abs(p.y-u.y)<p.r&&Math.hypot(p.x-u.x,p.y-u.y)<p.r){ins=true;break;}}
     u.sup=ins?1:0;
     if(hasAmmo(u)){if(u.am===undefined)ammoInit(u);if(ins&&u.am<u.amx)u.am=Math.min(u.amx,u.am+u.amx*.07*st);}}
+  updAmmoTrucks(P,st);
   // low / empty warnings (once per 25 s per side, only when it matters)
   for(const T of G.teams){if(T.out||G.t-(T.amWarn??-99)<25)continue;let low=0,zero=0,n=0;for(const u of G.ents){if(u.team!==T.id||u.dead||u.isB||u.am===undefined)continue;n++;if(u.am<=0)zero++;else if(u.am<u.amx*.25)low++;}
-    if(n&&zero>=Math.max(2,n*.2)){T.amWarn=G.t;log(T.id,'Out of ammo! Pull back to a depot, HQ, supply truck or captured town.','bad');}else if(n&&low+zero>=Math.max(2,n*.3)){T.amWarn=G.t;log(T.id,'Running low on ammo - resupply near a depot, HQ or supply truck.','w');}}
+    if(n&&zero>=Math.max(2,n*.2)){T.amWarn=G.t;log(T.id,'Out of ammo! Pull back to your area or call an Ammo Truck.','bad');}else if(n&&low+zero>=Math.max(2,n*.3)){T.amWarn=G.t;log(T.id,'Running low on ammo - resupply in your area or send an Ammo Truck.','w');}}
   updTowns(st);}
 /* ---------- CONQUEST: towns, hamlets, tax, unrest, revolt (Abdullah 2026-11-04) ----------
    A TOWN is a city of the map (M.cities) and a HAMLET one of the small villages (M.hamlets); both own the civilian

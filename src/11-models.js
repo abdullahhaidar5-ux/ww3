@@ -2,7 +2,7 @@ let WALKSIGN=1;
 /* ================= ART ASSETS: real 3D models (Quaternius, Kenney, Zsky, KolosStudios, Alex Safayan, angelo raffaele Catalano, jeremy, Jarlan Perez via Poly Pizza) ================= */
 const MODELS={ready:false,proto:{},tinted:{},loading:null,flipX:{}};
 const MCFG={
-  tank:{m:'tank',fit:'z',size:38},harv:{m:'truck',fit:'z',size:34},dozer:{m:'truck',fit:'z',size:34,extra:'crane'},
+  tank:{m:'tank',fit:'z',size:38},harv:{m:'truck',fit:'z',size:34},ammot:{m:'truck',fit:'z',size:34},dozer:{m:'truck',fit:'z',size:34,extra:'crane'},
   mortar:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],extra:'mortar'},recon:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#4a5242',tk:.5},officer:{m:'soldier',fit:'y',size:15.7,tint:'#3d4a36',tk:.5},medic:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#e8e4da',tk:.35},
   commissar:{m:'soldier',fit:'y',size:15.7,tint:'#5b4a3a',tk:.5},sapper:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#6a5a3c',tk:.4},guer:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#4c5a3a',tk:.55},atk:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],tint:'#3c4434',tk:.5},
   idome:{m:'truck',fit:'z',size:36,extra:'samtruck'},ew:{m:'truck',fit:'z',size:35,extra:'dish'},cbr:{m:'truck',fit:'z',size:35,extra:'dish'},jeep:{m:'truck',fit:'z',size:26},atgm:{m:'truck',fit:'z',size:27,extra:'samtruck',tint:'#55603f',tk:.4},saka:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#a08a5c',tk:.5},raidlead:{m:'truck',fit:'z',size:28,extra:'mg'},
@@ -30,9 +30,9 @@ Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abr
 // China keeps the T-90, South Korea the Abrams-like K1 stand-in)
 Object.assign(RMAP.tank,{UA:'oplot',IR:'t72',KP:'t62',CU:'t55',TR:'leo2'});
 RMAP.arty={};RMAP.airlift={};RMAP.jeep={SA:'humvee'};RMAP.raidlead={DW:'hilux'};
-for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k]={};
-for(const f of WESTVEH){RMAP.arty[f]='g6';RMAP.airlift[f]='uh60';for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k][f]='m35';}
-for(const f of EASTVEH){if(f!=='RS'&&f!=='DW')RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
+for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k]={};
+for(const f of WESTVEH){RMAP.arty[f]='g6';RMAP.airlift[f]='uh60';for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]='m35';}
+for(const f of EASTVEH){if(f!=='RS'&&f!=='DW')RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
 // Faction-unique helicopters and warships (Objaverse / Sketchfab, CC BY, authors in the menu credits): Russia flies the Mi-28,
 // Egypt the Ka-52, Turkey, Pakistan and Iran an AH-1 Cobra-type gunship; Western navies a Type 45 destroyer (Germany an F123
 // frigate), Russia/China/North Korea/Ukraine/India/Pakistan/Cuba/Iran a Russian-style destroyer; the Shia nations'
@@ -892,6 +892,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
      fl.geometry.translate(-H*.375,0,0);fl.position.set(x,y0+H*.95+H*.82,z);fl.rotation.y=ax==='x'?(fwd>0?0:Math.PI):(fwd>0?-Math.PI/2:Math.PI/2);yaw.add(fl);o.userData.parts.pennant=fl;fl.userData.base=Float32Array.from(fl.geometry.attributes.position.array);}
     
     const m=mesh(B.geo());yaw.add(m);}}
+  if(e.kind==='ammot'){const B=Bld();B.box(17,8,15,-6,22,0,'#5d6048');B.box(18,1,16,-6,26.6,0,'#4c5039');for(const z of [-5,0,5])B.box(3,3,3,-15.5,20,z,'#8a6a3a');B.box(7,4,6,5,21,0,'#8a6a3a');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
   if(e.kind==='harv'){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}

@@ -15,6 +15,7 @@ const ENC_NOTE={
   tank:'Main battle tanks combine a stabilised high-velocity gun, thick composite armour and a powerful engine. They lead armoured assaults and break enemy lines, but need infantry and air-defence cover in towns and against anti-tank missiles.',
   arty:'Self-propelled guns and rocket launchers shell targets many kilometres away, then move before counter-battery fire arrives. Superb against massed troops and buildings, nearly helpless once the enemy reaches them.',
   aa:'Mobile air-defence vehicles carry radar-guided guns or short-range missiles to protect columns and bases from helicopters, jets and drones.',
+  ammot:'Ammo trucks follow the army: they top up the ammunition of friendly units close to them, carry a limited stock and reload inside your own area. Light armour, no weapon: keep them behind the front.',
   harv:'Supply trucks are the logistics backbone: fuel, ammunition and food move by road. Armies lose more equipment to broken supply than to enemy fire.',
   dozer:'Combat engineers build bridges, fortifications and camps and clear obstacles, often under fire. The heavy construction vehicle is how an army digs in and builds forward.',
   heli:'Attack helicopters hunt armour from behind hills and tree lines with guided missiles and cannon. Fast and flexible, they are vulnerable to air defence and massed small-arms fire.',

@@ -198,6 +198,21 @@ try {
     ck(am.cantFire !== false, 'ammo zone: an empty vehicle fired a shot: ' + JSON.stringify(am));
     ck(am.back && am.back.sup === 1 && am.back.am > 0, 'ammo zone: unit back inside your area did not refill: ' + JSON.stringify(am.back));
     ck(am.conqHas === true && am.bt === true && am.sb === false, 'ammo zone: Conquest and Battle track ammo (ORCH note 20:18), Test range must be unlimited: ' + JSON.stringify(am)); }
+  // AMMO TRUCK (Abdullah 2026-11-13 21:46 "Separate ammo truck"): the money truck (harv) never refills ammo; every nation builds an Ammo Truck (kind 'ammot') at the War Factory that refills units next to it from a limited stock.
+  { const at = await ev(() => { const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq'); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && hasAmmo(e)); if (!u || !hq || typeof addUnit !== 'function') return { err: 'no unit/hq' };
+      const allN = Object.keys(FACTIONS).every(f => roster(f).factory.includes('ammot') && stats(f, 'ammot').noAttack && stats(f, 'ammot').from === 'factory');
+      const step = () => { G.supT = 1; updSupply(0.01); }; const far = { x: hq.x + 1800, y: hq.y + 1800 };
+      if (u.am === undefined) ammoInit(u); u.x = far.x; u.y = far.y; u.am = 3;
+      const hv = addUnit(ME, 'harv', far.x + 20, far.y); step(); step(); const harvAm = u.am; const harvSup = u.sup;
+      const tr = addUnit(ME, 'ammot', far.x - 30, far.y); step(); const stock0 = tr.am, cap = tr.amx;
+      for (let i = 0; i < 12; i++) step(); const filled = u.am, sup = u.sup, stock1 = tr.am;
+      const noHarvPt = !supplyPoints()[ME].some(p => Math.abs(p.x - hv.x) < 1 && Math.abs(p.y - hv.y) < 1);
+      return { allN, harvAm, harvSup, stock0, cap, filled, amx: u.amx, sup, stock1, noHarvPt }; });
+    console.log('ammotruck', JSON.stringify(at));
+    ck(!at.err && at.allN, 'every nation must have an Ammo Truck (noAttack, from the War Factory): ' + JSON.stringify(at));
+    ck(!at.err && at.harvAm === 3 && at.harvSup === 0 && at.noHarvPt, 'the money truck (harv) must never refill ammo or count as a supply point: ' + JSON.stringify(at));
+    ck(!at.err && at.filled > 3 && at.stock1 < at.stock0 && at.stock0 === at.cap && at.sup === 1, 'an Ammo Truck must refill a nearby unit from its limited stock: ' + JSON.stringify(at));
+    ck(!/supply truck[^'"]{0,40}(refill|resupplies)|(refill|resupplies)[^'"]{0,40}supply truck/i.test(Object.entries(SRC).filter(([k]) => !k.startsWith('13')).map(([, v]) => v).join('\n')), 'text still says the supply truck refills ammo'); }
   await shot('conquest-ir');
   // Balance toggle (Abdullah 2026-11-06 21:31): Balanced must stay equal for everyone; Realistic must tier fire support
   // (superpower strikes come faster/harder and its vehicles are cheaper; a small power's strikes are weaker but its
