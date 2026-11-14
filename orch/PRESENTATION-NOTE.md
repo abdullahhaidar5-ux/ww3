@@ -24,3 +24,7 @@ Rebuild the bottom bar to LOOK and FEEL like the C&C Generals Zero Hour command 
 
 
 Reuse the existing HUD code; it must be one HUD. Readable from a normal PC distance. Before/after screenshots.
+
+## FINAL on hotkeys (Abdullah, Sat 09:14): hide the letters, KEEP the shortcuts
+
+Buttons show NO hotkey letters, but every keyboard shortcut keeps working; remove nothing from the key table. If an earlier note said to remove the shortcuts, ignore it.
