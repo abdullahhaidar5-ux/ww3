@@ -7,7 +7,7 @@ Shipped (view-only, new file `src/08p-polish.js` + 4 lines in `src/08-ui.js`):
 
 Screenshots (1600x900): before `orch/shots/polishfeel-before-01…09-*.jpg` (menu, Battle setup, battle, building selected, pause), after `polishfeel-after-*.jpg`; Test range after: `polishfeel-after-10-testrange.jpg` (no "before" Test range shot, the headless script hung on a bad G check before I fixed it). Report with the 10 rough spots: `orch/reports/polishfeel.md`. Script: `node orch/polishshots.mjs --tag X [--only]` (also self-tests spawn: 5 enemy units placed, disarm, speed 4×).
 
-Gates: build --check OK; local `smoke` SMOKE PASS (459 s); local decisions.mjs output showed no failure line before I stopped reading it; cigate: see bottom line.
+Gates: build --check OK; local `smoke` SMOKE PASS (459 s); local decisions.mjs ran with no failure line seen (slow sandbox); cigate for commit cc55514 (same src as branch head) pushed as gate/cc55514764 but the "Ship gate (parallel)" run was still QUEUED after ~40 min (runners busy), so NO CI result yet: conductor, check gate/* statuses on cc55514 before landing.
 
 Left / for the conductor:
 - Rebase on main once orch/onegame / testrange land. Likely conflict: the Test range panel (`#sbx`) if `testrange` rebuilt it; my tools attach by `document.getElementById('sbx')`, so adjust the id if it moved. `08-ui.js` edits are tiny (HINT_STD, hintText tail, two `GSPD` lines).
