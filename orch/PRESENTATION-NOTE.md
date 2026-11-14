@@ -72,3 +72,9 @@ NO selected-unit portrait or info panel in the bar. The bar is now ONLY: the min
 - At most one small line of text above the grid naming what is selected (e.g. "Construction Vehicle" or "3 tanks") is fine; no picture, no stats block.
 
 - Leftovers rule: remove the portrait code, its CSS and any tests for it.
+
+## CHANGE (Abdullah, Sat 09:23): "Move money and power to the center of the top"
+
+Money and power readouts leave the bar. They sit centred at the TOP of the game screen, in the existing top-centre readout strip (merge with it; do not add a second one), styled to match the new bar.
+
+The bottom bar is then only the minimap and the context grid, plus the one small "selected" line.
