@@ -1,0 +1,55 @@
+game servers configured but down (http://127.0.0.1:9)
+[3s] three pages loaded
+[4s] host lobby open, code f5dnkr
+[60s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+    [net battle start] host: {"t":0,"loading":true,"paused":true,"fp":{"tx":32,"rx":23,"txB":3282,"rxB":1650,"dropped":0},"slots":[{"k":1,"peer":"ww3p-r7l015et","seenAgo":972,"disc":0,"ai":false,"aiTook":false,"buf":0},{"k":2,"peer":"ww3p-p83ksu5d","seenAgo":811,"disc":0,"ai":false,"aiTook":false,"buf":0}],"sb":null,"ckOut":false}
+    [net battle start] client A: {"me":1,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-r7l015et","hostPeer":"ww3-f5dnkr","sb":false,"ck":false,"ents":0,"fp":{"tx":15,"rx":23,"txB":1165,"rxB":2308,"dropped":0},"trace":[]}
+    [net battle start] client B: {"me":2,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-p83ksu5d","hostPeer":"ww3-f5dnkr","sb":false,"ck":false,"ents":0,"fp":{"tx":13,"rx":15,"txB":996,"rxB":1510,"dropped":0},"trace":[]}
+    [net t=5s] host: {"t":5,"loading":false,"paused":false,"fp":{"tx":141,"rx":35,"txB":63594,"rxB":2924,"dropped":0},"slots":[{"k":1,"peer":"ww3p-r7l015et","seenAgo":496,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988},{"k":2,"peer":"ww3p-p83ksu5d","seenAgo":249,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988}],"sb":2,"ckOut":false}
+    [net t=5s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":5,"snapT":4.9,"rxAgo":9,"recon":false,"myPeer":"ww3p-r7l015et","hostPeer":"ww3-f5dnkr","sb":false,"ck":false,"ents":9,"fp":{"tx":21,"rx":74,"txB":1719,"rxB":24278,"dropped":0},"trace":[]}
+    [net t=5s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":5.5,"snapT":4.7,"rxAgo":11,"recon":false,"myPeer":"ww3p-p83ksu5d","hostPeer":"ww3-f5dnkr","sb":true,"ck":true,"ents":9,"fp":{"tx":18,"rx":73,"txB":1441,"rxB":39852,"dropped":0},"trace":[]}
+    [net t=10s] host: {"t":10,"loading":false,"paused":false,"fp":{"tx":246,"rx":57,"txB":127434,"rxB":9820,"dropped":0},"slots":[{"k":1,"peer":"ww3p-r7l015et","seenAgo":912,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076},{"k":2,"peer":"ww3p-p83ksu5d","seenAgo":283,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076}],"sb":2,"ckOut":false}
+    [net t=10s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":10,"snapT":10,"rxAgo":20,"recon":false,"myPeer":"ww3p-r7l015et","hostPeer":"ww3-f5dnkr","sb":false,"ck":false,"ents":11,"fp":{"tx":32,"rx":127,"txB":5173,"rxB":55634,"dropped":0},"trace":[]}
+    [net t=10s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":10.5,"snapT":10,"rxAgo":21,"recon":false,"myPeer":"ww3p-p83ksu5d","hostPeer":"ww3-f5dnkr","sb":true,"ck":true,"ents":12,"fp":{"tx":29,"rx":126,"txB":4883,"rxB":72416,"dropped":0},"trace":[]}
+    [net t=30s] host: {"t":30,"loading":false,"paused":false,"fp":{"tx":676,"rx":77,"txB":560998,"rxB":15137,"dropped":0},"slots":[{"k":1,"peer":"ww3p-r7l015et","seenAgo":574,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577},{"k":2,"peer":"ww3p-p83ksu5d","seenAgo":1,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577}],"sb":2,"ckOut":false}
+    [net t=30s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":30,"snapT":30,"rxAgo":10,"recon":false,"myPeer":"ww3p-r7l015et","hostPeer":"ww3-f5dnkr","sb":false,"ck":false,"ents":19,"fp":{"tx":42,"rx":329,"txB":8032,"rxB":235164,"dropped":0},"trace":[]}
+    [net t=30s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":30.5,"snapT":30,"rxAgo":11,"recon":false,"myPeer":"ww3p-p83ksu5d","hostPeer":"ww3-f5dnkr","sb":true,"ck":true,"ents":19,"fp":{"tx":39,"rx":354,"txB":7341,"rxB":326450,"dropped":0},"trace":[]}
+[219s] before: client A @1 min t=60s: host 115 entities, slot 1 sees 30 (own 30); its screen has 30; missing 0, extra 0, off-position 0, mismatched 0; credits host 123 client 123
+[220s] before: client B @1 min t=60s: host 115 entities, slot 2 sees 31 (own 31); its screen has 31; missing 0, extra 0, off-position 0, mismatched 0; credits host 316 client 316
+    trace client A (screenshot stall):  || now: client via=pjd ws=false rxAgo=263
+    trace client B (screenshot stall):  || now: client via=pjd ws=false rxAgo=264
+[235s] host leaves at t=120.2s; standby checkpoint from t=116.4s (40 KB, 122 entities); armies US 34, RU 29, CN 34
+    +0.6s client A: client reconnecting room=ww3-f5dnkr gen=0 (no room)
+[235s] client A noticed the host was gone after 0.6 s
+    +0.6s client B: client reconnecting room=ww3-f5dnkr gen=0 (no room)
+    +1.6s client A: client reconnecting room=f5dnkr-m1 gen=0 (no room)
+    +2.2s client B: client reconnecting room=ww3-f5dnkr-m1 gen=0
+    +2.4s client A: host room=f5dnkr-m1 gen=1
+[237s] client A is the new host after 2.6 s (room f5dnkr-m1, battle resumed from t=116.6s)
+    +3.3s client B: client reconnecting room=ww3-f5dnkr-m1 gen=1
+[238s] client B reconnected to the new host 3.4 s after the host left
+    +3.5s client B: client room=ww3-f5dnkr-m1 gen=1
+    trace client A: 0.0 clientReconnect | 0.3 join tc-f5dnkr | 1.4 join failed tc-f5dnkr: network | 1.4 promoteToHost | 1.4 join tc-f5dnkr-m1 | 1.6 joined tc-f5dnkr-m1 via undefined | 2.4 promoteToHost -> true | 2.4 clientReconnect done, mode host
+    trace client B: 0.0 clientReconnect | 0.3 join tc-f5dnkr | 1.5 join failed tc-f5dnkr: network | 2.0 join tc-f5dnkr-m1 | 2.1 joined tc-f5dnkr-m1 via pjd | 3.1 snapshot t=117.1 while reconnecting | 3.2 snapshot t=117.2 while reconnecting | 3.3 snapshot t=117.3 while reconnecting | 3.3 clientReconnect done, mode client
+[243s]   US (slot 0): 34/34 of its pre-takeover entities are on the new host, 34 in all; AI-run (took over)
+[243s]   RU (slot 1): 28/29 of its pre-takeover entities are on the new host, 28 in all; player-run
+[243s]   CN (slot 2): 32/34 of its pre-takeover entities are on the new host, 35 in all; player-run
+[244s] after: client B right after the takeover t=122s: host 120 entities, slot 2 sees 42 (own 35); its screen has 42; missing 0, extra 0, off-position 0, mismatched 0; credits host 25 client 25
+[248s] client B order after the takeover: 16/26 of its units moved on the new host
+[251s] old host's side after 45 game-s under the AI: build step 0 -> 0, 2 new entities, 0 in production, $182
+[252s] after: client B 45 game-s after the takeover t=168s: host 87 entities, slot 2 sees 45 (own 10); its screen has 45; missing 0, extra 0, off-position 0, mismatched 0; credits host 84 client 84
+peak memory (node + browser, summed RSS): 4375 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/f5dnkr?role=host&key=28yhxzz5rmql145mt9' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientA console warning: p2p: no direct connection (peer-unavailable), using the server relay
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/gc-f5dnkr?role=client&id=ww3p-q4uj5kcr' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientA console warning: p2p: server relay unavailable (network), trying the Nostr network
+  warn: clientB console warning: p2p: no direct connection (peer-unavailable), using the server relay
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/gc-f5dnkr?role=client&id=ww3p-j5n1zuxg' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MIGRATE PASS, game servers down (274s) — screenshots orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png (this run: orch/out/runs/20261114-041532-migrate/)
