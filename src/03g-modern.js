@@ -34,3 +34,10 @@ function aiModern(id,T,mine,en){if(G.t<240)return;
   const army=mine.filter(e=>!e.isB&&e.s.dom==='ground'&&!e.s.noAttack);if(army.length<4)return;
   if(T.pw.hack&&T.pw.hack.cd<=0&&T.ai.t%5===1){let tg=null,bd=700;for(const e of G.ents){if(!e.isB||e.dead||ally(e.team,id)||e.team<0||e.built<1||!MW.HACKABLE.includes(e.kind)||!seenBy(id,e))continue;const d=Math.min(...army.slice(0,6).map(u=>Math.hypot(u.x-e.x,u.y-e.y)));if(d<bd){bd=d;tg=e;}}if(tg)usePower(id,'hack',tg.x,tg.y);}
   if(T.pw.emp&&T.pw.emp.cd<=0&&T.ai.t%5===3){const V=G.ents.filter(e=>!e.dead&&!e.isB&&e.team>=0&&!ally(e.team,id)&&isVeh(e.s)&&seenBy(id,e));let best=null,bn=4;for(const v of V.slice(0,24)){let n=0;for(const w of V)if(Math.hypot(w.x-v.x,w.y-v.y)<190)n++;if(n>bn){bn=n;best=v;}}if(best)usePower(id,'emp',best.x,best.y);}}
+/* ---- signature unit hooks (lane L1; data rows in 01d-signatures.js) ---- */
+{const _sm=specialMult;specialMult=function(e,wpn,src){let m=_sm(e,wpn,src);
+  if(src&&src.s&&src.s.tunAmb&&src.ambT>G.t)m*=SIG.tunAmbK;                       // RS Kornet team: first shots out of a tunnel hit double
+  const s=e.s;if(!e.isB&&s){
+    if(s.aps&&wpn==='at'&&!(src&&src.s&&src.s.dom==='air')&&G.t>=(e.apsT||0)){e.apsT=G.t+s.aps;m*=.05;FXE('boom',[e.x|0,e.y|0,8,0]);}   // APS soaks one anti-tank hit per 8 s
+    if(s.mass){let n=0;for(const v of G.ents)if(v!==e&&!v.dead&&!v.isB&&v.team===e.team&&v.s&&v.s.mass&&Math.hypot(v.x-e.x,v.y-e.y)<SIG.massR&&++n>=SIG.massN)break;if(n>=SIG.massN)m*=SIG.massK;}}
+  return m;};}

@@ -5163,7 +5163,7 @@ for(const k in HEROES){const F=FACTIONS[k];if(!F)continue;F.units=F.units||{};F.
 // Electronic warfare beyond RU: nations with a real EW arm can also build the jamming/spoof truck from the War Factory (same stats, max 2, General rank gate in the UI).
 for(const [k,nm] of [['US','AN/ULQ EW Vehicle'],['CN','PLA EW Jamming Truck'],['IR','IRGC EW Truck'],['IL','IDF EW Truck']]){const F=FACTIONS[k];if(!F||F.special==='ew')continue;F.extra=[...(F.extra||[]),'ew'];F.units=F.units||{};F.units.ew=Object.assign({},F.units.ew||{},{name:nm});}
 const SPECIAL_TIP={atgm:()=>'Long-range wire-guided anti-tank missiles: outranges tanks, but thin-skinned. Keep it behind your armor.',saka:()=>'Elite fast-moving commandos with grenades that hurt clustered infantry and garrisons.',hero:u=>u.mark?'Stealthed commando. Plants charges on buildings, and every target it hits is laser-marked: all your forces do 25% more damage to it for 6 seconds.':u.demo?'Stealthed commando. Right-click an enemy building to plant explosives.':'Stealthed sniper. Picks off infantry from very long range.',
-  mortar:u=>u.ripple?'Hidden rocket launchers: fire a ripple of 4 rockets that blankets an area, then reload. Hide when standing still. Cannot fire at close range.':u.droneSpot?'Indirect fire from long range, devastating against infantry in the open. Drone-guided: 40% more range against targets a friendly drone can see. Cannot fire at close range.':'Indirect fire from long range: devastating against infantry in the open. Cannot fire at close range.',recon:u=>'Unarmed, hides when still. Sees 520 meters and marks every enemy near it: your forces do 25% more damage to marked targets.',
+  mortar:u=>u.ripple?'Hidden rocket launchers: fire a ripple of '+u.ripple+' rockets that blankets an area, then reload. Hide when standing still. Cannot fire at close range.':u.droneSpot?'Indirect fire from long range, devastating against infantry in the open. Drone-guided: 40% more range against targets a friendly drone can see. Cannot fire at close range.':'Indirect fire from long range: devastating against infantry in the open. Cannot fire at close range.',recon:u=>'Unarmed, hides when still. Sees 520 meters and marks every enemy near it: your forces do 25% more damage to marked targets.',
   officer:u=>'Nearby infantry do 20% more damage and can\'t be suppressed.',medic:u=>'Heals nearby infantry, and kneels beside wounded soldiers (red-cross icon, 32 s before they bleed out) to get them back on their feet in 4 seconds with their veterancy. '+(u.revive?'Also heals vehicles, and about a third of infantry killed by blasts near the medics return 8 seconds later.':'Also heals nearby vehicles.'),commissar:u=>'Nearby infantry fire 25% faster and can\'t be suppressed.',
   sapper:u=>'Lays hidden anti-tank mines when standing still (up to 8). Enemy vehicles that drive over them are badly damaged.',guer:u=>'Hides when standing still; the first volley from hiding does double damage.',
   atk:u=>u.finisher?'Long-range anti-tank team that hides when standing still. Tank hunters: 40% more damage to vehicles already below half health.':'Long-range anti-tank team that hides when standing still.',idome:u=>'Shoots down incoming shells, rockets and missiles: friendly units and buildings nearby take 55% less damage from them.',
@@ -5853,6 +5853,21 @@ const MW_NAME={hack:{US:'Cyber Command Strike',TR:'Siber Harekat',IL:'Network In
 // GPS jamming: every nation can build the EW Jamming Truck (it already jams drones and guided weapons); the nation-flavoured names stay
 {const NM={TR:'Elektronik Harp Aracı',UA:'EW Jamming Vehicle',SA:'EW Jamming Truck',AE:'EW Jamming Truck',PK:'EW Jamming Truck',IN:'EW Jamming Truck',KP:'Jamming Truck',KR:'EW Jamming Truck',EG:'EW Jamming Truck',CU:'Jamming Truck',RS:'Mountain EW Truck',DW:'Desert EW Truck',EU:'EW Jamming Truck',FR:'EW Jamming Truck',DE:'EW Jamming Truck'};
   for(const k of Object.keys(FACTIONS)){const F=FACTIONS[k];if(!F||F.special==='ew'||(F.extra||[]).includes('ew'))continue;F.extra=[...(F.extra||[]),'ew'];F.units=F.units||{};F.units.ew=Object.assign({},F.units.ew||{},{name:NM[k]||'EW Jamming Truck'});}}
+/* ---- SIGNATURE UNITS (lane L1, Abdullah 2026-11-14; orch/reports/factiondesign.md) ----
+   Small behaviours added to EXISTING unit slots, not new systems. Each has a giveback; hooks live at the end of 03g-modern.js.
+   RS  Kornet Ambush Team: first shot after leaving a tunnel hits DOUBLE for 5 s (the shared tunnel ambush is +50% for 3 s).
+   IL, DE  Merkava Mk4M / Leopard 2A8 with active protection (APS): shrugs off one anti-tank hit per 8 s; costs 8% more.
+   RU, CN  Mass armour: a tank with 2+ friendly tanks within 120 m takes 10% less damage.
+   KP  KN-25 240 mm Rocket Battery: 12-rocket ripple from the War Factory, long reload, max 3, General rank gate (like the EW truck). */
+const SIG={apsCd:8,massR:120,massN:2,massK:.9,tunAmbT:5,tunAmbK:2/1.5,krbRank:SPEC_RANK};
+BASE.krb=Object.assign({},BASE.arty,{name:'KN-25 240 mm Rocket Battery',rocket:true,ripple:12,rng:400,minr:110,dmg:9,splash:40,rof:9,hp:240,cost:900,time:14,limit:3,desc:'Massed 240 mm rockets: a long ripple of 12 that blankets an area, then a slow reload. Fragile, so hide it behind your lines.'});
+{const f=(k,fn)=>{const F=FACTIONS[k];if(F){F.units=F.units||{};fn(F.units);}};
+  f('RS',U=>{U.at=Object.assign({},U.at||{},{name:'Kornet Ambush Team',tunAmb:1});});
+  for(const k of ['IL','DE'])f(k,U=>{const b=Object.assign({},BASE.tank,U.tank||{});U.tank=Object.assign({},U.tank||{},{aps:SIG.apsCd,name:k==='IL'?'Merkava Mk4M (APS)':'Leopard 2A8 (APS)',cost:Math.round(b.cost*1.08/25)*25});});
+  for(const k of ['RU','CN'])f(k,U=>{U.tank=Object.assign({},U.tank||{},{mass:1});});
+  f('KP',U=>{U.krb={};});
+  if(FACTIONS.KP)FACTIONS.KP.extra=[...(FACTIONS.KP.extra||[]),'krb'];}
+SPECIAL_TIP.krb=u=>'Massed 240 mm rockets: a ripple of '+(u.ripple||12)+' that blankets an area, then a slow reload. Fragile; keep it behind your lines. Needs General rank.';
 /* ================= MAP: sea channel, bridges, grid, pathfinding ================= */
 const COSB=0.894,BT=[0.894,0.447],BN=[-0.447,0.894];
 /* Maps: each defines water features (rivers, lakes), bridges, base slots (in fill order) and a symmetry used to place supply fairly.
@@ -7267,7 +7282,7 @@ function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],
 // Fields units and buildings pick up as the battle runs, declared (as undefined: same meaning as missing) when each is
 // made, so every unit has the same shape. Units growing fields in different orders gave the engine dozens of shapes,
 // and each new one threw away the compiled code of the hot loops (~80 times a game-minute): 10-30 ms hitches.
-const U_LATE='gr,habT,insT,ordT,hambT,rlyT,am,amx,sup,supT,amW,fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,mz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,cbpT,fl,low,_dv,_dvT,_dvTg,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,flT,_fc,cvRes,amb,spT,landed,wxw,toT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,_dv,_dvT,dead'.split(',');
+const U_LATE='gr,habT,insT,ordT,hambT,apsT,rlyT,am,amx,sup,supT,amW,fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,mz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,cbpT,fl,low,_dv,_dvT,_dvTg,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,flT,_fc,cvRes,amb,spT,landed,wxw,toT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,_dv,_dvT,dead'.split(',');
 function addUnit(team,kind,x,y){const T=G.teams[team],s0=stats(T.fac,kind),sm=kind===T.F.special?specMult(T):1,s=sm>1?Object.assign({},s0,{hp:Math.round(s0.hp*sm),dmg:s0.dmg*sm,name:s0.name+(sm>=1.4?' (Elite)':' (Veteran)')}):s0;const a=baseFacing(team);
   const u={id:G.nid++,isB:false,team,kind,s,x,y,ang:a,va:a,tang:a,hp:s.hp,max:s.hp,r:s.r,cd:0,order:null,target:null,lastHit:-99,lastFire:-99,state:'go',cargo:0,xp:0,rank:0,ammo:s.ammo||0,vs:new Array(G.teams.length).fill(false)};
   for(const k of U_LATE)u[k]=undefined;
@@ -7407,7 +7422,7 @@ function updDozer(u,dt){u.building=false;const o=u.order;
 const MOVE={inf:[9,140],at:[9,140],hacker:[9,140],hero:[10,160],harv:[2.2,40],dozer:[2.2,40],tank:[1.7,34],aa:[2.1,42],arty:[1.8,32],boat:[1.6,40],ship:[.55,10],heli:[2.3,55],drone:[3,80]};
 // Vehicle handling: tracked vehicles pivot on the spot, wheeled ones need speed to turn (a turning circle) and slow
 // into tight corners; everything ground-based labours uphill and runs a little faster downhill.
-const WHEELED=new Set(['harv','dozer','jeep','ew','cbr','raidlead','idome','aa']);
+const WHEELED=new Set(['harv','dozer','jeep','ew','krb','cbr','raidlead','idome','aa']);
 function isWheeled(u){const s=u.s;return WHEELED.has(u.kind)||(u.kind==='arty'&&s.rocket)||/Technical/.test(s.name||'');}
 // Fixed-wing flight (Shahed-type drones): they never stop or hover - they hold cruise speed, turn in smooth arcs
 // limited by bank angle, and tighten the turn only in the final dive onto a target.
@@ -8491,7 +8506,7 @@ function unloadTransport(tr){const C=tr.cargo||[];if(!C.length)return;const dom=
 function fortUnits(b){return b.gar||(b.gar=[]);}
 // The Mountain Fortress is standalone: it keeps its own garrison (FORT_CAP), apart from the shared tunnel network
 function enterTunnel(u,b){const f=b&&b.kind==='fort';const T=G.teams[u.team],L=f?fortUnits(b):T.tun,cap=f?FORT_CAP:tunCap(u.team);if(L.length>=cap){u.order=null;log(u.team,f?`The Mountain Fortress is full (${cap} units).`:`The tunnel network is full (${cap} units).`,'w');return;}u.order=null;u.target=null;u.inTun=true;G.byId.delete(u.id);L.push(u);}
-function unloadTunnel(b){const f=b.kind==='fort';const T=G.teams[b.team];const L=f?fortUnits(b):T.tun;const n=L.length;if(!n)return;L.forEach((u,i)=>{const a=i/n*6.283+(f?(i*.37)%.3:Math.random()*.3),r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;u.ambT=G.t+3;G.ents.push(u);G.byId.set(u.id,u);});
+function unloadTunnel(b){const f=b.kind==='fort';const T=G.teams[b.team];const L=f?fortUnits(b):T.tun;const n=L.length;if(!n)return;L.forEach((u,i)=>{const a=i/n*6.283+(f?(i*.37)%.3:Math.random()*.3),r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;u.ambT=G.t+(u.s.tunAmb?SIG.tunAmbT:3);G.ents.push(u);G.byId.set(u.id,u);});
   const out=L.slice();if(f)b.gar=[];else T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the ${f?'Mountain Fortress':'tunnel'}.`,'g');return out;}
 function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
 function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,t:0,next:1e9};return;}
@@ -9936,6 +9951,13 @@ function aiModern(id,T,mine,en){if(G.t<240)return;
   const army=mine.filter(e=>!e.isB&&e.s.dom==='ground'&&!e.s.noAttack);if(army.length<4)return;
   if(T.pw.hack&&T.pw.hack.cd<=0&&T.ai.t%5===1){let tg=null,bd=700;for(const e of G.ents){if(!e.isB||e.dead||ally(e.team,id)||e.team<0||e.built<1||!MW.HACKABLE.includes(e.kind)||!seenBy(id,e))continue;const d=Math.min(...army.slice(0,6).map(u=>Math.hypot(u.x-e.x,u.y-e.y)));if(d<bd){bd=d;tg=e;}}if(tg)usePower(id,'hack',tg.x,tg.y);}
   if(T.pw.emp&&T.pw.emp.cd<=0&&T.ai.t%5===3){const V=G.ents.filter(e=>!e.dead&&!e.isB&&e.team>=0&&!ally(e.team,id)&&isVeh(e.s)&&seenBy(id,e));let best=null,bn=4;for(const v of V.slice(0,24)){let n=0;for(const w of V)if(Math.hypot(w.x-v.x,w.y-v.y)<190)n++;if(n>bn){bn=n;best=v;}}if(best)usePower(id,'emp',best.x,best.y);}}
+/* ---- signature unit hooks (lane L1; data rows in 01d-signatures.js) ---- */
+{const _sm=specialMult;specialMult=function(e,wpn,src){let m=_sm(e,wpn,src);
+  if(src&&src.s&&src.s.tunAmb&&src.ambT>G.t)m*=SIG.tunAmbK;                       // RS Kornet team: first shots out of a tunnel hit double
+  const s=e.s;if(!e.isB&&s){
+    if(s.aps&&wpn==='at'&&!(src&&src.s&&src.s.dom==='air')&&G.t>=(e.apsT||0)){e.apsT=G.t+s.aps;m*=.05;FXE('boom',[e.x|0,e.y|0,8,0]);}   // APS soaks one anti-tank hit per 8 s
+    if(s.mass){let n=0;for(const v of G.ents)if(v!==e&&!v.dead&&!v.isB&&v.team===e.team&&v.s&&v.s.mass&&Math.hypot(v.x-e.x,v.y-e.y)<SIG.massR&&++n>=SIG.massN)break;if(n>=SIG.massN)m*=SIG.massK;}}
+  return m;};}
 /* ---------- ECONOMY, part 1 - earning and towns (branch orch/economy1; Abdullah 2026-11-05 19:04) ----------
    Builds on the Conquest towns (03-sim "CONQUEST: towns"), roads/convoys/ports (03c-logistics) and the oil/hamlet placement; adds:
    1 TRADE CARAVANS  two of your towns joined by a road network you hold -> civilian trucks shuttle between them, each leg pays a
@@ -10695,7 +10717,7 @@ function meGeo(B,kp,tc,fac){const C=ME_C;let K;
     case 'uplink:door':B.box(18,2,36,0,0,0,'#9d978a');B.box(2,2.2,36,8,0,0,'#4a4639');B.box(14,.3,32,0,1.1,0,'#a89f8a');break;
     default:return false;}
   return true;}
-const GEO_ALIAS={champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',cbr:'aa',jeep:'aa',raidlead:'aa'};
+const GEO_ALIAS={champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',krb:'arty',cbr:'aa',jeep:'aa',raidlead:'aa'};
 function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];const key=kind+fac+team.color+part;if(GEO[key])return GEO[key];const tc=team.color,hc=camo(team),dk='#2b2d26',mt='#55574e',cn='#9a988c',cl='#7d7c70';const B=Bld();let s=FACTIONS[fac].units[kind]||{};
   if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=B.geo();
   switch(kind+':'+part){
@@ -13438,7 +13460,7 @@ function fitCols(pn){const up=matchMedia('(max-width:560px),(max-width:760px) an
 const PHONE_NM={'Hetman Sahaidachny Frigate':'Sahaidachny Frigate'}; // phones only, when even the smallest font can't fit the full name (the tooltip keeps it)
 addEventListener('resize',()=>{clearTimeout(fitBtnNames.t);fitBtnNames.t=setTimeout(fitBtnNames,150);});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(barMin())barMin(false);showTab(b.dataset.tab);});
-function specLock(T,k){return k==='champ'?T.rank<HERO_RANK:(k===T.F.special||k==='ew')&&T.rank<SPEC_RANK;}
+function specLock(T,k){return k==='champ'?T.rank<HERO_RANK:(k===T.F.special||k==='ew'||k==='krb')&&T.rank<SPEC_RANK;}
 // the full text of a button (what it does, what it needs, what it counters) lives in data-tip and shows in the command
 // tooltip (hover with a mouse; tap or long-press on a touch screen) instead of on the button itself
 function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null){const c=b.querySelector('.c');if(c.textContent!==String(o.cost)){c.textContent=o.cost;if(!b.hidden&&b.dataset.tab===TAB)fitText(c,PHONE_BAR&&PHONE_BAR.matches?7.5:8.5);}}b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.classList.toggle('rdy',!!o.rdy);const t=o.title||'';if(b.dataset.tip!==t){b.dataset.tip=t;b.setAttribute('aria-label',[b.dataset.nm,b.dataset.desc,t].filter(Boolean).join('. '));}if(CTIP.b===b&&CTIP.sig!==(CTIP.sig=b.id+'|'+b.dataset.tip+'|'+b.querySelector('.c').textContent+'|'+b.querySelector('.q').textContent))ctipFill(b);}
@@ -13510,7 +13532,7 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}try{grandUi();}catch(e)
   else if(s.length){const c={};for(const e of s)c[e.s.name]=(c[e.s.name]||0)+1;b.textContent=`${s.length} selected`;sp.textContent=' '+Object.entries(c).map(([n,v])=>`${v}× ${n}`).join(' · ');}
   else{sp.textContent=TOUCHUI?'Tap a unit or building to select it. Double-tap a unit to select all of that type on screen.':'Click to select units or a building. Double-click selects all of a type on screen.';}
   if(s.length===1&&!s[0].isB&&s[0].aband)tip.textContent=ally(s[0].team,ME)?'Abandoned - the crew bailed out. Select infantry and right-click it to re-crew it before the enemy captures it.':'Abandoned enemy vehicle - select infantry and right-click it to capture it.';
-  if(s.length===1&&!s[0].isB&&!s[0].aband&&SPECIAL_TIP[s[0].kind]&&(s[0].kind===G.teams[s[0].team].F.special||s[0].kind==='ew'))tip.textContent=SPECIAL_TIP[s[0].kind](s[0].s);
+  if(s.length===1&&!s[0].isB&&!s[0].aband&&SPECIAL_TIP[s[0].kind]&&(s[0].kind===G.teams[s[0].team].F.special||s[0].kind==='ew'||s[0].kind==='krb'))tip.textContent=SPECIAL_TIP[s[0].kind](s[0].s);
   if(s.length===1&&!s[0].isB&&!tip.textContent&&G.teams[s[0].team])try{const e=s[0],mine=ally(e.team,ME),by=mine?null:matchBeaters(G.teams[ME].fac,e.s);tip.textContent=[mine?matchText(G.teams[e.team].fac,e.kind,foeFac()):by.length?'Beaten by your '+by.slice(0,3).map(x=>x.n).join(', '):'',mine?UNOTE[e.kind]||UNOTE[e.s.cls]:''].filter(Boolean).join(' · ');}catch(_){}
   {const ms=s.filter(e=>!e.isB).map(moraleOf).filter(Boolean);if(ms.length){const avg=ms.reduce((a,m)=>a+m.v,0)/ms.length,fl=ms.every(m=>m.st==='fearless'),ls=ms.filter(m=>m.st==='last').length,rt=ms.filter(m=>m.st==='routing').length;const T0=G.teams[s[0].team],why=NOBREAK[T0.fac]?'never break':T0.clr?'Ayatollah':(T0.mart||0)>G.t?'martyrdom':'fervor';const st=fl?'fearless':ls>ms.length/2?'last':rt>ms.length/2?'routing':avg>.66?'steady':avg>.35?'shaken':'breaking';
     const mb=document.createElement('div');mb.className='morale';mb.innerHTML=`<span class="ml">Morale</span><span class="mbar"><i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i></span><span class="mt" style="color:${MOR_COL[st]}">${fl?'Fearless ('+why+')':MOR_TXT[st]+(st==='last'?'':' '+Math.round(avg*100)+'%')}${rt&&!fl?' · '+rt+' routing':''}${ls&&st!=='last'?' · '+ls+' last stand':''}</span>`;
@@ -17796,7 +17818,7 @@ for(const T of [VO_MAP,VOR,VOH,RADT]){if(T.EU){T.FR=T.EU;T.DE=T.EU;}}
 /* Abdullah 2026-11-07 19:54 "Iraqis have a British accent": nations without their own recorded pack fell back to the browser's speech voice, which is English on most PCs. Borrow the nearest recorded native-language pack instead (same language family / dialect area) until each gets its own. */
 {const VO_ALIAS={IQ:'SA',RV:'DW',SY:'RS',JO:'RS',OB:'RS',BI:'SA',OM:'SA',KW:'SA',LY:'EG',SD:'EG',DZ:'EG',MA:'EG',AZ:'TR',KZ:'RU'};for(const T of [VO_MAP,VOR,VOH,RADT])for(const k in VO_ALIAS)if(!T[k]&&T[VO_ALIAS[k]])T[k]=T[VO_ALIAS[k]];for(const k in VO_ALIAS)if(!VO_SHEET[k])VO_SHEET[k]=VO_ALIAS[k];}
 // Role voices (2026-11-03): every unit type speaks its own lines. Unit kind -> voice role; clips live in vo/CODE_r.mp3 (VOR above).
-const VO_ROLE={inf:'inf',at:'at',atk:'at',atgm:'at',tank:'tank',hero:'elite',saka:'elite',guer:'elite',recon:'elite',hacker:'elite',aa:'veh',arty:'veh',mortar:'veh',idome:'veh',ew:'veh',cbr:'veh',jeep:'veh',raidlead:'veh',heli:'pilot',jet:'pilot',airlift:'pilot',drone:'pilot',boat:'navy',ship:'navy',lander:'navy',dozer:'eng',harv:'eng',sapper:'eng',medic:'eng',cleric:'leader',officer:'leader',commissar:'leader'};
+const VO_ROLE={inf:'inf',at:'at',atk:'at',atgm:'at',tank:'tank',hero:'elite',saka:'elite',guer:'elite',recon:'elite',hacker:'elite',aa:'veh',arty:'veh',mortar:'veh',idome:'veh',ew:'veh',krb:'veh',cbr:'veh',jeep:'veh',raidlead:'veh',heli:'pilot',jet:'pilot',airlift:'pilot',drone:'pilot',boat:'navy',ship:'navy',lander:'navy',dozer:'eng',harv:'eng',sapper:'eng',medic:'eng',cleric:'leader',officer:'leader',commissar:'leader'};
 const VORB={},VORP={},VORL={};
 function voRLoad(fac){if(!AU.ctx||!VOR[fac]||VORB[fac])return;VORB[fac]='loading';fetch('vo/'+(VO_SHEET[fac]||fac)+'_r.mp3?v=1').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{VORB[fac]=buf;}).catch(e=>{VORB[fac]='fail';});}
 function voRPlay(fac,kind){const buf=VORB[fac],M=VOR[fac];if(!buf||typeof buf==='string'||!M||kind>2||!auOn()||!G||!G.sel)return false;const us=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(!us.length)return false;

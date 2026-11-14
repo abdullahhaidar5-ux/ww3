@@ -99,7 +99,7 @@ function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],
 // Fields units and buildings pick up as the battle runs, declared (as undefined: same meaning as missing) when each is
 // made, so every unit has the same shape. Units growing fields in different orders gave the engine dozens of shapes,
 // and each new one threw away the compiled code of the hot loops (~80 times a game-minute): 10-30 ms hitches.
-const U_LATE='gr,habT,insT,ordT,hambT,rlyT,am,amx,sup,supT,amW,fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,mz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,cbpT,fl,low,_dv,_dvT,_dvTg,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,flT,_fc,cvRes,amb,spT,landed,wxw,toT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,_dv,_dvT,dead'.split(',');
+const U_LATE='gr,habT,insT,ordT,hambT,apsT,rlyT,am,amx,sup,supT,amW,fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,mz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,cbpT,fl,low,_dv,_dvT,_dvTg,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,flT,_fc,cvRes,amb,spT,landed,wxw,toT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,_dv,_dvT,dead'.split(',');
 function addUnit(team,kind,x,y){const T=G.teams[team],s0=stats(T.fac,kind),sm=kind===T.F.special?specMult(T):1,s=sm>1?Object.assign({},s0,{hp:Math.round(s0.hp*sm),dmg:s0.dmg*sm,name:s0.name+(sm>=1.4?' (Elite)':' (Veteran)')}):s0;const a=baseFacing(team);
   const u={id:G.nid++,isB:false,team,kind,s,x,y,ang:a,va:a,tang:a,hp:s.hp,max:s.hp,r:s.r,cd:0,order:null,target:null,lastHit:-99,lastFire:-99,state:'go',cargo:0,xp:0,rank:0,ammo:s.ammo||0,vs:new Array(G.teams.length).fill(false)};
   for(const k of U_LATE)u[k]=undefined;
@@ -239,7 +239,7 @@ function updDozer(u,dt){u.building=false;const o=u.order;
 const MOVE={inf:[9,140],at:[9,140],hacker:[9,140],hero:[10,160],harv:[2.2,40],dozer:[2.2,40],tank:[1.7,34],aa:[2.1,42],arty:[1.8,32],boat:[1.6,40],ship:[.55,10],heli:[2.3,55],drone:[3,80]};
 // Vehicle handling: tracked vehicles pivot on the spot, wheeled ones need speed to turn (a turning circle) and slow
 // into tight corners; everything ground-based labours uphill and runs a little faster downhill.
-const WHEELED=new Set(['harv','dozer','jeep','ew','cbr','raidlead','idome','aa']);
+const WHEELED=new Set(['harv','dozer','jeep','ew','krb','cbr','raidlead','idome','aa']);
 function isWheeled(u){const s=u.s;return WHEELED.has(u.kind)||(u.kind==='arty'&&s.rocket)||/Technical/.test(s.name||'');}
 // Fixed-wing flight (Shahed-type drones): they never stop or hover - they hold cruise speed, turn in smooth arcs
 // limited by bank angle, and tighten the turn only in the final dive onto a target.
@@ -1323,7 +1323,7 @@ function unloadTransport(tr){const C=tr.cargo||[];if(!C.length)return;const dom=
 function fortUnits(b){return b.gar||(b.gar=[]);}
 // The Mountain Fortress is standalone: it keeps its own garrison (FORT_CAP), apart from the shared tunnel network
 function enterTunnel(u,b){const f=b&&b.kind==='fort';const T=G.teams[u.team],L=f?fortUnits(b):T.tun,cap=f?FORT_CAP:tunCap(u.team);if(L.length>=cap){u.order=null;log(u.team,f?`The Mountain Fortress is full (${cap} units).`:`The tunnel network is full (${cap} units).`,'w');return;}u.order=null;u.target=null;u.inTun=true;G.byId.delete(u.id);L.push(u);}
-function unloadTunnel(b){const f=b.kind==='fort';const T=G.teams[b.team];const L=f?fortUnits(b):T.tun;const n=L.length;if(!n)return;L.forEach((u,i)=>{const a=i/n*6.283+(f?(i*.37)%.3:Math.random()*.3),r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;u.ambT=G.t+3;G.ents.push(u);G.byId.set(u.id,u);});
+function unloadTunnel(b){const f=b.kind==='fort';const T=G.teams[b.team];const L=f?fortUnits(b):T.tun;const n=L.length;if(!n)return;L.forEach((u,i)=>{const a=i/n*6.283+(f?(i*.37)%.3:Math.random()*.3),r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;u.ambT=G.t+(u.s.tunAmb?SIG.tunAmbT:3);G.ents.push(u);G.byId.set(u.id,u);});
   const out=L.slice();if(f)b.gar=[];else T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the ${f?'Mountain Fortress':'tunnel'}.`,'g');return out;}
 function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
 function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,t:0,next:1e9};return;}
