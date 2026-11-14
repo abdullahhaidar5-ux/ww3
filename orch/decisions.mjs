@@ -51,6 +51,23 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/function condUI\(/.test(u) && /function sbCond\(/.test(u), 'weathergfx: the setup or Test range Conditions picker is gone from 08-ui.js');
   ck(/const GFX_PRESETS=\[\['low','Low'.*\['auto','Medium'.*\['high','High'.*\['ultra','Ultra'/.test(u), 'weathergfx: Settings graphics row is not Low / Medium / High / Ultra any more');
   ck(!/wxRandIdx\(G\.seed\)===4/.test(s), 'weathergfx: the old "Random = day or night only" rule is back in newGame'); }
+// battlerules2 (Abdullah 2026-11-13 21:28): realistic superweapons only, splash-only friendly fire, Brutal AI never cheats.
+{ const game = Object.entries(SRC).filter(([f]) => !f.startsWith('13')).map(([, t]) => t).join('\n');
+  // 1. no nuclear / chemical / biological weapon anywhere in the game code or data (names, text, effects)
+  const bad = game.match(/\b(nuke|nukes|nuclear|atomic|warhead yield|chemical weapon|bioweapon|biological weapon|sarin|anthrax|nerve agent|mustard gas|dirty bomb|radiological)\b/gi);
+  ck(!bad, 'no nuclear/chemical/biological weapons (Abdullah 2026-11-13): found ' + (bad && [...new Set(bad)].join(', ')));
+  ck(/SW_NAME=\{/.test(SRC['01-data.js']) && !/nuc|chem|bio/i.test((SRC['01-data.js'].match(/SW_NAME=\{[^}]*\}/) || [''])[0]), 'Strike Center names (SW_NAME) must exist and be conventional');
+  // 2. splash-only friendly fire: explode() may hurt allied UNITS at reduced strength; direct fire never reaches friendlies
+  const ex = (SRC['03-sim.js'].match(/function explode\([^]*?\n  if\(G\.civAt\)/) || [''])[0];
+  ck(/FF_SPLASH=\.5/.test(SRC['03-sim.js']) && /const fr=ally\(e\.team,team\)/.test(ex) && /!e\.isB/.test(ex) && /if\(fr\)m\*=FF_SPLASH/.test(ex), 'splash-only friendly fire: explode() hurts allied units at FF_SPLASH (50%), never buildings');
+  const dir = (SRC['03-sim.js'].match(/function updProj[^]*?\n(?=function )/) || [''])[0];
+  ck(!/ally\([^)]*\)\s*\)?\s*\{?\s*applyDmg/.test(dir), 'bullets must never hit friendlies');
+  // 3. Brutal AI = sharper tactics only: same income as Hard, no money/vision/cost bonus anywhere on the difficulty rows
+  const row = (SRC['03-sim.js'].match(/DIFF\.push\(Object\.assign\(\{\},DIFF\[2\],\{[^}]*\}\)\);/) || [''])[0];
+  ck(row && !/\b(inc|cash|money|credits|bonus|vis|sight|reveal|cost|income)\s*:/.test(row), 'Brutal AI (DIFF[3]) must not touch income, money, vision or cost: ' + row);
+  ck(/Brutal/.test(SRC['07-net.js']) && /Brutal/.test(SRC['08-ui.js']), 'Brutal must appear in the lobby (07-net) and Battle setup / Test range (08-ui)');
+  ck(!/T\.ai\.d\s*(===|>=)\s*3[^]{0,80}(credits\s*\+=|\.reveals\.push)/.test(SRC['03-sim.js']), 'Brutal AI must not get extra money or vision');
+}
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];
