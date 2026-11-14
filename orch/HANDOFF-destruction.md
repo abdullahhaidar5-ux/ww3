@@ -10,7 +10,7 @@
 `src/03g-battlefeel.js` (hulkAdd accepts base buildings) · `src/05-fx3d.js` (SINKS collapse, long-lived rubble) · `src/06-view.js` (stage-3 sag). `orch/destrshots.mjs` makes the screenshots.
 
 ## Screenshots (orch/shots/)
-destruction-base-1-light.jpg, base-2-heavy, base-3a-collapsing, base-3b-rubble, destruction-neutral-1-light, neutral-2-heavy, neutral-3-rubble, destruction-tank-1-heavy, tank-2-critical, tank-3-wreck (whichever exist in the folder; the sandbox renders ~10 min per shot).
+destruction-base-1-light.jpg, base-2-heavy, base-3a-collapsing, base-3b-rubble, destruction-neutral-1-light, neutral-2-heavy, neutral-3-rubble, destruction-tank-1-heavy, tank-2-critical, tank-3-wreck.
 
 ## Gates
 - `python3 orch/build.py` and `--check`: pass.
