@@ -606,7 +606,13 @@ for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const
   const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);
   FACTIONS[k].units.champ=Object.assign({},u.champ||{},{name:N.hero[0],hab:N.hero[1]});HEROES[k]=N.hero;}
 for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctrine+=' Tunnel warfare: hidden tunnels move units across the map instantly.';}
-const FKEYS=Object.keys(FACTIONS).filter(k=>k!=='EU');   // nations-a1: the EU retires as a nation (Abdullah 2026-11-05 19:54) - FACTIONS.EU stays only as the hidden base row FR/DE are built from and for old saves/replays; it is in no lobby, menu or AI list
+// nations20 (Abdullah 2026-11-13 20:31-20:33 "Cut to 20", "Remove Iraq and Syria" -> 18): ONE allow-list. Every picker, AI/random choice, lobby, save and replay check reads FKEYS = PLAYABLE.
+// The data rows of removed nations stay (old saves, hidden base rows such as EU) but are in no list a player or the AI can reach.
+const PLAYABLE=['IR','RS','DW','RV','OB','US','GB','FR','DE','IL','UA','RU','CN','KP','IN','JP','KR','PK','SA','AE','TR','EG'];   /* Abdullah 2026-11-14 "Keep 22": the 18 + IN JP DE KR */
+const FKEYS=PLAYABLE.filter(k=>FACTIONS[k]||k==='JP');   /* JP's row is added by 01c-jp.js right after */
+// An old save / replay / online slot naming a removed nation falls back to a kept nation of the same morale style.
+const NATFALL={EU:'FR',PL:'FR',IQ:'RV',SY:'RS',BI:'OB',AF:'DW',KD:'RS',CU:'UA',AU:'GB',CA:'GB'};
+function natFix(f){if(FKEYS.includes(f))return f;if(NATFALL[f])return NATFALL[f];const st=MORALE_STYLE[f];return {zeal:'IR',prof:'RU',home:'UA',fire:'SA'}[st]||'US';}
 // Rock-paper-scissors: what each kind of unit beats and what beats it (shown in the unit tooltips).
 /* One language, idea 3 (orch/concepts/ONE-LANGUAGE.md): what every unit BEATS and is WEAK TO is COMPUTED from the real
    balance numbers (VS + stats/bstats) by this one helper - never write such lists by hand (guard: orch/decisions.mjs).

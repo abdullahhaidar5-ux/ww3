@@ -67,7 +67,7 @@ function joinByCode(raw,quiet,pw){if(!NET.room||NET.game)return;const code=codeF
     $('mpstatus').textContent='Game '+code.toUpperCase()+' was not found. Check that the battle\'s leader still has the lobby open and has invited you from the game\'s Share menu, and that you are signed in to claude.ai.';};look();}
 // Host-side handlers for a game room (also used when a standby player takes over as host)
 function wireHost(g){
-  NET.cseq=NET.cseq||{};const hostHello=(peer,by,f,tok,pw)=>{if(MODE==='host'){hostRejoin(peer,tok);return;}if(MODE!=='single')return;const cf=FKEYS.includes(f)?f:'US';const m={peer,by};const p=NET.lobby.find(q=>q.peer===m.peer);
+  NET.cseq=NET.cseq||{};const hostHello=(peer,by,f,tok,pw)=>{if(MODE==='host'){hostRejoin(peer,tok);return;}if(MODE!=='single')return;const cf=natFix(f);const m={peer,by};const p=NET.lobby.find(q=>q.peer===m.peer);
     // a password-protected game hosted in this browser: a newcomer must greet with the password (the server also checks
     // everyone who comes through its relay room; this covers direct browser-to-browser joins)
     if(!p&&NET.pw){if(pw===undefined){const q=NET.game&&NET.game.peers().find(x=>x.peer===peer);pw=q&&q.presence&&q.presence.hi?q.presence.hi.pw:undefined;}const why=pwHostCheck(peer,pw);if(why){NET.game.emit('lobby',{n:0,to:peer,pw:why}).catch(()=>{});return;}}
@@ -77,7 +77,7 @@ function wireHost(g){
   g.on('hello',m=>{if(m.sameTab)return;if(m.data&&m.data.sp){if(!(NET.peers&&NET.peers.indexOf(m.peer)>=0)&&!NET.lobby.some(p=>p.peer===m.peer)){(NET.isSpec=NET.isSpec||{})[m.peer]=1;browserSpec(m.peer);}return;}hostHello(m.peer,m.by,m.data&&m.data.f,null,m.data&&typeof m.data.pw==='string'?m.data.pw:'');});
   g.on('cmd',m=>hostCmd(m.peer,m.data));
   // a friend in the lobby picks their nation / team / Ready (08d-lobby); only the browser host's own lobby uses it
-  g.on('pick',m=>{if(m.sameTab||MODE!=='single')return;const p=NET.lobby.find(q=>q.peer===m.peer),d=m.data;if(!p||!d||typeof d!=='object')return;if(FKEYS.includes(d.f))p.f=d.f;p.r=d.r?1:0;if(typeof d.t==='number'&&d.t>=0&&d.t<8)NET.tm[NET.lobby.indexOf(p)+1]=d.t|0;renderLobby();});
+  g.on('pick',m=>{if(m.sameTab||MODE!=='single')return;const p=NET.lobby.find(q=>q.peer===m.peer),d=m.data;if(!p||!d||typeof d!=='object')return;if(typeof d.f==='string')p.f=natFix(d.f);p.r=d.r?1:0;if(typeof d.t==='number'&&d.t>=0&&d.t<8)NET.tm[NET.lobby.indexOf(p)+1]=d.t|0;renderLobby();});
   // the battle half (orders, pings, reconnects, keyframe requests) is shared with the server host (07a-hostsnap)
   g.onPeers(ch=>{for(const q of ch.joined.concat(ch.updated)){if(q.sameTab||!q.presence)continue;hostPres(q,hostHello);}});
   g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);if(NET.lobbySpec)NET.lobbySpec=NET.lobbySpec.filter(x=>x!==q.peer);if(NET.isSpec)delete NET.isSpec[q.peer];renderLobby();}else hostGone(q.peer);}});
