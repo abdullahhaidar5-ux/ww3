@@ -1,0 +1,29 @@
+desktop (1600×900, mouse)
+  FAIL page.evaluate: ReferenceError: RB is not defined |     at bstats (http://127.0.0.1:45187/index.html:5793:350) |     at addBld (http://127.0.0.1:45187/index.html:7282:62) |     at newGame (http://127.0.0.1:45187/index.html:7262:134)
+
+CONTROLS FAIL — 0/1 checks (3s); screenshots orch/out/controls-*.png
+page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:35269/index.html:5793:350)
+    at addBld (http://127.0.0.1:35269/index.html:7282:62)
+    at newGame (http://127.0.0.1:35269/index.html:7262:134)
+    at newGame (http://127.0.0.1:35269/index.html:15251:52)
+    at newGame (http://127.0.0.1:35269/index.html:16052:52)
+    at startSingle (http://127.0.0.1:35269/index.html:14445:140)
+    at eval (eval at evaluate (:311:30), <anonymous>:7:61)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at runScene (/home/runner/work/ww3/ww3/orch/walktest.mjs:78:14)
+    at /home/runner/work/ww3/ww3/orch/walktest.mjs:185:36 {
+  log: []
+}
+FAIL harness: page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:35269/index.html:5793:350)
+    at addBld (http://127.0.0.1:35269/index.html:7282:62)
+    at newGame (http://127.0.0.1:35269/index.html:7262:134)
+    at newGame (http://127.0.0.1:35269/index.html:15251:52)
+    at newGame (http://127.0.0.1:35269/index.html:16052:52)
+    at startSingle (http://127.0.0.1:35269/index.html:14445:140)
+    at eval (eval at evaluate (:311:30), <anonymous>:7:61)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+WALKTEST FAIL (1)
