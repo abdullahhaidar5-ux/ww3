@@ -21,7 +21,10 @@ Branch `orch/battleclean2` (lock `taken/battleclean2`). Not landed on main; the 
 - No ambient ground fog was found to cut; the pale cloud over a base was the sum of vehicle dust, construction dust and building smoke, now lighter.
 
 ## Gate
-smoke PASS, build --check OK locally. decisions.mjs and cigate: see the last lines of orch/LOG.md / the PR run (note below if filled in).
+Local: build --check OK, smoke PASS, decisions PASS (battle no towns: 0 towns/hamlets/tax, 94 garrisonable houses, 12 maps clean; Conquest map still 54 cities).
+GitHub (`gate/59fc2faa7c`, commit 59fc2faa7c): the runners were queued behind other helpers for ~40 min; cigate timed out at 13 of 28 results, ALL 13 PASS (art-mpsync, art-smoke,
+audio, cfclient, controls, decals, grandlive, headless, icons, migrate, migrate-dual, mpsync, smoke4). The rest (incl. smooth-pc / smooth-mp / grandsmooth, tutorial,
+mapsweep) had not reported yet: the conductor should read the remaining `gate/*` statuses on that commit before landing. The dust change only lowers particle counts, so smooth is expected equal or better.
 
 ## Pictures (orch/concepts/battleclean2/, before vs after, Battle as Lebanese Shia on Euphrates Crossing)
 town-before / town-after, vehicles-before / vehicles-after, firefight-before / firefight-after.
