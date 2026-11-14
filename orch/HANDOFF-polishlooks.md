@@ -19,8 +19,8 @@ src/11-models.js (mlrsGeo, PROCB gunTurret/samSite, BMOD proc hook, crate prop s
 tunnel gun, radio detail), orch/polishlooks.mjs (new shot script), index.html rebuilt.
 
 ## Gates
-Local: build --check OK, SMOKE PASS, DECISIONS PASS. GitHub gate for the code commit 8a7878c (orch/cigate.sh): queued on GitHub runners for 2 h+ (runner backlog: several gate/* runs and main "Gate bisect" ahead of it) — result to be filled in
+Local: build --check OK, SMOKE PASS, DECISIONS PASS. GitHub gate for the code commit 8a7878c (orch/cigate.sh): NOT RUN — GitHub Actions stalled: gate/8a7878c232 queued 04:16Z, re-pushed as gate/<head> 06:37Z, still queued at 07:00Z with 0 runs in progress and 30 queued repo-wide (looks like a runner/minutes stall, not this branch). Next helper or the conductor: run `orch/cigate.sh orch/polishlooks` once runners move
 Smooth: draw calls per object unchanged or +1 for gun/SAM buildings (rare, static); new geometries are built once and shared.
 
 ## Status
-Ready once the gate run for 8a7878c is green (code unchanged since; later commits are docs/shots only).
+Code done and pushed; **ready to land once its cigate run is green** (only blocker: the stalled GitHub runners). Left: dozer cab roof (needs a new free dozer model), supply-truck tarp (imported truck model).
