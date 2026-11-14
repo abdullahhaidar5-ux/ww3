@@ -1,0 +1,17 @@
+A: 5 min in, t=300.0 units=56 money=1180,235,0 (14845 ms)
+save: ok=true  encode 4 ms, packed 25 KB
+A after +2 min: t=420.0 hash=2012697165 units=64 money=400,115,0
+C loaded: ok=true  paused=true "Game loaded. Press P to continue." t=300.0
+C after +2 min: t=420.0 hash=2012697165 units=64 money=400,115,0
+Continue button: ▶ Continue — Straits of Thunder · Iran · 5:00
+after Continue: {"t":300.0000000000558,"p":true}
+file round trip: {"file":true,"old":"This save is from an older version and can't be loaded.","junk":"That is not a World War 3 save file.","bad":"This save file is damaged and can't be loaded.","stale":"This save is from an older version and can't be loaded.","g":true}
+SAVETEST PASS
+continue {"none":true,"old":true,"gm":"undefined"}
+keys {"btn":true,"win":true,"rows":35,"all":true,"setHidden":true,"wasd":"W, A, S and D always scroll the camera. Pick another letter.","used":"F is already used for \"Attack-move\". Move that one first (spare keys: \\ ` F2 F4 F8 F9).","digit":"Only letters and the spare keys \\ ` F2 F4 F8 F9 can be chosen.","tab":"Only letters and the spare keys \\ ` F2 F4 F8 F9 can be chosen.","fixed":"That key is fixed and can't be changed.","ok":"","back":"","swap2":"X is already used for \"Attack-move\". Move that one first (spare keys: \\ ` F2 F4 F8 F9).","cur":{"stop":"F8","amove":"x"},"stored":"{\"amove\":\"x\",\"stop\":\"F8\"}","dupes":[0],"pow":[]}
+battle keys {"bx":{"am":true,"stops":0},"bf":{"am":false,"stops":0},"bb":{"am":false,"stops":1},"rx":{"am":false,"stops":1},"rf":{"am":true,"stops":0}}
+bench {"picks":["low","high","auto","low","high"],"auto0":false,"r1":"high","g1":"high","once":true}
+battle text size 1366x768 {"side":[0,539,1366,768],"stage":[0,0,1366,539],"cv":[0,0,1366,539],"out":[],"zoom":1.3,"W":1366,"H":768,"mm":[true,true,true]}
+text size {"1366x768@1.3":0,"1366x768@1.15":0,"1920x1080@1.3":0,"1920x1080@1.15":0}
+cb {"off":true,"g":["●","■","▲","⬢"],"none":"","lbl":2,"seg":3}
+POLISH PASS
