@@ -1,0 +1,29 @@
+[0s] mp: opening 3 pages
+[9s] mp: pages open
+[10s] mp: lobby okui7i
+[14s] mp: clients joined
+[129s] mp: battle loaded on all pages
+[130s] mp: playing 40s
+[170s] mp: checking sync
+[183s] mp attempt 1: REGRESSED
+  (re-running once to rule out noise) a client got no snapshot for 2551 ms (limit 2500)
+[183s] mp: opening 3 pages
+[191s] mp: pages open
+[191s] mp: lobby ju97un
+[195s] mp: clients joined
+[311s] mp: battle loaded on all pages
+[311s] mp: playing 40s
+[351s] mp: checking sync
+[366s] mp attempt 2: ok
+
+                       mp        
+snap interval p95      156       
+snap jitter sd         57.64     
+order latency p95      116       
+client frame p95       564.6     
+client snaps           5         
+biggest snap (units)   15.57     
+desyncs                0         
+runtime 6.1 min
+
+SMOOTH PASS
