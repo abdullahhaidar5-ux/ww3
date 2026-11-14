@@ -1,16 +1,15 @@
 /* ================= READABILITY (queue "Readability", orch/polishP2): text size + colour-blind extras =================
    TEXT SIZE (Settings: 100 / 115 / 130 %): one switch, SET.ts. Every text surface that is ordinary page content is listed in
    TS_ROOTS and is laid out a little smaller and shown enlarged by the same factor (CSS zoom), so each panel keeps its own
-   layout and simply gets bigger: the command bar, battle log / hints, every menu and overlay card, the keyboard window, the
-   grand map's top bar, province column and every panel of GPAN (.gpx). A panel that would then reach past the screen edge is
+   layout and simply gets bigger: the command bar, battle log / hints, every menu and overlay card and the keyboard window. A panel that would then reach past the screen edge is
    capped to the screen and scrolls inside (tsFit) - nothing is cut off at 1366x768 or 1920x1080 (orch/polishtest.mjs sect. 4).
    The 3D picture and the labels painted over the battlefield are not page content and stay as they are.
-   A NEW PANEL that is appended to the page body gets its root added to TS_ROOTS (grand panels: nothing to do, .gpx is listed).
+   A NEW PANEL that is appended to the page body gets its root added to TS_ROOTS.
    COLOUR-BLIND MODE lives in 08b-identity.js (safe palette, shapes on the minimap and selection rings); this file adds the
    same team shape to the town / tower name plates and the allies list, so team identity never rests on colour alone. */
 const TS_STEPS=[1,1.15,1.3];
-const TS_ROOTS=['#side','#log','#hint','#mode','#wxchip','#net','#allyBox','#sbx','.overlay>.card','#mx','#campScreen>div','#kbWin .kbcard','#gTop','#gAlerts','#gSide','.gpx','#gCoach'];
-const TS_FIT='.gpx,#kbWin .kbcard,#gCoach';
+const TS_ROOTS=['#side','#log','#hint','#mode','#wxchip','#net','#allyBox','#sbx','.overlay>.card','#mx','#campScreen>div','#kbWin .kbcard'];
+const TS_FIT='#kbWin .kbcard';
 function tsVal(){const v=+(typeof SET!=='undefined'&&SET.ts);return TS_STEPS.includes(v)?v:1;}
 function tsCss(){if(document.getElementById('tsCss'))return;const s=document.createElement('style');s.id='tsCss';
   s.textContent='html.ts-on :is('+TS_ROOTS.join(',')+'){zoom:var(--ts,1)}html.ts-on .overlay{padding-block:8px}';document.head.appendChild(s);}

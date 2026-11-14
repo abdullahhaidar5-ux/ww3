@@ -255,7 +255,7 @@ async function openPage() {
 }
 // HELPERS is defined above openPage's first call
 await openPage();
-// every Conquest battlefield and every Battle map (src/02d-battlemaps.js)
+// every Battle map (src/02d-battlemaps.js) and every other battlefield (the old Conquest maps)
 let keys = await page.evaluate(() => MAP_KEYS.concat(typeof BM_KEYS !== 'undefined' ? BM_KEYS : []).map(k => [k, MAPS[k].max, MAPS[k].min || 2]));
 if (ONLY) keys = keys.filter(([k]) => ONLY.includes(k));
 // --shard 2/3: every third map starting with the second (the gate runs the shards side by side: 122 maps no longer fit in one 45-minute job)

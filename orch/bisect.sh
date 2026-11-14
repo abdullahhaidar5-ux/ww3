@@ -11,7 +11,6 @@ T="$1"
 case "$T" in
   check)    python3 orch/build.py --check && node orch/lint.mjs ;;
   smooth-*) node orch/smooth.mjs --profile "${T#smooth-}" ;;
-  grand)    node orch/grandtest.mjs ;;
   tutorial) node orch/tutorialtest.mjs ;;
   save)     node orch/savetest.mjs ;;
   smoke4)   node orch/smoke.mjs --players 4 ;;

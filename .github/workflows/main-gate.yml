@@ -38,7 +38,7 @@ jobs:
               c=x["context"]
               if c.startswith("gate/") and c!="gate/main": s.setdefault(c,x["state"])
           bad=sorted(k[5:] for k,v in s.items() if v!="success")
-          print(("INCOMPLETE" if len(s)<30 and not bad else "GREEN" if not bad else "RED")+"|"+str(len(s))+"|"+",".join(bad))')
+          print(("INCOMPLETE" if len(s)<27 and not bad else "GREEN" if not bad else "RED")+"|"+str(len(s))+"|"+",".join(bad))')
           ST=${LINE%%|*}; REST=${LINE#*|}; N=${REST%%|*}; BAD=${REST#*|}
           SUBJ=$(git log -1 --format=%s | cut -c1-70)
           STATE=success; [ "$ST" = RED ] && STATE=failure; [ "$ST" = INCOMPLETE ] && STATE=error

@@ -80,7 +80,7 @@ async function openGame(ctxOpts, saved) {
   await page.waitForFunction(() => G && !window.LOADING, null, { timeout: 600000, polling: 250 });
   // Freeze the battle (drawing and input keep running), place the test units, record every order sent to the battle.
   await page.evaluate(() => {
-    G.paused = true; SET.edge = 0; G.setupEnd = 0; /* Conquest: no setup phase in the control tests */
+    G.paused = true; SET.edge = 0;
     window.__acts = []; const o = doAct; doAct = function (a) { __acts.push(JSON.parse(JSON.stringify(a))); return o(a); };
     const hq = G.ents.find(b => b.team === ME && b.kind === 'hq'), eq = G.ents.find(b => b.team !== ME && b.kind === 'hq');
     // a patch of open, passable ground between the two bases

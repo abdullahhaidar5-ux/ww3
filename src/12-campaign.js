@@ -213,6 +213,6 @@ function campDebrief(c,won){
 }
 function campLeave(){try{if(MODE!=='single')leaveNet();}catch(e){}MODE='single';ME=0;G=null;try{kcReset();}catch(e){}try{$('end').hidden=true;$('menu').hidden=false;renderGames();}catch(e){}}
 
-// the mission objective is shown in the one goal line under the top bar (cqBanner, 08c-towns; 2026-11-13 orderfeel)
+// the mission objective is shown in the one goal line under the top bar (cqBanner, 08c-goal; 2026-11-13 orderfeel)
 setInterval(()=>{try{if(G&&G.camp)cqBanner();}catch(e){}},400);
 (function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Missions';b.title='Five single-player missions for Iran, the Lebanese Shia and the Zaidi Shia Movement';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();

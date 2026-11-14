@@ -51,7 +51,6 @@ function ldSpawn(T,x,y,n){let made=0;for(let i=0;i<n;i++){const p=nearestPassXY(
 function ldMuster(T,u,perB,cap){let made=ldSpawn(T,u.x,u.y,perB);const bl=G.ents.filter(e=>e.isB&&e.team===T.id&&e.kind==='barracks'&&e.built>=1&&!e.dead);
   for(const b of bl){if(made>=cap)break;made+=ldSpawn(T,b.x,b.y+(b.size||40)/2+30,Math.min(perB,cap-made));}return made;}
 function ldCast(team,k,x,y){const T=G.teams[team],u=LDU[team];if(!T||!u||u.dead||!LDKT[team])return false;const S=LDS[LDKT[team]],L=ldState(T),ai=!!T.ai;
-  if(G.conq&&G.t<G.setupEnd){if(!ai)log(team,'No fighting during the setup time.','w');return false;}
   const slot=k==='u'?'c2':'c1',A=S[k==='u'?'u':'a'];if(L[slot]>G.t){if(!ai)log(team,`${A.n}: ready in ${Math.ceil(L[slot]-G.t)} s.`,'w');return false;}
   const dl=LDKT[team]==='dl';
   if(k==='a'&&!dl){const r=S.a.r;let n=0;for(const e of G.ents){if(e.dead||e.isB||e.team!==team||!e.s||e.s.dom!=='ground'||e.kind==='harv'||e.kind==='dozer')continue;if(Math.hypot(e.x-u.x,e.y-u.y)<r){e.insT=G.t+S.a.dur;e.supp=0;n++;}}

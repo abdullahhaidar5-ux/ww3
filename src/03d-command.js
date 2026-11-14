@@ -33,8 +33,8 @@ function cfAnswer(team,from,yes){const i=G.tOff.findIndex(o=>o.f===from&&o.t===t
   if(yes&&!G.teams[from].out&&!G.teams[team].out&&!truced(from,team)){cfStart(from,team,o.d);return true;}
   if(!G.teams[from].ai)log(from,`${ctName(team)} declined the truce.`,'w');return false;}
 function cfBreak(team,other){const k=team<other?team*32+other:other*32+team;if(!G.truce||!(G.truce[k]>G.t))return false;delete G.truce[k];const T=G.teams[team];
-  T.oath=G.t+CF.OATH;T.cfCd=G.t+CF.COOL;let n=0;if(G.towns)for(const t of G.towns)if(t.ow===team){t.un=Math.min(100,(t.un||0)+CF.UNREST);n++;}
-  log(team,`You broke the truce with ${ctName(other)}. Locals are uneasy (unrest +${CF.UNREST} in ${n} town${n===1?'':'s'}) and nobody will trust you for ${CF.OATH/60} minutes.`,'bad');
+  T.oath=G.t+CF.OATH;T.cfCd=G.t+CF.COOL;
+  log(team,`You broke the truce with ${ctName(other)}. Nobody will trust you for ${CF.OATH/60} minutes.`,'bad');
   for(const O of G.teams)if(O.id!==team&&!O.reb&&!O.out)log(O.id,`${ctName(team)} BROKE its truce with ${ctName(other)} - oathbreaker!`,'w');FXE('cfb',[team,other]);return true;}
 function ctTick(dt){if(!G.tOff)G.tOff=[];if(!G.aidQ)G.aidQ=[];
   for(let i=G.tOff.length-1;i>=0;i--){const o=G.tOff[i];if(G.t>=o.e){if(!G.teams[o.f].ai)log(o.f,`${ctName(o.t)} did not answer your truce offer.`,'w');G.tOff.splice(i,1);continue;}

@@ -2,51 +2,29 @@
 //   node orch/polishtest.mjs      prints POLISH PASS / POLISH FAIL
 // 2. Settings: the Keyboard keys window lists the whole key table, refuses W A S D / keys in use, rebinding works in a battle, Reset restores;
 //    the first-launch graphics check picks a preset once.
-// 3. Campaign panels: every grand-map panel (GPAN, src/13zzz-gpanels.js) has the shared frame and close X, Esc closes the top one.
-// 4. Readability: text size 115 / 130 % keeps every menu, overlay and grand panel inside the window at 1366x768 and 1920x1080; colour-blind shapes.
-// 1. Never lose progress: the grand campaign is saved on a timer with 3 rolling copies, a damaged save falls back to a copy,
-//    and after reloading the page "Continue" is the first item of the single-player list and reopens the campaign.
+// 4. Readability: text size 115 / 130 % keeps every menu and overlay inside the window at 1366x768 and 1920x1080; colour-blind shapes.
+// 1. Never lose progress: with no save "Continue" is hidden, and an old grand-campaign save (the campaign was removed 2026-11-14) is ignored
+//    (battle saves + Continue after a reload: orch/savetest.mjs).
 import { boot, ROOT } from './savelib.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 const SHOTS = path.join(ROOT, 'orch', 'shots', 'polish'); fs.mkdirSync(SHOTS, { recursive: true });
 const shot = (pg, n) => pg.screenshot({ path: path.join(SHOTS, n + '.jpg'), type: 'jpeg', quality: 72 }).catch(() => {});
-const FROM = (() => { const i = process.argv.indexOf('--from'); return i > 0 ? Number(process.argv[i + 1]) : 1; })();   // --from 3: only the grand-map sections (quick)
+const FROM = (() => { const i = process.argv.indexOf('--from'); return i > 0 ? Number(process.argv[i + 1]) : 1; })();   // --from 4: only the readability section (quick)
 const fails = []; const ck = (c, m) => { if (!c) fails.push(m); };
 const B = await boot();
 try {
   if (FROM < 3) {
   const P = await B.open();
-  await P.waitForFunction(() => typeof svMenuSync === 'function' && typeof grNew === 'function' && typeof MX !== 'undefined', null, { timeout: 120000 });
-  // ---- 1. never lose progress
+  await P.waitForFunction(() => typeof svMenuSync === 'function' && typeof MX !== 'undefined', null, { timeout: 120000 });
+  // ---- 1. never lose progress (Continue covers battle saves only)
   const a = await P.evaluate(async () => { localStorage.clear(); await svMenuSync(); mxContSync();
     const none = document.getElementById('svContinue').hidden && MX.cont.hidden;
-    grNew({ me: 'IR', seed: 7, len: 'quick' }); grandOpen(); const open = !!document.getElementById('grandScreen');
-    const K = GR_KEY; localStorage.removeItem(K); const t1 = grAutoTick();            // not due yet
-    GR_AUTO.t = Date.now() - GR_AUTO.ms - 1000; const t2 = grAutoTick();               // due: saves + first copy
-    const s1 = !!localStorage.getItem(K), b1 = !!localStorage.getItem(K + '.b1');
-    grAutoTick(true); grAutoTick(true); grAutoTick(true);
-    const copies = [1, 2, 3].filter(i => localStorage.getItem(K + '.b' + i)).length, extra = !!localStorage.getItem(K + '.b4');
-    const info = JSON.parse(localStorage.getItem(K + '.i') || 'null'), size = localStorage.getItem(K).length;
-    localStorage.setItem(K, '{broken'); const turn = GC.turn; GC = null; const back = grLoad(); const fell = !!back && back.turn === turn; grSave();
-    return { none, open, t1, t2, s1, b1, copies, extra, info, size, fell }; });
-  console.log('grand autosave', JSON.stringify(a));
-  ck(a.none, 'Continue is shown although nothing is saved'); ck(a.open, 'grand map did not open');
-  ck(!a.t1 && a.t2 && a.s1 && a.b1, 'grand autosave timer does not save when due (or saves when not due)');
-  ck(a.copies === 3 && !a.extra, 'grand campaign must keep exactly 3 rolling copies, has ' + a.copies);
-  ck(a.info && a.info.n && a.info.ts > 0, 'grand save lacks the menu note (.i)'); ck(a.fell, 'a damaged grand save did not fall back to a safety copy');
-  ck(a.size * 4 < 4.5e6, 'grand save too big for 4 copies in browser storage: ' + a.size + ' chars each');
-  await P.reload({ waitUntil: 'load' });
-  await P.waitForFunction(() => typeof svMenuSync === 'function' && typeof MX !== 'undefined' && MX.cont, null, { timeout: 120000 });
-  await P.waitForFunction(() => { const b = document.getElementById('svContinue'); return b && !b.hidden && !MX.cont.hidden; }, null, { timeout: 20000 }).catch(() => fails.push('Continue did not appear after reload with a saved campaign'));
-  await P.waitForTimeout(1500); await shot(P, 'continue');
-  const c = await P.evaluate(() => { const vis = [...document.querySelectorAll('#mxmenu .mxi')].filter(b => !b.hidden); const sp = document.querySelector('#ms-single .mxlist');
-    const spFirst = sp ? [...sp.querySelectorAll('.mxi')].filter(b => !b.hidden)[0] : null;
-    const r = { first: vis[0] && vis[0].textContent, isCont: vis[0] === MX.cont, kind: document.getElementById('svContinue').dataset.kind, sp: sp ? (spFirst && spFirst.id) : 'no-window' }; MX.cont.click(); return r; });
-  console.log('continue', JSON.stringify(c));
-  ck(c.isCont && /^Continue/.test(c.first || '') && /Grand campaign/.test(c.first || ''), 'Continue is not the first menu item for a saved campaign: ' + c.first);
-  ck(c.sp === 'no-window' || c.sp === 'mxContSP', 'Continue is not the first item of the Single player window');
-  await P.waitForFunction(() => !!document.getElementById('grandScreen') && typeof GC !== 'undefined' && GC && GC.me === 'IR', null, { timeout: 60000 }).catch(() => fails.push('Continue did not reopen the saved grand campaign'));
+    localStorage.setItem('ww3grand1', '{"v":1,"me":"IR"}'); localStorage.setItem('ww3grand1.i', JSON.stringify({ ts: 5, me: 'IR', n: 'Iran', d: 'Mar 2027', over: 0 }));
+    await svMenuSync(); mxContSync(); const old = document.getElementById('svContinue').hidden && MX.cont.hidden;
+    localStorage.removeItem('ww3grand1'); localStorage.removeItem('ww3grand1.i'); return { none, old, gm: typeof grandMenu }; });
+  console.log('continue', JSON.stringify(a));
+  ck(a.none, 'Continue is shown although nothing is saved'); ck(a.old, 'Continue offers an old grand-campaign save (the campaign was removed)'); ck(a.gm === 'undefined', 'grand campaign code is back');
   // ---- 2. settings: the Keyboard keys window (the one key table) + first-launch graphics check
   await P.close();
   const Q = await B.open();
@@ -58,7 +36,7 @@ try {
       wasd: kbSet('stop', 'w'), used: kbSet('stop', 'f'), digit: kbSet('stop', '1'), tab: kbSet('stop', 'Tab'), fixed: kbSet('nope', 'c'), ok: kbSet('stop', 'F8'), back: kbSet('amove', 'x'), swap2: kbSet('stop', 'x') };
     r.cur = { stop: KB.cur.stop, amove: KB.cur.amove }; r.stored = localStorage.getItem('ww3_keys');
     // letters used by the handlers must all be rows of the table
-    r.dupes = ['battle', 'grand'].map(c => { const d = KEYTAB.filter(x => x.def && x.ctx === c).map(x => x.def); return d.length - new Set(d).size; });
+    r.dupes = ['battle'].map(c => { const d = KEYTAB.filter(x => x.def && x.ctx === c).map(x => x.def); return d.length - new Set(d).size; });
     r.pow = Object.values(POW_KEY).filter(k => !KEYTAB.some(x => x.def === k && x.ctx === 'battle'));
     kbuPaint(); return r; });
   await shot(Q, 'keys');
@@ -98,33 +76,9 @@ try {
     ck(hb.zoom === 1.3 && hb.side && hb.side[3] <= H + 1 && hb.side[2] <= W + 1 && hb.stage[3] <= hb.side[1] + 2 && hb.cv[3] <= hb.side[1] + 2 && !hb.out.length && hb.mm.every(Boolean), 'battle HUD at 130% text does not fit ' + W + 'x' + H + ': ' + JSON.stringify(hb));
     await Q.evaluate(() => { G.paused = true; }); if (W === 1366) await shot(Q, 'textsize-battle'); }
   await Q.evaluate(() => tsSet(1));
-  // ---- 3. campaign panels: one frame, one close X in the same corner, Esc closes the top-most panel, one per press
   await Q.close(); }
   const R = await B.open();
-  await R.waitForFunction(() => typeof grNew === 'function' && typeof gpxDress === 'function', null, { timeout: 120000 });
-  await R.evaluate(() => { localStorage.clear(); grNew({ me: 'IR', seed: 7, len: 'quick' }); grandOpen(); const c = document.getElementById('gCoach'); if (c) c.remove(); });
-  await R.waitForTimeout(1500);
-  const openers = { gEco: () => geUiPanel(), gMil: () => gmilUiPanel(), npWin: () => npOpen('IR'), gWeb: () => gwebOpen(), gpDeal: () => { const foe = Object.keys(GC.nat).find(c => c !== 'IR' && !GC.nat[c].dead); gpOpen('IR', foe); }, gModal: () => guConfirm('Test', 'Close me with Esc', () => { window.__yes = 1; }) };
-  const info = async (id) => R.evaluate((id) => { const p = GPAN.find(x => x.id === id), e = document.getElementById(id); if (!e) return null; const c = p.card ? e.firstElementChild : e, x = [...c.children].filter(k => k.classList.contains('gpx-x'));
-    const cr = c.getBoundingClientRect(), xr = x[0] ? x[0].getBoundingClientRect() : null; return { dressed: c.classList.contains('gpx'), xs: x.length, dx: xr ? Math.round(cr.right - xr.right) : -1, dy: xr ? Math.round(xr.top - cr.top) : -1, font: getComputedStyle(c).fontFamily.slice(0, 9), rad: getComputedStyle(c).borderTopLeftRadius, old: [...c.querySelectorAll('button')].filter(b => !b.classList.contains('gpx-x') && /✕/.test(b.textContent)).length }; }, id);
-  const seen = {};
-  for (const id of Object.keys(openers)) { await R.evaluate((src) => (0, eval)('(' + src + ')')(), openers[id].toString()); await R.waitForTimeout(250); const a = await info(id); seen[id] = a;
-    ck(a && a.dressed && a.xs === 1 && !a.old, 'panel ' + id + ' lacks the shared frame / has no or two close buttons: ' + JSON.stringify(a));
-    if (a) ck(a.dx >= 8 && a.dx <= 16 && a.dy >= 6 && a.dy <= 16, 'panel ' + id + ': close X is not in the shared top-right corner: ' + JSON.stringify(a));
-    if (id === 'npWin') await shot(R, 'panel-nation'); if (id === 'gMil') await shot(R, 'panel-military');
-    await R.keyboard.press('Escape'); await R.waitForTimeout(150); ck(!(await R.evaluate((id) => !!document.getElementById(id), id)), 'Esc did not close ' + id); }
-  console.log('panels', JSON.stringify(seen));
-  ck(new Set(Object.values(seen).filter(Boolean).map(a => a.font + a.rad)).size === 1, 'grand panels do not share one font / corner radius');
-  // stack: Esc closes one per press, top-most first; a dialog that needs an answer is not skipped
-  const stack = await R.evaluate(async () => { const o = []; geUiPanel(); gmilUiPanel(); npOpen('IR'); guConfirm('A', 'b', () => {}); const ids = ['gModal', 'npWin', 'gMil', 'gEco'];
-    const st = () => ids.filter(i => document.getElementById(i)).join(','); o.push(st()); for (let i = 0; i < 4; i++) { o.push(gpxCloseTop() + '>' + st()); }
-    guModal('Pick', [['One', () => { window.__one = 1; }, 1], ['Two', () => {}, 0]]); const blocked = gpxCloseTop(), still = !!document.getElementById('gModal'), noX = !document.querySelector('#gModal .gpx-x'); document.getElementById('gModal').remove();
-    grandClose(); grandMenu(); const camp = !!document.getElementById('campScreen'); return { o, blocked, still, camp }; });
-  await R.keyboard.press('Escape'); await R.waitForTimeout(200); stack.campGone = !(await R.evaluate(() => !!document.getElementById('campScreen')));
-  console.log('stack', JSON.stringify(stack));
-  ck(stack.o.join(' ') === 'gModal,npWin,gMil,gEco gModal>npWin,gMil,gEco npWin>gMil,gEco gMil>gEco gEco>', 'Esc must close the top-most grand panel, one per press: ' + stack.o.join(' '));
-  ck(stack.blocked === 'blocked' && stack.still, 'a dialog that needs an answer must not be skipped by Esc'); ck(stack.camp && stack.campGone, 'Esc on the Grand campaign menu must go one step back');
-  ck(await R.evaluate(() => GPAN.length >= 11 && ['gMilX', '_gPanelEsc', '_npKeys'].every(k => !document.getElementById(k) && !window[k])), 'old per-panel close / Esc code is back');
+  await R.waitForFunction(() => typeof tsSet === 'function' && typeof MX !== 'undefined', null, { timeout: 120000 });
   // ---- 4. readability: text size 100 / 115 / 130 % - nothing reaches past the window at 1366x768 and 1920x1080; colour-blind shapes
   const offScreen = () => R.evaluate(async () => { await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 60)))); const bad = [], W = innerWidth, H = innerHeight; const sel = TS_ROOTS.join(',');
     for (const el of document.querySelectorAll(sel)) { if (!el.getClientRects().length) continue; const st = getComputedStyle(el); if (st.visibility === 'hidden' || +st.opacity === 0) continue; const r = el.getBoundingClientRect(); if (r.width < 4 || r.height < 4) continue;
@@ -136,16 +90,10 @@ try {
   for (const [W, H] of (process.argv.includes('--small') ? [[1366, 768]] : [[1366, 768], [1920, 1080]])) { await R.setViewportSize({ width: W, height: H });
     for (const ts of [1.3, 1.15]) { const key = W + 'x' + H + '@' + ts; tsRes[key] = {};
       // main menu + settings + keyboard window
-      await R.evaluate((ts) => { try { grandClose(); } catch (e) {} const c = document.getElementById('campScreen'); if (c) c.remove(); document.getElementById('menu').hidden = false; tsSet(ts); }, ts); await R.waitForTimeout(400);
+      await R.evaluate((ts) => { document.getElementById('menu').hidden = false; tsSet(ts); }, ts); await R.waitForTimeout(400);
       tsRes[key].menu = await offScreen(); ck(Math.abs(await zoomOf('#mx') - ts) < .01, key + ': the main menu did not take the text size');
       await R.evaluate(() => { openSettings(); }); await R.waitForTimeout(300); tsRes[key].settings = await offScreen(); if (W === 1366 && ts === 1.3) await shot(R, 'textsize-settings');
       await R.evaluate(() => { kbuOpen(); }); await R.waitForTimeout(300); tsRes[key].keys = await offScreen(); await R.evaluate(() => { kbuClose(true); document.getElementById('settings').hidden = true; });
-      // grand map: top bar, province column, every panel
-      await R.evaluate(() => { if (!GC) grNew({ me: 'IR', seed: 7, len: 'quick' }); grandOpen(); const c = document.getElementById('gCoach'); if (c) c.remove(); }); await R.waitForTimeout(900);
-      tsRes[key].grand = await offScreen();
-      for (const [id, src] of Object.entries({ gEco: 'geUiPanel()', gMil: 'gmilUiPanel()', npWin: "npOpen('IR')", gWeb: 'gwebOpen()', gpDeal: "gpOpen('IR',Object.keys(GC.nat).find(c=>c!=='IR'&&!GC.nat[c].dead))", gModal: "guConfirm('Declare war?','Text size test',()=>{})" })) {
-        await R.evaluate((c) => (0, eval)(c), src); await R.waitForTimeout(350); tsRes[key][id] = await offScreen(); if (id === 'npWin' && W === 1366 && ts === 1.3) await shot(R, 'textsize-nation');
-        await R.evaluate(() => { for (let i = 0; i < 3 && gpxCloseTop(); i++); }); }
       for (const [k, v] of Object.entries(tsRes[key])) ck(!v.length, 'text size ' + key + ' ' + k + ': reaches past the window: ' + v.slice(0, 4).join(' | ')); } }
   console.log('text size', JSON.stringify(Object.fromEntries(Object.entries(tsRes).map(([k, v]) => [k, Object.values(v).flat().length]))));
   const cbm = await R.evaluate(() => { tsSet(1); const off = !document.documentElement.classList.contains('ts-on'); SET.cb = 1; const g = [0, 1, 2, 3].map(cbGlyph); SET.cb = 0; const none = cbGlyph(0);

@@ -2,7 +2,7 @@
    Every keyboard key the game listens to is one row here; Settings -> Controls -> Keyboard keys (src/08m-controls.js) lists
    exactly this table. A NEW HOTKEY = A NEW ROW HERE (CLAUDE.md "new hotkeys go in the one key table"; orch/polishtest.mjs
    presses every rebindable row and fails when a key in the handlers has no row).
-   Rows: {id, ctx:'battle'|'grand', grp, name, def} = a letter key the player may move to another letter (or a spare key: \\ ` F2 F4 F8 F9);
+   Rows: {id, ctx:'battle', grp, name, def} = a letter key the player may move to another letter (or a spare key: \\ ` F2 F4 F8 F9);
          {ctx, grp, name, fix:'text'}      = a fixed key, listed so the screen is complete.
    Rebinding does not touch the handlers: this file registers the FIRST key listener of the page; when the player moved an
    action from its standard letter to another one, the press of the new letter is passed on to the game as a press of the
@@ -45,25 +45,20 @@ const KEYTAB=[
   {ctx:'battle',grp:'Game',name:'Menu · cancel · one step back',fix:'Esc'},
   {ctx:'battle',grp:'Game',name:'Team play: give the "go" signal',fix:'Enter'},
   {ctx:'battle',grp:'Game',name:'Team play: ping, draw, circle on the map',fix:', . / \' ;'},
-  {ctx:'grand',grp:'Grand campaign map',name:'Pause / run time',fix:'Space'},
-  {ctx:'grand',grp:'Grand campaign map',name:'Time slower / faster, pick a speed',fix:'− · + · 1 – 5'},
-  {id:'g_outl',ctx:'grand',grp:'Grand campaign map',name:'Province outlines on / off',def:'o'},
-  {id:'g_drill',ctx:'grand',grp:'Grand campaign map',name:'Drill the selected army',def:'t'},
-  {ctx:'grand',grp:'Grand campaign map',name:'Close the top window · one step back',fix:'Esc'},
 ];
-const KB={cur:{},map:{battle:{},grand:{}},dead:{battle:{},grand:{}},win:false,onKey:null};
+const KB={cur:{},map:{battle:{}},dead:{battle:{}},win:false,onKey:null};
 const KB_FIXED='wasd',KB_CODE={BracketLeft:'[',BracketRight:']',Backslash:'\\',Backquote:'`'},KB_SPARE='\\ ` F2 F4 F8 F9';   // every letter has a job already, so a few spare keys can be chosen too
 function kbOk(k){return /^[a-z\[\]\\`]$/.test(k)||/^F[2489]$/.test(k);}
 function kbShow(k){return !k?'':k.length===1?k.toUpperCase():k;}
 function kbPhys(e){const k=e.key||'';return KB_CODE[e.code]||(k.length===1?k.toLowerCase():k);}
 function kbCodeOf(k){for(const c in KB_CODE)if(KB_CODE[c]===k)return c;return 'Key'+k.toUpperCase();}
 function kbRows(ctx){return KEYTAB.filter(r=>r.def&&(!ctx||r.ctx===ctx));}
-function kbBuild(){for(const c of ['battle','grand']){const m={},used={},dead={};
+function kbBuild(){for(const c of ['battle']){const m={},used={},dead={};
   for(const r of kbRows(c)){const k=KB.cur[r.id]||r.def;used[k]=1;if(k!==r.def)m[k]=r.def;}
   for(const r of kbRows(c))if(!used[r.def])dead[r.def]=1;
   KB.map[c]=m;KB.dead[c]=dead;}}
 function kbLoad(){let o={};try{o=JSON.parse(localStorage.getItem('ww3_keys')||'{}')||{};}catch(e){}KB.cur={};
-  for(const c of ['battle','grand']){const seen={};
+  for(const c of ['battle']){const seen={};
     for(const r of kbRows(c)){const k=o[r.id];if(typeof k==='string'&&kbOk(k)&&!KB_FIXED.includes(k)&&!seen[k]){KB.cur[r.id]=k;seen[k]=1;}}
     for(const r of kbRows(c))if(!KB.cur[r.id]){if(seen[r.def]){for(const x of kbRows(c))if(KB.cur[x.id]===r.def&&x.def!==r.def)delete KB.cur[x.id];}}   // a damaged list never leaves two actions on one key
     for(const r of kbRows(c))if(!KB.cur[r.id])KB.cur[r.id]=r.def;}
@@ -80,8 +75,8 @@ function kbSet(id,key){const r=KEYTAB.find(x=>x.id===id);if(!r||!r.def)return 'T
   KB.cur[id]=k;kbSave();kbBuild();return '';}
 function kbReset(){try{localStorage.removeItem('ww3_keys');}catch(e){}kbLoad();}
 function kbChanged(){return kbRows().some(r=>KB.cur[r.id]!==r.def);}
-function kbCtx(){try{const g=(typeof G!=='undefined'&&G)?G:null,gs=document.getElementById('grandScreen');
-  if(gs&&!(g&&!g.over))return 'grand';const m=document.getElementById('menu');if(g&&m&&m.hidden)return 'battle';}catch(e){}return '';}
+function kbCtx(){try{const g=(typeof G!=='undefined'&&G)?G:null;
+  const m=document.getElementById('menu');if(g&&m&&m.hidden)return 'battle';}catch(e){}return '';}
 function kbRemap(e){if(e._kb)return;
   if(KB.win){e.stopImmediatePropagation();e.preventDefault();if(e.type==='keydown'&&!e.repeat&&KB.onKey){try{KB.onKey(e);}catch(_){}}return;}   // the Keyboard keys window is open: every press belongs to it
   if(e.ctrlKey||e.metaKey||e.altKey)return;const lk=kbPhys(e);if(!lk||!kbOk(lk))return;
