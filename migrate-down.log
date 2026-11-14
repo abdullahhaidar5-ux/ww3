@@ -1,0 +1,23 @@
+game servers configured but down (http://127.0.0.1:9)
+[10s] three pages loaded
+[11s] host lobby open, code 3hnp82
+peak memory (node + browser, summed RSS): 2761 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/3hnp82?role=host&key=270lw01ddi4450xwro' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MIGRATE FAIL: page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:44307/index.html:5793:350)
+    at addBld (http://127.0.0.1:44307/index.html:7282:62)
+    at newGame (http://127.0.0.1:44307/index.html:7262:134)
+    at newGame (http://127.0.0.1:44307/index.html:15251:52)
+    at newGame (http://127.0.0.1:44307/index.html:16052:52)
+    at startMP (http://127.0.0.1:44307/index.html:14457:471)
+    at launchMP (http://127.0.0.1:44307/index.html:12707:696)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:43)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (56s)
