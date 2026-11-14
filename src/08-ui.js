@@ -380,7 +380,7 @@ function issueCmdD(w,t,rally){const had=G.sel.some(u=>!u.isB&&u.team===ME&&!u.de
 function issueCmd(w,t,rally){
     {const x=exitIntent(t,MODK.alt);if(x)return doExit(x,w,t);}
     const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
-    if(rally&&!units.length&&G.sel.some(b=>b.isB&&b.team===ME)){doAct({t:'rally',x:w.x,y:w.y,ids:G.sel.filter(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)).map(b=>b.id)});pushLog('Rally point set for the selected building.');return true;}
+    if(rally&&!units.length&&G.sel.some(b=>b.isB&&b.team===ME)){doAct({t:'rally',x:w.x,y:w.y,ids:G.sel.filter(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)).map(b=>b.id)});pushLog('Rally point set for the selected building.');try{RV.fl=performance.now()+1500;}catch(e){}return true;}
     if(!units.length)return false;const ids=units.map(u=>u.id);
     if(spyIssue(w,t,units))return true;
     if(!t){const di=damAt(w);if(di>=0){doAct({t:'atkDam',ids,fi:di});speak(2);markT(G.dams[di].x,G.dams[di].y,40);pushLog('Attacking the dam - if it breaks, the valley floods.');return true;}}
