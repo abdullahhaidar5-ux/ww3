@@ -12,7 +12,7 @@ function goalText(){if(GOAL.g!==G){GOAL.g=G;GOAL.pk={};GOAL.key='';}const me=G.t
   if(G.battle){let n=0;for(const e of G.ents)if(e.isB&&!e.dead&&e.built>=1&&e.kind!=='garrison'&&e.team>=0&&G.teams[e.team]&&enemy(G.teams[e.team]))n++;
     return{k:'b'+n,h:`<b>Battle</b><i>·</i>Destroy every enemy building <span class="gn">(${n} left)</span>`};}
   return null;}
-function cqBanner(){if(!G||!(G.battle||G.camp)||G.grand){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}
+function cqBanner(){if(!G||!(G.battle||G.camp)||G.grand||window.LOADING){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}
   if(G.over){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}let b=$('cqBn');
   if(!b){if(!$('goalCss')){const st=document.createElement('style');st.id='goalCss';st.textContent=`#cqBn{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;max-width:calc(100vw - 420px);color:#e6e1cc;font:500 13px/1.5 system-ui,sans-serif;letter-spacing:.01em;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6)}
 #cqBn .gl{display:inline-block;padding:2px 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;border-radius:3px;background:linear-gradient(90deg,rgba(10,13,10,0),rgba(10,13,10,.62) 18%,rgba(10,13,10,.62) 82%,rgba(10,13,10,0))}

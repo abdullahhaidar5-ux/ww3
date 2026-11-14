@@ -82,6 +82,7 @@ html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 #cmdP{bottom:auto!important;top:64px!important;left:10px!important;right:auto!important}
 html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
 #hudLyB{display:none!important}
+#pwMeter{display:none!important}   /* power lives in the bar's top console now */
 /* ▼ folds the whole bar down off the screen; only the ▼/★ tabs stay (Abdullah 16:33 "Make this down arrow minimize the entire bar") */
 html body #side.min{height:0!important;min-height:0!important;padding:0!important;overflow:visible!important;background:none!important;box-shadow:none!important;border:0!important}
 html body #side.min #sideTop,html body #side.min #panel,html body #side.min .ccard,html body #side.min #info,html body #side.min .sup,html body #side.min #zhEmb,html body #side.min #zhPw,html body #side.min #credits,html body #side.min #popCap{display:none!important}
@@ -145,6 +146,7 @@ function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
   {let tp=$('zhTop');if(!tp){tp=document.createElement('div');tp.id='zhTop';sd.append(tp);}const cr=$('credits'),pw=$('zhPw'),pc=$('popCap');if(pw&&pw.parentNode!==tp)tp.prepend(pw);if(cr&&cr.parentNode!==tp){if(pw&&pw.parentNode===tp)pw.after(cr);else tp.prepend(cr);}if(pc&&pc.parentNode!==tp)tp.append(pc);
     if(pw&&pw.firstChild){const v=pw.dataset.k;if(v&&pw.dataset.k2!==v){pw.dataset.k2=v;const [mk,us]=v.split('|');pw.firstChild.textContent='⚡ '+us+' / '+mk;}}
     if(pc&&!/^\d/.test(pc.textContent))pc.textContent=pc.textContent.replace(/^units\s*/,'');}
+  {const bn=$('cqBn');if(bn){const v=window.LOADING?'hidden':'';if(bn.style.visibility!==v)bn.style.visibility=v;}}   /* the goal line never floats over the loading screen */
   let emb=$('zhEmb');if(!emb){emb=document.createElement('div');emb.id='zhEmb';emb.innerHTML='';sd.append(emb);}
   sd.classList.toggle('zhnosel',!(G.sel||[]).some(e=>e&&!e.dead&&e.team===ME));
   const sig=(G.sel||[]).map(e=>e.id).join(',');if(sig!==ZH.sig)ZH.sig=sig;try{zhPowWin();}catch(e){}

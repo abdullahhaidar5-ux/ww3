@@ -15806,7 +15806,7 @@ function goalText(){if(GOAL.g!==G){GOAL.g=G;GOAL.pk={};GOAL.key='';}const me=G.t
   if(G.battle){let n=0;for(const e of G.ents)if(e.isB&&!e.dead&&e.built>=1&&e.kind!=='garrison'&&e.team>=0&&G.teams[e.team]&&enemy(G.teams[e.team]))n++;
     return{k:'b'+n,h:`<b>Battle</b><i>·</i>Destroy every enemy building <span class="gn">(${n} left)</span>`};}
   return null;}
-function cqBanner(){if(!G||!(G.battle||G.camp)||G.grand){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}
+function cqBanner(){if(!G||!(G.battle||G.camp)||G.grand||window.LOADING){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}
   if(G.over){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}let b=$('cqBn');
   if(!b){if(!$('goalCss')){const st=document.createElement('style');st.id='goalCss';st.textContent=`#cqBn{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;max-width:calc(100vw - 420px);color:#e6e1cc;font:500 13px/1.5 system-ui,sans-serif;letter-spacing:.01em;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6)}
 #cqBn .gl{display:inline-block;padding:2px 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;border-radius:3px;background:linear-gradient(90deg,rgba(10,13,10,0),rgba(10,13,10,.62) 18%,rgba(10,13,10,.62) 82%,rgba(10,13,10,0))}
@@ -17749,6 +17749,7 @@ html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 #cmdP{bottom:auto!important;top:64px!important;left:10px!important;right:auto!important}
 html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
 #hudLyB{display:none!important}
+#pwMeter{display:none!important}   /* power lives in the bar's top console now */
 /* ▼ folds the whole bar down off the screen; only the ▼/★ tabs stay (Abdullah 16:33 "Make this down arrow minimize the entire bar") */
 html body #side.min{height:0!important;min-height:0!important;padding:0!important;overflow:visible!important;background:none!important;box-shadow:none!important;border:0!important}
 html body #side.min #sideTop,html body #side.min #panel,html body #side.min .ccard,html body #side.min #info,html body #side.min .sup,html body #side.min #zhEmb,html body #side.min #zhPw,html body #side.min #credits,html body #side.min #popCap{display:none!important}
@@ -17812,6 +17813,7 @@ function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
   {let tp=$('zhTop');if(!tp){tp=document.createElement('div');tp.id='zhTop';sd.append(tp);}const cr=$('credits'),pw=$('zhPw'),pc=$('popCap');if(pw&&pw.parentNode!==tp)tp.prepend(pw);if(cr&&cr.parentNode!==tp){if(pw&&pw.parentNode===tp)pw.after(cr);else tp.prepend(cr);}if(pc&&pc.parentNode!==tp)tp.append(pc);
     if(pw&&pw.firstChild){const v=pw.dataset.k;if(v&&pw.dataset.k2!==v){pw.dataset.k2=v;const [mk,us]=v.split('|');pw.firstChild.textContent='⚡ '+us+' / '+mk;}}
     if(pc&&!/^\d/.test(pc.textContent))pc.textContent=pc.textContent.replace(/^units\s*/,'');}
+  {const bn=$('cqBn');if(bn){const v=window.LOADING?'hidden':'';if(bn.style.visibility!==v)bn.style.visibility=v;}}   /* the goal line never floats over the loading screen */
   let emb=$('zhEmb');if(!emb){emb=document.createElement('div');emb.id='zhEmb';emb.innerHTML='';sd.append(emb);}
   sd.classList.toggle('zhnosel',!(G.sel||[]).some(e=>e&&!e.dead&&e.team===ME));
   const sig=(G.sel||[]).map(e=>e.id).join(',');if(sig!==ZH.sig)ZH.sig=sig;try{zhPowWin();}catch(e){}
