@@ -82,7 +82,7 @@ async function svLoad(meta,packed){
   if(!sv||!o||!Array.isArray(o.facs)||!Array.isArray(ck.ents)||(ck.v|0)<2||!o.facs.every(f=>FKEYS.includes(f)||f==='EU')||!MAPS[o.map])return {ok:false,msg:'This save is from an older version and can\'t be loaded.'};
   if(G&&!G.over){try{quitGame();}catch(e){}}
   try{MODE='single';ME=sv.me|0;
-    TERR_DEFER=true;try{newGame(JSON.parse(JSON.stringify(o)));ckRestore(ck);}finally{TERR_DEFER=false;}
+    TERR_DEFER=true;try{newGame(Object.assign(JSON.parse(JSON.stringify(o)),{keepMap:1}));ckRestore(ck);}finally{TERR_DEFER=false;}
     G.ldHold=1;G.sel=[];
     const cm=sv.cam;
     try{$('menu').hidden=true;}catch(e){}
