@@ -1,0 +1,33 @@
+game servers running locally at http://127.0.0.1:41949
+[8s] both pages loaded (menu model downloads done after 4s / 4s)
+[8s] host lobby open, code o06rb0
+[9s] client's game list (from the server) shows game O06RB0: {"role":"server","n":1,"id":"ve5fcf28bdbc8","ok":true}
+[9s] client joining
+[9s] client connected via ws: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[29s] battle: US vs RU on bm_splitridge; client is slot 1
+[77s] both pages finished loading
+[77s] conditions: host picked Overcast; host shows Overcast, client shows Overcast
+[78s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[110s] client order: 2/2 of the client's units moved on the host
+[146s] check @1.0 min t=60s: host 16 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 2590 client 2590
+[237s] check @2.5 min t=150s: host 20 entities, client side sees 7 (own 5); client has 8 (own 5); missing 0, extra 0, off-position 0, mismatched 0; credits host 4030 client 4030
+[331s] check @4.0 min t=240s: host 24 entities, client side sees 6 (own 5); client has 7 (own 5); missing 0, extra 0, off-position 0, mismatched 0; credits host 5470 client 5470
+[334s] traffic host->client 1309 KB in 2628 messages, client->host 41 KB in 280; client lag max 0.40 game-s; 10 ms per 0.1 s step
+[334s] 24 live checks, 0 out of tolerance; up to 4 enemy entities were in the client's view at once
+[334s] relay traffic per player: host->player 651 frames (687 records), 327 KB raw / 80 KB compressed per game-minute; player->host 59 frames, 0.8 KB compressed per minute (orch/out/srv-traffic.json)
+peak memory (node + browser, summed RSS): 4173 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC FAIL: client console error: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:45275/index.html:13695:212)
+    at updateUI (http://127.0.0.1:45275/index.html:17929:79)
+    at buildPanels (http://127.0.0.1:45275/index.html:13548:65)
+    at g.terrain (http://127.0.0.1:45275/index.html:14542:34)
+    at after (335s)
+  ✗ host console error: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:45275/index.html:13695:212)
+    at updateUI (http://127.0.0.1:45275/index.html:17929:79)
+    at buildPanels (http://127.0.0.1:45275/index.html:13548:65)
+    at g.terrain (http://127.0.0.1:45275/index.html:14542:34)
+    at after
