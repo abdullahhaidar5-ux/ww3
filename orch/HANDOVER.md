@@ -278,3 +278,19 @@ Landing order: Battle fixes → techbldgs → onegame → maptrim → nations20 
   - spy agitators and town leaflets removed (onegame note).
 - **Faction uniqueness:** he picked all 6 (signature unit, group mechanic, economy, base look, unit look, sound). factiondesign trig_01LuoYT3S2TozKUe5NtLhyKr does an audit + design doc only, orch/reports/factiondesign.md. Show it to him, then split into lanes.
 - Train 14 (train/20261114-0256) was gating at 04:40Z: sweepfixA, sweepfixB, ghostslot, orderfeel, pileflag, testrange.
+
+## 2026-11-14 06:30 Chicago (ORCH morning check)
+
+- Nothing landed overnight; main is still a3b627b (00:47Z).
+
+- train/20261114-0256 failed on the pileflag rally-flag guard.
+
+- train/20261114-0900 (sweepfixA, sweepfixB, orderfeel, ghostslot, testrange) has smooth-pc/mp and decisions green. Its only reds are tutorial, audio and cfclient (known flaky; green on main), so the conductor should re-run them once and land.
+
+- Sent looks-abc.jpg; waiting for Abdullah to pick A/B/C.
+
+- dozerbuild trig_014yvXAJPqpxJJ34VqwaRhDX (Sonnet) fired 10:01Z: only the construction vehicle builds.
+
+- To send back for better looks later: quarry and power plant too boxy (techbldgs), trench has black hexagons (dugout).
+
+- Usage: no new helpers until Mon night; conductor every 4 h; shiamissions moved to Tue 05:00Z.
