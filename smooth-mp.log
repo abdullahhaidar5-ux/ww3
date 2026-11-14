@@ -1,0 +1,15 @@
+[1s] mp: opening 3 pages
+[6s] mp: pages open
+[6s] mp: lobby s3p2e2
+[67s] mp attempt 1: REGRESSED
+  (re-running once to rule out noise) could not run: timed out waiting for client 2 in the lobby
+[67s] mp: opening 3 pages
+[72s] mp: pages open
+[72s] mp: lobby rq5xul
+[134s] mp attempt 2: REGRESSED
+
+                       mp        
+runtime 2.2 min
+
+SMOOTH FAIL: 1 problem(s)
+  - mp: could not run: timed out waiting for client 2 in the lobby
