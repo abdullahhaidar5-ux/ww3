@@ -14,3 +14,6 @@ Delete this file in your last commit.
 ## Extra (Abdullah photo 20:05 Chicago, a Battle game): the top bar shows a green "Supply OK" chip in BATTLE.
 Battle has no supply lines (train 12) - remove that chip (and any supply-network status) from the Battle top bar; Conquest keeps it.
 Add it to your guard. (The red out-of-supply badge over units is handled by the testrange helper.)
+
+## Owner change 20:18-20:19 Chicago: Conquest and campaign are being REMOVED (helper onegame) and "Bring supply lines into battle".
+So do NOT remove the 'Supply OK' chip or supply network from Battle (ignore that earlier extra). Keep doing: no towns in Battle (buildings stay garrisonable), no civilians, less dust and smoke.
