@@ -34,3 +34,5 @@ Cost: the final shader got 4 uniforms and ~6 multiplies/one contrast + tint + ed
    Note the older `LOOK` object in `src/11c-look.js` (faction models, `?nolook=1`) is a different system; the new names are `LOOKP`/`LOOKK` to avoid the clash.
 3. Then `python3 orch/build.py`, smoke, `orch/cigate.sh` (smooth gates: expect no change, same passes).
 4. Time-of-day battles keep their own light (`lookW` returns the row unchanged when `G.todM` is on); if the pick should also grade those, move its `wx` values into the TOD rows.
+
+## Abdullah picked **B Cinematic** (Sat 2026-11-14 09:06 Chicago). ORCH made B the default (src/10-post.js LOOKK). ?look=a|c still works for comparison. Ready to land.

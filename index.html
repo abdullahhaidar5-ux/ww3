@@ -18198,7 +18198,7 @@ function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.rou
 const LOOKP={a:{n:'Today',wx:null,v:1,g:0,e:0,sh:1,k:1,bl:1,hz:1,s:[1,1,1],h:[1,1,1]},
   b:{n:'Cinematic',wx:{sun:'#ffc48e',si:3.0,off:[-1250,430,-560],sky:'#8fa3c8',gnd:'#54443a',hi:.9,fog:'#cfa47a',fn:1000,ff:4800,expo:1.04,sr:3,hor:[.98,.68,.42],zen:[.28,.40,.66],gr:[1.04,1,.92],sat:1,amb:[1.02,.96,.88]},v:1.6,g:.012,e:0,sh:1.2,k:1.1,bl:1.7,hz:2.2,s:[.94,.97,1.05],h:[1.05,1.01,.92]},
   c:{n:'Drone feed',wx:{sun:'#f4f7ff',si:3.0,off:[-650,1000,-450],sky:'#a2b8d6',gnd:'#575b60',hi:1.15,fog:'#a9b3bd',fn:1700,ff:6400,expo:.95,sr:1.5,hor:[.7,.77,.85],zen:[.34,.5,.76],gr:[.95,1,1.06],sat:.62,amb:[.94,.98,1.06]},v:1.35,g:.038,e:.22,sh:2.4,k:1.22,bl:.8,hz:.5,s:[.93,1,1.07],h:[1,1.01,1.02]}};
-let LOOKK='a';try{const q=(new URLSearchParams(location.search).get('look')||'a').toLowerCase();if(LOOKP[q])LOOKK=q;}catch(e){}
+let LOOKK='b';try{const q=(new URLSearchParams(location.search).get('look')||'b').toLowerCase();if(LOOKP[q])LOOKK=q;}catch(e){}
 function lookW(w){const L=LOOKP[LOOKK];if(!L||!L.wx||(typeof G!=='undefined'&&G&&G.todM))return w;return Object.assign({},w,L.wx);}
 function lookPost(F){const L=LOOKP[LOOKK]||LOOKP.a;F.lkA.value.set(L.v,L.g,L.e,L.sh);F.lkB.value.set(L.k,L.bl,L.hz,1);F.lkS.value.set(L.s[0],L.s[1],L.s[2]);F.lkH.value.set(L.h[0],L.h[1],L.h[2]);}
 // Theatre colour grade (purely visual): desert maps run warm and dusty, snow maps cold and a little desaturated,
