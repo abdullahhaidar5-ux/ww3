@@ -18872,27 +18872,26 @@ function spyKit(B,attach,hand,hp,hv,cp,V,k){const HC=hp.clone().add(V(0,1.35*k,0
 //  Dear Leader (KP): a middle-aged head of state - dark high-collared tunic suit, neat short hair greying at the temples,
 //  small gold collar stars, arms at his sides, upright.
 // (face and hands keep the soldier model's own skin texture: C.keep)
-const LDRLOOK={IR:{c:{top:'#8e897d',arm:'#2b241f',fore:'#2b241f',leg:'#8e897d',shoe:'#1b1815',keep:['skin','head'],untex:['shoe','leg','fore'],fold:.3,hair2:'#7d7a75'},skin:'#b8896a'},
-  KP:{c:{top:'#2c3033',arm:'#2c3033',fore:'#2c3033',leg:'#2a2d30',shoe:'#121212',keep:['skin','head'],untex:['shoe','leg','fore'],fold:.3,hair2:'#1f1b18'},skin:'#caa283'}};
+const LDRLOOK={IR:{c:{top:'#8e897d',arm:'#2b241f',fore:'#2b241f',leg:'#8e897d',shoe:'#1b1815',keep:['skin','head'],untex:['shoe','leg','fore'],fold:.3,hair2:'#7d7a75',beard:'#8a867f',sq:{dz:.3,r:.95,hy:.3}},skin:'#b8896a'},
+  KP:{c:{top:'#2c3033',arm:'#2c3033',fore:'#2c3033',leg:'#2a2d30',shoe:'#121212',keep:['skin','head'],untex:['shoe','leg','fore'],fold:.3,hair2:'#1f1b18',sq:{dz:.3,r:.95,hy:.3}},skin:'#caa283'}};
 function leaderKit(B,attach,hand,hp,hv,cp,V,k,fac){const DL=fac==='KP',HC=hp.clone().add(V(0,1.35*k,0)),H=new THREE.Group(),Cg=new THREE.Group(),Hp=new THREE.Group();
   const mk=(geo,col,x,y,z,g)=>{const o=new THREE.Mesh(geo,gearMat(col));o.position.set(x*k,y*k,z*k);g.add(o);return o;};
   const box=(w,h,d)=>new THREE.BoxGeometry(w*k,h*k,d*k),sph=(r,ws,hs)=>new THREE.SphereGeometry(r*k,ws||12,hs||8),hip=(x,y,z)=>hv.clone().add(V(x*k,y*k,z*k));
   // ground under the feet (the hem stops just above it)
   const fy=B.footL?new THREE.Vector3().setFromMatrixPosition(B.footL.matrixWorld).y:hv.y-7*k,drop=(hv.y-fy)/k+.35;
   if(!DL){
-    // turban: wraps of white cloth crossing a little, set low on the forehead, a soft rounded crown, a tail of cloth at the back
-    for(let i=0;i<3;i++){const t=mk(new THREE.TorusGeometry((.9-i*.05)*k,(.3-i*.03)*k,8,24),i===1?'#e4e0d5':'#eeeae0',0,-.04+i*.24,-.06,H);t.rotation.x=Math.PI/2+(i===1?.16:-.12);t.rotation.y=i===1?.12:-.08;t.scale.z=.8;}
-    mk(sph(.9,16,10),'#ebe7dc',0,.42,-.06,H).scale.set(1.04,.82,1.04);mk(box(.42,.7,.14),'#e3dfd3',0,-.3,-.95,H).rotation.x=.14;
+    // (head pieces are placed on the skull's real centre, .3 forward of the neck line; the face reaches z 1.15-1.4)
+    // turban: wraps of white cloth crossing a little, set on the forehead, a soft rounded crown, a tail of cloth at the back
+    for(let i=0;i<3;i++){const t=mk(new THREE.TorusGeometry(.9*k,(.3-i*.03)*k,8,26),i===1?'#e4e0d5':'#eeeae0',0,.2+i*.22,.25,H);t.scale.set(.98-i*.05,1.2-i*.06,.8);t.rotation.x=Math.PI/2+(i===1?.14:-.1);t.rotation.y=i===1?.1:-.06;}
+    mk(sph(.9,16,10),'#ebe7dc',0,.62,.24,H).scale.set(.95,.72,1.14);mk(box(.42,.7,.14),'#e3dfd3',0,-.1,-.92,H).rotation.x=.14;
     // grey hair showing below the turban at the back and sides
-    {const g=new THREE.SphereGeometry(.86*k,14,8,Math.PI*.5+1.05,Math.PI*2-2.1,Math.PI*.45,Math.PI*.22);mk(g,'#8d8984',0,-.12,-.04,H);}
-    // full beard, grey-white, from the cheeks along the jaw (the mouth stays clear), fuller and longer at the chin; moustache
-    {const g=new THREE.SphereGeometry(.85*k,18,10,-Math.PI*.1,Math.PI*1.2,Math.PI*.6,Math.PI*.4);const b=mk(g,'#cbc6bc',0,-.36,.1,H);b.scale.set(1.04,1.05,1.18);}
-    {const c=mk(new THREE.SphereGeometry(.5*k,12,8),'#c4bfb5',0,-1.22,.62,H);c.scale.set(1.1,1.25,.75);}
-    mk(box(.52,.13,.16),'#b7b1a7',0,-.56,.92,H);for(const x of[-1,1])mk(box(.18,.13,.14),'#bdb8ae',x*.3,-.62,.88,H).rotation.z=x>0?-.5:.5;
+    {const g=new THREE.SphereGeometry(.9*k,14,8,Math.PI*.5+1.4,Math.PI*2-2.8,Math.PI*.45,Math.PI*.2);const h=mk(g,'#8d8984',0,-.05,.25,H);h.scale.set(.95,1,1.12);}
+    // full beard, grey-white: painted onto the face (LDRLOOK.IR beard, spyPaint) and given body below the chin here
+    {const c=mk(sph(.42,14,10),'#86827b',0,-1.3,.88,H);c.scale.set(1.05,1.2,.78);}
     // aba: an open-fronted dark cloak from the shoulders to the ankles, thin gold edge down both sides of the opening
-    {const top=4.55,len=top+drop-.6,g=new THREE.CylinderGeometry(1.55*k,2.35*k,len*k,20,6,true,.42,Math.PI*2-.84);const a=mk(g,'#2b241f',0,top-len/2,-.08,Cg);a.scale.z=.86;
+    {const top=4.55,len=top+drop-.6,g=new THREE.CylinderGeometry(1.55*k,2.6*k,len*k,20,6,true,.42,Math.PI*2-.84);const a=mk(g,'#2b241f',0,top-len/2,-.08,Cg);a.scale.z=.86;
       const pa=g.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i),y=pa.getY(i),f=1+.05*Math.sin(Math.atan2(x,z)*7)*(.5-y/(len*k));pa.setX(i,x*f);pa.setZ(i,z*f);}g.computeVertexNormals();
-      for(const sd of[-1,1]){const t=mk(box(.1,len-.2,.14),'#b89a4e',0,0,0,Cg);const a0=.42,r0=(1.55+2.35)/2;t.position.set(Math.sin(a0)*r0*k*sd,(top-len/2)*k,(Math.cos(a0)*r0*.86-.08)*k);t.rotation.x=-Math.atan2(.8,len)*.95;t.rotation.z=sd*.04;}
+      for(const sd of[-1,1]){const t=mk(box(.1,len-.2,.14),'#b89a4e',0,0,0,Cg);const a0=.42,r0=(1.55+2.6)/2;t.position.set(Math.sin(a0)*r0*k*sd,(top-len/2)*k,(Math.cos(a0)*r0*.86-.08)*k);t.rotation.x=-Math.atan2(.8,len)*.95;t.rotation.z=sd*.04;}
       mk(sph(1.5,16,8),'#2b241f',0,top-.2,-.1,Cg).scale.set(1.08,.4,.88);
       // the qaba's front under the open cloak: a smooth closed robe body over the soldier's chest rig, a white collar band
       {const t=mk(new THREE.CylinderGeometry(1.38*k,1.55*k,4.3*k,16,1,true),'#8e897d',0,2.25,.1,Cg);t.scale.z=.88;mk(box(.12,4.1,.08),'#77726a',0,2.2,1.43,Cg);}
@@ -18904,11 +18903,9 @@ function leaderKit(B,attach,hand,hp,hv,cp,V,k,fac){const DL=fac==='KP',HC=hp.clo
     for(let q=0;q<11;q++){const a=q/10*Math.PI;mk(sph(.1,6,4),'#4a2c18',-.05+Math.cos(a)*.22,.7-Math.sin(a)*.95,1.85,Hp);}mk(box(.12,.3,.12),'#b89a4e',.17,-.35+.05,1.85,Hp);
   }else{
     // neat short dark hair with a side part, greying at the temples
-    {const g=new THREE.SphereGeometry(.95*k,18,9,Math.PI*.5+.75,Math.PI*2-1.5,0,Math.PI*.47);mk(g,'#1f1b18',0,.02,-.04,H).scale.set(1.0,.92,1.05);
-      mk(box(.07,.05,1.1),'#3a332d',.33,.82,.05,H);for(const x of[-.86,.86])mk(box(.1,.36,.5),'#6c6964',x,-.22,.0,H);
-      {const g2=new THREE.SphereGeometry(.92*k,14,6,Math.PI*.5+1.15,Math.PI*2-2.3,Math.PI*.45,Math.PI*.2);mk(g2,'#1f1b18',0,-.02,-.08,H).scale.z=1.07;}}
-    // a closed-mouth line and a clean-shaven jaw (no beard)
-    mk(box(.4,.05,.08),'#8c5f4c',0,-.98,.93,H);
+    {const g=new THREE.SphereGeometry(.97*k,18,9,Math.PI*.5+.75,Math.PI*2-1.5,0,Math.PI*.5);mk(g,'#1f1b18',0,.02,.28,H).scale.set(.88,.95,1.08);
+      mk(box(.06,.05,1.0),'#3a332d',.3,.86,.4,H);for(const x of[-.8,.8])mk(box(.08,.34,.42),'#6c6964',x,-.18,.42,H);
+      {const g2=new THREE.SphereGeometry(.92*k,14,6,Math.PI*.5+1.4,Math.PI*2-2.8,Math.PI*.48,Math.PI*.2);const h2=mk(g2,'#1f1b18',0,.0,.27,H);h2.scale.set(.9,1,1.1);}}
     // tunic: high stand collar, five buttons down the front, two breast pockets, small gold stars on the collar
     {const T=new THREE.Group(),t=mk(new THREE.CylinderGeometry(1.32*k,1.6*k,4.1*k,16,1,true),'#2c3033',0,0,0,T);t.scale.z=.88;
       const fz=y=>(1.46-y*.068)*.88;for(let i=0;i<5;i++){const y=1.55-i*.78;mk(sph(.09,8,6),'#7a6a3a',0,y,fz(y)+.04,T);}
@@ -18934,8 +18931,8 @@ function spyPaint(geo,skel,tex,C0,SK0){const C=C0||SPYC,SKC=SK0||SPYSKIN,pa=geo.
   for(let i=0;i<n;i++){const r=R[i];if(!r||C.keep&&C.keep.includes(r))continue;const c=col[r];let m=lum?Math.max(.55,Math.min(1.4,Lm[i]/Math.max(.02,sum[r]/cnt[r]))):1;if(C.fold)m=1+(m-1)*C.fold;ca.setXYZ(i,c.r*m,c.g*m,c.b*m);ua.setXY(i,-4,-4);}
   // no helmet: whatever the soldier wears on its head is pulled in under the hair / cap (top of the head only, the face stays)
   {const bp=nm=>{const i=skel.bones.findIndex(b=>b.name===nm);return i<0?null:new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(skel.boneInverses[i]).invert());},hb=bp('head'),hi=bp('hips');
-    if(hb&&hi){const kb=hb.distanceTo(hi)/5.2,up=hb.clone().sub(hi).normalize()/* hips to neck: the rigs' head-top joints are not reliable */,c=hb.clone().add(up.clone().multiplyScalar(1.35*kb)),v=new THREE.Vector3(),rm=.9*kb;
-      const hc2=C.hair2?lin(C.hair2):null;for(let i=0;i<n;i++){if(R[i]!=='head')continue;v.fromBufferAttribute(pa,i).sub(c);const vu=v.dot(up);if(hc2&&vu>=-.02*kb){ca.setXYZ(i,hc2.r,hc2.g,hc2.b);ua.setXY(i,-4,-4);}if(vu<.12*kb)continue;const d=v.length();/* leaders: the cap's texture under the hair / turban becomes hair */if(d>rm){v.multiplyScalar(rm/d).add(c);pa.setXYZ(i,v.x,v.y,v.z);}}pa.needsUpdate=true;}}
+    if(hb&&hi){const kb=hb.distanceTo(hi)/5.2,up=hb.clone().sub(hi).normalize()/* hips to neck: the rigs' head-top joints are not reliable */,c=hb.clone().add(up.clone().multiplyScalar(1.35*kb)),v=new THREE.Vector3(),rm=(C.sq?C.sq.r:.9)*kb;if(C.sq)c.z+=C.sq.dz*kb;/* leaders: the skull's real centre sits forward of the neck (bind space faces +z) */
+      const hc2=C.hair2?lin(C.hair2):null,bc=C.beard?lin(C.beard):null;for(let i=0;i<n;i++){if(R[i]!=='head')continue;v.fromBufferAttribute(pa,i).sub(c);const vu=v.dot(up);if(hc2&&vu>=(C.sq?C.sq.hy:-.02)*kb){ca.setXYZ(i,hc2.r,hc2.g,hc2.b);ua.setXY(i,-4,-4);}if(bc){const x=Math.abs(v.x)/kb,y=vu/kb,z=v.z/kb,line=x<.3?-.86:Math.min(-.16,-.86+(x-.3)/.45*.7),mo=y>-.76&&y<-.62&&x<.34&&z>.82;if(z>-.2&&y>-1.75&&(y<line&&!(y>-.9&&x<.26&&z>.9)||mo)){const f=(.7+.45*Math.min(1.2,Lm[i]))*(.84+.3*Math.abs(Math.sin(v.x*91.7+v.y*57.3+v.z*33.1)));ca.setXYZ(i,bc.r*f,bc.g*f,bc.b*f);ua.setXY(i,-4,-4);}}/* a full beard painted onto the face itself, so it follows the jaw exactly */if(vu<.12*kb)continue;const d=v.length();/* leaders: the cap's texture under the hair / turban becomes hair */if(d>rm){v.multiplyScalar(rm/d).add(c);pa.setXYZ(i,v.x,v.y,v.z);}}pa.needsUpdate=true;}}
   ca.needsUpdate=true;ua.needsUpdate=true;}
 // the owner's "this one is hidden" mark: a small eye above the spy (one instanced draw for every spy on the map; 06-view shows it)
 function spyEyeGeo(){const P=[],I=[],N=18,ring=(f,w)=>{const b=P.length/3;for(let i=0;i<=N;i++){const a=i/N*Math.PI*2,x=Math.cos(a),y=Math.sin(a);for(const s of[1,1-w]){const q=f(x,y);P.push(q[0]*s,q[1]*s,0);}}for(let i=0;i<N;i++){const a=b+i*2;I.push(a,a+1,a+2,a+1,a+3,a+2);}};
