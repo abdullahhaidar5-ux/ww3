@@ -1,0 +1,10 @@
+menu {"btn":"▶ Tutorial: learn Battle (10 min)","vis":false}
+-- skip / exit / restart
+PAGEERR Cannot set properties of null (setting 'hidden')
+  FAIL exception: page.evaluate: TypeError: Cannot read properties of null (reading 'getBoundingClientRect')
+    at eval (eval at evaluate (:311:30), <anonymous>:1:117)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+step seconds: [] total 41 s
+  FAIL page errors: Cannot set properties of null (setting 'hidden')
+TUTORIAL FAIL (2)
