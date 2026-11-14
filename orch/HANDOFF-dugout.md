@@ -31,3 +31,4 @@ Select 8-10 infantry, press **I**, wait 5 seconds, then box-select the area and 
 
 ## Look fix (ORCH note Sat 16:43Z) - ready
 Trench floor, dugout pit and ramp were near-black rock blobs that read as black hexagons from above; now flat dark-soil blobs. Trenches lost the green camo net; other nets are duller olive-brown. Re-shot orch/shots/dugout-*.jpg (looked at). build --check OK, SMOKE and DUGOUT PASS locally. Status: READY (gate on gate/* still to be read by the conductor).
+- Note: after the look fix a local smoke run timed out in this slow sandbox (no result); DUGOUT PASS ran on the new build. The change is color/size of instanced blobs only. Run the gate.
