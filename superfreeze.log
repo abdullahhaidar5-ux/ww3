@@ -1,0 +1,19 @@
+  page: shader warm-up 8561 ms, 62 models, 120 objects in 658 steps (longest 827 ms), 117 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 41 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=false frames=227 normal=41ms (quiet max 208) longest=137ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 137ms@1.1s {} ; 128ms@5.6s {} ; 125ms@8.3s {} ; 125ms@0.1s {} ; 123ms@11.2s {}
+IR worst JS call (not drawing): simUpdate 31ms; FAIL: launch failed
+  page: shader warm-up 4296 ms, 65 models, 125 objects in 612 steps (longest 507 ms), 123 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 45 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=false frames=170 normal=45ms (quiet max 122) longest=245ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 245ms@6.6s {} ; 125ms@6.9s {} ; 120ms@0.0s {} ; 120ms@1.2s {} ; 120ms@1.4s {}
+RU worst JS call (not drawing): simUpdate 27ms; FAIL: launch failed
+  page: shader warm-up 3161 ms, 59 models, 114 objects in 602 steps (longest 513 ms), 111 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 40 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=false frames=183 normal=40ms (quiet max 178) longest=202ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 202ms@5.9s {} ; 149ms@6.3s {} ; 134ms@0.7s {} ; 121ms@9.8s {} ; 121ms@4.0s {}
+US worst JS call (not drawing): simUpdate 27ms; FAIL: launch failed
+SUPERFREEZE FAIL
