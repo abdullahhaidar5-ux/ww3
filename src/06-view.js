@@ -43,7 +43,12 @@ function camTick(dt){camTarget();const k=1-Math.exp(-dt*9),kz=1-Math.exp(-dt*11)
   if(Math.abs(cam.tx-cam.x)<.05)cam.x=cam.tx;if(Math.abs(cam.ty-cam.y)<.05)cam.y=cam.ty;if(Math.abs(cam.td-cam.dist)<.05)cam.dist=cam.td;cam._xl=cam.x;cam._yl=cam.y;cam._dl=cam.dist;}
 // which city building is under the cursor (rooftops included)
 function civUnder(sx,sy,w){if(!G.civ||!G.civ.length)return null;if(CITYM){const v=new THREE.Vector2(sx/VW*2-1,-(sy/VH)*2+1);RAY.setFromCamera(v,CAM);const h=RAY.intersectObject(CITYM,true)[0];if(h){const c=civAtXY(h.point.x-h.face.normal.x*2,h.point.z-h.face.normal.z*2);if(c)return c;}}return w?civAtXY(w.x,w.y):null;}
-function screenToWorld(sx,sy){const v=new THREE.Vector2(sx/VW*2-1,-(sy/VH)*2+1);RAY.setFromCamera(v,CAM);const out=new THREE.Vector3();if(!RAY.ray.intersectPlane(GPLANE,out))return null;return{x:out.x,y:out.z};}
+// the ground point under a screen pixel. orderfeel 2026-11-13: it used to hit a flat plane at height 0, so on raised ground a
+// click (and its order marker) landed well beyond the cursor; now it walks the ray down onto the real terrain height
+function screenToWorld(sx,sy){const v=new THREE.Vector2(sx/VW*2-1,-(sy/VH)*2+1);RAY.setFromCamera(v,CAM);const out=new THREE.Vector3();if(!RAY.ray.intersectPlane(GPLANE,out))return null;
+  const o=RAY.ray.origin,d=RAY.ray.direction;if(d.y>-1e-4)return{x:out.x,y:out.z};let h=0,x=out.x,y=out.z;
+  for(let i=0;i<8;i++){const g=Math.max(groundH(x,y),typeof WL==="number"?WL:-1e9);if(!isFinite(g))break;const nh=h+(g-h)*.85;if(Math.abs(nh-h)<.3)break;h=nh;const t=(h-o.y)/d.y;if(!(t>0))break;x=o.x+d.x*t;y=o.z+d.z*t;}
+  return{x,y};}
 function toScreen(x,h,y){TMP.set(x,h,y).project(CAM);return{x:(TMP.x+1)/2*VW,y:(1-TMP.y)/2*VH,z:TMP.z};}
 function vis(e){return e.team===ME||e.vis;}
 function entHeightMid(e){return e.isB?BH[e.kind]*.6:(e.s.dom==='air'?unitH(e)-groundH(e.x,e.y):6);}
@@ -239,8 +244,8 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
   for(const m of MARKERS){const p=toScreen(m.x,groundH(m.x,m.y),m.y);if(p.z>1)continue;c.font='700 13px IBM Plex Mono, monospace';c.textAlign='center';c.fillStyle='#ea5a40';if(m.t>0)c.fillText(m.t.toFixed(1),p.x,p.y+4);}
   {const posts=new Map();for(const u of G.sel)if(u.defend&&u.team===ME&&!u.dead){const k=(u.defend.x|0)+','+(u.defend.y|0);if(!posts.has(k))posts.set(k,u.defend);}for(const D of posts.values()){c.strokeStyle='rgba(111,178,255,.75)';c.lineWidth=1.5;c.setLineDash([6,5]);c.beginPath();for(let i=0;i<=40;i++){const a=i/40*6.2832,p=toScreen(D.x+Math.cos(a)*D.r,groundH(D.x+Math.cos(a)*D.r,D.y+Math.sin(a)*D.r)+2,D.y+Math.sin(a)*D.r);i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y);}c.stroke();c.setLineDash([]);const p=toScreen(D.x,groundH(D.x,D.y)+3,D.y);c.fillStyle='#6fb2ff';c.font='bold 11px system-ui,sans-serif';c.textAlign='center';c.fillText('🛡 DEFEND',p.x,p.y);c.textAlign='left';}}
   // queued (Shift) and waypoint (Alt) orders: one thin amber line per group from where they stand through every point, while selected
-  {const paths=new Map();for(const u of G.sel){if(u.team!==ME||u.dead||u.isB||!u.wq||!u.wq.length||!u.order)continue;const pts=[u.order,...u.wq],key=pts.map(q=>(q.x>>3)+','+(q.y>>3)).join(' ');let P=paths.get(key);if(!P){P={pts,x:0,y:0,n:0};paths.set(key,P);}P.x+=u.x;P.y+=u.y;P.n++;}
-   for(const P of paths.values()){const sc=q=>toScreen(q.x,groundH(q.x,q.y)+2,q.y);let a=sc({x:P.x/P.n,y:P.y/P.n});c.lineWidth=1.4;c.strokeStyle='rgba(227,179,65,.75)';c.setLineDash([5,4]);c.beginPath();c.moveTo(a.x,a.y);
+  {const paths=new Map();for(const u of G.sel){if(u.team!==ME||u.dead||u.isB||!u.wq||!u.wq.length||!u.order)continue;const key=u.wq.map(q=>(q.x>>4)+','+(q.y>>4)).join(' ');let P=paths.get(key);if(!P){P={wq:u.wq,x:0,y:0,ox:0,oy:0,n:0};paths.set(key,P);}P.x+=u.x;P.y+=u.y;P.ox+=u.order.x;P.oy+=u.order.y;P.n++;}
+   for(const P of paths.values()){P.pts=[{x:P.ox/P.n,y:P.oy/P.n},...P.wq];const sc=q=>toScreen(q.x,groundH(q.x,q.y)+2,q.y);let a=sc({x:P.x/P.n,y:P.y/P.n});c.lineWidth=1.4;c.strokeStyle='rgba(227,179,65,.75)';c.setLineDash([5,4]);c.beginPath();c.moveTo(a.x,a.y);
      for(const q of P.pts){const b=sc(q);c.lineTo(b.x,b.y);}c.stroke();c.setLineDash([]);c.fillStyle='#e3b341';P.pts.forEach((q,i)=>{const b=sc(q);c.beginPath();c.moveTo(b.x,b.y-7);c.lineTo(b.x+7,b.y);c.lineTo(b.x,b.y+7);c.lineTo(b.x-7,b.y);c.closePath();c.fill();if(P.pts.length>1){c.font='600 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='#1a1408';c.fillText(String(i+1),b.x,b.y+3.5);c.fillStyle='#e3b341';}});}}
   if(typeof wallPreview==='function')wallPreview(c);
   if(drag&&drag.box){c.strokeStyle='#8af0a6';c.lineWidth=1;c.fillStyle='rgba(116,208,143,.1)';const x=Math.min(drag.x0,mouse.x),y=Math.min(drag.y0,mouse.y);c.fillRect(x,y,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));c.strokeRect(x+.5,y+.5,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));}

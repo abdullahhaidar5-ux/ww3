@@ -12,8 +12,8 @@
      ring per soldier where the line formation will put him, before the button is released.
    Both share one decal shader (ofMat). Settings > Mouse > Order markers Off hides the order markers (not the rings). */
 const SELR={m:null,max:400,n:0};
-const ORDM={m:null,cap:12,list:[],gmax:96,n:0};
-const OFK={mv:[0x74d08f,2,1.5,.85],am:[0xf08a3a,2,1.5,.85],atk:[0xea5a40,3,1.6,.9],gd:[0x6fb2ff,4,1.6,1.1],wp:[0xe3b341,5,1.4,1],ln:[0x74d08f,6,1.3,.8],lna:[0xf08a3a,6,1.3,.8],use:[0x9fe0b0,0,1.4,.7]};   // colour, shape, line px, life s
+const ORDM={m:null,cap:12,list:[],gmax:96,n:0,age:null};   // age: screenshot tools only (holds every marker at that age in seconds)
+const OFK={mv:[0x5fe08a,2,2.6,.85],am:[0xff8a2a,2,2.6,.85],atk:[0xff4a3a,3,2.6,.9],gd:[0x5fb0ff,4,2.2,1.1],wp:[0xffc23a,5,2.2,1],ln:[0x5fe08a,6,2,.8],lna:[0xff8a2a,6,2,.8],use:[0x9fe0b0,0,2,.7]};   // colour, shape, line px, life s
 function ofMat(){
   return new THREE.ShaderMaterial({transparent:true,depthWrite:false,depthTest:true,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4,toneMapped:false,
     vertexShader:`attribute vec3 aC;attribute vec4 aP;attribute vec3 aS;varying vec2 vP;varying vec3 vC;varying vec4 vQ;varying vec3 vS;
@@ -32,9 +32,9 @@ function ofMat(){
           float f=fract(atan(p.y,p.x)/6.2832*24.);d=min(d,abs(l-r*.86)+step(.5,f)*1e3);}
         else if(sh<5.5){d=max(abs(p.x)+abs(p.y)-s.x,0.);}
         else{d=sg(p,vec2(-s.x,0.),vec2(s.x,0.));vec2 q=vec2(abs(p.x)-s.x,abs(p.y));d=min(d,sg(q,vec2(0.,0.),vec2(0.,s.y)));}
-        float aa=max(fwidth(d),.04),core=1.-smoothstep(w*.5-aa,w*.5+aa,d),glow=exp(-max(d-w*.5,0.)/(w*1.3+.8))*.45;
-        float a=vQ.x*clamp(core+glow*(1.-core)+fill,0.,1.);if(a<.008)discard;
-        gl_FragColor=vec4(mix(vC,vec3(1.),core*.3),a);
+        float aa=max(fwidth(d),.04),core=1.-smoothstep(w*.5-aa,w*.5+aa,d),edge=(1.-core)*(1.-smoothstep(w*.5,w*1.15+aa,d))*.5,glow=(1.-core)*exp(-max(d-w*.5,0.)/(w*1.6+.8))*.32;
+        float a=clamp(core+edge+glow+fill,0.,1.);vec3 c=(mix(vC,vec3(1.),.12)*core+vC*.12*edge+vC*(glow+fill))/max(a,1e-3);a*=vQ.x;if(a<.008)discard;
+        gl_FragColor=vec4(c,a);
         #include <colorspace_fragment>
       }`});}
 function ofMesh(max){const g=new THREE.PlaneGeometry(2,2).rotateX(-Math.PI/2);
@@ -53,11 +53,11 @@ function ofReset(){for(const o of [SELR,ORDM])if(o.m){SCN.remove(o.m);o.m.geomet
 /* ---- selection rings ---- */
 let HOVE=null;   // the unit / building under the mouse (set by cursorIntent in 08-ui, which already picks it)
 function selShape(e){   // [shape, half-size x (along the facing), half-size z, line px, tilt]
-  if(e.isB){const h=e.size*.5+5;return[1,h,h,1.9,1];}
+  if(e.isB){const h=e.size*.5+5;return[1,h,h,2.8,1];}
   const s=e.s,air=s.dom==='air'&&!e.landed;
-  if(air||isInf(s))return[0,e.r+(air?7:4),e.r+(air?7:4),air?1.5:1.25,!air];
-  return[0,e.r*1.2+5,e.r*.78+4.5,1.6,s.dom!=='naval'];}
-function selRingCol(e){const T=G.teams[e.team];_OF.c.set(T&&T.color||'#8af0a6');return _OF.c.lerp(_OFW,.18).getHex();}const _OFW=new THREE.Color(1,1,1);
+  if(air||isInf(s))return[0,e.r+(air?7:4),e.r+(air?7:4),air?2.2:2,!air];
+  return[0,e.r*1.2+5,e.r*.78+4.5,2.4,s.dom!=='naval'];}
+function selRingCol(e){const T=G.teams[e.team];_OF.c.set(T&&T.color||'#8af0a6');return _OF.c.lerp(_OFW,.3).getHex();}const _OFW=new THREE.Color(1,1,1);
 function selRings(){if(!SCN||!G)return;if(!SELR.m)SELR.m=ofMesh(SELR.max);const M=SELR.m;let n=0;
   const put=(e,a)=>{if(n>=SELR.max||!e||e.dead||!vis(e))return;const[sh,sx,sz,wpx,tilt]=selShape(e),o=OBJ.get(e.id),yaw=e.isB?(o?o.rotation.y:0):(o?o.rotation.y:-(e.va||0));
     const h=e.isB||tilt?groundH(e.x,e.y)+1.4:unitH(e)+1.2;ofPut(M,n++,e.x,e.y,h,yaw,Math.max(sx,sz),tilt,selRingCol(e),a,sh,SET.cb&&!e.isB?idRingSeg(e.team):0,wpx,sx,sz,0);};
@@ -82,8 +82,8 @@ function ordLineGhost(){   // right-drag: where each soldier of the line will st
   for(const r in S)for(const k of S[r]){const u=rs.find(q=>q[0]===r);out.push({x:mx+nx*k[0]+px*k[1],y:my+ny*k[0]+py*k[1],r:u?u[1].r+3:7,veh:u&&!isInf(u[1].s)});}
   return{pts:out,am:!!(RDRAG.am||G.amove),a,b:w1};}
 function ordMarks(){if(!SCN||!G)return;if(!ORDM.m)ORDM.m=ofMesh(ORDM.cap+ORDM.gmax+2);const M=ORDM.m,now=performance.now(),L=ORDM.list;let n=0;
-  for(let i=L.length-1;i>=0;i--){const m=L[i],K=OFK[m.k],k=(now-m.t)/1000/K[3];if(k>=1||(m.e&&m.e.dead&&k>.3)){L.splice(i,1);continue;}}
-  for(const m of L){const K=OFK[m.k],k=Math.min(1,(now-m.t)/1000/K[3]),a=Math.pow(1-k,1.4)*Math.min(1,k*12+.35);
+  for(let i=L.length-1;i>=0;i--){const m=L[i],K=OFK[m.k],k=(ORDM.age!=null?ORDM.age:(now-m.t)/1000)/K[3];if(k>=1||(m.e&&m.e.dead&&k>.3)){L.splice(i,1);continue;}}
+  for(const m of L){const K=OFK[m.k],k=Math.min(1,(ORDM.age!=null?ORDM.age:(now-m.t)/1000)/K[3]),a=Math.pow(1-k,1.4)*Math.min(1,k*12+.35);
     let x=m.x,y=m.y,yaw=0,sx=m.r,sz=m.r;if(m.e&&!m.e.dead){x=m.e.x;y=m.e.y;}
     if(K[1]===6&&m.x2!=null){const dx=m.x2-m.x,dy=m.y2-m.y;x=(m.x+m.x2)/2;y=(m.y+m.y2)/2;yaw=-Math.atan2(dy,dx);sx=Math.max(6,Math.hypot(dx,dy)/2);sz=7;}
     const air=m.e&&m.e.s&&m.e.s.dom==='air'&&!m.e.landed;

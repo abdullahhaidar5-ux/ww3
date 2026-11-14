@@ -11798,7 +11798,12 @@ function camTick(dt){camTarget();const k=1-Math.exp(-dt*9),kz=1-Math.exp(-dt*11)
   if(Math.abs(cam.tx-cam.x)<.05)cam.x=cam.tx;if(Math.abs(cam.ty-cam.y)<.05)cam.y=cam.ty;if(Math.abs(cam.td-cam.dist)<.05)cam.dist=cam.td;cam._xl=cam.x;cam._yl=cam.y;cam._dl=cam.dist;}
 // which city building is under the cursor (rooftops included)
 function civUnder(sx,sy,w){if(!G.civ||!G.civ.length)return null;if(CITYM){const v=new THREE.Vector2(sx/VW*2-1,-(sy/VH)*2+1);RAY.setFromCamera(v,CAM);const h=RAY.intersectObject(CITYM,true)[0];if(h){const c=civAtXY(h.point.x-h.face.normal.x*2,h.point.z-h.face.normal.z*2);if(c)return c;}}return w?civAtXY(w.x,w.y):null;}
-function screenToWorld(sx,sy){const v=new THREE.Vector2(sx/VW*2-1,-(sy/VH)*2+1);RAY.setFromCamera(v,CAM);const out=new THREE.Vector3();if(!RAY.ray.intersectPlane(GPLANE,out))return null;return{x:out.x,y:out.z};}
+// the ground point under a screen pixel. orderfeel 2026-11-13: it used to hit a flat plane at height 0, so on raised ground a
+// click (and its order marker) landed well beyond the cursor; now it walks the ray down onto the real terrain height
+function screenToWorld(sx,sy){const v=new THREE.Vector2(sx/VW*2-1,-(sy/VH)*2+1);RAY.setFromCamera(v,CAM);const out=new THREE.Vector3();if(!RAY.ray.intersectPlane(GPLANE,out))return null;
+  const o=RAY.ray.origin,d=RAY.ray.direction;if(d.y>-1e-4)return{x:out.x,y:out.z};let h=0,x=out.x,y=out.z;
+  for(let i=0;i<8;i++){const g=Math.max(groundH(x,y),typeof WL==="number"?WL:-1e9);if(!isFinite(g))break;const nh=h+(g-h)*.85;if(Math.abs(nh-h)<.3)break;h=nh;const t=(h-o.y)/d.y;if(!(t>0))break;x=o.x+d.x*t;y=o.z+d.z*t;}
+  return{x,y};}
 function toScreen(x,h,y){TMP.set(x,h,y).project(CAM);return{x:(TMP.x+1)/2*VW,y:(1-TMP.y)/2*VH,z:TMP.z};}
 function vis(e){return e.team===ME||e.vis;}
 function entHeightMid(e){return e.isB?BH[e.kind]*.6:(e.s.dom==='air'?unitH(e)-groundH(e.x,e.y):6);}
@@ -11994,8 +11999,8 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
   for(const m of MARKERS){const p=toScreen(m.x,groundH(m.x,m.y),m.y);if(p.z>1)continue;c.font='700 13px IBM Plex Mono, monospace';c.textAlign='center';c.fillStyle='#ea5a40';if(m.t>0)c.fillText(m.t.toFixed(1),p.x,p.y+4);}
   {const posts=new Map();for(const u of G.sel)if(u.defend&&u.team===ME&&!u.dead){const k=(u.defend.x|0)+','+(u.defend.y|0);if(!posts.has(k))posts.set(k,u.defend);}for(const D of posts.values()){c.strokeStyle='rgba(111,178,255,.75)';c.lineWidth=1.5;c.setLineDash([6,5]);c.beginPath();for(let i=0;i<=40;i++){const a=i/40*6.2832,p=toScreen(D.x+Math.cos(a)*D.r,groundH(D.x+Math.cos(a)*D.r,D.y+Math.sin(a)*D.r)+2,D.y+Math.sin(a)*D.r);i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y);}c.stroke();c.setLineDash([]);const p=toScreen(D.x,groundH(D.x,D.y)+3,D.y);c.fillStyle='#6fb2ff';c.font='bold 11px system-ui,sans-serif';c.textAlign='center';c.fillText('🛡 DEFEND',p.x,p.y);c.textAlign='left';}}
   // queued (Shift) and waypoint (Alt) orders: one thin amber line per group from where they stand through every point, while selected
-  {const paths=new Map();for(const u of G.sel){if(u.team!==ME||u.dead||u.isB||!u.wq||!u.wq.length||!u.order)continue;const pts=[u.order,...u.wq],key=pts.map(q=>(q.x>>3)+','+(q.y>>3)).join(' ');let P=paths.get(key);if(!P){P={pts,x:0,y:0,n:0};paths.set(key,P);}P.x+=u.x;P.y+=u.y;P.n++;}
-   for(const P of paths.values()){const sc=q=>toScreen(q.x,groundH(q.x,q.y)+2,q.y);let a=sc({x:P.x/P.n,y:P.y/P.n});c.lineWidth=1.4;c.strokeStyle='rgba(227,179,65,.75)';c.setLineDash([5,4]);c.beginPath();c.moveTo(a.x,a.y);
+  {const paths=new Map();for(const u of G.sel){if(u.team!==ME||u.dead||u.isB||!u.wq||!u.wq.length||!u.order)continue;const key=u.wq.map(q=>(q.x>>4)+','+(q.y>>4)).join(' ');let P=paths.get(key);if(!P){P={wq:u.wq,x:0,y:0,ox:0,oy:0,n:0};paths.set(key,P);}P.x+=u.x;P.y+=u.y;P.ox+=u.order.x;P.oy+=u.order.y;P.n++;}
+   for(const P of paths.values()){P.pts=[{x:P.ox/P.n,y:P.oy/P.n},...P.wq];const sc=q=>toScreen(q.x,groundH(q.x,q.y)+2,q.y);let a=sc({x:P.x/P.n,y:P.y/P.n});c.lineWidth=1.4;c.strokeStyle='rgba(227,179,65,.75)';c.setLineDash([5,4]);c.beginPath();c.moveTo(a.x,a.y);
      for(const q of P.pts){const b=sc(q);c.lineTo(b.x,b.y);}c.stroke();c.setLineDash([]);c.fillStyle='#e3b341';P.pts.forEach((q,i)=>{const b=sc(q);c.beginPath();c.moveTo(b.x,b.y-7);c.lineTo(b.x+7,b.y);c.lineTo(b.x,b.y+7);c.lineTo(b.x-7,b.y);c.closePath();c.fill();if(P.pts.length>1){c.font='600 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='#1a1408';c.fillText(String(i+1),b.x,b.y+3.5);c.fillStyle='#e3b341';}});}}
   if(typeof wallPreview==='function')wallPreview(c);
   if(drag&&drag.box){c.strokeStyle='#8af0a6';c.lineWidth=1;c.fillStyle='rgba(116,208,143,.1)';const x=Math.min(drag.x0,mouse.x),y=Math.min(drag.y0,mouse.y);c.fillRect(x,y,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));c.strokeRect(x+.5,y+.5,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));}
@@ -12208,8 +12213,8 @@ function pingBtn(us){const left=Math.max(0,...us.map(u=>Math.ceil((u.pingT||0)-G
      ring per soldier where the line formation will put him, before the button is released.
    Both share one decal shader (ofMat). Settings > Mouse > Order markers Off hides the order markers (not the rings). */
 const SELR={m:null,max:400,n:0};
-const ORDM={m:null,cap:12,list:[],gmax:96,n:0};
-const OFK={mv:[0x74d08f,2,1.5,.85],am:[0xf08a3a,2,1.5,.85],atk:[0xea5a40,3,1.6,.9],gd:[0x6fb2ff,4,1.6,1.1],wp:[0xe3b341,5,1.4,1],ln:[0x74d08f,6,1.3,.8],lna:[0xf08a3a,6,1.3,.8],use:[0x9fe0b0,0,1.4,.7]};   // colour, shape, line px, life s
+const ORDM={m:null,cap:12,list:[],gmax:96,n:0,age:null};   // age: screenshot tools only (holds every marker at that age in seconds)
+const OFK={mv:[0x5fe08a,2,2.6,.85],am:[0xff8a2a,2,2.6,.85],atk:[0xff4a3a,3,2.6,.9],gd:[0x5fb0ff,4,2.2,1.1],wp:[0xffc23a,5,2.2,1],ln:[0x5fe08a,6,2,.8],lna:[0xff8a2a,6,2,.8],use:[0x9fe0b0,0,2,.7]};   // colour, shape, line px, life s
 function ofMat(){
   return new THREE.ShaderMaterial({transparent:true,depthWrite:false,depthTest:true,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4,toneMapped:false,
     vertexShader:`attribute vec3 aC;attribute vec4 aP;attribute vec3 aS;varying vec2 vP;varying vec3 vC;varying vec4 vQ;varying vec3 vS;
@@ -12228,9 +12233,9 @@ function ofMat(){
           float f=fract(atan(p.y,p.x)/6.2832*24.);d=min(d,abs(l-r*.86)+step(.5,f)*1e3);}
         else if(sh<5.5){d=max(abs(p.x)+abs(p.y)-s.x,0.);}
         else{d=sg(p,vec2(-s.x,0.),vec2(s.x,0.));vec2 q=vec2(abs(p.x)-s.x,abs(p.y));d=min(d,sg(q,vec2(0.,0.),vec2(0.,s.y)));}
-        float aa=max(fwidth(d),.04),core=1.-smoothstep(w*.5-aa,w*.5+aa,d),glow=exp(-max(d-w*.5,0.)/(w*1.3+.8))*.45;
-        float a=vQ.x*clamp(core+glow*(1.-core)+fill,0.,1.);if(a<.008)discard;
-        gl_FragColor=vec4(mix(vC,vec3(1.),core*.3),a);
+        float aa=max(fwidth(d),.04),core=1.-smoothstep(w*.5-aa,w*.5+aa,d),edge=(1.-core)*(1.-smoothstep(w*.5,w*1.15+aa,d))*.5,glow=(1.-core)*exp(-max(d-w*.5,0.)/(w*1.6+.8))*.32;
+        float a=clamp(core+edge+glow+fill,0.,1.);vec3 c=(mix(vC,vec3(1.),.12)*core+vC*.12*edge+vC*(glow+fill))/max(a,1e-3);a*=vQ.x;if(a<.008)discard;
+        gl_FragColor=vec4(c,a);
         #include <colorspace_fragment>
       }`});}
 function ofMesh(max){const g=new THREE.PlaneGeometry(2,2).rotateX(-Math.PI/2);
@@ -12249,11 +12254,11 @@ function ofReset(){for(const o of [SELR,ORDM])if(o.m){SCN.remove(o.m);o.m.geomet
 /* ---- selection rings ---- */
 let HOVE=null;   // the unit / building under the mouse (set by cursorIntent in 08-ui, which already picks it)
 function selShape(e){   // [shape, half-size x (along the facing), half-size z, line px, tilt]
-  if(e.isB){const h=e.size*.5+5;return[1,h,h,1.9,1];}
+  if(e.isB){const h=e.size*.5+5;return[1,h,h,2.8,1];}
   const s=e.s,air=s.dom==='air'&&!e.landed;
-  if(air||isInf(s))return[0,e.r+(air?7:4),e.r+(air?7:4),air?1.5:1.25,!air];
-  return[0,e.r*1.2+5,e.r*.78+4.5,1.6,s.dom!=='naval'];}
-function selRingCol(e){const T=G.teams[e.team];_OF.c.set(T&&T.color||'#8af0a6');return _OF.c.lerp(_OFW,.18).getHex();}const _OFW=new THREE.Color(1,1,1);
+  if(air||isInf(s))return[0,e.r+(air?7:4),e.r+(air?7:4),air?2.2:2,!air];
+  return[0,e.r*1.2+5,e.r*.78+4.5,2.4,s.dom!=='naval'];}
+function selRingCol(e){const T=G.teams[e.team];_OF.c.set(T&&T.color||'#8af0a6');return _OF.c.lerp(_OFW,.3).getHex();}const _OFW=new THREE.Color(1,1,1);
 function selRings(){if(!SCN||!G)return;if(!SELR.m)SELR.m=ofMesh(SELR.max);const M=SELR.m;let n=0;
   const put=(e,a)=>{if(n>=SELR.max||!e||e.dead||!vis(e))return;const[sh,sx,sz,wpx,tilt]=selShape(e),o=OBJ.get(e.id),yaw=e.isB?(o?o.rotation.y:0):(o?o.rotation.y:-(e.va||0));
     const h=e.isB||tilt?groundH(e.x,e.y)+1.4:unitH(e)+1.2;ofPut(M,n++,e.x,e.y,h,yaw,Math.max(sx,sz),tilt,selRingCol(e),a,sh,SET.cb&&!e.isB?idRingSeg(e.team):0,wpx,sx,sz,0);};
@@ -12278,8 +12283,8 @@ function ordLineGhost(){   // right-drag: where each soldier of the line will st
   for(const r in S)for(const k of S[r]){const u=rs.find(q=>q[0]===r);out.push({x:mx+nx*k[0]+px*k[1],y:my+ny*k[0]+py*k[1],r:u?u[1].r+3:7,veh:u&&!isInf(u[1].s)});}
   return{pts:out,am:!!(RDRAG.am||G.amove),a,b:w1};}
 function ordMarks(){if(!SCN||!G)return;if(!ORDM.m)ORDM.m=ofMesh(ORDM.cap+ORDM.gmax+2);const M=ORDM.m,now=performance.now(),L=ORDM.list;let n=0;
-  for(let i=L.length-1;i>=0;i--){const m=L[i],K=OFK[m.k],k=(now-m.t)/1000/K[3];if(k>=1||(m.e&&m.e.dead&&k>.3)){L.splice(i,1);continue;}}
-  for(const m of L){const K=OFK[m.k],k=Math.min(1,(now-m.t)/1000/K[3]),a=Math.pow(1-k,1.4)*Math.min(1,k*12+.35);
+  for(let i=L.length-1;i>=0;i--){const m=L[i],K=OFK[m.k],k=(ORDM.age!=null?ORDM.age:(now-m.t)/1000)/K[3];if(k>=1||(m.e&&m.e.dead&&k>.3)){L.splice(i,1);continue;}}
+  for(const m of L){const K=OFK[m.k],k=Math.min(1,(ORDM.age!=null?ORDM.age:(now-m.t)/1000)/K[3]),a=Math.pow(1-k,1.4)*Math.min(1,k*12+.35);
     let x=m.x,y=m.y,yaw=0,sx=m.r,sz=m.r;if(m.e&&!m.e.dead){x=m.e.x;y=m.e.y;}
     if(K[1]===6&&m.x2!=null){const dx=m.x2-m.x,dy=m.y2-m.y;x=(m.x+m.x2)/2;y=(m.y+m.y2)/2;yaw=-Math.atan2(dy,dx);sx=Math.max(6,Math.hypot(dx,dy)/2);sz=7;}
     const air=m.e&&m.e.s&&m.e.s.dom==='air'&&!m.e.landed;

@@ -26,7 +26,7 @@ const browser = await pw.chromium.launch({ args: ['--use-gl=angle', '--use-angle
 const want = k => !ONLY || ONLY.includes(k);
 
 async function game(mode) {
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  const ctx = await browser.newContext({ viewport: process.env.DBG ? { width: 480, height: 300 } : { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   await guardContext(ctx);
   const page = await ctx.newPage();
   await page.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue() : r.abort());
@@ -39,6 +39,8 @@ async function game(mode) {
   return { ctx, page };
 }
 const shot = async (page, name, wait = 1200) => { await page.waitForTimeout(wait); await page.screenshot({ path: path.join(SH, `${TAG}-${name}.jpg`), type: 'jpeg', quality: 78, timeout: 300000 }); console.log('shot', `${TAG}-${name}.jpg`); };
+// software GL needs ~1 min per frame, far longer than a marker lives: hold every marker at 0.2 s of age while the picture is taken
+const freeze = page => page.evaluate(() => { clearInterval(window.__fz); ORDM.age = .2; });
 const resel = page => page.evaluate(() => { G.sel = window.__grp.map(id => G.byId.get(id)).filter(u => u && !u.dead); updateUI(); });
 const stats = page => page.evaluate(() => ({ rings: typeof SELR !== 'undefined' && SELR.m ? SELR.m.count : (typeof RINGS !== 'undefined' ? RINGS.filter(r => r.visible).length : -1), marks: typeof ORDM !== 'undefined' ? ORDM.list.length : -1, goal: (document.getElementById('cqBn') || {}).textContent || '' }));
 
@@ -54,30 +56,36 @@ if (want('cq')) {
     const p = toScreen(bx + 20, groundH(bx + 20, by + 20), by + 20); const h = us[9]; const ph = toScreen(h.x, unitH(h) + 4, h.y);
     return { x: p.x, y: p.y, hx: ph.x, hy: ph.y, bx, by };
   });
-  await page.mouse.move(pos.hx, pos.hy); await page.waitForTimeout(300);
+  // the same functions a right-click calls (orderClick / lineOrder), with the mouse put on the spot: playwright's mouse in a
+  // 1-frame-per-minute software-GL page does not land reliably
+  const at = (x, y) => page.evaluate(([x, y]) => { mouse.x = x; mouse.y = y; mouse.in = true; try { cursorTick(true); } catch (e) {} }, [x, y]);
+  const order = (x, y, o = {}) => page.evaluate(([x, y, o]) => { mouse.x = x; mouse.y = y; mouse.in = true; G.sel = window.__grp.map(id => G.byId.get(id)).filter(u => u && !u.dead); if (o.am) G.amove = true; MODK.shift = !!o.sh; orderClick(!!o.sh); MODK.shift = false; }, [x, y, o]);
+  await at(pos.hx, pos.hy); await page.waitForTimeout(300);
   await shot(page, 'selected-group', 2500); console.log('ORDERFEEL', JSON.stringify(await stats(page)));
-  await resel(page);
-  // move order: right-click on open ground ahead of the group
-  await page.mouse.move(pos.x + 220, pos.y - 60); await page.mouse.down({ button: 'right' }); await page.mouse.up({ button: 'right' });
+  await at(5, 5);
+  if (process.env.DBG) { const r = await page.evaluate(() => { const out = {}; mouse.x = 240; mouse.y = 120; mouse.in = true; G.sel = window.__grp.map(id => G.byId.get(id)); out.w = screenToWorld(240, 120); const om = ordMark; let calls = []; window.ordMark = function (...a) { calls.push(a[0]); return om.apply(this, a); }; try { orderClick(false); } catch (e) { out.err = String(e.stack).slice(0, 300); } out.calls = calls; out.list = ORDM.list.map(m => [m.k, Math.round(performance.now() - m.t)]); out.sel = G.sel.length; out.ord = (G.byId.get(window.__grp[0]).order || {}).type; return out; }); console.log('DBG', JSON.stringify(r)); process.exit(0); }
+  // move order on open ground ahead of the group
+  await order(pos.x + 220, pos.y - 60); await freeze(page);
   await shot(page, 'move-marker', 250); console.log('ORDERFEEL', JSON.stringify(await stats(page)));
-  // attack-move: F, then right-click
-  await page.waitForTimeout(900); await resel(page);
-  await page.keyboard.press('f'); await page.mouse.move(pos.x - 240, pos.y - 40); await page.mouse.down({ button: 'right' }); await page.mouse.up({ button: 'right' });
+  // attack-move (F)
+  await page.evaluate(() => { ORDM.list.length = 0; }); await order(pos.x - 240, pos.y - 40, { am: 1 }); await freeze(page);
   await shot(page, 'attack-move-marker', 250); console.log('ORDERFEEL', JSON.stringify(await stats(page)));
-  // right-drag infantry line: hold the button, screenshot before release
-  await page.waitForTimeout(1500); await resel(page);
-  await page.mouse.move(pos.x - 160, pos.y - 140); await page.mouse.down({ button: 'right' });
-  for (let i = 1; i <= 6; i++) await page.mouse.move(pos.x - 160 + i * 50, pos.y - 140 - i * 6);
-  await shot(page, 'line-ghost', 600); await page.mouse.up({ button: 'right' });
+  // attack: an enemy tank
+  const ep = await page.evaluate((p) => { const en = G.teams.find(T => !T.reb && T.id !== ME); const u = addUnit(en.id, 'tank', p.bx + 120, p.by - 150); u.vis = true; ORDM.list.length = 0; const s = toScreen(u.x, unitH(u) + 5, u.y); return { x: s.x, y: s.y }; }, pos);
+  await order(ep.x, ep.y); await freeze(page);
+  await shot(page, 'attack-marker', 250); console.log('ORDERFEEL', JSON.stringify(await stats(page)));
+  await page.evaluate(() => { ORDM.age = null; ORDM.list.length = 0; });
+  // right-drag infantry line: the ghost while the button is still held
+  await page.evaluate(([x0, y0, x1, y1]) => { G.sel = window.__grp.map(id => G.byId.get(id)).filter(u => u && !u.dead); RDRAG = { x0, y0, w0: screenToWorld(x0, y0), id: -99, moved: true, gen: 1, line: true, mode: 'line', am: false }; mouse.x = x1; mouse.y = y1; mouse.in = true; }, [pos.x - 160, pos.y - 140, pos.x + 140, pos.y - 176]);
+  await shot(page, 'line-ghost', 600);
   console.log('ORDERFEEL', JSON.stringify(await stats(page)));
+  await page.evaluate(() => { const r = RDRAG; RDRAG = null; lineOrder(r); });
   // Shift-queued path (shown while selected)
-  await page.waitForTimeout(500);
-  await resel(page);
-  await page.keyboard.down('Shift'); for (const [dx, dy] of [[260, 90], [330, 200], [180, 260]]) { await page.mouse.move(pos.x + dx, pos.y + dy); await page.mouse.down({ button: 'right' }); await page.mouse.up({ button: 'right' }); await page.waitForTimeout(150); }
-  await page.keyboard.up('Shift'); await resel(page);
+  for (const [dx, dy] of [[260, 90], [330, 200], [180, 260]]) await order(pos.x + dx, pos.y + dy, { sh: 1 });
+  await resel(page); await page.evaluate(() => { ORDM.list.length = 0; });
   await shot(page, 'queued-path', 400); console.log('ORDERFEEL', JSON.stringify(await stats(page)));
   // spam: many orders fast, markers must stay capped
-  for (let i = 0; i < 30; i++) { await resel(page); await page.mouse.move(pos.x + (i % 6) * 40 - 100, pos.y - 100 + Math.floor(i / 6) * 30); await page.mouse.down({ button: 'right' }); await page.mouse.up({ button: 'right' }); }
+  for (let i = 0; i < 30; i++) await order(pos.x + (i % 6) * 40 - 100, pos.y - 100 + Math.floor(i / 6) * 30, { am: i % 2 });
   console.log('ORDERFEEL spam', JSON.stringify(await stats(page)));
   // goal line (setup countdown still running)
   await page.evaluate(() => { G.sel = []; updateUI(); });
