@@ -86,7 +86,7 @@ function phEls(){if(PHX.ov)return;const o=document.createElement('div');o.id='ph
   addEventListener('resize',()=>{if(PHX.on)phRect();});try{new ResizeObserver(()=>{if(PHX.on)phRect();}).observe(cv);}catch(e){}}
 function phPan(dx,dy){const s=cam.dist/700,ry=cam.ryaw||0,c=Math.cos(ry),n=Math.sin(ry);cam.x+=(dx*c+dy*n)*s;cam.y+=(-dx*n+dy*c)*s;}
 function phEnter(){if(!G||G.over||PHX.on||window.GLLOST||!R3||window.LOADING)return false;if(KC.on)return false;if($('menu')&&!$('menu').hidden)return false;
-  phEls();const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/370)),p0=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d))),p=Math.max(.1,Math.min(1.42,p0+(cam.tilt||0)));
+  phEls();const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/370)),p0=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d))),p=Math.max(.1,Math.min(1.55,p0+(cam.tilt||0)));
   PHX.st={c:{x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td,_xl:cam._xl,_yl:cam._yl,_dl:cam._dl},paused:G.paused,G,mp:MODE!=='single'};
   if(!PHX.st.mp){G.paused=true;xsTry(syncPause);}   // single player stops the battle; online only your own camera is freed
   xsTry(mlockOff);cam.free=true;cam.pitch=p;cam.ryaw=cam.yaw||0;cam.tilt=0;PHX.on=true;PHX.k={};PHX.ptr.clear();PHX.blob=null;
