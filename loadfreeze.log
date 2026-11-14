@@ -1,0 +1,40 @@
+  page: shader warm-up 10012 ms, 62 models, 120 objects in 682 steps (longest 805 ms), 113 programs, textures 137 MB
+parallel shader compile extension: false
+own-work stretches over 200 ms: 1 (longest 301 ms; this slow test machine hiccups by itself, so the gate fails only above 2500 ms or more than 20 stretches over 200 ms)
+quiet-stretch longest gap after loading (the test machine's own hiccups): 220
+most programs linked between two breaks: 8 at unit Group 1
+gaps over 190 ms:
+  301 step models b_barr
+IR warm-up {"ms":10012,"models":62,"steps":682,"maxStep":805,"progs":113,"late":0,"phone":0,"stage":[["models",7420],["extras",647],["battlefield",1945]],"slow":[["models b_barr",408,60,0],["models m_f18",193,40,0],["build m_hilux",103],["models m_hilux",210,55,4],["models m_mi24",151,27,1],["models b_barr_me",279,63,14],["models m_abrams",178,33,27],["models m_apache",267,26,14],["models m_ah1",318,13,106],["models m_mig29",176,24,10],["models m_mi8",312,55,24],["models m_uh60",232,41,14],["models tree_tex",167,23,5],["shared",217,28,3],["pass mBright",66],["pass mBlur",14],["pass mFinal",16],["pass mAO",19],["slice 16",805],["pip",20]]} own-work gaps >50 [301,111,51,62,56,92,59,164,57,78,51,72,54,79,69,57,91] raw long tasks [88,281,72,68,68,75,59,89,87,100,97,134,80,158,143,79,113,62,85,67,70,63,194,104,71,111,218,55,170,139,65,230,108,84,173,101,95,129,78,176,56,87,105,96,58,67,804,112,83,52,69,59] stages [["Generating terrain…",7277],["Loading 3D models…",1975],["Building the battlefield…",176],["Building the battlefield…",1843],["Preparing graphics…",10016],["Deploying forces…",660],["Deploying forces…",2049],["total",24735]]
+  World War 3 performance log
+  Graphics card: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+  Screen: 480×270 @1  39 FPS now
+  Last battle load (ms per stage): Generating terrain 7277, Loading 3D models 1975, Building the battlefield 176, Building the battlefield 1843, Preparing graphics 10016, Deploying forces 660, Deploying forces 2049, total 24735
+  Shader warm-up: 10012 ms, 62 models, 113 programs compiled, 682 steps (longest 805 ms) [models 7420, extras 647, battlefield 1945]
+  Long tasks while preparing graphics: 52, longest 804 ms
+IR ok (longest task 301 ms)
+  page: shader warm-up 5144 ms, 59 models, 114 objects in 652 steps (longest 544 ms), 105 programs, textures 72 MB
+parallel shader compile extension: false
+own-work stretches over 200 ms: 1 (longest 296 ms; this slow test machine hiccups by itself, so the gate fails only above 2500 ms or more than 20 stretches over 200 ms)
+quiet-stretch longest gap after loading (the test machine's own hiccups): 248
+most programs linked between two breaks: 8 at unit Group 1
+gaps over 190 ms:
+  296 step models b_barr
+US warm-up {"ms":5144,"models":59,"steps":652,"maxStep":544,"progs":105,"late":0,"phone":0,"stage":[["models",3715],["extras",370],["battlefield",1059]],"slow":[["models b_barr",213,51,1],["pass mBright",9],["pass mBlur",7],["pass mFinal",5],["pass mAO",2],["slice 16",544],["pip",8]]} own-work gaps >50 [296,95,60,133,54,53,55,66] raw long tasks [89,103,64,128,65,52,60,66,61,67,62,58,60,544,51] stages [["Generating terrain…",5572],["Loading 3D models…",1554],["Building the battlefield…",118],["Building the battlefield…",1465],["Preparing graphics…",5150],["Deploying forces…",995],["total",15782]]
+  World War 3 performance log
+  Graphics card: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+  Screen: 480×270 @1  46 FPS now
+  Last battle load (ms per stage): Generating terrain 5572, Loading 3D models 1554, Building the battlefield 118, Building the battlefield 1465, Preparing graphics 5150, Deploying forces 995, total 15782
+  Shader warm-up: 5144 ms, 59 models, 105 programs compiled, 652 steps (longest 544 ms) [models 3715, extras 370, battlefield 1059]
+  Long tasks while preparing graphics: 15, longest 544 ms
+US FAIL: 28 errors: console: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:41909/index.html:13676:212)
+    at updateUI (http://127.0.0.1:41909/index.html:17909:79)
+    at buildPanels (http://127.0.0.1:4 | console: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:41909/index.html:13676:212)
+    at updateUI (http://127.0.0.1:41909/index.html:17909:79)
+    at loop (http://127.0.0.1:41909/in | console: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:41909/index.html:13676:212)
+    at updateUI (http://127.0.0.1:41909/index.html:17909:79)
+    at loop (http://127.0.0.1:41909/in
+LOADFREEZE FAIL
