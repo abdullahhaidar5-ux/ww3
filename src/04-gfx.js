@@ -399,13 +399,8 @@ function buildWorld(tc){
     const lamp=new THREE.Mesh(new THREE.SphereGeometry(2.4,10,8),new THREE.MeshBasicMaterial({color:0x999999}));lamp.position.set(0,98,0);grp.add(lamp);
     grp.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
     grp.position.set(w.x,groundH(w.x,w.y),w.y);WORLD.add(grp);return{grp,lamp};});
-  // supply depots
-  G.fieldObj=G.fields.map((f,fi)=>{const grp=new THREE.Group();grp.position.set(f.x,groundH(f.x,f.y),f.y);WORLD.add(grp);const items=[];const R=mulberry(fi*13+5);
-    const pad=Bld();pad.box(f.r*2.1,1,f.r*1.7,0,.5,0,'#7e7462');const pm=mesh(pad.geo());pm.receiveShadow=true;grp.add(pm);
-    if(MODELS.ready){for(let gx=-2;gx<=2;gx++)for(let gz=-1;gz<=1;gz++){if(R()<.15)continue;const x=gx*17+R()*3,z=gz*20+R()*3,st=new THREE.Group();st.position.set(x,1,z);st.rotation.y=(R()-.5)*.4;grp.add(st);
-        propObj('pallet',0,0,0,st);const hgt=1+(R()*3|0);for(let k=0;k<hgt;k++){const m=propObj(R()<.2?'barrel':'crate',(R()-.5)*1.5,0,R()*.3,st);if(m)m.position.y=1.6+k*8;}items.push(st);}
-      propObj('container',-f.r-6,0,Math.PI/2,grp);propObj('containerG',f.r+8,6,Math.PI/2+.05,grp);propObj('sandbag',0,f.r*.9+6,0,grp);}
-    return{grp,items,n:items.length};});
+  // supply dumps (src/04d-supdump.js): one merged mesh each, shrinks in steps as the field is used up
+  G.fieldObj=G.fields.map((f,fi)=>{let m=null;try{m=sdDump(f,fi);WORLD.add(m);}catch(e){console.warn('sdDump',e);}return{m,a0:(G.map.fields[fi]&&G.map.fields[fi].amt)||f.amt||9000,st:-1};});
   try{chunkInst(WORLD);}catch(e){console.warn('chunkInst',e);}
   // fog of war overlay
   {const fk=Math.min(1.4,Math.max(1,WK*.65));FOGC=document.createElement('canvas');FOGC.width=Math.round(480*fk);FOGC.height=Math.round(330*fk);FOGC.b=document.createElement('canvas');FOGC.b.width=FOGC.width;FOGC.b.height=FOGC.height;}FOGT=new THREE.CanvasTexture(FOGC);FOGT.magFilter=THREE.LinearFilter;

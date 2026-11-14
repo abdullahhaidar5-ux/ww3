@@ -215,6 +215,15 @@ try {
     for (let i = 0; i < 3600 && !G.over; i++) simUpdate(1 / 60);
     return { battle: !!G.battle, conq: !!G.conq, setupEnd: G.setupEnd, blds, kinds, c0, c1: T.credits, tax: (G.towns || []).some(t => t.tax > 0 && t.ow >= 0), name: typeof modeName === 'function' ? modeName() : '' }; });
   console.log('battle mode', JSON.stringify(bt));
+    // pileflag 2026-11-14 (Abdullah 2026-11-13 19:52 "Green flag stays"): with real mouse clicks - select the HQ, click the ground (sets the rally point, short flash),
+    // click the ground somewhere else -> no flag on screen, nothing selected, and only one flag object ever
+    { const sp = await ev(() => { const hq = G.ents.find(e => e.team === ME && e.kind === 'hq' && !e.dead); G.teams[ME].rally = null; RV.fl = 0; cam.dist = cam.td = 520; centerOn(hq.x, hq.y + 60, true); G.sel = [hq]; try { updateUI(); syncScene(.016); renderFrame(.016); } catch (e) {}
+        const r = cv.getBoundingClientRect(), at = (x, y) => { const p = toScreen(x, groundH(x, y), y); return [r.left + p.x, r.top + p.y]; }; return { a: at(hq.x + 70, hq.y + 150), b: at(hq.x - 160, hq.y + 120), w: [r.width, r.height] }; });
+      await page.mouse.move(sp.a[0], sp.a[1]); await page.mouse.click(sp.a[0], sp.a[1]); await page.waitForTimeout(300);
+      const s1 = await ev(() => { try { syncScene(.016); } catch (e) {} return { rally: !!G.teams[ME].rally, flash: !!(RALLY && RALLY.visible) }; });
+      await page.mouse.move(sp.b[0], sp.b[1]); await page.mouse.click(sp.b[0], sp.b[1]); await page.waitForTimeout(300);
+      const s2 = await ev(() => { try { syncScene(.016); } catch (e) {} let flags = 0; SCN.traverse(o => { if (o === RALLY) flags++; }); return { flag: !!(RALLY && RALLY.visible), sel: G.sel.length, flags }; });
+      console.log('rally flag clicks', JSON.stringify({ s1, s2 })); ck(s1.rally && s1.flash && !s2.flag && s2.flags <= 1, 'rally flag must flash when set by a click and be gone after the next click on the ground: ' + JSON.stringify({ s1, s2 })); }
   ck(bt.battle && !bt.conq, 'Battle game did not start in Battle mode');
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
   ck(!bt.setupEnd, 'Battle has a no-fire setup phase'); ck(!bt.tax, 'Battle has town taxes'); ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');
