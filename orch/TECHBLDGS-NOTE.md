@@ -44,3 +44,12 @@ All of them:
 - realistic looks, merged or instanced;
 - a picture each.
 Not every map needs all nine. Each map gets a fair mix, the same for every start.
+
+
+## Captured buildings resupply (Abdullah 20:53: "Shouldnt these resupply")
+EVERY captured map building is a forward supply point for its owner: quarry, mine, power plant, field hospital, oil refinery, train station, telecom station, artillery position and oil derricks.
+- Units near one refill ammo; give it a small area, like a base building.
+- The ammo dump stays the strongest: a bigger area and faster refill.
+- A held road that connects to a captured building counts as a supply line, just like one to your base.
+- Use the ONE "your area" system from orch/ammozone. Add the captured buildings to it; do not build a second one.
+- Lose the building and its supply stops.
