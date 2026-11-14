@@ -976,7 +976,7 @@ function bldRoof(e,o,P){const key=e.kind+(o.userData.meWall?'m':'w');let r=ROOFC
   return r;}
 // is there flat roof (at the flat roof height) under x,z and a small margin around it?
 function roofFlatAt(R,x,z,m){if(!R||R.flatY==null)return false;const bb=R.bb,N=R.N;for(const [a,b] of [[0,0],[m,0],[-m,0],[0,m],[0,-m]]){const i=Math.floor((x+a-bb.min.x)/(bb.max.x-bb.min.x)*N),j=Math.floor((z+b-bb.min.z)/(bb.max.z-bb.min.z)*N);if(i<0||j<0||i>=N||j>=N)return false;const c=R.cells[j*N+i];if(!c||!c[1]||Math.abs(c[0]-R.flatY)>1.3)return false;}return true;}
-function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',2),pl=bkMat('plaster','#b8a98a',2),tin=bkMat('tin','#8c9096',2),dk=new THREE.MeshStandardMaterial({color:0x2c2e2b,roughness:.8,metalness:.3});
+function roofKit(e,o,P){const h=e.size/2,k=e.kind,BP=basePal(e),rf=bkMat('concrete',BP.rf,2),pl=bkMat('plaster',BP.pl,2),tin=bkMat('tin','#8c9096',2),dk=new THREE.MeshStandardMaterial({color:0x2c2e2b,roughness:.8,metalness:.3});
   let R=null;try{R=bldRoof(e,o,P);}catch(_){}const top=R&&R.flatY!=null?R.flatY:null;if(R)o.userData.roofY=R.roofY;o.userData.roofFlat=top!=null;
   if(o.userData.meWall)return;// Middle Eastern HQ/barracks/factory: meRoofKit already put real-roof clutter and the compound wall on this building (no second set)
   const G2=new THREE.Group();P.add(G2);let pid=0;const bx=(w,hh,d,x,y,z,m,ry)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);q.position.set(x,y,z);if(ry)q.rotation.y=ry;q.castShadow=q.receiveShadow=true;q.userData.pid=pid;G2.add(q);return q;};
@@ -994,9 +994,10 @@ function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',
   const RR=h+(k==='hq'?30:22),gate=7,seg=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(-(z1-z0),x1-x0);bx(L,.5,1.7,(x0+x1)/2,5.2,(z0+z1)/2,rf,a);return bx(L,5,1.1,(x0+x1)/2,2.5,(z0+z1)/2,pl,a);};
   const post=(x,z)=>bx(2.2,6.4,2.2,x,3.2,z,rf);
   o.userData.rings=(o.userData.rings||0)+1;// ONE yard wall, on the ground
+  if(!baseYard(e,o,P,RR,gate,BP)){// 'me' family keeps the plaster yard wall; soviet / west draw their own merged yard (11c-bases)
   seg(-RR,-RR,RR,-RR);seg(-RR,-RR,-RR,RR);seg(RR,-RR,RR,RR);seg(-RR,RR,-gate,RR);seg(gate,RR,RR,RR);
   for(const [x,z] of [[-RR,-RR],[RR,-RR],[-RR,RR],[RR,RR],[-gate,RR],[gate,RR]])post(x,z);
-  bx(gate*2+2.2,1.2,2.2,0,6.4,RR,rf);}
+  bx(gate*2+2.2,1.2,2.2,0,6.4,RR,rf);}}
 // DE-BLOCK slice 7: facade detail — dark window recesses with lintel+sill, a door and a wall lamp on each wall of HQ/barracks/factory/depot (view only)
 function facadeKit(e,o,P){let bb=null,bv=0,body=null;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;body=c;}}if(!bb)return;
   if(!isFinite(bb.max.y)||bb.max.y<8)return;const sx=bb.max.x-bb.min.x,sz=bb.max.z-bb.min.z,hy=bb.max.y,cx=(bb.max.x+bb.min.x)/2,cz=(bb.max.z+bb.min.z)/2;if(sx<10||sz<10||sx>400)return;
@@ -1115,8 +1116,9 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     // Middle Eastern nations: gun and SAM pits get a HESCO ring (open at the back), main buildings blast walls and a sandbag post
     if(MEFAC.has(T.fac)){const K=meKit(B,e.kind.length*97+s|0),h=s/2;if(e.kind==='turret'||e.kind==='sam'){const r=h+3;K.hesco(-r,-r,r,-r,4.5,3.2);K.hesco(r,-r,r,r,4.5,3.2);K.hesco(-r,-r,-r,r,4.5,3.2);K.hesco(-r,r,-5,r,4.5,3.2);K.hesco(5,r,r,r,4.5,3.2);}
       else if(s>40){K.twall(-h-3,-h+4,-h-3,-4,8);K.twall(-h+6,-h-3,h*.2,-h-3,8);K.bags(h+2,h-14,h+2,h+2,3);K.bags(h-12,h+2,h+2,h+2,3);}}
+    else baseSlabKit(B,e,T,s);
     const m=mesh(B.geo());o.add(m);P.main=m;}
-  const RT={...NATX_RT,US:'#bdb49c',EU:'#b5b2a6',FR:'#b5b2a6',DE:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',GB:'#b3ae98',AU:'#c3b48c',CA:'#a9ad96',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
+  let RT={...NATX_RT,US:'#bdb49c',EU:'#b5b2a6',FR:'#b5b2a6',DE:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',GB:'#b3ae98',AU:'#c3b48c',CA:'#a9ad96',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];RT=baseTint(T.fac,RT);
   for(const q of cfg.list){const rc=q.col?{color:q.col}:(RT?{color:RT}:null);const m=instModel(q.m,rc,q.fit,q.size,q.ys,q.col?q.k:(RT?.42:undefined));if(!m)continue;m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
     if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);if(MEFAC.has(T.fac)&&BME[e.kind]&&q===cfg.list[0])try{o.userData.meWall=1;o.userData.rings=1;meRoofKit(o,m,e,T);}catch(er){o.userData.meWall=0;o.userData.rings=0;}o.add(m);}}
   if(e.kind==='coast'){// emplacement: sandbag walls round the launcher and a small radar / command truck beside the pad (visual only)
