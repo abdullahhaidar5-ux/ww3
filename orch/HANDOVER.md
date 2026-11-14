@@ -212,3 +212,4 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   tech buildings (hospital, airfield...) - no answer yet.
 - 20:13 Chicago "Make it so that only certain buildings are reliant on electricity" -> note on orch/battlepower eb8b3e0 + trigger prompt updated: only electronic/high-tech buildings use power; low power never slows barracks/factory. CHECK the result follows it.
 - 20:15 Chicago per-building queues "like generals": bldqueue = trig_01JKgZFA6oNHcU1MUue18szv (Sonnet) fired 02:16Z: each production building its own queue, unit exits its own building, select building to queue, UNITS tab = shortcut to least busy building, refunds on loss. Sim change.
+- 20:16 Chicago "Unlimited queue" -> note on orch/bldqueue (no 9 cap, '+N more' chip). CHECK result.
