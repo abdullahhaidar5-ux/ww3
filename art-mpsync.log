@@ -1,0 +1,21 @@
+artifact page written: orch/out/artifact/index.html (5122517 bytes, game 4278138 chars), 125 audio files + 82 model files (14.7 MB); publish arguments in orch/out/artifact/publish.json
+[8s] both pages loaded (menu model downloads done after 7s / 7s)
+[8s] host lobby open, code pp0eow
+[8s] client joining
+peak memory (node + browser, summed RSS): 2255 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: client console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+
+MPSYNC FAIL: page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:38795/index.html:5524:350)
+    at addBld (http://127.0.0.1:38795/index.html:7013:62)
+    at newGame (http://127.0.0.1:38795/index.html:6993:134)
+    at newGame (http://127.0.0.1:38795/index.html:14982:52)
+    at newGame (http://127.0.0.1:38795/index.html:15783:52)
+    at startMP (http://127.0.0.1:38795/index.html:14188:471)
+    at launchMP (http://127.0.0.1:38795/index.html:12438:696)
+    at eval (eval at evaluate (:311:30), <anonymous>:5:5)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (31s)
