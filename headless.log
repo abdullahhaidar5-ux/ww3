@@ -1,0 +1,88 @@
+  day {"inf":280,"tank":280,"heli":340,"b":340} 
+  night {"inf":168,"tank":252,"heli":306,"b":204}
+NIGHT PASS — night sight x0.6, thermal x0.9, dusk between, changing cycles
+settings
+  ok   Easy and Normal do not get the new tactics
+  ok   Hard has weak-side probing, artillery protection and air-ground teamwork
+  ok   Hard gets no extra money (income x1, same as Normal)
+weak side
+  ok   no defences on either side: no preference
+  ok   guns on side +1: flank goes round side -1
+  ok   guns on side -1: flank goes round side +1
+  ok   Normal AI never probes
+artillery protection (US, not Zealous)
+  ok   escorts turn on the troops threatening the gun
+  ok   the gun steps back from them
+artillery protection (IR, Zealous: never pulls back)
+  ok   IR is a Zealous nation in this test
+  ok   escorts still turn on the threat
+  ok   the gun is never ordered back
+air works with the ground attack
+  ok   no wave out, nothing seen: no special target (old random pick)
+  ok   wave out: jets support it at its target
+  ok   wave out and a defence gun near the target: jets hit the gun first
+  ok   enemy artillery it cannot see is not targeted (no extra vision)
+  ok   enemy artillery it can see is hunted from the air
+  ok   Normal AI keeps the old behaviour
+AIHARD PASS
+node: 2 players [portable math: sin,cos,atan2,exp,pow] US vs RU vs DW on Straits of Thunder (strait), seed 1; sim loaded in 28 ms, battle set up in 1006 ms; map 33cbf75c5c79b96d
+  t=   0s  5fe8421d798512e4
+  t=  10s  91b13eebfbc12211  ents   46    81.2 ms CPU/game-s  8u6b 10u6b 16u0b
+  t=  20s  ee2d0a4d4dbd0048  ents   52    39.6 ms CPU/game-s  11u6b 13u6b 16u0b
+  t=  30s  0b1e923fcedf5af3  ents   55    67.6 ms CPU/game-s  11u7b 14u7b 16u0b
+  t=  40s  fc4c9e75f4a03164  ents   57    42.4 ms CPU/game-s  11u8b 15u7b 16u0b
+  t=  50s  cc0eea5a68bc844c  ents   55    14.1 ms CPU/game-s  11u8b 13u7b 16u0b
+  t=  60s  c4516627bff9694f  ents   56    16.0 ms CPU/game-s  11u9b 13u7b 16u0b
+  t=  70s  2f5fb07146ea0676  ents   57    14.3 ms CPU/game-s  11u9b 13u8b 16u0b
+  t=  80s  d983d64eadcc850e  ents   57    16.0 ms CPU/game-s  11u9b 13u8b 16u0b
+  t=  90s  649678593df2bca2  ents   57    21.0 ms CPU/game-s  11u9b 12u9b 16u0b
+  t= 100s  99d82b7596ebd196  ents   57    10.8 ms CPU/game-s  11u9b 12u9b 16u0b
+  t= 110s  41fe4ccb73f58d82  ents   57    15.9 ms CPU/game-s  11u9b 12u9b 16u0b
+  t= 120s  26238e88adefef22  ents   57    11.4 ms CPU/game-s  11u9b 12u9b 16u0b
+  t= 130s  33eaa15aaa98183b  ents   58    11.6 ms CPU/game-s  11u10b 12u9b 16u0b
+  t= 140s  4c54eff34f50bc53  ents   58     9.8 ms CPU/game-s  11u10b 12u9b 16u0b
+  t= 150s  67fab36871660f8d  ents   59    11.4 ms CPU/game-s  12u10b 12u9b 16u0b
+  t= 160s  44ded26fd4e987e8  ents   60    16.0 ms CPU/game-s  12u10b 13u9b 16u0b
+  t= 170s  5d11b2a342a08600  ents   61    17.1 ms CPU/game-s  12u11b 13u9b 16u0b
+  t= 180s  5c8a76e49a8799dd  ents   61    13.8 ms CPU/game-s  11u11b 13u10b 16u0b
+  t= 190s  49b1dda998d48b99  ents   59    46.1 ms CPU/game-s  9u11b 13u10b 16u0b
+  t= 200s  58a8bccce95af40c  ents   60    24.8 ms CPU/game-s  10u11b 13u10b 16u0b
+  t= 210s  a2fd3394f6524c52  ents   61    28.0 ms CPU/game-s  10u11b 14u10b 16u0b
+  t= 220s  6410f43cc39827de  ents   61    32.3 ms CPU/game-s  10u11b 14u10b 16u0b
+  t= 230s  54615d2bd8601534  ents   61    14.8 ms CPU/game-s  10u11b 14u10b 16u0b
+  t= 240s  d55090e82d4efca3  ents   61    20.2 ms CPU/game-s  10u11b 14u10b 16u0b
+  t= 250s  77799e2594be813d  ents   62    23.7 ms CPU/game-s  11u11b 14u10b 16u0b
+  t= 260s  d88d3a1fb48eb838  ents   61    35.3 ms CPU/game-s  11u11b 13u10b 16u0b
+  t= 270s  d9eb516ded0dbf90  ents   62    35.2 ms CPU/game-s  11u11b 14u10b 16u0b
+  t= 280s  4766bca42c6239c0  ents   63    28.8 ms CPU/game-s  11u12b 14u10b 16u0b
+  t= 290s  3ce6a53324361c16  ents   63    24.6 ms CPU/game-s  11u12b 14u10b 16u0b
+  t= 300s  469df87549fc6294  ents   63    21.1 ms CPU/game-s  11u12b 14u10b 16u0b
+
+final after 5.0 game-min: 63 entities, 0 projectiles in flight
+  slot 0 US: 11 units, 12 buildings, $309, built 11, lost 2, kills 0
+  slot 1 RU: 14 units, 10 buildings, $590, built 14, lost 0, kills 2
+  slot 2 DW: 16 units, 0 buildings, $0, built 0, lost 0, kills 0
+  sim cost: 25.5 ms of CPU per game-second on average (process CPU time; frozen pathfinding clock)
+  final hash 469df87549fc6294
+
+browser (Chromium, real index.html, no drawing): US vs RU vs DW on Straits of Thunder; map 33cbf75c5c79b96d
+  t=   0s  ad25c21df4f3c0df  DIFFERENT
+  t=  10s  d9ed5c933e59ba96  DIFFERENT    44.6 ms/game-s in the page
+  first differences:
+    team 0: node ["US",849.5416666666661,4,0,0,""] browser ["US",299.5416666666664,4,0,0,""]
+    entity 2: node [2,"harv",0,1266.783483087975,5137.022881295477,450,"ret","",0] browser [2,"harv",0,1267.0565212074466,5136.080168696773,486,"ret","",0]
+    entity 3: node [3,"dozer",0,1266.5061227752112,5030.107301469609,420,"go","build",0] browser [3,"dozer",0,1266.5061227752112,5030.107301469609,454,"go","build",0]
+    entity 8: node [8,"inf",0,1151.1681826914212,5117.981382581732,120,"go","",0] browser [8,"inf",0,1151.1681826914212,5117.981382581732,130,"go","",0]
+    entity 9: node [9,"inf",0,1178.6456412031619,5124.6887869780385,120,"go","",0] browser [9,"inf",0,1178.6456412031619,5124.6887869780385,130,"go","",0]
+    entity 37: node [37,"inf",1,8002.851994888699,1240.425897289882,120,"go","",0] browser [37,"inf",1,8003.374759350392,1241.4400631438502,120,"go","",0]
+    entity 38: node [38,"at",0,1166.180656416349,5051.883625666153,110,"go","",0] browser [38,"at",0,1197.3036111377755,5056.3684749028525,119,"go","",0]
+    entity 39: node [39,"harv",0,1389.7473735932676,5080.894774673689,450,"gather","",0] browser [39,"harv",1,7780.461985595971,1198.3337326276496,653,"go","",0]
+    entity 40: node [40,"harv",1,7780.461985595971,1198.3337326276496,653,"go","",0] browser [40,"harv",0,1352.957704417968,5105.84640104471,486,"go","",0]
+    entity 41: node [41,"at",1,8027.251798280051,1200.6217312110357,110,"go","",0] browser [41,"at",1,7991.140608033303,1235.1822189275454,110,"go","",0]
+    entity 42: node [42,"arty",0,1255.656713288927,5357.721585599592,280,"go","move",0] browser [42,"arty",1,7905.746513796854,944.7723768288394,528,"go","move",0]
+    entity 43: node [43,"at",0,1182.2097116712703,5064.988060039018,110,"go","",0] browser [43,"arty",0,1218.7755211636004,5353.729422100273,302,"go","move",0]
+peak memory (node + browser, summed RSS): 1407 MB
+
+HEADLESS FAIL
+  x state hash differs at t=10s (node 91b13eebfbc12211, browser d9ed5c933e59ba96)
+SKIP headless
