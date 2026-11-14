@@ -6,6 +6,6 @@
 
 **ORCH note (20:18) followed:** Battle tracks ammo too (not unlimited). NOT done: "roads connected to your buildings" - Battle has no road graph (the `lg` network in src/03c-logistics.js exists only with Conquest towns), so Battle's area is circles around buildings (170 each, HQ 380, depot 320). Also not done: AI sending supply trucks (pull-back only). The note file is not in this branch's tree (merged with `-s ours`).
 
-**Gate.** build + --check OK; smoke PASS locally; decisions.mjs has a new AMMO ZONE guard (run result: see PR/branch notes); cigate NOT run yet. Proof pictures NOT produced (headless runs too slow in this sandbox).
+**Gate.** build + --check OK; smoke PASS locally; decisions.mjs has a new AMMO ZONE guard (run result: see PR/branch notes); cigate run on gate/5f47102d8d was still QUEUED on GitHub after 45 min (no results; re-run orch/cigate.sh or read that run). decisions.mjs: only failure was a leftover time check, fixed after; re-run once to confirm. Proof pictures NOT produced (headless runs too slow in this sandbox).
 
 **Try for 2 minutes (PC):** in Battle, send a few tanks far from your base to fight, watch the ammo bars drain; when empty the badge shows (hover it); drive them back to the Command Center and watch them refill.
