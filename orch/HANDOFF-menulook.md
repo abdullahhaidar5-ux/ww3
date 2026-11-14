@@ -16,7 +16,7 @@ Branch `orch/menulook` (lock `taken/menulook`). Not pushed to main. No cigate (p
 - All options/flows unchanged (same elements, moved/restyled only).
 
 ## Checked
-- `python3 orch/build.py --check` OK; `node orch/smoke.mjs` SMOKE PASS (463 s); `node orch/decisions.mjs` timed out in this slow sandbox (>110 s) - not confirmed, run it on CI. Screenshots at 1920x1080: `orch/shots/menulook-main.jpg` (shell battle), `-single`, `-map`, `-setup` (nation step), `-settings`.
+- `python3 orch/build.py --check` OK; `node orch/smoke.mjs` SMOKE PASS (463 s); `node orch/decisions.mjs` timed out in this slow sandbox (>110 s) - not confirmed, run it on CI. Screenshots at 1920x1080: `orch/shots/menulook-main.jpg` (the fallback picture; the shell battle was too slow to capture again in software GL), `-single`, `-map`, `-setup` (nation step), `-settings`.
 - Software-GL sandbox renders the shell at ~0.1 sim-seconds/s, so no real fight was seen there: please look at it on a real GPU.
 - Known: the Settings/Load/Missions windows keep their own Done/Close button (Esc handling unchanged); the Back plate is only on the menu's own screens.
 
