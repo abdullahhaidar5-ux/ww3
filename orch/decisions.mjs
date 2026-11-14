@@ -393,6 +393,17 @@ try {
     for (let i = 0; i < 3600 && !G.over; i++) simUpdate(1 / 60);
     return { battle: !!G.battle, conq: !!G.conq, setupEnd: G.setupEnd, blds, kinds, c0, c1: T.credits, tax: (G.towns || []).some(t => t.tax > 0 && t.ow >= 0), name: typeof modeName === 'function' ? modeName() : '' }; });
   console.log('battle mode', JSON.stringify(bt));
+  // battleclean2 2026-11-13 (Abdullah 19:55 "I thought we removed towns in battle"): a Battle game has NO towns, hamlets, town houses or town income on any map
+  { const nt = await ev(() => { const own = { towns: (G.towns || []).length, civ: (G.civ || []).filter(c => !c.ruin).length, cities: G.map.cities.length, blds: G.map.cityBlds.length, ham: G.map.hamlets.length, tax: (G.towns || []).some(t => t.tax > 0) };
+      const keys = Object.keys(MAPS).filter(k => MAPS[k].bm).concat(['strait', 'heartland', 'fulda', 'aleppo', 'euphrates', 'sahara']).filter(k => MAPS[k]), bad = [];
+      const keepB = BASES, keepS = BASE_SLOTS;
+      for (const k of keys) { try { setBases(MAPS[k].max, k); NO_TOWNS = true; const m = mkMap(4242, k); if (m.cities.length || m.cityBlds.length || m.hamlets.length || (m.roadNet || []).length) bad.push(k); } catch (e) { bad.push(k + ':' + e.message); } finally { NO_TOWNS = false; } }
+      let conq = 0; try { setBases(MAPS.strait.max, 'strait'); const m = mkMap(4242, 'strait'); conq = m.cities.length + m.cityBlds.length; } catch (e) {}
+      BASES = keepB; BASE_SLOTS = keepS; return { own, bad, conq, n: keys.length }; });
+    console.log('battle no towns', JSON.stringify(nt));
+    ck(nt.own.towns === 0 && nt.own.civ === 0 && nt.own.cities === 0 && nt.own.blds === 0 && nt.own.ham === 0 && !nt.own.tax, 'Battle game has towns/hamlets/town houses/tax: ' + JSON.stringify(nt.own));
+    ck(!nt.bad.length, 'Battle map build still makes towns on: ' + nt.bad.join(','));
+    ck(nt.conq > 0, 'Conquest map lost its towns (NO_TOWNS leaked): ' + nt.conq); }
   // battleclean 2026-11-12 (Abdullah 2026-11-11 19:41 "for battle take out the concept the supply lines and the dotted roads"): Battle has no supply lines - nothing drawn on minimap or ground, no overlay, no Supply chip, no out-of-supply status; Conquest keeps them
   { const sl = await ev(() => { const rec = () => { let n = 0; const c = new Proxy({}, { get: (t, k) => k === 'canvas' ? document.createElement('canvas') : k === 'measureText' ? () => ({ width: 10 }) : (typeof k === 'string' && /^(stroke|fill|moveTo|lineTo|arc|drawImage|fillRect|fillText|strokeRect)$/.test(k)) ? () => { n++; } : () => {}, set: () => true }); return { c, n: () => n }; };
       const m = rec(), w = rec(); try { drawLogiMini(m.c, .1, .1); } catch (e) {} try { drawLogiWorld(w.c); } catch (e) {} try { drawTownsMini(m.c, .1, .1, 0); } catch (e) {}
