@@ -1,0 +1,17 @@
+ww3-sim.js:2640
+    q.forEach(([u],i)=>{const k=sl[i];let x=cx+fx*k[0]+px*k[1],y=cy+fy*k[0]+py*k[1];setMove(u,x,y,mode);u.faceA=Math.atan2(fy,fx);u.sq=keep?1:0;if(keep&&isFinite(cap))u.order.cap=cap*.97;});}
+                                                                                                                                                                                  ^
+
+TypeError: Cannot set properties of null (setting 'cap')
+    at ww3-sim.js:2640:179
+    at Array.forEach (<anonymous>)
+    at fmApply (ww3-sim.js:2640:7)
+    at aiForm (ww3-sim.js:2644:54)
+    at aiThink (ww3-sim.js:3490:26)
+    at simUpdate (ww3-sim.js:3614:201)
+    at ww3-sim.js:5527:63
+    at sim (ww3-sim.js:5505:18)
+    at W.step (ww3-sim.js:5527:5)
+    at file:///home/runner/work/ww3/ww3/orch/stuckscan.mjs:32:17
+
+Node.js v22.23.4
