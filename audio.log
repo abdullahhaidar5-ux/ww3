@@ -1,0 +1,15 @@
+ok   0) nothing plays or downloads before the first tap
+ok   0) menu: a menu track plays after a tap — menu-02
+ok   0) menu: music bus is not silent
+ok   i) menu: no battle sound files downloaded yet
+AUDIO FAIL: exception: page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:45399/index.html:5793:350)
+    at addBld (http://127.0.0.1:45399/index.html:7282:62)
+    at newGame (http://127.0.0.1:45399/index.html:7262:134)
+    at newGame (http://127.0.0.1:45399/index.html:15251:52)
+    at newGame (http://127.0.0.1:45399/index.html:16052:52)
+    at startSingle (http://127.0.0.1:45399/index.html:14445:140)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:9)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at /home/runner/work/ww3/ww3/orch/audio.mjs:126:14
