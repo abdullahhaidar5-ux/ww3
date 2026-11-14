@@ -1,0 +1,73 @@
+browser lock: skipped (--no-lock)
+map sweep: 41 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 9s)
+
+STATIC  728 map/player-count/seed combinations (4 seeds), 0 with issues
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:40151/index.html:5793:350)
+    at addBld (http://127.0.0.1:40151/index.html:7282:62)
+    at newGame (http://127.0.0.1:40151/index.html:7262:134)
+    at newGame (http://127.0.0.1:40151/index.html:15251:52)
+    at newGame (http://127.0.0.1:40151/index.html:16052:52)
+    at startSingle (http://127.0.0.1:40151/index.html:14445:140)
+    at SW.start (eval at evaluate (:311:30), <anonymous>:74:54)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:42)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at /home/runner/work/ww3/ww3/orch/mapsweep.mjs:336:29 {
+  log: []
+}
+
+Node.js v22.23.4
+browser lock: skipped (--no-lock)
+map sweep: 41 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 8s)
+
+STATIC  692 map/player-count/seed combinations (4 seeds), 0 with issues
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:41137/index.html:5793:350)
+    at addBld (http://127.0.0.1:41137/index.html:7282:62)
+    at newGame (http://127.0.0.1:41137/index.html:7262:134)
+    at newGame (http://127.0.0.1:41137/index.html:15251:52)
+    at newGame (http://127.0.0.1:41137/index.html:16052:52)
+    at startSingle (http://127.0.0.1:41137/index.html:14445:140)
+    at SW.start (eval at evaluate (:311:30), <anonymous>:74:54)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:42)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at /home/runner/work/ww3/ww3/orch/mapsweep.mjs:336:29 {
+  log: []
+}
+
+Node.js v22.23.4
+browser lock: skipped (--no-lock)
+map sweep: 40 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 4s)
+
+STATIC  692 map/player-count/seed combinations (4 seeds), 0 with issues
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:33633/index.html:5793:350)
+    at addBld (http://127.0.0.1:33633/index.html:7282:62)
+    at newGame (http://127.0.0.1:33633/index.html:7262:134)
+    at newGame (http://127.0.0.1:33633/index.html:15251:52)
+    at newGame (http://127.0.0.1:33633/index.html:16052:52)
+    at startSingle (http://127.0.0.1:33633/index.html:14445:140)
+    at SW.start (eval at evaluate (:311:30), <anonymous>:74:54)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:42)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at /home/runner/work/ww3/ww3/orch/mapsweep.mjs:336:29 {
+  log: []
+}
+
+Node.js v22.23.4
+MAPSWEEP FAIL (a shard failed, see above)
