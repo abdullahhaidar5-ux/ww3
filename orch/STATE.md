@@ -1,18 +1,6 @@
-# Conductor state — 2026-11-14 ~21:00 UTC (train 20261114-2055)
+# Conductor state — 2026-11-14 ~20:25 UTC
 
-Main at start = a6c5239 (camera tilt). No other train/* was in flight (last train 1845 is already in main).
-
-| Branch | State |
-|---|---|
-| freezefix, sweepfixA/B, battleclean2, unstuck, battlepower, groundreal, leaderlook, usvoice, looktest | already on main |
-| ghostslot, testrange, orderfeel, techbldgs | already on main (branch had only a note commit); merged again in the train, no-op |
-| **onegame** | IN TRAIN. Merge needed ~40 hunks resolved by hand (main had landed battlepower/techbldgs/orderfeel/ghostslot/testrange around it). Kept from main: Generators + power meter (HUD goal line moved into 08c-logi `cqBanner`), capturable tb buildings (`tbAdd`/`tbTick`), test-range window, sandbox always-in-supply. Dropped: Conquest, campaign, 08c-towns.js, Realistic/balance toggle, old plant rows (`infraInit` now empty). Guards in decisions.mjs / powertest.mjs adjusted by hand. |
-| **nations20** | IN TRAIN, after onegame. Branch had 18 nations; ORCH note says 22 — applied the 22 (IN JP DE KR added to PLAYABLE, removed from NATFALL, guard + CLAUDE.md updated). |
-| pileflag | reverted earlier on main (6c3916f); not re-landed (no cause found). |
-| dugout | reverted earlier on main (a0b31f7); branch has black-hexagon fix, no gate run. Not in train. |
-| bldqueue | own gate: controls, tutorial, migrate* red; 122 behind. Not landed. |
-| ammozone | overlaps onegame's ammo rule; not landed. |
-| camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans | parked (removed from the game) |
-| taken/* with no orch/* branch | battlemaps2 (no branch) |
-
-Notes: full `git fetch` times out (15k refs); fetch by refspec. Local smoke ~6 min, local decisions >10 min (use the gate).
+LANDED on main (476d070f6, Pages build OK): battlepower (Generators + power meter, hand-merged into the new goal line) and techbldgs part 1 (capturable quarry, mine, power plant, field hospital).
+Train gate (train/20261114-1930): all green except tutorial (known flaky) and superfreeze (a different nation each run: IR, then RU, over the limit by a slow runner; every nation passed in some run). smooth-pc and smooth-mp green.
+Held back: groundreal (first train with it had smooth-mp red: host step p95 16 ms vs 1.9, client got no snapshot 2.6 s; looks like the heavier ground shader on the CI software renderer; needs its own smooth fix). pileflag + dugout (earlier trains red, merges reverted: re-merging them needs "revert the revert" first, otherwise only the newest commits come in). leaderlook, usvoice, ammozone: no gate yet. looktest: waits for Abdullah's pick.
+Main moved by 20+ landings by someone else during this run (bldqueue, nations20 22 nations, dozerbuild, rangemirror, battlerules2, weathergfx, pacecap, squads, destruction, polishspeed/looks): not by this conductor; onegame (removes Conquest + campaign) not yet landed.
