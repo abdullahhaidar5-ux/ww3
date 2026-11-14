@@ -78,17 +78,18 @@ async function aim(cx, cy) { await page.evaluate(([cx, cy]) => { const W = inner
 const info = await page.evaluate(() => {
   G.ents = G.ents.filter(e => e.isB); let best = null;
   for (const c of G.civ) { if (c.dead || c.ruin) continue; let n = 0; for (const d of G.civ) if (!d.dead && !d.ruin && Math.hypot(d.x - c.x, d.y - c.y) < 220) n++; if (!best || n > best.n) best = { c, n }; }
-  const c = best.c; window.__c = c; cam.dist = cam.td = 330; cam.x = cam.tx = c.x; cam.y = cam.ty = c.y + 60; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist;
+  const c = best.c; window.__c = c; cam.dist = cam.td = 260; cam.x = cam.tx = c.x; cam.y = cam.ty = c.y + 60; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist;
   window.__st = dt => { G.t += dt; G.alpha = 1; placeCam(); syncScene(dt); fxUpdate(dt); realTick(dt); };
   for (let k = 0; k < 900; k++) __st(1 / 30);
+  // bring the town's civilians onto the streets in the middle of the picture (they keep walking on their own from there)
+  const cx = cam.x, cy = cam.y - 40; let i = 0;
+  for (const p of RE.civ) { for (let tr = 0; tr < 400; tr++) { const x = cx + (Math.random() - .5) * 260, y = cy + (Math.random() - .5) * 150; if (!reFree(x, y) || !reLine(x, y, x + 20, y) && !reLine(x, y, x, y + 20)) continue; p.x = p.tx = x; p.y = p.ty = y; p.age = 0; break; } i++; }
+  for (let k = 0; k < 45; k++) __st(1 / 30);
   return { n: RE.civ.length, x: c.x | 0, y: c.y | 0 };
 });
 console.log('street', JSON.stringify(info));
-const ctr = () => page.evaluate(() => { const L = RE.civ.filter(q => !q.fl || 1); if (!L.length) return [__c.x, __c.y]; const a = L[0]; const N = L.filter(q => Math.hypot(q.x - a.x, q.y - a.y) < 260); return [N.reduce((s, q) => s + q.x, 0) / N.length, N.reduce((s, q) => s + q.y, 0) / N.length]; });
-await page.evaluate(() => { cam.dist = cam.td = 280; cam.tilt = -.12; placeCam(); }); await aim(...await ctr()); await page.evaluate(() => { for (let k = 0; k < 3; k++) __st(1 / 60); });
 await shot('street');
-await page.evaluate(() => { const [x, y] = [cam.x, cam.y]; window.__fp = { x, y }; for (let k = 0; k < 30; k++) { const L = RE.civ; const a = L[0] || { x, y }; reMuz(a.x + 80 + (k % 7) * 6, a.y - 50, 0); if (k % 4 === 0) FXH.muz(a.x + 80 | 0, a.y - 50 | 0, 8, 0.3, 13); __st(1 / 30); } });
-await page.evaluate(() => { cam.dist = cam.td = 260; placeCam(); }); await aim(...await ctr()); await page.evaluate(() => { for (let k = 0; k < 3; k++) { reMuz(cam.x + 90, cam.y - 50, 0); __st(1 / 30); } });
+await page.evaluate(() => { for (let k = 0; k < 30; k++) { const a = RE.civ.find(q => inView(q.x, q.y, .1)) || __c; reMuz(a.x + 70 + (k % 7) * 6, a.y - 40, 0); if (k % 4 === 0) FXH.muz(a.x + 70 | 0, a.y - 40 | 0, 8, 0.3, 13); __st(1 / 30); } });
 console.log('flee', JSON.stringify(await page.evaluate(() => [RE.civ.length, RE.civ.filter(p => p.fl).length])));
 await shot('flee');
 const cl = await page.evaluate(() => {
@@ -96,11 +97,11 @@ const cl = await page.evaluate(() => {
   const open = q => { for (let a = 0; a < 6.28; a += .5) for (const r of [8, 18]) if (!reFree(q.x + Math.cos(a) * r, q.y + Math.sin(a) * r)) return false; return true; };
   let p = RE.civ.find(q => open(q)) || RE.civ[0]; if (!p) return null;
   p.age = 0; p.home = null; const u = addUnit(0, 'inf', p.x + 26, p.y + 22); u.hold = 1; window.__p = p; window.__u = u;
-  cam.dist = cam.td = 200; cam.tilt = -.25; cam.x = cam.tx = p.x; cam.y = cam.ty = p.y; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist;
+  cam.dist = cam.td = 200; cam.tilt = -.25; cam.x = cam.tx = p.x; cam.y = cam.ty = p.y + 30; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist;
   for (let k = 0; k < 6; k++) __st(1 / 30);
   return { p: [p.x | 0, p.y | 0], n: RE.civ.length };
 });
-if (cl) { await aim(...await page.evaluate(() => [__p.x + 8, __p.y])); await page.evaluate(() => { for (let k = 0; k < 4; k++) { G.t += 1 / 60; syncScene(1 / 60); realTick(1 / 60); } }); }
+const clip = cl && await page.evaluate(() => { const f = toScreen(__p.x + 10, 8, __p.y + 8); return { x: Math.max(0, Math.min(640, f.x - 320)), y: Math.max(0, Math.min(180, f.y - 200)), width: 640, height: 360 }; });
 console.log('close', JSON.stringify(cl));
-await shot('close', { x: 320, y: 90, width: 640, height: 360 });
+await shot('close', clip || undefined);
 await browser.close(); server.close(); console.log(errs.slice(0, 5).join('\n') || 'no errors');
