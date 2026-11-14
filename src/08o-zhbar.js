@@ -101,6 +101,14 @@ html body #side kbd,html body #side .hk,#tstrip .hk,.orddock kbd,.abc{display:no
 #zhPow .zp{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:7px 10px;border-radius:4px;border:1px solid #2f4352;background:linear-gradient(180deg,#1d2c38,#122029);color:#eef3f6;cursor:pointer}
 #zhPow .zp:hover:not(:disabled){box-shadow:inset 0 0 0 2px #fff}
 #zhPow .zp b{font-size:14px}#zhPow .zp i{font-style:normal;color:#f4d96a;font-size:12px}#zhPow .zp span{font-size:12px;color:#b9c7d2}
+
+/* power meter on the top edge of the bar, left of the money (Zero Hour style; Abdullah 16:36 "Where is power level?") */
+html body #side #zhPw{position:absolute;top:-9px;right:calc(50% + 96px);z-index:3;width:clamp(160px,13vw,240px);height:18px;display:flex;align-items:center;gap:6px;padding:0 8px;border-radius:3px;
+ background:linear-gradient(180deg,#0e1216,#1d242a);box-shadow:inset 0 0 0 1px #000,0 0 0 2px #aeb8c1;font:700 11px system-ui,sans-serif;color:#dfe6ea;white-space:nowrap}
+html body #side #zhPw .zb{flex:1;height:8px;border-radius:2px;background:#000;overflow:hidden;box-shadow:inset 0 0 0 1px #333}
+html body #side #zhPw .zb i{display:block;height:100%;background:linear-gradient(90deg,#4cd964,#b8f36a)}
+html body #side #zhPw.low{color:#ff8a78}html body #side #zhPw.low .zb i{background:linear-gradient(90deg,#ff5a3c,#ff9a5a)}
+html body #side.min #zhPw{display:none!important}
 #zhTip{position:fixed;left:10px;z-index:60;width:clamp(240px,22vw,380px);pointer-events:none;padding:10px 14px;border-radius:4px;color:#e9efdc;font:14px/1.4 system-ui,sans-serif;
  background:linear-gradient(180deg,rgba(14,22,40,.95),rgba(8,14,30,.95));box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px #3a5ea8,0 4px 14px rgba(0,0,0,.6)}
 #zhTip b{display:block;text-align:center;font-size:16px;margin-bottom:4px}#zhTip .zc{color:#f4d96a;font-weight:700}#zhTip .zd{color:#c9d3bd;margin-top:3px}#zhTip .zw{color:#ff9a7a;margin-top:3px}`;document.head.append(st);}
@@ -114,6 +122,7 @@ function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
   let star=$('zhStar');if(!star){star=document.createElement('button');star.id='zhStar';star.type='button';star.title='Generals\' powers and Strike';star.innerHTML='★★★<i class="dot" hidden></i>';
     star.onclick=()=>{ZH.star=!ZH.star;ZH.sig='';zhPowWin();zhCtx();};sd.append(star);}
   {const T=G.teams[ME];if(T&&sd.dataset.tc!==T.color){sd.dataset.tc=T.color;sd.style.setProperty('--tc',T.color);}}
+  {let pw=$('zhPw');if(G.battle&&typeof pwView==='function'){if(!pw){pw=document.createElement('div');pw.id='zhPw';pw.innerHTML='<span></span><span class="zb"><i></i></span>';sd.append(pw);}const v=pwView(),k=v.make+'|'+v.use;if(pw.dataset.k!==k){pw.dataset.k=k;pw.classList.toggle('low',!!v.low);pw.firstChild.textContent='⚡ POWER '+v.use+' / '+v.make;pw.querySelector('i').style.width=Math.round(100*Math.min(1,v.use/Math.max(1,v.make)))+'%';pw.title=v.low?'LOW POWER: build a Generator - powered buildings are offline':'Power used / produced';}}else if(pw)pw.remove();}
   let emb=$('zhEmb');if(!emb){emb=document.createElement('div');emb.id='zhEmb';emb.innerHTML='';sd.append(emb);}
   sd.classList.toggle('zhnosel',!(G.sel||[]).some(e=>e&&!e.dead&&e.team===ME));
   const sig=(G.sel||[]).map(e=>e.id).join(',');if(sig!==ZH.sig)ZH.sig=sig;try{zhPowWin();}catch(e){}

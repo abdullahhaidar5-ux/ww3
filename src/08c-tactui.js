@@ -1,5 +1,5 @@
 /* ---------- Tactics UI: dig in, sandbag lines / trenches, field repair, vehicle damage readout (Abdullah, 2026-11-04) ----------
-   Hotkey I: infantry dig a dugout and go inside it (vehicles never dig in) (like garrisoning a building; select the dugout + right-click ground to bring them out); with only Construction Vehicles selected it starts a fortification line. A line is traced: press and drag along the path you want (curves and corners), release to order it; or click where it
+   Hotkey I: infantry dig a dugout and go inside it (vehicles never dig in) (like garrisoning a building; select the dugout + right-click ground to bring them out); with only Construction Vehicles selected it starts a fortification line. A line is traced: right-press and drag along the path you want (left-click cancels) (curves and corners), release to order it; or click where it
    starts, then where it ends. Right-click (or Esc) cancels. Infantry never build lines, they only dig in. */
 const CRIT_NAME={1:'Tracks / wheels knocked out - cannot move',2:'Turret jammed - slow to aim and fire',4:'Engine on fire - burning and slower'};
 function critText(c){const a=[];for(const b of [1,2,4])if(c&b)a.push(CRIT_NAME[b]);return a.join(' · ');}
@@ -16,12 +16,12 @@ function wallHintEl(){let h=document.getElementById('wallHint');if(!h){h=documen
 function tactRow(el,s){
   const h=wallHintEl();
   if(G.wallM&&!tactBuilders().length){G.wallM=null;G.wallP=null;}
-  if(G.wallM){const k='Fortification line';h.hidden=false;h.textContent=(G.wallDn?`${k}: keep dragging along the path, release to build`:G.wallP?`${k}: ${TOUCHUI?'tap':'click'} where it ends`:`${k}: drag to trace a line, or ${TOUCHUI?'tap':'click'} where it starts`)+` · costs ${DUG[G.wallM].cost} per piece · ${TOUCHUI?'tap ✕':'right-click'} to cancel`;}else h.hidden=true;
+  if(G.wallM){const k='Fortification line';h.hidden=false;h.textContent=(G.wallDn?`${k}: keep right-dragging along the path, release to build`:G.wallP?`${k}: ${TOUCHUI?'tap':'right-click'} where it ends`:`${k}: right-drag to trace a line, or ${TOUCHUI?'tap':'right-click'} where it starts`)+` · costs ${DUG[G.wallM].cost} per piece · ${TOUCHUI?'tap ✕':'left-click or Esc'} to cancel`;}else h.hidden=true;
   if(s.length===1&&!s[0].isB&&s[0].crit){const d=document.createElement('div');d.className='morale';d.innerHTML='<span class="ml" style="color:#ea8a5a">Damaged</span><span style="font-size:12px;opacity:.9">'+critText(s[0].crit)+'</span>';d.title='A Construction Vehicle (or the War Factory yard) repairs these.';el.append(d);}
   const own=tactOwn(),inf=own.some(digCan),doz=own.filter(u=>u.kind==='dozer'),air=own.filter(u=>u.s.dom==='air'&&(u.s.cls==='heli'||u.s.cls==='jet'));if(!inf&&!doz.length&&!air.length)return;
   const r=document.createElement('div');r.className='cmdrow tact';const mk=(t,ti,fn,on)=>{const b=document.createElement('button');b.textContent=t;b.title=ti;b.onclick=fn;if(on)b.classList.add('on');r.append(b);return b;};
   if(inf)mk('⛏ Dig in (I)','Dig a dugout where they stand and go inside, like garrisoning a building: a few seconds, then they are under strong cover and fire from inside. They stay until you select the dugout and right-click the ground (or right-click it with more infantry to add them).',tactDig);
-  if(doz.length){mk('⛏ Fortification line'+(inf?'':' (I)'),'Build a fortification line (Construction Vehicles only): press and drag along the path you want, curves and corners included, or click its start then its end. A trench with a sandbag parapet; a new line that starts at the end of another joins it into a network. '+DUG.trench.cost+' supplies a piece. Best cover, slows vehicles.',()=>tactWall('trench'),G.wallM==='trench');
+  if(doz.length){mk('⛏ Fortification line'+(inf?'':' (I)'),'Build a fortification line (Construction Vehicles only): right-press and drag along the path you want (left-click cancels), curves and corners included, or click its start then its end. A trench with a sandbag parapet; a new line that starts at the end of another joins it into a network. '+DUG.trench.cost+' supplies a piece. Best cover, slows vehicles.',()=>tactWall('trench'),G.wallM==='trench');
     {if(G.rubN)mk('🧹 Clear rubble','Clear the nearest fallen building so tanks can pass again (idle Construction Vehicles do it on their own).',tactClr);
     mk('🔧 Fix vehicles','Repair knocked-out tracks, jammed turrets and engine fires on nearby vehicles (idle Construction Vehicles do it on their own).',tactFix);}}
   if(air.length){const lowNow=air.some(u=>LOWSET.has(u.id));mk(lowNow?'⬆ Fly high':'⬇ Fly low','Nap of the earth: low flyers cannot be locked by long-range SAM sites, but guns and shoulder-fired AA hurt them 35% more. Aircraft also pop flares / chaff on their own against SAM missiles (4 charges, refilled when landed).',()=>{const v=lowNow?0:1;for(const u of air){if(v)LOWSET.add(u.id);else LOWSET.delete(u.id);}doAct({t:'low',ids:air.map(u=>u.id),v});sfxUI(520);updateUI();},lowNow);}
@@ -42,13 +42,14 @@ function wallPts(end){let P=G.wallTr&&G.wallTr.length?G.wallTr.slice():G.wallP?[
 function wallSend(end){const P=wallPts(end),ids=tactBuilders().map(u=>u.id);if(P&&ids.length){doAct({t:'wall',ids,k:G.wallM,pts:P});speak(1);mark({x:P[P.length-2],y:P[P.length-1],r:14,t:0,d:.7,c:0xd9b97a});}
   G.wallM=null;G.wallP=null;G.wallTr=null;G.wallDn=null;updateUI();}
 function wallPointer(e){if(!G||G.over||!G.wallM)return;e.stopImmediatePropagation();e.preventDefault();
-  if(e.button===2){G.wallM=null;G.wallP=null;G.wallTr=null;G.wallDn=null;updateUI();return;}
+  /* Abdullah 2026-11-14 16:35 "Make fortification building right click": RIGHT button drags/clicks the line, LEFT click cancels */
+  if(e.button===0&&e.pointerType==='mouse'){G.wallM=null;G.wallP=null;G.wallTr=null;G.wallDn=null;updateUI();return;}if(e.pointerType==='mouse'&&e.button!==2)return;
   mpos(e);const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(!G.wallP){G.wallP={x:w.x,y:w.y};G.wallTr=[w.x,w.y];G.wallDn={sx:mouse.x,sy:mouse.y};mark({x:w.x,y:w.y,r:14,t:0,d:.7,c:0xd9b97a});sfxUI(560);updateUI();return;}
   G.wallTr=null;wallSend(w);}
 cv.addEventListener('pointerdown',wallPointer,true);
 window.addEventListener('pointermove',e=>{if(!G||G.over||!G.wallM||!G.wallDn||!G.wallTr)return;mpos(e);const w=screenToWorld(mouse.x,mouse.y);if(!w)return;const T=G.wallTr;if(Math.hypot(w.x-T[T.length-2],w.y-T[T.length-1])>=WALL_STEP&&T.length<2000)T.push(w.x,w.y);},true);
-window.addEventListener('pointerup',e=>{if(!G||G.over||!G.wallM||!G.wallP||!G.wallDn||e.button===2)return;mpos(e);const dx=mouse.x-G.wallDn.sx,dy=mouse.y-G.wallDn.sy;G.wallDn=null;if(dx*dx+dy*dy<26*26){G.wallTr=null;return;}
+window.addEventListener('pointerup',e=>{if(!G||G.over||!G.wallM||!G.wallP||!G.wallDn||(e.pointerType==='mouse'&&e.button!==2))return;e.stopImmediatePropagation();mpos(e);const dx=mouse.x-G.wallDn.sx,dy=mouse.y-G.wallDn.sy;G.wallDn=null;if(dx*dx+dy*dy<26*26){G.wallTr=null;return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w){G.wallTr=null;return;}wallSend(w);},true);
 cv.addEventListener('contextmenu',e=>{if(G&&G.wallM){e.preventDefault();}});
 // live preview while tracing: the path, the pieces it will become and the total supply cost (drawn on the HUD canvas)
