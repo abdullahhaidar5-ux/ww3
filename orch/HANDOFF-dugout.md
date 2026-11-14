@@ -11,6 +11,10 @@ Owner (Abdullah, Fri 2026-11-13 20:00 Chicago): "Make it digging in like garriso
 - Removed: `u.dig`, `startDig`, `digTick`, foxhole texts. Never touched `src/13*`.
 - Guards: `orch/decisions.mjs` ("dugout" static + runtime), new `node orch/dugouttest.mjs` (SHOTS=1 for pictures), `orch/tacttest.mjs` updated.
 
+## Vehicles + realistic looks (ORCH note, Abdullah 2026-11-13 20:43)
+- Tanks / IFVs / APCs / ground AA / artillery dig a hull-down position with Dig in (I): ~7 s, berm + ramp + track marks, front damage x0.5 and side x0.6 (rear unchanged), turret still fires, no movement until a move order (select + right-click ground). AI digs in when idle (max 8 per team) and leaves with its attack wave. `G.dug` kind `vpos` + `u.dgv`, in checkpoint and client list. Not done: a Construction Vehicle digging it for another vehicle (vehicles dig themselves in).
+- Looks: spoil lip, timber boards, firing steps, camo net on some, debris, scuffed earth on dugouts, trenches, sandbags and vehicle positions; instanced in the one mesh (cap raised 3600 -> 6000 blobs). Close-ups: `orch/shots/dugout-foxhole.jpg`, `dugout-trench.jpg`, `dugout-tank.jpg`.
+
 ## Gate
 - Local: `python3 orch/build.py --check` OK, `node orch/smoke.mjs` SMOKE PASS, `node orch/dugouttest.mjs` DUGOUT PASS, decisions see below / cigate result appended by the last line of this file.
 - No local smooth runs (per CLAUDE.md). cigate: see bottom.
