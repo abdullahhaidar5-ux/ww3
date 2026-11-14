@@ -184,3 +184,9 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
 - 19:55 Chicago "Make the dust and smoke less" + "Also I thought we removed towns in battle" (no earlier written decision found; treat as
   decision now: Battle has NO towns on any map). battleclean2 = trig_01VxtRXFgHVaQnuznuaaRs87 (Sonnet) fired 01:57Z: no towns in Battle +
   dust/smoke roughly halved with one FX table. Asked him whether the rainbow ground stripes are real or phone-camera moire (awaiting).
+- 19:57 Chicago correction: Battle KEEPS garrisonable buildings, only the named-town layer goes (note pushed to orch/battleclean2 3845540,
+  trigger prompt updated). CHECK its result: buildings must still be there.
+- 19:58 "this was a 2 player battle why are the zaidis in this game" (scoreboard showed a 3rd empty "Zaidi Shia Movement - Player" column).
+  ghostslot = trig_015yoiYnMHeKgu2KYUqsbN4e (Sonnet) fired 02:00Z: exactly the setup's players become teams; scoreboard tidy, no opinion row in Battle.
+- 19:58 "Make cargo look more like generals" -> supply pile style: chunky, readable Generals-like crate piles. Note pushed to orch/pileflag b1edd53.
+  CHECK pileflag pictures follow it.
