@@ -197,3 +197,6 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   Sim change (checkpoint). Overlaps sweepfixB (Dig in row) and unstuck (03-sim) - conductor merges carefully.
 - 20:01 Chicago "Make the ayatollah and dear leader more realistic and human looking". leaderlook = trig_01YM87cT3xwMftrBc8jciEKn (Opus, look)
   fired 02:04Z: realistic human figures, fictional, never a real person's likeness; respectful. CHECK its pictures for likeness before landing.
+- 20:03 Chicago "What's the red symbols" = out-of-supply badges (06-view.js:189) in Test range -> note on orch/testrange 3e1720b (never in sandbox/Battle).
+- 20:05 Chicago "This ground texture is too cartoony" (+ stair-stepped dark lines on the ground, + "Supply OK" chip in Battle).
+  groundreal = trig_019DXnuqhKtrVoLcRMDJsX87 (Opus) fired 02:06Z: CC0 PBR ground, macro variation, smooth fort/trench edges. Supply OK chip -> note on orch/battleclean2.
