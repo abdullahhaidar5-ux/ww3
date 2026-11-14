@@ -22,7 +22,7 @@ function hudTick(force){try{hudDeclutter();}catch(e){}if(!G||!G.teams||!G.teams[
   const b=hudBuild();b.hidden=false;const T=G.teams[ME];
   let cut=0;if(G.towns)for(const t of G.towns)if(t.cut&&townsMine(t))cut++;
   const inc=T.terr||0,op=(typeof opOf==='function'&&G.conq&&!T.reb)?Math.round(opOf(T)):null;
-  const gb=!!G.grand,bt=!!G.battle;const sig=[gb?1:0,bt?1:0,Math.floor(T.credits),inc.toFixed(1),cut,op,HUDS.unread,HUDS.open?1:0,HUDS.al.length,HD_KEYS.map(hudOn).join('')].join('|');if(sig===HUDS.sig)return;HUDS.sig=sig;
+  const gb=false,bt=!!G.battle;const sig=[bt?1:0,Math.floor(T.credits),inc.toFixed(1),cut,op,HUDS.unread,HUDS.open?1:0,HUDS.al.length,HD_KEYS.map(hudOn).join('')].join('|');if(sig===HUDS.sig)return;HUDS.sig=sig;
   b.querySelector('#hudM').hidden=gb;b.querySelector('#hudM').textContent='$'+Math.floor(T.credits).toLocaleString('en-US')+(inc>.05?'  +$'+inc.toFixed(1)+'/s':'');b.querySelector('#hudM').title='Money and territory income (tax from your towns and hamlets).';
   const s=b.querySelector('#hudS');s.textContent=cut?'Supply: '+cut+' cut off':'Supply OK';s.style.color=cut?'#ff9a8a':'#9be39b';s.title='Towns you hold that the supply network cannot reach.';s.hidden=bt;   /* Battle: no supply lines, no Supply chip */
   const o=b.querySelector('#hudO');if(gb||op==null||!hudOn('opinion'))o.hidden=true;else{o.hidden=false;const m=polMul(T);o.textContent='Opinion '+op+(m<1?'  SANCTIONS -'+Math.round((1-m)*100)+'%':'');o.style.color=op<POL.SANC_BELOW?'#ff8a7a':op>=POL.AID_ABOVE?'#9be39b':'#e8e2c8';o.title='World opinion of you. Low opinion brings sanctions (less income); high opinion brings foreign aid.';}
@@ -106,8 +106,7 @@ function uiDialog(msg,opt,cb){const old=document.getElementById('uiDlg');if(old)
 function uiConfirm(msg,yes,cb,danger){return uiDialog(msg,{yes,danger},cb);}
 
 /* ---------- declutter (Abdullah 2026-11-06 "Terrible clutter"): one place that decides what is shown ----------
-   Controls help line hidden unless asked (? button, Settings, or the first 45 s of a player's first battle); campaign (Fight-it) battles
-   are army-only so production tabs, auto-build and money/tax items are hidden and a unit roster takes the command bar. */
+   Controls help line hidden unless asked (? button, Settings, or the first 45 s of a player's first battle). */
 HUDS.help=false;
 function hudDeclutterCss(){if(document.getElementById('hudDcCss'))return;const st=document.createElement('style');st.id='hudDcCss';
   st.textContent='#hint{display:none!important}body.helpOn #hint{display:block!important}#lgBtn{display:none!important}'
@@ -118,7 +117,7 @@ function hudDeclutterCss(){if(document.getElementById('hudDcCss'))return;const s
   document.head.appendChild(st);}
 function hudDeclutter(){hudDeclutterCss();const on=!!(G&&!G.over&&G.teams&&G.teams[ME]);let seen=1;try{seen=!!localStorage.getItem('ww3_helpSeen');}catch(e){}
   let help=on&&(HUDS.help||SET.helpLine);
-  if(on&&!seen&&G.t<45&&!G.grand)help=true;else if(on&&!seen&&G.t>=45){try{localStorage.setItem('ww3_helpSeen','1');}catch(e){}}
+  if(on&&!seen&&G.t<45)help=true;else if(on&&!seen&&G.t>=45){try{localStorage.setItem('ww3_helpSeen','1');}catch(e){}}
   document.body.classList.toggle('helpOn',!!help);
   const sb=document.getElementById('setBody');if(sb&&!document.getElementById('sHelpLine')){const r=document.createElement('label');r.style.cssText='display:flex;gap:8px;align-items:center;margin:10px 0;font-size:15px;cursor:pointer';r.innerHTML='<input type="checkbox" id="sHelpLine"> Always show the controls help line at the bottom of the battle';const c=r.querySelector('input');c.checked=!!SET.helpLine;c.onchange=()=>{SET.helpLine=c.checked?1:0;saveSet();};sb.append(r);}
   /* one switch each for the commander's radio feed and the edge alerts (both default on; view only) */

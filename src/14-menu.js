@@ -1,6 +1,6 @@
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
-   saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.
+   saved or synced. Loaded LAST so every module that injects menu controls (save, replay, missions, editor) has already run.
    It does not rebuild any control: it MOVES the existing nodes (#pickP, #pickMap, #teamList, #aiN, #diff, #wx, #ssnRow, #gdocSel,
    #games, #playOnline …) into screens, so every handler, id and rule keeps working; the old card stays in the page, hidden, as the
    parking spot for what the title does not show (its buttons are clicked by the new items). #menu.hidden still means "no menu".
@@ -123,7 +123,6 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 #ms-online #mxolg{margin-bottom:6px}
 .mxlist{display:flex;flex-direction:column;align-items:flex-start;gap:0}
 .mxcred{max-width:860px}.mxcred p{margin:0 0 12px;color:#8a9a92;font:400 12px/1.6 var(--mono);max-width:none}
-#ms-online .gnrow{display:none!important}   /* campaign rows stay out of the open-games list while the campaign is paused (2026-11-13); a campaign link or code still joins */
 @media (max-width:1100px){.mxnat,.mxpl{grid-template-columns:1fr}#mxdet{position:static}}
 `;document.head.appendChild(s);}
 function mxModeName(){return typeof setup!=='undefined'&&setup.mode==='battle'?'Battle':'Conquest';}
@@ -207,10 +206,10 @@ function mxBuild(){
   const mp=[...card.querySelectorAll('.mode')].find(x=>x.querySelector('#playOnline'));if(mp)OL.appendChild(mp);
   {const lb=OL.querySelector('.label');if(lb)lb.textContent='Open games';const jc=OL.querySelector('#jcode');if(jc)jc.placeholder='Game code or invite link';}
   /* --- extras --- */
-  const E=scr('extras','<h2 class="mxh">Extras</h2><p class="mxsub">The Grand campaign preview (paused), practice, review and reference.</p>');const el=mxEl('div','mxlist');E.appendChild(el);
+  const E=scr('extras','<h2 class="mxh">Extras</h2><p class="mxsub">Practice, review and reference.</p>');const el=mxEl('div','mxlist');E.appendChild(el);
   const ex=(t,fn,tip)=>{const b=mxEl('button','mxi',t);b.type='button';b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);if(tip)b.title=tip;el.appendChild(b);};
   const byText=t=>()=>{const b=[...card.querySelectorAll('button')].find(x=>(x.textContent||'').trim().toLowerCase().replace(/\u2019/g,"'")===t);if(b){try{initAudio();}catch(_){}b.click();}};
-  {const b=mxEl('button','mxi');b.type='button';b.append('Grand campaign (preview, paused)',mxEl('small','','In development - Conquest and Battle come first.'));b.onclick=()=>{mxTick(660);mxClick('grandBtn');};b.onmouseenter=()=>mxTick(520);el.appendChild(b);}ex('Watch a replay',()=>mxClick('rpOpen'),'Open a replay file');ex('Map editor',()=>mxClick('edBtn'),'Draw your own battlefield');
+  ex('Watch a replay',()=>mxClick('rpOpen'),'Open a replay file');ex('Map editor',()=>mxClick('edBtn'),'Draw your own battlefield');
   ex('My battles',()=>mxClick('openMyb'));ex('Encyclopedia',()=>mxClick('openEnc'));ex('Unit guide',byText('unit guide'));ex('Medals',byText('medals'));ex('Profile',byText('profile'));ex('What’s new',byText('what’s new')||byText("what's new"));ex('Report a problem',()=>mxClick('rpMenu'),'Opens a pre-filled bug report');ex('Playtest card',()=>{if(typeof wwPlaytest==='function')wwPlaytest();},'Ten new things to try this week - thumbs up or down, a short note, save the file');
   /* --- credits --- */
   const C=scr('credits','<h2 class="mxh">Credits</h2><p class="mxsub">Free art, sound and music only, every author credited.</p>');const cw=mxEl('div','mxcred');for(const p of card.querySelectorAll('p.credits'))cw.appendChild(p);C.appendChild(cw);
@@ -219,15 +218,14 @@ function mxBuild(){
   new MutationObserver(()=>{if(!m.hidden)mxShown();}).observe(m,{attributes:true,attributeFilter:['hidden']});
   setInterval(mxPoll,500);
   MX.screens.title.classList.add('on');mxShown(true);}
-/* Multiplayer: which game the online screen is set for. Campaign opens the one campaign lobby (gnet); Conquest/Battle use the shared battle lobby. */
-function mxOnline(k){if(k==='campaign'||k==='conquest'||k==='battle'){MX.olG=k;if(k==='campaign'&&MX.cur!=='online')MX.campOnce=1;}k=MX.olG||'conquest';
-  if(k!=='campaign')mxSetMode(k);
+/* Multiplayer: which game the online screen is set for. Conquest/Battle use the shared battle lobby. */
+function mxOnline(k){if(k==='conquest'||k==='battle')MX.olG=k;k=MX.olG||'conquest';
+  mxSetMode(k);
   for(const g in MX.olBtns)MX.olBtns[g].classList.toggle('on',g===k);
   const po=document.getElementById('playOnline'),h=document.getElementById('host');
   const cb=MX.olGo;if(cb){cb.innerHTML='';
-    if(k==='campaign'){const b=mxEl('button','big','Create a campaign lobby');b.type='button';b.id='mxCampNew';b.onclick=()=>{mxTick(660);try{GNT.wantHost=1;grandSetup();}catch(e){console.warn(e);}};cb.append(b,mxEl('span','mxolnote','  Pick a scenario and your nation, then share the code or link. Or join a campaign below.'));}
-    else cb.append(mxEl('span','mxolnote','Start a '+mxModeName()+' game below, or join one that is open.'));}
-  if(po)po.hidden=k==='campaign'||!!(typeof NET!=='undefined'&&(NET.code||NET.game));if(h)h.hidden=k==='campaign'||!!(typeof NET!=='undefined'&&(NET.code||NET.game));
+    cb.append(mxEl('span','mxolnote','Start a '+mxModeName()+' game below, or join one that is open.'));}
+  if(po)po.hidden=!!(typeof NET!=='undefined'&&(NET.code||NET.game));if(h)h.hidden=!!(typeof NET!=='undefined'&&(NET.code||NET.game));
   if(MX.cur!=='online')menuGo('online');}
 function mxMapCards(){
   const g=MX.grid,sel=document.getElementById('mapSel');if(!g||!sel)return;g.innerHTML='';
@@ -254,7 +252,7 @@ function mxContSync(){const c=document.getElementById('svContinue');if(!MX.cont|
   const sl=document.querySelector('#ms-single .mxlist');if(sl&&!MX.contSP){const b=mxEl('button','mxi');b.type='button';b.id='mxContSP';b.title='Pick up where you left off';b.hidden=true;b.onclick=()=>{mxTick(660);mxClick('svContinue');};b.onmouseenter=()=>mxTick(520);sl.prepend(b);MX.contSP=b;}
   const t=c.hidden?'':(c.textContent||'').replace(/^\W*Continue\W*/i,'');
   for(const b of [MX.cont,MX.contSP]){if(!b)continue;if(b.hidden===c.hidden&&b.dataset.t===t)continue;b.hidden=c.hidden;b.dataset.t=t;b.textContent='';if(!c.hidden)b.append('Continue',mxEl('small','',t));}}
-function mxPoll(){const m=document.getElementById('menu');if(!m||m.hidden)return;mxContSync();if(MX.cur==='c-players'||MX.cur==='c-opts'){mxStartSync();mxPlayersSync();}if(MX.cur==='c-nation')mxNatShow();if(MX.cur==='online'&&MX.olG==='campaign')for(const i of ['playOnline','host']){const e=document.getElementById(i);if(e&&!e.hidden)e.hidden=true;}}
+function mxPoll(){const m=document.getElementById('menu');if(!m||m.hidden)return;mxContSync();if(MX.cur==='c-players'||MX.cur==='c-opts'){mxStartSync();mxPlayersSync();}if(MX.cur==='c-nation')mxNatShow();}
 function mxCrumb(){const id=MX.cur,top=document.getElementById('mxtop'),cr=document.getElementById('mxcrumb');if(!top)return;top.hidden=id==='title';cr.innerHTML='';
   const st=MX_STEPS.findIndex(s=>s[0]===id);if(st>=0){cr.append(mxEl('b','',mxModeName()));MX_STEPS.forEach(([sid,n],i)=>{cr.append(mxEl('i','','›'));const b=mxEl('button',sid===id?'cur':'',(i+1)+' '+n);b.type='button';if(sid!==id)b.onclick=()=>menuGo(sid,i<st);cr.append(b);});}
   else cr.append(mxEl('b','',MX_TITLES[id]||''));}
@@ -266,14 +264,12 @@ function menuGo(id,back){if(!MX.screens[id]||MX.cur===id)return;const from=MX.sc
 function menuBack(){if(MX.stack.length<2)return;MX.stack.pop();const id=MX.stack[MX.stack.length-1];const from=MX.screens[MX.cur];from.classList.remove('on','left');const to=MX.screens[id];to.classList.add('left');void to.offsetWidth;to.classList.remove('left');to.classList.add('on');MX.cur=id;mxCrumb();mxEnter(id);mxTick(480);}
 function menuHome(){for(const k in MX.screens)MX.screens[k].classList.remove('on','left');MX.stack=['title'];MX.cur='title';MX.screens.title.classList.add('on');mxCrumb();}
 function mxEnter(id){if(id==='c-map')mxMapCards();if(id==='c-nation'){mxNatFilter();mxNatShow();}if(id==='c-players'||id==='c-opts'){mxStartSync();mxPlayersSync();try{if(typeof renderTeams==='function')renderTeams();}catch(_){}}
-  if(id==='online'){if(MX.campOnce)MX.campOnce=0;else if(MX.olG==='campaign')MX.olG='conquest';mxOnline();}if(id==='title')mxContSync();}
+  if(id==='online')mxOnline();if(id==='title')mxContSync();}
 /* The war table (living main menu): the background shows YOUR war - whatever "Continue" would resume.
-   Grand campaign saved: its map around your nation, your borders lit in your color, your last battle marked (sketch from the save's small note, grWarTable in 13-grand.js).
    Battle saved: that battlefield with the front line between your forces and the enemy you could see (sketch in the save's list entry, svFront in 08d-save.js).
-   Nothing saved (or an old save without a sketch): the calm world-map picture. Drawn once per save; the campaign code is NOT loaded for it. */
-function mxWarSrc(){let g=null,b=null;try{g=typeof svGrandInfo==='function'?svGrandInfo():null;}catch(_){}try{b=typeof svLatest!=='undefined'?svLatest:null;}catch(_){}
-  if(g&&b)g=null;   /* campaign paused 2026-11-13: the background shows the last Conquest/Battle; the campaign only when it is the only save */const clk=t=>{t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
-  if(g)return {key:'g'+g.ts+'|'+g.d,wt:g.wt&&g.wt.d?g.wt:null,k:'Grand campaign (preview)',h:g.n+(g.d?' · '+g.d:''),l:g.lbn?'Last battle: '+g.lbn+(g.lbd?', '+g.lbd:'')+' — '+(g.lb&&g.lb.w?'won':'lost'):'No battle fought yet'};
+   Nothing saved (or an old save without a sketch): the calm world-map picture. Drawn once per save. */
+function mxWarSrc(){let b=null;try{b=typeof svLatest!=='undefined'?svLatest:null;}catch(_){}
+  const clk=t=>{t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
   if(b)return {key:'b'+b.id+'|'+b.ts,wt:b.wt&&b.wt.d?b.wt:null,k:'Your war · '+(b.camp?'Mission':'Battle'),h:b.facName+' · '+b.mapName,l:clk(b.t)+' into the fight'+(b.wt&&b.wt.e?' — the bright line is your front':'')};
   return null;}
 function mxWarTable(){const bg=document.getElementById('mxbg'),mn=document.getElementById('menu');if(!bg||(mn&&mn.hidden))return;   /* never draw behind a running battle; the next time the menu shows it is drawn */
@@ -301,6 +297,6 @@ function mxWarTable(){const bg=document.getElementById('mxbg'),mn=document.getEl
     requestAnimationFrame(()=>cv.classList.add('on'));}catch(e){for(const el of bg.querySelectorAll('#mxwt,.mxwtl'))el.remove();mx.classList.remove('wt');}}
 function mxShown(first){if(!first&&MX.cur!=='title')menuHome();mxContSync();try{if(typeof svMenuSync==='function')svMenuSync();else mxWarTable();}catch(_){}}   /* svMenuSync finds the newest save, then calls mxWarTable */
 function mxKey(e){if(e.key!=='Escape')return;const m=document.getElementById('menu');if(!m||m.hidden||MX.stack.length<2)return;
-  if(document.querySelector('.overlay:not(#menu):not([hidden]),#campScreen,#grandScreen,#gModal,#edOv.on'))return;if(e.target&&/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)&&e.target.id!=='mxnatin')return;
+  if(document.querySelector('.overlay:not(#menu):not([hidden]),#campScreen,#edOv.on'))return;if(e.target&&/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)&&e.target.id!=='mxnatin')return;
   e.preventDefault();e.stopImmediatePropagation();menuBack();}
 try{if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mxBuild);else mxBuild();}catch(e){console.warn('menu v3',e);}

@@ -1,6 +1,6 @@
 /* ---------- Politics & intel (Abdullah 2026-11-05 18:55; orch/reports/politics-intel.md) ----------
    World opinion + sanctions/aid, spies & sabotage, decoy units, refugees on roads, radio/TV station + leaflet drops, local militias.
-   Owners (orch/SYSTEMS.md): opinion = this file (the grand map will read T.op later); "knocked out for a while" = the building's `dis` (and
+   Owners (orch/SYSTEMS.md): opinion = this file; "knocked out for a while" = the building's `dis` (and
    o.sab on power plants); deception = decoys here + EW spoofs in 03-sim; locals = townRecruit/milMake + insurgents (t.rebU) in 03-sim.
    Host-authoritative and deterministic: no Math.random, fixed update order, constants in POL (01-data). New state rides in the checkpoint
    (team fields op/opT/..., unit fields sj/spCd/exp, town fields autoT/insT/refT, and G.refs / G.leaf / G.refId in CK_G). */

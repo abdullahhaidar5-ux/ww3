@@ -20,19 +20,9 @@ await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.
 const fails = []; const shot = async (n, clip) => { await page.waitForTimeout(1500); await page.screenshot({ path: path.join(OUT, TAG + '-' + n + '.png'), clip, timeout: 120000 }).catch(e => console.log('shot skipped', n, e.message.slice(0, 80))); };
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => typeof grNew === 'function' && typeof startSingle === 'function', null, { timeout: 60000 });
-  if (ONLY.includes('province')) {
-    await page.evaluate(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); GC.nat.IR.cash = 6000; GV.sel = GC.nat.IR.cap; grandOpen(); guSide(); });
-    await page.waitForTimeout(1500);
-    await shot('province');
-    const r = await page.evaluate(() => { const s = document.getElementById('gSel'); const t = s.textContent;
-      const tabs = [...s.querySelectorAll('[data-pt]')].map(e => e.dataset.pt); return { len: t.length, tabs, tax: /Tax/.test(t), rec: /Recruit/.test(t), bld: /Buildings/.test(t), au: /Autonomy/.test(t) }; });
-    console.log('province', JSON.stringify(r));
-    if (TAG === 'after') { if (r.tabs.length < 3) fails.push('province: no tabs'); if (!r.tax || !r.rec || !r.bld || !r.au) fails.push('province: lost a section ' + JSON.stringify(r)); }
-    for (const t of ['rec', 'bld', 'gov']) { const ok = await page.evaluate(t => { const e = document.querySelector('#gSel [data-pt="' + t + '"]'); if (!e) return false; e.click(); return true; }, t); if (ok) await shot('province-' + t); }
-  }
+  await page.waitForFunction(() => typeof startSingle === 'function', null, { timeout: 60000 });
   if (ONLY.includes('battle') || ONLY.includes('pause')) {
-    await page.evaluate(() => { if (typeof grandScreenShow === 'function') try { grandScreenShow(false); } catch (e) {} startSingle(); $('menu').hidden = true; });
+    await page.evaluate(() => { startSingle(); $('menu').hidden = true; });
     await page.waitForFunction(() => !window.LOADING, null, { timeout: 480000, polling: 500 }).catch(() => fails.push('battle loading did not finish')); await page.waitForTimeout(1500);
     if (ONLY.includes('battle')) {
       await shot('battle');
