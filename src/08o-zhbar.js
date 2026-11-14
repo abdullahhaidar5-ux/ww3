@@ -75,6 +75,8 @@ html body #side .stat>.sup.sw{display:none!important}
 html body #side.zhpow .stat>.sup.sw{display:flex!important;grid-column:4!important;grid-row:1!important;position:static!important;padding:8px!important}
 html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 #cmdP{bottom:auto!important;top:64px!important;left:10px!important;right:auto!important}
+html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
+#hudLyB{display:none!important}   /* Abdullah 2026-11-14 "Remove map layers" */
 html body #side kbd,html body #side .hk,#tstrip .hk,.orddock kbd,.abc{display:none!important}
 }
 #zhTip{position:fixed;left:10px;z-index:60;width:clamp(240px,22vw,380px);pointer-events:none;padding:10px 14px;border-radius:4px;color:#e9efdc;font:14px/1.4 system-ui,sans-serif;
@@ -90,12 +92,12 @@ function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
   let star=$('zhStar');if(!star){star=document.createElement('button');star.id='zhStar';star.type='button';star.title='Generals\' powers and Strike';star.innerHTML='★★★<i class="dot" hidden></i>';
     star.onclick=()=>{ZH.star=!ZH.star;ZH.sig='';zhCtx();};sd.append(star);}
   {const T=G.teams[ME];if(T&&sd.dataset.tc!==T.color){sd.dataset.tc=T.color;sd.style.setProperty('--tc',T.color);}}
-  let emb=$('zhEmb');if(!emb){emb=document.createElement('div');emb.id='zhEmb';emb.innerHTML='<i>★</i>';sd.append(emb);}
+  let emb=$('zhEmb');if(!emb){emb=document.createElement('div');emb.id='zhEmb';emb.innerHTML='';sd.append(emb);}
   sd.classList.toggle('zhnosel',!(G.sel||[]).some(e=>e&&!e.dead&&e.team===ME));
   const sig=(G.sel||[]).map(e=>e.id).join(',');if(sig!==ZH.sig){if(ZH.sig&&sig)ZH.star=false;ZH.sig=sig;}
   star.classList.toggle('on',ZH.star);{const pd=document.querySelector('.tabs button[data-tab="pow"] .dot');const d=star.querySelector('.dot');if(d)d.hidden=!(pd&&!pd.hidden&&getComputedStyle(pd).display!=='none');}
   const w=zhWant();if(w&&TAB!==w)showTab(w);sd.classList.toggle('zhpow',w==='pow');{const sb=$('supbtn');star.classList.toggle('rdy',!!(sb&&!sb.disabled)&&!ZH.star);}
-  {const od=document.querySelector('.orddock');const pn0=$('panel');if(od&&pn0&&innerWidth>=900){if((w==='none'||w==='build')&&!od.classList.contains('empty')){const r=pn0.getBoundingClientRect(),n=od.querySelectorAll('button').length,zb=parseFloat(getComputedStyle(sd).getPropertyValue('--zb'))||90,cols=w==='build'?Math.ceil(n/2):Math.max(1,Math.ceil(r.width/(zb+4))),ow=Math.min(r.width,cols*(zb+4)+12);od.classList.add('zhin');od.style.left=(r.right-ow)+'px';od.style.top=r.top+'px';od.style.width=ow+'px';od.style.height=r.height+'px';pn0.style.paddingRight=w==='build'?(ow+4)+'px':'';}else if(od.classList.contains('zhin')){od.classList.remove('zhin');pn0.style.paddingRight='';od.style.left=od.style.top=od.style.width=od.style.height='';}}}
+  {const od=document.querySelector('.orddock');const pn0=$('panel');if(od&&pn0&&innerWidth>=900){if((w==='none'||w==='build')&&!od.classList.contains('empty')){const r=pn0.getBoundingClientRect(),n=od.querySelectorAll('button').length,zb=(pn0.querySelector('.btn:not([hidden])')||{}).offsetWidth||90,cols=w==='build'?Math.ceil(n/2):Math.max(1,Math.ceil(r.width/(zb+4))),ow=Math.min(r.width,cols*(zb+4)+12);od.classList.add('zhin');od.style.left=(r.right-ow)+'px';od.style.top=r.top+'px';od.style.width=ow+'px';od.style.height=r.height+'px';if(w==='build')pn0.style.setProperty('padding-right',(ow+4)+'px','important');else pn0.style.removeProperty('padding-right');}else if(od.classList.contains('zhin')){od.classList.remove('zhin');pn0.style.removeProperty('padding-right');od.style.left=od.style.top=od.style.width=od.style.height='';}}}
   const pn=$('panel');if(pn){let e=pn.querySelector('.zhEmpty');const od2=document.querySelector('.orddock.zhin');const vis=!!od2||[...pn.querySelectorAll(':scope>[data-tab]')].some(b=>!b.hidden&&b.dataset.tab===TAB);
     if(!vis){if(!e){e=document.createElement('div');e.className='zhEmpty';pn.append(e);}e.textContent=w==='none'?'Select your Construction Vehicle to build, or a building to train units':'Nothing available here yet';e.hidden=false;}else if(e)e.hidden=true;}
   {const rk=document.querySelector('#side .sup.rk .bar i');if(rk){const wd=rk.style.width;if(wd&&rk.style.getPropertyValue('--rk')!==wd)rk.style.setProperty('--rk',wd);}}}
