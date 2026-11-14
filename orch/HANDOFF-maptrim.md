@@ -1,6 +1,6 @@
 # HANDOFF maptrim (branch orch/maptrim)
 
-**Status: code complete; READY once orch/cigate.sh is green (result below). Not done: capturable-building variety (see Left).**
+**Status: PARKED until after Monday (ORCH stop, Abdullah Sat 09:51); NOT READY.** Done: fairness runs, 35-map allow-list, fallback, picker, guard, report, contact sheet; local smoke PASS. Not done: orch/cigate.sh was NOT run; decisions.mjs was last run before a small fix (static check now only covers the mirrored new maps; the earlier failure was that) and was not re-confirmed; capturable-building variety; onegame rebase.
 
 ## What changed
 - ONE Battle map allow-list `BATTLE_MAPS` in `src/02d-battlemaps.js` (35 maps; `BM_KEYS` is built from it). Battle setup, online lobby, map picker, Random battlefield and the saved Battle map read it. The picker no longer has the "Conquest battlefields too" link.
