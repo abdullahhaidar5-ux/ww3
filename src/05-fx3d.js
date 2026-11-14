@@ -170,7 +170,7 @@ const FXH={
     if(sup&&!arc){mslFallStart(MK,'cruise');}else if(!sup&&r>=68){mslFallStart(MK,'bomb');}
     MARKERS.push(MK);},
   hack(x,y){for(let i=0;i<24;i++)part({x:x+rnd(-30,30),y:y+rnd(-30,30),h:groundH(x,y)+rnd(5,40),vh:rnd(10,30),add:true,c:[.3,1,.5],s:rnd(2,4),d:rnd(.6,1.2)});},
-  rank(id,r,x,y){if(typeof RKV!=='undefined')RKV.set(id,{r,t:performance.now()});if(inView(x,y,.1)){const g=groundH(x,y);for(let i=0;i<10;i++){const a=rnd(0,6.28);part({x:x+Math.cos(a)*3,y:y+Math.sin(a)*3,h:g+2,vx:Math.cos(a)*14,vy:Math.sin(a)*14,vh:rnd(10,24),add:true,c:[1,.85,.4],s:rnd(2,4),d:.6,a:.8});}}},
+  rank(id,r,x,y){if(typeof RKV!=='undefined')RKV.set(id,{r,t:performance.now()});try{if(typeof vetCue==='function')vetCue(id,r);}catch(e){}if(inView(x,y,.1)){const g=groundH(x,y);for(let i=0;i<10;i++){const a=rnd(0,6.28);part({x:x+Math.cos(a)*3,y:y+Math.sin(a)*3,h:g+2,vx:Math.cos(a)*14,vy:Math.sin(a)*14,vh:rnd(10,24),add:true,c:[1,.85,.4],s:rnd(2,4),d:.6,a:.8});}}},
   chf(x,y,h,jet){for(let i=0;i<(jet?7:5);i++){const b=rnd(0,6.28),v=rnd(25,60);part({x,y,h,vx:Math.cos(b)*v,vy:Math.sin(b)*v,vh:rnd(-8,6),g:18,add:true,c:jet?[2.6,2.6,3.2]:[3.4,2.2,.8],s:rnd(2.5,4),d:rnd(.7,1.2)});part({x,y,h,vx:Math.cos(b)*v*.6,vy:Math.sin(b)*v*.6,vh:rnd(-6,2),g:14,c:C_SMOKE,s:rnd(3,5),d:rnd(.8,1.3),a:.4});}mlight(x,y,h,2,120);},
   flare(x,y,r,d){FLARES.push({x,y,r,d:d||30,t:0,acc:0});if(FLARES.length>6)FLARES.shift();},
   ping(x,y,r){PINGS.push({x,y,r,t:0,d:1.6,c:0x7fb8e6});},
