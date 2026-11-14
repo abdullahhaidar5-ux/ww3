@@ -1,0 +1,124 @@
+menu {"btn":"▶ Tutorial: learn Conquest (10 min)","vis":false}
+-- out of order / skip / exit / restart
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   out of order: Defense Gun placed during step 1
+  ok   out of order: the tutorial stays on step 1 (no crash, no skipping ahead)
+  ok   Skip step moves to the next step (3 clicks -> step 4)
+  ok   a step already done earlier completes by itself (Barracks built before step 4)
+  ok   Exit tutorial hides the tips and arrow and leaves the battle running
+  ok   menu still offers the tutorial (not marked done after exiting)
+-- full playthrough
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   drag-select picks up soldiers (6)
+step 2 move | highlight: ring | words: 17
+  ok   step 2 tip visible
+  ok   step 2 tip short (<=50 words)
+  ok   step 2 has an arrow/ring on its target
+  ok   step 2 tip box does not cover its own highlight 
+    marker at 849 450
+  ok   the move marker is on screen below the tip box
+step 3 setup | highlight: box | words: 50
+  ok   step 3 tip visible
+  ok   step 3 tip short (<=50 words)
+  ok   step 3 has an arrow/ring on its target
+  ok   step 3 tip box does not cover its own highlight 
+  ok   a red enemy exists to attack (or the squad already beat the scouts on its own while a slow machine drew frames)
+step 4 setup | highlight: box | words: 50
+  ok   step 4 tip visible
+  ok   step 4 tip short (<=50 words)
+  ok   step 4 has an arrow/ring on its target
+  ok   step 4 tip box does not cover its own highlight 
+  ok   clicking Defense Gun arms placement
+  ok   Defense Gun placed with a click next to the base
+step 5 trn | highlight: ring | words: 21
+  ok   step 5 tip visible
+  ok   step 5 tip short (<=50 words)
+  ok   step 5 has an arrow/ring on its target
+  ok   step 5 tip box does not cover its own highlight 
+  ok   left-click selects the Barracks
+  ok   arrow points at the Units tab first
+step 6 town | highlight: ring | words: 42
+  ok   step 6 tip visible
+  ok   step 6 tip short (<=50 words)
+  ok   step 6 has an arrow/ring on its target
+  ok   step 6 tip box does not cover its own highlight 
+    takeHouses 0 {"cell":{"x":940,"y":4220},"unit":{"x":1412.6629572242382,"y":5112.325057899495,"id":8},"n":6}
+    takeHouses 1 {"cell":{"x":940,"y":4220},"unit":{"x":1414.1123246443299,"y":5141.035581210935,"id":9},"n":5}
+    takeHouses 2 {"cell":{"x":940,"y":4220},"unit":{"x":1426.2884399581449,"y":5146.401627302302,"id":21},"n":4}
+    takeHouses 3 {"cell":{"x":940,"y":4220},"unit":{"x":1404.5011645987013,"y":5101.317769345755,"id":22},"n":3}
+    takeHouses 4 {"cell":{"x":860,"y":4220},"unit":{"x":1417.8461599946065,"y":5114.822682452604,"id":23},"n":2}
+    takeHouses 5 {"cell":{"x":860,"y":4220},"unit":{"x":1127.0091604523184,"y":5087.6377875187745,"id":43},"n":1}
+    takeHouses 10 {"done":true}
+step 7 tax | highlight: low | words: 39
+  ok   step 7 tip visible
+  ok   step 7 tip short (<=50 words)
+  ok   step 7 has an arrow/ring on its target
+  ok   step 7 tip box does not cover its own highlight 
+  ok   clicking the town marker on the minimap opens its tax panel
+step 8 unrest | highlight: box | words: 43
+  ok   step 8 tip visible
+  ok   step 8 tip short (<=50 words)
+  ok   step 8 has an arrow/ring on its target
+  ok   step 8 tip box does not cover its own highlight 
+step 9 retake | highlight: ring | words: 28
+  ok   step 9 tip visible
+  ok   step 9 tip short (<=50 words)
+  ok   step 9 has an arrow/ring on its target
+  ok   step 9 tip box does not cover its own highlight 
+    takeHouses 0 {"cell":{"x":940,"y":4220},"unit":{"x":945.426615349921,"y":4240.056284796119,"id":9},"n":11}
+    takeHouses 1 {"cell":{"x":940,"y":4220},"unit":{"x":899.9874584692177,"y":4183.910565371757,"id":9},"n":11}
+    takeHouses 2 {"cell":{"x":860,"y":4220},"unit":{"x":913.1477505009802,"y":4213.8411225414275,"id":21},"n":10}
+    takeHouses 3 {"cell":{"x":1020,"y":4300},"unit":{"x":938.6435752256639,"y":4187.641933907925,"id":22},"n":9}
+    takeHouses 4 {"cell":{"x":940,"y":4220},"unit":{"x":887.1498837304721,"y":4218.035967336715,"id":23},"n":8}
+    takeHouses 5 {"cell":{"x":940,"y":4220},"unit":{"x":825.0694131187331,"y":4242.473999407748,"id":43},"n":7}
+    takeHouses 10 {"cell":{"x":940,"y":4220},"unit":{"x":918.9324640416335,"y":4286.002913602295,"id":54},"n":5}
+    takeHouses 20 {"done":true}
+step 10 civic | highlight: low | words: 44
+  ok   step 10 tip visible
+  ok   step 10 tip short (<=50 words)
+  ok   step 10 has an arrow/ring on its target
+  ok   step 10 tip box does not cover its own highlight 
+step 11 logi | highlight: box low | words: 41
+  ok   step 11 tip visible
+  ok   step 11 tip short (<=50 words)
+  ok   step 11 has an arrow/ring on its target
+  ok   step 11 tip box does not cover its own highlight 
+  ok   L key shows supply lines
+step 12 pow | highlight: box | words: 30
+  ok   step 12 tip visible
+  ok   step 12 tip short (<=50 words)
+  ok   step 12 has an arrow/ring on its target
+  ok   step 12 tip box does not cover its own highlight 
+  ok   a power button is visible
+step 13 md | highlight: box | words: 32
+  ok   step 13 tip visible
+  ok   step 13 tip short (<=50 words)
+    (highlight optional at this moment)
+  ok   step 13 tip box does not cover its own highlight 
+  ok   Missile defence is buildable
+  ok   missile defence placed
+step 14 win | highlight: edge | words: 40
+  ok   step 14 tip visible
+  ok   step 14 tip short (<=50 words)
+  ok   step 14 has an arrow/ring on its target
+  ok   step 14 tip box does not cover its own highlight 
+    attack round 0 {"t":264,"mine":30,"foe":9}
+    attack round 2 {"t":288,"mine":30,"foe":5}
+    attack round 4 {"t":313,"mine":30,"foe":4}
+    attack round 6 {"t":337,"mine":30,"foe":3}
+    attack round 8 {"t":362,"mine":30,"foe":1}
+    attack round 10 {"t":386,"mine":30,"foe":1}
+  ok   ready screen shows 3 tips
+  ok   completion remembered
+  ok   real match starts with the same nation and an AI opponent
+  ok   after finishing, the menu button says Tutorial (replay)
+step seconds: [0,0,0,1,0,0,0,2,0,0,0,0,0] total 348 s
+TUTORIAL PASS
