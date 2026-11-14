@@ -158,12 +158,28 @@ function syncScene(dt){const live=new Set();
   for(const p of PINGS){if(!p.m){p.m=new THREE.Mesh(new THREE.RingGeometry(.9,1,64).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:p.c,transparent:true,depthWrite:false}));p.m.position.set(p.x,groundH(p.x,p.y)+3,p.y);SCN.add(p.m);}
     const k=p.t/p.d;p.m.scale.setScalar(p.r*(.2+k*.8));p.m.material.opacity=1-k;if(k>=.98){SCN.remove(p.m);}}
 }
+/* Generals-style fog (Abdullah 2026-11-13 21:28): never-explored ground is black, ground you have seen but cannot see now is grey (terrain and buildings stay readable, units are hidden by the normal sight rules), ground in sight is clear.
+   View only: FOGC.x remembers what has been seen (painted every 5th refresh, ~1.6x the old cost at most); FOGC.b is the live mask that becomes the fog texture. Fog alpha: 255 = black, FOG_SEEN = grey. */
+const FOG_SEEN=140;
+/* Superweapon warning + countdown for everybody (Generals style, view only): one line per Strike Center in the match, red for an enemy's, green for yours or an ally's. Reads sim state, keeps none. */
+let SWB={el:null,t:-9,h:''};
+function swBanner(){if(!G||!G.battle||G.over){if(SWB.el&&SWB.el.style.display!=='none')SWB.el.style.display='none';return;}
+  const now=performance.now();if(now-SWB.t<400)return;SWB.t=now;const L=[];
+  for(const T of G.teams){if(T.reb||T.dummy||T.out||!T.sup)continue;if(!G.ents.some(e=>e.isB&&e.team===T.id&&e.kind==='uplink'&&e.built>=1&&!e.dead))continue;
+    const mine=T.id===ME||ally(T.id,ME),left=Math.max(0,Math.ceil(T.sup.charge-T.charge)),txt=left>0?Math.floor(left/60)+':'+String(left%60).padStart(2,'0'):'READY';
+    L.push(`<div style="color:${mine?'#9fe3a0':'#ff8a7a'};font-weight:${left>0?500:800}">${mine?'':'\u26A0 '}${T.F.name} \u00b7 ${T.sup.name} \u00b7 ${txt}</div>`);}
+  const h=L.join('');if(!SWB.el){const d=document.createElement('div');d.id='swBanner';d.style.cssText='position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:30;pointer-events:none;text-align:center;font:600 14px system-ui,sans-serif;letter-spacing:.06em;padding:6px 16px;border-radius:6px;background:rgba(10,14,20,.72);text-shadow:0 1px 2px #000;display:none';document.body.appendChild(d);SWB.el=d;}
+  if(h!==SWB.h){SWB.h=h;SWB.el.innerHTML=h;}SWB.el.style.display=h?'block':'none';}
 function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,sx=W/MAPW,sy=H/MAPH;c.globalCompositeOperation='source-over';
   // a replay or a spectator showing everything: no fog at all
-  if((RP.on&&!RP.fog)||(NET.spec&&NET.specAll)){c.fillStyle='#000';c.fillRect(0,0,W,H);FOGC.getContext('2d').drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}c.fillStyle='rgb(212,212,212)';c.fillRect(0,0,W,H);
-  const hole=(x,y,R)=>{const g=c.createRadialGradient(x*sx,y*sy,R*sx*.5,x*sx,y*sy,R*sx);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(x*sx,y*sy,R*sx,0,7);c.fill();};
-  {const sk=(G.teams[ME].F.mods.sight||1)*1.08;for(const e of G.ents)if(e.team===ME&&!e.dead)hole(e.x,e.y,(!e.isB&&e.s.vis?e.s.vis:e.isB?340:e.s.dom==='air'?340:e.s.dom==='naval'?380:280)*sk);}
-  for(const r of (G.teams[ME].reveals||[]))hole(r.x,r.y,r.r);c.globalCompositeOperation='source-over';const f=FOGC.getContext('2d');f.filter='blur(4px)';f.drawImage(FOGC.b,0,0);f.filter='none';FOGT.needsUpdate=true;}
+  if((RP.on&&!RP.fog)||(NET.spec&&NET.specAll)){c.fillStyle='#000';c.fillRect(0,0,W,H);FOGC.getContext('2d').drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}
+  let X=FOGC.x;if(!X){X=FOGC.x=document.createElement('canvas');X.width=W;X.height=H;FOGC.xN=0;}
+  const hs=[];{const sk=(G.teams[ME].F.mods.sight||1)*1.08;for(const e of G.ents)if(e.team===ME&&!e.dead)hs.push(e.x,e.y,(!e.isB&&e.s.vis?e.s.vis:e.isB?340:e.s.dom==='air'?340:e.s.dom==='naval'?380:280)*sk);}
+  for(const r of (G.teams[ME].reveals||[]))hs.push(r.x,r.y,r.r);
+  if((FOGC.xN++%5)===0){const xc=X.getContext('2d');xc.globalCompositeOperation='source-over';for(let i=0;i<hs.length;i+=3){const x=hs[i],y=hs[i+1],R=hs[i+2],g=xc.createRadialGradient(x*sx,y*sy,R*sx*.6,x*sx,y*sy,R*sx);g.addColorStop(0,'rgba('+FOG_SEEN+','+FOG_SEEN+','+FOG_SEEN+',1)');g.addColorStop(1,'rgba('+FOG_SEEN+','+FOG_SEEN+','+FOG_SEEN+',0)');xc.fillStyle=g;xc.beginPath();xc.arc(x*sx,y*sy,R*sx,0,7);xc.fill();}}
+  c.fillStyle='rgb(255,255,255)';c.fillRect(0,0,W,H);c.drawImage(X,0,0);
+  for(let i=0;i<hs.length;i+=3){const x=hs[i],y=hs[i+1],R=hs[i+2],g=c.createRadialGradient(x*sx,y*sy,R*sx*.5,x*sx,y*sy,R*sx);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(x*sx,y*sy,R*sx,0,7);c.fill();}
+  c.globalCompositeOperation='source-over';const f=FOGC.getContext('2d');f.filter='blur(4px)';f.drawImage(FOGC.b,0,0);f.filter='none';FOGT.needsUpdate=true;}
 const RKV=new Map();   // rank-up flash: last rank seen per unit (view only)
 const SHORTN={inf:'INF',at:'ANTI-TANK',aa:'ANTI-AIR',tank:'TANK',arty:'ARTILLERY',apc:'CARRIER',hero:'HERO',champ:'HERO',hacker:'HACKER',dozer:'DOZER',demo:'DEMO',sniper:'SNIPER',mlrs:'MLRS',ifv:'CARRIER'};
 /* Supply circles (faint rings around HQ / depots / trucks / held towns) show while ammo units are selected, while O is held,
@@ -340,5 +356,5 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
   c.strokeStyle='rgba(190,235,205,.5)';c.lineWidth=2;const k=10;for(const [x,y,dx,dy] of [[1,1,1,1],[W-1,1,-1,1],[1,H-1,1,-1],[W-1,H-1,-1,-1]]){c.beginPath();c.moveTo(x+dx*k,y);c.lineTo(x,y);c.lineTo(x,y+dy*k);c.stroke();}
   const cw=screenToWorld(VW/2,VH/2);const vis2=G.ents.filter(e=>!e.dead&&e.team!==ME&&!ally(e.team,ME)&&!e.isB&&vis(e)).length;c.font='600 9px IBM Plex Mono, monospace';const txt=(cw?'GRID '+mmGrid(cw.x,cw.y)+'  ':'')+'CONTACTS '+vis2;const tw=c.measureText(txt).width;c.fillStyle='rgba(5,8,7,.75)';c.fillRect(W-tw-10,H-15,tw+8,13);c.fillStyle='#bfe9cd';c.textBaseline='alphabetic';c.fillText(txt,W-tw-6,H-5);}
 function renderFrame(dt){if(!G||!G.terrain||!R3||window.GLLOST)return;try{aarTick();}catch(_){}try{tactFxTick(dt);}catch(_){}try{bfFxTick(dt);}catch(_){}if(WRECKQ.length)wreckTick();if(G.civDirty&&performance.now()-(G.civRb||0)>400){G.civDirty=false;G.civRb=performance.now();try{buildCity();}catch(e){console.warn(e);}}try{droneAudio(dt);}catch(_){}if(window.SKY)SKY.material.uniforms.t.value=G.t;if(window.WINDU){WINDU.value=performance.now()/1000;{const wk=(G.wx&&G.wx.k)||'clear',tg=wk==='sandstorm'||wk==='blizzard'?1.8:wk==='rain'?1.4:wk==='snow'?1.15:wk==='fog'?.8:1;WINDS.value+=(tg-WINDS.value)*Math.min(1,dt*.5);}}syncScene(dt);fxUpdate(dt);try{realTick(dt);}catch(_){}placeCam();WATER.material.uniforms.t.value=G.t;WATER.material.uniforms.cpos.value.copy(CAM.position);
-  fogT-=dt;if(fogT<=0){fogT=.12;updateFog();}renderPost();drawHUD();{const w=performance.now();if(!(w-(G.mmT||0)<33)){G.mmT=w;drawMini();}}}  // minimap at ~30 Hz (it was redrawn every frame, up to 240x a second)
+  fogT-=dt;if(fogT<=0){fogT=.12;updateFog();}renderPost();drawHUD();swBanner();{const w=performance.now();if(!(w-(G.mmT||0)<33)){G.mmT=w;drawMini();}}}  // minimap at ~30 Hz (it was redrawn every frame, up to 240x a second)
 
