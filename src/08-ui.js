@@ -728,12 +728,11 @@ function stUnits(){if(!G)return[];const m=G.sel.filter(u=>!u.isB&&u.team===ME&&!
 function stanceLabel(){const us=stUnits();if(!us.length)return'';const d=stDisp(us[0]),mixed=us.some(u=>stDisp(u)!==d);return STANCES[d][1]+' '+STANCES[d][0]+(mixed?'+':'');}
 /* ---- ammo & supply UI ---- */
 function resupplySel(){if(!G||G.over)return;const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead&&u.am!==undefined).map(u=>u.id);if(!ids.length)return;doAct({t:'resup',ids});try{speak(1);}catch(_){}}
-function ammoRowHTML(s){const us=s.filter(u=>!u.isB&&u.team===ME&&u.am!==undefined&&u.amx&&!u.dead);if(!us.length)return '';
-  const mm=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0'),oosT=u=>u.sup?0:Math.max(0,G.t-(u.supT??G.t));
-  if(us.length===1){const u=us[0],f=u.am/u.amx,col=u.am<=0?'#ff6a50':f<.3?'#f2d14a':'#c9b784',o=oosT(u);
-    return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.ceil(u.am)}/${u.amx} · ${u.sup?'In supply':'Out of supply '+mm(o)}</span>`;}
-  let sum=0,mx=0,low=0,zero=0,oos=0;for(const u of us){sum+=u.am;mx+=u.amx;if(u.am<=0)zero++;else if(u.am<u.amx*.3)low++;if(!u.sup)oos++;}const f=sum/mx,col=zero?'#ff6a50':f<.3?'#f2d14a':'#c9b784';
-  return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.round(f*100)}%${zero?' · '+zero+' empty':''}${low?' · '+low+' low':''}${oos?' · '+oos+' no supply':' · in supply'}</span>`;}
+function ammoRowHTML(s){if(!ammoOn())return '';const us=s.filter(u=>!u.isB&&u.team===ME&&u.am!==undefined&&u.amx&&!u.dead);if(!us.length)return '';
+    if(us.length===1){const u=us[0],f=u.am/u.amx,col=u.am<=0?'#ff6a50':f<.3?'#f2d14a':'#c9b784';
+    return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.ceil(u.am)}/${u.amx} · ${u.sup?'In your area':u.am<=0?'OUT OF AMMO - return to your area':'Outside your area'}</span>`;}
+  let sum=0,mx=0,low=0,zero=0,oos=0;for(const u of us){sum+=u.am;mx+=u.amx;if(u.am<=0)zero++;else if(u.am<u.amx*.3)low++;if(!u.sup&&u.am<=0)oos++;}const f=sum/mx,col=zero?'#ff6a50':f<.3?'#f2d14a':'#c9b784';
+  return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.round(f*100)}%${zero?' · '+zero+' empty':''}${low?' · '+low+' low':''}${oos?' · '+oos+' need resupply':''}</span>`;}
 let AMT=0;function ammoRowTick(){if(performance.now()-AMT<400)return;AMT=performance.now();const el=document.getElementById('ammoRow');if(el&&G)el.innerHTML=ammoRowHTML(G.sel.filter(e=>!e.dead));}
 function cycleStance(){const us=stUnits();if(!us.length)return;const c=stDisp(us[0]),n=c===1?2:c===2?3:1;doAct({t:'stance',ids:us.map(u=>u.id),v:n});sfxUI(480+n*40);if(typeof updateUI==='function')updateUI();}
 function tcOwn(){return G?G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead):[];}
@@ -838,7 +837,7 @@ function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   else if(k==='no'){G.place=null;G.aim=null;TC.pick=null;}
   TC.stripK='';updateUI();tcStrip(true);}
 /* the Supply button shows only when it matters (a selected unit is under 60% ammo or has been out of supply 10 s+) and takes Clear's place so the strip still fits */
-function tcNeedSup(own){return own.some(u=>u.am!==undefined&&u.amx&&(u.am<u.amx*.6||(!u.sup&&G.t-(u.supT??G.t)>10)));}
+function tcNeedSup(own){return ammoOn()&&own.some(u=>u.am!==undefined&&u.amx&&!u.sup&&u.am<=0);}
 function tcStrip(force){const now=performance.now();if(!force&&now-TC.stripT<120)return;TC.stripT=now;
   let s=$('tstrip');if(!s){s=document.createElement('div');s.id='tstrip';s.hidden=true;s.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)tcCmd(b.dataset.k);});document.body.append(s);}
   const on=TOUCHUI&&TC.touch&&G&&!G.over&&!window.LOADING&&$('menu').hidden;const own=on?tcOwn():[];

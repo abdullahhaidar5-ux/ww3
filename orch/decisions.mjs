@@ -182,6 +182,22 @@ try {
   ck(cq.wasd, 'W A S D changed selection/orders in a battle (camera only)');
   ck(cq.rot && cq.rot.q45 && !cq.rot.qSel && cq.rot.home && cq.rot.drag < -0.3, 'Q tap must turn the camera 45° clockwise (and not select), hold Q + mouse right turns it, Home back to north: ' + JSON.stringify(cq.rot));
   ck(cq.rot && cq.rot.caSel > 0, 'Ctrl+A did not select the army in battle: ' + JSON.stringify(cq.rot));
+  // AMMO ZONE (Abdullah 2026-11-13 20:06): Conquest units fight outside your area until empty, only then need resupply (no timers); refill inside the area; Battle/Test range: unlimited.
+  { ck(!/u\.supT|\.supT\?\?|G\.t-\(u\.supT/.test(Object.entries(SRC).filter(([k]) => !k.startsWith('13')).map(([, v]) => v).join('\n')), 'a time-based out-of-supply rule (u.supT) is still in src/ - ammo zone rule has no timers');
+    const am = await ev(() => { const T = G.teams[ME]; const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq'); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && hasAmmo(e)); if (!u || !hq) return { err: 'no unit/hq' };
+      const step = () => { G.supT = 1; updSupply(0.01); }; const far = { x: hq.x + 1800, y: hq.y + 1800 };
+      u.x = far.x; u.y = far.y; u.am = 5; step(); const o1 = { sup: u.sup, am: u.am }; G.t += 90; step(); const o2 = { sup: u.sup, am: u.am, healOk: true }; /* 90 s outside: still has its 5 shots, no refill, no timer penalty */
+      u.am = 0; step(); const empty = { am: u.am, sup: u.sup };
+      const bad = G.ents.find(e => !e.dead && e.team !== ME && !e.isB && e.team >= 0); let cantFire = null; if (bad && !isInf(u.s)) { const hp = bad.hp; fire(u, bad, 50, u.s.wpn, 0); cantFire = bad.hp === hp; }
+      u.x = hq.x + 40; u.y = hq.y + 40; step(); const back = { am: u.am, sup: u.sup };
+      const sv = { b: G.battle, s: G.sandbox }; G.battle = true; const bt = hasAmmo(u); G.battle = sv.b; G.sandbox = true; const sb = hasAmmo(u); G.sandbox = sv.s;
+      return { o1, o2, empty, cantFire, back, bt, sb, conqHas: hasAmmo(u) }; });
+    console.log('ammozone', JSON.stringify(am));
+    ck(!am.err && am.o1.sup === 0 && am.o1.am === 5 && am.o2.am === 5, 'ammo zone: a unit outside your area must keep its ammo (no timer, no refill): ' + JSON.stringify(am));
+    ck(am.empty && am.empty.am === 0 && am.empty.sup === 0, 'ammo zone: empty unit outside the area must stay empty: ' + JSON.stringify(am.empty));
+    ck(am.cantFire !== false, 'ammo zone: an empty vehicle fired a shot: ' + JSON.stringify(am));
+    ck(am.back && am.back.sup === 1 && am.back.am > 0, 'ammo zone: unit back inside your area did not refill: ' + JSON.stringify(am.back));
+    ck(am.conqHas === true && am.bt === false && am.sb === false, 'ammo zone: Conquest tracks ammo, Battle/Test range must be unlimited: ' + JSON.stringify(am)); }
   await shot('conquest-ir');
   // Balance toggle (Abdullah 2026-11-06 21:31): Balanced must stay equal for everyone; Realistic must tier fire support
   // (superpower strikes come faster/harder and its vehicles are cheaper; a small power's strikes are weaker but its
