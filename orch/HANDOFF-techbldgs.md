@@ -31,3 +31,18 @@ Minimap: a tile in the owner's colour with a small sign (cross, rock, pick, bolt
 - `python3 orch/build.py --check`, `node orch/smoke.mjs`: see the gate result at the bottom. No local smooth runs (rule).
 
 ## Pictures (looked at myself): orch/concepts/techbldgs/
+Close-ups (also copied to orch/shots/techbldgs-*.jpg): `hosp-held.jpg` (Field Hospital: canvas tents with red crosses, ward, ambulance, stretchers, generator, sandbag-free pad, owner flag),
+`mine-held.jpg`, `mine-being-captured.jpg` (infantry beside a mine, "CAPTURING" bar; headframe with winding wheels, ore hopper, spoil heaps, rail carts),
+`plant-held.jpg` (the existing power-plant model: cooling tower, stacks, turbine hall, transformers, pylons), `quarry-held.jpg` (stepped rock faces, crusher + conveyor,
+stone piles, dump truck, excavator; it is on the snow map so the weather tints it grey), `minimap-icons.jpg` (tiles with the owner's colour and a sign). Made with `node orch/techshots.mjs` (slow in a sandbox).
+Also changed: no trees, rocks or scrub grow on a capturable building's pad (`clear()` in src/02-map.js, view only).
+
+## One thing for Abdullah to try for 2 minutes (PC)
+Start a Battle on **Ferry Quarter**, build a Barracks and send 4 infantry (right-click) to the field hospital near your side of the river and wait ~6 s for "CAPTURING" to fill. Hurt your infantry (or wait until they are shot at) and stand them next to it: they heal. Then hover the mine across the bridge to read what it does, take it and watch your money rise faster.
+
+## Adding the next one (part 2 of the note, not started)
+Refinery (vehicles 10% cheaper), ammo dump (ammo refill, through the existing supply/ammo rule), artillery position (reuse the defense-gun firing code), train station (faster production),
+telecom station (morale, existing morale system, Zealous never rout): each = one row in `TB` (src/03-sim.js) + its effect in `tbTick` / the cost and speed hooks + a model in `techObj` + a minimap sign in `tbMini` + one `tb` entry per map. Capture, repair, AI raid, checkpoint come for free.
+
+## Gate
+

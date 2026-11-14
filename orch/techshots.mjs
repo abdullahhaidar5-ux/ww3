@@ -21,7 +21,7 @@ const page = await ctx.newPage();
 await page.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue() : r.abort());
 page.on('pageerror', e => console.log('PAGEERR', e.message));
 const jpg = async (name, clip) => { const f = path.join(OUT, name + '.jpg'); let q = 80; for (;;) { await page.screenshot({ path: f, type: 'jpeg', quality: q, timeout: 300000, ...(clip ? { clip } : {}) }); if (fs.statSync(f).size < 245000 || q <= 35) break; q -= 8; } console.log(name, fs.statSync(f).size); };
-const frame = async o => {   // o = JS expression giving the building; centre it on screen (the camera looks at an angle)
+const frame = async o => { await page.mouse.move(683, 330);   // the pointer at the window edge would scroll the camera   // o = JS expression giving the building; centre it on screen (the camera looks at an angle)
   for (let i = 0; i < 4; i++) { await page.evaluate(e => { const o = eval(e), w = screenToWorld(innerWidth / 2, innerHeight * .42); if (!w) return; cam.x += o.x - w.x; cam.y += o.y - w.y; cam.tx = cam.x; cam.ty = cam.y; cam._xl = cam.x; cam._yl = cam.y; }, o); await page.waitForTimeout(1200); } };
 const MAPS = [['ferryquarter', ['hosp', 'mine']], ['splitridge', ['plant', 'quarry']]];
 for (const [id, kinds] of MAPS) {
