@@ -68,7 +68,7 @@ async function rpWatch(buf){let P;try{P=await rpParse(buf);}catch(e){uiDialog('C
   $('end').hidden=true;RP.hdr=P.hdr;RP.frames=P.frames;RP.i=0;RP.spd=1;RP.paused=false;RP.kf=[];RP.fog=!P.hdr.full;RP.view=P.hdr.me|0;
   P.frames.forEach((f,i)=>{if(f[1]==='S'&&f[2].indexOf('"f":1')>=0)RP.kf.push(i);});
   const si=P.hdr.si;MODE='client';ME=Math.max(0,Math.min(si.facs.length-1,P.hdr.me|0));RP.loading=true;TERR_DEFER=true;
-  try{newGame(Object.assign({},si,{ai:si.facs.map(()=>false)}));}finally{TERR_DEFER=false;RP.loading=false;}
+  try{newGame(Object.assign({},si,{keepMap:1,ai:si.facs.map(()=>false)}));}finally{TERR_DEFER=false;RP.loading=false;}
   RP.on=true;G.rp=1;NET.spec=P.hdr.sp?1:0;NET.specAll=0;Object.assign(NET,{lastSnapT:0,iv:RP.SNAP_DT,ia:0,iaDev:0,rxW:0,prevT:0,cq:[]});document.body.classList.add('rp');
   rpBar();await afterStart();rpBarSync();return true;}
 function rpApply(f,quiet){const [t,k,s]=f;let d;try{d=JSON.parse(s);}catch(e){return;}

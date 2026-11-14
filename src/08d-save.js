@@ -83,7 +83,7 @@ async function svLoad(meta,packed){
   o.facs=o.facs.map(natFix);if(o.p)o.p=natFix(o.p);
   if(G&&!G.over){try{quitGame();}catch(e){}}
   try{MODE='single';ME=sv.me|0;
-    TERR_DEFER=true;try{newGame(JSON.parse(JSON.stringify(o)));ckRestore(ck);}finally{TERR_DEFER=false;}
+    TERR_DEFER=true;try{newGame(Object.assign(JSON.parse(JSON.stringify(o)),{keepMap:1}));ckRestore(ck);}finally{TERR_DEFER=false;}
     G.ldHold=1;G.sel=[];
     const cm=sv.cam;
     try{$('menu').hidden=true;}catch(e){}

@@ -133,3 +133,29 @@ const BMAPS={
     c:{lk:[[1600,1100,160]]}},
 };
 for(const id in BMAPS)bmRegister(id,BMAPS[id]);
+
+/* ===== THE BATTLE MAP LIST (maptrim, Abdullah 2026-11-13 21:17 "cut the Battle list down to great, tested maps") =====
+   ONE allow-list: [map key, fewest players, most players]. Battle setup, the online lobby, the map picker, Random battlefield,
+   quick start, Test range and the AI's random picks all read it (BM_KEYS is this list). A map is here only after
+   `node orch/battlemapfair.mjs` showed every start winning 40-60% of its AI-vs-AI Battle games at the player counts
+   listed; the numbers are in orch/reports/maptrim.md (orch/decisions.mjs checks that every entry has a row there).
+   Every other map is out of the Battle lists. Their data stays (old saves, the editor and missions still load them). */
+const BATTLE_MAPS=[
+  ['bm_splitridge',2,2],['bm_ferryquarter',2,2],['bm_breakwater',2,4],['bm_fourmills',2,4],['bm_sixroads',2,6],
+  ['lebanon',2,4],['gulf',2,4],['euphrates',2,2],['tihama',2,2],['zagros',2,2],
+  ['caribbean',2,2],['hormuzgate',2,2],['taiwan',2,2],['arctic',2,2],['khyber',2,2],
+  ['hajar',2,2],['marshes',2,2],['blacksea',2,2],['yemen',4,4],['hawizeh',4,4],
+  ['islands',4,4],['donbas',4,4],['mesopotamia',4,4],['persia',4,4],['taiga',4,4],
+  ['aegean',6,6],['dmziron',6,6],['rubalkhali',6,6],['oasis',6,8],['atoll',6,8],
+  ['hindukush',8,8],['kuwait',8,8],['rhine',8,8],['yangtze',8,8],['plateau',8,8],
+];
+const BATTLE_FALLBACK='bm_splitridge';
+for(const [k,lo,hi] of BATTLE_MAPS){const D=MAPS[k];if(!D)continue;if(!D.bm&&D.maxFull==null){D.minFull=D.min;D.maxFull=D.max;}D.min=lo;D.max=hi;if(!BM_KEYS.includes(k))BM_KEYS.push(k);}
+BM_KEYS.length=0;for(const [k] of BATTLE_MAPS)if(MAPS[k])BM_KEYS.push(k);
+// a map that is not in the list (old save of a new game, link, lobby, setting) becomes a listed map with enough slots:
+// the same terrain theme first, then the closest size; deterministic, so host and clients agree
+function battleMapFix(k,n){n=Math.max(2,n|0);const ok=q=>{const D=MAPS[q];return !!D&&D.min<=n&&D.max>=n;};
+  if(BM_KEYS.includes(k)&&ok(k))return k;
+  const th=(MAPS[k]&&(MAPS[k].theme||MAPS[k].tag))||'',c=BM_KEYS.filter(ok);
+  if(!c.length)return BM_KEYS.includes(BATTLE_FALLBACK)?BATTLE_FALLBACK:BM_KEYS[0];
+  return (c.find(q=>(MAPS[q].theme||MAPS[q].tag)===th&&th)||c.find(q=>MAPS[q].max===n)||c[0]);}
