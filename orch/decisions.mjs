@@ -305,6 +305,13 @@ try {
   await ev(() => { setup.p = 'IR'; setup.a = 'US'; setup.n = 1; try { initAudio(); } catch (e) {} startSingle(); });
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('conquest battle never finished loading'));
   await page.waitForTimeout(2500);
+  // ghostslot 2026-11-14 (Abdullah 2026-11-13 19:58 "this was a 2 player battle why are the zaidis in this game"): a game has exactly the players the setup showed - the hidden militia team is never a scoreboard column; Battle has no world-opinion row
+  { const gs = await ev(() => { const real = G.teams.filter(T => !T.reb).length, S = endStats(0), nm = G.teams.length - real;
+      esPage(S); const cols = [...document.querySelectorAll('#endStats .esC')].length, dts = [...document.querySelectorAll('#endStats .esC dt')].map(d => d.textContent);
+      const old = JSON.parse(JSON.stringify(S)); old.p.push(Object.assign({}, old.p[0], { f: 'DW', tm: 900 })); old.a.push([]); esPage(old); const colsOld = document.querySelectorAll('#endStats .esC').length;
+      esPage(null); return { mode: G.battle ? 'battle' : 'conquest', n: G.N, real, extra: nm, sp: S.p.length, sa: S.a.length, cols, colsOld, opinion: dts.includes('World opinion'), wrap: !!document.querySelector('#endStats .esC dt') }; });
+    console.log('ghost team', JSON.stringify(gs)); ck(gs.real === 2 && gs.sp === 2 && gs.sa === 2, 'a 2-player ' + gs.mode + ' game must have exactly 2 teams in its end stats: ' + JSON.stringify(gs));
+    ck(gs.cols === 2 && gs.colsOld === 2, 'scoreboard columns must equal the real players (a militia/ghost team must never get one): ' + JSON.stringify(gs)); ck(gs.opinion === !gs.mode.startsWith('b'), gs.mode + ' scoreboard world-opinion row is wrong: ' + JSON.stringify(gs)); }
   const cq = await ev(() => { const T = G.teams[ME]; const ban = { cleric: roster(T.fac).barracks.includes('cleric'), fort: bldAllowed(T.fac, 'fort'), bb: conqBan('bb'), bbIR: sigBan('IR', 'bb'), bbUS: sigBan('US', 'bb'), fortUS: bldAllowed('US', 'fort'), powIR: typeof POWERS.bb === 'object' };
     const shown = ['u_cleric', 'b_fort', 'p_bb', 'p_cleric'].filter(id => { const b = document.getElementById(id); if (!b) return false; return !b.hidden && b.offsetParent !== null; });
     const btns = [...document.querySelectorAll('#panel button, #side button, #bar button, #powers button, button.btn')].filter(b => b.offsetParent).map(b => b.id + ':' + b.textContent.trim().slice(0, 30));
@@ -409,6 +416,13 @@ try {
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
   ck(!bt.setupEnd, 'Battle has a no-fire setup phase'); ck(!bt.tax, 'Battle has town taxes'); ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');
   await shot('battle-us');
+  // ghostslot 2026-11-14 (Abdullah 2026-11-13 19:58 "this was a 2 player battle why are the zaidis in this game"): a game has exactly the players the setup showed - the hidden militia team is never a scoreboard column; Battle has no world-opinion row
+  { const gs = await ev(() => { const real = G.teams.filter(T => !T.reb).length, S = endStats(0), nm = G.teams.length - real;
+      esPage(S); const cols = [...document.querySelectorAll('#endStats .esC')].length, dts = [...document.querySelectorAll('#endStats .esC dt')].map(d => d.textContent);
+      const old = JSON.parse(JSON.stringify(S)); old.p.push(Object.assign({}, old.p[0], { f: 'DW', tm: 900 })); old.a.push([]); esPage(old); const colsOld = document.querySelectorAll('#endStats .esC').length;
+      esPage(null); return { mode: G.battle ? 'battle' : 'conquest', n: G.N, real, extra: nm, sp: S.p.length, sa: S.a.length, cols, colsOld, opinion: dts.includes('World opinion'), wrap: !!document.querySelector('#endStats .esC dt') }; });
+    console.log('ghost team', JSON.stringify(gs)); ck(gs.real === 2 && gs.sp === 2 && gs.sa === 2, 'a 2-player ' + gs.mode + ' game must have exactly 2 teams in its end stats: ' + JSON.stringify(gs));
+    ck(gs.cols === 2 && gs.colsOld === 2, 'scoreboard columns must equal the real players (a militia/ghost team must never get one): ' + JSON.stringify(gs)); ck(gs.opinion === !gs.mode.startsWith('b'), gs.mode + ' scoreboard world-opinion row is wrong: ' + JSON.stringify(gs)); }
   // ---- fixes1 (2026-11-11, "white streaks in Arabia", "oversized palms"): what a PLAYER gets on the first campaign map of a session.
   // The map must wait for the real land data (it used to be drawn on the hand-shaped stand-in and stay on it: chalk-white cliffs along the Red Sea);
   // snow only where snow can lie (never in Arabia; still on the Alps, the Himalaya and Greenland); palms no taller than the towns (one instanced draw).

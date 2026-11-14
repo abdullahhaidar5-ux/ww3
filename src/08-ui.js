@@ -53,20 +53,24 @@ function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb,cnt=P.map(()=>0),cap=P.leng
   i=best(p=>p.me);if(i>=0&&P[i].me>0)A.push(['War Economy',i,esM(P[i].me)+' earned']);
   i=best(p=>p.pt);if(i>=0&&P[i].pt>0)A.push(['Power Player',i,P[i].pt+' general power'+(P[i].pt===1?'':'s')+' used'+(P[i].pk?' (most: '+esPow(P[i].f,P[i].pk)+')':'')]);
   return A;}
-const ES_ROWS=[['World opinion',p=>p.op==null?'-':p.op+' / 100 (low '+(p.ol==null?p.op:p.ol)+')'],['Units built',p=>p.b],['Units lost',p=>p.lu],['Enemy units destroyed',p=>p.ku],['Structures destroyed',p=>p.kb],['Structures lost',p=>p.lb],
+const ES_OP=['World opinion',p=>p.op==null?'-':p.op+' / 100 (low '+(p.ol==null?p.op:p.ol)+')'];
+const ES_ROWS=[['Units built',p=>p.b],['Units lost',p=>p.lu],['Enemy units destroyed',p=>p.ku],['Structures destroyed',p=>p.kb],['Structures lost',p=>p.lb],
   ['Enemy value destroyed',p=>esM(p.vd)],['Money earned',p=>esM(p.me)],['Money spent',p=>esM(p.ms)],['General rank',p=>p.r],['Time alive',p=>esT(p.ta)]];
+// ghostslot 2026-11-14: stats from an older server/save may still carry the hidden militia team (tm 900, always last) - drop it; Battle has no world opinion
+function esClean(S){if(!S||!Array.isArray(S.p))return S;const keep=S.p.map(p=>!(p&&(p.tm===900||p.rb)));if(keep.every(Boolean))return S;const C=Object.assign({},S);C.p=S.p.filter((_,i)=>keep[i]);if(Array.isArray(S.a))C.a=S.a.filter((_,i)=>keep[i]);return C;}
+function esRows(S){const bt=S&&S.bt!=null?!!S.bt:!!(G&&G.battle);return bt?ES_ROWS:[ES_OP,...ES_ROWS];}
 // players in table order: winners first, then by value destroyed
 function esOrder(S){return S.p.map((p,i)=>i).sort((a,b)=>(esWin(S,b)-esWin(S,a))||(S.p[b].vd-S.p[a].vd)||a-b);}
 function esCss(){if($('esCss'))return;const st=document.createElement('style');st.id='esCss';st.textContent=`
 #end{place-items:start center}#end>.card{margin-block:auto}
 #endStats{display:flex;flex-direction:column;gap:20px;font-size:16px;line-height:1.35;text-align:left}#endStats[hidden]{display:none}
 #endStats h2{font-size:14px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin:0 0 10px;font-weight:700}
-.esP{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.esP{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
 .esC{border:1px solid rgba(255,255,255,.14);border-left:6px solid var(--c);border-radius:8px;padding:10px 12px;background:rgba(255,255,255,.035)}
 .esC.win{border-color:rgba(227,179,65,.75);border-left-color:var(--c);background:rgba(227,179,65,.07)}.esC.me{box-shadow:0 0 0 2px rgba(255,255,255,.35) inset}
 .esH{display:flex;align-items:center;gap:10px;margin-bottom:8px}.esH canvas{width:42px;height:25px;border-radius:2px;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.6)}
 .esN{font-weight:700;font-size:18px;line-height:1.2}.esTag{font-size:13px;opacity:.75}.esWinT{color:#e3b341;font-weight:800;font-size:13px;letter-spacing:.1em}
-.esC dl{display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:0}.esC dt{opacity:.78}.esC dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.esC dl{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin:0;font-size:14px}.esC dt{opacity:.78;white-space:nowrap}.esC dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .esA{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
 .esAw{border-radius:8px;padding:10px 12px;background:rgba(227,179,65,.08);border:1px solid rgba(227,179,65,.35);border-left:5px solid var(--c)}
 .esAw b{display:block;color:#e3b341;font-size:13px;letter-spacing:.12em;text-transform:uppercase}.esAw .who{font-weight:700;font-size:17px;margin:2px 0}.esAw .what{font-size:15px;opacity:.88}
@@ -77,7 +81,7 @@ function esCss(){if($('esCss'))return;const st=document.createElement('style');s
 function esFlagEl(f,w,h){const c=document.createElement('canvas');c.width=w*2;c.height=h*2;const im=esFlag(f);const x=c.getContext('2d');if(im)try{x.drawImage(im,0,0,c.width,c.height);}catch(e){}else{x.fillStyle=(FACTIONS[f]||{}).color||'#888';x.fillRect(0,0,c.width,c.height);}return c;}
 function esShareBtn(){let b=$('endShare');if(b)return b;const row=$('again')&&$('again').parentNode;if(!row)return null;b=document.createElement('button');b.id='endShare';b.className='big ghost';b.type='button';b.textContent='Share';b.hidden=true;b.onclick=esShare;row.insertBefore(b,$('change'));return b;}
 // fills (or with S=null hides) the summary under the result line
-function esPage(S){esCss();let box=$('endStats');if(!box){box=document.createElement('div');box.id='endStats';$('ends').after(box);}
+function esPage(S){S=esClean(S);esCss();let box=$('endStats');if(!box){box=document.createElement('div');box.id='endStats';$('ends').after(box);}
   const sb=esShareBtn();ES.S=S;ES.blob=null;box.innerHTML='';if(!S||!Array.isArray(S.p)||!S.p.length){box.hidden=true;if(sb)sb.hidden=true;return;}box.hidden=false;if(sb)sb.hidden=false;
   const ord=esOrder(S),sec=t=>{const s=document.createElement('section'),h=document.createElement('h2');h.textContent=t;s.append(h);box.append(s);return s;};
   // awards
@@ -87,7 +91,7 @@ function esPage(S){esCss();let box=$('endStats');if(!box){box=document.createEle
     const h=document.createElement('div');h.className='esH';h.append(esFlagEl(p.f,42,25));try{const GT=G&&G.teams&&G.teams[i];if(GT&&GT.emb&&GT.emb!=='flag')h.append(idEmbEl(GT,24));}catch(e){}const nm=document.createElement('div');nm.innerHTML='<div class="esN"></div><div class="esTag"></div>';nm.querySelector('.esN').textContent=esName(p);
     nm.querySelector('.esTag').textContent=[i===ME?'You':p.ai?'AI':'Player',GDOC[p.gd]?GDOC[p.gd].name+' doctrine':'',S.p.some((q,j)=>j!==i&&q.tm===p.tm)?'Team '+(p.tm<100?p.tm+1:i+1):'',esWin(S,i)?'':p.out?'Defeated':''].filter(Boolean).join(' · ');h.append(nm);
     if(esWin(S,i)){const w=document.createElement('div');w.className='esWinT';w.style.marginLeft='auto';w.textContent='WINNER';h.append(w);}d.append(h);
-    const dl=document.createElement('dl');for(const [k,f] of ES_ROWS){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=f(p);dl.append(dt,dd);}d.append(dl);g.append(d);}s.append(g);}
+    const dl=document.createElement('dl');for(const [k,f] of esRows(S)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=f(p);dl.append(dt,dd);}d.append(dl);g.append(d);}s.append(g);}
   // army strength over time
   if(S.a&&S.a.some(a=>a&&a.length>1)){const s=sec('Army strength over time');const c=document.createElement('canvas');c.id='esGraph';s.append(c);const lg=document.createElement('div');lg.className='esLeg';
     for(const i of ord){const sp=document.createElement('span'),k=document.createElement('i');k.style.setProperty('--c',S.p[i].c);sp.append(k,document.createTextNode(esWho(S,i)));lg.append(sp);}s.append(lg);
