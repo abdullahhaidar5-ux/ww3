@@ -381,7 +381,6 @@ function DRIVER() {
     return Object.assign(W.info(), { ms: realNow() - t0 });
   };
   W.ev = c => eval(c); // debug hook: evaluate code inside the sim's scope (G, setBases, ...); used by orch/conquest*.mjs
-  W.ev = src => eval(src); // probe: run an expression inside the sim's scope (orch/stuckscan.mjs)
   W.step = sec => {
     const n = Math.round(sec * 60); let done = 0; const t0 = realNow();
     sim(() => { for (let i = 0; i < n && G && !G.over; i++) { simUpdate(1 / 60); S.clock += 1000 / 60; done++; } });
