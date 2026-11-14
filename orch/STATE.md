@@ -1,25 +1,19 @@
-# STATE (conductor, 2026-11-14 18:50 UTC) — main = c53e750 (landed 18:30 UTC: train 1610 + battleclean2)
+# Conductor state — 2026-11-14 ~19:00 UTC
 
-Landed already (ahead=0): freezefix, sweepfixA, sweepfixB, unstuck, battleclean2.
-Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans, anything only in src/13*.
+Main = c53e750 (train 1610 landed 18:30 UTC: freezefix, sweepfixB, battleclean2, unstuck). Train `train/20261114-1845` (battlepower, techbldgs, groundreal) built on it, smoke PASS locally, full gate running.
 
-| branch | last push | ahead | HANDOFF | own gate on branch head |
-|---|---|---|---|---|
-| orderfeel | 14 h | 1 | yes | none seen |
-| ghostslot | 15 h | 1 | yes | none seen |
-| testrange | 16 h | 1 | yes | 26/27 green, audio red (known flaky) per handoff |
-| pileflag | 15 h | 2 | yes | none seen |
-| dugout | 88 min | 3 | yes | none seen |
-| battlepower | 16 h | 5 | yes | 27 green |
-| bldqueue | 15 h | 7 | yes | 22 green; controls, tutorial, migrate x4 red |
-| techbldgs | 15 h | 11 | yes (part 1 ready) | none seen |
-| groundreal | 14 h | 4 | yes | none seen |
-| leaderlook | 13 h | 11 | yes | none seen |
-| usvoice | 14 h | 3 | yes | run sat queued >1 h, no result |
-| ammozone | 15 h | 7 | yes | run queued 45 min, no result |
-| onegame | 14 h | 16 | yes | none seen |
-| nations20 | 15 h | 5 | yes (says 18 nations; brief says 22 - needs fixing before landing) | none seen |
-| looktest | 3 h | 3 | yes | never lands until Abdullah picks a look |
+| Branch | State |
+|---|---|
+| orderfeel, ghostslot, testrange, sweepfixA/B, freezefix, unstuck, battleclean2 | already in main (only HANDOFF text differs) |
+| pileflag | in train 0256, its gate red (decisions, tutorial), merge reverted. Not retried: needs its own fix + gate. Note: reverted merge means re-merging only brings new commits; revert the revert first. |
+| dugout | in train 1610, gate red (decisions crash `Cannot read properties of null (reading 'id')`, stuckscan, ew, save, audio...), reverted. Helper pushed a look fix 17:07, no own gate. Same revert-of-revert caveat. |
+| battlepower | own gate 27 green. IN TRAIN 1845 (hand-merged power meter into the new goal line) |
+| techbldgs | part 1. IN TRAIN 1845 |
+| groundreal | IN TRAIN 1845 |
+| bldqueue | red own gate: controls, tutorial, migrate, migrate-down, migrate-abrupt, migrate-dual. Not landed |
+| leaderlook, usvoice, ammozone | no own gate (usvoice/ammozone gate runs sat queued) — next train |
+| looktest | needs Abdullah's pick |
+| onegame (16 commits), nations20 | last, after the above; nations20 has a NOTE saying 22 (IN JP DE KR) but its code is 18 — must be reconciled |
+| camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans | parked (removed from the game) |
 
-Taken locks with no orch branch: not checked this run (state only).
-No train this run: main was pushed 5 min ago, its Main gate and Pages build are still queued; another push now would cancel the live-site update. Next run: train battlepower, testrange, ghostslot, orderfeel, pileflag, dugout (<=6).
+Repo has ~15,000 branches; `git fetch --prune` takes ~10 min here (fetch named refs).
