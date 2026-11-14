@@ -1,0 +1,53 @@
+game servers running locally at http://127.0.0.1:34127
+[3s] three pages loaded
+[3s] host lobby open, code 4lmhft
+[47s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+    [net battle start] host: {"t":0,"loading":true,"paused":true,"fp":{"tx":24,"rx":17,"txB":2518,"rxB":1410,"dropped":0},"slots":[{"k":1,"peer":"ww3p-d2cam9ra","seenAgo":67,"disc":0,"ai":false,"aiTook":false,"buf":0},{"k":2,"peer":"ww3p-ieu1xs0m","seenAgo":378,"disc":0,"ai":false,"aiTook":false,"buf":0}],"sb":null,"ckOut":false}
+    [net battle start] client A: {"me":1,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-d2cam9ra","hostPeer":"ww3-4lmhft","sb":false,"ck":false,"ents":0,"fp":{"tx":9,"rx":14,"txB":774,"rxB":1479,"dropped":0},"trace":[]}
+    [net battle start] client B: {"me":2,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-ieu1xs0m","hostPeer":"ww3-4lmhft","sb":false,"ck":false,"ents":0,"fp":{"tx":9,"rx":10,"txB":743,"rxB":1039,"dropped":0},"trace":[]}
+    [net t=5s] host: {"t":5,"loading":false,"paused":false,"fp":{"tx":136,"rx":28,"txB":62356,"rxB":2588,"dropped":0},"slots":[{"k":1,"peer":"ww3p-d2cam9ra","seenAgo":-8556,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988},{"k":2,"peer":"ww3p-ieu1xs0m","seenAgo":3,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988}],"sb":1,"ckOut":false}
+    [net t=5s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":5,"snapT":4.9,"rxAgo":7,"recon":false,"myPeer":"ww3p-d2cam9ra","hostPeer":"ww3-4lmhft","sb":true,"ck":true,"ents":9,"fp":{"tx":14,"rx":71,"txB":1309,"rxB":39444,"dropped":0},"trace":[]}
+    [net t=5s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":5,"snapT":4.8,"rxAgo":14,"recon":false,"myPeer":"ww3p-ieu1xs0m","hostPeer":"ww3-4lmhft","sb":false,"ck":false,"ents":9,"fp":{"tx":14,"rx":65,"txB":1279,"rxB":22912,"dropped":0},"trace":[]}
+    [net t=10s] host: {"t":10,"loading":false,"paused":false,"fp":{"tx":239,"rx":45,"txB":124228,"rxB":8736,"dropped":0},"slots":[{"k":1,"peer":"ww3p-d2cam9ra","seenAgo":294,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076},{"k":2,"peer":"ww3p-ieu1xs0m","seenAgo":616,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076}],"sb":1,"ckOut":false}
+    [net t=10s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":10,"snapT":10,"rxAgo":11,"recon":false,"myPeer":"ww3p-d2cam9ra","hostPeer":"ww3-4lmhft","sb":true,"ck":true,"ents":11,"fp":{"tx":23,"rx":123,"txB":4638,"rxB":69475,"dropped":0},"trace":[]}
+    [net t=10s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":10,"snapT":10,"rxAgo":14,"recon":false,"myPeer":"ww3p-ieu1xs0m","hostPeer":"ww3-4lmhft","sb":false,"ck":false,"ents":12,"fp":{"tx":22,"rx":116,"txB":4098,"rxB":54753,"dropped":0},"trace":[]}
+    [net t=30s] host: {"t":30,"loading":false,"paused":false,"fp":{"tx":666,"rx":63,"txB":552343,"rxB":13106,"dropped":0},"slots":[{"k":1,"peer":"ww3p-d2cam9ra","seenAgo":100,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577},{"k":2,"peer":"ww3p-ieu1xs0m","seenAgo":265,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577}],"sb":1,"ckOut":false}
+    [net t=30s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":30,"snapT":30,"rxAgo":3,"recon":false,"myPeer":"ww3p-d2cam9ra","hostPeer":"ww3-4lmhft","sb":true,"ck":true,"ents":19,"fp":{"tx":32,"rx":349,"txB":6656,"rxB":319731,"dropped":0},"trace":[]}
+    [net t=30s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":30,"snapT":30,"rxAgo":4,"recon":false,"myPeer":"ww3p-ieu1xs0m","hostPeer":"ww3-4lmhft","sb":false,"ck":false,"ents":19,"fp":{"tx":31,"rx":317,"txB":6450,"rxB":232612,"dropped":0},"trace":[]}
+[288s] before: client A @1 min t=60s: host 114 entities, slot 1 sees 30 (own 30); its screen has 30; missing 0, extra 0, off-position 0, mismatched 0; credits host 207 client 207
+[289s] before: client B @1 min t=60s: host 114 entities, slot 2 sees 30 (own 30); its screen has 30; missing 0, extra 0, off-position 0, mismatched 0; credits host 400 client 400
+    trace client A (screenshot stall):  || now: client via=pjd ws=false rxAgo=254
+    trace client B (screenshot stall):  || now: client via=pjd ws=false rxAgo=255
+[301s] host leaves at t=120.2s; standby checkpoint from t=116.4s (41 KB, 120 entities); armies US 34, RU 29, CN 35
+    +0.6s client A: client room=ww3-4lmhft gen=0
+    +0.7s client B: client room=ww3-4lmhft gen=0
+    +4.9s client B: client reconnecting room=ww3-4lmhft gen=0
+[306s] client A noticed the host was gone after 5.3 s (abrupt: no goodbye)
+    +5.3s client A: client reconnecting room=ww3-4lmhft gen=0
+    +5.3s client B: client reconnecting room=ww3-4lmhft gen=0 (no room)
+    +5.5s client A: client reconnecting room=ww3-4lmhft gen=0 (no room)
+    +6.5s client A: client reconnecting room=4lmhft-m1 gen=0 (no room)
+    +6.7s client B: client reconnecting room=ww3-4lmhft-m1 gen=0
+[308s] client A is the new host after 7.5 s (room 4lmhft-m1, battle resumed from t=116.5s)
+    +7.5s client A: host room=4lmhft-m1 gen=1
+    +7.7s client B: client reconnecting room=ww3-4lmhft-m1 gen=1
+    +7.9s client B: client room=ww3-4lmhft-m1 gen=1
+[309s] client B reconnected to the new host 8.0 s after the host left
+    trace client A: 5.2 clientReconnect | 5.5 join tc-4lmhft | 6.5 join failed tc-4lmhft: peer-unavailable | 6.5 promoteToHost | 6.5 join tc-4lmhft-m1 | 6.6 joined tc-4lmhft-m1 via undefined | 7.5 promoteToHost -> true | 7.5 clientReconnect done, mode host
+    trace client B: 4.9 clientReconnect | 5.1 join tc-4lmhft | 6.1 join failed tc-4lmhft: peer-unavailable | 6.6 join tc-4lmhft-m1 | 6.7 joined tc-4lmhft-m1 via pjd | 7.7 snapshot t=116.7 while reconnecting | 7.8 snapshot t=116.8 while reconnecting | 7.9 snapshot t=116.9 while reconnecting | 7.9 clientReconnect done, mode client
+[314s]   US (slot 0): 34/34 of its pre-takeover entities are on the new host, 34 in all; AI-run (took over)
+[314s]   RU (slot 1): 28/29 of its pre-takeover entities are on the new host, 28 in all; player-run
+[314s]   CN (slot 2): 34/35 of its pre-takeover entities are on the new host, 34 in all; player-run
+[315s] after: client B right after the takeover t=122s: host 116 entities, slot 2 sees 37 (own 34); its screen has 37; missing 0, extra 0, off-position 0, mismatched 0; credits host 203 client 203
+[318s] client B order after the takeover: 13/25 of its units moved on the new host
+[320s] old host's side after 45 game-s under the AI: build step 0 -> 0, 2 new entities, 0 in production, $199
+[321s] after: client B 45 game-s after the takeover t=167s: host 86 entities, slot 2 sees 37 (own 4); its screen has 37; missing 0, extra 0, off-position 0, mismatched 0; credits host 122 client 122
+peak memory (node + browser, summed RSS): 6201 MB
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console warning: p2p: no direct connection (peer-unavailable), using the server relay
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:34127/room/gc-4lmhft?role=client&id=ww3p-h2yrs0mm' failed: Error during WebSocket handshake: Unexpected response code: 400
+  warn: clientA console warning: p2p: server relay unavailable (network), trying the Nostr network
+
+MIGRATE PASS (abrupt host loss), local game servers (345s) — screenshots orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png (this run: orch/out/runs/20261114-160435-migrate-abrupt/)
