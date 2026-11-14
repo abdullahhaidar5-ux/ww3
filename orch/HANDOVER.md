@@ -190,3 +190,5 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   ghostslot = trig_015yoiYnMHeKgu2KYUqsbN4e (Sonnet) fired 02:00Z: exactly the setup's players become teams; scoreboard tidy, no opinion row in Battle.
 - 19:58 "Make cargo look more like generals" -> supply pile style: chunky, readable Generals-like crate piles. Note pushed to orch/pileflag b1edd53.
   CHECK pileflag pictures follow it.
+- 19:59 Chicago "Why can't I choose nations in test range" (startSandbox auto-picks). testrange = trig_013cioB9QbxiVSoERNzuxNeW (Sonnet) fired 02:01Z:
+  small setup window (your nation, target nation, map) reusing the nation picker + "Change nations…" in the range panel.
