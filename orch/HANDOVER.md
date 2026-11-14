@@ -235,3 +235,21 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   1. **Speed:** drop the dead Conquest and campaign code paths, profile at 300 units, keep smooth-pc/mp green with headroom.
   2. **Looks:** every unit and building realistic, no boxes, on the ground the user picked from looktest. Opus.
   3. **Feel and UI:** command bar, sounds, order responses, menus, and Test range made fully polished.
+
+## 2026-11-13 20:40-21:30 Chicago (ORCH) — polish sprint + Abdullah's 18 decisions
+Decisions: match 20-30 min · unit cap 150 · classic Generals bar · weather picked in setup + Random · Low/Med/High/Ultra · Generals stats screen · remake 5-8 Shia missions · online casual only · veterans get stripes + glow + voices · camera lower/closer with free zoom · realistic superweapons (no nuclear, chemical or biological) · squads of 3-6 · Generals fog · splash-only friendly fire · Easy/Medium/Hard/Brutal AI · visible damage + collapse · calm/combat music (exists) · generals = only the existing Ayatollah and Dear Leader (no new heroes).
+Maps: 35 top maps, island-hopping and variety, geographically realistic, a variety of capturable buildings (note on orch/maptrim). Captured buildings resupply; held roads to the base or a captured building resupply (notes on onegame and techbldgs). Vehicles dig in, with realistic dugouts (note on dugout).
+New helpers, all Sonnet and all fired except shiamissions:
+- polishspeed trig_01BW6HRBjnYzzzQR6m7TShZQ
+- polishfeel trig_01XeohZSh4ugCZkWiRwFmYFx
+- polishlooks trig_016K4KAAyFkgf5vQdp9BqxAN (Opus)
+- maptrim trig_01G63SrqWPVJmptnikhD2yq2
+- pacecap trig_01L52ALBPrYLh26tPkPhr3V7
+- presentation trig_01Kqw8TdwDhQp17vUwoyFJBW
+- weathergfx trig_011qjhG2mcEqQShhr1HANuJy
+- squads trig_01NBNDiiLyLbiXkgzopvuUJK
+- battlerules2 trig_01A1UfG3xzJKaxVR5mcKMsFw
+- destruction trig_011KsmXCoK6eVe2dkw2SQhhw
+- shiamissions trig_01U2DUsempJLxALabyqNG3YE, scheduled 2026-11-14 19:00Z
+- nations20 trig_01A6Ryt7QTV3y2XPoG2XpFve
+Landing order: Battle fixes → techbldgs → onegame → maptrim → nations20 → the rest. Squads, pacecap and battlerules2 touch balance, so check the tourney.
