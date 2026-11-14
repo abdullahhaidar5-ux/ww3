@@ -14,7 +14,7 @@ Not the setup, the lobby or empty slots. `newGame` (src/03-sim.js) always append
 - Guards in orch/decisions.mjs ("ghost team"): 2-player Battle and 2-player Conquest -> exactly 2 teams in the end stats, 2 scoreboard columns (also with a ghost entry injected, as an old server would send), no opinion row in Battle, opinion row in Conquest.
 
 ## Gate
-Local: `build.py --check` OK, smoke and decisions - see the end of this file for the result. cigate: see below.
+Local: `build.py --check` OK, `smoke.mjs` SMOKE PASS, and the new "ghost team" guard passed in both Conquest and Battle inside `decisions.mjs` (the full local decisions run was cut off by a sandbox restart, so GitHub's decisions job is the proof for the rest). cigate on commit 6552ce4 (gate/6552ce4...): 26 of 28 green on the first run; `gate/tutorial` and `gate/cfclient` failed (both on the known-flaky list). I re-ran those two once; the re-run was still queued on GitHub's runners when this helper stopped, so the conductor should check run 43548375367 before landing.
 
 ## Pictures (orch/concepts/ghostslot/)
 1-players-step-2p-map.jpg (Players step: exactly two players), 2-end-screen-BEFORE-3-columns.jpg, 3-end-screen-AFTER-2-columns.jpg. Note: the Victory screen still lets the HUD show through below the scoreboard - that is sweepfixB's job, not touched here.
