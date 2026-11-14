@@ -5,9 +5,7 @@
 const LK=(function(){
 const E=(t,c,x)=>{const d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d;};
 const st=document.createElement('style');st.id='lkCss';st.textContent=`
-.lob{gap:10px!important;border-radius:10px;padding:14px!important;animation:lkIn .25s ease-out}
 @keyframes lkIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.lob .lobk{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.65}
 .lkinv{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--accent,#c9892a);border-radius:8px;background:linear-gradient(180deg,#c9892a14,#0000)}
 .lkinv .lkr{display:flex;gap:8px;align-items:center}.lkinv input{flex:1;min-width:0;background:var(--panel,#121a16);border:1px solid var(--line,#2d4a3a);color:var(--fg,#e8efe9);padding:8px 10px;border-radius:6px;font:13px var(--mono,monospace)}
 .lkinv .lkcopy{background:var(--accent,#c9892a);color:#17110a;font-weight:700;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;white-space:nowrap}
@@ -16,10 +14,6 @@ const st=document.createElement('style');st.id='lkCss';st.textContent=`
 .lkflag{width:30px;height:18px;border-radius:2px;box-shadow:0 0 0 1px #0008;vertical-align:middle;flex:none}
 .lknat{display:flex;flex-direction:column;line-height:1.15;min-width:0}.lknat b{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lknat i{font-style:normal;font-size:11px;opacity:.65}
 .lkfc{display:flex;align-items:center;gap:7px;min-width:0}
-.seat{border-radius:7px;transition:background .2s,border-color .2s}.seat:hover{background:#1c2a23}
-.seat .tag{font-size:10px;padding:1px 7px;border-radius:9px;background:#33443b;text-transform:uppercase;letter-spacing:.06em;margin-left:6px;vertical-align:middle}
-.seat .tag.you{background:#2d5a7a;color:#fff}.seat .tag.ping{background:#26352d;text-transform:none;letter-spacing:0}
-.seat.open{opacity:.75;border-style:dashed}.seat.open .who{font-style:italic;opacity:.8}
 .lkmap{display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid var(--line,#2d4a3a);border-radius:8px;background:#0f1713}
 .lkmap .lkt{font-weight:700;font-size:14px}.lkmap .lkf{display:flex;flex-wrap:wrap;gap:6px}.lkmap .lkf span{font-size:11px;padding:2px 8px;border-radius:9px;background:#26352d}.lkmap .lkd{font-size:12px;opacity:.7}
 .lkcd{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px;border-radius:8px;background:#1c4a2d;border:1px solid #53e08a;font-weight:700;animation:lkIn .2s}
