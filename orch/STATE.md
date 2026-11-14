@@ -1,5 +1,6 @@
 # STATE (conductor, 2026-11-14 03:35 UTC)
 main = a3b627b1a (train 13). Train in gate: train/20261114-0256 (cd424463b): sweepfixA, sweepfixB, orderfeel, ghostslot, testrange, pileflag. GitHub runners queued (backlog), gate not started at 03:33.
+GATE STALL: 0 Actions jobs in progress, every gate run "queued" for 40+ min at 04:10 UTC; nothing could be landed this run. Train branch train/20261114-0256 (smoke PASS locally) is ready; re-gate when runners move.
 | branch | ahead | handoff | own gate | note |
 |---|---|---|---|---|
 | sweepfixA | 3 | yes | 28/28 | in train |
