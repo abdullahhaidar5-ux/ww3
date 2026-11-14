@@ -23,7 +23,7 @@ await page.goto(ORIGIN + '/index.html?lazy=1&look=c', { waitUntil: 'load', timeo
 await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 90000 });
 await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => {});
 console.log('URL look param ->', await page.evaluate(() => LOOKK));
-const MAP = process.env.MAP || 'rivers';
+const MAP = process.env.MAP || 'rubalkhali';
 await page.evaluate((m) => { try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} setup.n = 1; setup.p = 'IR'; setup.a = 'IL'; setup.map = m; startSingle(); }, MAP);
 await page.waitForFunction(() => G && !window.LOADING, null, { timeout: 900000, polling: 500 });
 const info = await page.evaluate(() => {
@@ -41,13 +41,13 @@ const info = await page.evaluate(() => {
   return { mx, my, n: G.ents.length, e, bs: bs.length };
 });
 console.log('staged', JSON.stringify(info));
-await page.evaluate(() => { G.paused = false; for (let i = 0; i < 300; i++) simUpdate(1 / 30); });
+await page.evaluate(() => { G.paused = false; for (let i = 0; i < 110; i++) simUpdate(1 / 30); document.body.classList.add('phOn'); });
 // make sure at least one building burns
 await page.evaluate((e) => { let n = 0; for (const b of G.ents) if (b.isB && b.team === e && !b.dead && n < 2 && b.kind !== 'hq') { b.hp = Math.min(b.hp, b.max * .22); n++; } for (let i = 0; i < 60; i++) simUpdate(1 / 30); }, info.e);
-const pos = await page.evaluate(() => { const L = G.ents.filter(u => !u.isB && !u.dead); let x = 0, y = 0; for (const u of L) { x += u.x; y += u.y; } return { x: x / L.length, y: y / L.length, n: L.length }; });
+const pos = await page.evaluate((i) => { const L = G.ents.filter(u => !u.isB && !u.dead && Math.hypot(u.x - i.mx, u.y - i.my) < 500); let x = 0, y = 0; for (const u of L) { x += u.x; y += u.y; } return { x: x / L.length, y: y / L.length, n: L.length }; }, info);
 console.log('fight centre', JSON.stringify(pos));
 const look = async (k, name, dist) => { await page.evaluate(([k, x, y, d]) => { LOOKK = k; applyWeather(0); camTarget(); cam.td = cam.dist = d; centerOn(x, y, true); for (let i = 0; i < 4; i++) renderFrame(.016); }, [k, pos.x, pos.y, dist]);
   await page.waitForTimeout(400); await page.evaluate(() => { renderFrame(.016); renderFrame(.016); }); await page.screenshot({ path: path.join(OUT, name + '.png'), timeout: 240000 }); console.log('shot', name); };
 const D1 = +process.env.D1 || 300, D2 = +process.env.D2 || 760;
-for (const k of ['a', 'b', 'c']) { await look(k, k, D1); await look(k, k + '-wide', D2); }
+for (const k of (process.env.ONLY || 'abc').split('')) { await look(k, k, D1); await look(k, k + '-wide', D2); }
 await ctx.close(); await browser.close(); server.close(); process.exit(0);

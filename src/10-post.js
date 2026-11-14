@@ -25,7 +25,7 @@ function initPost(){try{
         c=pow(c,vec3(1./2.2));
         c=(c-.5)*1.1+.5;c+=vec3(.012,.004,-.012)*(1.-l)+vec3(.03,.012,-.02)*l;
         vec2 q=vUv-.5;c*=1.-dot(q,q)*.75*lkA.x;
-        {float lk=dot(c,vec3(.299,.587,.114));c=(c-.5)*lkB.x+.5;c*=mix(lkS,lkH,smoothstep(.1,.8,lk));vec2 q3=q*vec2(res.x/res.y,1.);c*=1.-lkA.z*smoothstep(.3,.75,length(q3))*(.55+.45*sin(vUv.y*res.y*1.6));}
+        {float lk=dot(c,vec3(.299,.587,.114));c=(c-.5)*lkB.x+.5;c*=mix(lkS,lkH,smoothstep(.1,.8,lk));vec2 q3=q*vec2(res.x/res.y,1.);c*=1.-lkA.z*smoothstep(.5,.95,length(q3))*(.55+.45*sin(vUv.y*res.y*1.6));}
         c+=(h(vUv*res+t*61.)-.5)*(.022+lkA.y+.07*step(.5,vm)*step(vm,1.5));
         if(vm>1.5){float g=dot(c,vec3(.333));c=vec3(g)+vec3(-.01,-.005,.015)*(1.-g);c=clamp((c-.08)*1.25,0.,1.);}
         else if(vm>.5){vec2 q2=(vUv-.5)*vec2(res.x/res.y,1.);float ring=smoothstep(.62,.9,length(q2));c*=1.-ring*.85;c*=.94+.06*sin(vUv.y*res.y*1.2);}
@@ -63,8 +63,8 @@ function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.rou
 // numbers: v = vignette x, g = extra grain, e = edge-scanline strength, sh = sharpen x, k = contrast, bl = bloom x, hz = distance haze x,
 // s/h = shadow/highlight tint. Same single post chain, same passes: one shader, a few multiplies.
 const LOOKP={a:{n:'Today',wx:null,v:1,g:0,e:0,sh:1,k:1,bl:1,hz:1,s:[1,1,1],h:[1,1,1]},
-  b:{n:'Cinematic',wx:{sun:'#ffb36d',si:3.2,off:[-1250,400,-560],sky:'#8197c4',gnd:'#3e3024',hi:.78,fog:'#c9966a',fn:1000,ff:4800,expo:1.02,sr:3,hor:[.98,.68,.42],zen:[.28,.40,.66],gr:[1.07,1,.88],sat:1.06,amb:[1.03,.93,.82]},v:1.7,g:.012,e:0,sh:1.2,k:1.12,bl:1.7,hz:2.2,s:[.9,.95,1.08],h:[1.08,1.01,.88]},
-  c:{n:'Drone feed',wx:{sun:'#f4f7ff',si:3.0,off:[-650,1000,-450],sky:'#a2b8d6',gnd:'#575b60',hi:1.0,fog:'#a9b3bd',fn:1700,ff:6400,expo:.95,sr:1.5,hor:[.7,.77,.85],zen:[.34,.5,.76],gr:[.95,1,1.06],sat:.62,amb:[.94,.98,1.06]},v:1.35,g:.038,e:.32,sh:2.4,k:1.22,bl:.8,hz:.5,s:[.93,1,1.07],h:[1,1.01,1.02]}};
+  b:{n:'Cinematic',wx:{sun:'#ffc48e',si:3.0,off:[-1250,430,-560],sky:'#8fa3c8',gnd:'#54443a',hi:.9,fog:'#cfa47a',fn:1000,ff:4800,expo:1.04,sr:3,hor:[.98,.68,.42],zen:[.28,.40,.66],gr:[1.04,1,.92],sat:1,amb:[1.02,.96,.88]},v:1.6,g:.012,e:0,sh:1.2,k:1.1,bl:1.7,hz:2.2,s:[.94,.97,1.05],h:[1.05,1.01,.92]},
+  c:{n:'Drone feed',wx:{sun:'#f4f7ff',si:3.0,off:[-650,1000,-450],sky:'#a2b8d6',gnd:'#575b60',hi:1.15,fog:'#a9b3bd',fn:1700,ff:6400,expo:.95,sr:1.5,hor:[.7,.77,.85],zen:[.34,.5,.76],gr:[.95,1,1.06],sat:.62,amb:[.94,.98,1.06]},v:1.35,g:.038,e:.22,sh:2.4,k:1.22,bl:.8,hz:.5,s:[.93,1,1.07],h:[1,1.01,1.02]}};
 let LOOKK='a';try{const q=(new URLSearchParams(location.search).get('look')||'a').toLowerCase();if(LOOKP[q])LOOKK=q;}catch(e){}
 function lookW(w){const L=LOOKP[LOOKK];if(!L||!L.wx||(typeof G!=='undefined'&&G&&G.todM))return w;return Object.assign({},w,L.wx);}
 function lookPost(F){const L=LOOKP[LOOKK]||LOOKP.a;F.lkA.value.set(L.v,L.g,L.e,L.sh);F.lkB.value.set(L.k,L.bl,L.hz,1);F.lkS.value.set(L.s[0],L.s[1],L.s[2]);F.lkH.value.set(L.h[0],L.h[1],L.h[2]);}
