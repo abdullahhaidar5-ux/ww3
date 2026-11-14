@@ -1,0 +1,7 @@
+menu {"btn":"▶ Tutorial: learn Battle (10 min)","vis":false}
+-- skip / exit / restart
+PAGEERR RB is not defined
+  FAIL exception: page.waitForFunction: Timeout 900000ms exceeded.
+step seconds: [] total 901 s
+  FAIL page errors: RB is not defined
+TUTORIAL FAIL (2)
