@@ -1,0 +1,34 @@
+artifact page written: orch/out/artifact/index.html (5194685 bytes, game 4350306 chars), 125 audio files + 82 model files (14.7 MB); publish arguments in orch/out/artifact/publish.json
+[3s] both pages loaded (menu model downloads done after 3s / 3s)
+[4s] host lobby open, code sn8i09
+[4s] client joining
+[15s] battle: US vs RU on bm_splitridge; client is slot 1
+[57s] both pages finished loading
+[57s] conditions: host picked Overcast; host shows Overcast, client shows Overcast
+[58s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[60s] client order: 2/2 of the client's units moved on the host
+[61s] check @1.0 min t=60s: host 16 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 2590 client 2590
+[64s] check @2.5 min t=150s: host 21 entities, client side sees 5 (own 5); client has 7 (own 5); missing 0, extra 0, off-position 0, mismatched 0; credits host 3870 client 3870
+[71s] check @4.0 min t=240s: host 26 entities, client side sees 8 (own 5); client has 10 (own 5); missing 0, extra 0, off-position 0, mismatched 0; credits host 5150 client 5150
+[73s] traffic host->client 990 KB in 3435 messages, client->host 0 KB in 1; client lag max 0.10 game-s; 9 ms per 0.5 s step
+[73s] 24 live checks, 0 out of tolerance; up to 5 enemy entities were in the client's view at once
+[73s] host room sends: 3437 messages, peak 27 in one game-second
+[73s] client room sends: 1 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 3630 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: client console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+
+MPSYNC FAIL: host console error: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:43043/index.html:13407:212)
+    at updateUI (http://127.0.0.1:43043/index.html:17640:79)
+    at buildPanels (http://127.0.0.1:43043/index.html:13260:65)
+    at g.terrain (http://127.0.0.1:43043/index.html:14254:34)
+    at after (73s)
+  ✗ client console error: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:43043/index.html:13407:212)
+    at updateUI (http://127.0.0.1:43043/index.html:17640:79)
+    at buildPanels (http://127.0.0.1:43043/index.html:13260:65)
+    at g.terrain (http://127.0.0.1:43043/index.html:14254:34)
+    at after
