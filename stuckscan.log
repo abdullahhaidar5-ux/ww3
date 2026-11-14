@@ -1,0 +1,14 @@
+conquest strait       stuck episodes   0  mover-seconds 4045
+conquest golan        stuck episodes   1  mover-seconds 4371
+conquest taiwan       stuck episodes   0  mover-seconds 4087
+conquest honshu       stuck episodes   2  mover-seconds 4257
+conquest volga        stuck episodes   0  mover-seconds 4447
+conquest rivers       stuck episodes   0  mover-seconds 3468
+battle   strait       stuck episodes   0  mover-seconds 6200
+battle   golan        stuck episodes   2  mover-seconds 2712
+battle   taiwan       stuck episodes   2  mover-seconds 3423
+battle   honshu       stuck episodes   0  mover-seconds 2602
+battle   volga        stuck episodes   0  mover-seconds 4237
+battle   rivers       stuck episodes   0  mover-seconds 3972
+total stuck episodes 7 {"against building hq":1,"open ground":4,"against building sam":2}
+STUCKSCAN PASS (7 <= 8)
