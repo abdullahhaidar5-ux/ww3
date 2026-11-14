@@ -192,3 +192,6 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   CHECK pileflag pictures follow it.
 - 19:59 Chicago "Why can't I choose nations in test range" (startSandbox auto-picks). testrange = trig_013cioB9QbxiVSoERNzuxNeW (Sonnet) fired 02:01Z:
   small setup window (your nation, target nation, map) reusing the nation picker + "Change nations…" in the range panel.
+- 20:00 Chicago "Make it digging in like garrisoning units in that you have to remove them from the dugout". dugout = trig_01ANGmG3jFiQ6E6nHoFF6JRM
+  (Sonnet) fired 02:02Z: Dig in (I) builds a dugout the squad garrisons via the ONE building-garrison path; leave = select dugout + right-click ground.
+  Sim change (checkpoint). Overlaps sweepfixB (Dig in row) and unstuck (03-sim) - conductor merges carefully.
