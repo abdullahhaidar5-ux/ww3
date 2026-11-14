@@ -17507,7 +17507,7 @@ function cbGlyph(team){try{return SET.cb?(CB_GLYPH[idRingSeg(team)]||'●'):'';}
 {const st=document.createElement('style');st.textContent='.ukV .vsvg polygon{fill:#f2c94c;stroke:rgba(0,0,0,.7);stroke-width:1}.ukV.vet2 .vsvg polygon{fill:#bfe0ff}.ukV.vet2{color:#bfe0ff;animation:vetPulse 2.4s ease-in-out infinite}.ukV.vet3{color:#ffd76a;animation:vetPulse 1.6s ease-in-out infinite}.ukV.vet3 .vsvg polygon{fill:#ffd76a}@keyframes vetPulse{0%,100%{text-shadow:0 0 2px rgba(255,255,255,.0)}50%{text-shadow:0 0 9px currentColor}}';document.head.append(st);}
 
 /* Classic Generals bar (presentation): hotkey letters sit on the command buttons (em.hk) */
-{const st=document.createElement('style');st.textContent='#tstrip button{position:relative}#tstrip .hk{position:absolute;right:3px;top:1px;font:700 10px system-ui,sans-serif;font-style:normal;color:#f2c94c;opacity:.95;pointer-events:none}';document.head.append(st);}
+{const st=document.createElement('style');st.textContent='#tstrip button{position:relative}#tstrip .hk{display:none}';document.head.append(st);}
 
 /* FULL GENERALS-STYLE COMMAND BAR (Abdullah 2026-11-14 "Full Generals redesign"): one HUD, the existing elements restyled by CSS only (original art:
    gunmetal plate with bevel, rivets, angled top edge; minimap in a bezel; unit portrait; square icon buttons; stamped tabs; money on the top edge;
