@@ -1,0 +1,14 @@
+conquest strait       stuck episodes   0  mover-seconds 4018
+conquest golan        stuck episodes   1  mover-seconds 3841
+conquest taiwan       stuck episodes   0  mover-seconds 2795
+conquest honshu       stuck episodes   0  mover-seconds 3850
+conquest volga        stuck episodes   0  mover-seconds 4797
+conquest rivers       stuck episodes   0  mover-seconds 4802
+battle   strait       stuck episodes   0  mover-seconds 4135
+battle   golan        stuck episodes   0  mover-seconds 3459
+battle   taiwan       stuck episodes   0  mover-seconds 2995
+battle   honshu       stuck episodes   1  mover-seconds 3312
+battle   volga        stuck episodes   0  mover-seconds 4914
+battle   rivers       stuck episodes   1  mover-seconds 4851
+total stuck episodes 3 {"open ground":2,"against building garrison":1}
+STUCKSCAN PASS (3 <= 8)
