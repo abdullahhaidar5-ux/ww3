@@ -1,0 +1,11 @@
+ERROR page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:35079/index.html:5793:350)
+    at addBld (http://127.0.0.1:35079/index.html:7282:62)
+    at newGame (http://127.0.0.1:35079/index.html:7262:134)
+    at newGame (http://127.0.0.1:35079/index.html:15251:52)
+    at newGame (http://127.0.0.1:35079/index.html:16052:52)
+    at startSingle (http://127.0.0.1:35079/index.html:14445:140)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:22)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+EW FAIL (1)
