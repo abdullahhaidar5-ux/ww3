@@ -1,0 +1,17 @@
+[0s] mp: opening 3 pages
+[4s] mp: pages open
+[4s] mp: lobby tnqz67
+[5s] mp: clients joined
+[9s] mp attempt 1: REGRESSED
+  (re-running once to rule out noise) could not run: page.evaluate: ReferenceError: RB is not defined
+[10s] mp: opening 3 pages
+[14s] mp: pages open
+[14s] mp: lobby fzgik5
+[17s] mp: clients joined
+[23s] mp attempt 2: REGRESSED
+
+                       mp        
+runtime 0.4 min
+
+SMOOTH FAIL: 1 problem(s)
+  - mp: could not run: page.evaluate: ReferenceError: RB is not defined
