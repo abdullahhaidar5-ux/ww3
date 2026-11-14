@@ -1,0 +1,19 @@
+game servers running locally at http://127.0.0.1:40141
+[10s] three pages loaded
+[10s] host lobby open, code 94nm4s
+peak memory (node + browser, summed RSS): 3274 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE FAIL: page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:46703/index.html:5793:350)
+    at addBld (http://127.0.0.1:46703/index.html:7282:62)
+    at newGame (http://127.0.0.1:46703/index.html:7262:134)
+    at newGame (http://127.0.0.1:46703/index.html:15251:52)
+    at newGame (http://127.0.0.1:46703/index.html:16052:52)
+    at startMP (http://127.0.0.1:46703/index.html:14457:471)
+    at launchMP (http://127.0.0.1:46703/index.html:12707:696)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:43)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (52s)
