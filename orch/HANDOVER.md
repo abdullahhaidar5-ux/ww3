@@ -294,3 +294,29 @@ Landing order: Battle fixes → techbldgs → onegame → maptrim → nations20 
 - To send back for better looks later: quarry and power plant too boxy (techbldgs), trench has black hexagons (dugout).
 
 - Usage: no new helpers until Mon night; conductor every 4 h; shiamissions moved to Tue 05:00Z.
+
+## 2026-11-14 12:48 Chicago — Monday = "Faction polishing" (Abdullah: "Mondays updates will all be grouped into faction polishing")
+
+- **Today, finish by ~2:45 PM, push-fast without cigate:** pileflag, looktest(B), battlepower, bldqueue, techbldgs, groundreal, leaderlook, usvoice, ammozone, ammotruck, dugout, ringfix, presentation/genbar, dozerbuild, then onegame, maptrim(fast, static only), nations20.
+
+- Already live: c53e750 (freezefix, sweepfixA/B, orderfeel, ghostslot, testrange, battleclean2, unstuck).
+
+- **FACTION POLISHING (after the Mon 9:59 PM usage reset), one package:**
+
+  - L1 signature units (trig_01UyagHqexHv4mbUUj2Tebyr)
+
+  - L2 mechanics (trig_01HSR6WcJxzMv4GjEwZRFs5a)
+
+  - L3 economy (trig_0127iBLaXCJRK6qCS88p1ox1)
+
+  - L4 base styles (trig_01PN22U2Q37M1jREFGyCKwAW)
+
+  - L5 unit looks and camo (trig_01K6WX5XWm5HBJtogZtmzHnC)
+
+  - L6 voices and anthems (trig_013D8THwdTkPDv8r1sW2Wyco)
+
+  - Shia missions (trig_01U2DUsempJLxALabyqNG3YE)
+
+  - maptrim full fairness tests
+
+  Design: orch/reports/factiondesign.md on orch/factiondesign. All parked branches keep their work and HANDOFFs.
