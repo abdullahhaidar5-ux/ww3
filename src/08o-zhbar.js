@@ -115,6 +115,19 @@ html body #side #zhPw .zb{flex:1;height:8px;border-radius:2px;background:#000;ov
 html body #side #zhPw .zb i{display:block;height:100%;background:linear-gradient(90deg,#4cd964,#b8f36a)}
 html body #side #zhPw.low{color:#ff8a78}html body #side #zhPw.low .zb i{background:linear-gradient(90deg,#ff5a3c,#ff9a5a)}
 html body #side.min #zhPw{display:none!important}
+
+/* one console on the top edge: power | money | units (Abdullah 16:57 "Make power, money, units look better") */
+html body #side #zhTop{position:absolute;top:-17px;left:50%;transform:translateX(-50%);z-index:3;display:flex;align-items:stretch;height:30px;border-radius:5px;overflow:hidden;
+ background:linear-gradient(180deg,#1b232a,#0b0f13);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 2px #c9d2da,0 0 0 3px #4a535c,0 3px 8px rgba(0,0,0,.55)}
+html body #side #zhTop>*{position:static!important;transform:none!important;margin:0!important;box-shadow:none!important;border-radius:0!important;background:none!important;display:flex!important;align-items:center;gap:7px;padding:0 14px!important;white-space:nowrap}
+html body #side #zhTop>*+*{border-left:1px solid #3a444d!important}
+html body #side #zhTop #credits{min-width:150px;justify-content:center;font:700 18px "IBM Plex Mono",ui-monospace,monospace!important;color:#ffd75e!important;text-shadow:0 0 8px rgba(255,215,94,.35)!important;padding:0 18px!important}
+html body #side #zhTop #zhPw{width:auto!important;height:auto!important;font:700 12px system-ui,sans-serif!important;letter-spacing:.04em;color:#bff2a8}
+html body #side #zhTop #zhPw .zb{flex:none;width:70px;height:7px}
+html body #side #zhTop #zhPw.low{color:#ff8a78}
+html body #side #zhTop #popCap{font:700 12px system-ui,sans-serif!important;color:#cfe3f5!important;letter-spacing:.04em}
+html body #side #zhTop #popCap::before{content:"👥";margin-right:6px;font-size:13px}
+html body #side.min #zhTop{display:none!important}
 #zhTip{position:fixed;left:10px;z-index:60;width:clamp(240px,22vw,380px);pointer-events:none;padding:10px 14px;border-radius:4px;color:#e9efdc;font:14px/1.4 system-ui,sans-serif;
  background:linear-gradient(180deg,rgba(14,22,40,.95),rgba(8,14,30,.95));box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px #3a5ea8,0 4px 14px rgba(0,0,0,.6)}
 #zhTip b{display:block;text-align:center;font-size:16px;margin-bottom:4px}#zhTip .zc{color:#f4d96a;font-weight:700}#zhTip .zd{color:#c9d3bd;margin-top:3px}#zhTip .zw{color:#ff9a7a;margin-top:3px}`;document.head.append(st);}
@@ -129,6 +142,9 @@ function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
     star.onclick=()=>{ZH.star=!ZH.star;ZH.sig='';zhPowWin();zhCtx();};sd.append(star);}
   {const T=G.teams[ME];if(T&&sd.dataset.tc!==T.color){sd.dataset.tc=T.color;sd.style.setProperty('--tc',T.color);}}
   {let pw=$('zhPw');if(G.battle&&typeof pwView==='function'){if(!pw){pw=document.createElement('div');pw.id='zhPw';pw.innerHTML='<span></span><span class="zb"><i></i></span>';sd.append(pw);}const v=pwView(),k=v.make+'|'+v.use;if(pw.dataset.k!==k){pw.dataset.k=k;pw.classList.toggle('low',!!v.low);pw.firstChild.textContent='⚡ POWER '+v.use+' / '+v.make;pw.querySelector('i').style.width=Math.round(100*Math.min(1,v.use/Math.max(1,v.make)))+'%';pw.title=v.low?'LOW POWER: build a Generator - powered buildings are offline':'Power used / produced';}}else if(pw)pw.remove();}
+  {let tp=$('zhTop');if(!tp){tp=document.createElement('div');tp.id='zhTop';sd.append(tp);}const cr=$('credits'),pw=$('zhPw'),pc=$('popCap');if(pw&&pw.parentNode!==tp)tp.prepend(pw);if(cr&&cr.parentNode!==tp){if(pw&&pw.parentNode===tp)pw.after(cr);else tp.prepend(cr);}if(pc&&pc.parentNode!==tp)tp.append(pc);
+    if(pw&&pw.firstChild){const v=pw.dataset.k;if(v&&pw.dataset.k2!==v){pw.dataset.k2=v;const [mk,us]=v.split('|');pw.firstChild.textContent='⚡ '+us+' / '+mk;}}
+    if(pc&&!/^\d/.test(pc.textContent))pc.textContent=pc.textContent.replace(/^units\s*/,'');}
   let emb=$('zhEmb');if(!emb){emb=document.createElement('div');emb.id='zhEmb';emb.innerHTML='';sd.append(emb);}
   sd.classList.toggle('zhnosel',!(G.sel||[]).some(e=>e&&!e.dead&&e.team===ME));
   const sig=(G.sel||[]).map(e=>e.id).join(',');if(sig!==ZH.sig)ZH.sig=sig;try{zhPowWin();}catch(e){}

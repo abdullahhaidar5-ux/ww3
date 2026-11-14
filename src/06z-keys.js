@@ -24,7 +24,7 @@ const KEYTAB=[
   {id:'guard',ctx:'battle',grp:'Orders',name:'Guard (then click)',def:'g'},
   {id:'stop',ctx:'battle',grp:'Orders',name:'Stop',def:'x'},
   {id:'ret',ctx:'battle',grp:'Orders',name:'Return to base',def:'r'},
-  {id:'stance',ctx:'battle',grp:'Orders',name:'Next stance (hold: talk to your team)',def:'v'},
+  {id:'stance',ctx:'battle',grp:'Orders',name:'Next stance',def:'v'},
   {id:'form',ctx:'battle',grp:'Orders',name:'Next formation',def:'o'},
   {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (dozers: trench)',def:'i'},
   {id:'resup',ctx:'battle',grp:'Orders',name:'Resupply ammunition',def:'z'},
