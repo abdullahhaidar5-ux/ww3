@@ -1,0 +1,15 @@
+artifact page written: orch/out/artifact/index.html (6517871 bytes, game 5673454 chars), 125 audio files + 82 model files (14.7 MB); publish arguments in orch/out/artifact/publish.json
+3D models: 3 of 83 ready=true  (page open to models ready: 0.8s)
+Playtest card: 10 things to try, votes saved into the file
+artifact edition: room true, three r186, PeerJS undefined, P2P shim false
+battle: 2 players IR vs US on strait
+loading screen finished after 52.4s
+building dressing: 64 building looks checked, nothing floats
+fortline: {"infWl":false,"oldForm":true,"n":16,"angs":3,"bent":true,"bad":false,"infBtns":["⛏ Dig in (I)"],"dzBtns":["⛏ Fortification line (I)","🔧 Fix vehicles"]}
+3D models for this battle: 59 of 59
+after 4.0 game-min: 44 units, 24 structures, per team 25/27 (peak 31/27), last chunk 854 ms
+peak memory (node + browser, summed RSS): 3074 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+
+SMOKE PASS (artifact edition) (145s) — screenshots in orch/out/art-*.png (this run: orch/out/runs/20261114-203206-smoke-art/)
