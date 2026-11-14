@@ -2,8 +2,8 @@
    Same numbers for every nation; only the names are flavoured. Sim code: 03g-modern.js; effects/PiP/news: 08h-modern.js.
    Hotkeys: [ = Hack, ] = EMP (every letter key already has a job). One firewall upgrade covers hack AND EMP. */
 const MW={HACK_T:25,EMP_T:{veh:7,air:5,bld:8},FW_K:.5,JAM_MISS:.5,JAM_D:[28,70],
-  HACKABLE:['radio','uplink','sam','turret','coast'],EMPB:['radio','uplink','sam','turret','coast']};
-POWERS.hack={name:'Cyber Attack',desc:'Hack ONE enemy radio tower, Strike Center, SAM site, Defense Gun or power plant near the target: it goes dark for about 25 seconds (a hacked radio tower or Strike Center also turns the enemy minimap to static). Their Hardened Firewall research halves it. Hotkey [',cd:150,r:240};
+  HACKABLE:['radio','uplink','sam','turret','coast','gen'],EMPB:['radio','uplink','sam','turret','coast','gen']};
+POWERS.hack={name:'Cyber Attack',desc:'Hack ONE enemy radio tower, Strike Center, SAM site, Defense Gun, Generator or power plant near the target: it goes dark for about 25 seconds (a hacked radio tower or Strike Center also turns the enemy minimap to static). Their Hardened Firewall research halves it. Hotkey [',cd:150,r:240};
 POWERS.emp={name:'EMP Strike',desc:'A pulse knocks out enemy vehicles (7 s), aircraft (5 s, they hover and glide, no damage) and electronics: radio, Strike Centers, SAM sites and Defense Guns (8 s) in the area. Infantry are unaffected. Hardened Firewall halves it. Hotkey ]',cd:240,r:230};
 UPG.fw={name:'Hardened Firewall',at:'hq',cost:1300,time:28,desc:'Hardens your networks and electronics: enemy Cyber Attacks and EMP Strikes last half as long on your forces and buildings.'};
 {const _ul=upgList;upgList=function(f){const r=_ul(f);return r.includes('fw')?r:r.concat('fw');};}
