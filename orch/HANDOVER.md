@@ -221,3 +221,7 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   Conductor lands it AFTER the in-flight Battle branches.
 - Notes pushed: ammozone (rule now for Battle), battleclean2 (keep supply chip/network in Battle; towns/civilians still go), testrange (badge follows ammo rule in Battle).
 - Do NOT land: civhumans (civilians only lived in towns), campaign branches. ammozone lands via onegame (or on its own before it).
+- 20:21 Chicago "Yes and go" to capturable tech buildings in Battle. techbldgs = trig_011Jvi5iCZFYmmpzNEvkTnsX (Sonnet) fired 02:23Z: Field Hospital,
+  Airstrip, Radio Tower (+ optional Repair Depot) on the derrick capture system, symmetric on Battle maps, AI uses them. Add to conductor list when ready
+  (conductor prompt already takes "any other Battle branch with a ready HANDOFF"? - NO: its list is explicit; ADD techbldgs before onegame next update).
+- Conductor prompt rewritten 02:21Z for one-game focus (explicit candidate list; onegame last; never-land list incl. civhumans).
