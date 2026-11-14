@@ -12,7 +12,7 @@ function pqTarget(k){const s=BASE[k]&&stats(G.teams[ME].fac,k);if(!s)return null
 function pqAdd(k,n){if(!G||G.over)return;const T=G.teams[ME],s=stats(T.fac,k),sel=pqSel().some(e=>e.kind===s.from);let ok=0,b=null;
   for(let i=0;i<n;i++){b=pqTarget(k);if(!b){pushLog(`Requires ${STRUCT[s.from].name}.`,'w');return;}
     if(MODE==='client'?true:enqueue(ME,k,b.id)){if(MODE==='client')doAct({t:'q',k,tid:b.id});ok++;}else break;}
-  if(!ok)pushLog('Not enough credits, queue full (9) or missing building.','w');
+  if(!ok)pushLog('Not enough credits or missing building.','w');
   else if(!sel){const L=prodBlds(ME,s.from);if(L.length>1)pushLog(`${s.name}${ok>1?' ×'+ok:''} added to ${bldName(b)}.`);}
   try{sfxUI(420);}catch(_){}pqRender(true);}
 function pqCancelKind(k){if(!G)return;const s=BASE[k];if(!s)return;let b=null;for(const e of pqSel())if(e.kind===s.from&&e.q&&e.q.some(i=>i.kind===k)){b=e;break;}doAct(b?{t:'dq',k,tid:b.id,ti:b.q.map(i=>i.kind).lastIndexOf(k)}:{t:'dq',k});pqRender(true);}
@@ -35,8 +35,8 @@ function pqRender(force){if(!G||G.over||G.grand){if(PQ.el)PQ.el.hidden=true;retu
     if(kinds.size&&typeof showTab==='function'&&PQ.tabFor!==fk){PQ.tabFor=fk;showTab('units');}if(!kinds.size)PQ.tabFor='';}
   if(sig!==PQ.sig||force){PQ.sig=sig;const el=PQ.el;el.innerHTML='';pqPlace();
     for(const b of sel){const row=document.createElement('div');row.className='pqr';const n=document.createElement('span');n.className='pqn';n.textContent=bldName(b);row.append(n);
-      const runs=pqRuns(b);for(let i=0;i<9;i++){const sl=document.createElement('div');sl.className='pqs e';const r=runs[i];if(r){sl.className='pqs';const im=UK.icon(r.kind,T.color);sl.append(im);if(r.n>1){const bd=document.createElement('span');bd.className='pqb';bd.textContent='×'+r.n;sl.append(bd);}if(i===0){const pb=document.createElement('div');pb.className='pqp';pb.dataset.b=b.id;sl.append(pb);}const s=stats(T.fac,r.kind);sl.title=s.name+(r.n>1?' ×'+r.n:'')+' - right-click: cancel one (full refund)';sl.oncontextmenu=e=>{e.preventDefault();pqCancelAt(b,r.last);};}row.append(sl);}
-      const h=document.createElement('span');h.className='pqh';h.textContent=(b.q?b.q.length:0)+'/9';row.append(h);el.append(row);}
+      const runs=pqRuns(b),SL=8;for(let i=0;i<SL;i++){const sl=document.createElement('div');sl.className='pqs e';const r=runs[i];if(r){sl.className='pqs';const im=UK.icon(r.kind,T.color);sl.append(im);if(r.n>1){const bd=document.createElement('span');bd.className='pqb';bd.textContent='×'+r.n;sl.append(bd);}if(i===0){const pb=document.createElement('div');pb.className='pqp';pb.dataset.b=b.id;sl.append(pb);}const s=stats(T.fac,r.kind);sl.title=s.name+(r.n>1?' ×'+r.n:'')+' - right-click: cancel one (full refund)';sl.oncontextmenu=e=>{e.preventDefault();pqCancelAt(b,r.last);};}row.append(sl);}
+      const h=document.createElement('span');h.className='pqh';const nq=b.q?b.q.length:0,sh=runs.slice(0,SL).reduce((s,r)=>s+r.n,0);h.textContent=nq>sh?'+'+(nq-sh)+' more':nq?nq+' queued':'idle';row.append(h);el.append(row);}
     el.hidden=!sel.length;}
   if(PQ.el&&!PQ.el.hidden)for(const pb of PQ.el.querySelectorAll('.pqp')){const b=G.byId.get(+pb.dataset.b);if(b)pb.style.width=Math.round(pqProg(b)*100)+'%';}}
 // floating badge + progress ring over each producing building of mine

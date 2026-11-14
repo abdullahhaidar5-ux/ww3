@@ -353,6 +353,10 @@ try {
     ck(r.par && r.par[0] === 1 && r.par[1] === 1, 'two Barracks must each hold their own queue: ' + JSON.stringify(r.par));
     ck(r.spawned === 2 && r.emptied[0] === 0 && r.emptied[1] === 0, 'two Barracks must build two infantry at the same time (both queues empty after one build time): ' + JSON.stringify(r));
     ck(r.near.length === 2 && r.near.some(n => n[0] && !n[1]) && r.near.some(n => !n[0] && n[1]), 'each unit must come out of the building whose queue made it: ' + JSON.stringify(r.near));
+    { const u = await ev(() => { const T = G.teams[ME]; T.credits = 90000; const b1 = G.ents.find(e => e.isB && e.team === ME && e.kind === 'barracks' && e.built >= 1 && !e.dead), k = roster(T.fac).barracks[0], maxId = Math.max(...G.ents.map(e => e.id)); b1.q = [];
+        let ok = 0; for (let i = 0; i < 20; i++) if (enqueue(ME, k, b1.id)) ok++; const n0 = b1.q.length; for (let i = 0; i < 25; i++) production(prodTime(T, stats(T.fac, k)) + 1);
+        return { ok, n0, left: b1.q.length, out: G.ents.filter(e => !e.isB && e.id > maxId && e.team === ME && e.kind === k).length }; });
+      ck(u.ok === 20 && u.n0 === 20 && u.left === 0 && u.out === 20, 'a Barracks queue is unlimited: 20 queued infantry must all come out of it: ' + JSON.stringify(u)); }
     ck(r.paid > 0 && r.destroyRefund === r.paid && r.destroyQ === 0, 'destroying a Barracks must refund its whole queue: ' + JSON.stringify({ paid: r.paid, got: r.destroyRefund })); }
   { const s3 = SRC['03-sim.js']; ck(!/1\+\.5\*\(bl\.length-1\)/.test(s3) && !/bl\[Math\.floor\(Math\.random\(\)\*bl\.length\)\]/.test(s3), 'production: the +50% per extra building and the random spawn building are gone (bldqueue)');
     ck(!/tun:\[\],q:\{/.test(s3), 'mkTeam must not carry a shared queue (bldqueue)'); }
