@@ -1,0 +1,21 @@
+game servers running locally at http://127.0.0.1:33573
+[4s] both pages loaded (menu model downloads done after 3s / 3s)
+[4s] host lobby open, code qjnjo0
+[4s] client's game list (from the server) shows game QJNJO0: {"role":"server","n":1,"id":"v2b20bc6c3627","ok":true}
+[4s] client joining
+[5s] client connected via ws: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+peak memory (node + browser, summed RSS): 2973 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC FAIL: page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:43635/index.html:5793:350)
+    at addBld (http://127.0.0.1:43635/index.html:7282:62)
+    at newGame (http://127.0.0.1:43635/index.html:7262:134)
+    at newGame (http://127.0.0.1:43635/index.html:15251:52)
+    at newGame (http://127.0.0.1:43635/index.html:16052:52)
+    at startMP (http://127.0.0.1:43635/index.html:14457:471)
+    at launchMP (http://127.0.0.1:43635/index.html:12707:696)
+    at eval (eval at evaluate (:311:30), <anonymous>:5:5)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (22s)
