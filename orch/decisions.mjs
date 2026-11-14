@@ -298,6 +298,15 @@ try {
   const d = await ev(() => { const o = {}; o.fk = FKEYS.slice(); o.ms = MORALE_STYLE; o.rout0 = Object.entries(MORALE_STYLE).filter(([k, s]) => MSTYLES[s].rout === 0).map(([k]) => k).sort().join(' ');
     o.dw = (FACTIONS.DW || {}).name; o.rosterIR = roster('IR').barracks.concat(roster('IR').factory); return o; });
   ck(!d.fk.includes('EU'), 'EU still in FKEYS (retired from menus)');
+  // ---- nations20 (Abdullah 2026-11-13 20:31-20:33): exactly 18 playable nations, in every picker
+  { const W = 'IR RS DW RV OB US GB FR IL UA RU CN KP SA AE TR EG PK'.split(' ').sort().join(' ');
+    ck(d.fk.slice().sort().join(' ') === W, 'FKEYS must be exactly the 18 nations (' + W + '), got ' + d.fk.slice().sort().join(' '));
+    const pk = await ev(() => { try { facCards(); } catch (e) {} const names = k => k.map(x => x.trim()); const cards = [...document.querySelectorAll('#pickP .fac')].map(b => (b.querySelector('.nm') || b).textContent.trim());
+      const opt = [...document.querySelectorAll('#aiFac option')].map(o => o.value).sort().join(' '); const nm = FKEYS.map(k => FACTIONS[k].name).sort();
+      return { cards: cards.slice().sort(), nm, opt, fix: ['IQ', 'SY', 'IN', 'KR', 'CU', 'BI', 'EU', 'DE', 'PL', 'AU', 'CA', 'JP', 'AF', 'KD', 'ZZ'].map(f => FKEYS.includes(natFix(f))) }; });
+    ck(pk.cards.join('|') === pk.nm.join('|'), 'Battle setup nation picker must show exactly the 18 nations, shows: ' + pk.cards.join(', '));
+    ck(pk.opt === W, 'AI nation select must list exactly the 18, lists: ' + pk.opt);
+    ck(pk.fix.every(Boolean), 'natFix must map every removed nation (old saves/slots) to a kept nation'); }
   ck(d.rout0 === 'BI DW IR KP OB RS RV', 'Zealous (never rout) should be exactly IR RS DW KP RV OB BI, got ' + d.rout0);
   for (const [s, l] of Object.entries({ zeal: 'IR RS DW KP RV', home: 'IN UA CU EG VN BR NG ID JO OM ZA TH', fire: 'AE SA IL', prof: 'RU CN PK US' })) for (const k of l.split(' ')) ck(d.ms[k] === s, `morale style of ${k} should be ${s}, is ${d.ms[k]}`);
   console.log('DW name', d.dw);
