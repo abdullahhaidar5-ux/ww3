@@ -1047,7 +1047,7 @@ const PROCB={
     B.cyl(.35,.35,6,6,-4.6,8,0,D);B.box(.5,4.2,5.4,-4.9,11.6,0,'#6a6f5c',0,0,.3);B.box(.2,3.6,4.8,-4.6,11.7,0,'#3d4134',0,0,.3);
     return PROCG.s=[A.geo(),B.geo()];}};
 function playAnim(o,name,dt){const L=o.userData.mixers;if(!L)return;for(const M of L){if(M.cur!==name){const clip=M.anims.find(a=>a.name.toLowerCase().includes(name))||M.anims[0];if(clip){M.mix.stopAllAction();M.mix.clipAction(clip).play();}M.cur=name;}M.mix.update(dt);}}
-function propObj(key,x,z,rot,parent){const c=PROPS[key];if(!c||!MODELS.proto[key])return;const m=instModel(key,null,c.fit,c.size);if(!m)return;m.position.set(x,0,z);m.rotation.y=rot||0;m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});parent.add(m);return m;}
+function propObj(key,x,z,rot,parent){const c=PROPS[key];if(!c||!MODELS.proto[key])return;const m=instModel(key,null,c.fit,c.size);if(!m)return;m.position.set(x,0,z);m.rotation.y=rot||0;m.updateMatrix();const sk=!!m.getObjectByProperty('type','SkinnedMesh');m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}if(!sk&&o!==m){o.updateMatrix();o.matrixAutoUpdate=false;}});/* props never move relative to their building: no per-frame matrix compose */parent.add(m);return m;}
 // DE-BLOCK slice 2: procedural PBR concrete/plaster/corrugated materials (canvas colour + normal map, no external art), roof clutter, parapets, compound wall with gate
 const BKM={};
 /* DE-BLOCK slice 2b: real ambientCG PBR (Plaster001, Concrete034, CorrugatedSteel005; CC0) colour + normal tiles replace the procedural wall textures */
