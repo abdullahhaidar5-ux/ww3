@@ -139,7 +139,7 @@ function dmgOut(src){if(src.isB)return wxNow().acc;const T=G.teams[src.team],c=s
 function dmgIn(e,wpn){if(e.isB){const TB=G.teams[e.team];return TB?upgK(TB,e.kind,'taken'):1;}const T=G.teams[e.team],s=e.s;let m=e.retreat?.7:1;if(e.hambT>G.t)m*=.67;/* martyr bonus also hardens them: -10% damage taken under a martyrdom banner, and after the Ayatollah / Dear Leader falls */if(isInf(s)&&auraNear(e,'mart'))m*=.9;if((T.mart||0)>G.t)m*=.9;if(e.digT){if(e.mv!=null&&G.t-e.mv<1)e.digT=0;else m*=.65;}if(G.shields&&G.shields.length)for(const S of G.shields)if(S.t>G.t&&S.team===e.team&&Math.hypot(e.x-S.x,e.y-S.y)<S.r){m*=S.k||.4;break;}if(T.F.mods.dugIn&&isInf(s)&&G.t-(e.mv||-9)>3)m*=T.F.mods.dugIn;if(e.rout>G.t)m*=1.25;m*=upgK(T,e.kind,'taken')*(msOf(T.fac).taken||1);
   if(wpn==='at'||wpn==='missile')m*=upgK(T,e.kind,'mis');return m;}
 function rofMult(u){return (u.crit&2?1.6:1)*((u.crewT||0)>G.t?4:1)*upgK(G.teams[u.team],u.kind,'rof')*((u.rofT||0)>G.t?.8:1)*((u.supp||0)>.5?1.6:1)*(isInf(u.s)&&auraNear(u,'rof')?.8:1)*(isInf(u.s)&&auraNear(u,'mart')?.91:1)*ldRof(u);}
-function rngOf(e){return e.s.rng*(e.ordT>G.t?1.15:1)*upgK(G.teams[e.team],e.kind,'rng')*(e.s.droneSpot&&e.target&&droneSees(e.team,e.target)?1.4:1);}
+function rngOf(e){return e.s.rng*(e.iadsT>G.t?1.1:1)*(e.ordT>G.t?1.15:1)*upgK(G.teams[e.team],e.kind,'rng')*(e.s.droneSpot&&e.target&&droneSees(e.team,e.target)?1.4:1);}
 const DS_N=[];function droneSees(team,t){if(t._dsT===G.t+team*.001)return t._dsV;let v=false;for(const o of nearby(t.x,t.y,360,DS_N)){if(!o.dead&&o.team===team&&(o.kind==='drone'||o.kind==='recon')&&Math.hypot(o.x-t.x,o.y-t.y)<360){v=true;break;}}t._dsT=G.t+team*.001;t._dsV=v;return v;}
 function saSpotted(team,t){for(const o of nearby(t.x,t.y,500,DS_N)){if(!o.dead&&o.team===team&&o.s&&o.s.airSpot&&Math.hypot(o.x-t.x,o.y-t.y)<(o.s.vis||480))return true;}return false;}
 function canTarget(s,e){if(!e||e.dead)return false;if(s.navalOnly&&!(e.s&&e.s.dom==='naval'&&!e.isB))return false;if(e.s&&e.s.sub&&!e.isB&&!(s.dom==='naval'||s.cls==='heli'||s.sonar))return false;const air=!e.isB&&e.s.dom==='air'&&!e.landed;if(air){if(e.low&&s.wpn==='missile'&&s.aa>=2)return false;   /* nap-of-the-earth: long-range SAM cannot lock a low flyer */return s.aa>=(e.s.alt==='high'?2:1);}return s.ground!==false;}
@@ -161,7 +161,7 @@ function todNV(m){return !m.isB&&(m.kind==='recon'||m.kind==='jeep'||m.kind===G.
 function todVis(m){const l=G.todM?todLvl():0;if(l===2&&todNV(m))return 1;return l===0?1:l===1?(todThermal(m)?.95:.8):(todThermal(m)?.9:.6);}
 function visR(m){const k=(G.teams[m.team].F.mods.sight||1)*(m.isB?Math.max(.75,wxNow().vis):wxNow().vis)*todVis(m);if(!m.isB&&m.s.vis)return m.s.vis*k;return (m.isB?340:m.s.dom==='air'?340:m.s.dom==='naval'?380:280)*k;}
 function detR(team,m){const c=m.s&&m.s.cls;return(m.isB?170:(c==='drone'||c==='heli'||c==='jet'||m.s&&(m.s.airSpot||m.s.recon)?260:150))*upgT(G.teams[team],'detect');}
-function hiddenNow(e){if((e.detT||0)>G.t)return false;if(e.stlT&&!e.isB){if(G.t-(e.mv||-99)<1&&e.mv!=null||e.lastFire>0)e.stlT=0;else return true;}if(!e.isB&&G.smokes&&G.smokes.length&&G.t-(e.lastFire||-9)>1.5)for(const S of G.smokes)if(S.t>G.t&&ally(S.team,e.team)&&Math.hypot(e.x-S.x,e.y-S.y)<S.r)return true;if(e.isB)return isTun(e)&&e.built>=1&&G.t-(e.lastFire||-9)>3;if(e.s.camo&&G.t-e.lastFire>3&&G.t-(e.mv||-9)>3)return true;if(G.t-e.lastFire<=(e.s.sub?6:2.5)||e.planting)return false;if(e.s.stealth)return true;if(isInf(e.s)&&G.t-(e.mv||-9)>2&&G.t-e.lastFire>4){if(!(e._cvT>G.t-.6)){e._cvT=G.t;e._cvK=coverKind(e.x,e.y);}if(e._cvK===1)return true;}return !!(upgT(G.teams[e.team],'camo')&&isInf(e.s)&&G.t-(e.mv||-9)>3);}
+function hiddenNow(e){if((e.detT||0)>G.t)return false;if(e.stlT&&!e.isB){if(G.t-(e.mv||-99)<1&&e.mv!=null||e.lastFire>0)e.stlT=0;else return true;}if(!e.isB&&G.smokes&&G.smokes.length&&G.t-(e.lastFire||-9)>1.5)for(const S of G.smokes)if(S.t>G.t&&ally(S.team,e.team)&&Math.hypot(e.x-S.x,e.y-S.y)<S.r)return true;if(e.isB)return (isTun(e)||isPost(e))&&e.built>=1&&G.t-(e.lastFire||-9)>3;if(e.s.camo&&G.t-e.lastFire>3&&G.t-(e.mv||-9)>3)return true;if(G.t-e.lastFire<=(e.s.sub?6:2.5)||e.planting)return false;if(e.s.stealth)return true;if(isInf(e.s)&&G.t-(e.mv||-9)>2&&G.t-e.lastFire>4){if(!(e._cvT>G.t-.6)){e._cvT=G.t;e._cvK=coverKind(e.x,e.y);}if(e._cvK===1)return true;}return !!(upgT(G.teams[e.team],'camo')&&isInf(e.s)&&G.t-(e.mv||-9)>3);}
 
 /* ---------- production, research, building ---------- */
 function unitCount(team,kind){let n=0;for(const e of G.ents)if(!e.isB&&e.team===team&&e.kind===kind)n++;const q=G.teams[team].q[BASE[kind].from];for(const i of q)if(i.kind===kind)n++;return n;}
@@ -661,7 +661,7 @@ function updJet(u,dt){const s=u.s;if(wxNow().air===0&&u.state==='park'){if(u.ord
 function updBld(b,dt){if(b.kind==='garrison')return updGarrison(b,dt);if(G.teams[b.team].dummy&&!G.teams[b.team].fight&&b.built>=1)return;if(b.built<1){if(b.nd){b.stall=!G.ents.some(u=>u.kind==='dozer'&&u.team===b.team&&!u.dead&&Math.hypot(u.x-b.x,u.y-b.y)<b.size/2+48);if(b.stall)return;}const bk=G.sandbox&&b.team===0?6:1;b.built=Math.min(1,b.built+bk*dt/b.s.time);b.hp=Math.min(b.max,b.hp+bk*b.max*.9*dt/b.s.time);if(b.built>=1){log(b.team,`${b.s.name} complete.`,'g',b.x,b.y);log(b.team,'Building ready.','v7');}return;}
   if(b.charge){b.charge.t-=dt;if(b.charge.t<=0){const c=b.charge;b.charge=null;applyDmg(b,3000,'demo',c.team,c.src);FXE('boom',[b.x|0,b.y|0,b.size*.5,1]);}}
   if(b.dis>G.t)return;
-  if(b.kind!=='turret'&&b.kind!=='sam'&&b.kind!=='coast'&&!isTun(b))return;b.cd-=dt;const t=b.target;
+  if(b.kind!=='turret'&&b.kind!=='sam'&&b.kind!=='coast'&&!isTun(b)&&!isPost(b))return;b.cd-=dt;const t=b.target;
   if(t&&(t.dead||Math.hypot(t.x-b.x,t.y-b.y)-t.r>rngOf(b)||!seenBy(b.team,t)||!canTarget(b.s,t)))b.target=null;
   if(!b.target&&((b.scT=(b.scT||0)-dt)<=0||b.lastHit>G.t-dt*1.5)){b.scT=.2+(b.id%7)*.02;b.target=nearestEnemy(b,rngOf(b));}
   if(b.target){b.ang=Math.atan2(b.target.y-b.y,b.target.x-b.x);if(b.cd<=0){fire(b,b.target,b.s.dmg,b.s.wpn,0);b.cd=b.s.rof;}}}
@@ -740,7 +740,7 @@ function militiaSpot(team){const hq=hqOf(team);if(!hq)return null;let eh=null,ed
   const x=best?best.x:(hq.x+eh.x)/2,y=best?best.y:(hq.y+eh.y)/2;return nearestPassXY('ground',x,y)||null;}
 // Ground-Penetrating Radar: teams with the upgrade reveal enemy tunnel entrances near their HQ / Strike Centers (uses detT, host-side only)
 function gprTick(dt){G.gprT=(G.gprT||0)-dt;if(G.gprT>0)return;G.gprT=.5;let any=false;for(const T of G.teams)if(T.upg&&T.upg.gpr){any=true;break;}if(!any)return;
-  for(const e of G.ents){if(e.dead||!e.isB||!isTun(e)||e.built<1)continue;for(const T of G.teams){if(!T.upg.gpr||T.id===e.team||ally(T.id,e.team))continue;
+  for(const e of G.ents){if(e.dead||!e.isB||!(isTun(e)||isPost(e))||e.built<1)continue;for(const T of G.teams){if(!T.upg.gpr||T.id===e.team||ally(T.id,e.team))continue;
     for(const r of G.ents){if(r.dead||!r.isB||r.team!==T.id||r.built<1||(r.kind!=='hq'&&r.kind!=='uplink')||r.dis>G.t)continue;if(Math.hypot(r.x-e.x,r.y-e.y)<=GPR_R){e.detT=Math.max(e.detT||0,G.t+1);break;}}}}}
 function usePower(team,key,x,y){const ok=usePower0(team,key,x,y);if(ok&&G.teams[team]){const s=stOf(G.teams[team]);s.pw[key]=(s.pw[key]||0)+1;}return ok;}
 function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T.pw[key];if(conqBan(key)||sigBan(T.fac,key))return false;if(G.conq&&G.t<G.setupEnd){log(team,'No powers during the setup phase.','w');return false;}if(!P0||P0.passive||!w||w.cd>0)return false;if(key==='bb'&&(G.t<300||T.credits<P0.cash)){log(team,G.t<300?'Bunker Buster is not available in the first 5 minutes.':'Bunker Buster costs $'+P0.cash+'.','w');return false;}const L=Math.max(1,Math.min(3,w.lv||1)),M=PLV[L-1],P=Object.assign({},P0,{lv:L,M,cd:Math.round(P0.cd*PCD[L-1]),r:P0.r?Math.round(P0.r*(1+.2*(L-1))):P0.r});
@@ -1305,7 +1305,8 @@ function updMines(){if(G.t>=(G.n2T||0)){G.n2T=G.t+.5;navy2Detect();}for(const m 
 const TUN_CAP=12,FORT_CAP=20;function tunCap(id){return TUN_CAP;}
 // Mountain Fortress: infantry waiting in the tunnel network slowly heal (3 HP/s) while the team has a finished fortress
 function fortHeal(dt){for(const f of G.ents){if(f.kind!=='fort'||!f.gar||!f.gar.length||f.dead||f.built<1)continue;for(const u of f.gar)if(isInf(u.s)&&u.hp<u.max)u.hp=Math.min(u.max,u.hp+3*dt);}}
-function isTun(e){return e.kind==='tunnel'||e.kind==='fort';}
+function isPost(e){return e.kind==='tunnel'&&!!FACTIONS[G.teams[e.team].fac].post;}   /* RV/OB Hidden Firing Post: a hidden gun, no network */
+function isTun(e){return(e.kind==='tunnel'&&!isPost(e))||e.kind==='fort';}
 // what is waiting in a team's tunnel network, by unit type (shown on every tunnel entrance)
 function fortOf(id){return G.ents.find(e=>e.kind==='fort'&&e.team===id&&!e.dead&&e.built>=1);}
 function fortN(id){const f=fortOf(id);return f&&f.gar?f.gar.length:0;}
@@ -1334,13 +1335,13 @@ function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,
   if(!W.fc&&W.t>=W.next-25){W.fc=1;const w=WEATHER[W.nk];for(const T of G.teams)log(T.id,W.nk==='clear'?'Forecast: the weather is about to clear.':`Forecast: ${w.name.toLowerCase()} rolling in within 25 seconds.`,'w');}
   if(W.t<W.next)return;W.t=0;W.fc=0;W.k=W.nk;W.nk=null;W.next=W.k==='clear'?170+R()*120:55+R()*45;
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
-function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);ldTick(dt);if(G.grand)grandTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
+function simUpdate(dt){G.t+=dt;if(typeof fmTick==='function')fmTick(dt);gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);ldTick(dt);if(G.grand)grandTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
   if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(e.fl<FL_MAX&&e.landed)e.fl=FL_MAX;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam,id:e.id});if(s.cbr||(s.cls==='arty'&&gdHas(G.teams[e.team],'r1')))G.cbrTeams|=1<<e.team;}martyrTick();
   if(G.aur.heal.length)for(const e of G.ents){if(e.dead||e.isB||e.hp>=e.max||e.s.dom==='air')continue;for(const a of G.aur.heal)if(a.team===e.team&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){e.hp=Math.min(e.max,e.hp+a.v*dt);break;}}
   if(G.aur.jam.length)for(const e of G.ents){if(e.dead||e.kind!=='drone')continue;for(const a of G.aur.jam)if(!ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){applyDmg(e,30*dt,'flak',a.team,null);e.x+=srnd(-70,70)*dt;e.y+=srnd(-70,70)*dt;break;}}
   ewTick(dt);gprTick(dt);try{radioScan();}catch(_){}
   G.mT=(G.mT||0)-dt;if(G.mT<=0){G.mT=.2;updMines();}
-  for(const T of G.teams){T._upl=false;T._tun=false;}for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const T=G.teams[e.team];if(!T)continue;if(e.kind==='tunnel')T._tun=true;else if(e.kind==='uplink'&&!(e.dis>G.t))T._upl=true;}
+  for(const T of G.teams){T._upl=false;T._tun=false;}for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const T=G.teams[e.team];if(!T)continue;if(e.kind==='tunnel'&&!isPost(e))T._tun=true;else if(e.kind==='uplink'&&!(e.dis>G.t))T._upl=true;}
   for(const T of G.teams){if(!T.tun.length)continue;for(const u of T.tun)u.hp=Math.min(u.max,u.hp+12*dt);if(!T._tun){log(T.id,`Our last tunnel was destroyed. ${T.tun.length} units inside were lost.`,'w');T.tun=[];}}
   for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt*(G.conq?.5:1));for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
     {let j=0;for(const r of T.reveals){r.t-=dt;if(r.t>0)T.reveals[j++]=r;}T.reveals.length=j;}}

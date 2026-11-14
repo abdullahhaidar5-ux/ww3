@@ -322,6 +322,11 @@ try {
   // leadersC (Abdullah 2026-11-07 22:5x "these factions never rout in any form of the game"): Zealous never rout, retreat, bail out or fall back - in any mode
   { const z = await ev(() => { const out = {}; for (const k of ['IR', 'RS', 'DW', 'RV', 'KP', 'OB', 'BI']) out[k] = fearlessT({ fac: k, mart: 0, fervor: 0 }, { s: { cls: 'inf', dom: 'ground' } }); out.US = fearlessT({ fac: 'US', mart: 0, fervor: 0 }, { s: { cls: 'inf', dom: 'ground' } }); return out; });
     for (const k of ['IR', 'RS', 'DW', 'RV', 'KP', 'OB', 'BI']) ck(z[k], 'Zealous ' + k + ' can rout in battle (fearlessT false)'); ck(!z.US, 'a non-Zealous nation became unbreakable');
+    /* L2 faction mechanics guard (2026-11-14): Hidden Firing Post for RV/OB, cheap Shia forts in Battle, US/IL stronger-fewer, Gulf IADS range */
+    { const m = await ev(() => { const o = {}; o.rv = bldAllowed('RV', 'tunnel') && bstats('RV', 'tunnel').name === 'Hidden Firing Post' && bstats('RV', 'tunnel').cost <= 400; o.ob = bldAllowed('OB', 'tunnel') && !FACTIONS.OB.tunnels && !FACTIONS.RV.tunnels; o.irNet = !!FACTIONS.IR.tunnels && bstats('IR', 'tunnel').name !== 'Hidden Firing Post'; o.usNot = !bldAllowed('US', 'tunnel');
+        const had = G.battle; G.battle = 1; const a = bstats('RS', 'turret').cost; G.battle = 0; const b = bstats('RS', 'turret').cost; G.battle = had; o.fort = a < b && a <= Math.round(b * .6 / 25) * 25 + 25;
+        o.us = FMECH.US.cost === 1.08 && FMECH.IL.hp === 1.08 && typeof fmTick === 'function'; o.iads = !!IADS_NAT.SA && !!IADS_NAT.AE && typeof isPost === 'function'; return o; });
+      for (const k in m) ck(m[k], 'L2 faction mechanic broken: ' + k + ' ' + JSON.stringify(m)); }
     for (const f of ['03-sim.js', '03b-tactics.js', '13-grand.js']) ck(/msOf\([^)]*\)\.rout[!=]==0|grZealArmy/.test(SRC[f]), 'no Zealous rout guard in ' + f); }
   ck(cq.conq, 'standalone Conquest battle did not start in Conquest mode');
   { const cl = await ev(() => { let n = 0; const c = new Proxy({}, { get: (t, k) => k === 'canvas' ? document.createElement('canvas') : k === 'measureText' ? () => ({ width: 10 }) : (typeof k === 'string' && /^(stroke|fill|moveTo|lineTo|arc|drawImage|fillRect|fillText)$/.test(k)) ? () => { n++; } : () => {}, set: () => true }); try { drawLogiMini(c, .1, .1); } catch (e) {} return n; });
