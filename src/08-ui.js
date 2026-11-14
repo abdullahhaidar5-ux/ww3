@@ -1190,9 +1190,10 @@ function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 /* Test range (Abdullah 2026-11-13 19:59 "Why can't I choose nations in test range"): the nations come from the Test range window (src/14-menu.js, screen t-range); the old auto-pick is gone. */
 const TR_KEY='ww3_testrange';
-function trLoad(){let o=null;try{o=JSON.parse(localStorage.getItem(TR_KEY)||'null');}catch(e){}o=o||{};return {p:FACTIONS[o.p]?o.p:setup.p,a:FACTIONS[o.a]?o.a:(FACTIONS[setup.a]?setup.a:'US'),map:MAPS[o.map]?o.map:setup.map};}
+function trBmap(k){return MAPS[k]&&MAPS[k].bm&&MAPS[k].min<=2&&MAPS[k].max>=2?k:(typeof BM_KEYS!=='undefined'?BM_KEYS.find(m=>MAPS[m]&&MAPS[m].min<=2&&MAPS[m].max>=2):null)||k;}   /* the Test range plays on Battle maps only */
+function trLoad(){let o=null;try{o=JSON.parse(localStorage.getItem(TR_KEY)||'null');}catch(e){}o=o||{};return {p:FACTIONS[o.p]?o.p:setup.p,a:FACTIONS[o.a]?o.a:(FACTIONS[setup.a]?setup.a:'US'),map:trBmap(MAPS[o.map]?o.map:setup.map)};}
 function trSave(c){try{localStorage.setItem(TR_KEY,JSON.stringify(c));}catch(e){}}
-function startSandbox(c){c=c&&c.p?c:trLoad();setup.p=c.p;setup.a=c.a;if(MAPS[c.map])setup.map=c.map;trSave({p:setup.p,a:setup.a,map:setup.map});
+function startSandbox(c){c=c&&c.p?c:trLoad();setup.p=c.p;setup.a=c.a;if(MAPS[c.map])setup.map=trBmap(c.map);trSave({p:setup.p,a:setup.a,map:setup.map});
   if(G&&!G.over&&G.sandbox){G.over=true;G.paused=false;}
   const facs=[setup.p,setup.a];
   MODE='single';ME=0;

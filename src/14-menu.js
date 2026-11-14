@@ -189,7 +189,7 @@ function mxBuild(){
     const rs=mxEl('div','');rs.style.cssText='font-size:12px;opacity:.8;margin-top:4px;max-width:520px';const fill=()=>{rs.textContent=setup.real?[setup.p].concat(setup.a?[setup.a]:[]).filter(f=>FACTIONS[f]).map(f=>FACTIONS[f].name+' - '+realLine(f)).join('  ·  '):'';};r.addEventListener('click',()=>setTimeout(fill,0));r.addEventListener('mouseenter',fill);r.after(rs);fill();}
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
   /* --- test range: one small window (Abdullah 2026-11-13 19:59 "Why can't I choose nations in test range") --- */
-  {const R=scr('t-range','<h2 class="mxh">Test range</h2><p class="mxsub">Pick your nation and the target nation (they can be the same), and a map. Unlimited money, everything unlocked, a passive target to try things on.</p>');
+  {const R=scr('t-range','<h2 class="mxh">Test range</h2><p class="mxsub">Pick your nation and the target nation (they can be the same), and a Battle map. It plays exactly like Battle (Command Center, dozer, supply, tech tree) with unlimited money and a passive target to try things on.</p>');
    const w=mxEl('div','mxpl'),l=mxEl('div'),r=mxEl('div');MX.trNat=mxEl('div');MX.trNat.id='mxtrnat';MX.trTgt=mxEl('div','mxrow');MX.trMap=mxEl('div','mxrow');
    const in2=mxEl('input');in2.id='mxtrin';in2.placeholder='Find a nation…';in2.autocomplete='off';in2.spellcheck=false;in2.oninput=()=>mxNatFilter(in2.value);
    l.append(mxEl('div','mxlab','Your nation'),in2,MX.trNat);
@@ -253,7 +253,7 @@ function mxTrHome(id){const pp=document.getElementById('pickP'),af=document.getE
   if(!MX.trPp){MX.trPp=1;pp.addEventListener('click',()=>{if(MX.cur==='t-range'&&MX.trMapSel)setTimeout(()=>{setup.map=MX.trMapSel.value;},0);});}
   if(id==='t-range'){MX.trNat.appendChild(pp);MX.trTgt.appendChild(af);mxTrFill();}
   else if(id==='c-nation'||id==='c-players'){const nl=document.querySelector('#ms-c-nation .mxnat>div');if(nl&&pp.parentNode!==nl)nl.appendChild(pp);const r1=document.querySelector('#ms-c-players .mxrow');if(r1&&af.parentNode!==r1)r1.appendChild(af);}}
-function mxTrFill(){const ms=MX.trMapSel;if(!ms)return;if(!ms.options.length){const ks=(typeof MAP_KEYS!=='undefined'?MAP_KEYS:[]).filter(k=>MAPS[k]&&MAPS[k].min<=2&&MAPS[k].max>=2);for(const k of ks){const o=document.createElement('option');o.value=k;o.textContent=MAPS[k].name;ms.append(o);}}
+function mxTrFill(){const ms=MX.trMapSel;if(!ms)return;if(!ms.options.length){const ks=(typeof BM_KEYS!=='undefined'?BM_KEYS:[]).filter(k=>MAPS[k]&&MAPS[k].min<=2&&MAPS[k].max>=2);for(const k of ks){const o=document.createElement('option');o.value=k;o.textContent=MAPS[k].name;ms.append(o);}}
   const c=typeof trLoad==='function'?trLoad():{p:setup.p,a:setup.a,map:setup.map};setup.p=c.p;setup.a=c.a;if(MAPS[c.map])setup.map=c.map;
   document.getElementById('aiFac').value=setup.a;if(ms.querySelector('option[value="'+setup.map+'"]'))ms.value=setup.map;else{setup.map=ms.value;}
   if(typeof facCards==='function')facCards();

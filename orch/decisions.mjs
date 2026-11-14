@@ -258,9 +258,12 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(!/function startSandbox\(\)/.test(u) && !/FKEYS\.find\(k=>k!==setup\.p&&k!=='RS'/.test(u), 'Test range still auto-picks the target nation');
   ck(/scr\('t-range'/.test(mn) && /item\('Test range',\(\)=>mxTrOpen\(false\)/.test(mn), 'Test range menu item does not open the nation window');
   ck(/id='sbNations'/.test(u) && /Change nations/.test(u), 'Test range battle panel lost the "Change nations..." item'); }
-// 2d. No out-of-supply badge in Test range or Battle (Abdullah 2026-11-13 20:03 "What's the red symbols"): sandbox own units are always in supply.
-{ ck(/oos=[^;]*!G\.sandbox&&!e\.sup/.test(SRC['06-view.js']), 'out-of-supply badge can show in Test range');
-  ck(/let ins=!!\(G\.sandbox&&u\.team===0\)/.test(SRC['03-sim.js']), 'Test range units can run out of supply'); ck(/G\.sandbox&&u\.team===0\)u\.am=u\.amx/.test(SRC['03-sim.js']), 'Test range units can run out of ammo'); }
+// 2d. Test range = Battle rules (Abdullah 2026-11-14 13:51 "Make test range mirror battle"): no sandbox-only supply/ammo/tech/build-speed shortcuts left in the sim.
+{ const S3 = SRC['03-sim.js'];
+  ck(!/G\.sandbox&&u\.team===0\)u\.am=u\.amx/.test(S3) && !/let ins=!!\(G\.sandbox/.test(S3), 'Test range still refills ammo / forces supply (must behave like Battle)');
+  ck(!/G&&G\.sandbox&&t===0/.test(S3) && !/G&&G\.sandbox&&T\.id===0\)t\/=6/.test(S3) && !/m===2&&G\.sandbox/.test(S3), 'Test range still skips the tech tree, builds 6x faster or ignores build-spot rules');
+  ck(/G\.battle=!!o\.battle&&!o\.camp&&!o\.grand;/.test(S3) && /if\(o\.sandbox\)o\.battle=1;/.test(S3), 'newGame must make a sandbox a Battle game (G.battle true)');
+  ck(/oos=[^;]*!G\.battle&&/.test(SRC['06-view.js']), 'out-of-supply badge rule changed'); }
 // 3. Main menu order + naming (2026-11-07 21:41): Single player · Multiplayer · Test range, then small extras; no Classic.
 { const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).filter(Boolean).slice(0, 3);
   ck(m.join('|') === 'Single player|Multiplayer|Test range', 'main menu order is ' + m.join(' · '));
@@ -616,6 +619,11 @@ try {
       return { hid, shown, nd: !!(b && b.nd), far0, idle, worked }; });
     console.log('dozerbuild', JSON.stringify(db));
     ck(db.hid && db.shown, 'BUILD tab must show only while a Construction Vehicle is selected: ' + JSON.stringify(db)); ck(db.nd && db.far0 === 0 && db.idle === 0, 'a building must not progress without a dozer working on it: ' + JSON.stringify(db)); ck(db.worked > 0, 'a dozer on site must build it: ' + JSON.stringify(db)); }
+  { const t = await ev(() => { startSandbox({ p: 'IR', a: 'IL', map: 'strait' }); const A = { sb: !!G.sandbox, bt: !!G.battle, conq: !!G.conq, bm: !!(MAPS[G.mapKey] && MAPS[G.mapKey].bm), f: G.teams.slice(0, 2).map(T => T.fac).join('-'), blds: G.ents.filter(e => e.isB && e.team === 0).map(e => e.kind).sort().join(','), allowed: Object.keys(STRUCT).filter(k => bldAllowed('IR', k)).sort().join(',') };
+      newGame({ seed: 5, facs: ['IR', 'IL'], ai: [false, false], map: G.mapKey, tm: [0, 1], bs: 1, slot: -1, battle: 1 }); A.bblds = G.ents.filter(e => e.isB && e.team === 0).map(e => e.kind).sort().join(','); A.ballowed = Object.keys(STRUCT).filter(k => bldAllowed('IR', k)).sort().join(','); return A; });
+    ck(t.sb && t.f === 'IR-IL', 'Test range IR vs IL must give teams IR and IL, got ' + JSON.stringify(t));
+    ck(t.bt && !t.conq && t.bm, 'Test range must be a Battle game on a Battle map: ' + JSON.stringify(t));
+    ck(t.blds === t.bblds && t.allowed === t.ballowed, 'Test range must start with the same buildings and build list as Battle: ' + JSON.stringify(t)); }
   // ---- fixes1 (2026-11-11, "white streaks in Arabia", "oversized palms"): what a PLAYER gets on the first campaign map of a session.
   // The map must wait for the real land data (it used to be drawn on the hand-shaped stand-in and stay on it: chalk-white cliffs along the Red Sea);
   // snow only where snow can lie (never in Arabia; still on the Alps, the Himalaya and Greenland); palms no taller than the towns (one instanced draw).
