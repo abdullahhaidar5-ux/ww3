@@ -28,3 +28,6 @@ Owner (Abdullah, Fri 2026-11-13 20:00 Chicago): "Make it digging in like garriso
 
 ## Try for 2 minutes on PC
 Select 8-10 infantry, press **I**, wait 5 seconds, then box-select the area and right-click far away (nothing moves, they are inside). Now click the dugout, right-click the ground: they walk out. Then send an enemy tank at an occupied dugout and see them thrown out.
+
+## Look fix (ORCH note Sat 16:43Z) - ready
+Trench floor, dugout pit and ramp were near-black rock blobs that read as black hexagons from above; now flat dark-soil blobs. Trenches lost the green camo net; other nets are duller olive-brown. Re-shot orch/shots/dugout-*.jpg (looked at). build --check OK, SMOKE and DUGOUT PASS locally. Status: READY (gate on gate/* still to be read by the conductor).
