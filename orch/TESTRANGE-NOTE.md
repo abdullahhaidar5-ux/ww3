@@ -6,3 +6,5 @@ Test range has unlimited money and everything unlocked, so supply must never run
 in supply (no out-of-supply badge, no ammo/heal penalty). Also make sure Battle (G.battle, no supply lines since train 12) never shows
 this badge. Conquest keeps it, but give it a hover tooltip "Out of supply - get back to a road your side holds or a supply depot".
 Guard: sandbox and Battle units never get the badge. Delete this file in your last commit.
+
+## Owner change 20:18-20:19 Chicago: supply lines come INTO Battle (Conquest removed). So in Battle the out-of-ammo badge follows the new ammo rule (orch/ammozone); only Test range has no badge and unlimited ammo.
