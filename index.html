@@ -21779,7 +21779,7 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 #ms-online .gnrow{display:none!important}   /* campaign rows stay out of the open-games list while the campaign is paused (2026-11-13); a campaign link or code still joins */
 @media (max-width:1100px){.mxnat,.mxpl{grid-template-columns:1fr}#mxdet{position:static}}
 /* ---- Generals-style layout (Abdullah 2026-11-14): one right column of metal plates on every menu screen, Back bottom-left, the battle (or the picture) fills the rest ---- */
-#menu.m3{--mxw:clamp(460px,35vw,620px);--st1:#4a5445;--st2:#2e352c;--st3:#1b201a;--hi:#7d8a6c;--gold:#e8c85c}
+#menu.m3,body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen){--mxw:clamp(460px,35vw,620px);--st1:#4a5445;--st2:#2e352c;--st3:#1b201a;--hi:#7d8a6c;--gold:#e8c85c}
 #menu.m3.sh{background:transparent}
 #mx.sh #mxbg,#mx.sh #mxwt,#mx.sh .mxwtl,#mx.sh #mxwar{display:none}
 #mx.sh #mxfade{background:radial-gradient(125% 110% at 38% 50%,rgba(5,8,10,0) 48%,rgba(5,8,10,.68) 100%),linear-gradient(90deg,rgba(5,8,10,.12),rgba(5,8,10,.2) 55%,rgba(5,8,10,.55))}
@@ -22060,7 +22060,7 @@ async function mxShellStart(){if(!mxShellWant())return;SH.busy=1;const tok=++SH.
     await new Promise(r=>setTimeout(r,30));if(!alive()||G!==g){if(G===g)g.over=true;SH.busy=0;return;}
     paintTerrainNow();const tc=g.terrain;g.terrain=null;if(!R3)initGfx();else resetScene();
     buildWorld(tc||g.terrain);document.body.classList.add('mxshell');resize();try{window.dispatchEvent(new Event('resize'));}catch(_){}resize();
-    try{buildPanels();}catch(e){}cam.yaw=0;cam.tyaw=0;cam.dist=240;cam.td=240;const [bx,by]=BASES[0],[cx,cy]=BASES[1]||BASES[0];SH.x=(bx+cx)/2;SH.y=(by+cy)/2;SH.tx=SH.x;SH.ty=SH.y;SH.d=240;SH.pt=0;centerOn(SH.x,SH.y,true);
+    try{buildPanels();}catch(e){}cam.yaw=0;cam.tyaw=0;cam.dist=240;cam.td=240;const [bx,by]=BASES[0],[cx,cy]=BASES[1]||BASES[0];SH.x=bx+60;SH.y=by+40;SH.tx=SH.x;SH.ty=SH.y;SH.d=240;SH.pt=9;centerOn(SH.x,SH.y,true);
     g.terrain=tc;try{renderFrame(1/60);}catch(e){}
     if(!alive()||G!==g){SH.busy=0;return;}
     g.paused=false;last=performance.now();g.acc=0;SH.on=1;SH.busy=0;SH.t0=performance.now();
@@ -22072,7 +22072,7 @@ function mxShellCam(now){if(!SH.on)return;const g=SH.g;if(G!==g||g.over||documen
   const dt=Math.min(.05,Math.max(0,(now-(SH.lt||now))/1000));SH.lt=now;
   if((SH.pt-=dt)<=0){SH.pt=12+Math.random()*6;let best=null,bs=0;const U=g.ents.filter(e=>!e.isB&&!e.dead&&e.team<g.N&&e.s&&e.s.dom!=='air');
     for(let i=0;i<U.length;i+=Math.max(1,(U.length/60)|0)){const e=U[i];let n=0,m=0;for(const o of U){if(Math.abs(o.x-e.x)>130||Math.abs(o.y-e.y)>130)continue;if(o.team===e.team)m++;else n++;}const sc=Math.min(n,m)*2+n*.2;if(n&&sc>bs){bs=sc;best=e;}}
-    if(best){SH.tx=best.x;SH.ty=best.y;}else{const a=BASES[0],c=BASES[1]||a,k=.3+.4*Math.random();SH.tx=a[0]+(c[0]-a[0])*k+(Math.random()-.5)*160;SH.ty=a[1]+(c[1]-a[1])*k+(Math.random()-.5)*160;}
+    if(best){SH.tx=best.x;SH.ty=best.y;}else{SH.k=(SH.k||0)^1;const a=BASES[SH.k]||BASES[0];SH.tx=a[0]+(Math.random()-.5)*140;SH.ty=a[1]+(Math.random()-.5)*140;}   /* no fight yet: look in on a base, then the other */
     SH.tx=Math.max(120,Math.min(MAPW-120,SH.tx));SH.ty=Math.max(120,Math.min(MAPH-120,SH.ty));SH.td=best?190+Math.random()*60:260;}
   const dx=SH.tx-SH.x,dy=SH.ty-SH.y,dd=Math.hypot(dx,dy),mv=Math.min(dd,(14+dd*.18)*dt);if(dd>.01){SH.x+=dx/dd*mv;SH.y+=dy/dd*mv;}
   SH.d+=(SH.td-SH.d)*(1-Math.exp(-dt*.5));SH.yaw=Math.sin((now-SH.t0)/1000*.045)*.5;
