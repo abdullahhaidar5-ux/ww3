@@ -62,3 +62,13 @@ Keep every function reachable. Update the tutorial steps and hints that say "Bui
 - Keep it compact so it does not cover the battlefield much.
 
 - The bottom bar is then: minimap | selected picture and info | context grid, plus money and power on its top edge.
+
+## CHANGE (Abdullah, Sat 09:19): "Remove the selected section"
+
+NO selected-unit portrait or info panel in the bar. The bar is now ONLY: the minimap on the left, then a wide context button grid, with money and power on the top edge.
+
+- Health, rank and ammo stay on the units themselves (existing world bars and badges).
+
+- At most one small line of text above the grid naming what is selected (e.g. "Construction Vehicle" or "3 tanks") is fine; no picture, no stats block.
+
+- Leftovers rule: remove the portrait code, its CSS and any tests for it.
