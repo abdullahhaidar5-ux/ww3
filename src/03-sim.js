@@ -260,7 +260,7 @@ function roadK(u,whl,foot){const rm=G.roadMask;if(!rm||!rm.d[((u.y/rm.C)|0)*rm.w
 function stepTo(u,x,y,dt,fin){if(u.s.dom==='air'&&isFW(u)){const t=u.target;let gx=x,gy=y;
     if(t&&!t.dead&&t.x===x&&t.y===y){const dd=Math.hypot(t.x-u.x,t.y-u.y);if(dd>420){const a=Math.atan2(t.y-u.y,t.x-u.x)+Math.PI/2,off=((u.id%5)-2)*Math.min(90,(dd-260)*.35);gx=t.x+Math.cos(a)*off;gy=t.y+Math.sin(a)*off;}}
     flyFW(u,gx,gy,dt,!!(t&&!t.dead&&Math.hypot(t.x-u.x,t.y-u.y)<260));return;}
-  const want=Math.atan2(y-u.y,x-u.x),M=MOVE[u.s.cls]||[4,80],d=u.s.dom,dist2=Math.hypot(x-u.x,y-u.y);
+  const want=Math.atan2(y-u.y,x-u.x)+((u.avT||0)>G.t&&Math.hypot(x-u.x,y-u.y)>60?u.avO||0:0),M=MOVE[u.s.cls]||[4,80],d=u.s.dom,dist2=Math.hypot(x-u.x,y-u.y);
   if(u.hd==null||(M[0]>=8&&G.t-(u.vt??-9)>.3))u.hd=u.ang;if(u.v==null)u.v=0;const err0=angDiff(u.hd,want);const whl=d==='ground'&&M[0]<8&&isWheeled(u);
   let tr=M[0]*dt;if(whl){tr*=Math.min(1.25,.25+u.v/Math.max(20,u.s.spd*.45));if(u.v<6&&Math.abs(err0)>.6)u.v=Math.max(u.v,7);}
   const err=err0;u.hd+=Math.max(-tr,Math.min(tr,err));
@@ -269,11 +269,11 @@ function stepTo(u,x,y,dt,fin){if(u.s.dom==='air'&&isFW(u)){const t=u.target;let 
   const wx=wxNow();const UP=G.teams[u.team].upg;let top=u.s.spd*f*sl*(u.drg?.6:1)*(G.fln&&d==='ground'?floodSlow(u):1)*(G.bfFN&&d==='ground'?fireSlow(u):1)*(G.rubN&&d==='ground'?rubSlow(u):1)*(G.refs&&G.refs.length&&d==='ground'?refSlow(u):1)*(d==='ground'&&G.wood?woodSlow(u):1)*upgK(G.teams[u.team],u.kind,'spd')*(d==='ground'?wx.spd*roadK(u,whl,foot)*ssnK(u,whl,foot):d==='air'?(.75+.25*wx.air):1)*((u.supp||0)>.5?.6:1)*(u.crit?critSpd(u):1)*(u.dgS||1)*(isVeh(u.s)&&auraNear(u,'raid')?1.2:1)*((G.teams[u.team].raidT||0)>G.t&&u.s.armor==='heavy'?1.35:1)*(d==='ground'&&G.teams[u.team].dry&&isVeh(u.s)?FUEL_SLOW:1)*(G.smokes&&G.smokes.some(S=>S.t>G.t&&S.team===u.team&&Math.hypot(u.x-S.x,u.y-S.y)<S.r)?1.25:1)*(d==='ground'&&u.s.armor!=='heavy'&&G.t-(u.lastFire||-9)<3&&(DOCT[G.teams[u.team].fac]||{}).hitrun?1.25:1);if(u.order&&u.order.cap)top=Math.min(top,u.order.cap*f);if(fin){const brake=M[1]*1.4;top=Math.min(top,Math.sqrt(2*brake*Math.max(0,dist2-2))+4);}
   if(u.retreat)top*=1.15;if(u.insT>G.t)top*=1.15;
   if(d==='ground'&&!foot&&G.hash&&u.v>4){const la=u.r*2+12,px=u.x+Math.cos(u.hd)*la,py=u.y+Math.sin(u.hd)*la;for(const o of nearby(px,py,34,AV_N)){if(o===u||o.dead||o.isB||!o.s||o.s.dom!=='ground')continue;const dx=o.x-px,dy=o.y-py;if(dx*dx+dy*dy>(o.r+u.r*.8)*(o.r+u.r*.8))continue;
-    if((o.v||0)>4&&Math.abs(angDiff(u.hd,o.ang||0))<.6)top=Math.min(top,Math.max(8,(o.v||0)*.95));else if(massOf(o)>=massOf(u)*.5){const ah=angDiff(u.hd,Math.atan2(o.y-u.y,o.x-u.x));u.hd-=Math.sign(ah||1)*Math.min(1.8*dt,.12);top*=.75;}break;}}
+    if((o.v||0)>4&&Math.abs(angDiff(u.hd,o.ang||0))<.6)top=Math.min(top,Math.max(8,(o.v||0)*.95));else if(massOf(o)>=massOf(u)*.5){const ah=angDiff(u.hd,Math.atan2(o.y-u.y,o.x-u.x));u.hd-=Math.sign(ah||1)*Math.min(1.8*dt,.12);top*=.75;/* a vehicle in the way (a dozer at work, a parked truck): steer clearly around it for a moment instead of leaning on it */if((o.v||0)<=4){u.avO=-Math.sign(ah||1)*.85;u.avT=G.t+.8;}}break;}}
   const acc=(u.v<top?M[1]:M[1]*2.2)*dt;u.v+=Math.max(-acc,Math.min(acc,top-u.v));u.vt=G.t;
   const st=Math.min(u.v*dt,dist2+.5);const nx=u.x+Math.cos(u.hd)*st,ny=u.y+Math.sin(u.hd)*st;u.ang=u.hd;
   {const ph=P_H;P_H=!!(G.rubN&&d==='ground'&&rubHeavy(u)&&!rubAt(u.x,u.y));   // a heavy vehicle can't climb onto rubble (one already on it may drive off)
-  if(passXY(d,nx,ny)){u.x=nx;u.y=ny;}else if(passXY(d,nx,u.y)){u.x=nx;u.v*=.6;}else if(passXY(d,u.x,ny)){u.y=ny;u.v*=.6;}else{u.v*=.3;u.hd+=.6*dt*Math.sign(err||1);}P_H=ph;}
+  if(passXY(d,nx,ny)){u.x=nx;u.y=ny;}else if(passXY(d,nx,u.y)){u.x=nx;u.v*=.97;}else if(passXY(d,u.x,ny)){u.y=ny;u.v*=.97;}else{u.v*=.3;u.hd+=.6*dt*Math.sign(err||1);}P_H=ph;}
   if(st>.01)u.mv=G.t;}
 // A move that stops making progress ends instead of pushing forever: close to the spot (crowded by other units or a
 // building) it counts as arrived; further away the unit re-plans its route, then gives up after a while.
@@ -328,11 +328,12 @@ function sharePath(us,x,y){const G0=us.filter(u=>u.s.dom==='ground'&&u.order&&!u
 // clock stands still while code runs (a battle hosted on Cloudflare), so the work is counted too.
 const PF_RATE=120,PF_BURST=12,PF_MS=4,PF_N=12000;
 function navTo(u,x,y,dt,fin){if(G.rubN&&rubHeavy(u)){u.ffx=null;P_H=true;try{navTo0(u,x,y,dt,fin);}finally{P_H=false;}}else navTo0(u,x,y,dt,fin);}
+function losB(d,x0,y0,x1,y1){if(d!=='ground')return los(d,x0,y0,x1,y1);const pb=P_B;bocc();P_B=true;try{return los(d,x0,y0,x1,y1);}finally{P_B=pb;}}
 function navTo0(u,x,y,dt,fin){const d=u.s.dom;if(d==='air'){stepTo(u,x,y,dt,fin);return;}
   if(d==='ground'&&u.ffx!=null){if(Math.hypot(u.ffx-x,u.ffy-y)>450||Math.hypot(x-u.x,y-u.y)<600)u.ffx=null;else{const r=ffStep(u,x,y);if(r){stepTo(u,r[0],r[1],dt,r[2]&&fin);return;}}}
   const goalMoved=!u.path||Math.hypot(u.pgx-x,u.pgy-y)>60;
   if(goalMoved||G.t>u.prt){
-    if(los(d,u.x,u.y,x,y)){u.path=[[x,y]];u.pgx=x;u.pgy=y;u.prt=G.t+2.5+Math.random();}
+    if(losB(d,u.x,u.y,x,y)){u.path=[[x,y]];u.pgx=x;u.pgy=y;u.prt=G.t+2.5+Math.random();}   // a straight line counts only when no building stands on it (vehicles used to drive into a building and lean on it)
     else if((G.pfTok||0)>=1&&(G.pfMs||0)<PF_MS&&(G.pfN||0)<PF_N){G.pfTok-=1;const t0=performance.now();if(d==='ground'){bocc();P_B=true;}try{P_ROAD=u.kind==='harv';u.path=smoothP(d,u.x,u.y,findPath(d,u.x,u.y,x,y))||[[x,y]];}finally{P_ROAD=false;P_B=false;}G.pfMs=(G.pfMs||0)+performance.now()-t0;u.pgx=x;u.pgy=y;u.prt=G.t+2.5+Math.random();}
     else if(goalMoved){u.v=(u.v||0)*.85;return;}}
   const sk=(MOVE[u.s.cls]||[4])[0]>=8?12:26;while(u.path.length>1&&Math.hypot(u.path[0][0]-u.x,u.path[0][1]-u.y)<sk)u.path.shift();
@@ -1362,6 +1363,8 @@ const SEP_E=[];
    Deterministic (pure function of positions), runs on whoever runs the simulation. */
 function bridgeLanes(U){const B=G.map.bridges;if(!B||!B.length)return;
   for(const a of U){if(a.landed||a.inTun)continue;    for(let i=0;i<B.length;i++){const b=B[i];if(b.dead)continue;const dx=a.x-b.x,dy=a.y-b.y,u=dx*b.n[0]+dy*b.n[1],w=dx*b.t[0]+dy*b.t[1];if(Math.abs(u)>b.h+8||Math.abs(w)>44)continue;
+      if(Math.abs(w)>30&&Math.abs(u)<b.h-4)continue;   /* beside the deck: the lane pull must not drag a unit that is just walking past onto the bridge */
+      if(Math.abs(u)>b.h-40)continue;   /* the last 40 px at each end are ramps: a unit leaving the bridge sideways there used to be pulled back into its lane every tick (an artillery piece and a soldier held each other at one ramp for a minute) */
       const foot=a.s.cls&&MOVE[a.s.cls]&&MOVE[a.s.cls][0]>=8,lim=Math.max(6,30-a.r);let nw=w;
       if(foot&&Math.abs(w)<=lim&&Math.abs(u)<b.h-4){const lane=((a.id%4)-1.5)*Math.min(15,(lim*2)/4);nw=w+Math.max(-.35,Math.min(.35,(lane-w)*.03));}
       if(nw>lim)nw=lim;else if(nw<-lim)nw=-lim;

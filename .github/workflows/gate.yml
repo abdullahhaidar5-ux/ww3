@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, grand, grandsmooth, grandlive, decisions, superfreeze, loadfreeze, icons]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
+            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, grand, grandsmooth, grandlive, decisions, superfreeze, loadfreeze, icons, stuckscan, controlscheck]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -45,6 +45,8 @@ jobs:
             servertest)     node orch/servertest.mjs && node orch/specserver.mjs ;;   # + spectators in a server battle
             superfreeze)    node orch/superfreeze.mjs IR,RU,US ;;   # firing a nation's superweapon strike (Iran's 12-missile Kheibar, Russia, US) must not stall the sim/FX (no call > 150 ms) or log errors (orch/superfreeze.mjs)
             loadfreeze)    node orch/loadfreeze.mjs IR,US ;;   # loading a battle must never hang the browser: with the CPU slowed 4x the "Preparing graphics" step stays in small pieces (orch/loadfreeze.mjs)
+            stuckscan)      node orch/stuckscan.mjs --short ;;   # units with a move order must keep moving: seeded AI-vs-AI games on 4 maps x Conquest + Battle, fails when stuck episodes (no progress 10 s) exceed the limit (orch/stuckscan.mjs, orch/reports/stuck.md)
+            controlscheck)  node orch/controlscheck.mjs ;;   # Ctrl+A whole army, Q camera rotation, W A S D scroll only, X/F/G, rally point by left-click (orch/controlscheck.mjs; the rest of the controls are in the controls job)
             icons)          TAG=gate node orch/bugsA-icons.mjs ;;   # command-bar pictures: every build/unit button of IR/US/RU/KP/RS/CN has its own picture class, nothing non-infantry draws the soldier (orch/bugsA-icons.mjs)
             decisions)      node orch/decisions.mjs ;;   # audit: Abdullah's standing decisions as guards (no turn wording / End turn on the grand map, no Ayatollah/Fortress/Bunker Buster in Conquest, menu order, WASD camera-only, morale styles, Fight-it army-only)
             grand)          node orch/grandtest.mjs ;;   # grand campaign: 10 AI turns twice = same hash, Fight-it battle holds exactly the army's units + no production, survivors flow back, save round trip (orch/grandtest.mjs)
