@@ -14,3 +14,11 @@ KEEP: spies & sabotage, decoy units, ceasefire offers (he chose to keep them).
 
 
 Do NOT remove the Dear Leader's militia (Worker-Peasant Guards): the leader abilities are being removed separately by orch/leaderlook.
+
+## Also remove (ORCH 22:40): town-only spy and leaflet jobs
+
+Towns are gone from Battle, so remove the spy's "pay agitators" / bribe job (POL.SPY_BRIBE, SPY_BRIBE_COST, town unrest) and the leaflet drops on towns (G.leaf, LEAF_T), plus their buttons, tooltips, AI use and tests.
+
+
+
+KEEP the spy jobs Steal funds, Steal research and Sabotage.
