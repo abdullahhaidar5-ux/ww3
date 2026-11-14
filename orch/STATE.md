@@ -1,23 +1,33 @@
-# STATE — conductor run 2026-11-14 ~16:00 UTC
+# STATE — conductor run 2026-11-14 17:05 UTC (short run)
 
-main = 6c3916f (revert of the pileflag merge; gates: only the known-flaky audio / cfclient / tutorial red). Train `train/20261114-1610` (5 merged) gated as gate/e0645fd610; GitHub queue ~13 runs deep.
-Stale: train/20261114-1303 (based on pre-0256 main, own gate red: decisions, cfclient) — do not land; train/20261114-0900 = main.
+Another conductor run is still working: `train/20261114-1610` was pushed 16:40 UTC (21 min ago, 43 commits ahead of main, not landed yet). Rule: step 1 only, no new train. main = 6c3916f.
 
-| Branch | Last push (UTC) | Ahead of main | HANDOFF | Own gate | Train |
-|---|---|---|---|---|---|
-| freezefix | 11-13 03:04 | 12 | yes (ready, merged with main of 11-12) | none | IN train |
-| sweepfixB | 11-14 03:38 | 3 (2-row order dock) | yes | none | IN train |
-| battleclean2 | 11-14 04:00 | 8 | yes | 13 of 28 green, rest unreported | IN train |
-| dugout | 11-14 03:54 | 12 | yes | none | IN train |
-| unstuck | 11-14 01:59 | 2 | no | none | IN train (gate.yml + headless.mjs merged by hand) |
-| battlepower | 11-14 03:03 | 5 | yes | 27 statuses, none red | CONFLICT in src/08-ui, 08c-towns, 08i-hud — next train (needs a rebase by its owner or a small-hunk merge) |
-| bldqueue | 11-14 03:14 | 7 | yes | controls/tutorial/migrate* red (likely stale) | not yet (after battlepower) |
-| techbldgs | 11-14 03:42 | 11 | yes (part 1 ready alone) | none | next train |
-| groundreal / leaderlook / usvoice / ammozone | 11-14 03:55–05:29 | 4/11/3/7 | yes | gates were queued, no result | next trains |
-| looktest | 11-14 15:07 | 3 | yes — Abdullah picked B Cinematic 09:06 | none | next train |
-| onegame | 11-14 04:41 | 16 | yes | none | after the Battle branches |
-| nations20 | 11-14 03:33 | 5 | yes (NATIONS20-NOTE: Keep 22 not applied) | none | last |
-| orderfeel / ghostslot / testrange | | 1 each (handoff text only) | yes | green | already on main; nothing to land |
+| Idea (orch/…) | last push (UTC) | ahead | HANDOFF | own gate |
+|---|---|---|---|---|
+| freezefix | 11-13 03:04 | 12 | yes | none found |
+| sweepfixA | 11-14 00:39 | 0 | yes | already in main |
+| sweepfixB | 11-14 03:38 | 3 | yes | none found |
+| orderfeel | 11-14 04:37 | 1 | yes | none found |
+| ghostslot | 11-14 03:28 | 1 | yes | none found |
+| testrange | 11-14 03:06 | 1 | yes | none found |
+| battleclean2 | 11-14 04:00 | 8 | yes | none found |
+| pileflag | 11-14 03:17 | 2 | yes | none found (merge was reverted on main) |
+| battlemaps | 11-14 04:24 | 6 | yes | none found |
+| unstuck / unstuck2 | 11-14 01:59 / 02:39 | 2 / 4 | no | none found |
+| dugout | 11-14 16:42 | 13 | yes | none found |
+| battlepower | 11-14 03:03 | 5 | yes | gate/146a42a7cb |
+| bldqueue | 11-14 03:14 | 7 | yes | gate/6a914bdfd2 |
+| techbldgs | 11-14 03:42 | 11 | yes | none found |
+| groundreal | 11-14 05:04 | 4 | yes | none found |
+| leaderlook | 11-14 05:29 | 11 | yes | none found |
+| usvoice | 11-14 04:25 | 3 | yes | none found |
+| ammozone / ammotruck | 11-14 03:55 / 06:02 | 7 / 9 | yes | none found |
+| looktest | 11-14 09:07 | 3 | yes | none found (needs Abdullah's look pick) |
+| onegame | 11-13 22:41 | 16 | yes | none found (lands after the others) |
+| nations20 | 11-14 03:33 | 5 | yes | none found (lands last) |
+| dozerbuild, destruction, squads, battlerules2, pacecap, polishspeed, polishfeel | 11-14 03:34–10:24 | 2–8 | yes | none found |
+| battlemaps2 | no branch, no lock | | | |
 
-Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans, anything only in src/13*.
-Lock with no orch branch: L3-economy, L5-unitlooks, army-standards, c-real-supply, finish-tokens, freezefix2, realwar, seamless-hud, spylook2 (age not checked; saved nothing).
+Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
+
+Locks with no `orch/` branch (saved nothing): army-standards (11-10), c-real-supply (11-11), finish-tokens (11-11), freezefix2 (11-12), realwar (11-11), seamless-hud (11-11), spylook2 (11-12).
