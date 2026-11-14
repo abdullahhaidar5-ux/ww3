@@ -33,7 +33,7 @@ before/after at 1280: `-army-` (IR army), `-allarmy-` (army + dozer + truck), `-
 
 ## Not done / notes
 - 1600 wide not shot separately (1280 and 1920 both clean; the dock is at most 700 px wide, so 1600 sits between).
-  The 1920 pictures show the first (3-row) dock; the 1280 army/allarmy/dozer pictures show the final 2-row dock.
+  The 1920 dozer picture shows the first (3-row) dock; army/allarmy at 1280 and 1920 show the final 2-row dock.
 - Gate: `tutorial` failed twice (step 14 never started) — it also fails on most other recent gate branches (flaky);
   `audio` / `grandlive` failed once and passed on re-run.
 - Nameplate now lives on the minimap: a design call — if Abdullah wants it back next to the cash, the header needs a
