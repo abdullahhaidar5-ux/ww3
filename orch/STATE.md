@@ -2,7 +2,12 @@
 
 main head a3b627b (train 13). Live site = that. No other conductor run active (last train push 08:53 UTC).
 
-## Train in flight
+## Update 13:35 UTC
+Old train 0900 (gated 09:03, runners started it only 12:18): tutorial RED (twice, with testrange and sweepfixB; both of those were red on tutorial in their own gates; ghostslot, orderfeel, sweepfixA green). Not landed.
+New train train/20261114-1303 = sweepfixA + ghostslot + orderfeel (the exact commits that had green own gates), gate pushed as gate/df9c2a079a, QUEUED on GitHub since 13:14 behind gate/0cea660215 (queued since 10:11). Next conductor run: if gate/df9c2a079a is green (no red main lacks), fast-forward land it (rebase if main moved), then wait for pages.
+Held back: testrange, sweepfixB (tutorial red) - need a look.
+
+## Train in flight (old)
 train/20261114-0900 (fast-forward of main): ghostslot, sweepfixB, orderfeel, testrange, sweepfixA (pileflag merged then reverted). Own gate: smooth-pc/mp/grandsmooth/decisions/smoke4/check green; tutorial, audio, cfclient red (known flaky; audio+cfclient passed on previous train cd42446).
 
 ## Battle helpers (branch | last push UTC | ahead of main | HANDOFF)
