@@ -5,16 +5,16 @@
      pause / speed 1/2x-4x, overview camera, heal, reset. Test range only; nothing here touches the simulation rules. */
 (function(){if(typeof document==='undefined')return;
 const css='#app #hint{font-family:var(--display,system-ui,sans-serif);font-size:13px;letter-spacing:.01em;opacity:.85;color:#e6ece8}'+
- '@media (min-width:1100px) and (min-height:600px){#panel .btn .n{font-size:12.5px}#panel .btn .c{font-size:11px}#panel .btn{min-height:42px}}'+
+ '@media (min-width:1100px) and (min-height:600px){#panel .btn .n{font-size:12px!important}#panel .btn .c{font-size:11.5px!important}#panel .btn .sub,#panel .sub{font-size:11px!important}}'+
  '#sbTools{display:flex;flex-direction:column;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12);font-size:12.5px}'+
- '#sbTools .r{display:flex;flex-wrap:wrap;gap:5px;align-items:center}#sbTools .l{opacity:.7;min-width:44px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}'+
- '#sbTools button,#sbTools select{min-height:26px;padding:2px 8px;font-size:12.5px;border-radius:3px}'+
+ '#sbTools .r{display:flex;flex-wrap:wrap;gap:5px;align-items:center}#sbTools .l{opacity:.7;min-width:36px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}'+
+ '#sbTools button,#sbTools select{min-height:26px;padding:2px 5px;font-size:12px;border-radius:3px;flex:0 0 auto;width:auto;min-width:0}#sbTools .r button.w{flex:1 1 auto}'+
  '#sbTools button.on{outline:1px solid #e0b040;color:#f3d27a}#sbTools select{max-width:150px}'+
  'body.sbArm #c,body.sbArm canvas{cursor:copy!important}';
 const st=document.createElement('style');st.textContent=css;document.head.append(st);
 const mk=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
 let side=0,n=1,kind='',built=null;
-function kinds(team){const T=G.teams[team],out=[];for(const k of Object.keys(BASE)){let s;try{s=stats(T.fac,k);}catch(e){}if(!s||!s.name||STRUCT[k])continue;if(s.dom==='naval'&&!G.map.hasWater)continue;out.push([k,s.name]);}return out.sort((a,b)=>a[1].localeCompare(b[1]));}
+function kinds(team){const T=G.teams[team],out=[];for(const k of Object.keys(BASE)){let s;try{s=stats(T.fac,k);}catch(e){}if(!s||!s.name||STRUCT[k])continue;if(s.dom==='naval'&&!G.map.hasWater)continue;out.push([k,s.name]);}{const c={};for(const a of out)c[a[1]]=(c[a[1]]||0)+1;for(const a of out)if(c[a[1]]>1)a[1]+=' ('+a[0]+')';}return out.sort((a,b)=>a[1].localeCompare(b[1]));}
 function fill(sel){const prev=kind;sel.innerHTML='';const ks=kinds(side);for(const [k,nm] of ks){const o=mk('option','',nm);o.value=k;sel.append(o);}kind=ks.some(a=>a[0]===prev)?prev:(ks[0]&&ks[0][0])||'';sel.value=kind;}
 function arm(on){if(!G)return;G.sbSpawn=on?{team:side,kind,n}:null;document.body.classList.toggle('sbArm',!!on);const b=built&&built.go;if(b){b.classList.toggle('on',!!on);b.textContent=on?'Click the map…':'Place on map';}}
 function spawnAt(w){const S=G.sbSpawn;if(!S||!w)return;const T=G.teams[S.team];let made=0;
@@ -33,7 +33,7 @@ function build(){const host=document.getElementById('sbx');if(!host)return null;
   sd.onclick=()=>{side=side?0:1;sd.textContent=side?'Enemy side':'Your side';fill(sel);if(G.sbSpawn)arm(true);};
   sel.onchange=()=>{kind=sel.value;if(G.sbSpawn)arm(true);};
   for(const v of [1,5,10,20]){const o=mk('option','',v+'x');o.value=v;cnt.append(o);}cnt.onchange=()=>{n=+cnt.value;if(G.sbSpawn)arm(true);};
-  go.onclick=()=>arm(!G.sbSpawn);go.title='Click the map to drop the units (Shift keeps placing, right-click or Esc stops)';
+  go.className='w';go.onclick=()=>arm(!G.sbSpawn);go.title='Click the map to drop the units (Shift keeps placing, right-click or Esc stops)';
   r1.append(sd,sel,cnt,go);
   const r2=mk('div','r');r2.append(mk('span','l','Time'));const sp=[];
   for(const [t,v] of [['Pause',0],['½×',.5],['1×',1],['2×',2],['4×',4]]){const b=mk('button','',t);b.dataset.v=v;b.onclick=()=>{G.sbSpd=v;mark();};sp.push(b);r2.append(b);}
@@ -43,7 +43,7 @@ function build(){const host=document.getElementById('sbx');if(!host)return null;
   ov.onclick=()=>{try{centerOn(MAPW/2,MAPH/2);cam.td=zmax();}catch(e){}};ov.title='Pull the camera up over the whole battlefield';
   hl.onclick=()=>{for(const u of G.ents)if(!u.dead&&u.team===0&&u.max&&u.hp<u.max)u.hp=u.max;try{pushLog('Your units are repaired.','g');}catch(e){}};
   rs.onclick=()=>{try{arm(false);startSandbox();}catch(e){console.warn(e);}};rs.title='Start the Test range again from scratch';
-  r3.append(ov,hl,rs);W.append(r1,r2,r3);host.append(W);built={go,sel,sd,mark};return built;}
+  rs.className='w';r3.append(ov,hl,rs);W.append(r1,r2,r3);host.append(W);built={go,sel,sd,mark};return built;}
 setInterval(()=>{try{if(!G||!G.sandbox){if(document.body.classList.contains('sbArm'))document.body.classList.remove('sbArm');return;}
   if(!document.getElementById('sbTools')){built=null;}if(!built){if(!build())return;fill(built.sel);}built.mark();}catch(e){}},700);
 })();

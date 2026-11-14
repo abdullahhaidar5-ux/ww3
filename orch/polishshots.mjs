@@ -21,7 +21,7 @@ const page = await ctx.newPage(); await page.route('**/*', r => r.request().url(
 const errs = []; page.on('pageerror', e => errs.push(e.message));
 const shot = async n => { try { await page.screenshot({ path: path.join(OUT, `polishfeel-${TAG}-${n}.jpg`), type: 'jpeg', quality: 80, timeout: 240000 }); } catch (e) { console.log('shot skipped', n, e.message.split('\n')[0]); } };
 const audit = async n => console.log(n, JSON.stringify(await page.evaluate(() => { const small = [], clip = [], tiny = [];
-  for (const el of document.querySelectorAll(window.G ? '#side *, #sbx *, #pauseOv *, #top *, #hint *' : 'body *')) { const r = el.getBoundingClientRect(); if (!r.width || !r.height || el.offsetParent === null) continue; const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || +cs.opacity === 0) continue;
+  for (const el of document.querySelectorAll((typeof G !== 'undefined' && G) ? '#side *, #sbx *, #pauseOv *, #top *, #hint *' : 'body *')) { const r = el.getBoundingClientRect(); if (!r.width || !r.height || el.offsetParent === null) continue; const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || +cs.opacity === 0) continue;
     const own = [...el.childNodes].some(c => c.nodeType === 3 && c.textContent.trim()); const id = (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : '') || el.tagName;
     if (own && parseFloat(cs.fontSize) < 11) small.push(id + ':' + cs.fontSize + ':' + el.textContent.trim().slice(0, 20));
     if (own && el.scrollWidth > el.clientWidth + 2 && cs.overflowX === 'hidden' && cs.textOverflow !== 'ellipsis') clip.push(id + ':' + el.textContent.trim().slice(0, 20));
@@ -44,7 +44,15 @@ await page.evaluate(() => { const d = G.ents.find(e => e.team === ME && !e.isB);
 await page.keyboard.press('Escape'); await page.waitForTimeout(800); await shot('09-pause'); await audit('pause'); await page.keyboard.press('Escape');
 }
 if (!ONLY) await page.evaluate(() => { location.reload(); }); await page.waitForFunction(() => typeof startSandbox === 'function' && document.getElementById('mx'), null, { timeout: 60000 }); await page.waitForTimeout(1500);
-await page.evaluate(() => { initAudio(); startSandbox(); }); await page.waitForFunction(() => !window.LOADING && window.G && G.sandbox, null, { timeout: 600000, polling: 500 }); await page.waitForTimeout(3000);
+await page.evaluate(() => { initAudio(); startSandbox(); });
+for (let i = 0; i < 40; i++) { const st = await page.evaluate(() => ({ L: !!window.LOADING, g: typeof G !== 'undefined' && !!G, sb: !!(typeof G !== 'undefined' && G && G.sandbox), t: 0 })); if (i % 4 === 0) console.log('wait', i, JSON.stringify(st)); if (!st.L && st.sb) break; await page.waitForTimeout(5000); } await page.waitForTimeout(3000);
 await shot('10-testrange'); await audit('testrange');
 console.log('sbx html:', await page.evaluate(() => { const s = document.getElementById('sbx'); return s ? s.innerText.replace(/\n+/g, ' | ') : 'none'; }));
+{ const r = await page.evaluate(async () => { const n0 = G.ents.filter(e => e.team === 1 && !e.isB && !e.dead).length, m0 = G.ents.filter(e => e.team === 0 && !e.isB && !e.dead).length;
+    const btn = t => [...document.querySelectorAll('#sbTools button')].find(b => b.textContent === t);
+    btn('Enemy side') || btn('Your side').click(); const c = document.querySelector('#sbTools select:nth-of-type(2)'); const cnt = [...document.querySelectorAll('#sbTools select')][1]; cnt.value = '5'; cnt.onchange();
+    btn('Place on map').click(); const armed = !!G.sbSpawn; const cvr = cv.getBoundingClientRect();
+    cv.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0, clientX: cvr.left + cvr.width / 2, clientY: cvr.top + cvr.height / 2 }));
+    const n1 = G.ents.filter(e => e.team === 1 && !e.isB && !e.dead).length; btn('4×').click(); const spd = G.sbSpd; btn('1×').click(); return { n0, n1, armed, after: !!G.sbSpawn, spd, m0 }; });
+  console.log('spawn test', JSON.stringify(r)); }
 console.log('errors:', errs.slice(0, 5)); await browser.close(); server.close(); process.exit(0);
