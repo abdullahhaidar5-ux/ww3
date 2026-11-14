@@ -195,3 +195,5 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
 - 20:00 Chicago "Make it digging in like garrisoning units in that you have to remove them from the dugout". dugout = trig_01ANGmG3jFiQ6E6nHoFF6JRM
   (Sonnet) fired 02:02Z: Dig in (I) builds a dugout the squad garrisons via the ONE building-garrison path; leave = select dugout + right-click ground.
   Sim change (checkpoint). Overlaps sweepfixB (Dig in row) and unstuck (03-sim) - conductor merges carefully.
+- 20:01 Chicago "Make the ayatollah and dear leader more realistic and human looking". leaderlook = trig_01YM87cT3xwMftrBc8jciEKn (Opus, look)
+  fired 02:04Z: realistic human figures, fictional, never a real person's likeness; respectful. CHECK its pictures for likeness before landing.
