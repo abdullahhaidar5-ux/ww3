@@ -1,0 +1,39 @@
+menu {"btn":"▶ Tutorial: learn Battle (10 min)","vis":false}
+-- skip / exit / restart
+step 1 gen | highlight: edge | words: 51
+  ok   step 1 tip visible
+  FAIL step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  FAIL the one tutorial is the Battle tutorial with a supply-lines step
+  ok   Skip step moves to the next step (3 clicks -> step 4)
+  ok   Exit tutorial hides the tips and arrow and leaves the battle running
+  ok   menu still offers the tutorial (not marked done after exiting)
+-- full playthrough
+  ok   the tutorial is a Battle (no towns)
+step 1 gen | highlight: edge | words: 51
+  ok   step 1 tip visible
+  FAIL step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  FAIL exception: page.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#b_depot')
+    - locator resolved to <button hidden="" id="b_depot" data-tab="build" class="btn hasic" data-nm="Supply Depot" data-tip="Supply trucks unload here instead of driving back to the HQ. Build one beside a far supply field. Also refills ammo of troops near it." aria-label="Supply Depot. Supply trucks unload here instead of driving back to the HQ. Build one beside a far supply field. Also refills ammo of troops near it.">…</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    41 × waiting for element to be visible, enabled and stable
+       - element is not visible
+     - retrying click action
+       - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+
+step seconds: [] total 181 s
+TUTORIAL FAIL (4)
