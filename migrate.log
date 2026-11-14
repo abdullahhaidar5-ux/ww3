@@ -1,0 +1,33 @@
+game servers running locally at http://127.0.0.1:41193
+[4s] three pages loaded
+[8s] host lobby open, code l5c46z
+[40s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+    [net battle start] host: {"t":0,"loading":true,"paused":true,"fp":{"tx":21,"rx":15,"txB":2089,"rxB":1242,"dropped":0},"slots":[{"k":1,"peer":"ww3p-a5d6lewp","seenAgo":0,"disc":0,"ai":false,"aiTook":false,"buf":0},{"k":2,"peer":"ww3p-imclpmnn","seenAgo":9,"disc":0,"ai":false,"aiTook":false,"buf":0}],"sb":null,"ckOut":false}
+    [net battle start] client A: {"me":1,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-a5d6lewp","hostPeer":"ww3-l5c46z","sb":false,"ck":false,"ents":0,"fp":{"tx":8,"rx":12,"txB":645,"rxB":1232,"dropped":0},"trace":[]}
+    [net battle start] client B: {"me":2,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-imclpmnn","hostPeer":"ww3-l5c46z","sb":false,"ck":false,"ents":0,"fp":{"tx":7,"rx":9,"txB":597,"rxB":857,"dropped":0},"trace":[]}
+    [net t=5s] host: {"t":5,"loading":true,"paused":true,"fp":{"tx":129,"rx":25,"txB":40174,"rxB":2318,"dropped":0},"slots":[{"k":1,"peer":"ww3p-a5d6lewp","seenAgo":2,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988},{"k":2,"peer":"ww3p-imclpmnn","seenAgo":157,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988}],"sb":1,"ckOut":false}
+    [net t=5s] client A: {"me":1,"mode":"client","loading":true,"paused":true,"t":5,"snapT":4.9,"rxAgo":33,"recon":false,"myPeer":"ww3p-a5d6lewp","hostPeer":"ww3-l5c46z","sb":true,"ck":true,"ents":5,"fp":{"tx":13,"rx":68,"txB":1183,"rxB":25557,"dropped":0},"trace":[]}
+    [net t=5s] client B: {"me":2,"mode":"client","loading":true,"paused":true,"t":5,"snapT":4.7,"rxAgo":34,"recon":false,"myPeer":"ww3p-imclpmnn","hostPeer":"ww3-l5c46z","sb":false,"ck":false,"ents":5,"fp":{"tx":12,"rx":61,"txB":1135,"rxB":14617,"dropped":0},"trace":[]}
+    [net t=10s] host: {"t":10,"loading":false,"paused":false,"fp":{"tx":256,"rx":56,"txB":83358,"rxB":10317,"dropped":0},"slots":[{"k":1,"peer":"ww3p-a5d6lewp","seenAgo":-22597,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076},{"k":2,"peer":"ww3p-imclpmnn","seenAgo":-22597,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076}],"sb":1,"ckOut":false}
+    [net t=10s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":10.5,"snapT":10,"rxAgo":410,"recon":false,"myPeer":"ww3p-a5d6lewp","hostPeer":"ww3-l5c46z","sb":true,"ck":true,"ents":6,"fp":{"tx":29,"rx":132,"txB":5359,"rxB":46699,"dropped":0},"trace":[]}
+    [net t=10s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":10.5,"snapT":10,"rxAgo":417,"recon":false,"myPeer":"ww3p-imclpmnn","hostPeer":"ww3-l5c46z","sb":false,"ck":false,"ents":6,"fp":{"tx":27,"rx":124,"txB":4958,"rxB":36659,"dropped":0},"trace":[]}
+    [net t=30s] host: {"t":30,"loading":false,"paused":false,"fp":{"tx":673,"rx":64,"txB":283240,"rxB":11635,"dropped":0},"slots":[{"k":1,"peer":"ww3p-a5d6lewp","seenAgo":321,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577},{"k":2,"peer":"ww3p-imclpmnn","seenAgo":321,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577}],"sb":1,"ckOut":false}
+    [net t=30s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":30.5,"snapT":30,"rxAgo":9,"recon":false,"myPeer":"ww3p-a5d6lewp","hostPeer":"ww3-l5c46z","sb":true,"ck":true,"ents":6,"fp":{"tx":33,"rx":348,"txB":5981,"rxB":167409,"dropped":0},"trace":[]}
+    [net t=30s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":30.5,"snapT":30,"rxAgo":11,"recon":false,"myPeer":"ww3p-imclpmnn","hostPeer":"ww3-l5c46z","sb":false,"ck":false,"ents":6,"fp":{"tx":31,"rx":325,"txB":5654,"rxB":115831,"dropped":0},"trace":[]}
+[109s] before: client A @1 min t=60s: host 21 entities, slot 1 sees 7 (own 7); its screen has 7; missing 0, extra 0, off-position 0, mismatched 0; credits host 1940 client 1940
+[110s] before: client B @1 min t=60s: host 21 entities, slot 2 sees 7 (own 7); its screen has 7; missing 0, extra 0, off-position 0, mismatched 0; credits host 2015 client 2015
+    trace client A (screenshot stall):  || now: client via=pjd ws=false rxAgo=267
+    trace client B (screenshot stall):  || now: client via=pjd ws=false rxAgo=270
+peak memory (node + browser, summed RSS): 5225 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE FAIL: page.evaluate: TypeError: Cannot read properties of undefined (reading 'hq')
+    at eval (eval at evaluate (:311:30), <anonymous>:2:101)
+    at Array.reduce (<anonymous>)
+    at eval (eval at evaluate (:311:30), <anonymous>:2:77)
+    at Array.map (<anonymous>)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:53)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (137s)
