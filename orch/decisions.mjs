@@ -186,7 +186,7 @@ try {
   { ck(!/u\.supT|\.supT\?\?|G\.t-\(u\.supT/.test(Object.entries(SRC).filter(([k]) => !k.startsWith('13')).map(([, v]) => v).join('\n')), 'a time-based out-of-supply rule (u.supT) is still in src/ - ammo zone rule has no timers');
     const am = await ev(() => { const T = G.teams[ME]; const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq'); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && hasAmmo(e)); if (!u || !hq) return { err: 'no unit/hq' };
       const step = () => { G.supT = 1; updSupply(0.01); }; const far = { x: hq.x + 1800, y: hq.y + 1800 };
-      u.x = far.x; u.y = far.y; u.am = 5; step(); const o1 = { sup: u.sup, am: u.am }; G.t += 90; step(); const o2 = { sup: u.sup, am: u.am, healOk: true }; /* 90 s outside: still has its 5 shots, no refill, no timer penalty */
+      if (u.am === undefined) ammoInit(u); u.x = far.x; u.y = far.y; u.am = 5; step(); const o1 = { sup: u.sup, am: u.am }; G.t += 90; step(); const o2 = { sup: u.sup, am: u.am, healOk: true }; /* 90 s outside: still has its 5 shots, no refill, no timer penalty */
       u.am = 0; step(); const empty = { am: u.am, sup: u.sup };
       const bad = G.ents.find(e => !e.dead && e.team !== ME && !e.isB && e.team >= 0); let cantFire = null; if (bad && !isInf(u.s)) { const hp = bad.hp; fire(u, bad, 50, u.s.wpn, 0); cantFire = bad.hp === hp; }
       u.x = hq.x + 40; u.y = hq.y + 40; step(); const back = { am: u.am, sup: u.sup };
@@ -197,7 +197,7 @@ try {
     ck(am.empty && am.empty.am === 0 && am.empty.sup === 0, 'ammo zone: empty unit outside the area must stay empty: ' + JSON.stringify(am.empty));
     ck(am.cantFire !== false, 'ammo zone: an empty vehicle fired a shot: ' + JSON.stringify(am));
     ck(am.back && am.back.sup === 1 && am.back.am > 0, 'ammo zone: unit back inside your area did not refill: ' + JSON.stringify(am.back));
-    ck(am.conqHas === true && am.bt === false && am.sb === false, 'ammo zone: Conquest tracks ammo, Battle/Test range must be unlimited: ' + JSON.stringify(am)); }
+    ck(am.conqHas === true && am.bt === true && am.sb === false, 'ammo zone: Conquest and Battle track ammo (ORCH note 20:18), Test range must be unlimited: ' + JSON.stringify(am)); }
   await shot('conquest-ir');
   // Balance toggle (Abdullah 2026-11-06 21:31): Balanced must stay equal for everyone; Realistic must tier fire support
   // (superpower strikes come faster/harder and its vehicles are cheaper; a small power's strikes are weaker but its

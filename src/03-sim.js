@@ -1410,16 +1410,16 @@ function oilTarget(o){const ALL=new Array(16).fill(true);return{oil:o,isB:true,k
    supply trucks (harvesters) and captured towns (c.ow). NO timers: a unit outside the area keeps fighting until its ammo is 0, only then it needs resupply (vehicles can't fire, infantry plink at 12%). Healing no longer depends on supply.
    Towns: infantry garrisoned in a civilian building capture it (c.cp 0..1 toward team c.cpT); owner c.ow earns money
    and gets a supply circle. All of it runs on the host only; clients get am/supply as bits of the unit snapshot and town owners in teamGlobals. */
-const SUP_R={hq:380,depot:320,harv:230,town:230};
-/* Ammo rule (Abdullah 2026-11-13 20:06): Conquest + Missions only. Battle (Generals rules) and Test range: unlimited ammo, no badge. */
-function ammoOn(){return !!G&&!G.sandbox&&!(G.battle&&!G.grand);}
+const SUP_R={hq:380,depot:320,harv:230,town:230,base:170};   // base = any finished base building in Battle
+/* Ammo rule (Abdullah 2026-11-13 20:06; ORCH note 20:18: now for BATTLE too): ammo is tracked in Conquest, Battle and Missions; Test range (G.sandbox) is unlimited with no badge. */
+function ammoOn(){return !!G&&!G.sandbox;}
 function hasAmmo(u){const s=u.s;return ammoOn()&&!!s&&!u.isB&&s.dom==='ground'&&s.dmg>0&&s.rof>0&&!s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker';}
 function ammoCap(s){if(s.cls==='arty'||s.wpn==='missile')return 20;return Math.max(16,Math.min(300,Math.round(200/s.rof)));}
 function ammoInit(u){u.amx=ammoCap(u.s);u.am=u.amx;}
 function supplyPoints(){const N=G.teams.length,P=[];for(let i=0;i<N;i++)P.push([]);
   const add=(o,p)=>{for(let t=0;t<N;t++)if(ally(o,t))P[t].push(p);};
   for(const e of G.ents){if(e.dead||e.inTun||e.team==null||e.team<0||e.team>=N)continue;let r=0;
-    if(e.isB){if(e.built<1)continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot*(e.lcut?.5:1):0;}else if(e.kind==='harv')r=SUP_R.harv;
+    if(e.isB){if(e.built<1)continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot*(e.lcut?.5:1):(G.battle&&!G.grand&&!G.sandbox&&!['wall','gate','mine','tunnel'].includes(e.kind)?SUP_R.base:0);}else if(e.kind==='harv')r=SUP_R.harv;
     if(r)add(e.team,{x:e.x,y:e.y,r});}
   if(G.civ)for(const c of G.civ)if(!c.dead&&c.ow>=0&&c.ow<N&&!(c.ti>=0&&G.towns&&G.towns[c.ti]&&G.towns[c.ti].cut))add(c.ow,{x:c.x,y:c.y,r:(c.ti>=0&&G.towns&&G.towns[c.ti]&&G.conq&&!(G.towns[c.ti].dl>G.t)&&!G.towns[c.ti].sk)?SUP_R.town*.5:SUP_R.town});
   return P;}
