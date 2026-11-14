@@ -84,6 +84,17 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
         if (++bad <= 8) ck(false, `american: British spelling "${x[0]}" in src/${f} line ${t.slice(0, m.index).split('\n').length}: "${s.slice(Math.max(0, x.index - 20), x.index + 30).replace(/\n/g, ' ')}" (python3 orch/american.py fixes it)`); } } }
   if (bad > 8) ck(false, `american: ${bad} British spellings in player-facing text in all (python3 orch/american.py)`); }
 
+// ---- orderfeel (Abdullah 2026-11-13 17:31 "selection rings + order preview, clearer goals on screen"): ONE selection-ring system
+// (SELR, instanced, 06d-orderfeel), ONE order-marker system (ORDM, instanced, capped), ONE goal line (cqBanner) - no old per-unit RINGS,
+// no order pings through PINGS, no separate mission objectives box.
+{ const all = srcFiles.filter(f => !/^13/.test(f)).map(f => SRC[f]).join('\n');
+  ck(!/\bRINGS\b/.test(all.replace(/MAP_RINGS/g, '')), 'orderfeel: the old per-unit selection RINGS are back (one ring system: SELR in 06d-orderfeel)');
+  ck((all.match(/function selRings\(/g) || []).length === 1 && (all.match(/function ordMark\(/g) || []).length === 1, 'orderfeel: selRings / ordMark must exist exactly once');
+  for (const f of srcFiles.filter(f => !/^13/.test(f) && f !== '06d-orderfeel.js')) ck(!(/G\.sel/.test(SRC[f]) && /RingGeometry[^\n]{0,200}G\.sel|G\.sel[^\n]{0,200}RingGeometry/.test(SRC[f])), `orderfeel: ${f} draws its own selection ring (use SELR)`);
+  const mk = /function mark\(o\)\{[^\n]*\n?[^\n]*/.exec(SRC['08-ui.js'] || '') || [''];
+  ck(/ordMark\(/.test(mk[0]) && !/PINGS\.push/.test(mk[0]), 'orderfeel: order markers (mark/markT) must go to ordMark, not PINGS');
+  const cap = /ORDM=\{m:null,cap:(\d+)/.exec(SRC['06d-orderfeel.js'] || ''); ck(cap && +cap[1] <= 16, 'orderfeel: order markers need a small cap (ORDM.cap <= 16)');
+  ck(!/campHud/.test(all), 'orderfeel: the old mission objectives box (campHud) is back - missions use the goal line'); }
 // ---------- static checks ----------
 // polishP2 "Never lose progress": one save system. Battles autosave into 3 rolling slots (08d-save.js), the grand campaign saves on a timer and before every
 // Fight-it battle into 3 rolling copies (13-grand.js grSnap), and the menu's Continue (first item) covers both. Runtime proof: orch/polishtest.mjs (gate/save).
@@ -354,6 +365,16 @@ try {
   for (let c = 0; c < 4; c++) await ev(() => { for (let i = 0; i < 1800 && !G.over; i++) simUpdate(1 / 60); for (const e of G.ents) if (e.kind === 'fort' && !FORT_NAT[G.teams[e.team].fac]) window.__bad.push(e.kind); });
   const sim = await ev(() => [...new Set(window.__bad)]);
   ck(!sim.length, 'AI built a signature asset for a nation that does not have it: ' + sim.join(','));
+  // ---- orderfeel (2026-11-13): rings for every selected unit/building in one instanced mesh, capped order markers, Conquest goal line
+  { const of = await ev(() => { const us = G.ents.filter(e => e.team === ME && !e.isB && !e.dead).slice(0, 8), hq = G.ents.find(e => e.team === ME && e.isB && !e.dead);
+      G.sel = us.concat(hq ? [hq] : []); const want = G.sel.length; HOVE = null; try { syncScene(.016); } catch (e) {} const rings = SELR.n;
+      ORDM.list.length = 0; for (let i = 0; i < 40; i++) ordMark(['mv', 'am', 'atk', 'gd', 'wp'][i % 5], 500 + i * 3, 500); const cap = ORDM.list.length; try { ordMarks(); } catch (e) {}
+      const meshes = SCN.children.filter(o => o.userData && o.userData.of).length; ORDM.list.length = 0; G.sel = []; try { cqBanner(); } catch (e) {}
+      return { rings, want, cap, max: ORDM.cap, meshes, goal: (document.getElementById('cqBn') || {}).textContent || '' }; });
+    console.log('orderfeel conquest', JSON.stringify(of));
+    ck(of.rings === of.want && of.want > 0, `orderfeel: ${of.want} selected but ${of.rings} selection rings`); ck(of.cap <= of.max, `orderfeel: ${of.cap} order markers alive (cap ${of.max})`);
+    ck(of.meshes === 2, `orderfeel: rings + markers must be 2 instanced meshes, found ${of.meshes}`);
+    ck(/Take towns for income/.test(of.goal) && /Destroy the enemy base \(\d+ of \d+ structures left\)/.test(of.goal), 'orderfeel: Conquest goal line missing or wrong: ' + of.goal.slice(0, 160)); }
   // ---- BATTLE mode (Generals rules): Command Center + dozer + supply truck, no towns/tax, supply trucks pay
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
@@ -376,6 +397,8 @@ try {
     const rf = await ev(() => { const T = G.teams[ME], hq = G.ents.find(e => e.team === ME && e.kind === 'hq' && !e.dead), vis = () => { try { syncScene(.016); } catch (e) {} return !!(RALLY && RALLY.visible); };
       T.rally = { x: hq.x + 90, y: hq.y + 90 }; G.sel = []; vis(); RV.fl = 0; const away = vis(); G.sel = [hq]; const sel = vis(); G.sel = []; const gone = vis(); G.sel = []; return { away, sel, gone }; });
     console.log('rally flag', JSON.stringify(rf)); ck(!rf.away && rf.sel && !rf.gone, 'rally flag must show only while a production building is selected: ' + JSON.stringify(rf));
+    { const gl = await ev(() => { try { cqBanner(); } catch (e) {} return (document.getElementById('cqBn') || {}).textContent || ''; }); console.log('battle goal', gl.slice(0, 120));
+      ck(/Destroy every enemy building \(\d+ left\)/.test(gl), 'orderfeel: Battle goal line missing or wrong: ' + gl.slice(0, 160)); }
     ck(sl.mini === 0 && sl.world === 0, 'Battle draws supply lines (minimap ' + sl.mini + ', ground ' + sl.world + ' draw calls)'); ck(!sl.on && !sl.wanted, 'Battle supply overlay can be switched on'); ck(sl.chip, 'Battle shows the "Supply OK" chip'); ck(!sl.ui, 'Battle ammo row mentions in/out of supply'); }
   ck(bt.battle && !bt.conq, 'Battle game did not start in Battle mode');
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());

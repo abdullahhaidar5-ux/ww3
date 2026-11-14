@@ -62,14 +62,38 @@ function townBuild(){if(!document.getElementById('townCss')){const st=document.c
   const d=document.createElement('div');d.id='townp';d.innerHTML='<button class="x" aria-label="Close">&times;</button><div id="tpb"></div>';d.addEventListener('pointerdown',e=>e.stopPropagation());d.addEventListener('contextmenu',e=>e.preventDefault());
   d.querySelector('.x').onclick=townClose;d.addEventListener('click',e=>{const b=e.target.closest('button[data-r]');if(b&&TP.ti>=0){doAct({t:'tax',ti:TP.ti,r:+b.dataset.r});TP.t=0;setTimeout(()=>townPanelTick(true),60);}const a=e.target.closest('button[data-act]');if(a&&TP.ti>=0&&!a.disabled){doAct(a.dataset.act==='road'?{t:'road',ti:TP.ti,ids:G.sel.filter(u=>!u.isB&&u.kind==='dozer'&&u.team===ME).map(u=>u.id)}:{t:a.dataset.act,ti:TP.ti});TP.t=0;setTimeout(()=>townPanelTick(true),90);}});
   document.body.appendChild(d);TP.el=d;}
-function cqBanner(){if(!G||!(G.conq||G.battle))return;if(G.over){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}let b=$('cqBn');if(!b){b=document.createElement('div');b.id='cqBn';b.style.cssText='position:fixed;top:42px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;font:600 14px/1.3 system-ui,sans-serif;color:#f4e9c2;text-shadow:0 1px 3px #000;max-width:calc(100vw - 150px)';document.body.appendChild(b);}
-  if(G.battle){const h=`<div style="font:700 12px system-ui,sans-serif;letter-spacing:.2em;opacity:.8">BATTLE <span style="font-weight:400;letter-spacing:0">&middot; destroy every enemy building</span></div>`;if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}return;}
-  const setup=G.t<G.setupEnd;let h='';if(setup){const l=Math.max(0,Math.ceil(G.setupEnd-G.t));h=`<div style="background:rgba(60,45,10,.88);border:1px solid #d9b34a;border-radius:6px;padding:4px 12px;color:#ffe08a">SETUP PHASE ${Math.floor(l/60)}:${String(l%60).padStart(2,'0')} <span style="font-weight:400;font-size:12px">&middot; build up and grab towns &middot; no firing yet</span></div>`;}
-  if(G.bse&&G.teams[ME]){let c=0,m=0,n=0;for(const T of G.teams){if(T.reb||T.out||ally(T.id,ME)||!G.bse[T.id])continue;c+=G.bse[T.id][0];m+=G.bse[T.id][1];n++;}if(n&&m)h+=`<div style="margin-top:3px;font-size:12px;opacity:.92">${n>1?'Enemy bases':'Enemy base'}: ${c} of ${m} structures left</div>`;}
-  {const tm=x=>Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0');let sl='';
+/* THE goal line (Abdullah 2026-11-13 17:31 "clearer goals on screen"): one calm line under the top bar that says what wins this
+   game and how far along it is, updated live; a short flash when it moves (a base building falls, a town is taken).
+   Conquest: setup countdown · Take towns for income (held) · Destroy the enemy base (N of M structures left).
+   Battle: Destroy every enemy building (N left). Missions: the current objective with its check state (replaces the old
+   mission objectives box). Missile / uplink countdowns stay as a small second line under it. */
+const GOAL={pk:{},key:'',fl:0};
+function goalText(){if(GOAL.g!==G){GOAL.g=G;GOAL.pk={};GOAL.key='';}const me=G.teams[ME];if(!me)return null;const enemy=T=>!T.reb&&!T.out&&!ally(T.id,ME);const B=['hq','barracks','factory','airfield','shipyard'];
+  if(G.camp){const c=G.camp,m=c.m,done=m.obj.filter(o=>c.o[o[0]]).length,cur=m.obj.find(o=>!c.o[o[0]]);
+    return{k:'m'+done+(cur?cur[0]:''),h:`<b>${m.title}</b><i>·</i>`+(cur?`<span class="gb">☐</span> ${cur[1]}`:`<span class="gk">☑</span> All objectives complete`)+`<i>·</i><span class="gn">${done} of ${m.obj.length} done</span>`+(c.status?`<i>·</i><span class="gs">${c.status}</span>`:'')};}
+  if(G.battle){let n=0;for(const e of G.ents)if(e.isB&&!e.dead&&e.built>=1&&e.kind!=='garrison'&&e.team>=0&&G.teams[e.team]&&enemy(G.teams[e.team]))n++;
+    return{k:'b'+n,h:`<b>Battle</b><i>·</i>Destroy every enemy building <span class="gn">(${n} left)</span>`};}
+  if(G.conq){let c=0;const per={};for(const e of G.ents)if(e.isB&&!e.dead&&e.built>=1&&B.includes(e.kind)&&e.team>=0&&G.teams[e.team]&&enemy(G.teams[e.team])){per[e.team]=(per[e.team]||0)+1;c++;}
+    let m=0;for(const T of G.teams)if(enemy(T)){GOAL.pk[T.id]=Math.max(GOAL.pk[T.id]||0,per[T.id]||0);m+=GOAL.pk[T.id];}
+    const tw=G.towns?G.towns.filter(t=>!t.reb):[],mine=tw.filter(t=>t.ow===ME).length,setup=G.t<G.setupEnd;let h='';
+    if(setup){const l=Math.max(0,Math.ceil(G.setupEnd-G.t));h+=`<span class="gs">Setup ${Math.floor(l/60)}:${String(l%60).padStart(2,'0')} · no firing yet</span><i>·</i>`;}
+    h+=`Take towns for income${tw.length?` <span class="gn">(${mine} of ${tw.length} held)</span>`:''}<i>·</i>Destroy the enemy base <span class="gn">(${c} of ${m} structures left)</span>`;
+    return{k:'c'+mine+':'+c,h};}
+  return null;}
+function cqBanner(){if(!G||!(G.conq||G.battle||G.camp)||G.grand){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}
+  if(G.over){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}let b=$('cqBn');
+  if(!b){if(!$('goalCss')){const st=document.createElement('style');st.id='goalCss';st.textContent=`#cqBn{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;max-width:calc(100vw - 420px);color:#e6e1cc;font:500 13px/1.5 system-ui,sans-serif;letter-spacing:.01em;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6)}
+#cqBn .gl{display:inline-block;padding:2px 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;border-radius:3px;background:linear-gradient(90deg,rgba(10,13,10,0),rgba(10,13,10,.62) 18%,rgba(10,13,10,.62) 82%,rgba(10,13,10,0))}
+#cqBn b{font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:11px;color:#d9c48a}#cqBn i{font-style:normal;opacity:.45;margin:0 8px}#cqBn .gn{color:#f3dc8c}#cqBn .gs{color:#ffd77a}#cqBn .gk{color:#9fd36b}#cqBn .gb{opacity:.8}
+#cqBn .gl.fl{animation:goalFl 1.3s ease-out}@keyframes goalFl{0%{background-color:rgba(243,220,140,.45);color:#fff}100%{background-color:rgba(243,220,140,0)}}
+#cqBn .sl{font-size:11.5px;margin-top:1px}`;document.head.appendChild(st);}
+    b=document.createElement('div');b.id='cqBn';document.body.appendChild(b);}
+  const g=goalText();if(!g){if(b.dataset.h){b.dataset.h='';b.innerHTML='';}return;}
+  if(g.k!==GOAL.key){if(GOAL.key&&GOAL.key[0]===g.k[0])GOAL.fl=performance.now();GOAL.key=g.k;}
+  let h=`<div class="gl${performance.now()-GOAL.fl<1300?' fl':''}">${g.h}</div>`;
+  if(!G.camp){const tm=x=>Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0');
    for(const T of G.teams){if(T.reb||T.out||!T.sup)continue;const sec=strikeSecs(T);if(sec<0)continue;const mine=ally(T.id,ME);
-     sl+=`<div style="font-size:12px;margin-top:2px;color:${mine?'#bfe8c4':'#ffb4a8'}">${T.F.name} ${UPLINK[T.fac]?UPLINK[T.fac][0]:'missile strike'}: ${sec<=0.5?'READY':'ready in '+tm(sec)}</div>`;}
-   h+=sl;}
+     h+=`<div class="sl" style="color:${mine?'#bfe8c4':'#ffb4a8'}">${T.F.name} ${UPLINK[T.fac]?UPLINK[T.fac][0]:'missile strike'}: ${sec<=0.5?'READY':'ready in '+tm(sec)}</div>`;}}
   if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
 function strikeSecs(T){let f;if(MODE==='client'&&G.sfd)f=G.sfd[T.id];else f=T._upl?100*T.charge/T.sup.charge:-1;if(f==null||f<0)return -1;return Math.max((1-f/100)*T.sup.charge/.5,G.t<CQ_STRIKE_MIN?CQ_STRIKE_MIN-G.t:0);}
 function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){}
