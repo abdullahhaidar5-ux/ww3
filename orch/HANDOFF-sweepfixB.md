@@ -34,8 +34,12 @@ before/after at 1280: `-army-` (IR army), `-allarmy-` (army + dozer + truck), `-
 ## Not done / notes
 - 1600 wide not shot separately (1280 and 1920 both clean; the dock is at most 700 px wide, so 1600 sits between).
   The 1920 dozer picture shows the first (3-row) dock; army/allarmy at 1280 and 1920 show the final 2-row dock.
-- Gate: `tutorial` failed twice (step 14 never started) — it also fails on most other recent gate branches (flaky);
-  `audio` / `grandlive` failed once and passed on re-run.
+- Gate run 1 (c4248e1, 3-row dock): 25 of 28 green incl. smooth-pc / smooth-mp / grandsmooth; `audio` + `grandlive`
+  failed once and passed on re-run; `tutorial` failed twice ("step 14 never started") — it fails on most other recent
+  gate branches too (flaky, listed as such).
+- Gate run 2 for the final code (f2141d9, `gate/f2141d9d0c`) was still QUEUED when this run stopped: GitHub Actions
+  ran nothing repo-wide from ~02:50 to 03:40 UTC. Its statuses land on that commit when runners resume — the conductor
+  should check them (code after f2141d9 is pictures/docs only). Local re-check of f2141d9: DECISIONS PASS.
 - Nameplate now lives on the minimap: a design call — if Abdullah wants it back next to the cash, the header needs a
   second line (not enough width at 1280 for "Palestine Islamic Brigade").
 - The touch strip (`#tstrip`, phones) is untouched.
