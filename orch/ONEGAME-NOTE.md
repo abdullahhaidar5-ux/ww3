@@ -25,3 +25,12 @@ orch/ammozone (lands before you) made Battle's "your area" circles around your b
 - The AI cuts the enemy's roads and guards its own.
 - Keep it deterministic and in the checkpoint.
 - Proof: a picture of a supplied road, then of the same road cut, in orch/shots/onegame-supply-*.jpg.
+
+
+## Captured buildings resupply (Abdullah 20:53: "Shouldnt these resupply")
+EVERY captured map building is a forward supply point for its owner: quarry, mine, power plant, field hospital, oil refinery, train station, telecom station, artillery position and oil derricks.
+- Units near one refill ammo; give it a small area, like a base building.
+- The ammo dump stays the strongest: a bigger area and faster refill.
+- A held road that connects to a captured building counts as a supply line, just like one to your base.
+- Use the ONE "your area" system from orch/ammozone. Add the captured buildings to it; do not build a second one.
+- Lose the building and its supply stops.
