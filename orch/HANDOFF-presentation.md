@@ -16,3 +16,5 @@ Left / known:
 - Build/unit buttons have no hotkeys: letters Q/W/A/S/D are taken by camera, needs a key-table decision.
 - Missing voice lines: a dedicated "promoted / veteran" line per nation (using existing 'hsel' for now).
 - Ask Abdullah: play a battle 2 minutes, scroll the wheel all the way in, and promote a unit.
+
+Gate result: ready for the gate, not yet judged. `orch/cigate.sh` pushed gate/752cd2b1b5; run 43554480066 was still "queued" 40 min later (GitHub runners busy). Conductor: check `gate/smooth-pc`, `gate/smooth-mp`, then land. Status: READY pending gate.
