@@ -1,0 +1,7 @@
+menu items ["Grand campaign","Conquest","Battle","Missions","Tutorial","Play online","Load game","Settings","Extras","Credits","Random battlefield","Next: Nation →"]
+DW name Zaidi Shia Movement
+conquest {"ban":{"cleric":true,"fort":true,"bb":false,"bbIR":true,"bbUS":false,"fortUS":false,"powIR":true},"shown":["b_fort"],"conq":true,"wasd":true,"rot":{"q45":true,"qSel":0,"home":true,"caSel":2,"drag":-0.6},"btns":24,"bodyHas":["Mountain Fortress"]}
+battle mode {"battle":true,"conq":false,"setupEnd":0,"blds":["hq"],"kinds":["harv","dozer","inf","inf"],"c0":4800,"c1":5920,"tax":false,"name":"Battle"}
+rally flag clicks {"s1":{"rally":true,"flash":true,"sel":0},"s2":{"flag":false,"sel":0,"flags":1}}
+fight-it {"shown":[],"tax":"","money":"","cr":0,"txtA":null}
+DECISIONS PASS
