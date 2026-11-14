@@ -210,3 +210,4 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   battlepower = trig_018AgUEjBd7i3J7ohSFSoeSQ (Sonnet) fired 02:12Z: no map plants in Battle, buildable Generator per nation (equal stats), POWER table,
   Generals low-power rules via existing b.dis, power meter, AI builds them. Conquest keeps map plants. He was also offered Generals-style capturable
   tech buildings (hospital, airfield...) - no answer yet.
+- 20:13 Chicago "Make it so that only certain buildings are reliant on electricity" -> note on orch/battlepower eb8b3e0 + trigger prompt updated: only electronic/high-tech buildings use power; low power never slows barracks/factory. CHECK the result follows it.
