@@ -17,3 +17,16 @@
 **Lands after orch/ammozone** (this branch is built on top of it).
 
 **Try for 2 minutes (PC):** Battle, build a War Factory, buy an Ammo Truck, send a tank group far out to fight, and park the truck behind them: watch their ammo bars fill and the truck's bar drop. Drive it home and watch it reload.
+
+---
+## 2026-11-14 lander: NOT landed (skipped on purpose, too tangled)
+
+The branch forked from main commit a3b627b1, long before orch/onegame (Conquest and grand campaign removed), maptrim, the per-building queues, population cap and Generators landed on main. A trial merge of origin/main into it gave about 100 conflicts (src 01-data, 03-sim, 06-view, 08-ui, 08i-hud, 14-menu and the whole src/13* and test-file deletions), far over the 45 minute limit.
+
+What is left (do it fresh on top of current main, do not merge this branch):
+1. Re-apply the Ammo Truck idea: unit `ammot` for every nation (War Factory, $450, light armour, unarmed; refills units within r=170, ~5 s per unit, up to 6 at once, 800-shot stock in `am`/`amx`; reloads inside the supply area). Look: nation cargo truck body with covered bed + ammo crates, instanced.
+2. Remove the supply circle of the money truck (`SUP_R.harv`) so it never refills ammo; fix tooltips/Z-button/encyclopedia text.
+3. AI: one Ammo Truck at 8+ combat units, second at 18+, never from the random mix. Ctrl+A skips it.
+4. Guard in orch/decisions.mjs (every nation has `ammot`; a harv gives a dry tank nothing; Ammo Truck refills; no text says the supply truck refills ammo).
+5. On current main supply is already "supply lines" (roads and base buildings), so the Ammo Truck is an addition on top of that rule.
+Source of truth for the code to copy: commits d9c4a04 and 94a98a6 on this branch (`git show d9c4a04 -- src/`).
