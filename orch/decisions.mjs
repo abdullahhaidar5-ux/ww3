@@ -265,9 +265,20 @@ try {
   const menu = await ev(() => [...document.querySelectorAll('#menu button, #menu .mx-item, .mx-item')].filter(b => b.offsetParent).map(b => b.textContent.trim()).filter(Boolean).slice(0, 12));
   console.log('menu items', JSON.stringify(menu)); await shot('menu');
   // BATTLE MAP LIST (Abdullah 2026-11-11 19:40): Battle setup offers the Battle map list; Conquest keeps its own list untouched (116 battlefields on 2026-11-13)
-  { const L = await ev(() => { const opts = () => [...document.getElementById('mapSel').options].map(o => o.value).filter(k => !/^cm_/.test(k)); mxSetMode('conquest'); const c = opts(), cm = setup.map; mxSetMode('battle'); const b = opts(), bmap = setup.map, facts = BM_KEYS.map(k => bmInfo(k)); mxSetMode('conquest');
-      return { c, cm, b, bmap, back: setup.map, keys: MAP_KEYS.slice(), bk: BM_KEYS.slice(), facts }; });
-    ck(L.bk.length >= 1 && L.b.join() === L.bk.join() && /^bm_/.test(L.bmap), 'Battle setup must offer the Battle map list, got ' + L.b.slice(0, 8).join(',') + ' (chosen ' + L.bmap + ')');
+  { const L = await ev(() => { const opts = () => [...document.getElementById('mapSel').options].map(o => o.value).filter(k => !/^cm_/.test(k)); mxSetMode('conquest'); const c = opts(), cm = setup.map; mxSetMode('battle'); const b = opts(), bmap = setup.map, facts = BM_KEYS.filter(k => BM[k]).map(k => bmInfo(k)); mxSetMode('conquest');
+      return { c, cm, b, bmap, back: setup.map, keys: MAP_KEYS.slice(), bk: BM_KEYS.slice(), facts, allow: BATTLE_MAPS.map(a => a.slice()), fix: [battleMapFix('strait', 2), battleMapFix('strait', 6), battleMapFix('nosuchmap', 4), battleMapFix('lebanon', 8)].map(k => [k, MAPS[k] && MAPS[k].min, MAPS[k] && MAPS[k].max]), more: !!document.getElementById('mpMore') }; });
+    ck(L.bk.length >= 1 && L.b.join() === L.bk.join() && L.bk.includes(L.bmap), 'Battle setup must offer the Battle map list, got ' + L.b.slice(0, 8).join(',') + ' (chosen ' + L.bmap + ')');
+    // BATTLE MAP ALLOW-LIST (maptrim, Abdullah 2026-11-13 21:17 "cut the Battle list down to great, tested maps"): ONE list (BATTLE_MAPS) is the Battle map list;
+    // every entry has a PASS row (every start 40-60% in AI-vs-AI Battle games) in orch/reports/maptrim.md; a removed map falls back to a listed map with enough slots
+    ck(L.allow.map(a => a[0]).join() === L.bk.join(), 'the Battle map list (BM_KEYS) must equal the allow-list BATTLE_MAPS');
+    { const md = fs.existsSync('orch/reports/maptrim.md') ? fs.readFileSync('orch/reports/maptrim.md', 'utf8') : '';
+      const miss = L.allow.filter(([k]) => !new RegExp('\\| `' + k + '` \\|[^\\n]*PASS').test(md)).map(a => a[0]);
+      ck(!miss.length, 'every Battle map needs a PASS fairness row in orch/reports/maptrim.md, missing: ' + miss.join(','));
+      const cov = n => L.allow.filter(([k, lo, hi]) => lo <= n && hi >= n).length;
+      ck(L.allow.length >= 20 && L.allow.length <= 40, 'the Battle list should hold about 20-40 great maps, has ' + L.allow.length);
+      ck(L.allow.filter(a => a[1] <= 2 && a[2] >= 2).length >= 6 && L.allow.filter(a => a[2] >= 4).length >= 5 && L.allow.filter(a => a[2] >= 6).length >= 4 && L.allow.filter(a => a[2] >= 8).length >= 4, 'Battle list needs maps for 2, up to 4, up to 6 and up to 8 players'); }
+    ck(L.fix.every(f => L.bk.includes(f[0])) && L.fix[1][2] >= 6 && L.fix[2][2] >= 4 && L.fix[3][2] >= 8, 'a removed map must fall back to a listed map with enough slots, got ' + JSON.stringify(L.fix));
+    ck(!L.more, 'the Battle map picker must not offer other (removed) battlefields');
     ck(L.c.join() === L.keys.join() && L.keys.length >= 116 && !L.keys.some(k => /^bm_/.test(k)) && !/^bm_/.test(L.cm) && !/^bm_/.test(L.back), 'Conquest map list changed: ' + L.c.length + ' options, ' + L.keys.length + ' maps, chosen ' + L.cm + ' / ' + L.back);
     ck(L.facts.every(f => f && f.name && f.players >= 2 && f.size && f.theme && f.desc && f.supply >= 2 * f.players && f.oil >= 2), 'every Battle map needs a name, player count, size, theme, one line, supply sources and oil derricks'); }
   // MENU STRUCTURE (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range", "These are distinct"; 21:38 three games): the top level is exactly Single player, Multiplayer, Test range (+ small extras)
