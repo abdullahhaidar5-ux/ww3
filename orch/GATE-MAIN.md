@@ -34,3 +34,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-12 14:30Z 77b4ee84 **RED** (28 gates) failing: audio,cfclient,icons — Conductor train 12: Conquest full base + $10,000, Battle without suppl
 - 2026-11-14 01:39Z a3b627b1 **RED** (27 gates) failing: icons,mpsync — Conductor train 13: campaign to Extras, Battle maps, spy look — histor
 - 2026-11-14 17:45Z 6c3916f9 **RED** (28 gates) failing: audio,cfclient,grandlive,tutorial — Revert "Train: merge orch/pileflag"
+- 2026-11-14 19:25Z 71094e33 **RED** (27 gates) failing: cfclient,controls,tutorial — Train: merge orch/battleclean2
