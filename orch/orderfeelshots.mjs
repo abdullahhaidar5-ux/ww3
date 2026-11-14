@@ -38,7 +38,7 @@ async function game(mode) {
   await page.evaluate(() => { for (const el of document.querySelectorAll('div')) if (/Choose your General Doctrine/.test(el.textContent) && el.getBoundingClientRect().height < 200) el.style.display = 'none'; for (const T of G.teams) if (T.ai) T.ai = null; });
   return { ctx, page };
 }
-const shot = async (page, name, wait = 1200) => { await page.waitForTimeout(wait); await page.screenshot({ path: path.join(SH, `${TAG}-${name}.jpg`), type: 'jpeg', quality: 78, timeout: 300000 }); console.log('shot', `${TAG}-${name}.jpg`); };
+const shot = async (page, name, wait = 1200) => { await page.evaluate(() => { for (const el of document.querySelectorAll('div')) if (/^Choose your General Doctrine/.test(el.textContent) && el.getBoundingClientRect().height < 200) el.style.display = 'none'; }); await page.waitForTimeout(wait); await page.screenshot({ path: path.join(SH, `${TAG}-${name}.jpg`), type: 'jpeg', quality: 78, timeout: 300000 }); console.log('shot', `${TAG}-${name}.jpg`); };
 // software GL needs ~1 min per frame, far longer than a marker lives: hold every marker at 0.2 s of age while the picture is taken
 const freeze = page => page.evaluate(() => { clearInterval(window.__fz); ORDM.age = .2; });
 const resel = page => page.evaluate(() => { G.sel = window.__grp.map(id => G.byId.get(id)).filter(u => u && !u.dead); updateUI(); });
@@ -53,22 +53,25 @@ if (want('cq')) {
     kinds.forEach((k, i) => { const u = addUnit(ME, k, bx + (i % 4) * 22 - 30, by + Math.floor(i / 4) * 26); if (u) us.push(u); });
     us[1].hp = us[1].max * .45; us[8].hp = us[8].max * .6;
     window.__grp = us.map(u => u.id); G.sel = us.slice(); centerOn(bx + 20, by + 30, true); simUpdate(.05); updateUI();
+    for (let i = 0; i < 3; i++) simUpdate(.02); try { placeCam(); } catch (e) {} CAM.updateMatrixWorld(true); CAM.matrixWorldInverse.copy(CAM.matrixWorld).invert();
     const p = toScreen(bx + 20, groundH(bx + 20, by + 20), by + 20); const h = us[9]; const ph = toScreen(h.x, unitH(h) + 4, h.y);
     return { x: p.x, y: p.y, hx: ph.x, hy: ph.y, bx, by };
   });
   // the same functions a right-click calls (orderClick / lineOrder), with the mouse put on the spot: playwright's mouse in a
   // 1-frame-per-minute software-GL page does not land reliably
   const at = (x, y) => page.evaluate(([x, y]) => { mouse.x = x; mouse.y = y; mouse.in = true; try { cursorTick(true); } catch (e) {} }, [x, y]);
-  const order = (x, y, o = {}) => page.evaluate(([x, y, o]) => { mouse.x = x; mouse.y = y; mouse.in = true; G.sel = window.__grp.map(id => G.byId.get(id)).filter(u => u && !u.dead); if (o.am) G.amove = true; MODK.shift = !!o.sh; orderClick(!!o.sh); MODK.shift = false; }, [x, y, o]);
+  const order = (x, y, o = {}) => page.evaluate(([x, y, o]) => { try { placeCam(); } catch (e) {} CAM.updateMatrixWorld(true); CAM.matrixWorldInverse.copy(CAM.matrixWorld).invert(); mouse.x = x; mouse.y = y; mouse.in = true; G.sel = window.__grp.map(id => G.byId.get(id)).filter(u => u && !u.dead); if (o.am) G.amove = true; MODK.shift = !!o.sh; orderClick(!!o.sh); MODK.shift = false; }, [x, y, o]);
   await at(pos.hx, pos.hy); await page.waitForTimeout(300);
   await shot(page, 'selected-group', 2500); console.log('ORDERFEEL', JSON.stringify(await stats(page)));
   await at(5, 5);
-  if (process.env.DBG) { const r = await page.evaluate(() => { const out = {}; mouse.x = 240; mouse.y = 120; mouse.in = true; G.sel = window.__grp.map(id => G.byId.get(id)); out.w = screenToWorld(240, 120); const om = ordMark; let calls = []; window.ordMark = function (...a) { calls.push(a[0]); return om.apply(this, a); }; try { orderClick(false); } catch (e) { out.err = String(e.stack).slice(0, 300); } out.calls = calls; out.list = ORDM.list.map(m => [m.k, Math.round(performance.now() - m.t)]); out.sel = G.sel.length; out.ord = (G.byId.get(window.__grp[0]).order || {}).type; return out; }); console.log('DBG', JSON.stringify(r)); process.exit(0); }
+  if (process.env.DBG) { const r = await page.evaluate((p) => { const out = { VW, VH, iw: innerWidth, cw: cv.width, ccw: cv.clientWidth, asp: CAM.aspect, fov: CAM.fov };
+      const w = { x: p.bx, y: p.by }, h = groundH(w.x, w.y); out.h = h; const s1 = toScreen(w.x, h, w.y); out.s1 = s1; out.back = screenToWorld(s1.x, s1.y); out.plane0 = toScreen(w.x, 0, w.y);
+      const pi = CAM.projectionMatrixInverse.clone(), pm = CAM.projectionMatrix.clone().invert(); out.pinvDiff = pi.elements.reduce((a, v, i) => a + Math.abs(v - pm.elements[i]), 0); return out; }, pos); console.log('DBG', JSON.stringify(r)); process.exit(0); }
   // move order on open ground ahead of the group
-  await order(pos.x + 220, pos.y - 60); await freeze(page);
+  await order(pos.x + 40, pos.y + 110); await freeze(page);
   await shot(page, 'move-marker', 250); console.log('ORDERFEEL', JSON.stringify(await stats(page)));
   // attack-move (F)
-  await page.evaluate(() => { ORDM.list.length = 0; }); await order(pos.x - 240, pos.y - 40, { am: 1 }); await freeze(page);
+  await page.evaluate(() => { ORDM.list.length = 0; }); await order(pos.x - 250, pos.y + 50, { am: 1 }); await freeze(page);
   await shot(page, 'attack-move-marker', 250); console.log('ORDERFEEL', JSON.stringify(await stats(page)));
   // attack: an enemy tank
   const ep = await page.evaluate((p) => { const en = G.teams.find(T => !T.reb && T.id !== ME); const u = addUnit(en.id, 'tank', p.bx + 120, p.by - 150); u.vis = true; ORDM.list.length = 0; const s = toScreen(u.x, unitH(u) + 5, u.y); return { x: s.x, y: s.y }; }, pos);
