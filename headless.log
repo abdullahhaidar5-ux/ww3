@@ -1,0 +1,103 @@
+  day {"inf":280,"tank":280,"heli":340,"b":340} 
+  night {"inf":168,"tank":252,"heli":306,"b":204}
+NIGHT PASS — night sight x0.6, thermal x0.9, dusk between, changing cycles
+settings
+  ok   Easy and Normal do not get the new tactics
+  ok   Hard has weak-side probing, artillery protection and air-ground teamwork
+  ok   Hard gets no extra money (income x1, same as Normal)
+weak side
+  ok   no defences on either side: no preference
+  ok   guns on side +1: flank goes round side -1
+  ok   guns on side -1: flank goes round side +1
+  ok   Normal AI never probes
+artillery protection (US, not Zealous)
+  ok   escorts turn on the troops threatening the gun
+  ok   the gun steps back from them
+artillery protection (IR, Zealous: never pulls back)
+  ok   IR is a Zealous nation in this test
+  ok   escorts still turn on the threat
+  ok   the gun is never ordered back
+air works with the ground attack
+  ok   no wave out, nothing seen: no special target (old random pick)
+  ok   wave out: jets support it at its target
+  ok   wave out and a defence gun near the target: jets hit the gun first
+  ok   enemy artillery it cannot see is not targeted (no extra vision)
+  ok   enemy artillery it can see is hunted from the air
+  ok   Normal AI keeps the old behaviour
+AIHARD PASS
+node: 2 players [portable math: sin,cos,atan2,exp,pow] US vs RU vs DW on Straits of Thunder (strait), seed 1; sim loaded in 26 ms, battle set up in 979 ms; map 33cbf75c5c79b96d
+  t=   0s  d4cf5e653309c7af
+  t=  10s  b33f57d641fa97d4  ents   30    58.5 ms CPU/game-s  5u2b 5u2b 16u0b
+  t=  20s  d3e947787108aa30  ents   38    47.8 ms CPU/game-s  7u3b 9u3b 16u0b
+  t=  30s  d586dc5b2de20a7f  ents   44    48.9 ms CPU/game-s  8u4b 12u4b 16u0b
+  t=  40s  7b4890e661504116  ents   48    58.6 ms CPU/game-s  10u5b 12u5b 16u0b
+  t=  50s  4ab8c77cd602dfce  ents   52    36.1 ms CPU/game-s  13u5b 13u5b 16u0b
+  t=  60s  f4bbacc31f4e7c36  ents   52    18.7 ms CPU/game-s  13u5b 12u6b 16u0b
+  t=  70s  8e109427d7c543cb  ents   52    15.2 ms CPU/game-s  13u5b 12u6b 16u0b
+  t=  80s  2fbcc9f116348da3  ents   52    29.6 ms CPU/game-s  14u5b 11u6b 16u0b
+  t=  90s  30c3c6e999db9379  ents   55    23.1 ms CPU/game-s  14u5b 14u6b 16u0b
+  t= 100s  1b35cb53e0756a52  ents   56    14.8 ms CPU/game-s  14u5b 15u6b 16u0b
+  t= 110s  5f6af0d59dbc69b0  ents   58    22.2 ms CPU/game-s  14u6b 16u6b 16u0b
+  t= 120s  872a0775aa6d8968  ents   58    16.4 ms CPU/game-s  14u6b 16u6b 16u0b
+  t= 130s  70f3839b4ee7d6e1  ents   58    15.3 ms CPU/game-s  14u6b 15u7b 16u0b
+  t= 140s  0a93e3b4448a06ca  ents   59    11.1 ms CPU/game-s  14u7b 14u8b 16u0b
+  t= 150s  1433bb09596a631c  ents   59    12.7 ms CPU/game-s  14u7b 14u8b 16u0b
+  t= 160s  1a25f48f0beb0861  ents   61    16.2 ms CPU/game-s  14u7b 16u8b 16u0b
+  t= 170s  3e1cdadd8ecaa68e  ents   63    18.5 ms CPU/game-s  14u7b 18u8b 16u0b
+  t= 180s  9b304a04c94d0e4e  ents   65    14.5 ms CPU/game-s  14u8b 19u8b 16u0b
+  t= 190s  6945ff2199b54c15  ents   62    60.9 ms CPU/game-s  10u8b 20u8b 16u0b
+  t= 200s  5790408888dc7a46  ents   65    21.2 ms CPU/game-s  10u8b 23u8b 16u0b
+  t= 210s  2db1ea037c40360b  ents   67    65.8 ms CPU/game-s  10u8b 25u8b 16u0b
+  t= 220s  4b78986464d3d084  ents   68    48.9 ms CPU/game-s  10u8b 26u8b 16u0b
+  t= 230s  4d51750652368500  ents   70    18.8 ms CPU/game-s  10u8b 28u8b 16u0b
+  t= 240s  2513fb3f18fe2670  ents   71    49.4 ms CPU/game-s  10u8b 29u8b 16u0b
+  t= 250s  351f867293a7eb95  ents   73    26.0 ms CPU/game-s  11u8b 30u8b 16u0b
+  t= 260s  ebd82c97f688b997  ents   74    45.3 ms CPU/game-s  11u8b 30u9b 16u0b
+  t= 270s  092705e5e2c90355  ents   75    29.7 ms CPU/game-s  11u8b 31u9b 16u0b
+  t= 280s  af606d1fd05faf44  ents   75    97.5 ms CPU/game-s  11u8b 31u9b 16u0b
+  t= 290s  eb1c39920c365cb6  ents   76    56.8 ms CPU/game-s  12u8b 31u9b 16u0b
+  t= 300s  9b3d20d40a0e876d  ents   76    57.8 ms CPU/game-s  12u8b 31u9b 16u0b
+
+final after 5.0 game-min: 76 entities, 0 projectiles in flight
+  slot 0 US: 12 units, 8 buildings, $268, built 15, lost 4, kills 3
+  slot 1 RU: 31 units, 9 buildings, $1101, built 37, lost 3, kills 4
+  slot 2 DW: 16 units, 0 buildings, $0, built 0, lost 0, kills 0
+  sim cost: 35.2 ms of CPU per game-second on average (process CPU time; frozen pathfinding clock)
+  final hash 9b3d20d40a0e876d
+
+browser (Chromium, real index.html, no drawing): US vs RU vs DW on Straits of Thunder; map 33cbf75c5c79b96d
+  t=   0s  d4cf5e653309c7af  same
+  t=  10s  b33f57d641fa97d4  same    32.9 ms/game-s in the page
+  t=  20s  d3e947787108aa30  same    27.4 ms/game-s in the page
+  t=  30s  d586dc5b2de20a7f  same    45.0 ms/game-s in the page
+  t=  40s  7b4890e661504116  same    48.6 ms/game-s in the page
+  t=  50s  4ab8c77cd602dfce  same    29.6 ms/game-s in the page
+  t=  60s  f4bbacc31f4e7c36  same    44.3 ms/game-s in the page
+  t=  70s  8e109427d7c543cb  same    24.9 ms/game-s in the page
+  t=  80s  2fbcc9f116348da3  same    28.3 ms/game-s in the page
+  t=  90s  30c3c6e999db9379  same    26.3 ms/game-s in the page
+  t= 100s  1b35cb53e0756a52  same    22.1 ms/game-s in the page
+  t= 110s  5f6af0d59dbc69b0  same    29.9 ms/game-s in the page
+  t= 120s  872a0775aa6d8968  same    23.3 ms/game-s in the page
+  t= 130s  70f3839b4ee7d6e1  same    15.1 ms/game-s in the page
+  t= 140s  0a93e3b4448a06ca  same    16.7 ms/game-s in the page
+  t= 150s  1433bb09596a631c  same    15.0 ms/game-s in the page
+  t= 160s  1a25f48f0beb0861  same    23.0 ms/game-s in the page
+  t= 170s  3e1cdadd8ecaa68e  same    15.2 ms/game-s in the page
+  t= 180s  9b304a04c94d0e4e  same    15.1 ms/game-s in the page
+  t= 190s  6945ff2199b54c15  same    46.8 ms/game-s in the page
+  t= 200s  5790408888dc7a46  same    26.9 ms/game-s in the page
+  t= 210s  2db1ea037c40360b  same    45.9 ms/game-s in the page
+  t= 220s  4b78986464d3d084  same    42.1 ms/game-s in the page
+  t= 230s  4d51750652368500  same    32.7 ms/game-s in the page
+  t= 240s  2513fb3f18fe2670  same    38.2 ms/game-s in the page
+  t= 250s  351f867293a7eb95  same    36.3 ms/game-s in the page
+  t= 260s  ebd82c97f688b997  same    37.0 ms/game-s in the page
+  t= 270s  092705e5e2c90355  same    31.8 ms/game-s in the page
+  t= 280s  af606d1fd05faf44  same   102.3 ms/game-s in the page
+  t= 290s  eb1c39920c365cb6  same    81.0 ms/game-s in the page
+  t= 300s  9b3d20d40a0e876d  same    73.6 ms/game-s in the page
+peak memory (node + browser, summed RSS): 1801 MB
+sim cost: Node 35.2 ms of CPU per game-second; Chromium 35.9 ms of wall-clock time per game-second in the page
+
+HEADLESS PASS — 31 state hashes identical (Node v22.23.4 vs Chromium), 5.0 game-min, 76 entities at the end
