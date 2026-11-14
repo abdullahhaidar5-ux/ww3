@@ -382,6 +382,8 @@ try {
   const d = await ev(() => { const o = {}; o.fk = FKEYS.slice(); o.ms = MORALE_STYLE; o.rout0 = Object.entries(MORALE_STYLE).filter(([k, s]) => MSTYLES[s].rout === 0).map(([k]) => k).sort().join(' ');
     o.dw = (FACTIONS.DW || {}).name; o.rosterIR = roster('IR').barracks.concat(roster('IR').factory); return o; });
   ck(!d.fk.includes('EU'), 'EU still in FKEYS (retired from menus)');
+  // nodoc 2026-11-14 (Abdullah 16:54 "Remove doctrines"): no doctrine can be picked and no doctrine buttons exist
+  { const nd = await ev(() => ({ pick: gdPick(ME, GDOC_KEYS[0]), btn: !!document.querySelector('#panel [id^="dc_"],#panel [id^="dp_"],#gdocSel') })); ck(!nd.pick && !nd.btn, 'doctrines must be gone: ' + JSON.stringify(nd)); }
   // novdig 2026-11-14 (Abdullah 14:55 "Make it so that vehicles can't dig in"): no vehicle can dig in, infantry still can
   { const vd = await ev(() => { const T = G.teams[ME]; const k = allUnits(T.fac).find(k => { const s = stats(T.fac, k); return s.dom === 'ground' && isVeh(s) && s.dmg > 0 && k !== 'dozer' && k !== 'harv'; }); const u = { s: stats(T.fac, k), kind: k, team: ME, x: 0, y: 0, hp: 1, max: 1 }; return { veh: !!k && digCan(u), inf: allUnits(T.fac).some(k => isInf(stats(T.fac, k))) }; });
     ck(!vd.veh, 'vehicles must not be able to dig in'); }

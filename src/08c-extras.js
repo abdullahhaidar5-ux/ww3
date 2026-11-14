@@ -172,7 +172,7 @@ function vcStart(){if(!VC.SR||VC.on||!G||G.over||PHX.on)return;VC.on=true;VC.han
     r.onend=()=>{VC.on=false;VC.rec=null;const b2=$('vcBtn');if(b2)b2.classList.remove('live');vcFinish(VC.alts);};
     r.start();}catch(e){VC.on=false;VC.rec=null;if(b)b.classList.remove('live');vcSay('🎤 Voice commands are not available here','',true);}}
 function vcStop(){if(VC.rec)xsTry(()=>VC.rec.stop());}
-(function vcInit(){if(!VC.SR)return;const ref=$('aPause');if(!ref)return;const b=document.createElement('button');b.id='vcBtn';b.type='button';b.className=ref.className;b.textContent='🎤';b.title='Hold and speak a command (or hold V)';b.setAttribute('aria-label','Voice command: hold and speak');ref.before(b);
+(function vcInit(){return;/* voice commands removed (Abdullah 2026-11-14 16:57 "remove voice controls") */if(!VC.SR)return;const ref=$('aPause');if(!ref)return;const b=document.createElement('button');b.id='vcBtn';b.type='button';b.className=ref.className;b.textContent='🎤';b.title='Hold and speak a command (or hold V)';b.setAttribute('aria-label','Voice command: hold and speak');ref.before(b);
   const lg=document.createElement('button');lg.id='aVoiceLang';lg.type='button';lg.setAttribute('role','menuitem');const pm=$('aPhoto')||$('aPauseM');if(pm)pm.after(lg);
   const sl=()=>{const e=VC_LANGS.find(l=>l[0]===VC.lang)||VC_LANGS[0];lg.textContent='🎤 Voice language: '+e[1];};sl();
   lg.onclick=e=>{e.stopPropagation();const i=VC_LANGS.findIndex(l=>l[0]===VC.lang);VC.lang=VC_LANGS[(i+1)%VC_LANGS.length][0];xsTry(()=>localStorage.setItem('ww3_voiceLang',VC.lang));sl();};

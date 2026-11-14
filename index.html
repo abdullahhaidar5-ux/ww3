@@ -7961,7 +7961,8 @@ function natPower(team,P,x,y){const T=G.teams[team],hq=hqOf(team),en=e=>!e.dead&
     case 'raid':{T.raidT=G.t+25*P.M;T.reveals.push({x,y,r:P.r,t:25*P.M});FXE('ping',[x|0,y|0,P.r],team);return true;}}
   return false;}
 // ---------- General Doctrines: pick (free, first GDOC_LATE seconds, before any perk), buy perks (1 rank point each), recon flights ----------
-function gdPick(team,k){const T=G.teams[team];if(!T||T.out||!GDOC[k]||T.gdoc===k)return false;if(Object.keys(T.gperk).length||(G.t>GDOC_LATE&&!G.sandbox))return false;T.gdoc=k;T._uk=null;log(team,`Doctrine: ${GDOC[k].name}. Buy its perks with general-rank points.`,'g');return true;}
+/* Abdullah 2026-11-14 16:54 "Remove doctrines": no General Doctrine or doctrine tree can be picked (old saves keep none) */
+function gdPick(team,k){return false;const T=G.teams[team];if(!T||T.out||!GDOC[k]||T.gdoc===k)return false;if(Object.keys(T.gperk).length||(G.t>GDOC_LATE&&!G.sandbox))return false;T.gdoc=k;T._uk=null;log(team,`Doctrine: ${GDOC[k].name}. Buy its perks with general-rank points.`,'g');return true;}
 function gdBuy(team,k){const T=G.teams[team],p=GDOC_PERKS[k];if(!T||T.out||!p||p.doc!==T.gdoc||T.gperk[k]||T.rank-T.spent<1||(p.req&&!T.gperk[p.req]))return false;T.spent+=1;T.gperk[k]=1;T._uk=null;log(team,`${p.name}: ${p.desc}.`,'g');return true;}
 function aiPerk(id){const T=G.teams[id],D=GDOC[T.gdoc];if(!D)return false;for(const p of D.perks)if(!T.gperk[p.k]&&(!p.req||T.gperk[p.req]))return gdBuy(id,p.k);return false;}
 function gdRecon(dt){for(const T of G.teams){if(T.out||!T.gdoc||!gdHas(T,'i2'))continue;T.rcT=(T.rcT||0)-dt;if(T.rcT>0)continue;T.rcT=75;const en=G.teams.filter(O=>O.id!==T.id&&!ally(O.id,T.id)&&!O.out);if(!en.length)continue;T.rcN=((T.rcN||0)+1);const O=en[T.rcN%en.length];const hq=hqOf(O.id);if(!hq)continue;const a=T.rcN*2.4;T.reveals.push({x:hq.x+Math.cos(a)*180,y:hq.y+Math.sin(a)*180,r:320,t:10});if(!T.ai)log(T.id,'Recon flight: enemy area revealed.','g');}}
@@ -12554,8 +12555,8 @@ const KEYTAB=[
   {id:'guard',ctx:'battle',grp:'Orders',name:'Guard (then click)',def:'g'},
   {id:'stop',ctx:'battle',grp:'Orders',name:'Stop',def:'x'},
   {id:'ret',ctx:'battle',grp:'Orders',name:'Return to base',def:'r'},
-  {id:'stance',ctx:'battle',grp:'Orders',name:'Next stance (hold: talk to your team)',def:'v'},
-  {id:'form',ctx:'battle',grp:'Orders',name:'Next formation / plan a team order',def:'o'},
+  {id:'stance',ctx:'battle',grp:'Orders',name:'Next stance',def:'v'},
+  {id:'form',ctx:'battle',grp:'Orders',name:'Next formation',def:'o'},
   {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (dozers: trench)',def:'i'},
   {id:'resup',ctx:'battle',grp:'Orders',name:'Resupply ammunition',def:'z'},
   {id:'abil',ctx:'battle',grp:'Orders',name:'Unit or leader ability, sonar ping, Recon power (with Shift: leader\'s ultimate)',def:'e'},
@@ -13523,11 +13524,11 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
   const ups=upgList(T.fac);for(const c of CATS){const list=ups.filter(k=>UPG[k].at===c);if(!list.length)continue;sub('upg',STRUCT[c].name);for(const k of list){const U=UPG[k];{const ub=mk('upg','g_'+k,upgName(T.fac,k)+(U.sp?' ★':''),'$'+U.cost,U.desc,()=>doAct({t:'up',k}),null,true);ub.dataset.from=U.at;}}}
   for(const k in POWERS){if(sigBan(T.fac,k))continue;const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});}/* owned powers are used from the side rail / hotkey */},null,true);}
   sub('pow','Level up');for(const k in POWERS){if(sigBan(T.fac,k))continue;const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
-  sub('pow','General Doctrine (pick in the first 2 minutes)');for(const d of GDOC_KEYS){const D=GDOC[d];mk('pow','dc_'+d,D.name,'',D.blurb,()=>doAct({t:'doc',k:d}),null,true);}
-  sub('pow','Doctrine tree (1 point per perk; tier 2 needs tier 1, tier 3 needs the perk it hangs from)');const fcN=(G&&G.teams[ME]&&G.teams[ME].fac)||setup.p;for(const d of GDOC_KEYS)for(const p of GDOC[d].perks)mk('pow','dp_'+p.k,'T'+p.t+' '+gdName(fcN,p),'',(p.req?'Needs '+gdName(fcN,GDOC_PERKS[p.req])+'. ':'Tree root. ')+p.desc,()=>doAct({t:'dbuy',k:p.k}),null,true);
+  /* doctrines removed (Abdullah 2026-11-14 "Remove doctrines") */
+  
   showTab(TAB);try{PQ.fk=null;PQ.sig='';PQ.tabFor='';}catch(e){}updateUI();}
 // General Doctrine picker: a big touch-friendly card for the first 2 minutes, plus the buttons in the Powers tab
-function docUI(T){if(!G||!T)return;const lock=Object.keys(T.gperk||{}).length>0||(G.t>GDOC_LATE&&!G.sandbox),pts=T.rank-T.spent;
+function docUI(T){{const ov=$('docPick');if(ov)ov.hidden=true;}return;if(!G||!T)return;const lock=Object.keys(T.gperk||{}).length>0||(G.t>GDOC_LATE&&!G.sandbox),pts=T.rank-T.spent;
   for(const d of GDOC_KEYS){setBtn('dc_'+d,{dis:lock||T.gdoc===d,done:T.gdoc===d,cost:T.gdoc===d?'Your doctrine':lock?'Locked':'Pick (free)'});for(const p of GDOC[d].perks){const b=$('dp_'+p.k);if(!b)continue;const sh=T.gdoc===d,dv=sh?'':'none';if(b.style.display!==dv){b.style.display=dv;if(sh)fitBtnNames();}if(sh){const own=!!(T.gperk&&T.gperk[p.k]);const rq=gdReq(T,p);setBtn('dp_'+p.k,{dis:own||pts<1||!rq,done:own,cost:own?'Active':!rq?'Needs '+gdName(T.fac,GDOC_PERKS[p.req]):'1 point'});}}}
   if(!G.docSent&&setup.gdoc&&!T.gdoc&&G.t>.5&&!G.sandbox){G.docSent=1;doAct({t:'doc',k:setup.gdoc});}
   let ov=$('docPick');const show=!T.gdoc&&!lock&&!T.out&&!G.sandbox&&!G.docDis&&G.t>1&&!G.over&&!G.sel.length;
@@ -14708,7 +14709,7 @@ function ssnUI(){const r=$('ssnRow');if(r)r.querySelectorAll('button').forEach(b
 {const wr=$('wx');if(wr&&wr.parentNode&&!$('ssnRow')){const lb=document.createElement('div');lb.className='label';lb.textContent='Season';const row=document.createElement('div');row.className='seg';row.id='ssnRow';
   [[0,'Map default','Each map starts in its own season (snow maps in winter, the rest in summer)'],[1,'Summer','Dry ground, green foliage'],[2,'Autumn mud','Mud and puddles: wheeled vehicles slow a lot off the roads, tanks a little. Roads matter more'],[3,'Winter snow','Snow: infantry slow down off the roads, vehicles a little. Roofs and trees are white']].forEach(([v,n,t])=>{const b=document.createElement('button');b.type='button';b.dataset.s=v;b.textContent=n;b.title=t;b.onclick=()=>ssnSet(v);row.append(b);});
   wr.after(lb,row);ssnUI();}}
-{const dr=$('diff');if(dr&&dr.parentNode&&!$('gdocSel')){const w=document.createElement('div');w.id='gdocSel';w.style.cssText='margin:8px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center';const l=document.createElement('span');l.textContent='Doctrine:';l.style.cssText='font-size:13px;opacity:.85;margin-right:4px';w.append(l);
+{const dr=null;if(dr&&dr.parentNode&&!$('gdocSel')){const w=document.createElement('div');w.id='gdocSel';w.style.cssText='margin:8px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center';const l=document.createElement('span');l.textContent='Doctrine:';l.style.cssText='font-size:13px;opacity:.85;margin-right:4px';w.append(l);
   for(const d of ['',...GDOC_KEYS]){const b=document.createElement('button');b.type='button';b.textContent=d?GDOC[d].name:'Pick in battle';b.title=d?GDOC[d].blurb:'Choose in the first 2 minutes of the battle';b.style.cssText='min-height:40px;padding:0 12px;border-radius:6px;border:1px solid #667;background:#222;color:#eee;touch-action:manipulation';b.onclick=()=>{setup.gdoc=d;w.querySelectorAll('button').forEach(x=>x.style.background=x===b?'#4a5a38':'#222');};if((setup.gdoc||'')===d)b.style.background='#4a5a38';w.append(b);}
   dr.parentNode.insertBefore(w,dr.nextSibling);}}
 {const dd=$('diff');if(dd&&!dd.querySelector('[data-d="3"]')){const b=document.createElement('button');b.dataset.d='3';b.textContent='Brutal';b.title='Hard\'s tactics, sharper: faster thinking, more flanking, focus fire, raids on supply trucks, damaged units pulled back to repair. No extra money and no extra vision';dd.append(b);}}
@@ -15757,7 +15758,7 @@ function vcStart(){if(!VC.SR||VC.on||!G||G.over||PHX.on)return;VC.on=true;VC.han
     r.onend=()=>{VC.on=false;VC.rec=null;const b2=$('vcBtn');if(b2)b2.classList.remove('live');vcFinish(VC.alts);};
     r.start();}catch(e){VC.on=false;VC.rec=null;if(b)b.classList.remove('live');vcSay('🎤 Voice commands are not available here','',true);}}
 function vcStop(){if(VC.rec)xsTry(()=>VC.rec.stop());}
-(function vcInit(){if(!VC.SR)return;const ref=$('aPause');if(!ref)return;const b=document.createElement('button');b.id='vcBtn';b.type='button';b.className=ref.className;b.textContent='🎤';b.title='Hold and speak a command (or hold V)';b.setAttribute('aria-label','Voice command: hold and speak');ref.before(b);
+(function vcInit(){return;/* voice commands removed (Abdullah 2026-11-14 16:57 "remove voice controls") */if(!VC.SR)return;const ref=$('aPause');if(!ref)return;const b=document.createElement('button');b.id='vcBtn';b.type='button';b.className=ref.className;b.textContent='🎤';b.title='Hold and speak a command (or hold V)';b.setAttribute('aria-label','Voice command: hold and speak');ref.before(b);
   const lg=document.createElement('button');lg.id='aVoiceLang';lg.type='button';lg.setAttribute('role','menuitem');const pm=$('aPhoto')||$('aPauseM');if(pm)pm.after(lg);
   const sl=()=>{const e=VC_LANGS.find(l=>l[0]===VC.lang)||VC_LANGS[0];lg.textContent='🎤 Voice language: '+e[1];};sl();
   lg.onclick=e=>{e.stopPropagation();const i=VC_LANGS.findIndex(l=>l[0]===VC.lang);VC.lang=VC_LANGS[(i+1)%VC_LANGS.length][0];xsTry(()=>localStorage.setItem('ww3_voiceLang',VC.lang));sl();};
@@ -15785,7 +15786,7 @@ function goalText(){if(GOAL.g!==G){GOAL.g=G;GOAL.pk={};GOAL.key='';}const me=G.t
   if(G.battle){let n=0;for(const e of G.ents)if(e.isB&&!e.dead&&e.built>=1&&e.kind!=='garrison'&&e.team>=0&&G.teams[e.team]&&enemy(G.teams[e.team]))n++;
     return{k:'b'+n,h:`<b>Battle</b><i>·</i>Destroy every enemy building <span class="gn">(${n} left)</span>`};}
   return null;}
-function cqBanner(){if(!G||!(G.battle||G.camp)||G.grand){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}
+function cqBanner(){if(!G||!(G.battle||G.camp)||G.grand||window.LOADING){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}
   if(G.over){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}let b=$('cqBn');
   if(!b){if(!$('goalCss')){const st=document.createElement('style');st.id='goalCss';st.textContent=`#cqBn{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;max-width:calc(100vw - 420px);color:#e6e1cc;font:500 13px/1.5 system-ui,sans-serif;letter-spacing:.01em;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6)}
 #cqBn .gl{display:inline-block;padding:2px 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;border-radius:3px;background:linear-gradient(90deg,rgba(10,13,10,0),rgba(10,13,10,.62) 18%,rgba(10,13,10,.62) 82%,rgba(10,13,10,0))}
@@ -16628,7 +16629,8 @@ function ctPlanTick(){if(!G||G.over||G.paused||MODE==='spectate'||NET.spec)retur
       if(near>=Math.ceil(us.length*.7)||G.t-pl.tIss>100){pl.st='wait';pl.arr=G.t;if(s.t==='h'||pl.i===pl.steps.length-1){pl.st='done';pl.tDone=G.t;pushLog(`Plan ${pl.n} complete.`,'g');}}continue;}
     const s=pl.steps[pl.i+1];if(!s){pl.st='done';pl.tDone=G.t;continue;}
     if(ctTrigOk(pl,s,pl.i<0?pl.t0:pl.arr))ctStepFire(pl);}}
-function ctPlanStart(){const ids=selfSel().map(u=>u.id);if(!ids.length){pushLog('Select some units first, then draw their plan.','w');return;}CT.mode='plan';CT.draft={ids,steps:[]};ctUI();}
+function ctPlanStart(){return;}
+function ctPlanStart_old(){const ids=selfSel().map(u=>u.id);if(!ids.length){pushLog('Select some units first, then draw their plan.','w');return;}CT.mode='plan';CT.draft={ids,steps:[]};ctUI();}
 function ctPlanFinish(){const d=CT.draft;CT.mode=null;CT.draft=null;if(!d||!d.steps.length){ctUI();return;}
   for(const p of CT.plans)p.ids=p.ids.filter(i=>!d.ids.includes(i));CT.plans=CT.plans.filter(p=>p.ids.length);
   const pl={n:++CT.pid,ids:d.ids,steps:d.steps,i:-1,st:'wait',t0:G.t,arr:G.t,go:false};CT.plans.push(pl);pushLog(`Plan ${pl.n} set: ${pl.steps.length} step${pl.steps.length>1?'s':''}.`,'g');sfxUI(520);ctPlanTick();ctUI();}
@@ -16689,8 +16691,7 @@ window.addEventListener('contextmenu',e=>{if(CT.mode&&(e.target===cv||e.target==
 /* ---- keys (the one key table: O plan, Enter go / finish, , . / ping, ' draw, ; circle; Esc leaves a tool) ---- */
 window.addEventListener('keydown',e=>{if(!G||G.over||(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA'))||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key;
   if(k==='Escape'&&CT.mode){e.stopImmediatePropagation();e.preventDefault();ctToolOff();return;}
-  if(k==='Enter'){if(CT.mode==='plan'){e.preventDefault();ctPlanFinish();}else if(CT.plans.some(p=>p.st==='wait'&&p.steps[p.i+1]&&p.steps[p.i+1].trig==='go')){e.preventDefault();ctGoAll();}return;}
-  if(k==='o'||k==='O'){e.preventDefault();CT.mode==='plan'?ctPlanFinish():ctPlanStart();return;}
+  /* battle plans removed (Abdullah 2026-11-14 16:55 "Remove battle plans"): O is only Next formation again */
   const pm={',':'ping0','.':'ping1','/':'ping2',"'":'draw',';':'circle'}[k];if(pm&&ctTeamPlay()){e.preventDefault();CT.mode=CT.mode===pm?null:pm;CT.draft=null;ctUI();}},true);
 function ctTeamPlay(){return !!G&&!G.sandbox&&G.teams.some(O=>O.id!==ME&&!O.reb&&!O.out&&sameTm(O.id,ME));}
 /* ---- the panel ---- */
@@ -16743,9 +16744,6 @@ function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=nul
   const abA=typeof abMine==='function'?abMine():null,abT=abA&&abA.list.length?(abA.on!==false?' · ● on':' · ❚❚ paused'):'';
   let h=`<h4 data-a="tog"><span>Command</span><span class="abc" data-a="abtog" title="Auto-build: standing production orders (key U)">Auto-build [U]${abT}</span><small>${CT.open?'▾':'▸'}</small></h4>`;
   if(CT.open){
-    h+=`<div class="sec">Battle plans · key O</div><div class="row"><button class="${CT.mode==='plan'?'on':''}" data-a="plan" ${sel||CT.mode==='plan'?'':'disabled'}>${CT.mode==='plan'?'Finish plan':'Plan for selection'}</button>${CT.plans.some(p=>p.st==='wait'&&p.steps[p.i+1]&&p.steps[p.i+1].trig==='go')?'<button data-a="goall">GO ▶ (Enter)</button>':''}</div>`;
-    for(const p of CT.plans){const nx=p.steps[p.i+1],txt=p.st==='done'?'done':p.st==='move'?`step ${p.i+1}/${p.steps.length} under way`:nx?(nx.trig==='go'?`step ${p.i+2}: waiting for GO`:nx.trig==='timer'?`step ${p.i+2} in ${ctFmt(nx.sec-(G.t-(p.i<0?p.t0:p.arr)))}`:`step ${p.i+2} next`):'done';
-      h+=`<div class="row"><b>Plan ${p.n}</b><small>${ctMine(p.ids).length} units · ${txt}</small>${nx&&nx.trig==='go'&&p.st==='wait'?`<button data-a="go" data-v="${p.n}">GO ▶</button>`:''}<button data-a="pdel" data-v="${p.n}">✕</button></div>`;}
     h+='<div class="sec">Battle groups · keys 1-9 (Ctrl/Shift+number saves)</div>';let any=0;
     for(let i=1;i<=SQN;i++){const L=sqList(i);if(!L.length)continue;any=1;const hp=L.reduce((s,u)=>s+u.hp,0)/Math.max(1,L.reduce((s,u)=>s+u.max,0)),am=L.filter(u=>u.amx>0),ap=am.length?am.reduce((s,u)=>s+u.am,0)/am.reduce((s,u)=>s+u.amx,0):-1,f=CT.form[i]||'line';
       h+=`<div class="row" ><span class="nm" data-a="gname" data-v="${i}" data-n="${i}" title="Click: next name. Double-click: type a name">${ctGroupName(i)}</span><small>${L.length} units</small><span class="bar" title="Health ${Math.round(hp*100)}%"><i style="width:${Math.round(hp*100)}%;background:${hp>.6?'#74d08f':hp>.3?'#e3b341':'#ea5a40'}"></i></span>${ap>=0?`<span class="bar" title="Ammo ${Math.round(ap*100)}%"><i style="width:${Math.round(ap*100)}%;background:${ap>.4?'#6fb2ff':'#ea5a40'}"></i></span>`:''}</div>
@@ -17749,7 +17747,9 @@ html body #side::before{top:-14px!important;clip-path:polygon(0 14px,calc(50% - 
  box-shadow:inset 0 2px 0 #f1f5f8,inset 0 -3px 0 #1a1f24,inset 3px 0 0 #d2d9df,inset -3px 0 0 #1a1f24!important}
 html body #side #sideTop{grid-column:1!important;grid-row:1!important;padding:6px!important;background:#0a0f12!important;border-radius:6px!important;box-shadow:inset 0 0 0 2px #2a3138,0 0 0 2px #dfe5ea,0 0 0 4px #5d6873!important}
 html body #side #sideTop::after{display:none!important}
-html body #side .cardhd,html body #side .tabs,html body #side .sqbar,html body #side #facname,html body #side #mmBtn{display:none!important}
+html body #side .cardhd{position:absolute!important;left:0;top:0;width:0!important;height:0!important;padding:0!important;margin:0!important;overflow:visible!important}
+html body #side #fmb:not(.zhfm){display:none!important}
+html body #side .tabs,html body #side .sqbar>:not(#fmb),html body #side #facname,html body #side #mmBtn{display:none!important}
 /* side buttons */
 html body #side .stat>.hdr{grid-column:2!important;grid-row:1!important;display:flex!important;flex-direction:column!important;justify-content:space-between!important;align-items:stretch;gap:4px!important;padding:2px 0!important;background:none!important;box-shadow:none!important}
 html body #side .stat>.hdr button{width:40px;height:30px;padding:0!important;font:700 13px system-ui,sans-serif!important;color:#fff;border-radius:4px;border:1px solid #1a1f24;overflow:hidden;white-space:nowrap;
@@ -17784,7 +17784,10 @@ html body #side #panel .btn .q{position:absolute!important;right:3px;top:2px;fon
 html body #side #panel .btn .p{position:absolute!important;left:0;bottom:0;height:100%!important;background:rgba(0,0,0,.55)!important;box-shadow:none!important;border-radius:0!important;opacity:.9}
 html body #side #panel .zhEmpty{display:none!important}
 /* unit orders as pictures at the right end of the panel */
-.orddock.zhin{right:auto!important;bottom:auto!important;min-width:0!important;padding:6px!important;background:none!important;box-shadow:none!important;border:0!important;display:flex!important;flex-wrap:wrap-reverse;justify-content:flex-end;align-content:flex-start;gap:4px;pointer-events:none}
+.orddock.zhin{right:auto!important;bottom:auto!important;min-width:0!important;padding:6px!important;background:none!important;box-shadow:none!important;border:0!important;display:flex!important;flex-wrap:wrap;justify-content:center;align-content:center;gap:4px;pointer-events:none}
+.orddock.zhin.zhb{justify-content:flex-end;align-content:flex-start;flex-wrap:wrap-reverse}
+#fmb.zhfm{position:fixed!important;z-index:8;display:flex!important;justify-content:center;gap:6px!important;margin:0!important}
+#fmb.zhfm button{min-width:86px;height:32px;font:700 13px system-ui,sans-serif!important;border:1px solid #9fc0e0!important;border-radius:3px!important;background:radial-gradient(circle at 50% 40%,#3b5566,#101a20 80%)!important;color:#eef3f6!important;padding:0 10px!important;cursor:pointer}
 .orddock.zhin .cmdrow{display:contents!important}
 .orddock.zhin button{pointer-events:auto;width:var(--zb,74px)!important;height:calc(var(--zb,74px)*.8)!important;padding:0!important;margin:0!important;font-size:0!important;border-radius:1px!important;border:1px solid #9fc0e0!important;
  background:radial-gradient(circle at 50% 40%,#3b5566,#101a20 80%)!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important}
@@ -17810,11 +17813,13 @@ html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 #cmdP{bottom:auto!important;top:64px!important;left:10px!important;right:auto!important}
 html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
 #hudLyB{display:none!important}
+#pwMeter{display:none!important}   /* power lives in the bar's top console now */
 /* ▼ folds the whole bar down off the screen; only the ▼/★ tabs stay (Abdullah 16:33 "Make this down arrow minimize the entire bar") */
-html body #side{transition:transform .25s ease}
-html body #side.min{transform:translateY(100%)!important;height:var(--gbH)!important}
-html body #side.min #credits,html body #side.min #popCap{display:none!important}
-html body #side.min::before{display:none!important}   /* Abdullah 2026-11-14 "Remove map layers" */
+html body #side.min{height:0!important;min-height:0!important;padding:0!important;overflow:visible!important;background:none!important;box-shadow:none!important;border:0!important}
+html body #side.min #sideTop,html body #side.min #panel,html body #side.min .ccard,html body #side.min #info,html body #side.min .sup,html body #side.min #zhEmb,html body #side.min #zhPw,html body #side.min #credits,html body #side.min #popCap{display:none!important}
+html body #side.min .stat>.hdr>:not(#barGrip){display:none!important}
+html body #side.min::before{display:none!important}
+html body #side.min #barGrip,html body #side.min #zhStar{top:-26px!important}   /* Abdullah 2026-11-14 "Remove map layers" */
 html body #side kbd,html body #side .hk,#tstrip .hk,.orddock kbd,.abc{display:none!important}
 }
 
@@ -17842,6 +17847,19 @@ html body #side #zhPw .zb{flex:1;height:8px;border-radius:2px;background:#000;ov
 html body #side #zhPw .zb i{display:block;height:100%;background:linear-gradient(90deg,#4cd964,#b8f36a)}
 html body #side #zhPw.low{color:#ff8a78}html body #side #zhPw.low .zb i{background:linear-gradient(90deg,#ff5a3c,#ff9a5a)}
 html body #side.min #zhPw{display:none!important}
+
+/* one console on the top edge: power | money | units (Abdullah 16:57 "Make power, money, units look better") */
+html body #side #zhTop{position:absolute;top:-17px;left:50%;transform:translateX(-50%);z-index:3;display:flex;align-items:stretch;height:30px;border-radius:5px;overflow:hidden;
+ background:linear-gradient(180deg,#1b232a,#0b0f13);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 2px #c9d2da,0 0 0 3px #4a535c,0 3px 8px rgba(0,0,0,.55)}
+html body #side #zhTop>*{position:static!important;transform:none!important;margin:0!important;box-shadow:none!important;border-radius:0!important;background:none!important;display:flex!important;align-items:center;gap:7px;padding:0 14px!important;white-space:nowrap}
+html body #side #zhTop>*+*{border-left:1px solid #3a444d!important}
+html body #side #zhTop #credits{min-width:150px;justify-content:center;font:700 18px "IBM Plex Mono",ui-monospace,monospace!important;color:#ffd75e!important;text-shadow:0 0 8px rgba(255,215,94,.35)!important;padding:0 18px!important}
+html body #side #zhTop #zhPw{width:auto!important;height:auto!important;font:700 12px system-ui,sans-serif!important;letter-spacing:.04em;color:#bff2a8}
+html body #side #zhTop #zhPw .zb{flex:none;width:70px;height:7px}
+html body #side #zhTop #zhPw.low{color:#ff8a78}
+html body #side #zhTop #popCap{font:700 12px system-ui,sans-serif!important;color:#cfe3f5!important;letter-spacing:.04em}
+html body #side #zhTop #popCap::before{content:"👥";margin-right:6px;font-size:13px}
+html body #side.min #zhTop{display:none!important}
 #zhTip{position:fixed;left:10px;z-index:60;width:clamp(240px,22vw,380px);pointer-events:none;padding:10px 14px;border-radius:4px;color:#e9efdc;font:14px/1.4 system-ui,sans-serif;
  background:linear-gradient(180deg,rgba(14,22,40,.95),rgba(8,14,30,.95));box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px #3a5ea8,0 4px 14px rgba(0,0,0,.6)}
 #zhTip b{display:block;text-align:center;font-size:16px;margin-bottom:4px}#zhTip .zc{color:#f4d96a;font-weight:700}#zhTip .zd{color:#c9d3bd;margin-top:3px}#zhTip .zw{color:#ff9a7a;margin-top:3px}`;document.head.append(st);}
@@ -17856,6 +17874,10 @@ function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
     star.onclick=()=>{ZH.star=!ZH.star;ZH.sig='';zhPowWin();zhCtx();};sd.append(star);}
   {const T=G.teams[ME];if(T&&sd.dataset.tc!==T.color){sd.dataset.tc=T.color;sd.style.setProperty('--tc',T.color);}}
   {let pw=$('zhPw');if(G.battle&&typeof pwView==='function'){if(!pw){pw=document.createElement('div');pw.id='zhPw';pw.innerHTML='<span></span><span class="zb"><i></i></span>';sd.append(pw);}const v=pwView(),k=v.make+'|'+v.use;if(pw.dataset.k!==k){pw.dataset.k=k;pw.classList.toggle('low',!!v.low);pw.firstChild.textContent='⚡ POWER '+v.use+' / '+v.make;pw.querySelector('i').style.width=Math.round(100*Math.min(1,v.use/Math.max(1,v.make)))+'%';pw.title=v.low?'LOW POWER: build a Generator - powered buildings are offline':'Power used / produced';}}else if(pw)pw.remove();}
+  {let tp=$('zhTop');if(!tp){tp=document.createElement('div');tp.id='zhTop';sd.append(tp);}const cr=$('credits'),pw=$('zhPw'),pc=$('popCap');if(pw&&pw.parentNode!==tp)tp.prepend(pw);if(cr&&cr.parentNode!==tp){if(pw&&pw.parentNode===tp)pw.after(cr);else tp.prepend(cr);}if(pc&&pc.parentNode!==tp)tp.append(pc);
+    if(pw&&pw.firstChild){const v=pw.dataset.k;if(v&&pw.dataset.k2!==v){pw.dataset.k2=v;const [mk,us]=v.split('|');pw.firstChild.textContent='⚡ '+us+' / '+mk;}}
+    if(pc&&!/^\d/.test(pc.textContent))pc.textContent=pc.textContent.replace(/^units\s*/,'');}
+  {const bn=$('cqBn');if(bn){const v=window.LOADING?'hidden':'';if(bn.style.visibility!==v)bn.style.visibility=v;}}   /* the goal line never floats over the loading screen */
   let emb=$('zhEmb');if(!emb){emb=document.createElement('div');emb.id='zhEmb';emb.innerHTML='';sd.append(emb);}
   sd.classList.toggle('zhnosel',!(G.sel||[]).some(e=>e&&!e.dead&&e.team===ME));
   const sig=(G.sel||[]).map(e=>e.id).join(',');if(sig!==ZH.sig)ZH.sig=sig;try{zhPowWin();}catch(e){}
@@ -17863,7 +17885,10 @@ function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
   const w=zhWant();if(w&&TAB!==w)showTab(w);
   /* a selected building shows its own upgrades next to its units (upgrades are researched at their building: Abdullah 14:37) */
   {const pnU=$('panel'),sb=(G.sel||[]).find(e=>e&&!e.dead&&e.isB&&e.team===ME);if(pnU)for(const u of pnU.querySelectorAll(':scope>[data-tab="upg"]')){const want=!!sb&&u.dataset.from===sb.kind&&(w==='units'||w==='upg');if(u.classList.contains('sub')){u.hidden=true;continue;}if(u.hidden===want)u.hidden=!want;}}sd.classList.toggle('zhpow',w==='pow');{const sb=$('supbtn');star.classList.toggle('rdy',!!(sb&&!sb.disabled)&&!ZH.star);}
-  {const od=document.querySelector('.orddock');const pn0=$('panel');if(od&&pn0&&innerWidth>=900){if((w==='none'||w==='build')&&!od.classList.contains('empty')){const r=pn0.getBoundingClientRect(),n=od.querySelectorAll('button').length,zb=(pn0.querySelector('.btn:not([hidden])')||{}).offsetWidth||90,cols=w==='build'?Math.ceil(n/2):Math.max(1,Math.ceil(r.width/(zb+4))),ow=Math.min(r.width,cols*(zb+4)+12);od.classList.add('zhin');od.style.left=(r.right-ow)+'px';od.style.top=r.top+'px';od.style.width=ow+'px';od.style.height=r.height+'px';if(w==='build')pn0.style.setProperty('padding-right',(ow+4)+'px','important');else pn0.style.removeProperty('padding-right');}else if(od.classList.contains('zhin')){od.classList.remove('zhin');pn0.style.removeProperty('padding-right');od.style.left=od.style.top=od.style.width=od.style.height='';}}}
+  {const od=document.querySelector('.orddock');const pn0=$('panel');if(od&&pn0&&innerWidth>=900){if((w==='none'||w==='build')&&!od.classList.contains('empty')){const r=pn0.getBoundingClientRect(),n=od.querySelectorAll('button').length,zb=(pn0.querySelector('.btn:not([hidden])')||{}).offsetWidth||90,cols=w==='build'?Math.ceil(n/2):Math.max(1,Math.ceil(r.width/(zb+4))),ow=Math.min(r.width,cols*(zb+4)+12);od.classList.add('zhin');od.classList.toggle('zhb',w==='build');const fm=document.getElementById('fmb'),fmOn=w==='none'&&fm&&!fm.hidden&&fm.style.display!=='none'&&fm.children.length;
+      if(w==='build'){od.style.left=(r.right-ow)+'px';od.style.top=r.top+'px';od.style.width=ow+'px';od.style.height=r.height+'px';}
+      else{od.style.left=r.left+'px';od.style.top=r.top+'px';od.style.width=r.width+'px';od.style.height=(r.height-(fmOn?44:0))+'px';}
+      if(fm){if(fmOn){fm.classList.add('zhfm');fm.style.left=r.left+'px';fm.style.width=r.width+'px';fm.style.top=(r.bottom-42)+'px';}else fm.classList.remove('zhfm');}if(w==='build')pn0.style.setProperty('padding-right',(ow+4)+'px','important');else pn0.style.removeProperty('padding-right');}else if(od.classList.contains('zhin')){od.classList.remove('zhin');{const fm=document.getElementById('fmb');if(fm)fm.classList.remove('zhfm');}pn0.style.removeProperty('padding-right');od.style.left=od.style.top=od.style.width=od.style.height='';}}}
   const pn=$('panel');if(pn){let e=pn.querySelector('.zhEmpty');const od2=document.querySelector('.orddock.zhin');const vis=!!od2||[...pn.querySelectorAll(':scope>[data-tab]')].some(b=>!b.hidden&&b.dataset.tab===TAB);
     if(!vis){if(!e){e=document.createElement('div');e.className='zhEmpty';pn.append(e);}e.textContent=w==='none'?'Select your Construction Vehicle to build, or a building to train units':'Nothing available here yet';e.hidden=false;}else if(e)e.hidden=true;}
   {const rk=document.querySelector('#side .sup.rk .bar i');if(rk){const wd=rk.style.width;if(wd&&rk.style.getPropertyValue('--rk')!==wd)rk.style.setProperty('--rk',wd);}}}
@@ -17919,6 +17944,8 @@ function zhCamPaint(){if(!G||!G.teams||!G.teams[ME])return;const f=G.teams[ME].f
     const c=zhCamGet(f,k,b);if(c===undefined){if(!btn.hidden)zhCamWant(f,k,b);continue;}if(c&&btn.dataset.zbg!=='c'){btn.dataset.zbg='c';btn.style.setProperty('background-image','url('+(c._u||(c._u=c.toDataURL('image/jpeg',.85)))+')','important');}}
   const im=document.querySelector('#side #info .ukU img,#side #info .ukU canvas');if(im){const s=(G.sel||[]).find(e=>e&&!e.dead&&e.team===ME);if(s){const c=zhCamGet(f,s.kind,!!s.isB);if(c===undefined)zhCamWant(f,s.kind,!!s.isB);else if(c&&im.dataset.cam!==s.kind){im.dataset.cam=s.kind;if(im.tagName==='IMG')im.src=c._u||(c._u=c.toDataURL('image/jpeg',.85));else{const x=im.getContext('2d');x.clearRect(0,0,im.width,im.height);x.drawImage(c,0,0,im.width,im.height);}}}}}
 {const _z=zhCtx;zhCtx=function(){_z();try{if(innerWidth>=900)zhCamPaint();}catch(e){}};}
+/* the battlefield grows into the space when the bar is folded down, and shrinks back when it returns (Abdullah 16:54 "When dropping down the screen should expand") */
+if(typeof barMin==='function'){const _zb=barMin;barMin=function(v){const r=_zb.apply(this,arguments);if(v!=null){const fx=()=>{try{barH();resize();}catch(e){}};requestAnimationFrame(fx);setTimeout(fx,120);}return r;};}
 /* ================= AUDIO ENGINE: layered weapons, reverb, stereo, cinematic regional score ================= */
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};
 try{const v=JSON.parse(localStorage.getItem('ww3_audio')||'{}');if(v.m===false)AU.musicOn=false;if(v.s===false)AU.sfxOn=false;if(v.v===false)AU.voiceOn=false;}catch(e){}
@@ -21227,7 +21254,7 @@ function mxBuild(){
   MX.grid=mxEl('div','mxgrid');M.appendChild(MX.grid);
   foot(M,go('Random map',()=>{const b=g('pickMap')&&g('pickMap').querySelector('.rndmap');if(b)b.click();mxMapMark();menuGo('c-nation');},'mxlink'),go('Next: Nation →',()=>menuGo('c-nation')));
   /* --- battle 2: nation --- */
-  const N=scr('c-nation','<h2 class="mxh">Choose your nation</h2><p class="mxsub">Hover a nation to see its doctrine, morale style and strike. Click to choose.</p>');
+  const N=scr('c-nation','<h2 class="mxh">Choose your nation</h2><p class="mxsub">Hover a nation to see its morale style and strike. Click to choose.</p>');
   const nw=mxEl('div','mxnat'),nl=mxEl('div');const inp=mxEl('input');inp.id='mxnatin';inp.placeholder='Find a nation…';inp.autocomplete='off';inp.spellcheck=false;inp.oninput=mxNatFilter;
   nl.append(inp,g('pickP'));const det=mxEl('div');det.id='mxdet';nw.append(nl,det);N.appendChild(nw);
   const pp=g('pickP');pp.addEventListener('mouseover',e=>{const f=e.target.closest&&e.target.closest('.fac');if(f)mxNatShow(f);});pp.addEventListener('mouseleave',()=>mxNatShow());
@@ -21246,7 +21273,6 @@ function mxBuild(){
   /* --- battle 4: options --- */
   const O=scr('c-opts','<h2 class="mxh">Battle options</h2><p class="mxsub">Optional. The defaults are a good fight; start any time from the Players screen.</p>');
   const opt=(h,p,el)=>{const d=mxEl('div','mxopt');d.append(mxEl('h3','',h),mxEl('p','',p),el);O.appendChild(d);};
-  opt('Doctrine','Your general’s battle doctrine: a free bonus for the whole battle. Or pick it in the first 2 minutes.',g('gdocSel'));
   opt('Conditions','Time of day and weather. Low sun, dusk and night change what you can see and how far.',g('wx'));
   opt('Season','Mud slows wheels, snow slows infantry. Roads matter more.',g('ssnRow'));
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);

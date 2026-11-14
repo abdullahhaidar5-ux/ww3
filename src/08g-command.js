@@ -34,7 +34,8 @@ function ctPlanTick(){if(!G||G.over||G.paused||MODE==='spectate'||NET.spec)retur
       if(near>=Math.ceil(us.length*.7)||G.t-pl.tIss>100){pl.st='wait';pl.arr=G.t;if(s.t==='h'||pl.i===pl.steps.length-1){pl.st='done';pl.tDone=G.t;pushLog(`Plan ${pl.n} complete.`,'g');}}continue;}
     const s=pl.steps[pl.i+1];if(!s){pl.st='done';pl.tDone=G.t;continue;}
     if(ctTrigOk(pl,s,pl.i<0?pl.t0:pl.arr))ctStepFire(pl);}}
-function ctPlanStart(){const ids=selfSel().map(u=>u.id);if(!ids.length){pushLog('Select some units first, then draw their plan.','w');return;}CT.mode='plan';CT.draft={ids,steps:[]};ctUI();}
+function ctPlanStart(){return;}
+function ctPlanStart_old(){const ids=selfSel().map(u=>u.id);if(!ids.length){pushLog('Select some units first, then draw their plan.','w');return;}CT.mode='plan';CT.draft={ids,steps:[]};ctUI();}
 function ctPlanFinish(){const d=CT.draft;CT.mode=null;CT.draft=null;if(!d||!d.steps.length){ctUI();return;}
   for(const p of CT.plans)p.ids=p.ids.filter(i=>!d.ids.includes(i));CT.plans=CT.plans.filter(p=>p.ids.length);
   const pl={n:++CT.pid,ids:d.ids,steps:d.steps,i:-1,st:'wait',t0:G.t,arr:G.t,go:false};CT.plans.push(pl);pushLog(`Plan ${pl.n} set: ${pl.steps.length} step${pl.steps.length>1?'s':''}.`,'g');sfxUI(520);ctPlanTick();ctUI();}
@@ -95,8 +96,7 @@ window.addEventListener('contextmenu',e=>{if(CT.mode&&(e.target===cv||e.target==
 /* ---- keys (the one key table: O plan, Enter go / finish, , . / ping, ' draw, ; circle; Esc leaves a tool) ---- */
 window.addEventListener('keydown',e=>{if(!G||G.over||(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA'))||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key;
   if(k==='Escape'&&CT.mode){e.stopImmediatePropagation();e.preventDefault();ctToolOff();return;}
-  if(k==='Enter'){if(CT.mode==='plan'){e.preventDefault();ctPlanFinish();}else if(CT.plans.some(p=>p.st==='wait'&&p.steps[p.i+1]&&p.steps[p.i+1].trig==='go')){e.preventDefault();ctGoAll();}return;}
-  if(k==='o'||k==='O'){e.preventDefault();CT.mode==='plan'?ctPlanFinish():ctPlanStart();return;}
+  /* battle plans removed (Abdullah 2026-11-14 16:55 "Remove battle plans"): O is only Next formation again */
   const pm={',':'ping0','.':'ping1','/':'ping2',"'":'draw',';':'circle'}[k];if(pm&&ctTeamPlay()){e.preventDefault();CT.mode=CT.mode===pm?null:pm;CT.draft=null;ctUI();}},true);
 function ctTeamPlay(){return !!G&&!G.sandbox&&G.teams.some(O=>O.id!==ME&&!O.reb&&!O.out&&sameTm(O.id,ME));}
 /* ---- the panel ---- */
@@ -149,9 +149,6 @@ function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=nul
   const abA=typeof abMine==='function'?abMine():null,abT=abA&&abA.list.length?(abA.on!==false?' · ● on':' · ❚❚ paused'):'';
   let h=`<h4 data-a="tog"><span>Command</span><span class="abc" data-a="abtog" title="Auto-build: standing production orders (key U)">Auto-build [U]${abT}</span><small>${CT.open?'▾':'▸'}</small></h4>`;
   if(CT.open){
-    h+=`<div class="sec">Battle plans · key O</div><div class="row"><button class="${CT.mode==='plan'?'on':''}" data-a="plan" ${sel||CT.mode==='plan'?'':'disabled'}>${CT.mode==='plan'?'Finish plan':'Plan for selection'}</button>${CT.plans.some(p=>p.st==='wait'&&p.steps[p.i+1]&&p.steps[p.i+1].trig==='go')?'<button data-a="goall">GO ▶ (Enter)</button>':''}</div>`;
-    for(const p of CT.plans){const nx=p.steps[p.i+1],txt=p.st==='done'?'done':p.st==='move'?`step ${p.i+1}/${p.steps.length} under way`:nx?(nx.trig==='go'?`step ${p.i+2}: waiting for GO`:nx.trig==='timer'?`step ${p.i+2} in ${ctFmt(nx.sec-(G.t-(p.i<0?p.t0:p.arr)))}`:`step ${p.i+2} next`):'done';
-      h+=`<div class="row"><b>Plan ${p.n}</b><small>${ctMine(p.ids).length} units · ${txt}</small>${nx&&nx.trig==='go'&&p.st==='wait'?`<button data-a="go" data-v="${p.n}">GO ▶</button>`:''}<button data-a="pdel" data-v="${p.n}">✕</button></div>`;}
     h+='<div class="sec">Battle groups · keys 1-9 (Ctrl/Shift+number saves)</div>';let any=0;
     for(let i=1;i<=SQN;i++){const L=sqList(i);if(!L.length)continue;any=1;const hp=L.reduce((s,u)=>s+u.hp,0)/Math.max(1,L.reduce((s,u)=>s+u.max,0)),am=L.filter(u=>u.amx>0),ap=am.length?am.reduce((s,u)=>s+u.am,0)/am.reduce((s,u)=>s+u.amx,0):-1,f=CT.form[i]||'line';
       h+=`<div class="row" ><span class="nm" data-a="gname" data-v="${i}" data-n="${i}" title="Click: next name. Double-click: type a name">${ctGroupName(i)}</span><small>${L.length} units</small><span class="bar" title="Health ${Math.round(hp*100)}%"><i style="width:${Math.round(hp*100)}%;background:${hp>.6?'#74d08f':hp>.3?'#e3b341':'#ea5a40'}"></i></span>${ap>=0?`<span class="bar" title="Ammo ${Math.round(ap*100)}%"><i style="width:${Math.round(ap*100)}%;background:${ap>.4?'#6fb2ff':'#ea5a40'}"></i></span>`:''}</div>
