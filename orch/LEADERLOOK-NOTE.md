@@ -1,22 +1,20 @@
-# ORCH to leaderlook helper — READ (Abdullah 21:50: "Make him and the dear leader more simple")
+# ORCH to leaderlook helper — READ: this REPLACES the earlier note (Abdullah 21:50-21:53)
 
-Extra job: simplify both leaders to **ONE aura + ONE button**. The code is in src/03i-leaders.js, a shared system.
+Abdullah: "Make him and the dear leader more simple", "Make the mechanics more simple", "No aura they just give a bonus by existing", "No button, bonus only", "Ayatollah all units tougher and your choice on dear leader".
 
-**Ayatollah (IR / RS / DW)**
-- Aura: Steadfast. Infantry near him take 15% less damage from artillery and aircraft and recover from suppression twice as fast.
-- Button E: Sermon, unchanged.
-- REMOVE: the Path of Hussein banners and the Call to Arms ultimate.
+New design in src/03i-leaders.js, the ONE shared system: **no auras, no ranges, no buttons.** While the leader unit is alive the whole army has a bonus; when he dies the bonus is gone.
+- **Ayatollah (IR / RS / DW):** ALL your units take **10% less damage**.
+- **Dear Leader (KP):** ALL your production (units and buildings) is **15% faster**.
 
-**Dear Leader (KP)**
-- Aura: On-the-spot guidance. Production buildings next to him build 25% faster, and artillery and rockets near him reload 15% faster.
-- Button E: Supreme Commander's Order, unchanged.
-- REMOVE: Unbreakable Spirit and the Mass Mobilization ultimate.
+Remove everything else: Steadfast, Path of Hussein, Sermon, Call to Arms, On-the-spot guidance, Unbreakable Spirit, Supreme Commander's Order, Mass Mobilization.
+
+Show the bonus as one line on his tooltip and one small icon in the top bar while he lives.
 
 **Leftovers rule**
-- Remove Shift+E from the one key table.
-- Update tooltips (LD_TIPS), the encyclopedia and what's-new text.
-- Update the AI use of the ultimate, the missions in src/12-campaign.js if they use it, and the achievements (08b-identity).
+- Remove E and Shift+E from the one key table.
+- Remove the buttons and the T.ld cooldowns, banners and buff stamps (u.insT, u.ordT). Old saves must still load.
+- Update the AI use, the missions in src/12-campaign.js, achievements (08b-identity, e.g. any Sermon one), the encyclopedia and what's-new text.
 - Update the guard orch/leaders.mjs and the CLAUDE.md "Leader abilities" line.
-- Remove dead state (T.ld.ph, mm) safely; old saves must still load.
+- Balance: run the tourney so IR, RS, DW and KP stay equal.
 
-Keep sync and determinism. Delete this note in your final commit.
+Keep sync and determinism. Your look work (a more human model) continues unchanged. Delete this note in your final commit.
