@@ -62,7 +62,7 @@ function initGfx(){const PH=typeof gfxPhone==='function'&&gfxPhone();
         gl_FragColor=vec4(pow(c,vec3(2.2))*1.6,1.);}`}));SKY.renderOrder=-10;SKY.frustumCulled=false;SCN.add(SKY);
   CAM=new THREE.PerspectiveCamera(38,1,40,9000);
   HEMI=new THREE.HemisphereLight(lin('#b4cbef'),lin('#4d3f2c'),1.0*LUX);SCN.add(HEMI);
-  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7*LUX);SUN.castShadow=true;SUN.shadow.camera.layers.enable(1);const sm=PH?1024:2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
+  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7*LUX);SUN.castShadow=true;SUN.shadow.camera.layers.enable(1);const sm=PH?1024:SET.gfx==='ultra'?4096:2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
   SCN.add(SUN);SCN.add(SUN.target);
   initFX();initPost();
 }
@@ -421,7 +421,7 @@ function buildWorld(tc){
   // fog of war overlay
   {const fk=Math.min(1.4,Math.max(1,WK*.65));FOGC=document.createElement('canvas');FOGC.width=Math.round(480*fk);FOGC.height=Math.round(330*fk);FOGC.b=document.createElement('canvas');FOGC.b.width=FOGC.width;FOGC.b.height=FOGC.height;}FOGT=new THREE.CanvasTexture(FOGC);FOGT.magFilter=THREE.LinearFilter;
   FOGM=new THREE.Mesh(new THREE.PlaneGeometry(MAPW,MAPH).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x060a0f,transparent:true,alphaMap:FOGT,depthWrite:false}));FOGM.position.set(MAPW/2,46,MAPH/2);FOGM.renderOrder=2;WORLD.add(FOGM);
-  buildDecals();for(const [x,y,r] of (G.craters||[]))scorch(x,y,r);applyWeather(typeof setup!=='undefined'?wxBase(setup.w):0);
+  buildDecals();for(const [x,y,r] of (G.craters||[]))scorch(x,y,r);applyWeather(G&&G.wxB!=null?G.wxB:typeof setup!=='undefined'?wxBase(setup.w):0);
 }
 
 /* ---------- procedural model builder (merged, vertex-coloured) ---------- */

@@ -7,7 +7,7 @@ let MAPW=3200,MAPH=2200,WK=1;const CELL=40;let GW=Math.ceil(MAPW/CELL),GH=Math.c
 const WEATHER={clear:{name:'Clear',vis:1,acc:1,spd:1,air:1},
   rain:{name:'Rain',vis:.8,acc:.9,spd:.88,air:.9,tip:'Mud slows ground units, visibility and accuracy drop.'},
   fog:{name:'Fog',vis:.55,acc:.92,spd:.95,air:.85,tip:'Heavy fog: units see barely half as far. Ambush weather.'},
-  sandstorm:{name:'Sandstorm',vis:.55,acc:.8,spd:.88,air:0,tip:'Sandstorm: vision and accuracy slashed, jets grounded, helicopters and drones struggle.'},
+  sandstorm:{name:'Sandstorm',vis:.75,acc:.88,spd:.92,air:.5,tip:'Sandstorm: units see a little less far and shoot a little worse; aircraft fly slower.'},
   snow:{name:'Snow',vis:.8,acc:.92,spd:.9,air:.8,tip:'Deep snow slows ground units; vision and aircraft are a little worse.'},
   blizzard:{name:'Blizzard',vis:.6,acc:.85,spd:.8,air:0,tip:'Blizzard: snow slows everything, jets grounded, vision cut.'}};
 // Seasons (2026-11-06): the lobby 'Conditions' value w carries the weather/time-of-day in its ones digit (0-9, or -1 random) and the
@@ -16,12 +16,19 @@ function wxBase(w){w|=0;return w<0?-1:w%10;}
 function wxSsn(w){w|=0;return Math.min(3,(w<0?((-1-w)/10)|0:(w/10)|0));}
 function wxJoin(base,ssn){base|=0;ssn|=0;return base<0?-1-10*ssn:base+10*ssn;}
 const SEASONS=['Map default','Summer','Autumn mud','Winter snow'];
+// Conditions picker (2026-11-14, weathergfx): Random / Day / Dusk / Night / Rain / Sandstorm / Snow. Values are the same base digits as above
+// (0 day, 3 dusk, 4 night, 6 sandstorm, 7 rain, 8 snow, -1 random); th = the map themes the option fits (none listed = fits every map).
+// 1, 2 and 5 (golden hour, overcast, changing) only remain so old saves and links still load. Random picks, from the seed, only what fits.
+const CONDS=[{w:-1,n:'Random',t:'The seed picks day, dusk, night or the weather that suits this map'},{w:0,n:'Day',t:'Clear daylight'},{w:3,n:'Dusk',t:'Low red sun, long shadows; units see a little less far. Gunfire lights the field'},{w:4,n:'Night',t:'Dark battlefield: units see a little less far (tanks, aircraft, commandos and recon keep thermal sight); fire and flashes light the field'},{w:7,n:'Rain',th:['green'],t:'Rain: vision and accuracy a little down, mud slows ground units. Temperate maps only'},{w:6,n:'Sandstorm',th:['desert'],t:'Brown haze: units see a little less far and shoot a little worse. Desert and Gulf maps only'},{w:8,n:'Snow',th:['snow'],t:'Snowfall: white haze, deep snow slows ground units. Snow maps only'}];
+function condTheme(mk,w){const D=typeof MAPS!=='undefined'&&MAPS[mk],ss=wxSsn(w)||(typeof seasonOf==='function'?seasonOf(mk):1);const th=(D&&D.theme)||'green';return ss===3?'snow':th==='desert'?'desert':'green';}   // any other theme ('green', 'temperate', custom) counts as temperate
+function condFits(b,theme){const c=CONDS.find(x=>x.w===b);return !c?(b===1||b===2||b===5):!c.th||c.th.includes(theme);}
+function condFit(b,theme,seed){if(b<0){const L=[0,0,3,4].concat(CONDS.filter(c=>c.th&&c.th.includes(theme)).map(c=>c.w));return L[wxRandIdx(seed)%L.length];}return condFits(b,theme)?b:0;}
 function weatherKinds(theme){return theme==='snow'?['clear','blizzard','fog']:theme==='green'?['clear','rain','fog']:['clear','sandstorm','fog'];}
 // A duel is fought on a field 1.3x the 3200x2200 design (about 300 infantry-lengths across, like a classic RTS 1v1
 // map); each extra player adds room (8 players: 2.26x).
 function worldScaleFor(n,mk){n=Math.max(2,Math.min(8,n|0||2));const D=mk&&typeof MAPS!=='undefined'&&MAPS[mk];if(D&&D.cscale)return D.cscale;const K=n<=4?1.27:1;return Math.round(K*(n===2&&!(D&&D.oldScale&&D.oldScale.includes(2))?2.25:n===3&&!(D&&D.oldScale&&D.oldScale.includes(3))?2.4:Math.round((D&&D.oldScale&&D.oldScale.includes(n)?1.56:1.95)*Math.pow(n/2,.4)*100)/100)*100)/100;}   // Conquest maps (Abdullah 2026-11-04 20:01): 2-4 players another +27% (base-to-base walk ~4-5 min), 5-8 unchanged; // 2 and 3 players another +15%/+12% (Abdullah 2026-11-03 "epic size"); +25% again (Abdullah 2026-10-30: "maps need to be bigger and more complex"; 2026-10-29 was 1.56; a map can keep 1.56 for player counts listed in oldScale, where the bigger ground gave a start position the edge)
 // Player settings (graphics, volumes, game speed, HUD), saved per browser.
-const SET={gfx:'auto',mus:70,fx:100,vo:100,spd:1,hp:'dmg',edge:1,txt:1,scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1};try{Object.assign(SET,JSON.parse(localStorage.getItem('ww3_settings')||'{}'));}catch(e){}
+const SET={gfx:'auto',mus:70,fx:100,vo:100,spd:1,hp:'dmg',edge:1,txt:1,scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1};try{Object.assign(SET,JSON.parse(localStorage.getItem('ww3_settings')||'{}'));}catch(e){}if(SET.gfx==='med')SET.gfx='auto';   // graphics presets (2026-11-14): Low = 'low', Medium = 'auto' (today's default, the governor keeps it smooth), High = 'high', Ultra = 'ultra'
 function saveSet(){try{localStorage.setItem('ww3_settings',JSON.stringify(SET));}catch(e){}}
 const $=id=>document.getElementById(id);
 const rnd=(a,b)=>a+Math.random()*(b-a);

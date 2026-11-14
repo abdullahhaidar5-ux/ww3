@@ -3,7 +3,7 @@
    drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
-const CK_G=['truce','tOff','aidQ','milOk','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
+const CK_G=['truce','tOff','aidQ','milOk','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
   'todM','humA','rebT','radT','stT','gprT','supT','prT','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','conq','battle','setupEnd','reb','N','seed','mapKey','roadV'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);

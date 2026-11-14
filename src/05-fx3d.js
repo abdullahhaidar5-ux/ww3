@@ -75,7 +75,7 @@ function crater(x,y,s){if(!CRATER)return;decal(CRATER,crI++%160,x,y,s,Math.rando
 const TRK_UP=new THREE.Vector3(0,1,0),TRK_N=new THREE.Vector3(),TRK_Q=new THREE.Quaternion(),TRK_S=new THREE.Vector3(3.4,1,10.6);
 function track(x,y,a){if(!TRACKS)return;const i=trkI++%1600;const hx=groundH(x+2,y)-groundH(x-2,y),hz=groundH(x,y+2)-groundH(x,y-2);TRK_N.set(-hx/4,1,-hz/4).normalize();
   TRK_Q.setFromUnitVectors(TRK_UP,TRK_N);TMPQ.setFromAxisAngle(TRK_UP,-(a||0)+Math.PI/2).premultiply(TRK_Q);TMPM.compose(TMP.set(x,groundH(x,y)+.35,y),TMPQ,TRK_S);TRACKS.setMatrixAt(i,TMPM);TRACKS.instanceMatrix.needsUpdate=true;}
-function pBudget(){const lv=(typeof QUAL!=='undefined'&&fxLv())||0;return [1700,1400,1100,850,650,500][lv]||500;}
+function pBudget(){const lv=(typeof QUAL!=='undefined'&&fxLv())||0;return ([1700,1400,1100,850,650,500][lv]||500)*(SET.gfx==='ultra'?1.4:1);}
 // particles that would start well off-screen are skipped (smoke and exhaust from units across the map used CPU and
 // ate the particle budget meant for what the player is looking at)
 /* ---------- ONE TABLE for how much dust and smoke there is (Abdullah 2026-11-13 19:55 "Make the dust and smoke less") ----------

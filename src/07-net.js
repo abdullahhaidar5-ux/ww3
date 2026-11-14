@@ -319,7 +319,7 @@ async function joinGame(p,o){if(NET.game)return;const code=p.presence.g.c,jo=o&&
   hello();NET.helloI=setInterval(hello,1500);if(!own)$('mpstatus').textContent='Connecting…';return true;}
 // Set the Conditions choice and light up its menu button. The host's choice is used only for that battle: the player's
 // own menu choice (NET.ownW) comes back when they leave the battle, so their next solo battle uses their own Conditions.
-function wxSet(w){setup.w=w;if(typeof ssnUI==='function')ssnUI();const W=$('wx');if(W)W.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===wxBase(w)));}
+function wxSet(w){setup.w=w;if(typeof ssnUI==='function')ssnUI();if(typeof condUI==='function')condUI();}
 // How strong this device is as a battle host, should the battle have to move to a player (07b sbPick): a ~20 ms CPU
 // test, run once, x0.35 on a touch-only device, a little more for more cores. Typical PC 150-600, phone 30-120.
 function hostPower(){if(NET.hp>0)return NET.hp;let n=0,x=1;const a=new Float64Array(2048),t0=performance.now();
