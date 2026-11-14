@@ -27,3 +27,20 @@ Also:
 - Show damage or wreck states.
 - Build each one as ONE merged mesh per material, or instanced, so smooth-pc and smooth-mp stay green.
 - Put a close-up picture of each building in orch/shots/techbldgs-*.jpg and link them in your HANDOFF.
+
+## PART 2 (Abdullah, 20:28 "Top 5"): five more capturable buildings
+Do these AFTER the first four are done, committed and pushed (save your work first). If you run low on time, finish part 1, write HANDOFF "part 1 ready, part 2 not started" and stop. Part 1 must be able to land alone.
+5. **Oil refinery:** the owner's vehicles cost 10% less. Look: distillation columns, tanks, pipework, a flare stack.
+6. **Ammo dump:** the owner's units within range refill ammo fast. Tie this into the supply / out-of-ammo rule (do not add a second supply system; see orch/SYSTEMS.md and the ammo/supply code). Look: sandbagged bunkers, crate stacks, a camo net.
+7. **Artillery position:** a fixed gun (reuse the existing defense-gun firing code) that fires at enemies in range for its owner. Look: a dug-in howitzer pit with sandbags and shell crates.
+8. **Train station:** units from the owner's production buildings spawn faster (or reinforcements arrive near it). Look: a platform, a small station house, track with a few freight cars.
+9. **Telecom station:** the owner's units nearby get a morale boost and enemies nearby a small morale drop. Use the existing morale system; Zealous factions still never rout. Look: a lattice mast with dishes and an equipment shed.
+
+All of them:
+- one generic capture system;
+- symmetric placement;
+- the AI uses them;
+- checkpoint state;
+- realistic looks, merged or instanced;
+- a picture each.
+Not every map needs all nine. Each map gets a fair mix, the same for every start.
