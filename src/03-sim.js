@@ -33,7 +33,7 @@ function endGame(winner,reason){if(!G||G.over)return;try{stSample(1);G.endStats=
 // '#rrggbb' -> {r,g,b} in 0..1, the same values THREE.Color gives (no Three.js needed by the simulation)
 function hexRGB(h){const n=parseInt(String(h).slice(1),16);return{r:(n>>16&255)/255,g:(n>>8&255)/255,b:(n&255)/255};}
 // One battle scale for every game (the old Standard/Large/Massive choice is gone); AI strength comes from difficulty.
-const BATTLE=1.75;
+const BATTLE=1;
 // AI difficulty: Easy is slow to build and attack with small waves and no tricks (and earns less). Hard earns exactly
 // what Normal earns (Abdullah: smarter, never richer) but thinks faster and fights smarter: flanking columns that
 // converge on the main attack's target, focus fire on weakened targets, infantry that take cover behind walls,
@@ -166,6 +166,13 @@ function hiddenNow(e){if((e.detT||0)>G.t)return false;if(e.stlT&&!e.isB){if(G.t-
 
 /* ---------- production, research, building ---------- */
 function unitCount(team,kind){let n=0;for(const e of G.ents)if(!e.isB&&e.team===team&&e.kind===kind)n++;for(const i of qItems(G.teams[team],BASE[kind].from))if(i.kind===kind)n++;return n;}
+/* Population cap (Battle, Generals-style): infantry 1, light vehicles 2, tanks/heavy 3, aircraft 3 (small drones 1), boats 2, ships 3. Supply trucks and construction vehicles are free. Derived from live units + queues, so it needs no saved state and stays identical on host, clients and after a checkpoint. */
+const POP_CAP=150;
+function popOf(s){if(!s||s.cls==='harv'||s.cls==='dozer')return 0;if(s.dom==='air')return s.cls==='drone'?1:3;if(s.dom==='naval')return s.cls==='boat'?2:3;if(isInf(s))return 1;return(s.cls==='tank'||s.cls==='arty'||s.cost>=800)?3:2;}
+function popCap(){return G&&G.battle?POP_CAP:Infinity;}
+function popUsed(team,noQ){const T=G.teams[team];let n=0;for(const e of G.ents)if(!e.isB&&!e.dead&&e.team===team)n+=popOf(e.s);if(!noQ)for(const c of CATS)for(const i of qItems(T,c))n+=popOf(stats(T.fac,i.kind));return n;}
+function popFull(T,kind,noQ){const c=popCap();if(c===Infinity)return false;return popUsed(T.id,noQ)+popOf(stats(T.fac,kind))>c;}
+function popWarn(T){if(T.ai)return;if((T._popMsg||-99)>G.t-8)return;T._popMsg=G.t;log(T.id,'Unit limit reached ('+popCap()+').','w');}
 function rebuyFmt(s){s=Math.ceil(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
 /* Per-building production (Abdullah 2026-11-13 20:15 "make units que and must be built in their home building for instance infantry in barracks like generals"):
    every production building has ITS OWN queue b.q = [{kind,t,c}] (unlimited, c = what was paid, refunded in full), builds one unit at a time, and the unit
@@ -177,7 +184,7 @@ function bldName(b){const L=G.ents.filter(e=>e.isB&&e.team===b.team&&e.kind===b.
 function qRefund(b){if(!b.q||!b.q.length)return;const T=G.teams[b.team];let sum=0;for(const i of b.q)sum+=i.c||0;b.q=[];if(!T||!sum)return;T.credits+=sum;stSp(T,-sum);if(!T.ai)log(T.id,`${STRUCT[b.kind].name} lost - its queue was refunded ($${sum}).`,'w',b.x,b.y);}
 function enqueue(team,kind,bid){if(G.grand)return false;const T=G.teams[team],s=stats(T.fac,kind);if(kind==='champ'&&!heroOk(team,s))return false;if(conqBan(kind))return false;if(kind==='cleric'&&(T.rebuy||0)>G.t){if(!T.ai)log(team,`A new ${s.name} can be chosen in ${rebuyFmt(T.rebuy-G.t)}.`,'w');return false;}if(!allUnits(T.fac).includes(kind))return false;if(kind===T.F.special&&T.rank<SPEC_RANK){if(!T.ai)log(team,`${s.name} unlocks at general rank ${SPEC_RANK}.`,'w');return false;}const gcm=gdCostK(T,s,false),cst=Math.round(s.cost*gcm*(G.ec?ecCostMul(team,s.from):1)*ldCost(T,s));if(T.credits<cst||!done(team,s.from))return false;
   if(s.limit&&unitCount(team,kind)>=s.limit){log(team,`Only one ${s.name} at a time.`,'w');return false;}
-  let b=null;if(bid){const o=G.byId.get(bid);if(o&&o.isB&&o.team===team&&o.kind===s.from&&o.built>=1&&!o.dead)b=o;}if(!b)b=qPick(team,s.from);if(!b)return false;
+  let b=null;if(bid){const o=G.byId.get(bid);if(o&&o.isB&&o.team===team&&o.kind===s.from&&o.built>=1&&!o.dead)b=o;}if(!b)b=qPick(team,s.from);if(!b)return false;if(popFull(T,kind)){popWarn(T);return false;}
   const q=b.q||(b.q=[]);T.credits-=cst;stSp(T,cst);q.push({kind,t:0,c:cst});return true;}
 // cancel one queued item with a full refund: by building + slot (right-click on the queued icon), else the newest item of that kind anywhere
 function dequeue(team,kind,bid,idx){const T=G.teams[team];let b=bid?G.byId.get(bid):null,i=-1;if(b&&b.isB&&b.team===team&&b.q&&b.q.length){i=idx!=null&&b.q[idx]&&(!kind||b.q[idx].kind===kind)?idx:-1;if(i<0&&kind)for(let j=b.q.length-1;j>=0;j--)if(b.q[j].kind===kind){i=j;break;}}
@@ -185,7 +192,7 @@ function dequeue(team,kind,bid,idx){const T=G.teams[team];let b=bid?G.byId.get(b
   if(!b||i<0)return;const it=b.q.splice(i,1)[0];T.credits+=it.c||0;stSp(T,-(it.c||0));}
 function prodTime(T,s){let t=s.time/(1+((G&&G.bs)||1)*.6-.6);{const RR=realRow(T.fac);if(RR&&s.from!=='hq')t*=RR.bt;}t*=upgK(T,s.kind,'build');return t;}
 function production(dt){for(const b of G.ents){if(!b.isB||!b.q||!b.q.length)continue;if(b.dead){qRefund(b);continue;}if(b.built<1||b.dis>G.t)continue;const T=G.teams[b.team];if(!T)continue;
-    const it=b.q[0],s=stats(T.fac,it.kind);it.t+=dt*(G.ec?ecSpeedMul(T.id,[b]):1)*ldProd(T,[b],s);if(it.t>=prodTime(T,s)){b.q.shift();spawnFrom(T,b,it.kind);}}
+    const it=b.q[0],s=stats(T.fac,it.kind);it.t+=dt*(G.ec?ecSpeedMul(T.id,[b]):1)*ldProd(T,[b],s);if(it.t>=prodTime(T,s)){if(popFull(T,it.kind,1)){it.t=prodTime(T,s);popWarn(T);continue;}b.q.shift();spawnFrom(T,b,it.kind);}}
   for(const T of G.teams){
   for(const cat in T.rq){const r=T.rq[cat];if(!r)continue;if(!working(T.id,cat))continue;r.t+=dt;if(r.t>=UPG[r.key].time){T.rq[cat]=null;applyUpgrade(T,r.key);}}}}
 function spawnFrom(T,b,kind){const s=stats(T.fac,kind);let a=Math.atan2(MAPH/2-b.y,MAPW/2-b.x),x=b.x+Math.cos(a)*(b.size/2+16),y=b.y+Math.sin(a)*(b.size/2+16);
