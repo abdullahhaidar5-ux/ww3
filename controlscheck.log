@@ -1,0 +1,22 @@
+  ok   Ctrl+A selects the whole army
+  ok   …and gives no order
+  ok   …and no building is in it
+  ok   tap Q turns the camera 45° (clockwise)
+  ok   Shift+Q turns it 45° the other way
+  ok   Home snaps back to north-up
+  ok   double-tap Q = north-up
+  ok   hold Q + mouse turns the camera freely
+  ok   Q rotation is view only: no order sent
+  ok   W A S D each scroll the camera
+  ok   W A S D send no order
+  ok   A does not arm attack-move, S does not stop
+  ok   …and the selection is untouched
+  ok   X = stop order for the selected units
+  ok   F arms attack-move
+  ok   Esc cancels attack-move
+  ok   G arms guard
+  ok   Esc cancels guard
+  ok   left-click ground with a production building selected sets its rally point
+  ok   …and the building stays selected
+no page errors
+CONTROLSCHECK PASS
