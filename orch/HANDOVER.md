@@ -200,3 +200,6 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
 - 20:03 Chicago "What's the red symbols" = out-of-supply badges (06-view.js:189) in Test range -> note on orch/testrange 3e1720b (never in sandbox/Battle).
 - 20:05 Chicago "This ground texture is too cartoony" (+ stair-stepped dark lines on the ground, + "Supply OK" chip in Battle).
   groundreal = trig_019DXnuqhKtrVoLcRMDJsX87 (Opus) fired 02:06Z: CC0 PBR ground, macro variation, smooth fort/trench edges. Supply OK chip -> note on orch/battleclean2.
+- 20:06 Chicago ammo rule: "once the units has run out of ammunition they need to be resupplied if they are not near your area and control not that
+  it is time based"; asked which games -> "Conquest only" (Battle + Test range: unlimited ammo, no badge). ammozone = trig_01VbbAbtN2JuMfQ4FFFFfYhe
+  (Sonnet) fired 02:08Z. Overlaps testrange (badge in sandbox/Battle) - same direction, conductor merges.
