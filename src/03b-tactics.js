@@ -93,7 +93,7 @@ function trenchSnap(team,x,y){let b=null,bd=46*46;for(const d of G.dug||[]){if(d
 function wallOrder(team,us,k,pts){us=us.filter(u=>u&&!u.dead&&u.kind==='dozer');if(!us.length||!pts||pts.length<4)return;pts=pts.slice();
   if(k==='trench'){const a=trenchSnap(team,pts[0],pts[1]),e=pts.length-2,b=trenchSnap(team,pts[e],pts[e+1]);pts[0]=a[0];pts[1]=a[1];pts[e]=b[0];pts[e+1]=b[1];}
   us.sort((p,q)=>Math.hypot(p.x-pts[0],p.y-pts[1])-Math.hypot(q.x-pts[0],q.y-pts[1]));const pl=wallPlan(k,pts),n=us.length;
-  us.forEach((u,i)=>{const mine=pl.filter((_,j)=>j%n===i);if(!mine.length)return;u.wl=mine.map(p=>({x:p.x,y:p.y,a:p.a,k}));u.wb=0;u.wn=0;u.dig=null;u.order={type:'wall'};u.target=null;u.path=null;});}
+  us.forEach((u,i)=>{const mine=pl.filter((_,j)=>j%n===i);if(!mine.length)return;u.wl=mine.map(p=>({x:p.x,y:p.y,a:p.a,k}));u.wb=0;u.wn=0;u.order={type:'wall'};u.target=null;u.path=null;});}
 // ---- vehicle criticals ----
 const CRIT_TXT={1:'TRACKS OUT',2:'TURRET JAMMED',4:'ENGINE FIRE'};
 function critSpd(u){const c=u.crit|0;return !c?1:((c&1)?0:1)*((c&4)?.6:1);}

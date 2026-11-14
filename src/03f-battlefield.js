@@ -42,7 +42,7 @@ function wndTick(dt){const L=G.wnd;if(!L||!L.length)return;const meds=[],aid=[];
     if(rate){w.p+=rate*dt;if(w.p>=1){if(wndRevive(w))wndDrop(i);else w.p=.95;continue;}}
     if(G.t>=w.until){wndDrop(i,'BLED OUT');continue;}
     if(scan&&!w.dr&&!rate&&G.t-w.t0>2.5&&!(w.md&&w.mdT>G.t)&&!coverAt(w.x,w.y)&&!(G.rubN&&rubAt(w.x,w.y))){   // nobody coming: a squad mate drags him to cover
-      let best=null,bd=80*80;nearby(w.x,w.y,90,BF_NB);for(const u of BF_NB){if(u.dead||u.isB||u.team!==w.team||!u.s||!isInf(u.s)||u.s.noAttack||u.kind==='medic'||u.kind==='hacker'||u.order||u.target||u.drg||u.dig||u.inTun||u.aband||u.rout>G.t||u.hp<u.max*.35)continue;
+      let best=null,bd=80*80;nearby(w.x,w.y,90,BF_NB);for(const u of BF_NB){if(u.dead||u.isB||u.team!==w.team||!u.s||!isInf(u.s)||u.s.noAttack||u.kind==='medic'||u.kind==='hacker'||u.order||u.target||u.drg||u.inTun||u.aband||u.rout>G.t||u.hp<u.max*.35)continue;
         const d=(u.x-w.x)**2+(u.y-w.y)**2;if(d<bd){bd=d;best=u;}}
       if(best){const sp=wndCoverSpot(w);if(sp){w.tx=sp[0];w.ty=sp[1];w.dr=best.id;best.drg=w.id;best.order={type:'move',x:sp[0],y:sp[1],drg:w.id};best.path=null;FXE('txt',[best.x|0,best.y|0,'DRAGGING WOUNDED',best.team,-2]);}}}}
 }
