@@ -26,7 +26,7 @@ function tactRow(el,s){
     mk('🔧 Fix vehicles','Repair knocked-out tracks, jammed turrets and engine fires on nearby vehicles (idle Construction Vehicles do it on their own).',tactFix);}}
   if(air.length){const lowNow=air.some(u=>LOWSET.has(u.id));mk(lowNow?'⬆ Fly high':'⬇ Fly low','Nap of the earth: low flyers cannot be locked by long-range SAM sites, but guns and shoulder-fired AA hurt them 35% more. Aircraft also pop flares / chaff on their own against SAM missiles (4 charges, refilled when landed).',()=>{const v=lowNow?0:1;for(const u of air){if(v)LOWSET.add(u.id);else LOWSET.delete(u.id);}doAct({t:'low',ids:air.map(u=>u.id),v});sfxUI(520);updateUI();},lowNow);}
   const off=el.querySelector('.cmdrow.off');if(off)off.style.display='none';el.append(r);}
-(function(){const st=document.createElement('style');st.textContent='#info .cmdrow.tact{bottom:calc(var(--barh,170px) + 54px)}@media (max-width:900px){#info .cmdrow.tact{bottom:calc(var(--barh,200px) + 58px)}}';document.head.append(st);})();
+/* the dig-in / fortification row sits in the one order dock (ordDock in 08-ui), no position of its own */
 // trace a line: press where it starts and drag along the path, release to order it (a short press keeps the two-click way working)
 const WALL_STEP=12,WALL_MAXPTS=24;
 function wallSimplify(P,tol){if(P.length<=4)return P;const n=P.length/2,keep=new Array(n).fill(false);keep[0]=keep[n-1]=true;

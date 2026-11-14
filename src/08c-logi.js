@@ -121,7 +121,7 @@ function lgHint(){const h=typeof wallHintEl==='function'?wallHintEl():null;if(!h
 function lgRow(el,s){if(!G||!G.conq||!G.lgd)return;const own=s.filter(u=>u.team===ME&&!u.dead);
   const doz=own.filter(u=>!u.isB&&u.kind==='dozer'),hel=own.filter(u=>!u.isB&&u.kind==='airlift'),dep=own.length===1&&own[0].isB&&(own[0].kind==='depot'||own[0].kind==='shipyard')&&!(own[0].built<1)?own[0]:null;
   if(G.lgM&&!(G.lgM==='alift'?hel.length:doz.length))G.lgM=null;lgHint();if(!doz.length&&!hel.length&&!dep)return;
-  const hasT=!!el.querySelector('.cmdrow.tact'),r=document.createElement('div');r.className='cmdrow lgr';r.style.bottom=`calc(var(--barh,170px) + ${hasT?100:54}px)`;r.style.width='min(640px,calc(100vw - 16px))';r.style.flexWrap='wrap';el.append(r);
+  const r=document.createElement('div');r.className='cmdrow lgr';el.append(r);   /* placed in the one order dock by ordDock() (08-ui) */
   const mk=(t,ti,fn,on)=>{const b=document.createElement('button');b.textContent=t;b.title=ti;b.onclick=fn;if(on)b.classList.add('on');r.append(b);return b;};
   if(doz.length){mk('✹ Mine road',`Lay a hidden mine on a road ($${LGC.mine}): the first enemy vehicle over it is hit. Enemy engineers can clear it. Up to ${LG_MINE_MAX}.`,()=>lgMode('mine'),G.lgM==='mine');
     mk('⛔ Checkpoint',`Set up a checkpoint on a road ($${LGC.ckpt}): enemy supply can't use that road while it stands, and it collects a toll while the road is on your network. Up to ${LG_CK_MAX}.`,()=>lgMode('ckpt'),G.lgM==='ckpt');
