@@ -1,0 +1,10 @@
+game servers running locally at http://127.0.0.1:41087
+[4s] three pages loaded
+[7s] host lobby open, code 5e2na8
+peak memory (node + browser, summed RSS): 2558 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console warning: p2p: no direct connection (peer-unavailable), using the server relay
+
+MIGRATE FAIL: timed out waiting for client B to appear in the host lobby (70s)
