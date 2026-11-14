@@ -1,0 +1,20 @@
+A: 5 min in, t=300.0 units=51 money=890,390,0 (11201 ms)
+save: ok=true  encode 4 ms, packed 24 KB
+A after +2 min: t=420.0 hash=1451492614 units=35 money=31,12,0
+C loaded: ok=true  paused=true "Game loaded. Press P to continue." t=300.0
+C after +2 min: t=420.0 hash=1451492614 units=35 money=31,12,0
+Continue button: ▶ Continue — Straits of Thunder · Iran · 5:00
+after Continue: {"t":300.0000000000558,"p":true}
+file round trip: {"file":true,"old":"This save is from an older version and can't be loaded.","junk":"That is not a World War 3 save file.","bad":"This save file is damaged and can't be loaded.","stale":"This save is from an older version and can't be loaded.","g":true}
+SAVETEST PASS
+continue {"none":true,"old":true,"gm":"undefined"}
+keys {"btn":true,"win":true,"rows":35,"all":true,"setHidden":true,"wasd":"W, A, S and D always scroll the camera. Pick another letter.","used":"F is already used for \"Attack-move\". Move that one first (spare keys: \\ ` F2 F4 F8 F9).","digit":"Only letters and the spare keys \\ ` F2 F4 F8 F9 can be chosen.","tab":"Only letters and the spare keys \\ ` F2 F4 F8 F9 can be chosen.","fixed":"That key is fixed and can't be changed.","ok":"","back":"","swap2":"X is already used for \"Attack-move\". Move that one first (spare keys: \\ ` F2 F4 F8 F9).","cur":{"stop":"F8","amove":"x"},"stored":"{\"amove\":\"x\",\"stop\":\"F8\"}","dupes":[0],"pow":[]}
+battle keys {"bx":{"am":true,"stops":0},"bf":{"am":false,"stops":0},"bb":{"am":false,"stops":1},"rx":{"am":false,"stops":1},"rf":{"am":true,"stops":0}}
+bench {"picks":["low","ultra","auto","low","ultra"],"auto0":false,"r1":"ultra","g1":"ultra","once":true}
+battle text size 1366x768 {"side":[0,409,1366,768],"stage":[0,0,1366,409],"cv":[0,0,1366,409],"out":["sqAll","empty","BUTTON","BUTTON","BUTTON"],"zoom":1.3,"W":1366,"H":768,"mm":[true,true,true]}
+text size {"1366x768@1.3":0,"1366x768@1.15":0,"1920x1080@1.3":0,"1920x1080@1.15":0}
+cb {"off":true,"g":["●","■","▲","⬢"],"none":"","lbl":2,"seg":3}
+FAIL: graphics check picks the wrong preset: low,ultra,auto,low,ultra
+FAIL: graphics check did not set the preset exactly once: {"picks":["low","ultra","auto","low","ultra"],"auto0":false,"r1":"ultra","g1":"ultra","once":true}
+FAIL: battle HUD at 130% text does not fit 1366x768: {"side":[0,409,1366,768],"stage":[0,0,1366,409],"cv":[0,0,1366,409],"out":["sqAll","empty","BUTTON","BUTTON","BUTTON"],"zoom":1.3,"W":1366,"H":768,"mm":[true,true,true]}
+POLISH FAIL (3)
