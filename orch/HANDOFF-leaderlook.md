@@ -30,13 +30,18 @@ change well outside this run's view-only brief, so it was **not** done here; the
 so the next helper/conductor picks it up as its own gated job.
 
 ## Gate
-See the end of this file (filled in after `orch/cigate.sh`).
+- Local: `python3 orch/build.py --check` OK, `node orch/smoke.mjs` **SMOKE PASS**, `node orch/decisions.mjs` **DECISIONS PASS** (incl. the new "leader look" guard).
+- CI: pushed `gate/f36d4033ad` (commit f36d403, run 43558545624) at 04:49 UTC — after ~45 min **every job was still queued**
+  (the whole repo's Actions queue was stalled: main's own bisect/autodeploy runs were queued too). **No gate result yet —
+  conductor: check run 43558545624 (or re-push the gate) before landing.** The last code commit after f36d403 is docs/pictures only.
 
 ## Pictures (looked at)
-`orch/concepts/leaderlook/`: `ir-close.jpg`, `ir-zoom.jpg`, `kp-close.jpg`, `kp-zoom.jpg` (each leader beside a rifle squad
-close up and at the normal battle camera), `icons.jpg` (the two busts large and at command-bar size, next to the rifleman).
-Known limits: at close zoom the beard is a painted shape (a little flat); the faces are the soldier model's one face
-(generic young-ish man), so age reads from the beard / grey hair only.
+`orch/concepts/leaderlook/`: `ir-close.jpg`, `ir-face.jpg`, `ir-zoom.jpg`, `kp-close.jpg`, `kp-face.jpg`, `kp-zoom.jpg` (each leader between his
+bodyguards next to a rifle squad, close up, face crop, and at the normal battle camera), `icons.jpg` (the two busts large and at command-bar size, next to the rifleman).
+Known limits (honest): at close zoom the beard is a painted shape and reads a little like a grey mask; the Dear Leader
+keeps a thin light band at the hairline (left from the soldier's cap texture); the faces are the soldier model's one
+face (generic young-ish man), so age reads from the beard / grey hair only. At the normal battle camera both read well:
+white turban + dark robe + green halo, black tunic suit + gold halo. A real fix for faces would be a free CC0 head model.
 
 ## Credits
 No new assets: built on the existing soldier model (already credited) and code-made clothes.
