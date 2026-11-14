@@ -595,8 +595,8 @@ function spyKit(B,attach,hand,hp,hv,cp,V,k){const HC=hp.clone().add(V(0,1.35*k,0
 //  Dear Leader (KP): a middle-aged head of state - dark high-collared tunic suit, neat short hair greying at the temples,
 //  small gold collar stars, arms at his sides, upright.
 // (face and hands keep the soldier model's own skin texture: C.keep)
-const LDRLOOK={IR:{c:{top:'#8e897d',arm:'#2b241f',fore:'#2b241f',leg:'#8e897d',shoe:'#1b1815',keep:['skin','head']},skin:'#b8896a'},
-  KP:{c:{top:'#2c3033',arm:'#2c3033',fore:'#2c3033',leg:'#2a2d30',shoe:'#121212',keep:['skin','head']},skin:'#caa283'}};
+const LDRLOOK={IR:{c:{top:'#8e897d',arm:'#2b241f',fore:'#2b241f',leg:'#8e897d',shoe:'#1b1815',keep:['skin','head'],untex:['shoe','leg','fore'],fold:.3,hair2:'#7d7a75'},skin:'#b8896a'},
+  KP:{c:{top:'#2c3033',arm:'#2c3033',fore:'#2c3033',leg:'#2a2d30',shoe:'#121212',keep:['skin','head'],untex:['shoe','leg','fore'],fold:.3,hair2:'#1f1b18'},skin:'#caa283'}};
 function leaderKit(B,attach,hand,hp,hv,cp,V,k,fac){const DL=fac==='KP',HC=hp.clone().add(V(0,1.35*k,0)),H=new THREE.Group(),Cg=new THREE.Group(),Hp=new THREE.Group();
   const mk=(geo,col,x,y,z,g)=>{const o=new THREE.Mesh(geo,gearMat(col));o.position.set(x*k,y*k,z*k);g.add(o);return o;};
   const box=(w,h,d)=>new THREE.BoxGeometry(w*k,h*k,d*k),sph=(r,ws,hs)=>new THREE.SphereGeometry(r*k,ws||12,hs||8),hip=(x,y,z)=>hv.clone().add(V(x*k,y*k,z*k));
@@ -627,15 +627,16 @@ function leaderKit(B,attach,hand,hp,hv,cp,V,k,fac){const DL=fac==='KP',HC=hp.clo
     for(let q=0;q<11;q++){const a=q/10*Math.PI;mk(sph(.1,6,4),'#4a2c18',-.05+Math.cos(a)*.22,.7-Math.sin(a)*.95,1.85,Hp);}mk(box(.12,.3,.12),'#b89a4e',.17,-.35+.05,1.85,Hp);
   }else{
     // neat short dark hair with a side part, greying at the temples
-    {const g=new THREE.SphereGeometry(1.0*k,16,9,0,Math.PI*2,0,Math.PI*.5);mk(g,'#1f1b18',0,-.02,-.06,H).scale.set(1.03,.82,1.07);
-      mk(box(.08,.06,1.3),'#3a332d',.36,.6,.05,H);for(const x of[-.98,.98])mk(box(.12,.42,.62),'#6c6964',x,-.33,.05,H);
-      {const g2=new THREE.SphereGeometry(1.0*k,14,6,Math.PI*.5+1.1,Math.PI*2-2.2,Math.PI*.42,Math.PI*.16);mk(g2,'#1f1b18',0,-.05,-.06,H);}}
+    {const g=new THREE.SphereGeometry(.95*k,18,9,Math.PI*.5+.75,Math.PI*2-1.5,0,Math.PI*.47);mk(g,'#1f1b18',0,.02,-.04,H).scale.set(1.0,.92,1.05);
+      mk(box(.07,.05,1.1),'#3a332d',.33,.82,.05,H);for(const x of[-.86,.86])mk(box(.1,.36,.5),'#6c6964',x,-.22,.0,H);
+      {const g2=new THREE.SphereGeometry(.92*k,14,6,Math.PI*.5+1.15,Math.PI*2-2.3,Math.PI*.45,Math.PI*.2);mk(g2,'#1f1b18',0,-.02,-.08,H).scale.z=1.07;}}
     // a closed-mouth line and a clean-shaven jaw (no beard)
     mk(box(.4,.05,.08),'#8c5f4c',0,-.98,.93,H);
     // tunic: high stand collar, five buttons down the front, two breast pockets, small gold stars on the collar
-    {const T=new THREE.Group(),t=mk(new THREE.CylinderGeometry(1.42*k,1.6*k,4.1*k,16,1,true),'#2c3033',0,0,0,T);t.scale.z=.9;
-      for(let i=0;i<5;i++)mk(sph(.09,8,6),'#7a6a3a',0,1.55-i*.78,1.46,T);mk(box(.08,4.0,.06),'#202325',0,0,1.44,T);
-      for(const x of[-.75,.75]){mk(box(.68,.62,.1),'#30353a',x,1.05,1.3,T).rotation.y=x>0?.35:-.35;mk(box(.7,.16,.12),'#24282b',x,1.38,1.33,T).rotation.y=x>0?.35:-.35;}
+    {const T=new THREE.Group(),t=mk(new THREE.CylinderGeometry(1.32*k,1.6*k,4.1*k,16,1,true),'#2c3033',0,0,0,T);t.scale.z=.88;
+      const fz=y=>(1.46-y*.068)*.88;for(let i=0;i<5;i++){const y=1.55-i*.78;mk(sph(.09,8,6),'#7a6a3a',0,y,fz(y)+.04,T);}
+      for(const x of[-.66,.66]){mk(box(.6,.58,.08),'#30353a',x,1.05,fz(1.05)-.14,T).rotation.y=x>0?.45:-.45;mk(box(.62,.15,.1),'#24282b',x,1.36,fz(1.36)-.12,T).rotation.y=x>0?.45:-.45;}
+      {const y=mk(new THREE.CylinderGeometry(.8*k,1.32*k,.9*k,16,1,true),'#2c3033',0,2.5,.0,T);y.scale.z=.88;}/* yoke closing the tunic up to the collar */
       attach(B.chest,T,hip(0,2.25,.12));}
     {const c=mk(new THREE.CylinderGeometry(.66*k,.74*k,.5*k,16,1,true),'#2c3033',0,-1.42,.06,H);for(const x of[-.5,.5])mk(box(.14,.14,.08),'#d6b456',x,-1.4,.6,H).rotation.z=.785;}
     // tunic skirt to mid-thigh, straight trousers below (the legs' paint)
@@ -651,13 +652,13 @@ function spyPaint(geo,skel,tex,C0,SK0){const C=C0||SPYC,SKC=SK0||SPYSKIN,pa=geo.
   let lum=null;try{const im=tex&&tex.image;if(im&&ua&&im.width){const cv=document.createElement('canvas'),w=cv.width=Math.min(256,im.width),h=cv.height=Math.min(256,im.height),x=cv.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,w,h);const d=x.getImageData(0,0,w,h).data;
       lum=(u,v)=>{u-=Math.floor(u);v-=Math.floor(v);if(tex.flipY)v=1-v;const i=(Math.min(h-1,v*h|0)*w+Math.min(w-1,u*w|0))*4;return(d[i]*.3+d[i+1]*.59+d[i+2]*.11)/255;};}}catch(er){lum=null;}
   const R=new Array(n),Lm=new Float32Array(n),sum={},cnt={};
-  for(let i=0;i<n;i++){if(!ua||ua.getX(i)<-2){R[i]=null;continue;}let b=0,bw=-1;for(let q=0;q<4;q++){const w=sw.getComponent(i,q);if(w>bw){bw=w;b=si.getComponent(i,q);}}const r=R[i]=reg[b]||'top';Lm[i]=lum?lum(ua.getX(i),ua.getY(i)):1;sum[r]=(sum[r]||0)+Lm[i];cnt[r]=(cnt[r]||0)+1;}
+  for(let i=0;i<n;i++){const ut=!ua||ua.getX(i)<-2;if(ut&&!C.untex){R[i]=null;continue;}let b=0,bw=-1;for(let q=0;q<4;q++){const w=sw.getComponent(i,q);if(w>bw){bw=w;b=si.getComponent(i,q);}}if(ut&&!C.untex.includes(reg[b])){R[i]=null;continue;}const r=R[i]=reg[b]||'top';Lm[i]=lum&&!ut?lum(ua.getX(i),ua.getY(i)):1;sum[r]=(sum[r]||0)+Lm[i];cnt[r]=(cnt[r]||0)+1;}
   const col={};for(const r of['top','arm','fore','leg','shoe','skin','head'])col[r]=lin(r==='skin'||r==='head'||(r==='fore'&&!C.fore)?SKC:C[r]);
-  for(let i=0;i<n;i++){const r=R[i];if(!r||C.keep&&C.keep.includes(r))continue;const c=col[r],m=lum?Math.max(.55,Math.min(1.4,Lm[i]/Math.max(.02,sum[r]/cnt[r]))):1;ca.setXYZ(i,c.r*m,c.g*m,c.b*m);ua.setXY(i,-4,-4);}
+  for(let i=0;i<n;i++){const r=R[i];if(!r||C.keep&&C.keep.includes(r))continue;const c=col[r];let m=lum?Math.max(.55,Math.min(1.4,Lm[i]/Math.max(.02,sum[r]/cnt[r]))):1;if(C.fold)m=1+(m-1)*C.fold;ca.setXYZ(i,c.r*m,c.g*m,c.b*m);ua.setXY(i,-4,-4);}
   // no helmet: whatever the soldier wears on its head is pulled in under the hair / cap (top of the head only, the face stays)
   {const bp=nm=>{const i=skel.bones.findIndex(b=>b.name===nm);return i<0?null:new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(skel.boneInverses[i]).invert());},hb=bp('head'),hi=bp('hips');
     if(hb&&hi){const kb=hb.distanceTo(hi)/5.2,up=hb.clone().sub(hi).normalize()/* hips to neck: the rigs' head-top joints are not reliable */,c=hb.clone().add(up.clone().multiplyScalar(1.35*kb)),v=new THREE.Vector3(),rm=.9*kb;
-      for(let i=0;i<n;i++){if(R[i]!=='head')continue;v.fromBufferAttribute(pa,i).sub(c);if(v.dot(up)<.12*kb)continue;const d=v.length();if(d>rm){v.multiplyScalar(rm/d).add(c);pa.setXYZ(i,v.x,v.y,v.z);}}pa.needsUpdate=true;}}
+      const hc2=C.hair2?lin(C.hair2):null;for(let i=0;i<n;i++){if(R[i]!=='head')continue;v.fromBufferAttribute(pa,i).sub(c);const vu=v.dot(up);if(hc2&&vu>=-.02*kb){ca.setXYZ(i,hc2.r,hc2.g,hc2.b);ua.setXY(i,-4,-4);}if(vu<.12*kb)continue;const d=v.length();/* leaders: the cap's texture under the hair / turban becomes hair */if(d>rm){v.multiplyScalar(rm/d).add(c);pa.setXYZ(i,v.x,v.y,v.z);}}pa.needsUpdate=true;}}
   ca.needsUpdate=true;ua.needsUpdate=true;}
 // the owner's "this one is hidden" mark: a small eye above the spy (one instanced draw for every spy on the map; 06-view shows it)
 function spyEyeGeo(){const P=[],I=[],N=18,ring=(f,w)=>{const b=P.length/3;for(let i=0;i<=N;i++){const a=i/N*Math.PI*2,x=Math.cos(a),y=Math.sin(a);for(const s of[1,1-w]){const q=f(x,y);P.push(q[0]*s,q[1]*s,0);}}for(let i=0;i<N;i++){const a=b+i*2;I.push(a,a+1,a+2,a+1,a+3,a+2);}};
@@ -705,7 +706,7 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     // one material for the whole soldier: the uniform's (most triangles among the coloured parts), white so the baked
     // vertex colours show, keeping its weathering shader hook
     let src=sk[0].material,best=-1;for(const o of sk){const c=o.material.color,t=o.geometry.index?o.geometry.index.count:o.geometry.attributes.position.count;if(c&&c.r*.3+c.g*.59+c.b*.11>.02&&t>best){best=t;src=o.material;}}
-    if(/\|ldr\|v\d$/.test(key)){const lm=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,metalness:0});weather(lm,.3,0);src=lm;}/* leaders: clean cloth (light weathering, no camo, no field grime) */
+    if(/\|ldr\|v\d$/.test(key)){src=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.88,metalness:0});}/* leaders: clean cloth - no camo, field grime or dust (the dust tint shows as pale blotches on dark cloth) */
     const mat=src.clone();mat.onBeforeCompile=src.onBeforeCompile;mat.customProgramCacheKey=src.customProgramCacheKey;mat.vertexColors=true;if(mat.color)mat.color.setRGB(1,1,1);mat.map=tex;
     if(tex){const ob=src.onBeforeCompile,ck=src.customProgramCacheKey;mat.onBeforeCompile=(sh,r)=>{if(ob)ob.call(src,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\nvec4 sampledDiffuseColor=texture2D(map,vMapUv);if(vMapUv.x<-2.)sampledDiffuseColor=vec4(1.);diffuseColor*=sampledDiffuseColor;\n#endif');};
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
@@ -880,7 +881,7 @@ function dlBuild(o,yaw,B,P,T){
 const LDRAURA={};
 function leaderObj(e){const T=G.teams[e.team];if(MODELS.ready&&T&&(MODELS.proto.sol_m||MODELS.proto[solKey(T.fac)])){const o=modelFor(e);if(o&&o.userData.model){o.userData.cleric=true;o.userData.ldrModel=1;
       // a soft halo of light on the ground marks him: green for the Ayatollah, gold for the Dear Leader (one shared shape each)
-      const DL=T.fac==='KP',key=DL?'g':'v';let A=LDRAURA[key];if(!A)A=LDRAURA[key]={g:new THREE.RingGeometry(9,10.6,40).rotateX(-Math.PI/2),m:new THREE.MeshBasicMaterial({color:DL?0xe0b850:0x5fd38a,transparent:true,opacity:.22,depthWrite:false})};
+      const DL=T.fac==='KP',key=DL?'g':'v';let A=LDRAURA[key];if(!A)A=LDRAURA[key]={g:new THREE.RingGeometry(9,10.6,40).rotateX(-Math.PI/2),m:new THREE.MeshBasicMaterial({color:DL?0xf0c45a:0x5fd38a,transparent:true,opacity:DL?.4:.3,depthWrite:false})};
       const glow=new THREE.Mesh(A.g,A.m);glow.position.y=1.3;glow.renderOrder=2;glow.name='ldrAura';o.add(glow);return o;}}
   const o=clericModel(e);o.userData.bg=MODELS.gen|0;return o;}
 function clericModel(e){const o=clericModel0(e);if(o&&o.userData.parts&&o.userData.parts.body&&!o.userData._big){o.userData.parts.body.scale.multiplyScalar(1.15);o.userData._big=1;}return o;}// leaders stand as tall as the (x1.15) soldiers
