@@ -95,6 +95,14 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
         if (++bad <= 8) ck(false, `american: British spelling "${x[0]}" in src/${f} line ${t.slice(0, m.index).split('\n').length}: "${s.slice(Math.max(0, x.index - 20), x.index + 30).replace(/\n/g, ' ')}" (python3 orch/american.py fixes it)`); } } }
   if (bad > 8) ck(false, `american: ${bad} British spellings in player-facing text in all (python3 orch/american.py)`); }
 
+// ---- American voices (Abdullah 2026-11-13 20:08 "Americans sound British"): the US unit voices are cloned from public-domain American recordings
+// (tools/voices/refs, credits in CREDITS.md), never the old studio speakers; the credits text names the source. Render recipe: orch/reports/usvoice.md.
+{ const cast = JSON.parse(fs.readFileSync(path.join(ROOT, 'orch', 'vo', 'cast.json'), 'utf8')).US || {};
+  const ids = [].concat(cast.sold || [], cast.cmd || []);
+  ck(ids.length >= 3 && ids.every(v => /^clone:us_[a-z]+$/.test(v)), 'usvoice: the US cast must use the cloned American voices (clone:us_*): ' + JSON.stringify(ids));
+  for (const v of new Set(ids)) ck(fs.existsSync(path.join(ROOT, 'tools', 'voices', 'refs', v.slice(6) + '.flac')), 'usvoice: missing reference clip for ' + v);
+  ck(/US unit voices[^<]{0,200}public.domain/i.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'usvoice: menu credits do not name the American voice source'); }
+
 // ---------- static checks ----------
 // polishP2 "Never lose progress": one save system. Battles autosave into 3 rolling slots (08d-save.js), the grand campaign saves on a timer and before every
 // Fight-it battle into 3 rolling copies (13-grand.js grSnap), and the menu's Continue (first item) covers both. Runtime proof: orch/polishtest.mjs (gate/save).
