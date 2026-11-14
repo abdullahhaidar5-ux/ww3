@@ -656,7 +656,13 @@ const SHIA={IR:1,RS:1,DW:1};
 const BB_NAT={US:1,IL:1,RU:1,CN:1},FORT_NAT={IR:1,RS:1,AF:1,KD:1,DW:1,KP:1};
 /* (the grand map's own pre-built defender Mountain Fortress is spawned through bldAllowed, so 'fort' is NOT banned here; nothing can be built or bought in Fight-it anyway: GRAND_NOPROD) */
 function conqBan(k){return(k==='cleric'||k==='bb')&&typeof G!=='undefined'&&!!G&&!!G.grand;}
-function sigBan(fac,k){return(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
+/* upgsimple (Abdullah 2026-11-14 "simplify the list of upgrades and powers it's too much"): a nation's general powers are Recon, Paradrop, Barrage, Repair + its own national power
+   (+ Bunker Buster for US/IL/RU/CN) = 5-6, plus the passive Cash Bounty. Everything else in POWERS (flares, militia, reinforcements, sanctions, cyber, EMP) is not offered in Conquest/Battle (the grand map keeps them). */
+const POW_KEEP=['bounty','recon','para','barrage','repair','bb'];
+function powBan(k){return POW_KEEP.indexOf(k)<0&&!(typeof G!=='undefined'&&G&&G.grand);}
+function sigBan(fac,k){return powBan(k)||(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
+/* power use of a building for the Build button: + needs power, - gives power (Generator); 0 = no power use (one POWER table) */
+function pwNeed(k){return POWER.use[k]?POWER.use[k]:(k!=='hq'&&POWER.make[k]?-POWER.make[k]:0);}
 function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')&&!conqBan('cleric')?['cleric']:[]),'spy'],factory:['aa','tank','arty',...(F.extra||[]).filter(k=>stats(fac,k).from!=='airfield'),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift',...(F.extra||[]).filter(k=>stats(fac,k).from==='airfield')],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
 function bldAllowed(fac,k){if(conqBan(k)||sigBan(fac,k))return false;if(k==='gen')return typeof G!=='undefined'&&!!G&&!!G.battle;if(k==='econ'&&typeof G!=='undefined'&&G&&G.conq)return false;   /* Conquest: the Revenue Center is gone - territory pays
@@ -676,7 +682,7 @@ UPG.smug={name:'Smuggling Routes',at:'hq',cost:1500,time:30,desc:'Back-channel t
 // Ground-Penetrating Radar: HQ upgrade for nations WITHOUT tunnels - your HQ and Strike Centers reveal enemy tunnel entrances within 650 range
 UPG.gpr={name:'Ground-Penetrating Radar',at:'hq',cost:1200,time:25,desc:'Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot). Only for nations without tunnels.'};
 const GPR_R=650;
-function upgList(fac){return (UPGL[fac]||[]).concat('smug',FACTIONS[fac]&&FACTIONS[fac].tunnels?[]:['gpr']);}
+function upgList(fac){return (UPGL[fac]||[]).concat(typeof G!=='undefined'&&G&&G.grand?['smug']:[],FACTIONS[fac]&&FACTIONS[fac].tunnels?[]:['gpr']);}   /* upgsimple: Smuggling Routes only counters Sanctions, which Conquest/Battle no longer offer */
 // Effect groups an upgrade can target (unit stats s; buildings only match 'bld')
 function upgMatch(c,s,b){if(b)return c==='bld';switch(c){case 'all':return true;case 'inf':return s.armor==='light'&&s.dom==='ground';case 'rifle':return s.kind==='inf';case 'atinf':return s.cls==='at';
   case 'veh':return s.armor==='heavy'&&s.dom==='ground';case 'tank':case 'arty':case 'aa':case 'drone':case 'heli':case 'jet':case 'ship':case 'boat':return s.cls===c;case 'air':return s.dom==='air';case 'naval':return s.dom==='naval';}return false;}
