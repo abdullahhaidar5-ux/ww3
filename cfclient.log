@@ -1,0 +1,107 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:35635
+[3s] pages loaded; this machine's host benchmark: 726
+[59s] 1. battle RWMPWS running on the server: true; slots creator 0, friend 1
+[63s] 2. server's standby: slot 1 (benchmarks the server holds: 40, 900)
+[63s] 3. the server is made to fall behind real time (it gets only a third of the real time)
+[90s]    after 27.5 s: server battle closed (last window 0.526x real time); creator client (room gen 1), friend host
+[96s] 4. after the takeover, t=17 s: new host 10 entities, creator's side sees 5; creator's page: missing 0, off-position 0, mismatched 0; credits host 3000 page 3000
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFOVER PASS (97s) — the server picked the strong PC as standby, handed the battle to it when it fell behind real time, and the other player stayed in sync
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:37055
+[1s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[6s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+[6s]    server busy (busy) -> battle in this browser: "Your battle · codeLGELJ8OnlineSplit Ridge1 / 2 playersInvite friends — send the link, or give them this code under Play online › Join by cod"
+[7s]    the 3 lobbies closed; battle slots in use: 0
+[7s] 2. lobby open on the server, code 0X4FDX; creator status: "Your battle · code0X4FDXOnlineSplit Ridge1 / 2 playersInvite friends — send the link, or give them this code under Play "
+[8s]    friend joined: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+  ✗ page.evaluate: TypeError: Cannot read properties of null (reading 'click')
+    at eval (eval at evaluate (:311:30), <anonymous>:1:51)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E FAIL: page.evaluate: TypeError: Cannot read properties of null (reading 'click')
+    at eval (eval at evaluate (:311:30), <anonymous>:1:51)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (9s)
+local game server http://127.0.0.1:34931
+[1s] both pages loaded
+[3s] 1. protected battle open on Cloudflare, code A5NH1T; invite link http://127.0.0.1:44547/join.html#join=a5nh1t&pw=Yalla%202026%20%C3%B1
+[3s]    server keeps: {"mem":{"s":"f+zD0QDy7w7Be3RALtd1pg==","h":"ujs/fXPfmYR7f9lcJfMeL/C9nJu0PkR8z/Hg3PrcwI4=","i":4000},"kept":null}
+[4s] 2. friend's game list: "🔒 Battle · United States · game A5NH1T · Split Ridge · 1/2 playersJoin"
+[4s]    "Play online" with no password: started its own battle (did not join the protected one)
+[5s]    wrong password -> "Wrong password. Try again.JoinCancel"
+[6s]    right password -> "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"; creator's lobby has 2 players
+[8s] 3. invite link joined in one go; address bar now /index.html#join=a5nh1t
+[9s] 4. browser-hosted Y2ZLE8: join by code asks "🔒 Game Y2ZLE8 is password protected. Enter its password to join.JoinC"
+[31s]    right password -> friend: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFPASSWORD PASS (31s) — password-protected games: lock in the list, wrong password refused, right password and invite link join, server keeps only a hash, browser-hosted fallback checks it too
+local game server http://127.0.0.1:33447
+[1s] page loaded
+  ✗ page.evaluate: TypeError: Cannot read properties of undefined (reading 'bm')
+    at show (http://127.0.0.1:38477/index.html:14693:56)
+    at sel.onchange (http://127.0.0.1:38477/index.html:14696:268)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:142)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+--- server log (tail) ---
+
+  warn: player console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFSTARTPICK FAIL: page.evaluate: TypeError: Cannot read properties of undefined (reading 'bm')
+    at show (http://127.0.0.1:38477/index.html:14693:56)
+    at sel.onchange (http://127.0.0.1:38477/index.html:14696:268)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:142)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (3s)
+local game server http://127.0.0.1:37403 (pages reach it through http://127.0.0.1:44545); over-budget server http://127.0.0.1:46693
+[2s] 0. menu: "▶ Play online" and "+ New battle"
+[4s] 1. server busy (busy) -> battle in this browser; lobby: "Your battle · codeIHC920OnlineSplit Ridge1 / 2 playersInvite friends — send the link, or give them this code under Play online › Join by cod"
+[4s] 2. lobby open on the server, code QPCHOE; creator status: "Your battle · codeQPCHOEOnlineSplit Ridge1 / 2 playersInvite friends — send the link, or give them this code under Play "
+[4s] friend's game list: "1 open game · 0 in progressBattle · United States · game QPCHOE · Split Ridge · 1/2 playersJoin👁 Watch"
+[5s] friend joined with "Play online": "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+  ✗ page.evaluate: TypeError: Cannot read properties of null (reading 'click')
+    at eval (eval at evaluate (:311:30), <anonymous>:1:51)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+--- server log (tail) ---
+
+ ⛅️ wrangler 4.153.0 (update available 4.162.0)
+───────────────────────────────────────────────
+[custom build] Running: node build-sim.mjs
+[custom build] battle sim up to date: gen/battle-sim.js (784 KB)
+[custom build] 
+Your Worker has access to the following bindings:
+Binding                             Resource                  Mode
+env.ROOMS (GameRoom)                Durable Object            local
+env.LOBBY (Lobby)                   Durable Object            local
+env.BUDGET (Budget)                 Durable Object            local
+env.BATTLES (BattleRoom)            Durable Object            local
+env.OVERRUN_GUARD ("(hidden)")      Environment Variable      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:37403
+[wrangler:info] GET /health 200 OK (344ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (33ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (5ms)
+[wrangler:info] GET /turn 200 OK (4ms)
+[wrangler:info] GET /room/ihc920 101 Switching Protocols (25ms)
+[wrangler:info] GET /battle/qpchoe 101 Switching Protocols (64ms)
+[wrangler:info] GET /games 200 OK (5ms)
+[wrangler:info] GET /battle/qpchoe 101 Switching Protocols (7ms)
+
+creator log: []
+friend log: []
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT FAIL: page.evaluate: TypeError: Cannot read properties of null (reading 'click')
+    at eval (eval at evaluate (:311:30), <anonymous>:1:51)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (6s)
