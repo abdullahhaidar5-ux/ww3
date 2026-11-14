@@ -205,11 +205,11 @@ function tlChunks(){const M=G.map;if(M._tlCk)return M._tlCk;const cs=M.cities||[
 /* Capturable buildings of Battle: Quarry, Mine, Field Hospital (the Power plant reuses plantObj). Each one merged mesh (Bld) + an owner flag.
    Look only; effects are in 03-sim.js (TB). Real-world detail: stepped rock faces, crusher + conveyor, headframe + wheel, canvas tents. */
 function techObj(o){const k=o.tb;if(k==='plant'){const r=plantObj(o);r.tb=1;return r;}
-  const grp=new THREE.Group(),B=Bld(),dk='#2c2e2c',tent='#cfc8b0',red='#b3322a',wh='#f1ede2',rk='#a9a291',rk2='#8f8979',rk3='#7a7566',gv='#b9b29c';
+  const grp=new THREE.Group(),B=Bld(),dk='#2c2e2c',tent='#9c9468',red='#b3322a',wh='#f1ede2',rk='#c2ad82',rk2='#a8946b',rk3='#8a7a58',gv='#a39b86';
   if(k==='hosp'){
     B.box(70,1.6,50,0,.8,0,'#8a8474');                                                                            // packed-earth pad
     for(const z of [-9,12]){B.box(28,8,14,-8,5,z,tent);B.cyl(7.4,7.4,28,3,-8,12.6,z,tent,0,0,Math.PI/2);B.box(.8,6,6,-22.4,4.5,z,'#5a5648');B.box(28,.8,.8,-8,9.4,z+7.2,'#8a846f');
-      B.box(8,.6,.2,-12,9,z+7.3,wh);B.box(1.6,5,.3,-8,5.4,z+7.3,red);B.box(5,1.6,.3,-8,5.4,z+7.3,red);}              // two long canvas tents with a red cross panel each
+      B.box(9,6.4,.3,-8,6.4,z+7.3,wh);B.box(1.8,5,.4,-8,6.4,z+7.4,red);B.box(5,1.8,.4,-8,6.4,z+7.4,red);}              // two long canvas tents with a red cross panel each
     B.box(14,8,10,22,5,-6,'#d9d6cc');B.box(14,1.2,11,22,9.6,-6,'#a6a39a');B.box(3,5,.8,22,3.5,-.9,'#5d7380');B.box(1.2,3.4,.4,22,6,-.7,red);B.box(3.4,1.2,.4,22,6,-.7,red);   // prefab ward with a window and a cross
     B.box(1.4,22,1.4,-30,11,-18,'#55595c');B.box(12,8,.8,-30,21,-18,wh);B.box(2.4,6.4,.9,-30,21,-17.5,red);B.box(6.4,2.4,.9,-30,21,-17.5,red);   // tall sign board with a red cross (neutral)
     B.box(16,3.2,7,10,3.4,19,'#e9e7df');B.box(6,3.4,6.6,15,6.6,19,'#d8d6ce');B.box(.8,2.4,.9,9,5.6,22.6,red);B.box(2.4,.8,.9,9,5.6,22.6,red);for(const x of [6,14])B.cyl(1.5,1.5,1.2,10,x,1.5,22.6,dk,Math.PI/2),B.cyl(1.5,1.5,1.2,10,x,1.5,15.4,dk,Math.PI/2);   // ambulance

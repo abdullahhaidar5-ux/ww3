@@ -935,6 +935,7 @@ const LOAD_TIPS=['Supply: your troops carry limited ammo and refill it inside th
   'Infantry under heavy fire get suppressed: they shoot and move slower until it wears off.',
   'Moving targets are harder to hit. Keep your vehicles moving under fire.',
   'Capture oil derricks with infantry or vehicles for extra income.',
+  'Quarries and mines pay income, a captured Field Hospital heals your infantry nearby, and a power plant adds power: move infantry next to them to capture them. Hover one to read what it does.',
   'Your Construction Vehicle builds everything. Start with a Barracks, then a War Factory.',
   'Pull damaged units back instead of losing them. Survivors gain rank and fight better.',
   'Infantry can garrison city buildings and turn them into strongholds.',
