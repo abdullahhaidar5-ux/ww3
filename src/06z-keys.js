@@ -25,7 +25,7 @@ const KEYTAB=[
   {id:'stop',ctx:'battle',grp:'Orders',name:'Stop',def:'x'},
   {id:'ret',ctx:'battle',grp:'Orders',name:'Return to base',def:'r'},
   {id:'stance',ctx:'battle',grp:'Orders',name:'Next stance (hold: talk to your team)',def:'v'},
-  {id:'form',ctx:'battle',grp:'Orders',name:'Next formation / plan a team order',def:'o'},
+  {id:'form',ctx:'battle',grp:'Orders',name:'Next formation',def:'o'},
   {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (dozers: trench)',def:'i'},
   {id:'resup',ctx:'battle',grp:'Orders',name:'Resupply ammunition',def:'z'},
   {id:'abil',ctx:'battle',grp:'Orders',name:'Unit or leader ability, sonar ping, Recon power (with Shift: leader\'s ultimate)',def:'e'},
