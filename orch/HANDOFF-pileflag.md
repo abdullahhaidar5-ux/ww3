@@ -29,7 +29,13 @@ Abdullah (Fri 2026-11-13 19:52 Chicago, photo of Battle as Lebanese Shia, "In co
 - The old `pallet`/`crate`/`barrel` props stay in models/ (used elsewhere).
 
 ## Gate
-See the end of this file (filled in after `orch/cigate.sh`).
+- 2026-11-14 18:xx rerun: the first branch (orch/pileflag) was reverted from main after its gate had servertest failed + mapsweep cancelled
+  and it did not rebase cleanly. Same work re-applied on current main as **orch/pileflag2** (old branch left untouched, no force-push).
+  Main had also lost the "flag only while a production building is selected + 1.5 s flash" code in `06-view.js`; put back (`RV`).
+- Local: `build.py` + `--check` OK, `smoke.mjs` SMOKE PASS, `decisions.mjs` DECISIONS PASS (incl. new "rally flag clicks": select HQ, click
+  ground -> flash, click elsewhere -> no flag, one flag object). No local smooth run (per CLAUDE.md).
+- GitHub gate pushed for 5fe1119 as `gate/5fe1119ace`; results were still running when this run stopped. Conductor: read the `gate/*`
+  statuses of 5fe1119 before landing (smooth-pc / smooth-mp must be green; servertest, mapsweep known flaky - re-run once).
 
 ## Pictures (orch/concepts/pileflag/, made by `node orch/pileflagshots.mjs --tag after`)
 - before-pile-*.jpg / after-pile-*.jpg: close and normal play zoom at full, half used, almost empty.
