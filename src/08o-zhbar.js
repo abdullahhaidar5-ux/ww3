@@ -78,10 +78,11 @@ html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
 #hudLyB{display:none!important}
 /* ▼ folds the whole bar down off the screen; only the ▼/★ tabs stay (Abdullah 16:33 "Make this down arrow minimize the entire bar") */
-html body #side{transition:transform .25s ease}
-html body #side.min{transform:translateY(100%)!important;height:var(--gbH)!important}
-html body #side.min #credits,html body #side.min #popCap{display:none!important}
-html body #side.min::before{display:none!important}   /* Abdullah 2026-11-14 "Remove map layers" */
+html body #side.min{height:0!important;min-height:0!important;padding:0!important;overflow:visible!important;background:none!important;box-shadow:none!important;border:0!important}
+html body #side.min #sideTop,html body #side.min #panel,html body #side.min .ccard,html body #side.min #info,html body #side.min .sup,html body #side.min #zhEmb,html body #side.min #zhPw,html body #side.min #credits,html body #side.min #popCap{display:none!important}
+html body #side.min .stat>.hdr>:not(#barGrip){display:none!important}
+html body #side.min::before{display:none!important}
+html body #side.min #barGrip,html body #side.min #zhStar{top:-26px!important}   /* Abdullah 2026-11-14 "Remove map layers" */
 html body #side kbd,html body #side .hk,#tstrip .hk,.orddock kbd,.abc{display:none!important}
 }
 
@@ -186,3 +187,5 @@ function zhCamPaint(){if(!G||!G.teams||!G.teams[ME])return;const f=G.teams[ME].f
     const c=zhCamGet(f,k,b);if(c===undefined){if(!btn.hidden)zhCamWant(f,k,b);continue;}if(c&&btn.dataset.zbg!=='c'){btn.dataset.zbg='c';btn.style.setProperty('background-image','url('+(c._u||(c._u=c.toDataURL('image/jpeg',.85)))+')','important');}}
   const im=document.querySelector('#side #info .ukU img,#side #info .ukU canvas');if(im){const s=(G.sel||[]).find(e=>e&&!e.dead&&e.team===ME);if(s){const c=zhCamGet(f,s.kind,!!s.isB);if(c===undefined)zhCamWant(f,s.kind,!!s.isB);else if(c&&im.dataset.cam!==s.kind){im.dataset.cam=s.kind;if(im.tagName==='IMG')im.src=c._u||(c._u=c.toDataURL('image/jpeg',.85));else{const x=im.getContext('2d');x.clearRect(0,0,im.width,im.height);x.drawImage(c,0,0,im.width,im.height);}}}}}
 {const _z=zhCtx;zhCtx=function(){_z();try{if(innerWidth>=900)zhCamPaint();}catch(e){}};}
+/* the battlefield grows into the space when the bar is folded down, and shrinks back when it returns (Abdullah 16:54 "When dropping down the screen should expand") */
+if(typeof barMin==='function'){const _zb=barMin;barMin=function(v){const r=_zb.apply(this,arguments);if(v!=null){const fx=()=>{try{barH();resize();}catch(e){}};requestAnimationFrame(fx);setTimeout(fx,120);}return r;};}
