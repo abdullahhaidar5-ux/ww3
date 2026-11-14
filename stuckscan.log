@@ -1,0 +1,15 @@
+conquest strait       stuck episodes   4  mover-seconds 4809
+ww3-sim.js:2939
+    if(s.dom!=='air'){for(const st of G.strikes){if(st.t<.4||st.team===u.team||ally(st.team,u.team))continue;const dd=Math.hypot(u.x-st.x,u.y-st.y);if(dd<st.r+26){const a=Math.atan2(u.y-st.y,u.x-st.x)||Math.random()*6.28,k=st.r+60-dd;setMove(u,u.x+Math.cos(a)*k,u.y+Math.sin(a)*k,'move');u.order.auto=1;return true;}}}
+                                                                                                                                                                                                                                                                                                            ^
+
+TypeError: Cannot set properties of null (setting 'auto')
+    at unitBrain (ww3-sim.js:2939:301)
+    at updUnit (ww3-sim.js:2887:6)
+    at simUpdate (ww3-sim.js:3690:385)
+    at ww3-sim.js:5643:63
+    at sim (ww3-sim.js:5621:18)
+    at W.step (ww3-sim.js:5643:5)
+    at file:///home/runner/work/ww3/ww3/orch/stuckscan.mjs:32:17
+
+Node.js v22.23.4
