@@ -71,8 +71,8 @@ function svStateHash(){let h=2166136261>>>0;const mix=v=>{h^=v|0;h=Math.imul(h,1
     /* integrate1: new battle systems are part of the hash, so a save that forgets them fails savetest: locals' allegiance, knocked-out time left, morale fear / rout, suppression, rank */
     mix(e.loc?e.loc.charCodeAt(0):0);mix(Math.round(koLeft(e)*10));mix(Math.round((e.fear||0)*100));mix(Math.max(0,Math.round(((e.rout||0)-G.t)*10)));mix(Math.round((e.supp||0)*100));mix(e.rank|0);}
   mix((G.mban||[]).length);mix((G.smokes||[]).length);mix((G.wnd||[]).length);
-  for(const T of G.teams){mix(Math.round(T.credits));mix(T.kills|0);}for(const t of (G.towns||[])){mix(t.ow);mix(Math.round(t.un));mix(Math.round(t.rate*10));}
-  return {h,units:L.length,money:G.teams.map(T=>Math.round(T.credits)),towns:(G.towns||[]).map(t=>t.ow).join(',')};}
+  for(const T of G.teams){mix(Math.round(T.credits));mix(T.kills|0);}
+  return {h,units:L.length,money:G.teams.map(T=>Math.round(T.credits))};}
 /* ---------- load ---------- */
 function svCheck(meta){if(!meta||meta.fmt!==SV_FMT||meta.pv!==NET_PV)return 'This save is from an older version and can\'t be loaded.';return '';}
 async function svLoad(meta,packed){

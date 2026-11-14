@@ -10,11 +10,11 @@ const NET={room:null,user:null,game:null,code:null,opp:null,hostPeer:null,myPeer
 const FLG={built:1,cargo:2,dis:4,chg:8,hack:16,plant:32,land:64,hid:128,mem:256,mov:2048,busy:4096,nd:8192,stall:16384,supp:32768,mark:65536,rout:131072,shak:262144,last:524288,aband:1048576};
 // per-player streams and bundles (online edition / servers) vs one broadcast per topic (claude.ai artifact room)
 function hostP2P(){return NET.p2p!=null?!!NET.p2p:typeof window!=='undefined'&&!!window.WW3_P2P;}
-const CMD_T=['ldr','go','atk','atkOil','fld','q','dq','cb','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret','spoof','stance','resup','doc','dbuy','tax','eco','recruit','bribe','dig','wall','clr','atkDam','fix','hab','road','lg','ping','spy','leaf','auto'];
+const CMD_T=['ldr','go','atk','atkOil','fld','q','dq','cb','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret','spoof','stance','resup','doc','dbuy','dig','wall','clr','atkDam','fix','hab','lg','ping','spy','auto'];
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.ti=Math.max(0,num(a.ti)|0);o.r=Math.max(0,Math.min(3,num(a.r)|0));o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.at=a.at?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
-const NET_PV=8;   // 7 = Conquest (towns, tax command, rebel team)
+const NET_PV=9;   // 7 = Conquest (towns, tax command, rebel team); 9 = one game: Battle only, supply lines, no towns (2026-11-14)
 // A 'start' message for a battle where players picked start spots ('st') carries NET_PVS instead: an older game, which
 // would ignore the picks and put the bases elsewhere, refuses it as another version (close and reopen) instead.
 const NET_PVS=NET_PV+100;
@@ -102,11 +102,7 @@ function snapDrops(dr){if(!dr.length)return null;let c=NET.dyC;if(!c||c.t!==G.t|
   const o=dr.filter(id=>!dy.has(id));return o.length?{dr:o.slice(0,400)}:null;}
 // map-wide state (resource fields, oil derricks, who is out) is built once per flush and sent to a player only when it
 // changed since what they last got, or once a second as a refresh - it was resent to everyone 4x a second
-// owned / being-captured towns as a flat [civIndex, owner, capture%, capturingTeam, ...] list
-function hmPack(){const N=G.teams.length,th=[];if(G.towns)for(const t of G.towns){th.push(Math.round((t.pop==null?1:t.pop)*100),t.loy?1:0,(t.sm?1:0)+2*(t.mil?t.mil.filter(u=>!u.dead).length:0));for(let k=0;k<N;k++)th.push(Math.round((t.an&&t.an[k])||0));}return {th,tv:(G.tow||[]).map(w=>w.ow),tc:(G.tow||[]).map(w=>w.cp.map(v=>+v.toFixed(1))),bc:G.teams.map(T=>Math.max(0,Math.ceil((T.brT||0)-G.t))),ec:ecPack()};}
-function twPack(){const r=[];if(G.towns)for(const t of G.towns)if(t.ow>=0||t.reb>G.t)r.push(t.i,t.ow,t.rate,Math.round(t.un),Math.round(t.tax*10),t.why|0,t.reb>G.t?Math.ceil(t.reb-G.t):0,t.whole?1:0,t.fr|0,t.gar|0);return r;}
-function civPack(){const r=[];if(G.civ)for(const c of G.civ)if(!c.dead&&(c.ow>=0||c.cp>0))r.push(c.i,c.ow>=0?c.ow:-1,Math.round((c.cp||0)*100),c.cpT>=0?c.cpT:-1);return r;}
-function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),cv=civPack(),tw=twPack(),hm=hmPack(),lg=lgPack(),bs=G.bse||[],sf=G.teams.map(T=>T.reb||!T._upl||!T.sup?-1:Math.round(100*T.charge/T.sup.charge)),gd=G.teams.map(O=>O.gdoc||''),ig=G.teams.map(O=>(O.blk?1:0)+(O.dry?2:0)+Math.round((O.fuel==null?1:O.fuel)*10)*4),po=G.teams.map(O=>Math.round(opOf(O)*10)),rf=(G.refs||[]).map(r=>[r.id,Math.round(r.x0),Math.round(r.y0),Math.round(r.dx*1000),Math.round(r.dy*1000),Math.round(r.t0*10),Math.round(r.dur*10),r.n,r.ow]);NET.tgC={t:G.t,v:{fa,oil,out,cv,tw,hm,lg,bs,sf,gd,ig,po,rf},js:JSON.stringify([fa,oil,out,cv,tw,hm,lg,bs,sf,gd,ig,po,rf])};}
+function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),lg=lgPack(),sf=G.teams.map(T=>T.reb||!T._upl||!T.sup?-1:Math.round(100*T.charge/T.sup.charge)),gd=G.teams.map(O=>O.gdoc||'');NET.tgC={t:G.t,v:{fa,oil,out,lg,sf,gd},js:JSON.stringify([fa,oil,out,lg,sf,gd])};}
   const C=NET.tgC,S=NET.tgS||(NET.tgS={}),last=S[k];if(last&&last.js===C.js&&G.t-last.t<1)return {};S[k]={js:C.js,t:G.t};return C.v;}
 // EW minimap data for this team only (enemy bubbles over its units, ghost contacts, own spoof cooldowns); null when empty
 function ewPack(k){const v=ewView(k);return v.j.length||v.g.length||v.cd.length?{j:v.j,g:v.g,cd:v.cd}:null;}

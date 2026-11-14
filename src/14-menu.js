@@ -184,13 +184,10 @@ function mxBuild(){
   opt('Doctrine','Your general’s battle doctrine: a free bonus for the whole battle. Or pick it in the first 2 minutes.',g('gdocSel'));
   opt('Conditions','Time of day and weather. Low sun, dusk and night change what you can see and how far.',g('wx'));
   opt('Season','Mud slows wheels, snow slows infantry. Roads matter more.',g('ssnRow'));
-  {const r=mxEl('div','seg');r.id='balRow';[['Balanced',0],['Realistic',1]].forEach(([t,v])=>{const b=mxEl('button','',t);b.onclick=()=>{setup.real=v;r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));};if(!!setup.real===!!v)b.classList.add('on');r.appendChild(b);});opt('Balance','Balanced: every nation equally strong - the default. Realistic: each nation starts like its real 2026 military, but the game stays fair. Big powers start rich with tanks and strong air and missile support, but their units cost more and train slowly. Small nations and the Zealous factions start with many cheap infantry and AT teams, recruit fast and fortify cheaply at home. The host sets it for a multiplayer battle.',r);
-    const rs=mxEl('div','');rs.style.cssText='font-size:12px;opacity:.8;margin-top:4px;max-width:520px';const fill=()=>{rs.textContent=setup.real?[setup.p].concat(setup.a?[setup.a]:[]).filter(f=>FACTIONS[f]).map(f=>FACTIONS[f].name+' - '+realLine(f)).join('  ·  '):'';};r.addEventListener('click',()=>setTimeout(fill,0));r.addEventListener('mouseenter',fill);r.after(rs);fill();}
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
   /* --- single player (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range") --- */
   const SP=scr('single','<h2 class="mxh">Single player</h2><p class="mxsub">Two games. Pick one.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
   const sitem=(t,d,fn,cls)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''));b.type='button';b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);sl.appendChild(b);return b;};
-  sitem('Conquest','Take towns and collect their tax, destroy the enemy base - a full base and $10,000 from the start',()=>{mxSetMode('conquest');menuGo('c-map');});
   sitem('Battle','Generals-style skirmish: Command Center, supply trucks, tech up, destroy every enemy building',()=>{mxSetMode('battle');menuGo('c-map');});
   sitem('Missions','The story missions',()=>mxClick('campaign'),'dim sep');
   sitem('Tutorial','First time? A guided 10-minute battle',()=>mxClick('tutorial'),'dim');
@@ -200,7 +197,6 @@ function mxBuild(){
   const OL=scr('online','<h2 class="mxh">Multiplayer</h2><p class="mxsub">One place to play online. Choose the game, then start one or join a friend: open games and invite codes or links for both are below.</p>');
   const gl=mxEl('div','mxlist');gl.id='mxolg';OL.appendChild(gl);MX.olBtns={};
   const gitem=(k,t,d)=>{const b=mxEl('button','mxi');b.type='button';b.dataset.g=k;b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);mxOnline(k);};b.onmouseenter=()=>mxTick(520);gl.appendChild(b);MX.olBtns[k]=b;};
-  gitem('conquest','Conquest','Towns, tax and a full base for everyone');
   gitem('battle','Battle','Generals-style: Command Center, supply trucks, tech tree');
   MX.olGo=mxEl('div','mxolgo');OL.appendChild(MX.olGo);
   const mp=[...card.querySelectorAll('.mode')].find(x=>x.querySelector('#playOnline'));if(mp)OL.appendChild(mp);

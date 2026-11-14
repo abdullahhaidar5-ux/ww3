@@ -389,16 +389,7 @@ function buildWorld(tc){
     const pole=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,24,6),MAT.std);pole.position.set(-31,12,-9);grp.add(pole);
     grp.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
     grp.position.set(o.x,groundH(o.x,o.y),o.y);grp.rotation.y=(o.x*.01)%6;WORLD.add(grp);return{grp,arm,flag,crank};});
-  // propaganda towers: a guyed lattice radio mast with a dish and a small transmitter hut (a flag-light on top shows the owner's colour)
-  mats();G.towObj=(G.tow||[]).map(w=>{const grp=new THREE.Group(),B=Bld(),fr='#7a7f84',dk='#2c2e2c';
-    B.box(30,1.6,30,0,.8,0,'#8a877d');B.box(12,7,9,16,4.5,10,'#6c6a62');B.box(13,1,10,16,8.5,10,'#4d4b45');B.cyl(.8,.8,6,6,6,3,10,dk,Math.PI/2);
-    for(let i=0;i<9;i++){const y=i*10,w1=7-i*.55;for(const [sx,sz] of [[-1,-1],[1,-1],[1,1],[-1,1]])B.box(.9,10.4,.9,sx*w1/2,y+5,sz*w1/2,fr,0,0,0);
-      if(i<8){B.box(w1,.6,.6,0,y+10,-w1/2,fr);B.box(w1,.6,.6,0,y+10,w1/2,fr);B.box(.6,.6,w1,-w1/2,y+10,0,fr);B.box(.6,.6,w1,w1/2,y+10,0,fr);B.box(w1*1.1,.5,.5,0,y+5,-w1/2,fr,0,0,.75);B.box(w1*1.1,.5,.5,0,y+5,w1/2,fr,0,0,-.75);}}
-    B.cyl(.5,.5,14,6,0,86,0,'#c0c4c6');B.cyl(4,0.4,2.5,12,5,48,0,'#d8dcd4',0,0,Math.PI/2);
-    const base=mesh(B.geo());grp.add(base);
-    const lamp=new THREE.Mesh(new THREE.SphereGeometry(2.4,10,8),new THREE.MeshBasicMaterial({color:0x999999}));lamp.position.set(0,98,0);grp.add(lamp);
-    grp.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
-    grp.position.set(w.x,groundH(w.x,w.y),w.y);WORLD.add(grp);return{grp,lamp};});
+  mats();
   // supply depots
   G.fieldObj=G.fields.map((f,fi)=>{const grp=new THREE.Group();grp.position.set(f.x,groundH(f.x,f.y),f.y);WORLD.add(grp);const items=[];const R=mulberry(fi*13+5);
     const pad=Bld();pad.box(f.r*2.1,1,f.r*1.7,0,.5,0,'#7e7462');const pm=mesh(pad.geo());pm.receiveShadow=true;grp.add(pm);
