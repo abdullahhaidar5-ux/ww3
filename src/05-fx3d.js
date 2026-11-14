@@ -57,7 +57,11 @@ function buildDecals(){for(const d of [SCORCH,TRACKS,CRATER])if(d){SCN.remove(d)
   SCORCH=mk(320,(()=>{const n=128,c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');const g=x.createRadialGradient(64,64,0,64,64,60);g.addColorStop(0,'rgba(10,8,6,.92)');g.addColorStop(.35,'rgba(18,14,10,.8)');g.addColorStop(.7,'rgba(30,24,16,.35)');g.addColorStop(1,'rgba(30,24,16,0)');x.fillStyle=g;x.fillRect(0,0,n,n);
     for(let i=0;i<34;i++){const a=Math.random()*6.283,l=30+Math.random()*30,w=1+Math.random()*3;x.strokeStyle=`rgba(16,12,8,${.25+Math.random()*.35})`;x.lineWidth=w;x.beginPath();x.moveTo(64+Math.cos(a)*10,64+Math.sin(a)*10);x.lineTo(64+Math.cos(a)*l,64+Math.sin(a)*l);x.stroke();}
     for(let i=0;i<40;i++){const a=Math.random()*6.283,r=Math.random()*55;x.fillStyle=`rgba(12,10,8,${Math.random()*.6})`;x.fillRect(64+Math.cos(a)*r,64+Math.sin(a)*r,1+Math.random()*3,1+Math.random()*3);}
-    const t=new THREE.CanvasTexture(c);return t;})(),1);TRACKS=mk(1600,(()=>{const c=document.createElement('canvas');c.width=16;c.height=32;const x=c.getContext('2d');for(let i=0;i<32;i+=4){x.fillStyle='rgba(52,40,26,.75)';x.fillRect(1,i,14,2.2);}const g=x.getImageData(0,0,16,32);for(let i=0;i<16*32;i++){const px=i%16;const e=Math.min(px,15-px)/3;g.data[i*4+3]*=Math.min(1,e);}x.putImageData(g,0,0);const t=new THREE.CanvasTexture(c);t.magFilter=THREE.LinearFilter;return t;})(),.5);
+    const t=new THREE.CanvasTexture(c);return t;})(),1);TRACKS=mk(1600,(()=>{ // groundreal: soft tread print - feathered sides, ends that fade so overlapping prints join into one even rut (the old hard 16x32 stripes stepped like a staircase)
+    const c=document.createElement('canvas');c.width=32;c.height=64;const x=c.getContext('2d'),g=x.createImageData(32,64);
+    for(let j=0;j<64;j++)for(let i=0;i<32;i++){const u=(i+.5)/32,v=(j+.5)/64,side=Math.min(1,Math.min(u,1-u)/.3),end=Math.min(1,Math.min(v,1-v)/.25),bar=.72+.28*Math.pow(Math.abs(Math.sin(v*Math.PI*9)),3),k=(j*32+i)*4;
+      g.data[k]=58;g.data[k+1]=50;g.data[k+2]=40;g.data[k+3]=Math.round(255*.62*side*side*(3-2*side)*end*bar);}
+    x.putImageData(g,0,0);const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t;})(),.42);
   CRATER=mk(160,(()=>{const n=128,c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');
     let g=x.createRadialGradient(64,64,0,64,64,62);g.addColorStop(0,'rgba(34,26,18,.95)');g.addColorStop(.32,'rgba(52,40,27,.9)');g.addColorStop(.5,'rgba(92,74,52,.55)');g.addColorStop(.62,'rgba(150,126,92,.6)');g.addColorStop(.72,'rgba(120,98,70,.42)');g.addColorStop(1,'rgba(110,90,64,0)');x.fillStyle=g;x.fillRect(0,0,n,n);
     for(let i=0;i<60;i++){const a=Math.random()*6.283,r0=36+Math.random()*8,l=r0+6+Math.random()*20;x.strokeStyle=`rgba(${Math.random()<.5?'70,55,38':'140,118,86'},${.25+Math.random()*.35})`;x.lineWidth=1+Math.random()*2.5;x.beginPath();x.moveTo(64+Math.cos(a)*r0,64+Math.sin(a)*r0);x.lineTo(64+Math.cos(a)*l,64+Math.sin(a)*l);x.stroke();}
@@ -67,7 +71,10 @@ function buildDecals(){for(const d of [SCORCH,TRACKS,CRATER])if(d){SCN.remove(d)
 function decal(m,i,x,y,s,r){TMPM.compose(TMP.set(x,groundH(x,y)+.6,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r||0),new THREE.Vector3(s,1,s));m.setMatrixAt(i,TMPM);m.instanceMatrix.needsUpdate=true;}
 function scorch(x,y,s){if(!SCORCH)return;decal(SCORCH,decI++%320,x,y,s*2.4,Math.random()*6);}
 function crater(x,y,s){if(!CRATER)return;decal(CRATER,crI++%160,x,y,s,Math.random()*6);}
-function track(x,y,a){if(!TRACKS)return;const i=trkI++%1600;TMPM.compose(TMP.set(x,groundH(x,y)+.6,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),-(a||0)+Math.PI/2),new THREE.Vector3(4.2,1,9.5));TRACKS.setMatrixAt(i,TMPM);TRACKS.instanceMatrix.needsUpdate=true;}
+// a tread print lies on the slope (tilted to the ground under it), so it never cuts into the hill in jagged pieces
+const TRK_UP=new THREE.Vector3(0,1,0),TRK_N=new THREE.Vector3(),TRK_Q=new THREE.Quaternion(),TRK_S=new THREE.Vector3(3.4,1,10.6);
+function track(x,y,a){if(!TRACKS)return;const i=trkI++%1600;const hx=groundH(x+2,y)-groundH(x-2,y),hz=groundH(x,y+2)-groundH(x,y-2);TRK_N.set(-hx/4,1,-hz/4).normalize();
+  TRK_Q.setFromUnitVectors(TRK_UP,TRK_N);TMPQ.setFromAxisAngle(TRK_UP,-(a||0)+Math.PI/2).premultiply(TRK_Q);TMPM.compose(TMP.set(x,groundH(x,y)+.35,y),TMPQ,TRK_S);TRACKS.setMatrixAt(i,TMPM);TRACKS.instanceMatrix.needsUpdate=true;}
 function pBudget(){const lv=(typeof QUAL!=='undefined'&&fxLv())||0;return [1700,1400,1100,850,650,500][lv]||500;}
 // particles that would start well off-screen are skipped (smoke and exhaust from units across the map used CPU and
 // ate the particle budget meant for what the player is looking at)
