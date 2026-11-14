@@ -10,3 +10,7 @@ but remove the TOWN layer on top of them:
 - civilians/civilian cars: leave them out of Battle (they belong to the town layer).
 Conquest keeps towns exactly as today. Guard: Battle has zero towns but still has garrisonable buildings on maps that had towns.
 Delete this file in your last commit.
+
+## Extra (Abdullah photo 20:05 Chicago, a Battle game): the top bar shows a green "Supply OK" chip in BATTLE.
+Battle has no supply lines (train 12) - remove that chip (and any supply-network status) from the Battle top bar; Conquest keeps it.
+Add it to your guard. (The red out-of-supply badge over units is handled by the testrange helper.)
