@@ -57,6 +57,12 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/function tactBuilders\(\)\{return tactOwn\(\)\.filter\(u=>u\.kind==='dozer'\);\}/.test(u), 'fortline: tactBuilders must be Construction Vehicles only');
   ck(!/\.65\)/.test(t.slice(t.indexOf('function dozeWall'), t.indexOf('function trenchSnap'))), 'fortline: the slower infantry build factor is back in dozeWall');
   ck(/pts:\[/.test(t) && /t:'wall',ids:dzs/.test(t) && !/digCan\(e\)&&G\.t-\(e\.mv\|\|-9\)>3/.test(t), 'fortline: the AI builds lines with Construction Vehicles only'); }
+// ---- civhumans (Abdullah 2026-11-13 17:29 "Make sure civilians on the maps look like humans and aren't blocky"): town civilians are one
+// instanced human figure (reHumGeo / reHumMesh in 06b-realism), never the old four-box figure (RE_CIVM: box legs, box body, box head)
+{ const r = SRC['06b-realism.js'] || '';
+  ck(!/RE_CIVM/.test(r) && !/B\.box\(1,3\.4,1/.test(r), 'civhumans: the old box civilians (RE_CIVM) are back in src/06b-realism.js');
+  ck(/function reHumGeo\(/.test(r) && /RE_HUM=\[reHumMesh\(0\),reHumMesh\(1\)\]/.test(r) && /function reHumLook\(/.test(r), 'civhumans: civilians are no longer the shared human figure (reHumGeo / reHumMesh / reHumLook)');
+  ck(!Object.entries(SRC).some(([f, t]) => f !== '06b-realism.js' && /reHumGeo\(|new THREE\.InstancedMesh\([^)]*civ/i.test(t)), 'civhumans: a second civilian system outside src/06b-realism.js'); }
 // ---- Words (queue item, 2026-11-10): no old faction name, no real group's name and no stale building name in any text a
 // player can read. Comments are skipped (history lives there); string literals and templates are checked.
 { const strip = t => t.replace(/'(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"|`(?:\\.|[^`\\])*`|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, m => m[0] === '/' ? m.replace(/[^\n]/g, ' ') : m);

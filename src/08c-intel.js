@@ -29,10 +29,11 @@ function intelTownHtml(t){if(!G||!G.conq||!G.teams[ME])return '';const T=G.teams
 function polBannerHtml(){const T=G&&G.teams[ME];if(!T||T.reb||!G.conq)return '';const o=opOf(T),m=polMul(T),col=o<POL.SANC_BELOW?'#ff8a7a':o>=POL.AID_ABOVE?'#9be39b':'#e8e2c8';
   const note=m<1?' &middot; SANCTIONS -'+Math.round((1-m)*100)+'% income':o>=POL.AID_ABOVE?' &middot; foreign aid':'';
   return `<div style="margin-top:3px;font-size:12px;color:${col}">World opinion <span style="display:inline-block;vertical-align:middle;width:64px;height:6px;border-radius:3px;background:rgba(255,255,255,.2);overflow:hidden"><i style="display:block;height:100%;width:${Math.round(o)}%;background:${col}"></i></span> ${Math.round(o)} &middot; ${opLabel(o)}${note}</div>`;}
-// refugee columns walking away from a town under fire: little figures on the 2D overlay, dots on the minimap
-function drawRefugeesWorld(c){if(!G||!G.refs||!G.refs.length||G.over)return;c.save();
+// refugee columns walking away from a town under fire: 3D people (06b-realism reCivTick) or, when those are off (Low, far
+// zoom), little figures on the 2D overlay; dots on the minimap
+function drawRefugeesWorld(c){if(!G||!G.refs||!G.refs.length||G.over)return;c.save();const hum=typeof RE!=='undefined'&&performance.now()-RE.refD<300;/* drawn as 3D people by the town civilians (06b-realism) */
   for(const r of G.refs){const p=refPos(r);if(!inView(p[0],p[1],.1))continue;
-    for(let i=0;i<r.n;i++){const off=i*9-r.n*4.5,x=p[0]-r.dx*off+r.dy*((i%3)-1)*7,y=p[1]-r.dy*off-r.dx*((i%3)-1)*7,s=toScreen(x,groundH(x,y)+7,y);if(s.z>1)continue;
+    if(!hum)for(let i=0;i<r.n;i++){const off=i*9-r.n*4.5,x=p[0]-r.dx*off+r.dy*((i%3)-1)*7,y=p[1]-r.dy*off-r.dx*((i%3)-1)*7,s=toScreen(x,groundH(x,y)+7,y);if(s.z>1)continue;
       const k=Math.max(.5,Math.min(1.6,900/Math.max(300,cam.td||900))),h=9*k;c.fillStyle='rgba(20,20,18,.55)';c.fillRect(s.x-1.6*k,s.y-h,3.2*k,h);c.fillStyle=['#d9d2bd','#bfc7cf','#c9a98a'][i%3];c.beginPath();c.arc(s.x,s.y-h-1.6*k,1.8*k,0,7);c.fill();c.fillRect(s.x-1.3*k,s.y-h+1,2.6*k,h-1.5);}
     const s=toScreen(p[0],groundH(p[0],p[1])+22,p[1]);if(s.z<1&&inView(p[0],p[1],.05)){c.font='bold 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='rgba(8,12,10,.7)';c.fillRect(s.x-26,s.y-9,52,12);c.fillStyle='#e8f2e8';c.fillText('REFUGEES',s.x,s.y);}}
   c.restore();}
