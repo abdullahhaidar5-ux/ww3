@@ -1,0 +1,67 @@
+2.7s stale save in menu {"cont":false,"warn":true}
+37.5s map open
+46.6s march {"me":"IR","from":"Khuzestan","to":"Basra","foe":"RV","ok":true,"units":25}
+51.2s fallback {"modal":true,"map":true,"G":false}
+75.3s prompt: BATTLE · SeaStrait of HormuzAttackers — Iraqi Shia Brigades4 units1 Shatt Patrol Boat, 1 Marsh Boat, 1 Fast At
+77.2s Fight it live clicked
+86.3s {"L":true,"step":"Loading 3D models…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+88.2s {"L":true,"step":"Building the battlefield…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+90.2s {"L":true,"step":"Preparing graphics…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+93.0s {"L":true,"step":"Preparing graphics… 1 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+94.8s {"L":true,"step":"Preparing graphics… 5 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+96.8s {"L":true,"step":"Preparing graphics… 9 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+98.1s {"L":true,"step":"Preparing graphics… 11 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+99.4s {"L":true,"step":"Preparing graphics… 13 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+101.1s {"L":true,"step":"Preparing graphics… 15 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+102.8s {"L":true,"step":"Preparing graphics… 17 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+103.8s {"L":true,"step":"Preparing graphics… 18 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+105.2s {"L":true,"step":"Preparing graphics… 19 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+106.5s {"L":true,"step":"Preparing graphics… 20 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+107.8s {"L":true,"step":"Preparing graphics… 26 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+108.8s {"L":true,"step":"Preparing graphics… 31 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+110.6s {"L":true,"step":"Preparing graphics… 32 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+112.8s {"L":true,"step":"Deploying forces…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+145.1s {"L":false,"step":"Ready","g":true,"grand":true,"t":0,"paused":false,"gs":"none","ents":8}
+167.0s {"L":false,"step":"Ready","g":true,"grand":true,"t":0.18,"paused":false,"gs":"none","ents":8}
+198.1s battle running: Generating terrain 8940, Loading 3D models 505, Building the battlefield 1285, Building the battlefield 1977, Preparing graphics 20405, Deploying forces 965, Deploying forces 16570, total 52244
+GRANDLIVE PASS
+scenario {"foe":"RV","ok":true,"from":"Khuzestan","to":"Basra","units":37}
+  [page] grandlive: grandBattleStart sync 1969 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":8,"over":false,"gs":"none","camp":false}
+  [page] loading watchdog: "Preparing graphics" still not done after 20 s, moving on
+  [page] battle start: Generating terrain 12962 ms, Loading 3D models 408 ms, Building the battlefield 1434 ms, Building the battlefield 2101 ms, Preparing graphics 20040 ms, Deploying forces 1001 ms, Deploying forces 8010 ms, total 46367 ms
+  [page] shader warm-up 33161 ms, 44 models, 84 objects in 49 steps (longest 11372 ms), 87 programs, textures 36 MB (finished in the background after the loading watchdog)
+live 1 54.7s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":8,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.1400000000000006,"p":false,"h":false,"fs":null}],"running":true}
+scenario {"foe":"RV","ok":true,"from":"Khuzestan","to":"Basra","units":25}
+  [page] grandlive: grandBattleStart sync 2296 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":57,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 10967 ms, Loading 3D models 0 ms, Building the battlefield 1 ms, Building the battlefield 1037 ms, Preparing graphics 6660 ms, Deploying forces 14 ms, Deploying forces 2291 ms, total 21030 ms
+live 2 26.5s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":57,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.0966666666666671,"p":false,"h":false,"fs":null}],"running":true}
+
+GRANDLIVE2 PASS
+31.9s map open
+36.1s start {"turn":1,"day":0,"date":"1 Nov 2026","spd":0,"ph":"plan","modal":false}
+38.5s after Space {"turn":1,"day":1,"date":"2 Nov 2026","spd":2,"ph":"plan","modal":false}
+48.4s month rolled {"turn":2,"day":26,"date":"27 Dec 2026","spd":5,"ph":"plan","modal":false}
+50.2s paused {"turn":2,"day":26,"date":"27 Dec 2026","spd":0,"ph":"plan","modal":false}
+50.5s march {"ok":true,"hint":"Basra: arrives ~1 Feb 2027 (2 months)"}
+67.3s slide [{"x":1500,"z":392.0544912363294,"f":0.43826666666666275,"day":26},null]
+73.0s battle prompt {"turn":2,"day":0,"date":"1 Jan 2027","spd":3,"ph":"resolve","modal":true}
+80.0s AI mid-month {"n":0,"same":true,"cash":true,"f0":0}
+GRANDRT PASS
+occ {"cost":{"zeal":660,"prof":634,"home":587,"fire":608},"eff":{"zeal":24,"prof":0,"home":18,"fire":0},"ws":{"zeal":9,"prof":8.640909090909105,"home":8,"fire":8.290909090909082},"n":{"home":6,"prof":6,"zeal":6,"fire":6},"guard":3,"panel":true,"spread":1,"aiPath":[],"aiAns":true,"aiTo":57,"det":true}
+OCC PASS
+leg {"v":[32000,30000],"leg":true,"ws":4,"mor":2,"loserWs":true,"again":false,"tiny":false,"lop":false,"names":1,"style":"prof","expired":true,"saved":true}
+LEG PASS
+17.8s lobby open, code 8lbqet
+51.4s campaign started
+67.8s friend joined as SA
+76.3s friend march reached host
+108.4s friend answered their own event
+133.4s month rolled on the friend's map
+142.5s friend paused the world
+198.2s friend chose Fight it live
+207.3s friend battle loaded and finished
+211.1s friend live battle settled on host: fought the battle for Basra live
+214.6s friend left, AI took over
+GNETTEST PASS
