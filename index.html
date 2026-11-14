@@ -5538,7 +5538,13 @@ for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const
   const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);
   FACTIONS[k].units.champ=Object.assign({},u.champ||{},{name:N.hero[0],hab:N.hero[1]});HEROES[k]=N.hero;}
 for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctrine+=' Tunnel warfare: hidden tunnels move units across the map instantly.';}
-const FKEYS=Object.keys(FACTIONS).filter(k=>k!=='EU');   // nations-a1: the EU retires as a nation (Abdullah 2026-11-05 19:54) - FACTIONS.EU stays only as the hidden base row FR/DE are built from and for old saves/replays; it is in no lobby, menu or AI list
+// nations20 (Abdullah 2026-11-13 20:31-20:33 "Cut to 20", "Remove Iraq and Syria", "Keep 22"): ONE allow-list. Every picker, AI/random choice, lobby, save and replay check reads FKEYS = PLAYABLE.
+// The data rows of removed nations stay (old saves, hidden base rows such as EU) but are in no list a player or the AI can reach.
+const PLAYABLE=['IR','RS','DW','RV','OB','US','GB','FR','IL','UA','RU','CN','KP','SA','AE','TR','EG','PK','IN','JP','DE','KR'];
+const FKEYS=PLAYABLE.filter(k=>FACTIONS[k]);
+// An old save / replay / online slot naming a removed nation falls back to a kept nation of the same morale style.
+const NATFALL={EU:'FR',PL:'FR',IQ:'RV',SY:'RS',BI:'OB',AF:'DW',KD:'RS',CU:'UA',AU:'GB',CA:'GB'};
+function natFix(f){if(FKEYS.includes(f))return f;if(NATFALL[f])return NATFALL[f];const st=MORALE_STYLE[f];return {zeal:'IR',prof:'RU',home:'UA',fire:'SA'}[st]||'US';}
 // Rock-paper-scissors: what each kind of unit beats and what beats it (shown in the unit tooltips).
 /* One language, idea 3 (orch/concepts/ONE-LANGUAGE.md): what every unit BEATS and is WEAK TO is COMPUTED from the real
    balance numbers (VS + stats/bstats) by this one helper - never write such lists by hand (guard: orch/decisions.mjs).
@@ -5788,7 +5794,7 @@ for(const k in FACTIONS){const F=FACTIONS[k],D=DOCT[k];if(!D||F._dt)continue;F._
 FACTIONS.JP=F_('JP','Japan','#e8e8f0','ja-JP','eastasia','Maritime defense & precision: sensors see 12% farther, units self-repair, weapons deal 4% more damage, warships and submarines are 20% tougher and hit 10% harder, Type 10 tanks have better fire control.',{dmg:1.04,regen:3,sight:1.12},'hero',
   {inf:{name:'JGSDF Rifle Squad'},at:{name:'Type 01 LMAT Team'},hero:{name:'Special Forces Group Commando',demo:true},aa:{name:'Type 87 SPAAG'},tank:{name:'Type 10 Tank'},arty:{name:'Type 99 Howitzer'},heli:{name:'AH-64DJP Apache'},jet:{name:'F-2 Viper Zero'},boat:{name:'Hayabusa Missile Boat'},ship:{name:'Maya-class Aegis Destroyer'}},
   {name:'Type 12 Missile Salvo',charge:160,n:2,dmg:600,r:125,spread:80},'k2fcs');
-FKEYS.push('JP');
+
 UPLINK.JP=['Standoff Missile Command','vls'];
 ECON.JP='Electronics & Robotics Plant';
 COURAGE.JP=1.03;
@@ -12244,7 +12250,7 @@ function joinByCode(raw,quiet,pw){if(!NET.room||NET.game)return;const code=codeF
     $('mpstatus').textContent='Game '+code.toUpperCase()+' was not found. Check that the battle\'s leader still has the lobby open and has invited you from the game\'s Share menu, and that you are signed in to claude.ai.';};look();}
 // Host-side handlers for a game room (also used when a standby player takes over as host)
 function wireHost(g){
-  NET.cseq=NET.cseq||{};const hostHello=(peer,by,f,tok,pw)=>{if(MODE==='host'){hostRejoin(peer,tok);return;}if(MODE!=='single')return;const cf=FKEYS.includes(f)?f:'US';const m={peer,by};const p=NET.lobby.find(q=>q.peer===m.peer);
+  NET.cseq=NET.cseq||{};const hostHello=(peer,by,f,tok,pw)=>{if(MODE==='host'){hostRejoin(peer,tok);return;}if(MODE!=='single')return;const cf=natFix(f);const m={peer,by};const p=NET.lobby.find(q=>q.peer===m.peer);
     // a password-protected game hosted in this browser: a newcomer must greet with the password (the server also checks
     // everyone who comes through its relay room; this covers direct browser-to-browser joins)
     if(!p&&NET.pw){if(pw===undefined){const q=NET.game&&NET.game.peers().find(x=>x.peer===peer);pw=q&&q.presence&&q.presence.hi?q.presence.hi.pw:undefined;}const why=pwHostCheck(peer,pw);if(why){NET.game.emit('lobby',{n:0,to:peer,pw:why}).catch(()=>{});return;}}
@@ -12254,7 +12260,7 @@ function wireHost(g){
   g.on('hello',m=>{if(m.sameTab)return;if(m.data&&m.data.sp){if(!(NET.peers&&NET.peers.indexOf(m.peer)>=0)&&!NET.lobby.some(p=>p.peer===m.peer)){(NET.isSpec=NET.isSpec||{})[m.peer]=1;browserSpec(m.peer);}return;}hostHello(m.peer,m.by,m.data&&m.data.f,null,m.data&&typeof m.data.pw==='string'?m.data.pw:'');});
   g.on('cmd',m=>hostCmd(m.peer,m.data));
   // a friend in the lobby picks their nation / team / Ready (08d-lobby); only the browser host's own lobby uses it
-  g.on('pick',m=>{if(m.sameTab||MODE!=='single')return;const p=NET.lobby.find(q=>q.peer===m.peer),d=m.data;if(!p||!d||typeof d!=='object')return;if(FKEYS.includes(d.f))p.f=d.f;p.r=d.r?1:0;if(typeof d.t==='number'&&d.t>=0&&d.t<8)NET.tm[NET.lobby.indexOf(p)+1]=d.t|0;renderLobby();});
+  g.on('pick',m=>{if(m.sameTab||MODE!=='single')return;const p=NET.lobby.find(q=>q.peer===m.peer),d=m.data;if(!p||!d||typeof d!=='object')return;if(typeof d.f==='string')p.f=natFix(d.f);p.r=d.r?1:0;if(typeof d.t==='number'&&d.t>=0&&d.t<8)NET.tm[NET.lobby.indexOf(p)+1]=d.t|0;renderLobby();});
   // the battle half (orders, pings, reconnects, keyframe requests) is shared with the server host (07a-hostsnap)
   g.onPeers(ch=>{for(const q of ch.joined.concat(ch.updated)){if(q.sameTab||!q.presence)continue;hostPres(q,hostHello);}});
   g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);if(NET.lobbySpec)NET.lobbySpec=NET.lobbySpec.filter(x=>x!==q.peer);if(NET.isSpec)delete NET.isSpec[q.peer];renderLobby();}else hostGone(q.peer);}});
@@ -14206,7 +14212,7 @@ function mapPickerOpen(sel,done){
   const BMODE=mapBattleMode(),bOnly=()=>false;if(BMODE)ov.querySelector('#mpTitle').textContent='Choose a Battle map';
   const chipDefs0=[['reg','Region',Object.keys(MP_REG)],['pl','Players',[2,4,6,8]],['size','Size',['Small','Medium','Large']],['ter','Terrain',['desert','urban','mountain','coast']]];let chipDefs=chipDefs0;
   const chips=ov.querySelector('#mpChips');
-  const match=k=>{const D=MAPS[k];const hay=(D.name+' '+(D.tag||'')+' '+(D.desc||'')+' '+mpRegion(k)+' '+(D.home||[]).map(f=>FACTIONS[f]?FACTIONS[f].name:f).join(' ')).toLowerCase();return(!F.q||F.q.split(/\s+/).every(w=>hay.includes(w)))&&(!F.reg||mpRegion(k)===F.reg)&&(!F.pl||(bOnly()?D.max===F.pl:(D.min<=F.pl&&D.max>=F.pl)))&&(!F.size||mpSize(k)===F.size)&&(!F.ter||mpTerrain(k).includes(F.ter));};
+  const match=k=>{const D=MAPS[k];const hay=(D.name+' '+(D.tag||'')+' '+(D.desc||'')+' '+mpRegion(k)+' '+(D.home||[]).map(f=>FKEYS.includes(f)?FACTIONS[f].name:'').join(' ')).toLowerCase();return(!F.q||F.q.split(/\s+/).every(w=>hay.includes(w)))&&(!F.reg||mpRegion(k)===F.reg)&&(!F.pl||(bOnly()?D.max===F.pl:(D.min<=F.pl&&D.max>=F.pl)))&&(!F.size||mpSize(k)===F.size)&&(!F.ter||mpTerrain(k).includes(F.ter));};
   const pick=k=>{if(![...sel.options].some(o=>o.value===k)){const o=document.createElement('option');o.value=k;o.textContent=MAPS[k].name;sel.append(o);}sel.value=k;rec=[k,...rec.filter(x=>x!==k)].slice(0,6);save();ov.remove();document.removeEventListener('keydown',kd,true);if(sel.onchange)sel.onchange();if(done)done();};
   const card=(k,i)=>{const D=MAPS[k],b=document.createElement('div');b.setAttribute('role','button');b.tabIndex=0;b.dataset.k=k;b.dataset.i=i;const sn=D.theme==='snow'?'#9fb8c8':D.theme==='green'?'#5f8a4e':/desert|dune/.test(D.tag||'')?'#c3a56a':'#7d8a74';b.style.cssText='display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid '+(k===setup.map?'var(--accent,#d9a441)':'var(--line,#444)')+';background:var(--panel,#181a1c);cursor:pointer;min-width:0';
     b.innerHTML='<span style="width:34px;height:24px;flex:none;background:'+sn+';border:1px solid #0006"></span><span style="flex:1;min-width:0"><span style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+D.name.replace(/</g,'&lt;')+'</span><span style="font-size:11px;opacity:.7">'+(D.min===D.max?D.max:D.min+'–'+D.max)+' players · '+mpSize(k)+'</span></span>';
@@ -14241,7 +14247,7 @@ function mapPickerOpen(sel,done){
   document.addEventListener('keydown',kd,true);render();q.focus();}
 function mapCards(){const el=$('pickMap');if(!el)return;if(!setup.map)setup.map=(typeof SET!=='undefined'&&SET.map&&MAPS[SET.map])?SET.map:'strait';mapFixForMode();el.className='';el.innerHTML='';const box=document.createElement('div');box.className='mapsel';
   const cv=document.createElement('canvas');cv.id='mapCv';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Map preview: tap a numbered spot to choose who starts there');cv.onclick=e=>{if(!PREV[setup.map])return;const n=skSides().length,k=spotsHit(cv,e,setup.map,n);if(k<0)return;try{sfxUI(700);}catch(_){}skSet(spotsCycle(skSt(n),k));};const right=document.createElement('div');const sel=document.createElement('select');sel.id='mapSel';sel.setAttribute('aria-label','Battlefield');
-  for(const k of mapListKeys()){const o=document.createElement('option');o.value=k;const hm=(MAPS[k].home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);o.textContent=MAPS[k].bm?`${MAPS[k].name} (${mapFacts(k)})`:`${MAPS[k].name}${hm.length?' · Home turf: '+hm.join(' & '):''} (${MAPS[k].min}–${MAPS[k].max} players)`;sel.append(o);}if(typeof editorAddMaps==='function')editorAddMaps(sel);sel.value=setup.map;
+  for(const k of mapListKeys()){const o=document.createElement('option');o.value=k;const hm=(MAPS[k].home||[]).map(f=>FKEYS.includes(f)&&FACTIONS[f].name).filter(Boolean);o.textContent=MAPS[k].bm?`${MAPS[k].name} (${mapFacts(k)})`:`${MAPS[k].name}${hm.length?' · Home turf: '+hm.join(' & '):''} (${MAPS[k].min}–${MAPS[k].max} players)`;sel.append(o);}if(typeof editorAddMaps==='function')editorAddMaps(sel);sel.value=setup.map;
   { /* Battlefield picker (Abdullah 2026-11-07 21:29): the <select> stays hidden as the value holder; a small button opens a searchable, filterable, grouped, paged window. */
     sel.style.display='none';const pb=document.createElement('button');pb.type='button';pb.id='mapPick';pb.className='rndmap';pb.style.cssText='display:block;width:100%;text-align:left;margin:0 0 6px;padding:7px 9px;font-size:14px';
     const upd=()=>{pb.textContent='▾ '+(MAPS[setup.map]?MAPS[setup.map].name:mapBattleMode()?'Choose a Battle map':'Choose a battlefield');};upd();pb.onclick=()=>mapPickerOpen(sel,upd);right.append(pb);box.addEventListener('mapchanged',upd);sel.addEventListener('change',upd);}
@@ -14786,7 +14792,7 @@ const ID_MEDALS=(()=>{const n=(k,t,d)=>({k:'win_'+k,t,d,f:k,w:1});const M=[n('IR
   {k:'rs_fort',t:'Lebanese Shia: Rock Stands',d:'Win a Battle as the Lebanese Shia with your Mountain Fortress still standing.',f:'RS',w:1},
   {k:'fort20',t:'Hold the Mountain',d:'Keep a Mountain Fortress standing for 20 minutes in one Conquest or Battle game.',w:1},
   {k:'ir_bb',t:'Fire and Fury',d:'Call in a Bunker Buster strike in Conquest, Battle, a mission or on the test range.',w:1}];
-  for(const k of ['US','TR','IL','EU','FR','DE','UA','RU','SA','AE','PK','IN','CN','KP','KR','EG','CU','GB','AU','CA','DZ','MA','NG','ZA','ET','LY','SD','PL','AZ','JO','KD','IT','GR','ES','JP','TW','PH','VN','ID','TH','KZ','AF','OM','RV','OB','BI'])M.push(n(k,FACTIONS[k].name+': Victory','Win a battle as '+FACTIONS[k].name+'.'));
+  for(const k of PLAYABLE)M.push(n(k,FACTIONS[k].name+': Victory','Win a battle as '+FACTIONS[k].name+'.'));
   M.push({k:'hard_1v3',t:'Outnumbered',d:'Win alone against three or more enemies on Hard.',w:1},{k:'iron_wall',t:'Iron Wall',d:'Win a battle (3+ minutes) losing fewer than 10 units.'},{k:'vet10',t:'Veteran Commander',d:'Finish 10 battles.'});return M;})();
 function idStore(){let s=null;try{s=JSON.parse(localStorage.getItem('ww3_medals')||'null');}catch(e){}if(!s||typeof s!=='object')s={};s.earned=s.earned||{};s.hist=Array.isArray(s.hist)?s.hist:[];s.n=s.n|0;return s;}
 function idSave(s){try{localStorage.setItem('ww3_medals',JSON.stringify(s));}catch(e){}}
@@ -14917,7 +14923,7 @@ async function rpParse(buf){const u=buf instanceof Uint8Array?buf:new Uint8Array
   const b=u.indexOf(10,a+1);if(b<0)throw new Error('replay file is damaged');const hdr=JSON.parse(td.decode(u.subarray(a+1,b)));let p=b+1,i=0;const frames=[];
   while(p+4<=u.length){const L=new DataView(u.buffer,u.byteOffset+p,4).getUint32(0,true);const seg={z:hdr.z?hdr.z[i]|0:1,b:u.subarray(p+4,p+4+L)};p+=4+L;i++;
     const txt=await rpUnzip(seg);for(const ln of txt.split('\n')){const x=ln.indexOf('|'),y=ln.indexOf('|',x+1);if(x<0||y<0)continue;frames.push([+ln.slice(0,x),ln.slice(x+1,y),ln.slice(y+1)]);}}
-  if(!Array.isArray(hdr.si&&hdr.si.facs)||!hdr.si.facs.every(f=>FKEYS.includes(f)||f==='EU'))throw new Error('this replay has nations this version does not know');return {hdr,frames};}
+  if(!Array.isArray(hdr.si&&hdr.si.facs)||!hdr.si.facs.every(f=>typeof f==='string'))throw new Error('this replay is damaged');hdr.si.facs=hdr.si.facs.map(natFix);return {hdr,frames};}
 /* ---------- watching ---------- */
 async function rpWatch(buf){let P;try{P=await rpParse(buf);}catch(e){uiDialog('Could not open the replay: '+(e&&e.message||e),{yes:'OK',no:'Close'},()=>{});return false;}
   if(typeof NET_PV==='number'&&(P.hdr?.ver|0)!==NET_PV){uiDialog('This replay was recorded with an older version of the game and cannot be played back.',{yes:'OK',no:'Close'},()=>{});return false;}
@@ -15772,7 +15778,8 @@ async function svLoad(meta,packed){
   const bad=svCheck(meta);if(bad)return {ok:false,msg:bad};
   let ck;try{ck=await ckUnpack(packed);}catch(e){return {ok:false,msg:'This save file is damaged and can\'t be loaded.'};}
   const sv=ck&&ck.sv,o=sv&&sv.ng;
-  if(!sv||!o||!Array.isArray(o.facs)||!Array.isArray(ck.ents)||(ck.v|0)<2||!o.facs.every(f=>FKEYS.includes(f)||f==='EU')||!MAPS[o.map])return {ok:false,msg:'This save is from an older version and can\'t be loaded.'};
+  if(!sv||!o||!Array.isArray(o.facs)||!Array.isArray(ck.ents)||(ck.v|0)<2||!o.facs.every(f=>typeof f==='string')||!MAPS[o.map])return {ok:false,msg:'This save is from an older version and can\'t be loaded.'};
+  o.facs=o.facs.map(natFix);if(o.p)o.p=natFix(o.p);
   if(G&&!G.over){try{quitGame();}catch(e){}}
   try{MODE='single';ME=sv.me|0;
     TERR_DEFER=true;try{newGame(JSON.parse(JSON.stringify(o)));ckRestore(ck);}finally{TERR_DEFER=false;}
@@ -19623,7 +19630,7 @@ const CH={
 
 // ---------- the five missions ----------
 const CAMPAIGN=[
-{id:'pass',n:1,title:'Hold the Pass',sub:'Lebanese Shia · Ridge defense',fac:'RS',enemy:'DE',enemyName:'Invasion Force',map:'khyber',
+{id:'pass',n:1,title:'Hold the Pass',sub:'Lebanese Shia · Ridge defense',fac:'RS',enemy:'FR',enemyName:'Invasion Force',map:'khyber',
  brief:['An invasion force is pushing up the only road into our valleys. Our main columns are still two hours away on the mountain tracks.','You hold a ridge above the road with a small garrison: riflemen, anti-tank teams, two tanks and a few emplacements. Hold it. Every minute you stand buys the valley time.','When the reinforcements arrive, do not let the enemy rest: take the fight back down the pass and destroy their forward base.'],
  obj:[['hold','Hold the ridge until reinforcements arrive'],['reinf','Reinforcements arrive'],['crush','Destroy the enemy forward base']],
  win:'The pass is ours. The valley is safe, and the road is closed to the invaders.',lose:'The ridge has fallen. The valley will have to be defended from the next line.',
@@ -19685,7 +19692,7 @@ const CAMPAIGN=[
   else if(!hq)c.lose('Headquarters was destroyed.');
   c.status=c.t<c.T?'Relief in '+campClock(c.T-c.t)+' · wave '+c.wave:null;}},
 
-{id:'town',n:4,title:'Retake the Town',sub:'Lebanese Shia + Zaidi Shia Movement · Street fight',fac:'RS',ally:'DW',enemy:'DE',enemyName:'Occupation Force',map:'aleppo',
+{id:'town',n:4,title:'Retake the Town',sub:'Lebanese Shia + Zaidi Shia Movement · Street fight',fac:'RS',ally:'DW',enemy:'FR',enemyName:'Occupation Force',map:'aleppo',
  brief:['An occupation force has seized the old town at the crossroads. Its streets and rooftops are held by infantry and anti-tank teams, with armor in the squares.','Lebanese Shia and Zaidi Shia Movement fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the town street by street. Put infantry into buildings to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves.'],
  obj:[['z0','Clear the southern approach'],['z1','Clear the west quarter'],['z2','Clear the east quarter'],['z3','Take the citadel square'],['z4','Clear the far gate'],['gar','Garrison a building to hold ground']],
  win:'The town is free. Both flags fly over the citadel.',lose:'The assault has failed. Our columns fall back.',
@@ -20293,7 +20300,7 @@ function mxMapCards(){
   const g=MX.grid,sel=document.getElementById('mapSel');if(!g||!sel)return;g.innerHTML='';
   for(const o of sel.options){const k=o.value,D=(typeof MAPS!=='undefined'&&MAPS[k])||null;const b=mxEl('button','mxmap'+(k===sel.value?' on':''));b.type='button';b.dataset.k=k;
     let cv=MX.thumbs[k];if(!cv){cv=document.createElement('canvas');cv.width=384;cv.height=264;MX.thumbs[k]=cv;}if(!cv.classList.contains('rd')&&!MX.thumbQ.includes(k))MX.thumbQ.push(k);
-    const hm=D&&(D.home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);
+    const hm=D&&(D.home||[]).map(f=>FKEYS.includes(f)&&FACTIONS[f].name).filter(Boolean);
     const facts=D?(D.bm&&typeof mapFacts==='function'?mapFacts(k):(D.min===D.max?D.max+' players':D.min+'–'+D.max+' players')+(D.theme==='snow'?' · snow & ice':D.theme?' · '+D.theme:'')+(D.tag?' · '+D.tag:'')):o.textContent;
     const th=mxEl('div','mxth'),ph=mxEl('div','mxph'),TC={snow:'#2a3a46',desert:'#4a3d26',green:'#27402b'};th.style.background=TC[D&&D.theme]||'#2d3a2f';ph.append(D?D.name:o.textContent,mxEl('small','',D?(D.min===D.max?D.max:D.min+'–'+D.max)+' players':''));th.append(ph,cv);b.append(th,mxEl('div','t',D?D.name:o.textContent),mxEl('div','f',facts),mxEl('div','d',(D&&D.desc||'')+(hm&&hm.length?' Home turf: '+hm.join(' & ')+'.':'')));
     b.onclick=()=>{mxTick(700);sel.value=k;sel.onchange();mxMapMark();setTimeout(()=>{if(MX.cur==='c-map')menuGo('c-nation');},140);};g.appendChild(b);}
