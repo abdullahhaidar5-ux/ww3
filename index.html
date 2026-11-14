@@ -4940,7 +4940,7 @@ let MAPW=3200,MAPH=2200,WK=1;const CELL=40;let GW=Math.ceil(MAPW/CELL),GH=Math.c
 const WEATHER={clear:{name:'Clear',vis:1,acc:1,spd:1,air:1},
   rain:{name:'Rain',vis:.8,acc:.9,spd:.88,air:.9,tip:'Mud slows ground units, visibility and accuracy drop.'},
   fog:{name:'Fog',vis:.55,acc:.92,spd:.95,air:.85,tip:'Heavy fog: units see barely half as far. Ambush weather.'},
-  sandstorm:{name:'Sandstorm',vis:.55,acc:.8,spd:.88,air:0,tip:'Sandstorm: vision and accuracy slashed, jets grounded, helicopters and drones struggle.'},
+  sandstorm:{name:'Sandstorm',vis:.75,acc:.88,spd:.92,air:.5,tip:'Sandstorm: units see a little less far and shoot a little worse; aircraft fly slower.'},
   snow:{name:'Snow',vis:.8,acc:.92,spd:.9,air:.8,tip:'Deep snow slows ground units; vision and aircraft are a little worse.'},
   blizzard:{name:'Blizzard',vis:.6,acc:.85,spd:.8,air:0,tip:'Blizzard: snow slows everything, jets grounded, vision cut.'}};
 // Seasons (2026-11-06): the lobby 'Conditions' value w carries the weather/time-of-day in its ones digit (0-9, or -1 random) and the
@@ -4949,12 +4949,19 @@ function wxBase(w){w|=0;return w<0?-1:w%10;}
 function wxSsn(w){w|=0;return Math.min(3,(w<0?((-1-w)/10)|0:(w/10)|0));}
 function wxJoin(base,ssn){base|=0;ssn|=0;return base<0?-1-10*ssn:base+10*ssn;}
 const SEASONS=['Map default','Summer','Autumn mud','Winter snow'];
+// Conditions picker (2026-11-14, weathergfx): Random / Day / Dusk / Night / Rain / Sandstorm / Snow. Values are the same base digits as above
+// (0 day, 3 dusk, 4 night, 6 sandstorm, 7 rain, 8 snow, -1 random); th = the map themes the option fits (none listed = fits every map).
+// 1, 2 and 5 (golden hour, overcast, changing) only remain so old saves and links still load. Random picks, from the seed, only what fits.
+const CONDS=[{w:-1,n:'Random',t:'The seed picks day, dusk, night or the weather that suits this map'},{w:0,n:'Day',t:'Clear daylight'},{w:3,n:'Dusk',t:'Low red sun, long shadows; units see a little less far. Gunfire lights the field'},{w:4,n:'Night',t:'Dark battlefield: units see a little less far (tanks, aircraft, commandos and recon keep thermal sight); fire and flashes light the field'},{w:7,n:'Rain',th:['green'],t:'Rain: vision and accuracy a little down, mud slows ground units. Temperate maps only'},{w:6,n:'Sandstorm',th:['desert'],t:'Brown haze: units see a little less far and shoot a little worse. Desert and Gulf maps only'},{w:8,n:'Snow',th:['snow'],t:'Snowfall: white haze, deep snow slows ground units. Snow maps only'}];
+function condTheme(mk,w){const D=typeof MAPS!=='undefined'&&MAPS[mk],ss=wxSsn(w)||(typeof seasonOf==='function'?seasonOf(mk):1);const th=(D&&D.theme)||'green';return ss===3?'snow':th==='snow'?'green':th;}
+function condFits(b,theme){const c=CONDS.find(x=>x.w===b);return !c?(b===1||b===2||b===5):!c.th||c.th.includes(theme);}
+function condFit(b,theme,seed){if(b<0){const L=[0,0,3,4].concat(CONDS.filter(c=>c.th&&c.th.includes(theme)).map(c=>c.w));return L[wxRandIdx(seed)%L.length];}return condFits(b,theme)?b:0;}
 function weatherKinds(theme){return theme==='snow'?['clear','blizzard','fog']:theme==='green'?['clear','rain','fog']:['clear','sandstorm','fog'];}
 // A duel is fought on a field 1.3x the 3200x2200 design (about 300 infantry-lengths across, like a classic RTS 1v1
 // map); each extra player adds room (8 players: 2.26x).
 function worldScaleFor(n,mk){n=Math.max(2,Math.min(8,n|0||2));const D=mk&&typeof MAPS!=='undefined'&&MAPS[mk];if(D&&D.cscale)return D.cscale;const K=n<=4?1.27:1;return Math.round(K*(n===2&&!(D&&D.oldScale&&D.oldScale.includes(2))?2.25:n===3&&!(D&&D.oldScale&&D.oldScale.includes(3))?2.4:Math.round((D&&D.oldScale&&D.oldScale.includes(n)?1.56:1.95)*Math.pow(n/2,.4)*100)/100)*100)/100;}   // Conquest maps (Abdullah 2026-11-04 20:01): 2-4 players another +27% (base-to-base walk ~4-5 min), 5-8 unchanged; // 2 and 3 players another +15%/+12% (Abdullah 2026-11-03 "epic size"); +25% again (Abdullah 2026-10-30: "maps need to be bigger and more complex"; 2026-10-29 was 1.56; a map can keep 1.56 for player counts listed in oldScale, where the bigger ground gave a start position the edge)
 // Player settings (graphics, volumes, game speed, HUD), saved per browser.
-const SET={gfx:'auto',mus:70,fx:100,vo:100,spd:1,hp:'dmg',edge:1,txt:1,scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1};try{Object.assign(SET,JSON.parse(localStorage.getItem('ww3_settings')||'{}'));}catch(e){}
+const SET={gfx:'auto',mus:70,fx:100,vo:100,spd:1,hp:'dmg',edge:1,txt:1,scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1};try{Object.assign(SET,JSON.parse(localStorage.getItem('ww3_settings')||'{}'));}catch(e){}if(SET.gfx==='med')SET.gfx='auto';   // graphics presets (2026-11-14): Low = 'low', Medium = 'auto' (today's default, the governor keeps it smooth), High = 'high', Ultra = 'ultra'
 function saveSet(){try{localStorage.setItem('ww3_settings',JSON.stringify(SET));}catch(e){}}
 const $=id=>document.getElementById(id);
 const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -7233,7 +7240,7 @@ function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.te
 /* Realistic balance (Abdullah 2026-11-06 21:31): start money follows the nation's real-world military tier (GR_REAL mil figure); Balanced = equal */
 function realMul(f){const R=realRow(f);return R?R.cash:1;}
 function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].max||o.camp)?o.map:'strait';setWorld(worldScaleFor(N,mk));setBases(N,mk,mk===o.map?(Array.isArray(o.st)?o.st:o.slot):-1);if(o.camp)while(BASES.length<N)BASES.push(BASES[BASES.length-1]);
-  const wB=wxBase(o.w),ssn=wxSsn(o.w)||seasonOf(mk);const M=mkMap(o.seed,mk,ssn);
+  const ssn=wxSsn(o.w)||seasonOf(mk),wB=condFit(wxBase(o.w),condTheme(mk,o.w),o.seed);const M=mkMap(o.seed,mk,ssn);
   G={t:0,ssn,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
      map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};for(const k of G_LATE)G[k]=undefined;initCiv();initDams();initTowns();G.tow=(M.towers||[]).map((q,i)=>({i,x:q.x,y:q.y,ow:-1,cp:new Array(N).fill(0)}));G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});G.battle=!!o.battle&&!o.camp&&!o.grand&&!o.sandbox;G.conq=!o.camp&&!o.grand&&!o.sandbox&&!G.battle;infraInit();
   G.bs=BATTLE;G.real=o.real?1:0;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.conq=!o.camp&&!o.grand&&!o.sandbox&&!G.battle;G.setupEnd=G.conq?CQ_SETUP:0;G.real=o.real?1:0;G.teams.forEach(T=>{T.credits=T.reb?0:G.conq?Math.round(CQ_START*realMul(T.fac)/100)*100:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
@@ -7243,7 +7250,7 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].
   G.cover=new Uint8Array(GW*GH);for(const [x,y] of (G.treePos||[])){const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);if(cx>=0&&cy>=0&&cx<GW&&cy<GH)G.cover[cy*GW+cx]=Math.min(255,G.cover[cy*GW+cx]+1);}
   G.wood=G.cover.slice(); // trees per cell (before city cover is added): woods slow vehicles
   for(const b of (M.cityBlds||[])){const cx=Math.floor(b.x/CELL),cy=Math.floor(b.y/CELL);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const X=cx+i,Y=cy+j;if(X>=0&&Y>=0&&X<GW&&Y<GH&&G.grid[Y*GW+X]!==3)G.cover[Y*GW+X]=Math.min(255,G.cover[Y*GW+X]+2);}}
-  G.todM=wB<0?(wxRandIdx(G.seed)===4?2:0):todMode(wB);G.flares=[];{const fx={6:'sandstorm',7:'rain',8:'snow'}[wB];if(fx){G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};}}
+  G.wxB=wB;G.todM=todMode(wB);G.flares=[];{const fx=[0,3,4].includes(wB)?'clear':{6:'sandstorm',7:'rain',8:'snow'}[wB];if(fx){G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};}}   // a picked Day/Dusk/Night/weather stays as picked (no random weather on top)
   if(o.sandbox)G.sandbox=true;
   if(MODE!=='client'){
     if(o.camp)campSetup(o.camp);else if(o.grand)grandBattleSetup(o.grand);else for(let t=0;t<N;t++){const [bx,by]=BASES[t];const a=baseFacing(t),cx=Math.cos(a),cy=Math.sin(a);addBld(t,'hq',bx,by,true);addUnit(t,'harv',bx+cx*150-cy*60,by+cy*150+cx*60);addUnit(t,'dozer',bx+cx*120-cy*110,by+cy*120+cx*110);if(G.conq)conqBase(t,a);addUnit(t,'inf',bx+cx*130+cy*90,by+cy*130-cx*90);addUnit(t,'inf',bx+cx*150+cy*70,by+cy*150-cx*70);if(G.real&&!G.battle){const RR=realRow(G.teams[t].fac);let j=0;for(const [k,n] of (RR&&RR.st)||[])for(let i=0;i<n;i++,j++){const p=nearestPassXY('ground',bx+cx*(210+(j%4)*34)+cy*(-110+Math.floor(j/4)*44),by+cy*(210+(j%4)*34)-cx*(-110+Math.floor(j/4)*44));if(p)addUnit(t,k,p[0],p[1]);}}}
@@ -7326,7 +7333,7 @@ function todLvl(){const m=G.todM|0;if(m<3)return m;const d=todSeg(G.t).d;return 
 function todThermal(m){if(m.isB)return false;const c=m.s.cls;return c==='tank'||c==='heli'||c==='jet'||c==='drone'||c==='hero'||!!m.s.camo;}
 // night vision: each nation's special-forces unit and the recon teams / patrols see as well at night as by day
 function todNV(m){return !m.isB&&(m.kind==='recon'||m.kind==='jeep'||m.kind===G.teams[m.team].F.special);}
-function todVis(m){const l=G.todM?todLvl():0;if(l===2&&todNV(m))return 1;return l===0?1:l===1?(todThermal(m)?.95:.8):(todThermal(m)?.9:.6);}
+function todVis(m){const l=G.todM?todLvl():0;if(l===2&&todNV(m))return 1;return l===0?1:l===1?(todThermal(m)?.97:.9):(todThermal(m)?.95:.75);}   // a little less sight, not a lot (2026-11-14)
 function visR(m){const k=(G.teams[m.team].F.mods.sight||1)*(m.isB?Math.max(.75,wxNow().vis):wxNow().vis)*todVis(m);if(!m.isB&&m.s.vis)return m.s.vis*k;return (m.isB?340:m.s.dom==='air'?340:m.s.dom==='naval'?380:280)*k;}
 function detR(team,m){const c=m.s&&m.s.cls;return(m.isB?170:(c==='drone'||c==='heli'||c==='jet'||m.s&&(m.s.airSpot||m.s.recon)?260:150))*upgT(G.teams[team],'detect');}
 function hiddenNow(e){if((e.detT||0)>G.t)return false;if(e.stlT&&!e.isB){if(G.t-(e.mv||-99)<1&&e.mv!=null||e.lastFire>0)e.stlT=0;else return true;}if(!e.isB&&G.smokes&&G.smokes.length&&G.t-(e.lastFire||-9)>1.5)for(const S of G.smokes)if(S.t>G.t&&ally(S.team,e.team)&&Math.hypot(e.x-S.x,e.y-S.y)<S.r)return true;if(e.isB)return isTun(e)&&e.built>=1&&G.t-(e.lastFire||-9)>3;if(e.s.camo&&G.t-e.lastFire>3&&G.t-(e.mv||-9)>3)return true;if(G.t-e.lastFire<=(e.s.sub?6:2.5)||e.planting)return false;if(e.s.stealth)return true;if(isInf(e.s)&&G.t-(e.mv||-9)>2&&G.t-e.lastFire>4){if(!(e._cvT>G.t-.6)){e._cvT=G.t;e._cvK=coverKind(e.x,e.y);}if(e._cvK===1)return true;}return !!(upgT(G.teams[e.team],'camo')&&isInf(e.s)&&G.t-(e.mv||-9)>3);}
@@ -10206,7 +10213,7 @@ function initGfx(){const PH=typeof gfxPhone==='function'&&gfxPhone();
         gl_FragColor=vec4(pow(c,vec3(2.2))*1.6,1.);}`}));SKY.renderOrder=-10;SKY.frustumCulled=false;SCN.add(SKY);
   CAM=new THREE.PerspectiveCamera(38,1,40,9000);
   HEMI=new THREE.HemisphereLight(lin('#b4cbef'),lin('#4d3f2c'),1.0*LUX);SCN.add(HEMI);
-  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7*LUX);SUN.castShadow=true;SUN.shadow.camera.layers.enable(1);const sm=PH?1024:2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
+  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7*LUX);SUN.castShadow=true;SUN.shadow.camera.layers.enable(1);const sm=PH?1024:SET.gfx==='ultra'?4096:2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
   SCN.add(SUN);SCN.add(SUN.target);
   initFX();initPost();
 }
@@ -10554,7 +10561,7 @@ function buildWorld(tc){
   // fog of war overlay
   {const fk=Math.min(1.4,Math.max(1,WK*.65));FOGC=document.createElement('canvas');FOGC.width=Math.round(480*fk);FOGC.height=Math.round(330*fk);FOGC.b=document.createElement('canvas');FOGC.b.width=FOGC.width;FOGC.b.height=FOGC.height;}FOGT=new THREE.CanvasTexture(FOGC);FOGT.magFilter=THREE.LinearFilter;
   FOGM=new THREE.Mesh(new THREE.PlaneGeometry(MAPW,MAPH).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x060a0f,transparent:true,alphaMap:FOGT,depthWrite:false}));FOGM.position.set(MAPW/2,46,MAPH/2);FOGM.renderOrder=2;WORLD.add(FOGM);
-  buildDecals();for(const [x,y,r] of (G.craters||[]))scorch(x,y,r);applyWeather(typeof setup!=='undefined'?wxBase(setup.w):0);
+  buildDecals();for(const [x,y,r] of (G.craters||[]))scorch(x,y,r);applyWeather(G&&G.wxB!=null?G.wxB:typeof setup!=='undefined'?wxBase(setup.w):0);
 }
 
 /* ---------- procedural model builder (merged, vertex-coloured) ---------- */
@@ -11134,7 +11141,7 @@ function decal(m,i,x,y,s,r){TMPM.compose(TMP.set(x,groundH(x,y)+.6,y),TMPQ.setFr
 function scorch(x,y,s){if(!SCORCH)return;decal(SCORCH,decI++%320,x,y,s*2.4,Math.random()*6);}
 function crater(x,y,s){if(!CRATER)return;decal(CRATER,crI++%160,x,y,s,Math.random()*6);}
 function track(x,y,a){if(!TRACKS)return;const i=trkI++%1600;TMPM.compose(TMP.set(x,groundH(x,y)+.6,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),-(a||0)+Math.PI/2),new THREE.Vector3(4.2,1,9.5));TRACKS.setMatrixAt(i,TMPM);TRACKS.instanceMatrix.needsUpdate=true;}
-function pBudget(){const lv=(typeof QUAL!=='undefined'&&fxLv())||0;return [1700,1400,1100,850,650,500][lv]||500;}
+function pBudget(){const lv=(typeof QUAL!=='undefined'&&fxLv())||0;return ([1700,1400,1100,850,650,500][lv]||500)*(SET.gfx==='ultra'?1.4:1);}
 // particles that would start well off-screen are skipped (smoke and exhaust from units across the map used CPU and
 // ate the particle budget meant for what the player is looking at)
 function part(o){if(!inView(o.x,o.y,.4))return;const B=pBudget(),n=PARTS.length;if(n>B){if(!o.add||n>B*1.35)return;}else if(n>B*.6&&!o.add&&Math.random()<(n-B*.6)/(B*.4))return;PARTS.push(Object.assign({vx:0,vy:0,vh:0,t:0,d:1,s:6,g:0,a:1,h:0,c:[.4,.39,.36],add:false,f:.25,rise:0},o));}
@@ -12740,7 +12747,7 @@ async function joinGame(p,o){if(NET.game)return;const code=p.presence.g.c,jo=o&&
   hello();NET.helloI=setInterval(hello,1500);if(!own)$('mpstatus').textContent='Connecting…';return true;}
 // Set the Conditions choice and light up its menu button. The host's choice is used only for that battle: the player's
 // own menu choice (NET.ownW) comes back when they leave the battle, so their next solo battle uses their own Conditions.
-function wxSet(w){setup.w=w;if(typeof ssnUI==='function')ssnUI();const W=$('wx');if(W)W.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===wxBase(w)));}
+function wxSet(w){setup.w=w;if(typeof ssnUI==='function')ssnUI();if(typeof condUI==='function')condUI();}
 // How strong this device is as a battle host, should the battle have to move to a player (07b sbPick): a ~20 ms CPU
 // test, run once, x0.35 on a touch-only device, a little more for more cores. Typical PC 150-600, phone 30-120.
 function hostPower(){if(NET.hp>0)return NET.hp;let n=0,x=1;const a=new Float64Array(2048),t0=performance.now();
@@ -13084,7 +13091,7 @@ function specEvts(evs,SP){let e=evs.filter(v=>Array.isArray(v)),len=JSON.stringi
    drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
-const CK_G=['truce','tOff','aidQ','milOk','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
+const CK_G=['truce','tOff','aidQ','milOk','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
   'todM','humA','rebT','radT','stT','gprT','supT','prT','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','conq','battle','setupEnd','reb','N','seed','mapKey','roadV'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
@@ -14348,7 +14355,7 @@ function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   MODE='single';ME=0;
-  TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
+  TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,w:setup.w|0,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
 function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids,rl,bm){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0,real:rl?1:0,battle:bm?1:0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(!T.reb&&isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
@@ -14397,7 +14404,7 @@ function spotsNote(st,sides){const k=st.filter(v=>v>=0).length;return (k?`${k} o
 function skSides(){const f=rollAis();return f.map((_,i)=>({lab:i?'AI '+i:'You',col:TEAM_COL[(setup.tm[i]|0)%8]}));}
 function skSt(n){if(setup.stK&&setup.stK!==spotsKey(setup.map,n)){setup.slot=-1;setup.st=[];setup.stK=null;}const o=[];for(let i=0;i<n;i++){const v=i?(setup.st||[])[i]:setup.slot;o.push(Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1);}return o;}
 function skSet(st){setup.slot=st[0];setup.st=st.slice();setup.stK=spotsKey(setup.map,st.length);renderTeams();}
-function prevMarks(){const cv=$('mapCv'),k=setup.map;if(!cv||!PREV[k])return;const sides=skSides(),st=skSt(sides.length);spotsDraw(cv,k,sides,st);const note=$('slotNote');if(note)note.textContent=spotsNote(st,sides);}
+function prevMarks(){try{condUI();}catch(e){}const cv=$('mapCv'),k=setup.map;if(!cv||!PREV[k])return;const sides=skSides(),st=skSt(sides.length);spotsDraw(cv,k,sides,st);const note=$('slotNote');if(note)note.textContent=spotsNote(st,sides);}
 /* the Conquest setup box's map preview (a full map generation, ~0.6 s) is drawn a few seconds after page load, never during a battle (orch/loadF) */
 function mapPrevWhenSeen(cv,fn){cv._pv=fn;if(cv._pt)return;const t=()=>{cv._pt=0;if(typeof G!=='undefined'&&G&&!G.over){cv._pt=setTimeout(t,2000);return;}const f=cv._pv;cv._pv=null;if(f)f();};cv._pt=setTimeout(t,Math.max(20,4500-performance.now()));}
 function mapPreview(k,cv){const c=cv.getContext('2d'),W=cv.width,H=cv.height;const old=srand;const M=(()=>{const keepB=BASES,keepS=BASE_SLOTS;setBases(MAPS[k].max,k);const m=mkMap(4242,k);const sl=BASES.slice();BASES=keepB;BASE_SLOTS=keepS;return{m,sl};})();srand=old;
@@ -14496,9 +14503,14 @@ function renderTeams(){const el=$('teamList');if(!el)return;const facs=rollAis()
 function checkTeams(){const ok=new Set(setup.tm).size>1;const b=$('start');if(!b)return;b.disabled=!ok;b.title=ok?'':'Put at least one player on a different team.';}
 mapCards();
 facCards();const sel=$('aiFac');for(const k of FKEYS){const o=document.createElement('option');o.value=k;o.textContent=FACTIONS[k].name;sel.append(o);}sel.value=setup.a;setTimeout(renderTeams,0);sel.onchange=()=>{setup.a=sel.value;renderTeams();};if($('aiN'))$('aiN').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.n=+b.dataset.n;setTimeout(prevMarks,0);$('aiN').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$('start').textContent=setup.n>1?`Deploy vs ${setup.n} AI`:'Deploy vs AI';renderTeams();});if($('watch'))$('watch').onclick=()=>{$('end').hidden=true;};
-if($('wx'))$('wx').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.w=wxJoin(+b.dataset.w,wxSsn(setup.w));$('wx').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
+// Conditions picker (weathergfx 2026-11-14): the seven CONDS buttons are built here from the one table in 01-data; options that do not fit the
+// chosen map (snow on a desert map, sandstorm on a snow map...) are greyed out, and a choice that stops fitting falls back to Day.
+function condUI(){const wr=$('wx');if(!wr)return;if(!wr.dataset.cond){wr.dataset.cond=1;wr.textContent='';for(const c of CONDS){const b=document.createElement('button');b.type='button';b.dataset.w=c.w;b.textContent=c.n;b.dataset.t=c.t;b.onclick=()=>{if(b.disabled)return;setup.w=wxJoin(c.w,wxSsn(setup.w));condUI();};wr.append(b);}}
+  const th=condTheme(setup.map,setup.w);if(!condFits(wxBase(setup.w),th))setup.w=wxJoin(0,wxSsn(setup.w));const cur=wxBase(setup.w);
+  wr.querySelectorAll('button').forEach(b=>{const w=+b.dataset.w,fit=condFits(w,th);b.disabled=!fit;b.classList.toggle('on',w===cur);b.title=fit?b.dataset.t:b.dataset.t.split('.').pop().trim()||'Does not fit this map';if(!fit)b.title='Does not fit this map';});}
+condUI();
 // Season row (Summer / Autumn mud / Winter snow): rides in the tens digit of setup.w, so it reaches clients, the server and checkpoints with the weather.
-function ssnSet(v){setup.w=wxJoin(wxBase(setup.w),v);ssnUI();}
+function ssnSet(v){setup.w=wxJoin(wxBase(setup.w),v);ssnUI();condUI();}
 function ssnUI(){const r=$('ssnRow');if(r)r.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.s===wxSsn(setup.w)));}
 {const wr=$('wx');if(wr&&wr.parentNode&&!$('ssnRow')){const lb=document.createElement('div');lb.className='label';lb.textContent='Season';const row=document.createElement('div');row.className='seg';row.id='ssnRow';
   [[0,'Map default','Each map starts in its own season (snow maps in winter, the rest in summer)'],[1,'Summer','Dry ground, green foliage'],[2,'Autumn mud','Mud and puddles: wheeled vehicles slow a lot off the roads, tanks a little. Roads matter more'],[3,'Winter snow','Snow: infantry slow down off the roads, vehicles a little. Roofs and trees are white']].forEach(([v,n,t])=>{const b=document.createElement('button');b.type='button';b.dataset.s=v;b.textContent=n;b.title=t;b.onclick=()=>ssnSet(v);row.append(b);});
@@ -14532,11 +14544,15 @@ function qualStartLv(){return SET.gfx==='auto'?(gfxPhone()?1:0):({high:0,med:1,l
 // screen must not count as stutter
 function qualReset(){QUAL.lv=qualStartLv();QUAL.fx=0;QUAL.rk=null;QUAL.wait=10;QUAL.stepAt=QUAL.upAt=-99;QUAL.bad=QUAL.good=0;QUAL.ema=1/60;QUAL.dts.length=0;}
 function applyGfx(){if(typeof QUAL==='undefined')return;const ph=gfxPhone(),base=Math.min(2,window.devicePixelRatio||1);
-  QUAL.caps=ph?QCAPS0.map((c,i)=>Math.min(c,[1.5,1.35,1.25,1.1,1,.9][i]/base)):QCAPS0.slice();POST.aoLv=ph?1:2;POST.phone=ph;
-  /* Auto and Low both let the governor lighten things when frames are missed (phones are set to Low: it used to be locked, so nothing ever got lighter); High/Medium stay fixed. Low never goes back above its own level. */QUAL.lock=(SET.gfx==='high'||SET.gfx==='med')?1:0;QUAL.min=SET.gfx==='low'?qualStartLv():0;QUAL.hinted=0;qualReset();try{applyQual();}catch(e){}}
+  QUAL.caps=ph?QCAPS0.map((c,i)=>Math.min(c,[1.5,1.35,1.25,1.1,1,.9][i]/base)):QCAPS0.slice();if(SET.gfx==='ultra'&&!ph)QUAL.caps[0]=Math.min(1.5,2.5/base);try{if(typeof SUN!=='undefined'&&SUN){const sm=ph?1024:SET.gfx==='ultra'?4096:2048;if(SUN.shadow.mapSize.x!==sm){SUN.shadow.mapSize.set(sm,sm);if(SUN.shadow.map){SUN.shadow.map.dispose();SUN.shadow.map=null;}}}}catch(e){}POST.aoLv=ph?1:2;POST.phone=ph;
+  /* Auto and Low both let the governor lighten things when frames are missed (phones are set to Low: it used to be locked, so nothing ever got lighter); High/Medium stay fixed. Low never goes back above its own level. */QUAL.lock=(SET.gfx==='high'||SET.gfx==='med'||SET.gfx==='ultra')?1:0;QUAL.min=SET.gfx==='low'?qualStartLv():0;QUAL.hinted=0;qualReset();try{applyQual();}catch(e){}}
 // One game speed for everyone, a little brisker than real time so battles keep moving.
 const GSPD=1.2;
-function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number],['sTk','tk',Number]];
+// Graphics presets (weathergfx 2026-11-14), one row in Settings: Low (lightest effects, lower resolution) / Medium (today's default: the frame-rate
+// governor starts at full quality and steps down only when frames are missed) / High (fixed full quality) / Ultra (High plus a sharper 1.5x picture, 4096 shadow map, 40% more dust and smoke).
+const GFX_PRESETS=[['low','Low','Lightest look: fewer effects and a lower-resolution picture. For older PCs and laptops.'],['auto','Medium','The default look. Stays smooth by itself: it lightens up only when frames are missed.'],['high','High','Always full quality: every effect, native resolution.'],['ultra','Ultra','High plus a sharper picture (rendered above screen resolution), crisper shadows and denser dust and smoke. Needs a strong graphics card.']];
+function gfxRow(){const r=$('sGfx');if(!r||r.dataset.pre)return;r.dataset.pre=1;r.textContent='';for(const [v,n,t] of GFX_PRESETS){const b=document.createElement('button');b.type='button';b.dataset.v=v;b.textContent=n;b.title=t;r.append(b);}}
+function syncSettings(){gfxRow();const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number],['sTk','tk',Number]];
   for(const [id,k,cv] of segs){const el=$(id);if(!el)continue;el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',cv(b.dataset.v)===SET[k]);b.onclick=()=>{SET[k]=cv(b.dataset.v);saveSet();syncSettings();if(k==='gfx')applyGfx();if(k==='tk')tkApply();};});}
   for(const [id,k] of [['sMus','mus'],['sFx','fx'],['sVo','vo'],['sScr','scr'],['sZm','zm']]){const el=$(id);if(!el)continue;el.value=SET[k];const out=$(id+'V');if(out)out.textContent=SET[k]+'%';el.oninput=()=>{SET[k]=+el.value;if(out)out.textContent=SET[k]+'%';saveSet();if(k!=='scr'&&k!=='zm')applyAudio();};}
   syncMouseUI();}
@@ -14827,7 +14843,11 @@ setInterval(async()=>{if(document.hidden&&hbgNeeded())hbgStart();
 new ResizeObserver(()=>resize()).observe(cv);
 requestAnimationFrame(loop);netInit();
 
-function sbPanel(){const el=$('sbx');if(!el)return;el.hidden=!(G&&G.sandbox);if(el.hidden)return;const D=G.teams[1];const b=$('sbFight');if(b){b.textContent=D.fight?'Enemy fights back: ON':'Enemy fights back: OFF';b.classList.toggle('on',!!D.fight);}
+// Test range: the same Conditions picker, applied live (the range is never synced, so changing the sky mid-battle is safe).
+function condLive(b){if(!G||!G.sandbox)return;b=condFit(b,condTheme(G.mapKey||setup.map,setup.w),G.seed);G.wxB=b;G.todM=todMode(b);const fx=[0,3,4].includes(b)?'clear':{6:'sandstorm',7:'rain',8:'snow'}[b];G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};setup.w=wxJoin(b,wxSsn(setup.w));try{WXG=null;applyWeather(b);}catch(e){}sbCond();}
+function sbCond(){const sb=$('sbx');if(!sb||!G)return;let r=$('sbCond');if(!r){r=document.createElement('div');r.id='sbCond';r.className='seg';r.style.cssText='flex-wrap:wrap;margin-top:6px';for(const c of CONDS){if(c.w<0)continue;const b=document.createElement('button');b.type='button';b.dataset.w=c.w;b.textContent=c.n;b.onclick=()=>condLive(c.w);r.append(b);}sb.insertBefore(r,$('sbFight'));}
+  const th=condTheme(setup.map,setup.w);r.querySelectorAll('button').forEach(b=>{const w=+b.dataset.w,fit=condFits(w,th);b.disabled=!fit;b.classList.toggle('on',w===G.wxB);b.title=fit?(CONDS.find(c=>c.w===w)||{}).t:'Does not fit this map';});}
+function sbPanel(){const el=$('sbx');if(!el)return;el.hidden=!(G&&G.sandbox);if(el.hidden)return;if(!$('sbCond'))sbCond();const D=G.teams[1];const b=$('sbFight');if(b){b.textContent=D.fight?'Enemy fights back: ON':'Enemy fights back: OFF';b.classList.toggle('on',!!D.fight);}
   const n=G.ents.filter(e=>e.team===1&&!e.dead&&!e.isB).length;const c=$('sbCount');if(c)c.textContent=`${n} enemy target${n===1?'':'s'} left`;}
 if($('sbTargets'))$('sbTargets').onclick=()=>{if(G&&G.sandbox){sandboxTargets();pushLog('New targets have arrived.','g');updateUI();}};
 if($('sbFight'))$('sbFight').onclick=()=>{if(G&&G.sandbox){const D=G.teams[1];D.fight=!D.fight;updateUI();}};
@@ -17396,13 +17416,13 @@ const BENCH={t:0,n:0,skip:1,done:false,res:null,secs:3};
 try{if(typeof SET!=='undefined'&&SET.gfxB===undefined&&localStorage.getItem('ww3_settings')!==null)SET.gfxB=1;}catch(e){}
 function benchWant(){return !BENCH.done&&typeof SET!=='undefined'&&SET.gfx==='auto'&&!SET.gfxB&&!(typeof GFX_PHONE!=='undefined'&&GFX_PHONE)&&(!navigator.webdriver||!!window.__bench);}
 /* fps = frames per second measured at full quality; ref = what this screen can show (at most 60 counts) */
-function benchPick(fps,lv,cost,hz){const ref=Math.min(60,hz||60);if(lv>0||fps<ref*.6)return 'low';if(fps>=ref*.95&&cost<.5/ref)return 'high';return 'auto';}
+function benchPick(fps,lv,cost,hz){const ref=Math.min(60,hz||60);if(lv>0||fps<ref*.6)return 'low';if(fps>=ref*.95&&cost<.25/ref)return 'ultra';if(fps>=ref*.95&&cost<.5/ref)return 'high';return 'auto';}
 function benchTick(dt){if(!benchWant())return;
   if(typeof G==='undefined'||!G||G.over||G.paused||G.rp||window.LOADING||document.hidden){BENCH.t=0;BENCH.n=0;BENCH.skip=1;return;}
   if(BENCH.skip>0){BENCH.skip-=dt;return;}BENCH.t+=dt;BENCH.n++;if(BENCH.t<BENCH.secs)return;
   const fps=BENCH.n/BENCH.t,pick=benchPick(fps,QUAL.lv,QUAL.cost,QUAL.hz);BENCH.done=true;BENCH.res={fps:Math.round(fps),pick};
   SET.gfx=pick;SET.gfxB=1;try{saveSet();}catch(e){}try{applyGfx();}catch(e){}try{if(typeof syncSettings==='function'&&!document.getElementById('settings').hidden)syncSettings();}catch(e){}
-  try{pushLog('Graphics checked for this PC: '+({high:'High',low:'Low',auto:'Auto'}[pick])+'. Change it any time in Settings → Graphics.','g');}catch(e){}}
+  try{pushLog('Graphics checked for this PC: '+({ultra:'Ultra',high:'High',low:'Low',auto:'Medium'}[pick])+'. Change it any time in Settings → Graphics.','g');}catch(e){}}
 try{const _qt=qualTick;qualTick=function(dt){_qt(dt);try{benchTick(dt);}catch(e){}};}catch(e){}
 /* choosing a quality by hand is final: the check never overrides the player */
 try{const g=document.getElementById('sGfx');if(g)g.addEventListener('click',e=>{if(e.target&&e.target.tagName==='BUTTON'&&typeof SET!=='undefined'&&!SET.gfxB){SET.gfxB=1;BENCH.done=true;try{saveSet();}catch(_){}}});}catch(e){}

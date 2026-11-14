@@ -1151,7 +1151,7 @@ function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   MODE='single';ME=0;
-  TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
+  TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,w:setup.w|0,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
 function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids,rl,bm){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0,real:rl?1:0,battle:bm?1:0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(!T.reb&&isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
@@ -1200,7 +1200,7 @@ function spotsNote(st,sides){const k=st.filter(v=>v>=0).length;return (k?`${k} o
 function skSides(){const f=rollAis();return f.map((_,i)=>({lab:i?'AI '+i:'You',col:TEAM_COL[(setup.tm[i]|0)%8]}));}
 function skSt(n){if(setup.stK&&setup.stK!==spotsKey(setup.map,n)){setup.slot=-1;setup.st=[];setup.stK=null;}const o=[];for(let i=0;i<n;i++){const v=i?(setup.st||[])[i]:setup.slot;o.push(Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1);}return o;}
 function skSet(st){setup.slot=st[0];setup.st=st.slice();setup.stK=spotsKey(setup.map,st.length);renderTeams();}
-function prevMarks(){const cv=$('mapCv'),k=setup.map;if(!cv||!PREV[k])return;const sides=skSides(),st=skSt(sides.length);spotsDraw(cv,k,sides,st);const note=$('slotNote');if(note)note.textContent=spotsNote(st,sides);}
+function prevMarks(){try{condUI();}catch(e){}const cv=$('mapCv'),k=setup.map;if(!cv||!PREV[k])return;const sides=skSides(),st=skSt(sides.length);spotsDraw(cv,k,sides,st);const note=$('slotNote');if(note)note.textContent=spotsNote(st,sides);}
 /* the Conquest setup box's map preview (a full map generation, ~0.6 s) is drawn a few seconds after page load, never during a battle (orch/loadF) */
 function mapPrevWhenSeen(cv,fn){cv._pv=fn;if(cv._pt)return;const t=()=>{cv._pt=0;if(typeof G!=='undefined'&&G&&!G.over){cv._pt=setTimeout(t,2000);return;}const f=cv._pv;cv._pv=null;if(f)f();};cv._pt=setTimeout(t,Math.max(20,4500-performance.now()));}
 function mapPreview(k,cv){const c=cv.getContext('2d'),W=cv.width,H=cv.height;const old=srand;const M=(()=>{const keepB=BASES,keepS=BASE_SLOTS;setBases(MAPS[k].max,k);const m=mkMap(4242,k);const sl=BASES.slice();BASES=keepB;BASE_SLOTS=keepS;return{m,sl};})();srand=old;
@@ -1299,9 +1299,14 @@ function renderTeams(){const el=$('teamList');if(!el)return;const facs=rollAis()
 function checkTeams(){const ok=new Set(setup.tm).size>1;const b=$('start');if(!b)return;b.disabled=!ok;b.title=ok?'':'Put at least one player on a different team.';}
 mapCards();
 facCards();const sel=$('aiFac');for(const k of FKEYS){const o=document.createElement('option');o.value=k;o.textContent=FACTIONS[k].name;sel.append(o);}sel.value=setup.a;setTimeout(renderTeams,0);sel.onchange=()=>{setup.a=sel.value;renderTeams();};if($('aiN'))$('aiN').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.n=+b.dataset.n;setTimeout(prevMarks,0);$('aiN').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$('start').textContent=setup.n>1?`Deploy vs ${setup.n} AI`:'Deploy vs AI';renderTeams();});if($('watch'))$('watch').onclick=()=>{$('end').hidden=true;};
-if($('wx'))$('wx').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.w=wxJoin(+b.dataset.w,wxSsn(setup.w));$('wx').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
+// Conditions picker (weathergfx 2026-11-14): the seven CONDS buttons are built here from the one table in 01-data; options that do not fit the
+// chosen map (snow on a desert map, sandstorm on a snow map...) are greyed out, and a choice that stops fitting falls back to Day.
+function condUI(){const wr=$('wx');if(!wr)return;if(!wr.dataset.cond){wr.dataset.cond=1;wr.textContent='';for(const c of CONDS){const b=document.createElement('button');b.type='button';b.dataset.w=c.w;b.textContent=c.n;b.dataset.t=c.t;b.onclick=()=>{if(b.disabled)return;setup.w=wxJoin(c.w,wxSsn(setup.w));condUI();};wr.append(b);}}
+  const th=condTheme(setup.map,setup.w);if(!condFits(wxBase(setup.w),th))setup.w=wxJoin(0,wxSsn(setup.w));const cur=wxBase(setup.w);
+  wr.querySelectorAll('button').forEach(b=>{const w=+b.dataset.w,fit=condFits(w,th);b.disabled=!fit;b.classList.toggle('on',w===cur);b.title=fit?b.dataset.t:b.dataset.t.split('.').pop().trim()||'Does not fit this map';if(!fit)b.title='Does not fit this map';});}
+condUI();
 // Season row (Summer / Autumn mud / Winter snow): rides in the tens digit of setup.w, so it reaches clients, the server and checkpoints with the weather.
-function ssnSet(v){setup.w=wxJoin(wxBase(setup.w),v);ssnUI();}
+function ssnSet(v){setup.w=wxJoin(wxBase(setup.w),v);ssnUI();condUI();}
 function ssnUI(){const r=$('ssnRow');if(r)r.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.s===wxSsn(setup.w)));}
 {const wr=$('wx');if(wr&&wr.parentNode&&!$('ssnRow')){const lb=document.createElement('div');lb.className='label';lb.textContent='Season';const row=document.createElement('div');row.className='seg';row.id='ssnRow';
   [[0,'Map default','Each map starts in its own season (snow maps in winter, the rest in summer)'],[1,'Summer','Dry ground, green foliage'],[2,'Autumn mud','Mud and puddles: wheeled vehicles slow a lot off the roads, tanks a little. Roads matter more'],[3,'Winter snow','Snow: infantry slow down off the roads, vehicles a little. Roofs and trees are white']].forEach(([v,n,t])=>{const b=document.createElement('button');b.type='button';b.dataset.s=v;b.textContent=n;b.title=t;b.onclick=()=>ssnSet(v);row.append(b);});
@@ -1335,11 +1340,15 @@ function qualStartLv(){return SET.gfx==='auto'?(gfxPhone()?1:0):({high:0,med:1,l
 // screen must not count as stutter
 function qualReset(){QUAL.lv=qualStartLv();QUAL.fx=0;QUAL.rk=null;QUAL.wait=10;QUAL.stepAt=QUAL.upAt=-99;QUAL.bad=QUAL.good=0;QUAL.ema=1/60;QUAL.dts.length=0;}
 function applyGfx(){if(typeof QUAL==='undefined')return;const ph=gfxPhone(),base=Math.min(2,window.devicePixelRatio||1);
-  QUAL.caps=ph?QCAPS0.map((c,i)=>Math.min(c,[1.5,1.35,1.25,1.1,1,.9][i]/base)):QCAPS0.slice();POST.aoLv=ph?1:2;POST.phone=ph;
-  /* Auto and Low both let the governor lighten things when frames are missed (phones are set to Low: it used to be locked, so nothing ever got lighter); High/Medium stay fixed. Low never goes back above its own level. */QUAL.lock=(SET.gfx==='high'||SET.gfx==='med')?1:0;QUAL.min=SET.gfx==='low'?qualStartLv():0;QUAL.hinted=0;qualReset();try{applyQual();}catch(e){}}
+  QUAL.caps=ph?QCAPS0.map((c,i)=>Math.min(c,[1.5,1.35,1.25,1.1,1,.9][i]/base)):QCAPS0.slice();if(SET.gfx==='ultra'&&!ph)QUAL.caps[0]=Math.min(1.5,2.5/base);try{if(typeof SUN!=='undefined'&&SUN){const sm=ph?1024:SET.gfx==='ultra'?4096:2048;if(SUN.shadow.mapSize.x!==sm){SUN.shadow.mapSize.set(sm,sm);if(SUN.shadow.map){SUN.shadow.map.dispose();SUN.shadow.map=null;}}}}catch(e){}POST.aoLv=ph?1:2;POST.phone=ph;
+  /* Auto and Low both let the governor lighten things when frames are missed (phones are set to Low: it used to be locked, so nothing ever got lighter); High/Medium stay fixed. Low never goes back above its own level. */QUAL.lock=(SET.gfx==='high'||SET.gfx==='med'||SET.gfx==='ultra')?1:0;QUAL.min=SET.gfx==='low'?qualStartLv():0;QUAL.hinted=0;qualReset();try{applyQual();}catch(e){}}
 // One game speed for everyone, a little brisker than real time so battles keep moving.
 const GSPD=1.2;
-function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number],['sTk','tk',Number]];
+// Graphics presets (weathergfx 2026-11-14), one row in Settings: Low (lightest effects, lower resolution) / Medium (today's default: the frame-rate
+// governor starts at full quality and steps down only when frames are missed) / High (fixed full quality) / Ultra (High plus a sharper 1.5x picture, 4096 shadow map, 40% more dust and smoke).
+const GFX_PRESETS=[['low','Low','Lightest look: fewer effects and a lower-resolution picture. For older PCs and laptops.'],['auto','Medium','The default look. Stays smooth by itself: it lightens up only when frames are missed.'],['high','High','Always full quality: every effect, native resolution.'],['ultra','Ultra','High plus a sharper picture (rendered above screen resolution), crisper shadows and denser dust and smoke. Needs a strong graphics card.']];
+function gfxRow(){const r=$('sGfx');if(!r||r.dataset.pre)return;r.dataset.pre=1;r.textContent='';for(const [v,n,t] of GFX_PRESETS){const b=document.createElement('button');b.type='button';b.dataset.v=v;b.textContent=n;b.title=t;r.append(b);}}
+function syncSettings(){gfxRow();const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number],['sTk','tk',Number]];
   for(const [id,k,cv] of segs){const el=$(id);if(!el)continue;el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',cv(b.dataset.v)===SET[k]);b.onclick=()=>{SET[k]=cv(b.dataset.v);saveSet();syncSettings();if(k==='gfx')applyGfx();if(k==='tk')tkApply();};});}
   for(const [id,k] of [['sMus','mus'],['sFx','fx'],['sVo','vo'],['sScr','scr'],['sZm','zm']]){const el=$(id);if(!el)continue;el.value=SET[k];const out=$(id+'V');if(out)out.textContent=SET[k]+'%';el.oninput=()=>{SET[k]=+el.value;if(out)out.textContent=SET[k]+'%';saveSet();if(k!=='scr'&&k!=='zm')applyAudio();};}
   syncMouseUI();}
@@ -1630,7 +1639,11 @@ setInterval(async()=>{if(document.hidden&&hbgNeeded())hbgStart();
 new ResizeObserver(()=>resize()).observe(cv);
 requestAnimationFrame(loop);netInit();
 
-function sbPanel(){const el=$('sbx');if(!el)return;el.hidden=!(G&&G.sandbox);if(el.hidden)return;const D=G.teams[1];const b=$('sbFight');if(b){b.textContent=D.fight?'Enemy fights back: ON':'Enemy fights back: OFF';b.classList.toggle('on',!!D.fight);}
+// Test range: the same Conditions picker, applied live (the range is never synced, so changing the sky mid-battle is safe).
+function condLive(b){if(!G||!G.sandbox)return;b=condFit(b,condTheme(G.mapKey||setup.map,setup.w),G.seed);G.wxB=b;G.todM=todMode(b);const fx=[0,3,4].includes(b)?'clear':{6:'sandstorm',7:'rain',8:'snow'}[b];G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};setup.w=wxJoin(b,wxSsn(setup.w));try{WXG=null;applyWeather(b);}catch(e){}sbCond();}
+function sbCond(){const sb=$('sbx');if(!sb||!G)return;let r=$('sbCond');if(!r){r=document.createElement('div');r.id='sbCond';r.className='seg';r.style.cssText='flex-wrap:wrap;margin-top:6px';for(const c of CONDS){if(c.w<0)continue;const b=document.createElement('button');b.type='button';b.dataset.w=c.w;b.textContent=c.n;b.onclick=()=>condLive(c.w);r.append(b);}sb.insertBefore(r,$('sbFight'));}
+  const th=condTheme(setup.map,setup.w);r.querySelectorAll('button').forEach(b=>{const w=+b.dataset.w,fit=condFits(w,th);b.disabled=!fit;b.classList.toggle('on',w===G.wxB);b.title=fit?(CONDS.find(c=>c.w===w)||{}).t:'Does not fit this map';});}
+function sbPanel(){const el=$('sbx');if(!el)return;el.hidden=!(G&&G.sandbox);if(el.hidden)return;if(!$('sbCond'))sbCond();const D=G.teams[1];const b=$('sbFight');if(b){b.textContent=D.fight?'Enemy fights back: ON':'Enemy fights back: OFF';b.classList.toggle('on',!!D.fight);}
   const n=G.ents.filter(e=>e.team===1&&!e.dead&&!e.isB).length;const c=$('sbCount');if(c)c.textContent=`${n} enemy target${n===1?'':'s'} left`;}
 if($('sbTargets'))$('sbTargets').onclick=()=>{if(G&&G.sandbox){sandboxTargets();pushLog('New targets have arrived.','g');updateUI();}};
 if($('sbFight'))$('sbFight').onclick=()=>{if(G&&G.sandbox){const D=G.teams[1];D.fight=!D.fight;updateUI();}};
