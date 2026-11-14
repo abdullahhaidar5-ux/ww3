@@ -1,0 +1,31 @@
+  page: shader warm-up 10060 ms, 62 models, 120 objects in 604 steps (longest 968 ms), 116 programs, textures 137 MB
+parallel shader compile extension: false
+own-work stretches over 200 ms: 1 (longest 234 ms; this slow test machine hiccups by itself, so the gate fails only above 2500 ms or more than 20 stretches over 200 ms)
+quiet-stretch longest gap after loading (the test machine's own hiccups): 622
+most programs linked between two breaks: 7 at step models m_mi8
+gaps over 190 ms:
+  234 step models b_barr
+IR warm-up {"ms":10060,"models":62,"steps":604,"maxStep":968,"progs":116,"late":0,"phone":0,"stage":[["models",7423],["extras",662],["battlefield",1971]],"slow":[["models b_barr",421,45,0],["models m_f18",219,41,0],["build m_hilux",104],["models m_hilux",185,43,2],["models m_spb",158,8,0],["models b_barr_me",240,37,14],["models m_abrams",162,14,9],["models m_apache",195,15,7],["models m_ah1",367,12,181],["models m_mi8",286,34,28],["models m_mig29",197,19,30],["models m_subm",166,19,23],["models m_uh60",236,33,55],["models sol_w",154,9,17],["models tree_tex",194,18,5],["shared",194,19,3],["pass mBright",55],["pass mBlur",18],["pass mFinal",12],["pass mAO",12],["slice 16",968],["pip",6]]} own-work gaps >50 [234,94,73,66,56,95,156,57,70,58,64,51,77,91,117,63,69,166] raw long tasks [79,327,70,86,59,124,100,80,97,167,147,131,56,105,140,57,70,50,56,56,91,84,179,81,80,84,124,163,143,220,140,117,51,139,84,111,54,115,89,161,109,114,68,122,967,57,52] stages [["Generating terrain…",6131],["Loading 3D models…",5522],["Building the battlefield…",124],["Building the battlefield…",1922],["Preparing graphics…",10067],["Deploying forces…",367],["Deploying forces…",3117],["total",27839]]
+  World War 3 performance log
+  Graphics card: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+  Screen: 480×270 @1  15 FPS now
+  Last battle load (ms per stage): Generating terrain 6131, Loading 3D models 5522, Building the battlefield 124, Building the battlefield 1922, Preparing graphics 10067, Deploying forces 367, Deploying forces 3117, total 27839
+  Shader warm-up: 10060 ms, 62 models, 116 programs compiled, 604 steps (longest 968 ms) [models 7423, extras 662, battlefield 1971]
+  Long tasks while preparing graphics: 47, longest 967 ms
+IR ok (longest task 234 ms)
+  page: shader warm-up 4989 ms, 59 models, 114 objects in 618 steps (longest 567 ms), 110 programs, textures 72 MB
+parallel shader compile extension: false
+own-work stretches over 200 ms: 1 (longest 375 ms; this slow test machine hiccups by itself, so the gate fails only above 2500 ms or more than 20 stretches over 200 ms)
+quiet-stretch longest gap after loading (the test machine's own hiccups): 533
+most programs linked between two breaks: 10 at unit Group 389
+gaps over 190 ms:
+  375 step models b_barr
+US warm-up {"ms":4989,"models":59,"steps":618,"maxStep":567,"progs":110,"late":0,"phone":0,"stage":[["models",3333],["extras",344],["battlefield",1312]],"slow":[["models b_barr",157,38,1],["pass mBright",5],["pass mBlur",2],["pass mFinal",5],["pass mAO",6],["slice 16",567],["pip",7]]} own-work gaps >50 [375,65,90,84,53,94] raw long tasks [71,62,50,84,72,56,62,117,65,61,50,78,94,567] stages [["Generating terrain…",4774],["Loading 3D models…",4768],["Building the battlefield…",93],["Building the battlefield…",1784],["Preparing graphics…",4992],["Deploying forces…",249],["Deploying forces…",1520],["total",18734]]
+  World War 3 performance log
+  Graphics card: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+  Screen: 480×270 @1  26 FPS now
+  Last battle load (ms per stage): Generating terrain 4774, Loading 3D models 4768, Building the battlefield 93, Building the battlefield 1784, Preparing graphics 4992, Deploying forces 249, Deploying forces 1520, total 18734
+  Shader warm-up: 4989 ms, 59 models, 110 programs compiled, 618 steps (longest 567 ms) [models 3333, extras 344, battlefield 1312]
+  Long tasks while preparing graphics: 14, longest 567 ms
+US ok (longest task 375 ms)
+LOADFREEZE PASS
