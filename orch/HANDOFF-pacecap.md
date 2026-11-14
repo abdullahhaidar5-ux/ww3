@@ -7,3 +7,6 @@
 **Extra job (from `orch/PACECAP-NOTE.md` on this branch, written by ORCH, not in my task prompt):** unit gifts to allies are now 5 per gift, once every 2 minutes (was 12 per 20 s); tooltips updated; note deleted. Please confirm that is what Abdullah wanted.
 
 **Gate / status:** see the last lines of this file.
+
+## Status (2026-11-14)
+Local: build + `build.py --check` pass. smoke/decisions are too slow in this sandbox (per CLAUDE.md) and were not run locally. `orch/cigate.sh` was run once: commit 2867ac29fc pushed as `gate/2867ac29fc`, but GitHub's "Ship gate (parallel)" run (https://github.com/abdullahhaidar5-ux/ww3/actions/runs/43553137068) was still **queued** (no runner started) after ~30 min, so no gate result yet. **Not ready**: the conductor should read the gate/* statuses on that commit (or rerun cigate) before landing. Branch: orch/pacecap (rebased on origin/main a3b627b; main not touched).
