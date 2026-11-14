@@ -63,7 +63,15 @@ function track(x,y,a){if(!TRACKS)return;const i=trkI++%1600;TMPM.compose(TMP.set
 function pBudget(){const lv=(typeof QUAL!=='undefined'&&fxLv())||0;return [1700,1400,1100,850,650,500][lv]||500;}
 // particles that would start well off-screen are skipped (smoke and exhaust from units across the map used CPU and
 // ate the particle budget meant for what the player is looking at)
-function part(o){if(!inView(o.x,o.y,.4))return;const B=pBudget(),n=PARTS.length;if(n>B){if(!o.add||n>B*1.35)return;}else if(n>B*.6&&!o.add&&Math.random()<(n-B*.6)/(B*.4))return;PARTS.push(Object.assign({vx:0,vy:0,vh:0,t:0,d:1,s:6,g:0,a:1,h:0,c:[.4,.39,.36],add:false,f:.25,rise:0},o));}
+/* ---------- ONE TABLE for how much dust and smoke there is (Abdullah 2026-11-13 19:55 "Make the dust and smoke less") ----------
+   View only. Every non-fire, non-debris particle that part() receives is dust (tan colour: vehicle trails, impacts, rotor wash,
+   construction, collapse) or smoke (everything else: wreck/building/explosion columns, muzzle, exhaust, trails, screens).
+   amt = share of particles spawned, size = puff size, life = how long it hangs, alpha = how thick. 1 = the old look.
+   Smoke SCREENS (the gameplay tool) keep their count and duration: only size and thickness follow the table. Next change = edit one number. */
+const FX_DUST={amt:.4,size:.72,life:.5,alpha:.6},FX_SMOKE={amt:.6,size:.8,life:.65,alpha:.75};
+function fxTone(o){if(o.add||o.grav||o.fxk)return;const c=o.c,dust=Array.isArray(c)&&c[0]-c[2]>.09,T=dust?FX_DUST:FX_SMOKE;
+  if(!o.scr&&T.amt<1&&Math.random()>T.amt)return 0;o.s*=T.size;if(!o.scr)o.d*=T.life;o.a*=T.alpha;o.fxk=1;return 1;}
+function part(o){if(!inView(o.x,o.y,.4))return;const B=pBudget(),n=PARTS.length;if(n>B){if(!o.add||n>B*1.35)return;}else if(n>B*.6&&!o.add&&Math.random()<(n-B*.6)/(B*.4))return;const q=Object.assign({vx:0,vy:0,vh:0,t:0,d:1,s:6,g:0,a:1,h:0,c:[.4,.39,.36],add:false,f:.25,rise:0},o);if(fxTone(q)===0)return;PARTS.push(q);}
 const C_SMOKE=[.42,.4,.37],C_DARK=[.13,.12,.11],C_DUST=[.66,.58,.44],C_FIRE=[1,.42,.1],C_FIRE2=[1,.68,.3],C_SPARK=[1,.75,.35];
 /* Battle damage on a unit (visual only): a thin grey trickle of smoke from 75% health, thick smoke from 50%, black
    smoke with flames and sparks under 25%. Aircraft leave a smoke trail behind the tail; damaged ships list to one
@@ -174,7 +182,7 @@ const FXH={
   chf(x,y,h,jet){for(let i=0;i<(jet?7:5);i++){const b=rnd(0,6.28),v=rnd(25,60);part({x,y,h,vx:Math.cos(b)*v,vy:Math.sin(b)*v,vh:rnd(-8,6),g:18,add:true,c:jet?[2.6,2.6,3.2]:[3.4,2.2,.8],s:rnd(2.5,4),d:rnd(.7,1.2)});part({x,y,h,vx:Math.cos(b)*v*.6,vy:Math.sin(b)*v*.6,vh:rnd(-6,2),g:14,c:C_SMOKE,s:rnd(3,5),d:rnd(.8,1.3),a:.4});}mlight(x,y,h,2,120);},
   flare(x,y,r,d){FLARES.push({x,y,r,d:d||30,t:0,acc:0});if(FLARES.length>6)FLARES.shift();},
   ping(x,y,r){PINGS.push({x,y,r,t:0,d:1.6,c:0x7fb8e6});},
-  smoke(x,y,r){PINGS.push({x,y,r,t:0,d:1.2,c:0xb9bdbb});for(let i=0;i<140;i++){const a=rnd(0,6.28),d=Math.sqrt(Math.random())*r;part({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,h:groundH(x,y)+rnd(2,14),vh:rnd(1,4),rise:rnd(2,6),c:C_SMOKE,c2:[.75,.75,.73],ck:.4,s:rnd(30,55),g:2,d:rnd(12,20),a:.5});}},
+  smoke(x,y,r){PINGS.push({x,y,r,t:0,d:1.2,c:0xb9bdbb});for(let i=0;i<140;i++){const a=rnd(0,6.28),d=Math.sqrt(Math.random())*r;part({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,h:groundH(x,y)+rnd(2,14),vh:rnd(1,4),rise:rnd(2,6),c:C_SMOKE,c2:[.75,.75,.73],ck:.4,s:rnd(30,55),g:2,d:rnd(12,20),a:.5,scr:1});}},
   halo(x,y,r,c){PINGS.push({x,y,r,t:0,d:1.8,c:c|0});},   /* leader abilities (03i-leaders): a coloured ring from the pooled ping rings */
   vig(team,col,snd){if(team!==ME||typeof document==='undefined')return;try{let v=document.getElementById('ldVig');if(!v){v=document.createElement('div');v.id='ldVig';v.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9;opacity:0;transition:opacity .35s';document.body.appendChild(v);}
     v.style.background='radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,'+col+' 140%)';v.style.boxShadow='inset 0 0 160px 30px '+col;v.style.opacity='.85';clearTimeout(v._t);v._t=setTimeout(()=>{v.style.opacity='0';},2600);

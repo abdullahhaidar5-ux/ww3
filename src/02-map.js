@@ -386,6 +386,7 @@ function addComplexity(M,D){M.woods=M.woods||[];M.genCities=[];
     // a village on each flank, past the ravine's ends
     for(const b of [-.57,.57]){const q=P(0,b);if(clr(q[0],q[1])>200*u)M.genCities.push([q[0],q[1],70,vs]);}}}
 function seasonOf(mk){const D=MAPS[mk];return D?(D.ssn||(D.theme==='snow'?3:1)):1;}
+let NO_TOWNS=false;   /* set by newGame around mkMap for a Battle game: no towns at all */
 function mkMap(seed,mk,ssn){
   mk=MAPS[mk]?mk:'strait';const D=MAPS[mk];
   srand=mulberry(seed);const R=srand;
@@ -578,6 +579,9 @@ function mkMap(seed,mk,ssn){
    for(const h of M.hamlets)M.cities.push({x:h.x,y:h.y,r:CELL*3.4,style:h.style,ham:true});}
   // ROAD NET (Conquest): roads base -> rear towns -> middle hamlets -> centre prize town, on at least two routes. Pure
   // geometry on the ground grid (no random numbers), so host and clients lay identical roads; units move faster on them.
+  // BATTLE has no towns (Abdullah 2026-11-13 19:55 "I thought we removed towns in battle", 19:57 "...buildings where units could garrison in
+  // around the map like generals but not named towns"): the Battle game (Generals rules) gets no cities, hamlets or town roads on ANY map; newGame sets NO_TOWNS for a Battle build only. Conquest is unchanged.
+  if(NO_TOWNS){M.cities=[];M.hamlets=[];M.roadNet=[];}else   /* the houses stay (neutral garrisonable buildings, Generals style): only the named-town layer goes */
   if(!D.manual)try{buildRoadNet(M,grid);}catch(e){M.roadNet=[];}
   // Season (look only; the layout above is identical in every season, so fairness doesn't change): winter = the snow theme,
   // autumn = mud (ground tint, puddles, orange leaves; the sim slows off-road wheels, G.ssn), summer = green/desert as the map says.
