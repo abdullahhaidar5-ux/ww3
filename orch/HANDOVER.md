@@ -205,3 +205,8 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   (Sonnet) fired 02:08Z. Overlaps testrange (badge in sandbox/Battle) - same direction, conductor merges.
 - 20:08 Chicago "Americans sound British". usvoice = trig_01WNsvGuJdmSyRmnzTvU1Bj7 (Sonnet, voice generation) fired 02:09Z: re-voice US lines with American
   speakers, same files/radio treatment; also lists accents of other English-speaking nations.
+- 20:09 "No civilians in battle" - already in battleclean2's job (confirmed to him).
+- 20:11 Chicago "No power plants in battle make it so that factions have to build a generator building to produce electricity".
+  battlepower = trig_018AgUEjBd7i3J7ohSFSoeSQ (Sonnet) fired 02:12Z: no map plants in Battle, buildable Generator per nation (equal stats), POWER table,
+  Generals low-power rules via existing b.dis, power meter, AI builds them. Conquest keeps map plants. He was also offered Generals-style capturable
+  tech buildings (hospital, airfield...) - no answer yet.
