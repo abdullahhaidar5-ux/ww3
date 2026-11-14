@@ -213,6 +213,9 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(!/function startSandbox\(\)/.test(u) && !/FKEYS\.find\(k=>k!==setup\.p&&k!=='RS'/.test(u), 'Test range still auto-picks the target nation');
   ck(/scr\('t-range'/.test(mn) && /item\('Test range',\(\)=>mxTrOpen\(false\)/.test(mn), 'Test range menu item does not open the nation window');
   ck(/id='sbNations'/.test(u) && /Change nations/.test(u), 'Test range battle panel lost the "Change nations..." item'); }
+// 2d. No out-of-supply badge in Test range or Battle (Abdullah 2026-11-13 20:03 "What's the red symbols"): sandbox own units are always in supply.
+{ ck(/oos=!G\.battle&&!G\.sandbox&&!e\.sup/.test(SRC['06-view.js']), 'out-of-supply badge can show in Test range/Battle');
+  ck(/let ins=!!\(G\.sandbox&&u\.team===0\)/.test(SRC['03-sim.js']), 'Test range units can run out of supply'); }
 // 3. Main menu order + naming (2026-11-07 21:41): Single player · Multiplayer · Test range, then small extras; no Classic.
 { const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).filter(Boolean).slice(0, 3);
   ck(m.join('|') === 'Single player|Multiplayer|Test range', 'main menu order is ' + m.join(' · '));
