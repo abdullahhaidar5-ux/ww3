@@ -659,7 +659,7 @@ function conqBan(k){return(k==='cleric'||k==='bb')&&typeof G!=='undefined'&&!!G&
 /* upgsimple (Abdullah 2026-11-14 "simplify the list of upgrades and powers it's too much"): a nation's general powers are Recon, Paradrop, Barrage, Repair + its own national power
    (+ Bunker Buster for US/IL/RU/CN) = 5-6, plus the passive Cash Bounty. Everything else in POWERS (flares, militia, reinforcements, sanctions, cyber, EMP) is not offered in Conquest/Battle (the grand map keeps them). */
 const POW_KEEP=['bounty','recon','para','barrage','repair','bb'];
-function powBan(k){return POW_KEEP.indexOf(k)<0&&!(typeof G!=='undefined'&&G&&G.grand);}
+function powBan(k){return !!POWERS[k]&&POW_KEEP.indexOf(k)<0&&!(typeof G!=='undefined'&&G&&G.grand);}
 function sigBan(fac,k){return powBan(k)||(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
 /* power use of a building for the Build button: + needs power, - gives power (Generator); 0 = no power use (one POWER table) */
 function pwNeed(k){return POWER.use[k]?POWER.use[k]:(k!=='hq'&&POWER.make[k]?-POWER.make[k]:0);}
