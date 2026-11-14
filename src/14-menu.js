@@ -125,6 +125,66 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 .mxcred{max-width:860px}.mxcred p{margin:0 0 12px;color:#8a9a92;font:400 12px/1.6 var(--mono);max-width:none}
 #ms-online .gnrow{display:none!important}   /* campaign rows stay out of the open-games list while the campaign is paused (2026-11-13); a campaign link or code still joins */
 @media (max-width:1100px){.mxnat,.mxpl{grid-template-columns:1fr}#mxdet{position:static}}
+/* ---- Generals-style layout (Abdullah 2026-11-14): one right column of metal plates on every menu screen, Back bottom-left, the battle (or the picture) fills the rest ---- */
+#menu.m3{--mxw:clamp(460px,35vw,620px);--st1:#4a5445;--st2:#2e352c;--st3:#1b201a;--hi:#7d8a6c;--gold:#e8c85c}
+#menu.m3.sh{background:transparent}
+#mx.sh #mxbg,#mx.sh #mxwt,#mx.sh .mxwtl,#mx.sh #mxwar{display:none}
+#mx.sh #mxfade{background:radial-gradient(125% 110% at 38% 50%,rgba(5,8,10,0) 48%,rgba(5,8,10,.68) 100%),linear-gradient(90deg,rgba(5,8,10,.12),rgba(5,8,10,.2) 55%,rgba(5,8,10,.55))}
+body.mxshell #side,body.mxshell #stage>*:not(#cv),body.mxshell>*:not(#app):not(.overlay):not(#campScreen):not(#uiDlg):not(#gModal):not(script):not(style){display:none!important}
+#mxfade{background:radial-gradient(125% 110% at 38% 50%,rgba(5,8,10,.25),rgba(5,8,10,.8) 90%),linear-gradient(90deg,rgba(5,8,10,.35),rgba(5,8,10,.5))}
+#mxbody{left:auto;right:0;top:0;bottom:0;width:var(--mxw);background:linear-gradient(180deg,rgba(27,32,26,.9),rgba(20,24,19,.93));border-left:2px solid #11140f;box-shadow:-1px 0 0 rgba(125,138,108,.35),-26px 0 70px rgba(0,0,0,.55)}
+#mxtop{position:absolute;inset:0;height:auto;padding:0;display:block;pointer-events:none}
+#mxtop .mxback{position:absolute;left:clamp(24px,3vw,52px);bottom:clamp(22px,4vh,46px);pointer-events:auto;font:700 19px var(--display);letter-spacing:.14em;color:#e6e8dc;padding:10px 26px;background:linear-gradient(180deg,var(--st1),var(--st2) 55%,var(--st3));border:1px solid #11140f;border-top-color:var(--hi);box-shadow:0 2px 0 #0b0d0a,0 6px 18px rgba(0,0,0,.5)}
+#mxtop .mxback:hover{color:var(--gold);border-color:var(--gold)}
+#mxcrumb{position:absolute;right:0;top:0;width:var(--mxw);box-sizing:border-box;padding:16px 28px 0;pointer-events:auto;flex-wrap:wrap;font-size:14px;letter-spacing:.12em;z-index:3}
+#mxcrumb b{color:var(--hi)}#mxcrumb button.cur{color:var(--gold)}
+.ms{padding:30px 28px 0;box-sizing:border-box}
+.ms:has(.mxfoot){padding-bottom:0}
+#mx.stp .ms{padding-top:52px}
+.mxh{font:700 clamp(30px,4.2vh,42px)/1.05 var(--display);letter-spacing:.06em;color:var(--gold);padding:0 0 10px;margin:0 0 10px;border-bottom:1px solid rgba(125,138,108,.4);text-shadow:0 2px 0 #0b0d0a}
+.mxsub{font:400 13px/1.5 var(--mono);margin:0 0 18px;color:#a3b0a2}
+.mxfoot{position:sticky;left:auto;right:auto;bottom:0;margin:22px -28px 0;padding:34px 28px 24px;justify-content:flex-end;gap:12px;flex-wrap:wrap;background:linear-gradient(0deg,rgba(20,24,19,.98) 62%,rgba(20,24,19,0))}
+.mxi,.mxgo,.mxlink,.mxplus{display:block;box-sizing:border-box;border:1px solid #11140f;border-top-color:var(--hi);background:linear-gradient(180deg,var(--st1),var(--st2) 55%,var(--st3));color:#e6e8dc;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 2px 0 #0b0d0a,0 5px 14px rgba(0,0,0,.35);text-shadow:0 1px 0 #0b0d0a;border-radius:0;transform:none;transition:filter .12s,color .12s,border-color .12s}
+.mxi{width:100%;margin:0 0 8px;padding:11px 18px 11px 18px;font:700 clamp(19px,2.6vh,25px)/1.2 var(--display);letter-spacing:.12em;text-align:left;border-left:3px solid var(--hi)}
+.mxi:hover,.mxi:focus-visible,.mxlink:hover:not(:disabled),.mxplus:hover{filter:brightness(1.22);color:var(--gold);border-color:var(--gold);transform:none;outline:0}
+.mxi.on{color:var(--gold);border-color:var(--gold);filter:brightness(1.1)}
+.mxi small{margin-top:3px;font:400 12px/1.4 var(--mono);color:#b7c1ad;opacity:.9;text-shadow:none}
+.mxi.dim,.mxi.sep.dim{font-size:clamp(16px,2.1vh,20px);padding:8px 18px;color:#c9d0bf;border-left-color:#5d6850}
+.mxi.sep{margin-top:18px}
+.mxgo{font:700 20px var(--display);letter-spacing:.16em;padding:11px 34px;border-left:3px solid var(--gold);color:var(--gold)}
+.mxgo:hover:not(:disabled){background:linear-gradient(180deg,#8a7a36,#5e5424 55%,#3a3417);color:#fff}
+.mxlink,.mxplus{font:600 16px var(--display);letter-spacing:.12em;padding:9px 18px;border-style:solid}
+#mxmenu{align-items:stretch;gap:0}
+#ms-title{justify-content:center;padding-bottom:30px}
+#mxlogo{font:700 clamp(46px,5.6vw,92px)/.9 var(--display);margin:0 0 4px;text-shadow:0 4px 0 #0b0d0a,0 8px 30px rgba(0,0,0,.6)}
+#mxlogo span{color:var(--gold)}
+#mxtag{font:400 12px/1.5 var(--mono);margin:0 0 20px;color:#a3b0a2;padding-bottom:14px;border-bottom:1px solid rgba(125,138,108,.4)}
+#mxver{right:28px;bottom:14px;color:#6f7d68}
+.mxgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mxmap{background:linear-gradient(180deg,var(--st2),var(--st3));border:1px solid #11140f;border-top-color:var(--hi);box-shadow:0 2px 0 #0b0d0a,0 5px 14px rgba(0,0,0,.35)}
+.mxmap:hover,.mxmap:focus-visible{transform:none;border-color:var(--gold);filter:brightness(1.15)}
+.mxmap.on{border-color:var(--gold);background:linear-gradient(180deg,#4a4420,#2b2812)}
+.mxmap .t{font-size:19px;padding:8px 10px 0}.mxmap .f{padding:0 10px;font-size:11px}.mxmap .d{display:none}.mxmap .mxth{border-bottom:1px solid #11140f}
+.mxnat{display:block}
+#mxnatin{width:100%;box-sizing:border-box;background:rgba(10,13,9,.7);border:1px solid #11140f;border-top-color:#000;color:#e6e8dc}
+#menu.m3 #pickP{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#menu.m3 #pickP .fac{background:linear-gradient(180deg,var(--st1),var(--st2) 55%,var(--st3));border:1px solid #11140f;border-top-color:var(--hi);box-shadow:0 2px 0 #0b0d0a;transform:none;min-height:50px}
+#menu.m3 #pickP .fac:hover{border-color:var(--gold);filter:brightness(1.2);transform:none}
+#menu.m3 #pickP .fac.on{background:linear-gradient(180deg,#8a7a36,#5e5424 55%,#3a3417);border-color:var(--gold)}
+#mxdet{position:fixed;left:clamp(24px,3vw,52px);bottom:clamp(86px,13vh,130px);top:auto;width:min(430px,calc(100vw - var(--mxw) - 110px));min-height:0;max-height:48vh;overflow:auto;background:linear-gradient(180deg,rgba(27,32,26,.9),rgba(20,24,19,.92));border:1px solid #11140f;border-top:2px solid var(--hi);box-shadow:0 8px 30px rgba(0,0,0,.55);z-index:2}
+#ms-c-nation:not(.on) #mxdet{display:none}
+.mxpl{display:block}.mxpl>div{margin-bottom:12px}
+#menu.m3 .seg button,#menu.m3 .chip,#menu.m3 #gdocSel button{border-radius:0;background:linear-gradient(180deg,var(--st1),var(--st2) 55%,var(--st3));border:1px solid #11140f;border-top-color:var(--hi);color:#d9dfce}
+#menu.m3 .seg button.on,#menu.m3 #gdocSel button[style*="rgb(74, 90, 56)"]{border-color:var(--gold)!important;color:var(--gold)!important;background:linear-gradient(180deg,#4a4420,#2b2812)!important}
+.mxopt{margin:0 0 14px;padding:0 0 12px;border-bottom:1px solid rgba(125,138,108,.25)}.mxopt h3{color:var(--gold);letter-spacing:.1em;text-transform:uppercase}
+#ms-online .mode{max-width:none!important}.mxcred{max-width:none}
+#menu.m3 #ms-online .big{background:linear-gradient(180deg,var(--st1),var(--st2) 55%,var(--st3));border:1px solid #11140f;border-top-color:var(--hi);color:var(--gold);border-radius:0}
+/* the windows the menu opens (Settings, Load game, Missions, saves) wear the same column while the menu is up */
+body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen):not([hidden]){left:auto!important;right:0!important;top:0!important;bottom:0!important;width:var(--mxw)!important;max-width:none!important;display:block!important;padding:30px 28px!important;box-sizing:border-box;background:linear-gradient(180deg,#1d221b,#141813)!important;border-left:2px solid #11140f;box-shadow:-26px 0 70px rgba(0,0,0,.55);overflow-y:auto}
+body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv) .card,body:has(#menu:not([hidden])) #campScreen>div{max-width:none!important;width:auto!important;max-height:none!important;margin:0!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
+body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen) :is(h1,h2):first-child{font:700 clamp(30px,4.2vh,42px)/1.05 var(--display)!important;letter-spacing:.06em;color:var(--gold)!important;border-bottom:1px solid rgba(125,138,108,.4);padding-bottom:10px;margin:0 0 12px!important;text-transform:uppercase}
+body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen) button:is(.big,.ghost){border-radius:0!important;background:linear-gradient(180deg,var(--st1),var(--st2) 55%,var(--st3))!important;border:1px solid #11140f!important;border-top-color:var(--hi)!important;color:#e6e8dc!important;font-family:var(--display)!important;letter-spacing:.1em;text-transform:uppercase}
+body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen) button:is(.big,.ghost):hover{border-color:var(--gold)!important;color:var(--gold)!important}
 `;document.head.appendChild(s);}
 function mxModeName(){return typeof setup!=='undefined'&&setup.mode==='battle'?'Battle':'Conquest';}
 /* The two skirmish modes share the setup screens (battlefield, nation, players, options); this retitles them for the mode chosen on the main menu. */
@@ -225,7 +285,7 @@ function mxBuild(){
   const C=scr('credits','<h2 class="mxh">Credits</h2><p class="mxsub">Free art, sound and music only, every author credited.</p>');const cw=mxEl('div','mxcred');for(const p of card.querySelectorAll('p.credits'))cw.appendChild(p);C.appendChild(cw);
   /* --- wiring --- */
   document.addEventListener('keydown',mxKey,true);
-  new MutationObserver(()=>{if(!m.hidden)mxShown();}).observe(m,{attributes:true,attributeFilter:['hidden']});
+  new MutationObserver(()=>{if(!m.hidden)mxShown();else mxShellStop();}).observe(m,{attributes:true,attributeFilter:['hidden']});
   setInterval(mxPoll,500);
   MX.screens.title.classList.add('on');mxShown(true);}
 /* Multiplayer: which game the online screen is set for. Campaign opens the one campaign lobby (gnet); Conquest/Battle use the shared battle lobby. */
@@ -267,7 +327,7 @@ function mxTrStart(){const p=setup.p,a=document.getElementById('aiFac').value||s
   document.getElementById('menu').hidden=true;startSandbox({p,a,map});}
 function mxMapMark(){if(!MX.grid)return;const sel=document.getElementById('mapSel');for(const b of MX.grid.children)b.classList.toggle('on',sel&&b.dataset.k===sel.value);}
 function mxThumbRun(){if(MX.thumbRun)return;MX.thumbRun=1;const step=()=>{const k=MX.thumbQ.shift();if(!k){MX.thumbRun=0;return;}
-  if(typeof G!=='undefined'&&G&&!G.over){MX.thumbQ.unshift(k);setTimeout(step,800);return;}
+  if(typeof G!=='undefined'&&G&&!G.over&&!G.shell){MX.thumbQ.unshift(k);setTimeout(step,800);return;}
   try{if(typeof MAPS!=='undefined'&&MAPS[k]){mapPreview(k,MX.thumbs[k]);MX.thumbs[k].classList.add('rd');}}catch(e){}setTimeout(step,30);};setTimeout(step,60);}
 function mxNatFilter(v){const q=(typeof v==='string'?v:document.getElementById('mxnatin').value).trim().toLowerCase();MX.natQ=q;for(const f of document.querySelectorAll('#pickP .fac'))f.style.display=!q||(f.querySelector('.nm').textContent||'').toLowerCase().includes(q)?'':'none';}
 function mxNatShow(f){f=f||document.querySelector('#pickP .fac.on');const d=document.getElementById('mxdet');if(!d||!f)return;const t=c=>(f.querySelector(c)||{}).textContent||'';
@@ -282,8 +342,8 @@ function mxContSync(){const c=document.getElementById('svContinue');if(!MX.cont|
   for(const b of [MX.cont,MX.contSP]){if(!b)continue;if(b.hidden===c.hidden&&b.dataset.t===t)continue;b.hidden=c.hidden;b.dataset.t=t;b.textContent='';if(!c.hidden)b.append('Continue',mxEl('small','',t));}}
 function mxPoll(){const m=document.getElementById('menu');if(!m||m.hidden)return;mxContSync();if(MX.cur==='c-players'||MX.cur==='c-opts'){mxStartSync();mxPlayersSync();}if(MX.cur==='c-nation')mxNatShow();if(MX.cur==='online'&&MX.olG==='campaign')for(const i of ['playOnline','host']){const e=document.getElementById(i);if(e&&!e.hidden)e.hidden=true;}}
 function mxCrumb(){const id=MX.cur,top=document.getElementById('mxtop'),cr=document.getElementById('mxcrumb');if(!top)return;top.hidden=id==='title';cr.innerHTML='';
-  const st=MX_STEPS.findIndex(s=>s[0]===id);if(st>=0){cr.append(mxEl('b','',mxModeName()));MX_STEPS.forEach(([sid,n],i)=>{cr.append(mxEl('i','','›'));const b=mxEl('button',sid===id?'cur':'',(i+1)+' '+n);b.type='button';if(sid!==id)b.onclick=()=>menuGo(sid,i<st);cr.append(b);});}
-  else cr.append(mxEl('b','',MX_TITLES[id]||''));}
+  const st=MX_STEPS.findIndex(s=>s[0]===id);{const mxe=document.getElementById('mx');if(mxe)mxe.classList.toggle('stp',st>=0);}if(st>=0){cr.append(mxEl('b','',mxModeName()));MX_STEPS.forEach(([sid,n],i)=>{cr.append(mxEl('i','','›'));const b=mxEl('button',sid===id?'cur':'',(i+1)+' '+n);b.type='button';if(sid!==id)b.onclick=()=>menuGo(sid,i<st);cr.append(b);});}
+  }
 function menuGo(id,back){if(!MX.screens[id]||MX.cur===id)return;const from=MX.screens[MX.cur],to=MX.screens[id];
   if(MX_STEPS.some(s=>s[0]===id)&&MX_STEPS.some(s=>s[0]===MX.cur)){const i=MX.stack.indexOf(id);if(i>=0)MX.stack.length=i+1;else MX.stack.push(id);}
   else if(!back){if(id==='title')MX.stack=['title'];else MX.stack.push(id);}
@@ -325,7 +385,48 @@ function mxWarTable(){const bg=document.getElementById('mxbg'),mn=document.getEl
     const lab=(cls,fx,fy,html)=>{const e=mxEl('div','mxwtl '+cls);e.style.left=(fx*100).toFixed(2)+'%';e.style.top=(fy*100).toFixed(2)+'%';e.innerHTML=html;bg.appendChild(e);return e;};
     if(wt.b)lab('bat',wt.b[0],wt.b[1],'<svg viewBox="0 0 28 28" fill="none" stroke="#ffd666" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l15 15M23 5L8 20M6 17l5 5M22 17l-5 5M4 24l4-4M24 24l-4-4"/></svg><b>'+esc(wt.b[2])+'</b>Last battle · '+esc(wt.b[3])+(wt.b.length>4?' · '+(wt.b[4]?'won':'lost'):''));
     requestAnimationFrame(()=>cv.classList.add('on'));}catch(e){for(const el of bg.querySelectorAll('#mxwt,.mxwtl'))el.remove();mx.classList.remove('wt');}}
-function mxShown(first){if(!first&&MX.cur!=='title')menuHome();mxContSync();try{if(typeof svMenuSync==='function')svMenuSync();else mxWarTable();}catch(_){}}   /* svMenuSync finds the newest save, then calls mxWarTable */
+/* ---------- the shell battle (Abdullah 2026-11-14 14:31 "make the background like generals"): a live AI-vs-AI Battle behind the menu, like Zero Hour's shell map ----------
+   A small Battle on a 2-player Battle map, both sides computer-played, no sound effects (music only), a slow cinematic camera that drifts between the fights.
+   It is the normal engine (G.shell marks it): nothing is saved or recorded, fog is off, and it stops the moment any real game replaces G or the menu closes.
+   Automated browsers (navigator.webdriver: smoke, smooth and the other gates) skip it unless the page has ?shell=1. */
+const SH={on:0,busy:0,tok:0,g:null,x:0,y:0,d:240,yaw:0,tx:0,ty:0,pt:0,t0:0};
+function mxShellWant(){const m=document.getElementById('menu');if(!m||m.hidden||SH.on||SH.busy)return false;if(typeof G!=='undefined'&&G&&!G.over&&!G.shell)return false;
+  if(navigator.webdriver&&!/[?&]shell=1/.test(location.search))return false;if(/[?&]shell=0/.test(location.search))return false;if(typeof BM_KEYS==='undefined'||!BM_KEYS.length||typeof newGame!=='function')return false;return true;}
+function mxShellStop(){SH.tok++;const was=SH.on;SH.on=0;SH.busy=0;document.body.classList.remove('mxshell');const mx=document.getElementById('mx');if(mx)mx.classList.remove('sh');
+  const m=document.getElementById('menu');if(m)m.classList.remove('sh');
+  if(SH.g&&G===SH.g){G.over=true;G.paused=false;}SH.g=null;
+  if(was)try{window.dispatchEvent(new Event('resize'));}catch(_){}}
+async function mxShellStart(){if(!mxShellWant())return;SH.busy=1;const tok=++SH.tok,alive=()=>tok===SH.tok&&!document.getElementById('menu').hidden;
+  try{const keys=BM_KEYS.filter(k=>MAPS[k]&&MAPS[k].min<=2&&MAPS[k].max>=2);if(!keys.length){SH.busy=0;return;}
+    const map=keys[(Math.random()*keys.length)|0],ks=FKEYS.filter(k=>k!=='RS'&&k!=='DW'),ok=ks.filter(k=>{try{return upgList(k).every(u=>STRUCT[UPG[u].at]);}catch(_){return false;}});const a=(ok.length?ok:ks)[(Math.random()*(ok.length||ks.length))|0];let b=a;while(b===a)b=ks[(Math.random()*ks.length)|0];
+    MODE='single';ME=0;TERR_DEFER=true;try{newGame({battle:1,seed:(Math.random()*1e9)|0,facs:[a,b],ai:[true,true],map,w:0,tm:[0,1],bs:1,slot:-1});
+      G.shell=1;G.paused=true;G.teams.forEach(T=>{if(T.ai){T.ai=mkAI(2);T.credits=12000;}});}finally{TERR_DEFER=false;}
+    const g=G;SH.g=g;
+    try{await modelsFor([a,b],()=>{});}catch(e){}
+    if(!alive()||G!==g){if(G===g){g.over=true;}SH.busy=0;return;}
+    await new Promise(r=>setTimeout(r,30));if(!alive()||G!==g){if(G===g)g.over=true;SH.busy=0;return;}
+    paintTerrainNow();const tc=g.terrain;g.terrain=null;if(!R3)initGfx();else resetScene();
+    buildWorld(tc||g.terrain);document.body.classList.add('mxshell');resize();try{window.dispatchEvent(new Event('resize'));}catch(_){}resize();
+    try{buildPanels();}catch(e){}cam.yaw=0;cam.tyaw=0;cam.dist=240;cam.td=240;const [bx,by]=BASES[0],[cx,cy]=BASES[1]||BASES[0];SH.x=(bx+cx)/2;SH.y=(by+cy)/2;SH.tx=SH.x;SH.ty=SH.y;SH.d=240;SH.pt=0;centerOn(SH.x,SH.y,true);
+    g.terrain=tc;try{renderFrame(1/60);}catch(e){}
+    if(!alive()||G!==g){SH.busy=0;return;}
+    g.paused=false;last=performance.now();g.acc=0;SH.on=1;SH.busy=0;SH.t0=performance.now();
+    const mx=document.getElementById('mx');if(mx)mx.classList.add('sh');document.getElementById('menu').classList.add('sh');
+    requestAnimationFrame(mxShellCam);
+  }catch(e){console.warn('shell battle',e);mxShellStop();}}
+/* the camera: a slow low pan between the fights. Every ~12 s it picks the hottest contact (a unit of one side with an enemy unit close by); with none yet, it drifts across the middle of the map. */
+function mxShellCam(now){if(!SH.on)return;const g=SH.g;if(G!==g||g.over||document.getElementById('menu').hidden){mxShellStop();return;}
+  const dt=Math.min(.05,Math.max(0,(now-(SH.lt||now))/1000));SH.lt=now;
+  if((SH.pt-=dt)<=0){SH.pt=12+Math.random()*6;let best=null,bs=0;const U=g.ents.filter(e=>!e.isB&&!e.dead&&e.team<g.N&&e.s&&e.s.dom!=='air');
+    for(let i=0;i<U.length;i+=Math.max(1,(U.length/60)|0)){const e=U[i];let n=0,m=0;for(const o of U){if(Math.abs(o.x-e.x)>130||Math.abs(o.y-e.y)>130)continue;if(o.team===e.team)m++;else n++;}const sc=Math.min(n,m)*2+n*.2;if(n&&sc>bs){bs=sc;best=e;}}
+    if(best){SH.tx=best.x;SH.ty=best.y;}else{const a=BASES[0],c=BASES[1]||a,k=.3+.4*Math.random();SH.tx=a[0]+(c[0]-a[0])*k+(Math.random()-.5)*160;SH.ty=a[1]+(c[1]-a[1])*k+(Math.random()-.5)*160;}
+    SH.tx=Math.max(120,Math.min(MAPW-120,SH.tx));SH.ty=Math.max(120,Math.min(MAPH-120,SH.ty));SH.td=best?190+Math.random()*60:260;}
+  const dx=SH.tx-SH.x,dy=SH.ty-SH.y,dd=Math.hypot(dx,dy),mv=Math.min(dd,(14+dd*.18)*dt);if(dd>.01){SH.x+=dx/dd*mv;SH.y+=dy/dd*mv;}
+  SH.d+=(SH.td-SH.d)*(1-Math.exp(-dt*.5));SH.yaw=Math.sin((now-SH.t0)/1000*.045)*.5;
+  camTarget();cam.tx=SH.x;cam.ty=SH.y;cam.td=SH.d;cam.tyaw=SH.yaw;
+  requestAnimationFrame(mxShellCam);}
+function mxShellSoon(){clearTimeout(MX.shT);MX.shT=setTimeout(()=>{if(mxShellWant())mxShellStart();},2500);}
+function mxShown(first){if(!first&&MX.cur!=='title')menuHome();mxContSync();mxShellSoon();try{if(typeof svMenuSync==='function')svMenuSync();else mxWarTable();}catch(_){}}   /* svMenuSync finds the newest save, then calls mxWarTable */
 function mxKey(e){if(e.key!=='Escape')return;const m=document.getElementById('menu');if(!m||m.hidden||(MX.stack.length<2&&!(MX.trIn&&MX.cur==='t-range')))return;
   if(document.querySelector('.overlay:not(#menu):not([hidden]),#campScreen,#grandScreen,#gModal,#edOv.on'))return;if(e.target&&/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)&&e.target.id!=='mxnatin')return;
   e.preventDefault();e.stopImmediatePropagation();menuBack();}

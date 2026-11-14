@@ -179,7 +179,7 @@ function swBanner(){if(!G||!G.battle||G.over){if(SWB.el&&SWB.el.style.display!==
   if(h!==SWB.h){SWB.h=h;SWB.el.innerHTML=h;}SWB.el.style.display=h?'block':'none';}
 function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,sx=W/MAPW,sy=H/MAPH;c.globalCompositeOperation='source-over';
   // a replay or a spectator showing everything: no fog at all
-  if((RP.on&&!RP.fog)||(NET.spec&&NET.specAll)){c.fillStyle='#000';c.fillRect(0,0,W,H);FOGC.getContext('2d').drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}
+  if((RP.on&&!RP.fog)||(NET.spec&&NET.specAll)||G.shell){c.fillStyle='#000';c.fillRect(0,0,W,H);FOGC.getContext('2d').drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}
   let X=FOGC.x;if(!X){X=FOGC.x=document.createElement('canvas');X.width=W;X.height=H;FOGC.xN=0;}
   const hs=[];{const sk=(G.teams[ME].F.mods.sight||1)*1.08;for(const e of G.ents)if(e.team===ME&&!e.dead)hs.push(e.x,e.y,(!e.isB&&e.s.vis?e.s.vis:e.isB?340:e.s.dom==='air'?340:e.s.dom==='naval'?380:280)*sk);}
   for(const r of (G.teams[ME].reveals||[]))hs.push(r.x,r.y,r.r);

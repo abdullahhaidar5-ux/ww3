@@ -1544,7 +1544,7 @@ $('again').onclick=()=>{initAudio();try{if(NET.ownW!=null){wxSet(NET.ownW);NET.o
 // that saves the best frame as a PNG for sharing.
 const KC={G:null,on:false,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0,R:null};
 const KC_SPAN=9,KC_DT=.25,KC_TAIL=1.2;
-function kcOff(){return !!(navigator.webdriver&&!window.__killcam)||!!(G&&G.headless);}
+function kcOff(){return !!(navigator.webdriver&&!window.__killcam)||!!(G&&(G.headless||G.shell));}
 function kcReset(){if(KC.url)try{URL.revokeObjectURL(KC.url);}catch(e){}try{hlReset();}catch(e){}Object.assign(KC,{G,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0});const a=$('kcSave');if(a)a.hidden=true;}
 function kcFx(type,args){if(!G||G.over||KC.on||kcOff())return;if(KC.G!==G)kcReset();const t=G.t;KC.fx.push([t,type,args]);
   if(type==='die'){const [id,x,y,ki,isB,team]=args,k=KINDS[ki];const v=(isB?STRUCT[k]&&STRUCT[k].cost:BASE[k]&&BASE[k].cost)||150;
