@@ -53,6 +53,14 @@ try {
     o.dbg2 = { occ: c.occ.length, g: !!c.g, civs: G.civ.filter(q => q.dug && !q.dead).length }; if (c.g) act(ME, { t: 'ungar', tid: c.g.id, at: 0 }); o.fd = c.fd - G.t;
     // fades after a while if unused
     for (let i = 0; i < 1100; i++) simUpdate(.1); o.faded = c.dead && !(G.dug || []).some(d => d.k === 'hole');
+    // vehicles dig in too: hull-down position, much less front damage, cannot move until ordered out, leaves on a move order
+    { const tk = roster(T.fac).factory.find(k => stats(T.fac, k).cls === 'tank') || 'tank', foe = G.teams.find(q => q.id !== ME), V = addUnit(ME, tk, C.x + 60, C.y + 160); V.vis = true; V.hd = V.ang = 0; V.max = V.hp = 1e5;
+      const a1 = addUnit(foe.id, roster(foe.fac).barracks[0], V.x + 140, V.y); a1.vis = true; const open = addUnit(ME, tk, V.x, V.y + 90); open.hd = open.ang = 0; open.max = open.hp = 1e5;
+      const m0 = tactic(V, 'cannon', a1, 0).m; act(ME, { t: 'dig', ids: [V.id] }); o.vCan = !!V.dgDig; for (let i = 0; i < 100; i++) simUpdate(.1);
+      o.v = (G.dug || []).filter(d => d.k === 'vpos' && d.u === V.id).length; o.vFlag = !!V.dgv; const m1 = tactic(V, 'cannon', a1, 0).m, m2 = tactic(open, 'cannon', a1, 0).m; o.vm = [+m0.toFixed(2), +m1.toFixed(2), +m2.toFixed(2)];
+      const x0 = V.x; setMove(V, V.x + 300, V.y, 'move'); for (let i = 0; i < 30; i++) simUpdate(.1); o.vStay = Math.abs(V.x - x0) < 2;
+      const js = JSON.parse(JSON.stringify(ckEncode())); const je = js.ents.find(e => e.id === V.id); o.vCk = !!(je && je.dgv); const pk2 = dgPack(T); o.vPk = !!pk2 && pk2.dg.some(v => v[3] === DUGK.indexOf('vpos') && v[6] === V.id);
+      act(ME, { t: 'go', ids: [V.id], x: V.x + 200, y: V.y, mode: 'move' }); for (let i = 0; i < 60; i++) simUpdate(.1); o.vOut = !V.dgv && V.x > x0 + 20; for (let i = 0; i < 1100; i++) simUpdate(.1); o.vFade = !(G.dug || []).some(d => d.k === 'vpos'); }
     o.civAfter = G.civ.filter(q => q.dug && !q.dead).length;
     } catch (e) { o.err = String(e.stack).slice(0, 400); }
     return o;
@@ -76,9 +84,19 @@ try {
     await ev(() => { for (let i = 0; i < 80; i++) simUpdate(.1); G.sel = []; updateUI(); }); await view(150); await shot('2-dugout-with-occupants');
     await ev(() => { const c = G.civ.find(q => q.dug && !q.dead); G.sel = [c.g]; updateUI(); const im = document.createElement('img'); im.id = 'dgcur'; im.src = CURIMG.exit || (curCss('exit'), CURIMG.exit); im.style.cssText = 'position:fixed;z-index:99;left:760px;top:430px;width:32px;height:32px;pointer-events:none'; document.body.append(im); const w = { x: window.__C.x + 70, y: window.__C.y + 40 }; mark({ x: w.x, y: w.y, r: 16, t: 0, d: 5, c: 0x74d08f }); });
     await view(150, 35, 20); await shot('3-dugout-selected-leave');
+    // close-ups of the finished looks (orch/shots/dugout-*.jpg): infantry dugout, trench, tank dug in
+    fs.mkdirSync(path.join(ROOT, 'orch', 'shots'), { recursive: true });
+    const close = async (name, x, y, d) => { await ev(([x, y, d]) => { camTarget(); cam.td = cam.dist = d; centerOn(x, y, true); for (let i = 0; i < 3; i++) renderFrame(.016); }, [x, y, d]); await page.waitForTimeout(500); await ev(() => { renderFrame(.016); tactFxTick(.5); renderFrame(.016); }); await page.screenshot({ path: path.join(ROOT, 'orch', 'shots', name + '.jpg'), type: 'jpeg', quality: 80, timeout: 120000 }); };
+    await ev(() => { G.sel = []; updateUI(); }); await close('dugout-foxhole', P.x, P.y, 70);
+    const Q = await ev(() => { const T = G.teams[ME], C = window.__C, tk = roster(T.fac).factory.find(k => stats(T.fac, k).cls === 'tank') || 'tank', dz = addUnit(ME, 'dozer', C.x + 120, C.y + 40); dz.vis = true;
+      act(ME, { t: 'wall', ids: [dz.id], k: 'trench', x: C.x + 90, y: C.y + 150, x2: C.x + 190, y2: C.y + 150 }); for (let i = 0; i < 1500 && dz.order; i++) simUpdate(.1);
+      const V = addUnit(ME, tk, C.x - 120, C.y + 150); V.vis = true; V.hd = V.ang = 0.3; V.hid = false; act(ME, { t: 'dig', ids: [V.id] }); for (let i = 0; i < 100; i++) simUpdate(.1); G.sel = []; return { tx: C.x + 140, ty: C.y + 150, vx: V.x, vy: V.y }; });
+    await close('dugout-trench', Q.tx, Q.ty, 80); await close('dugout-tank', Q.vx, Q.vy, 75);
     await ev(() => { document.getElementById('dgcur').remove(); const c = G.civ.find(q => q.dug && !q.dead); act(ME, { t: 'ungar', tid: c.g.id, at: 1, x: window.__C.x + 70, y: window.__C.y + 40 }); G.sel = window.__us.slice(); for (let i = 0; i < 60; i++) simUpdate(.1); updateUI(); }); await view(150, 35, 20); await shot('4-squad-back-out');
   }
 
+  ck(R.v === 1 && R.vFlag, 'a tank digs in (hull-down position) ' + JSON.stringify([R.v, R.vFlag])); ck(R.vm && R.vm[1] < R.vm[2] * .7, 'dug-in tank takes much less front damage ' + JSON.stringify(R.vm)); ck(R.vStay, 'a dug-in tank cannot move until ordered out');
+  ck(R.vCk && R.vPk, 'dug-in state is in the checkpoint and the client list'); ck(R.vOut, 'a move order takes the tank out of its position'); ck(R.vFade, 'an unused vehicle position fades');
   ck(!errs.length, 'page errors: ' + errs.join(' || '));
 } catch (e) { fails.push('crash: ' + (e.stack || e)); }
 await browser.close(); server.close();
