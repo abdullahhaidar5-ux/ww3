@@ -1,0 +1,10 @@
+A: 5 min in, t=300.0 units=54 money=295,225,0 (8962 ms)
+save: ok=true  encode 4 ms, packed 22 KB
+A after +2 min: t=420.0 hash=556156059 units=56 money=95,742,0
+C loaded: ok=true  paused=true "Game loaded. Press P to continue." t=300.0
+C after +2 min: t=420.0 hash=2158421293 units=56 money=95,952,0
+Continue button: ▶ Continue — Straits of Thunder · Iran · 5:00
+after Continue: {"t":300.0000000000558,"p":true}
+file round trip: {"file":true,"old":"This save is from an older version and can't be loaded.","junk":"That is not a World War 3 save file.","bad":"This save file is damaged and can't be loaded.","stale":"This save is from an older version and can't be loaded.","g":true}
+SAVETEST FAIL
+ - replay differs after +2 min: A 556156059 (units 56, money 95,742,0) vs C 2158421293 (units 56, money 95,952,0)
