@@ -42,7 +42,11 @@ K.invite=function(code,link,text){const d=E('div','lkinv');d.append(E('div','lkh
   const b=E('button','lkcopy','Copy invite link');b.onclick=()=>copyText(text||link,b);const c=E('button','lkcode','Copy code');c.onclick=()=>copyText(String(code).toUpperCase(),c);r.append(inp,b,c);d.append(r);return d;};
 // map card: name + facts from the map's own data
 K.mapCard=function(mk,nn,mx){const m=MAPS[mk]||{},d=E('div','lkmap');d.append(E('div','lkt',m.name||mk));const f=E('div','lkf');
-  if(m.tag)f.append(E('span','',m.tag));f.append(E('span','',(m.min||2)+'–'+(m.max||mx||8)+' players'));if(m.sym)f.append(E('span','',m.sym==='point'?'Symmetric starts':'Mirrored starts'));if(nn)f.append(E('span','',nn+' in this battle'));
+  if(m.bm&&typeof bmInfo==='function'){/* a Battle map: players, size, theme and a small picture made from the map data (drawn once per map) */
+    const I=bmInfo(mk);f.append(E('span','',I.players+' players'),E('span','',I.size),E('span','',I.theme));K.pv=K.pv||{};let cv=K.pv[mk];
+    if(!cv){cv=K.pv[mk]=document.createElement('canvas');cv.width=192;cv.height=132;cv.className='lkpv';cv.style.cssText='width:96px;height:66px;float:right;margin:0 0 4px 8px;border:1px solid #0006';setTimeout(()=>{try{if(typeof mapPreview==='function')mapPreview(mk,cv);}catch(e){}},40);}
+    d.prepend(cv);}
+  else{if(m.tag)f.append(E('span','',m.tag));f.append(E('span','',(m.min||2)+'–'+(m.max||mx||8)+' players'));}if(m.sym)f.append(E('span','',m.sym==='point'?'Symmetric starts':'Mirrored starts'));if(nn)f.append(E('span','',nn+' in this battle'));
   d.append(f);if(m.desc)d.append(E('div','lkd',m.desc));return d;};
 K.empty=function(msg,err,dots){const d=E('div','lkempty'+(err?' err':''));d.append(document.createTextNode(msg));if(dots)d.append(E('span','lkdots'));return d;};
 // toasts

@@ -43,3 +43,18 @@ our own art, free CC0/CC-BY/public-domain sources only (credited).
   quality class from a studio game). Write the table + the shots' paths to `orch/reports/artbar.md` (append, dated).
 - Work on the lowest-scoring items first. Never ship something that scores lower than before on any item.
 - The goal is every item ≥ 4.5. Until then the art loop keeps going (see CHAIN-ART in orch/CHAIN.md).
+
+## BATTLE SECTION (added 2026-11-10 by the nightly queue, item "One look for everything")
+Reference feel, from public screenshots/trailers only (never their assets): **Company of Heroes 3** and **Broken Arrow** at normal
+gameplay zoom. What makes them read as one world, and what we score ourselves on:
+B1. **One material language** — every vehicle's paint has the same sheen and wear, every tyre is the same matt black, every wall
+    the same kind of plaster/concrete; nothing looks like a plastic toy next to a photo-scanned model. (Ours: `src/11c-look.js` classes.)
+B2. **One palette per army** — a nation's vehicles, uniforms and buildings share a small set of colours; no toy-bright outliers.
+B3. **Grounded** — contact shadows, dust on the lower hull the colour of the map's soil, tracks in the ground.
+B4. **Surface detail at gameplay zoom** — chipped paint, canvas weave, stained concrete, cracked mud plaster readable without zooming in.
+B5. **Silhouette quality** — models from one hand: same level of detail and proportions (this is the "code-built models" item).
+B6. **Light** — one sun, soft shadows, haze, the same grade on every map of a theatre.
+B7. **Smooth** — smooth-pc / smooth-mp green; draw calls never go up for a look change.
+Protocol: `LOOK_OFF=1 node orch/lookshots.mjs` then `node orch/lookshots.mjs` (same battle, same camera: IR, US, IL, SA, RS, DW, RV on
+the strait map) -> `orch/shots/look/before-*.jpg` / `after-*.jpg` + numbers; score B1-B7 honestly 1-5 in `orch/reports/look.md`
+(append, dated). Never ship a lower score or more draw calls than before.

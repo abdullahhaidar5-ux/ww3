@@ -77,5 +77,5 @@ function reDark(dt){let n=0;const now=G.t;for(let i=0;i<96;i+=3){const t=RE.shot
   if(typeof WXCITY!=='undefined'){if(RE.cityBase==null||Math.abs(WXCITY.value-RE.citySet)>1e-4)RE.cityBase=WXCITY.value;RE.citySet=RE.cityBase*(1-.85*RE.dark);WXCITY.value=RE.citySet;}}
 function realTick(dt){if(!G||!G.terrain||!(dt>0))return;if(window.NOREAL)return;if(RE.gG!==G){RE.gG=G;RE.civ.length=0;RE.cars.length=0;RE.shots.fill(0);RE.dark=0;if(RE_CIVM)for(const m of RE_CIVM.concat(RE_CARM)){m.count=0;if(!m.parent)SCN.add(m);}}if(G.t-RE.gT>.5)reGarRefresh();
   try{reDark(dt);}catch(e){}try{reGarFx(dt);}catch(e){if(!RE.er++)console.warn('realism garrison',e);}
-  const lo=typeof fxPH==='function'&&fxPH()||(typeof gfxLow==='function'&&gfxLow());if(!lo)try{reCivTick(dt);}catch(e){if(!RE.er++)console.warn('realism towns',e);}else if(RE_CIVM){for(const m of RE_CIVM.concat(RE_CARM))m.count=0;RE.civ.length=0;RE.cars.length=0;}}
+  const lo=typeof fxPH==='function'&&fxPH()||(typeof gfxLow==='function'&&gfxLow());if(!lo&&!G.battle)try{reCivTick(dt);}catch(e){if(!RE.er++)console.warn('realism towns',e);}else if(RE_CIVM){for(const m of RE_CIVM.concat(RE_CARM))m.count=0;RE.civ.length=0;RE.cars.length=0;}}
 RE.er=0;

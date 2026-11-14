@@ -8,7 +8,7 @@ const GMOD_COND={
   always:()=>true,
   style:(k,arg)=>{try{const n=grNat(k);return (MORALE_STYLE[n.fac]||MORALE_STYLE[k])===arg;}catch(e){return false;}}};
 const GMOD_ROWS=[
-  {id:'sty_zeal',src:'Zealous fervour',scope:'nation',stat:'warSupport',add:.10,cond:'style:zeal'},
+  {id:'sty_zeal',src:'Zealous fervor',scope:'nation',stat:'warSupport',add:.10,cond:'style:zeal'},
   {id:'sty_prof',src:'Professional officers',scope:'nation',stat:'rallySpeed',mul:1.25,cond:'style:prof'},
   {id:'sty_home',src:'Home defenders',scope:'nation',stat:'homeMorale',mul:1.4,cond:'style:home'},
   {id:'sty_fire',src:'Firepower doctrine',scope:'nation',stat:'fireSupport',mul:1.1,cond:'style:fire'}];

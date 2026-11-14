@@ -9,7 +9,15 @@ function fxUpd(A,count){if(A.clearUpdateRanges){A.clearUpdateRanges();A.addUpdat
 // chunks of a destroyed structure thrown out by the blast, tumbling and bouncing until they settle
 // rock chunks share a few quantised materials (they used to make one material per chunk: up to 110 live ones, never freed)
 const CHUNKM=new Map();function chunkMat(col){const q=Math.floor(Math.random()*6),k=col+q;let m=CHUNKM.get(k);if(!m){m=new THREE.MeshStandardMaterial({color:new THREE.Color(col).multiplyScalar(.7+q*.07),roughness:.95});CHUNKM.set(k,m);}return m;}
-let CHUNKG=null;function chunks(x,y,size,col,n){if(!inView(x,y,.3))return;if(!CHUNKG)CHUNKG=[0,1,2,3,4].map(i=>rockGeo(40+i*7,0,.6+i*.07,.55));const g0=groundH(x,y);n=Math.round(n*1.6);for(let i=0;i<n&&DEBRIS.length<110;i++){const s=rnd(.025,.07)*size,dk=Math.random()<.35,mm=chunkMat(dk?'#2f2b27':col);const m=new THREE.Mesh(CHUNKG[i%5],mm);m.scale.set(s*rnd(.8,1.5),s*rnd(.5,1),s*rnd(.7,1.3));m.castShadow=true;const a=Math.random()*6.28,r=Math.random()*size*.25;m.position.set(x+Math.cos(a)*r,g0+rnd(4,size*.4),y+Math.sin(a)*r);SCN.add(m);const sp=rnd(30,100);DEBRIS.push({m,vx:Math.cos(a)*sp,vz:Math.sin(a)*sp,vh:rnd(50,140),wx:rnd(-9,9),wy:rnd(-9,9),wz:rnd(-9,9),t:0,rest:0,chunk:1,sz:s});}
+// Shapes that are built once and reused for the whole battle (strike markers, ping rings, missiles, rock chunks, rubble heaps,
+// banners). The GPU memory clean-up (gpuGc, below) must never free them: it used to free any shape not on screen at that
+// moment, so each of these was sent to the graphics card again in the very frame a strike needed it.
+const GC_KEEP=new Set();function gcKeep(g){if(g)GC_KEEP.add(g);return g;}
+// shapes shared by every strike warning marker and every ping ring (built once; never one per marker)
+let MKG=null,PINGG=null;function mkGeo(){if(!MKG){MKG={ring:new THREE.RingGeometry(.95,1,56).rotateX(-Math.PI/2),inner:new THREE.RingGeometry(.9,1,56).rotateX(-Math.PI/2),disc:new THREE.CircleGeometry(1,48).rotateX(-Math.PI/2),bar:new THREE.PlaneGeometry(1,1).rotateX(-Math.PI/2)};for(const k in MKG)gcKeep(MKG[k]);}return MKG;}
+function pingGeo(){return PINGG||(PINGG=gcKeep(new THREE.RingGeometry(.9,1,64).rotateX(-Math.PI/2)));}
+function chunkGeos(){return CHUNKG||(CHUNKG=[0,1,2,3,4].map(i=>gcKeep(rockGeo(40+i*7,0,.6+i*.07,.55))));}
+let CHUNKG=null;function chunks(x,y,size,col,n){if(!inView(x,y,.3))return;chunkGeos();const g0=groundH(x,y);n=Math.round(n*1.6);for(let i=0;i<n&&DEBRIS.length<110;i++){const s=rnd(.025,.07)*size,dk=Math.random()<.35,mm=chunkMat(dk?'#2f2b27':col);const m=new THREE.Mesh(CHUNKG[i%5],mm);m.scale.set(s*rnd(.8,1.5),s*rnd(.5,1),s*rnd(.7,1.3));m.castShadow=true;const a=Math.random()*6.28,r=Math.random()*size*.25;m.position.set(x+Math.cos(a)*r,g0+rnd(4,size*.4),y+Math.sin(a)*r);SCN.add(m);const sp=rnd(30,100);DEBRIS.push({m,vx:Math.cos(a)*sp,vz:Math.sin(a)*sp,vh:rnd(50,140),wx:rnd(-9,9),wy:rnd(-9,9),wz:rnd(-9,9),t:0,rest:0,chunk:1,sz:s});}
   for(let i=0;i<Math.min(10,4+(size/8|0));i++){const a=rnd(0,6.28),v=rnd(20,70);part({x,y,h:g0+rnd(2,8),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,160),c:[.32,.27,.21],s:rnd(.9,1.8),f:.85,grav:1,bounce:1,d:rnd(1,1.8)});}}
 function debrisTick(dt){if(!DEBRIS.length)return;let w=0;for(const d of DEBRIS){d.t+=dt;const m=d.m;if(!d.rest){d.vh-=220*dt;m.position.x+=d.vx*dt;m.position.z+=d.vz*dt;m.position.y+=d.vh*dt;m.rotation.x+=d.wx*dt;m.rotation.y+=d.wy*dt;m.rotation.z+=d.wz*dt;
     const g=groundH(m.position.x,m.position.z)+(d.sz?d.sz*.2:1.5);if(m.position.y<g){m.position.y=g;if(Math.abs(d.vh)<25){d.rest=1;}else{d.vh=-d.vh*.32;d.vx*=.55;d.vz*=.55;d.wx*=.5;d.wy*=.5;d.wz*=.5;for(let q=0;q<6;q++)part({x:m.position.x,y:m.position.z,h:g,vx:rnd(-25,25),vy:rnd(-25,25),c:C_DUST,s:rnd(5,9),g:10,d:rnd(.6,1),a:.45});}}
@@ -49,7 +57,11 @@ function buildDecals(){for(const d of [SCORCH,TRACKS,CRATER])if(d){SCN.remove(d)
   SCORCH=mk(320,(()=>{const n=128,c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');const g=x.createRadialGradient(64,64,0,64,64,60);g.addColorStop(0,'rgba(10,8,6,.92)');g.addColorStop(.35,'rgba(18,14,10,.8)');g.addColorStop(.7,'rgba(30,24,16,.35)');g.addColorStop(1,'rgba(30,24,16,0)');x.fillStyle=g;x.fillRect(0,0,n,n);
     for(let i=0;i<34;i++){const a=Math.random()*6.283,l=30+Math.random()*30,w=1+Math.random()*3;x.strokeStyle=`rgba(16,12,8,${.25+Math.random()*.35})`;x.lineWidth=w;x.beginPath();x.moveTo(64+Math.cos(a)*10,64+Math.sin(a)*10);x.lineTo(64+Math.cos(a)*l,64+Math.sin(a)*l);x.stroke();}
     for(let i=0;i<40;i++){const a=Math.random()*6.283,r=Math.random()*55;x.fillStyle=`rgba(12,10,8,${Math.random()*.6})`;x.fillRect(64+Math.cos(a)*r,64+Math.sin(a)*r,1+Math.random()*3,1+Math.random()*3);}
-    const t=new THREE.CanvasTexture(c);return t;})(),1);TRACKS=mk(1600,(()=>{const c=document.createElement('canvas');c.width=16;c.height=32;const x=c.getContext('2d');for(let i=0;i<32;i+=4){x.fillStyle='rgba(52,40,26,.75)';x.fillRect(1,i,14,2.2);}const g=x.getImageData(0,0,16,32);for(let i=0;i<16*32;i++){const px=i%16;const e=Math.min(px,15-px)/3;g.data[i*4+3]*=Math.min(1,e);}x.putImageData(g,0,0);const t=new THREE.CanvasTexture(c);t.magFilter=THREE.LinearFilter;return t;})(),.5);
+    const t=new THREE.CanvasTexture(c);return t;})(),1);TRACKS=mk(1600,(()=>{ // groundreal: soft tread print - feathered sides, ends that fade so overlapping prints join into one even rut (the old hard 16x32 stripes stepped like a staircase)
+    const c=document.createElement('canvas');c.width=32;c.height=64;const x=c.getContext('2d'),g=x.createImageData(32,64);
+    for(let j=0;j<64;j++)for(let i=0;i<32;i++){const u=(i+.5)/32,v=(j+.5)/64,side=Math.min(1,Math.min(u,1-u)/.3),end=Math.min(1,Math.min(v,1-v)/.25),bar=.72+.28*Math.pow(Math.abs(Math.sin(v*Math.PI*9)),3),k=(j*32+i)*4;
+      g.data[k]=58;g.data[k+1]=50;g.data[k+2]=40;g.data[k+3]=Math.round(255*.62*side*side*(3-2*side)*end*bar);}
+    x.putImageData(g,0,0);const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t;})(),.42);
   CRATER=mk(160,(()=>{const n=128,c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');
     let g=x.createRadialGradient(64,64,0,64,64,62);g.addColorStop(0,'rgba(34,26,18,.95)');g.addColorStop(.32,'rgba(52,40,27,.9)');g.addColorStop(.5,'rgba(92,74,52,.55)');g.addColorStop(.62,'rgba(150,126,92,.6)');g.addColorStop(.72,'rgba(120,98,70,.42)');g.addColorStop(1,'rgba(110,90,64,0)');x.fillStyle=g;x.fillRect(0,0,n,n);
     for(let i=0;i<60;i++){const a=Math.random()*6.283,r0=36+Math.random()*8,l=r0+6+Math.random()*20;x.strokeStyle=`rgba(${Math.random()<.5?'70,55,38':'140,118,86'},${.25+Math.random()*.35})`;x.lineWidth=1+Math.random()*2.5;x.beginPath();x.moveTo(64+Math.cos(a)*r0,64+Math.sin(a)*r0);x.lineTo(64+Math.cos(a)*l,64+Math.sin(a)*l);x.stroke();}
@@ -59,11 +71,22 @@ function buildDecals(){for(const d of [SCORCH,TRACKS,CRATER])if(d){SCN.remove(d)
 function decal(m,i,x,y,s,r){TMPM.compose(TMP.set(x,groundH(x,y)+.6,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r||0),new THREE.Vector3(s,1,s));m.setMatrixAt(i,TMPM);m.instanceMatrix.needsUpdate=true;}
 function scorch(x,y,s){if(!SCORCH)return;decal(SCORCH,decI++%320,x,y,s*2.4,Math.random()*6);}
 function crater(x,y,s){if(!CRATER)return;decal(CRATER,crI++%160,x,y,s,Math.random()*6);}
-function track(x,y,a){if(!TRACKS)return;const i=trkI++%1600;TMPM.compose(TMP.set(x,groundH(x,y)+.6,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),-(a||0)+Math.PI/2),new THREE.Vector3(4.2,1,9.5));TRACKS.setMatrixAt(i,TMPM);TRACKS.instanceMatrix.needsUpdate=true;}
-function pBudget(){const lv=(typeof QUAL!=='undefined'&&QUAL.lv)||0;return [1700,1400,1100,850,650,500][lv]||500;}
+// a tread print lies on the slope (tilted to the ground under it), so it never cuts into the hill in jagged pieces
+const TRK_UP=new THREE.Vector3(0,1,0),TRK_N=new THREE.Vector3(),TRK_Q=new THREE.Quaternion(),TRK_S=new THREE.Vector3(3.4,1,10.6);
+function track(x,y,a){if(!TRACKS)return;const i=trkI++%1600;const hx=groundH(x+2,y)-groundH(x-2,y),hz=groundH(x,y+2)-groundH(x,y-2);TRK_N.set(-hx/4,1,-hz/4).normalize();
+  TRK_Q.setFromUnitVectors(TRK_UP,TRK_N);TMPQ.setFromAxisAngle(TRK_UP,-(a||0)+Math.PI/2).premultiply(TRK_Q);TMPM.compose(TMP.set(x,groundH(x,y)+.35,y),TMPQ,TRK_S);TRACKS.setMatrixAt(i,TMPM);TRACKS.instanceMatrix.needsUpdate=true;}
+function pBudget(){const lv=(typeof QUAL!=='undefined'&&fxLv())||0;return [1700,1400,1100,850,650,500][lv]||500;}
 // particles that would start well off-screen are skipped (smoke and exhaust from units across the map used CPU and
 // ate the particle budget meant for what the player is looking at)
-function part(o){if(!inView(o.x,o.y,.4))return;const B=pBudget(),n=PARTS.length;if(n>B){if(!o.add||n>B*1.35)return;}else if(n>B*.6&&!o.add&&Math.random()<(n-B*.6)/(B*.4))return;PARTS.push(Object.assign({vx:0,vy:0,vh:0,t:0,d:1,s:6,g:0,a:1,h:0,c:[.4,.39,.36],add:false,f:.25,rise:0},o));}
+/* ---------- ONE TABLE for how much dust and smoke there is (Abdullah 2026-11-13 19:55 "Make the dust and smoke less") ----------
+   View only. Every non-fire, non-debris particle that part() receives is dust (tan colour: vehicle trails, impacts, rotor wash,
+   construction, collapse) or smoke (everything else: wreck/building/explosion columns, muzzle, exhaust, trails, screens).
+   amt = share of particles spawned, size = puff size, life = how long it hangs, alpha = how thick. 1 = the old look.
+   Smoke SCREENS (the gameplay tool) keep their count and duration: only size and thickness follow the table. Next change = edit one number. */
+const FX_DUST={amt:.4,size:.72,life:.5,alpha:.6},FX_SMOKE={amt:.6,size:.8,life:.65,alpha:.75};
+function fxTone(o){if(o.add||o.grav||o.fxk)return;const c=o.c,dust=Array.isArray(c)&&c[0]-c[2]>.09,T=dust?FX_DUST:FX_SMOKE;
+  if(!o.scr&&T.amt<1&&Math.random()>T.amt)return 0;o.s*=T.size;if(!o.scr)o.d*=T.life;o.a*=T.alpha;o.fxk=1;return 1;}
+function part(o){if(!inView(o.x,o.y,.4))return;const B=pBudget(),n=PARTS.length;if(n>B){if(!o.add||n>B*1.35)return;}else if(n>B*.6&&!o.add&&Math.random()<(n-B*.6)/(B*.4))return;const q=Object.assign({vx:0,vy:0,vh:0,t:0,d:1,s:6,g:0,a:1,h:0,c:[.4,.39,.36],add:false,f:.25,rise:0},o);if(fxTone(q)===0)return;PARTS.push(q);}
 const C_SMOKE=[.42,.4,.37],C_DARK=[.13,.12,.11],C_DUST=[.66,.58,.44],C_FIRE=[1,.42,.1],C_FIRE2=[1,.68,.3],C_SPARK=[1,.75,.35];
 /* Battle damage on a unit (visual only): a thin grey trickle of smoke from 75% health, thick smoke from 50%, black
    smoke with flames and sparks under 25%. Aircraft leave a smoke trail behind the tail; damaged ships list to one
@@ -79,31 +102,47 @@ function unitDamageFX(e,o,s,gh,dt){if(!inView(e.x,e.y,.1))return;const f=e.hp/e.
     if(f<.25&&Math.random()<.55)part({x,y,h:hh,rise:14,add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(3,5)*(nav?1.4:1),g:-3,d:rnd(.2,.4)});
     if(f<.25&&!lo&&Math.random()<.25)for(let q=0;q<3;q++)part({x,y,h:hh,vx:rnd(-30,30),vy:rnd(-30,30),vh:rnd(30,70),add:true,c:C_SPARK,s:.9,f:.6,grav:1,d:rnd(.3,.6)});}}
 function inView(x,y,m){if(!CAM)return true;TMP.set(x,0,y).project(CAM);return Math.abs(TMP.x)<1+m&&Math.abs(TMP.y)<1+m;}
-function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.min(18,4+(s/5|0)),gr=h<4;
+// GAME FEEL (q-feel): what a shell hits decides what flies up. Water = a white spray column, a foam ring and drifting mist (no dirt, no
+// scorch mark, no lingering dust or smoke column); a road or other hard surface = grey chips, more sparks and pale grey dust; open ground =
+// clods and dust in the colour of this map's soil (sand, dark earth or snow). View only, all through the budgeted part() pool.
+const SOILC={desert:[[.6,.5,.35],[.47,.38,.26],[.3,.24,.17]],green:[[.42,.33,.22],[.3,.24,.17],[.22,.17,.12]],snow:[[.92,.94,.97],[.74,.76,.8],[.36,.33,.3]],hard:[[.56,.55,.52],[.4,.4,.39],[.27,.27,.26]]};
+function impactSurf(x,y){try{if(groundH(x,y)<=(typeof WL==='number'?WL+1:-1e9))return'water';const q=G&&G.roadMask;if(q&&q.f&&q.f[(y/q.C|0)*q.w+(x/q.C|0)]>.3)return'hard';const th=G&&G.map?G.map.theme:'';return th==='snow'?'snow':th==='green'||th==='temperate'?'green':'desert';}catch(_){return'desert';}}
+function splashFX(x,y,s,big){const g=(typeof WL==='number'?WL:groundH(x,y))+.5,W=[.86,.9,.95],W2=[.7,.78,.86],n=Math.min(22,8+(s/2|0));
+  // the column: fast, narrow, falls back under gravity
+  for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(2,s*.5);part({k:'spray',x:x+rnd(-s*.12,s*.12),y:y+rnd(-s*.12,s*.12),h:g+rnd(0,3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(s*4,s*(big?11:8)),f:.35,grav:1,c:i%3?W:W2,s:rnd(s*.22,s*.42),g:s*.9,d:rnd(.8,1.5),a:.8});}
+  // the crown: a ring of low spray thrown outward
+  for(let i=0;i<Math.min(16,6+(s/3|0));i++){const a=i/8*3.1416+rnd(-.2,.2),v=rnd(s*1.6,s*3.2);part({k:'spray',x,y,h:g+1,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(s*1.2,s*2.6),f:.3,grav:1,c:W,s:rnd(s*.18,s*.32),g:s*.7,d:rnd(.6,1.1),a:.7});}
+  // droplets and the mist that hangs and drifts for a few seconds
+  for(let i=0;i<Math.min(18,6+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(30,110)*(.5+s/40);part({k:'spray',x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(80,240),c:W,s:rnd(1.2,2.4),f:.8,grav:1,d:rnd(.7,1.4),a:.85});}
+  if(s>=12&&!fxPH())for(let i=0;i<5;i++){const a=rnd(0,6.28),r=rnd(0,s*.6);part({k:'spray',x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(3,s*.4),vx:Math.cos(a)*rnd(3,10),vy:Math.sin(a)*rnd(3,10),f:.5,rise:rnd(1,3),c:W,c2:W2,ck:.6,s:rnd(s*.8,s*1.3),g:s*.35,d:rnd(3,5),a:.28});}
+  // under the column the sea boils: a dark churned patch swells and fades, and a ring of foam runs outward along the surface
+  if(s>=8){const nb=fxPH()?2:4;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.25);part({k:'boil',x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+.2,f:.9,c:[.1,.15,.19],c2:[.3,.4,.46],ck:.7,s:rnd(s*.7,s*1.05),g:s*.8,d:rnd(1.6,2.6),a:.42});}
+    const nr=fxPH()?8:14;for(let i=0;i<nr;i++){const a=i/nr*6.2832+rnd(-.12,.12),v=rnd(s*1.5,s*2.1);part({k:'foam',x:x+Math.cos(a)*s*.3,y:y+Math.sin(a)*s*.3,h:g+.4,vx:Math.cos(a)*v,vy:Math.sin(a)*v,f:.12,c:W,c2:W2,ck:.5,s:rnd(s*.2,s*.34),g:s*.25,d:rnd(1.3,2),a:.55});}}}
+function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const gr=h<4,SF=gr?impactSurf(x,y):'air',wet=SF==='water',grd=gr&&!wet,SC=SOILC[SF]||SOILC.desert,g=wet&&typeof WL==='number'?WL+.5:groundH(x,y)+h,n=Math.min(18,4+(s/5|0)),wk=wet?.45:1;if(wet)splashFX(x,y,s,big);
   if(s<=10&&!big){for(let i=0;i<9;i++){const a=rnd(0,6.28),v=rnd(80,200);part({x,y,h:g+rnd(4,9),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,180),add:true,c:i%3?C_SPARK:[3,2.4,1.4],s:rnd(1,1.8),f:.5,grav:1,bounce:1,d:rnd(.25,.6)});}part({x,y,h:g+6,s:s*2.2,d:.06,add:true,c:[3.2,2.4,1.4]});}
   // brief white-hot flash (a blink, not a lingering ball) then a lumpy fireball built of many small rolling puffs
-  part({x,y,h:g+s*.3,s:s*.75,d:big?.07:.05,add:true,c:[3.4,2.9,2.1],a:.7});
-  {const nl=big?9:4;for(let i=0;i<nl;i++){const a=rnd(0,6.28),r=rnd(0,s*.35),v=rnd(2,s*.5);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.1,s*.55),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(6,s*1.2),f:.2,rise:rnd(8,20),add:true,c:[2.6,1.2,.3],c2:[.6,.16,.04],ck:.5,s:rnd(s*.16,s*.3),g:s*.9,d:rnd(.3,.6),a:.8});}}
-  const nf=Math.min(16,5+(s/4|0));for(let i=0;i<nf;i++){const a=rnd(0,6.28),r=rnd(0,s*.45),v=rnd(4,s*.9),hot=rnd(.8,1.15);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(1,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(8,s*1.6),f:.15,rise:rnd(6,18),c:[3.4*hot,1.5*hot,.4*hot],c2:i%3?[.5,.47,.42]:[.36,.34,.31],ck:rnd(.12,.25),s:rnd(s*.4,s*.7),g:s*.8,d:rnd(2,3.4),a:.62});}
-  for(let i=0;i<(n>>1);i++){const a=rnd(0,6.28),v=rnd(10,s*2);part({x,y,h:g+rnd(0,s*.6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(10,s*1.8),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(s*.15,s*.34),g:s*.5,d:rnd(.25,.5),a:.5});}
-  for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(5,s*.9);part({x:x+rnd(-s*.3,s*.3),y:y+rnd(-s*.3,s*.3),h:g+rnd(2,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,rise:rnd(16,34),c:i%4?C_SMOKE:C_DARK,c2:[.5,.47,.42],ck:.4,s:rnd(s*.4,s*.7),g:s*.6,d:rnd(2.2,3.8),a:.5});}
-  if(gr&&s>8){const C_DIRT=[.42,.33,.22];for(let i=0;i<Math.min(16,5+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(10,s*1.6);part({x:x+rnd(-3,3),y:y+rnd(-3,3),h:g+2,vx:Math.cos(a)*v*.4,vy:Math.sin(a)*v*.4,vh:rnd(s*3,s*6),f:.5,grav:1,c:i%2?C_DIRT:[.3,.24,.17],s:rnd(s*.35,s*.6),g:s*1.1,d:rnd(.9,1.5),a:.75});}
-    for(let i=0;i<Math.min(24,8+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(40,140)*(.5+s/40);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(90,260),c:[.22,.17,.12],s:rnd(1.6,3.2),f:.85,grav:1,bounce:1,d:rnd(1,1.8)});}}
-  if(gr)for(let i=0;i<Math.min(14,6+(s/4|0));i++){const a=i/7*3.1416+rnd(-.2,.2),v=rnd(s*2,s*3.5);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,f:.08,c:C_DUST,s:rnd(s*.35,s*.55),g:s*.5,d:rnd(1,1.6),a:.45});}
-  for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(90,260)*(.5+s/60);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(40,200),add:true,c:C_SPARK,s:1.4,f:.6,grav:1,d:rnd(.3,.7)});}
-  if(s>10)for(let i=0;i<Math.min(12,s/3|0);i++){const a=rnd(0,6.28),v=rnd(30,130);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(80,220),c:C_DARK,s:rnd(1.4,2.8),f:.85,grav:1,bounce:1,d:rnd(1.2,2.2)});}
+  part({x,y,h:g+s*.3,s:s*.75*wk,d:big?.07:.05,add:true,c:[3.4,2.9,2.1],a:.7});
+  {const nl=wet?2:big?9:4;for(let i=0;i<nl;i++){const a=rnd(0,6.28),r=rnd(0,s*.35),v=rnd(2,s*.5);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.1,s*.55),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(6,s*1.2),f:.2,rise:rnd(8,20),add:true,c:[2.6,1.2,.3],c2:[.6,.16,.04],ck:.5,s:rnd(s*.16,s*.3)*wk,g:s*.9*wk,d:rnd(.3,.6),a:.8});}}
+  const nf=wet?3:Math.min(16,5+(s/4|0));for(let i=0;i<nf;i++){const a=rnd(0,6.28),r=rnd(0,s*.45),v=rnd(4,s*.9),hot=rnd(.8,1.15);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(1,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(8,s*1.6),f:.15,rise:rnd(6,18),c:[3.4*hot,1.5*hot,.4*hot],c2:wet?[.8,.83,.86]:i%3?[.5,.47,.42]:[.36,.34,.31],ck:rnd(.12,.25),s:rnd(s*.4,s*.7)*wk,g:s*.8,d:rnd(2,3.4),a:.62});}
+  for(let i=0;i<(wet?n>>2:n>>1);i++){const a=rnd(0,6.28),v=rnd(10,s*2);part({x,y,h:g+rnd(0,s*.6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(10,s*1.8),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(s*.15,s*.34)*wk,g:s*.5,d:rnd(.25,.5),a:.5});}
+  for(let i=0;i<(wet?n>>1:n);i++){const a=rnd(0,6.28),v=rnd(5,s*.9);part({x:x+rnd(-s*.3,s*.3),y:y+rnd(-s*.3,s*.3),h:g+rnd(2,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,rise:rnd(16,34),c:wet?[.74,.77,.8]:i%4?C_SMOKE:C_DARK,c2:wet?[.88,.9,.92]:[.5,.47,.42],ck:.4,s:rnd(s*.4,s*.7),g:s*.6,d:rnd(2.2,3.8),a:.5});}
+  if(grd&&s>8){const C_DIRT=SC[0];for(let i=0;i<Math.min(16,5+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(10,s*1.6);part({x:x+rnd(-3,3),y:y+rnd(-3,3),h:g+2,vx:Math.cos(a)*v*.4,vy:Math.sin(a)*v*.4,vh:rnd(s*3,s*6),f:.5,grav:1,k:'dirt',c:i%2?C_DIRT:SC[1],s:rnd(s*.35,s*.6),g:s*1.1,d:rnd(.9,1.5),a:.75});}
+    for(let i=0;i<Math.min(24,8+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(40,140)*(.5+s/40);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(90,260),c:SC[2],s:rnd(1.6,3.2),f:.85,grav:1,bounce:1,d:rnd(1,1.8)});}}
+  if(grd)for(let i=0;i<Math.min(14,6+(s/4|0));i++){const a=i/7*3.1416+rnd(-.2,.2),v=rnd(s*2,s*3.5);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,f:.08,c:SF==='hard'?[.62,.61,.58]:C_DUST,s:rnd(s*.35,s*.55),g:s*.5,d:rnd(1,1.6),a:.45});}
+  for(let i=0;i<(SF==='hard'?n*2:wet?n>>2:n);i++){const a=rnd(0,6.28),v=rnd(90,260)*(.5+s/60);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(40,200),add:true,c:C_SPARK,s:1.4,f:.6,grav:1,d:rnd(.3,.7)});}
+  if(s>10&&!wet)for(let i=0;i<Math.min(12,s/3|0);i++){const a=rnd(0,6.28),v=rnd(30,130);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(80,220),c:C_DARK,s:rnd(1.4,2.8),f:.85,grav:1,bounce:1,d:rnd(1.2,2.2)});}
   // the fireball lingers and rolls upward, cooling from orange to dark red before the smoke takes over
-  if(s>=14&&!fxPH()){const nb=5;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.2,s*.6),vx:Math.cos(a)*rnd(3,s*.5),vy:Math.sin(a)*rnd(3,s*.5),vh:rnd(10,s*1.1),f:.2,rise:rnd(6,14),add:true,c:[2.4,.9,.22],c2:[.35,.1,.03],ck:.55,s:rnd(s*.3,s*.5),g:s*1.1,d:rnd(.55,.95),a:.6});}}
+  if(s>=14&&!wet&&!fxPH()){const nb=5;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.2,s*.6),vx:Math.cos(a)*rnd(3,s*.5),vy:Math.sin(a)*rnd(3,s*.5),vh:rnd(10,s*1.1),f:.2,rise:rnd(6,14),add:true,c:[2.4,.9,.22],c2:[.35,.1,.03],ck:.55,s:rnd(s*.3,s*.5),g:s*1.1,d:rnd(.55,.95),a:.6});}}
   // lingering dust: a low, wide cloud of ground-coloured dust that hangs over the impact and drifts off for several seconds
-  if(gr&&s>=14&&!fxPH()){const th=G&&G.map?(G.map.theme==='snow'?'snow':G.map.theme==='green'?'green':'desert'):'desert',C=DUSTC[th],nd=Math.min(8,4+(s/10|0)),dk=th==='snow'?.92:.78;
+  if(grd&&s>=14&&!fxPH()){const th=G&&G.map?(G.map.theme==='snow'?'snow':G.map.theme==='green'?'green':'desert'):'desert',C=SF==='hard'?DUSTC_HARD:DUSTC[th],nd=Math.min(8,4+(s/10|0)),dk=th==='snow'?.92:.78;
     for(let i=0;i<nd;i++){const a=rnd(0,6.28),r=rnd(s*.2,s*.8);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(4,s*.35),vx:Math.cos(a)*rnd(4,14),vy:Math.sin(a)*rnd(4,14),vh:rnd(0,4),f:.5,rise:rnd(1,4),c:[C[i&1][0]*dk,C[i&1][1]*dk,C[i&1][2]*dk],c2:C[2],ck:.6,s:rnd(s*.9,s*1.4),g:rnd(s*.3,s*.45),d:rnd(6,9),a:th==='snow'?.3:.4});}}
   // heavy ground hits throw a few tumbling chunks of debris (PC only)
-  if(gr&&s>=18&&!big&&!fxPH())chunks(x,y,s*2.2,'#3e3a34',4);
+  if(grd&&s>=18&&!big&&!fxPH())chunks(x,y,s*2.2,SF==='hard'?'#5a5955':'#3e3a34',SF==='hard'?6:4);
   // a column of dark smoke keeps climbing from the biggest blasts long after the fire is out
-  if(gr&&(big||s>=20&&!fxPH())&&inView(x,y,.3)){if(COLS.length>=12)COLS.shift();COLS.push({x,y,g,t:0,d:big?16:rnd(7,10),big:!!big,acc:0,G0:G});}
-  if(big&&!fxPH()){for(let i=0;i<10;i++){const a=rnd(0,6.28),v=rnd(20,s*1.4);part({x,y,h:g+rnd(2,s*.3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(s*1.2,s*3.2),f:.3,grav:1,rise:rnd(4,10),c:C_DARK,c2:[.2,.18,.16],ck:.5,s:rnd(s*.14,s*.26),g:s*1.1,d:rnd(1.2,2.2),a:.8});}
+  if(grd&&(big||s>=20&&!fxPH())&&inView(x,y,.3)){if(COLS.length>=12)COLS.shift();COLS.push({x,y,g,t:0,d:big?16:rnd(7,10),big:!!big,acc:0,G0:G});}
+  if(big&&!wet&&!fxPH()){for(let i=0;i<10;i++){const a=rnd(0,6.28),v=rnd(20,s*1.4);part({x,y,h:g+rnd(2,s*.3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(s*1.2,s*3.2),f:.3,grav:1,rise:rnd(4,10),c:C_DARK,c2:[.2,.18,.16],ck:.5,s:rnd(s*.14,s*.26),g:s*1.1,d:rnd(1.2,2.2),a:.8});}
     for(let i=0;i<14;i++){const a=rnd(0,6.28),v=rnd(40,s*3);part({x,y,h:g+rnd(2,6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,s*6),c:i&1?[.16,.14,.12]:[.3,.25,.2],s:rnd(1.5,3.4),f:.7,grav:1,bounce:1,d:rnd(1.2,2.4)});}}
-  scorch(x,y,s);if(gr&&s>=16&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9))crater(x,y,s*1.5);
+  if(!wet)scorch(x,y,s);if(gr&&s>=16&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9))crater(x,y,s*1.5);
   // pressure wave: a pale ring of dust racing outward along the ground; heavy hits leave a fire burning for a few seconds
   if(gr&&s>=14&&SHOCKS.length&&inView(x,y,.4)){const S=SHOCKS[shockI++%SHOCKS.length];S.t=0;S.d=big?.75:.45;S.r0=s*.5;S.r1=s*(big?6.5:4.2);S.a0=big?.6:.42;S.x=x;S.y=y;S.m.position.set(x,g+2.5,y);}
   if(gr&&(s>=20||big)&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9)){if(FIRES.length>=10)FIRES.shift();FIRES.push({x,y,g,t:0,d:big?9:rnd(4,6.5),r:Math.min(30,s*.45),big:!!big,acc:0});}
@@ -147,8 +186,9 @@ const FXH={
     if(o){SCN.remove(o);OBJ.delete(id);}},
   strike(x,y,t,r,sup,arc){if(sup)sfxAlarm();const gy=groundH(x,y)+1.5,objs=[],mk=(g,col,op)=>{const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.position.set(x,gy,y);SCN.add(m);objs.push(m);return m;};
     // warning marker: steady outer ring, a ring that shrinks onto the target as the hit gets closer, a faint disc, a cross and four ticks
-    const ring=mk(new THREE.RingGeometry(r*.95,r,56).rotateX(-Math.PI/2),0xea3a2c,.8),inner=mk(new THREE.RingGeometry(r*.9,r,56).rotateX(-Math.PI/2),0xff6a3a,.7),disc=mk(new THREE.CircleGeometry(r,48).rotateX(-Math.PI/2),0xea3a2c,.1);
-    const bar=(w,h,px,pz,rot)=>{const m=mk(new THREE.PlaneGeometry(w,h).rotateX(-Math.PI/2),0xff5a3a,.8);m.position.x+=px;m.position.z+=pz;m.rotation.y=rot||0;};
+    // every marker shares four unit-size shapes that are only scaled (they used to be built new for each missile: 108 meshes in the launch frame of a 12-missile strike)
+    const KG=mkGeo(),ring=mk(KG.ring,0xea3a2c,.8),inner=mk(KG.inner,0xff6a3a,.7),disc=mk(KG.disc,0xea3a2c,.1);ring.scale.setScalar(r);inner.scale.setScalar(r);disc.scale.setScalar(r);
+    const bar=(w,h,px,pz,rot)=>{const m=mk(KG.bar,0xff5a3a,.8);m.scale.set(w,1,h);m.position.x+=px;m.position.z+=pz;m.rotation.y=rot||0;};
     const cl=Math.max(5,r*.16);bar(cl*2,1.2,0,0);bar(1.2,cl*2,0,0);for(let q=0;q<4;q++){const a=q*Math.PI/2;bar(r*.2,1.6,Math.cos(a)*r*1.06,Math.sin(a)*r*1.06,-a);}
     const MK={x,y,t,t0:Math.max(.5,t),r,sup,ring,disc,inner,objs};
     if(sup&&!arc){mslFallStart(MK,'cruise');}else if(!sup&&r>=68){mslFallStart(MK,'bomb');}
@@ -158,14 +198,14 @@ const FXH={
   chf(x,y,h,jet){for(let i=0;i<(jet?7:5);i++){const b=rnd(0,6.28),v=rnd(25,60);part({x,y,h,vx:Math.cos(b)*v,vy:Math.sin(b)*v,vh:rnd(-8,6),g:18,add:true,c:jet?[2.6,2.6,3.2]:[3.4,2.2,.8],s:rnd(2.5,4),d:rnd(.7,1.2)});part({x,y,h,vx:Math.cos(b)*v*.6,vy:Math.sin(b)*v*.6,vh:rnd(-6,2),g:14,c:C_SMOKE,s:rnd(3,5),d:rnd(.8,1.3),a:.4});}mlight(x,y,h,2,120);},
   flare(x,y,r,d){FLARES.push({x,y,r,d:d||30,t:0,acc:0});if(FLARES.length>6)FLARES.shift();},
   ping(x,y,r){PINGS.push({x,y,r,t:0,d:1.6,c:0x7fb8e6});},
-  smoke(x,y,r){PINGS.push({x,y,r,t:0,d:1.2,c:0xb9bdbb});for(let i=0;i<140;i++){const a=rnd(0,6.28),d=Math.sqrt(Math.random())*r;part({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,h:groundH(x,y)+rnd(2,14),vh:rnd(1,4),rise:rnd(2,6),c:C_SMOKE,c2:[.75,.75,.73],ck:.4,s:rnd(30,55),g:2,d:rnd(12,20),a:.5});}},
+  smoke(x,y,r){PINGS.push({x,y,r,t:0,d:1.2,c:0xb9bdbb});for(let i=0;i<140;i++){const a=rnd(0,6.28),d=Math.sqrt(Math.random())*r;part({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,h:groundH(x,y)+rnd(2,14),vh:rnd(1,4),rise:rnd(2,6),c:C_SMOKE,c2:[.75,.75,.73],ck:.4,s:rnd(30,55),g:2,d:rnd(12,20),a:.5,scr:1});}},
   halo(x,y,r,c){PINGS.push({x,y,r,t:0,d:1.8,c:c|0});},   /* leader abilities (03i-leaders): a coloured ring from the pooled ping rings */
   vig(team,col,snd){if(team!==ME||typeof document==='undefined')return;try{let v=document.getElementById('ldVig');if(!v){v=document.createElement('div');v.id='ldVig';v.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9;opacity:0;transition:opacity .35s';document.body.appendChild(v);}
     v.style.background='radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,'+col+' 140%)';v.style.boxShadow='inset 0 0 160px 30px '+col;v.style.opacity='.85';clearTimeout(v._t);v._t=setTimeout(()=>{v.style.opacity='0';},2600);
     if(snd&&typeof sfxAlarm==='function')sfxAlarm();else if(typeof martyrSwell==='function'){AU.swellT=0;martyrSwell(team);}}catch(_){}},
   heal(x,y,r){PINGS.push({x,y,r,t:0,d:1.2,c:0x74d08f});for(let i=0;i<40;i++){const a=rnd(0,6.28),d=rnd(0,r);part({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,h:groundH(x,y)+rnd(2,20),vh:rnd(15,40),add:true,c:[.4,1,.55],s:rnd(2,4),d:rnd(.8,1.4)});}},
   plane(sx,sy,tx,ty,team){mats();const T=G.teams[team],o=mesh(geoFor('plane',T.fac,T,'body'));o.scale.setScalar(1.2);SCN.add(o);const a=Math.atan2(ty-sy,tx-sx),L=Math.hypot(tx-sx,ty-sy);PLANES.push({o,sx,sy,a,v:L/2.6,t:0,tx,ty,dropped:false});},
-  log(team,msg,kind){if(team===ME)pushLog(msg,kind);},
+  log(team,msg,kind,x,y){if(team===ME)pushLog(msg,kind,x,y);},
   end(winner){showEnd(winner);},
   elim(team){if(team===ME&&G&&!G.over)showElim();},
   oilDry(i){const o=G.oil&&G.oil[i];if(!o)return;if(MODE==='client'){o.res=0;}if(o.owner===ME||MODE==='client')try{pushLog('An oil derrick has run dry.','w');}catch(_){}},
@@ -189,7 +229,7 @@ for(const k of ['muz','tr','salvo','pj','boom','toss','bmis','die','strike','smo
 const FLAGS=[];let FLAGG=null;
 function flagGeo(){if(FLAGG)return FLAGG;const pole=new THREE.CylinderGeometry(.45,.6,30,6).translate(0,15,0),tip=new THREE.SphereGeometry(1,6,4).translate(0,30.5,0);
   const cloth=new THREE.PlaneGeometry(13,8,8,2).translate(6.5,24.5,0),P=cloth.attributes.position,base=Float32Array.from(P.array);
-  FLAGG={pole,tip,cloth,base,mPole:new THREE.MeshStandardMaterial({color:lin('#4a3a28'),roughness:.9}),mTip:new THREE.MeshStandardMaterial({color:lin('#b8953c'),roughness:.4,metalness:.6}),
+  gcKeep(pole);gcKeep(tip);gcKeep(cloth);FLAGG={pole,tip,cloth,base,mPole:new THREE.MeshStandardMaterial({color:lin('#4a3a28'),roughness:.9}),mTip:new THREE.MeshStandardMaterial({color:lin('#b8953c'),roughness:.4,metalness:.6}),
     mCloth:new THREE.MeshStandardMaterial({color:lin('#8a1212'),roughness:.85,side:THREE.DoubleSide})};return FLAGG;}
 function flagFX(x,y,team,dur){for(const f of FLAGS)if(f.team===team&&f.x===x&&f.y===y){f.left=Math.max(f.left,dur);return;}
   const F=flagGeo(),g=new THREE.Group(),pm=new THREE.Mesh(F.pole,F.mPole),tm=new THREE.Mesh(F.tip,F.mTip),cm=new THREE.Mesh(F.cloth,F.mCloth);pm.castShadow=cm.castShadow=true;g.add(pm,tm,cm);
@@ -233,12 +273,17 @@ function burntMat(src){const m=new THREE.MeshStandardMaterial({color:0xffffff,ma
   m.customProgramCacheKey=()=>'burnt1';return m;}
 function wreck(o,x,y){mats();let w;const mats2=[];const rec={heat:1};const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};if(o.userData.model){w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh){c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);}if(c.isSkinnedMesh)c.visible=false;});w.rotation.z=rnd(-.08,.08);w.rotation.x=rnd(-.05,.05);}else{w=new THREE.Group();o.traverse(c=>{if(c.isMesh&&c.material===MAT.std){const m=new THREE.Mesh(c.geometry,bm(c.material));m.position.copy(c.position);m.rotation.copy(c.rotation);m.castShadow=true;w.add(m);}});
   w.position.copy(o.position);w.rotation.y=o.rotation.y;}const P=o.userData.parts;if(P.turret){const t=w.children[1];if(t)t.rotation.set(rnd(-.2,.2),rnd(-1,1),rnd(-.2,.2));}w.traverse(c=>{if(c.isMesh){c.onBeforeRender=(r,s,cam,g,m)=>{if(m&&m.userData.heat&&m.userData.heat.value!==rec.heat){m.userData.heat.value=rec.heat;m.uniformsNeedUpdate=true;}};}});SCN.add(w);WRECKS.push({o:w,x,y,t:0,rec});while(WRECKS.length>(fxPH()?12:30)){const q=WRECKS.shift();SCN.remove(q.o);}smkAdd(x,y,1);}
-function rubble(x,y,size,o){if(size>=28)smkAdd(x,y,2);mats();const w=new THREE.Group();const B=Bld(),h=size*.5;const gr=['#7d7a72','#8e8b82','#6c6962','#5a5751','#9a968c'];
+// Rubble heaps: three are built once (while the battle loads) for a 40-wide building and reused, scaled and turned, for every
+// destroyed building. Each used to be modelled new at the moment of the hit (60 pieces merged, ~275 KB sent to the
+// graphics card in the impact frame - several at once when a strike levels a base).
+let RUBG=null,RUBI=0;function rubGeo(i){RUBG=RUBG||[];if(RUBG[i])return RUBG[i];mats();const size=40,B=Bld(),h=size*.5;const gr=['#7d7a72','#8e8b82','#6c6962','#5a5751','#9a968c'];
   B.rock(size*.95,1.6,size*.95,0,.3,0,'#5e5b54',0,rnd(0,6),0);
   for(let i=0;i<46;i++){const s2=rnd(2.5,10),r=Math.sqrt(Math.random())*h*1.05,a=rnd(0,6.28);B.rock(s2*1.3,s2*rnd(.5,.9),s2*rnd(.8,1.5),Math.cos(a)*r,s2*.1+rnd(0,3)*(1-r/h),Math.sin(a)*r,Math.random()<.2?'#2b2925':gr[i%5],rnd(-.5,.5),rnd(0,6),rnd(-.5,.5));}
   for(let k=0;k<3;k++){const a=rnd(0,6.28),r=rnd(h*.3,h*.8),ht=rnd(6,18),wd=rnd(10,22);B.box(wd,ht,2.5,Math.cos(a)*r,ht/2,Math.sin(a)*r,'#86837a',rnd(-.12,.12),a+1.57,rnd(-.1,.1));}
   for(let k=0;k<8;k++){const a=rnd(0,6.28),r=rnd(0,h*.8);B.cyl(.25,.25,rnd(6,14),4,Math.cos(a)*r,rnd(3,6),Math.sin(a)*r,'#3a2a20',rnd(-1,1),0,rnd(-1,1));}
-  const m=mesh(B.geo());w.add(m);scorch(x,y,size*.7);
+  return RUBG[i]=gcKeep(B.geo());}
+function rubble(x,y,size,o){if(size>=28)smkAdd(x,y,2);mats();const w=new THREE.Group();
+  const m=mesh(rubGeo(RUBI++%3));m.scale.setScalar(Math.max(.35,size/40));m.rotation.y=Math.random()*6.28;w.add(m);scorch(x,y,size*.7);
   w.position.set(x,groundH(x,y),y);SCN.add(w);WRECKS.push({o:w,x,y,t:0,big:true});smkAdd(x,y,2);}
 function fxUpdate(dt){
   for(const p of PARTS){p.t+=dt;const fr=Math.pow(p.f,dt);p.vx*=fr;p.vy*=fr;p.vh*=fr;if(p.grav)p.vh-=420*dt;p.x+=(p.vx+(p.add?0:6))*dt;p.y+=p.vy*dt;p.h+=(p.vh+p.rise)*dt;p.s=Math.max(.4,p.s+p.g*dt);
@@ -261,10 +306,10 @@ function fxUpdate(dt){
     else{part({x:p.x,y:p.y,h:p.h,s:2.6,d:.04,add:true,c:C_FIRE2});if(ox!=null)TRACERS.push({a:[ox,oh,oy],b:[p.x,p.h,p.y],t:0,d:.07,c:[1.6,1.2,.7]});}}
   for(let i=VPROJ.length-1;i>=0;i--)if(VPROJ[i].done)VPROJ.splice(i,1);
   for(const m of MARKERS){m.t-=dt;const fast=m.t<1.6,pu=.5+.5*Math.sin(performance.now()/(fast?55:110));m.ring.material.opacity=.45+.4*pu;m.disc.material.opacity=.07+.1*pu;
-    if(m.inner){const q=Math.max(0,Math.min(1,m.t/m.t0));m.inner.scale.setScalar(.12+.88*q);m.inner.material.opacity=.35+.5*pu;}
+    if(m.inner){const q=Math.max(0,Math.min(1,m.t/m.t0));m.inner.scale.setScalar(m.r*(.12+.88*q));m.inner.material.opacity=.35+.5*pu;}
     if(m.t<1.8&&!m.ws){m.ws=1;if(m.sup||m.r>=68)sfxWhistle(m.x,m.y,Math.max(.8,m.t));}
     if(m.fall)mslFallTick(m,dt);
-    if(m.t<=-.05){m.done=true;for(const o of m.objs){SCN.remove(o);o.geometry.dispose();o.material.dispose();}if(m.fall)SCN.remove(m.fall.M.g);}}
+    if(m.t<=-.05){m.done=true;for(const o of m.objs){SCN.remove(o);o.material.dispose();}if(m.fall)SCN.remove(m.fall.M.g);}}
   for(let i=MARKERS.length-1;i>=0;i--)if(MARKERS[i].done)MARKERS.splice(i,1);
   for(const p of PLANES){p.t+=dt;const d=p.v*p.t;const x=p.sx+Math.cos(p.a)*d,y=p.sy+Math.sin(p.a)*d;p.o.position.set(x,groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+150,y);p.o.rotation.y=-p.a;
     if(!p.dropped&&p.t>=2.6){p.dropped=true;for(let i=0;i<5;i++)part({x:p.tx+rnd(-40,40),y:p.ty+rnd(-40,40),h:groundH(p.tx,p.ty)+140,vh:-60,f:1,c:[.95,.95,.9],s:5,d:2.2,a:.9});}
@@ -361,7 +406,7 @@ function washTick(){for(const w of WASH)if(w.fr!==washFr&&w.m.visible){w.m.visib
    A slow or stopped vehicle leaves none. Purely visual: it reads where the vehicle is drawn and never touches the
    battle or its random numbers. It uses the shared particle pool (like rotor wash) with a cap per frame, spawns fewer
    on phones / low quality and backs off when the screen is already full of smoke. */
-const DUSTC={desert:[[.86,.76,.6],[.8,.69,.53],[.9,.83,.7]],green:[[.6,.55,.45],[.53,.49,.41],[.66,.62,.54]],snow:[[.95,.97,1],[.9,.93,.97],[.97,.98,1]]};
+const DUSTC_HARD=[[.66,.65,.62],[.58,.57,.55],[.74,.73,.7]];const DUSTC={desert:[[.86,.76,.6],[.8,.69,.53],[.9,.83,.7]],green:[[.6,.55,.45],[.53,.49,.41],[.66,.62,.54]],snow:[[.95,.97,1],[.9,.93,.97],[.97,.98,1]]};
 let dustN=0;
 function dustTrail(e,o,dt){if(!o||!o.visible||!(dt>0)||!e.s||!G||!G.map)return;const ud=o.userData,px=o.position.x,pz=o.position.z;
   const raw=ud.tdx==null?0:Math.min(300,Math.hypot(px-ud.tdx,pz-ud.tdz)/dt);ud.tdx=px;ud.tdz=pz;ud.tsp=(ud.tsp||0)+(raw-(ud.tsp||0))*Math.min(1,dt*3);
@@ -431,7 +476,7 @@ function wakeQ(x,z,ca,sa,w0,sp,len,a0,c,L){const N=NWAKE.n-NWAKE.NB,q=NWAKE.Q[NW
 function shipWake(e,o,dt){if(!NWAKE.m||!o||!o.visible||!(dt>0)||!e.s)return;const ud=o.userData,px=o.position.x,pz=o.position.z;
   const raw=ud.kpx==null?0:Math.min(300,Math.hypot(px-ud.kpx,pz-ud.kpz)/dt);ud.kpx=px;ud.kpz=pz;ud.ksp=(ud.ksp||0)+(raw-(ud.ksp||0))*Math.min(1,dt*3);
   const sp=ud.ksp,top=Math.max(30,e.s.spd||60),k=Math.max(0,Math.min(1,(sp/top-.08)/.55));if(k<=0){ud.kod=0;return;}
-  const a=e.va||0,ca=Math.cos(a),sa=Math.sin(a),r=e.r||14,big=r>20,lv=(typeof QUAL!=='undefined'&&QUAL.lv)||0,near=inView(px,pz,.35);
+  const a=e.va||0,ca=Math.cos(a),sa=Math.sin(a),r=e.r||14,big=r>20,lv=(typeof QUAL!=='undefined'&&fxLv())||0,near=inView(px,pz,.35);
   // bow wave: a pooled slot that follows this boat (the same one each frame)
   if(near){let B=null;for(let i=0;i<NWAKE.NB;i++){const q=NWAKE.Q[i];if(q.id===e.id&&q.fr!==NWAKE.fr){B=q;break;}}if(!B)for(let i=0;i<NWAKE.NB;i++){const q=NWAKE.Q[i];if(q.fr<NWAKE.fr-1){B=q;break;}}
     if(B){B.id=e.id;B.fr=NWAKE.fr;B.on=1;B.c=2;B.f=0;B.t=0;B.L=1e9;B.sp=0;const bl=r*(1.05+.35*k);B.x=px+ca*(r*.95-bl*.5);B.z=pz+sa*(r*.95-bl*.5);B.ca=ca;B.sa=sa;B.w0=r*(.95+.5*k);B.len=bl;B.a0=(.45+.4*k)*(.9+.1*Math.sin(G.t*9+e.id));}}
@@ -453,65 +498,120 @@ function wakeTick(dt){if(!NWAKE.m)return;const P=NWAKE.pos,U=NWAKE.uv,A=NWAKE.al
 /* ---------- Shader warm-up ----------
    The first time a new kind of object is drawn (a missile, a burnt-out wreck, an aircraft...) the graphics driver has to
    compile its shader, which can stall the game for a moment - several at once during a big strike felt like a freeze.
-   While the battle loads, every model and its burnt-wreck version is drawn once out of sight so all shaders are ready. */
-function warmShaders(){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0=performance.now();const grp=new THREE.Group();
-  const [bx,by]=BASES[ME]||[MAPW/2,MAPH/2];grp.position.set(bx,groundH(bx,by),by);
-  const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};
-  const add=o=>{if(!o)return;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);};
-  const teams=[G.teams[ME],null];
-  for(const k of Object.keys(MODELS.proto||{}))for(const T of teams){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;add(o);
-    if(T){try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});add(w);}catch(e){}}}
-  // the merged one-mesh soldier (mergeSoldier) is its own shader variant (skinned + vertex colours)
-  if(typeof mergeSoldier==='function')for(const T of teams){try{const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+(T?T.color+T.fac:'')))add(o);}catch(e){}}
-  try{add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);const cc=new Float32Array(gg.attributes.position.count*3).fill(.5);gg.setAttribute('color',new THREE.BufferAttribute(cc,3));add(new THREE.Mesh(gg,gm));add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
-  for(const op of [.8,.12])add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
-  // shockwave rings: drawn once, faintly and in view, so the GPU has their exact drawing state ready too
-  const shk=SHOCKS.map(S=>[S.m.position.clone(),S.m.scale.x,S.m.material.opacity]);for(const S of SHOCKS){S.m.position.set(bx,groundH(bx,by)+2.5,by);S.m.scale.setScalar(60);S.m.material.opacity=.01;}
-  const W0=WASH[0];if(W0){W0.m.visible=true;W0.m.material.opacity=.01;W0.m.position.set(bx,groundH(bx,by)+2.5,by);W0.m.scale.setScalar(60);}
-  // With post-processing on, the battle is only ever drawn into the post-processing target, never straight to the
-  // screen (which needs different shader variants), so the warm-up prepares those variants only: one scene draw, not two.
-  // first strike / big explosion used to compile ~20 shaders in one frame (a multi-second freeze): missiles, flames and rock chunks are prepared here
-  try{if(typeof mslWarm==='function')mslWarm(grp);if(!CHUNKG)CHUNKG=[0,1,2,3,4].map(i=>rockGeo(40+i*7,0,.6+i*.07,.55));const rk=new THREE.Mesh(CHUNKG[0],chunkMat('#4a4034'));rk.castShadow=true;rk.frustumCulled=false;rk.scale.setScalar(2);grp.add(rk);}catch(e){}
-  SCN.add(grp);try{if(typeof placeCam==='function')placeCam();const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}R3.compile(SCN,CAM);if(typeof renderPost==='function'){CAM.updateMatrixWorld();renderPost();}R3.setRenderTarget(null);if(!post)R3.render(SCN,CAM);}catch(e){console.warn('shader warm-up',e);}SCN.remove(grp);SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});
-  console.log('shader warm-up',Math.round(performance.now()-t0)+' ms, '+grp.children.length+' objects');}
-
-// Phones: the same warm-up, but light and spread over frames, so a phone never sits for a minute on one frame (Safari on
-// iPhone compiles shaders slowly and can drop the whole graphics context after one huge frame): only the models of the
-// nations in this battle, only the player's own team variant (team colour is a shader input, not a separate shader),
-// burnt wreck variants once per kind of material, a few models per frame with progress on the loading screen, a texture
-// memory budget, and a stop flag the loading watchdog sets (whatever isn't prepared then is prepared when first seen).
-// onProg(done,total) reports progress. Resolves when done or stopped.
-async function warmShadersPhone(onProg,stop){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0=performance.now();
+   While the battle loads, every model and its burnt-wreck version is prepared out of sight, a few per frame, so all shaders are ready. */
+/* Chunked warm-up (PC and phone alike). One synchronous warm-up of every model made a Windows gaming laptop's Chrome sit on
+   a single task for minutes (every shader program link is slow under Direct3D) and show "Page Unresponsive" at 78%.
+   So the work is done a few models per frame, with progress on the loading screen:
+   - only the models of the nations in this battle, only the player's own team variant (team colour is a shader input, not
+     a separate shader), a burnt wreck variant once per kind of material;
+   - compileAsync uses the browser's background shader compiling where it has it; one batch is never waited for longer than 4 s;
+   - the battlefield (ground, scenery, buildings) is prepared child by child, never as one huge compile;
+   - PCs also prepare what a strike shows for the first time (missiles, flames, rock chunks, warning markers, ping rings,
+     rubble, martyrdom banner, shock rings) and the corner picture (BREAKING NEWS), so a strike never compiles in a frame;
+   - a frame is yielded as soon as ~30 ms of work have been done, so no single task runs long;
+   - hard stop (stop(): the battle is gone) ends it at once; late() (the loading watchdog fired and the battle already
+     started) keeps working through the same queue in the background, a batch per frame, off the scene so nothing flashes.
+   onProg(done,total) reports progress. Resolves when done or stopped. Records its numbers in LOAD.warm for the Performance log. */
+async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0=performance.now();
+  const PH=typeof gfxPhone==='function'&&gfxPhone(),isLate=()=>!!(late&&late());
   const [bx,by]=BASES[ME]||[MAPW/2,MAPH/2],T=G.teams[ME],gy=groundH(bx,by);
+  const P0=R3.info.programs?R3.info.programs.length:0,W=LOAD.warm={ms:0,models:0,steps:0,maxStep:0,progs:0,late:0,phone:PH?1:0,stage:[]};
   const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};
   const want=new Set(typeof modelKeysFor==='function'?modelKeysFor(G.teams.map(q=>q.fac)):[]);
   const keys=Object.keys(MODELS.proto||{}).filter(k=>!want.size||want.has(k));
-  const sig=new Set(),texSeen=new Set();let texB=0;const TEXMAX=192*1048576;let nObj=0,nBatch=0;
+  const sig=new Set(),texSeen=new Set();let texB=0;const TEXMAX=192*1048576;let nObj=0;
   const frame=()=>new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,120);});
-  const upTex=o=>o.traverse(c=>{if(!c.isMesh)return;for(const m of (Array.isArray(c.material)?c.material:[c.material]))for(const p of ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap']){const t=m&&m[p];if(!t||texSeen.has(t))continue;texSeen.add(t);
-    const im=t.image||{},b=(im.width||0)*(im.height||0)*4*1.33;if(texB+b>TEXMAX)continue;texB+=b;try{R3.initTexture(t);}catch(e){}}});
-  const BATCH=4;
-  for(let i=0;i<keys.length;i+=BATCH){if(stop&&stop())break;if(window.GLLOST)break;const grp=new THREE.Group();grp.position.set(bx,gy,by);
-    for(const k of keys.slice(i,i+BATCH)){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);
-      // a burnt copy only for a kind of material not seen yet (most wrecks share a handful of burnt shaders)
+  // (the scene's own remove() queues shapes for the periodic GPU clean-up; these temporary groups must not be queued: hundreds of them
+  // made that clean-up a long frame, and it would free the strike shapes this warm-up just prepared)
+  const unscene=g=>THREE.Object3D.prototype.remove.call(SCN,g);
+  const dead=()=>(stop&&stop())||window.GLLOST;
+  // textures are sent to the card one by one, a frame given back whenever ~30 ms have passed (a big texture is its own task)
+  let tlast=performance.now();
+  const upTex=async o=>{const ts=[];o.traverse(c=>{if(!c.isMesh)return;for(const m of (Array.isArray(c.material)?c.material:[c.material]))for(const p of ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap']){const t=m&&m[p];if(!t||texSeen.has(t))continue;texSeen.add(t);
+    const im=t.image||{},b=(im.width||0)*(im.height||0)*4*1.33;if(texB+b>TEXMAX)continue;texB+=b;ts.push(t);}});
+    for(const t of ts){if(dead())return;MK('texture');try{R3.initTexture(t);}catch(e){}if(performance.now()-tlast>30){await frame();tlast=performance.now();}}};
+  const post=()=>typeof renderPost==='function'&&POST.on&&POST.mFinal;
+  // one step: compile a group (in the scene while loading, off it once the battle runs), time it, give a frame back
+  // draw only these groups once for real (everything else in the scene hidden for a moment, lights stay): a shape needs its own
+  // vertex array per shader program, made on its first draw, so compiling alone would leave those for the first sight of a unit/wreck
+  const hidAll=[];
+  const drawOnly=(grps,aoAlways)=>{hidAll.length=0;for(const c of SCN.children)if(!c.isLight&&c.visible&&!grps.includes(c)){c.visible=false;hidAll.push(c);}
+    try{CAM.updateMatrixWorld();if(post()){sizePost();if(POST.ovr&&POST.dRT&&(aoAlways||(POST.mAO&&POST.aoOn!==false))){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}R3.setRenderTarget(POST.rt);}R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
+    R3.setRenderTarget(null);for(const c of hidAll)c.visible=true;};
+  const ex=[],step=async(name,grp,wait,keep)=>{MK('step '+name);const s0=performance.now(),lt=isLate();let tcomp=0,ttex=0;
+    if(!lt)SCN.add(grp);
+    try{if(post()){sizePost();R3.setRenderTarget(POST.rt);}const c0=performance.now();const p=R3.compileAsync(grp,CAM,SCN);tcomp=performance.now()-c0;R3.setRenderTarget(null);await Promise.race([p,new Promise(r=>setTimeout(r,wait||4000))]);const u0=performance.now();await upTex(grp);ttex=performance.now()-u0;}catch(e){console.warn('warm-up',e);R3.setRenderTarget(null);}
+    if(!lt&&!PH&&!keep){MK('draw '+name);try{drawOnly([grp]);}catch(e){}}if(keep&&!lt)ex.push(grp);else if(!lt)unscene(grp);const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push([name,Math.round(d),Math.round(tcomp),Math.round(ttex)]);};
+  const MK=n=>{LOAD.wmark=n;},mk=()=>{const g=new THREE.Group();g.position.set(bx,gy,by);return g;};
+  const lap=(n,t)=>{W.stage.push([n,Math.round(performance.now()-t)]);};
+  const BATCH=PH?4:1;let ts=performance.now();
+  for(let i=0;i<keys.length;i+=BATCH){if(dead())break;const grp=mk(),tb0=performance.now();MK('build '+keys.slice(i,i+BATCH).join('+'));
+    for(const k of keys.slice(i,i+BATCH)){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;W.models++;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);
+      // a burnt copy: phones only for a kind of material not seen yet (most wrecks share a handful of burnt shaders); PCs for every model (each shape needs its own burnt vertex array before the first wreck)
       let s='';o.traverse(c=>{if(c.isMesh&&!c.isSkinnedMesh){const m=Array.isArray(c.material)?c.material[0]:c.material;if(m)s+=m.type+(m.map?'m':'')+(m.normalMap?'n':'')+(m.vertexColors?'v':'')+'|';}});
-      if(s&&!sig.has(s)){sig.add(s);try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});grp.add(w);}catch(e){}}}
-    nObj+=grp.children.length;nBatch++;SCN.add(grp);
-    try{const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}
-      // compileAsync uses the browser's background shader compiling where it has it; the watchdog below never lets
-      // a program that never reports ready hold the loading screen
-      const p=R3.compileAsync(grp,CAM,SCN);R3.setRenderTarget(null);
-      await Promise.race([p,new Promise(r=>setTimeout(r,4000))]);upTex(grp);}catch(e){console.warn('phone warm-up',e);}
-    SCN.remove(grp);if(onProg)try{onProg(Math.min(keys.length,i+BATCH),keys.length);}catch(e){}await frame();}
+      if(s&&(!PH||!sig.has(s))){sig.add(s);try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});grp.add(w);}catch(e){}}}
+    nObj+=grp.children.length;{const tb=performance.now()-tb0;if(tb>100)(W.slow=W.slow||[]).push(['build '+keys.slice(i,i+BATCH).join('+'),Math.round(tb)]);}await step('models '+keys.slice(i,i+BATCH).join('+'),grp);
+    if(onProg&&!isLate())try{onProg(Math.min(keys.length,i+BATCH),keys.length);}catch(e){}await frame();if(isLate()){W.late=1;
+      // the rest runs in the background: gently, and not at all on a machine that is already struggling (what is left is prepared when first seen)
+      if(typeof QUAL!=='undefined'&&QUAL.fps&&QUAL.fps<20){W.dropped=keys.length-i-BATCH;break;}await new Promise(r=>setTimeout(r,120));}}
+  lap('models',ts);ts=performance.now();
   // the merged one-mesh soldier and the shared plain materials
-  if(!(stop&&stop())&&!window.GLLOST){const grp=new THREE.Group();grp.position.set(bx,gy,by);
+  if(!dead()){const grp=mk();
     try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac))grp.add(o);}}catch(e){}
     try{grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);gg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*3).fill(.5),3));grp.add(new THREE.Mesh(gg,gm));grp.add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
-    grp.traverse(c=>{c.frustumCulled=false;});SCN.add(grp);
-    // and the battlefield itself (ground, scenery, buildings), drawn into the post-processing target as in the battle
-    try{if(typeof placeCam==='function')placeCam();const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}const p=R3.compileAsync(SCN,CAM);R3.setRenderTarget(null);await Promise.race([p,new Promise(r=>setTimeout(r,6000))]);}catch(e){console.warn('phone warm-up',e);}
-    SCN.remove(grp);}
-  console.log('shader warm-up (phone)',Math.round(performance.now()-t0)+' ms, '+keys.length+' models, '+nObj+' objects in '+nBatch+' steps, textures '+Math.round(texB/1048576)+' MB'+(stop&&stop()?' (stopped by the loading watchdog)':''));}
+    for(const op of [.8,.12])grp.add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
+    // an aircraft's exhaust plume is added when the unit is made (modelFor), not to the model itself: its shader and canvas texture are prepared here
+    try{if(typeof jetPlumeMat==='function'){const pl=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());pl.renderOrder=3;grp.add(pl);}}catch(e){}
+    grp.traverse(c=>{c.frustumCulled=false;});await step('shared',grp);await frame();}
+  // what a strike shows for the first time (PC): missiles, flames, rock chunks / warning markers, ping rings, rubble, banner / shock rings
+  if(!PH&&!dead()){
+    {const grp=mk();try{if(typeof mslWarm==='function')mslWarm(grp);for(const cg of chunkGeos()){const rk=new THREE.Mesh(cg,chunkMat('#4a4034'));rk.castShadow=true;rk.frustumCulled=false;rk.scale.setScalar(2);grp.add(rk);}}catch(e){console.warn('strike warm-up',e);}await step('missiles',grp,0,1);await frame();}
+    if(!dead()){const grp=mk();try{const KG=mkGeo(),bm2=new THREE.MeshBasicMaterial({color:0xea3a2c,transparent:true,opacity:.01,depthWrite:false});for(const g of [KG.ring,KG.inner,KG.disc,KG.bar,pingGeo()]){const m=new THREE.Mesh(g,bm2);m.frustumCulled=false;m.scale.setScalar(20);m.position.y=3;grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('markers',grp,0,1);await frame();}
+    if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
+    if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
+    // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
+    // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
+    {const shk=SHOCKS.map(S=>[S.m.position.clone(),S.m.scale.x,S.m.material.opacity]);const grp=mk();
+      if(!dead()&&!isLate()){try{for(const S of SHOCKS){S.m.position.set(bx,gy+2.5,by);S.m.scale.setScalar(60);S.m.material.opacity=.01;grp.add(S.m.clone());}const W0=WASH[0];if(W0)grp.add(W0.m.clone());}catch(e){}
+        grp.traverse(c=>{c.frustumCulled=false;c.visible=true;});await step('rings',grp,0,1);}
+      // all of the above is drawn once for real (only these objects in view, everything else hidden for a moment), so their shapes are on the card
+      // too: a strike would otherwise upload ~30 shapes in its first frames
+      if(!dead()&&!isLate()&&ex.length){MK('extras draw');for(const g of ex)g.traverse(c=>{c.frustumCulled=false;});drawOnly(ex,1);}
+      for(const g of ex)unscene(g);ex.length=0;
+      SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});await frame();}}
+  lap('extras',ts);ts=performance.now();
+  // the battlefield itself (ground, scenery, buildings), child by child, drawn into the post-processing target as in the battle
+  if(!dead()&&!isLate()){try{if(typeof placeCam==='function')placeCam();}catch(e){}
+    // units: each child of the scene, or the children of a big group, compiled one by one (sync compile = just requests the
+    // programs; their linking goes on in the browser/GPU process); a frame is given back after every ~30 ms of work
+    const units=[];for(const c of SCN.children){if(c.isLight)continue;if(c.children&&c.children.length>24&&!c.isMesh)for(const g of c.children)units.push(g);else units.push(c);}
+    const mats=new Set();let tl=performance.now();
+    for(const u of units){if(dead()||isLate())break;const s0=performance.now();MK('unit '+(u.name||u.type)+' '+(u.children?u.children.length:0));
+      try{if(post()){sizePost();R3.setRenderTarget(POST.rt);}const ms=R3.compile(u,CAM,SCN);R3.setRenderTarget(null);for(const m of ms)mats.add(m);}catch(e){console.warn('warm-up',e);R3.setRenderTarget(null);}
+      const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push(['unit '+(u.name||u.type)+' '+(u.children?u.children.length:0),Math.round(d)]);
+      if(performance.now()-tl>30){await frame();tl=performance.now();}}
+    // wait (at most 6 s) until the browser reports every requested program as linked
+    {const w0=performance.now(),rdy=()=>{for(const m of mats){const pr=R3.properties.get(m).currentProgram;if(pr!==undefined&&!pr.isReady())return false;}return true;};
+      while(!dead()&&!isLate()&&!rdy()&&performance.now()-w0<6000)await new Promise(r=>setTimeout(r,25));}
+    // the post-processing passes one by one (each its own program), then one draw of the battle itself with its own frame
+    if(!dead()&&!isLate()&&!PH&&post()){for(const k of ['mBright','mBlur','mFinal','mAO']){if(dead()||isLate())break;const m=POST[k];if(!m)continue;MK('pass '+k);const t1=performance.now();
+        try{const rt=k==='mFinal'?null:POST.bA;if(rt)pass(m,rt);else{R3.setRenderTarget(null);pass(m,null);}}catch(e){console.warn('warm-up',e);}R3.setRenderTarget(null);(W.slow=W.slow||[]).push(['pass '+k,Math.round(performance.now()-t1)]);await frame();}}
+    // the depth pass (ambient occlusion) and the shadow pass have their own program variants: drawn a slice of the battlefield at a time,
+    // everything else hidden for a moment (lights stay)
+    if(!dead()&&!isLate()&&!PH&&post()){const vis=units.filter(u=>u.visible),SL=8;let tl2=performance.now();
+      const aoOn=POST.mAO&&POST.aoOn!==false&&POST.ovr&&POST.dRT;
+      for(let i=0;i<vis.length&&!dead()&&!isLate();i+=SL){MK('slice '+i);const mine=new Set(vis.slice(i,i+SL));for(const u of vis)u.visible=mine.has(u);const s0=performance.now();
+        try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}
+          R3.setRenderTarget(POST.rt);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
+        R3.setRenderTarget(null);for(const u of vis)u.visible=true;const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push(['slice '+i,Math.round(d)]);
+        if(performance.now()-tl2>30){await frame();tl2=performance.now();}}
+      for(const u of vis)u.visible=true;}
+    // (no whole-scene draw here: the slices above prepared every variant; the last loading step draws the real first frame)
+    if(!dead()&&!isLate()&&!PH){CAM.updateMatrixWorld();
+      if(!dead()&&!isLate()&&typeof mwPipWarm==='function'){MK('pip');const m0=performance.now();mwPipWarm();(W.slow=W.slow||[]).push(['pip',Math.round(performance.now()-m0)]);await frame();}}}
+  lap('battlefield',ts);
+  W.ms=Math.round(performance.now()-t0);W.progs=(R3.info.programs?R3.info.programs.length:0)-P0;
+  console.log('shader warm-up'+(PH?' (phone)':'')+' '+W.ms+' ms, '+W.models+' models, '+nObj+' objects in '+W.steps+' steps (longest '+W.maxStep+' ms), '+W.progs+' programs, textures '+Math.round(texB/1048576)+' MB'+(isLate()?' (finished in the background after the loading watchdog)':dead()?' (stopped)':''));}
 
 /* ---------- GPU memory clean-up ----------
    Units, wrecks, rubble and effects create their own small shapes (selection rings, contact shadows, soldier kit,
@@ -525,7 +625,7 @@ function gpuGcHook(){if(!SCN||SCN.__gc)return;const rm=SCN.remove.bind(SCN);SCN.
 function gpuGc(){if(!GCQ.length||!SCN)return 0;if(!GC_PROTO){GC_PROTO=new Set();for(const k in MODELS.proto)MODELS.proto[k].scene.traverse(o=>{if(o.geometry)GC_PROTO.add(o.geometry);});}
   const used=new Set(),usedT=new Set();SCN.traverse(o=>{if(o.geometry)used.add(o.geometry);const m=o.material;if(m)for(const mm of (Array.isArray(m)?m:[m]))if(mm&&mm.map)usedT.add(mm.map);});
   const q=GCQ.splice(0,GCQ.length),seen=new Set();let n=0;
-  for(const root of q){if(root.parent)continue;root.traverse(o=>{const g=o.geometry;if(g&&!seen.has(g)&&!used.has(g)&&!GC_PROTO.has(g)){seen.add(g);g.dispose();n++;}
+  for(const root of q){if(root.parent)continue;root.traverse(o=>{const g=o.geometry;if(g&&!seen.has(g)&&!used.has(g)&&!GC_PROTO.has(g)&&!GC_KEEP.has(g)){seen.add(g);g.dispose();n++;}
     const m=o.material;if(m)for(const mm of (Array.isArray(m)?m:[m])){const t=mm&&mm.map;if(t&&t.isCanvasTexture&&!usedT.has(t)&&!seen.has(t)){seen.add(t);t.dispose();}}});}
   return n;}
 

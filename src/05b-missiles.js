@@ -27,9 +27,9 @@ function mslGeo(kind){MSL_GEO=MSL_GEO||{};if(MSL_GEO[kind])return MSL_GEO[kind];
   for(let k=0;k<nF;k++)list.push(fin(R*(kind==='ball'?1.9:1.5),L*.2,L*.05,h0,fc,k*Math.PI/2+Math.PI/4));
   if(kind==='cruise')for(let k=0;k<2;k++)list.push(fin(R*5.2,L*.12,L*.05,-L*.05,'#555955',k*Math.PI));       // pop-out wings
   if(kind==='bomb')for(let k=0;k<4;k++)list.push(fin(R*1.2,L*.1,L*.04,h1+L*.1,'#464a3c',k*Math.PI/2));         // guidance canards
-  return MSL_GEO[kind]=Object.assign(mslMerge(list),{userData:{L,R}});}
+  return MSL_GEO[kind]=gcKeep(Object.assign(mslMerge(list),{userData:{L,R}}));}
 function mslFlameGeo(){if(MSL_FL)return MSL_FL;const mk=(c,op)=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
-  return MSL_FL={outer:new THREE.ConeGeometry(1,1,10,1,true).rotateX(Math.PI).translate(0,-.5,0),mo:mk(new THREE.Color(2.4,1.15,.35),.75),mi:mk(new THREE.Color(3.2,2.8,1.8),.9)};}
+  return MSL_FL={outer:gcKeep(new THREE.ConeGeometry(1,1,10,1,true).rotateX(Math.PI).translate(0,-.5,0)),mo:mk(new THREE.Color(2.4,1.15,.35),.75),mi:mk(new THREE.Color(3.2,2.8,1.8),.9)};}
 // build one missile object: smooth body + (optional) motor flame; returns {g,fl:[outer,inner]|null,L,R}
 function mslMake(kind,flame){mats();const geo=mslGeo(kind),L=geo.userData.L,R=geo.userData.R,g=new THREE.Group(),m=new THREE.Mesh(geo,MAT.std);m.castShadow=false;g.add(m);let fl=null;
   if(flame){const F=mslFlameGeo(),o=new THREE.Mesh(F.outer,F.mo),i=new THREE.Mesh(F.outer,F.mi);o.position.y=i.position.y=-L/2+R*.2;g.add(o,i);fl=[o,i];}
@@ -86,21 +86,23 @@ function mslFallTick(m,dt){const f=m.fall,FT=kind_t(f.kind);if(m.t>=FT){return;}
   if(f.kind==='bomb'&&(!fxPH()||Math.random()<.5))part({x,y,h:h+f.M.L,add:true,c:[2,1.6,1],s:rnd(3,5),d:.08,a:.7});}
 function kind_t(k){return k==='bomb'?1.5:1.25;}
 // ---- the big blast: layered on top of boomFX() for every strike-sized explosion ----
-function megaBoom(x,y,s,big){if(!inView(x,y,.5))return;const ph=fxPH(),S=big?s:s*1.45,g=groundH(x,y),k=ph?.55:1,th=G&&G.map&&G.map.theme==='snow',dust=th?[.86,.88,.9]:[.64,.55,.4],dust2=th?[.7,.72,.75]:[.5,.44,.33];
+function megaBoom(x,y,s,big){if(!inView(x,y,.5))return;const SF=typeof impactSurf==='function'?impactSurf(x,y):'desert',wet=SF==='water',ph=fxPH(),S=big?s:s*1.45,g=wet&&typeof WL==='number'?WL+.5:groundH(x,y),k=ph?.55:1,th=G&&G.map&&G.map.theme==='snow',wf=wet?.45:1,
+    // the wall thrown outward is what the blast hit: white water, grey road dust, snow, or the map's own soil
+    dust=wet?[.86,.9,.95]:SF==='hard'?[.62,.61,.58]:th?[.86,.88,.9]:SF==='green'?[.5,.44,.34]:[.64,.55,.4],dust2=wet?[.7,.78,.86]:SF==='hard'?[.5,.5,.48]:th?[.7,.72,.75]:SF==='green'?[.38,.33,.26]:[.5,.44,.33];
   sfxMega(x,y,S);
-  part({x,y,h:g+S*.4,s:S*3.6,d:.1,add:true,c:[4,3.4,2.4],a:.9});part({x,y,h:g+S*.5,s:S*2,d:.35,add:true,c:[3,1.6,.5],c2:[1,.3,.08],ck:.7,a:.9});flash=Math.min(.3,flash+.12);
+  part({x,y,h:g+S*.4,s:S*3.6,d:.1,add:true,c:[4,3.4,2.4],a:.9});part({x,y,h:g+S*.5,s:S*2*(wet?.6:1),d:.35,add:true,c:[3,1.6,.5],c2:[1,.3,.08],ck:.7,a:.9});flash=Math.min(.3,flash+.12);
   PINGS.push({x,y,r:S*5.2,t:0,d:.8,c:0xffe6bb});                                           // fast bright shock ring on the ground
   // full-circle dust wall racing outward
   {const N=Math.round(30*k);for(let i=0;i<N;i++){const a=i/N*6.2832+rnd(-.1,.1),v=S*rnd(3.6,4.8);part({x:x+Math.cos(a)*S*.25,y:y+Math.sin(a)*S*.25,h:g+rnd(2,5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(2,9),f:.1,rise:rnd(1,3),c:dust,c2:dust2,ck:.5,s:rnd(S*.45,S*.7),g:S*.6,d:rnd(2.2,3.4),a:.62});}}
   // rolling fireball: many orange puffs that climb and cool
-  for(let i=0;i<Math.round(13*k);i++){const a=rnd(0,6.28),r=rnd(0,S*.32);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(S*.1,S*.5),vx:Math.cos(a)*rnd(2,S*.6),vy:Math.sin(a)*rnd(2,S*.6),vh:rnd(S*.5,S*1.7),f:.2,rise:rnd(8,18),add:true,c:[3,1.45,.4],c2:[.55,.13,.04],ck:.55,s:rnd(S*.45,S*.8),g:S*1.1,d:rnd(.7,1.3),a:.75});}
-  for(let i=0;i<Math.round(9*k);i++){const a=rnd(0,6.28),r=rnd(0,S*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(S*.2,S*.6),vx:Math.cos(a)*rnd(2,S*.5),vy:Math.sin(a)*rnd(2,S*.5),vh:rnd(S*.4,S*1.2),f:.25,rise:rnd(10,22),c:[1.7,.75,.22],c2:[.16,.12,.1],ck:.45,s:rnd(S*.5,S*.85),g:S*.9,d:rnd(1.5,2.6),a:.8});}
+  for(let i=0;i<Math.round(13*k*wf);i++){const a=rnd(0,6.28),r=rnd(0,S*.32);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(S*.1,S*.5),vx:Math.cos(a)*rnd(2,S*.6),vy:Math.sin(a)*rnd(2,S*.6),vh:rnd(S*.5,S*1.7),f:.2,rise:rnd(8,18),add:true,c:[3,1.45,.4],c2:[.55,.13,.04],ck:.55,s:rnd(S*.45,S*.8),g:S*1.1,d:rnd(.7,1.3),a:.75});}
+  for(let i=0;i<Math.round(9*k*wf);i++){const a=rnd(0,6.28),r=rnd(0,S*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(S*.2,S*.6),vx:Math.cos(a)*rnd(2,S*.5),vy:Math.sin(a)*rnd(2,S*.5),vh:rnd(S*.4,S*1.2),f:.25,rise:rnd(10,22),c:[1.7,.75,.22],c2:wet?[.8,.83,.86]:[.16,.12,.1],ck:.45,s:rnd(S*.5,S*.85),g:S*.9,d:rnd(1.5,2.6),a:.8});}
   // glowing fragments (irregular, small) arcing out, then rocks
-  for(let i=0;i<Math.round(22*k);i++){const a=rnd(0,6.28),v=rnd(30,S*3.2);part({x,y,h:g+4,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(S*2,S*6),f:.5,grav:1,add:true,c:[3,1.6,.5],c2:[1,.3,.1],ck:.6,s:rnd(2,4),d:rnd(.9,1.8),a:.9});}
-  if(!ph)chunks(x,y,S*1.0,'#4a4034',big?8:5);else chunks(x,y,S*.9,'#4a4034',3);
+  for(let i=0;i<Math.round(22*k*wf);i++){const a=rnd(0,6.28),v=rnd(30,S*3.2);part({x,y,h:g+4,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(S*2,S*6),f:.5,grav:1,add:true,c:[3,1.6,.5],c2:[1,.3,.1],ck:.6,s:rnd(2,4),d:rnd(.9,1.8),a:.9});}
+  if(wet){}else if(!ph)chunks(x,y,S*1.0,SF==='hard'?'#5a5955':'#4a4034',big?8:5);else chunks(x,y,S*.9,'#4a4034',3);
   // lingering mushroom column (only a few at a time so a whole salvo stays cheap)
-  if(MUSH.length<4)MUSH.push({x,y,g,S,t:0,acc:0,cap:0});
-  const sc=S*1.5;scorch(x,y,sc);if(g>(typeof WL==='number'?WL+1:-1e9))crater(x,y,S*1.7);
+  if(!wet&&MUSH.length<4)MUSH.push({x,y,g,S,t:0,acc:0,cap:0});
+  const sc=S*1.5;if(!wet)scorch(x,y,sc);if(g>(typeof WL==='number'?WL+1:-1e9))crater(x,y,S*1.7);
   const kd=Math.max(0,1-Math.hypot(x-cam.x,y-cam.y)/(cam.dist*2.3));shake=Math.min(26,shake+S*.3*kd*(ph?.7:1));}
 function mushTick(dt){if(!MUSH.length)return;const ph=fxPH();for(let i=MUSH.length-1;i>=0;i--){const m=MUSH[i];m.t+=dt;const S=m.S,TS=3.4,H=S*5.3;
     if(m.t<TS){m.acc+=dt*(ph?9:17);while(m.acc>=1){m.acc-=1;const q=m.t/TS,h=m.g+q*H*.96,r=S*(.1+.06*Math.sin(q*9));part({x:m.x+rnd(-r,r),y:m.y+rnd(-r,r),h,vx:rnd(-4,4),vy:rnd(-4,4),vh:rnd(0,8),rise:rnd(2,6),c:q<.3?[.5,.28,.12]:[.3,.27,.24],c2:[.52,.5,.47],ck:.7,s:rnd(S*.4,S*.6),g:S*.22,d:rnd(8,11),a:.6});}}

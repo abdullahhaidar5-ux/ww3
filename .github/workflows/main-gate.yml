@@ -5,6 +5,11 @@ name: Main gate
 on:
   push:
     branches: [main]
+# One run at a time; a newer push to main replaces any older run that is still WAITING (the running one finishes).
+# Without this, many small pushes queue one full gate each and block GitHub's runners for hours (2026-11-10).
+concurrency:
+  group: main-gate
+  cancel-in-progress: false
 permissions:
   contents: write
   statuses: write
@@ -33,7 +38,7 @@ jobs:
               c=x["context"]
               if c.startswith("gate/") and c!="gate/main": s.setdefault(c,x["state"])
           bad=sorted(k[5:] for k,v in s.items() if v!="success")
-          print(("INCOMPLETE" if len(s)<28 and not bad else "GREEN" if not bad else "RED")+"|"+str(len(s))+"|"+",".join(bad))')
+          print(("INCOMPLETE" if len(s)<30 and not bad else "GREEN" if not bad else "RED")+"|"+str(len(s))+"|"+",".join(bad))')
           ST=${LINE%%|*}; REST=${LINE#*|}; N=${REST%%|*}; BAD=${REST#*|}
           SUBJ=$(git log -1 --format=%s | cut -c1-70)
           STATE=success; [ "$ST" = RED ] && STATE=failure; [ "$ST" = INCOMPLETE ] && STATE=error

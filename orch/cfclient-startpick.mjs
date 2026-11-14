@@ -161,6 +161,7 @@ async function pickerClip(page) {
 
 // the leader's lobby picks (3 seats: leader, friend, computer): leader on 5, friend on 3, computer on 7
 async function lobbyPicks(A) {
+  await A.evaluate(() => { if (typeof menuGo === 'function') menuGo('online'); });   // the lobby lives on the Multiplayer screen
   await A.locator('.seat.open .addai').first().click({ timeout: 30000 });
   say('   computer player added');
   await waitFor(A, () => NET.ais.length === 1 && !!document.getElementById('lobSpots'), null, 20000, 'the computer player in the lobby');

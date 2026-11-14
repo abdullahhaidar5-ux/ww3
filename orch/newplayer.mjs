@@ -33,12 +33,12 @@ const visit = async (name, id) => {
   const back = id === 'title' || items.some(i => /back/i.test(i.t)); if (!back) report.issues.push(`"${name}": no visible Back`);
   if (shot) { fs.mkdirSync(path.join(ROOT, 'orch/shots/laneD'), { recursive: true }); await pg.screenshot({ path: path.join(ROOT, `orch/shots/laneD/menu-${id}.png`) }); }
 };
-for (const [n, id] of [['title', 'title'], ['Battlefield', 'c-map'], ['Nation', 'c-nation'], ['Players', 'c-players'], ['Battle options', 'c-opts'], ['Play online', 'online'], ['Extras', 'extras'], ['Credits', 'credits']]) await visit(n, id);
+for (const [n, id] of [['title', 'title'], ['Single player', 'single'], ['Battlefield', 'c-map'], ['Nation', 'c-nation'], ['Players', 'c-players'], ['Battle options', 'c-opts'], ['Multiplayer', 'online'], ['Extras', 'extras'], ['Credits', 'credits']]) await visit(n, id);
 // every title entry must be a real, visible, clickable item
 await pg.evaluate(() => menuHome());
 await pg.waitForFunction(() => { const t = document.getElementById('ms-title'); const c = t && getComputedStyle(t); return !!c && c.visibility === 'visible' && +c.opacity === 1; }, null, { timeout: 8000 }).catch(() => report.issues.push('the title menu never faded in'));
 await pg.waitForTimeout(300);
-const titles = (await scan()).map(i => i.t.split(' ')[0].toLowerCase()); for (const want of ['grand', 'conquest', 'missions', 'tutorial', 'play', 'load', 'settings', 'extras', 'credits']) if (!titles.includes(want)) report.issues.push(`title menu is missing "${want}"`);
+const titles = (await scan()).map(i => i.t.split(' ')[0].toLowerCase()); for (const want of ['single', 'multiplayer', 'test', 'settings', 'extras', 'credits']) if (!titles.includes(want)) report.issues.push(`title menu is missing "${want}"`);
 for (const s of report.screens) for (const i of s.items) {
   if (!i.t && !i.tip && i.id !== 'mxnatin') report.issues.push(`[${s.name}] control #${i.id} has no text or tooltip`);
   if (JARGON.test(i.t)) report.issues.push(`[${s.name}] jargon: "${i.t}"`);

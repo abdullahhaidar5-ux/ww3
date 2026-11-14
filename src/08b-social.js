@@ -33,7 +33,7 @@ function bhOpen(){let ov=document.getElementById('myb');
   const a=bhLoad(),s=bhStats(a),nm=k=>(FACTIONS[k]&&FACTIONS[k].name)||k||'-';
   const rows=a.slice(-20).reverse().map(b=>`<tr><td>${bhEsc(new Date(b.t).toLocaleDateString(undefined,{month:'short',day:'numeric'}))}</td><td>${bhEsc(nm(b.nat))}</td><td class="${b.res==='W'?'win':'loss'}">${b.res==='W'?'Victory':'Defeat'}</td><td>${bhFmt(b.len)}</td><td>${bhEsc(b.map)}</td><td>vs ${bhEsc((b.opp||[]).join(', ')||'-')}</td><td>${b.built}/${b.lost}</td></tr>`).join('');
   ov.innerHTML=`<div class="card"><h1>My battles</h1><p style="opacity:.75;margin:0">Saved on this device only. Skirmish, online and finished battles count; the Tutorial and Test Range do not.</p>`+(a.length?
-   `<div class="stat"><div><b>${s.n}</b>battles</div><div><b>${s.w}</b>wins (${Math.round(100*s.w/s.n)}%)</div><div><b>${bhEsc(nm(s.fav))}</b>favourite nation</div><div><b>${bhFmt(s.best)}</b>fastest win</div><div><b>${Math.round(s.secs/60)} min</b>played</div></div>
+   `<div class="stat"><div><b>${s.n}</b>battles</div><div><b>${s.w}</b>wins (${Math.round(100*s.w/s.n)}%)</div><div><b>${bhEsc(nm(s.fav))}</b>favorite nation</div><div><b>${bhFmt(s.best)}</b>fastest win</div><div><b>${Math.round(s.secs/60)} min</b>played</div></div>
    <div class="label">Most-used units</div><div>${s.top.length?s.top.map(k=>bhEsc(bhUnitName(s.fav,k))+' ×'+s.uc[k]).join(' · '):'Train some units in a battle to fill this in.'}</div>
    <div class="label">Last ${Math.min(20,a.length)} battles</div><div style="overflow-x:auto"><table><tr><th>Day</th><th>Nation</th><th>Result</th><th>Time</th><th>Map</th><th>Opponents</th><th title="units built / lost">B/L</th></tr>${rows}</table></div>`
    :`<div class="none">No finished battles yet. Win or lose one and it shows up here.</div>`)+
@@ -58,7 +58,7 @@ function tutSpawn(n,x,y){let c=0;for(let i=0;i<n;i++){const p=nearestPassXY('gro
 const tutPanelBtn=id=>document.getElementById(id);
 const tutTownBtn=r=>{const p=document.getElementById('townp');return p&&p.style.display!=='none'&&TP.ti===(TUTS.town&&TUTS.town.i)?p.querySelector('button[data-r="'+r+'"]'):null;};
 const tutTownHL=r=>{const b=tutTownBtn(r);if(b)return{el:b};const t=tutTown();return t?{mm:{x:t.x,y:t.y}}:null;};
-const TUT=[
+const TUTC=[
  {k:'sel',t:'Welcome to Conquest! These are your soldiers.',a:'Left-click one, or drag a box around them, to select.',
   hl:()=>({w:tutSquad()}),cam:()=>tutSquad(),ok:()=>G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&!['harv','dozer','hacker'].includes(u.kind))},
  {k:'move',t:'Selected soldiers take orders with the RIGHT mouse button.',a:'Right-click the glowing spot to send them there.',
@@ -70,10 +70,10 @@ const TUT=[
  {k:'atk',t:'Red soldiers are enemies. Your men also shoot on their own, but you choose the targets. (After an order they deselect: pick them again.)',a:'Select your soldiers, then right-click a red enemy to attack.',
   enter:()=>{TUTS.k0=G.teams[ME].kills|0;if(!tutFoe()){const s=tutSquad()||tutHQ();if(s)for(let i=0;i<2;i++){const p=nearestPassXY('ground',s.x+330+i*30,s.y+i*25);const u=p&&Math.hypot(p[0]-s.x,p[1]-s.y)<700&&addUnit(1,'inf',p[0],p[1]);if(u)u.hp*=.7;}}},
   hl:()=>({w:tutFoe()}),cam:()=>tutFoe(),ok:()=>(G.teams[ME].kills|0)>TUTS.k0},
- {k:'setup',t:'Setup phase: in every match nobody can shoot for the first 90 seconds (timer at the top). Spend it building your base.',a:'Open Build, click Barracks, then click the ground next to your base.',
+ {k:'setup',t:'Setup phase: in every match nobody can shoot for the first 90 seconds (timer at the top), and you start with a full base: Barracks, War Factory, Supply Depot and $10,000. Spend the time adding to it.',a:'Open Build, click Defense Gun, then click the ground next to your base.',
   enter:()=>{G.setupEnd=Math.max(G.setupEnd||0,G.t+75);},
-  hl:()=>{if(tutBld('barracks'))return{w:tutBld('barracks')};if(G.place==='barracks'){const h=tutHQ();return{w:h?{x:h.x+120,y:h.y+90}:null};}return{d:'#b_barracks'};},cam:()=>tutHQ(),
-  ok:()=>G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1)},
+  hl:()=>{if(tutBld('turret'))return{w:tutBld('turret')};if(G.place==='turret'){const h=tutHQ();return{w:h?{x:h.x+120,y:h.y+90}:null};}return{d:'#b_turret'};},cam:()=>tutHQ(),
+  ok:()=>G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='turret'&&!e.dead&&e.built>=1)},
  {k:'trn',t:'The Barracks trains soldiers. Training takes a few seconds.',a:'Click your Barracks, open the Units tab, then click the first soldier.',
   enter:()=>{TUTS.n0=tutInf();},
   hl:()=>{const b=tutBld('barracks');if(!b)return{w:tutHQ()};if(G.sel.includes(b)){const k=roster(G.teams[ME].fac).barracks[0];return{d:'#u_'+k};}return{w:b};},cam:()=>tutBld('barracks')||tutHQ(),
@@ -104,6 +104,24 @@ const TUT=[
  {k:'win',t:'Last step: destroy the enemy base to win. It is far away (see the minimap) and only lightly guarded. Reserves arrive now; keep your Barracks producing too.',a:'Gather your soldiers, then hold F and click the enemy base to attack-move.',
   enter:()=>{const T=G.teams[ME],h=tutHQ();T.credits+=2500;if(h)tutSpawn(6,h.x+70,h.y+140);try{pushLog('Reserves have arrived.','w');}catch(e){}},   // the calm enemy stays calm (no AI): the tutorial finale stays winnable and deterministic
   hl:()=>({w:tutFoeHQ()}),cam:()=>tutHQ(),ok:()=>false}];
+/* BATTLE tutorial (polishE 2026-11-10): the Generals-rules lesson, same step machinery as the Conquest one (one system per idea). */
+const tutMob=()=>G.ents.filter(e=>!e.isB&&e.team===ME&&!e.dead&&!['harv','dozer','hacker'].includes(e.kind));
+const tutBPlace=(k,dx,dy)=>{if(tutBld(k))return{w:tutBld(k)};if(G.place===k){const h=tutHQ();return{w:h?{x:h.x+dx,y:h.y+dy}:null};}return{d:'#b_'+k};};
+const TUTB=[
+ {k:'gen',t:'Welcome to Battle! Your electronic buildings (air defense, Strike Center, radio, Airfield) need power. You build a Generator for it, and you can capture map power plants for extra. Without enough power they switch off.',a:'Open Build, click Generator, then click the ground near your base.',
+  hl:()=>tutBPlace('gen',-100,-110),cam:()=>tutHQ(),ok:()=>!!tutBld('gen')},
+ {k:'dep',t:'Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.',a:'Open Build, click Supply Depot, then click the ground near your base.',
+  hl:()=>tutBPlace('depot',-130,90),cam:()=>tutHQ(),ok:()=>!!tutBld('depot')},
+ {k:'bar',t:'Barracks train infantry, and they unlock the rest of your tech tree.',a:'Build a Barracks (Build tab) next to your base. Your Dozer builds it.',
+  hl:()=>tutBPlace('barracks',120,90),cam:()=>tutHQ(),ok:()=>!!tutBld('barracks')},
+ {k:'fac',t:'The War Factory builds tanks and other vehicles. It needs a Barracks first.',a:'Build a War Factory (Build tab) next to your base.',
+  hl:()=>tutBPlace('factory',150,-60),cam:()=>tutHQ(),ok:()=>!!tutBld('factory')},
+ {k:'veh',t:'Now put the factory to work. Units appear in the Units tab when a production building is selected.',a:'Click your War Factory, then click a vehicle to train it.',
+  hl:()=>{const b=tutBld('factory');if(!b)return{w:tutHQ()};return G.sel.includes(b)?{d:'#u_tank'}:{w:b};},cam:()=>tutBld('factory'),
+  enter:()=>{TUTS.k0=tutMob().length;},ok:()=>tutMob().length>TUTS.k0},
+ {k:'atk',t:'Your army is ready. Select it (Ctrl+A selects everything), then send it at the enemy with a right-click. Destroy every enemy building to win.',a:'Select your army and right-click an enemy building.',
+  enter:()=>{G.teams[ME].credits+=2500;},hl:()=>({w:tutFoeHQ()}),cam:()=>tutFoeHQ(),ok:()=>false}];
+let TUT=TUTC;
 let TUTS=null;
 function tutEl(){let el=document.getElementById('tut');if(el)return el;el=document.createElement('div');el.id='tut';el.hidden=true;
   el.innerHTML=`<div class="tt"><b id="tutN"></b><span id="tutT"></span></div><div class="ta" id="tutA"></div><div class="tb"><button id="tutShow">Show me</button><button id="tutSkip">Skip step</button><button id="tutExit">Exit tutorial</button></div>`;
@@ -126,7 +144,7 @@ function tutHLHide(){const h=document.getElementById('tutHL');if(h)h.style.displ
 function tutExit(){if(G)G.tut=false;TUTS=null;const el=document.getElementById('tut');if(el)el.hidden=true;tutHLHide();}
 function tutDone(){try{localStorage.setItem(TUT_KEY,'1');}catch(e){}TUTS=null;tutHLHide();const el=document.getElementById('tut');if(el)el.hidden=true;
   let r=document.getElementById('tutReady');if(r)r.remove();r=document.createElement('div');r.id='tutReady';
-  r.innerHTML=`<div class="c"><h2>You're ready!</h2>Three tips for a real match:<ol><li>Tax: <b>High</b> in safe towns behind your lines, <b>Low</b> on the front line. Watch the unrest bars.</li><li>Keep your towns linked by road (press <b>L</b>) and build missile defence before the enemy's strike is ready.</li><li>Right-click orders, <b>F</b> + click attack-move, <b>X</b> stops. Attack as one big group.</li></ol><div class="r"><button id="tutGo">Start a real match</button><button id="tutMenu" class="g">Main menu</button></div></div>`;
+  r.innerHTML=`<div class="c"><h2>You're ready!</h2>Three tips for a real match:<ol><li>Tax: <b>High</b> in safe towns behind your lines, <b>Low</b> on the front line. Watch the unrest bars.</li><li>Keep your towns linked by road (press <b>L</b>) and build missile defense before the enemy's strike is ready.</li><li>Right-click orders, <b>F</b> + click attack-move, <b>X</b> stops. Attack as one big group.</li></ol><div class="r"><button id="tutGo">Start a real match</button><button id="tutMenu" class="g">Main menu</button></div></div>`;
   document.body.append(r);$('tutGo').onclick=()=>{r.remove();$('end').hidden=true;try{G.tut=false;}catch(e){}initAudio();startSingle();};
   $('tutMenu').onclick=()=>{r.remove();const c=$('change');if(c)c.click();};setTimeout(()=>{if(G)G.tut=false;},50);}
 function tutHLTick(){let h=document.getElementById('tutHL');if(!TUTS||!G||!G.tut||G.over||TUTS.wait||!$('menu').hidden){if(h)h.style.display='none';return;}
@@ -152,15 +170,21 @@ function tutLayout(){const el=document.getElementById('tut');if(!el||el.hidden)r
 function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&(!G||!G.tut))el.hidden=true;}if(!TUTS||!G||!G.tut||G.over||TUTS.wait||!$('menu').hidden)return;
   const me=G.teams[ME],k=TUT[TUTS.i].k;tutLayout();
   /* safety nets: never leave the player without soldiers; the unrest lesson is sped up so a revolt really happens within seconds */
-  if(!tutUnits().length&&!tutGarN()&&!G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1&&e.q&&e.q.length)){const h=tutHQ();if(h&&(TUTS.rescue|0)<4){TUTS.rescue=(TUTS.rescue|0)+1;tutSpawn(5,h.x+60,h.y+130);try{pushLog('Reserves have arrived.','w');}catch(e){}}}
+  if(TUT===TUTC&&!tutUnits().length&&!tutGarN()&&!G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1&&e.q&&e.q.length)){const h=tutHQ();if(h&&(TUTS.rescue|0)<4){TUTS.rescue=(TUTS.rescue|0)+1;tutSpawn(5,h.x+60,h.y+130);try{pushLog('Reserves have arrived.','w');}catch(e){}}}
   if(TUTS.town){for(const c of TUTS.town.cells){const g=c.g;if(g&&!g.dead&&g.max&&g.team===ME&&g.hp<g.max*.4)g.hp=g.max*.4;}}   /* the tutorial town's houses cannot be shot to rubble (that would make the town impossible to take) */
   if(k==='retake'&&TUTS.town){for(const c of TUTS.town.cells)if(c.g&&!c.g.dead&&c.g.team===G.reb&&c.occ&&c.occ.length){try{leaveGarrison(c);}catch(e){}}
     if(performance.now()-TUTS.e0>8000){for(const u of G.ents.slice())if(!u.isB&&!u.dead&&u.team===G.reb&&Math.hypot(u.x-TUTS.town.x,u.y-TUTS.town.y)<600){try{kill(u,ME,null);}catch(e){u.dead=true;}}}}   /* after a few seconds the last rebels give up, so nothing contests the town */   /* rebels never hole up in the houses during the tutorial: they fight in the open and the houses stay free to take */
   if(k==='unrest'){const t=tutTown();if(t&&t.ow===ME&&t.rate>=3)t.un=Math.min(100,t.un+6);}
   let ok=false;try{ok=!!TUT[TUTS.i].ok();}catch(e){}
-  if(ok)tutAdvance(false);}
+  if(ok&&performance.now()-(TUTS.e0||0)>=1500)tutAdvance(false);}   /* every tip stays up at least 1.5 s before it is ticked off: a step your men finish on their own (they shoot by themselves) used to flash by unread */
 setInterval(()=>{try{tutCheck();}catch(e){}},400);setInterval(()=>{try{tutHLTick();}catch(e){}},120);
-function startTutorial(){MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
+function startBattleTutorial(){TUT=TUTB;MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
+  const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
+  TERR_DEFER=true;try{newGame({battle:1,w:setup.w|0,seed:(window.__tutSeed||Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
+  const T=G.teams[0];G.tut=true;G.docDis=1;G.setupEnd=0;T.credits+=1500;if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
+  try{const eh=G.ents.find(e=>e.team===1&&e.kind==='hq');if(eh){eh.max=eh.hp=Math.min(eh.max,1500);}}catch(e){}
+  TUTS={i:0};afterStart();for(const id of ['tutShow','tutSkip'])$(id).hidden=false;$('tutExit').textContent='Exit tutorial';tutEnter();}
+function startTutorial(){TUT=TUTC;MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
   const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
   TERR_DEFER=true;try{newGame({w:setup.w|0,seed:(window.__tutSeed||Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
   const T=G.teams[0];G.tut=true;G.docDis=1;G.setupEnd=0;T.credits+=3000;T.gxp=Math.max(T.gxp|0,RANKS[1]);promoteGeneral(T);if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;

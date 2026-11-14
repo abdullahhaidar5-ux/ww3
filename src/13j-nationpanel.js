@@ -23,14 +23,14 @@ function npDraw(){npClose();if(!GC||!NP.code)return;const code=NP.code,own=code=
   stat('⚔','Army',S.army.toLocaleString()+' ('+S.men+' units)','Total value of your armies on the map');
   stat('🗺','Provinces',S.prov,'Provinces you hold');stat('★','Score',grScore(code),'Campaign score');
   for(const f of NP_HDR)try{f(code,stat);}catch(_){}
-  hd.appendChild(g);const x=guEl('button','padding:6px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:15px','Close ✕');x.type='button';x.onclick=npClose;hd.appendChild(x);w.appendChild(hd);
+  hd.appendChild(g);w.appendChild(hd);
   const tabs=NP.tabs.filter(t=>!t.show||t.show(code));if(!tabs.some(t=>t.id===NP.cur)&&tabs.length)NP.cur=tabs[0].id;
   const tb=guEl('div','display:flex;gap:4px;padding:8px 12px 0;border-bottom:1px solid #2c4258;flex-wrap:wrap');
   for(const t of tabs){const on=t.id===NP.cur;const b=guEl('button','padding:8px 14px;border-radius:7px 7px 0 0;border:1px solid '+(on?'#c9a35a':'#34506a')+';border-bottom:none;background:'+(on?'#2a3a4c':'#15222f')+';color:'+(on?'#ffe6a8':'#c8d4e0')+';cursor:pointer;font-size:15px','<span style="font-size:18px">'+t.icon+'</span> '+t.title);b.type='button';b.title=t.title;b.onclick=()=>{NP.cur=t.id;npDraw();};tb.appendChild(b);}
   w.appendChild(tb);const body=guEl('div','padding:14px 18px;overflow:auto;line-height:1.55;min-height:260px');w.appendChild(body);
   const cur=tabs.find(t=>t.id===NP.cur);try{if(cur)cur.render(code,body,{own,S});}catch(e){body.textContent='Tab error: '+e.message;console.error('npTab',e);}
   (document.getElementById('grandScreen')||document.body).appendChild(w);}
-if(!window._npKeys){window._npKeys=1;addEventListener('keydown',ev=>{if(ev.key==='Escape'&&document.getElementById('npWin')){ev.stopPropagation();ev.preventDefault();npClose();}},true);}
+/* Esc + the close X: src/13zzz-gpanels.js */
 // ---- helpers
 function npTable(body,head,rows,onRow){const t=guEl('table','width:100%;border-collapse:collapse;font-size:15px');t.innerHTML='<tr>'+head.map(h=>'<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #34506a;opacity:.8">'+h+'</th>').join('')+'</tr>';
   for(const r of rows){const tr=guEl('tr','cursor:'+(onRow?'pointer':'default'));tr.innerHTML=r.cells.map(c=>'<td style="padding:5px 8px;border-bottom:1px solid #1f3246">'+c+'</td>').join('');if(onRow)tr.onclick=()=>onRow(r);tr.onmouseenter=()=>{tr.style.background='#1d3248';};tr.onmouseleave=()=>{tr.style.background='';};t.appendChild(tr);}body.appendChild(t);}

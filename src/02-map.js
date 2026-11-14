@@ -109,7 +109,7 @@ const MAPS={
     cities:[[1300,950,190,'russia'],[1980,1050,170,'russia'],[700,1600,80,'europe'],[2600,600,80,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1640+150*Math.sin(y*.0028+ph),y]);M.rivers.push({pts,hw:()=>150});M.bridgeAt=[[0,.25],[0,.48],[0,.78]];M.bridgeFrac=true;
       M.islands.push({x:1650,y:620,r:60,rx:2,rot:1.4,wob:q=>.1*Math.sin(q*3)},{x:1640,y:1600,r:50,rx:1.8,rot:1.5,wob:q=>.1*Math.sin(q*4)});}},
-  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA','BI'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
+  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA','BI'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armor; a few oases and oil everywhere.',
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1300,1100+Math.sin(a)*840]);return s;})(),
     cities:[[1600,1100,190,'mideast']],
     water(M,R){for(const [x,y] of [[900,700],[2300,1500],[2300,700],[900,1500]])M.lakes.push({x,y,r:55,rx:1.4,wob:q=>.15*Math.sin(q*3+x)});}},
@@ -132,12 +132,12 @@ const MAPS={
     slots:[[450,1900],[2850,1600],[450,400],[2850,600],[700,1150],[2500,1100]],
     cities:[[900,800,150,'asia'],[2650,1850,140,'asia'],[2700,350,110,'korea']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let t=0;t<=1.0001;t+=.01){pts.push([1500+t*400+80*Math.sin(t*7+ph),-200+t*2600]);}M.rivers.push({pts,hw:(t,x)=>330});M.islands.push({x:1780,y:1000,r:60,rx:1.5,rot:.4,wob:q=>.1*Math.sin(q*3)});M.bridgeAng.push([1575,480,.988,-.152],[1835,1700,.988,-.152]);}},
-  honshu:{name:'Honshu Coast: Land of the Rising Sun',min:2,max:4,sym:'mirrorX',theme:'green',rough:1.25,home:['JP'],tag:'dense low-rise towns · bay · offshore islands · naval-friendly',desc:'A stylised Japanese coast: tight tiled-roof towns climb narrow valleys behind a central bay with island strongholds offshore. Two land routes through the hills and one by sea.',
+  honshu:{name:'Honshu Coast: Land of the Rising Sun',min:2,max:4,sym:'mirrorX',theme:'green',rough:1.25,home:['JP'],tag:'dense low-rise towns · bay · offshore islands · naval-friendly',desc:'A stylized Japanese coast: tight tiled-roof towns climb narrow valleys behind a central bay with island strongholds offshore. Two land routes through the hills and one by sea.',
     slots:[[450,1900],[2750,1900],[450,1200],[2750,1200]],
     cities:[[1600,1150,170,'japan'],[800,1500,100,'japan'],[2400,1500,100,'japan'],[1600,1850,90,'japan']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,-70+30*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:()=>480});
       for(const [x,y] of [[800,620],[1600,520],[2400,620]]){M.islands.push({x,y,r:110,rx:1,rot:0,wob:q=>.3*Math.max(0,Math.sin(q*6))});}M.bridgeAng.push([800,560,0,1],[2400,560,0,1]);}},
-  dmz:{name:'Korean DMZ',min:2,max:8,sym:'mirrorY',rough:1.3,home:['KP','KR'],tag:'fortified border · river · mountain ridges',desc:'The most fortified border on Earth: the Imjin river, the demilitarised strip, mountain ridges to the east and capitals within artillery range.',
+  dmz:{name:'Korean DMZ',min:2,max:8,sym:'mirrorY',rough:1.3,home:['KP','KR'],tag:'fortified border · river · mountain ridges',desc:'The most fortified border on Earth: the Imjin river, the demilitarized strip, mountain ridges to the east and capitals within artillery range.',
     slots:[[500,250],[500,1950],[1600,200],[1600,2000],[2700,250],[2700,1950],[1050,300],[1050,1900]],
     cities:[[1150,1850,150,'korea'],[1150,350,120,'asia'],[2250,1880,90,'korea'],[2250,330,80,'asia']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-200;x<=2200;x+=40)pts.push([x,1100+50*Math.sin(x*.005+ph)]);M.rivers.push({pts,hw:()=>58});M.bridgeAt=[[0,.25],[0,.6]];M.bridgeFrac=true;
@@ -157,7 +157,7 @@ const MAPS={
     slots:[[420,1500],[2780,700]],cities:mirrorList([[1020,1280,85,'southasia']],'p'),
     water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1270,330],[1420,560],[1560,770]],40,25,2,ph),hw:()=>110},{pts:polyline([[640,330],[960,560]],40,18,2,ph),hw:()=>80});
       M.peaks.push({x:2250,y:330,r:80,rx:1.5,rot:.3});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:72,rx:1.25,rot:0});}},
-  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR','IQ','SY','BI'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
+  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR','IQ','SY','BI'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armor.',
     slots:[[420,700],[2780,1500]],cities:mirrorList([[1180,430,110,'mideast'],[860,1700,75,'mideast']],'p'),
     water(M,R){M.lakes.push({x:900,y:1170,r:70,rx:1.7,wob:a=>.12*Math.sin(a*3)});M.peaks.push({x:1250,y:1820,r:70,rx:1.6,rot:.3});mirrorMap(M,'p');
       const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+110*Math.sin((y-1100)*.0035)+35*Math.sin((y-1100)*.011),y]);M.rivers.push({pts,hw:()=>92});M.bridgeAt=[[0,.18],[0,.5],[0,.82]];M.bridgeFrac=true;}},
@@ -186,7 +186,7 @@ const MAPS={
     slots:[[480,380],[2720,1820],[2720,380],[480,1820]],sl3:[[480,380],[2720,380],[1600,1700]],
     water(M,R){M.lakes.push({x:950,y:720,r:85,rx:1.5,wob:a=>.12*Math.sin(a*3)},{x:1600,y:330,r:70,rx:2,wob:a=>.1*Math.sin(a*2)},{x:420,y:1100,r:65,rx:1.3,wob:a=>.1*Math.sin(a*4)});mirrorMap(M,'x');mirrorMap(M,'y');
       M.lakes.push({x:1600,y:1100,r:250,rx:1.6,wob:a=>.07*Math.cos(4*a)});M.islands.push({x:1600,y:1100,r:70,rx:1.2,rot:0,wob:()=>0});M.bridgeAng.push([1360,1100,1,0],[1840,1100,-1,0],[1600,925,0,1],[1600,1275,0,-1]);}},
-  sahara:{name:'Sahara Crossroads',min:4,max:6,sym:'point',rough:.9,tag:'open desert · oases · caravan town',desc:'Open Saharan sand around a caravan town: rock outcrops split the desert into lanes and small oases mark the routes. Room for armour to swing wide.',
+  sahara:{name:'Sahara Crossroads',min:4,max:6,sym:'point',rough:.9,tag:'open desert · oases · caravan town',desc:'Open Saharan sand around a caravan town: rock outcrops split the desert into lanes and small oases mark the routes. Room for armor to swing wide.',
     slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,130,'mideast']],
     water(M,R){M.peaks.push({x:1150,y:640,r:85,rx:1.6,rot:.5},{x:1600,y:380,r:75,rx:1.4,rot:0},{x:1000,y:1420,r:70,rx:1.3,rot:-.4});M.lakes.push({x:1280,y:1060,r:48,rx:1.3,wob:a=>.1*Math.sin(a*3)},{x:700,y:820,r:40,rx:1.2,wob:a=>.1*Math.sin(a*3)});mirrorMap(M,'p');}},
   caucasus:{name:'Caucasus Valleys',min:4,max:6,sym:'point',theme:'snow',rough:1.5,home:['RU'],tag:'three valleys · mountain passes',desc:'Three snowy valleys between Caucasus ridges. Passes in the middle and narrow tracks at both ends link them: hold a pass and you hold the valley.',
@@ -248,13 +248,13 @@ const MAPS={
     water(M,R){const pts=[];for(let x=-200;x<=3400;x+=40)pts.push([x,1100+36*Math.sin((x-1600)*.003)]);M.rivers.push({pts,hw:()=>300});M.bridgeAt=[[0,.12],[0,.88]];M.bridgeFrac=true;
       navIsle(M,{x:1600,y:1100,r:130,rx:2.3,w:a=>.05*Math.sin(a*3)});M.bridgeAng.push([1600,885,0,1],[1600,1315,0,-1]);
       for(const x of [1000,2200])navIsle(M,{x,y:1100,r:75,rx:1});}},
-  harbour:{name:'Delta Harbour',min:2,max:4,sym:'point',fieldMinB:300,tag:'harbour city · channel · open bays · landings',desc:'A port city on a channel that runs between two open bays. Bridges and an island district tie the banks together by land; fleets and landing craft fight for the harbour from the bays.',
+  harbour:{name:'Delta Harbor',min:2,max:4,sym:'point',fieldMinB:300,tag:'harbor city · channel · open bays · landings',desc:'A port city on a channel that runs between two open bays. Bridges and an island district tie the banks together by land; fleets and landing craft fight for the harbor from the bays.',
     slots:[[760,560],[2440,1640],[2440,560],[760,1640]],oilAt:[[1600,1100],[1600,520],[1600,1680],[300,1100,1],[2900,1100,1]],
     water(M,R){const pts=[];for(let x=-200;x<=3400;x+=40)pts.push([x,1100+30*Math.sin((x-1600)*.004)]);M.rivers.push({pts,hw:()=>190});M.bridgeAt=[[0,.347],[0,.653]];M.bridgeFrac=true;
       M.lakes.push({x:-100,y:1100,r:620,rx:1,wob:a=>.05*Math.sin(a*3)});M.lakes.push({x:3300,y:1100,r:620,rx:1,wob:a=>.05*Math.sin(-a*3)});
       navIsle(M,{x:1600,y:1100,r:70,rx:2.4});M.bridgeAng.push([1600,970,0,1],[1600,1230,0,-1]);
       for(const x of [300,2900])navIsle(M,{x,y:1100,r:75,rx:1});}},
-  atoll:{name:'Pacific Atolls',min:6,max:8,sym:'point',fieldMinB:300,tag:'ocean · island bases · offshore oil · big navies',desc:'Eight island bases ring a great ocean. Bridges link neighbours around the ring and to the central isle; rock-pad oil rigs sit in open water between them, and fleets and landings decide who holds them.',
+  atoll:{name:'Pacific Atolls',min:6,max:8,sym:'point',fieldMinB:300,tag:'ocean · island bases · offshore oil · big navies',desc:'Eight island bases ring a great ocean. Bridges link neighbors around the ring and to the central isle; rock-pad oil rigs sit in open water between them, and fleets and landings decide who holds them.',
     slots:[[560,430],[2640,1770],[1600,380],[1600,1820],[2640,430],[560,1770],[560,1100],[2640,1100]],oilAt:[[1600,1100],[1100,760,1],[2100,1440,1],[1100,1440,1],[2100,760,1]],
     water(M,R){M.lakes.push({x:1600,y:1100,r:6000,rx:1,wob:()=>0});const w=R()*6.28,mk=(x,y,k)=>({x,y,r:290,rx:1.45,w:a=>.05*Math.sin(a*3+w+k)});
       const I=[mk(560,430,0),mk(1600,380,1),mk(2640,430,2),mk(2640,1100,3),mk(2640,1770,4),mk(1600,1820,5),mk(560,1770,6),mk(560,1100,7)],C={x:1600,y:1100,r:190,rx:1.5};
@@ -386,6 +386,7 @@ function addComplexity(M,D){M.woods=M.woods||[];M.genCities=[];
     // a village on each flank, past the ravine's ends
     for(const b of [-.57,.57]){const q=P(0,b);if(clr(q[0],q[1])>200*u)M.genCities.push([q[0],q[1],70,vs]);}}}
 function seasonOf(mk){const D=MAPS[mk];return D?(D.ssn||(D.theme==='snow'?3:1)):1;}
+let NO_TOWNS=false;   /* set by newGame around mkMap for a Battle game: no towns at all */
 function mkMap(seed,mk,ssn){
   mk=MAPS[mk]?mk:'strait';const D=MAPS[mk];
   srand=mulberry(seed);const R=srand;
@@ -473,9 +474,11 @@ function mkMap(seed,mk,ssn){
   M.fields=[];M.oil=[];
   // fixed derricks a map asks for (a central oil field): symmetric by design, so fair to everyone
   for(const [ox,oy,sea] of (D.oilAt||[])){const X=ox*WK,Y=oy*WK;if((sea?(X>90&&Y>90&&X<MAPW-90&&Y<MAPH-90&&M.edge(X,Y)<-60&&M.mtn(X,Y)<-48):dry(X,Y,80))&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>150))M.oil.push(Object.assign({x:X,y:Y,owner:-1,cp:[0,0],inc:0},sea?{sea:1}:{}));}   // sea:1 = an offshore rig on a rock pad: ships beside it capture it too
+  // tech buildings a Battle map asks for (02d-battlemaps 'tb', symmetric by the kit): Field Hospital / Airstrip / Radio Tower / Repair Depot
+  M.tech=[];for(const [tx,ty,tk] of (D.techAt||[])){const X=tx*WK,Y=ty*WK;if(dry(X,Y,80)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>130)&&M.tech.every(o=>Math.hypot(o.x-X,o.y-Y)>130))M.tech.push({x:X,y:Y,k:tk});}
   // fixed supply fields a custom map asks for (map editor)
-  for(const [ox,oy] of (D.fieldAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.fields.every(f=>Math.hypot(f.x-X,f.y-Y)>150)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>120))M.fields.push({x:X,y:Y,r:46,amt:9000});}
-  for(const [bx,by] of BASES){const a0=Math.atan2(MAPH/2-by,MAPW/2-bx);let put=false;for(let r of [390,430,350,470,300,250])for(let q=0;q<14&&!put;q++){const a=a0+(q%2?1:-1)*Math.ceil(q/2)*.35,fx=bx+Math.cos(a)*r,fy=by+Math.sin(a)*r;
+  for(const [ox,oy,am] of (D.fieldAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.fields.every(f=>Math.hypot(f.x-X,f.y-Y)>150)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>120))M.fields.push({x:X,y:Y,r:46,amt:am>0?am*100:9000});}   // a Battle map (02d-battlemaps) may give its own amount, in hundreds
+  if(!D.bm)for(const [bx,by] of BASES){const a0=Math.atan2(MAPH/2-by,MAPW/2-bx);let put=false;for(let r of [390,430,350,470,300,250])for(let q=0;q<14&&!put;q++){const a=a0+(q%2?1:-1)*Math.ceil(q/2)*.35,fx=bx+Math.cos(a)*r,fy=by+Math.sin(a)*r;
       if(!dry(fx,fy,110))continue;if(BASES.some(([qx,qy])=>(qx!==bx||qy!==by)&&Math.hypot(qx-fx,qy-fy)<380))continue;if(M.fields.some(f=>Math.hypot(f.x-fx,f.y-fy)<220))continue;M.fields.push({x:fx,y:fy,r:46,amt:9000});put=true;}}
   // Neutral supply and oil, placed fairly for whichever start positions are in play: every base gets the same
   // expansions at the same DRIVING distance inside its own part of the map, a contested field sits where the routes
@@ -565,7 +568,7 @@ function mkMap(seed,mk,ssn){
   // hamlets a custom map asks for (map editor)
   for(const [ox,oy] of (D.hamAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.hamlets.every(h=>Math.hypot(h.x-X,h.y-Y)>200))M.hamlets.push({x:X,y:Y});}
   // build the houses: 2-5 low buildings round each hamlet centre, in the map's local style
-  {const cnt={};for(const q of CITIES)cnt[q[3]]=(cnt[q[3]]||0)+1;let st='europe',bn=0;for(const k in cnt)if(cnt[k]>bn){bn=cnt[k];st=k;}
+  {const cnt={};for(const q of CITIES)cnt[q[3]]=(cnt[q[3]]||0)+1;let st=D.hstyle||'europe',bn=0;for(const k in cnt)if(cnt[k]>bn){bn=cnt[k];st=k;}
    st=({gulfcity:'yemen',america:'europe',latin:'latin',southasia:'southasia'})[st]||st;
    const OFF=[[0,0],[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,-2],[2,-2],[-2,2],[4,0],[0,4],[-4,0],[0,-4]];
    for(const h of M.hamlets){const HR=mulberry((seed|0)*17+Math.round(h.x*7+h.y*3)),want=2+Math.floor(HR()*4),i0=Math.floor(h.x/CELL),j0=Math.floor(h.y/CELL);let got=0;
@@ -578,6 +581,9 @@ function mkMap(seed,mk,ssn){
    for(const h of M.hamlets)M.cities.push({x:h.x,y:h.y,r:CELL*3.4,style:h.style,ham:true});}
   // ROAD NET (Conquest): roads base -> rear towns -> middle hamlets -> centre prize town, on at least two routes. Pure
   // geometry on the ground grid (no random numbers), so host and clients lay identical roads; units move faster on them.
+  // BATTLE has no towns (Abdullah 2026-11-13 19:55 "I thought we removed towns in battle", 19:57 "...buildings where units could garrison in
+  // around the map like generals but not named towns"): the Battle game (Generals rules) gets no cities, hamlets or town roads on ANY map; newGame sets NO_TOWNS for a Battle build only. Conquest is unchanged.
+  if(NO_TOWNS){M.cities=[];M.hamlets=[];M.roadNet=[];}else   /* the houses stay (neutral garrisonable buildings, Generals style): only the named-town layer goes */
   if(!D.manual)try{buildRoadNet(M,grid);}catch(e){M.roadNet=[];}
   // Season (look only; the layout above is identical in every season, so fairness doesn't change): winter = the snow theme,
   // autumn = mud (ground tint, puddles, orange leaves; the sim slows off-road wheels, G.ssn), summer = green/desert as the map says.
@@ -697,11 +703,11 @@ function terrTexMax(){let m=3072;try{const s=typeof SET!=='undefined'&&SET?SET.g
 // Battle start splits the terrain in two: paintTerrain() inside newGame only plans it (everything the simulation needs,
 // no drawing, a fraction of a second) and paintTerrainNow() draws the picture afterwards behind the loading screen.
 // It replays the same random numbers in the same order, so the drawing is exactly what one pass would have made.
-let TERR_DEFER=false,TERR_PEND=null;
+let TERR_DEFER=false,TERR_PEND=null;let TERR_RD=[];const TERR_CRACKS=false,TERR_SAT=.58; // groundreal 2026-11-14: dry ground keeps 58% of its painted color (real desert reads pale beige / gray-brown, not orange); fine per-pixel grain is mostly gone (the photo ground textures carry the grain)
 function paintTerrain(M){if(TERR_DEFER){TERR_PEND={M,g:G};terrPaint(M,false,true);}else{TERR_PEND=null;terrPaint(M,true,true);}}
 function paintTerrainNow(){const P=TERR_PEND;TERR_PEND=null;if(!P||P.g!==G||!G)return false;terrPaint(P.M,true,false);return true;}
 const TERR_NOP=(()=>{const f=()=>{},gr={addColorStop:f},o={createRadialGradient:()=>gr,createLinearGradient:()=>gr};for(const k of ['setTransform','fillRect','beginPath','moveTo','lineTo','quadraticCurveTo','closePath','ellipse','arc','fill','stroke','save','restore','clip','drawImage','putImageData'])o[k]=f;return o;})();
-function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
+function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();TERR_RD=[];
   srand=mulberry(M.seed*7+3);
   const TS0=Math.min(1,3072/MAPW,3072/MAPH),TS=draw?Math.min(TS0,TEXMAX/MAPW,TEXMAX/MAPH):TS0,TA=Math.max(1,MAPW*MAPH*TS0*TS0/(3200*2200));const lite=TS<TS0;const c=draw?document.createElement('canvas'):null;if(c){c.width=Math.round(MAPW*TS);c.height=Math.round(MAPH*TS);}const t=c?c.getContext('2d',{willReadFrequently:true}):TERR_NOP;t.setTransform(TS,0,0,TS,0,0);
   t.fillStyle='#a8825a';t.fillRect(0,0,MAPW,MAPH);
@@ -710,10 +716,11 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   blotch(260,[[178,138,96],[164,120,82],[190,152,108],[150,108,74],[172,134,92]],1);blotch(90,[[184,146,102],[154,114,80],[198,164,118],[140,104,72]],.7);blotch(30,[[172,146,104],[154,130,92],[128,112,78]],.45);blotch(9,[[140,120,84],[200,178,134]],.2);
   {const P=(n,col,rmin,rmax,al)=>{for(let k=0;k<n;k++){const x=srand()*MAPW,y=srand()*MAPH,r=srnd(rmin,rmax);for(let q=0;q<5;q++){const qx=x+srnd(-r,r)*.6,qy=y+srnd(-r,r)*.6,qr=r*srnd(.4,.8);const g=t.createRadialGradient(qx,qy,0,qx,qy,qr);g.addColorStop(0,`rgba(${col},${al})`);g.addColorStop(.6,`rgba(${col},${al*.5})`);g.addColorStop(1,`rgba(${col},0)`);t.fillStyle=g;t.beginPath();t.ellipse(qx,qy,qr,qr*srnd(.5,1),srnd(0,3),0,7);t.fill();}}};
    P(140*TA|0,'126,104,72',20,70,.4);P(220*TA|0,'112,108,70',10,40,.3);P(160*TA|0,'206,186,140',8,26,.35);
-   for(let k=0;k<26000*TA;k++){const x=srand()*MAPW,y=srand()*MAPH,v=srand();t.fillStyle=v<.4?'rgba(96,80,56,.35)':v<.8?'rgba(214,196,152,.35)':'rgba(120,104,76,.4)';t.fillRect(x,y,srnd(1,2.6),srnd(1,2.6));}}
+   for(let k=0;k<26000*TA;k++){const x=srand()*MAPW,y=srand()*MAPH,v=srand();t.fillStyle=v<.4?'rgba(110,100,84,.12)':v<.8?'rgba(206,196,172,.12)':'rgba(120,110,92,.14)';t.fillRect(x,y,srnd(1,2.6),srnd(1,2.6));}}
   const CK=draw&&lite?[[],[]]:null;
   for(let k=0;k<70*TA;k++){const cx=srand()*MAPW,cy=srand()*MAPH,R=srnd(70,170);const pts=[];for(let i=0;i<55;i++){const a=srand()*6.283,r=Math.sqrt(srand())*R;pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r*.8]);}
     for(const [ax,ay] of pts){const nb=pts.map(q=>[q,(q[0]-ax)**2+(q[1]-ay)**2]).sort((u,v)=>u[1]-v[1]).slice(1,4);for(const [[bx,by]] of nb){const fade=1-Math.hypot(ax-cx,ay-cy)/R;if(fade<=0)continue;
+      if(!TERR_CRACKS){srnd(-3,3);srnd(-3,3);continue;} // groundreal: hairline crack strokes drew stair-stepped dark lines when magnified; the cracked-earth ground texture replaces them (same random numbers drawn, so the map is unchanged)
       if(CK){const q=Math.max(1,Math.round(fade*8)),D=CK[0][q]||(CK[0][q]=new Path2D()),L=CK[1][q]||(CK[1][q]=new Path2D());D.moveTo(ax,ay);D.lineTo((ax+bx)/2+srnd(-3,3),(ay+by)/2+srnd(-3,3));D.lineTo(bx,by);L.moveTo(ax+1,ay+1);L.lineTo(bx+1,by+1);continue;}
       t.strokeStyle=`rgba(86,66,44,${.4*fade})`;t.lineWidth=1.3;t.beginPath();t.moveTo(ax,ay);t.lineTo((ax+bx)/2+srnd(-3,3),(ay+by)/2+srnd(-3,3));t.lineTo(bx,by);t.stroke();t.strokeStyle=`rgba(226,208,166,${.22*fade})`;t.lineWidth=1;t.beginPath();t.moveTo(ax+1,ay+1);t.lineTo(bx+1,by+1);t.stroke();}}}
   // phones: the ~25,000 hairline cracks are gathered into 8 shades and drawn in 16 strokes instead of one by one
@@ -740,9 +747,9 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   const RP=[];const road=(pts,w)=>{for(let i=0;i<pts.length-1;i++){const [ax,ay]=pts[i],[bx,by]=pts[i+1],n=Math.ceil(Math.hypot(bx-ax,by-ay)/40);for(let j=0;j<=n;j++)RP.push([ax+(bx-ax)*j/n,ay+(by-ay)*j/n]);}
     const path=()=>{t.beginPath();t.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length-1;i++){const mx=(pts[i][0]+pts[i+1][0])/2,my=(pts[i][1]+pts[i+1][1])/2;t.quadraticCurveTo(pts[i][0],pts[i][1],mx,my);}const l=pts[pts.length-1];t.lineTo(l[0],l[1]);};
     t.lineCap='round';t.lineJoin='round';path();t.strokeStyle='rgba(176,150,108,.22)';t.lineWidth=w+26;t.stroke();path();t.strokeStyle='rgba(70,60,40,.22)';t.lineWidth=w+8;t.stroke();path();t.strokeStyle='rgba(138,116,84,.62)';t.lineWidth=w;t.stroke();
-    {const P=[];let cx=pts[0][0],cy=pts[0][1];P.push([cx,cy]);for(let i=1;i<pts.length-1;i++){const mx=(pts[i][0]+pts[i+1][0])/2,my=(pts[i][1]+pts[i+1][1])/2;for(let k=1;k<=24;k++){const u=k/24,a=(1-u)*(1-u),b=2*u*(1-u),c=u*u;P.push([a*cx+b*pts[i][0]+c*mx,a*cy+b*pts[i][1]+c*my]);}cx=mx;cy=my;}const l=pts[pts.length-1];for(let k=1;k<=12;k++)P.push([cx+(l[0]-cx)*k/12,cy+(l[1]-cy)*k/12]);
+    {const P=[];let cx=pts[0][0],cy=pts[0][1];P.push([cx,cy]);for(let i=1;i<pts.length-1;i++){const mx=(pts[i][0]+pts[i+1][0])/2,my=(pts[i][1]+pts[i+1][1])/2;for(let k=1;k<=24;k++){const u=k/24,a=(1-u)*(1-u),b=2*u*(1-u),c=u*u;P.push([a*cx+b*pts[i][0]+c*mx,a*cy+b*pts[i][1]+c*my]);}cx=mx;cy=my;}const l=pts[pts.length-1];for(let k=1;k<=12;k++)P.push([cx+(l[0]-cx)*k/12,cy+(l[1]-cy)*k/12]);if(draw)TERR_RD.push([P,w]);
      const off=(o,jit)=>{t.beginPath();for(let i=0;i<P.length;i++){const p=P[Math.max(0,i-1)],q=P[Math.min(P.length-1,i+1)];let dx=q[0]-p[0],dy=q[1]-p[1];const L=Math.hypot(dx,dy)||1;const nx=-dy/L,ny=dx/L,j=Math.sin(i*.21+o)*jit;const x=P[i][0]+nx*(o+j),y=P[i][1]+ny*(o+j);i?t.lineTo(x,y):t.moveTo(x,y);}};
-     for(const sg of [-1,1]){off(sg*w*.24,1.6);t.strokeStyle='rgba(84,68,46,.26)';t.lineWidth=w*.17;t.stroke();off(sg*w*.24,1.2);t.strokeStyle='rgba(62,50,34,.3)';t.lineWidth=w*.07;t.stroke();off(sg*w*.24+w*.1*sg,1);t.strokeStyle='rgba(196,172,128,.16)';t.lineWidth=w*.05;t.stroke();}
+     for(const sg of [-1,1]){off(sg*w*.24,1.6);t.strokeStyle='rgba(84,72,56,.15)';t.lineWidth=w*.24;t.stroke();off(sg*w*.24,1.2);t.strokeStyle='rgba(70,60,46,.12)';t.lineWidth=w*.12;t.stroke();off(sg*w*.24+w*.1*sg,1);t.strokeStyle='rgba(196,172,128,.16)';t.lineWidth=w*.05;t.stroke();}
      off(0,2);t.strokeStyle='rgba(168,146,104,.28)';t.lineWidth=w*.2;t.stroke();
      for(let i=0;i<P.length;i+=2){if(srand()>.35)continue;const [x,y]=P[i];t.fillStyle='rgba(66,54,38,.22)';t.beginPath();t.ellipse(x+srnd(-w*.35,w*.35),y+srnd(-w*.35,w*.35),srnd(2,6),srnd(1.5,4),srnd(0,3),0,7);t.fill();}}};
   {const crosses=(a,b)=>{const n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/30);for(let i=1;i<n-1;i++){const x=a[0]+(b[0]-a[0])*i/n,y=a[1]+(b[1]-a[1])*i/n;if(M.edge(x,y)>-25||M.mtn(x,y)>-30)return true;}return false;};
@@ -788,7 +795,7 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   for(const f of M.fields){const g=t.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r*1.8);g.addColorStop(0,'rgba(120,96,60,.6)');g.addColorStop(1,'rgba(120,96,60,0)');t.fillStyle=g;t.beginPath();t.arc(f.x,f.y,f.r*1.8,0,7);t.fill();}
   if(sim){const C=16,w=Math.ceil(MAPW/C),h=Math.ceil(MAPH/C),d=new Uint8Array(w*h);for(const [a,b] of RP){const r=2;const ci=a/C|0,cj=b/C|0;for(let i=-r;i<=r;i++)for(let j=-r;j<=r;j++){const x=ci+i,y=cj+j;if(x>=0&&y>=0&&x<w&&y<h&&Math.hypot(i,j)<=r)d[y*w+x]=1;}}const f=new Float32Array(w*h),R2=7;for(const [a,b] of RP){const ci=a/C|0,cj=b/C|0;for(let i=-R2;i<=R2;i++)for(let j=-R2;j<=R2;j++){const x=ci+i,y=cj+j;if(x<0||y<0||x>=w||y>=h)continue;const v=1-Math.max(0,(Math.hypot(i,j)-2)/(R2-2));if(v>f[y*w+x])f[y*w+x]=v;}}G.roadMask={C,w,h,d,f};}
   const roadD=(x,y)=>{let m=1e12;for(const [a,b] of RP){const d=(a-x)**2+(b-y)**2;if(d<m)m=d;}return Math.sqrt(m);};
-  const clear=(x,y,pad=0)=>!M.cityNear(x,y,30+pad)&&Math.abs(M.depth(x,y))>M.hw(x)+60+pad&&M.mtn(x,y)<-30-pad&&BASES.every(([bx,by])=>Math.hypot(x-bx,y-by)>340)&&M.fields.every(f=>Math.hypot(f.x-x,f.y-y)>f.r+60)&&M.oil.every(o=>Math.hypot(o.x-x,o.y-y)>70);
+  const clear=(x,y,pad=0)=>!M.cityNear(x,y,30+pad)&&Math.abs(M.depth(x,y))>M.hw(x)+60+pad&&M.mtn(x,y)<-30-pad&&BASES.every(([bx,by])=>Math.hypot(x-bx,y-by)>340)&&M.fields.every(f=>Math.hypot(f.x-x,f.y-y)>f.r+60)&&M.oil.every(o=>Math.hypot(o.x-x,o.y-y)>70)&&(M.tech||[]).every(o=>Math.hypot(o.x-x,o.y-y)>100);   // no trees, rocks or scrub on a capturable building's pad
   const AR=Math.min(3,Math.max(1,MAPW*MAPH/(3200*2200)));for(let i=0;i<26*TA;i++){const x=srnd(0,MAPW),y=srnd(0,MAPH);if(!clear(x,y))continue;const r=srnd(14,34);const g=t.createRadialGradient(x,y,r*.2,x,y,r);g.addColorStop(0,'rgba(40,34,22,.35)');g.addColorStop(.8,'rgba(40,34,22,.1)');g.addColorStop(.9,'rgba(170,150,110,.25)');g.addColorStop(1,'rgba(170,150,110,0)');t.fillStyle=g;t.beginPath();t.arc(x,y,r,0,7);t.fill();}
   for(let i=0;i<480*TA;i++){const x=srnd(0,MAPW),y=srnd(0,MAPH);if(!clear(x,y))continue;const n=2+srand()*4|0,sz=srnd(4,9);
     for(let j=0;j<n;j++){const ox=x+srnd(-sz*1.4,sz*1.4),oy=y+srnd(-sz,sz),r=sz*srnd(.6,1.1);const g=t.createRadialGradient(ox,oy,0,ox,oy,r*1.3);g.addColorStop(0,'rgba(104,92,60,.32)');g.addColorStop(.7,'rgba(118,104,70,.16)');g.addColorStop(1,'rgba(118,104,70,0)');t.fillStyle=g;t.beginPath();t.arc(ox,oy,r*1.3,0,7);t.fill();}}
@@ -806,9 +813,10 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   if(draw&&M.mud){ // Autumn mud: dark wet puddles with a grey-blue sheen (look only)
     const np=Math.round(MAPW*MAPH/38000);for(let k=0;k<np;k++){const x=srand()*MAPW,y=srand()*MAPH;if(M.edge(x,y)>-50)continue;const r=26+srand()*70,sq=.35+srand()*.4,rot=srand()*3.14;
       t.save();t.translate(x,y);t.rotate(rot);t.scale(1,sq);const g=t.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'rgba(92,100,106,.8)');g.addColorStop(.6,'rgba(40,34,26,.62)');g.addColorStop(1,'rgba(40,34,26,0)');t.fillStyle=g;t.beginPath();t.arc(0,0,r,0,6.2832);t.fill();t.restore();}}
-  if(draw){const CW=c.width,CH=c.height,id=t.getImageData(0,0,CW,CH),d=id.data;const SN=M.theme==='snow',GR=M.theme==='green',MUD=!!M.mud;const WS=new Float32Array(CW);for(let x=0;x<CW;x++)WS[x]=Math.sin(x/TS*.0021);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*16;if(GR&&!MUD&&!(d[i+2]>d[i]+10)){const gy=Math.max(Math.abs(d[i]-d[i+1]),Math.abs(d[i+1]-d[i+2])*.72),gk=Math.max(0,Math.min(1,(gy-5)/13));if(gk>0){const px=(i>>2)%CW,py=((i>>2)/CW)|0;const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,w=WS[px]*Math.cos(py/TS*.0017)*.5+.5;d[i]=d[i]*(1-gk)+(l*.42+30+18*w+n)*gk;d[i+1]=d[i+1]*(1-gk)+(l*.52+56+10*w+n)*gk;d[i+2]=d[i+2]*(1-gk)+(l*.3+22+n*.6)*gk;continue;}}if(SN&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=l*.42+128+n*.6;d[i+1]=l*.44+134+n*.6;d[i+2]=l*.45+146+n*.6;continue;}if(MUD&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=d[i]*.12+(l*.4+34)*.88+n;d[i+1]=d[i+1]*.12+(l*.32+25)*.88+n;d[i+2]=d[i+2]*.12+(l*.2+15)*.88+n*.8;continue;}d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;}t.putImageData(id,0,0);
+  if(draw){const CW=c.width,CH=c.height,id=t.getImageData(0,0,CW,CH),d=id.data;const SN=M.theme==='snow',GR=M.theme==='green',MUD=!!M.mud;const WS=new Float32Array(CW);for(let x=0;x<CW;x++)WS[x]=Math.sin(x/TS*.0021);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*16;if(GR&&!MUD&&!(d[i+2]>d[i]+10)){const gy=Math.max(Math.abs(d[i]-d[i+1]),Math.abs(d[i+1]-d[i+2])*.72),gk=Math.max(0,Math.min(1,(gy-5)/13));if(gk>0){const px=(i>>2)%CW,py=((i>>2)/CW)|0;const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,w=WS[px]*Math.cos(py/TS*.0017)*.5+.5;d[i]=d[i]*(1-gk)+(l*.42+30+18*w+n)*gk;d[i+1]=d[i+1]*(1-gk)+(l*.52+56+10*w+n)*gk;d[i+2]=d[i+2]*(1-gk)+(l*.3+22+n*.6)*gk;continue;}}if(SN&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=l*.42+128+n*.6;d[i+1]=l*.44+134+n*.6;d[i+2]=l*.45+146+n*.6;continue;}if(MUD&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=d[i]*.12+(l*.4+34)*.88+n;d[i+1]=d[i+1]*.12+(l*.32+25)*.88+n;d[i+2]=d[i+2]*.12+(l*.2+15)*.88+n*.8;continue;}if(d[i+2]>d[i]+10){d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;continue;}{const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,q=n*.35;d[i]=l+(d[i]-l)*TERR_SAT+q;d[i+1]=l+(d[i+1]-l)*TERR_SAT+q;d[i+2]=l+(d[i+2]-l)*TERR_SAT+q*.8;}}t.putImageData(id,0,0);
   const e=t.createRadialGradient(MAPW/2,MAPH/2,MAPH*.55,MAPW/2,MAPH/2,MAPW*.72);e.addColorStop(0,'rgba(0,0,0,0)');e.addColorStop(1,'rgba(0,0,0,.35)');t.fillStyle=e;t.fillRect(0,0,MAPW,MAPH);
-  G.terrain=c;G.tctx=t;const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;th.getContext('2d').drawImage(c,0,0,th.width,th.height);G.thumb=th;}
+  G.terrain=c;G.tctx=t;G.roadDraw=TERR_RD;  // the painted road curves (rendering only: 04-gfx draws the road mask from them, smooth at any angle)
+  const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;th.getContext('2d').drawImage(c,0,0,th.width,th.height);G.thumb=th;}
   if(sim){buildHGrid();if(!draw&&typeof document!=='undefined'){const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;const q=th.getContext('2d');q.fillStyle='#a8825a';q.fillRect(0,0,th.width,th.height);G.thumb=th;}}
   srand=Math.random;
 }

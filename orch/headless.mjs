@@ -58,7 +58,7 @@ const PORTABLE = ['sin', 'cos', 'atan2', 'exp', 'pow'];
 
 // ------------------------------------------------------------------------------------------------ loading the sim
 // Modules that ARE the simulation (loaded whole).
-export const SIM_FILES = ['01-data.js', '01c-jp.js', '01c-modern.js', '02-map.js', '02b-realmaps.js', '02c-memaps.js', '03-sim.js', '03b-tactics.js', '03c-heroes.js', '03c-logistics.js', '03d-command.js', '03d-navy2.js', '03e-politics.js', '03f-battlefield.js', '03g-battlefeel.js', '03g-modern.js', '03h-economy.js', '03i-leaders.js'];
+export const SIM_FILES = ['01-data.js', '01c-jp.js', '01c-modern.js', '02-map.js', '02b-realmaps.js', '02c-memaps.js', '02d-battlemaps.js', '03-sim.js', '03b-tactics.js', '03c-heroes.js', '03c-logistics.js', '03d-command.js', '03d-navy2.js', '03e-politics.js', '03f-battlefield.js', '03g-battlefeel.js', '03g-modern.js', '03h-economy.js', '03i-leaders.js'];
 // The host netcode a server adds on top (--hostsnap): snapshots/events/team panels, and battle checkpoints. Loaded whole
 // and verbatim, with no window in scope (they must not need one).
 export const HOST_FILES = ['07a-hostsnap.js', '07b-ckpt.js'];
@@ -372,7 +372,7 @@ function DRIVER() {
     S = { rng: mul((o.seed ^ 0x9E3779B9) >>> 0), clock: 0, realClock: !!o.realClock, portMath: (o.portMath || []).filter(k => PM[k]), steps: 0, ms: 0 };
     MODE = o.mode || 'single'; ME = 0; setup.d = o.diff == null ? 1 : o.diff;
     const t0 = realNow();
-    sim(() => { TERR_DEFER = true; try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map(() => true), map: o.map, tm: o.tm || o.facs.map((_, i) => i), slot: -1, w: o.w | 0 }); } finally { TERR_DEFER = false; } });
+    sim(() => { TERR_DEFER = true; try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map(() => true), map: o.map, tm: o.tm || o.facs.map((_, i) => i), slot: -1, ...(Array.isArray(o.st) ? { st: o.st } : {}), w: o.w | 0, battle: o.battle ? 1 : 0 }); } finally { TERR_DEFER = false; } });
     G.headless = !o.fx; // the page runs no visual/audio effect handlers unless --render
     if (o.fx && !W.fxWrapped) { // effects on: they may use Math.random/performance.now, but never the battle's
       W.fxWrapped = true; const f = FXE;
@@ -381,6 +381,7 @@ function DRIVER() {
     return Object.assign(W.info(), { ms: realNow() - t0 });
   };
   W.ev = c => eval(c); // debug hook: evaluate code inside the sim's scope (G, setBases, ...); used by orch/conquest*.mjs
+  W.ev = src => eval(src); // probe: run an expression inside the sim's scope (orch/stuckscan.mjs)
   W.step = sec => {
     const n = Math.round(sec * 60); let done = 0; const t0 = realNow();
     sim(() => { for (let i = 0; i < n && G && !G.over; i++) { simUpdate(1 / 60); S.clock += 1000 / 60; done++; } });

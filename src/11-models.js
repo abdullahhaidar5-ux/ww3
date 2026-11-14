@@ -6,7 +6,7 @@ const MCFG={
   mortar:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],extra:'mortar'},recon:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#4a5242',tk:.5},officer:{m:'soldier',fit:'y',size:15.7,tint:'#3d4a36',tk:.5},medic:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#e8e4da',tk:.35},
   commissar:{m:'soldier',fit:'y',size:15.7,tint:'#5b4a3a',tk:.5},sapper:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#6a5a3c',tk:.4},guer:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#4c5a3a',tk:.55},atk:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],tint:'#3c4434',tk:.5},
   idome:{m:'truck',fit:'z',size:36,extra:'samtruck'},ew:{m:'truck',fit:'z',size:35,extra:'dish'},cbr:{m:'truck',fit:'z',size:35,extra:'dish'},jeep:{m:'truck',fit:'z',size:26},atgm:{m:'truck',fit:'z',size:27,extra:'samtruck',tint:'#55603f',tk:.4},saka:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#a08a5c',tk:.5},raidlead:{m:'truck',fit:'z',size:28,extra:'mg'},
-  inf:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7],[-11,0]]},at:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]]},hacker:{m:'soldier',fit:'y',size:13.1,squad:[[3,-4],[-3,4]]},
+  inf:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7],[-11,0]]},spy:{m:'soldier',fit:'y',size:14.0},cleric:{m:'soldier',fit:'y',size:14.0,squad:[[4,0],[-5,-6],[-5,6]]},at:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]]},hacker:{m:'soldier',fit:'y',size:13.1,squad:[[3,-4],[-3,4]]},
   hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},champ:{m:'soldier',fit:'y',size:19.5,tint:'#262a26',tk:.62},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},fast:{m:'boat',fit:'z',size:30,tint:'#7a8590',tk:.9},minel:{m:'boat',fit:'z',size:50,tint:'#6d7570',tk:.9},sweep:{m:'boat',fit:'z',size:46,tint:'#7d8a82',tk:.9},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
 };
 // Realistic models (Objaverse / Sketchfab, CC-BY - authors credited in the menu): each nation fields the hardware it
@@ -84,7 +84,7 @@ function fetchModel(url){const ac=typeof AbortController!=='undefined'?new Abort
 const MQ={bytes:{},parsed:{},need:0,ld:null,bg:[],bgRun:0};MODELS.failed=[];
 // a nation's own hardware: its tank, militia technical, helicopter, jet and bulldozer models
 function nationModelKeys(f){const s=new Set();for(const kind in RMAP){const rk=RMAP[kind][f];if(rk&&RMOD[rk])s.add(RMOD[rk].m);}
-  if(MIL_TANK[f])s.add(MIL_TANK[f].m);if(f==='RS'||f==='DW')s.add(RMOD.zu.m);s.add(solKey(f));if(MEFAC.has(f))for(const k in BME)s.add(BME[k].m);return s;}
+  if(MIL_TANK[f])s.add(MIL_TANK[f].m);if(f==='RS'||f==='DW')s.add(RMOD.zu.m);s.add(solKey(f));if(f==='KP')s.add('sol_m');/* the Dear Leader's body: the bare-faced soldier (KP's own wears a mask) */if(MEFAC.has(f))for(const k in BME)s.add(BME[k].m);return s;}
 // every model that belongs to some nation (or to no unit yet, like the spare realistic models) is loaded only for a
 // battle with that nation; everything else is shared and always loaded
 function modelKeysFor(facs){if(typeof MODEL_FILES==='undefined')return[];const nat=new Set();
@@ -107,7 +107,7 @@ function parseModel(k){if(MQ.parsed[k])return MQ.parsed[k];return MQ.parsed[k]=(
     const g=await new Promise((res,rej)=>{try{ld.parse(b,'',res,rej);}catch(e){rej(e);}});const P={scene:g.scene,anims:g.animations};
     P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);if(m.userData.sgGloss!=null){m.roughness=Math.min(1,Math.max(.35,1-m.userData.sgGloss*.7));m.metalness=.15;}if(m.transmission>0){m.opacity*=1-m.transmission;m.transmission=0;}}}});
     try{mergeProto(P);}catch(e){console.warn('merge',k,e);}
-    MODELS.proto[k]=P;MODELS.ready=true;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
+    MODELS.proto[k]=P;MODELS.ready=true;MODELS.gen=(MODELS.gen|0)+1;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
     // the effects module keeps a list of model geometry it must never free; a model added later must join it
     try{GC_PROTO=null;}catch(e){}return true;}
   catch(e){MODELS.err=String(e&&e.message||e);if(!MODELS.failed.includes(k))MODELS.failed.push(k);delete MQ.bytes[MODEL_FILES[k]];setTimeout(()=>{delete MQ.parsed[k];},0);console.warn('3D model '+k+' failed to load:',e);return false;}})();}
@@ -197,8 +197,8 @@ function weather(m,amt,camo){if(!m||m.userData.wx)return;m.userData.wx=1;amt=amt
        else{/*ground: sun-faded top, rust streaks, mud on lower hull, snow settling on up-facing*/diffuseColor.rgb=mix(diffuseColor.rgb,vec3(l0)*1.08+vec3(.03,.025,.015),smoothstep(.55,1.,vWN.y)*.18*wAmt);float rs=wn(vec3(vOP.x*4.,vOP.y*.5,vOP.z*4.));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.30,.16,.09)*(.7+.5*gn),smoothstep(.72,.9,rs)*.28*wAmt*step(.04,l0));float dl=(1.-smoothstep(.0,1.25,hq))*(.55+.45*wn(vec3(vOP.x*5.,vOP.y*1.5,vOP.z*5.)));diffuseColor.rgb=mix(diffuseColor.rgb,wEnv.rgb*(.8+.35*gn)*.9,dl*(.45+.3*wAmt)*step(.04,l0));float sp=smoothstep(.66,.88,wn(vec3(vOP.x*9.,vOP.y*3.,vOP.z*9.)));diffuseColor.rgb*=1.-.22*sp*(1.-smoothstep(0.,1.8,hq));float ed=smoothstep(.8,.96,1.-abs(vWN.y))*smoothstep(.6,.8,wn(vOP*13.));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.46,.45,.42)*(.8+.4*gn),ed*.35*step(.04,l0));if(wEnv.w>.5)diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.86,.88,.92),smoothstep(.62,.95,vWN.y)*.42*wAmt);}}`).replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n{vec3 bp=vWP*2.3;float b0=wn(bp);vec3 bg=vec3(wn(bp+vec3(.35,0.,0.))-b0,wn(bp+vec3(0.,.35,0.))-b0,wn(bp+vec3(0.,0.,.35))-b0);float bs=(wAmt>.9&&wAmt<1.2)?.55:.18;normal=normalize(normal+(viewMatrix*vec4(bg,0.)).xyz*bs);}').replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor+(.5-gn)*.25*wAmt,.3,1.);').replace('#include <dithering_fragment>','#include <dithering_fragment>\n{vec3 vv=normalize(vViewPosition);float rim=pow(1.-clamp(dot(normalize(normal),vv),0.,1.),3.);gl_FragColor.rgb+=vec3(.55,.62,.75)*rim*.22*wAmt*(1.-.6*wRefl);if(wRefl>0.){vec3 Vw=normalize(cameraPosition-vWP),Nw=normalize(vWN+vec3(0.,1e-4,0.));float ndv=clamp(dot(Nw,Vw),0.,1.);vec3 Rw=reflect(-Vw,Nw);vec3 env=Rw.y>0.?mix(vec3(.6,.64,.68),vec3(.33,.48,.74),smoothstep(0.,.6,Rw.y)):vec3(.23,.2,.16);float fr=.04+.96*pow(1.-ndv,5.);float sp=pow(max(dot(Rw,vec3(-.66,.57,-.46)),0.),70.);float lu=dot(gl_FragColor.rgb,vec3(.33));gl_FragColor.rgb=mix(gl_FragColor.rgb,env*(.5+.5*lu),clamp(fr*.5*wRefl,0.,.6))+vec3(1.,.93,.8)*sp*.5*wRefl;}if(wCamo>0.){float up=clamp(vWN.y/max(length(vWN),1e-4),0.,1.);gl_FragColor.rgb+=vec3(.42,.5,.62)*rim*.18+vec3(.06,.07,.08)*up*up;}}');
     // DE-BLOCK 4b: vehicle hulls get a fine hammered-steel / dent bump (screen-derivative normal perturbation of a noise height) so they stop reading as smooth plastic
     sh.fragmentShader=sh.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
-      if(wCamo>0.&&wKind<1.5){float bh=wn(vOP*2.3)*.55+wn(vOP*7.1)*.3+wn(vOP*19.)*.15;vec3 bx=dFdx(-vViewPosition),by=dFdy(-vViewPosition);float bdx=dFdx(bh),bdy=dFdy(bh);vec3 r1=cross(by,normal),r2=cross(normal,bx);float dt=dot(bx,r1);if(abs(dt)>1e-12){vec3 gr=sign(dt)*(bdx*r1+bdy*r2);normal=normalize(abs(dt)*normal-.15*gr);}}`);};
-  m.customProgramCacheKey=()=>'wxb'+(m.userData.wk||0)+amt+'_'+camo+'_'+(m.userData.camoP||0)+'_'+(m.userData.wall||0);}
+      if(wCamo>0.&&wKind<1.5){float bh=wn(vOP*2.3)*.55+wn(vOP*7.1)*.3+wn(vOP*19.)*.15;vec3 bx=dFdx(-vViewPosition),by=dFdy(-vViewPosition);float bdx=dFdx(bh),bdy=dFdy(bh);vec3 r1=cross(by,normal),r2=cross(normal,bx);float dt=dot(bx,r1);if(abs(dt)>1e-12){vec3 gr=sign(dt)*(bdx*r1+bdy*r2);normal=normalize(abs(dt)*normal-.15*gr);}}`);if(typeof lookShader==='function')lookShader(m,sh);};
+  m.customProgramCacheKey=()=>'wxb'+(m.userData.wk||0)+amt+'_'+camo+'_'+(m.userData.camoP||0)+'_'+(m.userData.wall||0)+(typeof LOOK!=='undefined'&&LOOK.on&&m.userData.look?'L':'');}
 function normScale(obj,fit,size){obj.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(obj),sz=bb.getSize(new THREE.Vector3());const dim=fit==='y'?sz.y:fit==='x'?sz.x:(fit==='xz'||fit==='long')?Math.max(sz.x,sz.z):sz.z;const s=size/Math.max(.001,dim);const c=bb.getCenter(new THREE.Vector3());return{s,cx:c.x,cz:c.z,my:bb.min.y,xl:sz.x>sz.z};}
 const CAMOK={};function camoFreq(key){if(CAMOK[key]!==undefined)return;if(!['tank','tankE','tankW','truck','technical','toontank'].includes(key)){CAMOK[key]=0;return;}const P=MODELS.proto[key];P.scene.updateMatrixWorld(true);let mx=0;P.scene.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const b=o.geometry.boundingBox,sz=b.getSize(new THREE.Vector3());mx=Math.max(mx,sz.x,sz.y,sz.z);}});CAMOK[key]=mx>0?4/mx:0;}
 /* ---------- per-country looks: vehicle paint, camo blotches, uniform colour and national flag ---------- */
@@ -383,7 +383,7 @@ function tintedProto(key,team,kk){wxEnv();camoFreq(key);const LK=team&&team.fac?
         if(c.map)c.color.lerp(bc.multiplyScalar(Math.min(4,(.35+lum*.65)/bl)),.7);else c.color.lerp(bc.multiplyScalar(Math.min(1.6,.6+lum*1.4)),.82);
         if(AS.p!==3){c.userData.camoA=new THREE.Color(AS.a).convertSRGBToLinear();c.userData.camoB=new THREE.Color(AS.m).convertSRGBToLinear();c.userData.camoC=new THREE.Color(AS.c).convertSRGBToLinear();c.userData.camoP=AS.p;c.userData.camoS=AS.s||1;}}}
       if(tc&&c.color&&!['tree1','tree2','tree3','tree4'].includes(key))c.color.lerp(tc,LK&&(isSol(key)||VK.includes(key)||AS)?Math.min(k,AS?.03:.06):k);if(isB&&c.color){c.color.multiply(new THREE.Color(1.08,1.0,.84));const rg=team&&team.fac&&FACTIONS[team.fac]?FACTIONS[team.fac].music:null,BW={west:'#9aa3a8',mideast:'#d2b48a',slavic:'#8f9686',southasia:'#c9a27a',eastasia:'#a8a196',latin:'#d9c9a8'}[rg];if(BW){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.05&&lum<.85)c.color.lerp(new THREE.Color(BW).convertSRGBToLinear().multiplyScalar(.6+lum*.9),.32);}}{if(c.isMeshStandardMaterial&&['tank','tankE','tankW','truck','technical','toontank','heli','jet','ship','boat','drone','sam'].includes(key)){c.metalness=Math.min(Math.max(c.metalness||0,.12),.3);c.roughness=Math.min(Math.max(c.roughness??.7,.5),.7);c.userData.sheen=1;}}
-      if(isB&&team&&team.fac&&CAMOX[team.fac]){const X=CAMOX[team.fac];c.userData.trimC=new THREE.Color(X.t).convertSRGBToLinear();c.userData.wall=X.w||0;}map.set(m,c);}return map.get(m);});o.material=Array.isArray(o.material)?nm:nm[0];});
+      if(isB&&team&&team.fac&&CAMOX[team.fac]){const X=CAMOX[team.fac];c.userData.trimC=new THREE.Color(X.t).convertSRGBToLinear();c.userData.wall=X.w||0;}if(typeof lookApply==='function')lookApply(c,key,team,m);map.set(m,c);}return map.get(m);});o.material=Array.isArray(o.material)?nm:nm[0];});
   if(!(P.anims&&P.anims.length))try{mergeTinted(clone);}catch(err){console.warn('mergeTinted',key,err);}
   MODELS.tinted[id]={scene:clone,anims:P.anims};return MODELS.tinted[id];}
 // Graphics Phase 5: a vehicle model still drew one mesh per paint colour (hull, tracks, wheels, hatches, lights... each
@@ -396,7 +396,7 @@ function matSig(m){if(!m||!m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||!
   for(const t of ['map','normalMap','roughnessMap','metalnessMap','aoMap','emissiveMap','alphaMap','bumpMap','lightMap','displacementMap','envMap'])if(m[t])return null;
   const u=m.userData,cc=c=>c&&c.isColor?c.getHexString():'';
   return [m.side,m.alphaTest,+m.roughness.toFixed(4),+m.metalness.toFixed(4),m.emissive.getHexString(),m.emissiveIntensity,m.flatShading?1:0,m.depthWrite?1:0,m.depthTest?1:0,m.fog?1:0,m.polygonOffset?m.polygonOffsetFactor+'/'+m.polygonOffsetUnits:0,m.envMapIntensity,
-    m.customProgramCacheKey?m.customProgramCacheKey():'',u.wx||0,u.refl||0,u.sheen||0,cc(u.camoA),cc(u.camoB),cc(u.camoC),u.camoP||0,u.camoS||0,cc(u.trimC),u.wall||0].join('|');}
+    m.customProgramCacheKey?m.customProgramCacheKey():'',u.wx||0,u.refl||0,u.sheen||0,cc(u.camoA),cc(u.camoB),cc(u.camoC),u.camoP||0,u.camoS||0,cc(u.trimC),u.wall||0,u.look||'',u.lookTx||0].join('|');}
 // Only rotors and propellers are animated by name (main_rotor / tail_rotor); a model's turret and gun nodes never move
 // on their own (the whole vehicle turns to its target), so they merge too. A future turret animation must keep them.
 const MOVE_KEEP=/rotor|prop/i;
@@ -442,12 +442,12 @@ const TANKBOX={};function tankBox(key,yaw){if(TANKBOX[key]!==undefined)return TA
 // Kit on every soldier so squads read like real infantry: a national helmet (rounded western, flared Soviet-style,
 // or a militia cap / shemagh), a field pack with bedroll, ammo pouches and a canteen. Pieces ride on the skeleton's
 // head and chest bones so they move with the walk; sizes are given in world units and converted to bone space.
-const GEARM={};function gearMat(c){return GEARM[c]||(GEARM[c]=(()=>{const m=new THREE.MeshStandardMaterial({color:lin(c),roughness:.8,metalness:.05});if(typeof weather==='function')weather(m,.8,0);return m;})());}
+const GEARM={};function gearMat(c){return GEARM[c]||(GEARM[c]=(()=>{const m=new THREE.MeshStandardMaterial({color:lin(c),roughness:.8,metalness:.05});if(typeof weather==='function')weather(m,.8,0);if(typeof lookTag==='function')lookTag(m,'canvas');return m;})());}
 // Each soldier's kit (helmet, pack, bedroll, pouches, canteen) was ~10 separate meshes - every one a draw call in every
 // pass, times 3 soldiers per squad. It is merged into one vertex-coloured mesh per bone (head, chest, hips), and the
 // merged shapes are shared by every soldier of the same nation and type.
 const GEARG={};let GEARVM=null;
-function gearVCMat(){return GEARVM||(GEARVM=(()=>{const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8,metalness:.05});if(typeof weather==='function')weather(m,.8,0);return m;})());}
+function gearVCMat(){return GEARVM||(GEARVM=(()=>{const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8,metalness:.05});if(typeof weather==='function')weather(m,.8,0);if(typeof lookTag==='function')lookTag(m,'canvas');return m;})());}
 function mergeGear(B,key){for(const bn of ['head','chest','hips']){const bone=B[bn];if(!bone)continue;const gear=bone.children.filter(c=>c.userData.gear);if(!gear.length)continue;
     let geo=GEARG[key+'|'+bn];
     if(!geo){bone.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(bone.matrixWorld).invert(),parts=[];for(const g of gear)g.traverse(q=>{if(q.isMesh&&q.geometry&&q.geometry.attributes.normal){const M=new THREE.Matrix4().multiplyMatrices(inv,q.matrixWorld);const fg=floatGeo(q.geometry,['position','normal']);fg.applyMatrix4(M);parts.push([fg,q.material.color||new THREE.Color(1,1,1)]);}});
@@ -544,7 +544,7 @@ function newSoldierKit(m,fac,kind,key,vr){vr=vr|0;const inner=m.userData.inner;i
   const rq=mq.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),.16));
   const attach=(bone,obj,wp,q)=>{const bq=new THREE.Quaternion(),ws=new THREE.Vector3();bone.getWorldQuaternion(bq);bone.getWorldScale(ws);const p=wp.clone();bone.worldToLocal(p);obj.position.copy(p);obj.quaternion.copy(bq.invert().multiply(q||mq));obj.scale.set(1/ws.x,1/ws.y,1/ws.z);obj.userData.gear=1;bone.add(obj);};
   // the rifle goes on first; the palm spots are read back from it, so the hands follow wherever the rifle really is
-  const rf=solRifle(k);attach(B.chest,rf,cp.clone().add(V(-.18*k,-1.0*k,.15*k)),rq);rf.updateMatrixWorld(true);const RP=a=>rf.localToWorld(new THREE.Vector3(a[0]*k,a[1]*k,a[2]*k)),TR=RP(RGRIP),TL=RP(RFORE);
+  // (the Infiltrator carries no rifle: see spyKit; the rifle is made below, after the hand solver)
   // The hands are posed by their palms, not their wrists (the old pose put the wrists on the grip points, so the hands
   // floated in front of a rifle hidden under the forearms): a two-bone arm solve aims the wrist, the hand is turned so the
   // palm faces the rifle (right palm against the grip from the right, left palm up under the handguard), the fingers
@@ -552,6 +552,9 @@ function newSoldierKit(m,fac,kind,key,vr){vr=vr|0;const inner=m.userData.inner;i
   const palm=sd=>{const ha=B['hand'+sd],mid=B[(sd==='R'?'Right':'Left')+'HandMiddle1'];const p=mid?mid.position.clone().multiplyScalar(.5):new THREE.Vector3(0,ha.position.length()*.17,0);p.z+=p.length()*.25;return p;};
   const hand=(sd,T,pole,face)=>{const ha=B['hand'+sd];if(!ha||!B['arm'+sd]||!B['forearm'+sd])return;const P=palm(sd),W=T.clone(),c=new THREE.Vector3();
     for(let i=0;i<6;i++){solArm(B,sd,W,pole);solTwist(ha,face);c.copy(P).applyMatrix4(ha.matrixWorld);W.add(T.clone().sub(c));}return P;};
+  if(kind==='spy'){spyKit(B,attach,hand,hp,hv,cp,V,k);mergeGear(B,key+'|spy|'+k.toFixed(3));return;}
+  if(kind==='ldr'){leaderKit(B,attach,hand,hp,hv,cp,V,k,fac);mergeGear(B,key+'|ldr|'+(fac==='KP'?'KP':'IR')+'|'+k.toFixed(3));return;}
+  const rf=solRifle(k);attach(B.chest,rf,cp.clone().add(V(-.18*k,-1.0*k,.15*k)),rq);rf.updateMatrixWorld(true);const RP=a=>rf.localToWorld(new THREE.Vector3(a[0]*k,a[1]*k,a[2]*k)),TR=RP(RGRIP),TL=RP(RFORE);
   const PR=hand('R',TR,V(-.5,-1,-.35),V(1,.15,0)),PL=hand('L',TL,V(.7,-1,-.1),V(-.15,1,0));
   solCurl(B,'R',1.15);solCurl(B,'L',.95);
   // where the palms belong on the rifle (chest frame) and where the palm sits in each hand (hand frame): orch/walktest.mjs
@@ -564,6 +567,102 @@ function newSoldierKit(m,fac,kind,key,vr){vr=vr|0;const inner=m.userData.inner;i
 // 3 kit meshes on its bones - 10 draw calls per soldier in every pass (picture + shadow), ~30 per squad. They are merged
 // into ONE skinned, vertex-coloured mesh per soldier (kit rides its bone as a rigidly skinned part), so a squad costs 3.
 // The merged shape is built once per nation / team colour / unit type and shared by every soldier that looks the same.
+// ---- Infiltrator (spy): a plain-clothes operative, not a rifleman (Abdullah 2026-11-11 "Make them look like actual spies") ----
+// Same soldier body and skeleton as everyone else (so it walks, merges and is drawn exactly like other infantry: ONE skinned
+// mesh, shapes shared by every spy of the same look), but: no rifle, no helmet, no combat kit; the uniform is re-painted in
+// civilian colours (spyPaint, by which bone a vertex follows) and a few code-made props say "spy". One look (Abdullah 2026-11-12
+// "Go with B"): long plain coat + scarf, binoculars at the eyes. View only: nothing here touches the simulation.
+const SPYC={top:'#6d6455',arm:'#6d6455',fore:'#6d6455',leg:'#2c2d31',shoe:'#1d1b19',hair:'#241c15'};
+const SPYSKIN='#b98a66';
+function spyKit(B,attach,hand,hp,hv,cp,V,k){const HC=hp.clone().add(V(0,1.35*k,0)),C=SPYC,H=new THREE.Group(),Cg=new THREE.Group(),Hp=new THREE.Group();
+  const mk=(geo,col,x,y,z,g)=>{const o=new THREE.Mesh(geo,gearMat(col));o.position.set(x*k,y*k,z*k);g.add(o);return o;};
+  const box=(w,h,d)=>new THREE.BoxGeometry(w*k,h*k,d*k),at=(x,y,z)=>HC.clone().add(V(x*k,y*k,z*k)),hip=(x,y,z)=>hv.clone().add(V(x*k,y*k,z*k));
+  // bare head: hair (or the cap) covers where the helmet was
+  {const d=mk(new THREE.SphereGeometry(1.0*k,12,7,0,Math.PI*2,0,Math.PI*.55),C.hair,0,.12,-.05,H);d.scale.set(1,.95,1.1);}
+  {{const t=mk(new THREE.TorusGeometry(.98*k,.3*k,6,12),'#8a2f2a',0,-1.25,.05,H);t.rotation.x=Math.PI/2;}mk(box(.6,1.9,.22),'#8a2f2a',.4,-2.3,.95,H);/* scarf + hanging end */
+    for(const x of[-.34,.34]){const c=mk(new THREE.CylinderGeometry(.3*k,.36*k,1.0*k,8),'#15161a',x,-.5,1.5,H);c.rotation.x=Math.PI/2;}mk(box(.5,.3,.4),'#15161a',0,-.5,1.3,H);/* binoculars at the eyes */
+    const sk=mk(new THREE.CylinderGeometry(1.5*k,1.95*k,3.3*k,12,1,true),C.top,0,-1.45,0,Hp);sk.scale.z=.82;mk(box(.16,3.2,.1),'#4b4438',0,-1.45,1.52,Hp);/* long coat below the waist, front seam */
+    {const T=new THREE.Group(),t=mk(new THREE.CylinderGeometry(1.42*k,1.62*k,4.1*k,12,1,true),C.top,0,0,0,T);t.scale.z=.9;mk(box(.16,4.0,.1),'#4b4438',0,0,1.42,T);const b=mk(new THREE.CylinderGeometry(1.66*k,1.66*k,.34*k,12,1,true),'#3b352c',0,-1.75,0,T);b.scale.z=.9;attach(B.chest,T,hip(0,2.25,.12));}/* the coat's body: closed front, belt */
+    hand('R',at(-.8,-.62,1.55),V(-1,-.8,.2),V(1,0,0));solCurl(B,'R',.9);hand('L',at(.8,-.62,1.55),V(1,-.8,.2),V(-1,0,0));solCurl(B,'L',.9);}
+  if(H.children.length)attach(B.head,H,HC);if(Cg.children.length)attach(B.chest,Cg,cp.clone().add(V(0,.2*k,0)));if(Hp.children.length)attach(B.hips,Hp,hv.clone());}
+// ---- The two leader figures (Abdullah 2026-11-13 "Make the ayatollah and dear leader more realistic and human looking") ----
+// Same soldier body and skeleton as the infantry (so they walk, merge and draw like any soldier: ONE skinned mesh each,
+// shared by every leader of the same look), re-painted (spyPaint with the colours below) and dressed in code-made clothes
+// that ride the bones. Both are FICTIONAL, generic people of their role - never the likeness of any real person: no
+// spectacles, no signature hairstyle, no real faces or names. View only: nothing here touches the simulation.
+//  Ayatollah (IR / RS / DW): an elderly senior cleric - white wrapped turban, full grey-white beard, a long light qaba robe
+//  under an open dark aba cloak with a thin gold edge, hands folded in front holding prayer beads.
+//  Dear Leader (KP): a middle-aged head of state - dark high-collared tunic suit, neat short dark hair,
+//  small gold collar stars, arms at his sides, upright.
+// (face and hands keep the soldier model's own skin texture: C.keep)
+const LDRLOOK={IR:{c:{top:'#8e897d',arm:'#2b241f',fore:'#2b241f',leg:'#8e897d',shoe:'#1b1815',keep:['skin','head'],untex:['shoe','leg','fore','head'],fold:.3,hair2:'#7d7a75',beard:'#8f8a82',sq:{dz:.3,r:.95,hy:.12}},skin:'#b8896a'},
+  KP:{c:{top:'#2c3033',arm:'#2c3033',fore:'#2c3033',leg:'#2a2d30',shoe:'#121212',keep:['skin','head'],untex:['shoe','leg','fore','head'],fold:.3,hair2:'#1f1b18',sq:{dz:.3,r:.95,hy:.05}},skin:'#caa283'}};
+function leaderKit(B,attach,hand,hp,hv,cp,V,k,fac){const DL=fac==='KP',HC=hp.clone().add(V(0,1.35*k,0)),H=new THREE.Group(),Cg=new THREE.Group(),Hp=new THREE.Group();
+  const mk=(geo,col,x,y,z,g)=>{const o=new THREE.Mesh(geo,gearMat(col));o.position.set(x*k,y*k,z*k);g.add(o);return o;};
+  const box=(w,h,d)=>new THREE.BoxGeometry(w*k,h*k,d*k),sph=(r,ws,hs)=>new THREE.SphereGeometry(r*k,ws||12,hs||8),hip=(x,y,z)=>hv.clone().add(V(x*k,y*k,z*k));
+  // ground under the feet (the hem stops just above it)
+  const fy=B.footL?new THREE.Vector3().setFromMatrixPosition(B.footL.matrixWorld).y:hv.y-7*k,drop=(hv.y-fy)/k+.35;
+  if(!DL){
+    // (head pieces are placed on the skull's real centre, .3 forward of the neck line; the face reaches z 1.15-1.4)
+    // turban: wraps of white cloth crossing a little, set on the forehead, a soft rounded crown, a tail of cloth at the back
+    for(let i=0;i<3;i++){const t=mk(new THREE.TorusGeometry(.9*k,(.3-i*.03)*k,8,26),i===1?'#e4e0d5':'#eeeae0',0,.2+i*.22,.25,H);t.scale.set(.98-i*.05,1.2-i*.06,.8);t.rotation.x=Math.PI/2+(i===1?.14:-.1);t.rotation.y=i===1?.1:-.06;}
+    mk(sph(.9,16,10),'#ebe7dc',0,.62,.24,H).scale.set(.95,.72,1.14);mk(box(.42,.7,.14),'#e3dfd3',0,-.1,-.92,H).rotation.x=.14;
+    // grey hair showing below the turban at the back and sides
+    {const g=new THREE.SphereGeometry(.9*k,14,8,Math.PI*.5+1.4,Math.PI*2-2.8,Math.PI*.45,Math.PI*.2);const h=mk(g,'#8d8984',0,-.05,.25,H);h.scale.set(.95,1,1.12);}
+    // full beard, grey-white: painted onto the face (LDRLOOK.IR beard, spyPaint) and given body below the chin here
+    {const c=mk(sph(.42,14,10),'#86827b',0,-1.3,.88,H);c.scale.set(1.05,1.2,.78);}
+    // aba: an open-fronted dark cloak from the shoulders to the ankles, thin gold edge down both sides of the opening
+    {const top=4.55,len=top+drop-.6,g=new THREE.CylinderGeometry(1.55*k,2.6*k,len*k,20,6,true,.42,Math.PI*2-.84);const a=mk(g,'#2b241f',0,top-len/2,-.08,Cg);a.scale.z=.86;
+      const pa=g.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i),z=pa.getZ(i),y=pa.getY(i),f=1+.05*Math.sin(Math.atan2(x,z)*7)*(.5-y/(len*k));pa.setX(i,x*f);pa.setZ(i,z*f);}g.computeVertexNormals();
+      for(const sd of[-1,1]){const t=mk(box(.1,len-.2,.14),'#b89a4e',0,0,0,Cg);const a0=.42,r0=(1.55+2.6)/2;t.position.set(Math.sin(a0)*r0*k*sd,(top-len/2)*k,(Math.cos(a0)*r0*.86-.08)*k);t.rotation.x=-Math.atan2(.8,len)*.95;t.rotation.z=sd*.04;}
+      mk(sph(1.5,16,8),'#2b241f',0,top-.2,-.1,Cg).scale.set(1.08,.4,.88);
+      // the qaba's front under the open cloak: a smooth closed robe body over the soldier's chest rig, a white collar band
+      {const t=mk(new THREE.CylinderGeometry(1.38*k,1.55*k,4.3*k,16,1,true),'#8e897d',0,2.25,.1,Cg);t.scale.z=.88;mk(box(.12,4.1,.08),'#77726a',0,2.2,1.43,Cg);}
+      attach(B.chest,Cg,hv.clone());}
+    // qaba: the long light robe below the waist, closed, to the ankles
+    {const g=new THREE.CylinderGeometry(1.5*k,1.95*k,(drop-.5)*k,16,1,true);mk(g,'#8e897d',0,-(drop-.5)/2,0,Hp).scale.z=.9;}
+    // hands folded in front at the waist, a string of dark prayer beads hanging from them
+    hand('R',hip(-.3,1.25,1.75),V(-1,-.6,-.2),V(.6,.2,.8));hand('L',hip(.3,1.15,1.7),V(1,-.6,-.2),V(-.6,.2,.8));solCurl(B,'R',.8);solCurl(B,'L',.8);
+    for(let q=0;q<11;q++){const a=q/10*Math.PI;mk(sph(.1,6,4),'#4a2c18',-.05+Math.cos(a)*.22,.7-Math.sin(a)*.95,1.85,Hp);}mk(box(.12,.3,.12),'#b89a4e',.17,-.35+.05,1.85,Hp);
+  }else{
+    // neat short dark hair (the painted scalp plus a soft volume over the top, sides and back)
+    {const g=new THREE.SphereGeometry(.97*k,18,9,Math.PI*.5+.75,Math.PI*2-1.5,0,Math.PI*.5);mk(g,'#1f1b18',0,.02,.28,H).scale.set(.88,.95,1.08);
+      
+      {const g3=new THREE.SphereGeometry(.97*k,12,5,Math.PI*.5-.8,1.6,Math.PI*.2,Math.PI*.24);const fr=mk(g3,'#1f1b18',0,.02,.28,H);fr.scale.set(.88,.95,1.0);}/* the front of the hair, close over the forehead */
+      {const g2=new THREE.SphereGeometry(.92*k,14,6,Math.PI*.5+1.4,Math.PI*2-2.8,Math.PI*.48,Math.PI*.2);const h2=mk(g2,'#1f1b18',0,.0,.27,H);h2.scale.set(.9,1,1.1);}}
+    // tunic: high stand collar, five buttons down the front, two breast pockets, small gold stars on the collar
+    {const T=new THREE.Group(),t=mk(new THREE.CylinderGeometry(1.32*k,1.6*k,4.1*k,16,1,true),'#2c3033',0,0,0,T);t.scale.z=.88;
+      const fz=y=>(1.46-y*.068)*.88;for(let i=0;i<5;i++){const y=1.55-i*.78;mk(sph(.09,8,6),'#7a6a3a',0,y,fz(y)+.04,T);}
+      for(const x of[-.66,.66]){mk(box(.6,.58,.08),'#30353a',x,1.05,fz(1.05)-.14,T).rotation.y=x>0?.45:-.45;mk(box(.62,.15,.1),'#24282b',x,1.36,fz(1.36)-.12,T).rotation.y=x>0?.45:-.45;}
+      {const y=mk(new THREE.CylinderGeometry(.8*k,1.32*k,.9*k,16,1,true),'#2c3033',0,2.5,.0,T);y.scale.z=.88;}/* yoke closing the tunic up to the collar */
+      attach(B.chest,T,hip(0,2.25,.12));}
+    {const c=mk(new THREE.CylinderGeometry(.66*k,.74*k,.5*k,16,1,true),'#2c3033',0,-1.42,.06,H);for(const x of[-.48,.48])mk(box(.2,.2,.08),'#e0bc58',x,-1.38,.62,H).rotation.z=.785;}
+    // tunic skirt to mid-thigh, straight trousers below (the legs' paint)
+    {const g=new THREE.CylinderGeometry(1.62*k,1.8*k,1.9*k,16,1,true);mk(g,'#2c3033',0,-.85,0,Hp).scale.z=.9;mk(new THREE.CylinderGeometry(1.64*k,1.64*k,.18*k,16,1,true),'#24282b',0,.05,0,Hp).scale.z=.9;}
+    // arms relaxed at the sides
+    hand('R',hip(-1.85,-1.5,.35),V(-.2,0,-1),V(1,0,0));hand('L',hip(1.85,-1.5,.35),V(.2,0,-1),V(-1,0,0));solCurl(B,'R',.55);solCurl(B,'L',.55);}
+  if(H.children.length)attach(B.head,H,HC);if(Hp.children.length)attach(B.hips,Hp,hv.clone());}
+// Civilian colours for the soldier body: every body vertex is painted by the bone it follows most (legs = trousers, feet =
+// shoes, trunk = jacket / coat / shirt, arms = sleeves, hands and face = skin). The cloth keeps the folds and shading of the
+// original uniform texture (its brightness, sampled once per vertex), but none of its camouflage or nation tint.
+function spyPaint(geo,skel,tex,C0,SK0,nSk){const C=C0||SPYC,SKC=SK0||SPYSKIN,pa=geo.attributes.position,ca=geo.attributes.color,ua=geo.attributes.uv,si=geo.attributes.skinIndex,sw=geo.attributes.skinWeight,n=pa.count;
+  const reg=skel.bones.map(b=>{const nm=b.name;return /foot|toe/i.test(nm)?'shoe':/upleg|^leg|leg[LR]?$/i.test(nm)?'leg':/hand/i.test(nm)?'skin':/forearm/i.test(nm)?'fore':/arm|shoulder/i.test(nm)?'arm':/head|neck/i.test(nm)?'head':'top';});
+  let lum=null,skn=null;try{const im=tex&&tex.image;if(im&&ua&&im.width){const cv=document.createElement('canvas'),w=cv.width=Math.min(256,im.width),h=cv.height=Math.min(256,im.height),x=cv.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,w,h);const d=x.getImageData(0,0,w,h).data;
+      lum=(u,v)=>{u-=Math.floor(u);v-=Math.floor(v);if(tex.flipY)v=1-v;const i=(Math.min(h-1,v*h|0)*w+Math.min(w-1,u*w|0))*4;return(d[i]*.3+d[i+1]*.59+d[i+2]*.11)/255;};
+      skn=(u,v)=>{u-=Math.floor(u);v-=Math.floor(v);if(tex.flipY)v=1-v;const i=(Math.min(h-1,v*h|0)*w+Math.min(w-1,u*w|0))*4,r=d[i],g=d[i+1],b=d[i+2];return r>g*1.06&&r>b*1.12&&r>55;};/* is this texel skin? (leaders: the cap band above the brows becomes hair) */}}catch(er){lum=null;skn=null;}
+  const R=new Array(n),Lm=new Float32Array(n),sum={},cnt={};
+  for(let i=0;i<n;i++){const ut=!ua||ua.getX(i)<-2;if(ut&&(!C.untex||nSk!=null&&i>=nSk)){R[i]=null;continue;}let b=0,bw=-1;for(let q=0;q<4;q++){const w=sw.getComponent(i,q);if(w>bw){bw=w;b=si.getComponent(i,q);}}if(ut&&!C.untex.includes(reg[b])){R[i]=null;continue;}const r=R[i]=reg[b]||'top';Lm[i]=lum&&!ut?lum(ua.getX(i),ua.getY(i)):1;sum[r]=(sum[r]||0)+Lm[i];cnt[r]=(cnt[r]||0)+1;}
+  const col={};for(const r of['top','arm','fore','leg','shoe','skin','head'])col[r]=lin(r==='skin'||r==='head'||(r==='fore'&&!C.fore)?SKC:C[r]);
+  for(let i=0;i<n;i++){const r=R[i];if(!r||C.keep&&C.keep.includes(r))continue;const c=col[r];let m=lum?Math.max(.55,Math.min(1.4,Lm[i]/Math.max(.02,sum[r]/cnt[r]))):1;if(C.fold)m=1+(m-1)*C.fold;ca.setXYZ(i,c.r*m,c.g*m,c.b*m);ua.setXY(i,-4,-4);}
+  // no helmet: whatever the soldier wears on its head is pulled in under the hair / cap (top of the head only, the face stays)
+  {const bp=nm=>{const i=skel.bones.findIndex(b=>b.name===nm);return i<0?null:new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().copy(skel.boneInverses[i]).invert());},hb=bp('head'),hi=bp('hips');
+    if(hb&&hi){const kb=hb.distanceTo(hi)/5.2,up=hb.clone().sub(hi).normalize()/* hips to neck: the rigs' head-top joints are not reliable */,c=hb.clone().add(up.clone().multiplyScalar(1.35*kb)),v=new THREE.Vector3(),rm=(C.sq?C.sq.r:.9)*kb;if(C.sq)c.z+=C.sq.dz*kb;/* leaders: the skull's real centre sits forward of the neck (bind space faces +z) */
+      const hc2=C.hair2?lin(C.hair2):null,bc=C.beard?lin(C.beard):null;for(let i=0;i<n;i++){if(R[i]!=='head')continue;v.fromBufferAttribute(pa,i).sub(c);if(C.sq&&ua.getX(i)<-2){if(v.dot(up)>=-.12*kb)pa.setXYZ(i,c.x,c.y,c.z);continue;}/* leaders: the soldier's goggles on the cap go (untextured parts above the brows) */const vu=v.dot(up);if(hc2&&(vu>=(C.sq?C.sq.hy:-.02)*kb||skn&&C.sq&&vu>=-.12*kb&&ua.getX(i)>-2&&!skn(ua.getX(i),ua.getY(i)))){ca.setXYZ(i,hc2.r,hc2.g,hc2.b);ua.setXY(i,-4,-4);}if(bc){const x=Math.abs(v.x)/kb,y=vu/kb,z=v.z/kb,line=x<.26?-.86:Math.min(-.42,-.86+(x-.26)/.22*.44),mo=y>-.79&&y<-.67&&x<.32&&z>.82;if(z>-.2&&y>-1.75&&(y<line&&!(y>-.9&&x<.26&&z>.9)||mo)){const f=(.7+.45*Math.min(1.2,Lm[i]))*(.84+.3*Math.abs(Math.sin(v.x*91.7+v.y*57.3+v.z*33.1)));ca.setXYZ(i,bc.r*f,bc.g*f,bc.b*f);ua.setXY(i,-4,-4);}}/* a full beard painted onto the face itself, so it follows the jaw exactly */if(vu<.12*kb)continue;const d=v.length();/* leaders: the cap's texture under the hair / turban becomes hair */if(d>rm){v.multiplyScalar(rm/d).add(c);pa.setXYZ(i,v.x,v.y,v.z);}}pa.needsUpdate=true;}}
+  ca.needsUpdate=true;ua.needsUpdate=true;}
+// the owner's "this one is hidden" mark: a small eye above the spy (one instanced draw for every spy on the map; 06-view shows it)
+function spyEyeGeo(){const P=[],I=[],N=18,ring=(f,w)=>{const b=P.length/3;for(let i=0;i<=N;i++){const a=i/N*Math.PI*2,x=Math.cos(a),y=Math.sin(a);for(const s of[1,1-w]){const q=f(x,y);P.push(q[0]*s,q[1]*s,0);}}for(let i=0;i<N;i++){const a=b+i*2;I.push(a,a+1,a+2,a+1,a+3,a+2);}};
+  ring((x,y)=>[x,y*.5*(1-.45*Math.abs(x))],.2);ring((x,y)=>[x*.3,y*.3],1);
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(P),3));g.setIndex(I);g.computeVertexNormals();return g;}
 const SOLM={};
 // Distant soldier: the merged soldier mesh is thinned by vertex clustering (nearby vertices snap together, tiny triangles vanish)
 // into a cheap skinned mesh on the same skeleton. Shown instead of the full one when the camera is far (see 06-view), so big
@@ -601,9 +700,12 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
       if(g.index){const ix=g.index.array;for(let i=0;i<ix.length;i++)I[oi+i]=ix[i]+ov;oi+=ix.length;}else{for(let i=0;i<n;i++)I[oi+i]=ov+i;oi+=n;}ov+=n;}
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(P,3));geo.setAttribute('normal',new THREE.BufferAttribute(N,3));geo.setAttribute('color',new THREE.BufferAttribute(C,3));if(UV)geo.setAttribute('uv',new THREE.BufferAttribute(UV,2));
     geo.setAttribute('skinIndex',new THREE.BufferAttribute(SI,4));geo.setAttribute('skinWeight',new THREE.BufferAttribute(SW,4));geo.setIndex(new THREE.BufferAttribute(I,1));
+    if(/\|spy\|v\d$/.test(key))try{spyPaint(geo,skel,tex);}catch(er){console.warn('spyPaint',er);}
+    else if(/\|ldr\|v\d$/.test(key))try{const lf=key.split('|')[3],L=LDRLOOK[lf==='KP'?'KP':'IR'];spyPaint(geo,skel,tex,L.c,L.skin,parts.reduce((q,p)=>q+(p.sk?p.g.attributes.position.count:0),0));}catch(er){console.warn('ldrPaint',er);}
     // one material for the whole soldier: the uniform's (most triangles among the coloured parts), white so the baked
     // vertex colours show, keeping its weathering shader hook
     let src=sk[0].material,best=-1;for(const o of sk){const c=o.material.color,t=o.geometry.index?o.geometry.index.count:o.geometry.attributes.position.count;if(c&&c.r*.3+c.g*.59+c.b*.11>.02&&t>best){best=t;src=o.material;}}
+    if(/\|ldr\|v\d$/.test(key)){src=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.88,metalness:0});}/* leaders: clean cloth - no camo, field grime or dust (the dust tint shows as pale blotches on dark cloth) */
     const mat=src.clone();mat.onBeforeCompile=src.onBeforeCompile;mat.customProgramCacheKey=src.customProgramCacheKey;mat.vertexColors=true;if(mat.color)mat.color.setRGB(1,1,1);mat.map=tex;
     if(tex){const ob=src.onBeforeCompile,ck=src.customProgramCacheKey;mat.onBeforeCompile=(sh,r)=>{if(ob)ob.call(src,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\nvec4 sampledDiffuseColor=texture2D(map,vMapUv);if(vMapUv.x<-2.)sampledDiffuseColor=vec4(1.);diffuseColor*=sampledDiffuseColor;\n#endif');};
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
@@ -750,19 +852,19 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     else{const x=ty==='lancet'?-1.5:-2.4;for(const yy of ty==='mq'?[.3,0,.6]:[0,.2]){let n=0;for(const sg of [1,-1])if(dd('side',sg,x,yy,1.1,.66,'f:'+f,null,{fa:.6,fb:.6,maxw:1.3,tag:'flag'}))n++;if(n)break;}}
     const g=K.geo();if(g){g.userData.P=dP;yaw.add(kitMarker('drone|'+ty+'|'+f,g));}}catch(err){console.warn('drone kit',err);}
   SCN.add(o);return o;}
-// The Ayatollah: a senior cleric - layered black turban (amamah), full white beard, round spectacles, a pale grey
+// Stand-in until the soldier model arrives (leaderObj). The Ayatollah: a fictional senior cleric - layered white turban, full white beard, a pale grey
 // qaba robe to the ground under a dark brown aba cloak with thin gold edging, hands folded holding prayer beads.
-// North Korea's supreme leader: a generic heavy-set figure in a grey-black buttoned tunic suit with two escort generals (visual only)
+// The Dear Leader: a fictional, generic figure in a grey-black buttoned tunic suit with two escort generals (visual only)
 function dlBuild(o,yaw,B,P,T){
   const skin='#d8b48e',suit='#2c2f31',hair='#141210';
   const man=(x,z,k)=>{const sk=skin,body=k?'#5c6140':suit,cap=k?'#5c6140':suit,s=k?.92:1;
     for(const sd of [-1,1]){B.cyl(.75*s,.85*s,6.4*s,10,x,3.4*s,z+1.05*sd*s,body);B.box(1.5,.45,.8,x+.35,.22,z+1.05*sd*s,'#141414');}
-    B.cyl(2.5*s,3.0*s,6.2*s,18,x,9.2*s,z,body);B.sph(2.9*s,x,8.6*s,z,body,1,1.05,1.05);
+    B.cyl(2.3*s,2.6*s,6.2*s,18,x,9.2*s,z,body);B.sph(2.5*s,x,8.6*s,z,body,1,1.05,1.05);
     for(const sd of [-1,1]){B.cyl(.8*s,.95*s,5.4*s,10,x,9.2*s,z+3.0*sd*s,body,0,0,.12*sd);B.sph(.6*s,x+.2,6.5*s,z+3.35*sd*s,sk);}
     B.cyl(.8,.9,.9,10,x,12.3*s,z,body);B.cyl(.75,.75,.5,10,x,12.8*s,z,sk);
     {const g=new THREE.SphereGeometry(1.45*s,18,14);g.scale(1,1.1,1.05);P(g,x,14.1*s,z,sk);}
     for(const sd of [-1,1])B.sph(.14,x+1.3*s,14.3*s,z+.45*sd,'#1a1410');
-    if(!k){B.sph(1.5,x-.1,14.55,z,hair,1,.8,1.05);B.box(.35,.35,2.3,x-1.35,13.5,z,hair);
+    if(!k){B.sph(1.5,x-.1,14.55,z,hair,1,.8,1.05);
       for(let q=0;q<5;q++)B.sph(.2,x+1.55,10.8-q*1.05,z+.05,'#8a8e90');
       B.box(.12,.5,.8,x+2.55,10.6,z+1.1,'#b3202a');B.sph(.2,x+2.7,10.6,z+1.1,'#d9b24a');}
     else{B.cyl(1.9,1.7,.8,16,x,15.6*s,z,cap);B.cyl(2.6,2.6,.45,18,x+.1,16.3*s,z,cap);B.box(1.5,.18,2.2,x+1.8,15.3*s,z,'#141414');B.box(.3,.5,1.2,x+2.1,16.3*s,z,'#d9b24a');
@@ -773,9 +875,17 @@ function dlBuild(o,yaw,B,P,T){
   const body=mesh(B.geo());body.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85});body.castShadow=true;body.receiveShadow=true;yaw.add(body);yaw.scale.setScalar(.888);/* same height as a soldier (MCFG.inf.size 14) */
   const ring=new THREE.Mesh(new THREE.RingGeometry(7,7.8,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:new THREE.Color(T.color),transparent:true,opacity:.32,depthWrite:false}));ring.position.y=1.2;ring.renderOrder=2;o.add(ring);o.userData.parts.tring=ring;
   SCN.add(o);return o;}
+// the leader unit: the dressed human figure (leaderKit) with two armed bodyguards once the soldier model has arrived; until
+// then the old code-built stand-in (it is swapped for the real one as soon as the model lands, like every soldier)
+const LDRAURA={};
+function leaderObj(e){const T=G.teams[e.team];if(MODELS.ready&&T&&(MODELS.proto.sol_m||MODELS.proto[solKey(T.fac)])){const o=modelFor(e);if(o&&o.userData.model){o.userData.cleric=true;o.userData.ldrModel=1;
+      // a soft halo of light on the ground marks him: green for the Ayatollah, gold for the Dear Leader (one shared shape each)
+      const DL=T.fac==='KP',key=DL?'g':'v';let A=LDRAURA[key];if(!A)A=LDRAURA[key]={g:new THREE.RingGeometry(9,10.6,40).rotateX(-Math.PI/2),m:new THREE.MeshBasicMaterial({color:DL?0xf0c45a:0x5fd38a,transparent:true,opacity:DL?.4:.3,depthWrite:false})};
+      const glow=new THREE.Mesh(A.g,A.m);glow.position.y=1.3;glow.renderOrder=2;glow.name='ldrAura';o.add(glow);return o;}}
+  const o=clericModel(e);o.userData.bg=MODELS.gen|0;return o;}
 function clericModel(e){const o=clericModel0(e);if(o&&o.userData.parts&&o.userData.parts.body&&!o.userData._big){o.userData.parts.body.scale.multiplyScalar(1.15);o.userData._big=1;}return o;}// leaders stand as tall as the (x1.15) soldiers
 function clericModel0(e){const T=G.teams[e.team],o=new THREE.Group(),yaw=new THREE.Group();o.add(yaw);o.userData.parts={body:yaw};o.userData.model=true;o.userData.cleric=true;
-  const DL=T&&T.fac==='KP',B=Bld(),skin=DL?'#d8b48e':'#c69a78',robe=DL?'#3a3d3f':'#a8a397',aba=DL?'#2a2c2e':'#3b2d23',trim=DL?'#2a2c2e':'#b8963e',tur='#101010',beard=DL?(DL?'#d8b48e':'#ecebe6'):'#ecebe6',P=(g,x,y,z,c,rx=0,ry=0,rz=0)=>{const m=new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(1,1,1));B._p.push({g,m,c:lin(c)});};
+  const DL=T&&T.fac==='KP',B=Bld(),skin=DL?'#d8b48e':'#c69a78',robe=DL?'#3a3d3f':'#a8a397',aba=DL?'#2a2c2e':'#3b2d23',trim=DL?'#2a2c2e':'#b8963e',tur='#ece8dd',beard=DL?(DL?'#d8b48e':'#ecebe6'):'#ecebe6',P=(g,x,y,z,c,rx=0,ry=0,rz=0)=>{const m=new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(1,1,1));B._p.push({g,m,c:lin(c)});};
   if(DL)return dlBuild(o,yaw,B,P,T);
   // qaba: smooth lathe from hem to shoulders, with soft folds
   {const pts=[];for(let k=0;k<=12;k++){const y=k/12*11.6;const r=3.05-1.05*Math.pow(k/12,.9)+(k===12?-.4:0);pts.push(new THREE.Vector2(r,y));}const g=new THREE.LatheGeometry(pts,24);const pa=g.attributes.position;for(let q=0;q<pa.count;q++){const x=pa.getX(q),z=pa.getZ(q),y=pa.getY(q),a=Math.atan2(z,x),f=1+.05*Math.sin(a*9)*(1-y/11.6);pa.setX(q,x*f);pa.setZ(q,z*f);}g.computeVertexNormals();P(g,0,0,0,robe);}
@@ -791,15 +901,13 @@ function clericModel0(e){const T=G.teams[e.team],o=new THREE.Group(),yaw=new THR
   {const g=new THREE.SphereGeometry(1.35,18,14);g.scale(1,1.2,.98);P(g,0,13.9,0,skin);}
   {const g=new THREE.ConeGeometry(.28,.75,8);g.rotateZ(-Math.PI/2);P(g,1.55,13.75,0,'#b98c6a');}
   for(const sd of [-1,1]){B.sph(.16,1.25,14.25,.45*sd,'#1a1410');B.box(.2,.18,.65,1.28,14.62,.47*sd,'#e7e5df');}
-  // round spectacles
-  for(const sd of [-1,1]){const g=new THREE.TorusGeometry(.36,.05,6,16);g.rotateY(Math.PI/2);P(g,1.42,14.25,.45*sd,'#3a3226');}B.box(.06,.06,.3,1.44,14.3,0,'#3a3226');
   // full white beard from ear to ear, longer at the chin, and moustache
   {const g=new THREE.SphereGeometry(1.35,16,12,0,Math.PI*2,Math.PI*.42,Math.PI*.58);g.scale(1.05,1.55,1.08);P(g,.12,13.55,0,beard);}
   {const g=new THREE.ConeGeometry(.9,2.2,10);g.rotateZ(Math.PI);P(g,.65,11.95,0,beard);}B.box(.35,.32,1.1,1.38,13.32,0,'#e2e0d9');
   for(const sd of [-1,1])B.sph(.42,.25,14.05,1.2*sd,beard,.7,1.3,.6);
   // amamah: wrapped layers of black cloth and a rounded crown
-  for(let k=0;k<4;k++){const g=new THREE.TorusGeometry(1.32-k*.06,.38,8,24);g.rotateX(Math.PI/2);P(g,-.05,14.95+k*.42,0,k%2?'#161616':tur,0,0,(k%2?.06:-.05));}
-  B.sph(1.35,-.05,16.1,0,tur,1,.62,1);B.sph(.5,.25,16.5,.3,'#1b1b1b',1.2,.6,1.4);
+  for(let k=0;k<4;k++){const g=new THREE.TorusGeometry(1.32-k*.06,.38,8,24);g.rotateX(Math.PI/2);P(g,-.05,14.95+k*.42,0,k%2?'#e2ded2':tur,0,0,(k%2?.06:-.05));}
+  B.sph(1.35,-.05,16.1,0,tur,1,.62,1);
   // shoes peeking out of the hem
   for(const sd of [-1,1])B.box(1.3,.45,.7,1.7,.22,.75*sd,'#1c1a18');
   const body=mesh(B.geo());body.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85});body.castShadow=true;body.receiveShadow=true;yaw.add(body);yaw.scale.setScalar(.826);/* same height as a soldier (MCFG.inf.size 14) */
@@ -815,6 +923,7 @@ const DECAL={sets:{}};
 function decalSet(k){let S=DECAL.sets[k];if(S)return S;let geo,mat,ro;
   if(k==='blob'){if(!window.BLOBTEX){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,4,32,32,31);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(.6,'rgba(0,0,0,.25)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);window.BLOBTEX=new THREE.CanvasTexture(c);}
     geo=new THREE.PlaneGeometry(1.5,1).rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({map:BLOBTEX,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});ro=1;}
+  else if(k==='eye'){geo=spyEyeGeo();mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.92,depthTest:false,depthWrite:false,side:THREE.DoubleSide});ro=6;}
   else{geo=k==='ringS'?new THREE.RingGeometry(.5,.56,28):new THREE.RingGeometry(.36,.41,28);geo.rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.24,depthWrite:false});ro=2;}
   return DECAL.sets[k]=S={geo,mat,ro,im:null,cap:0,list:new Set(),col:k!=='blob'};}
 // faction kit, ship radars and drone stencils are drawn as instances (one draw call per kit shape for the whole
@@ -841,8 +950,9 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
-  for(const [px,pz] of sq){const VR=Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,c.dy||0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK,VR);else soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind+'|v'+(SK?VR:0));}catch(err){console.warn('mergeSoldier',err);}}
+  for(const [px,pz] of sq){const KD=e.kind==='cleric'?(px===sq[0][0]&&pz===sq[0][1]?'ldr':'inf'):e.kind;const VR=e.kind==='spy'||KD==='ldr'?0:Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=KD==='ldr'&&MODELS.proto.sol_m?'sol_m':c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const TK=KD==='ldr'?0:c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,TK);if(!m)return null;m.position.set(-pz,c.dy||0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,KD,SK,VR);else if(e.kind!=='spy')soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),KD);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+(TK||0)+'|'+(T.fac||'')+'|'+KD+'|v'+(SK?VR:0));if(KD==='ldr')m.userData.ldr=1;}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
+  if(e.kind==='spy'){const ey=decal('eye');ey.position.y=c.size+7;ey.scale.setScalar(5.2);ey.visible=false;o.add(ey);o.userData.parts.eye=ey;}
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
   {const ring=decal(c.squad?'ringS':'ringV',new THREE.Color(T.color));ring.scale.setScalar(c.size);ring.position.y=1.2;if(!['heli','jet'].includes(e.kind))o.add(ring);o.userData.parts.tring=ring;}
   // soft contact shadow so ground vehicles sit in the terrain instead of floating on it
@@ -910,34 +1020,63 @@ function bkTex(kind){if(BKM[kind])return BKM[kind];{const rl=bkReal(kind);if(rl)
     ni.data[j]=(a*.5+.5)*255;ni.data[j+1]=(b*.5+.5)*255;ni.data[j+2]=(c*.5+.5)*255;ni.data[j+3]=255;const g=kind==='tin'?150+v*70:170+v*70-(kind==='plaster'&&y>N*.8?18:0);im.data[j]=g;im.data[j+1]=g;im.data[j+2]=g;im.data[j+3]=255;}
   cx.putImageData(im,0,0);nx.putImageData(ni,0,0);const t=new THREE.CanvasTexture(cv),n=new THREE.CanvasTexture(nm);for(const q of [t,n]){q.wrapS=q.wrapT=THREE.RepeatWrapping;}t.colorSpace=THREE.SRGBColorSpace;return BKM[kind]={t,n};}
 function bkMat(kind,col,rep){const T=bkTex(kind),t=T.t.clone(),n=T.n.clone();if(T.cl){T.cl[0].push(t);T.cl[1].push(n);}t.needsUpdate=n.needsUpdate=true;t.repeat.set(rep,rep);n.repeat.set(rep,rep);return new THREE.MeshStandardMaterial({color:col,map:t,normalMap:n,normalScale:new THREE.Vector2(.9,.9),roughness:kind==='tin'?.55:.93,metalness:kind==='tin'?.45:0});}
+// Roof survey (view only): a 15x15 grid of downward rays over the building BODY (largest child, never the kit / flag) tells where the real roof is.
+// The old code took the top of the body's bounding box, which for the factory is the chimney tops: the parapet frame and every roof prop then hung in the air up there.
+// Cached per kind + look (the model never changes). flatY = height of the highest sizeable flat roof (null: saw-tooth / pitched, no props there); roofY = what the guard measures against.
+const ROOFC={};
+function bldRoof(e,o,P){const key=e.kind+(o.userData.meWall?'m':'w');let r=ROOFC[key];
+  const fl=o.userData.parts&&o.userData.parts.flag,sz=new THREE.Vector3(),pv=o.userData.parts?Object.values(o.userData.parts):[];let body=null,bv=0,bb=null;
+  let mainBody=null,mv=0,mq=null;
+  for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;// not the kit or the flag
+    if(pv.includes(c)&&c!==o.userData.parts.main)continue;// not the dish/crane parts
+    const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz);const v=sz.x*sz.y*sz.z;if(c===o.userData.parts.main){mainBody=c;mq=q;mv=v;continue;}// the slab (its flag pole made it the 'biggest' on every modelled building) only counts when it is all there is (code-built depot etc.)
+    if(v>bv){bv=v;body=c;bb=q;}}
+  if(!body&&mainBody){body=mainBody;bb=mq;}
+  if(!body)return null;
+  if(!r){const N=15,rc=new THREE.Raycaster(),dn=new THREE.Vector3(0,-1,0),pt=new THREE.Vector3(),nm=new THREE.Vector3(),cells=[],ys=[];o.updateMatrixWorld(true);
+    for(let j=0;j<N;j++)for(let i=0;i<N;i++){const x=bb.min.x+(i+.5)/N*(bb.max.x-bb.min.x),z=bb.min.z+(j+.5)/N*(bb.max.z-bb.min.z);rc.set(pt.set(x,bb.max.y+4,z),dn);const h=rc.intersectObject(body,true)[0];
+      if(!h){cells.push(null);continue;}const up=h.face?nm.copy(h.face.normal).transformDirection(h.object.matrixWorld).y>.9:false;cells.push([h.point.y,up]);ys.push(h.point.y);}
+    ys.sort((a,b)=>a-b);const p85=ys.length?ys[Math.min(ys.length-1,Math.floor(ys.length*.85))]:BH[e.kind]/BSC,bins={};let tot=ys.length;
+    for(const c of cells)if(c&&c[1]){const k=Math.round(c[0]);bins[k]=(bins[k]||0)+1;}
+    let fy=null,best=-1;for(const k in bins){if(bins[k]>=Math.max(6,tot*.18)&&+k>best&&+k>6){best=+k;fy=+k;}}
+    r=ROOFC[key]={N,cells,bb,flatY:fy,roofY:fy!=null?fy:p85};}
+  return r;}
+// is there flat roof (at the flat roof height) under x,z and a small margin around it?
+function roofFlatAt(R,x,z,m){if(!R||R.flatY==null)return false;const bb=R.bb,N=R.N;for(const [a,b] of [[0,0],[m,0],[-m,0],[0,m],[0,-m]]){const i=Math.floor((x+a-bb.min.x)/(bb.max.x-bb.min.x)*N),j=Math.floor((z+b-bb.min.z)/(bb.max.z-bb.min.z)*N);if(i<0||j<0||i>=N||j>=N)return false;const c=R.cells[j*N+i];if(!c||!c[1]||Math.abs(c[0]-R.flatY)>1.3)return false;}return true;}
 function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',2),pl=bkMat('plaster','#b8a98a',2),tin=bkMat('tin','#8c9096',2),dk=new THREE.MeshStandardMaterial({color:0x2c2e2b,roughness:.8,metalness:.3});
-  let top=BH[k]/BSC;try{// roof height = the top of the BUILDING BODY (largest child), not of everything: the radar dish / crane / flag mast stand taller and made the parapet frame float above the roof
-    const fl=o.userData.parts&&o.userData.parts.flag,sz=new THREE.Vector3();let bv=0,bt=0;for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz);const v=sz.x*sz.y*sz.z;if(v>bv){bv=v;bt=q.max.y;}}if(bt>6)top=bt;}catch(_){}
-  const G2=new THREE.Group();P.add(G2);const bx=(w,hh,d,x,y,z,m,ry)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);q.position.set(x,y,z);if(ry)q.rotation.y=ry;q.castShadow=q.receiveShadow=true;G2.add(q);return q;};
-  const cy=(r1,r2,l,x,y,z,m,sg)=>{const q=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,l,sg||10),m);q.position.set(x,y,z);q.castShadow=q.receiveShadow=true;G2.add(q);return q;};
-  const w=h*.78;
-  for(const sd of [-1,1]){bx(w*2,1.6,1.1,0,top+.8,sd*w,rf);bx(1.1,1.6,w*2,sd*w,top+.8,0,rf);}
+  let R=null;try{R=bldRoof(e,o,P);}catch(_){}const top=R&&R.flatY!=null?R.flatY:null;if(R)o.userData.roofY=R.roofY;o.userData.roofFlat=top!=null;
+  if(o.userData.meWall)return;// Middle Eastern HQ/barracks/factory: meRoofKit already put real-roof clutter and the compound wall on this building (no second set)
+  const G2=new THREE.Group();P.add(G2);let pid=0;const bx=(w,hh,d,x,y,z,m,ry)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);q.position.set(x,y,z);if(ry)q.rotation.y=ry;q.castShadow=q.receiveShadow=true;q.userData.pid=pid;G2.add(q);return q;};
+  const cy=(r1,r2,l,x,y,z,m,sg)=>{const q=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,l,sg||10),m);q.position.set(x,y,z);q.castShadow=q.receiveShadow=true;q.userData.pid=pid;G2.add(q);return q;};// userData.pid: meshes of one roof prop share an id (the guard in orch/bldfix.mjs measures a prop by its lowest mesh)
+  const w=h*.78,ok=(x,z,m)=>top!=null&&roofFlatAt(R,x,z,m);
+  // parapet frame only when the roof really is flat all round it; props only where a flat roof really is under them
+  if(top!=null&&ok(-w,-w,1)&&ok(w,-w,1)&&ok(-w,w,1)&&ok(w,w,1))for(const sd of [-1,1]){bx(w*2,1.6,1.1,0,top+.8,sd*w,rf);bx(1.1,1.6,w*2,sd*w,top+.8,0,rf);}
   const r=((e.x|0)*31+(e.y|0)*17)&255,rn=i=>((r*(i+3)*2654435761)>>>0)/4294967296;
-  for(let i=0;i<3;i++){const x=-w*.6+i*w*.55,z=-w*.45+rn(i)*w*.5;bx(4.2,2.6,3.2,x,top+1.3,z,tin);bx(3.4,1.6,.2,x,top+1.5,z+1.65,dk);}
-  {const x=w*.45,z=-w*.35;for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])bx(.4,2.2,.4,x+a*1.3,top+1.1,z+b*1.3,dk);cy(2.1,2.1,3.4,x,top+3.9,z,tin,14);cy(.2,1.8,.9,x,top+6.1,z,tin,14);}
-  {const dsh=cy(2.4,.3,.7,-w*.55,top+3.4,w*.5,tin,14);dsh.rotation.set(.9,.5,0);cy(.15,.15,3,-w*.55,top+1.5,w*.5,dk,6);}
-  for(let i=0;i<2;i++){const x=w*.2+i*3,z=w*.45;cy(.12,.12,9+i*4,x,top+4.5+i*2,z,dk,5);bx(2.6,.15,.15,x,top+7+i*3,z,dk);}
-  if(k==='hq'||k==='factory'){bx(5,3,5,w*.1,top+1.5,-w*.1,pl);bx(5.4,.5,5.4,w*.1,top+3.2,-w*.1,rf);}
-  const R=h+(k==='hq'?30:22),gate=7,seg=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(-(z1-z0),x1-x0);return bx(L,5,1.1,(x0+x1)/2,2.5,(z0+z1)/2,rf,a);};
+  for(let i=0;i<3;i++){const x=-w*.6+i*w*.55,z=-w*.45+rn(i)*w*.5;if(!ok(x,z,3))continue;pid++;bx(4.2,2.6,3.2,x,top+1.3,z,tin);bx(3.4,1.6,.2,x,top+1.5,z+1.65,dk);}
+  {const x=w*.45,z=-w*.35;if(ok(x,z,2.5)){pid++;for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])bx(.4,2.2,.4,x+a*1.3,top+1.1,z+b*1.3,dk);cy(2.1,2.1,3.4,x,top+3.9,z,tin,14);cy(.2,1.8,.9,x,top+6.1,z,tin,14);}}
+  {const x=-w*.55,z=w*.5;if(ok(x,z,3)){pid++;const dsh=cy(2.4,.3,.7,x,top+3.4,z,tin,14);dsh.rotation.set(.9,.5,0);cy(.15,.15,3,x,top+1.5,z,dk,6);}}
+  for(let i=0;i<2;i++){const x=w*.2+i*3,z=w*.45;if(!ok(x,z,1.5))continue;pid++;cy(.12,.12,9+i*4,x,top+4.5+i*2,z,dk,5);bx(2.6,.15,.15,x,top+7+i*3,z,dk);}
+  if((k==='hq'||k==='factory')&&ok(w*.1,-w*.1,4)){pid++;bx(5,3,5,w*.1,top+1.5,-w*.1,pl);bx(5.4,.5,5.4,w*.1,top+3.2,-w*.1,rf);}
+  pid=-1;// ground yard wall meshes: no prop id (each one checked on its own)
+  const RR=h+(k==='hq'?30:22),gate=7,seg=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(-(z1-z0),x1-x0);bx(L,.5,1.7,(x0+x1)/2,5.2,(z0+z1)/2,rf,a);return bx(L,5,1.1,(x0+x1)/2,2.5,(z0+z1)/2,pl,a);};
   const post=(x,z)=>bx(2.2,6.4,2.2,x,3.2,z,rf);
-  seg(-R,-R,R,-R);seg(-R,-R,-R,R);seg(R,-R,R,R);seg(-R,R,-gate,R);seg(gate,R,R,R);
-  for(const [x,z] of [[-R,-R],[R,-R],[-R,R],[R,R],[-gate,R],[gate,R]])post(x,z);
-  bx(gate*2+2.2,1.2,2.2,0,6.4,R,rf);
-  bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
+  o.userData.rings=(o.userData.rings||0)+1;// ONE yard wall, on the ground
+  seg(-RR,-RR,RR,-RR);seg(-RR,-RR,-RR,RR);seg(RR,-RR,RR,RR);seg(-RR,RR,-gate,RR);seg(gate,RR,RR,RR);
+  for(const [x,z] of [[-RR,-RR],[RR,-RR],[-RR,RR],[RR,RR],[-gate,RR],[gate,RR]])post(x,z);
+  bx(gate*2+2.2,1.2,2.2,0,6.4,RR,rf);}
 // DE-BLOCK slice 7: facade detail — dark window recesses with lintel+sill, a door and a wall lamp on each wall of HQ/barracks/factory/depot (view only)
-function facadeKit(e,o,P){let bb=null,bv=0;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;}}if(!bb)return;
+function facadeKit(e,o,P){let bb=null,bv=0,body=null;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;body=c;}}if(!bb)return;
   if(!isFinite(bb.max.y)||bb.max.y<8)return;const sx=bb.max.x-bb.min.x,sz=bb.max.z-bb.min.z,hy=bb.max.y,cx=(bb.max.x+bb.min.x)/2,cz=(bb.max.z+bb.min.z)/2;if(sx<10||sz<10||sx>400)return;
   if(!window.BKFW){window.BKFW={g:new THREE.BoxGeometry(1,1,1),w:new THREE.MeshStandardMaterial({color:0x14181b,roughness:.35,metalness:.4}),t:new THREE.MeshStandardMaterial({color:0x8d8776,roughness:.9}),l:new THREE.MeshBasicMaterial({color:0xffd9a0})};}
   const F=window.BKFW,G=new THREE.Group();P.add(G);const by=Math.max(5,hy*.5);const add=(m,w,h,d,x,y,z)=>{const q=new THREE.Mesh(F.g,m);q.scale.set(w,h,d);q.position.set(x,y,z);G.add(q);return q;};
+  // a window / door / lamp is only drawn where the building really has a wall at its outline: models with a wide ground-floor terrace or a
+  // set-back tower used to get windows floating in the air along the outline (Abdullah 2026-11-10 "floating windows here without walls")
+  const rc=new THREE.Raycaster(),ro=new THREE.Vector3(),rd=new THREE.Vector3(),wallAt=(x,y,z,dx,dz)=>{try{ro.set(x+dx*3,y,z+dz*3);rd.set(-dx,0,-dz);rc.set(ro,rd);rc.near=0;rc.far=4.1;const h=rc.intersectObject(body,true);return h.length>0&&h[0].distance>=2;}catch(_){return true;}};
   for(const [ax,sg] of [[0,1],[0,-1],[1,1],[1,-1]]){const L=ax?sz:sx,n=Math.max(2,Math.floor(L/13)),off=ax?(sg>0?bb.max.x:bb.min.x):(sg>0?bb.max.z:bb.min.z);
     for(let i=0;i<n;i++){const u=(i+.5)/n*L-L/2;if(ax===0&&sg>0&&Math.abs(u)<5)continue;const x=ax?off+sg*.12:cx+u,z=ax?cz+u:off+sg*.12;
+      if(!wallAt(x,by,z,ax?sg:0,ax?0:sg))continue;
       const ww=ax?.5:5,wd=ax?5:.5;add(F.w,ww,3.4,wd,x,by,z);add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by-2,z+(ax?0:sg*.2));add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by+2,z+(ax?0:sg*.2));}}
-  add(F.w,5.5,6.5,.6,cx,3.3,bb.max.z+.15);add(F.t,7,.7,1.2,cx,6.8,bb.max.z+.3);add(F.l,.9,.9,.5,cx+4.6,7.6,bb.max.z+.35);}
+  if(wallAt(cx,3.3,bb.max.z,0,1)){add(F.w,5.5,6.5,.6,cx,3.3,bb.max.z+.15);add(F.t,7,.7,1.2,cx,6.8,bb.max.z+.3);add(F.l,.9,.9,.5,cx+4.6,7.6,bb.max.z+.35);}}
 // DE-BLOCK slice 3: tyre tracks out of the gate, scattered rocks and debris round the base (view only, shared geometry/material)
 let BKTRK=null,BKROCK=null;
 let BKAO=null,BKOIL=null,BKBLO=null,BKSCR=null;
@@ -1046,7 +1185,7 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     const m=mesh(B.geo());o.add(m);P.main=m;}
   const RT={...NATX_RT,US:'#bdb49c',EU:'#b5b2a6',FR:'#b5b2a6',DE:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',GB:'#b3ae98',AU:'#c3b48c',CA:'#a9ad96',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
   for(const q of cfg.list){const rc=q.col?{color:q.col}:(RT?{color:RT}:null);const m=instModel(q.m,rc,q.fit,q.size,q.ys,q.col?q.k:(RT?.42:undefined));if(!m)continue;m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
-    if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);if(MEFAC.has(T.fac)&&BME[e.kind]&&q===cfg.list[0])try{meRoofKit(o,m,e,T);}catch(er){}o.add(m);}}
+    if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);if(MEFAC.has(T.fac)&&BME[e.kind]&&q===cfg.list[0])try{o.userData.meWall=1;o.userData.rings=1;meRoofKit(o,m,e,T);}catch(er){o.userData.meWall=0;o.userData.rings=0;}o.add(m);}}
   if(e.kind==='coast'){// emplacement: sandbag walls round the launcher and a small radar / command truck beside the pad (visual only)
     const h=e.size/2,B=Bld();for(let i=-2;i<=2;i++){const sb=propObj('sandbag',-h*.92,i*h*.36,Math.PI/2,o);if(sb)sb.position.y=2.4;}
     for(const sd of [-1,1])for(let i=0;i<3;i++){const sb=propObj('sandbag',-h*.5+i*h*.42,sd*h*.97,0,o);if(sb)sb.position.y=2.4;}
@@ -1076,7 +1215,7 @@ function folGeo(cards,cx,cy,cz){const n=cards.length,P=new Float32Array(n*12),N=
     for(let q=0;q<4;q++){N[i*12+q*3]=mx/ml*.8;N[i*12+q*3+1]=my/ml*.8+.45;N[i*12+q*3+2]=mz/ml*.8;const sh=q<2?.78:1;C[i*12+q*3]=r*sh;C[i*12+q*3+1]=g*sh;C[i*12+q*3+2]=b*sh;}
     {const a=FOLREAL?(i%2)*.5:0,b=FOLREAL?a+.5:1;U.set(FOLREAL?[a,1,b,1,b,0,a,0]:[0,0,1,0,1,1,0,1],i*8);}I.set([i*4,i*4+1,i*4+2,i*4,i*4+2,i*4+3],i*6);});
   const G2=new THREE.BufferGeometry();G2.setAttribute('position',new THREE.BufferAttribute(P,3));G2.setAttribute('normal',new THREE.BufferAttribute(N,3));G2.setAttribute('uv',new THREE.BufferAttribute(U,2));G2.setAttribute('color',new THREE.BufferAttribute(C,3));G2.setIndex(new THREE.BufferAttribute(I,1));return G2;}
-function folMat(kind){const tm=new THREE.MeshStandardMaterial({map:folTex(kind),vertexColors:true,alphaTest:.42,side:THREE.DoubleSide,roughness:1,metalness:0});weather(tm,.35);
+function folMat(kind){const tm=new THREE.MeshStandardMaterial({map:folTex(kind),vertexColors:true,alphaTest:.42,side:THREE.DoubleSide,roughness:1,metalness:0});weather(tm,.35);if(typeof lookTag==='function')lookTag(tm,'foliage',1);
   const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.uniforms.ws=WINDS;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;uniform float ws;').replace('#include <begin_vertex>','#include <begin_vertex>\n{/* whole canopy leans together (phase per tree, none per leaf: no shearing), slow and small, rises with height */vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);k*=k;float ph=ip.x*.013+ip.z*.011;float a=(sin(wt*.55+ph)*.7+sin(wt*.95+ph*1.6+.8)*.18)*k*.8*ws;transformed.x+=a;transformed.z+=a*.4;transformed.y-=a*a*.6/max(transformed.y,2.);}');}};
   tm.customProgramCacheKey=()=>'folt'+kind;return tm;}
 function folPlace(list,geos,mats2,shadowG,yoff,sx,sy,snow){ // one InstancedMesh per part, same transforms
@@ -1140,19 +1279,19 @@ function modelTrees(){if(!MODELS.ready||!G.treePos)return false;const keys=['tre
      else{
      for(let f=0;f<12;f++){const a=f/12*6.283+R()*.3,len=14+R()*5;for(let q=0;q<5;q++){const t=(q+.5)/5,d=t*len,droop=-Math.pow(t,1.7)*10+2.5;const g=new THREE.ConeGeometry(4.2*(1-t*.55),len/5+2,4);g.rotateZ(Math.PI/2);g.scale(1,.3,1);g.rotateY(-a);const c=new THREE.Color().setHSL(.22+R()*.04,.42,.2+t*.05);parts_add(B,g,px+Math.cos(a)*d,py+droop,Math.sin(a)*d,c);}}
      B.sph(1.6,px,py-.5,0,'#5d4a30');
-     const g=B.geo().toNonIndexed();g.computeVertexNormals();smoothNorm(g);const tm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,side:THREE.DoubleSide});weather(tm,.3);const im=new THREE.InstancedMesh(g,tm,palms.length);
+     const g=B.geo().toNonIndexed();g.computeVertexNormals();smoothNorm(g);const tm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,side:THREE.DoubleSide});weather(tm,.3);if(typeof lookTag==='function')lookTag(tm,'foliage',1);const im=new THREE.InstancedMesh(g,tm,palms.length);
      palms.forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)-.5,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*.95,s*(.9+((i*7)%5)*.06),s*.95));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.receiveShadow=true;WORLD.add(im);}}
    {const lo=gfxLow(),tkm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0});for(let v=0;v<VAR;v++){if(!lists[v].length)continue;const oak=v===2,[tr,fo]=broadleaf(oak?'oak':'acacia',v,lo);
     folPlace(lists[v],[tr,fo],[tkm,folMat('leaf')],oak?new THREE.IcosahedronGeometry(13,0).scale(1,.7,1).translate(0,27,0):new THREE.IcosahedronGeometry(12,0).scale(1,.32,1).translate(0,20,0),-.5,1.05,1.05);}}
    return true;}
   keys.forEach((k,ki)=>{const root=MODELS.proto[k].scene;const n=normScale(root,'y',40);root.updateMatrixWorld(true);const base=new THREE.Matrix4().compose(new THREE.Vector3(-n.cx*n.s,-n.my*n.s,-n.cz*n.s),new THREE.Quaternion(),new THREE.Vector3(n.s,n.s,n.s));
-    root.traverse(mm=>{if(!mm.isMesh)return;const tm=mm.material.clone();weather(tm,.5);if(tm.color){tm.color.offsetHSL(.02,-.2,.03);}tm.roughness=1;tm.metalness=0;const im=new THREE.InstancedMesh(mm.geometry,tm,per[ki].length);const local=new THREE.Matrix4().multiplyMatrices(base,mm.matrixWorld);
+    root.traverse(mm=>{if(!mm.isMesh)return;const tm=mm.material.clone();weather(tm,.5);if(typeof lookTag==='function')lookTag(tm,'foliage',1);if(tm.color){tm.color.offsetHSL(.02,-.2,.03);}tm.roughness=1;tm.metalness=0;const im=new THREE.InstancedMesh(mm.geometry,tm,per[ki].length);const local=new THREE.Matrix4().multiplyMatrices(base,mm.matrixWorld);
       per[ki].forEach(([x,y,s,r],i)=>{const M=new THREE.Matrix4().compose(new THREE.Vector3(x,groundH(x,y),y),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s,s*(.85+((i*7)%5)*.07),s));M.multiply(local);im.setMatrixAt(i,M);});
       im.castShadow=true;im.receiveShadow=true;WORLD.add(im);});});return true;}
 function scenery(){G.sceneryPos=[];if(!MODELS.ready||!G.map)return;mats();const R=mulberry((G.seed||1)*7+41),M=G.map,rm=G.roadMask;let placed=0;
   const ok=(x,y)=>{if(x<120||y<120||x>MAPW-120||y>MAPH-120)return false;if(Math.abs(M.depth(x,y))<M.hw(x)+120)return false;if(BASES.some(([bx,by])=>Math.hypot(x-bx,y-by)<520))return false;if(M.fields.some(f=>Math.hypot(f.x-x,f.y-y)<f.r+120))return false;if(M.oil.some(o=>Math.hypot(o.x-x,o.y-y)<140))return false;if(rm&&rm.f&&rm.f[(y/rm.C|0)*rm.w+(x/rm.C|0)]>.05)return false;
     const sl=Math.hypot(groundH(x+10,y)-groundH(x-10,y),groundH(x,y+10)-groundH(x,y-10))/20;return sl<.15;};
-  {const HB=Bld();const st='#3a3a36';for(const [rx,rz] of [[0,0],[Math.PI/2,0],[0,Math.PI/2]]){HB.box(2.6,26,2.6,0,0,0,st,rx+.5,0,rz);}const hg=HB.geo();const hm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.55});weather(hm,.9);const HP=[];
+  {const HB=Bld();const st='#3a3a36';for(const [rx,rz] of [[0,0],[Math.PI/2,0],[0,Math.PI/2]]){HB.box(2.6,26,2.6,0,0,0,st,rx+.5,0,rz);}const hg=HB.geo();const hm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.55});weather(hm,.9);if(typeof lookTag==='function')lookTag(hm,'metal');const HP=[];
    for(let k=0;k<60&&HP.length<34;k++){const cx=R()*MAPW,cy=R()*MAPH;if(!ok(cx,cy))continue;for(let j=0;j<3+(R()*3|0);j++){const x=cx+(R()-.5)*90,y=cy+(R()-.5)*40;if(ok(x,y))HP.push([x,y,R()*6.28]);}}
    const im=new THREE.InstancedMesh(hg,hm,HP.length);HP.forEach(([x,y,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)+6,y),TMPQ.setFromEuler(new THREE.Euler(0,r,0)),new THREE.Vector3(1.1,1.1,1.1));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.receiveShadow=true;WORLD.add(im);G.hedgePos=HP;
    G.craters=[];for(let k=0;k<45;k++){const x=R()*MAPW,y=R()*MAPH;if(ok(x,y))G.craters.push([x,y,8+R()*10]);}}
@@ -1313,7 +1452,7 @@ function kitMat(){if(KIT.mat)return KIT.mat;const c=document.createElement('canv
   sten(68,'شاهد','bold 34px Tahoma, "Noto Sans Arabic", sans-serif','#262624');sten(69,'قاصف','bold 34px Tahoma, "Noto Sans Arabic", sans-serif','#262624');sten(70,'أبابيل','bold 30px Tahoma, "Noto Sans Arabic", sans-serif','#262624');
   sten(71,'조국을 위하여','bold 17px "Noto Sans KR", "Malgun Gothic", sans-serif','#e8e2d0','#6e2a24');sten(72,'Б-21','bold 40px Arial, sans-serif','#ecebe4');
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;KIT.tex=t;
-  const m=new THREE.MeshStandardMaterial({map:t,vertexColors:true,alphaTest:.5,roughness:.75,metalness:.1});if(typeof weather==='function')weather(m,.8,0);KIT.mat=m;return m;}
+  const m=new THREE.MeshStandardMaterial({map:t,vertexColors:true,alphaTest:.5,roughness:.75,metalness:.1});if(typeof weather==='function')weather(m,.8,0);if(typeof lookTag==='function')lookTag(m,'canvas',1);KIT.mat=m;return m;}
 function kitBuilder(){const P=[],N=[],C=[],U=[],AUD=[],Wc=kitUV('white',.4,.4,.6,.6),wu=(Wc.u0+Wc.u1)/2,wv=(Wc.vt+Wc.vb)/2,E=new THREE.Euler(),Q=new THREE.Quaternion(),V=new THREE.Vector3(),S=new THREE.Vector3(1,1,1);
   const push=(g,M,col,rect)=>{g=g.index?g.toNonIndexed():g;g.applyMatrix4(M);const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
     for(let i=0;i<p.count;i++){P.push(p.getX(i),p.getY(i),p.getZ(i));N.push(n.getX(i),n.getY(i),n.getZ(i));C.push(col.r,col.g,col.b);

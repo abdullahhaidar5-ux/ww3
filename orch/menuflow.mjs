@@ -15,11 +15,12 @@ const click = t => page.evaluate(t => { const e = [...document.querySelectorAll(
 try {
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`); await page.waitForFunction(() => typeof menuGo === 'function', null, { timeout: 60000 }); await page.waitForTimeout(1500);
   const step = async (want, label) => { try { await page.waitForFunction(w => MX.cur === w, want, { timeout: 8000 }); } catch { throw new Error(`${label}: on ${await cur()}, wanted ${want}`); } };
+  if (!await click('single player')) throw new Error('no Single player item'); await step('single', 'Single player');
   if (!await click('conquest')) throw new Error('no Conquest item'); await step('c-map', 'Conquest');
   await page.evaluate(() => document.querySelector('#mx .mxmap:nth-child(2)').click()); await step('c-nation', 'pick map');
   await page.evaluate(() => document.querySelector('#pickP .fac:nth-child(3)').click()); await step('c-players', 'pick nation');
   const me = await page.evaluate(() => setup.p); if (me !== 'IL') throw new Error('nation not set: ' + me);
-  await page.keyboard.press('Escape'); await step('c-nation', 'Esc 1'); await page.keyboard.press('Escape'); await step('c-map', 'Esc 2'); await page.keyboard.press('Escape'); await step('title', 'Esc 3');
+  await page.keyboard.press('Escape'); await step('c-nation', 'Esc 1'); await page.keyboard.press('Escape'); await step('c-map', 'Esc 2'); await page.keyboard.press('Escape'); await step('single', 'Esc 3'); await page.keyboard.press('Escape'); await step('title', 'Esc 4');
   await page.evaluate(() => menuGo('c-players')); await page.waitForTimeout(500);
   await click('start battle');
   await page.waitForFunction(() => document.getElementById('menu').hidden && typeof G !== 'undefined' && G && !G.over, null, { timeout: 150000 }); ok = true;

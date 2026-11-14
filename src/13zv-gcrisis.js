@@ -16,7 +16,7 @@ function gcrCond(c,code){
  return true;}
 GEV_ROWS.push(
  {id:'bi_esc',t:'Border crisis deepens',x:'Troop movements on both sides of a tense frontier have everyone on edge. The general staff wants orders.',w:3,c:'rival',ai:1,o:[
-  {t:'Mobilise the border brigades ($300)',fx:[['cash',-300],['mod','warSupport',.05,6],['rel','$nb',-12],['chain','bi_clash',3]]},
+  {t:'Mobilize the border brigades ($300)',fx:[['cash',-300],['mod','warSupport',.05,6],['rel','$nb',-12],['chain','bi_clash',3]]},
   {t:'Back down and talk',fx:[['rel','$nb',8],['un',3]]},
   {t:'Take it to the UN ($100)',fx:[['cash',-100],['rel','$nb',4]]}]},
  {id:'bi_clash',t:'Shots fired at the frontier',x:'A patrol has been ambushed. Both capitals blame each other and the press demands a response.',w:0,c:'always',o:[

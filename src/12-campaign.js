@@ -29,7 +29,7 @@ const CH={
 
 // ---------- the five missions ----------
 const CAMPAIGN=[
-{id:'pass',n:1,title:'Hold the Pass',sub:'Lebanese Shia · Ridge defence',fac:'RS',enemy:'DE',enemyName:'Invasion Force',map:'khyber',
+{id:'pass',n:1,title:'Hold the Pass',sub:'Lebanese Shia · Ridge defense',fac:'RS',enemy:'DE',enemyName:'Invasion Force',map:'khyber',
  brief:['An invasion force is pushing up the only road into our valleys. Our main columns are still two hours away on the mountain tracks.','You hold a ridge above the road with a small garrison: riflemen, anti-tank teams, two tanks and a few emplacements. Hold it. Every minute you stand buys the valley time.','When the reinforcements arrive, do not let the enemy rest: take the fight back down the pass and destroy their forward base.'],
  obj:[['hold','Hold the ridge until reinforcements arrive'],['reinf','Reinforcements arrive'],['crush','Destroy the enemy forward base']],
  win:'The pass is ours. The valley is safe, and the road is closed to the invaders.',lose:'The ridge has fallen. The valley will have to be defended from the next line.',
@@ -73,7 +73,7 @@ const CAMPAIGN=[
   else if(CH.combat(0)===0&&tr.length&&got<4)c.lose('The escort is gone.');}},
 
 {id:'fortress',n:3,title:'Mountain Fortress',sub:'Iran · Build and defend',fac:'IR',enemy:'US',enemyName:'Coalition Task Force',map:'zagros',
- brief:['Our command post sits in a mountain valley that the enemy must take to open the road to the plains. They will come in waves - infantry first, then armour, then everything they have.','Build a Mountain Fortress: five thousand tons of rock-cut bunker, with room for twenty fighters. Garrison it, dig in, and keep the engineers repairing.','Late in the battle the enemy will bring bunker-busting bombs. Warnings will sound. Get the garrison out of the fortress before the bombs fall, repair what you can, and do not lose headquarters. Hold until relief arrives at twelve minutes.'],
+ brief:['Our command post sits in a mountain valley that the enemy must take to open the road to the plains. They will come in waves - infantry first, then armor, then everything they have.','Build a Mountain Fortress: five thousand tons of rock-cut bunker, with room for twenty fighters. Garrison it, dig in, and keep the engineers repairing.','Late in the battle the enemy will bring bunker-busting bombs. Warnings will sound. Get the garrison out of the fortress before the bombs fall, repair what you can, and do not lose headquarters. Hold until relief arrives at twelve minutes.'],
  obj:[['fort','Build the Mountain Fortress'],['hold','Hold headquarters until relief arrives'],['bb','Survive the bunker-buster strikes']],
  win:'Relief columns have arrived. The valley held.',lose:'Headquarters has fallen. The valley is lost.',
  setup(c){const B=BASES[0];G.teams[0].credits=Math.round(7000/Math.max(.85,c.mul));c.T=720;c.focus=[B[0],B[1]];const hq=CH.base(0,B[0],B[1]);CH.unit(0,'dozer',B[0]+60,B[1]+110);
@@ -92,7 +92,7 @@ const CAMPAIGN=[
   c.status=c.t<c.T?'Relief in '+campClock(c.T-c.t)+' · wave '+c.wave:null;}},
 
 {id:'town',n:4,title:'Retake the Town',sub:'Lebanese Shia + Zaidi Shia Movement · Street fight',fac:'RS',ally:'DW',enemy:'DE',enemyName:'Occupation Force',map:'aleppo',
- brief:['An occupation force has seized the old town at the crossroads. Its streets and rooftops are held by infantry and anti-tank teams, with armour in the squares.','Lebanese Shia and Zaidi Shia Movement fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the town street by street. Put infantry into buildings to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves.'],
+ brief:['An occupation force has seized the old town at the crossroads. Its streets and rooftops are held by infantry and anti-tank teams, with armor in the squares.','Lebanese Shia and Zaidi Shia Movement fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the town street by street. Put infantry into buildings to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves.'],
  obj:[['z0','Clear the southern approach'],['z1','Clear the west quarter'],['z2','Clear the east quarter'],['z3','Take the citadel square'],['z4','Clear the far gate'],['gar','Garrison a building to hold ground']],
  win:'The town is free. Both flags fly over the citadel.',lose:'The assault has failed. Our columns fall back.',
  setup(c){const d=c.mul,B=BASES[0],C=[MAPW/2,MAPH/2],E=BASES[1];const ang=Math.atan2(C[1]-B[1],C[0]-B[0]),nx=-Math.sin(ang),ny=Math.cos(ang),ux=Math.cos(ang),uy=Math.sin(ang);
@@ -119,7 +119,7 @@ const CAMPAIGN=[
   else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and assault force lost.');}},
 
 {id:'finale',n:5,title:'Combined Arms',sub:'Iran · Final assault',fac:'IR',enemy:'RU',enemyName:'Northern Group',map:'plateau',
- brief:['This is the strike that ends the offensive. The enemy has dug a fortified base on the plateau: air-defence sites on the approaches, armour in depth, a War Factory and a command post at the back.','You command a combined force: loitering drones, missile launchers, armour and infantry. Drones cannot survive the air defences - break the SAM sites first with launchers and tanks, then let the drones tear the base apart.','Take out the air defences, destroy the vehicle factory, then the headquarters. The enemy commander will fight back with everything he builds.'],
+ brief:['This is the strike that ends the offensive. The enemy has dug a fortified base on the plateau: air-defence sites on the approaches, armor in depth, a War Factory and a command post at the back.','You command a combined force: loitering drones, missile launchers, armor and infantry. Drones cannot survive the air defenses - break the SAM sites first with launchers and tanks, then let the drones tear the base apart.','Take out the air defenses, destroy the vehicle factory, then the headquarters. The enemy commander will fight back with everything he builds.'],
  obj:[['sam','Destroy the enemy air-defence sites'],['fac','Destroy the vehicle factory'],['hq','Destroy the enemy headquarters']],
  win:'The enemy command post is rubble. The offensive is over.',lose:'The assault force is destroyed.',
  setup(c){const d=c.mul,B=BASES[0];G.teams[0].credits=3500;const s=CH.pt(.14,0);c.focus=s;CH.base(0,B[0],B[1]);
@@ -132,7 +132,7 @@ const CAMPAIGN=[
   const q=CH.pt(.85,0);CH.units(1,'tank',Math.round(5*d),q[0],q[1],140);CH.units(1,'inf',Math.round(10*d),q[0],q[1],140);CH.units(1,'at',Math.round(4*d),q[0],q[1],100);CH.units(1,'aa',2,q[0],q[1],100);
   T.ai=mkAI(c.diff);},
  tick(c,dt){const sam=CH.count(1,'sam'),fac=CH.count(1,'factory'),hq=CH.count(1,'hq');
-  if(!c.o.sam&&sam===0){c.o.sam=true;CH.say('Air defences down - the drones have a free sky.','g');}
+  if(!c.o.sam&&sam===0){c.o.sam=true;CH.say('Air defenses down - the drones have a free sky.','g');}
   if(!c.o.fac&&fac===0)c.o.fac=true;if(!c.o.hq&&hq===0)c.o.hq=true;
   c.status=null;if(c.o.hq)c.win();
   else if(CH.combat(0)===0&&G.teams[0].credits<250)c.lose('The assault force is destroyed.');
@@ -213,13 +213,6 @@ function campDebrief(c,won){
 }
 function campLeave(){try{if(MODE!=='single')leaveNet();}catch(e){}MODE='single';ME=0;G=null;try{kcReset();}catch(e){}try{$('end').hidden=true;$('menu').hidden=false;renderGames();}catch(e){}}
 
-// objectives panel (on screen during a mission)
-function campPanel(){
-  let el=document.getElementById('campHud');
-  if(!G||!G.camp||G.over&&G.camp.fin){if(el)el.hidden=true;return;}
-  const c=G.camp;if(!el){el=campEl('div','position:fixed;left:10px;top:92px;z-index:600;max-width:min(300px,62vw);background:rgba(12,16,10,.82);border:1px solid #5d6e49;border-radius:8px;padding:8px 10px;color:#efe9d6;font-size:15px;line-height:1.45;pointer-events:none;');el.id='campHud';document.body.appendChild(el);}
-  el.hidden=false;
-  el.innerHTML=`<b>${c.m.title}</b> <span style="opacity:.6">· ${CAMP_DIFF[c.diff]}</span><br>`+c.m.obj.map(o=>`<span style="${c.o[o[0]]?'color:#9fd36b':''}">${c.o[o[0]]?'☑':'☐'} ${o[1]}</span>`).join('<br>')+(c.status?`<br><b style="color:#f0d27a">${c.status}</b>`:'');
-}
-setInterval(()=>{try{campPanel();}catch(e){}},400);
+// the mission objective is shown in the one goal line under the top bar (cqBanner, 08c-towns; 2026-11-13 orderfeel)
+setInterval(()=>{try{if(G&&G.camp)cqBanner();}catch(e){}},400);
 (function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Missions';b.title='Five single-player missions for Iran, the Lebanese Shia and the Zaidi Shia Movement';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();

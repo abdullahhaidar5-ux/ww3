@@ -11,7 +11,7 @@
 // Monthly hook (GMOD_HOOKS) so it works before and after the real-time change. Deterministic: no random; the AI uses fixed rules. Saved inside GC.
 const GS_COREMONTHS=6;
 const GS_EST=[['army','Security services & army','Generals, intelligence chiefs and the police'],['clergy','Clergy','Religious institutions, seminaries and endowments'],
-  ['biz','Business elites','Industrialists, bankers, oil and trading houses'],['work','Labour & unions','Factory hands, dockers, teachers and farm workers'],
+  ['biz','Business elites','Industrialists, bankers, oil and trading houses'],['work','Labor & unions','Factory hands, dockers, teachers and farm workers'],
   ['tribe','Tribes & clans','Tribal sheikhs, elders and clan networks'],['guard','Revolutionary Guard','A parallel army with its own business empire'],
   ['party','The Party','The ruling party apparatus, from politburo to factory cell']];
 const GS_COL={army:'#7d8c5a',clergy:'#3f8f7a',biz:'#c9a35a',work:'#b4584a',tribe:'#a07850',guard:'#8a3b3b',party:'#c0392b',crown:'#3b6a96'};
@@ -42,7 +42,7 @@ const GS_NM={IR:{army:'Army & intelligence',clergy:'Clerical establishment',biz:
  PK:{army:'Army & intelligence',clergy:'Religious parties & seminaries'},AF:{clergy:'Clerical council'},KD:{army:'Peshmerga commanders',tribe:'Party-clan networks'},
  DZ:{biz:'State energy company'},LY:{army:'Armed forces & security',biz:'National oil company'},NG:{tribe:'Traditional rulers'},MA:{biz:'Royal holdings & business'},
  VE:{biz:'Private business',party:'Ruling party'},CU:{army:'Armed forces & their companies'},ET:{party:'Ruling party'},KP:{army:'Army (military first)'},
- AZ:{biz:'State oil company & holdings'},KZ:{biz:'Resource conglomerates'},US:{biz:'Corporations & defence industry'},JP:{biz:'Business federations'},KR:{biz:'Family conglomerates'}};
+ AZ:{biz:'State oil company & holdings'},KZ:{biz:'Resource conglomerates'},US:{biz:'Corporations & defense industry'},JP:{biz:'Business federations'},KR:{biz:'Family conglomerates'}};
 // privilege = [id, estate, name, benefit{stat,add|mul}, drawback{stat,add|mul}, plain text]
 const GS_PRIV=[
   ['pv_a1','army','Veteran Land Grants',{stat:'manpower',mul:1.08},{stat:'income',mul:.97},'+8% manpower, -3% income'],
@@ -50,7 +50,7 @@ const GS_PRIV=[
   ['pv_c1','clergy','Religious Schools',{stat:'ppPol',mul:1.08},{stat:'income',mul:.98},'+8% Political points, -2% income'],
   ['pv_c2','clergy','Pious Endowments',{stat:'unrest',add:-3},{stat:'income',mul:.97},'-3 unrest, -3% income'],
   ['pv_b1','biz','Trade Charters',{stat:'income',mul:1.05},{stat:'unrest',add:2},'+5% income, +2 unrest'],
-  ['pv_b2','biz','Banking Licences',{stat:'income',mul:1.03},{stat:'warSupport',add:-.02},'+3% income, -2% war support'],
+  ['pv_b2','biz','Banking Licenses',{stat:'income',mul:1.03},{stat:'warSupport',add:-.02},'+3% income, -2% war support'],
   ['pv_w1','work','Union Recognition',{stat:'unrest',add:-3},{stat:'income',mul:.97},'-3 unrest, -3% income'],
   ['pv_w2','work','Public Works',{stat:'manpower',mul:1.05},{stat:'upkeep',mul:1.03},'+5% manpower, +3% army upkeep'],
   ['pv_t1','tribe','Tribal Subsidies',{stat:'unrest',add:-3},{stat:'income',mul:.97},'-3 unrest, -3% income'],

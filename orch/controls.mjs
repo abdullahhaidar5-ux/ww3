@@ -312,7 +312,7 @@ try {
     await page.keyboard.press('t');
     check('T with nothing selected selects all own combat units', await page.evaluate(() => G.sel.length > 0 && G.sel.every(u => !u.isB && u.team === ME && !['harv', 'hacker', 'dozer'].includes(u.kind))));
     await page.evaluate(([A, B]) => { G.sel = [G.byId.get(A), G.byId.get(B)].filter(Boolean); updateUI(); }, [A, B]);
-    check('orders row has a Type (T) button', await page.evaluate(() => [...document.querySelectorAll('.cmdrow button')].some(b => /Type \(T\)/.test(b.textContent))));
+    check('orders row has a Same type (T) button', await page.evaluate(() => [...document.querySelectorAll('.cmdrow button')].some(b => /type \(T\)/i.test(b.getAttribute('aria-label') || b.textContent))));
   }
   await page.keyboard.press('x');
   a = await acts(page);

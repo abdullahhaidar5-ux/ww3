@@ -6,11 +6,11 @@ const PG_COST=30, PG_CD=4, PG_HIT=12, PG_COUNTER=20, PG_CLEN=6;
 // how much each style shrugs off enemy messaging (x hit): Zealous hard to shake, Professional resistant, Home defenders shaken when fighting abroad, Firepower-reliant hurt by casualty news
 const PG_RES={zeal:.4,prof:.5,home:1,fire:1.25};
 // war economy: high war support lifts output; same size for every style, different story (equal value)
-const WE_ROWS=[['zeal','Volunteer labour'],['prof','Efficient war industry'],['home','Home-front drives'],['fire','Arms-industry output']];
+const WE_ROWS=[['zeal','Volunteer labor'],['prof','Efficient war industry'],['home','Home-front drives'],['fire','Arms-industry output']];
 GMOD_COND.pws=(k,arg)=>{if(!GC||!GC.nat[k])return false;return wsStyle(k)===arg&&wsOf(k)>=60;};
 for(const [s,n] of WE_ROWS)GMOD_ROWS.push({id:'we_'+s,src:n+' (war support 60%+)',scope:'nation',stat:'income',mul:1.04,cond:'pws:'+s});
 // government <-> war support: one data row per style (what high / low support does to the government)
-const PG_GOV={zeal:{n:'Legitimacy',hi:'Fervour steadies the leadership: unrest eases in every province',lo:'The faithful grow restless: unrest creeps up'},
+const PG_GOV={zeal:{n:'Legitimacy',hi:'Fervor steadies the leadership: unrest eases in every province',lo:'The faithful grow restless: unrest creeps up'},
   prof:{n:'Approval',hi:'Voters and the staff approve: stability rises at the two-yearly review',lo:'The review goes badly: stability falls'},
   home:{n:'Unity',hi:'The nation is united: unrest eases',lo:'Home-front quarrels: unrest creeps up'},
   fire:{n:'World opinion',hi:'Clean wins impress the world: opinion of us improves',lo:'Bad news abroad: opinion of us sours'}};

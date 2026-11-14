@@ -201,6 +201,52 @@ function tlChunks(){const M=G.map;if(M._tlCk)return M._tlCk;const cs=M.cities||[
 
 /* ===== power plant model (Infrastructure): turbine hall, two striped stacks, a cooling tower, a transformer yard with pylons and a fence.
    Owner colour shows on the flag. Same builder API as the oil derrick (Bld/mesh). ===== */
+
+/* Capturable buildings of Battle: Quarry, Mine, Field Hospital (the Power plant reuses plantObj). Each one merged mesh (Bld) + an owner flag.
+   Look only; effects are in 03-sim.js (TB). Real-world detail: stepped rock faces, crusher + conveyor, headframe + wheel, canvas tents. */
+function techObj(o){const k=o.tb;if(k==='plant'){const r=plantObj(o);r.tb=1;return r;}
+  const grp=new THREE.Group(),B=Bld(),dk='#2c2e2c',tent='#9c9468',red='#b3322a',wh='#f1ede2',rk='#c2ad82',rk2='#a8946b',rk3='#8a7a58',gv='#a39b86';
+  if(k==='hosp'){
+    B.box(70,1.6,50,0,.8,0,'#8a8474');                                                                            // packed-earth pad
+    for(const z of [-9,12]){B.box(28,8,14,-8,5,z,tent);B.cyl(7.4,7.4,28,3,-8,12.6,z,tent,0,0,Math.PI/2);B.box(.8,6,6,-22.4,4.5,z,'#5a5648');B.box(28,.8,.8,-8,9.4,z+7.2,'#8a846f');
+      for(const q of [7.3,-7.3]){B.box(9,6.4,.3,-8,6.4,z+q,wh);B.box(1.8,5,.4,-8,6.4,z+q*1.01,red);B.box(5,1.8,.4,-8,6.4,z+q*1.01,red);}}              // two long canvas tents with a red cross panel each
+    B.box(14,8,10,22,5,-6,'#d9d6cc');B.box(14,1.2,11,22,9.6,-6,'#a6a39a');B.box(3,5,.8,22,3.5,-.9,'#5d7380');B.box(1.2,3.4,.4,22,6,-.7,red);B.box(3.4,1.2,.4,22,6,-.7,red);   // prefab ward with a window and a cross
+    B.box(1.4,22,1.4,-30,11,-18,'#55595c');B.box(12,8,.8,-30,21,-18,wh);B.box(2.4,6.4,.9,-30,21,-17.5,red);B.box(6.4,2.4,.9,-30,21,-17.5,red);   // tall sign board with a red cross (neutral)
+    B.box(16,3.2,7,10,3.4,19,'#e9e7df');B.box(6,3.4,6.6,15,6.6,19,'#d8d6ce');B.box(.8,2.4,.9,9,5.6,22.6,red);B.box(2.4,.8,.9,9,5.6,22.6,red);for(const x of [6,14])B.cyl(1.5,1.5,1.2,10,x,1.5,22.6,dk,Math.PI/2),B.cyl(1.5,1.5,1.2,10,x,1.5,15.4,dk,Math.PI/2);   // ambulance
+    B.box(3,.8,6.4,-24,2.2,-1,'#6a7360');B.box(.6,1.2,6.4,-22.6,1.8,-1,'#4b5246');B.box(3,.8,6.4,-20,2.2,-1,'#6a7360');   // stretchers
+    B.box(7,5,5,-26,4,26,'#5f6b4f');B.box(5,1,5,-26,6.8,26,dk);B.cyl(.6,.6,5,6,-24,8.8,27,'#55595c');B.cyl(2.8,2.8,2,10,-12,3,26,'#6d6f6c');   // generator and fuel drum
+    for(let i=0;i<5;i++)B.box(2.6,1.8,2.6,26+i*3.2,2.5,24,'#7d8a6b');for(let i=0;i<3;i++)B.box(2.6,1.8,2.6,28+i*3.2,4.3,24,'#8b9677');   // supply crates
+    for(const sx of [-34,34])B.box(.5,3,48,sx,2,0,'#6a6658');
+  }else if(k==='quarry'){
+    B.box(84,1.4,70,0,.5,0,gv);                                                                                      // gravel floor
+    for(let t=0;t<4;t++){const y=3.5+t*7,w=60-t*8,d=14-t*1.2;B.box(w,7,d,-4-t*3,y,-26+t*3,t%2?rk:rk2);B.box(w-2,.9,d+.6,-4-t*3,y+3.7,-26+t*3,'#b8b09a');}   // stepped cut rock faces (benches)
+    for(const x of [-26,-12,6,22])B.box(2.4,2.4,6,x,4.6,-18,rk3,.3,x*.1,.2);                                          // boulders at the toe of the face
+    B.box(14,7,12,-20,4.5,10,'#8a8f86');B.box(10,10,8,-20,12,10,'#7f847b');B.box(12,2,10,-20,18,10,'#6c7068');   // crusher hall on a platform
+    B.box(24,1.2,3,-4,7,10,dk,0,0,-.28);B.box(24,.6,3.6,-4,7.2,10,'#55595c',0,0,-.28);                              // conveyor belt, rising
+    for(const x of [-10,0,8])B.box(.8,7,.8,x,3.5,10,'#55595c');
+    for(const [x,z,h] of [[16,6,10],[22,8,7],[26,2,5]]){B.cyl(.4,h*.9,h,10,x,h/2+1,z,'#a39c88');}                    // conical stone piles
+    B.box(10,4,6,28,4.2,-6,'#c9a227');B.box(5,3.4,5.6,31,7.2,-6,'#d9b43a');B.cyl(1.6,1.6,1,10,25,2.4,-3,dk,Math.PI/2);B.cyl(1.6,1.6,1,10,31,2.4,-3,dk,Math.PI/2);B.cyl(1.6,1.6,1,10,25,2.4,-9,dk,Math.PI/2);B.cyl(1.6,1.6,1,10,31,2.4,-9,dk,Math.PI/2);   // dump truck
+    B.box(10,2,5,-4,2.5,-6,'#c9a227');B.box(5,.8,.8,2,6,-6,'#55595c',0,0,.7);B.box(3,1.6,2,6,7.6,-6,'#55595c');       // excavator
+    B.box(8,4,5,-34,3.8,24,'#8d8a80');B.box(8.6,.9,5.6,-34,6.2,24,'#6f6c63');                                          // site cabin
+    B.box(1.4,20,1.4,-36,10,-30,'#55595c');
+  }else{
+    B.box(76,1.4,66,0,.5,0,'#6f6a5c');                                                                                // trampled spoil ground
+    B.box(1.8,36,1.8,-8,18,-4,'#4b5056',0,0,.18);B.box(1.8,36,1.8,-2,18,-4,'#4b5056',0,0,-.18);B.box(1.8,36,1.8,-8,18,4,'#4b5056',0,0,.18);B.box(1.8,36,1.8,-2,18,4,'#4b5056',0,0,-.18);   // headframe legs
+    for(const y of [8,16,24])B.box(8,.8,.8,-5,y,-4,'#4b5056'),B.box(8,.8,.8,-5,y,4,'#4b5056');B.box(7,1.4,10,-5,36.5,0,'#3e4246');
+    B.cyl(5.6,5.6,1.4,18,-5,38,-3,'#b7421f',Math.PI/2);B.cyl(5.6,5.6,1.4,18,-5,38,3,'#b7421f',Math.PI/2);B.cyl(1.3,1.3,8,8,-5,38,0,dk,Math.PI/2);   // two winding wheels
+    B.box(14,8,12,-24,5,-2,'#8a8f86');B.box(15,1.2,13,-24,9.6,-2,'#6c7068');B.box(3,5,.8,-24,3.5,4.2,dk);                // winding house
+    B.box(10,9,9,10,6,-14,'#7c7870');B.box(12,2,11,10,11.6,-14,'#686459');B.box(5,3,5,10,2.6,-6,'#5a5648');             // ore hopper and chute
+    B.cyl(.4,14,13,12,24,7,-6,'#4a4640');B.cyl(.4,10,9,12,32,5,-12,'#524e44');B.cyl(.4,8,7,12,16,4,-24,'#46423a');     // spoil heaps (dark, steep)
+    B.box(34,.5,.8,6,1.7,20,'#55595c');B.box(34,.5,.8,6,1.7,23,'#55595c');for(let x=-10;x<=22;x+=4)B.box(.8,.4,5,x,1.4,21.5,'#5a5348');   // rail track
+    B.box(5,2.4,3.2,4,3.2,21.5,'#8c4a2a');B.box(5,2.4,3.2,12,3.2,21.5,'#8c4a2a');B.box(5,2.4,3.2,20,3.2,21.5,'#7a3e22');                  // ore carts
+    for(const x of [2,6,10,14,18,22])B.cyl(.7,.7,.5,8,x,1.9,19.3,dk,Math.PI/2);
+    B.box(.6,18,.6,-36,9,-30,'#55595c');B.box(5,2.2,3.6,-30,3.2,24,'#6a6a5a');B.box(3,2,3,-26,3,28,'#7d8a6b');
+  }
+  const base=mesh(B.geo());grp.add(base);
+  const flag=new THREE.Mesh(new THREE.PlaneGeometry(10,6),new THREE.MeshBasicMaterial({color:0x888888,side:THREE.DoubleSide}));flag.position.set(-36,24,k==='quarry'?-26:-28);grp.add(flag);
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,26,6),MAT.std);pole.position.set(-41,13,k==='quarry'?-26:-28);grp.add(pole);
+  grp.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
+  grp.scale.setScalar(1.55);grp.position.set(o.x,groundH(o.x,o.y),o.y);grp.rotation.y=(o.x*.01)%6;WORLD.add(grp);return{grp,arm:null,flag,crank:null,tb:1};}
 function plantObj(o){const grp=new THREE.Group(),B=Bld(),cn='#9a978d',cd='#6f6c63',dk='#2c2e2c',st='#b8b5aa';
   B.box(64,2,50,0,1,0,'#7c796f');                                   // slab
   B.box(40,15,22,-6,9.5,-6,cn);B.box(40,1.6,23,-6,17.8,-6,cd);B.box(40,3,.8,-6,12,5.1,'#5d7380');B.box(8,10,.8,-20,6,5.1,dk);   // turbine hall, roof lip, window band, door

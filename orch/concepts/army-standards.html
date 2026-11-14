@@ -1,0 +1,110 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#0c1418}
+svg{display:block}
+text{font-family:"DejaVu Sans Condensed","DejaVu Sans","Liberation Sans",Arial,sans-serif}
+.h{font-weight:700;letter-spacing:3px;fill:#e9efe6}
+.sub{fill:#9fb0a6}
+.lab{fill:#dfe7dc;font-weight:700}
+.note{fill:#9fb0a6}
+.sec{fill:#e2b23c;font-weight:700;letter-spacing:2.5px}
+</style></head><body><div id="root"></div><script>
+const W=1200,H=1760;
+const FL={IR:['#239f40','#f4f4f0','#da0000'],TM:['#1c8a4b','#1c8a4b','#1c8a4b'],US:['#b22234','#f4f4f0','#3c3b6e'],IQ:['#ce1126','#f4f4f0','#111'],RU:['#f4f4f0','#0039a6','#d52b1e'],SA:['#0b6b3a','#0b6b3a','#0b6b3a'],TR:['#e30a17','#e30a17','#e30a17']};
+let uid=0,defs='';
+function arc(cx,cy,r,frac,col,w,bg){const c=2*Math.PI*r;return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${bg||'#1b262b'}" stroke-width="${w}"/>`+
+ `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${(c*frac).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${cx} ${cy})"/>`;}
+function flag(cx,cy,r,f){const id='c'+(uid++);defs+=`<clipPath id="${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>`;const b=FL[f],h=2*r/3;if(f==='US'){let g=`<g clip-path="url(#${id})">`;for(let i=0;i<7;i++)g+=`<rect x="${cx-r}" y="${cy-r+i*2*r/7}" width="${2*r}" height="${2*r/7+0.5}" fill="${i%2?'#f4f4f0':'#b22234'}"/>`;return g+`<rect x="${cx-r}" y="${cy-r}" width="${r*1.05}" height="${r*1.15}" fill="#3c3b6e"/></g>`;}
+ return `<g clip-path="url(#${id})">`+b.map((c,i)=>`<rect x="${cx-r}" y="${cy-r+i*h}" width="${2*r}" height="${h+0.5}" fill="${c}"/>`).join('')+
+ (f==='TM'?`<rect x="${cx-r*0.55}" y="${cy-r}" width="${r*0.42}" height="${2*r}" fill="#b8323a"/>`:'')+
+ (f==='TR'?`<circle cx="${cx-r*0.1}" cy="${cy}" r="${r*0.45}" fill="#fff"/><circle cx="${cx+r*0.05}" cy="${cy}" r="${r*0.36}" fill="#e30a17"/>`:'')+
+ (f==='SA'?`<rect x="${cx-r*0.5}" y="${cy+r*0.15}" width="${r}" height="${r*0.12}" fill="#fff"/>`:'')+`</g>`;}
+// rel: me | enemy | ally | other
+const RIM={me:'#ffffff',enemy:'#ff4d3d',ally:'#58a6ff',other:'#8c9a94'};
+function coin(x,y,r,o){o=o||{};const rel=o.rel||'me',ghost=rel==='other';let s='';
+ s+=`<ellipse cx="${x}" cy="${y+r+ (o.lift||10)}" rx="${r*0.75}" ry="${r*0.22}" fill="#000" opacity=".35"/>`;
+ s+=`<path d="M${x-5} ${y+r+3} L${x} ${y+r+(o.lift||10)} L${x+5} ${y+r+3}Z" fill="${RIM[rel]}" opacity="${ghost?.5:1}"/>`;
+ if(o.dug)s+=[0,90,180,270].map(a=>`<path d="M${x-r-13} ${y-9} v-0 h0 M${x-r-13} ${y-10} v-0" /><path d="M${x-r-14} ${y-12} h-0 M${x-r-15} ${y-13} l0 26" stroke="#e2b23c" stroke-width="5" stroke-linecap="round" transform="rotate(${a+45} ${x} ${y})"/><path d="M${x-r-15} ${y-13} h7 M${x-r-15} ${y+13} h7" stroke="#e2b23c" stroke-width="5" stroke-linecap="round" transform="rotate(${a+45} ${x} ${y})"/>`).join('');
+ if(o.march!=null){const a=o.march;s+=`<path d="M${x+r+36} ${y} l-19 -16 v32 z" stroke="#0e171b" stroke-width="2" fill="${RIM[rel]}" transform="rotate(${a} ${x} ${y})"/>`;}
+ s+=`<g opacity="${ghost?.55:1}">`;
+ s+=`<circle cx="${x}" cy="${y}" r="${r+9}" fill="#0e171b"/>`;
+ s+=arc(x,y,r+5,o.str==null?1:o.str,(o.str!=null&&o.str<0.35)?'#ff6a4d':'#58d36c',5);
+ if(!o.nosup)s+=arc(x,y,r+11.5,o.sup==null?1:o.sup,(o.sup!=null&&o.sup<0.3)?'#ff6a4d':'#e2b23c',2.6,'#141f24');
+ s+=flag(x,y,r,o.f||'IR');
+ s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${RIM[rel]}" stroke-width="${rel==='me'?3:rel==='other'?1.5:3.5}"/>`;
+ s+=`</g>`;
+ if(o.n!=null){const pw=o.comp?150:62,ph=o.comp?58:36,px=x+r+18,py=y-ph/2;
+  s+=`<g opacity="${ghost?.6:1}"><rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="8" fill="#0e171b" stroke="${rel==='me'?'#34454b':RIM[rel]}" stroke-width="1.5"/>`;
+  s+=`<text x="${px+12}" y="${py+(o.comp?26:26)}" font-size="${o.comp?24:22}" font-weight="700" fill="#fff">${o.n}</text>`;
+  if(o.gen)s+=`<text x="${px+ (o.comp?52:44)}" y="${py+(o.comp?24:24)}" font-size="15" fill="#e2b23c">${'★'.repeat(o.gen)}</text>`;
+  if(o.comp){let cx2=px+12;o.comp.forEach(([ic,c])=>{s+=`<use href="#${ic}" x="${cx2}" y="${py+34}" width="${ic==='inf'?15:21}" height="15" fill="#c9d4cc"/><text x="${cx2+(ic==='inf'?18:24)}" y="${py+47}" font-size="13" fill="#c9d4cc">${c}</text>`;cx2+=(ic==='inf'?44:50);});}
+  s+=`</g>`;}
+ return s;}
+function patch(x,y,w,h,inner){const id='p'+(uid++);defs+=`<clipPath id="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14"/></clipPath>`;
+ return `<g clip-path="url(#${id})"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#7f9a76"/>`+
+ `<path d="M${x} ${y+h*0.38} C${x+w*0.3} ${y+h*0.28} ${x+w*0.6} ${y+h*0.5} ${x+w} ${y+h*0.34} V${y} H${x}Z" fill="#b98a86"/>`+
+ `<path d="M${x} ${y+h*0.38} C${x+w*0.3} ${y+h*0.28} ${x+w*0.6} ${y+h*0.5} ${x+w} ${y+h*0.34}" fill="none" stroke="#1d2a22" stroke-width="3"/>`+
+ `<path d="M${x+w*0.42} ${y+h*0.38} C${x+w*0.4} ${y+h*0.6} ${x+w*0.5} ${y+h*0.8} ${x+w*0.46} ${y+h} M${x} ${y+h*0.7} C${x+w*0.2} ${y+h*0.66} ${x+w*0.3} ${y+h*0.72} ${x+w*0.44} ${y+h*0.68} M${x+w*0.47} ${y+h*0.74} C${x+w*0.7} ${y+h*0.7} ${x+w*0.8} ${y+h*0.8} ${x+w} ${y+h*0.72}" fill="none" stroke="#2c3b30" stroke-width="1.6" opacity=".8"/>`+
+ inner+`</g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="none" stroke="#2a3a40" stroke-width="2"/>`;}
+function call(x1,y1,x2,y2,t,t2,anchor){return `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="#e2b23c" stroke-width="1.6"/><circle cx="${x1}" cy="${y1}" r="3.5" fill="#e2b23c"/>`+
+ `<text x="${x2+(anchor==='end'?-8:8)}" y="${y2+1}" font-size="21" class="lab" text-anchor="${anchor||'start'}">${t}</text>`+(t2?`<text x="${x2+(anchor==='end'?-8:8)}" y="${y2+25}" font-size="17" class="note" text-anchor="${anchor||'start'}">${t2}</text>`:'');}
+function cap(x,y,t,t2){return `<text x="${x}" y="${y}" font-size="20" class="lab" text-anchor="middle">${t}</text>`+(t2?`<text x="${x}" y="${y+23}" font-size="16" class="note" text-anchor="middle">${t2}</text>`:'');}
+let b='';
+b+=`<text x="60" y="78" font-size="50" class="h">ARMY STANDARDS</text><text x="60" y="114" font-size="22" class="sub">One clean token per army. Whose it is, how strong, how supplied, what it is doing — at a glance.</text>`;
+// A anatomy
+b+=`<text x="60" y="176" font-size="19" class="sec">1 · READ IT LIKE A WATCH FACE</text>`;
+b+=`<rect x="60" y="196" width="1080" height="330" rx="16" fill="#101b20" stroke="#22323a"/>`;
+b+=coin(500,355,74,{f:'IR',str:.78,sup:.5,n:37,gen:2,comp:[['inf',31],['tank',2],['mlrs',4]],lift:14});
+b+=call(500,330,330,238,'Flag = whose army','',"end");
+b+=call(500-79*0.7,355+79*0.7,330,345,'Green ring = strength','men and machines left',"end");
+b+=call(500-85.5*0.3,355+85.5*0.95,330,455,'Gold ring = supply','fuel and ammunition',"end");
+b+=call(706,340,792,250,'37 units · ★★ general','');
+b+=call(724,374,792,345,'What it is made of','infantry · armour · fire support');
+b+=call(500,355+74+14,792,455,'Pin = exact spot on the map','');
+// B whose
+b+=`<text x="60" y="590" font-size="19" class="sec">2 · WHOSE IS IT — THE RIM</text>`;
+[['me','IR','Yours','white rim',37,.9,.8],['enemy','US','Enemy','red rim',19,.6,.7],['ally','IQ','Ally','blue rim',24,.8,.6],['other','TM','Everyone else','faint, small, no clutter',null,1,1]].forEach((a,i)=>{const x=170+i*285;
+ b+=coin(x-(a[4]!=null?30:0),672,a[0]==='other'?24:36,{f:a[1],rel:a[0],n:a[4],str:a[5],sup:a[6],nosup:a[0]==='other'});b+=cap(x,762,a[2],a[3]);});
+// C doing
+b+=`<text x="60" y="842" font-size="19" class="sec">3 · WHAT IS IT DOING — THE SHAPE</text>`;
+const cy=930;
+b+=coin(150,cy,34,{f:'IR',str:.9,sup:.8});b+=cap(150,cy+86,'Holding','plain circle');
+b+=`<path d="M444 ${cy-30} C480 ${cy-44} 505 ${cy-44} 540 ${cy-52}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="2 9" stroke-linecap="round"/><circle cx="540" cy="${cy-52}" r="6" fill="none" stroke="#fff" stroke-width="2.5"/><text x="552" y="${cy-46}" font-size="16" fill="#fff" font-weight="700">4 days</text>`;
+b+=coin(372,cy,34,{f:'IR',str:.9,sup:.6,march:-24});b+=cap(400,cy+86,'Marching','arrow + route + arrival');
+b+=coin(640,cy,34,{f:'IR',str:1,sup:.9,dug:1});b+=cap(640,cy+86,'Dug in','gold corner brackets');
+// besieging
+b+=`<circle cx="860" cy="${cy}" r="52" fill="none" stroke="#ff4d3d" stroke-width="3" stroke-dasharray="10 7"/><rect x="846" y="${cy-12}" width="28" height="22" fill="#cfc6ae" stroke="#3a3a30"/><path d="M842 ${cy-12} L860 ${cy-26} L878 ${cy-12}Z" fill="#a8553d"/>`;
+b+=coin(905,cy-34,22,{f:'IR',str:.8,nosup:1,lift:6});b+=cap(860,cy+86,'Besieging','ring closes around the town');
+// fighting
+b+=coin(1040,cy,30,{f:'IR',str:.7,nosup:1});b+=coin(1112,cy,30,{f:'US',rel:'enemy',str:.45,nosup:1});
+b+=`<path d="M1076 ${cy-30} l-8 14 h7 l-6 14 l16 -18 h-8 l6 -10z" fill="#ffd34d" stroke="#0e171b" stroke-width="1.5"/>`;
+b+=`<rect x="1010" y="${cy+46}" width="132" height="9" rx="4.5" fill="#ff4d3d"/><rect x="1010" y="${cy+46}" width="84" height="9" rx="4.5" fill="#58d36c"/>`;
+b+=cap(1076,cy+86,'Fighting','bar shows who is winning');
+// D zoom
+b+=`<text x="60" y="1090" font-size="19" class="sec">4 · DETAIL APPEARS AS YOU ZOOM IN</text>`;
+const zy=1112,zw=340,zh=300;
+// far
+let f='';[[90,150,'IR','me',37],[150,205,'IR','me',18],[230,95,'TM','other',null],[285,170,'US','enemy',19],[60,70,'TR','other',null],[205,250,'IQ','ally',24]].forEach(a=>{const X=60+a[0],Y=zy+a[1];const r=a[4]?12:6;
+ f+=`<circle cx="${X}" cy="${Y}" r="${r+2.5}" fill="#0e171b"/><circle cx="${X}" cy="${Y}" r="${r}" fill="${FL[a[2]][a[2]==='RU'?1:0]}" stroke="${RIM[a[3]]}" stroke-width="${a[4]?2.5:1}" opacity="${a[4]?1:.6}"/>`+(a[4]?`<text x="${X+17}" y="${Y+6}" font-size="17" font-weight="700" fill="#fff" stroke="#0e171b" stroke-width="3" paint-order="stroke">${a[4]}</text>`:'');});
+b+=patch(60,zy,zw,zh,f);b+=cap(60+zw/2,zy+zh+30,'Far: dots and numbers','yours and enemies bold, the rest faint');
+// mid
+let m=coin(430+105,zy+150,26,{f:'IR',str:.78,sup:.5,n:37,gen:2,lift:8})+coin(430+70,zy+245,20,{f:'TM',rel:'other',nosup:1,lift:6})+coin(430+205,zy+86,22,{f:'US',rel:'enemy',str:.6,sup:.7,n:19,lift:7});
+b+=patch(430,zy,zw,zh,m);b+=cap(430+zw/2,zy+zh+30,'Middle: the token','rings, number, general');
+// close
+let c='';const gx=800+150,gy=zy+215;
+c+=`<ellipse cx="${gx}" cy="${gy}" rx="118" ry="44" fill="#239f40" opacity=".28" stroke="#fff" stroke-width="2" stroke-dasharray="3 6"/>`;
+[[-70,-8],[-44,6],[-18,-10],[8,8],[34,-8],[60,6],[-56,-28],[-4,-30],[46,-28]].forEach(p=>{c+=`<use href="#inf" x="${gx+p[0]-9}" y="${gy+p[1]-18}" width="18" height="22" fill="#1d5a2e" stroke="#0e171b" stroke-width=".6"/>`;});
+c+=`<use href="#tank" x="${gx-104}" y="${gy+6}" width="44" height="30" fill="#2a4a33" stroke="#0e171b" stroke-width=".5"/><use href="#tank" x="${gx+62}" y="${gy+8}" width="44" height="30" fill="#2a4a33" stroke="#0e171b" stroke-width=".5"/><use href="#mlrs" x="${gx-18}" y="${gy+14}" width="44" height="30" fill="#2a4a33" stroke="#0e171b" stroke-width=".5"/>`;
+c+=coin(gx-70,zy+92,28,{f:'IR',str:.78,sup:.5,n:37,gen:2,comp:[['inf',31],['tank',2],['mlrs',4]],lift:9});
+b+=patch(800,zy,zw,zh,c);b+=cap(800+zw/2,zy+zh+30,'Close: the real army in miniature','the same units you will command in battle');
+// E odds
+b+=`<text x="60" y="1512" font-size="19" class="sec">5 · SELECT YOUR ARMY — EVERY ENEMY IN REACH SHOWS YOUR ODDS</text>`;
+b+=`<rect x="60" y="1532" width="1080" height="176" rx="16" fill="#101b20" stroke="#22323a"/>`;
+b+=`<circle cx="170" cy="1616" r="50" fill="none" stroke="#58d36c" stroke-width="2.5" stroke-dasharray="4 6"/>`+coin(170,1616,34,{f:'IR',str:.78,sup:.5,n:37});
+[['Good odds','#58d36c',9,.82,'attack'],['Even fight','#e2b23c',34,.5,'bring help'],['Bad odds','#ff4d3d',61,.2,'do not attack alone']].forEach((o,i)=>{const x=470+i*235,y=1612;
+ b+=coin(x,y,30,{f:'US',rel:'enemy',str:.8,nosup:1,n:o[2]});
+ b+=`<rect x="${x-34}" y="${y-62}" width="${o[0].length*10.6+22}" height="26" rx="13" fill="${o[1]}"/><text x="${x-23}" y="${y-43.5}" font-size="16" font-weight="700" fill="#0e171b">${o[0]}</text>`;
+ b+=`<text x="${x+30}" y="${y+62}" font-size="16" class="note" text-anchor="middle">${o[4]}</text>`;});
+b+=`<text x="600" y="1742" font-size="17" class="note" text-anchor="middle">Replaces the red figure blobs, shield badges and waving flags. Stacked armies fan out on hover. Instanced, so it stays smooth.</text>`;
+const sym=`<symbol id="inf" viewBox="0 0 20 22"><circle cx="10" cy="4.6" r="3.4"/><path d="M4.5 21 V12.5 a5.5 5.5 0 0 1 11 0 V21 Z"/><rect x="15.2" y="5" width="1.7" height="13" transform="rotate(18 15.2 5)"/></symbol><symbol id="tank" viewBox="0 0 30 20"><rect x="2" y="11" width="23" height="6.5" rx="3.2"/><rect x="8" y="5.5" width="11" height="6.5" rx="1.8"/><rect x="18" y="7.2" width="11" height="2"/></symbol><symbol id="mlrs" viewBox="0 0 30 20"><rect x="2" y="12" width="24" height="4" rx="1"/><circle cx="8" cy="17" r="2.4"/><circle cx="20" cy="17" r="2.4"/><rect x="7" y="4.5" width="17" height="5" rx="1" transform="rotate(-18 15 8)"/></symbol>`;
+document.getElementById('root').innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${sym}${defs}</defs><rect width="${W}" height="${H}" fill="#0c1418"/>${b}</svg>`;
+</script></body></html>

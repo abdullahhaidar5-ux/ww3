@@ -6,21 +6,21 @@
 const ENC={on:false,f:'IR',q:'',type:'all',sel:null,r:null,scn:null,cam:null,obj:null,yaw:.6,pitch:.28,zoom:1,drag:null,raf:0,idle:0,seq:0,ov:null,all:null};
 const ENC_TYPES=[['all','Everything'],['inf','Infantry'],['veh','Vehicles'],['air','Aircraft'],['sea','Naval'],['bld','Buildings']];
 const ENC_NOTE={
-  inf:'Rifle squads are the backbone of any army. Trained to fight from cover, they take ground, garrison buildings and screen the armour. They are cheap, flexible and decisive in towns and broken terrain, and very vulnerable in the open.',
-  at:'Anti-tank teams carry shoulder-fired or tripod-mounted guided missiles and rockets that can kill an armoured vehicle from ambush. Modern infantry relies on them to stop tanks that would otherwise run it down.',
+  inf:'Rifle squads are the backbone of any army. Trained to fight from cover, they take ground, garrison buildings and screen the armor. They are cheap, flexible and decisive in towns and broken terrain, and very vulnerable in the open.',
+  at:'Anti-tank teams carry shoulder-fired or tripod-mounted guided missiles and rockets that can kill an armored vehicle from ambush. Modern infantry relies on them to stop tanks that would otherwise run it down.',
   hacker:'Electronic-warfare and cyber specialists disrupt enemy sensors, radios and networks. Armies keep small teams near the front to blind or disable equipment rather than to destroy it.',
   hero:'A marksman or sniper team: a trained shooter and a spotter pick off officers and crews from long range, using concealment rather than firepower.',
   champ:'Elite special forces are small, highly trained units used for raids, ambushes and high-value-target operations. They are expensive and few, and punch far above their numbers.',
   cleric:'A respected religious or political figure whose presence steadies the troops around him. Morale, belief and cohesion matter in combat as much as weapons do. The Ayatollah (Iran, Lebanese Shia, Zaidi Shia Movement): Steadfast (infantry near him recover from suppression twice as fast, take 15% less artillery and air damage), Path of Hussein (a fallen soldier near him raises a green banner for 20 s; comrades nearby hit 8% harder, up to 3), Sermon (120 s: a green halo, +20% fire rate, +15% speed and no suppression for 25 s) and Call to Arms (300 s: 6 volunteer riflemen at him and at each barracks). The Dear Leader (North Korea): On-the-spot guidance (a production building beside him builds 25% faster, artillery near him reloads 15% faster), Unbreakable Spirit (wounded units near him keep full damage and speed; damaged vehicles mend slowly), Supreme Commander\'s Order (120 s: every artillery and rocket unit near him fires one free volley at a chosen spot, then fires faster and farther for 25 s) and Mass Mobilization (300 s: infantry train 50% faster and 25% cheaper for 20 s, and 8 Worker-Peasant Guards form at each barracks). Press E for the ability, Shift+E for the ultimate. If he falls: mourning, +15% damage for 40 s, and a new one can be chosen after 3 minutes.',
-  tank:'Main battle tanks combine a stabilised high-velocity gun, thick composite armour and a powerful engine. They lead armoured assaults and break enemy lines, but need infantry and air-defence cover in towns and against anti-tank missiles.',
-  arty:'Self-propelled guns and rocket launchers shell targets many kilometres away, then move before counter-battery fire arrives. Superb against massed troops and buildings, nearly helpless once the enemy reaches them.',
+  tank:'Main battle tanks combine a stabilized high-velocity gun, thick composite armor and a powerful engine. They lead armored assaults and break enemy lines, but need infantry and air-defence cover in towns and against anti-tank missiles.',
+  arty:'Self-propelled guns and rocket launchers shell targets many kilometers away, then move before counter-battery fire arrives. Superb against massed troops and buildings, nearly helpless once the enemy reaches them.',
   aa:'Mobile air-defence vehicles carry radar-guided guns or short-range missiles to protect columns and bases from helicopters, jets and drones.',
   harv:'Supply trucks are the logistics backbone: fuel, ammunition and food move by road. Armies lose more equipment to broken supply than to enemy fire.',
   dozer:'Combat engineers build bridges, fortifications and camps and clear obstacles, often under fire. The heavy construction vehicle is how an army digs in and builds forward.',
-  heli:'Attack helicopters hunt armour from behind hills and tree lines with guided missiles and cannon. Fast and flexible, they are vulnerable to air defence and massed small-arms fire.',
-  jet:'Strike fighters and fighter-bombers drop precision-guided bombs and fire missiles at targets far behind the line, then leave before air defences can react.',
+  heli:'Attack helicopters hunt armor from behind hills and tree lines with guided missiles and cannon. Fast and flexible, they are vulnerable to air defense and massed small-arms fire.',
+  jet:'Strike fighters and fighter-bombers drop precision-guided bombs and fire missiles at targets far behind the line, then leave before air defenses can react.',
   drone:'Armed strike drones and loitering munitions turned small, cheap aircraft into precision weapons: they find a target, circle, and dive onto it.',
-  boat:'Fast attack craft and patrol boats guard coasts and shipping lanes with guns and anti-ship missiles, using speed instead of armour.',
+  boat:'Fast attack craft and patrol boats guard coasts and shipping lanes with guns and anti-ship missiles, using speed instead of armor.',
   sub:'Submarines hunt ships quietly and strike with torpedoes or missiles from beneath the surface. Their greatest weapon is not being found.',
   ship:'Destroyers and frigates are the workhorses of the surface fleet: radar, missiles and guns protect task forces and shell coastlines.',
   lander:'Landing craft carry vehicles and troops from ship to beach, the slow, exposed link in any amphibious assault.',
@@ -28,10 +28,10 @@ const ENC_NOTE={
 const ENC_BNOTE={
   hq:'The command headquarters is the heart of an army\'s base: planning, communications and the engineers who build everything else. Lose it and the rest of the base is soon lost.',
   barracks:'Barracks house, train and equip infantry. Real armies train recruits in camps like this, then rotate squads to the front.',
-  factory:'The War Factory stands for the vehicle depots and armour plants that build, repair and refit tanks, trucks and artillery.',
+  factory:'The War Factory stands for the vehicle depots and armor plants that build, repair and refit tanks, trucks and artillery.',
   airfield:'Airfields give aircraft and drones a runway, hangars, fuel and maintenance crews. A jet is only useful as long as its base survives.',
   shipyard:'The shipyard builds, repairs and launches naval vessels. It must sit on the coast, which makes it an obvious target.',
-  turret:'Fixed gun positions cover approaches and chokepoints. Real defence lines combine such guns with mines, wire and observers.',
+  turret:'Fixed gun positions cover approaches and chokepoints. Real defense lines combine such guns with mines, wire and observers.',
   sam:'Surface-to-air missile sites guard cities and bases from jets and helicopters, often with a radar nearby to cue the launchers.',
   coast:'Coastal missile batteries deny the sea near a shoreline to enemy ships, hiding mobile launchers among the hills and ports.',
   tunnel:'Tunnel networks let a defender hide, move and resupply under the enemy\'s air power, a method used by many armies in mountains and hills.',
@@ -39,7 +39,7 @@ const ENC_BNOTE={
   depot:'A forward supply depot stores fuel and ammunition near the fighting so trucks do not need to drive back to the main base.',
   fort:'A mountain fortress is a hardened position dug into rock, built to survive bombardment and to hold a pass for a long time.',
   econ:'Civil and commercial offices that keep an economy running during a war.'};
-const ENC_BCOUNTER={hq:'Lose it and you cannot build any more: guard it with air defence and a strong garrison',barracks:'Takes damage from artillery and air strikes; protect it with Defense Guns',factory:'Weak to air strikes and artillery',airfield:'Weak to missiles and bombers; defend with SAM sites',shipyard:'Weak to naval gunfire and missiles',turret:'Beats infantry and light vehicles · Loses to artillery and tanks',sam:'Beats helicopters, jets and drones · Loses to tanks and artillery',coast:'Beats ships and boats near the coast · Loses to aircraft and artillery',tunnel:'Garrison fights from cover · Loses to heavy artillery and bunker-busting strikes',uplink:'Launches the nation\'s strike salvo · Loses to anything that reaches it, so guard it',depot:'Lets trucks unload far from the HQ · Unarmed, easy to snipe',fort:'Beats almost everything that attacks head-on · Loses to long-range missiles and sustained bombardment'};
+const ENC_BCOUNTER={hq:'Lose it and you cannot build any more: guard it with air defense and a strong garrison',barracks:'Takes damage from artillery and air strikes; protect it with Defense Guns',factory:'Weak to air strikes and artillery',airfield:'Weak to missiles and bombers; defend with SAM sites',shipyard:'Weak to naval gunfire and missiles',tunnel:'Garrison fights from cover · Vulnerable to heavy artillery and bunker-busting strikes',uplink:'Launches the nation\'s strike salvo · Vulnerable to anything that reaches it, so guard it',depot:'Lets trucks unload far from the HQ · Unarmed, easy to snipe',fort:'Shrugs off almost everything that attacks head-on · Vulnerable to long-range missiles and sustained bombardment'};
 const ENC_ARM={light:'Light (soldiers)',medium:'Medium',heavy:'Heavy (vehicle)',bld:'Structure',air:'Aircraft',ship:'Ship'};
 function encType(s,b){if(b)return 'bld';const c=s.cls;if(['inf','at','hacker','hero','champ','cleric'].includes(c))return 'inf';if(['heli','jet','drone','airlift'].includes(c)||s.dom==='air')return 'air';if(['boat','sub','ship','lander'].includes(c)||(s.dom&&s.dom!=='ground'))return 'sea';return 'veh';}
 function encEntries(){if(ENC.all)return ENC.all;const out=[];
@@ -90,14 +90,14 @@ function encInfo(en){const P=ENC.ov.querySelector('.einfo'),s=en.s,F=FACTIONS[en
   const row=(a,b)=>{const r=encE('div','erow');r.append(encE('span','ek',a),encE('span','ev',b));P.append(r);};
   row('Cost','$'+(s.cost||0).toLocaleString('en-US')+(s.time&&!en.b?'  ·  trains in '+Math.round(s.time)+' s':en.b&&s.time?'  ·  builds in '+Math.round(s.time)+' s':''));
   row('Health',String(s.hp));
-  row('Armour',en.b?'Structure':ENC_ARM[s.armor]||String(s.armor||'—'));
+  row('Armor',en.b?'Structure':ENC_ARM[s.armor]||String(s.armor||'—'));
   if(!en.b)row('Speed',s.spd?Math.round(s.spd)+' (ground units/s'+(s.dom==='air'?', airborne':s.dom&&s.dom!=='ground'?', afloat':'')+')':'immobile');
   else row('Footprint',(s.size||0)+' m');
   if(s.dmg>0){const dps=s.dmg/Math.max(.05,s.rof||1);row('Weapon',(s.wpn?String(s.wpn)+' · ':'')+'damage '+Math.round(s.dmg)+' per shot · about '+Math.round(dps)+' per second');row('Range',Math.round(s.rng||0)+(s.splash?'  ·  blast radius '+Math.round(s.splash):''));
     const tg=[];if(s.aa)tg.push('aircraft');if(s.ground!==false)tg.push('ground');if(s.dom==='air'&&s.noAttack)tg.length=0;row('Hits',tg.join(' and ')||'ground');}
   else row('Weapon','unarmed');
   if(F.docShort)row('Nation',F.docShort);
-  const cn=en.b?ENC_BCOUNTER[en.k]:COUNTER[s.cls];if(cn){const c=encE('div','esec');c.append(encE('div','ek','Counters'),encE('div','etx',cn));P.append(c);}
+  {const mu=UK.match(en.f,en.k,en.f),cn=en.b?ENC_BCOUNTER[en.k]:UNOTE[en.k]||UNOTE[s.cls];if(mu||cn){const c=encE('div','esec');c.append(encE('div','ek','Counters'));if(mu)c.append(mu);if(cn)c.append(encE('div','etx',cn));P.append(c);}}   /* one language 3: computed BEATS / WEAK TO, same helper as the command buttons */
   const nt=en.b?ENC_BNOTE[en.k]:ENC_NOTE[en.k]||ENC_NOTE[s.cls];if(nt){const c=encE('div','esec');c.append(encE('div','ek','Real-world note'),encE('div','etx',nt));P.append(c);}
   if(s.desc){const c=encE('div','esec');c.append(encE('div','ek','In the game'),encE('div','etx',String(s.desc)));P.append(c);}}
 // ----- the list -----

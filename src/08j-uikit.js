@@ -50,6 +50,20 @@ const st=E('style');st.id='ukCss';st.textContent=`
 #panel .btn.hasic{padding-left:47px!important}
 #panel .btn .uic{position:absolute;left:4px;top:50%;transform:translateY(-50%);width:38px;height:30px;border-radius:2px;background:linear-gradient(180deg,#36473d,#141b17);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
 #panel .btn.on .uic{box-shadow:inset 0 0 0 1px var(--accent,#e3b341)}
+.uk-mu{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.uk-mu .mr{display:flex;align-items:flex-start;gap:8px;padding:4px 7px;border-radius:4px}.uk-mu .mul{display:flex;flex-wrap:wrap;gap:3px 10px;min-width:0}
+.uk-mu .mr.g{background:rgba(52,150,80,.24);box-shadow:inset 0 0 0 1px rgba(110,220,130,.5)}.uk-mu .mr.r{background:rgba(170,52,44,.26);box-shadow:inset 0 0 0 1px rgba(240,120,105,.5)}
+.uk-mu .mr b{font:700 11px var(--display,sans-serif);letter-spacing:.09em;min-width:56px;flex:none;line-height:21px}.uk-mu .mr.g b{color:#9be8a6}.uk-mu .mr.r b{color:#f3a096}
+.uk-mu .mi{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#e6e2d6;white-space:nowrap}.uk-mu .mi img{width:28px;height:21px}.uk-mu .mi i{font-style:normal}
+#panel .btn .uk-mu.mini{position:absolute;right:4px;bottom:3px;top:auto;transform:none;width:auto;margin:0;gap:3px;display:flex;flex-direction:row;pointer-events:none}
+#panel .btn .uk-mu.mini .mr{padding:0 1px;gap:1px;height:13px;justify-content:center;flex-wrap:nowrap;border-radius:2px}
+#panel .btn .uk-mu.mini img{width:18px;height:13px;display:block}
+/* sweepfixB: the BEATS / WEAK TO chips sit on the price line (bottom right), so the building/unit name gets the whole width */#panel .btn.hasmu .n{padding-right:4px}
+#panel .btn:disabled .uk-mu.mini{opacity:.75}
+#panel .btn.ctr{box-shadow:0 0 0 2px #6fe08a,0 0 14px rgba(111,224,138,.55)!important;z-index:1}
+#panel .btn.ctr::after{content:'BEATS IT';position:absolute;left:4px;bottom:2px;font:800 8.5px/1 var(--display,sans-serif);letter-spacing:.06em;color:#06220c;background:#6fe08a;padding:1px 3px;border-radius:2px}
+.tabs button.ctr{box-shadow:inset 0 -3px 0 #6fe08a}
+#info .ukBy{margin-top:4px}
 #info .ukU{display:flex;gap:9px;align-items:center;margin:0 0 4px}
 #info .ukU img{width:52px;height:40px;flex:none;border-radius:3px;background:linear-gradient(180deg,#36473d,#141b17);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
 #info .ukUt{min-width:0;flex:1}#info .ukUt b{display:block;font:600 16px/1.1 var(--display,sans-serif)}
@@ -99,7 +113,8 @@ function iconClass(k,s){s=s||{};const nm=String(s.name||''),cl=s.cls||'';k=Strin
   if(k==='at'||k==='atk')return'at';
   if(k==='mortar')return'mortar';
   if(k==='hacker')return'hacker';
-  if(k==='commissar'||k==='cleric')return'commissar';
+  if(k==='cleric')return nm==='Dear Leader'?'dearleader':'ayatollah';   /* leaderlook: painted busts of the two (fictional) leaders */
+  if(k==='commissar')return'commissar';
   if(k==='officer'||k==='hero')return'officer';
   if(k==='spy')return'spy';
   if(k==='champ'||cl==='hero')return'squad';
@@ -149,8 +164,21 @@ function drawUnit(c,k,W,H,col,st){const K=iconClass(k,st);c.save();c.translate(W
   case'mortar':line(-16,14,12,-22,7);rect(-26,15,26,5);line(6,-6,22,16,3);line(6,-6,30,8,3);man(26,6,.55);break;
   case'hacker':man(-10,2,1);rect(2,2,28,15,L);rect(5,4,22,10,DM);rect(-1,17,34,3,L);break;
   case'officer':man(0,2,1);rect(-13,-19,26,4,L);rect(-9,-21,18,3,col);for(const x of [-16,10])line(x+3,3,x+7,9,4);poly([[0,8],[2,13],[7,13],[3,16],[5,21],[0,18],[-5,21],[-3,16],[-7,13],[-2,13]],DM);break;
+  case'ayatollah':case'dearleader':{const DL=K==='dearleader',gr=(y0,y1,a,b)=>{const g=c.createLinearGradient(0,y0,0,y1);g.addColorStop(0,a);g.addColorStop(1,b);return g;},el=(x,y,rx,ry,f)=>{c.fillStyle=f;c.beginPath();c.ellipse(x,y,rx,ry,0,0,7);c.fill();};
+    /* a painted bust (shaded, not a flat silhouette): a fictional, generic figure of the role - never a real person's likeness */
+    c.fillStyle=col;c.globalAlpha=.55;c.beginPath();c.arc(0,-6,30,0,7);c.fill();c.globalAlpha=1;
+    c.fillStyle=gr(4,38,DL?'#3a3f44':'#3a312a',DL?'#1c1f22':'#1c1714');c.beginPath();c.moveTo(-31,38);c.quadraticCurveTo(-30,8,-12,4);c.lineTo(12,4);c.quadraticCurveTo(30,8,31,38);c.closePath();c.fill();
+    if(!DL){c.fillStyle=gr(4,38,'#b4ae9f','#7d786c');c.beginPath();c.moveTo(-9,4);c.lineTo(9,4);c.lineTo(6,38);c.lineTo(-6,38);c.closePath();c.fill();c.strokeStyle='#d6b25a';c.lineWidth=1.6;for(const x of[-1,1]){c.beginPath();c.moveTo(x*9.5,4);c.lineTo(x*6.5,38);c.stroke();}}
+    else{c.fillStyle='#2b3034';c.fillRect(-7,1,14,6);for(const x of[-1,1])el(x*4.6,4,1.6,1.6,'#d8b456');for(let i=0;i<4;i++)el(0,12+i*7,1.5,1.5,'#8a7a46');for(const x of[-1,1]){c.fillStyle='#262a2e';c.fillRect(x>0?7:-17,14,10,8);}}
+    c.fillStyle=gr(-24,2,'#d2a582','#a87a5c');c.fillRect(-3.5,-2,7,7);el(0,-12,9,11,gr(-24,0,'#d6a986','#b0815f'));
+    for(const x of[-1,1]){el(x*3.4,-13,1.5,1,'#2a1d14');c.fillStyle=DL?'#1f1b18':'#bfbab0';c.fillRect(x*3.4-2.6,-16.4,5.2,1.2);}
+    if(!DL){c.fillStyle=gr(-8,12,'#d9d5cc','#a9a49a');c.beginPath();c.moveTo(-9,-12);c.quadraticCurveTo(-10,2,-4,8);c.quadraticCurveTo(0,13,4,8);c.quadraticCurveTo(10,2,9,-12);c.quadraticCurveTo(7,-6,4,-6);c.lineTo(-4,-6);c.quadraticCurveTo(-7,-6,-9,-12);c.fill();
+      c.fillStyle='#bdb8ae';c.fillRect(-4,-6.5,8,1.6);
+      c.fillStyle=gr(-36,-18,'#ffffff','#d9d4c8');c.beginPath();c.ellipse(0,-23,13,8.5,0,0,7);c.fill();c.strokeStyle='#c4beb1';c.lineWidth=1.2;for(const yy of[-26,-22,-18.5]){c.beginPath();c.ellipse(0,yy,12.5,3.2,yy===-22?.12:-.1,.2,2.95);c.stroke();}}
+    else{c.fillStyle=gr(-26,-12,'#2b2622','#15120f');c.beginPath();c.moveTo(-9.5,-11);c.quadraticCurveTo(-11,-26,0,-25);c.quadraticCurveTo(11,-26,9.5,-11);c.quadraticCurveTo(8,-18,2,-19);c.lineTo(-4,-18.5);c.quadraticCurveTo(-8,-17,-9.5,-11);c.fill();for(const x of[-1,1]){c.fillStyle='#77736c';c.fillRect(x>0?7.6:-9.4,-15,1.8,4);}c.fillStyle='#8c5f4c';c.fillRect(-3,-5.5,6,1);}
+    break;}
   case'commissar':man(-8,2,1);rect(-14,-19,24,4,L);line(24,-30,24,18,2.5);rect(24,-30,18,12,col);poly([[28,-27],[30,-22],[36,-22],[31,-19],[33,-13],[28,-17],[23,-13],[25,-19],[20,-22],[26,-22]],'#f2ead2');break;
-  case'spy':man(0,2,1);c.fillStyle=L;c.beginPath();c.ellipse(0,-19,17,4,0,0,7);c.fill();rect(-9,-19,18,5,L);rect(-8,-11,16,4,D);poly([[-12,2],[0,12],[12,2],[8,2],[0,8],[-8,2]],DM);break;
+  case'spy':man(0,2,1);/* plain clothes: flat cap with a peak, dark glasses, a satchel on a strap, phone at the ear */c.beginPath();c.arc(0,-12,10.5,3.14,6.28);c.fillStyle=L;c.fill();rect(-11,-13,26,3.5,L);rect(-7,-9,14,3.5,D);line(-11,5,9,19,2.2,D);rect(6,14,13,10,L);rect(8,16,9,2,D);rect(-14,-12,4.5,10,L);break;
   case'squad':man(-18,5,.8);man(18,5,.8);man(0,-1,1.05);rect(-6,-15,12,4,D);line(-6,10,26,-6,3);break;
   case'recon':man(-8,4,.95);c.save();c.translate(24,-20);rect(-3,-2,6,4);line(-12,-8,12,8,2);line(12,-8,-12,8,2);for(const [x,y] of [[-12,-8],[12,-8],[-12,8],[12,8]]){c.strokeStyle=L;c.lineWidth=1.6;c.beginPath();c.ellipse(x,y,5,2,0,0,7);c.stroke();}c.restore();break;
   default:man(0,2,1);line(-16,13,28,-6,3.5);rect(-4,6,5,8,DM);}
@@ -158,7 +186,7 @@ function drawUnit(c,k,W,H,col,st){const K=iconClass(k,st);c.save();c.translate(W
 function iconBranch(k,bld,st){return bld?bldClass(k,st):iconClass(k,st);}
 /* building silhouettes for the battle BUILD tab (same hand as drawUnit) */
 function bldClass(k,st){k=String(k||'');const nm=String((st&&st.name)||'');
-  if(/factory/.test(k))return'factory';if(/airfield/.test(k))return'airfield';if(/shipyard/.test(k))return'shipyard';if(/depot/.test(k))return'depot';
+  if(/factory/.test(k))return'factory';if(/airfield/.test(k))return'airfield';if(/shipyard/.test(k))return'shipyard';if(/depot/.test(k))return'depot';if(k==='gen')return'gen';
   if(/uplink/.test(k))return'uplink';if(/coast/.test(k))return'coast';if(/sam/.test(k))return'sam';if(/turret|gun|battery/.test(k))return'turret';
   if(/econ|oil/.test(k))return/oil|gas|pipeline|petrol|crude|derrick|refiner/i.test(nm)||k==='oil'?'oil':'bank';
   if(/tunnel/.test(k))return'tunnel';if(/fort/.test(k))return'fort';if(/radio/.test(k))return'radio';if(/hq/.test(k))return'hq';if(/barracks/.test(k))return'barracks';return'house';}
@@ -168,6 +196,7 @@ function drawBld(c,k,W,H,st){const K=bldClass(k,st);c.save();c.translate(W/2,H/2
   case'factory':c.beginPath();c.moveTo(-28,16);for(let i=0;i<3;i++){c.lineTo(-28+i*16,-2);c.lineTo(-12+i*16,-10);c.lineTo(-12+i*16,-2);}c.lineTo(22,16);c.closePath();c.fill();c.fillRect(22,-22,7,38);break;
   case'airfield':c.fillRect(-30,10,60,6);c.fillRect(-6,-16,10,26);c.fillRect(-12,-24,22,9);break;
   case'shipyard':c.fillRect(-28,8,56,8);c.fillRect(-18,-22,5,30);c.fillRect(-18,-22,34,4);c.fillRect(12,-18,2,16);break;
+  case'gen':c.fillRect(-26,6,40,16);c.fillRect(-20,-10,8,16);c.fillRect(-8,-18,8,24);c.fillRect(16,-2,10,24);c.fillRect(-26,22,52,3);break;
   case'depot':for(const [x,y] of [[-22,0],[-4,0],[14,0],[-13,-16],[5,-16]])c.fillRect(x,y,15,14);break;
   case'oil':c.beginPath();c.moveTo(-16,16);c.lineTo(0,-24);c.lineTo(16,16);c.stroke();c.beginPath();c.moveTo(-10,0);c.lineTo(10,0);c.moveTo(-6,-10);c.lineTo(6,-10);c.stroke();c.fillRect(-20,14,40,4);break;
   case'bank':c.beginPath();c.moveTo(-30,-6);c.lineTo(0,-24);c.lineTo(30,-6);c.closePath();c.fill();for(const x of [-22,-8,6,20])c.fillRect(x,-2,7,18);c.fillRect(-32,16,64,5);c.fillStyle=D;c.beginPath();c.arc(0,-11,5,0,7);c.fill();break;
@@ -197,7 +226,7 @@ function card(o){const b=E('button','uk-card'+(o.on===false?' off':'')+(o.sel?' 
 function seg(names,cur,fn,tips){const s=E('div','uk-seg');names.forEach((n,i)=>{const b=E('button',i===cur?'on':'',n);b.type='button';if(tips&&tips[i])b.dataset.tt=tips[i];b.onclick=()=>fn(i);s.appendChild(b);});return s;}
 function link(t,fn,tip,dim){const b=E('button','uk-link'+(dim?' dim':''),t);b.type='button';if(tip)b.dataset.tt=tip;b.onclick=fn;return b;}
 /* ---- the one tooltip: any element with data-tt (plain text or JSON {t,d,r:[[k,v]],w}) or a title attribute inside game UI ---- */
-const icC={};function icon(k,col,bld){const key=k+'|'+col+'|'+(bld?1:0);let u=icC[key];if(!u){const cv=document.createElement('canvas');cv.width=104;cv.height=80;const x=cv.getContext('2d');try{if(bld)drawBld(x,k,104,80);else drawUnit(x,k,104,80,col||'#7a8a6a');}catch(e){}u=icC[key]=cv.toDataURL();}const im=document.createElement('img');im.src=u;im.alt='';return im;}
+const icC={};function icon(k,col,bld,st){const key=k+'|'+col+'|'+(bld?1:0)+(st&&st.name?'|'+st.name:'');let u=icC[key];if(!u){const cv=document.createElement('canvas');cv.width=104;cv.height=80;const x=cv.getContext('2d');try{if(bld)drawBld(x,k,104,80);else drawUnit(x,k,104,80,col||'#7a8a6a',st);}catch(e){}u=icC[key]=cv.toDataURL();}const im=document.createElement('img');im.src=u;im.alt='';return im;}
 let tipEl=null,tipFor=null;
 function tipShow(el,x,y){let raw=el.dataset.tt;if(raw==null)return;let o;if(raw[0]==='{'){try{o=JSON.parse(raw);}catch(e){o={d:raw};}}else{const L=raw.split(/\n| — | - (?=[A-Z])/);o=L.length>1&&L[0].length<40?{t:L[0],d:L.slice(1).join(' ')}:{d:raw};}
   if(!o.t&&!o.d)return;if(!tipEl){tipEl=E('div');tipEl.id='ukTip';document.body.appendChild(tipEl);}
@@ -210,7 +239,12 @@ function tipAt(t){for(let e=t,i=0;e&&e!==document.body&&i<6;e=e.parentElement,i+
 document.addEventListener('mouseover',e=>{const el=tipAt(e.target);if(!el){if(tipFor)tipHide();return;}if(el!==tipFor)tipShow(el,e.clientX,e.clientY);},true);
 document.addEventListener('mousemove',e=>{if(tipFor){if(!tipFor.isConnected)tipHide();else if(tipFor.title){const el=tipFor;tipFor=null;tipAt(el);tipShow(el,e.clientX,e.clientY);}else tipMove(e.clientX,e.clientY);}},{passive:true});
 document.addEventListener('mousedown',()=>tipHide(),true);
-return {E,drawUnit,drawBld,iconBranch,icon,tabs,chip,sec,card,seg,link,tipHide};
+/* matchup chips (one language, idea 3): BEATS / WEAK TO with unit pictures. Reads matchUp() in 01-data - the one helper. o.mini = the two small rows on a command button. */
+function match(fac,kind,foe,o){o=o||{};let m;try{m=matchUp(fac,kind,foe);}catch(e){return null;}if(!m.beats.length&&!m.weak.length)return null;if(o.mini&&!m.armed)return null;   /* unarmed: the hover card says what hunts it; the button keeps its full name */
+  const w=E('div','uk-mu'+(o.mini?' mini':'')),n=o.n||(o.mini?1:4);w.dataset.k=kind;
+  const row=(cls,lab,L)=>{if(!L.length)return;const r=E('div','mr '+cls),ms=o.mini?r:E('div','mul');if(!o.mini){r.appendChild(E('b','',lab));r.appendChild(ms);}for(const x of L.slice(0,n)){const s=E('span','mi');s.appendChild(icon(x.k,cls==='g'?'#9be8a6':'#f3a096',x.b));if(!o.mini)s.appendChild(E('i','',x.n));ms.appendChild(s);}w.appendChild(r);};
+  row('g','BEATS',m.beats);row('r','WEAK TO',m.weak);return w;}
+return {E,drawUnit,drawBld,iconBranch,icon,tabs,chip,sec,card,seg,link,tipHide,match};
 })();
 /* ===== ingameui slice 3: pause menu = one centred panel with a vertical text menu; Settings in tabs; Esc = one step back ===== */
 (function(){const $$=id=>document.getElementById(id);
@@ -228,7 +262,17 @@ return {E,drawUnit,drawBld,iconBranch,icon,tabs,chip,sec,card,seg,link,tipHide};
 #pauseOv.ukP .ukKeys{margin-top:12px;font:12px var(--mono,monospace);color:var(--dim,#8a9a92)}
 #settings .uk-tabs{margin:2px 0 12px}#settings .uk-tab{font-size:16px}
 #settings .uk-pane .label:first-child{margin-top:0}
-#settings .uk-pane .sethd{display:none}`;document.head.appendChild(st);
+#settings .uk-pane .sethd{display:none}
+/* sweepfixB (2026-11-13): Settings = one framed window in the middle of the screen, the same height on every tab (the tab
+   scrolls inside it if it is long), DONE pinned at the bottom; group labels breathe instead of touching the buttons above */
+#settings:not([hidden]){display:flex;align-items:center;justify-content:center}
+#settings>.card{width:min(800px,94vw);max-width:none!important;max-height:none!important;height:min(700px,calc(100vh - 48px));box-sizing:border-box;display:flex;flex-direction:column;margin:auto;padding:24px 34px 16px;background:linear-gradient(180deg,rgba(24,31,27,.98),rgba(13,18,16,.98));border:1px solid #3d4d44;border-top:2px solid var(--accent,#e3b341);box-shadow:0 18px 50px rgba(0,0,0,.6);text-align:left}
+#settings #setBody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:0;overflow:hidden;padding-right:0}
+#settings #setBody>h1{margin:0 0 6px;flex:none}
+#settings #setBody>.uk-tabs{flex:none;margin:0 0 14px}
+#settings .uk-pane.on{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px 10px 12px 0}
+#settings .uk-pane .label{margin:22px 0 9px;line-height:1.35}
+#settings .uk-pane .label:first-child{margin-top:4px}`;document.head.appendChild(st);
   function pauseInstall(){const ov=$$('pauseOv');if(!ov||ov.classList.contains('ukP'))return;const card=ov.querySelector('.card'),row=card&&card.querySelector('.row');if(!row)return;ov.classList.add('ukP');
     const m=document.createElement('nav');m.className='ukMenu';m.setAttribute('role','menu');const add=(b,cls)=>{if(!b)return;b.className=cls||'';b.setAttribute('role','menuitem');m.append(b);};
     const mk=(id,t,fn,tip)=>{const b=document.createElement('button');b.type='button';b.id=id;b.textContent=t;b.onclick=fn;if(tip)b.dataset.tt=tip;return b;};

@@ -9,7 +9,7 @@
 const CT={mode:null,plans:[],pid:0,pl:{type:'m',trig:'auto',sec:10},marks:[],draw:null,form:{},names:{},sendG:0,open:false,sig:''};
 const CT_COL={m:'#74d08f',a:'#ea5a40',h:'#6fb2ff'},CT_TN={m:'Move',a:'Assault',h:'Hold'};
 const CT_PING=[{n:'Attack here',c:'#ea5a40'},{n:'Defend here',c:'#6fb2ff'},{n:'Danger',c:'#f2c94c'}];
-const CT_GN=['Armour','Infantry','Assault','Recon','Support','Artillery','Air','Reserve'];
+const CT_GN=['Armor','Infantry','Assault','Recon','Support','Artillery','Air','Reserve'];
 const CT_FORMS=['line','column','wedge'];
 function ctMine(ids){return (ids||[]).map(i=>G.byId.get(i)).filter(u=>u&&!u.dead&&!u.isB&&u.team===ME);}
 function ctCentroid(us){let x=0,y=0;for(const u of us){x+=u.x;y+=u.y;}return us.length?{x:x/us.length,y:y/us.length}:null;}
@@ -42,7 +42,7 @@ function ctPlanCancel(){if(CT.mode==='plan'){CT.mode=null;CT.draft=null;ctUI();r
 function ctGoAll(){let n=0;for(const pl of CT.plans)if(pl.st==='wait'&&pl.steps[pl.i+1]&&pl.steps[pl.i+1].trig==='go'){pl.go=true;n++;}if(n)sfxUI(660);ctPlanTick();ctUI();}
 /* ---- pings, drawings, quick lines (received) ---- */
 function ctMark(m){m.t0=performance.now()/1000;m.life=10;CT.marks.push(m);if(CT.marks.length>40)CT.marks.shift();}
-FXH.mping=function(team,k,x,y){if(!G||!sameTm(team,ME))return;ctMark({k,x,y,team,kind:'ping'});sfxUI(k===2?440:700);};
+FXH.mping=function(team,k,x,y){if(!G||!sameTm(team,ME))return;ctMark({k,x,y,team,kind:'ping'});if(team!==ME)try{edgeAlert('Ally ping','ping',x,y);}catch(e){}sfxUI(k===2?440:700);};
 FXH.mdraw=function(team,c,p){if(!G||!sameTm(team,ME))return;const pts=[];for(let i=0;i+1<p.length;i+=2)pts.push([p[i],p[i+1]]);ctMark({kind:c?'circle':'line',pts,team});};
 FXH.say=function(team,i){if(!G||!sameTm(team,ME)||!CF.LINES[i])return;pushLog(`${team===ME?'You':ctName(team)}: ${CF.LINES[i]}`,team===ME?'':'g');if(team!==ME)sfxUI(600);};
 FXH.cfo=function(f,t,d){};FXH.cfs=function(a,b,d){if(G&&(a===ME||b===ME))sfxUI(520);};FXH.cfb=function(a,b){if(G&&b===ME)sfxUI(300);};
@@ -130,7 +130,7 @@ function ctPlanBar(){let b=$('planBar');if(CT.mode!=='plan'){if(b)b.hidden=true;
 function ctAct(a,v,w){const T=G&&G.teams[ME];if(!G||!T)return;
   switch(a){case 'tog':CT.open=!CT.open;if(CT.open&&typeof AB!=='undefined'&&AB.open){AB.open=false;AB.sig='';abUI();}break;case 'abtog':if(typeof abAct==='function'){abAct('open');if(AB.open)CT.open=false;}break;case 'plan':CT.mode==='plan'?ctPlanFinish():ctPlanStart();return;case 'ptype':CT.pl.type=v;break;
     case 'ptrig':if(v==='auto'||v==='go'){CT.pl.trig=v;}else{CT.pl.trig='timer';CT.pl.sec=+v.slice(5);}break;case 'pfin':ctPlanFinish();return;case 'pcan':ctPlanCancel();return;
-    case 'go':{const pl=CT.plans.find(p=>p.n===+v);if(pl){pl.go=true;sfxUI(660);ctPlanTick();}break;}case 'goall':ctGoAll();return;case 'pdel':CT.plans=CT.plans.filter(p=>p.n!==+v);pushLog('Plan cancelled.');break;
+    case 'go':{const pl=CT.plans.find(p=>p.n===+v);if(pl){pl.go=true;sfxUI(660);ctPlanTick();}break;}case 'goall':ctGoAll();return;case 'pdel':CT.plans=CT.plans.filter(p=>p.n!==+v);pushLog('Plan canceled.');break;
     case 'tool':CT.mode=CT.mode===v?null:v;CT.draft=null;break;case 'say':doAct({t:'say',i:+v});break;
     case 'gsel':sqSelect(+v);break;case 'gstop':doAct({t:'stop',ids:sqList(+v).map(u=>u.id)});break;case 'ghold':{const L=sqList(+v),c=ctCentroid(L);if(c){doAct({t:'def',ids:L.map(u=>u.id),x:c.x,y:c.y});speak(1);}break;}
     case 'gform':{const i=+v;CT.form[i]=CT_FORMS[(CT_FORMS.indexOf(CT.form[i]||'line')+1)%3];break;}case 'gsend':CT.sendG=CT.sendG===+v?0:+v;CT.mode=CT.sendG?'gsend':null;break;
@@ -157,7 +157,7 @@ function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=nul
       h+=`<div class="row" ><span class="nm" data-a="gname" data-v="${i}" data-n="${i}" title="Click: next name. Double-click: type a name">${ctGroupName(i)}</span><small>${L.length} units</small><span class="bar" title="Health ${Math.round(hp*100)}%"><i style="width:${Math.round(hp*100)}%;background:${hp>.6?'#74d08f':hp>.3?'#e3b341':'#ea5a40'}"></i></span>${ap>=0?`<span class="bar" title="Ammo ${Math.round(ap*100)}%"><i style="width:${Math.round(ap*100)}%;background:${ap>.4?'#6fb2ff':'#ea5a40'}"></i></span>`:''}</div>
       <div class="row"><button data-a="gsel" data-v="${i}">Select</button><button class="${CT.sendG===i?'on':''}" data-a="gsend" data-v="${i}" title="Then click the map (Shift: attack-move)">Send</button><button data-a="gform" data-v="${i}" title="Formation when sent">${f[0].toUpperCase()+f.slice(1)}</button><button data-a="ghold" data-v="${i}">Hold</button><button data-a="gstop" data-v="${i}">Stop</button></div>`;}
     if(!any)h+='<small>Select units and press Ctrl+1 to save a group.</small>';
-    if(tp){h+=`<div class="sec">Pings &amp; drawing</div><div class="row">`+CT_PING.map((p,i)=>`<button class="${CT.mode==='ping'+i?'on':''}" data-a="tool" data-v="ping${i}" style="border-color:${p.c}" title="${[',','.','/'][i]} then click the map or minimap">${p.n}</button>`).join('')+`<button class="${CT.mode==='draw'?'on':''}" data-a="tool" data-v="draw" title="' then drag on the map">Draw</button><button class="${CT.mode==='circle'?'on':''}" data-a="tool" data-v="circle" title="; then drag from the centre">Circle</button></div><div class="row">`+CF.LINES.map((l,i)=>`<button data-a="say" data-v="${i}">${l}</button>`).join('')+'</div>';
+    if(tp){h+=`<div class="sec">Pings &amp; drawing</div><div class="row">`+CT_PING.map((p,i)=>`<button class="${CT.mode==='ping'+i?'on':''}" data-a="tool" data-v="ping${i}" style="border-color:${p.c}" title="${[',','.','/'][i]} then click the map or minimap">${p.n}</button>`).join('')+`<button class="${CT.mode==='draw'?'on':''}" data-a="tool" data-v="draw" title="' then drag on the map">Draw</button><button class="${CT.mode==='circle'?'on':''}" data-a="tool" data-v="circle" title="; then drag from the center">Circle</button></div><div class="row">`+CF.LINES.map((l,i)=>`<button data-a="say" data-v="${i}">${l}</button>`).join('')+'</div>';
       h+='<div class="sec">Aid for teammates</div>';for(const O of oth.filter(O=>sameTm(O.id,ME)))h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b><button data-a="give" data-v="${O.id}" data-w="500" title="10% fee, arrives after 4 s">$500</button><button data-a="give" data-v="${O.id}" data-w="2000">$2000</button><button data-a="gift" data-v="${O.id}" ${sel?'':'disabled'} title="Give the selected units (up to 12, one gift per 20 s)">Give units</button></div>`;}
     if(ffa&&oth.length){h+='<div class="sec">Truce (free-for-all)</div>';
       for(const O of oth){const tr=truced(ME,O.id),k=ME<O.id?ME*32+O.id:O.id*32+ME,out=(G.tOff||[]).find(o=>o.f===ME&&o.t===O.id),oath=(O.oath||0)>G.t,me=(T.oath||0)>G.t;

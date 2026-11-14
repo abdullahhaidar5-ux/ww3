@@ -24,8 +24,24 @@ function svStorageMsg(e){const m=String(e&&e.message||e||'');return 'Your browse
 /* ---------- capture ---------- */
 function svThumb(){try{if(typeof mm==='undefined'||!mm||!mm.width)return null;const c=document.createElement('canvas');c.width=160;c.height=Math.max(1,Math.round(160*mm.height/mm.width));c.getContext('2d').drawImage(mm,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.7);}catch(e){return null;}}
 function svCanSave(){return !!(G&&!G.over&&!G.rp&&MODE==='single'&&!window.LOADING&&G.ng&&!G.sandbox&&!G.grand);}
+/* svFront (living main menu): a small sketch of the battlefield at the moment of saving - water and land, and which side holds each part of the land, worked out from your own
+   forces and the enemy forces you could see - run-length packed like the campaign's war table (13-grand.js grWarTable) so the main menu can draw where your front is.
+   Display only: it rides in the save's list entry (meta), never in the checkpoint; nothing in the battle reads it. */
+function svFront(){try{if(!G||!G.map||!G.ents||!G.teams[ME])return null;const W=240,H=135,GW=40,GH=Math.max(8,Math.round(40*MAPH/MAPW)),dm=new Float32Array(GW*GH).fill(1e9),df=new Float32Array(GW*GH).fill(1e9);let foes=0;
+  /* each part of the land belongs to whoever is nearest: your forces (and allies) or an enemy you can see */
+  for(const e of G.ents){if(e.dead||e.team==null||e.team<0||!G.teams[e.team])continue;const mine=ally(e.team,ME);if(!mine&&!vis(e))continue;if(!mine)foes++;
+    const gx=e.x/MAPW*GW-.5,gy=e.y/MAPH*GH-.5,D=mine?dm:df;for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){const dx=i-gx,dy=j-gy,q=dx*dx+dy*dy,k=j*GW+i;if(q<D[k])D[k]=q;}}
+  const inf=new Float32Array(GW*GH);for(let k=0;k<inf.length;k++)inf[k]=Math.sqrt(df[k])-Math.sqrt(dm[k]);
+  const s=Math.max(MAPH/(.8*H),MAPW/(.5*W)),vx=MAPW/2-.7*W*s,vy=MAPH/2-.5*H*s,out=[];let pv=-1,run=0;const put=()=>{if(run<1)return;out.push(pv);let r=run;while(r>127){out.push((r&127)|128);r>>=7;}out.push(r);};
+  for(let j=0;j<H;j++){const wy=vy+(j+.5)*s;for(let i=0;i<W;i++){const wx=vx+(i+.5)*s;let v=0;
+    if(wx>=0&&wy>=0&&wx<MAPW&&wy<MAPH&&!(G.map.edge(wx,wy)>0)){const fx=Math.max(0,Math.min(GW-1.001,wx/MAPW*GW-.5)),fy=Math.max(0,Math.min(GH-1.001,wy/MAPH*GH-.5)),x0=fx|0,y0=fy|0,ax=fx-x0,ay=fy-y0,k=y0*GW+x0;
+      v=!foes||inf[k]*(1-ax)*(1-ay)+inf[k+1]*ax*(1-ay)+inf[k+GW]*(1-ax)*ay+inf[k+GW+1]*ax*ay>=0?1:2;}
+    if(v===pv)run++;else{put();pv=v;run=1;}}}put();
+  let d='';for(let i=0;i<out.length;i+=8192)d+=String.fromCharCode.apply(null,out.slice(i,i+8192));
+  const hex=c=>{const m=/^#?([0-9a-f]{6})$/i.exec(String(c||''));return m?[0,2,4].map(i=>parseInt(m[1].substr(i,2),16)):[200,170,80];};
+  return {w:W,h:H,d:btoa(d),c:hex(G.teams[ME].color),e:foes?[150,62,50]:null};}catch(e){return null;}}
 function svMeta(id,name,kind){const T=G.teams[ME]||G.teams[0],mp=MAPS[G.mapKey];return {id,name,kind,ts:Date.now(),fmt:SV_FMT,pv:NET_PV,map:G.mapKey,mapName:mp&&mp.name||G.mapKey,fac:T.fac,facName:T.F&&T.F.name||T.fac,
-  t:Math.round(G.t),camp:G.camp?G.camp.id:null,n:G.teams.filter(x=>!x.reb).length,thumb:svThumb()};}
+  t:Math.round(G.t),camp:G.camp?G.camp.id:null,n:G.teams.filter(x=>!x.reb).length,thumb:svThumb(),wt:svFront()};}
 /* rolling autosave: 3 slots (auto, auto2, auto3) - an empty one is used first, then the oldest is overwritten, so one bad write never costs the only copy (queue "Never lose progress") */
 async function svAutoSlot(){const ids=['auto','auto2','auto3'];let L=[];try{L=(await svList()).filter(m=>m.kind==='auto');}catch(e){}
   const free=ids.find(i=>!L.some(m=>m.id===i));if(free)return free;const old=L.filter(m=>ids.includes(m.id)).sort((x,y)=>x.ts-y.ts)[0];return old?old.id:'auto';}
@@ -137,14 +153,14 @@ function svGrandInfo(){try{const K='ww3grand1';if(!localStorage.getItem(K))retur
   if(!i){const o=JSON.parse(localStorage.getItem(K));if(!o||o.v!==1)return null;i={ts:0,me:o.me||'',n:o.me?((typeof FACTIONS!=='undefined'&&FACTIONS[o.me]&&FACTIONS[o.me].name)||o.me):'Observer',d:'',over:o.over?1:0};}
   return i&&!i.over?i:null;}catch(e){return null;}}
 function svContinueGrand(){return loadGrand().then(()=>{if(grLoad()&&!GC.over){grandOpen();return true;}grandMenu();return false;});}
-/* Continue = the newest thing you were playing: a saved/autosaved battle or the grand campaign */
+/* Continue = the newest saved/autosaved Conquest or Battle (or mission); the grand campaign (preview, paused) only when it is the only save */
 async function svMenuSync(){const cb=$('svContinue');if(!cb)return;let L=[];try{L=await svList();}catch(e){}
   svLatest=L.find(m=>!svCheck(m))||null;svGrand=svGrandInfo();
-  if(svGrand&&svLatest&&svLatest.ts>svGrand.ts)svGrand=null;
+  if(svGrand&&svLatest)svGrand=null;   /* campaign paused 2026-11-13: Continue resumes the newest Conquest/Battle save; the campaign save only if it is the only one */
   cb.hidden=!svLatest&&!svGrand;cb.dataset.kind=svGrand?'grand':svLatest?'battle':'';
-  if(svGrand)cb.textContent='▶ Continue — Grand campaign · '+svGrand.n+(svGrand.d?' · '+svGrand.d:'');
+  if(svGrand)cb.textContent='▶ Continue — Grand campaign (preview) · '+svGrand.n+(svGrand.d?' · '+svGrand.d:'');
   else if(svLatest)cb.textContent='▶ Continue — '+svLatest.mapName+' · '+svLatest.facName+' · '+svClock(svLatest.t);
-  const lb=$('svLoadBtn');if(lb)lb.hidden=false;}
+  const lb=$('svLoadBtn');if(lb)lb.hidden=false;try{if(typeof mxWarTable==='function')mxWarTable();}catch(e){}}
 function svInstall(){const rs=$('resumeBtn');if(rs&&!$('svSave')){const b=document.createElement('button');b.id='svSave';b.type='button';b.className='big ghost';b.textContent='Save game';b.onclick=()=>svSaveDialog();rs.after(b);}
   const st=$('start');if(st&&!$('svLoadBtn')){const l=document.createElement('button');l.id='svLoadBtn';l.type='button';l.className='big ghost';l.textContent='Load game';l.title='Load a saved battle (or a .ww3save file)';l.onclick=()=>svLoadDialog();
     const c=document.createElement('button');c.id='svContinue';c.type='button';c.className='big';c.hidden=true;c.onclick=async()=>{if(svGrand){c.disabled=true;try{await svContinueGrand();}catch(e){uiDialog('The grand campaign could not be loaded. Check your connection and try again.',{yes:'OK',no:'Close'},()=>{});}c.disabled=false;return;}if(!svLatest)return;c.disabled=true;const r=await svLoadId(svLatest.id);c.disabled=false;if(!r.ok)uiDialog(r.msg,{yes:'OK',no:'Close'},()=>{});};

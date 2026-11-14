@@ -10,12 +10,29 @@ function mwPipEl(show,label){let el=document.getElementById('mwPip');if(!el){el=
 function mwPipShow(x,y,label,delay){if(typeof SET!=='undefined'&&SET.tk===0)return;if(typeof MODE!=='undefined'&&MODE==='replay')return;
   const g0=G,go=()=>{if(!G||G!==g0||G.over||(window.LOADING))return;const now=performance.now();if((MWV.pip&&MWV.pip.until>now)||now-MWV.pipAt<6000)return;MWV.pipAt=now;MWV.pip={x,y,until:now+3000,G};mwPipEl(true,label);};
   if(delay>0)setTimeout(go,delay*1000);else go();}
+// The corner picture is drawn into its own small off-screen picture with the same settings as the main view and then
+// copied to the corner. It used to be drawn straight to the screen, which needs a second version of EVERY shader in
+// view: the first "MISSILE STRIKE" picture (1.2 s before the first hit) compiled them all in one frame - on a real
+// graphics card that was the freeze during a Kheibar strike. The off-screen picture and its copy shader are made while
+// the battle loads (mwPipWarm), never during a strike.
+function mwPipRT(){if(!POST.pip){POST.pip=new THREE.WebGLRenderTarget(480,270,{type:THREE.HalfFloatType,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:true});
+    POST.mPip=new THREE.ShaderMaterial({uniforms:{tex:{value:null}},vertexShader:FSV,depthTest:false,depthWrite:false,
+      fragmentShader:`uniform sampler2D tex;varying vec2 vUv;void main(){vec3 c=texture2D(tex,vUv).rgb;if(!(c.r==c.r&&c.g==c.g&&c.b==c.b))c=vec3(0.);c=min(c,vec3(60.))*.55;c=clamp((c*(2.51*c+.03))/(c*(2.43*c+.59)+.14),0.,1.);gl_FragColor=vec4(pow(c,vec3(1./2.2)),1.);}`});}return POST.pip;}
+function mwPipDraw(c,x,y,w,h){const vp=MWV.vp||(MWV.vp=new THREE.Vector4());R3.getViewport(vp);
+  if(POST.on&&POST.mFinal){const rt=mwPipRT();if(typeof softP==='function')softP(false);R3.setRenderTarget(rt);R3.clear();R3.render(SCN,c);
+    POST.mPip.uniforms.tex.value=rt.texture;POST.quad.material=POST.mPip;R3.setRenderTarget(null);R3.setScissorTest(true);R3.setViewport(x,y,w,h);R3.setScissor(x,y,w,h);R3.render(POST.scn,POST.cam);}
+  else{R3.setRenderTarget(null);R3.setScissorTest(true);R3.setViewport(x,y,w,h);R3.setScissor(x,y,w,h);R3.clear();R3.render(SCN,c);}   // no post-processing: the main view is drawn straight to the screen too, so the shaders are the same
+  R3.setScissorTest(false);R3.setViewport(vp);}
+function mwPipCam(x,y,asp){const c=MWV.cam||(MWV.cam=CAM.clone());c.aspect=asp;c.updateProjectionMatrix();const gy=(typeof groundH==='function'?groundH(x,y):0)||0;c.position.set(x,gy+115,y+165);c.lookAt(x,gy,y);c.updateMatrixWorld();return c;}
+// called once by the shader warm-up while the battle loads: one corner picture is drawn (hidden behind the loading screen)
+function mwPipWarm(){try{if(!R3||!SCN||!CAM||!G||G.headless)return;
+  // only the off-screen picture and its copy shader are made here; the battle's own shaders are the same ones the main view already
+  // has (same picture type), so no second draw of the whole battlefield is needed (that one task ran for seconds on slow machines)
+  if(POST.on&&POST.mFinal){const vp=MWV.vp||(MWV.vp=new THREE.Vector4());R3.getViewport(vp);const rt=mwPipRT();R3.setRenderTarget(rt);R3.clear();
+    POST.mPip.uniforms.tex.value=rt.texture;POST.quad.material=POST.mPip;R3.setRenderTarget(null);R3.setScissorTest(true);R3.setViewport(0,0,16,9);R3.setScissor(0,0,16,9);R3.render(POST.scn,POST.cam);R3.setScissorTest(false);R3.setViewport(vp);}}catch(e){console.warn('corner picture warm-up',e);}}
 function mwPipRender(){const P=MWV.pip;if(!P)return;try{if(P.G!==G||performance.now()>P.until||G.over){MWV.pip=null;mwPipEl(false);return;}
   const el=document.getElementById('mwPip'),r=el.getBoundingClientRect(),cr=R3.domElement.getBoundingClientRect();if(!r.width)return;
-  const c=MWV.cam||(MWV.cam=CAM.clone()),vp=MWV.vp||(MWV.vp=new THREE.Vector4());c.aspect=r.width/r.height;c.updateProjectionMatrix();
-  const gy=(typeof groundH==='function'?groundH(P.x,P.y):0)||0;c.position.set(P.x,gy+115,P.y+165);c.lookAt(P.x,gy,P.y);c.updateMatrixWorld();
-  R3.getViewport(vp);const x=r.left-cr.left+2,y=cr.height-(r.bottom-cr.top)+2,w=r.width-4,h=r.height-4;
-  R3.setRenderTarget(null);R3.setScissorTest(true);R3.setViewport(x,y,w,h);R3.setScissor(x,y,w,h);R3.clear();R3.render(SCN,c);R3.setScissorTest(false);R3.setViewport(vp);}catch(e){MWV.pip=null;mwPipEl(false);}}
+  mwPipDraw(mwPipCam(P.x,P.y,r.width/r.height),r.left-cr.left+2,cr.height-(r.bottom-cr.top)+2,r.width-4,r.height-4);}catch(e){MWV.pip=null;mwPipEl(false);}}
 {const _rp=renderPost;renderPost=function(){_rp();if(MWV.pip)mwPipRender();};}
 // effects
 FXH.cyb=(x,y,dur,vt,id)=>{PINGS.push({x,y,r:90,t:0,d:1.4,c:0x39ff88});for(let i=0;i<34;i++)part({x:x+rnd(-26,26),y:y+rnd(-26,26),h:groundH(x,y)+rnd(2,50),vh:rnd(20,60),add:true,c:[.2,1,.5],s:rnd(2,4),d:rnd(.7,1.5)});

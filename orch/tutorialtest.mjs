@@ -89,11 +89,11 @@ try {
   // ---- part A: out-of-order play, Skip step, Exit tutorial, restart
   console.log('-- out of order / skip / exit / restart'); SHOTS = false;
   await startTut(); await waitStep(0);
-  { await page.click('#b_barracks'); const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; }); let placed = false;
+  { await page.click('#b_turret'); const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; }); let placed = false;
     for (const [dx, dy] of [[120, 90], [-140, 90], [150, -90], [-150, -100], [0, 170]]) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y); await wait(500);
-      if (await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'barracks' && !e.dead))) { placed = true; break; } if (!(await ev(() => G.place === 'barracks'))) await page.click('#b_barracks'); }
-    ok(placed, 'out of order: Barracks placed during step 1');
-    for (let k = 0; k < 100 && !(await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'barracks' && !e.dead && e.built >= 1))); k++) await ff(3); if (!(await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'barracks' && !e.dead && e.built >= 1)))) bad('Barracks never finished');
+      if (await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'turret' && !e.dead))) { placed = true; break; } if (!(await ev(() => G.place === 'turret'))) await page.click('#b_turret'); }
+    ok(placed, 'out of order: Defense Gun placed during step 1');
+    for (let k = 0; k < 100 && !(await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'turret' && !e.dead && e.built >= 1))); k++) await ff(3); if (!(await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'turret' && !e.dead && e.built >= 1)))) bad('Defense Gun never finished');
     ok(await ev(() => TUTS.i === 0), 'out of order: the tutorial stays on step 1 (no crash, no skipping ahead)');
     for (let k = 0; k < 3; k++) { await page.click('#tutSkip'); await wait(250); }
     ok(await ev(() => TUTS.i === 3), 'Skip step moves to the next step (3 clicks -> step 4)');
@@ -115,12 +115,12 @@ try {
     for (let k = 0; k < 6 && f; k++) { const fe = await ev(() => { const e = tutFoe(), q = tutSquad(); return e && q && Math.hypot(e.x - q.x, e.y - q.y) < 900 ? { x: e.x, y: e.y } : null; }); if (!fe) break;   /* only the nearby scouts, never the far enemy base */ await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p = await scr(fe.x, fe.y, 10); await boxSelectSquad().catch(() => 0); await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p2 = await scr(fe.x, fe.y, 10); await click(p2.x, p2.y, { button: 'right' }); await ff(8);
       if (await ev(() => TUTS.wait || TUTS.i > 2)) break; } }
   await done(2); await shotAfter(3, 'atk');
-  // 4 setup + barracks
-  await waitStep(3); { await shot('04b-setup-banner'); await page.click('#b_barracks'); await wait(300); const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; });
-    ok(await ev(() => G.place === 'barracks'), 'clicking Barracks arms placement'); await shot('04c-placing');
+  // 4 setup + defense gun
+  await waitStep(3); { await shot('04b-setup-banner'); await page.click('#b_turret'); await wait(300); const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; });
+    ok(await ev(() => G.place === 'turret'), 'clicking Defense Gun arms placement'); await shot('04c-placing');
     let placed = false; for (const [dx, dy] of [[120, 90], [-140, 90], [150, -90], [-150, -100], [0, 170], [220, 40]]) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); await wait(500); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y); await wait(600);
-      if (await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'barracks' && !e.dead))) { placed = true; break; } if (!(await ev(() => G.place === 'barracks'))) await page.click('#b_barracks'); }
-    ok(placed, 'Barracks placed with a click next to the base'); }
+      if (await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'turret' && !e.dead))) { placed = true; break; } if (!(await ev(() => G.place === 'turret'))) await page.click('#b_turret'); }
+    ok(placed, 'Defense Gun placed with a click next to the base'); }
   await done(3); await shotAfter(4, 'bar');
   // 5 train
   await waitStep(4); { const b = await ev(() => { const e = tutBld('barracks'); return { x: e.x, y: e.y }; }); await ev(([x, y]) => centerOn(x, y, true), [b.x, b.y]); await wait(600); const p = await scr(b.x, b.y, 10); await click(p.x, p.y); await wait(500);

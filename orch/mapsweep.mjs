@@ -9,8 +9,10 @@
 //
 //   node orch/mapsweep.mjs                         # all maps, 2/4/8 players, 3 game-minutes each
 //   node orch/mapsweep.mjs --maps strait,oasis --players 2,8 --minutes 5
+//   node orch/mapsweep.mjs --batch 6              # battles: a fresh browser page every 6 maps (default), so memory stays flat
 //   node orch/mapsweep.mjs --static-only           # just the map-layout checks (about a minute; --static-seeds N, default 4)
 //   node orch/mapsweep.mjs --seed 7 --no-lock
+//   node orch/mapsweep.mjs --shard 1/3 --no-lock   # a third of the maps (run the three shards side by side, as the gate does)
 //   node orch/mapsweep.mjs --previews               # screenshot the map picker preview of every map, desktop + phone width
 //   node orch/mapsweep.mjs --full-start             # rebuild the 3D world for every battle (slow, like the Deploy button)
 import http from 'node:http';
@@ -28,6 +30,7 @@ const MINUTES = Number(argS('minutes', 3));
 const PLAYERS = String(argS('players', '2,4,8')).split(',').map(Number).filter(n => n >= 2 && n <= 8);
 const ONLY = argS('maps', '') ? argS('maps', '').split(',') : null;
 const SEED = Number(argS('seed', 1234));
+const BATCH = Number(argS('batch', 6)); // battles: maps per browser page before a fresh one (memory: one page for all 116 maps died at ~5 GB)
 const STATIC_ONLY = process.argv.includes('--static-only');
 const FULL_START = process.argv.includes('--full-start');
 const STATIC_SEEDS = Number(argS('static-seeds', 4)); // the static check is cheap: try several seeds (coastlines wobble per seed)
@@ -77,18 +80,8 @@ let cur = null; // the run errors are attributed to
 const { chromium } = await loadPlaywright();
 const browser = await chromium.launch({ executablePath: findChromium(),
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-await guardContext(page.context()); // never the live game servers (WebSockets escape page.route)
-await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
+let ctx, page;
 const addFail = m => (cur ? cur.fails : globalFails).push(m);
-page.on('pageerror', e => addFail('page error: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')));
-page.on('console', m => {
-  if (m.type() !== 'error') return;
-  const t = m.text();
-  if (/ERR_FAILED|net::|Failed to load resource|peer|PeerJS|WebSocket|ICE|AudioContext|autoplay|speechSynthesis/i.test(t)) return;
-  addFail('console error: ' + t.slice(0, 240));
-});
-
 // ---------------------------------------------------------------- in-page helpers
 const HELPERS = () => {
   const SW = window.__SW = {};
@@ -238,14 +231,35 @@ const HELPERS = () => {
 const saveUrl = (file, url) => fs.writeFileSync(file, Buffer.from(url.split(',')[1], 'base64'));
 
 // ---------------------------------------------------------------- boot
-await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
-await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => warns.push('3D models still loading after 180s'));
-await page.evaluate(HELPERS);
-if (FULL_START) await page.evaluate(() => { __SW.full = true; });
-try { await page.evaluate(() => { try { initAudio(); } catch (e) {} }); } catch {}
-let keys = await page.evaluate(() => MAP_KEYS.map(k => [k, MAPS[k].max, MAPS[k].min || 2]));
+// a fresh browser context + page (the old one is closed first so everything it held is freed): the battles run one map
+// per page, because one page running every battle grew to ~5 GB and the browser died
+async function openPage() {
+  if (ctx) await ctx.close().catch(() => {});
+  ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await guardContext(ctx); // never the live game servers (WebSockets escape page.route)
+  page = await ctx.newPage();
+  await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
+  page.on('pageerror', e => addFail('page error: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')));
+  page.on('console', m => {
+    if (m.type() !== 'error') return;
+    const t = m.text();
+    if (/ERR_FAILED|net::|Failed to load resource|peer|PeerJS|WebSocket|ICE|AudioContext|autoplay|speechSynthesis/i.test(t)) return;
+    addFail('console error: ' + t.slice(0, 240));
+  });
+  await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
+  await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+  await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => warns.push('3D models still loading after 180s'));
+  await page.evaluate(HELPERS);
+  if (FULL_START) await page.evaluate(() => { __SW.full = true; });
+  try { await page.evaluate(() => { try { initAudio(); } catch (e) {} }); } catch {}
+}
+// HELPERS is defined above openPage's first call
+await openPage();
+// every Conquest battlefield and every Battle map (src/02d-battlemaps.js)
+let keys = await page.evaluate(() => MAP_KEYS.concat(typeof BM_KEYS !== 'undefined' ? BM_KEYS : []).map(k => [k, MAPS[k].max, MAPS[k].min || 2]));
 if (ONLY) keys = keys.filter(([k]) => ONLY.includes(k));
+// --shard 2/3: every third map starting with the second (the gate runs the shards side by side: 122 maps no longer fit in one 45-minute job)
+{ const sh = String(argS('shard', '')).match(/^(\d+)\/(\d+)$/); if (sh) keys = keys.filter((_, i) => i % +sh[2] === +sh[1] - 1); }
 console.log(`map sweep: ${keys.length} maps, players ${PLAYERS.join('/')}, ${MINUTES} game-min each, seed ${SEED} (boot ${((Date.now() - t0) / 1000) | 0}s)`);
 
 // ---------------------------------------------------------------- 0. map-select previews (--previews: only this)
@@ -309,9 +323,10 @@ for (const s of sBad) console.log(`  ${s.k.padEnd(12)} ${String(s.n).padStart(1)
 const runs = [], shots = [];
 if (!STATIC_ONLY) {
   const FAC = await page.evaluate(() => FKEYS.slice());
-  let ri = 0;
+  let ri = 0, mapsOnPage = BATCH; // the first map opens a fresh page (the static checks used the old one)
   for (const [k, max] of keys) {
     const ns = PLAYERS.filter(n => n <= max);
+    if (ns.length && mapsOnPage++ >= BATCH) { await openPage(); mapsOnPage = 1; } // fresh page every BATCH maps (a new page's first start is slow)
     for (const n of ns) {
       const run = { k, n, fails: [], warn: [] }; cur = run; runs.push(run);
       // factions rotate through all 18 but depend only on map + player count, so a run is reproducible with --maps

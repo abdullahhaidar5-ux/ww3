@@ -1,0 +1,22 @@
+{
+ "_": "American spelling in all player-facing text (Abdullah 2026-11-10 18:17 'American'). One list for the fixer (python3 orch/american.py) and the guard (orch/decisions.mjs). 'map': British stem -> American stem, applied to whole words made of the stem + one of 'suffix'. 'keep': real proper names that stay as they are. 'skipFiles': voice-line text tied to recorded audio.",
+ "map": {
+  "defence":"defense","defenceless":"defenseless","armour":"armor","armoury":"armory","armouries":"armories","colour":"color","colourful":"colorful",
+  "centre":"center","centred":"centered","centring":"centering","programme":"program","programmed":"programmed","neighbour":"neighbor","neighbourhood":"neighborhood","neighbourly":"neighborly",
+  "honour":"honor","honourable":"honorable","favour":"favor","favourite":"favorite","favourable":"favorable","labour":"labor","harbour":"harbor","fervour":"fervor",
+  "clamour":"clamor","valour":"valor","rumour":"rumor","humour":"humor","behaviour":"behavior","endeavour":"endeavor","saviour":"savior","vigour":"vigor","rigour":"rigor",
+  "vapour":"vapor","splendour":"splendor","grey":"gray","metre":"meter","kilometre":"kilometer","centimetre":"centimeter","millimetre":"millimeter","litre":"liter",
+  "theatre":"theater","calibre":"caliber","fibre":"fiber","spectre":"specter","sombre":"somber","meagre":"meager",
+  "manoeuvre":"maneuver","manoeuvred":"maneuvered","manoeuvring":"maneuvering","manoeuvrable":"maneuverable","manoeuvrability":"maneuverability",
+  "licence":"license","offence":"offense","pretence":"pretense","labelled":"labeled","labelling":"labeling","cancelled":"canceled","cancelling":"canceling",
+  "travelled":"traveled","travelling":"traveling","traveller":"traveler","fuelled":"fueled","fuelling":"fueling","refuelled":"refueled","refuelling":"refueling",
+  "modelled":"modeled","modelling":"modeling","signalled":"signaled","signalling":"signaling","levelled":"leveled","levelling":"leveling","totalled":"totaled",
+  "counsellor":"counselor","jewellery":"jewelry","marvellous":"marvelous","skilful":"skillful","fulfil":"fulfill","enrol":"enroll","instalment":"installment",
+  "plough":"plow","aluminium":"aluminum","whilst":"while","amongst":"among","sceptic":"skeptic","sceptical":"skeptical","mould":"mold","cheque":"check","storey":"story","ageing":"aging",
+  "analyse":"analyze","analysed":"analyzed","analysing":"analyzing","paralyse":"paralyze","paralysed":"paralyzed","paralysing":"paralyzing","judgement":"judgment","artefact":"artifact"
+ },
+ "suffix": ["","s","d","ed","ing","'s"],
+ "ise": ["mobil","demobil","organ","reorgan","disorgan","critic","synchron","demilitar","militar","mechan","motor","stabil","destabil","styl","real","recogn","author","emphas","minim","maxim","neutral","special","util","modern","national","privat","central","decentral","normal","legal","penal","harmon","standard","optim","priorit","jeopard","capital","terror","polar","radical","symbol","summar","apolog","categor","civil","colon","computer","democrat","econom","equal","general","global","hospital","immobil","immun","industrial","initial","local","marginal","memor","monopol","patrol_","public","rational","revolution","scrutin","subsid","sympath","tranquill","urban","vapor","victim","visual","weapon","pressur","galvan","antagon","legitim","liberal","final","formal","fertil","external","internal","demoral","moral","character","commercial"],
+ "keep": ["Australian Defence Force","Ethiopian National Defence Force","South African National Defence Force","Valour-class","Sky Sabre","Centre Macedonia","Tyre Hills"],
+ "skipFiles": ["09-audio.js","09b-radio.js","09c-shouts.js"]
+}

@@ -9,7 +9,7 @@ for(let L=1;L<=RS_MAX;L++){GMOD_ROWS.push({id:'rs_gov'+L,src:'Governance researc
   {id:'rs_man'+L,src:'Armed forces research '+L,scope:'nation',stat:'manpower',add:.02,cond:'rs:mil:'+L},
   {id:'rs_fire'+L,src:'Armed forces research '+L,scope:'nation',stat:'fireSupport',add:.03,cond:'rs:mil:'+L});}
 GMOD_COND.rs=(k,arg)=>{const N=GC&&GC.nat[k];if(!N||!N.rs)return false;const [t,l]=arg.split(':');return (N.rs[t]|0)>=+l;};
-const CAB=[['dip','ppDip','Foreign Affairs',.05],['mil','ppMil','Defence',.05],['pol','income','Finance',.015],['pol','ppPol','Interior',.05]]; // post -> [pool, stat, title, per skill]
+const CAB=[['dip','ppDip','Foreign Affairs',.05],['mil','ppMil','Defense',.05],['pol','income','Finance',.015],['pol','ppPol','Interior',.05]]; // post -> [pool, stat, title, per skill]
 function cabSkill(c,i){try{const p=pplOf(c,'minister',i);return p?(pplHash(pplName(p))%3)+1:1;}catch(e){return 1;}}
 GMOD_COND.cab=(k,arg)=>{if(!GC||!GC.nat[k])return false;const [i,s]=arg.split(':');return cabSkill(k,+i)===+s;};
 for(let i=0;i<CAB.length;i++)for(let s=1;s<=3;s++)GMOD_ROWS.push({id:'cab'+i+'_'+s,src:'Minister of '+CAB[i][2]+' (skill '+s+')',scope:'nation',stat:CAB[i][1],add:CAB[i][3]*s,cond:'cab:'+i+':'+s});

@@ -2,7 +2,7 @@
    overlay switcher for the map / minimap layers. View-only: no sim state, nothing here is saved or synced. Every alert comes from pushLog()
    (the one log entry point), every overlay flag is read by the draw code it switches (OVL.*), so no second panel is ever needed. ---------- */
 const OVL={towns:true,opinion:true,sonar:true,mines:true};   // 'supply' mirrors the logistics overlay (LGU.on, key L)
-const HUD_OV=[['towns','Towns','Town markers, loyalty and tax, unrest and cut-off warnings (map and minimap)'],['supply','Supply','Supply roads, convoys and cut-off towns (also key L)'],['opinion','Opinion','World opinion meter in this bar'],['sonar','Sonar','Submarine contacts on the map and minimap'],['mines','Mines','Mine markers on the map and minimap']];
+const HUD_OV=[['towns','Towns','Town markers, loyalty and tax, unrest and cut-off warnings (map and minimap)'],['supply','Supply','Roads colored by who holds them (green yours, red enemy, gray neutral, dashed = cut off), convoys and cut-off towns (also key L)'],['opinion','Opinion','World opinion meter in this bar'],['sonar','Sonar','Submarine contacts on the map and minimap'],['mines','Mines','Mine markers on the map and minimap']];
 const HUDS={al:[],unread:0,open:false,el:null,g:null,t:0,sig:''};
 function hudAlert(m,k){if(!G||!m||(k!=='bad'&&k!=='w'))return;if(HUDS.g!==G){HUDS.g=G;HUDS.al.length=0;HUDS.unread=0;}
   const last=HUDS.al[0];if(last&&last.m===m&&G.t-last.t<2)return;HUDS.al.unshift({m,k,t:G.t});if(HUDS.al.length>30)HUDS.al.length=30;if(!HUDS.open)HUDS.unread=Math.min(99,HUDS.unread+1);HUDS.t=0;}
@@ -22,21 +22,63 @@ function hudTick(force){try{hudDeclutter();}catch(e){}if(!G||!G.teams||!G.teams[
   const b=hudBuild();b.hidden=false;const T=G.teams[ME];
   let cut=0;if(G.towns)for(const t of G.towns)if(t.cut&&townsMine(t))cut++;
   const inc=T.terr||0,op=(typeof opOf==='function'&&G.conq&&!T.reb)?Math.round(opOf(T)):null;
-  const gb=!!G.grand;const sig=[gb?1:0,Math.floor(T.credits),inc.toFixed(1),cut,op,HUDS.unread,HUDS.open?1:0,HUDS.al.length,HD_KEYS.map(hudOn).join('')].join('|');if(sig===HUDS.sig)return;HUDS.sig=sig;
+  const gb=!!G.grand,bt=!!G.battle;const sig=[gb?1:0,bt?1:0,Math.floor(T.credits),inc.toFixed(1),cut,op,HUDS.unread,HUDS.open?1:0,HUDS.al.length,HD_KEYS.map(hudOn).join('')].join('|');if(sig===HUDS.sig)return;HUDS.sig=sig;
   b.querySelector('#hudM').hidden=gb;b.querySelector('#hudM').textContent='$'+Math.floor(T.credits).toLocaleString('en-US')+(inc>.05?'  +$'+inc.toFixed(1)+'/s':'');b.querySelector('#hudM').title='Money and territory income (tax from your towns and hamlets).';
-  const s=b.querySelector('#hudS');s.textContent=cut?'Supply: '+cut+' cut off':'Supply OK';s.style.color=cut?'#ff9a8a':'#9be39b';s.title='Towns you hold that the supply network cannot reach.';
+  const s=b.querySelector('#hudS');s.textContent=cut?'Supply: '+cut+' cut off':'Supply OK';s.style.color=cut?'#ff9a8a':'#9be39b';s.title='Towns you hold that the supply network cannot reach.';s.hidden=bt;   /* Battle: no supply lines, no Supply chip */
   const o=b.querySelector('#hudO');if(gb||op==null||!hudOn('opinion'))o.hidden=true;else{o.hidden=false;const m=polMul(T);o.textContent='Opinion '+op+(m<1?'  SANCTIONS -'+Math.round((1-m)*100)+'%':'');o.style.color=op<POL.SANC_BELOW?'#ff8a7a':op>=POL.AID_ABOVE?'#9be39b':'#e8e2c8';o.title='World opinion of you. Low opinion brings sanctions (less income); high opinion brings foreign aid.';}
   const a=b.querySelector('#hudAl');a.textContent='\u26A0 '+(HUDS.unread||HUDS.al.length);a.className=HUDS.unread?'hot':'';
-  for(const x of b.querySelectorAll('#hudOv button'))x.className=hudOn(x.dataset.o)?'on':'';
+  for(const x of b.querySelectorAll('#hudOv button')){x.className=hudOn(x.dataset.o)?'on':'';if(x.dataset.o==='supply')x.hidden=bt;}
   let f=document.getElementById('hudFeed');if(!HUDS.open){if(f)f.remove();}else{if(!f){f=document.createElement('div');f.id='hudFeed';document.body.appendChild(f);}
     f.innerHTML='';if(!HUDS.al.length){const d=document.createElement('div');d.textContent='No alerts yet.';f.appendChild(d);}
     for(const q of HUDS.al.slice(0,12)){const d=document.createElement('div');d.className=q.k;const m=Math.max(0,Math.floor(G.t-q.t));d.textContent=(m<60?m+'s':Math.floor(m/60)+'m')+' ago · '+q.m;f.appendChild(d);}}}
 const HD_KEYS=HUD_OV.map(q=>q[0]);
+/* ---------- Edge alerts (idea 15): when something the alerts report happens OFF screen, a small arrow sits on the screen edge
+   pointing at it for ~6 s; a click moves the camera there. ONE event source: pushLog(m,k,x,y) (every positioned log line: base under
+   attack, troops under fire, unit lost, unit / building finished) and the team ping (FXH.mping) - any other display (the commander's
+   radio) can read the same EDGE.last. View only: nothing here touches the simulation. Max 3, newest wins; Settings switch SET.edgeAl (default on), never over the command bar
+   or the minimap (arrows stay inside the battlefield canvas, clear of the top bar and the bottom panels). ---------- */
+const EDGE={a:[],el:null,g:null,last:null,LIFE:6000,MAX:3};
+/* the arrow carries the SAME icon as the radio line of that report (radKind, 09b-radio.js): one sign language for both displays */
+const EDGE_K={atk:['⚠','#ff6a55','Under attack'],eye:['◉','#ffd27a','Enemy spotted'],lost:['✖','#ffb0a0','Unit lost'],done:['✔','#8fe38f','Ready'],plus:['✚','#8fc7ff','Reinforcements'],msg:['›','#d5ddd6','Report'],ping:['◆','#7fbcff','Ally ping']};
+const EDGE_PR={atk:3,lost:2,eye:1};
+function edgeKind(m,k){if(k==='ping')return 'ping';if(k==='r:lost')return 'lost';if(k==='r:base')return 'atk';let r='msg';try{r=radKind(m||'')[1];}catch(e){}return EDGE_K[r]?r:'msg';}
+function edgeAlert(m,k,x,y){if(!G||SET.edgeAl===0||!(x>=0)||!(y>=0))return;if(EDGE.g!==G){EDGE.g=G;EDGE.a.length=0;}const kind=edgeKind(m,k),now=performance.now();
+  EDGE.last={m,kind,x,y,t:now};                                                   // the one feed entry (radio / "jump to last alert" read this)
+  const o=EDGE.a.find(q=>(q.kind==='ping')===(kind==='ping')&&Math.hypot(q.x-x,q.y-y)<320);   // same place: ONE arrow, the more urgent report wins (attack > loss > sighting > the rest)
+  if(o){o.t=now;if((EDGE_PR[kind]||0)>=(EDGE_PR[o.kind]||0)){o.x=x;o.y=y;o.m=m;if(o.kind!==kind){o.kind=kind;if(o.b){o.b.remove();o.b=null;}}}return;}
+  EDGE.a.unshift({m,kind,x,y,t:now,b:null});while(EDGE.a.length>EDGE.MAX){const d=EDGE.a.pop();if(d.b)d.b.remove();}}
+function edgeGo(q){try{centerOn(q.x,q.y);}catch(e){}q.t=-1e15;}
+function edgeTick(){const A=EDGE.a;if(!A.length&&!EDGE.el)return;const now=performance.now();
+  const off=!G||G.over||SET.edgeAl===0||EDGE.g!==G||(window.PHX&&PHX.on)||(typeof KC!=='undefined'&&KC.on)||document.body.classList.contains('inMenu');
+  for(let i=A.length-1;i>=0;i--)if(off||now-A[i].t>EDGE.LIFE){if(A[i].b)A[i].b.remove();A.splice(i,1);}
+  if(!A.length){if(EDGE.el)EDGE.el.style.display='none';return;}
+  let el=EDGE.el;if(!el){const st=document.createElement('style');st.textContent='#edgeAl{position:fixed;z-index:7;pointer-events:none;overflow:hidden}#edgeAl button{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;padding:0;border-radius:50%;border:2px solid var(--c);background:rgba(8,12,10,.82);color:var(--c);font:700 17px/30px system-ui,sans-serif;text-align:center;cursor:pointer;pointer-events:auto;box-shadow:0 1px 6px rgba(0,0,0,.6)}#edgeAl button.vhov,#edgeAl button:hover{background:rgba(40,50,44,.95)}#edgeAl button i{position:absolute;left:50%;top:50%;width:0;height:0;margin:-7px 0 0 -7px;border:7px solid transparent;border-left:11px solid var(--c);border-right:0;transform:rotate(var(--r)) translateX(22px);transform-origin:7px 7px;pointer-events:none}body.inMenu #edgeAl,body.phOn #edgeAl{display:none!important}';document.head.appendChild(st);
+    el=EDGE.el=document.createElement('div');el.id='edgeAl';document.body.appendChild(el);}
+  const r=cv.getBoundingClientRect();el.style.display='block';el.style.left=r.left+'px';el.style.top=r.top+'px';el.style.width=r.width+'px';el.style.height=r.height+'px';
+  const L=44,T=96,R=r.width-44,B=r.height-128,cx=(L+R)/2,cy=(T+B)/2,hw=(R-L)/2,hh=(B-T)/2;
+  const lg=document.getElementById('log'),lr=lg&&lg.children.length?lg.getBoundingClientRect():null,put=[];   // keep clear of the radio feed and of each other
+  for(const q of A){const p=toScreen(q.x,groundH(q.x,q.y),q.y);let vx=p.x-cx,vy=p.y-cy;if(p.z>1){vx=-vx;vy=-vy;}
+    const on=p.z<=1&&p.x>=0&&p.x<=r.width&&p.y>=0&&p.y<=r.height;
+    if(!q.b){const K=EDGE_K[q.kind],b=q.b=document.createElement('button');b.type='button';b.dataset.k=q.kind;b.style.setProperty('--c',K[1]);b.textContent=K[0];b.appendChild(document.createElement('i'));b.onclick=e=>{e.stopPropagation();edgeGo(q);};el.appendChild(b);}
+    if(on){q.b.style.display='none';continue;}
+    const k=1/Math.max(Math.abs(vx)/hw,Math.abs(vy)/hh,1e-6);let x=cx+vx*k,y=cy+vy*k;
+    if(lr&&x<lr.right-r.left+26&&y<lr.bottom-r.top+26){x=L;y=lr.bottom-r.top+26;}
+    for(let n=0;n<3;n++){const h=put.find(o=>Math.abs(o[0]-x)<40&&Math.abs(o[1]-y)<40);if(!h)break;if(x<=L+1||x>=R-1)y=h[1]+(h[1]>cy?-40:40);else x=h[0]+(h[0]>cx?-40:40);}
+    put.push([x,y]);const fade=Math.min(1,(EDGE.LIFE-(now-q.t))/600);
+    q.b.style.display='';q.b.title=EDGE_K[q.kind][2]+': '+q.m+' - click to look';q.b.style.opacity=fade.toFixed(2);q.b.style.transform='translate('+x.toFixed(0)+'px,'+y.toFixed(0)+'px)';q.b.style.setProperty('--r',Math.atan2(vy,vx).toFixed(2)+'rad');}}
 /* ---------- What's new (one screen, newest first) ---------- */
 const WHATS_NEW=[
+ ['Test range: pick both nations','Test range now opens a small window: choose your nation, the target nation (it can be the same one) and a map, then Start. Inside the range, "Change nations…" in the Test range box restarts it with a new pair, no trip through the main menu.'],
+ ['Battle runs on Generators','Build a Generator (Build tab, about the price of a Barracks) to power your electronic buildings: air defense, coastal missiles, the Strike Center, Radio & TV, the Airfield and your minimap radar. Your top bar shows power produced and used: green is fine, red means LOW POWER and those buildings go offline until you build another Generator or capture a map power plant. Barracks, War Factory, Depot and defense guns never need power. Blowing up enemy Generators is a real tactic. Conquest keeps its map power plants.'],
+ ['Grand campaign is paused','We are finishing Conquest and Battle first. Single player and Multiplayer now offer Conquest and Battle. The Grand campaign is still there as a preview: Extras → Grand campaign (preview, paused). Continue now resumes your latest Conquest or Battle.'],
+ ['Every button says what it beats','Unit buttons now carry two small pictures: green = what this unit BEATS best, red = what it is most WEAK TO. Hold the mouse on a button for the full list with names. Point at an enemy unit (or select it) and the buttons that beat it light up green with "BEATS IT". The game works these out from the real damage, armor, range and price numbers against the nation you are fighting, so they are always true - the Encyclopedia and the Unit guide show the same.'],
+ ['The main menu shows your war','The main menu background now shows whatever Continue would take you back to. A saved grand campaign: the map around your nation, your borders lit in your color and your last battle marked, won or lost. A saved battle: that battlefield, with a bright line where your front was against the enemy you could see. The bottom right corner says which war it is. With nothing saved it stays the calm world map.'],
+ ['Commander\'s radio','Every report from the field - base under attack, enemy spotted, unit lost, building finished, a unit ready - is now one short line with a small icon at the top left of the battle (three lines at most, each fades after a few seconds). Lines marked with a small arrow know where it happened: click the line, or press Space, and the camera goes there. Settings has a switch for it.'],
+ ['Edge alerts','When something happens away from where you are looking - your base or troops come under attack, a unit is lost, a unit or building is finished, a teammate pings the map - a small round marker with an arrow now sits on the edge of the screen pointing at it for about six seconds (three at most). Click it and the camera goes there. Settings has a switch for it.'],
  ['Cleaner sound','The sound is mixed properly now: even the biggest fight no longer crackles or distorts, unit voices stay clear over the guns (explosions and music step back a little while a soldier speaks), every button and menu item gives a soft click, and each battlefield has a quiet background of its own - dry desert wind, wind in the trees, or a thin winter howl - with the muffled thump of fighting elsewhere on the map.'],
- ['Three games: Grand campaign, Conquest, Battle','The main menu now has three separate games. Grand campaign runs a whole empire on the world map. Conquest is the town-and-tax battle with a full base. NEW: Battle plays like C&C Generals - you start with a Command Center and a dozer, supply trucks bring in your money, you build power, barracks, a War Factory and an airfield, tech up, earn general\'s points for powers, and win by destroying every enemy building. Pick Conquest or Battle in the online lobby too. Missions and the Tutorial are still in the menu, just smaller.'],
- ['Online grand campaign','Grand campaign → Play with friends: pick a scenario and your nation, then share the invite code or link; friends pick a nation and tick Ready in the lobby, you press Start. Or Grand campaign → Join friends to enter theirs by code. Each friend leads a free nation (the AI runs the rest), sees the world through its own fog, and anyone can pause; the host sets the speed.'],
+ ['Three games: Grand campaign, Conquest, Battle','The main menu now has three separate games. Grand campaign runs a whole empire on the world map. Conquest is the town-and-tax battle with a full base. NEW: Battle plays like C&C Generals - you start with a Command Center and a dozer, supply trucks bring in your money, you build a Generator for power (only electronic buildings need it), then barracks, a War Factory and an airfield, tech up, earn general\'s points for powers, and win by destroying every enemy building. Pick Conquest or Battle in the online lobby too. Missions and the Tutorial are still in the menu, just smaller.'],
+ ['New main menu: Single player, Multiplayer, Test range','The main menu is now Single player (Grand campaign, Conquest, Battle, Missions, Tutorial), Multiplayer and Test range. Multiplayer is the one place to play online: choose Grand campaign, Conquest or Battle, then start or join - open games and invite codes or links cover all three, each labeled Campaign, Conquest or Battle.'],
+ ['Online grand campaign','Multiplayer → Grand campaign → Create a campaign lobby: pick a scenario and your nation, then share the invite code or link; friends pick a nation and tick Ready in the lobby, you press Start. Or Multiplayer → type the code or paste the invite link (or pick the campaign in the open games list) to enter theirs. Each friend leads a free nation (the AI runs the rest), sees the world through its own fog, and anyone can pause; the host sets the speed.'],
  ['Morale styles','Every nation now fights with one of four styles: Zealous (slow to break, banners rally the faithful, heavier losses), Professional (steady under artillery, rally fast near officers), Home defenders (much braver on home turf) and Firepower-reliant (break sooner, but stronger fire support). The style shows on the nation pick screen and in the Encyclopedia.'],
  ['One HUD','A single top bar now shows money, income, supply, world opinion and an Alerts button (click it for the last warnings). The Towns / Supply / Opinion / Sonar / Mines buttons switch the map and minimap layers on and off.'],
  ['Grand-map assets','The Ayatollah, the Dear Leader, the Mountain Fortress and the Bunker Buster are no longer in Conquest battles; they live on the grand map.'],
@@ -48,7 +90,7 @@ function whatsNewPage(){const o=idOv('idNew',"What's new"),b=o.querySelector('.i
    Supply lines button, Conquest banner and town panel stayed on screen after leaving a battle). One rule: while the main menu is open,
    body gets .inMenu and every battle-only overlay is hidden; nothing else changes. */
 function hudMenuWatch(){const m=document.getElementById('menu');if(!m||hudMenuWatch.on)return;hudMenuWatch.on=1;
-  const st=document.createElement('style');st.textContent='body.inMenu #hudBar,body.inMenu #hudFeed,body.inMenu #lgBtn,body.inMenu #cqBn,body.inMenu #townp{display:none!important}';document.head.appendChild(st);
+  const st=document.createElement('style');st.textContent='body.inMenu #log,body.inMenu #hudBar,body.inMenu #hudFeed,body.inMenu #lgBtn,body.inMenu #cqBn,body.inMenu #townp{display:none!important}';document.head.appendChild(st);
   const sync=()=>document.body.classList.toggle('inMenu',!m.hidden);sync();new MutationObserver(sync).observe(m,{attributes:true,attributeFilter:['hidden']});}
 if(typeof document!=='undefined'){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hudMenuWatch);else hudMenuWatch();}
 
@@ -80,7 +122,9 @@ function hudDeclutter(){hudDeclutterCss();const on=!!(G&&!G.over&&G.teams&&G.tea
   let help=on&&(HUDS.help||SET.helpLine);
   if(on&&!seen&&G.t<45&&!G.grand)help=true;else if(on&&!seen&&G.t>=45){try{localStorage.setItem('ww3_helpSeen','1');}catch(e){}}
   document.body.classList.toggle('helpOn',!!help);
-  const sb=document.getElementById('setBody');if(sb&&!document.getElementById('sHelpLine')){const r=document.createElement('label');r.style.cssText='display:flex;gap:8px;align-items:center;margin:10px 0;font-size:15px;cursor:pointer';r.innerHTML='<input type="checkbox" id="sHelpLine"> Always show the controls help line at the bottom of the battle';const c=r.querySelector('input');c.checked=!!SET.helpLine;c.onchange=()=>{SET.helpLine=c.checked?1:0;saveSet();};sb.append(r);}}
+  const sb=document.getElementById('setBody');if(sb&&!document.getElementById('sHelpLine')){const r=document.createElement('label');r.style.cssText='display:flex;gap:8px;align-items:center;margin:10px 0;font-size:15px;cursor:pointer';r.innerHTML='<input type="checkbox" id="sHelpLine"> Always show the controls help line at the bottom of the battle';const c=r.querySelector('input');c.checked=!!SET.helpLine;c.onchange=()=>{SET.helpLine=c.checked?1:0;saveSet();};sb.append(r);}
+  /* one switch each for the commander's radio feed and the edge alerts (both default on; view only) */
+  if(sb&&!document.getElementById('sRadio'))for(const [id,key,txt] of [['sRadio','radio','Commander\'s radio: short battle reports at the top left of the battle'],['sEdgeAl','edgeAl','Edge alerts: an arrow on the screen edge points to things happening off screen']]){const r=document.createElement('label');r.style.cssText='display:flex;gap:8px;align-items:center;margin:10px 0;font-size:15px;cursor:pointer';r.innerHTML='<input type="checkbox" id="'+id+'"> '+txt;const c=r.querySelector('input');c.checked=SET[key]!==0;c.onchange=()=>{SET[key]=c.checked?1:0;saveSet();if(!c.checked&&key==='radio'){const l=document.getElementById('log');if(l)l.textContent='';}};sb.append(r);}}
 /* ---------- bottom dock (declutter2, Abdullah 2026-11-06 20:30 "shouldn't be side by side, too cluttered"): the bottom of the battle screen reads as
    one tidy panel. Command + Auto-build are ONE strip (08g/08h); the Supply lines button is gone (the top bar's Supply switch and key L do it);
    the controls hint is one quiet line that never runs under the order buttons; empty battle-group slots shrink to their number. View-only CSS. */
@@ -89,3 +133,9 @@ function hudDeclutter(){hudDeclutterCss();const on=!!(G&&!G.over&&G.teams&&G.tea
  '#app #hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;right:520px;opacity:.7}'+
  '#sqs button.empty{opacity:.55}#sqs button.empty small{display:none}#sqs button.empty{min-width:0;padding-left:7px;padding-right:7px}';
  document.head.append(st);})();
+/* sweepfixB (2026-11-13): Settings and the Victory / Defeat screen cover the whole battle HUD. The HUD floaters (money /
+   supply / opinion bar, its feed, the setup-phase banner, quick powers, hints, town card) sit above the overlay layer
+   on purpose during play, so they step aside while one of those two windows is open. */
+(function(){if(typeof document==='undefined')return;const st=document.createElement('style');st.id='ovHudCss';
+ const H=':is(#hudBar,#hudFeed,#hudLyM,#cqBn,#mwScore,#qpow,#qptip,#wallHint,#townp,#idToasts,#vcToast,#hlToast,#info .orddock)';
+ st.textContent='body:has(#settings:not([hidden])) '+H+',body:has(#end:not([hidden])) '+H+'{visibility:hidden!important}';document.head.append(st);})();
