@@ -21406,7 +21406,7 @@ function mxWarTable(){const bg=document.getElementById('mxbg'),mn=document.getEl
    It is the normal engine (G.shell marks it): nothing is saved or recorded, fog is off, and it stops the moment any real game replaces G or the menu closes.
    Automated browsers (navigator.webdriver: smoke, smooth and the other gates) skip it unless the page has ?shell=1. */
 const SH={on:0,busy:0,tok:0,g:null,x:0,y:0,d:240,yaw:0,tx:0,ty:0,pt:0,t0:0};
-function mxShellWant(){const m=document.getElementById('menu');if(!m||m.hidden||SH.on||SH.busy)return false;if(typeof G!=='undefined'&&G&&!G.over&&!G.shell)return false;
+function mxShellWant(){return false;/* off (Abdullah 2026-11-14 17:07 asked for a static menu picture; the live menu battle also left the Test range white) */const m=document.getElementById('menu');if(!m||m.hidden||SH.on||SH.busy)return false;if(typeof G!=='undefined'&&G&&!G.over&&!G.shell)return false;
   if(navigator.webdriver&&!/[?&]shell=1/.test(location.search))return false;if(/[?&]shell=0/.test(location.search))return false;if(typeof BM_KEYS==='undefined'||!BM_KEYS.length||typeof newGame!=='function')return false;return true;}
 function mxShellStop(){SH.tok++;const was=SH.on;SH.on=0;SH.busy=0;document.body.classList.remove('mxshell');const mx=document.getElementById('mx');if(mx)mx.classList.remove('sh');
   const m=document.getElementById('menu');if(m)m.classList.remove('sh');
