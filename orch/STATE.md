@@ -1,17 +1,9 @@
-# STATE (conductor, 2026-11-14 03:35 UTC)
-main = a3b627b1a (train 13). Train in gate: train/20261114-0256 (cd424463b): sweepfixA, sweepfixB, orderfeel, ghostslot, testrange, pileflag. GitHub runners queued (backlog), gate not started at 03:33.
-GATE STALL: 0 Actions jobs in progress, every gate run "queued" for 40+ min at 04:10 UTC; nothing could be landed this run. Train branch train/20261114-0256 (smoke PASS locally) is ready; re-gate when runners move.
-| branch | ahead | handoff | own gate | note |
-|---|---|---|---|---|
-| sweepfixA | 3 | yes | 28/28 | in train |
-| sweepfixB | 4 | yes | 27/28 (tutorial, flaky) | in train |
-| orderfeel | 4 | yes | tip newer than gate; older: main/cfclient/icons/audio red (flaky) | in train |
-| ghostslot | 2 | yes | 10 ok, running | in train |
-| testrange | 6 | yes | 23/24 (audio, flaky) | in train |
-| pileflag | 3 | yes | none | in train |
-| freezefix | 12 | yes | superfreeze RED | skipped |
-| unstuck2 | 4 | no | 30/30 | next train |
-| battleclean2, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, ammozone, techbldgs(part1), onegame, nations20 | - | mostly no | no gate on tip | next trains (onegame, nations20 last) |
-| looktest | 2 | yes | - | waits for Abdullah's look pick |
-| camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans | - | - | - | parked (removed from the game) |
-Taken locks with no orch branch after 90+ min: none found (all taken/* have a branch except taken/polishspeed, taken/spylook2, taken/freezefix2).
+# Conductor state — 2026-11-14 04:55 UTC
+
+- origin/main = a3b627b (train 20261113-2336, campaign moved to Extras).
+- Open train `train/20261114-0256` (cd42446, 30 commits ahead of main: ghostslot, sweepfixB, orderfeel, pileflag, testrange, sweepfixA) pushed 02:58 UTC.
+  Its gate (`gate/cd424463b1`) was queued 03:15 UTC and is STILL queued: GitHub runners are backed up (31 queued runs at 04:55; only gate/art-mpsync, grand, ew, audio reported). Nothing can be proven yet.
+- Also queued: gate/f36d4033ad (leaderlook), gate/0b65d10b0c, gate/6200963203 (groundreal).
+- Decision this run: no second train (would only deepen the queue). Next run lands train 0256 if its gate is green, then continues with remaining candidates.
+- Tip heads: freezefix 6258cb3, battleclean2 55044b6, unstuck ad3d2b0, dugout 5a3cf5b, battlepower 146a42a, bldqueue 6a914bd, techbldgs a1234be, usvoice 95b6d0f, ammozone d8a24a4, onegame 7b26a8c, nations20 dd51ce4 (not yet in a train; gate state not checked this run).
+- Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
