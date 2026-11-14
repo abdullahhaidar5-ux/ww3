@@ -5791,7 +5791,7 @@ for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   if(UPLINK[b])UPLINK[k]=[N.uplink||(k==='IQ'?'Rocket Command (Al-Faw)':'Missile Command (Qalamoun)'),UPLINK[b][1]];
   ECON[k]=N.econ||(k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board');
   if(N.sub)SUBN[k]=N.sub;if(N.md)MDN[k]=N.md;if(N.coast)COASTN[k]=N.coast;if(N.trn)TRN[k]=N.trn;
-  UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
+  UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b.toLowerCase()+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 /* ---------- REALISTIC balance tiers (Abdullah 2026-11-06 21:31 "Would this all realistically have the same fire support?") ----------
