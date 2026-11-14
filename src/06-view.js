@@ -81,7 +81,7 @@ function syncScene(dt){const live=new Set();
           if(e.fires&&Math.random()<dt*1.2){const L=LIGHTS&&LIGHTS.find(l=>l.intensity<.05*LUX);if(L){L.position.set(e.x+e.fires[0][0],gh+e.fires[0][2]+6,e.y+e.fires[0][1]);L.color.setRGB(1,.55,.2);L.intensity=1.6*LUX;L.distance=120;L.userData.d=.9;L.userData.t=0;}}}
         if(f<.6&&Math.random()<dt*(f<.3?9:4))part({x:e.x+rnd(-e.size*.3,e.size*.3),y:e.y+rnd(-e.size*.3,e.size*.3),h:gh+BH[e.kind]*rnd(.5,1),rise:rnd(30,44),c:f<.3?C_DARK:C_SMOKE,c2:[.46,.44,.41],ck:.35,s:rnd(7,11),g:12,d:rnd(2,3),a:.5});
         if(f<.3&&Math.random()<dt*7)part({x:e.x+rnd(-e.size*.3,e.size*.3),y:e.y+rnd(-e.size*.3,e.size*.3),h:gh+BH[e.kind]*rnd(.4,1),rise:20,add:true,c:C_FIRE,s:rnd(6,12),g:-5,d:rnd(.3,.6)});
-        if(e.kind==='factory'&&(e.busy||(G.teams[e.team].q.factory||[]).length)&&Math.random()<dt*5)part({x:e.x+28,y:e.y-26,h:gh+46,vx:rnd(2,8),rise:24,c:C_SMOKE,s:rnd(5,9),g:14,d:rnd(1.8,2.6),a:.45});
+        if(e.kind==='factory'&&(e.busy||(e.q&&e.q.length))&&Math.random()<dt*5)part({x:e.x+28,y:e.y-26,h:gh+46,vx:rnd(2,8),rise:24,c:C_SMOKE,s:rnd(5,9),g:14,d:rnd(1.8,2.6),a:.45});
         if(e.dis>G.t||e.disv){if(Math.random()<dt*10)part({x:e.x+rnd(-e.size*.4,e.size*.4),y:e.y+rnd(-e.size*.4,e.size*.4),h:gh+rnd(4,BH[e.kind]),vh:rnd(10,30),add:true,c:[.3,1,.5],s:rnd(2,3.5),d:rnd(.4,.9)});}
         if(e.charge||e.chv){if(Math.random()<dt*14)part({x:e.x+e.size*.45,y:e.y+e.size*.45,h:gh+4,add:true,c:[1,.2,.1],s:4,d:.12});}}}
     else{const s=e.s,c=s.cls;if(s.dom==='ground'&&s.armor==='heavy'){const ft=G.t-(e.lastFire||-9);if(ft<.2&&ft>=0){const k=(1-ft/.2)*2.4,ang=e.tang??e.va;o.position.x-=Math.cos(ang)*k;o.position.z-=Math.sin(ang)*k;o.rotation.x=0;}}if(s.dom==='naval'){o.rotation.z=Math.sin(G.t*1.1+e.id)*.025;o.rotation.x=Math.sin(G.t*.8+e.id*2)*.02;o.position.y+=Math.sin(G.t*1.4+e.id)*.6;}const mv0=G.t-(e.mv||-9)<.15||(e.mvC>0);let yawT=e.va;if(o.userData.model&&!P.turret&&!mv0&&e.tang!=null&&G.t-(e.lastFire||-9)<4&&s.dom!=='air')yawT=e.tang;
@@ -150,11 +150,11 @@ function syncScene(dt){const live=new Set();
   selRings();ordMarks();
   // rally flag
   // Abdullah 2026-11-11 19:45 "Once I click this should disappear": the rally flag (one per army, never two) stands only while a production building of yours is selected, plus a 1.5 s flash right after the point is set; clicking away or selecting something else takes it down at once
-  const T=G.teams[ME];const rcK=T&&T.rally?(T.rally.x|0)+','+(T.rally.y|0):'',ssK=G.sel.length+':'+(G.sel[0]?G.sel[0].id:0),nowR=performance.now();
+  const T=G.teams[ME];const selB=G.sel.find(b=>b.isB&&b.team===ME&&!b.dead&&b.built>=1&&CATS.includes(b.kind)),RR=(selB&&selB.rally)||(T&&T.rally);const rcK=T&&T.rally?(T.rally.x|0)+','+(T.rally.y|0):'',ssK=G.sel.length+':'+(G.sel[0]?G.sel[0].id:0),nowR=performance.now();
   if(rcK!==RV.rc){RV.rc=rcK;RV.ss=ssK;RV.fl=rcK?nowR+1500:0;}else if(ssK!==RV.ss){RV.ss=ssK;RV.fl=0;}
-  const rShow=!!(T&&T.rally&&(nowR<RV.fl||G.sel.some(b=>b.isB&&b.team===ME&&!b.dead&&b.built>=1&&CATS.includes(b.kind))));
+  const rShow=!!(RR&&(nowR<RV.fl||selB));
   if(rShow){if(!RALLY){RALLY=new THREE.Group();const pole=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,24,5),new THREE.MeshBasicMaterial({color:0x2a2b26}));pole.position.y=12;RALLY.add(pole);const fl=new THREE.Mesh(new THREE.PlaneGeometry(12,7),new THREE.MeshBasicMaterial({color:0x74d08f,side:THREE.DoubleSide}));fl.position.set(6,20,0);RALLY.add(fl);SCN.add(RALLY);}
-    RALLY.visible=true;RALLY.position.set(T.rally.x,groundH(T.rally.x,T.rally.y),T.rally.y);RALLY.children[1].rotation.y=Math.sin(G.t*3)*.3;}else if(RALLY)RALLY.visible=false;
+    RALLY.visible=true;RALLY.position.set(RR.x,groundH(RR.x,RR.y),RR.y);RALLY.children[1].rotation.y=Math.sin(G.t*3)*.3;}else if(RALLY)RALLY.visible=false;
   // placement ghost
   if(G.place){if(GHOSTK!==G.place){if(GHOST)SCN.remove(GHOST);GHOST=makeGhost(G.place);GHOST.scale.setScalar(BSC);GHOSTK=G.place;}const w=screenToWorld(mouse.x,mouse.y);if(w){const ok=validSpot(ME,G.place,w.x,w.y);G.placeWhy=ok?(ok===2?'dz':''):validSpot.why;GHOST.visible=true;GHOST.position.set(w.x,groundH(w.x,w.y),w.y);
     GHOST.traverse(c=>{if(c.isMesh&&c!==GHOST.userData.ring)c.material=ok?MAT.ghostOk:MAT.ghostBad;});const rg=STRUCT[G.place].rng||0;GHOST.userData.ring.visible=!!rg;GHOST.userData.ring.scale.set(rg/BSC,1,rg/BSC);GHOST.userData.ring.position.y=2;}}

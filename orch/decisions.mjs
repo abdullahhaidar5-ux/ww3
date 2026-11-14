@@ -417,6 +417,30 @@ try {
   ck(cq.rot && cq.rot.q45 && !cq.rot.qSel && cq.rot.home && cq.rot.drag < -0.3, 'Q tap must turn the camera 45° clockwise (and not select), hold Q + mouse right turns it, Home back to north: ' + JSON.stringify(cq.rot));
   ck(cq.rot && cq.rot.caSel > 0, 'Ctrl+A did not select the army in battle: ' + JSON.stringify(cq.rot));
   await shot('conquest-ir');
+  // bldqueue (Abdullah 2026-11-13 20:15 "make units que and must be built in their home building ... like generals"): every production building has its own queue
+  { const r = await ev(() => { const T = G.teams[ME], out = {}; T.credits = 90000; const b1 = G.ents.find(e => e.isB && e.team === ME && e.kind === 'barracks' && e.built >= 1 && !e.dead);
+      const b2 = addBld(ME, 'barracks', b1.x + 260, b1.y + 40, 1); b1.q = []; b2.q = []; const k = roster(T.fac).barracks[0], cost = stats(T.fac, k).cost; out.noShared = T.q === undefined;
+      const c0 = T.credits; out.addOk = enqueue(ME, k, b2.id); out.b2n = b2.q.length; out.b1n = b1.q.length; dequeue(ME, k, b2.id, 0); out.refund = Math.round(T.credits - c0); out.emptyAfter = b2.q.length;
+      enqueue(ME, k, b1.id); enqueue(ME, k, b2.id); out.par = [b1.q.length, b2.q.length]; out.pick = qPick(ME, 'barracks') === null ? 0 : 1;
+      const maxId = Math.max(...G.ents.map(e => e.id)); production(prodTime(T, stats(T.fac, k)) + 1);
+      const nu = G.ents.filter(e => !e.isB && e.id > maxId && e.kind === k && e.team === ME); out.spawned = nu.length;
+      out.near = nu.map(u => [Math.hypot(u.x - b1.x, u.y - b1.y) < 140, Math.hypot(u.x - b2.x, u.y - b2.y) < 140]);
+      out.emptied = [b1.q.length, b2.q.length]; out.rem = G.ents.filter(e => !e.isB && e.id > maxId && e.team === ME).length;
+      for (let i = 0; i < 3; i++) enqueue(ME, k, b2.id); const c1 = T.credits; out.paid = b2.q.reduce((s, i) => s + i.c, 0); kill(b2, 1 === ME ? 0 : 1); out.destroyRefund = Math.round(T.credits - c1); out.destroyQ = b2.q.length; out.cost = cost; return out; });
+    console.log('bldqueue', JSON.stringify(r));
+    ck(r.noShared, 'the shared per-type queue T.q must be gone (each production building has its own queue)');
+    ck(r.addOk && r.b2n === 1 && r.b1n === 0, 'a unit queued on Barracks 2 must sit in that building only: ' + JSON.stringify(r));
+    ck(r.refund === 0 && r.emptyAfter === 0, 'cancel must refund the full price (net 0): ' + JSON.stringify(r));
+    ck(r.par && r.par[0] === 1 && r.par[1] === 1, 'two Barracks must each hold their own queue: ' + JSON.stringify(r.par));
+    ck(r.spawned === 2 && r.emptied[0] === 0 && r.emptied[1] === 0, 'two Barracks must build two infantry at the same time (both queues empty after one build time): ' + JSON.stringify(r));
+    ck(r.near.length === 2 && r.near.some(n => n[0] && !n[1]) && r.near.some(n => !n[0] && n[1]), 'each unit must come out of the building whose queue made it: ' + JSON.stringify(r.near));
+    { const u = await ev(() => { const T = G.teams[ME]; T.credits = 90000; const b1 = G.ents.find(e => e.isB && e.team === ME && e.kind === 'barracks' && e.built >= 1 && !e.dead), k = roster(T.fac).barracks[0], maxId = Math.max(...G.ents.map(e => e.id)); b1.q = [];
+        let ok = 0; for (let i = 0; i < 20; i++) if (enqueue(ME, k, b1.id)) ok++; const n0 = b1.q.length; for (let i = 0; i < 25; i++) production(prodTime(T, stats(T.fac, k)) + 1);
+        return { ok, n0, left: b1.q.length, out: G.ents.filter(e => !e.isB && e.id > maxId && e.team === ME && e.kind === k).length }; });
+      ck(u.ok === 20 && u.n0 === 20 && u.left === 0 && u.out === 20, 'a Barracks queue is unlimited: 20 queued infantry must all come out of it: ' + JSON.stringify(u)); }
+    ck(r.paid > 0 && r.destroyRefund === r.paid && r.destroyQ === 0, 'destroying a Barracks must refund its whole queue: ' + JSON.stringify({ paid: r.paid, got: r.destroyRefund })); }
+  { const s3 = SRC['03-sim.js']; ck(!/1\+\.5\*\(bl\.length-1\)/.test(s3) && !/bl\[Math\.floor\(Math\.random\(\)\*bl\.length\)\]/.test(s3), 'production: the +50% per extra building and the random spawn building are gone (bldqueue)');
+    ck(!/tun:\[\],q:\{/.test(s3), 'mkTeam must not carry a shared queue (bldqueue)'); }
   // fixes1 (2026-11-11): the hover card of a build button must really show what the unit beats and what it is weak to: at least one
   // picture + name in each row (a stale screenshot showed the two row labels with nothing in them). Real mouse hover on a button.
   { await ev(() => { window.__tab0 = TAB; showTab('units'); }); await page.waitForTimeout(300);

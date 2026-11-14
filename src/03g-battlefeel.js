@@ -118,4 +118,4 @@ function bfAutoTick(){G.auT=(G.auT||0)-1;if(G.auT>0)return;G.auT=2;
     for(const it of A.list){const k=it.k;if(!allUnits(T.fac).includes(k))continue;const s=stats(T.fac,k);if(!done(T.id,s.from))continue;if(unitCount(T.id,k)>=it.n)continue;
       if(s.limit&&unitCount(T.id,k)>=s.limit)continue;
       const cst=Math.round(s.cost*gdCostK(T,s,false));if(T.credits<cst)break;   // save up for the higher priority
-      if(used[s.from]||T.q[s.from].length>=3)continue;if(enqueue(T.id,k))used[s.from]=1;}}}
+      {const qb=qPick(T.id,s.from);if(used[s.from]||!qb||(qb.q?qb.q.length:0)>=3)continue;}if(enqueue(T.id,k))used[s.from]=1;}}}
