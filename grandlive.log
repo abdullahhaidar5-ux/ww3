@@ -1,0 +1,52 @@
+2.3s stale save in menu {"cont":false,"warn":true}
+29.6s map open
+43.7s march {"me":"IR","from":"Khuzestan","to":"Basra","foe":"RV","ok":true,"units":25}
+49.3s fallback {"modal":true,"map":true,"G":false}
+70.6s prompt: BATTLE · SeaStrait of HormuzAttackers — Iraqi Shia Brigades4 units1 Shatt Patrol Boat, 1 Marsh Boat, 1 Fast At
+72.7s Fight it live clicked
+84.6s {"L":true,"step":"Loading 3D models…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+86.6s {"L":true,"step":"Building the battlefield…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+88.6s {"L":true,"step":"Preparing graphics…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+164.3s {"L":true,"step":"Deploying forces…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+189.1s {"L":false,"step":"Ready","g":true,"grand":true,"t":0,"paused":false,"gs":"none","ents":8}
+190.1s {"L":false,"step":"Ready","g":true,"grand":true,"t":0.18,"paused":false,"gs":"none","ents":8}
+231.4s battle running: Generating terrain 11758, Loading 3D models 482, Building the battlefield 1501, Building the battlefield 1990, Preparing graphics 75730, Deploying forces 1328, Deploying forces 12432, total 105670
+GRANDLIVE PASS
+scenario {"foe":"RV","ok":true,"from":"Khuzestan","to":"Basra","units":37}
+  [page] grandlive: grandBattleStart sync 2108 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":8,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 11537 ms, Loading 3D models 562 ms, Building the battlefield 1491 ms, Building the battlefield 2093 ms, Preparing graphics 35557 ms, Deploying forces 1066 ms, Deploying forces 1866 ms, total 54596 ms
+live 1 60.3s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":8,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.2000000000000006,"p":false,"h":false,"fs":null}],"running":true}
+scenario {"foe":"RV","ok":true,"from":"Khuzestan","to":"Basra","units":25}
+  [page] grandlive: grandBattleStart sync 3537 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":57,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 9854 ms, Loading 3D models 0 ms, Building the battlefield 0 ms, Building the battlefield 976 ms, Preparing graphics 254 ms, Deploying forces 20 ms, Deploying forces 883 ms, total 12723 ms
+live 2 19.4s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":57,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.036666666666667,"p":false,"h":false,"fs":null}],"running":true}
+
+GRANDLIVE2 PASS
+32.9s map open
+37.7s start {"turn":1,"day":0,"date":"1 Nov 2026","spd":0,"ph":"plan","modal":false}
+39.9s after Space {"turn":1,"day":1,"date":"2 Nov 2026","spd":2,"ph":"plan","modal":false}
+49.8s month rolled {"turn":2,"day":25,"date":"26 Dec 2026","spd":5,"ph":"plan","modal":false}
+51.7s paused {"turn":2,"day":25,"date":"26 Dec 2026","spd":0,"ph":"plan","modal":false}
+51.9s march {"ok":true,"hint":"Basra: arrives ~1 Feb 2027 (2 months)"}
+67.2s slide [{"x":1500,"z":392.0544912363294,"f":0.426533333333345,"day":25},null]
+73.7s battle prompt {"turn":2,"day":0,"date":"1 Jan 2027","spd":3,"ph":"resolve","modal":true}
+80.9s AI mid-month {"n":0,"same":true,"cash":true,"f0":0}
+GRANDRT PASS
+occ {"cost":{"zeal":660,"prof":634,"home":587,"fire":608},"eff":{"zeal":24,"prof":0,"home":18,"fire":0},"ws":{"zeal":9,"prof":8.640909090909105,"home":8,"fire":8.290909090909082},"n":{"home":6,"prof":6,"zeal":6,"fire":6},"guard":3,"panel":true,"spread":1,"aiPath":[],"aiAns":true,"aiTo":57,"det":true}
+OCC PASS
+leg {"v":[32000,30000],"leg":true,"ws":4,"mor":2,"loserWs":true,"again":false,"tiny":false,"lop":false,"names":1,"style":"prof","expired":true,"saved":true}
+LEG PASS
+6.5s lobby open, code qnkab3
+14.9s campaign started
+35.5s friend joined as SA
+35.5s friend march reached host
+46.2s friend answered their own event
+54.5s month rolled on the friend's map
+57.1s friend paused the world
+87.8s friend chose Fight it live
+98.1s friend battle loaded and finished
+100.9s friend live battle settled on host: fought the battle for Basra live
+106.1s friend left, AI took over
+GNETTEST PASS
