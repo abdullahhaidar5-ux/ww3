@@ -6,7 +6,7 @@
    parking spot for what the title does not show (its buttons are clicked by the new items). #menu.hidden still means "no menu".
    Recipe for a new screen: orch/HOWTO.md "Add a menu screen". ---------- */
 const MX={stack:['title'],cur:'title',screens:{},busy:0,thumbQ:[],thumbs:{},natQ:''};
-const MX_STEPS=[['c-map','Battlefield'],['c-nation','Nation'],['c-players','Players'],['c-opts','Battle options']];
+const MX_STEPS=[['c-map','Map'],['c-nation','Nation'],['c-players','Players'],['c-opts','Options']];
 const MX_TITLES={'title':'','c-map':'Battle','c-nation':'Battle','c-players':'Battle','c-opts':'Battle','single':'Play','online':'Multiplayer','extras':'Extras','credits':'Credits'};
 function mxEl(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
 function mxClick(id){const e=document.getElementById(id);if(e){try{initAudio();}catch(_){}e.click();}}
@@ -139,7 +139,7 @@ function mxBuild(){
   const foot=(s,...k)=>{const f=mxEl('div','mxfoot');f.append(...k);s.appendChild(f);return f;};
   const go=(t,fn,cls)=>{const b=mxEl('button',cls||'mxgo',t);b.type='button';b.onclick=fn;return b;};
   /* --- title --- */
-  const T=scr('title');T.innerHTML='<h1 id="mxlogo">World War <span>3</span></h1><p id="mxtag">Real-time modern warfare, from one battle to the whole world.</p>';
+  const T=scr('title');T.innerHTML='<h1 id="mxlogo">World War <span>3</span></h1><p id="mxtag">Real-time modern warfare: build your base, hold your supply lines, win the battle.</p>';
   const menu=mxEl('div');menu.id='mxmenu';T.appendChild(menu);
   const item=(t,fn,cls,tip)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''),t);b.type='button';b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);if(tip)b.title=tip;menu.appendChild(b);return b;};
   MX.cont=item('',()=>mxClick('svContinue'),'','Pick up where you left off: your latest Battle');MX.cont.hidden=true;
