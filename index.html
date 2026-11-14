@@ -14346,9 +14346,15 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
   setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}try{vohLoad(g.teams[ME].fac);}catch(_){}},0);}
 function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({battle:setup.mode==='battle'?1:0,real:setup.real?1:0,w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length)});G.teams.forEach((T,i)=>{if(T.ai)T.ai=mkAI(Math.max(0,Math.min(2,setup.d|0))+10*persCode((setup.pers||[])[i]));});}finally{TERR_DEFER=false;}afterStart();}
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
-function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
+/* Test range (Abdullah 2026-11-13 19:59 "Why can't I choose nations in test range"): the nations come from the Test range window (src/14-menu.js, screen t-range); the old auto-pick is gone. */
+const TR_KEY='ww3_testrange';
+function trLoad(){let o=null;try{o=JSON.parse(localStorage.getItem(TR_KEY)||'null');}catch(e){}o=o||{};return {p:FACTIONS[o.p]?o.p:setup.p,a:FACTIONS[o.a]?o.a:(FACTIONS[setup.a]?setup.a:'US'),map:MAPS[o.map]?o.map:setup.map};}
+function trSave(c){try{localStorage.setItem(TR_KEY,JSON.stringify(c));}catch(e){}}
+function startSandbox(c){c=c&&c.p?c:trLoad();setup.p=c.p;setup.a=c.a;if(MAPS[c.map])setup.map=c.map;trSave({p:setup.p,a:setup.a,map:setup.map});
+  if(G&&!G.over&&G.sandbox){G.over=true;G.paused=false;}
+  const facs=[setup.p,setup.a];
   MODE='single';ME=0;
-  TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
+  TERR_DEFER=true;try{newGame({seed:(Math.random()*1e9)|0,facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:-1,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
 function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids,rl,bm){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0,real:rl?1:0,battle:bm?1:0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(!T.reb&&isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
@@ -14829,6 +14835,8 @@ requestAnimationFrame(loop);netInit();
 
 function sbPanel(){const el=$('sbx');if(!el)return;el.hidden=!(G&&G.sandbox);if(el.hidden)return;const D=G.teams[1];const b=$('sbFight');if(b){b.textContent=D.fight?'Enemy fights back: ON':'Enemy fights back: OFF';b.classList.toggle('on',!!D.fight);}
   const n=G.ents.filter(e=>e.team===1&&!e.dead&&!e.isB).length;const c=$('sbCount');if(c)c.textContent=`${n} enemy target${n===1?'':'s'} left`;}
+if($('sbx')&&!$('sbNations')){const b=document.createElement('button');b.id='sbNations';b.type='button';b.textContent='Change nations…';b.title='Pick both nations (and the map) again and restart the range';$('sbx').insertBefore(b,$('sbCount'));}
+if($('sbNations'))$('sbNations').onclick=()=>{if(G&&G.sandbox&&typeof mxTrOpen==='function')mxTrOpen(true);};
 if($('sbTargets'))$('sbTargets').onclick=()=>{if(G&&G.sandbox){sandboxTargets();pushLog('New targets have arrived.','g');updateUI();}};
 if($('sbFight'))$('sbFight').onclick=()=>{if(G&&G.sandbox){const D=G.teams[1];D.fight=!D.fight;updateUI();}};
 if($('sbClear'))$('sbClear').onclick=()=>{if(G&&G.sandbox){for(const e of G.ents)if(e.team===1&&!e.isB&&!e.dead){e.dead=true;G.byId.delete(e.id);FXE('die',[e.id,e.x|0,e.y|0,KINDS.indexOf(e.kind),0,1]);}updateUI();}};
@@ -16938,6 +16946,7 @@ function edgeTick(){const A=EDGE.a;if(!A.length&&!EDGE.el)return;const now=perfo
     q.b.style.display='';q.b.title=EDGE_K[q.kind][2]+': '+q.m+' - click to look';q.b.style.opacity=fade.toFixed(2);q.b.style.transform='translate('+x.toFixed(0)+'px,'+y.toFixed(0)+'px)';q.b.style.setProperty('--r',Math.atan2(vy,vx).toFixed(2)+'rad');}}
 /* ---------- What's new (one screen, newest first) ---------- */
 const WHATS_NEW=[
+ ['Test range: pick both nations','Test range now opens a small window: choose your nation, the target nation (it can be the same one) and a map, then Start. Inside the range, "Change nations…" in the Test range box restarts it with a new pair, no trip through the main menu.'],
  ['Grand campaign is paused','We are finishing Conquest and Battle first. Single player and Multiplayer now offer Conquest and Battle. The Grand campaign is still there as a preview: Extras → Grand campaign (preview, paused). Continue now resumes your latest Conquest or Battle.'],
  ['Every button says what it beats','Unit buttons now carry two small pictures: green = what this unit BEATS best, red = what it is most WEAK TO. Hold the mouse on a button for the full list with names. Point at an enemy unit (or select it) and the buttons that beat it light up green with "BEATS IT". The game works these out from the real damage, armor, range and price numbers against the nation you are fighting, so they are always true - the Encyclopedia and the Unit guide show the same.'],
  ['The main menu shows your war','The main menu background now shows whatever Continue would take you back to. A saved grand campaign: the map around your nation, your borders lit in your color and your last battle marked, won or lost. A saved battle: that battlefield, with a bright line where your front was against the enemy you could see. The bottom right corner says which war it is. With nothing saved it stays the calm world map.'],
@@ -17309,7 +17318,7 @@ const FH_TEXT={
   'Conquest':['Conquest: what to do first','Your base is already built: Barracks, War Factory, Supply Depot and (for most nations) an Airfield, plus $10,000. Left-click a building to train units, send out the Supply Trucks, and use the Build tab to add more.|Your money comes from towns you hold: capture towns and set their tax.|Left-click selects, right-click moves or attacks. Destroy the enemy base to win.'],
   'Battle':['Battle: what to do first','Send the Supply Truck to a supply field: it hauls money back to your Command Center. Build a Supply Depot beside a far field.|Dozer: build Barracks, then a War Factory (Build tab), then train units there.|Left-click selects, right-click moves or attacks. Destroy every enemy building to win.'],
   'Mission':['Mission: what to do first','Read the objective at the top of the screen.|Left-click selects your units, right-click moves or attacks.|The mission ends when the objective is done or your force is lost.'],
-  'Test range':['Test range: what to do first','Nothing here counts: spawn any unit or building and try it out.|Left-click selects, right-click moves or attacks.|Press Esc for the menu when you are done.'],
+  'Test range':['Test range: what to do first','Nothing here counts: spawn any unit or building and try it out.|You picked both nations; "Change nations…" in the Test range box restarts with a new pair.|Left-click selects, right-click moves or attacks.|Press Esc for the menu when you are done.'],
   'Grand campaign':['Grand campaign: what to do first','Click your nation flag to open its panel (economy, ideas, military).|Select an army (a round token with your flag and a white rim), then right-click a province to move it. Use the speed buttons or pause to control time.|When armies meet, choose Fight it live or auto-resolve.']};
 function fhKey(m){return 'ww3_fh_'+String(m).replace(/\W/g,'');}
 /* automated test browsers (navigator.webdriver) never get the auto-popup - it would sit over the units the tests click; orch/polishplay.mjs sets ww3_fh_test=1 to see it */
@@ -20520,7 +20529,7 @@ function loadGrand(){
    Recipe for a new screen: orch/HOWTO.md "Add a menu screen". ---------- */
 const MX={stack:['title'],cur:'title',screens:{},busy:0,thumbQ:[],thumbs:{},natQ:''};
 const MX_STEPS=[['c-map','Battlefield'],['c-nation','Nation'],['c-players','Players'],['c-opts','Battle options']];
-const MX_TITLES={'title':'','c-map':'Conquest','c-nation':'Conquest','c-players':'Conquest','c-opts':'Conquest','single':'Single player','online':'Multiplayer','extras':'Extras','credits':'Credits'};
+const MX_TITLES={'title':'','c-map':'Conquest','c-nation':'Conquest','c-players':'Conquest','c-opts':'Conquest','single':'Single player','online':'Multiplayer','extras':'Extras','credits':'Credits','t-range':'Test range'};
 function mxEl(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
 function mxClick(id){const e=document.getElementById(id);if(e){try{initAudio();}catch(_){}e.click();}}
 function mxTick(f){try{sfxUI(f);}catch(_){}}
@@ -20666,7 +20675,7 @@ function mxBuild(){
   MX.cont=item('',()=>mxClick('svContinue'),'','Pick up where you left off: your latest Conquest or Battle');MX.cont.hidden=true;
   item('Single player',()=>menuGo('single'),'','Conquest, Battle, missions and the tutorial');
   item('Multiplayer',()=>menuGo('online'),'','Play online with friends: Conquest or Battle');
-  item('Test range',()=>mxClick('sandbox'),'','Unlimited money and every unit against a passive target');
+  item('Test range',()=>mxTrOpen(false),'','Pick your nation and a target nation, then try any unit with unlimited money');
   item('Settings',()=>mxClick('openSettings'),'sep dim','Graphics, sound and mouse');
   item('Extras',()=>menuGo('extras'),'dim','Replays, encyclopedia, medals, map editor and more');
   item('Credits',()=>menuGo('credits'),'dim');
@@ -20701,6 +20710,15 @@ function mxBuild(){
   {const r=mxEl('div','seg');r.id='balRow';[['Balanced',0],['Realistic',1]].forEach(([t,v])=>{const b=mxEl('button','',t);b.onclick=()=>{setup.real=v;r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));};if(!!setup.real===!!v)b.classList.add('on');r.appendChild(b);});opt('Balance','Balanced: every nation equally strong - the default. Realistic: each nation starts like its real 2026 military, but the game stays fair. Big powers start rich with tanks and strong air and missile support, but their units cost more and train slowly. Small nations and the Zealous factions start with many cheap infantry and AT teams, recruit fast and fortify cheaply at home. The host sets it for a multiplayer battle.',r);
     const rs=mxEl('div','');rs.style.cssText='font-size:12px;opacity:.8;margin-top:4px;max-width:520px';const fill=()=>{rs.textContent=setup.real?[setup.p].concat(setup.a?[setup.a]:[]).filter(f=>FACTIONS[f]).map(f=>FACTIONS[f].name+' - '+realLine(f)).join('  ·  '):'';};r.addEventListener('click',()=>setTimeout(fill,0));r.addEventListener('mouseenter',fill);r.after(rs);fill();}
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
+  /* --- test range: one small window (Abdullah 2026-11-13 19:59 "Why can't I choose nations in test range") --- */
+  {const R=scr('t-range','<h2 class="mxh">Test range</h2><p class="mxsub">Pick your nation and the target nation (they can be the same), and a map. Unlimited money, everything unlocked, a passive target to try things on.</p>');
+   const w=mxEl('div','mxpl'),l=mxEl('div'),r=mxEl('div');MX.trNat=mxEl('div');MX.trNat.id='mxtrnat';MX.trTgt=mxEl('div','mxrow');MX.trMap=mxEl('div','mxrow');
+   const in2=mxEl('input');in2.id='mxtrin';in2.placeholder='Find a nation…';in2.autocomplete='off';in2.spellcheck=false;in2.oninput=()=>mxNatFilter(in2.value);
+   l.append(mxEl('div','mxlab','Your nation'),in2,MX.trNat);
+   const ms=mxEl('select');ms.id='mxtrmap';ms.onchange=()=>{setup.map=ms.value;};MX.trMapSel=ms;
+   MX.trTgt.append(mxEl('div','mxlab','Target nation'),g('aiFac'));MX.trMap.append(mxEl('div','mxlab','Map'),ms);
+   r.append(MX.trTgt,MX.trMap);w.append(l,r);R.appendChild(w);
+   MX.trGo=go('Start',()=>mxTrStart());foot(R,MX.trGo);}
   /* --- single player (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range") --- */
   const SP=scr('single','<h2 class="mxh">Single player</h2><p class="mxsub">Two games. Pick one.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
   const sitem=(t,d,fn,cls)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''));b.type='button';b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);sl.appendChild(b);return b;};
@@ -20752,11 +20770,28 @@ function mxMapCards(){
     b.onclick=()=>{mxTick(700);sel.value=k;sel.onchange();mxMapMark();setTimeout(()=>{if(MX.cur==='c-map')menuGo('c-nation');},140);};g.appendChild(b);}
   {const vis=new Set([...sel.options].map(o=>o.value));MX.thumbQ=MX.thumbQ.filter(k=>vis.has(k)).concat(MX.thumbQ.filter(k=>!vis.has(k)));}   /* the maps on screen get their pictures first */
   mxThumbRun();}
+/* Test range window. The nation cards (#pickP) and the opponent list (#aiFac) are the Conquest/Battle ones, moved in while this window is open and back when Conquest's own screens open. */
+function mxTrHome(id){const pp=document.getElementById('pickP'),af=document.getElementById('aiFac');if(!pp||!af)return;
+  if(!MX.trPp){MX.trPp=1;pp.addEventListener('click',()=>{if(MX.cur==='t-range'&&MX.trMapSel)setTimeout(()=>{setup.map=MX.trMapSel.value;},0);});}
+  if(id==='t-range'){MX.trNat.appendChild(pp);MX.trTgt.appendChild(af);mxTrFill();}
+  else if(id==='c-nation'||id==='c-players'){const nl=document.querySelector('#ms-c-nation .mxnat>div');if(nl&&pp.parentNode!==nl)nl.appendChild(pp);const r1=document.querySelector('#ms-c-players .mxrow');if(r1&&af.parentNode!==r1)r1.appendChild(af);}}
+function mxTrFill(){const ms=MX.trMapSel;if(!ms)return;if(!ms.options.length){const ks=(typeof MAP_KEYS!=='undefined'?MAP_KEYS:[]).filter(k=>MAPS[k]&&MAPS[k].min<=2&&MAPS[k].max>=2);for(const k of ks){const o=document.createElement('option');o.value=k;o.textContent=MAPS[k].name;ms.append(o);}}
+  const c=typeof trLoad==='function'?trLoad():{p:setup.p,a:setup.a,map:setup.map};setup.p=c.p;setup.a=c.a;if(MAPS[c.map])setup.map=c.map;
+  document.getElementById('aiFac').value=setup.a;if(ms.querySelector('option[value="'+setup.map+'"]'))ms.value=setup.map;else{setup.map=ms.value;}
+  if(typeof facCards==='function')facCards();
+  const x=document.getElementById('mxtrin');if(x){x.value='';mxNatFilter('');}
+}
+function mxTrOpen(inGame){MX.trIn=!!inGame;const m=document.getElementById('menu');if(!m)return;
+  if(inGame){m.hidden=false;try{menuHome();}catch(_){}}
+  menuGo('t-range');}
+function mxTrClose(){MX.trIn=0;const m=document.getElementById('menu');if(m)m.hidden=true;menuHome();}
+function mxTrStart(){const p=setup.p,a=document.getElementById('aiFac').value||setup.a,map=MX.trMapSel.value||setup.map;MX.trIn=0;try{initAudio();}catch(_){}
+  document.getElementById('menu').hidden=true;startSandbox({p,a,map});}
 function mxMapMark(){if(!MX.grid)return;const sel=document.getElementById('mapSel');for(const b of MX.grid.children)b.classList.toggle('on',sel&&b.dataset.k===sel.value);}
 function mxThumbRun(){if(MX.thumbRun)return;MX.thumbRun=1;const step=()=>{const k=MX.thumbQ.shift();if(!k){MX.thumbRun=0;return;}
   if(typeof G!=='undefined'&&G&&!G.over){MX.thumbQ.unshift(k);setTimeout(step,800);return;}
   try{if(typeof MAPS!=='undefined'&&MAPS[k])mapPreview(k,MX.thumbs[k]);}catch(e){}setTimeout(step,30);};setTimeout(step,60);}
-function mxNatFilter(){const q=document.getElementById('mxnatin').value.trim().toLowerCase();MX.natQ=q;for(const f of document.querySelectorAll('#pickP .fac'))f.style.display=!q||(f.querySelector('.nm').textContent||'').toLowerCase().includes(q)?'':'none';}
+function mxNatFilter(v){const q=(typeof v==='string'?v:document.getElementById('mxnatin').value).trim().toLowerCase();MX.natQ=q;for(const f of document.querySelectorAll('#pickP .fac'))f.style.display=!q||(f.querySelector('.nm').textContent||'').toLowerCase().includes(q)?'':'none';}
 function mxNatShow(f){f=f||document.querySelector('#pickP .fac.on');const d=document.getElementById('mxdet');if(!d||!f)return;const t=c=>(f.querySelector(c)||{}).textContent||'';
   d.innerHTML='';d.append(mxEl('h3','',t('.nm')),mxEl('div','a',t('.dc')));const full=t('.full');if(full)d.append(mxEl('p','',full));d.append(mxEl('p','s',t('.sp')),mxEl('p','w',t('.sw')));}
 function mxPlayersSync(){const n=(typeof setup!=='undefined'&&setup.n)||1;if(MX.cnt)MX.cnt.textContent='Computers · '+n;
@@ -20776,9 +20811,9 @@ function menuGo(id,back){if(!MX.screens[id]||MX.cur===id)return;const from=MX.sc
   else if(!back){if(id==='title')MX.stack=['title'];else MX.stack.push(id);}
   from.classList.remove('on');from.classList.toggle('left',!back);to.classList.remove('left');if(back)from.classList.remove('left');
   to.scrollTop=0;to.classList.add('on');MX.cur=id;mxCrumb();mxEnter(id);mxTick(back?480:640);}
-function menuBack(){if(MX.stack.length<2)return;MX.stack.pop();const id=MX.stack[MX.stack.length-1];const from=MX.screens[MX.cur];from.classList.remove('on','left');const to=MX.screens[id];to.classList.add('left');void to.offsetWidth;to.classList.remove('left');to.classList.add('on');MX.cur=id;mxCrumb();mxEnter(id);mxTick(480);}
+function menuBack(){if(MX.cur==='t-range'&&MX.trIn){mxTrClose();return;}if(MX.stack.length<2)return;MX.stack.pop();const id=MX.stack[MX.stack.length-1];const from=MX.screens[MX.cur];from.classList.remove('on','left');const to=MX.screens[id];to.classList.add('left');void to.offsetWidth;to.classList.remove('left');to.classList.add('on');MX.cur=id;mxCrumb();mxEnter(id);mxTick(480);}
 function menuHome(){for(const k in MX.screens)MX.screens[k].classList.remove('on','left');MX.stack=['title'];MX.cur='title';MX.screens.title.classList.add('on');mxCrumb();}
-function mxEnter(id){if(id==='c-map')mxMapCards();if(id==='c-nation'){mxNatFilter();mxNatShow();}if(id==='c-players'||id==='c-opts'){mxStartSync();mxPlayersSync();try{if(typeof renderTeams==='function')renderTeams();}catch(_){}}
+function mxEnter(id){mxTrHome(id);if(id==='c-map')mxMapCards();if(id==='c-nation'){mxNatFilter();mxNatShow();}if(id==='c-players'||id==='c-opts'){mxStartSync();mxPlayersSync();try{if(typeof renderTeams==='function')renderTeams();}catch(_){}}
   if(id==='online'){if(MX.campOnce)MX.campOnce=0;else if(MX.olG==='campaign')MX.olG='conquest';mxOnline();}if(id==='title')mxContSync();}
 /* The war table (living main menu): the background shows YOUR war - whatever "Continue" would resume.
    Grand campaign saved: its map around your nation, your borders lit in your color, your last battle marked (sketch from the save's small note, grWarTable in 13-grand.js).
@@ -20813,7 +20848,7 @@ function mxWarTable(){const bg=document.getElementById('mxbg'),mn=document.getEl
     if(wt.b)lab('bat',wt.b[0],wt.b[1],'<svg viewBox="0 0 28 28" fill="none" stroke="#ffd666" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l15 15M23 5L8 20M6 17l5 5M22 17l-5 5M4 24l4-4M24 24l-4-4"/></svg><b>'+esc(wt.b[2])+'</b>Last battle · '+esc(wt.b[3])+(wt.b.length>4?' · '+(wt.b[4]?'won':'lost'):''));
     requestAnimationFrame(()=>cv.classList.add('on'));}catch(e){for(const el of bg.querySelectorAll('#mxwt,.mxwtl'))el.remove();mx.classList.remove('wt');}}
 function mxShown(first){if(!first&&MX.cur!=='title')menuHome();mxContSync();try{if(typeof svMenuSync==='function')svMenuSync();else mxWarTable();}catch(_){}}   /* svMenuSync finds the newest save, then calls mxWarTable */
-function mxKey(e){if(e.key!=='Escape')return;const m=document.getElementById('menu');if(!m||m.hidden||MX.stack.length<2)return;
+function mxKey(e){if(e.key!=='Escape')return;const m=document.getElementById('menu');if(!m||m.hidden||(MX.stack.length<2&&!(MX.trIn&&MX.cur==='t-range')))return;
   if(document.querySelector('.overlay:not(#menu):not([hidden]),#campScreen,#grandScreen,#gModal,#edOv.on'))return;if(e.target&&/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)&&e.target.id!=='mxnatin')return;
   e.preventDefault();e.stopImmediatePropagation();menuBack();}
 try{if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mxBuild);else mxBuild();}catch(e){console.warn('menu v3',e);}
