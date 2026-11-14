@@ -368,6 +368,35 @@ try {
         const r = await ev((h) => { const u = G.ents.find(e => e.id === h.u), c = G.civ[h.c]; return { order: u && u.order ? u.order.type : '', inside: !!(c.occ && c.occ.some(o => o.id === h.u)) }; }, hs);
         ck(r.order === 'garrison' || r.inside, 'right-click on a house with a friendly soldier standing in front of it does not send the selected infantry into the house: ' + JSON.stringify(r)); }
       await ev((h) => { for (const id of [h.blk, h.u]) { const e = G.ents.find(x => x.id === id); if (e) { e.dead = true; G.byId.delete(id); } } const c = G.civ[h.c]; if (c.g && c.occ.some(o => o.id === h.u)) { try { leaveGarrison(c); } catch (e) {} } G.sel = []; }, hs); } }
+  // sweepfixB (2026-11-13 slice sweep, findings 2/3/5; CLAUDE.md "Command bar text big and readable", small elegant buttons):
+  // at 1280 wide no order button is cut ("Attac…"), the order rows sit in one dock above the command bar, an army without a
+  // Construction Vehicle shows no road tools; the nation nameplate fits on one line for every nation; Settings and the
+  // Victory/Defeat screen hide the battle HUD top bar.
+  { await page.setViewportSize({ width: 1280, height: 720 }); await page.waitForTimeout(700);
+    const o = await ev(() => { const T = G.teams[ME], R = roster(T.fac), ks = []; for (const c in R) for (const k of R[c]) { const s = stats(T.fac, k); if (s.dom === 'ground' && s.dmg > 0 && k !== 'dozer') ks.push(k); }
+      const h = G.ents.find(e => e.team === ME && e.isB && !e.dead), add = []; for (let i = 0; i < 6; i++) add.push(addUnit(ME, ks[i % Math.min(ks.length, 3)], h.x + 120 + i * 16, h.y + 90));
+      const doz = G.ents.find(e => e.team === ME && !e.dead && e.kind === 'dozer'), out = {}, side = document.getElementById('side').getBoundingClientRect();
+      const look = sel => { G.sel = sel; updateUI(); const bs = [...document.querySelectorAll('#info .cmdrow button')].filter(b => b.offsetParent);
+        return { n: bs.length, cut: bs.filter(b => b.scrollWidth > b.clientWidth + 1 || /…|\.\.\./.test(b.textContent)).map(b => b.textContent), low: bs.filter(b => b.getBoundingClientRect().bottom > side.top + 1).map(b => b.textContent),
+          docks: document.querySelectorAll('#info .orddock').length, road: !!document.querySelector('#info .cmdrow.lgr'), keys: bs.filter(b => b.querySelector('kbd')).map(b => b.querySelector('kbd').textContent).join('') }; };
+      out.army = look(add.slice()); out.mixed = look(add.concat(doz ? [doz] : [])); out.doz = doz ? look([doz]) : null;
+      const fn = document.getElementById('facname'), bad = [];
+      for (const k of FKEYS) { fn.textContent = FACTIONS[k].name; fitText(fn, 11); const fs = parseFloat(getComputedStyle(fn).fontSize), r = fn.getBoundingClientRect(); if (fn.scrollWidth > fn.clientWidth + 1 || r.height > fs * 1.7 || fs < 11) bad.push(k + ':' + FACTIONS[k].name + '@' + fs); }
+      out.plate = bad; fn.dataset.k = ''; G.sel = []; updateUI();
+      const hidden = () => { const b = document.getElementById('hudBar'); return !b || getComputedStyle(b).visibility === 'hidden'; };
+      out.hud0 = !hidden(); openSettings(); out.hudSet = hidden(); document.getElementById('settings').hidden = true;
+      const en = document.getElementById('end'); en.hidden = false; out.hudEnd = hidden(); en.hidden = true; out.hud1 = !hidden();
+      for (const u of add) { u.dead = true; G.byId.delete(u.id); } G.ents = G.ents.filter(e => !add.includes(e)); return out; });
+    console.log('order dock', JSON.stringify({ army: o.army.n + ' ' + o.army.keys, mixed: o.mixed.n, doz: o.doz && o.doz.n, plate: o.plate.length }));
+    for (const k of ['army', 'mixed', 'doz']) { const x = o[k]; if (!x) continue;
+      ck(x.n > 0 && !x.cut.length, 'order buttons cut at 1280 wide (' + k + '): ' + x.cut.join(' | '));
+      ck(!x.low.length, 'order buttons overlap the command bar (' + k + '): ' + x.low.join(' | '));
+      ck(x.docks === 1, 'order rows must sit in one dock (' + k + '), found ' + x.docks); }
+    ck(!o.army.road, 'an army without a Construction Vehicle shows the road-tool row');
+    ck(o.army.keys.includes('F') && o.army.keys.includes('X') && o.army.keys.includes('G'), 'order buttons must show their hotkeys, got ' + o.army.keys);
+    ck(!o.plate.length, 'nation nameplate does not fit on one line at 1280 wide: ' + o.plate.join(', '));
+    ck(o.hud0 && o.hudSet && o.hudEnd && o.hud1, 'battle HUD top bar must hide under Settings and the Victory/Defeat screen (and come back): ' + JSON.stringify([o.hud0, o.hudSet, o.hudEnd, o.hud1]));
+    await page.setViewportSize({ width: 1600, height: 900 }); await page.waitForTimeout(500); }
   // Balance toggle (Abdullah 2026-11-06 21:31): Balanced must stay equal for everyone; Realistic must tier fire support
   // (superpower strikes come faster/harder and its vehicles are cheaper; a small power's strikes are weaker but its
   // infantry cheaper). Read as data on both settings, with the battle's own setting put back afterwards.
