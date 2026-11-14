@@ -15,5 +15,5 @@ Abdullah (photo of 8 rocket launchers on big pink ellipses): "Remove these red r
 
 ## Gate
 build --check OK. decisions/smoke: see end of this file (run in background; results appended if they finished).
-Status: ready for gate once core checks pass.
+Status: READY (ring removal only; ORCH extra notes left for Monday: Retreat/Assault/Stop/Hold removal, auto-build panel, Layers, breaking news).
 smoke: SMOKE PASS (652 s). decisions.mjs: running, no FAIL in output so far (static guards run first).
