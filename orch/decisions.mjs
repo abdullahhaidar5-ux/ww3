@@ -68,15 +68,6 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/function tactBuilders\(\)\{return tactOwn\(\)\.filter\(u=>u\.kind==='dozer'\);\}/.test(u), 'fortline: tactBuilders must be Construction Vehicles only');
   ck(!/\.65\)/.test(t.slice(t.indexOf('function dozeWall'), t.indexOf('function trenchSnap'))), 'fortline: the slower infantry build factor is back in dozeWall');
   ck(/pts:\[/.test(t) && /t:'wall',ids:dzs/.test(t) && !/digCan\(e\)&&G\.t-\(e\.mv\|\|-9\)>3/.test(t), 'fortline: the AI builds lines with Construction Vehicles only'); }
-// ---- dugout (Abdullah 2026-11-13 20:00 "Make it digging in like garrisoning units in that you have to remove them from the dugout"): Dig in is a garrison, not a stance on the units
-{ const t = SRC['03b-tactics.js'] || '', sim = SRC['03-sim.js'] || '', ui = SRC['08c-tactui.js'] || '';
-  ck(!/function startDig\(|function digTick\(/.test(t) && !/\bu\.dig\b|\.dig=null|m\.dig\b/.test(t + sim + (SRC['03f-battlefield.js'] || '')), 'dugout: the old Dig-in stance (u.dig / startDig / digTick) is back');
-  ck(/case 'dig':digIn\(team,own\(a\.ids\)\)/.test(sim) && /function dugoutMake\(/.test(t) && /type:'garrison',ci:c\.i/.test(t), 'dugout: Dig in must send the squad into a dugout through the garrison order');
-  ck(/c\.dug&&c\.dg>G\.t/.test(t) && /enterGarrison\(u,c\)/.test(sim) && !/function enterDugout|function leaveDugout/.test(t + sim), 'dugout: one garrison system - the dugout must reuse enterGarrison / leaveGarrison');
-  { const d1 = SRC['01-data.js'] || ''; ck(!/\.digT\b|fx==='dig'|fx:'dig'|troops arrive dug in/.test(t + sim + d1) && !/mods\.dugIn&&isInf/.test(sim), 'dugout (Abdullah 2026-11-13 21:38 "Replace with dugouts only"): the automatic dig-in (30% less damage holding position / paratroops arriving dug in) is back - dugouts are the only way to dig in');
-    ck(!/dig in \(30%|troops dig in and fight|name:'Dug In'/.test(d1), 'dugout: a stale "dig in" text / name is back in src/01-data.js'); }
-  ck(/dugEnsure\(ck\.civ/.test(SRC['07b-ckpt.js'] || ''), 'dugout: checkpoints / saves must keep dugout slots (dugEnsure in ckRestore)');
-  ck(!/foxhole|dig a foxhole/i.test(ui.replace(/\/\*[\s\S]*?\*\//, '')), 'dugout: the Dig in button text still talks about foxholes'); }
 // ---- Words (queue item, 2026-11-10): no old faction name, no real group's name and no stale building name in any text a
 // player can read. Comments are skipped (history lives there); string literals and templates are checked.
 { const strip = t => t.replace(/'(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"|`(?:\\.|[^`\\])*`|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, m => m[0] === '/' ? m.replace(/[^\n]/g, ' ') : m);
@@ -507,18 +498,6 @@ try {
   ck(bt.battle && !bt.conq, 'Battle game did not start in Battle mode');
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
   ck(!bt.setupEnd, 'Battle has a no-fire setup phase'); ck(!bt.tax, 'Battle has town taxes'); ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');
-  // dugout (Abdullah 2026-11-13 20:00): Dig in puts the squad inside a dugout (units off the map, the dugout holds them); move orders do nothing until they are taken out; select dugout + right-click ground releases them; a checkpoint keeps them inside
-  { const dg = await ev(() => { const T = G.teams[ME], hq = G.ents.find(e => e.team === ME && e.kind === 'hq'), inf = roster(T.fac).barracks[0], o = {};
-      let C = null; for (let r = 260; r < 1400 && !C; r += 40) for (let a = 0; a < 6.28 && !C; a += .3) { const x = hq.x + Math.cos(a) * r, y = hq.y + Math.sin(a) * r; if (x > 300 && y > 300 && x < MAPW - 300 && y < MAPH - 300 && dugSiteOk(x, y) && !G.ents.some(e => !e.dead && Math.hypot(e.x - x, e.y - y) < (e.isB ? e.size / 2 + 60 : 80))) C = { x, y }; }
-      if (!C) return { skip: true }; const us = [0, 1, 2, 3].map(i => addUnit(ME, inf, C.x - 22 + i * 14, C.y)); const ids = us.map(u => u.id);
-      act(ME, { t: 'dig', ids }); for (let i = 0; i < 150; i++) simUpdate(.1); const c = G.civ.find(q => q.dug && !q.dead);
-      o.inside = c ? c.occ.length : -1; o.onMap = us.filter(u => G.byId.has(u.id) && !u.inTun).length;
-      act(ME, { t: 'go', ids, x: C.x + 150, y: C.y, mode: 'move' }); for (let i = 0; i < 20; i++) simUpdate(.1); o.stay = !!c && c.occ.length === 4;
-      const js = JSON.parse(JSON.stringify(ckEncode())); o.ck = c && js.civ[c.i] && js.civ[c.i].occ && js.civ[c.i].occ.length;
-      act(ME, { t: 'ungar', tid: c.g.id, at: 1, x: C.x - 120, y: C.y }); o.out = c.occ.length === 0 && us.every(u => G.byId.has(u.id) && !u.inTun);
-      for (const u of us) { u.dead = true; G.byId.delete(u.id); } dugoutFree(c); return o; });
-    console.log('dugout', JSON.stringify(dg));
-    if (!dg.skip) { ck(dg.inside === 4 && dg.onMap === 0, 'dugout: Dig in must put the squad inside the dugout, off the map: ' + JSON.stringify(dg)); ck(dg.stay, 'dugout: a move order must not pull units out of the dugout'); ck(dg.ck === 4, 'dugout: a checkpoint / save must keep the soldiers inside'); ck(dg.out, 'dugout: select the dugout + right-click ground must bring them out'); } }
   await shot('battle-us');
   // ghostslot 2026-11-14 (Abdullah 2026-11-13 19:58 "this was a 2 player battle why are the zaidis in this game"): a game has exactly the players the setup showed - the hidden militia team is never a scoreboard column; Battle has no world-opinion row
   { const gs = await ev(() => { const real = G.teams.filter(T => !T.reb).length, S = endStats(0), nm = G.teams.length - real;

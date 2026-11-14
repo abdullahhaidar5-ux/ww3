@@ -35,14 +35,14 @@ function ckDecode(ck){const byId=new Map();const S=ck.S;const ents=ck.ents.map(o
   for(const e of ents){for(const k in e){if(k==='$s')continue;e[k]=dec(e[k]);}e.s=sTab[e.$s];delete e.$s;e.vs=new Array(G.teams.length).fill(false);}
   return {ents,byId,dec};}
 // Turn this page (currently a client in the battle) into the host, from a checkpoint.
-function ckRestore(ck){const N=G.teams.length;dugEnsure(ck.civ?ck.civ.length:0);const {ents,byId,dec}=ckDecode(ck);  // dugout slots are added to the civ list after the map's own buildings: make room before refs are resolved
+function ckRestore(ck){const N=G.teams.length;const {ents,byId,dec}=ckDecode(ck);
   G.ents=ents;G.byId=byId;G.proj=[];G.strikes=[];G.timers=[];G.planes=[];G.out=[];G.spoofs=[];G.mban=[];G.mbanN=0;G._ewv=null;  // defaults for checkpoints from before these were saved
   for(const k in ck.g){const d=ck.g[k];G[k]=(d&&typeof d==='object')?JSON.parse(JSON.stringify(d)):d;}
   const reb=dec;
   for(const k of ['mines','smokes','shields'])if(Array.isArray(G[k]))G[k]=reb(G[k]);
   ck.fields.forEach((f,i)=>{if(G.fields[i])Object.assign(G.fields[i],f);});
   ck.oil.forEach((o,i)=>{if(G.oil[i])Object.assign(G.oil[i],reb(o));});
-  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});dugAtRebuild();(ck.tw||[]).forEach((o,i)=>{const t=G.towns&&G.towns[i];if(t){const q={};for(const k in o)if(k[0]!=='$')q[k]=reb(o[k]);Object.assign(t,q);t.rebU=(o.$rebU||[]).map(id=>byId.get(id)).filter(Boolean);t.mil=(o.$mil||[]).map(id=>byId.get(id)).filter(Boolean);}});
+  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});(ck.tw||[]).forEach((o,i)=>{const t=G.towns&&G.towns[i];if(t){const q={};for(const k in o)if(k[0]!=='$')q[k]=reb(o[k]);Object.assign(t,q);t.rebU=(o.$rebU||[]).map(id=>byId.get(id)).filter(Boolean);t.mil=(o.$mil||[]).map(id=>byId.get(id)).filter(Boolean);}});
   if(Array.isArray(ck.proj))G.proj=ck.proj.map(p=>{const o={};for(const k in p)o[k]=reb(p[k]);return o;}).filter(p=>p.src&&p.tgt);
   if(ck.camp&&G.camp)for(const k in ck.camp){const v=reb(ck.camp[k]);if(typeof G.camp[k]!=='function')G.camp[k]=v;}(ck.tow||[]).forEach((o,i)=>{if(G.tow&&G.tow[i])Object.assign(G.tow[i],o);});(ck.brT||[]).forEach((x,i)=>{if(G.teams[i])G.teams[i].brT=x;});try{rubSync();bfSync();}catch(e){}
   ck.teams.forEach((t,i)=>{const T=G.teams[i];if(!T)return;for(const k in t){if(k==='$ai'||k==='$aiD'||k==='$aiS'||k==='aiTook')continue;T[k]=reb(t[k]);}T.ai=(t.$ai||t.aiTook)?mkAI(t.$aiD!=null?t.$aiD:1):null;if(T.ai&&t.$aiS){const S=reb(t.$aiS);for(const k in S)T.ai[k]=S[k];}T.aiTook=!!t.aiTook;});
