@@ -20,8 +20,9 @@
      rd:[[x,y,x,y..]..]      roads     wd:[[x,y,r]..] woods
      c:{ ...same lists... }  things ON the mirror line or in the middle: placed once, not mirrored
    }
+   hold:1  keeps a map out of every list (checker still runs it) until node orch/battlemapfair.mjs --battles passes for it.
    Check a map: node orch/battlemapfair.mjs --maps <id>   (a map that fails must not be listed here). */
-const BM={},BM_KEYS=[];
+const BM={},BM_KEYS=[],BM_HELD=[];  // BM_HELD = maps held back from the list until their AI-vs-AI win rates pass (hold:1 in the data)
 const BM_LISTS=['sl','fl','oil','ct','hm','rg','pk','rv','lk','br','rd','wd'];
 function bmExpand(S){
   const W=3200,H=2200,fx=S.sym==='x'||S.sym==='q',fy=S.sym==='y'||S.sym==='q',rot=S.sym==='r';
@@ -46,7 +47,7 @@ function bmRegister(id,S){
   const D=cmBuild(c,key);delete D.custom;delete D.cmKey;
   // Battle extras the editor format does not carry: supply amounts, the list texts, and "no automatic base field"
   D.bm=1;D.manual=true;D.hstyle=S.cs||'mideast';D.min=2;D.max=c.sl.length;D.tag=S.tg||c.th;D.desc=S.ds||'';D.fieldAt=E.fl.map(q=>q.slice(0,3));D.oilAt=E.oil.map(q=>q.slice(0,3));
-  MAPS[key]=D;BM[key]={id,S,E,c};if(!BM_KEYS.includes(key))BM_KEYS.push(key);return key;}
+  MAPS[key]=D;BM[key]={id,S,E,c};const L=S.hold?BM_HELD:BM_KEYS;if(!L.includes(key))L.push(key);return key;}
 // what the map list shows for a Battle map (name, players, size, theme, one line)
 function bmInfo(key){const B=BM[key],D=MAPS[key];if(!B||!D)return null;
   return{k:key,name:D.name,players:D.max,size:CM_SIZES[B.c.z],theme:D.tag,desc:D.desc,supply:B.E.fl.length,oil:B.E.oil.length};}
@@ -56,7 +57,7 @@ function isBattleMap(k){return !!BM[k];}
 
 const BMAPS={
   // ---- 2 players ----
-  tarbasin:{nm:'Tar Basin',z:0,th:'desert',tg:'desert oil field',cs:'mideast',sym:'r',
+  tarbasin:{hold:1,nm:'Tar Basin',z:0,th:'desert',tg:'desert oil field',cs:'mideast',sym:'r',
     ds:'A dry basin with an oil field in the middle. Three lanes between two rock outcrops; whoever holds the derricks out-earns the other.',
     sl:[[430,1100]],
     fl:[[650,830,120],[610,1400,90],[1120,400,90]],
