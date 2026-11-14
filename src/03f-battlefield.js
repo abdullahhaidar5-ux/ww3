@@ -26,13 +26,13 @@ function wndRevive(w){const p=nearestPassXY('ground',w.x,w.y)||[w.x,w.y];const n
   FXE('txt',[n.x|0,n.y|0,'REVIVED',w.team,-2]);FXE('heal',[n.x|0,n.y|0,40],w.team);return true;}
 // a blast kills the wounded lying in it
 function wndBlast(x,y,r){const L=G.wnd;if(!L||!L.length)return;for(let i=L.length-1;i>=0;i--){const w=L[i];if(Math.hypot(w.x-x,w.y-y)<r*.85)wndDrop(i,'KILLED');}}
-function wndCoverSpot(w){let b=null,bd=170*170;for(const d of G.dug||[]){if(!ally(d.team,w.team))continue;const q=(d.x-w.x)**2+(d.y-w.y)**2;if(q<bd&&passXY('ground',d.x,d.y)){bd=q;b=[d.x,d.y];}}if(b)return b;
+function wndCoverSpot(w){let b=null,bd=170*170;for(const d of G.dug||[]){if(d.k==='hole'||!ally(d.team,w.team))continue;const q=(d.x-w.x)**2+(d.y-w.y)**2;if(q<bd&&passXY('ground',d.x,d.y)){bd=q;b=[d.x,d.y];}}if(b)return b;
   for(const r of [45,80,115,150])for(let k=0;k<12;k++){const a=k/12*6.283+w.id,x=w.x+Math.cos(a)*r,y=w.y+Math.sin(a)*r;if(x<30||y<30||x>MAPW-30||y>MAPH-30||!passXY('ground',x,y))continue;if((G.dugN&&dugCov(x,y))||(G.rubN&&rubAt(x,y))||coverAt(x,y))return[x,y];}return null;}
 function wndFoes(x,y,team,R){nearby(x,y,R,BF_NB);for(const e of BF_NB)if(!e.dead&&!e.isB&&e.team!==team&&!ally(e.team,team)&&e.s&&e.s.dmg>0&&e.s.dom==='ground'&&Math.hypot(e.x-x,e.y-y)<R)return true;return false;}
 function wndTick(dt){const L=G.wnd;if(!L||!L.length)return;const meds=[],aid=[];
   for(const e of G.ents){if(e.dead||e.inTun)continue;if(e.isB){if(e.built>=1&&(e.kind==='hq'||e.kind==='depot'||e.kind==='field'))aid.push(e);}else if(e.kind==='medic')meds.push(e);}
   G.wndS=(G.wndS||0)-dt;const scan=G.wndS<=0;if(scan)G.wndS=.5;
-  if(scan)for(const m of meds){if(m.order||m.dig||m.rout>G.t||G.t-(m.mv||-9)<.8||m.aband)continue;let b=null,bd=320*320;
+  if(scan)for(const m of meds){if(m.order||m.rout>G.t||G.t-(m.mv||-9)<.8||m.aband)continue;let b=null,bd=320*320;
     for(const w of L){if(!ally(w.team,m.team)||(w.md&&w.mdT>G.t&&w.md!==m.id))continue;const d=(w.x-m.x)**2+(w.y-m.y)**2;if(d<bd&&!wndFoes(w.x,w.y,w.team,120)){bd=d;b=w;}}
     if(b){m.order={type:'move',x:b.x,y:b.y};m.path=null;b.md=m.id;b.mdT=G.t+10;}}
   for(let i=L.length-1;i>=0;i--){const w=L[i];
@@ -42,7 +42,7 @@ function wndTick(dt){const L=G.wnd;if(!L||!L.length)return;const meds=[],aid=[];
     if(rate){w.p+=rate*dt;if(w.p>=1){if(wndRevive(w))wndDrop(i);else w.p=.95;continue;}}
     if(G.t>=w.until){wndDrop(i,'BLED OUT');continue;}
     if(scan&&!w.dr&&!rate&&G.t-w.t0>2.5&&!(w.md&&w.mdT>G.t)&&!coverAt(w.x,w.y)&&!(G.rubN&&rubAt(w.x,w.y))){   // nobody coming: a squad mate drags him to cover
-      let best=null,bd=80*80;nearby(w.x,w.y,90,BF_NB);for(const u of BF_NB){if(u.dead||u.isB||u.team!==w.team||!u.s||!isInf(u.s)||u.s.noAttack||u.kind==='medic'||u.kind==='hacker'||u.order||u.target||u.drg||u.dig||u.inTun||u.aband||u.rout>G.t||u.hp<u.max*.35)continue;
+      let best=null,bd=80*80;nearby(w.x,w.y,90,BF_NB);for(const u of BF_NB){if(u.dead||u.isB||u.team!==w.team||!u.s||!isInf(u.s)||u.s.noAttack||u.kind==='medic'||u.kind==='hacker'||u.order||u.target||u.drg||u.inTun||u.aband||u.rout>G.t||u.hp<u.max*.35)continue;
         const d=(u.x-w.x)**2+(u.y-w.y)**2;if(d<bd){bd=d;best=u;}}
       if(best){const sp=wndCoverSpot(w);if(sp){w.tx=sp[0];w.ty=sp[1];w.dr=best.id;best.drg=w.id;best.order={type:'move',x:sp[0],y:sp[1],drg:w.id};best.path=null;FXE('txt',[best.x|0,best.y|0,'DRAGGING WOUNDED',best.team,-2]);}}}}
 }
@@ -52,7 +52,7 @@ function wdPack(T){if(!G.wnd)return null;if(T.wdV===G.wndV&&G.t<(T.wdT||0))retur
 function wdApply(L){G.wnd=L.map(v=>({id:v[0],x:v[1],y:v[2],team:v[3],p:v[4]/100,until:G.t+v[5]/10,kind:'inf',rank:0,xp:0}));G.wndN=G.wnd.length;G.wndV=(G.wndV|0)+1;}
 
 /* ---------- damaged buildings ---------- */
-function civStage(c){if(c.dead||!c.max)return;const f=c.hp/c.max,s=f>.66?0:f>.33?1:2;if(s>(c.stg|0)){c.stg=s;FXE('civs',[c.i,s]);civBail(c,s);}}
+function civStage(c){if(c.dead||!c.max)return;const f=c.hp/c.max,s=f>.66?0:f>.33?1:2;if(s>(c.stg|0)){c.stg=s;if(!c.dug)FXE('civs',[c.i,s]);civBail(c,s);}}
 function civBail(c,s){if(!c.occ||!c.occ.length)return;
   if(s===1){for(const u of c.occ)u.fear=(u.fear||0)+.12;return;}
   const n=Math.ceil(c.occ.length/2),out=c.occ.splice(c.occ.length-n,n);
@@ -107,7 +107,7 @@ function floodTick(dt){const D=G.dams;if(!D||!G.fln)return;G.flS=(G.flS||0)-dt;i
     if(isInf(e.s)){e.hp-=e.max*.035*st*f;e.fear=(e.fear||0)+.01;if(e.hp<=0){FXE('txt',[e.x|0,e.y|0,'SWEPT AWAY',-2,e.team]);kill(e,null,null);}}
     else if(e.hp>e.max*.2)e.hp=Math.max(e.max*.2,e.hp-e.max*(e.s.armor==='heavy'?.004:.008)*st*f);}
   if(G.wnd&&G.wnd.length)for(let i=G.wnd.length-1;i>=0;i--){const w=G.wnd[i];if(floodAt(w.x,w.y)>.5)wndDrop(i,'SWEPT AWAY');}
-  if(G.dug&&G.dug.length)for(let i=G.dug.length-1;i>=0;i--){const q=G.dug[i];if(q.k!=='sand'&&floodAt(q.x,q.y)>.7){G.dug.splice(i,1);G.dugBd=1;}}if(G.dugBd){G.dugBd=0;dugBump();}}
+  if(G.dug&&G.dug.length)for(let i=G.dug.length-1;i>=0;i--){const q=G.dug[i];if(q.k!=='sand'&&q.k!=='hole'&&floodAt(q.x,q.y)>.7){G.dug.splice(i,1);G.dugBd=1;}}if(G.dugBd){G.dugBd=0;dugBump();}}
 function damPack(T){const D=G.dams;if(!D)return null;if(T.dmV===G.damV&&T.dmN)return null;T.dmV=G.damV;T.dmN=1;return{dm:D.map(d=>[d.i,d.dead?1:0,Math.round(d.hp/d.max*100),Math.round(d.t0*10),d.fin?1:0])};}
 function damApply(L){if(!G.dams)return;for(const v of L){const d=G.dams[v[0]];if(!d)continue;const was=d.dead;d.dead=!!v[1];d.hp=v[2]/100*d.max;d.t0=v[3]/10;d.fin=!!v[4];if(d.dead&&!was){FXE('dam',[d.i,d.x,d.y]);}}G.damV=(G.damV|0)+1;}
 // AI: blow the dam whose flood would catch more of the enemy than of us (or our friends); a few strong units go and shell it
