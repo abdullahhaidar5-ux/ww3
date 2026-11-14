@@ -15,6 +15,9 @@ Owner (Abdullah, Fri 2026-11-13 20:00 Chicago): "Make it digging in like garriso
 - Tanks / IFVs / APCs / ground AA / artillery dig a hull-down position with Dig in (I): ~7 s, berm + ramp + track marks, front damage x0.5 and side x0.6 (rear unchanged), turret still fires, no movement until a move order (select + right-click ground). AI digs in when idle (max 8 per team) and leaves with its attack wave. `G.dug` kind `vpos` + `u.dgv`, in checkpoint and client list. Not done: a Construction Vehicle digging it for another vehicle (vehicles dig themselves in).
 - Looks: spoil lip, timber boards, firing steps, camo net on some, debris, scuffed earth on dugouts, trenches, sandbags and vehicle positions; instanced in the one mesh (cap raised 3600 -> 6000 blobs). Close-ups: `orch/shots/dugout-foxhole.jpg`, `dugout-trench.jpg`, `dugout-tank.jpg`.
 
+## Replace with dugouts only (ORCH note, Abdullah 2026-11-13 21:38)
+- Removed the automatic dig-in: `mods.dugIn` no longer cuts infantry damage while holding position (it now makes the Lebanese Shia's DUGOUTS take 30% less damage), UA's Territorial Defense lands veterans instead of "dug in" troops (`digT` gone), upgrade "Dug In" renamed "Hardened Infantry", PL/RS doctrine texts fixed. Guard in decisions.mjs. **Not done:** the defense tourney rebalance (`node orch/tourney.mjs`) - too slow in the sandbox; worth a run if infantry look weak on defense.
+
 ## Gate
 - Local: `python3 orch/build.py --check` OK, `node orch/smoke.mjs` SMOKE PASS, `node orch/dugouttest.mjs` DUGOUT PASS, decisions see below / cigate result appended by the last line of this file.
 - No local smooth runs (per CLAUDE.md). Local full `decisions.mjs` was too slow here (stopped); its static part passes and its new dugout runtime guard is in the file for CI.
