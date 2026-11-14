@@ -1,0 +1,15 @@
+A: 5 min in, t=300.0 units=69 money=274,236,0 (12871 ms)
+save: ok=true  encode 6 ms, packed 27 KB
+A after +2 min: t=420.0 hash=3166708791 units=80 money=1036,1237,0 towns=-1,-1,-1,0,1,-1,-1,-1,-1,-1,-1,-1,-1
+C loaded: ok=true  paused=true "Game loaded. Press P to continue." t=300.0
+C after +2 min: t=420.0 hash=3166708791 units=80 money=1036,1237,0 towns=-1,-1,-1,0,1,-1,-1,-1,-1,-1,-1,-1,-1
+Continue button: ▶ Continue — Straits of Thunder · Iran · 5:00
+after Continue: {"t":300.0000000000558,"p":true}
+file round trip: {"file":true,"old":"This save is from an older version and can't be loaded.","junk":"That is not a World War 3 save file.","bad":"This save file is damaged and can't be loaded.","stale":"This save is from an older version and can't be loaded.","g":true}
+SAVETEST PASS
+grand autosave {"none":true,"open":true,"t1":false,"t2":true,"s1":true,"b1":true,"copies":3,"extra":false,"info":{"ts":1794686195223,"me":"IR","n":"Iran","d":"Nov 2026","over":0},"size":508022,"fell":true}
+continue {"first":"ContinueGrand campaign · Iran · Nov 2026","isCont":true,"kind":"grand","sp":"no-window"}
+keys {"btn":true,"win":true,"rows":39,"all":true,"setHidden":true,"wasd":"W, A, S and D always scroll the camera. Pick another letter.","used":"F is already used for \"Attack-move\". Move that one first (spare keys: \\ ` F2 F4 F8 F9).","digit":"Only letters and the spare keys \\ ` F2 F4 F8 F9 can be chosen.","tab":"Only letters and the spare keys \\ ` F2 F4 F8 F9 can be chosen.","fixed":"That key is fixed and can't be changed.","ok":"","back":"","swap2":"X is already used for \"Attack-move\". Move that one first (spare keys: \\ ` F2 F4 F8 F9).","cur":{"stop":"F8","amove":"x"},"stored":"{\"amove\":\"x\",\"stop\":\"F8\"}","dupes":[0,0],"pow":[]}
+battle keys {"bx":{"am":true,"stops":0},"bf":{"am":false,"stops":0},"bb":{"am":false,"stops":1},"rx":{"am":false,"stops":1},"rf":{"am":true,"stops":0}}
+bench {"picks":["low","high","auto","low","high"],"auto0":false,"r1":"high","g1":"high","once":true}
+POLISH PASS
