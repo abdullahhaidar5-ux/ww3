@@ -697,7 +697,7 @@ function terrTexMax(){let m=3072;try{const s=typeof SET!=='undefined'&&SET?SET.g
 // Battle start splits the terrain in two: paintTerrain() inside newGame only plans it (everything the simulation needs,
 // no drawing, a fraction of a second) and paintTerrainNow() draws the picture afterwards behind the loading screen.
 // It replays the same random numbers in the same order, so the drawing is exactly what one pass would have made.
-let TERR_DEFER=false,TERR_PEND=null;let TERR_RD=[];const TERR_CRACKS=false,TERR_SAT=.58; // groundreal 2026-11-14: dry ground keeps 58% of its painted colour (real desert reads pale beige / grey-brown, not orange); fine per-pixel grain is mostly gone (the photo ground textures carry the grain)
+let TERR_DEFER=false,TERR_PEND=null;let TERR_RD=[];const TERR_CRACKS=false,TERR_SAT=.58; // groundreal 2026-11-14: dry ground keeps 58% of its painted color (real desert reads pale beige / gray-brown, not orange); fine per-pixel grain is mostly gone (the photo ground textures carry the grain)
 function paintTerrain(M){if(TERR_DEFER){TERR_PEND={M,g:G};terrPaint(M,false,true);}else{TERR_PEND=null;terrPaint(M,true,true);}}
 function paintTerrainNow(){const P=TERR_PEND;TERR_PEND=null;if(!P||P.g!==G||!G)return false;terrPaint(P.M,true,false);return true;}
 const TERR_NOP=(()=>{const f=()=>{},gr={addColorStop:f},o={createRadialGradient:()=>gr,createLinearGradient:()=>gr};for(const k of ['setTransform','fillRect','beginPath','moveTo','lineTo','quadraticCurveTo','closePath','ellipse','arc','fill','stroke','save','restore','clip','drawImage','putImageData'])o[k]=f;return o;})();

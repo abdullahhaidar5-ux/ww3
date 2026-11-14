@@ -55,7 +55,7 @@ for (const [name, map, dist, fort] of SPOTS) {
   }
   if (fort) await page.evaluate(() => { const s = window.__spot, d = G.ents.find(e => e.team === ME && e.kind === 'dozer'); const pts = [s.x - 160, s.y + 120, s.x - 60, s.y + 150, s.x + 40, s.y + 110, s.x + 130, s.y + 160];
     if (d) { d.x = s.x - 170; d.y = s.y + 110; act(ME, { t: 'wall', ids: [d.id], pts }); G.teams[ME].money = 99999; for (let i = 0; i < 30 * 60; i++) simUpdate(1 / 30); } window.__spot = { x: s.x - 20, y: s.y + 130 }; });
-  await page.evaluate(([d]) => { const s = window.__spot; cam.dist = cam.td = d; cam._dl = d; centerOn(s.x, s.y, true); for (let i = 0; i < 6; i++) { simUpdate(1 / 30); try { renderFrame(.1); } catch (e) { } } }, [dist]);
+  await page.evaluate(([d]) => { const s = window.__spot; G.place = null; cam.dist = cam.td = d; cam._dl = d; centerOn(s.x, s.y, true); for (let i = 0; i < 6; i++) { simUpdate(1 / 30); try { renderFrame(.1); } catch (e) { } } }, [dist]);
   await page.waitForTimeout(2500); await jpg(name);
 }
 await browser.close(); server.close(); process.exit(0);
