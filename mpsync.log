@@ -1,0 +1,21 @@
+[3s] both pages loaded (menu model downloads done after 2s / 2s)
+[4s] host lobby open, code evclzj
+[4s] client joining
+peak memory (node + browser, summed RSS): 2377 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/evclzj?role=host&key=qbm5selnf8k4bh9nwa' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MPSYNC FAIL: page.evaluate: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:43017/index.html:5793:350)
+    at addBld (http://127.0.0.1:43017/index.html:7282:62)
+    at newGame (http://127.0.0.1:43017/index.html:7262:134)
+    at newGame (http://127.0.0.1:43017/index.html:15251:52)
+    at newGame (http://127.0.0.1:43017/index.html:16052:52)
+    at startMP (http://127.0.0.1:43017/index.html:14457:471)
+    at launchMP (http://127.0.0.1:43017/index.html:12707:696)
+    at eval (eval at evaluate (:311:30), <anonymous>:5:5)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (20s)
