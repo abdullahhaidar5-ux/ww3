@@ -1,0 +1,19 @@
+3D models: 3 of 83 ready=true  (page open to models ready: 0.8s)
+Playtest card: 10 things to try, votes saved into the file
+grand campaign is lazy: grand.6fe69d8570.js not loaded at the menu
+living main menu: your war drawn from the save notes (campaign, battle, none), campaign code not loaded
+battle: 4 players IR vs US vs CN vs SE on strait
+loading screen finished after 126.8s
+building dressing: 64 building looks checked, nothing floats
+fortline: {"infWl":false,"oldForm":true,"n":16,"angs":3,"bent":true,"bad":false,"infBtns":["⛏ Dig in (I)"],"dzBtns":["⛏ Fortification line (I)","🔧 Fix vehicles"]}
+3D models for this battle: 66 of 66
+peak memory (node + browser, summed RSS): 3441 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: console (ignored, offline/headless): TypeError: Cannot set properties of null (setting 'auto')
+    at unitBrain (http://127.0.0.1:36051/index.html?lazy=1:7781:301)
+    at updUnit (http://127.0.0.1:36051/index.html?lazy=1:7729:6)
+    at s
+
+SMOKE FAIL (258s)
+  ✗ simulation threw: TypeError: Cannot set properties of null (setting 'auto') |     at unitBrain (http://127.0.0.1:36051/index.html?lazy=1:7781:301) |     at updUnit (http://127.0.0.1:36051/index.html?lazy=1:7729:6) |     at simUpdate (http://127.0.0.1:36051/index.html?lazy=1:8520:385)
