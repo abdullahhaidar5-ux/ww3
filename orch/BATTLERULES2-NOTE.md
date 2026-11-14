@@ -12,3 +12,9 @@ Instead, POLISH the existing Strike Center:
 - great visuals and sound.
 
 The rest of your task (Generals fog, splash-only friendly fire, Brutal AI) is unchanged. Delete this note in your final commit.
+
+## Abdullah's answers (21:36)
+- **Brutal AI: YES.** AI difficulty exists (the DIFF array in src/03-sim.js); Brutal = one more DIFF entry with smarter tactics only.
+- **Strike Center polish: YES**, as in the note above.
+- **Fog:** fog exists (updateFog) without memory of explored ground; add that memory.
+- **Splash-only friendly fire:** as in your task.
