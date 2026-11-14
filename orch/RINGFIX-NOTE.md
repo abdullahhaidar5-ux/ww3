@@ -16,3 +16,7 @@ Leftovers rule:
 - add a guard in orch/decisions.mjs: only these order buttons exist.
 
 Keep sync and determinism.
+
+## Also (Abdullah 12:21): "Remove the auto build window"
+
+Remove the "COMMAND / Auto-build [U]" panel on the left of the battle screen and the auto-build feature behind it (src/08h-autobuild.js and its hooks): the panel, the U hotkey, its settings and tooltips, help/tutorial/what's-new text and tests (leftovers rule). The AI keeps its own building logic; only the player's auto-build goes. Add a guard in decisions.mjs: no auto-build panel.
