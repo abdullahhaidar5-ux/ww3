@@ -18,3 +18,7 @@ Show the bonus as one line on his tooltip and one small icon in the top bar whil
 - Balance: run the tourney so IR, RS, DW and KP stay equal.
 
 Keep sync and determinism. Your look work (a more human model) continues unchanged. Delete this note in your final commit.
+
+## CHANGE (Abdullah 21:54): "Make both the same units are 10% tougher and deal 10% more damage"
+
+**BOTH leaders now give the SAME bonus while alive: ALL your units take 10% less damage AND deal 10% more damage.** This applies to the Ayatollah (IR / RS / DW) and the Dear Leader (KP). This replaces the Ayatollah-only toughness and the Dear Leader production bonus above. Everything else in the note stands: no aura, no buttons, the leftovers rule, the guard and the tourney balance check.
