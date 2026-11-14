@@ -1,0 +1,136 @@
+battlemapfair: 143 Battle games on 100 maps, 4 at a time
+  4/143  beqaa g12 IR kill win side 0 t=928s  (80 s)
+  8/143  khyber g4 IL kill win side 0 t=526s  (115 s)
+  12/143  gaza g36 PK kill win side 1 t=669s  (154 s)
+  16/143  caribbean g4 JP kill win side 1 t=543s  (197 s)
+  20/143  honshu g20 IL kill win side 0 t=611s  (228 s)
+  24/143  golan g20 EG kill win side 1 t=928s  (273 s)
+  28/143  mosulcity g28 UA kill win side 0 t=504s  (313 s)
+  32/143  hajar g4 EG kill win side 0 t=551s  (349 s)
+  36/143  taurus g20 IL kill win side 0 t=831s  (386 s)
+  40/143  kashmir g28 RS timeout win side 0 t=1320s  (427 s)
+  44/143  dmz g36 SA kill win side 1 t=603s  (457 s)
+  48/143  carmelcoast g28 SA timeout win side 0 t=1320s  (525 s)
+  52/143  taiga g36 EG kill win side 0 t=935s  (622 s)
+  56/143  harbour g20 DW kill win side 0 t=754s  (737 s)
+  60/143  golanplateau g20 CN kill win side 0 t=1417s  (842 s)
+  64/143  hormuzgate g20 US kill win side 0 t=1267s  (902 s)
+  68/143  persia g20 IL kill win side 1 t=623s  (1026 s)
+  72/143  volga g36 EG kill win side 1 t=805s  (1101 s)
+  76/143  rivers g4 IL kill win side 1 t=845s  (1205 s)
+  80/143  strait g36 IL kill win side 1 t=954s  (1314 s)
+  84/143  sahara g36 IL kill win side 1 t=826s  (1453 s)
+  88/143  crimea g44 TR kill win side 1 t=1319s  (1720 s)
+  92/143  punjab g16 KP timeout win side 1 t=1680s  (1872 s)
+  96/143  lebanon g4 DW kill win side 0 t=1007s  (1995 s)
+  100/143  yemen g8 JP kill win side 1 t=982s  (2176 s)
+  104/143  indus g52 EG kill win side 1 t=816s  (2382 s)
+  108/143  rubalkhali g16 IL kill win side 1 t=1186s  (2531 s)
+  112/143  bosphorus g28 UA kill win side 1 t=1197s  (2706 s)
+  116/143  atoll g40 JP kill win side 1 t=813s  (2810 s)
+  120/143  persia g8 US kill win side 1 t=827s  (3019 s)
+  124/143  rhine g16 UA kill win side 0 t=740s  (3174 s)
+  128/143  plateau g8 RU kill win side 1 t=899s  (3399 s)
+  132/143  dmz g24 DW kill win side 0 t=666s  (3536 s)
+  136/143  arctic g24 US kill win side 0 t=678s  (3786 s)
+  140/143  najd g0 IN kill win side 1 t=697s  (3985 s)
+FAIL lebanon@2        1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+FAIL beqaa@2          1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL yemen@2          2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+FAIL tihama@2         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL mesopotamia@2    1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL zagros@2         1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+FAIL khyber@2         2 games (2 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL euphrates@2      1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL caspian@2        1 games (0 kill, 1 on time, 0 draw)  win rate per start 0% / 100%
+FAIL aleppo@2         1 games (0 kill, 1 on time, 0 draw)  win rate per start 0% / 100%
+ok   gaza@2           2 games (1 kill, 1 on time, 0 draw)  win rate per start 50% / 50%
+FAIL coral@2          1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL hormuzgate@2     1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+FAIL islands@2        1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+ok   caribbean@2      2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 50%
+FAIL taiwan@2         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL honshu@2         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL gulf@2           1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+ok   hormuz@2         2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 50%
+FAIL delta@2          1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL golan@2          1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+FAIL negev@2          1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+FAIL tigristowns@2    2 games (1 kill, 0 on time, 1 draw)  win rate per start 75% / 25%
+FAIL mosulcity@2      1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL marshes@2        1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+FAIL petra@2          1 games (0 kill, 1 on time, 0 draw)  win rate per start 0% / 100%
+FAIL hajar@2          2 games (2 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL duhok@2          1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL taurus@2         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL blacksea@2       1 games (0 kill, 1 on time, 0 draw)  win rate per start 0% / 100%
+FAIL jordanvalley@2   2 games (2 kill, 0 on time, 0 draw)  win rate per start 0% / 100%
+FAIL kashmir@2        1 games (0 kill, 1 on time, 0 draw)  win rate per start 0% / 100%
+FAIL donbas@2         1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+FAIL arctic@2         1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+FAIL dmz@2            2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 0%
+FAIL carmelcoast@2    1 games (0 kill, 1 on time, 0 draw)  win rate per start 0% / 100%
+FAIL hawizeh@4        1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 100% / 0%
+FAIL anatolia@4       2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 100% / 0% / 50%
+FAIL babelmandeb@4    1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0% / 0% / 100%
+FAIL taiga@4          2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 100% / 0% / 50%
+FAIL islands@4        1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 100% / 0%
+FAIL gulf@4           2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 50% / 50% / 0%
+FAIL golanplateau@4   1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0% / 0% / 100%
+FAIL beqaa@4          2 games (1 kill, 1 on time, 0 draw)  win rate per start 0% / 50% / 50% / 100%
+FAIL harbour@4        1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0% / 0% / 100%
+FAIL emirates@4       2 games (2 kill, 0 on time, 0 draw)  win rate per start 0% / 50% / 50% / 100%
+FAIL honshu@4         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 100% / 0%
+FAIL caribbean@4      2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 100% / 0% / 50%
+FAIL hormuzgate@4     1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0% / 0% / 100%
+FAIL lebanon@4        2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 100% / 0% / 50%
+FAIL yemen@4          1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 100% / 0%
+FAIL mesopotamia@4    2 games (1 kill, 1 on time, 0 draw)  win rate per start 50% / 0% / 100% / 50%
+FAIL persia@4         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 100% / 0%
+FAIL volga@4          2 games (2 kill, 0 on time, 0 draw)  win rate per start 0% / 50% / 50% / 100%
+FAIL heartland@4      1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 100% / 0%
+FAIL fulda@4          2 games (2 kill, 0 on time, 0 draw)  win rate per start 0% / 50% / 50% / 100%
+FAIL dnipro@4         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 100% / 0%
+FAIL rivers@4         2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 50% / 50% / 0%
+FAIL delta@4          1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0% / 0% / 100%
+FAIL strait@4         2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 0% / 100% / 50%
+FAIL donbas@4         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 100% / 0%
+FAIL sahara@6         2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 0% / 100% / 50% / 0% / 50%
+FAIL caucasus@6       2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 100% / 100% / 0% / 50% / 0%
+FAIL crimea@6         2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 50% / 50% / 50% / 50% / 0%
+FAIL punjab@6         2 games (1 kill, 1 on time, 0 draw)  win rate per start 100% / 0% / 50% / 50% / 0% / 100%
+FAIL najd@6           2 games (2 kill, 0 on time, 0 draw)  win rate per start 0% / 0% / 50% / 100% / 50% / 100%
+FAIL ural@6           2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 0% / 100% / 50% / 0% / 50%
+FAIL aegean@6         1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0% / 0% / 100% / 0% / 100%
+FAIL yangtze@6        2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 100% / 50% / 0% / 50% / 0%
+FAIL lebanon@6        2 games (2 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 0% / 50% / 100% / 50%
+FAIL yemen@6          2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 50% / 50% / 50% / 0% / 50%
+FAIL mesopotamia@6    2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 0% / 100% / 100% / 0% / 50%
+FAIL rubalkhali@6     2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 50% / 100% / 0% / 50% / 50%
+FAIL indus@6          2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 50% / 0% / 50% / 100% / 50%
+FAIL taiwan@6         2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 50% / 50% / 0% / 50% / 100%
+FAIL bosphorus@6      1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0% / 0% / 100% / 0% / 100%
+FAIL nile@6           2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 100% / 50% / 0% / 50% / 0%
+FAIL oasis@6          2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 50% / 50% / 0% / 50% / 100%
+FAIL atoll@6          2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 50% / 50% / 50% / 0% / 50%
+FAIL dmziron@6        2 games (2 kill, 0 on time, 0 draw)  win rate per start 0% / 50% / 50% / 50% / 50% / 100%
+FAIL zagros@8         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 0% / 100% / 100% / 100% / 0% / 100% / 0%
+FAIL persia@8         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 0% / 100% / 100% / 100% / 0% / 0%
+FAIL hindukush@8      2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 0% / 0% / 50% / 100% / 50% / 100% / 50%
+FAIL volga@8          1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 100% / 100% / 0% / 0% / 100% / 0% / 0%
+FAIL rhine@8          1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 0% / 100% / 100% / 100% / 0% / 100% / 0%
+FAIL kuwait@8         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 0% / 100% / 100% / 100% / 0% / 0%
+FAIL gulfoil@8        2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 100% / 100% / 50% / 0% / 50% / 0% / 50%
+FAIL yangtze@8        1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 0% / 0% / 100% / 100% / 0% / 100% / 100%
+FAIL oasis@8          1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 0% / 100% / 100% / 100% / 0% / 100% / 0%
+FAIL plateau@8        1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 0% / 100% / 100% / 100% / 0% / 0%
+FAIL nile@8           2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 100% / 100% / 50% / 0% / 50% / 0% / 50%
+FAIL dmz@8            1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 100% / 100% / 0% / 0% / 100% / 0% / 0%
+FAIL atoll@8          1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 100% / 0% / 0% / 0% / 100% / 0% / 100%
+FAIL fulda@8          1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 0% / 100% / 0% / 0% / 0% / 100% / 100%
+FAIL heartland@8      2 games (2 kill, 0 on time, 0 draw)  win rate per start 50% / 0% / 0% / 50% / 100% / 50% / 100% / 50%
+FAIL arctic@8         1 games (1 kill, 0 on time, 0 draw)  win rate per start 100% / 100% / 100% / 0% / 0% / 100% / 0% / 0%
+FAIL aegean@8         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 0% / 100% / 100% / 100% / 0% / 100% / 0%
+FAIL ural@8           1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 100% / 0% / 100% / 100% / 100% / 0% / 0%
+FAIL najd@8           2 games (2 kill, 0 on time, 0 draw)  win rate per start 100% / 50% / 50% / 100% / 50% / 0% / 50% / 0%
+FAIL strait@8         1 games (1 kill, 0 on time, 0 draw)  win rate per start 0% / 0% / 0% / 100% / 100% / 0% / 100% / 100%
