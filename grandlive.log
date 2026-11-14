@@ -1,0 +1,66 @@
+1.0s stale save in menu {"cont":false,"warn":true}
+25.8s map open
+32.2s march {"me":"IR","from":"Khuzestan","to":"Basra","foe":"RV","ok":true,"units":25}
+35.3s fallback {"modal":true,"map":true,"G":false}
+52.4s prompt: BATTLE · SeaStrait of HormuzAttackers — Iraqi Shia Brigades4 units1 Shatt Patrol Boat, 1 Marsh Boat, 1 Fast At
+53.5s Fight it live clicked
+59.5s {"L":true,"step":"Loading 3D models…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+60.7s {"L":true,"step":"Building the battlefield…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+62.4s {"L":true,"step":"Preparing graphics…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+64.6s {"L":true,"step":"Preparing graphics… 1 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+65.8s {"L":true,"step":"Preparing graphics… 5 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+67.0s {"L":true,"step":"Preparing graphics… 9 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+68.1s {"L":true,"step":"Preparing graphics… 12 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+69.6s {"L":true,"step":"Preparing graphics… 15 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+71.2s {"L":true,"step":"Preparing graphics… 18 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+72.9s {"L":true,"step":"Preparing graphics… 20 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+74.2s {"L":true,"step":"Preparing graphics… 28 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+75.5s {"L":true,"step":"Preparing graphics… 32 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+76.8s {"L":true,"step":"Preparing graphics… 35 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+78.1s {"L":true,"step":"Preparing graphics… 38 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+80.4s {"L":true,"step":"Preparing graphics… 40 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+82.7s {"L":true,"step":"Preparing graphics… 42 of 53","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":8}
+106.0s {"L":false,"step":"Ready","g":true,"grand":true,"t":0,"paused":false,"gs":"none","ents":8}
+114.3s {"L":false,"step":"Ready","g":true,"grand":true,"t":0.24,"paused":false,"gs":"none","ents":8}
+159.3s battle running: Generating terrain 5959, Loading 3D models 450, Building the battlefield 630, Building the battlefield 1593, Preparing graphics 20330, Deploying forces 831, Deploying forces 12188, total 42370
+GRANDLIVE PASS
+scenario {"foe":"RV","ok":true,"from":"Khuzestan","to":"Basra","units":37}
+  [page] grandlive: grandBattleStart sync 1210 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":8,"over":false,"gs":"none","camp":false}
+  [page] loading watchdog: "Preparing graphics" still not done after 20 s, moving on
+  [page] shader warm-up 20361 ms, 53 models, 102 objects in 260 steps (longest 1364 ms), 98 programs, textures 121 MB (finished in the background after the loading watchdog)
+  [page] battle start: Generating terrain 8077 ms, Loading 3D models 106 ms, Building the battlefield 631 ms, Building the battlefield 1501 ms, Preparing graphics 20361 ms, Deploying forces 569 ms, Deploying forces 2760 ms, total 34443 ms
+live 1 39.6s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":8,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.559879999999994,"p":false,"h":false,"fs":null}],"running":true}
+scenario {"foe":"RV","ok":true,"from":"Khuzestan","to":"Basra","units":25}
+  [page] grandlive: grandBattleStart sync 2029 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":57,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 6588 ms, Loading 3D models 0 ms, Building the battlefield 0 ms, Building the battlefield 874 ms, Preparing graphics 4571 ms, Deploying forces 9 ms, Deploying forces 771 ms, total 12863 ms
+live 2 18.1s {"g":true,"grand":true,"t":0.06,"tick":0,"LOADING":false,"ls":"-","ents":57,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.5166666666666675,"p":false,"h":false,"fs":null}],"running":true}
+
+GRANDLIVE2 PASS
+21.2s map open
+28.2s start {"turn":1,"day":0,"date":"1 Nov 2026","spd":0,"ph":"plan","modal":false}
+30.6s after Space {"turn":1,"day":1,"date":"2 Nov 2026","spd":2,"ph":"plan","modal":false}
+35.1s month rolled {"turn":2,"day":10,"date":"11 Dec 2026","spd":5,"ph":"plan","modal":false}
+40.7s paused {"turn":2,"day":10,"date":"11 Dec 2026","spd":0,"ph":"plan","modal":false}
+40.9s march {"ok":true,"hint":"Basra: arrives ~1 Feb 2027 (2 months)"}
+46.7s slide [{"x":1500,"z":392.0544912363294,"f":0.16666666666666666,"day":10},{"x":1498.1107178827947,"z":388.9715391310781,"f":0.24743333333332945,"day":14}]
+61.2s battle prompt {"turn":2,"day":0,"date":"1 Jan 2027","spd":3,"ph":"resolve","modal":true}
+67.2s AI mid-month {"n":0,"same":true,"cash":true,"f0":0}
+GRANDRT PASS
+occ {"cost":{"zeal":660,"prof":634,"home":587,"fire":608},"eff":{"zeal":24,"prof":0,"home":18,"fire":0},"ws":{"zeal":9,"prof":8.640909090909105,"home":8,"fire":8.290909090909082},"n":{"home":6,"prof":6,"zeal":6,"fire":6},"guard":3,"panel":true,"spread":1,"aiPath":[],"aiAns":true,"aiTo":57,"det":true}
+OCC PASS
+leg {"v":[32000,30000],"leg":true,"ws":4,"mor":2,"loserWs":true,"again":false,"tiny":false,"lop":false,"names":1,"style":"prof","expired":true,"saved":true}
+LEG PASS
+10.1s lobby open, code yyn429
+29.8s campaign started
+44.6s friend joined as SA
+46.9s friend march reached host
+65.9s friend answered their own event
+80.9s month rolled on the friend's map
+86.3s friend paused the world
+118.7s friend chose Fight it live
+124.9s friend battle loaded and finished
+127.2s friend live battle settled on host: fought the battle for Basra live
+129.1s friend left, AI took over
+GNETTEST PASS
