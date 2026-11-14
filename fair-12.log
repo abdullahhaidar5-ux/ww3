@@ -1,0 +1,88 @@
+battlemapfair: 205 Battle games on 36 maps, 4 at a time
+  4/205  taiga g20 US kill win side 0 t=547s  (94 s)
+  8/205  islands g28 PK kill win side 1 t=858s  (186 s)
+  12/205  gulf g4 JP kill win side 0 t=1002s  (261 s)
+  16/205  honshu g12 SA kill win side 0 t=615s  (318 s)
+  20/205  caribbean g20 TR kill win side 1 t=1124s  (386 s)
+  24/205  hormuzgate g28 DW kill win side 0 t=916s  (437 s)
+  28/205  lebanon g36 CN kill win side 0 t=890s  (510 s)
+  32/205  yemen g44 KP kill win side 0 t=617s  (556 s)
+  36/205  mesopotamia g52 IN kill win side 1 t=926s  (627 s)
+  40/205  heartland g4 TR kill win side 0 t=830s  (716 s)
+  44/205  heartland g68 TR kill win side 0 t=993s  (772 s)
+  48/205  donbas g20 RU kill win side 1 t=789s  (849 s)
+  52/205  donbas g84 RU kill win side 0 t=854s  (893 s)
+  56/205  najd g92 UA kill win side 1 t=792s  (975 s)
+  60/205  ural g36 JP kill win side 0 t=1105s  (1057 s)
+  64/205  aegean g108 SA kill win side 1 t=725s  (1157 s)
+  68/205  rubalkhali g116 RS kill win side 1 t=825s  (1227 s)
+  72/205  oasis g36 US kill win side 0 t=861s  (1335 s)
+  76/205  atoll g12 KP kill win side 0 t=972s  (1429 s)
+  80/205  dmziron g20 CN kill win side 1 t=678s  (1512 s)
+  84/205  zagros g92 SA kill win side 0 t=677s  (1745 s)
+  88/205  zagros g188 SA kill win side 1 t=1038s  (2062 s)
+  92/205  zagros g60 SA kill win side 1 t=1651s  (2268 s)
+  96/205  persia g100 RU kill win side 1 t=959s  (2465 s)
+  100/205  persia g260 RU kill win side 0 t=1205s  (2682 s)
+  104/205  hindukush g140 IL kill win side 0 t=626s  (2989 s)
+  108/205  hindukush g268 IL kill win side 1 t=899s  (3235 s)
+  112/205  volga g84 US kill win side 0 t=828s  (3346 s)
+  116/205  volga g244 US kill win side 1 t=766s  (3547 s)
+  120/205  rhine g28 KP draw win side -1 t=1680s  (3777 s)
+  124/205  rhine g188 KP kill win side 1 t=1007s  (4002 s)
+  128/205  rhine g252 KP kill win side 1 t=1001s  (4186 s)
+  132/205  kuwait g164 RU kill win side 0 t=1012s  (4421 s)
+  136/205  yangtze g44 PK kill win side 1 t=1019s  (4771 s)
+  140/205  yangtze g140 PK kill win side 0 t=727s  (4905 s)
+  144/205  oasis g20 US kill win side 0 t=1085s  (5212 s)
+  148/205  oasis g116 US kill win side 0 t=769s  (5353 s)
+  152/205  oasis g212 US timeout win side 1 t=1680s  (5508 s)
+  156/205  plateau g92 PK kill win side 1 t=1084s  (5706 s)
+  160/205  plateau g220 PK kill win side 1 t=1016s  (5951 s)
+  164/205  dmz g4 KR kill win side 0 t=1444s  (6122 s)
+  168/205  dmz g164 KR kill win side 1 t=1115s  (6286 s)
+  172/205  atoll g76 KP kill win side 1 t=1228s  (6701 s)
+  176/205  atoll g172 KP kill win side 1 t=804s  (6879 s)
+  180/205  atoll g236 KP kill win side 0 t=1326s  (7144 s)
+  184/205  heartland g148 TR kill win side 0 t=968s  (7350 s)
+  188/205  heartland g276 TR kill win side 1 t=1378s  (7671 s)
+  192/205  arctic g188 SA kill win side 1 t=1038s  (8059 s)
+  196/205  ural g4 JP kill win side 1 t=784s  (8257 s)
+  200/205  ural g100 JP kill win side 0 t=1058s  (8498 s)
+  204/205  ural g260 JP kill win side 1 t=1147s  (8646 s)
+FAIL hawizeh@4        4 games (3 kill, 0 on time, 1 draw)  win rate per start 38% / 13% / 63% / 88%
+FAIL taiga@4          4 games (4 kill, 0 on time, 0 draw)  win rate per start 50% / 75% / 75% / 0%
+FAIL islands@4        3 games (3 kill, 0 on time, 0 draw)  win rate per start 33% / 100% / 33% / 33%
+FAIL gulf@4           4 games (4 kill, 0 on time, 0 draw)  win rate per start 50% / 25% / 50% / 75%
+FAIL honshu@4         4 games (4 kill, 0 on time, 0 draw)  win rate per start 25% / 75% / 50% / 50%
+FAIL caribbean@4      4 games (3 kill, 1 on time, 0 draw)  win rate per start 75% / 50% / 0% / 75%
+FAIL hormuzgate@4     3 games (2 kill, 1 on time, 0 draw)  win rate per start 100% / 33% / 33% / 33%
+FAIL lebanon@4        4 games (4 kill, 0 on time, 0 draw)  win rate per start 0% / 75% / 50% / 75%
+FAIL yemen@4          4 games (4 kill, 0 on time, 0 draw)  win rate per start 50% / 100% / 25% / 25%
+FAIL mesopotamia@4    4 games (4 kill, 0 on time, 0 draw)  win rate per start 50% / 75% / 25% / 50%
+FAIL persia@4         3 games (3 kill, 0 on time, 0 draw)  win rate per start 67% / 67% / 67% / 0%
+FAIL heartland@4      4 games (4 kill, 0 on time, 0 draw)  win rate per start 50% / 25% / 100% / 25%
+FAIL strait@4         4 games (4 kill, 0 on time, 0 draw)  win rate per start 100% / 50% / 25% / 25%
+FAIL donbas@4         4 games (3 kill, 1 on time, 0 draw)  win rate per start 25% / 50% / 50% / 75%
+FAIL najd@6           3 games (3 kill, 0 on time, 0 draw)  win rate per start 67% / 33% / 0% / 67% / 67% / 67%
+FAIL ural@6           4 games (4 kill, 0 on time, 0 draw)  win rate per start 100% / 25% / 75% / 50% / 0% / 50%
+FAIL aegean@6         4 games (4 kill, 0 on time, 0 draw)  win rate per start 75% / 50% / 25% / 75% / 50% / 25%
+FAIL rubalkhali@6     4 games (4 kill, 0 on time, 0 draw)  win rate per start 75% / 25% / 100% / 50% / 0% / 50%
+FAIL taiwan@6         3 games (3 kill, 0 on time, 0 draw)  win rate per start 67% / 100% / 67% / 0% / 67% / 0%
+FAIL oasis@6          4 games (4 kill, 0 on time, 0 draw)  win rate per start 75% / 50% / 50% / 25% / 25% / 75%
+FAIL atoll@6          4 games (4 kill, 0 on time, 0 draw)  win rate per start 25% / 100% / 25% / 25% / 100% / 25%
+FAIL dmziron@6        4 games (4 kill, 0 on time, 0 draw)  win rate per start 50% / 50% / 25% / 75% / 75% / 25%
+FAIL zagros@8         8 games (8 kill, 0 on time, 0 draw)  win rate per start 38% / 75% / 50% / 38% / 50% / 13% / 88% / 50%
+FAIL persia@8         9 games (9 kill, 0 on time, 0 draw)  win rate per start 67% / 56% / 78% / 33% / 44% / 33% / 44% / 44%
+FAIL hindukush@8      9 games (9 kill, 0 on time, 0 draw)  win rate per start 56% / 78% / 56% / 44% / 56% / 44% / 33% / 33%
+FAIL volga@8          9 games (8 kill, 1 on time, 0 draw)  win rate per start 56% / 56% / 56% / 56% / 67% / 11% / 56% / 44%
+FAIL rhine@8          8 games (7 kill, 0 on time, 1 draw)  win rate per start 31% / 31% / 56% / 81% / 56% / 56% / 31% / 56%
+FAIL kuwait@8         9 games (9 kill, 0 on time, 0 draw)  win rate per start 67% / 56% / 78% / 33% / 44% / 33% / 44% / 44%
+FAIL yangtze@8        9 games (8 kill, 1 on time, 0 draw)  win rate per start 56% / 56% / 56% / 44% / 33% / 67% / 33% / 56%
+FAIL oasis@8          9 games (8 kill, 1 on time, 0 draw)  win rate per start 56% / 56% / 56% / 56% / 67% / 11% / 56% / 44%
+FAIL plateau@8        8 games (8 kill, 0 on time, 0 draw)  win rate per start 25% / 38% / 38% / 75% / 63% / 50% / 50% / 63%
+FAIL dmz@8            9 games (8 kill, 1 on time, 0 draw)  win rate per start 33% / 67% / 22% / 44% / 33% / 67% / 78% / 56%
+FAIL atoll@8          9 games (9 kill, 0 on time, 0 draw)  win rate per start 56% / 78% / 56% / 44% / 56% / 22% / 78% / 11%
+FAIL heartland@8      9 games (9 kill, 0 on time, 0 draw)  win rate per start 44% / 67% / 67% / 44% / 33% / 44% / 44% / 56%
+FAIL arctic@8         8 games (8 kill, 0 on time, 0 draw)  win rate per start 38% / 75% / 50% / 38% / 50% / 13% / 88% / 50%
+FAIL ural@8           9 games (9 kill, 0 on time, 0 draw)  win rate per start 33% / 67% / 44% / 44% / 33% / 67% / 78% / 33%
