@@ -47,3 +47,12 @@ Abdullah (Fri 2026-11-13 19:52 Chicago, photo of Battle as Lebanese Shia, "In co
 Start a Battle as Lebanese Shia, send the supply truck to the crate pile next to your base and watch the pyramid drop a tier as it is
 emptied; then click your Command HQ, click the ground to set the rally point, and click somewhere else - the green flag should be gone.
 https://abdullahhaidar5-ux.github.io/ww3/
+
+## Update 2026-11-14 evening (follow-up run, branch orch/pileflag2 = continuation of orch/pileflag, merged with origin/main daebfc244)
+- Merge: main already carries the flag rule (`RV` in 06-view); kept it, kept the supply pile (`sdDumpTick`), the click handler in 08-ui and the
+  "rally flag clicks" guard in orch/decisions.mjs. build + --check OK, SMOKE PASS (403 s).
+- decisions: the "rally flag clicks" guard passes (flash after set, no flag after the next click, one flag object). The run's only failure is
+  `menu shows "Classic"`, which is not from this branch: no src change here touches that text, the same "classic" strings are in main's
+  01-data / 02c-memaps / 13c-grandui. Whoever owns the menu/maps wording should look; it is not a pileflag leftover.
+- Not seen: Abdullah's "bigger striped flag" next to the small teal one - the only flag drawn by `RALLY` is the teal one; the striped one is
+  not from this system (nation/army flag or another helper's order marker) - orderfeel/unstuck lanes, untouched.
