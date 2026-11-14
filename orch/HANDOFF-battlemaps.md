@@ -8,7 +8,7 @@
    **Tar Basin is held back (`hold:1`)**: structure passes but start 1 won 60% of 120 games (63% of an earlier 40; 61% pooled), over the 40-60 rule. It is not in any list. Next step: find why (geometry is exactly mirrored; try moving the center derricks/rock outcrops), re-run `--battles --games 120 --maps tarbasin`, remove `hold:1` when it passes.
 
 ## Gate
-Local: build --check OK, static PASS, BATTLEMAPLIST PASS. decisions/smoke see the commit message / gate run. No local smooth runs. cigate result: see below if added.
+Local: build --check OK, static PASS, BATTLEMAPLIST PASS, decisions PASS, smoke PASS. cigate on ec0cbb4 (+revert): 27 of 28 statuses in, all green except audio (sprite sheet decode) and cfclient (creator gets no fresh state), both on the known-flaky list; not re-run (no re-run tool here). smooth-pc, smooth-mp, grandsmooth, decisions green.
 
 ## Pictures (orch/concepts/battlemaps/)
 overview-{tarbasin,splitridge,ferryquarter,breakwater,fourmills,sixroads}.jpg (top-down; red starts, green supply, black derricks), ingame-{tarbasin(desert),splitridge(snow),ferryquarter(green),breakwater}.jpg, list-battle-setup.jpg, list-battle-picker.jpg (5 maps).
