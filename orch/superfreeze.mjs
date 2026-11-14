@@ -55,7 +55,7 @@ for (const fac of FACS) {
   await page.evaluate(v => { window.__vaoDiag = !!v; }, E.VAO);
   const info = await page.evaluate(town => { const hq = G.ents.find(e => e.team === ME && e.kind === 'hq') || G.ents.find(e => e.team === ME && e.isB);
     let up = G.ents.find(e => e.team === ME && e.kind === 'uplink'); if (!up) up = addBld(ME, 'uplink', hq.x + 120, hq.y + 60, 1); up.built = 1; up.hp = up.max;
-    QUAL.lock = 1; /* the frame-rate governor follows the test machine's speed (a detail step rebuilds the picture buffers): held still, the gate measures the strike */ const T = G.teams[ME]; T.credits = 50000; T.charge = T.sup.charge; G.t = Math.max(G.t, CQ_STRIKE_MIN + 5);
+    QUAL.lock = 1; /* the frame-rate governor follows the test machine's speed (a detail step rebuilds the picture buffers): held still, the gate measures the strike */ const T = G.teams[ME]; T.credits = 50000; T.charge = T.sup.charge;
     let en = G.ents.find(e => e.isB && e.team !== ME && !e.dead) || hq; if (town && G.towns && G.towns.length) { en = G.towns.slice().sort((a, b) => Math.hypot(a.x - en.x, a.y - en.y) - Math.hypot(b.x - en.x, b.y - en.y))[0]; }
     // a mixed enemy force stands on the target, so the strike also kills many soldiers and vehicles in the same frames (wrecks, bodies, debris)
     const ET = G.teams.find(t => t.id !== ME && !t.reb && !ally(t.id, ME)); let crowd = 0;
