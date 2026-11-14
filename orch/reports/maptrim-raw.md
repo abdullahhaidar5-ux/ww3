@@ -6,10 +6,10 @@ Merged by `node orch/maptrimreport.mjs`. Old maps (the 2-8 player maps from `src
 | Map@players | Name | Games (kill / on time / draw / errors) | Win rate per start | Verdict | In the Battle list |
 |---|---|---|---|---|---|
 | aleppo@2 | Aleppo: Ruined City | 40 (36 / 4 / 0 / 0) | 60% / 40% | PASS |  |
-| arctic@2 | Arctic Front: Frozen Armies | 40 (36 / 4 / 0 / 0) | 60% / 40% | PASS |  |
+| arctic@2 | Arctic Front: Frozen Armies | 120 (109 / 9 / 2 / 0) | 60% / 40% | PASS |  |
 | beqaa@2 | Lebanon: Beqaa and Chouf | 40 (35 / 2 / 3 / 0) | 36% / 64% | FAIL |  |
-| blacksea@2 | Black Sea Coast: Green Mountains | 40 (36 / 4 / 0 / 0) | 48% / 53% | PASS |  |
-| caribbean@2 | Caribbean Island | 40 (36 / 4 / 0 / 0) | 45% / 55% | PASS |  |
+| blacksea@2 | Black Sea Coast: Green Mountains | 120 (110 / 9 / 1 / 0) | 45% / 55% | PASS |  |
+| caribbean@2 | Caribbean Island | 120 (110 / 10 / 0 / 0) | 43% / 57% | PASS |  |
 | carmelcoast@2 | Carmel Coast: Haifa Bay | 40 (36 / 4 / 0 / 0) | 48% / 53% | PASS |  |
 | caspian@2 | Caspian Oil Coast | 40 (32 / 7 / 1 / 0) | 66% / 34% | FAIL |  |
 | coral@2 | Coral Archipelago | 40 (33 / 6 / 1 / 0) | 61% / 39% | FAIL |  |
@@ -17,27 +17,91 @@ Merged by `node orch/maptrimreport.mjs`. Old maps (the 2-8 player maps from `src
 | dmz@2 | Korean DMZ | 40 (36 / 3 / 1 / 0) | 61% / 39% | FAIL |  |
 | donbas@2 | Donbas Steppe | 40 (38 / 2 / 0 / 0) | 40% / 60% | PASS |  |
 | duhok@2 | Duhok: Border Mountains | 40 (33 / 6 / 1 / 0) | 61% / 39% | FAIL |  |
-| euphrates@2 | Euphrates Crossing | 40 (34 / 5 / 1 / 0) | 49% / 51% | PASS |  |
+| euphrates@2 | Euphrates Crossing | 120 (101 / 16 / 3 / 0) | 53% / 47% | PASS |  |
 | gaza@2 | Gaza: Rubble Streets | 40 (35 / 5 / 0 / 0) | 55% / 45% | PASS |  |
 | golan@2 | Golan: Fight for the Heights | 40 (33 / 6 / 1 / 0) | 61% / 39% | FAIL |  |
-| gulf@2 | Gulf Coast Landings | 40 (35 / 5 / 0 / 0) | 55% / 45% | PASS |  |
-| hajar@2 | Hajar Mountains: Wadi Passes | 40 (37 / 3 / 0 / 0) | 50% / 50% | PASS |  |
-| honshu@2 | Honshu Coast: Land of the Rising Sun | 40 (38 / 2 / 0 / 0) | 40% / 60% | PASS |  |
+| gulf@2 | Gulf Coast Landings | 120 (102 / 17 / 1 / 0) | 48% / 52% | PASS |  |
+| hajar@2 | Hajar Mountains: Wadi Passes | 120 (108 / 12 / 0 / 0) | 43% / 57% | PASS |  |
+| honshu@2 | Honshu Coast: Land of the Rising Sun | 120 (110 / 9 / 1 / 0) | 47% / 53% | PASS |  |
 | hormuz@2 | Hormuz Narrows | 40 (37 / 3 / 0 / 0) | 60% / 40% | PASS |  |
-| hormuzgate@2 | Strait of Hormuz: Island Gate | 40 (39 / 1 / 0 / 0) | 50% / 50% | PASS |  |
+| hormuzgate@2 | Strait of Hormuz: Island Gate | 120 (110 / 10 / 0 / 0) | 55% / 45% | PASS |  |
 | islands@2 | Island Chain Armada | 40 (32 / 7 / 1 / 0) | 66% / 34% | FAIL |  |
 | jordanvalley@2 | Jordan Valley: Rift Crossing | 40 (33 / 6 / 1 / 0) | 56% / 44% | PASS |  |
 | kashmir@2 | Kashmir Line | 40 (40 / 0 / 0 / 0) | 57% / 43% | PASS |  |
-| khyber@2 | Khyber Pass: Gate of Fortresses | 40 (36 / 4 / 0 / 0) | 60% / 40% | PASS |  |
-| lebanon@2 | South Lebanon | 40 (39 / 1 / 0 / 0) | 55% / 45% | PASS |  |
-| marshes@2 | Southern Marshes | 40 (40 / 0 / 0 / 0) | 57% / 43% | PASS |  |
+| khyber@2 | Khyber Pass: Gate of Fortresses | 120 (109 / 9 / 2 / 0) | 60% / 40% | PASS |  |
+| lebanon@2 | South Lebanon | 120 (113 / 6 / 1 / 0) | 50% / 50% | PASS |  |
+| marshes@2 | Southern Marshes | 120 (114 / 5 / 1 / 0) | 50% / 50% | PASS |  |
 | mesopotamia@2 | Mesopotamia | 40 (37 / 3 / 0 / 0) | 63% / 38% | FAIL |  |
 | mosulcity@2 | Mosul: Old City on the Tigris | 40 (36 / 4 / 0 / 0) | 57% / 43% | PASS |  |
 | negev@2 | Negev: Desert Crater | 40 (37 / 3 / 0 / 0) | 50% / 50% | PASS |  |
 | petra@2 | Petra Highlands: Red Canyons | 40 (37 / 3 / 0 / 0) | 50% / 50% | PASS |  |
-| taiwan@2 | Taiwan Strait | 40 (38 / 2 / 0 / 0) | 40% / 60% | PASS |  |
+| taiwan@2 | Taiwan Strait | 120 (111 / 8 / 1 / 0) | 47% / 53% | PASS |  |
 | taurus@2 | Taurus Mountains: Cilician Gates | 40 (38 / 2 / 0 / 0) | 40% / 60% | PASS |  |
 | tigristowns@2 | Tigris: River Towns | 40 (34 / 6 / 0 / 0) | 45% / 55% | PASS |  |
-| tihama@2 | Yemen: Tihama and Highlands | 40 (33 / 7 / 0 / 0) | 40% / 60% | PASS |  |
+| tihama@2 | Yemen: Tihama and Highlands | 120 (109 / 11 / 0 / 0) | 46% / 54% | PASS |  |
 | yemen@2 | Yemen Highlands | 40 (33 / 6 / 1 / 0) | 61% / 39% | FAIL |  |
-| zagros@2 | Zagros: Mountain Fortress | 40 (36 / 4 / 0 / 0) | 60% / 40% | PASS |  |
+| zagros@2 | Zagros: Mountain Fortress | 120 (108 / 10 / 2 / 0) | 60% / 40% | PASS |  |
+| anatolia@4 | Anatolian Mesa | 48 (47 / 1 / 0 / 0) | 54% / 50% / 67% / 29% | FAIL |  |
+| babelmandeb@4 | Bab-el-Mandeb | 48 (47 / 1 / 0 / 0) | 40% / 40% / 48% / 73% | FAIL |  |
+| beqaa@4 | Lebanon: Beqaa and Chouf | 48 (43 / 5 / 0 / 0) | 52% / 44% / 40% / 65% | FAIL |  |
+| caribbean@4 | Caribbean Island | 48 (47 / 1 / 0 / 0) | 50% / 38% / 50% / 63% | FAIL |  |
+| delta@4 | Delta Inferno | 48 (43 / 4 / 1 / 0) | 61% / 51% / 32% / 55% | FAIL |  |
+| dnipro@4 | Dnipro: City on Fire | 48 (47 / 1 / 0 / 0) | 56% / 48% / 56% / 40% | FAIL |  |
+| donbas@4 | Donbas Steppe | 48 (40 / 5 / 3 / 0) | 45% / 53% / 57% / 45% | PASS |  |
+| emirates@4 | Gulf Emirates | 48 (44 / 4 / 0 / 0) | 40% / 40% / 65% / 56% | FAIL |  |
+| fulda@4 | Fulda Gap | 48 (44 / 0 / 4 / 0) | 35% / 56% / 46% / 63% | FAIL |  |
+| golanplateau@4 | Golan Plateau | 48 (45 / 1 / 2 / 0) | 46% / 46% / 46% / 63% | FAIL |  |
+| gulf@4 | Gulf Coast Landings | 48 (43 / 5 / 0 / 0) | 46% / 54% / 42% / 58% | PASS |  |
+| harbour@4 | Delta Harbor | 48 (46 / 2 / 0 / 0) | 65% / 35% / 40% / 60% | FAIL |  |
+| hawizeh@4 | Hawizeh Marshes | 48 (45 / 3 / 0 / 0) | 50% / 58% / 46% / 46% | PASS |  |
+| heartland@4 | American Heartland | 48 (45 / 3 / 0 / 0) | 54% / 58% / 46% / 42% | PASS |  |
+| honshu@4 | Honshu Coast: Land of the Rising Sun | 48 (42 / 5 / 1 / 0) | 45% / 47% / 53% / 55% | PASS |  |
+| hormuzgate@4 | Strait of Hormuz: Island Gate | 48 (44 / 4 / 0 / 0) | 60% / 48% / 48% / 44% | FAIL |  |
+| islands@4 | Island Chain Armada | 48 (46 / 2 / 0 / 0) | 46% / 58% / 50% / 46% | PASS |  |
+| lebanon@4 | South Lebanon | 48 (47 / 1 / 0 / 0) | 42% / 46% / 63% / 50% | FAIL |  |
+| mesopotamia@4 | Mesopotamia | 48 (44 / 3 / 1 / 0) | 47% / 45% / 53% / 55% | PASS |  |
+| persia@4 | Persian Plateau | 48 (42 / 6 / 0 / 0) | 52% / 44% / 48% / 56% | PASS |  |
+| rivers@4 | Twin Rivers Offensive | 48 (43 / 2 / 3 / 0) | 64% / 41% / 51% / 45% | FAIL |  |
+| strait@4 | Straits of Thunder | 48 (45 / 3 / 0 / 0) | 50% / 42% / 50% / 58% | PASS |  |
+| taiga@4 | Siberian Taiga | 48 (48 / 0 / 0 / 0) | 54% / 50% / 46% / 50% | PASS |  |
+| volga@4 | Volga Winter | 48 (48 / 0 / 0 / 0) | 44% / 52% / 40% / 65% | FAIL |  |
+| yemen@4 | Yemen Highlands | 48 (43 / 4 / 1 / 0) | 61% / 51% / 49% / 39% | FAIL |  |
+| aegean@6 | Aegean Islands | 60 (55 / 5 / 0 / 0) | 60% / 50% / 43% / 57% / 50% / 40% | PASS |  |
+| atoll@6 | Pacific Atolls | 60 (59 / 1 / 0 / 0) | 58% / 55% / 62% / 42% / 45% / 38% | FAIL |  |
+| bosphorus@6 | Bosphorus: City on Two Continents | 60 (60 / 0 / 0 / 0) | 57% / 47% / 33% / 50% / 53% / 60% | FAIL |  |
+| caucasus@6 | Caucasus Valleys | 60 (60 / 0 / 0 / 0) | 75% / 62% / 42% / 38% / 42% / 42% | FAIL |  |
+| crimea@6 | Crimean Isthmus | 60 (57 / 2 / 1 / 0) | 43% / 68% / 49% / 51% / 39% / 51% | FAIL |  |
+| dmziron@6 | Korean DMZ: Iron Triangle | 60 (54 / 5 / 1 / 0) | 59% / 48% / 41% / 48% / 56% / 49% | PASS |  |
+| indus@6 | Indus Valley | 60 (60 / 0 / 0 / 0) | 52% / 32% / 45% / 65% / 58% / 48% | FAIL |  |
+| lebanon@6 | South Lebanon | 60 (60 / 0 / 0 / 0) | 35% / 58% / 42% / 65% / 62% / 38% | FAIL |  |
+| mesopotamia@6 | Mesopotamia | 60 (60 / 0 / 0 / 0) | 63% / 43% / 50% / 43% / 53% / 47% | FAIL |  |
+| najd@6 | Najd Escarpment | 60 (60 / 0 / 0 / 0) | 60% / 40% / 57% / 57% / 47% / 40% | PASS |  |
+| nile@6 | Nile & Suez | 60 (60 / 0 / 0 / 0) | 62% / 72% / 35% / 42% / 45% / 45% | FAIL |  |
+| oasis@6 | Oasis Basin: Last Water | 60 (58 / 2 / 0 / 0) | 53% / 50% / 53% / 40% / 47% / 57% | PASS |  |
+| punjab@6 | Five Rivers | 60 (56 / 4 / 0 / 0) | 58% / 55% / 58% / 45% / 35% / 48% | FAIL |  |
+| rubalkhali@6 | Empty Quarter Edge | 60 (51 / 5 / 4 / 0) | 60% / 40% / 60% / 45% / 43% / 52% | PASS |  |
+| sahara@6 | Sahara Crossroads | 60 (60 / 0 / 0 / 0) | 68% / 35% / 45% / 52% / 55% / 45% | FAIL |  |
+| taiwan@6 | Taiwan Strait | 60 (56 / 3 / 1 / 0) | 51% / 53% / 64% / 41% / 39% / 53% | FAIL |  |
+| ural@6 | Ural Ridge | 60 (60 / 0 / 0 / 0) | 63% / 50% / 60% / 43% / 53% / 30% | FAIL |  |
+| yangtze@6 | Yangtze Gorges | 60 (59 / 1 / 0 / 0) | 58% / 52% / 32% / 68% / 45% / 45% | FAIL |  |
+| yemen@6 | Yemen Highlands | 60 (60 / 0 / 0 / 0) | 65% / 52% / 58% / 35% / 52% / 38% | FAIL |  |
+| aegean@8 | Aegean Islands | 40 (37 / 1 / 2 / 0) | 57% / 28% / 50% / 45% / 57% / 45% / 65% / 53% | FAIL |  |
+| arctic@8 | Arctic Front: Frozen Armies | 40 (40 / 0 / 0 / 0) | 57% / 45% / 53% / 43% / 45% / 53% / 53% / 53% | PASS |  |
+| atoll@8 | Pacific Atolls | 40 (38 / 2 / 0 / 0) | 45% / 53% / 50% / 60% / 53% / 35% / 50% / 55% | FAIL |  |
+| dmz@8 | Korean DMZ | 40 (38 / 2 / 0 / 0) | 38% / 50% / 48% / 63% / 60% / 48% / 33% / 63% | FAIL |  |
+| fulda@8 | Fulda Gap | 40 (39 / 1 / 0 / 0) | 48% / 20% / 63% / 53% / 55% / 48% / 57% / 57% | FAIL |  |
+| gulfoil@8 | Gulf Oil Platforms | 40 (37 / 3 / 0 / 0) | 57% / 65% / 57% / 48% / 40% / 48% / 38% / 48% | FAIL |  |
+| heartland@8 | American Heartland | 40 (38 / 1 / 1 / 0) | 59% / 36% / 51% / 59% / 46% / 51% / 51% / 46% | FAIL |  |
+| hindukush@8 | Hindu Kush | 40 (39 / 1 / 0 / 0) | 53% / 45% / 38% / 43% / 60% / 53% / 53% / 57% | FAIL |  |
+| kuwait@8 | Burning Oil Fields: Inferno | 40 (40 / 0 / 0 / 0) | 55% / 63% / 55% / 55% / 43% / 55% / 35% / 40% | FAIL |  |
+| najd@8 | Najd Escarpment | 40 (38 / 1 / 1 / 0) | 46% / 36% / 59% / 64% / 54% / 51% / 36% / 54% | FAIL |  |
+| nile@8 | Nile & Suez | 40 (40 / 0 / 0 / 0) | 63% / 55% / 63% / 43% / 35% / 63% / 43% / 38% | FAIL |  |
+| oasis@8 | Oasis Basin: Last Water | 40 (40 / 0 / 0 / 0) | 60% / 43% / 55% / 50% / 48% / 45% / 35% / 65% | FAIL |  |
+| persia@8 | Persian Plateau | 40 (40 / 0 / 0 / 0) | 48% / 50% / 57% / 63% / 55% / 43% / 43% / 43% | FAIL |  |
+| plateau@8 | Sinai: Iron Mesa | 40 (40 / 0 / 0 / 0) | 53% / 60% / 57% / 48% / 40% / 53% / 43% / 48% | PASS |  |
+| rhine@8 | Rhine Front | 40 (39 / 1 / 0 / 0) | 45% / 68% / 60% / 45% / 48% / 40% / 50% / 45% | FAIL |  |
+| strait@8 | Straits of Thunder | 40 (40 / 0 / 0 / 0) | 38% / 35% / 43% / 53% / 70% / 53% / 57% / 53% | FAIL |  |
+| ural@8 | Ural Ridge | 40 (40 / 0 / 0 / 0) | 55% / 48% / 55% / 45% / 53% / 60% / 30% / 55% | FAIL |  |
+| volga@8 | Volga Winter | 40 (38 / 2 / 0 / 0) | 48% / 50% / 63% / 73% / 35% / 57% / 28% / 48% | FAIL |  |
+| yangtze@8 | Yangtze Gorges | 40 (38 / 2 / 0 / 0) | 45% / 43% / 55% / 55% / 53% / 40% / 60% / 50% | PASS |  |
+| zagros@8 | Zagros: Mountain Fortress | 40 (39 / 1 / 0 / 0) | 48% / 50% / 57% / 38% / 50% / 63% / 48% / 48% | FAIL |  |
