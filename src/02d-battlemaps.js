@@ -14,6 +14,8 @@
      sl:[[x,y]..]            start spots (after mirroring: 1st and 2nd are opposite each other, and so on)
      fl:[[x,y,amt?]..]       supply sources (amt in hundreds of $, default 90 = $9,000)
      oil:[[x,y]..]           oil derricks (neutral, capture with infantry: steady income)
+     tb:[[x,y,'hosp'|'air'|'radio'|'depot']..]  tech buildings (neutral, capture with infantry; effects in TB, 03-sim.js). Mirrored like oil, so a
+                             mirrored pair has the same type on both sides; a type on the mirror line goes in c.tb.
      ct:[[x,y,r,style?]..]   towns (neutral buildings infantry can garrison)     hm:[[x,y]..] hamlets
      rg:[[w,x,y,x,y..]..]    cliffs / ridges (impassable)    pk:[[x,y,r]..] rock outcrops
      rv:[[w,x,y,x,y..]..]    rivers / sea lanes (ships sail them)   lk:[[x,y,r]..] lakes / sea   br:[[x,y,deg]..] bridges
@@ -22,7 +24,7 @@
    }
    Check a map: node orch/battlemapfair.mjs --maps <id>   (a map that fails must not be listed here). */
 const BM={},BM_KEYS=[];
-const BM_LISTS=['sl','fl','oil','ct','hm','rg','pk','rv','lk','br','rd','wd'];
+const BM_LISTS=['sl','fl','oil','tb','ct','hm','rg','pk','rv','lk','br','rd','wd'];
 function bmExpand(S){
   const W=3200,H=2200,fx=S.sym==='x'||S.sym==='q',fy=S.sym==='y'||S.sym==='q',rot=S.sym==='r';
   // the copies of one point, in the order: itself, its opposite, then the other two quarters
@@ -45,11 +47,11 @@ function bmRegister(id,S){
   if(!c)return null;
   const D=cmBuild(c,key);delete D.custom;delete D.cmKey;
   // Battle extras the editor format does not carry: supply amounts, the list texts, and "no automatic base field"
-  D.bm=1;D.manual=true;D.hstyle=S.cs||'mideast';D.min=2;D.max=c.sl.length;D.tag=S.tg||c.th;D.desc=S.ds||'';D.fieldAt=E.fl.map(q=>q.slice(0,3));D.oilAt=E.oil.map(q=>q.slice(0,3));
+  D.bm=1;D.manual=true;D.hstyle=S.cs||'mideast';D.min=2;D.max=c.sl.length;D.tag=S.tg||c.th;D.desc=S.ds||'';D.fieldAt=E.fl.map(q=>q.slice(0,3));D.oilAt=E.oil.map(q=>q.slice(0,3));D.techAt=E.tb.map(q=>q.slice(0,3));
   MAPS[key]=D;BM[key]={id,S,E,c};if(!BM_KEYS.includes(key))BM_KEYS.push(key);return key;}
 // what the map list shows for a Battle map (name, players, size, theme, one line)
 function bmInfo(key){const B=BM[key],D=MAPS[key];if(!B||!D)return null;
-  return{k:key,name:D.name,players:D.max,size:CM_SIZES[B.c.z],theme:D.tag,desc:D.desc,supply:B.E.fl.length,oil:B.E.oil.length};}
+  return{k:key,name:D.name,players:D.max,size:CM_SIZES[B.c.z],theme:D.tag,desc:D.desc,supply:B.E.fl.length,oil:B.E.oil.length,tech:B.E.tb.length};}
 // the map list of a game: Battle has its own maps, Conquest keeps its list
 function mapKeysFor(battle){return battle&&BM_KEYS.length?BM_KEYS:MAP_KEYS;}
 function isBattleMap(k){return !!BM[k];}
@@ -61,6 +63,7 @@ const BMAPS={
     sl:[[430,1100]],
     fl:[[650,830,120],[610,1400,90],[1120,400,90]],
     oil:[[300,700],[1600,800]],
+    tb:[[1000,540,'hosp']],
     pk:[[1230,770,105],[1330,1530,85]],
     hm:[[1010,1130]],
     wd:[[820,1860,90]],
@@ -71,6 +74,7 @@ const BMAPS={
     sl:[[440,1100]],
     fl:[[660,840,120],[640,1380,90],[1150,300,90]],
     oil:[[320,1560],[1590,690]],
+    tb:[[1330,1150,'radio']],
     rg:[[75,1500,-60,1530,220,1560,470]],
     pk:[[1010,1180,80],[1180,1840,95]],
     wd:[[900,560,110],[1240,1480,80]],
@@ -82,6 +86,7 @@ const BMAPS={
     sl:[[430,1100]],
     fl:[[650,820,120],[620,1400,90],[1040,380,90]],
     oil:[[300,660],[1330,1840]],
+    tb:[[1000,1700,'depot']],
     ct:[[1240,1100,165]],
     br:[[1552,330,0]],
     wd:[[800,1800,100],[1020,720,70]],
@@ -93,6 +98,7 @@ const BMAPS={
     sl:[[560,560]],
     fl:[[770,400,120],[400,770,90],[1250,330,90]],
     oil:[[260,330],[1020,880],[1600,620]],
+    tb:[[1250,880,'air'],[1600,300,'radio']],
     lk:[[0,1100,400]],
     br:[[900,1100,90]],
     ct:[[1600,880,105]],
@@ -105,6 +111,7 @@ const BMAPS={
     sl:[[500,430]],
     fl:[[760,250,120],[300,700,90],[1600,280,100]],
     oil:[[250,250],[1120,1100]],
+    tb:[[1600,500,'depot']],
     rg:[[70,-60,1100,330,1100,660,1100]],
     ct:[[1130,640,120],[1600,760,90]],
     wd:[[820,860,90],[1380,330,70]],
@@ -116,6 +123,7 @@ const BMAPS={
     sl:[[350,1100],[1040,300]],
     fl:[[510,960,105],[900,460,120],[1250,300,90],[1100,1100,90],[1330,760,90]],
     oil:[[911,886],[1600,515]],
+    tb:[[1250,530,'radio']],
     ct:[[1600,810,95]],
     pk:[[280,330,120],[1600,130,60]],
     rg:[[55,560,560,700,470]],

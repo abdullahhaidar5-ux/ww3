@@ -473,6 +473,8 @@ function mkMap(seed,mk,ssn){
   M.fields=[];M.oil=[];
   // fixed derricks a map asks for (a central oil field): symmetric by design, so fair to everyone
   for(const [ox,oy,sea] of (D.oilAt||[])){const X=ox*WK,Y=oy*WK;if((sea?(X>90&&Y>90&&X<MAPW-90&&Y<MAPH-90&&M.edge(X,Y)<-60&&M.mtn(X,Y)<-48):dry(X,Y,80))&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>150))M.oil.push(Object.assign({x:X,y:Y,owner:-1,cp:[0,0],inc:0},sea?{sea:1}:{}));}   // sea:1 = an offshore rig on a rock pad: ships beside it capture it too
+  // tech buildings a Battle map asks for (02d-battlemaps 'tb', symmetric by the kit): Field Hospital / Airstrip / Radio Tower / Repair Depot
+  M.tech=[];for(const [tx,ty,tk] of (D.techAt||[])){const X=tx*WK,Y=ty*WK;if(dry(X,Y,80)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>130)&&M.tech.every(o=>Math.hypot(o.x-X,o.y-Y)>130))M.tech.push({x:X,y:Y,k:tk});}
   // fixed supply fields a custom map asks for (map editor)
   for(const [ox,oy,am] of (D.fieldAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.fields.every(f=>Math.hypot(f.x-X,f.y-Y)>150)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>120))M.fields.push({x:X,y:Y,r:46,amt:am>0?am*100:9000});}   // a Battle map (02d-battlemaps) may give its own amount, in hundreds
   if(!D.bm)for(const [bx,by] of BASES){const a0=Math.atan2(MAPH/2-by,MAPW/2-bx);let put=false;for(let r of [390,430,350,470,300,250])for(let q=0;q<14&&!put;q++){const a=a0+(q%2?1:-1)*Math.ceil(q/2)*.35,fx=bx+Math.cos(a)*r,fy=by+Math.sin(a)*r;

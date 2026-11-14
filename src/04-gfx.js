@@ -374,7 +374,7 @@ function buildWorld(tc){
       for(let v=0;v<NV;v++){rims[v].count=rcnt[v];WORLD.add(rims[v]);}}
     gm.count=n;gm.receiveShadow=true;gm.userData.noDepth=true;WORLD.add(gm);}
   // oil derricks
-  mats();G.oilObj=G.oil.map(o=>{if(o.pw)return plantObj(o);const grp=new THREE.Group();const B=Bld(),fr='#4f555b',dk='#2c2e2c';
+  mats();G.oilObj=G.oil.map(o=>{if(o.tb)return techObj(o);if(o.pw)return plantObj(o);const grp=new THREE.Group();const B=Bld(),fr='#4f555b',dk='#2c2e2c';
     B.box(46,2.4,24,0,1.2,0,'#8a877d');B.box(10,1,10,20,2.6,0,'#6f6c63');
     for(const z of [-5,5]){B.box(2.2,32,2.2,-4,16,z*1.25,fr,z>0?-.16:.16,0,0);B.box(2.2,30,2.2,4,15,z*1.25,fr,z>0?-.16:.16,0,0);}
     B.box(10,1.4,1.4,0,8,-5.5,fr);B.box(10,1.4,1.4,0,8,5.5,fr);B.box(4,2,6,0,31,0,dk);

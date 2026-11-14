@@ -67,7 +67,7 @@ function realMul(f){const R=realRow(f);return R?R.cash:1;}
 function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].max||o.camp)?o.map:'strait';setWorld(worldScaleFor(N,mk));setBases(N,mk,mk===o.map?(Array.isArray(o.st)?o.st:o.slot):-1);if(o.camp)while(BASES.length<N)BASES.push(BASES[BASES.length-1]);
   const wB=wxBase(o.w),ssn=wxSsn(o.w)||seasonOf(mk);const M=mkMap(o.seed,mk,ssn);
   G={t:0,ssn,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
-     map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};for(const k of G_LATE)G[k]=undefined;initCiv();initDams();initTowns();G.tow=(M.towers||[]).map((q,i)=>({i,x:q.x,y:q.y,ow:-1,cp:new Array(N).fill(0)}));G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});G.battle=!!o.battle&&!o.camp&&!o.grand&&!o.sandbox;G.conq=!o.camp&&!o.grand&&!o.sandbox&&!G.battle;infraInit();
+     map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};for(const k of G_LATE)G[k]=undefined;initCiv();initDams();initTowns();G.tow=(M.towers||[]).map((q,i)=>({i,x:q.x,y:q.y,ow:-1,cp:new Array(N).fill(0)}));G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});G.battle=!!o.battle&&!o.camp&&!o.grand&&!o.sandbox;G.conq=!o.camp&&!o.grand&&!o.sandbox&&!G.battle;infraInit();if(G.battle)tbAdd(M,N);
   G.bs=BATTLE;G.real=o.real?1:0;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.conq=!o.camp&&!o.grand&&!o.sandbox&&!G.battle;G.setupEnd=G.conq?CQ_SETUP:0;G.real=o.real?1:0;G.teams.forEach(T=>{T.credits=T.reb?0:G.conq?Math.round(CQ_START*realMul(T.fac)/100)*100:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
   {const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'];const cd=(p,q)=>{const a=hexRGB(p),b=hexRGB(q);return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);};
    for(let i=1;i<N;i++){const T=G.teams[i];if(G.teams.slice(0,i).some(P=>cd(P.color,T.color)<.45)){const c=ALT.find(c=>G.teams.slice(0,i).every(P=>cd(P.color,c)>=.45))||ALT[i%ALT.length];T.color=c;T.dark=shade(c,.45);}}}
@@ -103,7 +103,7 @@ const U_LATE='gr,habT,insT,ordT,hambT,rlyT,am,amx,sup,supT,amW,fldT,field,path,p
 function addUnit(team,kind,x,y){const T=G.teams[team],s0=stats(T.fac,kind),sm=kind===T.F.special?specMult(T):1,s=sm>1?Object.assign({},s0,{hp:Math.round(s0.hp*sm),dmg:s0.dmg*sm,name:s0.name+(sm>=1.4?' (Elite)':' (Veteran)')}):s0;const a=baseFacing(team);
   const u={id:G.nid++,isB:false,team,kind,s,x,y,ang:a,va:a,tang:a,hp:s.hp,max:s.hp,r:s.r,cd:0,order:null,target:null,lastHit:-99,lastFire:-99,state:'go',cargo:0,xp:0,rank:0,ammo:s.ammo||0,vs:new Array(G.teams.length).fill(false)};
   for(const k of U_LATE)u[k]=undefined;
-  u.max=Math.round(s.hp*hpMult(team,kind));u.hp=u.max;G.ents.push(u);G.byId.set(u.id,u);if(kind==='champ')heroSpawned(u);return u;}
+  u.max=Math.round(s.hp*hpMult(team,kind));u.hp=u.max;if(s.cls==='inf'&&G.oil&&tbHeld(team,'hosp')){u.rank=1;u.xp=Math.max(300,s.cost||0);}G.ents.push(u);G.byId.set(u.id,u);if(kind==='champ')heroSpawned(u);return u;}
 function addBld(team,kind,x,y,built){const T=G.teams[team],s=bstats(T.fac,kind);G.bdirty=true;
   const b={id:G.nid++,isB:true,team,kind,s,x,y,size:s.size,r:s.size/2,max:s.hp,hp:built?s.hp:s.hp*.1,built:built?1:0,cd:0,target:null,ang:baseFacing(team),lastHit:-99,dis:0,vs:new Array(G.teams.length).fill(false)};
   for(const k of B_LATE)b[k]=undefined;
@@ -1348,7 +1348,7 @@ function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.mi
   if(!(G.prT>G.t)){G.prT=G.t+1;for(const k of ['smokes','shields'])if(Array.isArray(G[k])&&G[k].length){let j=0;const A=G[k];for(const S of A)if(S.t>G.t)A[j++]=S;A.length=j;}}
   for(const tm of G.timers){tm.t-=dt;if(tm.t<=0){tm.done=true;tm.fn();}}{let j=0;for(const t of G.timers)if(!t.done)G.timers[j++]=t;G.timers.length=j;}
   const n=G.ents.length;for(let i=0;i<n;i++){const e=G.ents[i];if(e.dead)continue;if(e.isB)updBld(e,dt);else{if(e.kind!=='jet'){e.va=lerpA(e.va,e.ang,dt*7);const tt=e.target&&!e.target.dead?Math.atan2(e.target.y-e.y,e.target.x-e.x):(e.order&&e.order.target&&!e.order.target.dead?Math.atan2(e.order.target.y-e.y,e.order.target.x-e.x):e.va);e.tang=lerpA(e.tang,tt,dt*(e.crit&2?1.4:8));}updUnit(e,dt);if(e.v&&e.vt!==G.t){const M=MOVE[e.s.cls]||[4,80];e.v=Math.max(0,e.v-M[1]*2.5*dt);if(e.v>1&&e.s.dom!=='air'&&e.kind!=='jet'){const nx=e.x+Math.cos(e.hd)*e.v*dt,ny=e.y+Math.sin(e.hd)*e.v*dt;if(passXY(e.s.dom,nx,ny)){e.x=nx;e.y=ny;e.mv=G.t;}}}}}
-  updProj(dt);updStrikes(dt);separate();updOil(dt);infraTick(dt);updSupply(dt);bfTick(dt);
+  updProj(dt);updStrikes(dt);separate();updOil(dt);tbTick(dt);infraTick(dt);updSupply(dt);bfTick(dt);
   {const E=G.ents;let j=0;for(let i=0;i<E.length;i++){const e=E[i];if(!e.dead&&!e.inTun)E[j++]=e;}E.length=j;}
   for(const T of G.teams)T.clr=false;/* no cleric morale in battles any more (integrate1) */
   {let thought=false;for(const T of G.teams)if(T.ai&&!T.out){if(!G.aiTT)G.aiTT=G.teams.map((_,i)=>i*.13);G.aiTT[T.id]-=dt;if(G.aiTT[T.id]<=0&&!thought){thought=true;G.aiTT[T.id]=DIFF[T.ai.d??1].think;aiThink(T);}}}
@@ -1384,6 +1384,32 @@ function separate(){const groups=SEP_G;groups.ground.length=groups.naval.length=
 
 /* ---------- oil derricks: capturable, and destructible ---------- */
 const OIL_HP=1500;
+/* ---------- tech buildings (Battle): Field Hospital, Airstrip, Radio Tower, Repair Depot ----------
+   ONE system with the derricks and power plants: they are G.oil rows with o.tb = the type, so capture (infantry stand next to
+   it ~6 s), the owner flag, shooting it down and the Construction Vehicle repair (8 s) are the code in updOil below.
+   Neutral at the start; the effect goes ONLY to the owner (not allies), is the same for every nation, and the numbers are
+   only here. Effects run on the host (clients see the result in the snapshot). Map data: tb:[[x,y,'hosp'|'air'|'radio'|'depot']]. */
+const TB_HP=1200;
+const TB={
+  hosp:{name:'Field Hospital',r:260,heal:.015,eff:'Heals your infantry within 260 m (1.5% of their health every second). Infantry you train come out as veterans (rank 1) while you hold it.'},
+  air:{name:'Airstrip',cd:100,cap:2,eff:'Delivers a free Strike Drone every 100 s while you hold it (at most 2 waiting at once). Real, controllable drones - they fly only when you send them.'},
+  radio:{name:'Radio Tower',r:760,eff:'Reveals everything within 760 m of the tower for you, on the battlefield and the minimap, so enemy movements there show up.'},
+  depot:{name:'Repair Depot',r:260,rep:.015,eff:'Repairs your vehicles within 260 m (1.5% of their health every second).'}};
+function tbOf(o){return o&&o.tb&&TB[o.tb]||null;}
+function tbHeld(team,k){if(!G||!G.oil)return false;for(const o of G.oil)if(o.tb===k&&!o.dead&&o.owner===team)return true;return false;}
+function tbAdd(M,N){for(const q of (M.tech||[])){if(!TB[q.k])continue;const o={x:q.x,y:q.y,owner:-1,cp:new Array(N).fill(0),inc:0,tb:q.k};o.i=G.oil.length;o.hp=o.max=TB_HP;o.dead=false;o.burn=0;o.rep=0;G.oil.push(o);o.tg=oilTarget(o);o.tg.kind='techb';o.tg.s.name=TB[q.k].name;}}
+const TBNB=[];
+function tbTick(dt){if(MODE==='client'||!G.oil)return;G.tbT=(G.tbT||0)+dt;if(G.tbT<.5)return;const st=G.tbT;G.tbT=0;
+  for(const o of G.oil){if(!o.tb)continue;const T=o.owner>=0?G.teams[o.owner]:null;
+    if(!T||T.out||T.reb||o.dead){for(const Q of G.teams)if(Q.reveals.some(r=>r.tb===o.i))Q.reveals=Q.reveals.filter(r=>r.tb!==o.i);continue;}
+    const D=TB[o.tb];
+    if(o.tb==='hosp'||o.tb==='depot'){const inf=o.tb==='hosp',rate=(inf?D.heal:D.rep)*st;
+      for(const e of nearby(o.x,o.y,D.r,TBNB)){if(e.dead||e.isB||e.team!==o.owner||e.hp>=e.max||e.s.dom!=='ground'||(e.s.cls==='inf')!==inf||e.inTun)continue;if(Math.hypot(e.x-o.x,e.y-o.y)>D.r)continue;e.hp=Math.min(e.max,e.hp+e.max*rate);}}
+    else if(o.tb==='radio'){for(const Q of G.teams)if(Q.reveals.some(r=>r.tb===o.i&&Q.id!==o.owner))Q.reveals=Q.reveals.filter(r=>r.tb!==o.i);T.reveals=T.reveals.filter(r=>r.tb!==o.i);T.reveals.push({x:o.x,y:o.y,r:D.r,t:1.2,tb:o.i});}
+    else if(o.tb==='air'){o.nt=(o.nt==null?D.cd:o.nt)-st;if(o.nt>0)continue;
+      let n=0;for(const e of G.ents)if(!e.dead&&!e.isB&&e.fromTb===o.i&&e.team===o.owner)n++;
+      if(n>=D.cap){o.nt=0;continue;}o.nt=D.cd;let s0=null;try{s0=stats(T.fac,'drone');}catch(_){}if(!s0||!s0.hp)continue;
+      const k=(o.dn=(o.dn||0)+1),a=k*2.4,u=addUnit(o.owner,'drone',o.x+Math.cos(a)*34,o.y+Math.sin(a)*34);if(u){u.fromTb=o.i;log(o.owner,'The Airstrip delivered a free Strike Drone.','g',o.x,o.y);}}}}
 /* ---------- City buildings: infantry can garrison them; any of them can be shot or shelled down ----------
    Each street-grid lot is one building. Up to 4-10 infantry (more in taller blocks) move in: they are safe inside
    and fire out at 20% longer range, while the building soaks up the damage. Rifles barely scratch it; shells,
@@ -1600,14 +1626,14 @@ function hmTick(st,U,TF){G.humA=(G.humA||0)+st;
 function damageOil(o,d,team){if(o.dead||d<=0)return;if(team!=null&&ally(team,o.owner))return;o.hp-=d;o.hit=G.t;if(o.hp<=0)destroyOil(o,team);}
 function destroyOil(o,team){const prev=o.owner;o.dead=true;o.hp=0;o.owner=-1;o.cp=o.cp.map(()=>0);o.burn=45;o.rep=0;
   FXE('boom',[o.x|0,o.y|0,30,1]);FXE('boom',[(o.x+14)|0,(o.y-6)|0,18,0]);
-  if(team!=null&&team>=0)log(team,o.pw?'Power plant destroyed.':'Oil derrick destroyed.','g');if(prev>=0&&prev!==team)log(prev,o.pw?'One of our power plants was destroyed! Repair it with the Construction Vehicle.':'One of our oil derricks was destroyed!','w');}
+  if(team!=null&&team>=0)log(team,o.tb?TB[o.tb].name+' destroyed.':o.pw?'Power plant destroyed.':'Oil derrick destroyed.','g');if(prev>=0&&prev!==team)log(prev,o.tb?'Our '+TB[o.tb].name+' was destroyed! Repair it with the Construction Vehicle.':o.pw?'One of our power plants was destroyed! Repair it with the Construction Vehicle.':'One of our oil derricks was destroyed!','w');}
 const OILNB=[];let OIL_HERE=[];
 function updOil(dt){const N=G.teams.length;const here=OIL_HERE.length===N?OIL_HERE:(OIL_HERE=new Array(N).fill(0));for(const o of G.oil){if(o.cp.length!==N)o.cp=new Array(N).fill(0);here.fill(0);for(const e of (G.hash?nearby(o.x,o.y,o.sea?135:70,OILNB):G.ents)){if(e.dead||e.isB||e.kind==='harv'||e.team===G.reb)continue;if(e.s.dom!=='ground'){if(!(o.sea&&e.s.dom==='naval'&&!e.s.sub&&Math.hypot(e.x-o.x,e.y-o.y)<125))continue;here[e.team]++;continue;}if(Math.abs(e.x-o.x)<60&&Math.abs(e.y-o.y)<60&&Math.hypot(e.x-o.x,e.y-o.y)<60)here[e.team]++;}
   const present=[];for(let t=0;t<N;t++)if(here[t])present.push(t);
-  if(o.dead){o.burn=Math.max(0,o.burn-dt);const pwOk=!o.pw||(present.length&&G.ents.some(e=>e.kind==='dozer'&&!e.dead&&e.team===present[0]&&Math.hypot(e.x-o.x,e.y-o.y)<PW_R));if(pwOk&&present.length&&present.every(q=>ally(q,present[0]))){const t=present[0];o.cp[t]+=dt;if(o.cp[t]>=(o.pw?PW_FIX:12)){o.dead=false;o.hp=o.max*.4;o.owner=t;o.cp=o.cp.map(()=>0);log(t,o.pw?'Power plant repaired.':'Oil derrick repaired and captured.','g');}}else for(let t=0;t<N;t++)if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);continue;}
-  for(let t=0;t<N;t++){if(here[t]&&present.every(q=>ally(q,t))&&!ally(o.owner,t)){o.cp[t]+=dt;if(o.cp[t]>=6){const prev=o.owner;o.owner=t;o.cp=o.cp.map(()=>0);log(t,o.pw?'Power plant captured.':'Oil derrick captured.','g');if(prev>=0&&prev!==t){log(prev,o.pw?'The enemy captured one of our power plants!':'An oil derrick was captured by the enemy!','w');if(!o.pw)pubNews('oil',t,prev);}}}else if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);}
+  if(o.dead){o.burn=Math.max(0,o.burn-dt);const pwOk=!(o.pw||o.tb)||(present.length&&G.ents.some(e=>e.kind==='dozer'&&!e.dead&&e.team===present[0]&&Math.hypot(e.x-o.x,e.y-o.y)<PW_R));if(pwOk&&present.length&&present.every(q=>ally(q,present[0]))){const t=present[0];o.cp[t]+=dt;if(o.cp[t]>=((o.pw||o.tb)?PW_FIX:12)){o.dead=false;o.hp=o.max*.4;o.owner=t;o.cp=o.cp.map(()=>0);log(t,o.tb?TB[o.tb].name+' repaired.':o.pw?'Power plant repaired.':'Oil derrick repaired and captured.','g',o.x,o.y);}}else for(let t=0;t<N;t++)if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);continue;}
+  for(let t=0;t<N;t++){if(here[t]&&present.every(q=>ally(q,t))&&!ally(o.owner,t)){o.cp[t]+=dt;if(o.cp[t]>=6){const prev=o.owner;o.owner=t;o.cp=o.cp.map(()=>0);log(t,o.tb?TB[o.tb].name+' captured. '+TB[o.tb].eff:o.pw?'Power plant captured.':'Oil derrick captured.','g',o.x,o.y);if(prev>=0&&prev!==t){log(prev,o.tb?'The enemy captured our '+TB[o.tb].name+'!':o.pw?'The enemy captured one of our power plants!':'An oil derrick was captured by the enemy!','w',o.x,o.y);if(!o.pw&&!o.tb)pubNews('oil',t,prev);}}}else if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);}
   if(o.hp<o.max&&G.t-(o.hit??-99)>8)o.hp=Math.min(o.max,o.hp+o.max*.01*dt);
-  if(o.owner>=0&&!o.pw){o.inc+=dt;if(o.inc>=2){o.inc=0;const T=G.teams[o.owner];T.credits+=Math.round(14*(T.F.mods.oil||1)*(G.bs||1)*incMul(T)*(G.conq?CQ_OIL:1));}}}
+  if(o.owner>=0&&!o.pw&&!o.tb){o.inc+=dt;if(o.inc>=2){o.inc=0;const T=G.teams[o.owner];T.credits+=Math.round(14*(T.F.mods.oil||1)*(G.bs||1)*incMul(T)*(G.conq?CQ_OIL:1));}}}
   econTick(dt);}
 // income buildings pay every 2 seconds; a team's extra ones earn less each
 // Sanctions: income multiplier for a team (1 normally; 0.8 while sanctioned, 0.92 with Smuggling Routes). T.sanc = sim time it ends.
@@ -1646,7 +1672,7 @@ const ML={NEAR:1300,JOIN:60,HOSTILE:-50,HOS_T:120,SIZE_T:4,SIZE_H:3,JOIN_N:3,HUN
 function infraInit(){const M=G.map,N=G.N;if(!G.conq)return;
   G.pgrid=new Array(N).fill(0);
   for(const p of (M.plants||[])){const o={x:p.x,y:p.y,owner:(p.home>=0&&p.home<N)?p.home:-1,cp:new Array(N).fill(0),inc:0,pw:1,home:p.home};o.i=G.oil.length;o.hp=o.max=PW_HP;o.dead=false;o.burn=0;o.rep=0;G.oil.push(o);o.tg=oilTarget(o);o.tg.kind='plant';o.tg.s.name='Power plant';if(o.home>=0&&o.home<N)G.pgrid[o.home]=1;}}
-function oilNm(o){return o.pw?'power plant':'oil derrick';}
+function oilNm(o){return o.tb?TB[o.tb].name.toLowerCase():o.pw?'power plant':'oil derrick';}
 function milNm(){return 'local militia';}
 function gridOn(team){for(const o of G.oil)if(o.pw&&!o.dead&&!(o.sab>G.t)&&o.owner>=0&&ally(o.owner,team))return true;return false;}
 function powerOut(team){return !!(G.conq&&G.pgrid&&G.teams[team]&&!G.teams[team].reb&&G.pgrid.some((v,i)=>v&&ally(i,team))&&!gridOn(team));}
