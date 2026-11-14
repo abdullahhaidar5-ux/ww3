@@ -11607,7 +11607,7 @@ const FXH={
     if(sup&&!arc){mslFallStart(MK,'cruise');}else if(!sup&&r>=68){mslFallStart(MK,'bomb');}
     MARKERS.push(MK);},
   hack(x,y){for(let i=0;i<24;i++)part({x:x+rnd(-30,30),y:y+rnd(-30,30),h:groundH(x,y)+rnd(5,40),vh:rnd(10,30),add:true,c:[.3,1,.5],s:rnd(2,4),d:rnd(.6,1.2)});},
-  rank(id,r,x,y){if(typeof RKV!=='undefined')RKV.set(id,{r,t:performance.now()});if(inView(x,y,.1)){const g=groundH(x,y);for(let i=0;i<10;i++){const a=rnd(0,6.28);part({x:x+Math.cos(a)*3,y:y+Math.sin(a)*3,h:g+2,vx:Math.cos(a)*14,vy:Math.sin(a)*14,vh:rnd(10,24),add:true,c:[1,.85,.4],s:rnd(2,4),d:.6,a:.8});}}},
+  rank(id,r,x,y){if(typeof RKV!=='undefined')RKV.set(id,{r,t:performance.now()});try{if(typeof vetCue==='function')vetCue(id,r);}catch(e){}if(inView(x,y,.1)){const g=groundH(x,y);for(let i=0;i<10;i++){const a=rnd(0,6.28);part({x:x+Math.cos(a)*3,y:y+Math.sin(a)*3,h:g+2,vx:Math.cos(a)*14,vy:Math.sin(a)*14,vh:rnd(10,24),add:true,c:[1,.85,.4],s:rnd(2,4),d:.6,a:.8});}}},
   chf(x,y,h,jet){for(let i=0;i<(jet?7:5);i++){const b=rnd(0,6.28),v=rnd(25,60);part({x,y,h,vx:Math.cos(b)*v,vy:Math.sin(b)*v,vh:rnd(-8,6),g:18,add:true,c:jet?[2.6,2.6,3.2]:[3.4,2.2,.8],s:rnd(2.5,4),d:rnd(.7,1.2)});part({x,y,h,vx:Math.cos(b)*v*.6,vy:Math.sin(b)*v*.6,vh:rnd(-6,2),g:14,c:C_SMOKE,s:rnd(3,5),d:rnd(.8,1.3),a:.4});}mlight(x,y,h,2,120);},
   flare(x,y,r,d){FLARES.push({x,y,r,d:d||30,t:0,acc:0});if(FLARES.length>6)FLARES.shift();},
   ping(x,y,r){PINGS.push({x,y,r,t:0,d:1.6,c:0x7fb8e6});},
@@ -12354,8 +12354,8 @@ function applyQual(){POST.aoOn=fxLv()<2;const k=QUAL.lv+'|'+QUAL.caps[QUAL.lv];i
 function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*(((()=>{try{return GFX_PHONE;}catch(e){return false;}})())?Math.max(.85,QUAL.caps[QUAL.lv]):QUAL.caps[QUAL.lv]);/* phones stay sharp (Abdullah 2026-10-29: Low looked bad); they save on effects instead */VW=Math.max(1,r.width);VH=Math.max(1,r.height);
   if(R3){R3.setPixelRatio(dpr);R3.setSize(VW,VH,false);if(POST.rt)sizePost();CAM.aspect=VW/VH;CAM.updateProjectionMatrix();}hud.width=Math.round(VW*dpr);hud.height=Math.round(VH*dpr);}
 // the player can pull the camera higher (ZMAX) and tilt it (cam.tilt: Shift+wheel, Page Up/Down, two fingers up/down) - Abdullah 2026-10-29
-const ZMAX=2600;function zmax(){try{return Math.max(ZMAX,Math.min(3600,Math.round(MAPW*.4)));}catch(e){return ZMAX;}}function tiltBy(v){cam.tilt=Math.max(-.75,Math.min(1.3,(cam.tilt||0)+v));}
-function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/(600-230)));let p=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d)));p=cam.free?Math.max(.08,Math.min(1.5,cam.pitch)):Math.max(.1,Math.min(1.55,p+(cam.tilt||0)));if(typeof SCN!=='undefined'&&SCN&&SCN.fog){const f=SCN.fog;if(f._set!==f.near){f.n0=f.near;f.f0=f.far;}const ex=Math.max(0,d-1400)*1.2;f.near=f.n0+ex;f.far=f.f0+ex;f._set=f.near;}/* zoomed far out, push the haze back so the battlefield stays clear */cam.x=Math.max(0,Math.min(MAPW,cam.x));cam.y=Math.max(Math.min(60+cam.dist*.5,MAPH/2),Math.min(MAPH+120,cam.y));{const lo=Math.min(cam.dist*.55,MAPW/2);cam.x=Math.max(lo,Math.min(MAPW-lo,cam.x));}
+const ZMIN=90;const ZMAX=2600;function zmax(){try{return Math.max(ZMAX,Math.min(3600,Math.round(MAPW*.4)));}catch(e){return ZMAX;}}function tiltBy(v){cam.tilt=Math.max(-.75,Math.min(1.3,(cam.tilt||0)+v));}
+function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-110)/(700-110)));/* cinematic default (presentation, Abdullah 2026-11-13 21:24 "Lower & closer, free zoom"): low pitch up close, the old high view far out; never below ~10 units over the ground */let p=Math.max(.15+kz*.63,Math.asin(Math.min(1,10/d)));p=cam.free?Math.max(.08,Math.min(1.5,cam.pitch)):Math.max(.1,Math.min(1.55,p+(cam.tilt||0)));if(typeof SCN!=='undefined'&&SCN&&SCN.fog){const f=SCN.fog;if(f._set!==f.near){f.n0=f.near;f.f0=f.far;}const ex=Math.max(0,d-1400)*1.2;f.near=f.n0+ex;f.far=f.f0+ex;f._set=f.near;}/* zoomed far out, push the haze back so the battlefield stays clear */cam.x=Math.max(0,Math.min(MAPW,cam.x));cam.y=Math.max(Math.min(60+cam.dist*.5,MAPH/2),Math.min(MAPH+120,cam.y));{const lo=Math.min(cam.dist*.55,MAPW/2);cam.x=Math.max(lo,Math.min(MAPW-lo,cam.x));}
   const sx=shake>.3?rnd(-shake,shake):0,sy=shake>.3?rnd(-shake,shake):0;
   {const ry=camYaw(),hd=Math.cos(p)*d;CAM.position.set(cam.x+sx+Math.sin(ry)*hd,Math.sin(p)*d,cam.y+Math.cos(ry)*hd+sy);}/* battle view turns with cam.yaw (Q), photo mode orbits with cam.ryaw */CAM.lookAt(cam.x+sx,0,cam.y+sy);CAM.updateMatrixWorld();if(window.SKY)SKY.position.copy(CAM.position);
   SUN.position.set(cam.x+SUNOFF[0],SUNOFF[1],cam.y+SUNOFF[2]);SUN.target.position.set(cam.x,0,cam.y);const hs=Math.max(380,d*1.05),sc=SUN.shadow.camera;if(sc.right!==hs){sc.left=-hs;sc.right=hs;sc.top=hs;sc.bottom=-hs;sc.updateProjectionMatrix();}
@@ -12499,6 +12499,7 @@ function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,
   const hole=(x,y,R)=>{const g=c.createRadialGradient(x*sx,y*sy,R*sx*.5,x*sx,y*sy,R*sx);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(x*sx,y*sy,R*sx,0,7);c.fill();};
   {const sk=(G.teams[ME].F.mods.sight||1)*1.08;for(const e of G.ents)if(e.team===ME&&!e.dead)hole(e.x,e.y,(!e.isB&&e.s.vis?e.s.vis:e.isB?340:e.s.dom==='air'?340:e.s.dom==='naval'?380:280)*sk);}
   for(const r of (G.teams[ME].reveals||[]))hole(r.x,r.y,r.r);c.globalCompositeOperation='source-over';const f=FOGC.getContext('2d');f.filter='blur(4px)';f.drawImage(FOGC.b,0,0);f.filter='none';FOGT.needsUpdate=true;}
+const VGL={};function vetGlow(r){const k=r>2?3:2;if(VGL[k])return VGL[k];const cv=document.createElement('canvas');cv.width=cv.height=64;const x=cv.getContext('2d'),g=x.createRadialGradient(32,32,4,32,32,31),c=k===3?'255,205,90':'150,200,255';g.addColorStop(0,'rgba('+c+',.0)');g.addColorStop(.55,'rgba('+c+',.28)');g.addColorStop(.8,'rgba('+c+',.55)');g.addColorStop(1,'rgba('+c+',0)');x.fillStyle=g;x.fillRect(0,0,64,64);return VGL[k]=cv;}
 const RKV=new Map();   // rank-up flash: last rank seen per unit (view only)
 const SHORTN={inf:'INF',at:'ANTI-TANK',aa:'ANTI-AIR',tank:'TANK',arty:'ARTILLERY',apc:'CARRIER',hero:'HERO',champ:'HERO',hacker:'HACKER',dozer:'DOZER',demo:'DEMO',sniper:'SNIPER',mlrs:'MLRS',ifv:'CARRIER'};
 /* Supply circles (faint rings around HQ / depots / trucks / held towns) show while ammo units are selected, while O is held,
@@ -12533,6 +12534,7 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
     if(e.aband&&!e.isB){c.font='bold 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='rgba(0,0,0,.7)';c.fillText('ABANDONED',p.x+1,p.y-4);c.fillStyle=ally(e.team,ME)?'#e3b341':'#ffd166';c.fillText('ABANDONED',p.x,p.y-5);c.textAlign='left';}
     {const mo=!e.isB?moraleOf(e):null;if(mo&&(mo.v<.995||mo.st==='routing')&&(ally(e.team,ME)||sel||mo.v<.66)){const y=p.y+(sel||e.hp<e.max||SET.hp==='all'?5:0);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,y-1,w+2,4);c.fillStyle=MOR_COL[mo.st];c.fillRect(p.x-w/2,y,Math.max(2,w*mo.v),2);if(mo.st==='fearless'){c.fillStyle='#5fd38a';c.beginPath();c.arc(p.x+w/2+5,y+1,2.2,0,7);c.fill();}}}
     if(!e.isB&&e.team===ME&&G.sqOf&&G.sqOf[e.id]){const q=G.sqOf[e.id];c.fillStyle='rgba(0,0,0,.7)';c.fillRect(p.x-w/2-13,p.y-3,10,10);c.fillStyle='#e3b341';c.font='700 10px IBM Plex Mono, monospace';c.textAlign='center';c.fillText(q,p.x-w/2-8,p.y+5);}
+    if(e.rank>1&&!e.isB){const gs=vetGlow(e.rank),fp=toScreen(e.x,unitH(e),e.y);if(fp.z<=1){const R=Math.max(14,Math.min(70,e.r*PPU*3.2)),pu=.6+.4*Math.sin(performance.now()/(e.rank>2?380:620)+e.id);c.save();c.globalCompositeOperation='lighter';c.globalAlpha=(sel?1:.8)*pu;c.drawImage(gs,fp.x-R,fp.y-R*.62,R*2,R*1.24);c.restore();}}   // elite = cool silver-blue shimmer, heroic = gold (one cached sprite each, drawn only for ranks 2-3)
     if(e.rank>0&&!e.isB){const rk=RKV.get(e.id);const fl=rk?Math.max(0,1-(performance.now()-rk.t)/1600):0;
       // rank chevrons (gold V's, 1-3) above the unit, with a short gold flash + ring when it levels up
       const cx=p.x,cy=p.y-9-(fl?(1-fl)*0:0);c.lineJoin='round';
@@ -13794,6 +13796,8 @@ function showElim(){if(!G||G.over)return;   // (the 'out' list can arrive after 
    Every player sees the same numbers: the host (or the Cloudflare server) builds them in endStats() (03-sim) when the
    battle ends and sends them to the clients in one 'est' event just before 'end' (07-net applyEvents keeps G.endStats). */
 const ES={blob:null,S:null};
+/* rank stripes (1-3 gold chevrons) for the bar portrait; Elite shimmers silver-blue, Heroic gold (CSS in 08o-genbar) */
+function vetStripes(r){let p='';for(let i=0;i<r;i++){const y=3+i*6;p+='<polygon points="1,'+(y+4)+' 8,'+y+' 15,'+(y+4)+' 15,'+(y+7)+' 8,'+(y+3)+' 1,'+(y+7)+'"/>';}return '<svg class="vsvg" width="16" height="'+(6*r+4)+'" viewBox="0 0 16 '+(6*r+4)+'" style="vertical-align:middle">'+p+'</svg>';}
 function esT(t){t=Math.max(0,Math.round(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
 function esM(n){n=Math.round(n||0);return '$'+(n>=100000?Math.round(n/1000)+'k':n>=10000?(n/1000).toFixed(1)+'k':String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','));}
 function esFlag(f){try{const t=flagTex(f);return t&&t.image||null;}catch(e){return null;}}
@@ -14098,7 +14102,7 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}try{grandUi();}catch(e)
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
   if(s.length===1&&!s[0].isB){const e=s[0],u=document.createElement('div'),tx=document.createElement('div'),hp=Math.max(0,Math.min(1,e.hp/e.max));u.className='ukU';tx.className='ukUt';u.append(UK.icon(e.kind,(G.teams[e.team]||{}).color,0,e.s),tx);   /* ingameui slice 2: selected-unit card */
-    if(e.rank)b.textContent=b.textContent.replace(' · '+VET[e.rank],'');tx.append(b);if(e.rank){const v=document.createElement('span');v.className='ukV';v.textContent='★'.repeat(e.rank)+' '+VET[e.rank];tx.append(v);}const hb=document.createElement('i');hb.className='ukHp';hb.innerHTML='<b style="width:'+Math.round(hp*100)+'%;background:'+(hp>.66?'#6fc24a':hp>.33?'#e3b83a':'#d9503f')+'"></b>';tx.append(hb,sp);el.append(u);}
+    if(e.rank)b.textContent=b.textContent.replace(' · '+VET[e.rank],'');tx.append(b);if(e.rank){const v=document.createElement('span');v.className='ukV vet'+e.rank;v.innerHTML=vetStripes(e.rank)+' ';v.append(document.createTextNode(VET[e.rank]));tx.append(v);}const hb=document.createElement('i');hb.className='ukHp';hb.innerHTML='<b style="width:'+Math.round(hp*100)+'%;background:'+(hp>.66?'#6fc24a':hp>.33?'#e3b83a':'#d9503f')+'"></b>';tx.append(hb,sp);el.append(u);}
   else if(s.length>1&&s.every(e=>!e.isB)){const c={};for(const e of s)c[e.kind]=(c[e.kind]||0)+1;const g=document.createElement('div');g.className='ukG';for(const k of Object.keys(c).slice(0,8)){const w=document.createElement('span'),n=document.createElement('em');n.textContent='×'+c[k];w.append(UK.icon(k,(G.teams[s[0].team]||{}).color,0,(s.find(e=>e.kind===k)||{}).s),n);w.dataset.tt=c[k]+'× '+(s.find(e=>e.kind===k).s.name);g.append(w);}el.append(g,b,sp);}
   else el.append(b,sp);if(tip.textContent)el.append(tip);
   {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;const bcn=document.createElement('button');bcn.className='cnBtn';bcn.textContent='✕ Cancel';{const ci=cancelInfo();bcn.disabled=!ci;bcn.title=ci?ci.tip+' (Backspace / Delete)':'Nothing to cancel (select a building with a queue or a builder)';bcn.onclick=e=>doCancel(e.shiftKey);if(ci)r.classList.remove('off');}const bt=document.createElement('button');bt.textContent='▣ Type (T)';bt.title='Select every one of your units on the map that is the same type as the selection (hotkey T)';bt.onclick=selectTypes;const bq=document.createElement('button');bq.textContent='⛽ Resupply (Z)';bq.title='Send the selected units to the nearest supply point (HQ, Supply Depot, supply truck or held town) to refill ammo';bq.onclick=resupplySel;{const df=s.some(u=>u.defend),rt=s.some(u=>u.retreat),sl=stanceLabel(),sm=/^(\S+) (.*)$/.exec(sl)||['','◈',sl||'Stance'];ordLab(ba,'⚔',G.amove?(TOUCHUI?'Tap map…':'Click map…'):'Attack','F');ordLab(bd,(df&&!G.defm?'✓ ':'')+'🛡',G.defm?(TOUCHUI?'Tap map…':'Click map…'):'Guard','G');ordLab(bt,'▣','Same type','T');ordLab(bs,'■','Stop','X');ordLab(br,'↩',rt?'Retreating…':'Retreat','R');ordLab(bv,sm[1],sm[2],'V');ordLab(bq,'⛽','Resupply','Z');ordLab(bcn,'✕','Cancel','Del');}r.append(ba,bd,bt,bs,br,bv,bq,bcn);if(!can){const why='Select combat units to use orders';for(const x of r.children){if(x===bcn)continue;x.disabled=true;x.title=why;}}else{ba.title+=' (hotkey F)';bs.title='Stop: halt and hold fire position (hotkey X)';}if(can)el.append(r);else el.append(r);try{tactRow(el,s);if(typeof lgRow==='function')lgRow(el,s);}catch(_){}ordDock(el);}
@@ -14148,7 +14152,7 @@ function fieldAt(w){const i=G.fields.findIndex(f=>Math.hypot(f.x-w.x,f.y-w.y)<f.
 cv.addEventListener('mouseenter',e=>{mpos(e);mouse.in=true;});cv.addEventListener('mouseleave',()=>{mouse.in=false;});
 cv.addEventListener('mousemove',e=>{mpos(e);});
 cv.addEventListener('pointerdown',()=>{RV.fl=0;},true);   // any click on the battlefield ends the rally flag's flash at once (06-view)
-cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(zmax(),cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;const o=camVec(0,cam.dist*.08);cam.tx+=(w.x-(cam.tx-o.x))*f*.9;cam.ty+=(w.y-(cam.ty-o.y))*f*.9;}}},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(ZMIN,Math.min(zmax(),cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;const o=camVec(0,cam.dist*.08);cam.tx+=(w.x-(cam.tx-o.x))*f*.9;cam.ty+=(w.y-(cam.ty-o.y))*f*.9;}}},{passive:false});
 // After an order the ordered units deselect so the next click selects fresh (Abdullah 2026-10-30 20:54). Kept when Shift
 // queues, when Settings > Mouse > mKeep is on, or when a targeting mode is active. Production-building rally points never count.
 function houseThru(t,units){return !!t&&!t.isB&&!t.aband&&ally(t.team,ME)&&units.some(u=>u!==t&&canGarrison(u));}   // t = a plain friendly unit under the cursor while other infantry is selected
@@ -14407,7 +14411,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='r'&&!e.ctrlKey&&!e.metaKey){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length){doAct({t:'ret',ids});speak(2);}}
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
   if(k===' '&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.repeat&&!G.over)radJump();
-  if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(zmax(),cam.td*1.15);}
+  if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(ZMIN,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(zmax(),cam.td*1.15);}
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
 window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;if(k==='q')camRotUp(e);MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
 window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;CROT.hold=false;});
@@ -14641,7 +14645,7 @@ function tcStrip(force){const now=performance.now();if(!force&&now-TC.stripT<120
   const key=mode+'|'+(mode==='cmd'?[cnl,G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat),stanceLabel(),tcNeedSup(own),own.some(u=>u.kind==='dozer'),own.some(digCan),G.wallM].join():mode==='conf'?(G.place?'b':'f')+ok:'');
   document.body.classList.toggle('tstripOn',mode==='cmd'||mode==='cn');document.body.classList.toggle('tconfOn',mode==='conf');
   if(key===TC.stripK)return;TC.stripK=key;s.hidden=!mode;s.className=mode==='cn'?'conf':mode;s.innerHTML='';if(!mode)return;
-  const mk=(k,ic,tx,ti,cl)=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.title=ti;b.setAttribute('aria-label',ti);if(cl)b.className=cl;const i=document.createElement('i');i.textContent=ic;const t=document.createElement('span');t.textContent=tx;b.append(i,t);s.append(b);return b;};
+  const mk=(k,ic,tx,ti,cl)=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.title=ti;b.setAttribute('aria-label',ti);if(cl)b.className=cl;const i=document.createElement('i');i.textContent=ic;const t=document.createElement('span');t.textContent=tx;b.append(i,t);{const hid={am:'amove',gd:'guard',st:'stop',ty:'seltype',rt:'ret',sn:'stance',dg:'dig',rs:'resup'}[k],hk=hid?kbKey(hid):k==='all'?'Ctrl+A':'';if(hk){const h=document.createElement('em');h.className='hk';h.textContent=String(hk).toUpperCase().replace('CTRL+A','Ctrl+A');b.append(h);}}s.append(b);return b;};
   if(mode==='cn'){mk(...TC_CN,'cx');return;}
   if(mode==='conf'){const b=mk('ok','✓',G.place?'Build here':'Fire here',G.place?'Build it at the marked spot':'Fire at the marked spot','go');b.disabled=!ok;mk('no','✕','Cancel','Cancel','cx');return;}
   for(const [k,ic,tx,ti] of TC_BTN){if(k==='dg'&&(cnl||(!own.some(digCan)&&!own.some(u=>u.kind==='dozer'))))continue;/* the strip is exactly one phone wide: no Dig button while Cancel is showing */if(k==='rs'&&!tcNeedSup(own))continue;if(k==='ds'&&tcNeedSup(own))continue;const b=k==='sn'?mk(k,'◈',(stanceLabel().replace(/^\S+ /,'').replace('Guerrilla','Guerr.'))||'Stance',ti):mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat))||(k==='dg'&&G.wallM))b.classList.add('on');}if(cnl)mk(...TC_CN,'cx');}
@@ -14917,7 +14921,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
       try{if(G===g&&g.thumb&&!g.mmBase)g.mmBase=mmBase();}catch(e){}}],
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
-    ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();cam.yaw=0;cam.tyaw=0;/* every battle starts north-up */const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
+    ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();cam.yaw=0;cam.tyaw=0;/* every battle starts north-up */const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=300;cam.td=300;}],
     ['Preparing graphics…',.78,()=>{LOAD.wstop=0;LOAD.wt=[performance.now(),0];LOAD.warm=null;
       // chunked on every device: a few models per frame, progress on the loading screen; the watchdog below starts the battle even if it is unfinished
       // (what is left then goes through the same queue in the background)
@@ -18184,6 +18188,110 @@ try{tsInstall();tsApply();addEventListener('resize',tsFitSoon);}catch(e){console
 /* ---------- colour-blind extras: the team's shape as text (allies list) ---------- */
 const CB_GLYPH={40:'●',4:'■',3:'▲',6:'⬢',5:'⬟',10:'○',11:'⊕',12:'⊕'};
 function cbGlyph(team){try{return SET.cb?(CB_GLYPH[idRingSeg(team)]||'●'):'';}catch(e){return '';}}
+/* ================= COMMAND BAR + VETERAN LOOK (presentation, Abdullah 2026-11-13 21:24 "Classic Generals bar", "Stripes + glow + voices") =================
+   The end-of-match screen is NOT touched (he said "Leave as is", 21:36). View only. */
+/* veteran look in the bar portrait (presentation): gold stripes, Elite silver-blue shimmer, Heroic gold glow */
+{const st=document.createElement('style');st.textContent='.ukV .vsvg polygon{fill:#f2c94c;stroke:rgba(0,0,0,.7);stroke-width:1}.ukV.vet2 .vsvg polygon{fill:#bfe0ff}.ukV.vet2{color:#bfe0ff;animation:vetPulse 2.4s ease-in-out infinite}.ukV.vet3{color:#ffd76a;animation:vetPulse 1.6s ease-in-out infinite}.ukV.vet3 .vsvg polygon{fill:#ffd76a}@keyframes vetPulse{0%,100%{text-shadow:0 0 2px rgba(255,255,255,.0)}50%{text-shadow:0 0 9px currentColor}}';document.head.append(st);}
+
+/* Classic Generals bar (presentation): hotkey letters sit on the command buttons (em.hk) */
+{const st=document.createElement('style');st.textContent='#tstrip button{position:relative}#tstrip .hk{display:none}';document.head.append(st);}
+
+/* FULL GENERALS-STYLE COMMAND BAR (Abdullah 2026-11-14 "Full Generals redesign"): one HUD, the existing elements restyled by CSS only (original art:
+   gunmetal plate with bevel, rivets, angled top edge; minimap in a bezel; unit portrait; square icon buttons; stamped tabs; money on the top edge;
+   Strike Center + general rank on the right). The .stat wrapper becomes display:contents so its pieces sit in the bar grid. PC width only. No per-frame work. */
+{const st=document.createElement('style');st.textContent=`/* GENERALS-STYLE COMMAND BAR (original art, CSS only, no per-frame work) */
+@media(min-width:900px){
+body #side{--gbH:clamp(256px,36vh,360px);--bs:clamp(60px,calc((var(--gbH) - 80px)/3),100px);--st1:#4a5445;--st2:#2e352c;--st3:#1b201a;--hi:#7d8a6c;--gold:#e8c85c;
+ position:relative;isolation:isolate;display:grid!important;grid-template-columns:262px minmax(350px,400px) minmax(0,1fr) 214px!important;grid-template-rows:38px minmax(0,1fr)!important;gap:4px 12px!important;
+ height:var(--gbH)!important;box-sizing:border-box;padding:8px 16px 12px!important;border:0!important;background:none!important;overflow:visible!important;font-family:system-ui,Segoe UI,sans-serif}
+/* the plate: angled top edge, gunmetal gradient, fine brushed lines, bevel */
+body #side::before{content:"";position:absolute;z-index:-1;left:0;right:0;bottom:0;top:-16px;pointer-events:none;
+ clip-path:polygon(0 16px,300px 16px,326px 0,calc(100% - 244px) 0,calc(100% - 218px) 16px,100% 16px,100% 100%,0 100%);
+ background:
+  radial-gradient(circle at 9px 25px,#9aa68a 0 2px,#262b24 3px 4px,transparent 5px),
+  radial-gradient(circle at calc(100% - 9px) 25px,#9aa68a 0 2px,#262b24 3px 4px,transparent 5px),
+  radial-gradient(circle at 9px calc(100% - 9px),#9aa68a 0 2px,#262b24 3px 4px,transparent 5px),
+  radial-gradient(circle at calc(100% - 9px) calc(100% - 9px),#9aa68a 0 2px,#262b24 3px 4px,transparent 5px),
+  repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px),
+  repeating-linear-gradient(0deg,rgba(0,0,0,.10) 0 1px,transparent 1px 4px),
+  linear-gradient(180deg,#5b6653 0,#434c3e 7%,#343c31 40%,#262c25 100%);
+ box-shadow:inset 0 2px 0 #8c9a7a,inset 0 -3px 0 #151913,inset 3px 0 0 #6a7660,inset -3px 0 0 #151913;}
+body #side::after{content:"";position:absolute;z-index:-1;left:0;right:0;top:-16px;height:16px;pointer-events:none;filter:drop-shadow(0 -3px 6px rgba(0,0,0,.55))}
+/* minimap in a heavy bezel */
+body #sideTop{grid-column:1;grid-row:1/3;display:flex!important;align-items:center;justify-content:center;padding:9px!important;margin:0!important;border-radius:5px;
+ background:linear-gradient(145deg,#22271f,#3f493a 50%,#1b1f19);box-shadow:inset 0 0 0 2px #10130e,inset 0 0 0 4px #7a876a,inset 0 0 0 6px #2a3025,0 2px 0 #0b0d09,0 0 14px rgba(0,0,0,.6)}
+body #sideTop{flex-direction:column;gap:6px}
+body #sideTop::after{content:'TACTICAL MAP';font:800 11px system-ui,sans-serif;letter-spacing:.3em;color:#aab59a;text-shadow:0 1px 0 #000}
+body #sideTop #mm{width:100%!important;height:auto!important;aspect-ratio:384/264;max-height:100%;border-radius:2px;box-shadow:0 0 0 2px #0b0d09,0 0 0 3px #5d6951,inset 0 0 18px rgba(0,0,0,.5)}
+/* centre: unit portrait + info. the .stat wrapper dissolves so its children sit in the bar grid */
+body #side>.stat{display:contents!important}
+body #side .stat>.hdr{grid-column:2;grid-row:1;display:flex!important;align-items:center;gap:10px;padding:0 12px!important;margin:0!important;min-width:0;border-radius:4px;
+ background:linear-gradient(180deg,#10140f,#1b2118);box-shadow:inset 0 0 0 1px #070906,inset 0 0 0 2px #5a6650,0 1px 0 #7d8a6c}
+body #side #facname{flex:none;font:800 15px system-ui,sans-serif!important;letter-spacing:.1em;text-transform:uppercase}
+body #side #credits{flex:none;font:800 20px "IBM Plex Mono",ui-monospace,monospace!important;color:#f4d96a!important;text-shadow:0 0 8px rgba(244,217,106,.35),0 1px 0 #000;margin-left:6px;padding:0 12px;border-radius:3px;background:#0a0d09;box-shadow:inset 0 0 0 1px #3b4433,inset 0 2px 6px #000}
+body #side #barGrip,body #side #mmBtn{display:none!important}
+body #side .stat>.hdr button{font:700 14px system-ui,sans-serif!important;color:#e6ecd8;border-radius:3px;border:1px solid #1a1f17;background:linear-gradient(180deg,#566150,#363e32);box-shadow:inset 0 1px 0 #8f9c7e,0 1px 0 #0b0d09;padding:4px 8px}
+body #side .stat>.hdr button:hover{background:linear-gradient(180deg,#6b785f,#444e3d)}
+body #side .stat>.hdr button:active{background:linear-gradient(180deg,#2b3228,#3d4639);box-shadow:inset 0 2px 4px #000}
+body #side .stat>.hdr #aMenu{margin-left:auto}
+body #side #info{grid-column:2;grid-row:2;min-height:0;overflow-y:auto;overflow-x:hidden;padding:10px 12px!important;border-radius:4px;scrollbar-width:thin;
+ background:linear-gradient(180deg,#141914,#0e120d);box-shadow:inset 0 0 0 1px #070906,inset 0 0 0 2px #5a6650,inset 0 8px 18px rgba(0,0,0,.5),0 1px 0 #7d8a6c;font-size:14px;line-height:1.35}
+body #side #info .ukU{gap:12px;align-items:flex-start;margin:0 0 6px}
+body #side #info .ukU img{width:112px!important;height:86px!important;border-radius:3px;object-fit:contain;background:radial-gradient(circle at 50% 40%,#46543f,#171d15 80%)!important;box-shadow:inset 0 0 0 1px #aeb99b,inset 0 0 0 3px #1a1f17,inset 0 0 0 4px #66725a,0 0 8px #000!important}
+body #side #info .ukUt{min-width:0;flex:1}
+body #side #info .ukUt b{font:800 19px system-ui,sans-serif;display:block;color:#f1f5e4;letter-spacing:.02em}
+body #side #info .ukHp{height:12px!important;margin:5px 0!important;border-radius:2px;background:#050704!important;box-shadow:inset 0 0 0 1px #3d4733,0 1px 0 #6f7b5f}
+body #side #info .ukV{font-weight:700;font-size:14px}
+body #side #info .morale,body #side #info #ammoRow{font-size:13px}
+/* right of centre: tabs + big square button grid */
+body #side>.ccard{display:contents!important}
+body #side .cardhd{grid-column:3;grid-row:1;display:flex!important;align-items:flex-end;justify-content:space-between;gap:8px;min-width:0;margin:0!important;padding:0 2px!important}
+body #side .tabs{display:flex!important;gap:3px;align-items:flex-end}
+body #side .tabs button{position:relative;height:30px;padding:0 11px!important;font:800 12px system-ui,sans-serif!important;letter-spacing:.08em;text-transform:uppercase;color:#aeb89c;border:0!important;border-radius:5px 5px 0 0!important;
+ clip-path:polygon(0 100%,0 7px,7px 0,calc(100% - 7px) 0,100% 7px,100% 100%);background:linear-gradient(180deg,#3d4639,#242a22)!important;box-shadow:none}
+body #side .tabs button:hover{color:#fff;background:linear-gradient(180deg,#566150,#303829)!important}
+body #side .tabs button.on{height:34px;color:#1b1a0e!important;background:linear-gradient(180deg,#f0d66e,#c4a23b 55%,#a8872b)!important;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+body #side .tabs button .dot{background:#ff5a3c!important}
+body #side .sqbar{margin:0!important;flex:0 1 auto}
+body #side .sqbar button{font:700 12px system-ui,sans-serif;border-radius:3px;border:1px solid #1a1f17;background:linear-gradient(180deg,#566150,#363e32);color:#e6ecd8;padding:3px 9px}
+body #side #panel{grid-column:3;grid-row:2;min-height:0;overflow-x:hidden!important;overflow-y:auto!important;display:grid!important;grid-template-columns:repeat(auto-fill,minmax(calc(var(--bs)*1.08),1fr))!important;grid-auto-rows:var(--bs);grid-auto-flow:row!important;grid-auto-columns:0!important;gap:5px!important;align-content:start;padding:6px!important;scrollbar-width:thin;
+ border-radius:4px;background:linear-gradient(180deg,#0f130e,#171d15);box-shadow:inset 0 0 0 1px #070906,inset 0 0 0 2px #5a6650,inset 0 6px 14px rgba(0,0,0,.55),0 1px 0 #7d8a6c}
+body #side #panel .sub{display:none!important}
+/* square icon buttons */
+body #side #panel .btn{position:relative;display:flex!important;flex-direction:column!important;align-items:stretch;justify-content:flex-start;width:auto!important;min-width:0!important;height:var(--bs)!important;min-height:0!important;padding:3px 3px 2px!important;gap:1px;overflow:hidden;text-align:center;border-radius:4px;border:0!important;
+ background:linear-gradient(180deg,#59654f 0,#3e4839 14%,#2a3127 100%)!important;box-shadow:inset 0 1px 0 #a6b392,inset 0 0 0 1px #151913,0 2px 0 #0a0c08!important;transition:none}
+body #side #panel .btn.wide{width:auto!important;height:var(--bs)!important;grid-column:span 4;text-align:left;justify-content:center;padding:6px 12px!important}
+body #side #panel .btn.wide .n{font-size:14px!important;white-space:normal;text-align:left}
+body #side #panel .btn.wide .d{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;line-height:1.25;color:#b9c4a6;text-align:left}
+body #side #panel .btn[hidden],body #side #panel .btn[style*="display: none"],body #side #panel .sub[hidden]{display:none!important}
+body #side #panel .btn.hasic canvas.uic{position:static!important;display:block!important;order:0;width:100%!important;height:calc(var(--bs) - 1.45em - 8px)!important;min-height:18px;flex:none;object-fit:contain;border-radius:2px;background:radial-gradient(circle at 50% 50%,#4f5d48,#1a2018 88%);box-shadow:inset 0 0 0 1px #0d100b}
+body #side #panel .btn{font-size:clamp(11px,calc(var(--bs)*.17),14px)}
+body #side #panel .btn .n{position:static!important;order:1;width:auto!important;margin-top:2px;font:800 1em/1.15 system-ui,sans-serif!important;color:#f2f6e6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;text-shadow:0 1px 1px #000}
+body #side #panel .btn .c{position:absolute!important;right:5px;bottom:calc(1.45em + 5px);z-index:2;font:800 .92em/1 "IBM Plex Mono",ui-monospace,monospace!important;color:var(--gold)!important;background:rgba(8,10,7,.82);padding:2px 4px;border-radius:2px;box-shadow:0 0 0 1px rgba(232,200,92,.25)}
+body #side #panel .btn:not(.wide) .d{display:none!important}
+body #side #panel .btn:not(.hasic){justify-content:center}
+body #side #panel .btn:not(.hasic) .n{white-space:normal}
+body #side #panel .btn:not(.hasic) .c{position:static!important;background:none;box-shadow:none;margin-top:3px}
+body #side #panel .btn.wide .c{position:static!important;background:none;box-shadow:none}
+body #side #panel .btn .q{position:absolute!important;right:4px;top:3px;left:auto!important;bottom:auto!important;font:800 13px system-ui,sans-serif;color:#fff;text-shadow:0 0 3px #000,0 1px 1px #000;background:none;padding:0}
+body #side #panel .btn .p{position:absolute!important;left:3px;bottom:3px;height:4px!important;border-radius:2px;background:#79d65b!important;box-shadow:0 0 4px #79d65b}
+body #side #panel .btn:hover:not(:disabled){background:linear-gradient(180deg,#7a8a68 0,#556248 14%,#3b4635 100%)!important;box-shadow:inset 0 1px 0 #dbe8c4,inset 0 0 0 2px #e8c85c,0 2px 0 #0a0c08!important}
+body #side #panel .btn:active:not(:disabled){background:linear-gradient(180deg,#1e231b,#2f382b)!important;box-shadow:inset 0 3px 6px #000,inset 0 0 0 1px #000!important;transform:translateY(1px)}
+body #side #panel .btn:disabled,body #side #panel .btn.dis{filter:grayscale(.85) brightness(.62);box-shadow:inset 0 0 0 1px #151913!important}
+/* right edge: Strike Center + general rank */
+body #side .stat>.sup.rk{grid-column:4;grid-row:1;margin:0!important;padding:2px 10px!important;min-width:0;display:flex!important;flex-direction:column;justify-content:center;gap:2px;border-radius:4px;background:linear-gradient(180deg,#10140f,#1b2118);box-shadow:inset 0 0 0 1px #070906,inset 0 0 0 2px #5a6650,0 1px 0 #7d8a6c;overflow:hidden}
+body #side .stat>.sup.rk .lbl{font-size:12px;display:flex;justify-content:space-between;gap:6px;white-space:nowrap}
+body #side .stat>.sup.rk .lbl span:first-child{overflow:hidden;text-overflow:ellipsis;color:#e8c85c;font-weight:700}
+body #side .stat>.sup.sw{grid-column:4;grid-row:2;display:flex!important;flex-direction:column;justify-content:center;gap:8px;margin:0!important;padding:12px!important;border-radius:4px;background:linear-gradient(180deg,#141914,#0e120d);box-shadow:inset 0 0 0 1px #070906,inset 0 0 0 2px #5a6650,inset 0 8px 18px rgba(0,0,0,.5),0 1px 0 #7d8a6c}
+body #side .stat>.sup.sw .lbl{display:flex;flex-direction:column;gap:3px}
+body #side .stat>.sup.sw #supname{font:800 15px system-ui,sans-serif;letter-spacing:.04em;color:#f1f5e4}
+body #side .stat>.sup.sw #supt{font:700 13px "IBM Plex Mono",monospace;color:#e8c85c}
+body #side .stat>.sup.rk .bar{height:6px!important}
+body #side .stat>.sup .bar{height:10px!important;border-radius:2px;background:#050704!important;box-shadow:inset 0 0 0 1px #3d4733}
+body #side .stat>.sup.sw #supbtn{font:800 16px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;height:48px;border-radius:4px;border:1px solid #2a0d08;color:#fff;background:linear-gradient(180deg,#d65a3c,#8f2a18);box-shadow:inset 0 1px 0 #ff9a7a,0 2px 0 #0a0c08}
+body #side .stat>.sup.sw #supbtn:disabled{filter:grayscale(.9) brightness(.55)}
+}
+`;document.head.append(st);}
 /* ---------- Performance log (Settings → Graphics → "Performance log…") ----------
    No test machine has the player's graphics card, so the game keeps its own notes: every frame of a battle that takes
    longer than 250 ms is written down with what was going on - battle time, frame length, how many shader programs /
@@ -18824,6 +18932,12 @@ function radioCall(key){if(!G||!G.teams[ME])return false;const fac=G.teams[ME].f
 /* hero squad lines: when a hero squad is among the selected units, select / move / attack use its own 3 lines */
 function heroSpeak(fac,kind){if(!G||!G.sel||!VOH[fac])return false;const h=G.sel.find(u=>!u.isB&&u.kind==='champ'&&u.team===ME&&!u.dead);if(!h)return false;
   const key=['hsel','hmove','hatk'][kind];return !!key&&vohPlay(fac,key,false);}
+
+/* Promotion cue (presentation, 2026-11-14): a rising two-note chime for your own units (louder per rank); Elite and Heroic also get the nation's existing
+   "ready" hero line (vo radio sheet key hsel) - a dedicated "promoted" line per nation does not exist yet (see orch/HANDOFF-presentation.md). View/audio only. */
+const VETC={t:0};
+function vetCue(id,r){if(!G||!G.byId||!AU.ctx||!auOn())return;const u=G.byId.get(id);if(!u||u.team!==ME)return;const n=performance.now();if(n-VETC.t<350)return;VETC.t=n;
+  try{sfxUI(560+r*160);}catch(e){}if(r>=2&&AU.voiceOn){const fac=G.teams[ME].fac;vohLoad(fac);try{vohPlay(fac,'hsel',false);}catch(e){}}}
 /* ===== Soldier shouts (Abdullah 2026-11-05 19:01 "battlefeel") =====
    The host raises FXE('shout',[type,x,y,team]) from real sim events (03g-battlefeel.js: RPG fired, man down, reloading, grenade, first
    contact, tank spotted, wounded calling for a medic), already throttled per team / type / unit. Here each shout plays one short clip

@@ -44,3 +44,9 @@ function radioCall(key){if(!G||!G.teams[ME])return false;const fac=G.teams[ME].f
 /* hero squad lines: when a hero squad is among the selected units, select / move / attack use its own 3 lines */
 function heroSpeak(fac,kind){if(!G||!G.sel||!VOH[fac])return false;const h=G.sel.find(u=>!u.isB&&u.kind==='champ'&&u.team===ME&&!u.dead);if(!h)return false;
   const key=['hsel','hmove','hatk'][kind];return !!key&&vohPlay(fac,key,false);}
+
+/* Promotion cue (presentation, 2026-11-14): a rising two-note chime for your own units (louder per rank); Elite and Heroic also get the nation's existing
+   "ready" hero line (vo radio sheet key hsel) - a dedicated "promoted" line per nation does not exist yet (see orch/HANDOFF-presentation.md). View/audio only. */
+const VETC={t:0};
+function vetCue(id,r){if(!G||!G.byId||!AU.ctx||!auOn())return;const u=G.byId.get(id);if(!u||u.team!==ME)return;const n=performance.now();if(n-VETC.t<350)return;VETC.t=n;
+  try{sfxUI(560+r*160);}catch(e){}if(r>=2&&AU.voiceOn){const fac=G.teams[ME].fac;vohLoad(fac);try{vohPlay(fac,'hsel',false);}catch(e){}}}
