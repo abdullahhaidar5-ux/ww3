@@ -14,3 +14,16 @@ Reuse what exists. Do not add a second system:
 - Capture = infantry stand on or enter the building, the same way as the oil derricks. Symmetric placement on every Battle map, the same for each start. The AI goes for them. State goes in src/07b-ckpt.js.
 - Helper orch/onegame removes Conquest and lands AFTER you. Keep your code in Battle-owned places (not behind Conquest-only checks) so it survives. Mention this in your HANDOFF.
 - Delete this note file in your final commit.
+
+## LOOKS (Abdullah, 20:24): "Make sure these buildings look realistic"
+Real-world detail, not blocks. Use orch/ART-BAR.md and the existing building models as your bar.
+- **Quarry:** stepped cut rock faces, a gravel pit, a crusher with a conveyor, stone piles, an excavator or dump truck.
+- **Mine:** a headframe tower with a wheel, an ore hopper, a spoil heap, rail carts.
+- **Power plant:** cooling towers or a stack, a turbine hall, transformers, pylons with wires.
+- **Field Hospital:** canvas tents with red crescent or red cross panels (neutral, no nation emblems), stretchers, a generator, an ambulance.
+
+Also:
+- Show who owns each building with a flag or team-colour panel.
+- Show damage or wreck states.
+- Build each one as ONE merged mesh per material, or instanced, so smooth-pc and smooth-mp stay green.
+- Put a close-up picture of each building in orch/shots/techbldgs-*.jpg and link them in your HANDOFF.
