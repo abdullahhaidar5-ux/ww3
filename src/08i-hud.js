@@ -130,3 +130,9 @@ function hudDeclutter(){hudDeclutterCss();const on=!!(G&&!G.over&&G.teams&&G.tea
  '#app #hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;right:520px;opacity:.7}'+
  '#sqs button.empty{opacity:.55}#sqs button.empty small{display:none}#sqs button.empty{min-width:0;padding-left:7px;padding-right:7px}';
  document.head.append(st);})();
+/* sweepfixB (2026-11-13): Settings and the Victory / Defeat screen cover the whole battle HUD. The HUD floaters (money /
+   supply / opinion bar, its feed, the setup-phase banner, quick powers, hints, town card) sit above the overlay layer
+   on purpose during play, so they step aside while one of those two windows is open. */
+(function(){if(typeof document==='undefined')return;const st=document.createElement('style');st.id='ovHudCss';
+ const H=':is(#hudBar,#hudFeed,#hudLyM,#cqBn,#mwScore,#qpow,#qptip,#wallHint,#townp,#idToasts,#vcToast,#hlToast,#info .orddock)';
+ st.textContent='body:has(#settings:not([hidden])) '+H+',body:has(#end:not([hidden])) '+H+'{visibility:hidden!important}';document.head.append(st);})();

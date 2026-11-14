@@ -247,7 +247,17 @@ return {E,drawUnit,drawBld,iconBranch,icon,tabs,chip,sec,card,seg,link,tipHide,m
 #pauseOv.ukP .ukKeys{margin-top:12px;font:12px var(--mono,monospace);color:var(--dim,#8a9a92)}
 #settings .uk-tabs{margin:2px 0 12px}#settings .uk-tab{font-size:16px}
 #settings .uk-pane .label:first-child{margin-top:0}
-#settings .uk-pane .sethd{display:none}`;document.head.appendChild(st);
+#settings .uk-pane .sethd{display:none}
+/* sweepfixB (2026-11-13): Settings = one framed window in the middle of the screen, the same height on every tab (the tab
+   scrolls inside it if it is long), DONE pinned at the bottom; group labels breathe instead of touching the buttons above */
+#settings:not([hidden]){display:flex;align-items:center;justify-content:center}
+#settings>.card{width:min(800px,94vw);max-width:none!important;max-height:none!important;height:min(700px,calc(100vh - 48px));box-sizing:border-box;display:flex;flex-direction:column;margin:auto;padding:24px 34px 16px;background:linear-gradient(180deg,rgba(24,31,27,.98),rgba(13,18,16,.98));border:1px solid #3d4d44;border-top:2px solid var(--accent,#e3b341);box-shadow:0 18px 50px rgba(0,0,0,.6);text-align:left}
+#settings #setBody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:0;overflow:hidden;padding-right:0}
+#settings #setBody>h1{margin:0 0 6px;flex:none}
+#settings #setBody>.uk-tabs{flex:none;margin:0 0 14px}
+#settings .uk-pane.on{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:2px 10px 12px 0}
+#settings .uk-pane .label{margin:22px 0 9px;line-height:1.35}
+#settings .uk-pane .label:first-child{margin-top:4px}`;document.head.appendChild(st);
   function pauseInstall(){const ov=$$('pauseOv');if(!ov||ov.classList.contains('ukP'))return;const card=ov.querySelector('.card'),row=card&&card.querySelector('.row');if(!row)return;ov.classList.add('ukP');
     const m=document.createElement('nav');m.className='ukMenu';m.setAttribute('role','menu');const add=(b,cls)=>{if(!b)return;b.className=cls||'';b.setAttribute('role','menuitem');m.append(b);};
     const mk=(id,t,fn,tip)=>{const b=document.createElement('button');b.type='button';b.id=id;b.textContent=t;b.onclick=fn;if(tip)b.dataset.tt=tip;return b;};
