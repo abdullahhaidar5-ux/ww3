@@ -28,3 +28,23 @@ Reuse the existing HUD code; it must be one HUD. Readable from a normal PC dista
 ## FINAL on hotkeys (Abdullah, Sat 09:14): hide the letters, KEEP the shortcuts
 
 Buttons show NO hotkey letters, but every keyboard shortcut keeps working; remove nothing from the key table. If an earlier note said to remove the shortcuts, ignore it.
+
+## CHANGE (Abdullah, Sat 09:16): "Remove build units upgrade and powers" = NO TABS
+
+Remove the Build / Units / Upgrade / Powers tabs. The button grid is CONTEXT-ONLY, like Generals: it shows what the selected thing can do.
+
+- Construction Vehicle: its buildings (orch/dozerbuild makes building need a dozer).
+
+- Barracks, War Factory, Airfield or other production building: its units, then its upgrades in the same grid.
+
+- A unit or a group: its commands and abilities.
+
+- Nothing selected: an empty grid with one hint line.
+
+
+
+Generals' powers move OUT of the grid into a small fixed column of power buttons on the right edge of the bar, with the Strike Center countdown at the top. Also include the General's rank / points button there.
+
+
+
+Keep every function reachable. Update the tutorial steps and hints that say "Build tab", "Units tab" and so on (leftovers rule). Add a guard in orch/decisions.mjs: no command-bar tabs.
