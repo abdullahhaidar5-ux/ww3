@@ -1404,6 +1404,10 @@ function tbOf(o){return o&&o.tb&&TB[o.tb]||null;}
 function tbHeld(team,k){if(!G||!G.oil)return false;for(const o of G.oil)if(o.tb===k&&!o.dead&&o.owner===team)return true;return false;}
 function tbPlants(team){let n=0;if(G&&G.oil)for(const o of G.oil)if(o.tb==='plant'&&!o.dead&&o.owner===team)n++;return n;}   // live power plants held by this team (the Battle power meter adds them)
 function tbAdd(M,N){for(const q of (M.tech||[])){if(!TB[q.k])continue;const o={x:q.x,y:q.y,owner:-1,cp:new Array(N).fill(0),inc:0,tb:q.k};o.i=G.oil.length;o.hp=o.max=TB_HP;o.dead=false;o.burn=0;o.rep=0;G.oil.push(o);o.tg=oilTarget(o);o.tg.kind='techb';o.tg.s.name=TB[q.k].name;}}
+// RESUPPLY (ORCH note, Abdullah 20:53 "Shouldnt these resupply"): EVERY captured map building (quarry, mine, plant, hospital, oil derricks, later the rest) is a
+// small forward supply point for its owner while it stands. ONE list for the "your area" system of orch/ammozone to read - this is not a second supply system.
+const TB_SUP_R=170;   // the same small circle a base building gives
+function tbSupplyPts(team){const out=[];if(G&&G.oil)for(const o of G.oil)if(!o.dead&&o.owner===team&&!o.pw)out.push({x:o.x,y:o.y,r:(o.tb&&TB[o.tb].supR)||TB_SUP_R});return out;}
 const TBNB=[];
 function tbTick(dt){if(MODE==='client'||!G.oil)return;G.tbT=(G.tbT||0)+dt;if(G.tbT<.5)return;const st=G.tbT;G.tbT=0;
   for(const o of G.oil){if(o.tb!=='hosp'||o.dead||o.owner<0)continue;const T=G.teams[o.owner];if(!T||T.out||T.reb)continue;const D=TB.hosp,rate=D.heal*st;

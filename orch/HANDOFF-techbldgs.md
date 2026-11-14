@@ -18,6 +18,12 @@ to the owner (not allies). Any enemy can shoot it down (1200 health, burns, goes
 repair it in ~8 s for the repairer. Notices: radio-feed line on capture / loss / destruction (with a point on the map). Hover one: name, owner, what it does.
 Minimap: a tile in the owner's colour with a small sign (cross, rock, pick, bolt). The AI captures them like derricks, raids enemy-held ones, and sends idle infantry to defend the ones it holds.
 
+## Resupply (ORCH note, Abdullah 20:53 "Shouldnt these resupply") — hook ready, ONE line for the conductor
+Every held capturable building (quarry, mine, plant, hospital) and every held oil derrick is a small forward supply point for its owner only, and stops when it is lost.
+orch/ammozone is not on main, so its "your area" code is not on this branch: `tbSupplyPts(team)` (src/03-sim.js) returns `[{x,y,r}]` (r = 170, a base building's circle) and is tested in
+orch/techbldgs.mjs. **When ammozone and this branch are both on main, add one line to ammozone's area function: also treat every point of `tbSupplyPts(team)` as inside your area.**
+NOT done (no Battle road graph, as ammozone found too): "a held road that connects to a captured building is a supply line". The stronger ammo dump is part 2.
+
 ## Where it lives (ONE system, no second capture code)
 - `src/03-sim.js`: the `TB` table + `tbAdd/tbTick/tbHeld/tbPlants`; the rows are `G.oil` entries with `o.tb`, so `updOil`/`damageOil`/`destroyOil` are the derrick code (messages and income hooks branch on `o.tb`). Only runs in Battle (`G.battle`), not behind any Conquest-only check, so it survives helper onegame.
 - `src/02-map.js` (`M.tech` from `D.techAt`), `src/02d-battlemaps.js` (`tb:[[x,y,type]]`, mirrored by the kit like oil). Every Battle map has a pair or quad: Tar Basin hospital + mine, Split Ridge plant + quarry, Ferry Quarter hospital + mine, Breakwater hospital + quarry, Four Mills mine + hospital, Six Roads plant + quarry.

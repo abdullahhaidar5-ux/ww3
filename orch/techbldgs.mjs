@@ -46,6 +46,8 @@ ck(!ev('tbHeld(0,"hosp")'), 'a destroyed hospital must not count as held');
 ev(`(()=>{const o=G.oil[${hi_}];addUnit(0,'dozer',o.x+20,o.y+20);for(let k=0;k<2;k++)addUnit(0,'inf',o.x+10*k,o.y+10);})()`);
 for (let t = 0; t < 14; t++) W.step(1);
 ck(ev(`!G.oil[${hi_}].dead&&G.oil[${hi_}].owner===0`), 'a Construction Vehicle + infantry should repair the hospital');
+// --- every held capturable building (and derrick) is a supply point for its owner only, and stops when it is lost
+ck(ev(`tbSupplyPts(0).some(q=>q.x===G.oil[${hi_}].x&&q.y===G.oil[${hi_}].y)&&!tbSupplyPts(1).some(q=>q.x===G.oil[${hi_}].x)`), 'a held hospital must be a supply point for its owner only');
 // --- power plant counter (Battle power meter reads it)
 ev('(()=>{const o={x:1,y:1,owner:1,cp:[0,0],tb:"plant",hp:1,max:1,dead:false};G.oil.push(o);G._pl=G.oil.length-1;})()');
 ck(ev('tbPlants(1)') === 1 && ev('tbPlants(0)') === 0, 'tbPlants must count only the owner\'s live plants');
