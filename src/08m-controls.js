@@ -64,13 +64,13 @@ const BENCH={t:0,n:0,skip:1,done:false,res:null,secs:3};
 try{if(typeof SET!=='undefined'&&SET.gfxB===undefined&&localStorage.getItem('ww3_settings')!==null)SET.gfxB=1;}catch(e){}
 function benchWant(){return !BENCH.done&&typeof SET!=='undefined'&&SET.gfx==='auto'&&!SET.gfxB&&!(typeof GFX_PHONE!=='undefined'&&GFX_PHONE)&&(!navigator.webdriver||!!window.__bench);}
 /* fps = frames per second measured at full quality; ref = what this screen can show (at most 60 counts) */
-function benchPick(fps,lv,cost,hz){const ref=Math.min(60,hz||60);if(lv>0||fps<ref*.6)return 'low';if(fps>=ref*.95&&cost<.5/ref)return 'high';return 'auto';}
+function benchPick(fps,lv,cost,hz){const ref=Math.min(60,hz||60);if(lv>0||fps<ref*.6)return 'low';if(fps>=ref*.95&&cost<.25/ref)return 'ultra';if(fps>=ref*.95&&cost<.5/ref)return 'high';return 'auto';}
 function benchTick(dt){if(!benchWant())return;
   if(typeof G==='undefined'||!G||G.over||G.paused||G.rp||window.LOADING||document.hidden){BENCH.t=0;BENCH.n=0;BENCH.skip=1;return;}
   if(BENCH.skip>0){BENCH.skip-=dt;return;}BENCH.t+=dt;BENCH.n++;if(BENCH.t<BENCH.secs)return;
   const fps=BENCH.n/BENCH.t,pick=benchPick(fps,QUAL.lv,QUAL.cost,QUAL.hz);BENCH.done=true;BENCH.res={fps:Math.round(fps),pick};
   SET.gfx=pick;SET.gfxB=1;try{saveSet();}catch(e){}try{applyGfx();}catch(e){}try{if(typeof syncSettings==='function'&&!document.getElementById('settings').hidden)syncSettings();}catch(e){}
-  try{pushLog('Graphics checked for this PC: '+({high:'High',low:'Low',auto:'Auto'}[pick])+'. Change it any time in Settings → Graphics.','g');}catch(e){}}
+  try{pushLog('Graphics checked for this PC: '+({ultra:'Ultra',high:'High',low:'Low',auto:'Medium'}[pick])+'. Change it any time in Settings → Graphics.','g');}catch(e){}}
 try{const _qt=qualTick;qualTick=function(dt){_qt(dt);try{benchTick(dt);}catch(e){}};}catch(e){}
 /* choosing a quality by hand is final: the check never overrides the player */
 try{const g=document.getElementById('sGfx');if(g)g.addEventListener('click',e=>{if(e.target&&e.target.tagName==='BUTTON'&&typeof SET!=='undefined'&&!SET.gfxB){SET.gfxB=1;BENCH.done=true;try{saveSet();}catch(_){}}});}catch(e){}

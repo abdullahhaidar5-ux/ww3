@@ -23,6 +23,7 @@ systems doing one job, merge them into the owner and note it here.
 | **Doctrines / perks** | doctrines.md (General Doctrines) |, it must not duplicate doctrine perks |
 | **Commanders** | heroes.md (hero squads + commander radio) ||
 | **Capturable neutral buildings (Battle)** — quarry, mine, power plant, field hospital (later: refinery, ammo dump, artillery position, train station, telecom) | `G.oil` rows with `o.tb`: capture/destroy/repair = `updOil` (the derrick code), numbers + effects = `TB` table in `src/03-sim.js` (`tbTick`, `tbHeld`, `tbPlants`), map data `tb:[[x,y,type]]` in `src/02d-battlemaps.js`, look `techObj` in `src/04c-townlook.js`, minimap `tbMini` in `src/06-view.js`; guard `orch/techbldgs.mjs` | A new capturable building = one row in `TB` + one look; never a second capture system. The Conquest economy points (`src/03h-economy.js` quarries/mines) go away with Conquest |
+| **Supply field look (the crate pile trucks collect from)** | `src/04d-supdump.js` (`sdDump` built in 04-gfx `G.fieldObj`, `sdDumpTick` from 06-view; one merged mesh + one shared atlas material, depletion = draw range in tier steps) | Any new supply-source dressing extends `sdDump`; never a second pile system |
 | **AI personalities** | coop-ai.md | Named AI generals, nemesis-style memory if ever added |
 | **Spectating** | replay-spec.md (replays + spectators) | Spectate live (modern-war)|
 | **News / announcements** | one news feed component (create in modern-war: battle ticker) | |

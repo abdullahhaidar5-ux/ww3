@@ -62,13 +62,14 @@ function fireTick(dt,w){const L=G.bfFire;if(!L.length)return;const B=bfBurning()
     nearby(x,y,34,BF_NB);for(const e of BF_NB){if(e.dead||e.isB||!e.s||e.s.dom!=='ground'||Math.hypot(e.x-x,e.y-y)>30)continue;if(isInf(e.s)){applyDmg(e,5*dt,'gun',null,null,false);e.fear=(e.fear||0)+.05*dt;}else if(e.s.armor==='light')applyDmg(e,1.5*dt,'gun',null,null,false);}}
   L.length=j;G.bfFN=j;}
 // ---------- hulks ----------
-function hulkAdd(e){if(MODE==='client'||!e.s||e.s.dom!=='ground'||!isVeh(e.s))return;bfInit();const k=Math.floor(e.y/CELL)*GW+Math.floor(e.x/CELL);if(k<0||k>=GW*GH||G.grid[k]!==0)return;
+function hulkAdd(e){if(MODE==='client'||!e.s)return;const bl=!!e.isB&&!e.civ&&e.kind!=='garrison'&&e.built>=1&&(e.size||0)>=24;if(!bl&&(e.s.dom!=='ground'||!isVeh(e.s)))return;   // a fallen base building leaves a rubble pile that is cover (destruction, 2026-11-14)
+  bfInit();const k=Math.floor(e.y/CELL)*GW+Math.floor(e.x/CELL);if(k<0||k>=GW*GH||G.grid[k]!==0)return;
   for(const h of G.bfHulk)if(h.k===k)return;
   // never wall in a narrow pass: at least 6 of the 8 neighbours must be open ground
   let open=0;const cx=k%GW,cy=(k/GW)|0;for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){if(!i&&!j)continue;const X=cx+i,Y=cy+j;if(X>=0&&Y>=0&&X<GW&&Y<GH&&G.grid[Y*GW+X]===0&&!(G.rub&&G.rub[Y*GW+X]))open++;}if(open<6)return;
   if(G.bfHulk.length>=BF_HULK_MAX)hulkGone(G.bfHulk[0].k,true);
   if(!G.rub||G.rub.length!==GW*GH){G.rub=new Uint8Array(GW*GH);G.rubN=0;}if(G.rub[k])return;G.rub[k]=1;G.rubN++;G.gridV=(G.gridV|0)+1;
-  if(G.cover)G.cover[k]=Math.min(255,G.cover[k]+3);G.bfHulk.push({k,x:e.x|0,y:e.y|0,t:+G.t.toFixed(1)});
+  if(G.cover)G.cover[k]=Math.min(255,G.cover[k]+3);G.bfHulk.push(bl?{k,x:e.x|0,y:e.y|0,t:+G.t.toFixed(1),b:1}:{k,x:e.x|0,y:e.y|0,t:+G.t.toFixed(1)});
   if(bfDry()>.05&&bfRnd(k,5)<.3*bfDry())fireIgnite(k);}
 function hulkGone(k,fade){const L=G.bfHulk;if(!L)return;const i=L.findIndex(h=>h.k===k);if(i<0)return;L.splice(i,1);if(G.cover)G.cover[k]=Math.max(0,G.cover[k]-3);
   if(G.rub&&G.rub[k]){G.rub[k]=0;G.rubN--;G.gridV=(G.gridV|0)+1;}FXE('bfh',[k,fade?1:0]);}
@@ -118,4 +119,4 @@ function bfAutoTick(){G.auT=(G.auT||0)-1;if(G.auT>0)return;G.auT=2;
     for(const it of A.list){const k=it.k;if(!allUnits(T.fac).includes(k))continue;const s=stats(T.fac,k);if(!done(T.id,s.from))continue;if(unitCount(T.id,k)>=it.n)continue;
       if(s.limit&&unitCount(T.id,k)>=s.limit)continue;
       const cst=Math.round(s.cost*gdCostK(T,s,false));if(T.credits<cst)break;   // save up for the higher priority
-      if(used[s.from]||T.q[s.from].length>=3)continue;if(enqueue(T.id,k))used[s.from]=1;}}}
+      {const qb=qPick(T.id,s.from);if(used[s.from]||!qb||(qb.q?qb.q.length:0)>=3)continue;}if(enqueue(T.id,k))used[s.from]=1;}}}

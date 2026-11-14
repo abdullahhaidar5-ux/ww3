@@ -44,6 +44,8 @@ function bhOpen(){let ov=document.getElementById('myb');
 /* The ONE tutorial: a guided first Battle (single-player, passive enemy) that also teaches the supply lines. Each step: t = what and why (short), a = the ONE thing to do,
    hl() = what to point the pulsing arrow at ({d:'css selector'} | {el:element} | {w:{x,y}} world spot), cam() = where the camera goes when the step starts,
    ok() = done test. The tests look at the state of the battle (not at "what changed"), so doing things out of order never blocks a step. */
+// buildings are built only by a Construction Vehicle (Dozer): until one is selected the tutorial points at it
+const tutDzHl=()=>{if(G.sel.some(u=>u.kind==='dozer'&&u.team===ME&&!u.dead))return null;const d=G.ents.find(u=>u.team===ME&&u.kind==='dozer'&&!u.dead);return d?{w:d}:null;};
 const tutHQ=()=>G.ents.find(e=>e.team===ME&&e.kind==='hq'&&!e.dead);
 const tutBld=k=>G.ents.find(e=>e.isB&&e.team===ME&&e.kind===k&&!e.dead);
 const tutInf=()=>G.ents.filter(e=>!e.isB&&e.team===ME&&e.kind==='inf'&&!e.dead).length;
@@ -54,19 +56,19 @@ function tutSpawn(n,x,y){let c=0;for(let i=0;i<n;i++){const p=nearestPassXY('gro
 const tutPanelBtn=id=>document.getElementById(id);
 /* BATTLE tutorial (polishE 2026-11-10; supply lines 2026-11-14): the Generals-rules lesson. */
 const tutMob=()=>G.ents.filter(e=>!e.isB&&e.team===ME&&!e.dead&&!['harv','dozer','hacker'].includes(e.kind));
-const tutBPlace=(k,dx,dy)=>{if(tutBld(k))return{w:tutBld(k)};if(G.place===k){const h=tutHQ();return{w:h?{x:h.x+dx,y:h.y+dy}:null};}return{d:'#b_'+k};};
+const tutBPlace=(k,dx,dy)=>{if(tutBld(k))return{w:tutBld(k)};{const z=tutDzHl();if(z)return z;}if(G.place===k){const h=tutHQ();return{w:h?{x:h.x+dx,y:h.y+dy}:null};}return{d:'#b_'+k};};
 const TUTB=[
- {k:'gen',t:'Welcome to Battle! Your electronic buildings (air defense, Strike Center, radio, Airfield) need power. You build a Generator for it, and you can capture map power plants for extra. Without enough power they switch off.',a:'Open Build, click Generator, then click the ground near your base.',
+ {k:'gen',t:'Welcome to Battle! Your electronic buildings (air defense, Strike Center, radio, Airfield) need power. You build a Generator for it, and you can capture map power plants for extra. Without enough power they switch off.',a:'Click your Dozer (Construction Vehicle), open Build, click Generator, then click the ground near your base.',
   hl:()=>tutBPlace('gen',-100,-110),cam:()=>tutHQ(),ok:()=>!!tutBld('gen')},
- {k:'dep',t:'Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.',a:'Open Build, click Supply Depot, then click the ground near your base.',
+ {k:'dep',t:'Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.',a:'Click your Dozer, open Build, click Supply Depot, then click the ground near your base.',
   hl:()=>tutBPlace('depot',-130,90),cam:()=>tutHQ(),ok:()=>!!tutBld('depot')},
- {k:'bar',t:'Barracks train infantry, and they unlock the rest of your tech tree.',a:'Build a Barracks (Build tab) next to your base. Your Dozer builds it.',
+ {k:'bar',t:'Barracks train infantry, and they unlock the rest of your tech tree.',a:'Click your Dozer, open Build, click Barracks, then click next to your base. Hold Shift to line up several buildings.',
   hl:()=>tutBPlace('barracks',120,90),cam:()=>tutHQ(),ok:()=>!!tutBld('barracks')},
- {k:'fac',t:'The War Factory builds tanks and other vehicles. It needs a Barracks first.',a:'Build a War Factory (Build tab) next to your base.',
+ {k:'fac',t:'The War Factory builds tanks and other vehicles. It needs a Barracks first.',a:'With your Dozer selected, open Build and place a War Factory next to your base. Right-click a half-built building with another Dozer to help.',
   hl:()=>tutBPlace('factory',150,-60),cam:()=>tutHQ(),ok:()=>!!tutBld('factory')},
  {k:'sup',t:'SUPPLY LINES: your troops carry limited ammo. They refill near your buildings and along your supply lines - the roads running out from your Command Center and Supply Depots (green). Outside them they fight until they are empty, then come back or need a supply truck. Craters and blown bridges cut a line (dashed).',a:'Press L to show your supply lines.',
   hl:()=>({d:'#lgBtn'}),cam:()=>tutHQ(),ok:()=>!!(typeof LGU!=='undefined'&&LGU.on)},
- {k:'veh',t:'Now put the factory to work. Units appear in the Units tab when a production building is selected.',a:'Click your War Factory, then click a vehicle to train it.',
+ {k:'veh',t:'Now put the factory to work. A selected production building shows what it can make and its own queue. Vehicles are built only in the War Factory.',a:'Click your War Factory, then click a vehicle to train it.',
   hl:()=>{const b=tutBld('factory');if(!b)return{w:tutHQ()};return G.sel.includes(b)?{d:'#u_tank'}:{w:b};},cam:()=>tutBld('factory'),
   enter:()=>{TUTS.k0=tutMob().length;},ok:()=>tutMob().length>TUTS.k0},
  {k:'atk',t:'Your army is ready. Select it (Ctrl+A selects everything), then send it at the enemy with a right-click. Keep an eye on its ammo bar far from your supply lines. Destroy every enemy building to win.',a:'Select your army and right-click an enemy building.',

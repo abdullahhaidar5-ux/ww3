@@ -109,6 +109,27 @@ async function battleProfile(name) {
       const uf = window.updateFog; window.updateFog = function () { uf.apply(this, arguments); try { FOGM.visible = false; } catch (e) {} };
     }, EXTRA);
     LOG(name + ': army in place'); const census = await page.evaluate(() => { let u = 0; for (const e of G.ents) if (!e.dead && !e.isB) u++; return { units: u, min: +(G.t / 3600).toFixed(1) }; });
+    if (has('--scene')) { // scene census: what makes the draw calls (run: node orch/smooth.mjs --profile pc --scene)
+      LOG(name + ' scene: ' + JSON.stringify(await page.evaluate(() => {
+        const gl = R3.getContext(); for (const fn of ['drawElements', 'drawElementsInstanced', 'drawArrays', 'drawArraysInstanced', 'drawRangeElements']) if (gl[fn]) gl[fn] = function () {};
+        const vis = o => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
+        const by = {}; let total = 0, vcount = 0; const t0 = performance.now();
+        SCN.traverse(o => { total++; if (!vis(o)) return; vcount++; if (!(o.isMesh || o.isPoints || o.isLine || o.isSprite)) return;
+          const m = Array.isArray(o.material) ? o.material[0] : o.material; const k = (o.isInstancedMesh ? 'I:' : o.isPoints ? 'P:' : o.isSprite ? 'S:' : o.isLine ? 'L:' : 'M:') + (o.name || (m && m.name) || (m && m.type) || '?') + (o.castShadow ? ' cs' : '') + (o.userData && o.userData.noDepth ? ' nd' : '') + (m && m.transparent ? ' tr' : '');
+          by[k] = (by[k] || 0) + 1; });
+        const trav = performance.now() - t0;
+        const run = (sh) => { R3.info.reset(); R3.info.autoReset = false; R3.shadowMap.needsUpdate = sh; R3.render(SCN, CAM); return R3.info.render.calls; };
+        const tm = f => { const t = performance.now(); for (let i = 0; i < 5; i++) f(); return +((performance.now() - t) / 5).toFixed(1); };
+        let auto = 0, nAll = 0; SCN.traverse(o => { nAll++; if (o.matrixAutoUpdate) auto++; });
+        const mUpd = tm(() => SCN.updateMatrixWorld(true)); const rNo = tm(() => run(false)); const rSh = tm(() => run(true));
+        SCN.matrixWorldAutoUpdate = false; const rNoMat = tm(() => run(false)); SCN.matrixWorldAutoUpdate = true;
+        const log = []; const rr = R3.render.bind(R3), rc = R3.clear.bind(R3); const W = f => function () { const t = performance.now(); const r = f.apply(null, arguments); log.push([f === rr ? 'render' : 'clear', (R3.getRenderTarget() && R3.getRenderTarget().width) || 0, +(performance.now() - t).toFixed(1)]); return r; };
+        R3.render = W(rr); R3.clear = W(rc); renderPost(); log.length = 0; const tp = performance.now(); renderPost(); const rpT = +(performance.now() - tp).toFixed(1); R3.render = rr; R3.clear = rc;
+        const a = run(false), b = run(true); R3.info.autoReset = true;
+        const top = Object.entries(by).sort((x, y) => y[1] - x[1]).slice(0, 6);
+        return { rpT, log, total, auto, mUpd, rNo, rSh, rNoMat, vcount, travMs: +trav.toFixed(1), callsNoShadow: a, callsWithShadow: b, top };
+      }), null, 0));
+    }
     if (PHONE) await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
     await gcHeap(page);
     if (has('--probe')) for (let i = 0; i < 6; i++) LOG('probe frame ' + await page.evaluate(() => { const t = performance.now(); simUpdate(1 / 60); G.alpha = 1; const a = performance.now(); renderFrame(1 / 60); const b = performance.now(); R3.getContext().finish(); return [a - t, b - a, performance.now() - b, R3.info.render.calls].map(x => Math.round(x)).join('/'); }));

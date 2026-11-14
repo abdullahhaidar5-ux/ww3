@@ -3,7 +3,7 @@
    drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
-const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','fixWx','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
+const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
   'polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','wnd','wndN','wndV','wndId','dams','damV','fln',
   'todM','rebT','radT','stT','gprT','supT','prT','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
@@ -34,17 +34,18 @@ function ckDecode(ck){const byId=new Map();const S=ck.S;const ents=ck.ents.map(o
   for(const e of ents){for(const k in e){if(k==='$s')continue;e[k]=dec(e[k]);}e.s=sTab[e.$s];delete e.$s;e.vs=new Array(G.teams.length).fill(false);}
   return {ents,byId,dec};}
 // Turn this page (currently a client in the battle) into the host, from a checkpoint.
-function ckRestore(ck){const N=G.teams.length;const {ents,byId,dec}=ckDecode(ck);
+function ckRestore(ck){const N=G.teams.length;dugEnsure(ck.civ?ck.civ.length:0);const {ents,byId,dec}=ckDecode(ck);  // dugout slots are added to the civ list after the map's own buildings: make room before refs are resolved
   G.ents=ents;G.byId=byId;G.proj=[];G.strikes=[];G.timers=[];G.planes=[];G.out=[];G.spoofs=[];G.mban=[];G.mbanN=0;G._ewv=null;  // defaults for checkpoints from before these were saved
   for(const k in ck.g){const d=ck.g[k];G[k]=(d&&typeof d==='object')?JSON.parse(JSON.stringify(d)):d;}
   const reb=dec;
   for(const k of ['mines','smokes','shields'])if(Array.isArray(G[k]))G[k]=reb(G[k]);
   ck.fields.forEach((f,i)=>{if(G.fields[i])Object.assign(G.fields[i],f);});
   ck.oil.forEach((o,i)=>{if(G.oil[i])Object.assign(G.oil[i],reb(o));});
-  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});
+  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});dugAtRebuild();
   if(Array.isArray(ck.proj))G.proj=ck.proj.map(p=>{const o={};for(const k in p)o[k]=reb(p[k]);return o;}).filter(p=>p.src&&p.tgt);
   if(ck.camp&&G.camp)for(const k in ck.camp){const v=reb(ck.camp[k]);if(typeof G.camp[k]!=='function')G.camp[k]=v;}try{rubSync();bfSync();}catch(e){}
   ck.teams.forEach((t,i)=>{const T=G.teams[i];if(!T)return;for(const k in t){if(k==='$ai'||k==='$aiD'||k==='$aiS'||k==='aiTook')continue;T[k]=reb(t[k]);}T.ai=(t.$ai||t.aiTook)?mkAI(t.$aiD!=null?t.$aiD:1):null;if(T.ai&&t.$aiS){const S=reb(t.$aiS);for(const k in S)T.ai[k]=S[k];}T.aiTook=!!t.aiTook;});
+  for(const T of G.teams){if(T.q){for(const c of CATS){const L=(T.q[c]||[]);if(!L.length)continue;const b=G.ents.filter(e=>e.isB&&e.team===T.id&&e.kind===c&&e.built>=1&&!e.dead).sort((x,y)=>x.id-y.id)[0];if(b)b.q=(b.q||[]).concat(L.map(i=>({kind:i.kind,t:i.t||0,c:Math.round((BASE[i.kind]&&BASE[i.kind].cost)||0)})));else for(const i of L)T.credits+=BASE[i.kind]?BASE[i.kind].cost:0;}delete T.q;}}  // old saves: the shared queue of a building type moves onto its first building (no building left: refunded)
   for(const e of ents){if(e.so&&e.order&&e.so!==e.order&&JSON.stringify(e.so)===JSON.stringify(e.order))e.so=e.order;}  // stall watch compares the order by identity
   for(const e of ents){const p=e.path,w=e.npW;if(w&&p&&p[0]&&w[0]===p[0][0]&&w[1]===p[0][1])e.npW=p[0];}  // path-progress watch compares the waypoint by identity
   try{lgSync();}catch(e){}try{damSync();}catch(e){}G.civDirty=true;G.bdirty=true;G.hash=null;try{buildHash();}catch(e){}try{updateVis();}catch(e){}

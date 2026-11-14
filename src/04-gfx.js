@@ -62,7 +62,7 @@ function initGfx(){const PH=typeof gfxPhone==='function'&&gfxPhone();
         gl_FragColor=vec4(pow(c,vec3(2.2))*1.6,1.);}`}));SKY.renderOrder=-10;SKY.frustumCulled=false;SCN.add(SKY);
   CAM=new THREE.PerspectiveCamera(38,1,40,9000);
   HEMI=new THREE.HemisphereLight(lin('#b4cbef'),lin('#4d3f2c'),1.0*LUX);SCN.add(HEMI);
-  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7*LUX);SUN.castShadow=true;SUN.shadow.camera.layers.enable(1);const sm=PH?1024:2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
+  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7*LUX);SUN.castShadow=true;SUN.shadow.camera.layers.enable(1);const sm=PH?1024:SET.gfx==='ultra'?4096:2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
   SCN.add(SUN);SCN.add(SUN.target);
   initFX();initPost();
 }
@@ -406,18 +406,13 @@ function buildWorld(tc){
     grp.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
     grp.position.set(o.x,groundH(o.x,o.y),o.y);grp.rotation.y=(o.x*.01)%6;WORLD.add(grp);return{grp,arm,flag,crank};});
   mats();
-  // supply depots
-  G.fieldObj=G.fields.map((f,fi)=>{const grp=new THREE.Group();grp.position.set(f.x,groundH(f.x,f.y),f.y);WORLD.add(grp);const items=[];const R=mulberry(fi*13+5);
-    const pad=Bld();pad.box(f.r*2.1,1,f.r*1.7,0,.5,0,'#7e7462');const pm=mesh(pad.geo());pm.receiveShadow=true;grp.add(pm);
-    if(MODELS.ready){for(let gx=-2;gx<=2;gx++)for(let gz=-1;gz<=1;gz++){if(R()<.15)continue;const x=gx*17+R()*3,z=gz*20+R()*3,st=new THREE.Group();st.position.set(x,1,z);st.rotation.y=(R()-.5)*.4;grp.add(st);
-        propObj('pallet',0,0,0,st);const hgt=1+(R()*3|0);for(let k=0;k<hgt;k++){const m=propObj(R()<.2?'barrel':'crate',(R()-.5)*1.5,0,R()*.3,st);if(m)m.position.y=1.6+k*8;}items.push(st);}
-      propObj('container',-f.r-6,0,Math.PI/2,grp);propObj('containerG',f.r+8,6,Math.PI/2+.05,grp);propObj('sandbag',0,f.r*.9+6,0,grp);}
-    return{grp,items,n:items.length};});
+  // supply dumps (src/04d-supdump.js): one merged mesh each, shrinks in steps as the field is used up
+  G.fieldObj=G.fields.map((f,fi)=>{let m=null;try{m=sdDump(f,fi);WORLD.add(m);}catch(e){console.warn('sdDump',e);}return{m,a0:(G.map.fields[fi]&&G.map.fields[fi].amt)||f.amt||9000,st:-1};});
   try{chunkInst(WORLD);}catch(e){console.warn('chunkInst',e);}
   // fog of war overlay
   {const fk=Math.min(1.4,Math.max(1,WK*.65));FOGC=document.createElement('canvas');FOGC.width=Math.round(480*fk);FOGC.height=Math.round(330*fk);FOGC.b=document.createElement('canvas');FOGC.b.width=FOGC.width;FOGC.b.height=FOGC.height;}FOGT=new THREE.CanvasTexture(FOGC);FOGT.magFilter=THREE.LinearFilter;
   FOGM=new THREE.Mesh(new THREE.PlaneGeometry(MAPW,MAPH).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x060a0f,transparent:true,alphaMap:FOGT,depthWrite:false}));FOGM.position.set(MAPW/2,46,MAPH/2);FOGM.renderOrder=2;WORLD.add(FOGM);
-  buildDecals();for(const [x,y,r] of (G.craters||[]))scorch(x,y,r);applyWeather(typeof setup!=='undefined'?wxBase(setup.w):0);
+  buildDecals();for(const [x,y,r] of (G.craters||[]))scorch(x,y,r);applyWeather(G&&G.wxB!=null?G.wxB:typeof setup!=='undefined'?wxBase(setup.w):0);
 }
 
 /* ---------- procedural model builder (merged, vertex-coloured) ---------- */
@@ -515,7 +510,7 @@ function meGeo(B,kp,tc,fac){const C=ME_C;let K;
       for(let x=-16;x<=16;x+=8)B.box(5,.3,1.2,x,2.6,18,'#e8e3cf');break;}
     case 'tunnel:main':{K=meKit(B,303);
       // bunker: earth mound, concrete portal with T-wall wings, two-course sandbag ring, net over the entrance
-      B.cyl(14,21,6,12,0,3,0,K.j('#9a8460',.04));B.cyl(9,14,4.5,10,0,8,0,K.j('#8d7855',.04));B.cyl(7,9,1,10,0,10.6,0,'#a6a08f');
+      B.rock(42,11,40,0,2,-1,K.j('#9a8460',.04),0,.5,0,1);B.rock(26,7,24,0,6.6,-2,K.j('#8d7855',.04),0,1.7,0,4);B.cyl(7,9,1,10,0,10.6,0,'#a6a08f');
       B.box(15,9,9,0,4.5,15,K.j(C.conc,.04));B.box(9,6.5,.6,0,3.6,19.6,C.dk);B.box(17,1.6,11,0,9.6,15.4,K.j(C.conc,.04));
       K.twall(-8.5,17,-8.5,24,8);K.twall(8.5,17,8.5,24,8);
       for(let i=0;i<14;i++){const a=i/14*6.283;if(Math.abs(a-1.5708)<.5)continue;for(let r=0;r<2;r++)B.box(5.4,1.3,2.4,Math.cos(a)*21.5,.7+r*1.25,Math.sin(a)*21.5,K.j(C.bag,.1),0,-a+Math.PI/2+r*.15,0);}
@@ -623,10 +618,10 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
       B.box(14,9,1.2,-8,7,4.3,'#26261f');for(const [x,z] of [[14,-14],[20,-14],[14,-8],[20,-8],[17,-11]])B.box(5,5,5,x,5.5,z,'#c99a2e');B.box(5,5,5,17,10.5,-11,'#b2862a');
       B.box(2,22,2,16,11,12,'#5a5c52');B.box(2,22,2,-20,11,12,'#5a5c52');B.box(38,2,2,-2,22,12,'#5a5c52');B.box(4,6,4,4,17,12,'#3a3b34');
       for(let x=-22;x<=22;x+=11)B.box(6,.4,1.2,x,3.2,20,'#e8e3cf');break;}
-    case 'tunnel:main':B.cyl(17,22,7,12,0,3.5,0,'#8a7656');B.cyl(10,15,4,10,0,9,0,'#7a6849');B.box(13,10,9,0,5,15,'#1c1814');B.box(15,2,10,0,10.5,15,'#5d5a50');for(let i=0;i<9;i++){const a=i/9*6.28;B.box(6,3,3.5,Math.cos(a)*21,1.5,Math.sin(a)*21,'#a08d68',0,-a,0);}break;
+    case 'tunnel:main':B.rock(44,12,42,0,2.4,-1,'#8a7656',0,.5,0,1);B.rock(28,8,26,0,7.4,-2,'#7a6849',0,1.7,0,4);B.box(13,10,9,0,5,15,'#1c1814');B.box(15,2,10,0,10.5,15,'#5d5a50');for(let i=0;i<9;i++){const a=i/9*6.28;B.box(6,3,3.5,Math.cos(a)*21,1.5,Math.sin(a)*21,'#a08d68',0,-a,0);}break;
     case 'fort:main':{/* Mountain Fortress: a rock outcrop with a reinforced gate, blast doors, sandbag/HESCO walls, slits, gun ports, camo net, mast and flag. Gate faces +z. */
       const lo=gfxLow(),KP=fac==='KP',SH=fac==='IR'||fac==='RS'||fac==='DW',C=KP?'#8a8d90':SH?'#b9a77f':'#a39f92',C2=KP?'#6f7275':SH?'#9d8c68':'#8a867a',RK=KP?'#6d6e6a':SH?'#8a7a60':'#7d766a',RK2=KP?'#5b5c58':SH?'#76684f':'#6a645a',DK='#0b0a09',SB='#9a8e6c',HS='#a89f78';
-      B.cyl(30,38,10,lo?8:11,0,5,0,RK);B.cyl(21,30,12,lo?7:10,0,16,-6,RK2);B.cyl(9,18,13,lo?6:8,-5,28,-13,RK);
+      /* polishlooks: craggy rock outcrop (seeded noise rocks) instead of three stacked cones that read as a ziggurat */B.rock(80,22,64,0,6,-6,RK,0,.4,0,0);B.rock(60,28,46,-3,15,-11,RK2,0,1.3,0,1);B.rock(36,32,30,-5,26,-13,RK,0,2.2,0,2);if(!lo){B.rock(30,20,26,-29,7,-12,RK2,0,.8,0,3);B.rock(28,18,24,28,6,-14,RK,0,2.9,0,4);B.rock(22,16,18,13,24,-20,RK2,0,.2,0,5);}
       if(!lo)for(let i=0;i<9;i++){const a=i/9*6.28+.3,r=30+(i%3)*3;if(Math.sin(a)>.55)continue;B.box(9+i%3*3,6+i%2*3,8,Math.cos(a)*r,3,Math.sin(a)*r-4,i%2?RK:RK2,.1*i,a,.05*i);}
       B.box(30,17,7,0,8.5,22,C);B.box(34,3,9,0,18.5,22,C2);B.box(15,11.5,3.4,0,5.8,25,DK);
       B.box(7,10.6,1.2,-4.1,5.5,26.3,'#4b514b');B.box(7,10.6,1.2,4.8,5.5,26.6,'#434943',0,-.5,0);B.box(1,10.6,1.6,0,5.5,26.6,'#2b2e2b');
@@ -640,7 +635,7 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
       if(SH){B.cyl(.35,.35,36,5,10,52,-4,DK);B.box(15.2,10.2,.4,17.6,63,-4,'#1f5a2e');B.box(14,9,.7,17.6,63,-4,'#b3121a');}else{B.cyl(.3,.3,24,5,10,46,-4,DK);B.box(7,4.5,.4,13.5,56,-4,tc);}
       for(let i=0;i<7;i++){const a=i/7*6.28+.2;B.box(5,3,3.5,Math.cos(a)*36,1.5,Math.sin(a)*36,'#8b7e66',0,-a,0);}break;}
     case 'fort:gun':
-    case 'tunnel:gun':B.cyl(2.4,2.8,3,8,0,8,0,'#3b3d36');B.box(12,1.6,1.6,6,9.5,0,'#2c2e29');break;
+    case 'tunnel:gun':B.cyl(2.6,3,3,10,0,8,0,'#3b3d36');B.box(3.6,2.4,4.4,.8,9.7,0,'#44473d');B.box(.5,3.4,5.8,3,10,0,'#4d5044');B.cyl(.5,.58,12,8,8.6,9.9,0,'#2a2c27',0,0,Math.PI/2);B.cyl(.78,.78,1.8,8,14.6,9.9,0,'#1f201c',0,0,Math.PI/2);B.box(2.4,1.4,1,0,9.4,2.9,'#5a5d4c');break;
     case 'turret:main':B.tor(15,4.2,0,3.5,0,'#968660');B.cyl(10,12,7,12,0,3.5,0,'#6d6c62');break;
     case 'turret:gun':B.cyl(8,9,6,12,0,3,0,tc);B.box(8,5,10,2,4,0,hc);B.cyl(1.1,1.1,20,6,13,4,-2.5,dk,0,0,Math.PI/2);B.cyl(1.1,1.1,20,6,13,4,2.5,dk,0,0,Math.PI/2);break;
     case 'sam:main':B.cyl(14,16,4,12,0,2,0,'#6d6c62');B.box(26,1,26,0,4.5,0,'#55574e');break;
@@ -664,6 +659,15 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
     case 'plane:body':B.cyl(5,6,60,10,0,0,0,'#7c8086',0,0,Math.PI/2);B.cone(5,10,10,35,0,0,'#7c8086',0,0,-Math.PI/2);B.box(18,1.2,80,-2,2,0,'#6f7378');B.box(10,10,1.2,-27,6,0,'#6f7378');B.box(10,1,26,-27,2,0,'#6f7378');B.box(20,.6,1.4,-2,2.8,-30,tc);B.box(20,.6,1.4,-2,2.8,30,tc);break;
     case 'radio:main':{B.box(44,2,44,0,1,0,cl);B.box(30,11,22,-4,7.5,6,cn);B.box(32,1.6,24,-4,13.8,6,'#6f6e66');B.box(30,2.4,1,-4,10,17.2,tc);B.box(8,6,1.2,-12,5,17.1,'#26261f');B.box(9,5,1.2,2,6.5,17.1,'#2f4a5a');
       B.box(12,5,10,13,4.5,-9,'#6c6a62');B.cyl(3.6,.5,2.4,12,13,9,-9,'#d8dcd4',0,0,Math.PI/2);
+      /* polishlooks: roof parapet, AC units and dishes, window bands, entrance canopy, generator + fuel tank, guy wires */
+      {const pc='#7c7a70';B.box(32,1.4,.8,-4,15.3,-5.6,pc);B.box(32,1.4,.8,-4,15.3,17.6,pc);B.box(.8,1.4,24,-19.6,15.3,6,pc);B.box(.8,1.4,24,11.6,15.3,6,pc);
+       for(const [x,z] of [[-12,0],[-6,2],[4,10]]){B.box(3.6,2,2.6,x,15.6,z,'#9a9a92');B.cyl(.8,.8,.3,8,x,16.7,z,'#2c2c2a');}
+       B.cyl(.3,.3,2.4,5,6,15.8,0,'#55564f');B.cyl(2.6,.4,.9,12,6,17.4,0,'#d4d2c6',.7,.6,0);B.cyl(.3,.3,2,5,-1,15.6,12,'#55564f');B.cyl(1.8,.3,.7,12,-1,17,12,'#d4d2c6',.6,-.8,0);
+       for(let i=0;i<6;i++){const x=-17+i*5.2;if(Math.abs(x+12)<4.5)continue;B.box(3,2.6,.4,x,9,17.25,'#29343a');B.box(3.4,.4,.6,x,7.6,17.3,'#8a887e');}
+       for(let i=0;i<4;i++){B.box(.4,2.6,3,11.25,9,-2+i*5.4,'#29343a');B.box(.4,2.6,3,-19.25,9,-2+i*5.4,'#29343a');}
+       B.box(12,.5,5,-12,8.6,19.6,'#5d5c55');B.cyl(.25,.25,8,5,-17.6,4.6,21.6,'#3a3a36');B.cyl(.25,.25,8,5,-6.4,4.6,21.6,'#3a3a36');
+       B.box(7,4,4,13,2.6,6,'#4e5a48');B.box(1,1.4,3.4,16.7,3,6,'#2a2c28');B.cyl(.25,.25,2.2,5,11,5.6,7.4,'#262622');B.cyl(2,2,6,12,13,3.2,14,'#8b8f86',Math.PI/2,0,0);B.box(1,2,1,10.6,1,14,'#55564f');B.box(1,2,1,15.4,1,14,'#55564f');
+       for(const [dx,dz] of [[-16,-16],[16,-16],[-16,16],[16,16]]){const x1=-14+dx,z1=-8+dz,x0=-14,z0=-8,yt=58,L=Math.hypot(dx,yt-2,dz);B.cyl(.09,.09,L,3,(x0+x1)/2,(yt+2)/2,(z0+z1)/2,'#2a2a28',Math.atan2(-dz,yt-2),0,Math.atan2(dx,yt-2));}}
       const fr='#7a7f84';for(let i=0;i<7;i++){const y=14+i*9,w1=5.4-i*.5;for(const [sx,sz] of [[-1,-1],[1,-1],[1,1],[-1,1]])B.box(.8,9.4,.8,-14+sx*w1/2,y+4.7,-8+sz*w1/2,fr);
         if(i<6){B.box(w1,.5,.5,-14,y+9,-8-w1/2,fr);B.box(w1,.5,.5,-14,y+9,-8+w1/2,fr);B.box(.5,.5,w1,-14-w1/2,y+9,-8,fr);B.box(.5,.5,w1,-14+w1/2,y+9,-8,fr);}}
       B.cyl(.45,.45,12,6,-14,83,-8,'#c0c4c6');B.cyl(5,.4,2,12,-8,52,-8,'#d8dcd4',0,0,Math.PI/2);break;}

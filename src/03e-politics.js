@@ -54,7 +54,7 @@ function polAI(T){const id=T.id;if(G.t<60)return;
   const hq=G.ents.find(e=>e.isB&&e.kind==='hq'&&e.team===id&&!e.dead);if(!hq)return;
   const mine=G.ents.filter(e=>e.team===id&&!e.dead),enemies=G.teams.filter(O=>O.id!==id&&!O.reb&&!O.out&&!ally(O.id,id));
   // one spy at a time
-  const spies=mine.filter(e=>!e.isB&&e.kind==='spy'),inQ=(T.q.barracks||[]).some(q=>q.kind==='spy');
+  const spies=mine.filter(e=>!e.isB&&e.kind==='spy'),inQ=qItems(T,'barracks').some(q=>q.kind==='spy');
   if(!spies.length&&!inQ&&G.t>240&&T.credits>1300&&enemies.length&&done(id,'barracks'))enqueue(id,'spy');
   for(const u of spies){if(u.sj||G.t<(u.spCd||0))continue;
     let best=null,bd=1e18;for(const O of enemies){const h=G.ents.find(e=>e.isB&&e.kind==='hq'&&e.team===O.id&&!e.dead);if(!h)continue;const d=Math.hypot(h.x-u.x,h.y-u.y);if(d<bd){bd=d;best={O,h};}}
@@ -64,5 +64,5 @@ function polAI(T){const id=T.id;if(G.t<60)return;
       else if(Object.keys(O.upg||{}).some(k=>O.upg[k]&&!T.upg[k]&&UPG[k]))job={k:'upg',tid:best.h.id};}
     if(job)polSpyCmd(id,Object.assign({ids:[u.id]},job));}
   // a few decoys travel with the army
-  const dec=mine.filter(e=>!e.isB&&e.s&&e.s.fake).length,decQ=(T.q.factory||[]).filter(q=>BASE[q.kind]&&BASE[q.kind].fake).length;
+  const dec=mine.filter(e=>!e.isB&&e.s&&e.s.fake).length,decQ=qItems(T,'factory').filter(q=>BASE[q.kind]&&BASE[q.kind].fake).length;
   if(G.t>360&&dec+decQ<3&&T.credits>500&&done(id,'factory'))enqueue(id,['dtank','darty','dsam'][(dec+decQ)%3]);}
