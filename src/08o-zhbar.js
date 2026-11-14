@@ -54,8 +54,8 @@ html body #side #panel .zhEmpty{display:none!important}
 .orddock.zhin{right:auto!important;bottom:auto!important;min-width:0!important;padding:6px!important;background:none!important;box-shadow:none!important;border:0!important;display:flex!important;flex-wrap:wrap-reverse;justify-content:flex-end;align-content:flex-start;gap:4px;pointer-events:none}
 .orddock.zhin .cmdrow{display:contents!important}
 .orddock.zhin button{pointer-events:auto;width:var(--zb,74px)!important;height:calc(var(--zb,74px)*.8)!important;padding:0!important;margin:0!important;font-size:0!important;border-radius:1px!important;border:1px solid #9fc0e0!important;
- background:radial-gradient(circle at 50% 40%,#3b5566,#101a20 80%)!important;display:flex!important;align-items:center;justify-content:center}
-.orddock.zhin button>i{position:static!important;margin:0!important;transform:none!important;font-size:30px!important;font-style:normal;filter:drop-shadow(0 1px 1px #000)}
+ background:radial-gradient(circle at 50% 40%,#3b5566,#101a20 80%)!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important}
+.orddock.zhin button>i{position:static!important;margin:0!important;transform:none!important;display:block!important;width:100%!important;flex:1 1 100%!important;text-align:center!important;line-height:1!important;padding:0!important;font-size:30px!important;font-style:normal;filter:drop-shadow(0 1px 1px #000)}
 .orddock.zhin button:hover{box-shadow:inset 0 0 0 2px #fff,0 0 8px #6fb0ff!important}
 .orddock{right:126px!important}
 /* portrait / emblem + rank */
