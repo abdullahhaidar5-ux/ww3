@@ -1,0 +1,39 @@
+  page: shader warm-up 8759 ms, 62 models, 120 objects in 661 steps (longest 934 ms), 114 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 43 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=false frames=234 normal=43ms (quiet max 110) longest=114ms three(progs/geo/tex)=+0/+1/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":3,"bufKB":5,"vao":2,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 114ms@2.5s {} ; 111ms@10.1s {} ; 110ms@5.6s {} ; 108ms@10.3s {} ; 108ms@8.6s {}
+  frames that made the GPU work (1):
+    2.33s 38ms {"buf":3,"bufKB":5.1,"vao":1} three geo/tex 577/248
+IR worst JS call (not drawing): simUpdate 49ms; FAIL: launch failed
+  page: shader warm-up 4678 ms, 65 models, 125 objects in 661 steps (longest 590 ms), 120 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +18s] normal frame 35 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=false frames=206 normal=35ms (quiet max 98) longest=144ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 144ms@0.1s {} ; 102ms@5.6s {} ; 102ms@6.6s {} ; 99ms@6.0s {} ; 98ms@2.6s {}
+RU worst JS call (not drawing): simUpdate 26ms; FAIL: launch failed; 102 errors: console: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:42499/index.html:13676:212)
+    at updateUI (http://127.0.0.1:42499/index.html:17909:79)
+    at buildPanels (http://127.0.0.1:4 | console: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:42499/index.html:13676:212)
+    at updateUI (http://127.0.0.1:42499/index.html:17909:79)
+    at loop (http://127.0.0.1:42499/in | console: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:42499/index.html:13676:212)
+    at updateUI (http://127.0.0.1:42499/index.html:17909:79)
+    at w (eval at evaluate (:311:30), 
+  page: shader warm-up 3724 ms, 59 models, 114 objects in 658 steps (longest 544 ms), 108 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +18s] normal frame 38 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=false frames=236 normal=38ms (quiet max 112) longest=118ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 118ms@6.7s {} ; 112ms@9.7s {} ; 100ms@2.2s {} ; 96ms@6.8s {} ; 93ms@1.9s {}
+US worst JS call (not drawing): simUpdate 25ms; FAIL: launch failed; 107 errors: console: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:42499/index.html:13676:212)
+    at updateUI (http://127.0.0.1:42499/index.html:17909:79)
+    at buildPanels (http://127.0.0.1:4 | console: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:42499/index.html:13676:212)
+    at updateUI (http://127.0.0.1:42499/index.html:17909:79)
+    at loop (http://127.0.0.1:42499/in | console: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:42499/index.html:13676:212)
+    at updateUI (http://127.0.0.1:42499/index.html:17909:79)
+    at w (eval at evaluate (:311:30), 
+SUPERFREEZE FAIL
