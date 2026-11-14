@@ -34,10 +34,10 @@ await pg.evaluate(() => { const T = G.teams[0]; T.charge = T.sup.charge - 200; G
 await pg.waitForTimeout(1500); await shot('banner');
 await pg.waitForFunction(() => typeof FOGC !== 'undefined' && FOGC && FOGC.b, null, { timeout: 170000 });
 const F = await pg.evaluate(async () => { const hq0 = G.ents.find(e => e.team === 0 && e.kind === 'hq'); const hq1 = G.ents.find(e => e.team === 1 && e.kind === 'hq');
-  for (let i = 0; i < 30; i++) { updateFog(); await new Promise(r => setTimeout(r, 20)); } const px = (x, y) => { const c = FOGC, v = c.getContext('2d').getImageData(Math.floor(x * c.width / MAPW), Math.floor(y * c.height / MAPH), 1, 1).data[1]; return v; };
+  for (let i = 0; i < 6; i++) updateFog(); const px = (x, y) => { const c = FOGC, v = c.getContext('2d').getImageData(Math.floor(x * c.width / MAPW), Math.floor(y * c.height / MAPH), 1, 1).data[1]; return v; };
   const o = { home: px(hq0.x, hq0.y), enemyBase: px(hq1.x, hq1.y) };
-  const u = G.ents.find(e => e.team === 0 && !e.isB && !e.dead); const ox = u.x, oy = u.y; const tgt = { x: Math.min(MAPW - 200, ox + 900), y: oy }; u.x = tgt.x; u.y = tgt.y; for (let i = 0; i < 30; i++) { updateFog(); await new Promise(r => setTimeout(r, 15)); }
-  o.newSpot = px(tgt.x, tgt.y); u.x = ox; u.y = oy; for (let i = 0; i < 30; i++) { updateFog(); await new Promise(r => setTimeout(r, 15)); } o.rememberedWhenAway = px(tgt.x, tgt.y); o.unexploredRef = px(MAPW - 60, MAPH - 60); return o; });
+  const u = G.ents.find(e => e.team === 0 && !e.isB && !e.dead); const ox = u.x, oy = u.y; const tgt = { x: Math.min(MAPW - 200, ox + 900), y: oy }; u.x = tgt.x; u.y = tgt.y; for (let i = 0; i < 6; i++) updateFog();
+  o.newSpot = px(tgt.x, tgt.y); u.x = ox; u.y = oy; for (let i = 0; i < 6; i++) updateFog(); o.rememberedWhenAway = px(tgt.x, tgt.y); o.unexploredRef = px(MAPW - 60, MAPH - 60); return o; });
 console.log(JSON.stringify(F)); await shot('fog');
 await pg.evaluate(() => { const hq1 = G.ents.find(e => e.team === 1 && e.kind === 'hq'); G.teams[0].charge = G.teams[0].sup.charge; launch(0, hq1.x, hq1.y); simUpdate(1); });
 await pg.waitForTimeout(2500); await shot('strike');
