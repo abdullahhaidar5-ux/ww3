@@ -1,0 +1,25 @@
+  page: shader warm-up 11839 ms, 62 models, 120 objects in 603 steps (longest 1226 ms), 115 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 81 ms; firing
+IR {"sup":"Kheibar Missile Strike","working":true,"n":12,"crowd":36} launched=false frames=199 normal=81ms (quiet max 279) longest=378ms three(progs/geo/tex)=+0/+1/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":5,"bufKB":275,"vao":2,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 378ms@5.3s {} ; 240ms@10.1s {} ; 234ms@4.1s {} ; 230ms@5.9s {} ; 227ms@9.1s {}
+  frames that made the GPU work (1):
+    2.78s 62ms {"buf":5,"bufKB":274.7,"vao":1} three geo/tex 520/163
+IR worst JS call (not drawing): simUpdate 40ms; FAIL: launch failed
+  page: shader warm-up 5951 ms, 65 models, 125 objects in 620 steps (longest 858 ms), 121 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 81 ms; firing
+RU {"sup":"Iskander Strike","working":true,"n":2,"crowd":36} launched=false frames=151 normal=81ms (quiet max 285) longest=233ms three(progs/geo/tex)=+0/+1/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":5,"bufKB":275,"vao":2,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 233ms@1.2s {} ; 230ms@2.3s {} ; 226ms@3.7s {} ; 223ms@2.7s {} ; 220ms@0.1s {}
+  frames that made the GPU work (1):
+    2.54s 204ms {"buf":5,"bufKB":274.7,"vao":2} three geo/tex 620/236
+RU worst JS call (not drawing): simUpdate 55ms; FAIL: launch failed
+  page: shader warm-up 4457 ms, 59 models, 114 objects in 612 steps (longest 847 ms), 107 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +18s] normal frame 82 ms; firing
+US {"sup":"Tomahawk Salvo","working":true,"n":6,"crowd":36} launched=false frames=170 normal=82ms (quiet max 215) longest=253ms three(progs/geo/tex)=+0/+1/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":5,"bufKB":275,"vao":2,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 253ms@3.6s {} ; 252ms@7.2s {} ; 232ms@2.3s {} ; 224ms@9.0s {} ; 221ms@3.4s {}
+  frames that made the GPU work (1):
+    1.36s 101ms {"buf":5,"bufKB":274.7,"vao":2} three geo/tex 505/136
+US worst JS call (not drawing): updateUI 134ms; FAIL: launch failed
+SUPERFREEZE FAIL
