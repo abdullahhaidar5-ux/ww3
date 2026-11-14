@@ -8,7 +8,7 @@
 const MPL={el:null,log:[],key:''};
 (function(){const s=document.createElement('style');s.id='mplCss';s.textContent=`
 body.mplon #menu{visibility:hidden}
-#mpl{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:2vh 2vw;background:radial-gradient(ellipse at center,#0000 35%,#000a 100%);font-family:inherit;color:#e4eadf;animation:lkIn .25s ease-out}
+#mpl{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:2vh 2vw;background:radial-gradient(ellipse at center,#0006 20%,#000d 100%);font-family:inherit;color:#e4eadf;animation:lkIn .25s ease-out}
 #mpl .mfr{position:relative;display:grid;grid-template-columns:minmax(0,1.75fr) minmax(300px,1fr);grid-template-rows:auto minmax(0,1fr) auto auto;gap:14px 20px;width:min(1560px,96vw);height:min(920px,94vh);padding:22px 26px 20px;background:linear-gradient(180deg,#252a26ee,#161a17f2);border:2px solid #5b6a5c;border-radius:6px;box-shadow:0 0 0 1px #0009,0 0 22px #7fb88a55,inset 0 0 18px #7fb88a22,0 18px 60px #000c}
 #mpl .mfr:before{content:"";position:absolute;inset:6px;border:1px solid #8ea88f66;border-radius:3px;pointer-events:none}
 #mpl .mhd{grid-column:1/3;display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
@@ -30,12 +30,12 @@ body.mplon #menu{visibility:hidden}
 #mpl .mrd{font-size:15px;font-weight:700;letter-spacing:.05em;color:#8d9b8c}#mpl .mrd.on{color:#6fe39a}
 #mpl .mopts{display:flex;flex-wrap:wrap;gap:10px 26px;align-items:center;padding:10px 14px;border:1px solid #3b4a3d;border-radius:4px;background:#141915;font-size:17px}
 #mpl .mopts label{display:flex;gap:10px;align-items:center;color:#b9c7b6}#mpl .mopts b{color:#e4eadf;font-weight:600}
-#mpl .mright{display:flex;flex-direction:column;gap:12px;min-height:0}
+#mpl .mright{display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto}
 #mpl .mpv{border:1px solid #5b6a5c;border-radius:4px;background:#0b0f0c;padding:8px;box-shadow:inset 0 0 14px #000}
-#mpl .mpv canvas{display:block;width:100%;height:auto;border-radius:2px;image-rendering:auto}
+#mpl .mpv canvas{display:block;width:auto;max-width:100%;max-height:31vh;margin:0 auto;height:auto;border-radius:2px;image-rendering:auto}
 #mpl .mmap{font-size:25px;font-weight:700;letter-spacing:.06em}#mpl .mmapn{font-size:17px;opacity:.75}
 #mpl .mchat{grid-column:1/3;display:flex;flex-direction:column;gap:6px;min-height:0}
-#mpl .mlog{height:clamp(70px,13vh,130px);overflow:auto;background:#0f130f;border:1px solid #3b4a3d;border-radius:4px;padding:8px 12px;font-size:16px;line-height:1.45;color:#c4d0c1}
+#mpl .mlog{height:clamp(60px,10vh,100px);overflow:auto;background:#0f130f;border:1px solid #3b4a3d;border-radius:4px;padding:8px 12px;font-size:16px;line-height:1.45;color:#c4d0c1}
 #mpl .mlog div{white-space:pre-wrap}#mpl .mchat input{font-size:17px;padding:8px 12px;background:#101511;border:1px solid #3b4a3d;border-radius:4px;color:#e4eadf}
 #mpl .mft{grid-column:1/3;display:flex;align-items:center;gap:16px}
 #mpl .mbtn{font:700 24px inherit;font-family:inherit;letter-spacing:.14em;padding:12px 38px;min-width:230px;color:#e9efe3;background:linear-gradient(180deg,#4a5649,#2c342c);border:1px solid #8ea88f;border-radius:4px;cursor:pointer;box-shadow:0 0 0 1px #000a,inset 0 1px 0 #ffffff33}
@@ -64,8 +64,8 @@ function mplShow(D){
   const L=E('div','mleft'),tb=document.createElement('table');tb.id='mplTable';tb.innerHTML='<thead><tr><th>Player</th><th>Colour</th><th>Nation</th><th>Team</th><th></th></tr></thead>';const bd=document.createElement('tbody');
   D.rows.forEach((r,i)=>{const tr=document.createElement('tr');tr.className=(r.you?'me ':'')+(r.kind==='open'?'open':'');tr.style.setProperty('--tc',TEAM_COL[((r.tm|0)+8)%8]);const td=()=>{const c=document.createElement('td');tr.append(c);return c;};
     const c1=td(),nm=E('div','mnm');
-    if(r.kind==='open'){if(r.ed&&r.ed.slot){const s=document.createElement('select');s.setAttribute('aria-label','Slot '+(i+1));opt(s,'',r.ed.slotLabel||'Open');['Easy','Medium','Hard','Brutal'].forEach((n,d)=>opt(s,d,'AI '+n));s.value='';s.onchange=()=>{if(s.value!=='')r.ed.slot(+s.value);};nm.append(s);}else nm.append(E('b','','Open'));c1.append(nm);td().append(E('span','',''));td().append(E('span','','—'));td().append(E('span','','—'));td().append(E('span','mrd',''));bd.append(tr);return;}
-    if(r.kind==='ai'){nm.append(E('span','mtag','AI'));if(r.ed&&r.ed.slot){const s=document.createElement('select');s.setAttribute('aria-label','Computer player '+(i+1));opt(s,'',"Open (remove)");['Easy','Medium','Hard','Brutal'].forEach((n,d)=>opt(s,d,n));s.value=String(r.d|0);s.onchange=()=>r.ed.slot(s.value===''?-1:+s.value);nm.append(s);if(r.pers)nm.append(r.pers);}else nm.append(E('b','',['Easy','Medium','Hard','Brutal'][r.d|0]));}
+    if(r.kind==='open'){if(r.ed&&r.ed.slot){const s=document.createElement('select');s.setAttribute('aria-label','Slot '+(i+1));opt(s,'',r.ed.slotLabel||'Open');AI_LEVELS.forEach((n,d)=>opt(s,d,'AI '+n));s.value='';s.onchange=()=>{if(s.value!=='')r.ed.slot(+s.value);};nm.append(s);}else nm.append(E('b','','Open'));c1.append(nm);td().append(E('span','',''));td().append(E('span','','—'));td().append(E('span','','—'));td().append(E('span','mrd',''));bd.append(tr);return;}
+    if(r.kind==='ai'){nm.append(E('span','mtag','AI'));if(r.ed&&r.ed.slot){const s=document.createElement('select');s.setAttribute('aria-label','Computer player '+(i+1));opt(s,'',"Open (remove)");AI_LEVELS.forEach((n,d)=>opt(s,d,n));s.value=String(r.d|0);s.onchange=()=>r.ed.slot(s.value===''?-1:+s.value);nm.append(s);if(r.pers)nm.append(r.pers);}else nm.append(E('b','',AI_LEVELS[r.d|0]));}
     else{nm.append(LK.flag(r.f),E('b','',r.name));if(r.you){nm.append(E('span','mtag','you'));const pg=LK.ping();if(pg)nm.append(pg);}if(r.host&&!r.you)nm.append(E('span','mtag','leader'));}
     c1.append(nm);
     const sw=E('span','msw');td().append(sw);

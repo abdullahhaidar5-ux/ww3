@@ -10,7 +10,6 @@ const GLB={landing:null,me:{f:null,t:-1,r:0},roster:null,el:null,sent:0};
 #glob .gtag{font-size:12px;padding:2px 7px;border-radius:9px;background:#33443b;text-transform:uppercase;letter-spacing:.05em}
 #glob .gbtn{display:block;width:100%;margin-top:10px;padding:13px;font-size:19px;font-weight:700;border-radius:8px;border:0;cursor:pointer;background:#c9892a;color:#17110a}
 #glob .gbtn.on{background:#2a9a55;color:#fff}#glob .gbtn.sec{background:#2a3a33;color:#cfe0d5;font-size:15px;font-weight:500;padding:9px}
-.startbtn.rdyok{box-shadow:0 0 0 2px #53e08a,0 0 22px #53e08a99;animation:rdyp 1.4s ease-in-out infinite}@keyframes rdyp{50%{box-shadow:0 0 0 2px #53e08a,0 0 34px #53e08a}}
 `;document.head.appendChild(s);})();
 function glName(r,k){return r.me?'You':r.h?'Leader':'Friend '+k;}
 // what the lobby looks like to a guest: from the Cloudflare blob or the browser host's roster

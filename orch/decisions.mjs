@@ -293,6 +293,12 @@ for (const [w, why] of [['Secretary-General', 'RS leader'], ['Leader of the Revo
   ck(r.status === 0 && /BATTLEMAPFAIR STATIC PASS/.test(r.stdout || ''), 'a listed Battle map fails the structural fairness checks: ' + (r.stdout || r.stderr || '').trim().split('\n').filter(l => /FAIL|differ|fewer|only|cannot|not equally/.test(l)).slice(0, 6).join(' | '));
   const bm = SRC['02d-battlemaps.js'] || ''; ck(/for\(const id in BMAPS\)bmRegister\(id,BMAPS\[id\]\)/.test(bm) && !/MAP_KEYS\.push/.test(bm), 'Battle maps must register through bmRegister and never join the Conquest list (MAP_KEYS)');
   ck(/cmBuild\(c,key\)/.test(bm) && /cmCanon\(/.test(bm), 'Battle maps must load through the map editor loader (cmCanon / cmBuild): one map system'); }
+// ONLINE LOBBY LAYOUT (Abdullah 2026-11-14 16:51 "Do this layout for multiplayer", Zero Hour skirmish screen): host and guest share ONE framed screen
+// (src/08d-mplobby.js): players table Player / Colour / Nation / Team, a map preview with SELECT MAP, options row, log + chat line, PLAY GAME / READY and BACK.
+{ const ml = SRC['08d-mplobby.js'] || '', nt = SRC['07-net.js'] || '', lb = SRC['08d-lobby.js'] || '', kit = SRC['08d-lobkit.js'] || '';
+  ck(/<th>Player<\/th><th>Colour<\/th><th>Nation<\/th><th>Team<\/th>/.test(ml) && /SELECT MAP/.test(ml) && /mapPreview\(D\.mk,cv\)/.test(ml) && /PLAY GAME/.test(ml) && /BACK/.test(ml), 'online lobby: must be the framed screen with a Player/Colour/Nation/Team table, map preview, SELECT MAP, PLAY GAME and BACK');
+  ck(/mplShow\(/.test(nt) && /mplShow\(/.test(lb), 'online lobby: leader (07-net) and guest (08d-lobby) must both draw through mplShow');
+  ck(!/E\('div','lobhd'\)|E\('div','seats'\)|'grow'/.test(nt + lb) && !/^\.seat|^\.lob\{/m.test(kit), 'online lobby: the old seat-list lobby layout must be gone'); }
 // GROUND LOOK (Abdullah 2026-11-13 20:05 "This ground texture is too cartoony"): battle ground uses the real CC0 photo ground
 // set (TERR_DET2: sand, cracked earth, rocky soil, packed dirt) in the terrain shader; every terrain detail texture is
 // mipmapped (no shimmer); the road mask is drawn smooth from the road curves (no 16-unit staircase); no hairline crack strokes.

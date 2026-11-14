@@ -39,6 +39,7 @@ async function renderGames(){if(!NET.room)return;const el=$('games');const all=N
     if(g.sp&&!g.pw&&!mine){const w=document.createElement('button');w.className='ghost';w.textContent=(g.ns|0)>=SPEC_MAX?'👁 Full':'👁 Watch';w.title='Watch this battle as a spectator: no army, you see everything';w.disabled=!!NET.code||!!NET.game||(g.ns|0)>=SPEC_MAX;w.onclick=()=>{initAudio();NET.wantSpec=1;joinGame(p).then(r=>{if(r!==true)NET.wantSpec=0;});};row.append(w);}
     el.append(row);}}
 const GAME_URL=window.WW3_P2P?(()=>{try{const r=document.referrer||'';if(/itch\.io/.test(r))return r.split('#')[0];}catch(e){}return location.href.split('#')[0];})():'https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi';
+const AI_LEVELS=['Easy','Medium','Hard','Brutal'];// computer player levels shown in the lobby's slot menus
 function lobbyCode(){return (NET.code&&NET.code!=='join'?NET.code:NET.jcode)||'';}
 // a password-protected game's invite carries the password in the link's fragment (#…&pw=, never sent to any server),
 // so a friend joins in one tap; the text also spells it out for anyone typing the code

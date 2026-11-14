@@ -58,7 +58,7 @@ K.cdLine=function(ok,go){const C=K.cd;C.ok=ok;C.go=go;
   const d=E('div','lkcd');const t=E('span','','Everyone is ready — starting in 5…');t.id='lkcdt';const b=E('button','chip','Cancel');b.onclick=()=>{C.off=1;C.t0=0;d.remove();};d.append(t,b);
   if(!C.iv)C.iv=setInterval(K.cdTick,200);return d;};
 K.cdTick=function(){const C=K.cd;if(!C.t0){if(C.iv&&!document.getElementById('lkcdt')){clearInterval(C.iv);C.iv=0;}return;}
-  if(!C.ok||!C.ok()||!document.querySelector('.startbtn')){C.t0=0;return;}
+  if(!C.ok||!C.ok()||!document.querySelector('#mplPlay')){C.t0=0;return;}
   const left=Math.ceil(5-(performance.now()-C.t0)/1000),t=document.getElementById('lkcdt');
   if(left<=0){C.t0=0;C.off=1;try{C.go();}catch(e){}return;}
   if(t)t.textContent='Everyone is ready — starting in '+left+'…';};
