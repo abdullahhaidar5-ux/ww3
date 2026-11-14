@@ -1,0 +1,24 @@
+3D models: 3 of 83 ready=true  (page open to models ready: 0.9s)
+Playtest card: 10 things to try, votes saved into the file
+grand campaign is lazy: grand.6fe69d8570.js not loaded at the menu
+living main menu: your war drawn from the save notes (campaign, battle, none), campaign code not loaded
+battle: 4 players IR vs US vs JP vs KR on strait
+loading screen finished after 116.1s
+building dressing: 64 building looks checked, nothing floats
+fortline: {"infWl":false,"oldForm":true,"n":16,"angs":3,"bent":true,"bad":false,"infBtns":["⛏ Dig in (I)"],"dzBtns":["⛏ Fortification line (I)","🔧 Fix vehicles"]}
+3D models for this battle: 61 of 61
+after 4.0 game-min: 60 units, 37 structures, per team 16/20/19/21 (peak 19/22/22/21), last chunk 1229 ms
+peak memory (node + browser, summed RSS): 3524 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+SMOKE PASS (239s) — screenshots in orch/out/*.png (this run: orch/out/runs/20261114-071540-smoke/)
+live battle: IR vs US on strait (loaded after 95 s)
+live end: t=180.06s, 64 units/buildings, hash 92af92a8; replay file 40 KB (13 KB per game-minute, 594 frames)
+replay loaded after 9 s: 594 frames, 19 keyframes
+replay to the end: hash 92af92a8 matches (64 units/buildings)
+screenshot orch/out/replay.png
+seek to 90 s showed 56 units/buildings
+seek to the middle, then to the end: hash 92af92a8 matches (64 units/buildings)
+(158 s)
+REPLAY PASS
