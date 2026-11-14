@@ -24,3 +24,7 @@ Remove the "COMMAND / Auto-build [U]" panel on the left of the battle screen and
 ## Also (Abdullah 12:22): "Remove map layers"
 
 Remove the "Layers ▾" button and dropdown in the top bar and the map-layer overlays it toggles, with their hotkeys, settings, help text and tests (leftovers rule). Overlays the game needs by default (fog, the minimap, the supply-road drawing) stay always-on as they are. Add a guard in decisions.mjs: no Layers button.
+
+## Also (Abdullah 12:41): "Remove the breaking news feature"
+
+Remove the "Breaking news" banner/ticker feature from Battle and every remaining mode (grep -i "breaking news", BREAKING): its UI, triggers, sounds, settings, help/what's-new text and tests (leftovers rule). Add a guard in decisions.mjs: no breaking-news UI.
