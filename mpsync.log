@@ -1,0 +1,37 @@
+[4s] both pages loaded (menu model downloads done after 2s / 2s)
+[4s] host lobby open, code o4sg9o
+[4s] client joining
+[19s] battle: US vs RU on bm_splitridge; client is slot 1
+[71s] both pages finished loading
+[71s] conditions: host picked Overcast; host shows Overcast, client shows Overcast
+[71s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[74s] client order: 2/2 of the client's units moved on the host
+[76s] check @1.0 min t=60s: host 16 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 2590 client 2590
+[76s] --reconnect: the client's connection is cut for 12 game-s
+[76s] --reconnect: the client (now showing 0 entities, 0 own) thinks it lost the host and reconnects
+[76s] --reconnect: after 0.2 s the client is reconnected
+[79s] right after reconnecting t=77s: host 17 entities, client side sees 8 (own 7); client has 8 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 2910 client 2910
+[82s] check @2.5 min t=150s: host 23 entities, client side sees 7 (own 5); client has 8 (own 5); missing 0, extra 0, off-position 0, mismatched 0; credits host 4030 client 4030
+[89s] check @4.0 min t=240s: host 26 entities, client side sees 5 (own 3); client has 6 (own 3); missing 0, extra 0, off-position 0, mismatched 0; credits host 4830 client 4830
+[91s] traffic host->client 1133 KB in 2345 messages, client->host 8 KB in 52; client lag max 0.30 game-s; 12 ms per 0.5 s step
+[91s] 23 live checks, 0 out of tolerance; up to 3 enemy entities were in the client's view at once
+[91s] --reconnect: at t=240s the client's side is still the player's
+peak memory (node + browser, summed RSS): 3554 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: client console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/o4sg9o?role=host&key=jcu7k0op5s8xdphjkt' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MPSYNC FAIL: host console error: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:36263/index.html:13676:212)
+    at updateUI (http://127.0.0.1:36263/index.html:17909:79)
+    at buildPanels (http://127.0.0.1:36263/index.html:13529:65)
+    at g.terrain (http://127.0.0.1:36263/index.html:14523:34)
+    at after (91s)
+  ✗ client console error: ReferenceError: conqBan is not defined
+    at updateUI (http://127.0.0.1:36263/index.html:13676:212)
+    at updateUI (http://127.0.0.1:36263/index.html:17909:79)
+    at buildPanels (http://127.0.0.1:36263/index.html:13529:65)
+    at g.terrain (http://127.0.0.1:36263/index.html:14523:34)
+    at after
