@@ -1,0 +1,14 @@
+conquest strait       stuck episodes   2  mover-seconds 3418
+conquest golan        stuck episodes   7  mover-seconds 3064
+conquest taiwan       stuck episodes  11  mover-seconds 3046
+conquest honshu       stuck episodes   2  mover-seconds 3402
+conquest volga        stuck episodes   0  mover-seconds 2167
+conquest rivers       stuck episodes   1  mover-seconds 2808
+battle   strait       stuck episodes   1  mover-seconds 5982
+battle   golan        stuck episodes   4  mover-seconds 3125
+battle   taiwan       stuck episodes   0  mover-seconds 3194
+battle   honshu       stuck episodes   3  mover-seconds 4304
+battle   volga        stuck episodes   1  mover-seconds 3613
+battle   rivers       stuck episodes   1  mover-seconds 3848
+total stuck episodes 33 {"against building barracks":3,"open ground":19,"embedded in blocked tile/footprint":1,"bridge":8,"against building hq":1,"against building turret":1}
+STUCKSCAN FAIL (33 <= 8)
