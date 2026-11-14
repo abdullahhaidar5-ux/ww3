@@ -219,6 +219,14 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(/k==='a'&&\(e\.ctrlKey\|\|e\.metaKey\)[^\n]*selectArmy\(\)/.test(u), 'Ctrl+A no longer selects the whole army in battle');
   ck(/k==='q'[^\n]*CROT\.hold=true/.test(u) && /function camRotSnap/.test(u), 'Q no longer rotates the battle camera');
   ck(!/\(Q\)|Q: army/.test(u), 'a tooltip/hint still says Q selects the army'); }
+// 2c. Test range (2026-11-13 19:59): both nations are chosen in its window; the old auto-pick of the target is gone; the battle panel can reopen the window.
+{ const u = SRC['08-ui.js'], mn = SRC['14-menu.js'];
+  ck(!/function startSandbox\(\)/.test(u) && !/FKEYS\.find\(k=>k!==setup\.p&&k!=='RS'/.test(u), 'Test range still auto-picks the target nation');
+  ck(/scr\('t-range'/.test(mn) && /item\('Test range',\(\)=>mxTrOpen\(false\)/.test(mn), 'Test range menu item does not open the nation window');
+  ck(/id='sbNations'/.test(u) && /Change nations/.test(u), 'Test range battle panel lost the "Change nations..." item'); }
+// 2d. No out-of-supply badge in Test range or Battle (Abdullah 2026-11-13 20:03 "What's the red symbols"): sandbox own units are always in supply.
+{ ck(/oos=[^;]*!G\.sandbox&&!e\.sup/.test(SRC['06-view.js']), 'out-of-supply badge can show in Test range');
+  ck(/let ins=!!\(G\.sandbox&&u\.team===0\)/.test(SRC['03-sim.js']), 'Test range units can run out of supply'); ck(/G\.sandbox&&u\.team===0\)u\.am=u\.amx/.test(SRC['03-sim.js']), 'Test range units can run out of ammo'); }
 // 3. Main menu order + naming (2026-11-07 21:41): Single player · Multiplayer · Test range, then small extras; no Classic.
 { const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).filter(Boolean).slice(0, 3);
   ck(m.join('|') === 'Single player|Multiplayer|Test range', 'main menu order is ' + m.join(' · '));
@@ -292,6 +300,12 @@ try {
     const sp = await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).map(b => ((b.firstChild||{}).textContent||'').trim()));
     ck(sp.filter(t => /^(Grand campaign|Conquest|Battle)$/.test(t)).join('|') === 'Conquest|Battle' && sp.includes('Missions') && sp.includes('Tutorial') && sp.includes('Load game') && !sp.some(t => /^Grand campaign/.test(t)), 'Single player should list Conquest|Battle then Missions, Tutorial, Load game and NO Grand campaign (paused 2026-11-13), got ' + sp.join('|'));
     ck(await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).every(b => b.querySelector('small'))), 'every Single player item needs a one-line description');
+    // Test range (Abdullah 2026-11-13 19:59 "Why can't I choose nations in test range"): the top-level item opens a small nation window, it does not start at once
+    await ev(() => { menuGo('title'); }); await page.waitForTimeout(700);
+    await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].find(b => ((b.firstChild || {}).textContent || '').trim() === 'Test range').click()); await page.waitForTimeout(900);
+    { const tr = await ev(() => ({ on: MX.cur === 't-range' && document.getElementById('ms-t-range').classList.contains('on'), nat: !!document.querySelector('#ms-t-range #pickP .fac'), tgt: !!document.querySelector('#ms-t-range #aiFac'), map: !!document.querySelector('#ms-t-range #mxtrmap'), start: !!document.querySelector('#ms-t-range .mxfoot button'), inGame: !!(typeof G !== 'undefined' && G) }));
+      ck(tr.on && tr.nat && tr.tgt && tr.map && tr.start && !tr.inGame, 'opening Test range must show the nation choice window (your nation, target, map, Start) and not start a battle: ' + JSON.stringify(tr)); }
+    await ev(() => { menuGo('title'); });
     await ev(() => menuGo('online'));
     const mpg = await ev(() => [...document.querySelectorAll('#ms-online #mxolg .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
     ck(mpg.join('|') === 'Conquest|Battle', 'Multiplayer should offer Conquest|Battle only (campaign paused 2026-11-13), got ' + mpg.join('|'));
@@ -484,6 +498,9 @@ try {
       esPage(null); return { mode: G.battle ? 'battle' : 'conquest', n: G.N, real, extra: nm, sp: S.p.length, sa: S.a.length, cols, colsOld, opinion: dts.includes('World opinion'), wrap: !!document.querySelector('#endStats .esC dt') }; });
     console.log('ghost team', JSON.stringify(gs)); ck(gs.real === 2 && gs.sp === 2 && gs.sa === 2, 'a 2-player ' + gs.mode + ' game must have exactly 2 teams in its end stats: ' + JSON.stringify(gs));
     ck(gs.cols === 2 && gs.colsOld === 2, 'scoreboard columns must equal the real players (a militia/ghost team must never get one): ' + JSON.stringify(gs)); ck(gs.opinion === !gs.mode.startsWith('b'), gs.mode + ' scoreboard world-opinion row is wrong: ' + JSON.stringify(gs)); }
+  // Test range started from its window with IR vs IL gives exactly those two teams (the old auto-pick is gone)
+  { const t = await ev(() => { startSandbox({ p: 'IR', a: 'IL', map: 'strait' }); return { sb: !!G.sandbox, f: G.teams.slice(0, 2).map(T => T.fac).join('-') }; });
+    ck(t.sb && t.f === 'IR-IL', 'Test range IR vs IL must give teams IR and IL, got ' + JSON.stringify(t)); }
   // ---- fixes1 (2026-11-11, "white streaks in Arabia", "oversized palms"): what a PLAYER gets on the first campaign map of a session.
   // The map must wait for the real land data (it used to be drawn on the hand-shaped stand-in and stay on it: chalk-white cliffs along the Red Sea);
   // snow only where snow can lie (never in Arabia; still on the Alps, the Himalaya and Greenland); palms no taller than the towns (one instanced draw).
