@@ -632,7 +632,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   /* Ctrl+A = select your whole army (was Q until 2026-11-07; Q now rotates the camera - Abdullah 19:54/19:55) */
   if(k==='a'&&(e.ctrlKey||e.metaKey)&&!e.altKey){e.preventDefault();keys.a=false;selectArmy();}
   if(k==='q'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.repeat&&!CROT.hold&&!G.over){CROT.hold=true;CROT.t0=e.timeStamp||performance.now();CROT.mv=0;CROT.sh=e.shiftKey;}
-  if(e.key==='Home'){e.preventDefault();camRotReset();}
+  if(e.key==='Home'){e.preventDefault();camRotReset();cam.tilt=0;}   /* Home also levels the camera tilt (a view tilted up into the sky looked like a blank white screen) */
   if(k==='t'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){selectTypes();}
   if(k==='f'&&G.sel.some(u=>!u.isB)){G.amove=true;G.defm=false;}if(k==='g'&&G.sel.some(u=>!u.isB&&u.team===ME)){G.defm=true;G.amove=false;}
   if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)for(const pk in POW_KEY)if(POW_KEY[pk]===k){powGo(pk);break;}
