@@ -939,7 +939,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}
 function playAnim(o,name,dt){const L=o.userData.mixers;if(!L)return;for(const M of L){if(M.cur!==name){const clip=M.anims.find(a=>a.name.toLowerCase().includes(name))||M.anims[0];if(clip){M.mix.stopAllAction();M.mix.clipAction(clip).play();}M.cur=name;}M.mix.update(dt);}}
-function propObj(key,x,z,rot,parent){const c=PROPS[key];if(!c||!MODELS.proto[key])return;const m=instModel(key,null,c.fit,c.size);if(!m)return;m.position.set(x,0,z);m.rotation.y=rot||0;m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});parent.add(m);return m;}
+function propObj(key,x,z,rot,parent){const c=PROPS[key];if(!c||!MODELS.proto[key])return;const m=instModel(key,null,c.fit,c.size);if(!m)return;m.position.set(x,0,z);m.rotation.y=rot||0;m.updateMatrix();const sk=!!m.getObjectByProperty('type','SkinnedMesh');m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}if(!sk&&o!==m){o.updateMatrix();o.matrixAutoUpdate=false;}});/* props never move relative to their building: no per-frame matrix compose */parent.add(m);return m;}
 // DE-BLOCK slice 2: procedural PBR concrete/plaster/corrugated materials (canvas colour + normal map, no external art), roof clutter, parapets, compound wall with gate
 const BKM={};
 /* DE-BLOCK slice 2b: real ambientCG PBR (Plaster001, Concrete034, CorrugatedSteel005; CC0) colour + normal tiles replace the procedural wall textures */

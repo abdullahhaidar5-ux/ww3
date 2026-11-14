@@ -82,10 +82,14 @@ function softP(on){for(const P of [PN_,PA_]){if(!P)continue;const u=P.m.uniforms
 // previous result is reused (a 1/60 s old soft shadow in the corners is not visible). View only. (speedS 2026-11-11)
 let _aoN=0,_aoRT=null;function aoDue(){_aoN++;if(_aoRT!==POST.dRT){_aoRT=POST.dRT;_aoN=0;return true;}let lite=false;try{lite=fxLv()>=1||QUAL.fps<50;}catch(e){}return !lite||(_shN&1)===0||_aoN<4;}   // on the frames the half-rate shadow pass skips (shadowDue runs later this frame and draws when _shN is odd here), so no frame pays for both
 function pass(mat,target){POST.quad.material=mat;R3.setRenderTarget(target);R3.render(POST.scn,POST.cam);}
-function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.setRenderTarget(null);R3.shadowMap.needsUpdate=shadowDue();R3.render(SCN,CAM);return;}
+// Every R3.render() walks the whole scene and recomputes every object's matrix (compose + multiply for ~16k objects, ~10 ms each on a mid PC
+// in a 300-unit fight). A frame renders the scene twice (depth pre-pass, then colour + shadows), so the matrices are brought up to date once
+// here and the passes reuse them (nothing moves between the passes). View only. (polishspeed 2026-11-14)
+function renderPost(){SCN.updateMatrixWorld();SCN.matrixWorldAutoUpdate=false;try{renderPost0();}finally{SCN.matrixWorldAutoUpdate=true;}}
+function renderPost0(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.setRenderTarget(null);R3.shadowMap.needsUpdate=shadowDue();R3.render(SCN,CAM);return;}
   sizePost();if(typeof visionTick==='function')try{visionTick(0);}catch(e){}
   const fogWas=FOGM?FOGM.visible:false;let postFog=false;
-  if(POST.mAO&&POST.aoOn!==false&&!(POST.aoLv!=null&&fxLv()>=POST.aoLv)){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}if(aoDue()){const hid=[];SCN.traverse(o=>{if(!o.visible)return;const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
+  if(POST.mAO&&POST.aoOn!==false&&!(POST.aoLv!=null&&fxLv()>=POST.aoLv)){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}if(aoDue()){const hid=[];SCN.traverseVisible(o=>{const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
     const bg=SCN.background;SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.clear();R3.render(SCN,CAM);SCN.overrideMaterial=null;for(const o of hid)o.visible=true;
     const A=POST.mAO.uniforms;A.dep.value=POST.dRT.depthTexture;A.near.value=CAM.near;A.far.value=CAM.far;const ty=Math.tan(CAM.fov*Math.PI/360);A.tanF.value.set(ty*CAM.aspect,ty);A.res.value.set(POST.dRT.width,POST.dRT.height);A.pm.value=POST.dRT.height/(2*ty);A.cw.value.copy(CAM.matrixWorld);A.tt.value=performance.now()/1000;A.fogT.value=FOGT;A.cloudK.value=POST.cloud??1;A.mapS.value.set(MAPW,MAPH);
     pass(POST.mAO,POST.aA);const ab=(src,dst,x,y)=>{POST.mBlur.uniforms.tex.value=src.texture;POST.mBlur.uniforms.dir.value.set(x/src.width,y/src.height);pass(POST.mBlur,dst);};ab(POST.aA,POST.aB,1,0);ab(POST.aB,POST.aA,0,1);}POST.mFinal.uniforms.fogK.value=postFog?1:0;
