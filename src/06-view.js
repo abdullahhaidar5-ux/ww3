@@ -135,7 +135,7 @@ function syncScene(dt){const live=new Set();
           if(sp>.4)for(const sd of [-1,1])part({x:e.x+ca*e.r*.75+sa*sd*e.r*.25,y:e.y+sa*e.r*.75-ca*sd*e.r*.25,h:WL+2,vx:sa*sd*rnd(20,40)+ca*10,vy:-ca*sd*rnd(20,40)+sa*10,vh:rnd(10,30),grav:1,f:.7,c:[.92,.96,1],s:rnd(2,3.5)*big,g:6,d:rnd(.4,.7),a:.6});}}
       e.lx=e.x;e.ly=e.y;}}catch(err){if(!e._drawErr){e._drawErr=1;console.warn('draw skipped',e.kind,err);}}}
   for(const [id,o] of OBJ)if(!live.has(id)){SCN.remove(o);OBJ.delete(id);}
-  if(G.fieldObj)G.fields.forEach((f,i)=>{const v=G.fieldObj[i];if(!v)return;const k=Math.ceil(v.n*Math.max(0,f.amt)/(f.amt0||9000));v.items.forEach((it,j)=>it.visible=j<k);});
+  sdDumpTick();
   if(G.sceneryPos)for(const [sx,sy,k,wx,wy] of G.sceneryPos){if(k!==2||wx==null||Math.random()>dt*5||!inView(sx,sy,.2))continue;part({x:wx+rnd(-3,3),y:wy+rnd(-3,3),h:groundH(wx,wy)+10,vx:2,rise:rnd(40,52),c:C_SMOKE,c2:[.5,.48,.45],ck:.35,s:rnd(4,6),g:7,d:rnd(3,4),a:.2});}
   if(G.towObj)G.tow.forEach((w,i)=>{const v=G.towObj[i];if(v&&v.lamp){const T=w.ow>=0&&G.teams[w.ow];v.lamp.material.color.set(T?T.color:'#999999');v.lamp.visible=T?((G.t*2)%1<.6):true;}});
   if(G.oilObj)G.oil.forEach((o,i)=>{const v=G.oilObj[i];const ph=G.t*1.6+i;
