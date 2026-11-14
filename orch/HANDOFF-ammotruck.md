@@ -12,7 +12,7 @@
 
 **Guard.** `orch/decisions.mjs` AMMO TRUCK block: every nation has `ammot` (War Factory, unarmed); a harv beside a dry tank gives it nothing and is not a supply point; an Ammo Truck refills the tank from its stock; and no source text says the supply truck refills ammo.
 
-**Gate.** build + `--check` OK; `node orch/smoke.mjs` SMOKE PASS (444 s); decisions: see the last line below. cigate: see the last line below.
+**Gate.** build + `--check` OK; `node orch/smoke.mjs` SMOKE PASS (444 s); `node orch/decisions.mjs` DECISIONS PASS (with the new guard). `orch/cigate.sh` ran once on commit 94a98a6d82 (branch `gate/94a98a6d82`, run 43559078276): after 70+ minutes the GitHub run was still **queued** (runner backlog), so NO gate/* results yet. Status: **ready in code, cigate result pending** - the conductor should read the gate statuses on `gate/94a98a6d82` (or re-run cigate) before landing, after orch/ammozone.
 
 **Lands after orch/ammozone** (this branch is built on top of it).
 
