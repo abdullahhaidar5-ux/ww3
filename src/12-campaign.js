@@ -213,13 +213,6 @@ function campDebrief(c,won){
 }
 function campLeave(){try{if(MODE!=='single')leaveNet();}catch(e){}MODE='single';ME=0;G=null;try{kcReset();}catch(e){}try{$('end').hidden=true;$('menu').hidden=false;renderGames();}catch(e){}}
 
-// objectives panel (on screen during a mission)
-function campPanel(){
-  let el=document.getElementById('campHud');
-  if(!G||!G.camp||G.over&&G.camp.fin){if(el)el.hidden=true;return;}
-  const c=G.camp;if(!el){el=campEl('div','position:fixed;left:10px;top:92px;z-index:600;max-width:min(300px,62vw);background:rgba(12,16,10,.82);border:1px solid #5d6e49;border-radius:8px;padding:8px 10px;color:#efe9d6;font-size:15px;line-height:1.45;pointer-events:none;');el.id='campHud';document.body.appendChild(el);}
-  el.hidden=false;
-  el.innerHTML=`<b>${c.m.title}</b> <span style="opacity:.6">· ${CAMP_DIFF[c.diff]}</span><br>`+c.m.obj.map(o=>`<span style="${c.o[o[0]]?'color:#9fd36b':''}">${c.o[o[0]]?'☑':'☐'} ${o[1]}</span>`).join('<br>')+(c.status?`<br><b style="color:#f0d27a">${c.status}</b>`:'');
-}
-setInterval(()=>{try{campPanel();}catch(e){}},400);
+// the mission objective is shown in the one goal line under the top bar (cqBanner, 08c-towns; 2026-11-13 orderfeel)
+setInterval(()=>{try{if(G&&G.camp)cqBanner();}catch(e){}},400);
 (function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Missions';b.title='Five single-player missions for Iran, the Lebanese Shia and the Zaidi Shia Movement';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();
