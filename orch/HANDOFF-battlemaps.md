@@ -18,3 +18,6 @@ overview-{tarbasin,splitridge,ferryquarter,breakwater,fourmills,sixroads}.jpg (t
 2. `python3 orch/build.py`; `node orch/battlemapfair.mjs --static --maps <id>` (seconds; must print PASS).
 3. `node orch/battlemapfair.mjs --battles --games 120 --maps <id>` (2p about 7 s/game; 6p about 25 s/game, run it in the background), then `--report`. All starts must win 40-60%.
 4. When it passes remove `hold:1`; `node orch/battlemapshots.mjs` (list picture) and `node orch/battlemapfair.mjs --static --dump orch/out/bm-static.json && python3 orch/battlemapshots.py orch/out/bm-static.json orch/concepts/battlemaps` (overview). Then smoke, decisions, one `orch/cigate.sh`.
+
+## Not done (new ORCH rules, orch/BATTLEMAPS-NOTE.md, arrived after this run started)
+Roads as supply lines per map, capturable tech buildings slots, no named towns, 120-game rule (already met for the 5 listed). The 5 listed maps still have town-to-town roads/named towns; next helper adapts them and then deletes the note.
