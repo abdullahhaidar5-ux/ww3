@@ -172,3 +172,12 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
     same battle pictured in each + side-by-side strip -> Abdullah picks tomorrow; the pick becomes default in one small landing.
   * One big overnight landing train instead of many; helpers' own gate runs optional (conductor's train gate decides).
   * ORCH checks only at ~01:59Z and once in the morning; no extra Opus helpers; next jobs on Sonnet.
+
+## Update Sat 2026-11-14 01:55Z (ORCH)
+- TRAIN 13 LANDED a3b627b 00:47Z, Pages built 00:49Z: campaign in Extras, six Battle maps, Infiltrator outfit B. (freezefix NOT in it.)
+- Done, waiting: civhumans 19f29b8 (28/28), sweepfixA b3daff2, sweepfixB c4248e1. orderfeel WIP 366b905. looktest 4c04100 (pictures?).
+  ORCH looked at civilians, order buttons, rings+goal line: good; sent to Abdullah 19:50 Chicago.
+- 19:52 Chicago photo (Battle, RS, Windows laptop) "In conquest and battle" -> he picked "Blocky supply pile" + "Green flag stays".
+  pileflag = trig_019xF6W6ixtVwWzzZdeXWueY (Opus) fired 01:54Z. Note: rally flag fix from train 12 apparently not enough.
+- Seen in his photo, NOT asked to fix: Windows taskbar covers the bottom bar and the right panel runs off-screen (he plays windowed) -
+  consider a fit-to-window check later.
