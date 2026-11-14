@@ -1,0 +1,30 @@
+menu {"btn":"▶ Tutorial: learn Conquest (10 min)","vis":false}
+-- out of order / skip / exit / restart
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   out of order: Defense Gun placed during step 1
+  ok   out of order: the tutorial stays on step 1 (no crash, no skipping ahead)
+  ok   Skip step moves to the next step (3 clicks -> step 4)
+  ok   a step already done earlier completes by itself (Barracks built before step 4)
+  ok   Exit tutorial hides the tips and arrow and leaves the battle running
+  ok   menu still offers the tutorial (not marked done after exiting)
+-- full playthrough
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   drag-select picks up soldiers (6)
+step 2 move | highlight: ring | words: 17
+  ok   step 2 tip visible
+  ok   step 2 tip short (<=50 words)
+  ok   step 2 has an arrow/ring on its target
+  ok   step 2 tip box does not cover its own highlight 
+    marker at 1327 245
+  FAIL the move marker is on screen below the tip box
+  FAIL step 3 never started (stuck on 4)
+step seconds: [0,0] total 498 s
+TUTORIAL FAIL (2)
