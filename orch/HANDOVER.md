@@ -225,3 +225,13 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   Airstrip, Radio Tower (+ optional Repair Depot) on the derrick capture system, symmetric on Battle maps, AI uses them. Add to conductor list when ready
   (conductor prompt already takes "any other Battle branch with a ready HANDOFF"? - NO: its list is explicit; ADD techbldgs before onegame next update).
 - Conductor prompt rewritten 02:21Z for one-game focus (explicit candidate list; onegame last; never-land list incl. civhumans).
+
+## 2026-11-13 20:24-20:38 Chicago (ORCH)
+- techbldgs, part 1: quarry, mine, power plant, field hospital. Part 2: oil refinery, ammo dump, artillery position, train station, telecom station. All with realistic looks. Note on orch/techbldgs.
+- Notes pushed to orch/onegame (keep the capturable buildings) and orch/battlepower (keep the map power plants, capturable).
+- nations20 helper trig_01A6Ryt7QTV3y2XPoG2XpFve (Sonnet), fired. "Keep 22": IR RS DW RV OB US GB FR DE IL UA RU CN KP IN JP KR PK SA AE TR EG. Note on orch/nations20. Lands LAST, after onegame. Conductor prompt updated.
+- **VISION (Abdullah 20:38): "The vision is a super super polished and smooth and beautiful battle game and test range".**
+  NEXT, after onegame and nations20 land, start the POLISH SPRINT in three lanes:
+  1. **Speed:** drop the dead Conquest and campaign code paths, profile at 300 units, keep smooth-pc/mp green with headroom.
+  2. **Looks:** every unit and building realistic, no boxes, on the ground the user picked from looktest. Opus.
+  3. **Feel and UI:** command bar, sounds, order responses, menus, and Test range made fully polished.
