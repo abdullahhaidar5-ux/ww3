@@ -520,3 +520,4 @@ laneA 2026-11-07 RG3 slice 2 spies→covert actions: Sabotage ($600, 3 months of
 2026-11-10 Morocco (MA) now has its own Moroccan-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
 2026-11-10 Computer opponent on Hard is smarter (same money): it goes round your weaker side, guards its artillery, keeps a few strike aircraft and sends them in with its ground attack; beats Normal 98% in test battles — orch/q-ai
 2026-11-10 Words: buildings are called by their one official name everywhere (Strike Center, Defense Gun, War Factory, Anti-Air Missile Site); a check now stops old faction names or real groups' names from ever showing — orch/q-words
+2026-11-14 Ammo zone: units fight until their ammo is empty, and only then need resupply (return to your area or a supply truck) - no more timers; Test range has unlimited ammo - orch/ammozone

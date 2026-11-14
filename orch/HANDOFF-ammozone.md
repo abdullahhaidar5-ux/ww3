@@ -1,0 +1,11 @@
+# HANDOFF ammozone (2026-11-14)
+
+**Rules (plain words).** Ground combat units carry ammo (the existing per-unit amount) and spend one per shot. Inside your area it refills steadily: HQ / Command Center, Supply Depot, any finished base building (Battle), your captured towns, supply trucks. Outside the area nothing refills and the unit keeps fighting until empty. Only then it needs resupply: vehicles cannot fire, infantry plink with a sidearm at 12% damage (my call, unchanged). It returns to your area, a supply truck comes close (circle ~230), or you press Z. No timers: the 20 s badge, 60 s no-heal and 10 s Supply-button rules are gone (`u.supT` is no longer used; the field stays in the unit list so old saves load). Test range: unlimited, no badge. Missions: unchanged.
+
+**View.** Badge only when empty AND outside the area; hovering it says "Out of ammo - bring it back to your area or send a supply truck". Ammo bar as before. Ammo row says In your area / Outside your area / OUT OF AMMO. The Supply button shows only when a unit is empty outside the area. AI pulls empty units (and low ones with no target) back to the nearest supply point.
+
+**ORCH note (20:18) followed:** Battle tracks ammo too (not unlimited). NOT done: "roads connected to your buildings" - Battle has no road graph (the `lg` network in src/03c-logistics.js exists only with Conquest towns), so Battle's area is circles around buildings (170 each, HQ 380, depot 320). Also not done: AI sending supply trucks (pull-back only). The note file is not in this branch's tree (merged with `-s ours`).
+
+**Gate.** build + --check OK; smoke PASS locally; decisions.mjs has a new AMMO ZONE guard (run result: see PR/branch notes); cigate NOT run yet. Proof pictures NOT produced (headless runs too slow in this sandbox).
+
+**Try for 2 minutes (PC):** in Battle, send a few tanks far from your base to fight, watch the ammo bars drain; when empty the badge shows (hover it); drive them back to the Command Center and watch them refill.
