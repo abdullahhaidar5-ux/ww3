@@ -17,7 +17,8 @@ Owner (Abdullah, Fri 2026-11-13 20:00 Chicago): "Make it digging in like garriso
 
 ## Gate
 - Local: `python3 orch/build.py --check` OK, `node orch/smoke.mjs` SMOKE PASS, `node orch/dugouttest.mjs` DUGOUT PASS, decisions see below / cigate result appended by the last line of this file.
-- No local smooth runs (per CLAUDE.md). cigate: see bottom.
+- No local smooth runs (per CLAUDE.md). Local full `decisions.mjs` was too slow here (stopped); its static part passes and its new dugout runtime guard is in the file for CI.
+- cigate: pushed as `gate/8f7b45449a` (code commit 8f7b454; later commits are pictures/docs only). On 2026-11-14 03:07-04:00 UTC GitHub Actions had every run queued (main, other gate branches too), so no gate/* status had arrived when I stopped. Check `gate/8f7b45449a`; known flaky: audio, mpsync, cfclient, icons, tutorial, mapsweep (re-run a failed job once).
 
 ## Pictures (looked at, JPG < 250 KB) — `orch/concepts/dugout/`
 1-squad-digging-in · 2-dugout-with-occupants · 3-dugout-selected-leave (cursor + marker overlay added by the test; panel title there predates the "Dugout" rename) · 4-squad-back-out.
