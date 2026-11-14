@@ -1,0 +1,24 @@
+artifact page written: orch/out/artifact/index.html (5560445 bytes, game 4716272 chars), 125 audio files + 82 model files (14.7 MB); publish arguments in orch/out/artifact/publish.json
+[3s] both pages loaded (menu model downloads done after 2s / 2s)
+[4s] host lobby open, code uw3s8o
+[4s] client joining
+[22s] battle: US vs RU on strait; client is slot 1
+[150s] both pages finished loading
+[150s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[150s] client owns hq,harv,dozer,barracks,factory,airfield,depot,inf,inf; ordering 2 units to attack-move on the host base
+[153s] client order: 2/2 of the client's units moved on the host
+[154s] check @1.0 min t=60s: host 54 entities, client side sees 18 (own 18); client has 18 (own 18); missing 0, extra 0, off-position 0, mismatched 0; credits host 4959 client 4959
+[157s] check @2.5 min t=150s: host 66 entities, client side sees 38 (own 28); client has 38 (own 28); missing 0, extra 0, off-position 0, mismatched 0; credits host 1163 client 1163
+[177s] check @4.0 min t=240s: host 70 entities, client side sees 31 (own 31); client has 31 (own 31); missing 0, extra 0, off-position 0, mismatched 0; credits host 1338 client 1338
+[190s] traffic host->client 2015 KB in 3476 messages, client->host 0 KB in 2; client lag max 0.10 game-s; 11 ms per 0.5 s step
+[190s] 24 live checks, 0 out of tolerance; up to 10 enemy entities were in the client's view at once
+[190s] host room sends: 3478 messages, peak 47 in one game-second
+[190s] client room sends: 2 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 4225 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: client console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: host: peak 47 room messages in one game-second (t=150s: {"n":47,"snap":12,"evt":5,"ck":8,"team":5,"pong":17}); the room drops sends past ~40/s (burst 80)
+
+MPSYNC PASS (artifact edition) (190s) — screenshots orch/out/art-mp-host.png, orch/out/art-mp-client.png (this run: orch/out/runs/20261114-034328-mpsync-art/)
