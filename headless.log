@@ -1,0 +1,74 @@
+  day {"inf":280,"tank":280,"heli":340,"b":340} 
+  night {"inf":168,"tank":252,"heli":306,"b":204}
+NIGHT PASS — night sight x0.6, thermal x0.9, dusk between, changing cycles
+settings
+  ok   Easy and Normal do not get the new tactics
+  ok   Hard has weak-side probing, artillery protection and air-ground teamwork
+  ok   Hard gets no extra money (income x1, same as Normal)
+weak side
+  ok   no defences on either side: no preference
+  ok   guns on side +1: flank goes round side -1
+  ok   guns on side -1: flank goes round side +1
+  ok   Normal AI never probes
+artillery protection (US, not Zealous)
+  ok   escorts turn on the troops threatening the gun
+  ok   the gun steps back from them
+artillery protection (IR, Zealous: never pulls back)
+  ok   IR is a Zealous nation in this test
+  ok   escorts still turn on the threat
+  ok   the gun is never ordered back
+air works with the ground attack
+  ok   no wave out, nothing seen: no special target (old random pick)
+  ok   wave out: jets support it at its target
+  ok   wave out and a defence gun near the target: jets hit the gun first
+  ok   enemy artillery it cannot see is not targeted (no extra vision)
+  ok   enemy artillery it can see is hunted from the air
+  ok   Normal AI keeps the old behaviour
+AIHARD PASS
+node: 2 players [portable math: sin,cos,atan2,exp,pow] US vs RU vs DW on Straits of Thunder (strait), seed 1; sim loaded in 30 ms, battle set up in 993 ms; map 33cbf75c5c79b96d
+  t=   0s  5fe8421d798512e4
+  t=  10s  7c445a6fb00df37b  ents   46    88.3 ms CPU/game-s  8u6b 10u6b 16u0b
+  t=  20s  697b43b19ef6eaa3  ents   45    52.1 ms CPU/game-s  7u7b 8u7b 16u0b
+  t=  30s  30855e4145b32803  ents   55    46.4 ms CPU/game-s  10u7b 16u6b 16u0b
+  t=  40s  154960e0ecb6e53e  ents   53    48.9 ms CPU/game-s  9u8b 13u7b 16u0b
+  t=  50s  7f6a0def06b7a698  ents   57    23.7 ms CPU/game-s  14u7b 13u7b 16u0b
+  t=  60s  d58f6ece59528f9b  ents   53    17.8 ms CPU/game-s  10u8b 11u8b 16u0b
+  t=  70s  08245111c445c7f3  ents   60    15.7 ms CPU/game-s  15u8b 12u9b 16u0b
+  t=  80s  d99de51d9e1ec8f2  ents   57    16.6 ms CPU/game-s  9u10b 13u9b 16u0b
+  t=  90s  a18b73ef87931f34  ents   63    20.5 ms CPU/game-s  17u8b 13u9b 16u0b
+  t= 100s  d8cc7646cd5c2ab8  ents   64    15.1 ms CPU/game-s  17u8b 12u11b 16u0b
+  t= 110s  75c1b020bcd2010c  ents   64    17.6 ms CPU/game-s  12u11b 15u10b 16u0b
+  t= 120s  2b97c0244fb4583c  ents   62    23.3 ms CPU/game-s  10u12b 13u11b 16u0b
+  t= 130s  76692b6d8e51f85a  ents   64    23.7 ms CPU/game-s  11u12b 14u11b 16u0b
+  t= 140s  d5aad735d9d2e1d6  ents   68    17.4 ms CPU/game-s  17u10b 13u12b 16u0b
+  t= 150s  e25ef04f8078dd6b  ents   68    17.0 ms CPU/game-s  14u12b 14u12b 16u0b
+  t= 160s  a0399f667c048480  ents   70    20.2 ms CPU/game-s  17u10b 16u11b 16u0b
+  t= 170s  483cd0222e4f1c1c  ents   68    24.9 ms CPU/game-s  12u12b 15u13b 16u0b
+  t= 180s  e29bd6e480565630  ents   72    13.9 ms CPU/game-s  14u12b 18u12b 16u0b
+  t= 190s  4695d65c623ad762  ents   68    48.1 ms CPU/game-s  8u14b 18u12b 16u0b
+  t= 200s  a849b1ce0809692a  ents   69    19.5 ms CPU/game-s  7u15b 19u12b 16u0b
+  t= 210s  fef03bcfed45fc71  ents   71    25.2 ms CPU/game-s  8u15b 20u12b 16u0b
+  t= 220s  0051a5f52279cb62  ents   75    19.1 ms CPU/game-s  13u12b 22u12b 16u0b
+  t= 230s  cd409cb050b1549f  ents   72    29.6 ms CPU/game-s  8u14b 22u12b 16u0b
+  t= 240s  a79239130bcae273  ents   74    32.6 ms CPU/game-s  8u14b 24u12b 16u0b
+  t= 250s  02517d748c5bf85c  ents   76    32.6 ms CPU/game-s  9u15b 23u13b 16u0b
+  t= 260s  fad0607f45aa21aa  ents   77    20.9 ms CPU/game-s  9u15b 25u12b 16u0b
+  t= 270s  b423c9832eef6e0a  ents   78    18.4 ms CPU/game-s  9u16b 25u12b 16u0b
+ww3-sim.js:2640
+    q.forEach(([u],i)=>{const k=sl[i];let x=cx+fx*k[0]+px*k[1],y=cy+fy*k[0]+py*k[1];setMove(u,x,y,mode);u.faceA=Math.atan2(fy,fx);u.sq=keep?1:0;if(keep&&isFinite(cap))u.order.cap=cap*.97;});}
+                                                                                                                                                                                  ^
+
+TypeError: Cannot set properties of null (setting 'cap')
+    at ww3-sim.js:2640:179
+    at Array.forEach (<anonymous>)
+    at fmApply (ww3-sim.js:2640:7)
+    at aiForm (ww3-sim.js:2644:54)
+    at aiThink (ww3-sim.js:3490:26)
+    at simUpdate (ww3-sim.js:3614:201)
+    at ww3-sim.js:5527:63
+    at sim (ww3-sim.js:5505:18)
+    at W.step (ww3-sim.js:5527:5)
+    at runNode (file:///home/runner/work/ww3/ww3/orch/headless.mjs:516:11)
+
+Node.js v22.23.4
+SKIP headless
