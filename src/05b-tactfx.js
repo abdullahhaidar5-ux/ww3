@@ -13,17 +13,17 @@ function tactBlob(m,n,x,y,dy,sx,sy,sz,yaw,r,g,b){if(n>=6000)return n;_te.set(0,y
 function tactDress(m,n,d,R,ca,sa,cx,cy,rad,opt){const at=(u,v)=>[cx+ca*u-sa*v,cy+sa*u+ca*v];
   for(let i=0;i<(opt.deb||4);i++){const t=R()*6.283,rr=rad*(1.05+R()*.5),k=.8+R()*.4;if(R()<.5)n=tactBlob(m,n,cx+Math.cos(t)*rr,cy+Math.sin(t)*rr,.15,.7+R()*.5,.35,.5,R()*6,.5*k,.42*k,.2*k);else n=tactBlob(m,n,cx+Math.cos(t)*rr,cy+Math.sin(t)*rr,.1,.5,.25,1.4+R(),R()*6,.3*k,.24*k,.12*k);}   // ammo boxes and spent cases
   for(let i=0;i<(opt.wear||5);i++){const t=R()*6.283,rr=rad*(.4+R()*.9);n=tactBlob(m,n,cx+Math.cos(t)*rr,cy+Math.sin(t)*rr,-.05,2.2+R()*2,.12,1.6+R()*1.6,R()*6,.27,.2,.13);}   // scuffed, trampled earth
-  if(opt.net&&d.id%4===0){const p=at(opt.nu||0,opt.nv||0);n=tactBlob(m,n,p[0],p[1],opt.nh||3.6,opt.nw||12,.18,opt.nd||9,-d.a+.15,.2,.25,.12);n=tactBlob(m,n,p[0]+1.5,p[1]-1,opt.nh?opt.nh+.12:3.7,(opt.nw||12)*.6,.14,(opt.nd||9)*.7,-d.a+.5,.14,.19,.09);}
+  if(opt.net&&d.id%4===0){const p=at(opt.nu||0,opt.nv||0);n=tactBlob(m,n,p[0],p[1],opt.nh||3.6,opt.nw||12,.18,opt.nd||9,-d.a+.15,.24,.23,.13);n=tactBlob(m,n,p[0]+1.5,p[1]-1,opt.nh?opt.nh+.12:3.7,(opt.nw||12)*.6,.14,(opt.nd||9)*.7,-d.a+.5,.2,.19,.1);}
   return n;}
 function tactRebuild(){const m=tactMesh();let n=0;const L=G.dug||[];
   for(const d of L){const R=mulberry(d.id*977+11),ca=Math.cos(d.a),sa=Math.sin(d.a);
     const earth=()=>{const k=.8+R()*.3;return[.4*k,.3*k,.2*k];};
     if(d.k==='fox'){for(let i=0;i<12;i++){const t=i/12*6.283+R()*.25,rr=6+R()*1.3,c=earth();n=tactBlob(m,n,d.x+Math.cos(t)*rr,d.y+Math.sin(t)*rr,.2,3.1+R()*1.2,.95+R()*.5,2.3+R()*.8,t+1.57+R()*.6,c[0],c[1],c[2]);}
-      for(let i=0;i<2;i++)n=tactBlob(m,n,d.x+(R()-.5)*2,d.y+(R()-.5)*2,-.3,5.2+R(),.5,5+R(),R()*6,.13,.1,.07);
+      for(let i=0;i<2;i++)n=tactBlob(m,n,d.x+(R()-.5)*2,d.y+(R()-.5)*2,-.2,5.4+R(),.25,5+R(),R()*6,.17,.12,.075);
       for(let i=0;i<4;i++){const t=(i-1.5)*.55+d.a,k=.9+R()*.2;n=tactBlob(m,n,d.x+Math.cos(t)*7.6,d.y+Math.sin(t)*7.6,1.3,2.6,.9,1.5,t+1.57,.6*k,.5*k,.31*k);}}
     else if(d.k==='hole'){/* a dugout: a wide earth berm ring round a dark pit, sandbag parapet with a gap, planks and a team-coloured stake */
       for(let i=0;i<14;i++){const t=i/14*6.283+R()*.2,rr=13.5+R()*1.6,c=earth();n=tactBlob(m,n,d.x+Math.cos(t)*rr,d.y+Math.sin(t)*rr,.3,4.4+R()*1.4,1.1+R()*.6,3.2+R()*.9,t+1.57+R()*.5,c[0],c[1],c[2]);}
-      for(let i=0;i<3;i++)n=tactBlob(m,n,d.x+(R()-.5)*4,d.y+(R()-.5)*4,-.35,9+R()*2,.5,9+R()*2,R()*6,.05,.04,.03);
+      for(let i=0;i<3;i++)n=tactBlob(m,n,d.x+(R()-.5)*4,d.y+(R()-.5)*4,-.2,9+R()*2,.25,9+R()*2,R()*6,.17,.12,.075);
       for(let i=0;i<10;i++){const t=d.a+(i+.5)/10*5.2,k=.9+R()*.2;n=tactBlob(m,n,d.x+Math.cos(t)*11.6,d.y+Math.sin(t)*11.6,1.5,3.4,1.1,1.8,t+1.57,.6*k,.5*k,.31*k);}
       for(let i=0;i<2;i++)n=tactBlob(m,n,d.x+(i-.5)*5,d.y+(R()-.5)*3,.05,11,.25,1.6,d.a+.3*i,.34,.23,.12);
       for(let i=0;i<4;i++){const t=d.a+3.2+(i-1.5)*.5;n=tactBlob(m,n,d.x+Math.cos(t)*9.6,d.y+Math.sin(t)*9.6,.55,2.8,.7,5.5,t+1.57,.32,.22,.12);}   // timber revetment boards on the inner wall
@@ -34,20 +34,20 @@ function tactRebuild(){const m=tactMesh();let n=0;const L=G.dug||[];
       const fx=ca,fy=sa;for(let i=0;i<11;i++){const t=(i-5)/5*1.05,rr=17+R()*1.5,c=earth(),px=d.x+fx*Math.cos(t)*rr-sa*Math.sin(t)*rr,py=d.y+fy*Math.cos(t)*rr+ca*Math.sin(t)*rr;
         n=tactBlob(m,n,px,py,.5,5.4+R()*1.5,1.5+R()*.8,3.6+R(),-d.a+t+1.57+R()*.3,c[0],c[1],c[2]);}
       for(let i=0;i<6;i++){const t=(i-2.5)/2.5*.8,rr=13.5,c=earth();n=tactBlob(m,n,d.x+fx*Math.cos(t)*rr-sa*Math.sin(t)*rr,d.y+fy*Math.cos(t)*rr+ca*Math.sin(t)*rr,1.7,4.2,1.1,2.8,-d.a+t+1.57,c[0]*.9,c[1]*.9,c[2]*.9);}   // spoil lip on top of the berm
-      n=tactBlob(m,n,d.x-fx*19,d.y-fy*19,0,14,.3,12,-d.a,.22,.16,.1);n=tactBlob(m,n,d.x-fx*9,d.y-fy*9,-.25,12,.4,15,-d.a,.07,.055,.04);   // ramp
+      n=tactBlob(m,n,d.x-fx*19,d.y-fy*19,0,14,.3,12,-d.a,.22,.16,.1);n=tactBlob(m,n,d.x-fx*9,d.y-fy*9,-.2,12,.3,15,-d.a,.19,.14,.09);   // ramp
       for(const sg of [-1,1])for(let i=0;i<7;i++){const u=-24-i*4.2,v=sg*6.2+(R()-.5)*.8;n=tactBlob(m,n,d.x+ca*u-sa*v,d.y+sa*u+ca*v,.05,2.6,.14,.9,-d.a,.1,.09,.085);}   // track marks
       n=tactDress(m,n,d,R,ca,sa,d.x,d.y,20,{deb:4,wear:6,net:1,nu:-6,nv:0,nh:4.6,nw:9,nd:8});}
     else if(d.k==='sand'){for(let c=0;c<2;c++){const cnt=c?4:5;for(let i=0;i<cnt;i++){const u=(i-(cnt-1)/2)*5.2+(R()-.5)*.6+c*2.4,v=(R()-.5)*.9,k=.88+R()*.24;
         n=tactBlob(m,n,d.x+ca*u-sa*v,d.y+sa*u+ca*v,.7+c*1.55,2.9+R()*.4,1.05+R()*.25,1.7+R()*.35,-d.a+(R()-.5)*.3,.6*k,.5*k,.31*k);}}
       n=tactBlob(m,n,d.x,d.y,.15,13,.5,4.2,-d.a,.2,.15,.1);n=tactDress(m,n,d,R,ca,sa,d.x,d.y,9,{deb:2,wear:3});}
     else{for(const sg of [-1,1])for(let i=0;i<5;i++){const u=(i-2)*7+(R()-.5)*2,v=sg*(6.8+R()*1),c=earth();n=tactBlob(m,n,d.x+ca*u-sa*v,d.y+sa*u+ca*v,.4,4.4+R()*1.2,1.4+R()*.6,2.4+R()*.6,-d.a+(R()-.5)*.3,c[0],c[1],c[2]);}
-      for(let i=0;i<3;i++){const u=(i-1)*9;n=tactBlob(m,n,d.x+ca*u,d.y+sa*u,-.4,10.5,.5,6.2,-d.a,.15,.115,.08);}}  // groundreal: the floor pieces overlap into one dug-earth channel (they were three separate near-black blocks: a dashed, blocky dark line)
+      for(let i=0;i<3;i++){const u=(i-1)*9;n=tactBlob(m,n,d.x+ca*u,d.y+sa*u,-.2,10,.25,8.5,-d.a,.17,.12,.075);}}
       // sandbag parapet along both lips, wooden duckboards on the floor, revetment posts
       for(const sg of [-1,1])for(let i=0;i<3;i++){const u=(i-1)*9+(R()-.5)*1.5,v=sg*8.4,k=.9+R()*.2;n=tactBlob(m,n,d.x+ca*u-sa*v,d.y+sa*u+ca*v,1.5,3.2,.9,1.5,-d.a+(R()-.5)*.2,.6*k,.5*k,.31*k);}
       for(let i=0;i<2;i++){const u=(i-.5)*13;n=tactBlob(m,n,d.x+ca*u,d.y+sa*u,-.2,5.6,.22,2.2,-d.a,.34,.23,.12);}
       for(const sg of [-1,1]){const u=(R()-.5)*14,v=sg*5.2;n=tactBlob(m,n,d.x+ca*u-sa*v,d.y+sa*u+ca*v,1.2,.55,2.6,.55,0,.3,.2,.1);}
       for(const sg of [-1,1])n=tactBlob(m,n,d.x-sa*sg*5.2,d.y+ca*sg*5.2,.05,11,.5,2,-d.a,.3,.24,.15);   // firing step along both walls
-      n=tactDress(m,n,d,R,ca,sa,d.x,d.y,12,{deb:3,wear:4,net:1,nh:2.6,nw:11,nd:8});
+      n=tactDress(m,n,d,R,ca,sa,d.x,d.y,12,{deb:3,wear:5});
       // junction: another trench piece of ours close by (not along the same line) gets a widened mouth so the lines read as one network
       for(const o of L){if(o===d||o.k!=='trench'||o.team!==d.team||o.id<d.id)continue;const dx=o.x-d.x,dy=o.y-d.y,dd=dx*dx+dy*dy;if(dd>44*44||dd<12*12)continue;if(Math.abs(Math.sin(o.a-d.a))<.3)continue;
         n=tactBlob(m,n,(o.x+d.x)/2,(o.y+d.y)/2,-.1,7,.25,7,0,.2,.14,.08);}}
