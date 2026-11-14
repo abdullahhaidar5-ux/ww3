@@ -134,6 +134,12 @@ for(const id in BMAPS)bmRegister(id,BMAPS[id]);
    Every other map is out of the Battle lists. Their data stays (old saves, the editor and missions still load them). */
 const BATTLE_MAPS=[
   ['bm_splitridge',2,2],['bm_ferryquarter',2,2],['bm_breakwater',2,4],['bm_fourmills',2,4],['bm_sixroads',2,6],
+  ['lebanon',2,4],['gulf',2,4],['euphrates',2,2],['tihama',2,2],['zagros',2,2],
+  ['caribbean',2,2],['hormuzgate',2,2],['taiwan',2,2],['arctic',2,2],['khyber',2,2],
+  ['hajar',2,2],['marshes',2,2],['blacksea',2,2],['yemen',4,4],['hawizeh',4,4],
+  ['islands',4,4],['donbas',4,4],['mesopotamia',4,4],['persia',4,4],['taiga',4,4],
+  ['aegean',6,6],['dmziron',6,6],['rubalkhali',6,6],['oasis',6,8],['atoll',6,8],
+  ['hindukush',8,8],['kuwait',8,8],['rhine',8,8],['yangtze',8,8],['plateau',8,8],
 ];
 const BATTLE_FALLBACK='bm_splitridge';
 for(const [k,lo,hi] of BATTLE_MAPS){const D=MAPS[k];if(!D)continue;if(!D.bm&&D.maxFull==null){D.minFull=D.min;D.maxFull=D.max;}D.min=lo;D.max=hi;if(!BM_KEYS.includes(k))BM_KEYS.push(k);}

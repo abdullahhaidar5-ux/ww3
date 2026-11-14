@@ -91,7 +91,7 @@ if (!MAIN) { /* imported (orch/decisions.mjs uses STATIC_FN, judge, countsOf) */
     const t0 = Date.now(); let r;
     try {
       if (!W) W = makeSim(undefined, { prof: [] }).W;
-      if (m.list) { process.send({ list: m.old ? P.ev(`${JSON.stringify(m.old)}.map(([k,n])=>({k,name:MAPS[k].name,players:n,old:1}))`) : P.ev('BM_KEYS.concat(BM_HELD).map(k=>bmInfo(k))') }); return; }
+      if (m.list) { process.send({ list: m.old ? P.ev(`${JSON.stringify(m.old)}.map(([k,n])=>({k,name:MAPS[k].name,players:n,old:1}))`) : P.ev('BM_KEYS.concat(BM_HELD).filter(k=>BM[k]).map(k=>bmInfo(k))') }); return; }
       if (m.static) { if (!globalThis.__bmStatic) P.ev(STATIC_FN); r = P.ev(`__bmStatic(${JSON.stringify(m.map)},${m.n},${m.seed},${m.dump ? 1 : 0})`); process.send(r); return; }
       W.start({ seed: m.seed, map: m.map, facs: m.facs, tm: m.tm, st: m.st, diff: m.diff, battle: 1 });
       let st = null;
