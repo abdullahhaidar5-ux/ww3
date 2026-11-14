@@ -7200,7 +7200,7 @@ function endGame(winner,reason){if(!G||G.over)return;try{stSample(1);G.endStats=
 // '#rrggbb' -> {r,g,b} in 0..1, the same values THREE.Color gives (no Three.js needed by the simulation)
 function hexRGB(h){const n=parseInt(String(h).slice(1),16);return{r:(n>>16&255)/255,g:(n>>8&255)/255,b:(n&255)/255};}
 // One battle scale for every game (the old Standard/Large/Massive choice is gone); AI strength comes from difficulty.
-const BATTLE=1.75;
+const BATTLE=1;
 // AI difficulty: Easy is slow to build and attack with small waves and no tricks (and earns less). Hard earns exactly
 // what Normal earns (Abdullah: smarter, never richer) but thinks faster and fights smarter: flanking columns that
 // converge on the main attack's target, focus fire on weakened targets, infantry that take cover behind walls,
