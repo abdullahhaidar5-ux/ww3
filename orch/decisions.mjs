@@ -409,6 +409,16 @@ try {
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
   ck(!bt.setupEnd, 'Battle has a no-fire setup phase'); ck(!bt.tax, 'Battle has town taxes'); ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');
   await shot('battle-us');
+  // dozerbuild 2026-11-14 (Abdullah 04:00 "You can only build a building using the construction vehicle"): the BUILD tab shows only while a Construction Vehicle is selected; a placed building starts with NO progress until a dozer drives there and works on it (pauses when it leaves); nothing starts without a dozer assigned
+  { const db = await ev(() => { const T = G.teams[ME], dz = G.ents.find(e => e.team === ME && e.kind === 'dozer' && !e.dead), hq = G.ents.find(e => e.team === ME && e.kind === 'hq' && !e.dead), tb = document.querySelector('.tabs button[data-tab="build"]');
+      G.sel = []; updateUI(); const hid = !!tb.hidden; G.sel = [dz]; updateUI(); const shown = !tb.hidden;
+      T.credits = 5000; let spot = null; for (let r = 260; r < 700 && !spot; r += 40) for (let a = 0; a < 6.28 && !spot; a += .5) { const x = hq.x + Math.cos(a) * r, y = hq.y + Math.sin(a) * r; if (validSpot(ME, 'barracks', x, y)) spot = [x, y]; }
+      dz.order = null; dz.x = hq.x - 900; dz.y = hq.y; placeBld(ME, 'barracks', spot[0], spot[1], dz.id); const b = G.ents.find(e => e.isB && e.team === ME && e.kind === 'barracks' && e.built < 1);
+      const far0 = b && b.built; dz.order = null; dz.bq = []; dz.x = hq.x - 900; dz.y = hq.y; for (let i = 0; i < 120; i++) { if (dz.order) dz.order = null; simUpdate(1 / 60); } const idle = b ? b.built : -1;
+      dz.order = { type: 'build', target: b }; dz.x = b.x - b.size / 2 - 20; dz.y = b.y; for (let i = 0; i < 180; i++) simUpdate(1 / 60); const worked = b.built;
+      return { hid, shown, nd: !!(b && b.nd), far0, idle, worked }; });
+    console.log('dozerbuild', JSON.stringify(db));
+    ck(db.hid && db.shown, 'BUILD tab must show only while a Construction Vehicle is selected: ' + JSON.stringify(db)); ck(db.nd && db.far0 === 0 && db.idle === 0, 'a building must not progress without a dozer working on it: ' + JSON.stringify(db)); ck(db.worked > 0, 'a dozer on site must build it: ' + JSON.stringify(db)); }
   // ---- fixes1 (2026-11-11, "white streaks in Arabia", "oversized palms"): what a PLAYER gets on the first campaign map of a session.
   // The map must wait for the real land data (it used to be drawn on the hand-shaped stand-in and stay on it: chalk-white cliffs along the Red Sea);
   // snow only where snow can lie (never in Arabia; still on the Alps, the Himalaya and Greenland); palms no taller than the towns (one instanced draw).
