@@ -253,3 +253,28 @@ New helpers, all Sonnet and all fired except shiamissions:
 - shiamissions trig_01U2DUsempJLxALabyqNG3YE, scheduled 2026-11-14 19:00Z
 - nations20 trig_01A6Ryt7QTV3y2XPoG2XpFve
 Landing order: Battle fixes → techbldgs → onegame → maptrim → nations20 → the rest. Squads, pacecap and battlerules2 touch balance, so check the tourney.
+
+## 2026-11-13 21:30-22:47 Chicago (ORCH) — corrections after checking what exists
+- **Already existed:** Strike Center (superweapon), squad offsets, weather, gfx setting, end screen and replays, ranks, DIFF levels, collapse, ally money and unit gifts, spies.
+- **Abdullah's answers:**
+  - squads: only soldiers dropping one by one;
+  - Strike Center: polish only;
+  - weather: + night/dusk + picker;
+  - graphics: + Ultra;
+  - end screen: leave as is;
+  - veterans: restyle;
+  - Brutal: yes;
+  - destruction: damage stages + wreck cover;
+  - camera: yes;
+  - telecom: keep both;
+  - command bar: FULL Generals redesign;
+  - dig-in: dugouts only;
+  - missions: polish the 5 in src/12-campaign.js + 1 RV (keep 12-campaign.js!);
+  - unit gifts: 5 per 2 min (pacecap note);
+  - ammo: a separate Ammo Truck, ammotruck trig_01RZ7xELdjDao4FuxooDnTAD;
+  - leaders: no aura, no buttons, a 5% tougher + 5% damage army bonus while alive (leaderlook note);
+  - Bunker Buster: stays US/IL/RU/CN;
+  - local militias removed;
+  - spy agitators and town leaflets removed (onegame note).
+- **Faction uniqueness:** he picked all 6 (signature unit, group mechanic, economy, base look, unit look, sound). factiondesign trig_01LuoYT3S2TozKUe5NtLhyKr does an audit + design doc only, orch/reports/factiondesign.md. Show it to him, then split into lanes.
+- Train 14 (train/20261114-0256) was gating at 04:40Z: sweepfixA, sweepfixB, ghostslot, orderfeel, pileflag, testrange.
