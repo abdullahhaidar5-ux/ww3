@@ -213,3 +213,11 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
 - 20:13 Chicago "Make it so that only certain buildings are reliant on electricity" -> note on orch/battlepower eb8b3e0 + trigger prompt updated: only electronic/high-tech buildings use power; low power never slows barracks/factory. CHECK the result follows it.
 - 20:15 Chicago per-building queues "like generals": bldqueue = trig_01JKgZFA6oNHcU1MUue18szv (Sonnet) fired 02:16Z: each production building its own queue, unit exits its own building, select building to queue, UNITS tab = shortcut to least busy building, refunds on loss. Sim change.
 - 20:16 Chicago "Unlimited queue" -> note on orch/bldqueue (no 9 cap, '+N more' chip). CHECK result.
+
+## DECISION Fri 2026-11-13 20:18-20:19 Chicago - ONE GAME
+"Abandon conquest and campaign entirely remove them from the game" then "Bring supply lines into battle".
+- onegame = trig_01GnGSmxvcGcM725iJwcZ2n9 (Opus, big removal) fired 02:21Z: delete campaign (src/13*, grand bundle, tests) and Conquest mode;
+  supply network on roads + ammo rule move INTO Battle; Conquest maps kept as Battle maps; menu = Play · Multiplayer · Test range; CLAUDE.md rewrite.
+  Conductor lands it AFTER the in-flight Battle branches.
+- Notes pushed: ammozone (rule now for Battle), battleclean2 (keep supply chip/network in Battle; towns/civilians still go), testrange (badge follows ammo rule in Battle).
+- Do NOT land: civhumans (civilians only lived in towns), campaign branches. ammozone lands via onegame (or on its own before it).
