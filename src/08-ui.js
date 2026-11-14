@@ -1334,7 +1334,7 @@ function syncMouseUI(){const pre=mPreset();
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
   const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
-const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · O: formation · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Ctrl+A: army · Q: rotate view (hold + mouse; tap: 45°; Home: north) · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
+const HINT_STD='Left-click: select  ·  Right-click: move / attack  ·  F: attack-move  ·  X: stop  ·  Q: rotate view  ·  Wheel: zoom  ·  ? button: every control';
 // the on-screen hint follows the chosen mouse functions (the Standard preset has its own fixed text)
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
@@ -1343,7 +1343,7 @@ function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOr
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Get out: right-click your selected transport (Alt+right-click a spot: drive there, unload) · building or tunnel selected, right-click the ground');
-  P.push('Ctrl+A: army · Q: rotate (hold + mouse) · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
+  return [P[0],P[5],'F: attack-move','X: stop','Q: rotate view','Wheel: zoom','? button: every control'].join('  ·  ');}
 // the hint line speaks to what the player last used: touch wording after a tap, the active mouse scheme after a click
 // (a touchscreen laptop switches back and forth)
 function setHint(){const h=$('hint');if(h)h.textContent=TOUCHUI&&HINTDEV==='touch'?HINT_TOUCH:hintText();}
@@ -1550,7 +1550,7 @@ const FT=[];function lowPct(){if(FT.length<120)return 0;const s=FT.slice().sort(
 let _fpsT=0;function fpsHud(){const now=performance.now();if(now-_fpsT<500)return;_fpsT=now;const el=$('fpsHud');if(!el)return;let on=false;try{on=localStorage.getItem('ww3_fpsShow')==='1';}catch(e){}el.hidden=!on||!G;if(el.hidden)return;
   el.textContent=Math.round(QUAL.fps)+' FPS'+(lowPct()?' · 1% low '+Math.round(lowPct()):'')+(QUAL.lv?' · detail −'+QUAL.lv:'')+(MODE==='client'&&NET.ping?' · ping '+Math.round(NET.ping)+' ms':MODE==='host'&&NET.pings&&Object.keys(NET.pings).length?' · ping '+Object.values(NET.pings).map(v=>Math.round(v)).join('/')+' ms':'');}
 function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const rawDt=Math.max(0,(now-last)/1000);const dt=Math.min(.05,rawDt);last=now;if(G&&!document.hidden&&rawDt<.5){qualTick(rawDt);FT.push(rawDt);if(FT.length>900)FT.shift();}
-  try{if(G&&!G.over&&!G.paused){if(MODE==='client'){if(RP.on)rpTick(dt);else{clientTick(dt);if(NET.spec)specTick(dt);}}else{const sd=dt*GSPD;
+  try{if(G&&!G.over&&!G.paused){if(MODE==='client'){if(RP.on)rpTick(dt);else{clientTick(dt);if(NET.spec)specTick(dt);}}else{const sd=dt*GSPD*(G.sandbox&&G.sbSpd!=null?G.sbSpd:1);
     // fixed 60 Hz simulation: it used to run once per rendered frame (144-240x a second on high-refresh monitors, all of it
     // host CPU in multiplayer); drawing interpolates unit positions between steps so motion stays smooth at any refresh rate
     const ST=1/60;
@@ -1570,7 +1570,7 @@ function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const
 const HBG={w:null,iv:null,t:0};
 function hbgNeeded(){return !!(G&&!G.over&&MODE==='host'&&NET.game&&NET.peers&&NET.peers.some((p,k)=>k!==ME&&p));}
 function hbgStep(){if(!document.hidden||window.__stopLoop||!G){hbgStop();return;}const now=performance.now();const rawDt=Math.min(1,Math.max(0,(now-HBG.t)/1000));HBG.t=now;if(rawDt<=0)return;
-  try{if(!G.over&&!G.paused&&MODE!=='client'){const ST=1/60;G.acc=Math.min(1,(G.acc||0)+rawDt*GSPD);let n=0;
+  try{if(!G.over&&!G.paused&&MODE!=='client'){const ST=1/60;G.acc=Math.min(1,(G.acc||0)+rawDt*GSPD*(G.sandbox&&G.sbSpd!=null?G.sbSpd:1));let n=0;
       while(G.acc>=ST-1e-6&&n<80){for(const e of G.ents)if(!e.isB){e.ox=e.x;e.oy=e.y;}simUpdate(ST);G.acc-=ST;n++;}G.alpha=1;}
     netTick(rawDt);}catch(err){console.error(err);}}
 function hbgStart(){if(HBG.w||HBG.iv)return;HBG.t=Math.max(last,performance.now()-50);
