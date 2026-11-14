@@ -1,0 +1,23 @@
+artifact page written: orch/out/artifact/index.html (5521284 bytes, game 4677111 chars), 125 audio files + 82 model files (14.7 MB); publish arguments in orch/out/artifact/publish.json
+[4s] both pages loaded (menu model downloads done after 3s / 3s)
+[4s] host lobby open, code ie5rn6
+[4s] client joining
+[30s] battle: US vs RU on strait; client is slot 1
+[190s] both pages finished loading
+[190s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[191s] client owns hq,harv,dozer,barracks,factory,airfield,depot,inf,inf; ordering 2 units to attack-move on the host base
+[193s] client order: 2/2 of the client's units moved on the host
+[195s] check @1.0 min t=60s: host 53 entities, client side sees 18 (own 18); client has 18 (own 18); missing 0, extra 0, off-position 0, mismatched 0; credits host 4959 client 4959
+[198s] check @2.5 min t=150s: host 68 entities, client side sees 28 (own 28); client has 28 (own 28); missing 0, extra 0, off-position 0, mismatched 0; credits host 1247 client 1247
+[225s] check @4.0 min t=240s: host 74 entities, client side sees 33 (own 33); client has 33 (own 33); missing 0, extra 0, off-position 0, mismatched 0; credits host 772 client 772
+[240s] traffic host->client 2177 KB in 3531 messages, client->host 0 KB in 2; client lag max 0.10 game-s; 18 ms per 0.5 s step
+[240s] 24 live checks, 0 out of tolerance; up to 4 enemy entities were in the client's view at once
+[240s] host room sends: 3533 messages, peak 38 in one game-second
+[240s] client room sends: 2 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 4141 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: client console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+
+MPSYNC PASS (artifact edition) (240s) — screenshots orch/out/art-mp-host.png, orch/out/art-mp-client.png (this run: orch/out/runs/20261114-012620-mpsync-art/)
