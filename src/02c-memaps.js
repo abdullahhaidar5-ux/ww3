@@ -77,7 +77,7 @@ add([
  c:[[760,520,95,'mideast'],[1150,820,85,'mideast'],[580,950,70,'mideast']],cc:[1600,1100,130,'mideast'],
  riv:[[1150,-200,1250,1100,60,60]],br:[[0,.55]],lk:[[1280,330,170,1.5]],rd:[[600,660,780,820,66]]},
 {k:'homsgap',n:'Homs Gap',th:'green',rg:1.25,home:['SY','RS','IL'],tag:'mountain gap · orchards · highway',
- desc:'The wide gap between the coastal mountains and the Lebanese mountains: orchards and a river valley, the highway from the coast to the interior and a lake and an old fortress hill. A classic invasion route.',
+ desc:'The wide gap between the coastal mountains and the Lebanese mountains: orchards and a river valley, the highway from the coast to the interior and a lake and an old fortress hill. A well-worn invasion route.',
  c:[[760,470,100,'lebanon'],[1150,300,80,'mideast'],[560,900,75,'lebanon']],cc:[1600,1100,140,'mideast'],
  rd:[[900,-60,950,420,90],[840,880,1000,1000,80]],lk:[[1280,760,90,1.4]],riv:[[300,620,1500,700,50,34]],br:[[0,.4],[0,.8]],pk:[[1200,420,60,1.4,-.3]]},
 {k:'latakiamtns',n:'Latakia: Coastal Mountains',th:'green',rg:1.55,home:['SY','TR'],fmb:300,tag:'forested mountains · coast · port',
