@@ -1,0 +1,23 @@
+[0s] pc: launching browser
+[0s] ctx
+[0s] guarded
+[1s] page
+[1s] pc: loading page
+[1s] pc: page loaded
+[1s] pc: menu ready
+[3s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) could not run: page.evaluate: ReferenceError: RB is not defined
+[3s] pc: launching browser
+[3s] ctx
+[3s] guarded
+[4s] page
+[4s] pc: loading page
+[4s] pc: page loaded
+[4s] pc: menu ready
+[7s] pc attempt 2: REGRESSED
+
+                       pc        
+runtime 0.1 min
+
+SMOOTH FAIL: 1 problem(s)
+  - pc: could not run: page.evaluate: ReferenceError: RB is not defined
