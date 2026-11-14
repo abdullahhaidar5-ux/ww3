@@ -12202,7 +12202,7 @@ function pingBtn(us){const left=Math.max(0,...us.map(u=>Math.ceil((u.pingT||0)-G
 /* ===== ORDER FEEL (Abdullah 2026-11-13 17:26 "Focus all effort on wrapping up conquest and battle", 17:31 "Can we start
    on these now?" - selection rings + order preview, clearer goals on screen). View only: nothing here touches the
    simulation, so multiplayer sync is untouched.
-   SELR = THE selection-ring system (replaces the old one-mesh-per-unit RINGS): one instanced mesh, one draw call. Every
+   SELR = THE selection-ring system (replaces the old one-mesh-per-unit ring list): one instanced mesh, one draw call. Every
      selected unit gets a thin, softly glowing ring in its team color under the model, tilted to the slope so it never
      cuts into a hillside: round for soldiers and aircraft, oval for vehicles and ships, a rectangle for buildings. The
      unit under the mouse gets a fainter one (hover).

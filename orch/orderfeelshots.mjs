@@ -64,9 +64,6 @@ if (want('cq')) {
   await at(pos.hx, pos.hy); await page.waitForTimeout(300);
   await shot(page, 'selected-group', 2500); console.log('ORDERFEEL', JSON.stringify(await stats(page)));
   await at(5, 5);
-  if (process.env.DBG) { const r = await page.evaluate((p) => { const out = { VW, VH, iw: innerWidth, cw: cv.width, ccw: cv.clientWidth, asp: CAM.aspect, fov: CAM.fov };
-      const w = { x: p.bx, y: p.by }, h = groundH(w.x, w.y); out.h = h; const s1 = toScreen(w.x, h, w.y); out.s1 = s1; out.back = screenToWorld(s1.x, s1.y); out.plane0 = toScreen(w.x, 0, w.y);
-      const pi = CAM.projectionMatrixInverse.clone(), pm = CAM.projectionMatrix.clone().invert(); out.pinvDiff = pi.elements.reduce((a, v, i) => a + Math.abs(v - pm.elements[i]), 0); return out; }, pos); console.log('DBG', JSON.stringify(r)); process.exit(0); }
   // move order on open ground ahead of the group
   await order(pos.x + 40, pos.y + 110); await freeze(page);
   await shot(page, 'move-marker', 250); console.log('ORDERFEEL', JSON.stringify(await stats(page)));
