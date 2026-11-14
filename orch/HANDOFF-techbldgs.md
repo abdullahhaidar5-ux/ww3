@@ -52,3 +52,6 @@ telecom station (morale, existing morale system, Zealous never rout): each = one
 
 ## Gate
 
+Local: `python3 orch/build.py --check` ok, `node orch/smoke.mjs` SMOKE PASS (471 s), `node orch/techbldgs.mjs` PASS, `node orch/battlemapfair.mjs --static` PASS (6 maps, 30 checks). No local smooth runs (rule).
+GitHub: `orch/cigate.sh` pushed the code commit `b068be5` as `gate/b068be5bd4`; when I stopped, GitHub's runners had 4 "Ship gate" runs queued ahead of it, so the 28 `gate/*` statuses were NOT in yet. Read them on that commit; this file's own commit changes nothing but docs.
+Not run here: `node orch/decisions.mjs` (browser, too slow in the sandbox; it runs in the gate) and the quick AI-vs-AI tourney (`node orch/battlemapfair.mjs --battles`, too slow here) — fairness rests on the symmetric static check; run the tourney on a fast machine before landing if you want the win rates.
