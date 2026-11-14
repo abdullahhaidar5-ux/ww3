@@ -7706,7 +7706,7 @@ function physImpulse(e,nx,ny,J){if(e.isB||e.dead||!e.s||e.s.dom!=='ground')retur
   if(m<2&&kv>70){koSet(e,.8+Math.min(.8,kv/300),'crit');FXE('toss',[e.id,Math.min(110,kv*.55)|0]);}}
 function physTick(u,dt){if(!u.kx&&!u.ky)return;const d=u.s.dom==='ground'?(massOf(u)<2?5.5:7.5):6,k=Math.exp(-d*dt);const nx=u.x+u.kx*dt,ny=u.y+u.ky*dt;
   if(passXY(u.s.dom,nx,ny)){u.x=nx;u.y=ny;}else{u.kx*=-.3;u.ky*=-.3;}u.kx*=k;u.ky*=k;if(Math.abs(u.kx)+Math.abs(u.ky)<2){u.kx=u.ky=0;}}
-function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.crT&&G.t>u.crT&&!u.inTun){u.dead=true;G.byId.delete(u.id);FXE('gone',[u.id,u.x|0,u.y|0,-1,1]);return;}if(u.crit)critTick(u,dt);if(u.aband)return updAband(u,dt);if(G.dugN&&u.s.armor==='heavy'&&u.s.dom==='ground'&&G.t>(u.dgT||0)){u.dgT=G.t+.25;dugVeh(u);}if(u.order&&u.order.type==='wall'&&u.kind!=='dozer'&&dozeWall(u,dt))return;if(u.dig)digTick(u,dt);else if(G.teams[u.team].ai&&u.s.armor==='light'&&u.s.dom==='ground')aiDig(u,dt);if(u.hp<u.max*.2&&u.s.armor==='heavy'&&bailCheck(u))return;const s=u.s,T=G.teams[u.team],m=T.F.mods;if(u.stun>G.t){u.cd=Math.max(u.cd,.5);return;}u.cd-=dt;if(T.dummy&&!T.fight){const o=u.order;u.target=null;if(o&&(o.type==='move'||o.type==='amove')&&u.kind!=='jet'){if(Math.hypot(o.x-u.x,o.y-u.y)<14)u.order=null;else navTo(u,o.x,o.y,dt,true);}return;}if(u.supp)u.supp=Math.max(0,u.supp-dt*(u.mz?.36:.22)*ldSupp(u));
+function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.crT&&G.t>u.crT&&!u.inTun){u.dead=true;G.byId.delete(u.id);FXE('gone',[u.id,u.x|0,u.y|0,-1,1]);return;}if(u.crit)critTick(u,dt);if(u.aband)return updAband(u,dt);if(G.dugN&&u.s.armor==='heavy'&&u.s.dom==='ground'&&G.t>(u.dgT||0)){u.dgT=G.t+.25;dugVeh(u);}if(u.order&&u.order.type==='wall'&&u.kind!=='dozer'&&dozeWall(u,dt))return;if(G.teams[u.team].ai&&u.s.armor==='light'&&u.s.dom==='ground')aiDig(u,dt);if(u.hp<u.max*.2&&u.s.armor==='heavy'&&bailCheck(u))return;const s=u.s,T=G.teams[u.team],m=T.F.mods;if(u.stun>G.t){u.cd=Math.max(u.cd,.5);return;}u.cd-=dt;if(T.dummy&&!T.fight){const o=u.order;u.target=null;if(o&&(o.type==='move'||o.type==='amove')&&u.kind!=='jet'){if(Math.hypot(o.x-u.x,o.y-u.y)<14)u.order=null;else navTo(u,o.x,o.y,dt,true);}return;}if(u.supp)u.supp=Math.max(0,u.supp-dt*(u.mz?.36:.22)*ldSupp(u));
   if(G.t-u.lastHit>5&&u.hp<u.max&&!(!G.battle&&u.supT!=null&&G.t-u.supT>60)){let rg=(m.regen||0)+(u.rank>=3?5:0)+upgK(T,u.kind,'regen');if(rg)u.hp=Math.min(u.max,u.hp+rg*dt);}
   if(u.kind==='harv')return u.cv?updConvoy(u,dt):updHarv(u,dt);if(u.kind==='dozer')return updDozer(u,dt);if(u.kind==='jet')return updJet(u,dt);if(u.kind==='hacker')return updHacker(u,dt);
   if(canRout(u)&&moraleTick(u,dt))return;
@@ -7718,7 +7718,7 @@ function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.crT&&G.t>u.crT&&!u.inTu
   if(s.door&&!u.landed){const D=s.door;u.dgT=(u.dgT||0)-dt;if(u.dgT<=0){let t=u.dgTg;if(!t||t.dead||!canTarget(D,t)||Math.hypot(t.x-u.x,t.y-u.y)-t.r>D.rng)t=nearestEnemy(u,D.rng,D);u.dgTg=t;u.dgT=t?D.rof*rofMult(u)*(.85+Math.random()*.3):.25;if(t)fire(u,t,D.dmg*dmgOut(u),D.wpn,0);}}
   if(s.noAttack||s.mines){specialTick(u,dt,o);if(s.noAttack){if(o&&(o.type==='move'||o.type==='amove')){if(Math.hypot(o.x-u.x,o.y-u.y)<14||stalled(u,o))u.order=null;else navTo(u,o.x,o.y,dt,true);}else if(o&&o.type==='enter'){}else return;if(!o||o.type!=='enter')return;}}
   if(o&&o.type==='board'){const tr=o.target;if(!tr||tr.dead){u.order=null;return;}if(Math.hypot(tr.x-u.x,tr.y-u.y)<tr.r+(tr.s.dom==='naval'?95:40)){boardTransport(u,tr);return;}navTo(u,tr.x,tr.y,dt);return;}
-  if(o&&o.type==='garrison'){const c=G.civ&&G.civ[o.ci];if(!c||c.dead||(c.g&&!ally(c.g.team,u.team))){u.order=null;return;}const gd=Math.hypot(c.x-u.x,c.y-u.y);if(gd<CELL*1.85||(gd<CELL*2.3&&G.t-(u.mv||-9)>.6)){enterGarrison(u,c);return;}if(stalled(u,o)&&gd>CELL*2.3){u.order=null;return;}navTo(u,c.x,c.y,dt);return;}
+  if(o&&o.type==='garrison'){const c=G.civ&&G.civ[o.ci];if(!c||c.dead||(c.g&&!ally(c.g.team,u.team))||(c.dug&&!ally(c.dteam,u.team))){u.order=null;return;}const gd=Math.hypot(c.x-u.x,c.y-u.y);if(gd<CELL*1.85||(gd<CELL*2.3&&G.t-(u.mv||-9)>.6)){if(dugoutWait(c,u))return;enterGarrison(u,c);return;}if(stalled(u,o)&&gd>CELL*2.3){u.order=null;return;}navTo(u,c.x,c.y,dt);return;}
   if(o&&o.type==='enter'){const b=o.target;if(b.dead||b.built<1){u.order=null;return;}if(Math.hypot(b.x-u.x,b.y-u.y)<b.size/2+24){enterTunnel(u,b);return;}navTo(u,b.x,b.y,dt);return;}
   if(o&&o.type==='attack'){if(o.target.dead||!canTarget(s,o.target)||!seenBy(u.team,o.target)){u.order=o=null;u.target=null;}else u.target=o.target;}
   if(u.target&&(u.target.dead||!seenBy(u.team,u.target)||!canTarget(s,u.target)))u.target=null;
@@ -7971,7 +7971,7 @@ function act(team,a){if(!G||G.over)return;if(G.grand&&GRAND_NOPROD.includes(a.t)
     case 'say':ctSay(team,a.i);break;
     case 'gift':ctGift(team,a.ids,a.to|0);break;
     case 'tun':{const b=G.byId.get(a.tid);if(!b||!b.isB||b.team!==team||!isTun(b)||b.built<1)break;for(const u of own(a.ids))if(u.s.dom==='ground'&&u.kind!=='harv'&&u.kind!=='hacker'){u.order={type:'enter',target:b};u.target=null;u.path=null;}break;}
-    case 'gar':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||(c.g&&!ally(c.g.team,team)))break;for(const u of own(a.ids))if(canGarrison(u)){u.order={type:'garrison',ci:c.i,x:c.x,y:c.y};u.target=null;u.guard=null;u.path=null;}break;}
+    case 'gar':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||(c.g&&!ally(c.g.team,team))||(c.dug&&!ally(c.dteam,team)))break;for(const u of own(a.ids))if(canGarrison(u)){u.order={type:'garrison',ci:c.i,x:c.x,y:c.y};u.target=null;u.guard=null;u.path=null;}break;}
     case 'atkCiv':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||c.g)break;const t=civTarget(c);for(const u of own(a.ids)){if(u.kind==='harv'||u.kind==='dozer'||u.kind==='hacker'||!canTarget(u.s,t))continue;u.order={type:'attack',target:t};u.guard=null;u.path=null;}break;}
     // at=1: leave toward the point x,y (garrison / tunnel: everyone comes out and moves there; transport: drive there, then unload)
     case 'ungar':{const b=G.byId.get(a.tid);if(b&&b.kind==='garrison'&&b.team===team&&b.civ){const out=leaveGarrison(b.civ);if(a.at&&out&&out.length)formMove(out,a.x,a.y,'move',false);}break;}
@@ -7993,8 +7993,8 @@ function act(team,a){if(!G||G.over)return;if(G.grand&&GRAND_NOPROD.includes(a.t)
     case 'leaf':{polLeaf(team,a);break;}
     case 'resup':{const P=supplyPoints()[team]||[];for(const u of own(a.ids)){if(!hasAmmo(u)||!P.length)continue;let b=null,bd=1e9;for(const p of P){const d=Math.hypot(p.x-u.x,p.y-u.y);if(d<bd){bd=d;b=p;}}if(!b)continue;const an=(u.id%12)*.5236,rr=Math.min(b.r*.5,60+(u.id%5)*18);setMove(u,b.x+Math.cos(an)*rr,b.y+Math.sin(an)*rr,'move');}break;}
     case 'low':{const v=a.v?1:0;for(const u of own(a.ids))if(!u.isB&&u.s.dom==='air'&&(u.s.cls==='heli'||u.s.cls==='jet'))u.low=v;break;}
-    case 'stop':for(const u of own(a.ids)){u.order=null;u.target=null;u.path=null;u.dig=null;u.wl=null;}break;
-    case 'dig':for(const u of own(a.ids))startDig(u);break;
+    case 'stop':for(const u of own(a.ids)){u.order=null;u.target=null;u.path=null;u.wl=null;}break;
+    case 'dig':digIn(team,own(a.ids));break;
     case 'wall':{const k='trench';let P=a.pts;if(P===undefined)P=[a.x,a.y,a.x2,a.y2];
       if(!Array.isArray(P)||P.length<4||P.length>48||P.length%2||!P.every(v=>Number.isFinite(v)&&v>=0&&v<=Math.max(MAPW,MAPH)))break;
       P=P.map((v,i)=>Math.max(0,Math.min(i%2?MAPH:MAPW,v)));wallOrder(team,own(a.ids),k,P);break;}
@@ -8371,6 +8371,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   if(DC.covert||aiPers(T).amb)aiAmbush(T,army,anchor,pb);
   if(aiPers(T).raid)aiRaid(T,army,anchor);
   const HM=DIFF[T.ai.d??1].hm;if(HM){aiHmTowns(T,mine,anchor,army,en);aiHmSmart(T,mine,anchor,army,en,pb);aiHmOp(T,pb);aiHmArms(T,army,anchor);}
+  aiDugRelease(T,army);
   const idle=army.filter(u=>!u.order&&!u.target&&!u.amb&&!u.opW);
   for(const u of idle)if(u.flT&&!u.flT.dead&&G.t-u.flank<150){setMove(u,u.flT.x+rnd(-60,60),u.flT.y+rnd(-60,60),'amove');u.flT=null;aiStat(T.ai,'flankIn');}else if(Math.hypot(u.x-anchor.x,u.y-anchor.y)>900&&pb.length){const pc=HM&&pb.some(b=>HM_CRIT[b.kind])?pb.filter(b=>HM_CRIT[b.kind]):pb;const t=pc.reduce((a,b)=>dist(a,u)<dist(b,u)?a:b);setMove(u,t.x,t.y,'amove');}
   const home=idle.filter(u=>Math.hypot(u.x-anchor.x,u.y-anchor.y)<=900&&u.s.dom!=='naval');
@@ -8502,7 +8503,7 @@ function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,
   if(!W.fc&&W.t>=W.next-25){W.fc=1;const w=WEATHER[W.nk];for(const T of G.teams)log(T.id,W.nk==='clear'?'Forecast: the weather is about to clear.':`Forecast: ${w.name.toLowerCase()} rolling in within 25 seconds.`,'w');}
   if(W.t<W.next)return;W.t=0;W.fc=0;W.k=W.nk;W.nk=null;W.next=W.k==='clear'?170+R()*120:55+R()*45;
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
-function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);ldTick(dt);if(G.grand)grandTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
+function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);ldTick(dt);if(G.grand)grandTick(dt);production(dt);fortHeal(dt);dugTick();buildHash();if(!G.mines)G.mines=[];
   if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(e.fl<FL_MAX&&e.landed)e.fl=FL_MAX;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam,id:e.id});if(s.cbr||(s.cls==='arty'&&gdHas(G.teams[e.team],'r1')))G.cbrTeams|=1<<e.team;}martyrTick();
   if(G.aur.heal.length)for(const e of G.ents){if(e.dead||e.isB||e.hp>=e.max||e.s.dom==='air')continue;for(const a of G.aur.heal)if(a.team===e.team&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){e.hp=Math.min(e.max,e.hp+a.v*dt);break;}}
   if(G.aur.jam.length)for(const e of G.ents){if(e.dead||e.kind!=='drone')continue;for(const a of G.aur.jam)if(!ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){applyDmg(e,30*dt,'flak',a.team,null);e.x+=srnd(-70,70)*dt;e.y+=srnd(-70,70)*dt;break;}}
@@ -8568,14 +8569,14 @@ function civAtXY(x,y){if(!G.civAt)return null;const c=G.civAt.get(Math.floor(y/C
 function canGarrison(u){return !u.isB&&!u.dead&&isInf(u.s)&&!u.s.noAttack&&u.kind!=='hacker'&&u.kind!=='harv'&&u.kind!=='dozer';}
 function civTarget(c){const ALL=new Array(16).fill(true);return c.tg||(c.tg={civ:c,isB:true,kind:'civb',x:c.x,y:c.y,r:16,size:32,team:-1,vs:ALL,s:{name:'City building',armor:'bld'},get dead(){return c.dead||!!c.g;},get hp(){return c.hp;},get max(){return c.max;}});}
 function damageCiv(c,d,team){if(c.dead||d<=0||c.g)return;c.hp-=d;c.hit=G.t;if(c.hp<=0)collapseCiv(c,team);else civStage(c);}
-function collapseCiv(c,team){if(c.dead)return;polCiv(c,team);c.dead=true;c.ow=-1;c.cp=0;c.hp=0;if(G.grid[c.k]===3)gridOpen(c.k);rubMark(c);if(G.cover)G.cover[c.k]=Math.min(255,(G.cover[c.k]||0)+2);G.civDirty=true;
+function collapseCiv(c,team){if(c.dead)return;if(c.dug){dugoutBreak(c,team);return;}polCiv(c,team);c.dead=true;c.ow=-1;c.cp=0;c.hp=0;if(G.grid[c.k]===3)gridOpen(c.k);rubMark(c);if(G.cover)G.cover[c.k]=Math.min(255,(G.cover[c.k]||0)+2);G.civDirty=true;
   const g=c.g;c.g=null;const occ=c.occ;c.occ=[];occ.forEach((u,i)=>{const a=i/Math.max(1,occ.length)*6.283;const p=nearestPassXY('ground',c.x+Math.cos(a)*30,c.y+Math.sin(a)*30)||[c.x,c.y];u.x=p[0];u.y=p[1];u.inTun=false;u.inGar=null;u.mv=G.t;u.order=null;u.target=null;u.hp*=.6;u.fear=(u.fear||0)+.5;G.ents.push(u);G.byId.set(u.id,u);});
   if(g&&!g.dead){g.dead=true;G.byId.delete(g.id);FXE('die',[g.id,g.x|0,g.y|0,KINDS.indexOf(g.kind),1,g.team]);}FXE('civd',[c.i]);if(occ.length)log(occ[0].team,`A building we held collapsed - ${occ.length} soldier${occ.length>1?'s':''} thrown clear.`,'w');}
-function enterGarrison(u,c){if(c.dead){u.order=null;return;}if(c.g&&!ally(c.g.team,u.team)){u.order=null;return;}if(c.occ.length>=c.cap){u.order=null;log(u.team,`That building is full (${c.cap} troops).`,'w');return;}
-  if(!c.g){const T=G.teams[u.team],s=bstats(T.fac,'garrison');const g={id:G.nid++,isB:true,team:u.team,kind:'garrison',s,civ:c,x:c.x,y:c.y,size:s.size,r:s.size/2,max:c.max,hp:c.hp,built:1,cd:0,target:null,ang:0,lastHit:-99,dis:0,vs:new Array(G.teams.length).fill(false)};G.ents.push(g);G.byId.set(g.id,g);c.g=g;}
+function enterGarrison(u,c){if(c.dead){u.order=null;return;}if(c.g&&!ally(c.g.team,u.team)){u.order=null;return;}if(c.occ.length>=c.cap){u.order=null;log(u.team,c.dug?`That dugout is full (${c.cap} troops).`:`That building is full (${c.cap} troops).`,'w');return;}
+  if(!c.g){const T=G.teams[u.team],s=bstats(T.fac,'garrison');const g={id:G.nid++,isB:true,team:u.team,kind:'garrison',s,civ:c,x:c.x,y:c.y,size:s.size,r:s.size/2,max:c.max,hp:c.hp,built:1,cd:0,target:null,ang:0,lastHit:-99,dis:0,vs:new Array(G.teams.length).fill(false)};if(c.dug){g.size=26;g.r=13;}G.ents.push(g);G.byId.set(g.id,g);c.g=g;}
   u.order=null;u.target=null;u.guard=null;u.inTun=true;u.inGar=c;u.x=c.x;u.y=c.y;G.byId.delete(u.id);c.occ.push(u);}
 function leaveGarrison(c){const g=c.g;if(!g)return;const occ=c.occ;c.occ=[];occ.forEach((u,i)=>{const a=i/Math.max(1,occ.length)*6.283;const p=nearestPassXY('ground',c.x+Math.cos(a)*30,c.y+Math.sin(a)*30)||[c.x,c.y];u.x=p[0];u.y=p[1];u.inTun=false;u.inGar=null;u.mv=G.t;u.order=null;G.ents.push(u);G.byId.set(u.id,u);});
-  c.hp=Math.max(1,g.hp);g.dead=true;G.byId.delete(g.id);c.g=null;FXE('gone',[g.id,g.x|0,g.y|0,-1,1]);return occ;}
+  c.hp=Math.max(1,g.hp);if(c.dug)c.fd=G.t+DUGOUT.fade;g.dead=true;G.byId.delete(g.id);c.g=null;FXE('gone',[g.id,g.x|0,g.y|0,-1,1]);return occ;}
 // the soldiers inside shoot from the windows
 function updGarrison(g,dt){const c=g.civ;if(!c||c.dead){g.dead=true;return;}c.hp=g.hp;civStage(c);if(!c.occ.length){leaveGarrison(c);return;}
   for(const u of c.occ){u.x=c.x;u.y=c.y;u.cd-=dt;u.hp=Math.min(u.max,u.hp+2*dt);u.fear=Math.max(0,(u.fear||0)-dt*.1);if(u.cd>0)continue;const R=u.s.rng*1.2;
@@ -8886,40 +8887,71 @@ function milTick(st){if(!G.milOk){milInit();}if(!G.towns)return;const N=G.N;
    far more likely to do it. The roll is seeded (map seed, unit id, tick) so host and checkpoints agree. Below 20% health
    the crew bails out (existing hulk / re-crew system). Construction Vehicles, and the war factory / HQ yard, fix criticals.
    crit bits ride in the unit snapshot (high bits of the morale field) so every screen shows the same icons. */
-const DUGK=['fox','sand','trench'];
-const DUG={fox:{hp:150,t:4,r:15,cost:0},sand:{hp:230,t:3,r:14,cost:35},trench:{hp:320,t:5,r:18,cost:70}};
+const DUGK=['fox','sand','trench','hole'];  // 'fox' only exists in old saves (the old Dig-in foxholes); 'hole' = a dugout (see below)
+const DUG={fox:{hp:150,t:4,r:15,cost:0},hole:{hp:1,t:0,r:0,cost:0},sand:{hp:230,t:3,r:14,cost:35},trench:{hp:320,t:5,r:18,cost:70}};
 const DUG_MAX=150;
 function dugInit(){if(!G.dug){G.dug=[];G.dugN=0;G.dugV=0;G.dugId=1;}}
 function dugBump(){G.dugN=G.dug.length;G.dugV=(G.dugV|0)+1;}
 // 0 = no cover, 1 = sandbags, 2 = foxhole / trench
 function dugCov(x,y){const L=G.dug;if(!L)return 0;let best=0;for(let i=0;i<L.length;i++){const d=L[i];const dx=x-d.x,dy=y-d.y;if(dx>30||dx<-30||dy>30||dy<-30)continue;
-  if(d.k==='fox'){if(dx*dx+dy*dy<DUG.fox.r*DUG.fox.r)return 2;continue;}
+  if(d.k==='hole')continue;if(d.k==='fox'){if(dx*dx+dy*dy<DUG.fox.r*DUG.fox.r)return 2;continue;}
   const ca=Math.cos(d.a),sa=Math.sin(d.a),u=dx*ca+dy*sa,v=-dx*sa+dy*ca;
   if(d.k==='trench'){if(Math.abs(u)<DUG.trench.r+3&&Math.abs(v)<13)return 2;}else if(Math.abs(u)<DUG.sand.r+2&&Math.abs(v)<11)best=1;}return best;}
 // how far a soldier sinks into a hole (render only; clients derive it from the synced list)
 function holeDrop(e){if(!G.dug||!e.s||!isInf(e.s))return 0;if(MODE==='client'?e.mvC:G.t-(e.mv||-9)<.5)return 0;return dugCov(e.x,e.y)===2?3.2:0;}
-function dugAdd(team,k,x,y,a){dugInit();if(G.dug.length>=DUG_MAX){let o=-1;for(let i=0;i<G.dug.length;i++)if(G.dug[i].team===team){o=i;break;}if(o<0)return null;G.dug.splice(o,1);}
+function dugAdd(team,k,x,y,a){dugInit();if(G.dug.length>=DUG_MAX){let o=-1;for(let i=0;i<G.dug.length;i++)if(G.dug[i].team===team&&G.dug[i].k!=='hole'){o=i;break;}if(o<0)return null;G.dug.splice(o,1);}
   const d={id:G.dugId++,x:Math.round(x),y:Math.round(y),a:+a.toFixed(2),k,team,hp:DUG[k].hp,max:DUG[k].hp};G.dug.push(d);dugBump();return d;}
 function dugKill(d){const i=G.dug.indexOf(d);if(i<0)return;G.dug.splice(i,1);dugBump();FXE('boom',[d.x,d.y,9,0]);}
 // shells, bombs and missiles tear up fortifications near the blast
 function dugBlast(x,y,r,dmg,wpn){const L=G.dug;if(!L||!L.length)return;const K=wpn==='bomb'||wpn==='super'?1.3:wpn==='shell'||wpn==='missile'||wpn==='boom'?1:.7;
-  for(let i=L.length-1;i>=0;i--){const d=L[i],dist=Math.hypot(d.x-x,d.y-y);if(dist>r+14)continue;d.hp-=dmg*K*(1-.5*Math.max(0,dist-8)/(r+14));if(d.hp<=0){L.splice(i,1);FXE('boom',[d.x,d.y,9,0]);G.dugBd=1;}}
+  for(let i=L.length-1;i>=0;i--){const d=L[i],dist=Math.hypot(d.x-x,d.y-y);if(d.k==='hole'||dist>r+14)continue;d.hp-=dmg*K*(1-.5*Math.max(0,dist-8)/(r+14));if(d.hp<=0){L.splice(i,1);FXE('boom',[d.x,d.y,9,0]);G.dugBd=1;}}
   if(G.dugBd){G.dugBd=0;dugBump();}}
 // vehicles driving over them: slowed (about half), and tanks flatten them
 function dugVeh(u){const L=G.dug;let s=1;if(!L)return;const crush=u.s.cls==='tank'||u.s.cls==='arty'||u.s.r>=13;
-  for(let i=L.length-1;i>=0;i--){const d=L[i];const dx=u.x-d.x,dy=u.y-d.y;if(dx>34||dx<-34||dy>34||dy<-34)continue;if(dx*dx+dy*dy>(u.r+16)*(u.r+16))continue;
+  for(let i=L.length-1;i>=0;i--){const d=L[i];if(d.k==='hole')continue;const dx=u.x-d.x,dy=u.y-d.y;if(dx>34||dx<-34||dy>34||dy<-34)continue;if(dx*dx+dy*dy>(u.r+16)*(u.r+16))continue;
     s=.5;if(crush&&u.v>3){d.hp-=70*.25;if(d.hp<=0){L.splice(i,1);G.dugBd=1;}}}
   if(G.dugBd){G.dugBd=0;dugBump();}u.dgS=s;}
-// ---- infantry foxholes ----
-function digTick(u,dt){const D=u.dig;if(!D)return;
-  if(u.order||G.t-(u.mv||-9)<.35||u.rout>G.t||u.aband||u.inTun){u.dig=null;return;}
-  D.p+=dt;if(D.p<D.need)return;u.dig=null;const near=G.dug&&G.dug.some(d=>d.k!=='sand'&&Math.hypot(d.x-u.x,d.y-u.y)<10);
-  if(!near)dugAdd(u.team,'fox',u.x,u.y,(u.id*2.399)%6.28);FXE('txt',[u.x|0,u.y|0,'DUG IN',u.team,-2]);}
-function digCan(u){return u&&!u.isB&&!u.dead&&u.s&&isInf(u.s)&&!u.s.noAttack&&u.kind!=='hacker'&&!u.inTun&&!u.aband;}
-function startDig(u){if(!digCan(u)||u.dig)return;if(G.dug&&G.dug.some(d=>d.k!=='sand'&&Math.hypot(d.x-u.x,d.y-u.y)<10))return;u.order=null;u.target=null;u.path=null;u.dig={p:0,need:DUG.fox.t};FXE('txt',[u.x|0,u.y|0,'DIGGING IN',u.team,-2]);}
-// AI infantry that have stood still a while dig in (they are holding that ground), at most 28 holes per AI team
-function aiDig(u,dt){if(u.order||u.target||u.dig||u.rout>G.t||G.t-(u.mv||-9)<.5){u.idl=0;return;}u.idl=(u.idl||0)+dt;if(u.idl<7||!digCan(u))return;u.idl=-4-(u.id%8);
-  let n=0;for(const d of G.dug||[])if(d.team===u.team&&d.k==='fox')n++;if(n<28)startDig(u);}
+// ---- dugouts (Abdullah 2026-11-13 20:00: "Make it digging in like garrisoning units in that you have to remove them from the dugout") ----
+// Dig in (I) = the squad builds a DUGOUT and goes inside it, exactly like garrisoning a building: the dugout is one more slot of the
+// city-building garrison system (G.civ entry with dug:1; enterGarrison / leaveGarrison / updGarrison / damage / eject are the shared code).
+// Its look + sync is a G.dug entry of kind 'hole' (d.ci = the G.civ index). Troops stay inside until the player takes them out.
+const DUGOUT={cap:12,hp:420,t:4.5,fade:100,max:80};
+function digCan(u){return u&&!u.isB&&!u.dead&&u.s&&isInf(u.s)&&!u.s.noAttack&&u.kind!=='hacker'&&canGarrison(u)&&!u.inTun&&!u.aband&&!u.inGar;}
+function dugSiteOk(x,y){if(x<40||y<40||x>MAPW-40||y>MAPH-40||!passXY('ground',x,y))return false;const k=Math.floor(y/CELL)*GW+Math.floor(x/CELL);return G.grid[k]===0&&!(G.civAt&&G.civAt.get(k));}
+function dugSite(cx,cy){if(dugSiteOk(cx,cy))return[cx,cy];for(const r of [22,44,66])for(let i=0;i<8;i++){const a=i*.785+r*.01,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;if(dugSiteOk(x,y))return[x,y];}return null;}
+function dugoutSlot(){for(const c of G.civ)if(c.dug&&c.dead)return c;const c={i:G.civ.length,k:0,x:0,y:0,b:[],h:3,ruin:true,dug:1,dead:true,occ:[],g:null,max:1,hp:1,cap:DUGOUT.cap};G.civ.push(c);return c;}
+function dugoutLive(team){let n=0;for(const c of G.civ)if(c.dug&&!c.dead&&c.dteam===team)n++;return n;}
+function dugoutMake(team,x,y){dugInit();const c=dugoutSlot();x=Math.round(x);y=Math.round(y);
+  Object.assign(c,{k:Math.floor(y/CELL)*GW+Math.floor(x/CELL),x,y,b:[],h:3,ruin:true,dug:1,dteam:team,dead:false,occ:[],g:null,cap:DUGOUT.cap,max:DUGOUT.hp,hp:DUGOUT.hp,stg:0,dg:G.t+DUGOUT.t,fd:G.t+DUGOUT.t+DUGOUT.fade});
+  G.civAt.set(c.k,c);const d=dugAdd(team,'hole',x,y,(c.i*2.399)%6.28);if(!d){c.dead=true;G.civAt.delete(c.k);return null;}d.ci=c.i;FXE('txt',[x,y,'DIGGING IN',team,-2]);return c;}
+// the squad takes the shortest path in: an own dugout with room close by is reused, otherwise a new one is dug where they stand
+function digIn(team,us){const L=us.filter(digCan).sort((p,q)=>p.id-q.id);if(!L.length)return 0;let live=dugoutLive(team),sent=0,bad=0;
+  while(L.length){const a=L.shift(),grp=[a];for(let i=0;i<L.length&&grp.length<DUGOUT.cap;){const u=L[i];if(Math.hypot(u.x-a.x,u.y-a.y)<90){grp.push(u);L.splice(i,1);}else i++;}
+    let cx=0,cy=0;for(const u of grp){cx+=u.x;cy+=u.y;}cx/=grp.length;cy/=grp.length;
+    let c=null;for(const q of G.civ)if(q.dug&&!q.dead&&ally(q.dteam,team)&&q.occ.length+grp.length<=q.cap&&Math.hypot(q.x-cx,q.y-cy)<50&&(!c||Math.hypot(q.x-cx,q.y-cy)<Math.hypot(c.x-cx,c.y-cy)))c=q;
+    if(!c&&live<DUGOUT.max){const st=dugSite(cx,cy);if(st){c=dugoutMake(team,st[0],st[1]);if(c)live++;}}
+    if(!c){bad+=grp.length;continue;}
+    for(const u of grp){u.order={type:'garrison',ci:c.i,x:c.x,y:c.y};u.target=null;u.guard=null;u.path=null;sent++;}}
+  if(bad&&!sent)log(team,'No room to dig in here - move clear of buildings and water.','w');return sent;}
+// the dugout is dug in a few seconds, and nobody but its owner's side may use it
+function dugoutWait(c,u){return c.dug&&c.dg>G.t;}
+function dugoutFree(c){if(!c||!c.dug||c.dead)return;if(c.g||c.occ.length){const occ=c.occ;if(c.g)leaveGarrison(c);else c.occ=[];for(const u of occ||[]){if(!u.dead&&!G.byId.has(u.id)){u.inTun=false;u.inGar=null;G.ents.push(u);G.byId.set(u.id,u);}}}
+  c.dead=true;c.occ=[];c.g=null;if(G.civAt&&G.civAt.get(c.k)===c)G.civAt.delete(c.k);
+  if(G.dug)for(let i=G.dug.length-1;i>=0;i--)if(G.dug[i].k==='hole'&&G.dug[i].ci===c.i)G.dug.splice(i,1);dugBump();}
+// destroyed (shells, bombs, tank guns): the soldiers are thrown clear, hurt - same as a collapsing building
+function dugoutBreak(c,team){if(c.dead)return;const g=c.g,occ=c.occ;c.g=null;c.occ=[];
+  occ.forEach((u,i)=>{const a=i/Math.max(1,occ.length)*6.283;const p=nearestPassXY('ground',c.x+Math.cos(a)*26,c.y+Math.sin(a)*26)||[c.x,c.y];u.x=p[0];u.y=p[1];u.inTun=false;u.inGar=null;u.mv=G.t;u.order=null;u.target=null;u.hp*=.6;u.fear=(u.fear||0)+.5;G.ents.push(u);G.byId.set(u.id,u);});
+  if(g&&!g.dead){g.dead=true;G.byId.delete(g.id);FXE('die',[g.id,g.x|0,g.y|0,KINDS.indexOf(g.kind),1,g.team]);}
+  FXE('boom',[c.x,c.y,14,0]);if(occ.length)log(occ[0].team,`A dugout was destroyed - ${occ.length} soldier${occ.length>1?'s':''} thrown clear.`,'w');dugoutFree(c);}
+// unused dugouts fade away after a while
+function dugTick(){if(!G.civ||G.t<(G.dgT||0))return;G.dgT=G.t+1;for(const c of G.civ){if(!c.dug||c.dead)continue;if(c.occ.length||c.g){c.fd=G.t+DUGOUT.fade;continue;}if(G.t>c.fd)dugoutFree(c);}}
+// AI infantry that have stood still a while dig in as one squad (at most 6 dugouts per AI team); they come out again when a wave is ready (aiDugRelease)
+function aiDig(u,dt){if(u.order||u.target||u.rout>G.t||G.t-(u.mv||-9)<.5){u.idl=0;return;}u.idl=(u.idl||0)+dt;if(u.idl<7||!digCan(u))return;u.idl=-4-(u.id%8);
+  if(dugoutLive(u.team)>=6)return;const g=[u];for(const o of nearby(u.x,u.y,80,DUG_NB)){if(o!==u&&!o.dead&&o.team===u.team&&digCan(o)&&!o.order&&!o.target&&g.length<DUGOUT.cap)g.push(o);}digIn(u.team,g);}
+const DUG_NB=[];
+function aiDugRelease(T,army){let occ=0;const L=[];for(const c of G.civ)if(c.dug&&!c.dead&&c.dteam===T.id&&c.g){L.push(c);occ+=c.occ.length;}if(!occ)return;
+  const idleN=army.filter(u=>!u.order&&!u.target&&!u.amb).length;if(idleN+occ<(T.ai.wave||8))return;
+  for(const c of L){const out=leaveGarrison(c);if(out)for(const u of out)u.idl=-40;}}
 // ---- sandbag lines / trench segments laid by a Construction Vehicle along a dragged line ----
 function wallPlan(k,pts){const sp=k==='trench'?30:25;let L=0;const cum=[0];for(let i=2;i<pts.length;i+=2){L+=Math.hypot(pts[i]-pts[i-2],pts[i+1]-pts[i-1]);cum.push(L);}
   const n=Math.max(1,Math.min(28,Math.round(L/sp)+1)),out=[];let j=0;
@@ -8964,10 +8996,16 @@ function critNear(u,R){let b=null,bd=R*R;for(const v of G.ents)if(!v.isB&&!v.dea
 // the crew bails out of a vehicle that is nearly dead (below 20% health), whether or not morale has broken
 function bailCheck(u){if(msOf(G.teams[u.team].fac).rout===0)return false;/* Zealous crews fight to the last */if(u.aband||!critOk(u)||u.kind==='dozer'||u.hp>=u.max*.2||G.t-(u.reT||-99)<8)return false;if(u.s.cap&&u.cargo&&u.cargo.length)try{unloadTransport(u);}catch(_){}bailOut(u);return true;}
 // client sync: the fortification list rides in the team panel when it changed (and every 12 s as a safety net)
-function dgPack(T){if(!G.dug)return null;if(T.dgV===G.dugV&&G.t<(T.dgT||0))return null;T.dgV=G.dugV;T.dgT=G.t+12;return{dg:G.dug.map(d=>[d.id,d.x,d.y,DUGK.indexOf(d.k),Math.round(d.a*100),d.team])};}
-function dgApply(L){G.dug=L.map(v=>({id:v[0],x:v[1],y:v[2],k:DUGK[v[3]]||'fox',a:v[4]/100,team:v[5],hp:1,max:1}));G.dugN=G.dug.length;G.dugV=(G.dugV|0)+1;G.dugId=Math.max(G.dugId|0,1);}
+function dgPack(T){if(!G.dug)return null;if(T.dgV===G.dugV&&G.t<(T.dgT||0))return null;T.dgV=G.dugV;T.dgT=G.t+12;return{dg:G.dug.map(d=>[d.id,d.x,d.y,DUGK.indexOf(d.k),Math.round(d.a*100),d.team,d.k==='hole'?d.ci:-1])};}
+function dgApply(L){G.dug=L.map(v=>({id:v[0],x:v[1],y:v[2],k:DUGK[v[3]]||'fox',a:v[4]/100,team:v[5],hp:1,max:1,ci:v[6]}));G.dugN=G.dug.length;G.dugV=(G.dugV|0)+1;G.dugId=Math.max(G.dugId|0,1);dugRelink();}
+// a screen that does not run the simulation learns where the dugouts are from the same list (and which G.civ slot each one is)
+function dugEnsure(n){if(!G.civ)return;while(G.civ.length<n)G.civ.push({i:G.civ.length,k:0,x:-9999,y:-9999,b:[],h:3,ruin:true,dug:1,dead:true,occ:[],g:null,max:1,hp:1,cap:DUGOUT.cap});}
+function dugAtRebuild(){if(!G.civ||!G.civAt)return;for(const c of G.civ)if(c.dug&&!c.dead)G.civAt.set(c.k,c);}
+function dugRelink(){if(!G.civ||!G.civAt)return;const live=new Set();
+  for(const d of G.dug||[])if(d.k==='hole'&&d.ci>=0){dugEnsure(d.ci+1);const c=G.civ[d.ci];if(!c||!c.dug)continue;live.add(c);if(MODE==='client'){c.dead=false;c.x=d.x;c.y=d.y;c.k=Math.floor(d.y/CELL)*GW+Math.floor(d.x/CELL);c.dteam=d.team;c.cap=DUGOUT.cap;}G.civAt.set(c.k,c);}
+  for(const c of G.civ)if(c.dug&&!live.has(c)){if(MODE==='client')c.dead=true;if(c.dead&&G.civAt.get(c.k)===c)G.civAt.delete(c.k);}}
 // AI: after the first four minutes an idle Construction Vehicle throws up a sandbag line (or trench) across the approach in front of a base building
-function aiWalls(T,mine){if(T.ai.d<1||T.ai.t%9!==4||T.credits<450||G.t<240)return;let n=0;for(const d of G.dug||[])if(d.team===T.id&&d.k!=='fox')n++;if(n>=14)return;
+function aiWalls(T,mine){if(T.ai.d<1||T.ai.t%9!==4||T.credits<450||G.t<240)return;let n=0;for(const d of G.dug||[])if(d.team===T.id&&(d.k==='sand'||d.k==='trench'))n++;if(n>=14)return;
   const dzs=mine.filter(e=>!e.isB&&e.kind==='dozer'&&!e.order&&!e.dead).slice(0,2);if(!dzs.length)return;const dz=dzs[0];let foe=null,bd=1e12;for(const e of G.ents)if(e.isB&&!e.dead&&e.kind==='hq'&&!ally(e.team,T.id)){const d=(e.x-dz.x)**2+(e.y-dz.y)**2;if(d<bd){bd=d;foe=e;}}if(!foe)return;
   const bs=mine.filter(e=>e.isB&&e.built>=1&&(e.kind==='factory'||e.kind==='barracks'||e.kind==='hq'));if(!bs.length)return;const b=bs[(T.ai.t/9|0)%bs.length];
   const a=Math.atan2(foe.y-b.y,foe.x-b.x),r=b.size/2+80,cx=b.x+Math.cos(a)*r,cy=b.y+Math.sin(a)*r,px=-Math.sin(a)*75,py=Math.cos(a)*75,k='trench';   /* Abdullah 2026-11-07 21:21 "Make it all dig in": one dug-in line, no separate sandbag line */
@@ -9685,13 +9723,13 @@ function wndRevive(w){const p=nearestPassXY('ground',w.x,w.y)||[w.x,w.y];const n
   FXE('txt',[n.x|0,n.y|0,'REVIVED',w.team,-2]);FXE('heal',[n.x|0,n.y|0,40],w.team);return true;}
 // a blast kills the wounded lying in it
 function wndBlast(x,y,r){const L=G.wnd;if(!L||!L.length)return;for(let i=L.length-1;i>=0;i--){const w=L[i];if(Math.hypot(w.x-x,w.y-y)<r*.85)wndDrop(i,'KILLED');}}
-function wndCoverSpot(w){let b=null,bd=170*170;for(const d of G.dug||[]){if(!ally(d.team,w.team))continue;const q=(d.x-w.x)**2+(d.y-w.y)**2;if(q<bd&&passXY('ground',d.x,d.y)){bd=q;b=[d.x,d.y];}}if(b)return b;
+function wndCoverSpot(w){let b=null,bd=170*170;for(const d of G.dug||[]){if(d.k==='hole'||!ally(d.team,w.team))continue;const q=(d.x-w.x)**2+(d.y-w.y)**2;if(q<bd&&passXY('ground',d.x,d.y)){bd=q;b=[d.x,d.y];}}if(b)return b;
   for(const r of [45,80,115,150])for(let k=0;k<12;k++){const a=k/12*6.283+w.id,x=w.x+Math.cos(a)*r,y=w.y+Math.sin(a)*r;if(x<30||y<30||x>MAPW-30||y>MAPH-30||!passXY('ground',x,y))continue;if((G.dugN&&dugCov(x,y))||(G.rubN&&rubAt(x,y))||coverAt(x,y))return[x,y];}return null;}
 function wndFoes(x,y,team,R){nearby(x,y,R,BF_NB);for(const e of BF_NB)if(!e.dead&&!e.isB&&e.team!==team&&!ally(e.team,team)&&e.s&&e.s.dmg>0&&e.s.dom==='ground'&&Math.hypot(e.x-x,e.y-y)<R)return true;return false;}
 function wndTick(dt){const L=G.wnd;if(!L||!L.length)return;const meds=[],aid=[];
   for(const e of G.ents){if(e.dead||e.inTun)continue;if(e.isB){if(e.built>=1&&(e.kind==='hq'||e.kind==='depot'||e.kind==='field'))aid.push(e);}else if(e.kind==='medic')meds.push(e);}
   G.wndS=(G.wndS||0)-dt;const scan=G.wndS<=0;if(scan)G.wndS=.5;
-  if(scan)for(const m of meds){if(m.order||m.dig||m.rout>G.t||G.t-(m.mv||-9)<.8||m.aband)continue;let b=null,bd=320*320;
+  if(scan)for(const m of meds){if(m.order||m.rout>G.t||G.t-(m.mv||-9)<.8||m.aband)continue;let b=null,bd=320*320;
     for(const w of L){if(!ally(w.team,m.team)||(w.md&&w.mdT>G.t&&w.md!==m.id))continue;const d=(w.x-m.x)**2+(w.y-m.y)**2;if(d<bd&&!wndFoes(w.x,w.y,w.team,120)){bd=d;b=w;}}
     if(b){m.order={type:'move',x:b.x,y:b.y};m.path=null;b.md=m.id;b.mdT=G.t+10;}}
   for(let i=L.length-1;i>=0;i--){const w=L[i];
@@ -9711,7 +9749,7 @@ function wdPack(T){if(!G.wnd)return null;if(T.wdV===G.wndV&&G.t<(T.wdT||0))retur
 function wdApply(L){G.wnd=L.map(v=>({id:v[0],x:v[1],y:v[2],team:v[3],p:v[4]/100,until:G.t+v[5]/10,kind:'inf',rank:0,xp:0}));G.wndN=G.wnd.length;G.wndV=(G.wndV|0)+1;}
 
 /* ---------- damaged buildings ---------- */
-function civStage(c){if(c.dead||!c.max)return;const f=c.hp/c.max,s=f>.66?0:f>.33?1:2;if(s>(c.stg|0)){c.stg=s;FXE('civs',[c.i,s]);civBail(c,s);}}
+function civStage(c){if(c.dead||!c.max)return;const f=c.hp/c.max,s=f>.66?0:f>.33?1:2;if(s>(c.stg|0)){c.stg=s;if(!c.dug)FXE('civs',[c.i,s]);civBail(c,s);}}
 function civBail(c,s){if(!c.occ||!c.occ.length)return;
   if(s===1){for(const u of c.occ)u.fear=(u.fear||0)+.12;return;}
   const n=Math.ceil(c.occ.length/2),out=c.occ.splice(c.occ.length-n,n);
@@ -9766,7 +9804,7 @@ function floodTick(dt){const D=G.dams;if(!D||!G.fln)return;G.flS=(G.flS||0)-dt;i
     if(isInf(e.s)){e.hp-=e.max*.035*st*f;e.fear=(e.fear||0)+.01;if(e.hp<=0){FXE('txt',[e.x|0,e.y|0,'SWEPT AWAY',-2,e.team]);kill(e,null,null);}}
     else if(e.hp>e.max*.2)e.hp=Math.max(e.max*.2,e.hp-e.max*(e.s.armor==='heavy'?.004:.008)*st*f);}
   if(G.wnd&&G.wnd.length)for(let i=G.wnd.length-1;i>=0;i--){const w=G.wnd[i];if(floodAt(w.x,w.y)>.5)wndDrop(i,'SWEPT AWAY');}
-  if(G.dug&&G.dug.length)for(let i=G.dug.length-1;i>=0;i--){const q=G.dug[i];if(q.k!=='sand'&&floodAt(q.x,q.y)>.7){G.dug.splice(i,1);G.dugBd=1;}}if(G.dugBd){G.dugBd=0;dugBump();}}
+  if(G.dug&&G.dug.length)for(let i=G.dug.length-1;i>=0;i--){const q=G.dug[i];if(q.k!=='sand'&&q.k!=='hole'&&floodAt(q.x,q.y)>.7){G.dug.splice(i,1);G.dugBd=1;}}if(G.dugBd){G.dugBd=0;dugBump();}}
 function damPack(T){const D=G.dams;if(!D)return null;if(T.dmV===G.damV&&T.dmN)return null;T.dmV=G.damV;T.dmN=1;return{dm:D.map(d=>[d.i,d.dead?1:0,Math.round(d.hp/d.max*100),Math.round(d.t0*10),d.fin?1:0])};}
 function damApply(L){if(!G.dams)return;for(const v of L){const d=G.dams[v[0]];if(!d)continue;const was=d.dead;d.dead=!!v[1];d.hp=v[2]/100*d.max;d.t0=v[3]/10;d.fin=!!v[4];if(d.dead&&!was){FXE('dam',[d.i,d.x,d.y]);}}G.damV=(G.damV|0)+1;}
 // AI: blow the dam whose flood would catch more of the enemy than of us (or our friends); a few strong units go and shell it
@@ -11746,6 +11784,12 @@ function tactRebuild(){const m=tactMesh();let n=0;const L=G.dug||[];
     if(d.k==='fox'){for(let i=0;i<12;i++){const t=i/12*6.283+R()*.25,rr=6+R()*1.3,c=earth();n=tactBlob(m,n,d.x+Math.cos(t)*rr,d.y+Math.sin(t)*rr,.2,3.1+R()*1.2,.95+R()*.5,2.3+R()*.8,t+1.57+R()*.6,c[0],c[1],c[2]);}
       for(let i=0;i<2;i++)n=tactBlob(m,n,d.x+(R()-.5)*2,d.y+(R()-.5)*2,-.3,5.2+R(),.5,5+R(),R()*6,.05,.04,.03);
       for(let i=0;i<4;i++){const t=(i-1.5)*.55+d.a,k=.9+R()*.2;n=tactBlob(m,n,d.x+Math.cos(t)*7.6,d.y+Math.sin(t)*7.6,1.3,2.6,.9,1.5,t+1.57,.6*k,.5*k,.31*k);}}
+    else if(d.k==='hole'){/* a dugout: a wide earth berm ring round a dark pit, sandbag parapet with a gap, planks and a team-coloured stake */
+      for(let i=0;i<14;i++){const t=i/14*6.283+R()*.2,rr=13.5+R()*1.6,c=earth();n=tactBlob(m,n,d.x+Math.cos(t)*rr,d.y+Math.sin(t)*rr,.3,4.4+R()*1.4,1.1+R()*.6,3.2+R()*.9,t+1.57+R()*.5,c[0],c[1],c[2]);}
+      for(let i=0;i<3;i++)n=tactBlob(m,n,d.x+(R()-.5)*4,d.y+(R()-.5)*4,-.35,9+R()*2,.5,9+R()*2,R()*6,.05,.04,.03);
+      for(let i=0;i<10;i++){const t=d.a+(i+.5)/10*5.2,k=.9+R()*.2;n=tactBlob(m,n,d.x+Math.cos(t)*11.6,d.y+Math.sin(t)*11.6,1.5,3.4,1.1,1.8,t+1.57,.6*k,.5*k,.31*k);}
+      for(let i=0;i<2;i++)n=tactBlob(m,n,d.x+(i-.5)*5,d.y+(R()-.5)*3,.05,11,.25,1.6,d.a+.3*i,.34,.23,.12);
+      {const col=G.teams[d.team]?_tc.set(G.teams[d.team].color):_tc.setRGB(.8,.8,.8);n=tactBlob(m,n,d.x+Math.cos(d.a+3.4)*10.5,d.y+Math.sin(d.a+3.4)*10.5,5.5,.7,6.5,.7,0,col.r,col.g,col.b);}}
     else if(d.k==='sand'){for(let c=0;c<2;c++){const cnt=c?4:5;for(let i=0;i<cnt;i++){const u=(i-(cnt-1)/2)*5.2+(R()-.5)*.6+c*2.4,v=(R()-.5)*.9,k=.88+R()*.24;
         n=tactBlob(m,n,d.x+ca*u-sa*v,d.y+sa*u+ca*v,.7+c*1.55,2.9+R()*.4,1.05+R()*.25,1.7+R()*.35,-d.a+(R()-.5)*.3,.6*k,.5*k,.31*k);}}
       n=tactBlob(m,n,d.x,d.y,.15,13,.5,4.2,-d.a,.2,.15,.1);}
@@ -12107,13 +12151,14 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
      c.fillStyle='rgba(0,0,0,.5)';c.fillRect(p.x-W/2+3,p.y-3,W-6,2);c.fillStyle=n>=CAP?'#ea5a40':'#74d08f';c.fillRect(p.x-W/2+3,p.y-3,(W-6)*n/CAP,2);}}}
   // garrison prompt: with infantry selected, outline the city building under the cursor and say how many fit
   {const inf=G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&typeof canGarrison==='function'&&canGarrison(u));if(inf&&!G.place&&!G.aim){const now=performance.now();if(now-(drawHUD.ht||0)>90){drawHUD.ht=now;const w=screenToWorld(mouse.x,mouse.y);drawHUD.hc=civUnder(mouse.x,mouse.y,w);}
-    const cv=drawHUD.hc;if(cv&&!cv.dead){const own=cv.g&&!cv.g.dead,mine=own&&ally(cv.g.team,ME),enemy=own&&!mine;const n=MODE==='client'?(own?(cv.g.occN|0):0):cv.occ.length,cap=cv.cap;const bh=cv.h,g0=groundH(cv.x,cv.y),hw=CELL/2;
+    const cv=drawHUD.hc;if(cv&&!cv.dead){const own=cv.g&&!cv.g.dead,mine=own&&ally(cv.g.team,ME),enemy=own&&!mine;const n=MODE==='client'?(own?(cv.g.occN|0):0):cv.occ.length,cap=cv.cap;const bh=cv.h,g0=groundH(cv.x,cv.y),hw=cv.dug?16:CELL/2;
       const pts=[[-hw,-hw],[hw,-hw],[hw,hw],[-hw,hw]].map(([dx,dy])=>toScreen(cv.x+dx,g0+bh+1,cv.y+dy));const pb=[[-hw,-hw],[hw,-hw],[hw,hw],[-hw,hw]].map(([dx,dy])=>toScreen(cv.x+dx,g0,cv.y+dy));
       c.strokeStyle=enemy?'#ea5a40':n>=cap?'#e3b341':'#74d08f';c.lineWidth=2;c.setLineDash([]);c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.closePath();c.stroke();for(let i=0;i<4;i++){c.beginPath();c.moveTo(pts[i].x,pts[i].y);c.lineTo(pb[i].x,pb[i].y);c.stroke();}
-      const top=pts.reduce((a,p)=>p.y<a.y?p:a,pts[0]);const t=enemy?'ENEMY-HELD BUILDING':n>=cap?'BUILDING FULL '+n+'/'+cap:'CLICK TO GARRISON  '+n+'/'+cap;c.font='700 12px Saira Condensed, sans-serif';const tw=c.measureText(t).width+12;c.fillStyle='rgba(8,12,10,.85)';c.fillRect(top.x-tw/2,top.y-24,tw,17);c.fillStyle=c.strokeStyle;c.textAlign='center';c.fillText(t,top.x,top.y-11);}}}
+      const top=pts.reduce((a,p)=>p.y<a.y?p:a,pts[0]);const t=cv.dug?(enemy?'ENEMY DUGOUT':n>=cap?'DUGOUT FULL '+n+'/'+cap:'CLICK TO ENTER DUGOUT  '+n+'/'+cap):enemy?'ENEMY-HELD BUILDING':n>=cap?'BUILDING FULL '+n+'/'+cap:'CLICK TO GARRISON  '+n+'/'+cap;c.font='700 12px Saira Condensed, sans-serif';const tw=c.measureText(t).width+12;c.fillStyle='rgba(8,12,10,.85)';c.fillRect(top.x-tw/2,top.y-24,tw,17);c.fillStyle=c.strokeStyle;c.textAlign='center';c.fillText(t,top.x,top.y-11);}}}
   // own garrisons: troop count over the building
   for(const e of G.ents){if(e.dead||e.kind!=='garrison'||!ally(e.team,ME))continue;const cv=civAtXYAny(e.x,e.y);const bh=cv?cv.h:20;const p=toScreen(e.x,groundH(e.x,e.y)+bh+22,e.y);if(p.z>1||p.x<-40||p.y<-40||p.x>VW+40||p.y>VH+40)continue;const n=MODE==='client'?(e.occN|0):(cv?cv.occ.length:0),cap=MODE==='client'?(e.capN|0):(cv?cv.cap:0);
-    const t='GARRISON '+n+'/'+cap;c.font='700 11px Saira Condensed, sans-serif';const tw=c.measureText(t).width+10;c.fillStyle='rgba(8,12,10,.8)';c.fillRect(p.x-tw/2,p.y-13,tw,15);c.fillStyle=e.team===ME?'#74d08f':'#7fb6e8';c.textAlign='center';c.fillText(t,p.x,p.y-2);}
+    const dg=cv&&cv.dug,t=(dg?'DUGOUT ':'GARRISON ')+n+'/'+cap;c.font='700 11px Saira Condensed, sans-serif';const tw=c.measureText(t).width+10;c.fillStyle='rgba(8,12,10,.8)';c.fillRect(p.x-tw/2,p.y-13,tw,15);c.fillStyle=e.team===ME?'#74d08f':'#7fb6e8';c.textAlign='center';c.fillText(t,p.x,p.y-2);
+    if(dg&&cap>0){const pw=7,pg=2,W=cap*(pw+pg)-pg;c.fillStyle='rgba(8,12,10,.8)';c.fillRect(p.x-W/2-3,p.y+3,W+6,10);for(let q=0;q<cap;q++){const px=p.x-W/2+q*(pw+pg);if(q<n){c.fillStyle=e.team===ME?'#74d08f':'#7fb6e8';c.fillRect(px,p.y+5,pw,6);c.fillRect(px+2,p.y+4,pw-4,2);}else{c.strokeStyle='rgba(200,210,200,.45)';c.lineWidth=1;c.strokeRect(px+.5,p.y+5.5,pw-1,5);}}}}
   for(const m of (G.mines||[])){if(m.team!==ME||m.nav)continue;const p=toScreen(m.x,groundH(m.x,m.y)+1,m.y);if(p.z>1||p.x<-10||p.y<-10||p.x>VW+10||p.y>VH+10)continue;c.strokeStyle='#e3b341';c.lineWidth=1.5;c.beginPath();c.arc(p.x,p.y,4,0,7);c.stroke();c.fillStyle='rgba(20,20,16,.85)';c.beginPath();c.arc(p.x,p.y,2.5,0,7);c.fill();}
   try{drawNavy2(c);}catch(e){}
   {const now=performance.now();c.textAlign='center';c.font='700 13px Saira Condensed, sans-serif';for(let i=FLOATS.length-1;i>=0;i--){const f=FLOATS[i],k=(now-f.t0)/1100;if(k>=1){FLOATS.splice(i,1);continue;}const p=toScreen(f.x,groundH(f.x,f.y)+26+k*26,f.y);if(p.z>1)continue;c.globalAlpha=1-k*k;c.fillStyle='rgba(0,0,0,.6)';c.fillText(f.s,p.x+1,p.y+1);c.fillStyle=f.c;c.fillText(f.s,p.x,p.y);}c.globalAlpha=1;}
@@ -12253,7 +12298,7 @@ function reWin(e,a,seed,minFl){const c=e.civ;if(!c||!c.b||!c.b.length)return nul
   const k=k0+Math.floor(rh(seed*7.13+c.i)*(k1-k0+1)),t=s*(k+.5)*WS,fl=Math.max(0,Math.floor((b.h-.4)/FH)-1),f0=Math.min(fl,minFl==null?1:minFl),fy=f0+Math.floor(rh(seed*3.7+c.i*1.9)*(fl-f0+1)),gy=groundH(b.x,b.y);
   return{x:wall===0?b.x+b.w/2:wall===1?b.x-b.w/2:t,z:wall===2?b.y+b.d/2:wall===3?b.y-b.d/2:t,y:gy+(fy+.55)*FH,nx,nz,FH,WS,tower};}
 function rh(n){const v=Math.sin(n*12.9898)*43758.5453;return v-Math.floor(v);}
-function reGarRefresh(){RE.gars.length=0;RE.gT=G.t;for(const e of G.ents)if(!e.dead&&e.kind==='garrison'&&e.civ){if(e.k==null)e.k=0;RE.gars.push(e);}}
+function reGarRefresh(){RE.gars.length=0;RE.gT=G.t;for(const e of G.ents)if(!e.dead&&e.kind==='garrison'&&e.civ&&!e.civ.dug){if(e.k==null)e.k=0;RE.gars.push(e);}}
 function reGarFx(dt){const lo=typeof fxPH==='function'&&fxPH()||(typeof gfxLow==='function'&&gfxLow());if(!RE.sil){RE.sil=rePool('sil',lo?8:20,2.6,3.4);RE.hole=rePool('hole',lo?8:22,5.5,5.5);}
   if(RE.sil[0]&&!RE.sil[0].parent){for(const m of RE.sil.concat(RE.hole))SCN.add(m);}RE.sil.forEach(q=>q.visible=false);RE.hole.forEach(q=>q.visible=false);if(cam.dist>650)return;let si=0,hi=0;
   for(const e of RE.gars){if(!inView(e.x,e.y,.15))continue;const f=e.hp/e.max,occ=MODE==='client'?(e.occN|0):(e.civ.occ?e.civ.occ.length:0);
@@ -12802,7 +12847,7 @@ function applySnap(d){if(!G||!Array.isArray(d.e))return;const now=G.t;if(typeof 
     if(!e){const T=G.teams[team];const s=isB?bstats(T.fac,kind):stats(T.fac,kind);e={id,isB,team,kind,s,x,y,va:va/100,tang:ta/100,hp,max:mx_,r:isB?s.size/2:s.r,size:isB?s.size:0,vs:new Array(G.teams.length).fill(true),fx:x,fy:y,tx:x,ty:y,it:1};G.ents.push(e);G.byId.set(id,e);}
     else{e.gone=false;e.fx=e.x;e.fy=e.y;e.tx=x;e.ty=y;e.it=0;if(e.team!==team&&!isB){e.team=team;const T=G.teams[team];try{e.s=stats(T.fac,kind);}catch(err){}}}
     if(!(e.fbT>G.t))e.tva=va/100;e.tta=ta/100;e.hp=hp;e.max=mx_;e.seenAt=st;e.seenL=now;e.ut=st;e.vis=true;
-    if(isB){e.built=f&FLG.built?ex/100:1;e.disv=!!(f&FLG.dis);e.dis=0;e.chv=!!(f&FLG.chg);e.mem=!!(f&FLG.mem);e.busy=!!(f&FLG.busy);e.nd=!!(f&FLG.nd);e.stall=!!(f&FLG.stall);if(kind==='uplink')e.chg=ex/100;if(kind==='garrison'){e.occN=ex>>4;e.capN=ex&15;e.built=1;}e.ang=e.tta;e.x=x;e.y=y;}
+    if(isB){e.built=f&FLG.built?ex/100:1;e.disv=!!(f&FLG.dis);e.dis=0;e.chv=!!(f&FLG.chg);e.mem=!!(f&FLG.mem);e.busy=!!(f&FLG.busy);e.nd=!!(f&FLG.nd);e.stall=!!(f&FLG.stall);if(kind==='uplink')e.chg=ex/100;if(kind==='garrison'){e.occN=ex>>4;e.capN=ex&15;e.built=1;{const cd=civAtXYAny(x,y);if(cd&&cd.dug){e.size=26;e.r=13;}}}e.ang=e.tta;e.x=x;e.y=y;}
     else{e.cargo=f&FLG.cargo?1:0;e.hacking=!!(f&FLG.hack);e.planting=!!(f&FLG.plant);e.landed=!!(f&FLG.land);e.hid=!!(f&FLG.hid);e.mvC=f&FLG.mov?1:0;e.building=!!(f&FLG.busy);e.supp=f&FLG.supp?1:0;e.routV=!!(f&FLG.rout);e.shakV=!!(f&FLG.shak);e.markV=!!(f&FLG.mark);e.lastV=!!(f&FLG.last);e.aband=f&FLG.aband?1:0;e.rank=(f>>9)&3;{const q=(f>>>23)&127;if(q){if(!e.amx)e.amx=ammoCap(e.s);e.am=q<=1?0:(q-1)/126*e.amx;}else e.am=undefined;const sp=(f>>>30)&1;if(sp!==(e.sup|0)||e.supT==null){e.supT=G.t;}e.sup=sp;}e.st=(f>>21)&3;e.mor=(ex&127)-1;e.crit=ex>>7;}}}
 function clientTick(dt){G.t+=dt;const now=G.t;
   const P=Math.max(.1,Math.min(.6,Math.max(NET.iv||.1,(NET.ia||NET.iv||.2)+2*(NET.iaDev||0))));
@@ -13116,14 +13161,14 @@ function ckDecode(ck){const byId=new Map();const S=ck.S;const ents=ck.ents.map(o
   for(const e of ents){for(const k in e){if(k==='$s')continue;e[k]=dec(e[k]);}e.s=sTab[e.$s];delete e.$s;e.vs=new Array(G.teams.length).fill(false);}
   return {ents,byId,dec};}
 // Turn this page (currently a client in the battle) into the host, from a checkpoint.
-function ckRestore(ck){const N=G.teams.length;const {ents,byId,dec}=ckDecode(ck);
+function ckRestore(ck){const N=G.teams.length;dugEnsure(ck.civ?ck.civ.length:0);const {ents,byId,dec}=ckDecode(ck);  // dugout slots are added to the civ list after the map's own buildings: make room before refs are resolved
   G.ents=ents;G.byId=byId;G.proj=[];G.strikes=[];G.timers=[];G.planes=[];G.out=[];G.spoofs=[];G.mban=[];G.mbanN=0;G._ewv=null;  // defaults for checkpoints from before these were saved
   for(const k in ck.g){const d=ck.g[k];G[k]=(d&&typeof d==='object')?JSON.parse(JSON.stringify(d)):d;}
   const reb=dec;
   for(const k of ['mines','smokes','shields'])if(Array.isArray(G[k]))G[k]=reb(G[k]);
   ck.fields.forEach((f,i)=>{if(G.fields[i])Object.assign(G.fields[i],f);});
   ck.oil.forEach((o,i)=>{if(G.oil[i])Object.assign(G.oil[i],reb(o));});
-  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});(ck.tw||[]).forEach((o,i)=>{const t=G.towns&&G.towns[i];if(t){const q={};for(const k in o)if(k[0]!=='$')q[k]=reb(o[k]);Object.assign(t,q);t.rebU=(o.$rebU||[]).map(id=>byId.get(id)).filter(Boolean);t.mil=(o.$mil||[]).map(id=>byId.get(id)).filter(Boolean);}});
+  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});dugAtRebuild();(ck.tw||[]).forEach((o,i)=>{const t=G.towns&&G.towns[i];if(t){const q={};for(const k in o)if(k[0]!=='$')q[k]=reb(o[k]);Object.assign(t,q);t.rebU=(o.$rebU||[]).map(id=>byId.get(id)).filter(Boolean);t.mil=(o.$mil||[]).map(id=>byId.get(id)).filter(Boolean);}});
   if(Array.isArray(ck.proj))G.proj=ck.proj.map(p=>{const o={};for(const k in p)o[k]=reb(p[k]);return o;}).filter(p=>p.src&&p.tgt);
   if(ck.camp&&G.camp)for(const k in ck.camp){const v=reb(ck.camp[k]);if(typeof G.camp[k]!=='function')G.camp[k]=v;}(ck.tow||[]).forEach((o,i)=>{if(G.tow&&G.tow[i])Object.assign(G.tow[i],o);});(ck.brT||[]).forEach((x,i)=>{if(G.teams[i])G.teams[i].brT=x;});try{rubSync();bfSync();}catch(e){}
   ck.teams.forEach((t,i)=>{const T=G.teams[i];if(!T)return;for(const k in t){if(k==='$ai'||k==='$aiD'||k==='$aiS'||k==='aiTook')continue;T[k]=reb(t[k]);}T.ai=(t.$ai||t.aiTook)?mkAI(t.$aiD!=null?t.$aiD:1):null;if(T.ai&&t.$aiS){const S=reb(t.$aiS);for(const k in S)T.ai[k]=S[k];}T.aiTook=!!t.aiTook;});
@@ -13530,7 +13575,7 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}try{grandUi();}catch(e)
   if(s.some(u=>!u.isB&&u.kind==='spy'&&u.team===ME&&!u.dead))el.prepend(spyCard(s));
   {const hu=s.find(u=>!u.isB&&u.kind==='champ'&&u.team===ME&&!u.dead);if(hu)el.prepend(habBtn(hu));const lu=s.find(u=>!u.isB&&u.kind==='cleric'&&u.team===ME&&!u.dead);if(lu)for(const b of ldrBtns(lu).reverse())el.prepend(b);}
   {const ps=s.filter(u=>!u.isB&&u.team===ME&&!u.dead&&u.s&&u.s.dom==='naval'&&u.s.sonar);if(ps.length)el.prepend(pingBtn(ps));}
-  if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
+  if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';const dgo=c&&c.dug;d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>'+(dgo?'Dugout: strong cover against rifles and shrapnel, firing out at 20% longer range. Shells, rockets, tank guns and flame bring it down. Right-click the ground to bring them out, or right-click the dugout with more infantry to add them.':'Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.');el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&isTun(s[0])&&s[0].team===ME&&s[0].built>=1){const FT=s[0].kind==='fort',n=FT?(MODE==='client'?(T.fortN|0):fortN(ME)):(MODE==='client'?(T.tunN|0):T.tun.length),K=FT?(MODE==='client'?(T.fortK||{}):fortKinds(ME)):(MODE==='client'?(T.tunK||{}):tunKinds(T));const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>'+(FT?'Inside the Mountain Fortress: '+n+' / '+FORT_CAP:'In the tunnel network: '+n+' / '+tunCap(ME))+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. '+(TOUCHUI?'Tap':leftOrders()?'Click':'Right-click')+(FT?' the fortress':' a tunnel')+' with units selected to send them in.'+(FT?' Units inside heal and only leave through the fortress.':''));el.append(d);}
   if(s.length===1&&s[0].isB&&isTun(s[0])&&s[0].team===ME&&s[0].built>=1&&(s[0].kind==='fort'?(MODE==='client'?T.fortN:fortN(ME)):(MODE==='client'?T.tunN:T.tun.length))){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring units out here';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   const net=$('net');if(MODE!=='single'){net.hidden=false;net.innerHTML=`<b>●</b> Online · vs ${vsText()}`;}else net.hidden=true;}
@@ -15906,7 +15951,7 @@ function lgPointer(e){if(!G||G.over||!G.lgM)return;e.stopImmediatePropagation();
   try{speak(1);mark({x:w.x,y:w.y,r:14,t:0,d:.7,c:0xd9b97a});}catch(err){}G.lgM=null;updateUI();}
 if(typeof cv!=='undefined'&&cv){cv.addEventListener('pointerdown',lgPointer,true);cv.addEventListener('contextmenu',e=>{if(G&&G.lgM)e.preventDefault();});}
 /* ---------- Tactics UI: dig in, sandbag lines / trenches, field repair, vehicle damage readout (Abdullah, 2026-11-04) ----------
-   Hotkey I: infantry dig a foxhole; with only Construction Vehicles selected it starts a fortification line. A line is traced: press and drag along the path you want (curves and corners), release to order it; or click where it
+   Hotkey I: infantry dig a dugout and go inside it (like garrisoning a building; select the dugout + right-click ground to bring them out); with only Construction Vehicles selected it starts a fortification line. A line is traced: press and drag along the path you want (curves and corners), release to order it; or click where it
    starts, then where it ends. Right-click (or Esc) cancels. Infantry never build lines, they only dig in. */
 const CRIT_NAME={1:'Tracks / wheels knocked out - cannot move',2:'Turret jammed - slow to aim and fire',4:'Engine on fire - burning and slower'};
 function critText(c){const a=[];for(const b of [1,2,4])if(c&b)a.push(CRIT_NAME[b]);return a.join(' · ');}
@@ -15927,7 +15972,7 @@ function tactRow(el,s){
   if(s.length===1&&!s[0].isB&&s[0].crit){const d=document.createElement('div');d.className='morale';d.innerHTML='<span class="ml" style="color:#ea8a5a">Damaged</span><span style="font-size:12px;opacity:.9">'+critText(s[0].crit)+'</span>';d.title='A Construction Vehicle (or the War Factory yard) repairs these.';el.append(d);}
   const own=tactOwn(),inf=own.some(digCan),doz=own.filter(u=>u.kind==='dozer'),air=own.filter(u=>u.s.dom==='air'&&(u.s.cls==='heli'||u.s.cls==='jet'));if(!inf&&!doz.length&&!air.length)return;
   const r=document.createElement('div');r.className='cmdrow tact';const mk=(t,ti,fn,on)=>{const b=document.createElement('button');b.textContent=t;b.title=ti;b.onclick=fn;if(on)b.classList.add('on');r.append(b);return b;};
-  if(inf)mk('⛏ Dig in (I)','Dig a foxhole where they stand: a few seconds, then they sit low in it and take about half damage. They climb out when you give a move order.',tactDig);
+  if(inf)mk('⛏ Dig in (I)','Dig a dugout where they stand and go inside, like garrisoning a building: a few seconds, then they are under strong cover and fire from inside. They stay until you select the dugout and right-click the ground (or right-click it with more infantry to add them).',tactDig);
   if(doz.length){mk('⛏ Fortification line'+(inf?'':' (I)'),'Build a fortification line (Construction Vehicles only): press and drag along the path you want, curves and corners included, or click its start then its end. A trench with a sandbag parapet; a new line that starts at the end of another joins it into a network. '+DUG.trench.cost+' supplies a piece. Best cover, slows vehicles.',()=>tactWall('trench'),G.wallM==='trench');
     {if(G.rubN)mk('🧹 Clear rubble','Clear the nearest fallen building so tanks can pass again (idle Construction Vehicles do it on their own).',tactClr);
     mk('🔧 Fix vehicles','Repair knocked-out tracks, jammed turrets and engine fires on nearby vehicles (idle Construction Vehicles do it on their own).',tactFix);}}
