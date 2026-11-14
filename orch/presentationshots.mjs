@@ -50,8 +50,4 @@ await pg.evaluate(() => { const hq = G.ents.find(e => e.team === ME && e.kind ==
 await shot(pg, 'presentation-bar', 3000);
 await pg.evaluate(() => { const [x, y] = window.__hq; centerOn(x + 190, y + 105, true); cam.td = 150; cam.dist = 150; placeCam(); });
 await shot(pg, 'presentation-veteran', 4000);
-await pg.evaluate(() => { const s0 = G.teams[ME].st || (G.teams[ME].st = stNew()), o = G.teams[1 - ME] || G.teams[0]; const s1 = o.st || (o.st = stNew());
-  G.t = 912; G.teams[ME].built = 64; G.teams[ME].lost = 21; s0.ku = 88; s0.kb = 6; s0.lb = 2; s0.bb = 14; s0.cb = 3; s0.sp = 21400; G.teams[ME].credits = 5200; s0.c0 = 10000; G.teams[ME].tm = 0; o.built = 71; o.lost = 90; s1.ku = 20; s1.kb = 1; s1.lb = 6; s1.bb = 9; s1.cb = 1; s1.sp = 17900; o.credits = 100; s1.c0 = 10000;
-  endGame(ME, 'The last enemy building fell.'); });
-await shot(pg, 'presentation-stats', 4000);
 await browser.close(); server.close(); process.exit(0);

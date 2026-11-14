@@ -1,0 +1,7 @@
+/* ================= COMMAND BAR + VETERAN LOOK (presentation, Abdullah 2026-11-13 21:24 "Classic Generals bar", "Stripes + glow + voices") =================
+   The end-of-match screen is NOT touched (he said "Leave as is", 21:36). View only. */
+/* veteran look in the bar portrait (presentation): gold stripes, Elite silver-blue shimmer, Heroic gold glow */
+{const st=document.createElement('style');st.textContent='.ukV .vsvg polygon{fill:#f2c94c;stroke:rgba(0,0,0,.7);stroke-width:1}.ukV.vet2 .vsvg polygon{fill:#bfe0ff}.ukV.vet2{color:#bfe0ff;animation:vetPulse 2.4s ease-in-out infinite}.ukV.vet3{color:#ffd76a;animation:vetPulse 1.6s ease-in-out infinite}.ukV.vet3 .vsvg polygon{fill:#ffd76a}@keyframes vetPulse{0%,100%{text-shadow:0 0 2px rgba(255,255,255,.0)}50%{text-shadow:0 0 9px currentColor}}';document.head.append(st);}
+
+/* Classic Generals bar (presentation): minimap | selected unit / building | command + build grid; hotkey letters sit on the command buttons (em.hk) */
+{const st=document.createElement('style');st.textContent='#tstrip button{position:relative}#tstrip .hk{position:absolute;right:3px;top:1px;font:700 10px system-ui,sans-serif;font-style:normal;color:#f2c94c;opacity:.95;pointer-events:none}@media(min-width:900px){body:not(.gbat) #side{grid-template-columns:238px minmax(300px,340px) 1fr}body:not(.gbat) #side>.ccard{order:3}body:not(.gbat) #side>:nth-child(3){order:2}}';document.head.append(st);}

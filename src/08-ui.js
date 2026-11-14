@@ -32,7 +32,7 @@ function showElim(){if(!G||G.over)return;   // (the 'out' list can arrive after 
    Every player sees the same numbers: the host (or the Cloudflare server) builds them in endStats() (03-sim) when the
    battle ends and sends them to the clients in one 'est' event just before 'end' (07-net applyEvents keeps G.endStats). */
 const ES={blob:null,S:null};
-/* rank stripes (1-3 gold chevrons) for the bar portrait; Elite shimmers silver-blue, Heroic gold (CSS in 08o-genstats vetCss) */
+/* rank stripes (1-3 gold chevrons) for the bar portrait; Elite shimmers silver-blue, Heroic gold (CSS in 08o-genbar) */
 function vetStripes(r){let p='';for(let i=0;i<r;i++){const y=3+i*6;p+='<polygon points="1,'+(y+4)+' 8,'+y+' 15,'+(y+4)+' 15,'+(y+7)+' 8,'+(y+3)+' 1,'+(y+7)+'"/>';}return '<svg class="vsvg" width="16" height="'+(6*r+4)+'" viewBox="0 0 16 '+(6*r+4)+'" style="vertical-align:middle">'+p+'</svg>';}
 function esT(t){t=Math.max(0,Math.round(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
 function esM(n){n=Math.round(n||0);return '$'+(n>=100000?Math.round(n/1000)+'k':n>=10000?(n/1000).toFixed(1)+'k':String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','));}
