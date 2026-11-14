@@ -172,8 +172,8 @@ function dequeue(team,kind){const T=G.teams[team],s=stats(T.fac,kind),q=T.q[s.fr
 function prodTime(T,s){let t=s.time/(1+((G&&G.bs)||1)*.6-.6);{const RR=realRow(T.fac);if(RR&&s.from!=='hq')t*=RR.bt;}if(G&&G.sandbox&&T.id===0)t/=6;t*=upgK(T,s.kind,'build');return t;}
 function production(dt){for(const T of G.teams){for(const cat of CATS){const q=T.q[cat];if(!q.length)continue;
     const bl=G.ents.filter(e=>e.isB&&e.team===T.id&&e.kind===cat&&e.built>=1&&!e.dead&&!(e.dis>G.t));if(!bl.length)continue;
-    const it=q[0],s=stats(T.fac,it.kind);it.t+=dt*pwMul(T.id)*(1+.5*(bl.length-1))*(G.ec?ecSpeedMul(T.id,bl):1)*ldProd(T,bl,s);if(it.t>=prodTime(T,s)){q.shift();spawnFrom(T,bl[Math.floor(Math.random()*bl.length)],it.kind);}}
-  for(const cat in T.rq){const r=T.rq[cat];if(!r)continue;if(!working(T.id,cat))continue;r.t+=dt*pwMul(T.id);if(r.t>=UPG[r.key].time){T.rq[cat]=null;applyUpgrade(T,r.key);}}}}
+    const it=q[0],s=stats(T.fac,it.kind);it.t+=dt*(1+.5*(bl.length-1))*(G.ec?ecSpeedMul(T.id,bl):1)*ldProd(T,bl,s);if(it.t>=prodTime(T,s)){q.shift();spawnFrom(T,bl[Math.floor(Math.random()*bl.length)],it.kind);}}
+  for(const cat in T.rq){const r=T.rq[cat];if(!r)continue;if(!working(T.id,cat))continue;r.t+=dt;if(r.t>=UPG[r.key].time){T.rq[cat]=null;applyUpgrade(T,r.key);}}}}
 function spawnFrom(T,b,kind){const s=stats(T.fac,kind);let a=Math.atan2(MAPH/2-b.y,MAPW/2-b.x),x=b.x+Math.cos(a)*(b.size/2+16),y=b.y+Math.sin(a)*(b.size/2+16);
   if(s.dom==='naval'){const w=nearestPassXY('naval',b.x,b.y);if(!w)return;x=w[0];y=w[1];}
   else if(s.dom==='ground'){const p=nearestPassXY('ground',x,y);if(p){x=p[0];y=p[1];}}
@@ -658,7 +658,7 @@ function updJet(u,dt){const s=u.s;if(wxNow().air===0&&u.state==='park'){if(u.ord
   const want=Math.atan2(goal.y-u.y,goal.x-u.x),df=angDiff(u.ang,want);u.ang+=Math.max(-2.6*dt,Math.min(2.6*dt,df));u.va=u.ang;u.tang=u.ang;
   const near=!o&&home&&Math.hypot(goal.x-u.x,goal.y-u.y)<160;u.ld=(!o||u.ammo<=0)&&home?Math.max(0,Math.min(1,Math.hypot(goal.x-u.x,goal.y-u.y)/420)):1;const thr=u.toT!=null?Math.min(1,.3+(G.t-u.toT)/2.2):1;const sp=s.spd*upgK(G.teams[u.team],u.kind,'spd')*(near?.5:1)*thr;u.v=sp;u.x+=Math.cos(u.ang)*sp*dt;u.y+=Math.sin(u.ang)*sp*dt;u.x=Math.max(-100,Math.min(MAPW+100,u.x));u.y=Math.max(-100,Math.min(MAPH+100,u.y));
   if(u.target&&u.ammo>0&&u.cd<=0){const d=Math.hypot(u.target.x-u.x,u.target.y-u.y)-u.target.r;if(d<rngOf(u)&&Math.abs(angDiff(u.ang,Math.atan2(u.target.y-u.y,u.target.x-u.x)))<.5){fire(u,u.target,s.dmg*dmgOut(u),'bomb',s.splash);u.ammo--;u.cd=s.rof*rofMult(u);if(u.ammo<=0)u.order=null;}}}
-function updBld(b,dt){if(b.kind==='garrison')return updGarrison(b,dt);if(G.teams[b.team].dummy&&!G.teams[b.team].fight&&b.built>=1)return;if(b.built<1){if(b.nd){b.stall=!G.ents.some(u=>u.kind==='dozer'&&u.team===b.team&&!u.dead&&Math.hypot(u.x-b.x,u.y-b.y)<b.size/2+48);if(b.stall)return;}const bk=G.sandbox&&b.team===0?6:1;{const pm=pwMul(b.team);b.built=Math.min(1,b.built+bk*pm*dt/b.s.time);b.hp=Math.min(b.max,b.hp+bk*pm*b.max*.9*dt/b.s.time);}if(b.built>=1){log(b.team,`${b.s.name} complete.`,'g',b.x,b.y);log(b.team,'Building ready.','v7');}return;}
+function updBld(b,dt){if(b.kind==='garrison')return updGarrison(b,dt);if(G.teams[b.team].dummy&&!G.teams[b.team].fight&&b.built>=1)return;if(b.built<1){if(b.nd){b.stall=!G.ents.some(u=>u.kind==='dozer'&&u.team===b.team&&!u.dead&&Math.hypot(u.x-b.x,u.y-b.y)<b.size/2+48);if(b.stall)return;}const bk=G.sandbox&&b.team===0?6:1;b.built=Math.min(1,b.built+bk*dt/b.s.time);b.hp=Math.min(b.max,b.hp+bk*b.max*.9*dt/b.s.time);if(b.built>=1){log(b.team,`${b.s.name} complete.`,'g',b.x,b.y);log(b.team,'Building ready.','v7');}return;}
   if(b.charge){b.charge.t-=dt;if(b.charge.t<=0){const c=b.charge;b.charge=null;applyDmg(b,3000,'demo',c.team,c.src);FXE('boom',[b.x|0,b.y|0,b.size*.5,1]);}}
   if(b.dis>G.t)return;
   if(b.kind!=='turret'&&b.kind!=='sam'&&b.kind!=='coast'&&!isTun(b))return;b.cd-=dt;const t=b.target;
@@ -1129,7 +1129,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   const ORD=aiPers(T).ord?[...aiPers(T).ord,...AIORDER]:AIORDER;
   while(ORD[T.ai.bi]&&(!bldAllowed(T.fac,ORD[T.ai.bi])||ORD[T.ai.bi]==='shipyard'))T.ai.bi++;
   if(T.ai.bi>1&&!mine.some(e=>e.kind==='barracks'))T.ai.re='barracks';else if(T.ai.bi>2&&!mine.some(e=>e.kind==='factory'))T.ai.re='factory';else T.ai.re=null;
-  if(G.battle&&bldAllowed(T.fac,'gen')){const pw=pwrOf(id);if(!mine.some(e=>e.kind==='gen')||(pw.use+14>pw.make&&!mine.some(e=>e.kind==='gen'&&e.built<1)))T.ai.re='gen';}   /* Battle power: generators first, keep power positive, rebuild lost ones */
+  if(G.battle&&bldAllowed(T.fac,'gen')){const pw=pwrOf(id),nx=POWER.use[ORD[T.ai.bi]]||0;if(!mine.some(e=>e.kind==='gen'&&e.built<1)&&(pw.use>pw.make||(nx&&pw.use+nx>pw.make)))T.ai.re='gen';}   /* Battle power: a Generator before the first electronic building, keep power positive, rebuild lost ones */
   if(T.ai.re&&!mine.some(e=>e.isB&&e.built<1)){const s=bstats(T.fac,T.ai.re);if(T.credits>=s.cost){const p=aiFindSpot(id,T.ai.re,anchor);if(p)placeBld(id,T.ai.re,p[0],p[1]);}}
   // Supply depots: next to rich fields near home, and - late in the game, when the near fields have run dry and the
   // trucks report a long haul (updHarv sets T.ai.depF) - right next to the field they now drive to, wherever it is,
@@ -1645,16 +1645,15 @@ function sandboxTick(dt){const P=G.teams[0];if(P.credits<900000)P.credits=999999
 const PW_DEP=['sam','turret','coast','uplink'],PW_R=60,PW_FIX=8,PW_HP=2000,FUEL_DRAIN=1/900,FUEL_FILL=1/90,FUEL_SLOW=.72;
 const ML={NEAR:1300,JOIN:60,HOSTILE:-50,HOS_T:120,SIZE_T:4,SIZE_H:3,JOIN_N:3,HUNT_R:800};
 /* BATTLE POWER (Abdullah 2026-11-13 20:11, table POWER in 01-data): Battle has no map power plants. Built Generators make power, buildings use it.
-   Used > made = LOW POWER: production and building run at POWER.slow, defenses / air defense / Strike Center go offline (b.dis, the same flag as blackout/EMP), the minimap radar is off.
+   Used > made = LOW POWER: every powered building (POWER.use: air defense, coastal missiles, Strike Center, Radio & TV, Airfield) goes offline (b.dis, the same flag as blackout/EMP/hack), the minimap radar is off; production speed is never changed.
    State is derived from the buildings every 0.5 s (T.pwM made, T.pwU used, T.pwLow, T.pwW warn time), so saves, clients and host migration agree. */
-function pwrOf(team){let make=0,use=0;for(const e of G.ents){if(!e.isB||e.dead||e.team!==team||e.built<1)continue;const k=e.kind;if(!(e.dis>G.t))make+=POWER.make[k]||0;use+=POWER.use[k]||0;}return{make,use};}
-function pwMul(team){const T=G.teams[team];return G.battle&&T&&T.pwLow?POWER.slow:1;}
+function pwrOf(team){let make=0,use=0;for(const e of G.ents){if(!e.isB||e.dead||e.team!==team||e.built<1)continue;const k=e.kind;if(!(e.dis>G.t))make+=POWER.make[k]||0;use+=POWER.use[k]||0;}if(typeof tbPlants==='function')make+=tbPlants(team)*POWER.plant;return{make,use};}
 function pwrLow(team){const T=G.teams[team];return !!(G.battle&&T&&T.pwLow);}
 function battlePower(dt){if(!G.battle||MODE==='client')return;G.pwT=(G.pwT||0)+dt;if(G.pwT<.5)return;G.pwT=0;
   for(const T of G.teams){if(T.reb||T.out)continue;const p=pwrOf(T.id);T.pwM=p.make;T.pwU=p.use;const low=p.use>p.make;
-    if(low&&!T.pwLow){T.pwLow=1;if(G.t-(T.pwW??-999)>90){T.pwW=G.t;log(T.id,'Low power - build a Generator. Production is slow and defenses are offline.','bad');for(const O of G.teams)if(O.id!==T.id&&!O.reb&&!ally(O.id,T.id)&&!O.ai&&G.t>60)log(O.id,`Enemy ${T.F.name} is on low power - its defenses are offline.`,'g');}}
-    else if(!low&&T.pwLow){T.pwLow=0;if(T.pwW!=null)log(T.id,'Power is back - production and defenses online.','g');}
-    if(T.pwLow)for(const e of G.ents)if(e.isB&&e.team===T.id&&!e.dead&&PW_DEP.includes(e.kind)&&!(e.dis>G.t+1.2))koSet(e,1.2,'lowpower');}}
+    if(low&&!T.pwLow){T.pwLow=1;if(G.t-(T.pwW??-999)>90){T.pwW=G.t;log(T.id,'Low power - build a Generator. Air defense, Strike Center, radio and Airfield are offline.','bad');for(const O of G.teams)if(O.id!==T.id&&!O.reb&&!ally(O.id,T.id)&&!O.ai&&G.t>60)log(O.id,`Enemy ${T.F.name} is on low power - its air defense and Strike Center are offline.`,'g');}}
+    else if(!low&&T.pwLow){T.pwLow=0;if(T.pwW!=null)log(T.id,'Power is back - everything online.','g');}
+    if(T.pwLow)for(const e of G.ents)if(e.isB&&e.team===T.id&&!e.dead&&POWER.use[e.kind]&&!(e.dis>G.t+1.2))koSet(e,1.2,'lowpower');}}
 function infraInit(){const M=G.map,N=G.N;if(!G.conq)return;
   G.pgrid=new Array(N).fill(0);
   for(const p of (M.plants||[])){const o={x:p.x,y:p.y,owner:(p.home>=0&&p.home<N)?p.home:-1,cp:new Array(N).fill(0),inc:0,pw:1,home:p.home};o.i=G.oil.length;o.hp=o.max=PW_HP;o.dead=false;o.burn=0;o.rep=0;G.oil.push(o);o.tg=oilTarget(o);o.tg.kind='plant';o.tg.s.name='Power plant';if(o.home>=0&&o.home<N)G.pgrid[o.home]=1;}}

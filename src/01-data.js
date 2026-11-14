@@ -80,7 +80,7 @@ const BASE={
 const STRUCT={
   hq:{name:'Command HQ',hp:3000,size:90,cost:2000,time:30},
   barracks:{name:'Barracks',hp:900,size:60,cost:500,time:8},
-  gen:{name:'Power Generator',hp:700,size:46,cost:500,time:8,desc:'Battle only: makes the power every other building uses. Low power halves production and switches defenses, air defense, the Strike Center and the radar off.'},
+  gen:{name:'Power Generator',hp:700,size:46,cost:500,time:8,desc:'Battle only: makes power for the electronic buildings (air defense, coastal missiles, Strike Center, Radio & TV, Airfield, radar). Not enough power switches them off. Captured map power plants add to it.'},
   factory:{name:'War Factory',hp:1400,size:76,cost:1200,time:12,req:'barracks'},
   airfield:{name:'Airfield',hp:1500,size:96,cost:1500,time:15,req:'factory'},
   shipyard:{name:'Shipyard',hp:1400,size:70,cost:1200,time:12,req:'barracks',shore:true},
@@ -124,8 +124,10 @@ const ECON_RATE=[1,.75,.55,.4];
 const BUILD_ORDER=['gen','barracks','depot','econ','factory','airfield','shipyard','coast','turret','sam','tunnel','fort','radio','uplink','hq'];
 
 /* BATTLE POWER (Abdullah 2026-11-13 20:11): ONE table. Battle has no map power plants - you build Generators. Same numbers for every nation; only the name differs.
-   make = power a building gives, use = power it needs. Used > made = LOW POWER (production/building at PW_SLOW speed, defenses/air defense/Strike Center/radar offline). */
-const POWER={make:{hq:10,gen:30},use:{barracks:5,factory:10,airfield:10,shipyard:10,turret:5,sam:8,coast:8,uplink:20,radio:5,econ:5,depot:2},slow:.5};
+   make = power a building gives (a captured map power plant adds POWER.plant through tbPlants), use = power it needs. ONLY electronic buildings use power (Abdullah 2026-11-13 20:13
+   "Make it so that only certain buildings are reliant on electricity"): air defense, coastal missiles, Strike Center, Radio & TV Station, Airfield (control tower).
+   HQ, Barracks, War Factory, Depot, Shipyard, Defense Gun, tunnels, forts and economy buildings never need power. Used > made = LOW POWER: ALL powered buildings go offline (b.dis) and the radar is off; production speed never changes. */
+const POWER={make:{hq:10,gen:30},use:{sam:8,coast:8,uplink:20,radio:5,airfield:10},plant:20};
 const GENN={RS:'Mountain Power Station',IR:'Diesel Generator Station',DW:'Mountain Power Station',RV:'Diesel Generator Station',KP:'Hydro Power Hall',RU:'Gas Turbine Station',CN:'Turbine Power Station',US:'Mobile Power Plant',IL:'Power Generator',TR:'Power Generator',UA:'Diesel Generator Station',PK:'Diesel Generator Station',IN:'Diesel Generator Station'};
 const CATS=['hq','barracks','factory','airfield','shipyard'];
 const VS={

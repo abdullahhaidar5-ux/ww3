@@ -108,7 +108,7 @@ const TUTC=[
 const tutMob=()=>G.ents.filter(e=>!e.isB&&e.team===ME&&!e.dead&&!['harv','dozer','hacker'].includes(e.kind));
 const tutBPlace=(k,dx,dy)=>{if(tutBld(k))return{w:tutBld(k)};if(G.place===k){const h=tutHQ();return{w:h?{x:h.x+dx,y:h.y+dy}:null};}return{d:'#b_'+k};};
 const TUTB=[
- {k:'gen',t:'Welcome to Battle! Your buildings need power, and the map has no power plants: you build a Generator. Without enough power production slows down and defenses go offline.',a:'Open Build, click Generator, then click the ground near your base.',
+ {k:'gen',t:'Welcome to Battle! Your electronic buildings (air defense, Strike Center, radio, Airfield) need power. You build a Generator for it, and you can capture map power plants for extra. Without enough power they switch off.',a:'Open Build, click Generator, then click the ground near your base.',
   hl:()=>tutBPlace('gen',-100,-110),cam:()=>tutHQ(),ok:()=>!!tutBld('gen')},
  {k:'dep',t:'Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.',a:'Open Build, click Supply Depot, then click the ground near your base.',
   hl:()=>tutBPlace('depot',-130,90),cam:()=>tutHQ(),ok:()=>!!tutBld('depot')},

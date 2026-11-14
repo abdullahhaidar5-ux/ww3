@@ -1,4 +1,4 @@
-// Battle power test (battlepower, Abdullah 2026-11-13 20:11): no map power plants in Battle, a Generator for every nation, low power = slow production + offline defenses, Conquest keeps its plants. node orch/powertest.mjs -> POWER PASS
+// Battle power test (battlepower, Abdullah 2026-11-13 20:11 + 20:13): a Generator for every nation, only electronic buildings use power, low power = those buildings offline and production unchanged, Conquest keeps its plants. node orch/powertest.mjs -> POWER PASS
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -58,27 +58,28 @@ try {
     out.btn = !!document.getElementById('b_gen') && !document.getElementById('b_gen').hidden;
     const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq');
     const p0 = pwrOf(ME); out.p0 = [p0.make, p0.use];
-    const bar = addBld(ME, 'barracks', hq.x + 200, hq.y + 100, true), fac = addBld(ME, 'factory', hq.x + 200, hq.y - 100, true), ua = addBld(ME, 'uplink', hq.x - 200, hq.y - 100, true), tu = addBld(ME, 'turret', hq.x - 200, hq.y + 100, true);
+    const bar = addBld(ME, 'barracks', hq.x + 200, hq.y + 100, true), fac = addBld(ME, 'factory', hq.x + 200, hq.y - 100, true), ua = addBld(ME, 'uplink', hq.x - 200, hq.y - 100, true), tu = addBld(ME, 'sam', hq.x - 200, hq.y + 100, true), gun = addBld(ME, 'turret', hq.x - 260, hq.y + 160, true);
     const p1 = pwrOf(ME); out.p1 = [p1.make, p1.use];
     // low power: slower production, defenses offline
-    for (let i = 0; i < 6; i++) battlePower(.5); out.low = !!T.pwLow; out.mulLow = pwMul(ME);
-    for (let i = 0; i < 3; i++) battlePower(.5); out.off = koLeft(tu) > 0 && koLeft(ua) > 0;
+    for (let i = 0; i < 6; i++) battlePower(.5); out.low = !!T.pwLow; out.slow = false; { const qk = 'inf'; T.q.barracks.push({ kind: qk, t: 0 }); const t0 = T.q.barracks[0].t; production(1); out.slow = T.q.barracks.length ? T.q.barracks[0].t - t0 < 0.99 : false; T.q.barracks.length = 0; out.gunOn = !(koLeft(gun) > 0); }
+    for (let i = 0; i < 3; i++) battlePower(.5); out.off = koLeft(tu) > 0 && koLeft(ua) > 0 && !(koLeft(gun) > 0 && false);
     G._pwv = null; const pcb = document.getElementById('cqBn'); try { cqBanner(); } catch (e) {} out.meter = pcb ? pcb.textContent : '';
     // a Generator brings it back
     const g1 = addBld(ME, 'gen', hq.x, hq.y + 220, true); const g2 = addBld(ME, 'gen', hq.x + 60, hq.y + 220, true); const p2 = pwrOf(ME); out.p2 = [p2.make, p2.use];
-    for (let i = 0; i < 4; i++) battlePower(.5); out.ok = !T.pwLow && pwMul(ME) === 1;
+    for (let i = 0; i < 4; i++) battlePower(.5); out.ok = !T.pwLow;
     // destroying generators puts it back to low power
     g1.dead = true; g2.dead = true; for (let i = 0; i < 4; i++) battlePower(.5); out.low2 = !!T.pwLow;
     // checkpoint keeps it
     try { const c = ckEncode(); out.ck = !!c && c.teams[ME].pwLow === 1; } catch (e) { out.ck = String(e); }
     return out; });
   console.log('power', JSON.stringify(r));
-  ck(r.battle && r.plants === 0, 'Battle must have no map power plants ' + JSON.stringify([r.battle, r.plants]));
+  ck(r.battle && r.plants === 0, 'Battle has no Conquest-style home power plants (map plants are the capturable tb kind) ' + JSON.stringify([r.battle, r.plants]));
   ck(FKEYS_OK(r.gens), 'every live nation needs a Generator in Battle: ' + JSON.stringify(r.gens));
   ck(r.names[0] === 'Mountain Power Station' && r.names[0] !== r.names[1], 'nation flavor in the name only ' + r.names);
   ck(r.cost[0] === r.cost[1] && Math.abs(r.cost[0] - r.cost[2]) <= 100, 'Generator costs about a Barracks, same for every nation ' + r.cost);
   ck(r.btn, 'the Build tab must have a Generator button in Battle');
-  ck(r.p1[1] > r.p1[0] && r.low && r.mulLow < 1 && r.off, 'power used > made must give low power: slow production + offline defenses ' + JSON.stringify([r.p1, r.low, r.mulLow, r.off]));
+  ck(r.p1[1] > r.p1[0] && r.low && r.off, 'power used > made must switch the electronic buildings (SAM, Strike Center) off ' + JSON.stringify([r.p1, r.low, r.off]));
+  ck(!r.slow && r.gunOn, 'low power must NOT slow Barracks/War Factory production and must not switch Defense Guns off ' + JSON.stringify([r.slow, r.gunOn]));
   ck(/POWER/.test(r.meter) && /LOW POWER/.test(r.meter), 'the Battle top bar must show the power meter and the low-power words: ' + r.meter);
   ck(r.p2[0] > r.p1[0] && r.ok, 'two Generators must restore power ' + JSON.stringify([r.p2, r.ok]));
   ck(r.low2, 'losing the Generators must bring low power back');
