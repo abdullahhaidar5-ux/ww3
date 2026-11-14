@@ -29,7 +29,7 @@ No market crowds, workers or prisoners exist in battle maps.
 - No full skinned human: the infantry meshes (`sol_e/m/w`) are one textured mesh with helmet, vest and camo baked in, so they would read as soldiers; a code-built figure with the same height and proportions was used instead.
 
 ## Gate
-See the bottom of this file (filled in after `orch/cigate.sh`).
+`orch/cigate.sh` on 0b07cbbcc3: **28 of 28 green** — smooth-pc, smooth-mp, grandsmooth, decisions, smoke4, mpsync, cfclient all PASS first time; `audio` failed once ("second battle: battle music again", unrelated, known flaky) and passed on the one re-run. Local: `python3 orch/build.py --check` OK, `node orch/decisions.mjs` DECISIONS PASS, `node orch/smoke.mjs` SMOKE PASS. Code is unchanged after the gate commit (this file only). Ready for the conductor to land.
 
 ## Pictures (orch/concepts/civhumans/)
 `before-street.jpg` / `after-street.jpg` (town at play zoom), `before-flee.jpg` / `after-flee.jpg` (gunfire starts), `before-close.jpg` / `after-close.jpg` (close zoom next to a soldier).
