@@ -6,4 +6,4 @@ Soldiers now drop one by one as a squad loses health: visible soldiers = ceil(hp
 Change: `src/06-view.js` (walker loop). Screenshots: `orch/shots/squads-drop.jpg` (full 4 / half 2 / nearly dead 1),
 `squads-drop-falling.jpg`. Script: `node orch/squadshots.mjs`.
 Ignored per ORCH note: bigger squads, firepower scaling, per-member muzzle flashes, pips, garrison display.
-Gates: see the gate result line below.
+Gates: local build + build --check OK; page ran clean in the screenshot run (no errors). Smoke here is too slow to finish (loading screen alone ~4 min). `orch/cigate.sh` once on gate/174d3ce112: GitHub run stayed QUEUED for over 1 h (runner backlog), so no gate result yet - check that run. Status: ready pending gate.
