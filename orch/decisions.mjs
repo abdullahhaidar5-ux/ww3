@@ -345,15 +345,18 @@ try {
         return { n: bs.length, cut: bs.filter(b => b.scrollWidth > b.clientWidth + 1 || /…|\.\.\./.test(b.textContent)).map(b => b.textContent), low: bs.filter(b => b.getBoundingClientRect().bottom > side.top + 1).map(b => b.textContent),
           docks: document.querySelectorAll('#info .orddock').length, road: !!document.querySelector('#info .cmdrow.lgr'), keys: bs.filter(b => b.querySelector('kbd')).map(b => b.querySelector('kbd').textContent).join('') }; };
       out.army = look(add.slice()); out.mixed = look(add.concat(doz ? [doz] : [])); out.doz = doz ? look([doz]) : null;
-      G.sel = []; updateUI();
+      const fn = document.getElementById('facname'), bad = [];
+      for (const k of FKEYS) { fn.textContent = FACTIONS[k].name; fitText(fn, 11); const fs = parseFloat(getComputedStyle(fn).fontSize), r = fn.getBoundingClientRect(); if (fn.scrollWidth > fn.clientWidth + 1 || r.height > fs * 1.7 || fs < 11) bad.push(k + ':' + FACTIONS[k].name + '@' + fs); }
+      out.plate = bad; fn.dataset.k = ''; G.sel = []; updateUI();
       for (const u of add) { u.dead = true; G.byId.delete(u.id); } G.ents = G.ents.filter(e => !add.includes(e)); return out; });
-    console.log('order dock', JSON.stringify({ army: o.army.n + ' ' + o.army.keys, mixed: o.mixed.n, doz: o.doz && o.doz.n}));
+    console.log('order dock', JSON.stringify({ army: o.army.n + ' ' + o.army.keys, mixed: o.mixed.n, doz: o.doz && o.doz.n, plate: o.plate.length }));
     for (const k of ['army', 'mixed', 'doz']) { const x = o[k]; if (!x) continue;
       ck(x.n > 0 && !x.cut.length, 'order buttons cut at 1280 wide (' + k + '): ' + x.cut.join(' | '));
       ck(!x.low.length, 'order buttons overlap the command bar (' + k + '): ' + x.low.join(' | '));
       ck(x.docks === 1, 'order rows must sit in one dock (' + k + '), found ' + x.docks); }
     ck(!o.army.road, 'an army without a Construction Vehicle shows the road-tool row');
     ck(o.army.keys.includes('F') && o.army.keys.includes('X') && o.army.keys.includes('G'), 'order buttons must show their hotkeys, got ' + o.army.keys);
+    ck(!o.plate.length, 'nation nameplate does not fit on one line at 1280 wide: ' + o.plate.join(', '));
     await page.setViewportSize({ width: 1600, height: 900 }); await page.waitForTimeout(500); }
   // Balance toggle (Abdullah 2026-11-06 21:31): Balanced must stay equal for everyone; Realistic must tier fire support
   // (superpower strikes come faster/harder and its vehicles are cheaper; a small power's strikes are weaker but its

@@ -55,10 +55,10 @@ const st=E('style');st.id='ukCss';st.textContent=`
 .uk-mu .mr.g{background:rgba(52,150,80,.24);box-shadow:inset 0 0 0 1px rgba(110,220,130,.5)}.uk-mu .mr.r{background:rgba(170,52,44,.26);box-shadow:inset 0 0 0 1px rgba(240,120,105,.5)}
 .uk-mu .mr b{font:700 11px var(--display,sans-serif);letter-spacing:.09em;min-width:56px;flex:none;line-height:21px}.uk-mu .mr.g b{color:#9be8a6}.uk-mu .mr.r b{color:#f3a096}
 .uk-mu .mi{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#e6e2d6;white-space:nowrap}.uk-mu .mi img{width:28px;height:21px}.uk-mu .mi i{font-style:normal}
-#panel .btn .uk-mu.mini{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:26px;margin:0;gap:2px;pointer-events:none}
-#panel .btn .uk-mu.mini .mr{padding:0;gap:1px;height:17px;justify-content:center;flex-wrap:nowrap;border-radius:2px}
-#panel .btn .uk-mu.mini img{width:22px;height:16px;display:block}
-#panel .btn.hasmu{padding-right:32px!important}#panel .btn.hasmu .q{right:33px}
+#panel .btn .uk-mu.mini{position:absolute;right:4px;bottom:3px;top:auto;transform:none;width:auto;margin:0;gap:3px;display:flex;flex-direction:row;pointer-events:none}
+#panel .btn .uk-mu.mini .mr{padding:0 1px;gap:1px;height:13px;justify-content:center;flex-wrap:nowrap;border-radius:2px}
+#panel .btn .uk-mu.mini img{width:18px;height:13px;display:block}
+/* sweepfixB: the BEATS / WEAK TO chips sit on the price line (bottom right), so the building/unit name gets the whole width */#panel .btn.hasmu .n{padding-right:4px}
 #panel .btn:disabled .uk-mu.mini{opacity:.75}
 #panel .btn.ctr{box-shadow:0 0 0 2px #6fe08a,0 0 14px rgba(111,224,138,.55)!important;z-index:1}
 #panel .btn.ctr::after{content:'BEATS IT';position:absolute;left:4px;bottom:2px;font:800 8.5px/1 var(--display,sans-serif);letter-spacing:.06em;color:#06220c;background:#6fe08a;padding:1px 3px;border-radius:2px}
