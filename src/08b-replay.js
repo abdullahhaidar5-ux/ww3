@@ -60,7 +60,7 @@ async function rpParse(buf){const u=buf instanceof Uint8Array?buf:new Uint8Array
   const b=u.indexOf(10,a+1);if(b<0)throw new Error('replay file is damaged');const hdr=JSON.parse(td.decode(u.subarray(a+1,b)));let p=b+1,i=0;const frames=[];
   while(p+4<=u.length){const L=new DataView(u.buffer,u.byteOffset+p,4).getUint32(0,true);const seg={z:hdr.z?hdr.z[i]|0:1,b:u.subarray(p+4,p+4+L)};p+=4+L;i++;
     const txt=await rpUnzip(seg);for(const ln of txt.split('\n')){const x=ln.indexOf('|'),y=ln.indexOf('|',x+1);if(x<0||y<0)continue;frames.push([+ln.slice(0,x),ln.slice(x+1,y),ln.slice(y+1)]);}}
-  if(!Array.isArray(hdr.si&&hdr.si.facs)||!hdr.si.facs.every(f=>FKEYS.includes(f)||f==='EU'))throw new Error('this replay has nations this version does not know');return {hdr,frames};}
+  if(!Array.isArray(hdr.si&&hdr.si.facs)||!hdr.si.facs.every(f=>typeof f==='string'))throw new Error('this replay is damaged');hdr.si.facs=hdr.si.facs.map(natFix);return {hdr,frames};}
 /* ---------- watching ---------- */
 async function rpWatch(buf){let P;try{P=await rpParse(buf);}catch(e){uiDialog('Could not open the replay: '+(e&&e.message||e),{yes:'OK',no:'Close'},()=>{});return false;}
   if(typeof NET_PV==='number'&&(P.hdr?.ver|0)!==NET_PV){uiDialog('This replay was recorded with an older version of the game (before Conquest) and cannot be played back.',{yes:'OK',no:'Close'},()=>{});return false;}

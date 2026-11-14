@@ -189,7 +189,7 @@ function mxBuild(){
     const rs=mxEl('div','');rs.style.cssText='font-size:12px;opacity:.8;margin-top:4px;max-width:520px';const fill=()=>{rs.textContent=setup.real?[setup.p].concat(setup.a?[setup.a]:[]).filter(f=>FACTIONS[f]).map(f=>FACTIONS[f].name+' - '+realLine(f)).join('  ·  '):'';};r.addEventListener('click',()=>setTimeout(fill,0));r.addEventListener('mouseenter',fill);r.after(rs);fill();}
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
   /* --- test range: one small window (Abdullah 2026-11-13 19:59 "Why can't I choose nations in test range") --- */
-  {const R=scr('t-range','<h2 class="mxh">Test range</h2><p class="mxsub">Pick your nation and the target nation (they can be the same), and a map. Unlimited money, everything unlocked, a passive target to try things on.</p>');
+  {const R=scr('t-range','<h2 class="mxh">Test range</h2><p class="mxsub">Pick your nation and the target nation (they can be the same), and a Battle map. It plays exactly like Battle (Command Center, dozer, supply, tech tree) with unlimited money and a passive target to try things on.</p>');
    const w=mxEl('div','mxpl'),l=mxEl('div'),r=mxEl('div');MX.trNat=mxEl('div');MX.trNat.id='mxtrnat';MX.trTgt=mxEl('div','mxrow');MX.trMap=mxEl('div','mxrow');
    const in2=mxEl('input');in2.id='mxtrin';in2.placeholder='Find a nation…';in2.autocomplete='off';in2.spellcheck=false;in2.oninput=()=>mxNatFilter(in2.value);
    l.append(mxEl('div','mxlab','Your nation'),in2,MX.trNat);
@@ -242,7 +242,7 @@ function mxMapCards(){
   const g=MX.grid,sel=document.getElementById('mapSel');if(!g||!sel)return;g.innerHTML='';
   for(const o of sel.options){const k=o.value,D=(typeof MAPS!=='undefined'&&MAPS[k])||null;const b=mxEl('button','mxmap'+(k===sel.value?' on':''));b.type='button';b.dataset.k=k;
     let cv=MX.thumbs[k];if(!cv){cv=document.createElement('canvas');cv.width=384;cv.height=264;MX.thumbs[k]=cv;}if(!cv.classList.contains('rd')&&!MX.thumbQ.includes(k))MX.thumbQ.push(k);
-    const hm=D&&(D.home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);
+    const hm=D&&(D.home||[]).map(f=>FKEYS.includes(f)&&FACTIONS[f].name).filter(Boolean);
     const facts=D?(D.bm&&typeof mapFacts==='function'?mapFacts(k):(D.min===D.max?D.max+' players':D.min+'–'+D.max+' players')+(D.theme==='snow'?' · snow & ice':D.theme?' · '+D.theme:'')+(D.tag?' · '+D.tag:'')):o.textContent;
     const th=mxEl('div','mxth'),ph=mxEl('div','mxph'),TC={snow:'#2a3a46',desert:'#4a3d26',green:'#27402b'};th.style.background=TC[D&&D.theme]||'#2d3a2f';ph.append(D?D.name:o.textContent,mxEl('small','',D?(D.min===D.max?D.max:D.min+'–'+D.max)+' players':''));th.append(ph,cv);b.append(th,mxEl('div','t',D?D.name:o.textContent),mxEl('div','f',facts),mxEl('div','d',(D&&D.desc||'')+(hm&&hm.length?' Home turf: '+hm.join(' & ')+'.':'')));
     b.onclick=()=>{mxTick(700);sel.value=k;sel.onchange();mxMapMark();setTimeout(()=>{if(MX.cur==='c-map')menuGo('c-nation');},140);};g.appendChild(b);}
@@ -253,7 +253,7 @@ function mxTrHome(id){const pp=document.getElementById('pickP'),af=document.getE
   if(!MX.trPp){MX.trPp=1;pp.addEventListener('click',()=>{if(MX.cur==='t-range'&&MX.trMapSel)setTimeout(()=>{setup.map=MX.trMapSel.value;},0);});}
   if(id==='t-range'){MX.trNat.appendChild(pp);MX.trTgt.appendChild(af);mxTrFill();}
   else if(id==='c-nation'||id==='c-players'){const nl=document.querySelector('#ms-c-nation .mxnat>div');if(nl&&pp.parentNode!==nl)nl.appendChild(pp);const r1=document.querySelector('#ms-c-players .mxrow');if(r1&&af.parentNode!==r1)r1.appendChild(af);}}
-function mxTrFill(){const ms=MX.trMapSel;if(!ms)return;if(!ms.options.length){const ks=(typeof MAP_KEYS!=='undefined'?MAP_KEYS:[]).filter(k=>MAPS[k]&&MAPS[k].min<=2&&MAPS[k].max>=2);for(const k of ks){const o=document.createElement('option');o.value=k;o.textContent=MAPS[k].name;ms.append(o);}}
+function mxTrFill(){const ms=MX.trMapSel;if(!ms)return;if(!ms.options.length){const ks=(typeof BM_KEYS!=='undefined'?BM_KEYS:[]).filter(k=>MAPS[k]&&MAPS[k].min<=2&&MAPS[k].max>=2);for(const k of ks){const o=document.createElement('option');o.value=k;o.textContent=MAPS[k].name;ms.append(o);}}
   const c=typeof trLoad==='function'?trLoad():{p:setup.p,a:setup.a,map:setup.map};setup.p=c.p;setup.a=c.a;if(MAPS[c.map])setup.map=c.map;
   document.getElementById('aiFac').value=setup.a;if(ms.querySelector('option[value="'+setup.map+'"]'))ms.value=setup.map;else{setup.map=ms.value;}
   if(typeof facCards==='function')facCards();
