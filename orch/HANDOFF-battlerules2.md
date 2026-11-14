@@ -19,3 +19,6 @@ src/01-data.js (SW_* data, bstats), src/03-sim.js (swSup, swTick, launch, explod
 - Friendly splash applies in Battle only (`G.battle`); missions/grand/conquest unchanged. If onegame makes everything Battle, nothing else to do.
 - The tourney equal-strength check (`orch/tourney.mjs`) was NOT run here (too slow in this sandbox); all nations keep their old salvo numbers and share one 360 s timer.
 - Smoke printed no PASS locally (loading screen took 235 s in the sandbox); trust the GitHub gate.
+
+## Gate result
+`orch/cigate.sh` ONCE on commit 22d82dd (gate/22d82ddd13, run 558): still QUEUED on GitHub when I stopped (no runner picked it up after ~25 min), so no gate result yet. Local: build + `--check` pass; decisions static guards pass (tested by extraction); orch/br2check.mjs passes (Strike Center timer 360 s / $5000 / needs Airfield, HQ kept 60% after a full salvo, friendly splash 52% vs 98%, fog black/grey/clear 255/140/0, Brutal d=3 inc=1). Full smoke/decisions not completed locally. Status: NOT ready until the gate run turns green - check https://github.com/abdullahhaidar5-ux/ww3/actions/runs/43554547194
