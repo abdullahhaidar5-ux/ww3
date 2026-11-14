@@ -33,7 +33,7 @@ const argS = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 
 const has = k => process.argv.includes('--' + k);
 const NATIONS = ['US', 'RU', 'CN', 'IR', 'TR', 'RS', 'IN', 'UA', 'KP', 'SA', 'PK', 'EG', 'IL', 'DW', 'KR', 'JP'];
 const OUT = path.join(ROOT, 'orch/out'); fs.mkdirSync(OUT, { recursive: true });
-const BATTLES_JSON = path.join(OUT, 'battlemapfair-battles.json'), STATIC_JSON = path.join(OUT, 'battlemapfair-static.json');
+const BATTLES_JSON = argS('out', '') ? path.resolve(argS('out', '')) : path.join(OUT, 'battlemapfair-battles.json'), STATIC_JSON = path.join(OUT, 'battlemapfair-static.json');
 
 export const STATIC_FN = `globalThis.__bmStatic=(k,n,seed,dump)=>{setWorld(worldScaleFor(n,k));setBases(n,k,-1);const sv=srand;let M,M2;try{M=mkMap(seed,k);M2=mkMap(seed+977,k);}finally{srand=sv;}
   const B=BM[k],cell=(x,y)=>Math.floor(y/CELL)*GW+Math.floor(x/CELL),NB=BASES.length,DB=BASES.map(([x,y])=>gridDist(M.grid,x,y));
@@ -63,8 +63,8 @@ export const STATIC_FN = `globalThis.__bmStatic=(k,n,seed,dump)=>{setWorld(world
 // structural verdict for one map at one player count: list of problems (empty = pass)
 export function judge(r) {
   const bad = [], sp = a => { const lo = Math.min(...a), hi = Math.max(...a); return lo > 0 ? (hi - lo) / lo : 9; };
-  if (r.F !== r.wantF) bad.push(`only ${r.F} of ${r.wantF} supply sources are on the ground`);
-  if (r.O !== r.wantO) bad.push(`only ${r.O} of ${r.wantO} oil derricks are on the ground`);
+  if (r.wantF >= 0 && r.F !== r.wantF) bad.push(`only ${r.F} of ${r.wantF} supply sources are on the ground`);
+  if (r.wantO >= 0 && r.O !== r.wantO) bad.push(`only ${r.O} of ${r.wantO} oil derricks are on the ground`);
   if (!r.same) bad.push('the ground changes with the seed');
   if (r.b.some(b => !b.ok)) bad.push('a start cannot drive to every other start');
   else {
@@ -91,7 +91,7 @@ if (!MAIN) { /* imported (orch/decisions.mjs uses STATIC_FN, judge, countsOf) */
     const t0 = Date.now(); let r;
     try {
       if (!W) W = makeSim(undefined, { prof: [] }).W;
-      if (m.list) { process.send({ list: P.ev('BM_KEYS.concat(BM_HELD).map(k=>bmInfo(k))') }); return; }
+      if (m.list) { process.send({ list: m.old ? P.ev(`${JSON.stringify(m.old)}.map(([k,n])=>({k,name:MAPS[k].name,players:n,old:1}))`) : P.ev('BM_KEYS.concat(BM_HELD).map(k=>bmInfo(k))') }); return; }
       if (m.static) { if (!globalThis.__bmStatic) P.ev(STATIC_FN); r = P.ev(`__bmStatic(${JSON.stringify(m.map)},${m.n},${m.seed},${m.dump ? 1 : 0})`); process.send(r); return; }
       W.start({ seed: m.seed, map: m.map, facs: m.facs, tm: m.tm, st: m.st, diff: m.diff, battle: 1 });
       let st = null;
@@ -117,13 +117,16 @@ if (!MAIN) { /* imported (orch/decisions.mjs uses STATIC_FN, judge, countsOf) */
       ch.on('message', r => { out.push(r); if (onDone) onDone(r, out.length); feed(); }); ch.on('exit', () => { if (--live === 0) res(out); }); feed(); };
     for (let i = 0; i < Math.min(n, Math.max(1, jobs.length)); i++) spawn();
   });
-  const list = (await pool([{ list: 1 }], 1))[0].list;
-  const want = argS('maps', '') ? argS('maps', '').split(',').map(s => 'bm_' + s.replace(/^bm_/, '')) : null;
+  // --list file.json: old maps to test, [[key, players], ...] (a map can appear at several player counts: key@n ids)
+  const OLD = argS('list', '') ? JSON.parse(fs.readFileSync(argS('list', ''), 'utf8')) : null;
+  const list = (await pool([{ list: 1, old: OLD }], 1))[0].list;
+  if (OLD) for (const m of list) { m.mk = m.k; m.k = m.k + '@' + m.players; }
+  const want = argS('maps', '') ? argS('maps', '').split(',').map(s => OLD ? s : 'bm_' + s.replace(/^bm_/, '')) : null;
   const maps = list.filter(m => !want || want.includes(m.k));
   if (!maps.length) { console.error('no Battle map matches'); process.exit(1); }
 
   const runStatic = async dump => {
-    const jobs = []; for (const m of maps) for (const n of countsOf(m.players)) for (const seed of [4242, 7, 990001]) jobs.push({ static: 1, map: m.k, n, seed, dump: dump && n === m.players && seed === 4242 });
+    const jobs = []; for (const m of maps) for (const n of (OLD ? [m.players] : countsOf(m.players))) for (const seed of [4242, 7, 990001]) jobs.push({ static: 1, map: m.mk || m.k, n, seed, dump: dump && n === m.players && seed === 4242 });
     const res = await pool(jobs, JOBS); res.sort((a, b) => a.k < b.k ? -1 : a.k > b.k ? 1 : a.n - b.n || a.seed - b.seed);
     for (const r of res) r.bad = judge(r); return res;
   };
@@ -139,16 +142,18 @@ if (!MAIN) { /* imported (orch/decisions.mjs uses STATIC_FN, judge, countsOf) */
     process.exit(fail ? 1 : 0);
   } else if (has('battles')) {
     const GAMES = +argS('games', 40), MIN = +argS('minutes', 22), ROUND = +argS('round', 1), jobs = [];
-    for (const m of maps) { const S = splits(m.players), per = Math.ceil(GAMES / (S.length * m.players)) * S.length * m.players;
+    for (const m of maps) { const S = splits(m.players), full = S.length * m.players, sampled = full > 3 * GAMES,   // 8 players: 35 splits x 8 seats is too many, so sample splits and rotate seats
+        per = sampled ? Math.ceil(GAMES / m.players) * m.players : Math.ceil(GAMES / full) * full;
       for (let g = 0; g < per; g++) { const f = NATIONS[(g + (ROUND - 1) * 5 + m.k.length) % NATIONS.length];
         // seats rotate through the start positions (player i starts on spot st[i]), so a seat's own quirks (who moves first) cancel out
-        const rot = Math.floor(g / S.length) % m.players, st = Array.from({ length: m.players }, (_, i) => (i + rot) % m.players);
+        const rot = (sampled ? g : Math.floor(g / S.length)) % m.players, si = sampled ? (g * 7 + Math.floor(g / m.players) * 3) % S.length : g % S.length, st = Array.from({ length: m.players }, (_, i) => (i + rot) % m.players);
         // ... and the two sides swap their team numbers every full cycle (and from round to round), so "team 1 moves first" cancels out too
-        const flip = (Math.floor(g / (S.length * m.players)) + ROUND) % 2;
-        jobs.push({ map: m.k, n: m.players, g, seed: 9000 * ROUND + g * 131 + m.k.length * 7, facs: new Array(m.players).fill(f), st, flip, v: 3, tm: st.map(p => S[g % S.length][p] ^ flip), minutes: MIN + (m.players > 2 ? 6 : 0), diff: 1, adj: 1.15, round: ROUND }); } }
+        const flip = (Math.floor(g / (sampled ? m.players : full)) + ROUND) % 2;
+        jobs.push({ map: m.mk || m.k, id: m.k, n: m.players, g, seed: 9000 * ROUND + g * 131 + m.k.length * 7, facs: new Array(m.players).fill(f), st, flip, v: 3, tm: st.map(p => S[si][p] ^ flip), minutes: MIN + (m.players > 2 ? 6 : 0), diff: 1, adj: 1.15, round: ROUND }); } }
+    const SH = argS('shard', ''); if (SH) { const [si, sn] = SH.split('/').map(Number); jobs.splice(0, jobs.length, ...jobs.filter((_, i) => i % sn === si)); }
     console.log(`battlemapfair: ${jobs.length} Battle games on ${maps.length} maps, ${JOBS} at a time`);
     let prev = []; try { prev = JSON.parse(fs.readFileSync(BATTLES_JSON, 'utf8')); } catch (e) { }
-    const keep = prev.filter(r => !jobs.some(j => j.map === r.map && j.g === r.g && j.round === r.round));
+    const keep = prev.filter(r => !jobs.some(j => (j.id || j.map) === (r.id || r.map) && j.g === r.g && j.round === r.round));
     const t0 = Date.now(); const acc = [];
     await pool(jobs, JOBS, (r, k) => { acc.push(r); if (k % 4 === 0 || r.result === 'error') { console.log(`  ${k}/${jobs.length}  ${r.map} g${r.g} ${r.facs[0]} ${r.result}${r.err ? ' ' + r.err : ''} win side ${r.win} t=${r.t}s  (${Math.round((Date.now() - t0) / 1000)} s)`); fs.writeFileSync(BATTLES_JSON, JSON.stringify(keep.concat(acc))); } });
     fs.writeFileSync(BATTLES_JSON, JSON.stringify(keep.concat(acc)));
@@ -174,7 +179,7 @@ if (!MAIN) { /* imported (orch/decisions.mjs uses STATIC_FN, judge, countsOf) */
 
 function rates(res, maps, rot = true) {   // rot: the final design (v 3: seats rotate, sides swap numbers); false: the earlier pilot games
   const by = {}, lines = [];
-  for (const m of maps) { const G = res.filter(r => r.map === m.k && r.result !== 'error' && (rot ? r.v === 3 : r.v !== 3)); if (!G.length) continue;
+  for (const m of maps) { const G = res.filter(r => (r.id || r.map) === m.k && r.result !== 'error' && (rot ? r.v === 3 : r.v !== 3)); if (!G.length) continue;
     const w = new Array(m.players).fill(0), c = new Array(m.players).fill(0); let kill = 0, time = 0, draw = 0;
     for (const r of G) { if (r.result === 'kill') kill++; else if (r.result === 'timeout') time++; else draw++;
       r.tm.forEach((t, i) => { const p = r.st ? r.st[i] : i; c[p]++; w[p] += r.win < 0 ? .5 : r.win === t ? 1 : 0; }); }
