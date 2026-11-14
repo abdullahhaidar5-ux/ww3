@@ -1,0 +1,22 @@
+3D models: 3 of 83 ready=true  (page open to models ready: 0.7s)
+Playtest card: 10 things to try, votes saved into the file
+living main menu: your war drawn from the save note (battle, old, none; old campaign saves ignored)
+peak memory (node + browser, summed RSS): 1778 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+SMOKE FAIL (14s)
+  ✗ skirmish failed to start: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:40719/index.html:5793:350)
+    at addBld (http://127.0.0.1:40719/index.html:7282:62)
+    at newGame (http://127.0.0.1:40719/index.html:7262:134)
+    at newGame (http://127.0.0.1:40719/index.html:15251:52)
+    at newGame (http://127.0.0.1:40719/index.html:16052:52)
+    at startSingle (http://127.0.0.1:40719/index.html:14445:140)
+    at eval (eval at evaluate (:311:30), <anonymous>:5:7)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+  ✗ console error: ReferenceError: RB is not defined
+    at bstats (http://127.0.0.1:40719/index.html:5793:350)
+    at updateUI (http://127.0.0.1:40719/index.html:13577:39)
+    at loop (http://127.0.0.1:40719/index.html:14901:234)
