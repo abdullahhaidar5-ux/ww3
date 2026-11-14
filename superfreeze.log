@@ -1,0 +1,15 @@
+  page: shader warm-up 9272 ms, 62 models, 120 objects in 632 steps (longest 896 ms), 116 programs, textures 137 MB
+  [IR +0s] battle loaded
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.evaluate: ReferenceError: CQ_STRIKE_MIN is not defined
+    at eval (eval at evaluate (:311:30), <anonymous>:3:257)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at /home/runner/work/ww3/ww3/orch/superfreeze.mjs:56:27 {
+  log: []
+}
+
+Node.js v22.23.4
