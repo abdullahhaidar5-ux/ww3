@@ -181,3 +181,6 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
   pileflag = trig_019xF6W6ixtVwWzzZdeXWueY (Opus) fired 01:54Z. Note: rally flag fix from train 12 apparently not enough.
 - Seen in his photo, NOT asked to fix: Windows taskbar covers the bottom bar and the right panel runs off-screen (he plays windowed) -
   consider a fit-to-window check later.
+- 19:55 Chicago "Make the dust and smoke less" + "Also I thought we removed towns in battle" (no earlier written decision found; treat as
+  decision now: Battle has NO towns on any map). battleclean2 = trig_01VxtRXFgHVaQnuznuaaRs87 (Sonnet) fired 01:57Z: no towns in Battle +
+  dust/smoke roughly halved with one FX table. Asked him whether the rainbow ground stripes are real or phone-camera moire (awaiting).
