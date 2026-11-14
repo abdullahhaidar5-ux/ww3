@@ -40,7 +40,8 @@ function dugVeh(u){const L=G.dug;let s=1;if(!L)return;const crush=u.s.cls==='tan
 const DUGOUT={cap:12,hp:420,t:4.5,fade:100,max:80};
 function digCanInf(u){return u&&!u.isB&&!u.dead&&u.s&&isInf(u.s)&&!u.s.noAttack&&u.kind!=='hacker'&&canGarrison(u)&&!u.inTun&&!u.aband&&!u.inGar;}
 // tanks, IFVs, APCs, ground AA and artillery vehicles dig a hull-down position (berm in front, scraped ramp behind): much less front / side damage, cannot move until ordered out
-function vposCan(u){return !!u&&!u.isB&&!u.dead&&!!u.s&&u.s.dom==='ground'&&isVeh(u.s)&&u.kind!=='dozer'&&u.kind!=='harv'&&!u.s.noAttack&&u.s.dmg>0&&!u.aband&&!u.inTun&&!u.dgv&&!((u.crit|0)&1);}
+/* Abdullah 2026-11-14 14:55 "Make it so that vehicles can't dig in": only infantry dig in (dugouts); old hull-down positions in saves just fade */
+function vposCan(u){return false&&!!u&&!u.isB&&!u.dead&&!!u.s&&u.s.dom==='ground'&&isVeh(u.s)&&u.kind!=='dozer'&&u.kind!=='harv'&&!u.s.noAttack&&u.s.dmg>0&&!u.aband&&!u.inTun&&!u.dgv&&!((u.crit|0)&1);}
 function digCan(u){return digCanInf(u)||vposCan(u);}
 function dugSiteOk(x,y){if(x<40||y<40||x>MAPW-40||y>MAPH-40||!passXY('ground',x,y))return false;const k=Math.floor(y/CELL)*GW+Math.floor(x/CELL);return G.grid[k]===0&&!(G.civAt&&G.civAt.get(k));}
 function dugSite(cx,cy){if(dugSiteOk(cx,cy))return[cx,cy];for(const r of [22,44,66])for(let i=0;i<8;i++){const a=i*.785+r*.01,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;if(dugSiteOk(x,y))return[x,y];}return null;}
