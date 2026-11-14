@@ -1,0 +1,27 @@
+menu {"btn":"▶ Tutorial: learn Conquest (10 min)","vis":false}
+-- out of order / skip / exit / restart
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  FAIL step 1 tip box does not cover its own highlight [[335,79,1125,177],[421,177,517,273]]
+  FAIL exception: page.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#b_turret')
+    - locator resolved to <button hidden="" data-tip="" id="b_turret" data-tab="build" data-nm="Defense Gun" class="btn hasic hasmu" aria-label="Defense Gun">…</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    38 × waiting for element to be visible, enabled and stable
+       - element is not visible
+     - retrying click action
+       - waiting 500ms
+
+step seconds: [] total 100 s
+TUTORIAL FAIL (2)
