@@ -132,14 +132,14 @@ const PAGE = () => {
   const E = endGame;
   window.endGame = (w, why) => { if (TR.st && G && !G.over && !TR.st.end) TR.st.end = { w, t: G.t, why: why || '' }; return E(w, why); };
 
-  TR.list = () => ({ facs: FKEYS.slice(), names: Object.fromEntries(FKEYS.map(k => [k, FACTIONS[k].name])), maps: MAP_KEYS.map(k => [k, MAPS[k].max]) });
-  TR.start = (m, diff, realClock, REAL) => {
+  TR.list = () => ({ facs: FKEYS.slice(), names: Object.fromEntries(FKEYS.map(k => [k, FACTIONS[k].name])), maps: MAP_KEYS.concat(typeof BM_KEYS !== 'undefined' ? BM_KEYS : []).map(k => [k, MAPS[k].max]) });
+  TR.start = (m, diff, realClock, REAL, BT) => {
     if (G) G.over = true;
     MODE = 'single'; ME = 0; setup.d = diff; setup.map = m.map; setup.p = m.a; setup.a = m.b; setup.n = 1; setup.others = []; setup.tm = [0, 1]; setup.slot = -1; setup.seed = m.seed;
     TR.st = { rng: mul(m.seed ^ 0x9E3779B9), clock: 0, realClock, end: null, ms: 0, steps: 0, trace: [], nextT: 0,
       side: [0, 1].map(() => ({ uLost: 0, uLostV: 0, bLost: 0, bLostV: 0, peakU: 0, peakUV: 0 })) };
     const ms0 = realNow();
-    sim(() => newGame({ seed: m.seed, facs: [m.a, m.b], ai: [true, true], map: m.map, tm: [0, 1], bs: setup.bs, slot: -1, real: REAL ? 1 : 0 }));
+    sim(() => newGame({ seed: m.seed, facs: [m.a, m.b], ai: [true, true], map: m.map, tm: [0, 1], bs: setup.bs, slot: -1, real: REAL ? 1 : 0, battle: BT ? 1 : 0 }));
     G.headless = true; // FXE skips every visual/audio effect handler
     G.teams.forEach(T => { T.ai = mkAI(diff); }); // mkAI scales the wave by G.bs itself (same as a fresh AI slot)
     return { facs: G.teams.map(T => T.fac), map: G.mapKey, ms: realNow() - ms0 };
@@ -166,7 +166,7 @@ const PAGE = () => {
     sim(sample);
     const score = T => { const F = forceOf(T); return F.bv + F.uv + F.dz * 500; };
     return { t: G.t, over: G.over, end: S.end, msPerStep: S.ms / Math.max(1, S.steps), trace: S.trace,
-      sides: G.teams.map((T, i) => { const F = forceOf(T); return { fac: T.fac, out: !!T.out, why: T.whyOut || '', built: T.built, made: T.made || {}, kills: T.kills,
+      sides: G.teams.map((T, i) => { const F = forceOf(T); return { gens: G.ents.filter(e => e.isB && e.team === i && e.kind === 'gen' && !e.dead).length, pw: [T.pwM, T.pwU, T.pwLow ? 1 : 0], fac: T.fac, out: !!T.out, why: T.whyOut || '', built: T.built, made: T.made || {}, kills: T.kills,
         credits: T.credits | 0, score: score(T), units: F.un, blds: F.bn, ...S.side[i] }; }) };
   };
 };
@@ -253,7 +253,7 @@ async function play(w, m) {
   const r = { ...m, errs: [] }; w.cur = r;
   const tr = Date.now();
   try {
-    const st = await w.page.evaluate(([m, d, rc, rl]) => __TR.start(m, d, rc, rl), [m, DIFF, REAL_CLOCK, REAL]);
+    const st = await w.page.evaluate(([m, d, rc, rl, bt]) => __TR.start(m, d, rc, rl, bt), [m, DIFF, REAL_CLOCK, REAL, has('battle')]);
     if (st.map !== m.map) r.errs.push(`started on ${st.map}, not ${m.map}`);
     r.startS = st.ms / 1000;
     const steps = Math.round(MINUTES * 3600), CH = 3600;
@@ -307,7 +307,7 @@ const T = {};
 for (const f of facs) T[f] = { fac: f, name: info.names[f], g: 0, w: 0, tw: 0, l: 0, tl: 0, d: 0, err: 0, winMin: [], built: 0, uLost: 0, kills: 0, lostV: 0 };
 for (const r of results) {
   if (!r.sides || r.result === 'error') { for (const f of [r.a, r.b]) T[f].err++; continue; }
-  r.sides.forEach((s, i) => {
+  r.sides.slice(0, 2).forEach((s, i) => {
     const t = T[s.fac]; t.g++; t.built += s.built; t.uLost += s.uLost; t.kills += s.kills; t.lostV += s.uLostV;
     if (r.winner < 0) t.d++;
     else if (r.winner === i) { if (r.result === 'win') { t.w++; t.winMin.push(r.t / 60); } else t.tw++; }

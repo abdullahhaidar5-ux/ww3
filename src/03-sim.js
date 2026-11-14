@@ -1049,7 +1049,7 @@ function aiLanding(T,mine,anchor,pb,launched){const D=DIFF[T.ai.d??1],id=T.id;if
 function aiSalvage(T,mine){if(T.ai.t%3)return;for(const v of G.ents){if(v.dead||!v.aband)continue;let best=null,bd=650*650;for(const u of mine){if(u.isB||u.dead||!isInf(u.s)||u.s.noAttack||u.kind==='hacker'||u.rout>G.t||u.inTun)continue;const d=(u.x-v.x)**2+(u.y-v.y)**2;if(d<bd){bd=d;best=u;}}if(best&&!(best.order&&best.order.salv===v.id)){setMove(best,v.x,v.y,'move');best.order.salv=v.id;}}}
 /* ---- Hard AI plays Conquest like a smart human (DIFF.hm; Easy/Normal never run any of this). Tactics only: no money, no vision -
    it only reacts to enemy troops it can see (seenBy); enemy base buildings and towns are public map knowledge, as for the other AIs. */
-const HM_CRIT={hq:1,barracks:1,factory:1,airfield:1,shipyard:1};
+const HM_CRIT={gen:1,hq:1,barracks:1,factory:1,airfield:1,shipyard:1};
 function aiHmFree(army,anchor,r){return army.filter(u=>!u.order&&!u.target&&!u.amb&&!u.opW&&!u.inTun&&u.s.dom==='ground'&&!(u.rout>G.t)&&dist(u,anchor)<r);}
 function aiHmSeenVal(id,x,y,r){let v=0;for(const e of nearby(x,y,r,NB))if(!e.dead&&!e.isB&&e.team>=0&&!ally(e.team,id)&&e.s&&!e.s.noAttack&&e.s.dom!=='air'&&seenBy(id,e)&&Math.hypot(e.x-x,e.y-y)<r)v+=e.s.cost||300;return v;}
 function aiHmPick(free,x,y,need,max){const L=free.slice().sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y)),out=[];let v=0;for(const u of L){if(out.length>=max||v>=need)break;out.push(u);v+=u.s.cost||300;}return{out,v};}
@@ -1131,6 +1131,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   const ORD=aiPers(T).ord?[...aiPers(T).ord,...AIORDER]:AIORDER;
   while(ORD[T.ai.bi]&&(!bldAllowed(T.fac,ORD[T.ai.bi])||ORD[T.ai.bi]==='shipyard'))T.ai.bi++;
   if(T.ai.bi>1&&!mine.some(e=>e.kind==='barracks'))T.ai.re='barracks';else if(T.ai.bi>2&&!mine.some(e=>e.kind==='factory'))T.ai.re='factory';else T.ai.re=null;
+  if(G.battle&&bldAllowed(T.fac,'gen')){const pw=pwrOf(id),nx=POWER.use[ORD[T.ai.bi]]||0;if(!mine.some(e=>e.kind==='gen'&&e.built<1)&&(pw.use>pw.make||(nx&&pw.use+nx>pw.make)))T.ai.re='gen';}   /* Battle power: a Generator before the first electronic building, keep power positive, rebuild lost ones */
   if(T.ai.re&&!mine.some(e=>e.isB&&e.built<1)){const s=bstats(T.fac,T.ai.re);if(T.credits>=s.cost){const p=aiFindSpot(id,T.ai.re,anchor);if(p)placeBld(id,T.ai.re,p[0],p[1]);}}
   // Supply depots: next to rich fields near home, and - late in the game, when the near fields have run dry and the
   // trucks report a long haul (updHarv sets T.ai.depF) - right next to the field they now drive to, wherever it is,
@@ -1350,7 +1351,7 @@ function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.mi
   if(!(G.prT>G.t)){G.prT=G.t+1;for(const k of ['smokes','shields'])if(Array.isArray(G[k])&&G[k].length){let j=0;const A=G[k];for(const S of A)if(S.t>G.t)A[j++]=S;A.length=j;}}
   for(const tm of G.timers){tm.t-=dt;if(tm.t<=0){tm.done=true;tm.fn();}}{let j=0;for(const t of G.timers)if(!t.done)G.timers[j++]=t;G.timers.length=j;}
   const n=G.ents.length;for(let i=0;i<n;i++){const e=G.ents[i];if(e.dead)continue;if(e.isB)updBld(e,dt);else{if(e.kind!=='jet'){e.va=lerpA(e.va,e.ang,dt*7);const tt=e.target&&!e.target.dead?Math.atan2(e.target.y-e.y,e.target.x-e.x):(e.order&&e.order.target&&!e.order.target.dead?Math.atan2(e.order.target.y-e.y,e.order.target.x-e.x):e.va);e.tang=lerpA(e.tang,tt,dt*(e.crit&2?1.4:8));}updUnit(e,dt);if(e.v&&e.vt!==G.t){const M=MOVE[e.s.cls]||[4,80];e.v=Math.max(0,e.v-M[1]*2.5*dt);if(e.v>1&&e.s.dom!=='air'&&e.kind!=='jet'){const nx=e.x+Math.cos(e.hd)*e.v*dt,ny=e.y+Math.sin(e.hd)*e.v*dt;if(passXY(e.s.dom,nx,ny)){e.x=nx;e.y=ny;e.mv=G.t;}}}}}
-  updProj(dt);updStrikes(dt);separate();updOil(dt);infraTick(dt);updSupply(dt);bfTick(dt);
+  updProj(dt);updStrikes(dt);separate();updOil(dt);infraTick(dt);battlePower(dt);updSupply(dt);bfTick(dt);
   {const E=G.ents;let j=0;for(let i=0;i<E.length;i++){const e=E[i];if(!e.dead&&!e.inTun)E[j++]=e;}E.length=j;}
   for(const T of G.teams)T.clr=false;/* no cleric morale in battles any more (integrate1) */
   {let thought=false;for(const T of G.teams)if(T.ai&&!T.out){if(!G.aiTT)G.aiTT=G.teams.map((_,i)=>i*.13);G.aiTT[T.id]-=dt;if(G.aiTT[T.id]<=0&&!thought){thought=true;G.aiTT[T.id]=DIFF[T.ai.d??1].think;aiThink(T);}}}
@@ -1647,6 +1648,16 @@ function sandboxTick(dt){const P=G.teams[0];if(P.credits<900000)P.credits=999999
    that side only for two minutes. Same numbers for every nation. No RNG; fixed update order; host-authoritative. */
 const PW_DEP=['sam','turret','coast','uplink'],PW_R=60,PW_FIX=8,PW_HP=2000,FUEL_DRAIN=1/900,FUEL_FILL=1/90,FUEL_SLOW=.72;
 const ML={NEAR:1300,JOIN:60,HOSTILE:-50,HOS_T:120,SIZE_T:4,SIZE_H:3,JOIN_N:3,HUNT_R:800};
+/* BATTLE POWER (Abdullah 2026-11-13 20:11, table POWER in 01-data): Battle has no map power plants. Built Generators make power, buildings use it.
+   Used > made = LOW POWER: every powered building (POWER.use: air defense, coastal missiles, Strike Center, Radio & TV, Airfield) goes offline (b.dis, the same flag as blackout/EMP/hack), the minimap radar is off; production speed is never changed.
+   State is derived from the buildings every 0.5 s (T.pwM made, T.pwU used, T.pwLow, T.pwW warn time), so saves, clients and host migration agree. */
+function pwrOf(team){let make=0,use=0;for(const e of G.ents){if(!e.isB||e.dead||e.team!==team||e.built<1)continue;const k=e.kind;if(!(e.dis>G.t))make+=POWER.make[k]||0;use+=POWER.use[k]||0;}if(typeof tbPlants==='function')make+=tbPlants(team)*POWER.plant;return{make,use};}
+function pwrLow(team){const T=G.teams[team];return !!(G.battle&&T&&T.pwLow);}
+function battlePower(dt){if(!G.battle||MODE==='client')return;G.pwT=(G.pwT||0)+dt;if(G.pwT<.5)return;G.pwT=0;
+  for(const T of G.teams){if(T.reb||T.out)continue;const p=pwrOf(T.id);T.pwM=p.make;T.pwU=p.use;const low=p.use>p.make;
+    if(low&&!T.pwLow){T.pwLow=1;if(G.t-(T.pwW??-999)>90){T.pwW=G.t;log(T.id,'Low power - build a Generator. Air defense, Strike Center, radio and Airfield are offline.','bad');for(const O of G.teams)if(O.id!==T.id&&!O.reb&&!ally(O.id,T.id)&&!O.ai&&G.t>60)log(O.id,`Enemy ${T.F.name} is on low power - its air defense and Strike Center are offline.`,'g');}}
+    else if(!low&&T.pwLow){T.pwLow=0;if(T.pwW!=null)log(T.id,'Power is back - everything online.','g');}
+    if(T.pwLow)for(const e of G.ents)if(e.isB&&e.team===T.id&&!e.dead&&POWER.use[e.kind]&&!(e.dis>G.t+1.2))koSet(e,1.2,'lowpower');}}
 function infraInit(){const M=G.map,N=G.N;if(!G.conq)return;
   G.pgrid=new Array(N).fill(0);
   for(const p of (M.plants||[])){const o={x:p.x,y:p.y,owner:(p.home>=0&&p.home<N)?p.home:-1,cp:new Array(N).fill(0),inc:0,pw:1,home:p.home};o.i=G.oil.length;o.hp=o.max=PW_HP;o.dead=false;o.burn=0;o.rep=0;G.oil.push(o);o.tg=oilTarget(o);o.tg.kind='plant';o.tg.s.name='Power plant';if(o.home>=0&&o.home<N)G.pgrid[o.home]=1;}}

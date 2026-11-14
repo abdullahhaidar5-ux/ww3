@@ -62,6 +62,8 @@ function townBuild(){if(!document.getElementById('townCss')){const st=document.c
   const d=document.createElement('div');d.id='townp';d.innerHTML='<button class="x" aria-label="Close">&times;</button><div id="tpb"></div>';d.addEventListener('pointerdown',e=>e.stopPropagation());d.addEventListener('contextmenu',e=>e.preventDefault());
   d.querySelector('.x').onclick=townClose;d.addEventListener('click',e=>{const b=e.target.closest('button[data-r]');if(b&&TP.ti>=0){doAct({t:'tax',ti:TP.ti,r:+b.dataset.r});TP.t=0;setTimeout(()=>townPanelTick(true),60);}const a=e.target.closest('button[data-act]');if(a&&TP.ti>=0&&!a.disabled){doAct(a.dataset.act==='road'?{t:'road',ti:TP.ti,ids:G.sel.filter(u=>!u.isB&&u.kind==='dozer'&&u.team===ME).map(u=>u.id)}:{t:a.dataset.act,ti:TP.ti});TP.t=0;setTimeout(()=>townPanelTick(true),90);}});
   document.body.appendChild(d);TP.el=d;}
+/* Battle power meter numbers (same derivation on host and clients, refreshed twice a second) */
+function pwView(){const k=Math.floor(G.t*2),c=G._pwv;if(c&&c.k===k)return c;const p=pwrOf(ME);return G._pwv={k,make:p.make,use:p.use,low:p.use>p.make};}
 /* THE goal line (Abdullah 2026-11-13 17:31 "clearer goals on screen"): one calm line under the top bar that says what wins this
    game and how far along it is, updated live; a short flash when it moves (a base building falls, a town is taken).
    Conquest: setup countdown · Take towns for income (held) · Destroy the enemy base (N of M structures left).
@@ -91,6 +93,7 @@ function cqBanner(){if(!G||!(G.conq||G.battle||G.camp)||G.grand){const o=$('cqBn
   const g=goalText();if(!g){if(b.dataset.h){b.dataset.h='';b.innerHTML='';}return;}
   if(g.k!==GOAL.key){if(GOAL.key&&GOAL.key[0]===g.k[0])GOAL.fl=performance.now();GOAL.key=g.k;}
   let h=`<div class="gl${performance.now()-GOAL.fl<1300?' fl':''}">${g.h}</div>`;
+  if(G.battle){const pw=pwView(),pc=pw.low?'#ff6a55':'#7fe08a',fr=Math.min(1,pw.make/Math.max(1,pw.use,pw.make));h+=`<div id="pwMeter" style="margin-top:3px;display:inline-flex;align-items:center;gap:8px;font:700 12px system-ui,sans-serif;color:${pc};background:rgba(8,12,10,.72);border:1px solid ${pc};border-radius:6px;padding:2px 10px"><span>&#9889; POWER ${pw.make} produced &middot; ${pw.use} used</span><span style="display:inline-block;width:70px;height:7px;background:rgba(255,255,255,.18);border-radius:4px;overflow:hidden"><i style="display:block;height:100%;width:${Math.round(fr*100)}%;background:${pc}"></i></span>${pw.low?'<span>LOW POWER - build a Generator</span>':''}</div>`;}
   if(!G.camp){const tm=x=>Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0');
    for(const T of G.teams){if(T.reb||T.out||!T.sup)continue;const sec=strikeSecs(T);if(sec<0)continue;const mine=ally(T.id,ME);
      h+=`<div class="sl" style="color:${mine?'#bfe8c4':'#ffb4a8'}">${T.F.name} ${UPLINK[T.fac]?UPLINK[T.fac][0]:'missile strike'}: ${sec<=0.5?'READY':'ready in '+tm(sec)}</div>`;}}

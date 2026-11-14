@@ -190,7 +190,8 @@ function critIcons(c,x,y,crit){let i=0;for(const b of [1,2,4]){if(!(crit&b))cont
     else{c.fillStyle='#ff6a2a';c.beginPath();c.moveTo(cx,y-5);c.quadraticCurveTo(cx+4.5,y,cx+2.4,y+4);c.lineTo(cx-2.4,y+4);c.quadraticCurveTo(cx-4.5,y,cx,y-5);c.fill();c.fillStyle='#ffd35a';c.beginPath();c.moveTo(cx,y-1);c.quadraticCurveTo(cx+2,y+1.5,cx+1,y+3.4);c.lineTo(cx-1,y+3.4);c.quadraticCurveTo(cx-2,y+1.5,cx,y-1);c.fill();}}}
 function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW,VH);
   try{drawSupplyTowns(c);}catch(_){}
-  for(const e of G.ents){if(e.dead||!vis(e))continue;const sel=G.sel.includes(e);if(SET.hp!=='all'&&!sel&&e.hp>=e.max&&!(e.rank>0)&&!(e.isB&&e.built<1)&&!e.hacking&&!e.planting&&!(e.building&&e.team===ME)&&!((e.supp||0)>.5&&!e.isB)&&!(e.rout>G.t||e.routV)&&!(e.team===ME&&!e.isB&&(()=>{const m=moraleOf(e);return m&&m.v<.995;})())&&!(e.team===ME&&G.sqOf&&G.sqOf[e.id])&&!(e.mark>G.t||e.markV)&&!(e.am!==undefined&&e.amx&&ally(e.team,ME)&&(e.am<e.amx*.3||(!e.sup&&G.t-(e.supT??G.t)>20)))&&!(e.crit&&!e.isB))continue;
+  for(const e of G.ents){if(e.dead||!vis(e))continue;const sel=G.sel.includes(e);if(G.battle&&e.isB&&e.built>=1&&POWER.use[e.kind]&&(e.disv||e.dis>G.t)){const q=toScreen(e.x,unitH(e)+BH[e.kind]+24,e.y);if(q.z<=1){const lp=ally(e.team,ME)&&pwView().low;c.save();c.textAlign='center';c.font='700 10px system-ui,sans-serif';c.fillStyle='rgba(0,0,0,.72)';c.fillRect(q.x-30,q.y-9,60,14);c.fillStyle=lp?'#ff6a55':'#7fd0ff';c.fillText('\u26A1 '+(lp?'NO POWER':'OFFLINE'),q.x,q.y+2);c.strokeStyle=c.fillStyle;c.lineWidth=1.4;c.beginPath();c.moveTo(q.x-26,q.y+3);c.lineTo(q.x-18,q.y-7);c.stroke();c.restore();}}   /* Battle: small no-power marker on an electronic building that is switched off */
+    if(SET.hp!=='all'&&!sel&&e.hp>=e.max&&!(e.rank>0)&&!(e.isB&&e.built<1)&&!e.hacking&&!e.planting&&!(e.building&&e.team===ME)&&!((e.supp||0)>.5&&!e.isB)&&!(e.rout>G.t||e.routV)&&!(e.team===ME&&!e.isB&&(()=>{const m=moraleOf(e);return m&&m.v<.995;})())&&!(e.team===ME&&G.sqOf&&G.sqOf[e.id])&&!(e.mark>G.t||e.markV)&&!(e.am!==undefined&&e.amx&&ally(e.team,ME)&&(e.am<e.amx*.3||(!e.sup&&G.t-(e.supT??G.t)>20)))&&!(e.crit&&!e.isB))continue;
     const top=e.isB?BH[e.kind]+8:entHeightMid(e)+(e.s.dom==='air'?14:16);const p=toScreen(e.x,unitH(e)+top,e.y);if(p.z>1||p.x<-40||p.y<-40||p.x>VW+40||p.y>VH+40)continue;
     const w=Math.max(e.isB?24:14,Math.min(e.isB?80:46,(e.isB?e.size*.7:e.r*2)*PPU));   /* orderfeel: small bars, not clutter */
     if(sel||e.hp<e.max||SET.hp==='all'){const f=Math.max(0,e.hp/e.max);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,p.y-1,w+2,5);c.fillStyle=f>.5?'#74d08f':f>.25?'#e3b341':'#ea5a40';c.fillRect(p.x-w/2,p.y,w*f,3);if(w>=30){c.fillStyle='rgba(0,0,0,.45)';for(let i=1;i<5;i++)c.fillRect(p.x-w/2+w*i/5,p.y,1,3);}}
@@ -317,7 +318,8 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
   for(const st of (G.strikes||[])){const x=st.x*sx,y=st.y*sy,r=Math.max(4,st.r*sx);c.strokeStyle=ally(st.team,ME)?'rgba(116,208,143,.9)':'rgba(234,90,64,.95)';c.lineWidth=1.5;c.setLineDash([3,2]);c.beginPath();c.arc(x,y,r,0,7);c.stroke();c.setLineDash([]);c.beginPath();c.moveTo(x-r-3,y);c.lineTo(x+r+3,y);c.moveTo(x,y-r-3);c.lineTo(x,y+r+3);c.stroke();}
   // units and buildings
   const sel=new Set(G.sel);
-  for(const e of G.ents){if(e.dead||!vis(e))continue;const x=e.x*sx,y=e.y*sy,col=G.teams[e.team].color,own=e.team===ME;
+  const radOff=!!(G.battle&&pwView().low);   /* Battle low power: the minimap radar shows only your own side */
+  for(const e of G.ents){if(e.dead||!vis(e))continue;if(radOff&&!ally(e.team,ME))continue;const x=e.x*sx,y=e.y*sy,col=G.teams[e.team].color,own=e.team===ME;
     if(e.isB){const s=e.kind==='hq'?9:e.kind==='turret'||e.kind==='sam'||isTun(e)?5:7;c.fillStyle='#050807';c.fillRect(x-s/2-1.5,y-s/2-1.5,s+3,s+3);c.fillStyle=col;c.fillRect(x-s/2,y-s/2,s,s);if(e.kind==='hq'){c.fillStyle='#050807';c.fillRect(x-1.5,y-1.5,3,3);}if(SET.cb)idMiniMark(c,x,y,e.team,1);if(e.built<1){c.fillStyle='rgba(0,0,0,.45)';c.fillRect(x-s/2,y-s/2,s,s*(1-e.built));}continue;}
     const d=e.s.dom;c.fillStyle=col;c.strokeStyle=own?'rgba(255,255,255,.75)':'#050807';c.lineWidth=1;
     if(d==='air'){const a=e.ang||0;c.save();c.translate(x,y);c.rotate(a);c.beginPath();c.moveTo(4.5,0);c.lineTo(-3,3);c.lineTo(-1.5,0);c.lineTo(-3,-3);c.closePath();c.fill();c.stroke();c.restore();}
@@ -329,6 +331,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
     if(SET.cb)idMiniMark(c,x,y,e.team,e.isB);if(sel.has(e)){c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(x,y,4.5,0,7);c.stroke();}
     if(own&&G.t-(e.lastHit||-99)<1.2&&Math.random()<.04)MMC.push({x:e.x,y:e.y,t:now});}
   mmEW(c,sx,sy,now);
+  if(radOff){c.fillStyle='rgba(10,14,12,.5)';c.fillRect(0,0,W,H);c.fillStyle='#ff6a55';c.font='700 11px system-ui,sans-serif';c.textAlign='center';c.fillText('RADAR OFFLINE - LOW POWER',W/2,H/2);c.textAlign='left';}
   // contact flashes where we're under fire
   for(let i=MMC.length-1;i>=0;i--){const m=MMC[i],a=now-m.t;if(a>1.4){MMC.splice(i,1);continue;}c.strokeStyle=`rgba(255,80,60,${1-a/1.4})`;c.lineWidth=1.5;c.beginPath();c.arc(m.x*sx,m.y*sy,3+a*9,0,7);c.stroke();}
   if(MMC.length>40)MMC.splice(0,MMC.length-40);

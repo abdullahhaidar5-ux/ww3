@@ -172,7 +172,7 @@ function drawUnit(c,k,W,H,col,st){const K=iconClass(k,st);c.save();c.translate(W
 function iconBranch(k,bld,st){return bld?bldClass(k,st):iconClass(k,st);}
 /* building silhouettes for the battle BUILD tab (same hand as drawUnit) */
 function bldClass(k,st){k=String(k||'');const nm=String((st&&st.name)||'');
-  if(/factory/.test(k))return'factory';if(/airfield/.test(k))return'airfield';if(/shipyard/.test(k))return'shipyard';if(/depot/.test(k))return'depot';
+  if(/factory/.test(k))return'factory';if(/airfield/.test(k))return'airfield';if(/shipyard/.test(k))return'shipyard';if(/depot/.test(k))return'depot';if(k==='gen')return'gen';
   if(/uplink/.test(k))return'uplink';if(/coast/.test(k))return'coast';if(/sam/.test(k))return'sam';if(/turret|gun|battery/.test(k))return'turret';
   if(/econ|oil/.test(k))return/oil|gas|pipeline|petrol|crude|derrick|refiner/i.test(nm)||k==='oil'?'oil':'bank';
   if(/tunnel/.test(k))return'tunnel';if(/fort/.test(k))return'fort';if(/radio/.test(k))return'radio';if(/hq/.test(k))return'hq';if(/barracks/.test(k))return'barracks';return'house';}
@@ -182,6 +182,7 @@ function drawBld(c,k,W,H,st){const K=bldClass(k,st);c.save();c.translate(W/2,H/2
   case'factory':c.beginPath();c.moveTo(-28,16);for(let i=0;i<3;i++){c.lineTo(-28+i*16,-2);c.lineTo(-12+i*16,-10);c.lineTo(-12+i*16,-2);}c.lineTo(22,16);c.closePath();c.fill();c.fillRect(22,-22,7,38);break;
   case'airfield':c.fillRect(-30,10,60,6);c.fillRect(-6,-16,10,26);c.fillRect(-12,-24,22,9);break;
   case'shipyard':c.fillRect(-28,8,56,8);c.fillRect(-18,-22,5,30);c.fillRect(-18,-22,34,4);c.fillRect(12,-18,2,16);break;
+  case'gen':c.fillRect(-26,6,40,16);c.fillRect(-20,-10,8,16);c.fillRect(-8,-18,8,24);c.fillRect(16,-2,10,24);c.fillRect(-26,22,52,3);break;
   case'depot':for(const [x,y] of [[-22,0],[-4,0],[14,0],[-13,-16],[5,-16]])c.fillRect(x,y,15,14);break;
   case'oil':c.beginPath();c.moveTo(-16,16);c.lineTo(0,-24);c.lineTo(16,16);c.stroke();c.beginPath();c.moveTo(-10,0);c.lineTo(10,0);c.moveTo(-6,-10);c.lineTo(6,-10);c.stroke();c.fillRect(-20,14,40,4);break;
   case'bank':c.beginPath();c.moveTo(-30,-6);c.lineTo(0,-24);c.lineTo(30,-6);c.closePath();c.fill();for(const x of [-22,-8,6,20])c.fillRect(x,-2,7,18);c.fillRect(-32,16,64,5);c.fillStyle=D;c.beginPath();c.arc(0,-11,5,0,7);c.fill();break;
