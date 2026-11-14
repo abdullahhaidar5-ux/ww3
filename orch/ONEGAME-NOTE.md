@@ -34,3 +34,7 @@ EVERY captured map building is a forward supply point for its owner: quarry, min
 - A held road that connects to a captured building counts as a supply line, just like one to your base.
 - Use the ONE "your area" system from orch/ammozone. Add the captured buildings to it; do not build a second one.
 - Lose the building and its supply stops.
+
+## WARNING (ORCH 21:40): src/12-campaign.js is MISSIONS, not the grand campaign
+
+src/12-campaign.js holds the 5 Shia story MISSIONS (Hold the Pass, Supply Run, Mountain Fortress, Retake the Town, Combined Arms), and the game KEEPS Missions. Do NOT delete it or its menu entry. Only src/13* plus the grand-campaign menu, saves and lobby go. Orch/shiamissions polishes those missions after you land.
