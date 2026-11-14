@@ -1,0 +1,12 @@
+SAVETEST FAIL
+ - test threw: page.evaluate: TypeError: Cannot set properties of null (setting 'cap')
+    at http://127.0.0.1:37359/index.html:7556:179
+    at Array.forEach (<anonymous>)
+    at fmApply (http://127.0.0.1:37359/index.html:7556:7)
+    at aiForm (http://127.0.0.1:37359/index.html:7560:54)
+    at aiThink (http://127.0.0.1:37359/index.html:8406:26)
+    at simUpdate (http://127.0.0.1:37359/index.html:8530:201)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:189)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at run (/home/runner/work/w
