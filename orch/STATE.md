@@ -1,21 +1,16 @@
-# State — conductor run 2026-11-14 00:50 UTC (step 1 only)
-
-Another conductor run is working: `train/20261113-2336` (pushed 23:37 UTC, not in main yet) merges menucamp + battlemaps + spylook.
-Its gate (gate/b7d0521c13) shows 29 of 29 green. main head 77b4ee84 (train 12) shows red on gate/main, cfclient, icons, audio (flaky set).
-This run did not build a train.
-
-| Idea (branch) | Last push | Ahead of main | Handoff | Note |
+# STATE (conductor, 2026-11-14 03:35 UTC)
+main = a3b627b1a (train 13). Train in gate: train/20261114-0256 (cd424463b): sweepfixA, sweepfixB, orderfeel, ghostslot, testrange, pileflag. GitHub runners queued (backlog), gate not started at 03:33.
+| branch | ahead | handoff | own gate | note |
 |---|---|---|---|---|
-| menucamp | 11-13 13:49 | 3 | yes | in train 2336 |
-| battlemaps | 11-13 04:07 | 4 | no | in train 2336 |
-| spylook | 11-13 00:33 | 7 | yes | in train 2336 |
-| freezefix | 11-13 03:04 | 12 | yes | not in train 2336 — waiting |
-| sweepfixA | 11-14 00:39 | 3 | yes | own gate 6ee6043f: only `save` seen so far |
-| sweepfixB | 11-14 00:32 | 2 | no | active |
-| orderfeel | 11-14 00:10 | 1 | no | active |
-| civhumans | 11-14 00:03 | 1 | no | active |
-| slicesweep | 11-13 14:14 | 1 | no | idle 10 h |
-| plan75 | 11-13 17:34 | 15 | no | idle |
-
-Locks with no branch: taken/freezefix2, taken/spylook2, taken/unstuck (12+ h, saved nothing).
-Campaign branches (camphud, nofightit, warpeace, mapshapes, eu4audit): parked (campaign paused).
+| sweepfixA | 3 | yes | 28/28 | in train |
+| sweepfixB | 4 | yes | 27/28 (tutorial, flaky) | in train |
+| orderfeel | 4 | yes | tip newer than gate; older: main/cfclient/icons/audio red (flaky) | in train |
+| ghostslot | 2 | yes | 10 ok, running | in train |
+| testrange | 6 | yes | 23/24 (audio, flaky) | in train |
+| pileflag | 3 | yes | none | in train |
+| freezefix | 12 | yes | superfreeze RED | skipped |
+| unstuck2 | 4 | no | 30/30 | next train |
+| battleclean2, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, ammozone, techbldgs(part1), onegame, nations20 | - | mostly no | no gate on tip | next trains (onegame, nations20 last) |
+| looktest | 2 | yes | - | waits for Abdullah's look pick |
+| camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans | - | - | - | parked (removed from the game) |
+Taken locks with no orch branch after 90+ min: none found (all taken/* have a branch except taken/polishspeed, taken/spylook2, taken/freezefix2).
