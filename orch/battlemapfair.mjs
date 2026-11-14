@@ -42,7 +42,7 @@ export const STATIC_FN = `globalThis.__bmStatic=(k,n,seed,dump)=>{setWorld(world
   const eD=BASES.map((_,i)=>BASES.map((q,j)=>j===i?0:Math.round(dAt(i,q[0],q[1]))));
   let near=1e9;for(let i=0;i<NB;i++)for(let j=0;j<NB;j++)if(i!==j)near=Math.min(near,eD[i][j]);const reach=.75*near;
   const b=BASES.map(([x,y],i)=>{const en=eD[i].filter((_,j)=>j!==i);return{x:Math.round(x),y:Math.round(y),sup:Math.round(Math.min(...M.fields.map(f=>dAt(i,f.x,f.y)))),supN:M.fields.filter(f=>dAt(i,f.x,f.y)<=reach).length,
-    oil:M.oil.filter(o=>dAt(i,o.x,o.y)<=reach).length,eMin:Math.min(...en),eMean:Math.round(en.reduce((a,v)=>a+v,0)/en.length),ok:en.every(v=>v<1e8)};});
+    oil:M.oil.filter(o=>dAt(i,o.x,o.y)<=reach).length,tech:(M.tech||[]).filter(o=>dAt(i,o.x,o.y)<=reach).length,techNear:(M.tech||[]).reduce((a,o)=>{a[o.k]=Math.min(a[o.k]??1e9,Math.round(dAt(i,o.x,o.y)));return a;},{}),eMin:Math.min(...en),eMean:Math.round(en.reduce((a,v)=>a+v,0)/en.length),ok:en.every(v=>v<1e8)};});
   // 2 attack routes: wall off a band along the shortest route (outside both base zones) and look for another way
   const routes=[];const ZB=450,RB=Math.round(100/CELL);
   for(let i=0;i<NB;i++)for(let j=i+1;j<NB;j++){if(!(eD[i][j]<1e8)){routes.push([i,j,0]);continue;}
@@ -56,7 +56,7 @@ export const STATIC_FN = `globalThis.__bmStatic=(k,n,seed,dump)=>{setWorld(world
       for(let dy=-RB;dy<=RB;dy++)for(let dx=-RB;dx<=RB;dx++){const X=Math.round(fx)+dx,Y=Math.round(fy)+dy;if(X>=0&&Y>=0&&X<GW&&Y<GH&&dx*dx+dy*dy<=RB*RB)g2[Y*GW+X]=3;}}}
     const D2=gridDist(g2,BASES[i][0],BASES[i][1]);let m=1e9;{const X0=Math.floor(BASES[j][0]/CELL),Y0=Math.floor(BASES[j][1]/CELL);for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const X=X0+dx,Y=Y0+dy;if(X>=0&&Y>=0&&X<GW&&Y<GH)m=Math.min(m,D2[Y*GW+X]);}}
     routes.push([i,j,m<1e8?2:1,Math.round(m<1e8?m:0)]);}
-  const r={k,n,seed,W:MAPW,H:MAPH,F:M.fields.length,O:M.oil.length,wantF:B?B.E.fl.length:-1,wantO:B?B.E.oil.length:-1,same,reach:Math.round(reach),b,eD,routes,water:M.hasWater?1:0};
+  const r={k,n,seed,W:MAPW,H:MAPH,F:M.fields.length,O:M.oil.length,T:(M.tech||[]).length,wantT:B?B.E.tb.length:-1,wantF:B?B.E.fl.length:-1,wantO:B?B.E.oil.length:-1,same,reach:Math.round(reach),b,eD,routes,water:M.hasWater?1:0};
   if(dump){r.GW=GW;r.GH=GH;r.grid=Array.from(M.grid).join('');r.fields=M.fields.map(f=>[f.x|0,f.y|0,f.amt]);r.oil=M.oil.map(o=>[o.x|0,o.y|0]);r.cities=M.cities.map(c=>[c.x|0,c.y|0,c.r|0]);r.hamlets=M.hamlets.map(h=>[h.x|0,h.y|0]);r.theme=M.theme;r.name=M.name;r.roads=(M.roads||[]).map(p=>p.map(([x,y])=>[x*WK|0,y*WK|0]));r.cb=(M.cityBlds||[]).length;}
   return r;}`;
 
@@ -65,10 +65,12 @@ export function judge(r) {
   const bad = [], sp = a => { const lo = Math.min(...a), hi = Math.max(...a); return lo > 0 ? (hi - lo) / lo : 9; };
   if (r.F !== r.wantF) bad.push(`only ${r.F} of ${r.wantF} supply sources are on the ground`);
   if (r.O !== r.wantO) bad.push(`only ${r.O} of ${r.wantO} oil derricks are on the ground`);
+  if (r.T !== r.wantT) bad.push(`only ${r.T} of ${r.wantT} capturable buildings (quarry / mine / power plant / field hospital) are on the ground`);
   if (!r.same) bad.push('the ground changes with the seed');
   if (r.b.some(b => !b.ok)) bad.push('a start cannot drive to every other start');
   else {
     if (sp(r.b.map(b => b.sup)) > .12) bad.push(`nearest supply source is not equally far (${r.b.map(b => b.sup).join(' / ')})`);
+    if (new Set(r.b.map(b => b.tech)).size > 1) bad.push(`capturable buildings within reach differ (${r.b.map(b => b.tech).join(' / ')})`);
     if (new Set(r.b.map(b => b.oil)).size > 1) bad.push(`oil derricks within reach differ (${r.b.map(b => b.oil).join(' / ')})`);
     if (sp(r.b.map(b => b.eMin)) > .15) bad.push(`route to the nearest enemy is not equally long (${r.b.map(b => b.eMin).join(' / ')})`);
     if (sp(r.b.map(b => b.eMean)) > .20) bad.push(`mean route to the enemies is not equally long (${r.b.map(b => b.eMean).join(' / ')})`);

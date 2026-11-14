@@ -7058,7 +7058,7 @@ add([
      sl:[[x,y]..]            start spots (after mirroring: 1st and 2nd are opposite each other, and so on)
      fl:[[x,y,amt?]..]       supply sources (amt in hundreds of $, default 90 = $9,000)
      oil:[[x,y]..]           oil derricks (neutral, capture with infantry: steady income)
-     tb:[[x,y,'hosp'|'air'|'radio'|'depot']..]  tech buildings (neutral, capture with infantry; effects in TB, 03-sim.js). Mirrored like oil, so a
+     tb:[[x,y,'quarry'|'mine'|'plant'|'hosp']..]  capturable buildings (neutral, capture with infantry; effects in TB, 03-sim.js). Mirrored like oil, so a
                              mirrored pair has the same type on both sides; a type on the mirror line goes in c.tb.
      ct:[[x,y,r,style?]..]   towns (neutral buildings infantry can garrison)     hm:[[x,y]..] hamlets
      rg:[[w,x,y,x,y..]..]    cliffs / ridges (impassable)    pk:[[x,y,r]..] rock outcrops
@@ -7107,7 +7107,7 @@ const BMAPS={
     sl:[[430,1100]],
     fl:[[650,830,120],[610,1400,90],[1120,400,90]],
     oil:[[300,700],[1600,800]],
-    tb:[[1000,540,'hosp']],
+    tb:[[1000,540,'hosp'],[1350,1250,'mine']],
     pk:[[1230,770,105],[1330,1530,85]],
     hm:[[1010,1130]],
     wd:[[820,1860,90]],
@@ -7118,7 +7118,7 @@ const BMAPS={
     sl:[[440,1100]],
     fl:[[660,840,120],[640,1380,90],[1150,300,90]],
     oil:[[320,1560],[1590,690]],
-    tb:[[1330,1150,'radio']],
+    tb:[[1330,1150,'plant'],[900,1700,'quarry']],
     rg:[[75,1500,-60,1530,220,1560,470]],
     pk:[[1010,1180,80],[1180,1840,95]],
     wd:[[900,560,110],[1240,1480,80]],
@@ -7130,7 +7130,7 @@ const BMAPS={
     sl:[[430,1100]],
     fl:[[650,820,120],[620,1400,90],[1040,380,90]],
     oil:[[300,660],[1330,1840]],
-    tb:[[1000,1700,'depot']],
+    tb:[[1000,1700,'hosp'],[1420,560,'mine']],
     ct:[[1240,1100,165]],
     br:[[1552,330,0]],
     wd:[[800,1800,100],[1020,720,70]],
@@ -7142,7 +7142,7 @@ const BMAPS={
     sl:[[560,560]],
     fl:[[770,400,120],[400,770,90],[1250,330,90]],
     oil:[[260,330],[1020,880],[1600,620]],
-    tb:[[1250,880,'air'],[1600,300,'radio']],
+    tb:[[1250,880,'hosp'],[1600,300,'quarry']],
     lk:[[0,1100,400]],
     br:[[900,1100,90]],
     ct:[[1600,880,105]],
@@ -7155,7 +7155,7 @@ const BMAPS={
     sl:[[500,430]],
     fl:[[760,250,120],[300,700,90],[1600,280,100]],
     oil:[[250,250],[1120,1100]],
-    tb:[[1600,500,'depot']],
+    tb:[[1600,500,'mine'],[900,720,'hosp']],
     rg:[[70,-60,1100,330,1100,660,1100]],
     ct:[[1130,640,120],[1600,760,90]],
     wd:[[820,860,90],[1380,330,70]],
@@ -7167,7 +7167,7 @@ const BMAPS={
     sl:[[350,1100],[1040,300]],
     fl:[[510,960,105],[900,460,120],[1250,300,90],[1100,1100,90],[1330,760,90]],
     oil:[[911,886],[1600,515]],
-    tb:[[1250,530,'radio']],
+    tb:[[1250,530,'plant'],[700,1100,'quarry']],
     ct:[[1600,810,95]],
     pk:[[280,330,120],[1600,130,60]],
     rg:[[55,560,560,700,470]],
@@ -8410,6 +8410,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   aiNavyAct(T,mine);aiLanding(T,mine,anchor,pb,launched);
   if(T.ai.t%6===0)for(const u of mine)if(u.kind==='jet'&&u.state==='park'&&u.ammo>=u.s.ammo&&pb.length){const t=aiAirTarget(T,u,pb)||pb[Math.floor(Math.random()*pb.length)];u.order={type:'attack',target:t};u.state='fly';u.landed=false;}
   if(T.ai.t%4===0){const free=G.oil.filter(o=>!ally(o.owner,id)).sort((a,b)=>dist(a,anchor)-dist(b,anchor))[0];if(free){const inf=mine.find(u=>!u.isB&&u.kind==='inf'&&!u.order&&!u.target&&!u.amb);if(inf&&Math.hypot(free.x-anchor.x,free.y-anchor.y)<1700)setMove(inf,free.x,free.y,'move');}}
+  if(T.ai.t%7===3){const mineB=G.oil.find(o=>o.tb&&o.owner===id&&!o.dead&&G.ents.some(e=>!e.dead&&!e.isB&&e.team>=0&&e.team!==G.reb&&!ally(e.team,id)&&e.s.dom==='ground'&&Math.hypot(e.x-o.x,e.y-o.y)<220));if(mineB){const sq=army.filter(u=>!u.order&&!u.target&&!u.amb&&u.s.dom==='ground'&&u.s.cls==='inf'&&Math.hypot(u.x-mineB.x,u.y-mineB.y)<1200).slice(0,5);for(const u of sq)setMove(u,mineB.x,mineB.y,'amove');}}   // the AI defends the quarries, mines, plants and hospitals it holds
   if(T.ai.t%9===0){const tgt=G.oil.filter(o=>!o.dead&&o.owner>=0&&!ally(o.owner,id)).sort((p,q)=>dist(p,anchor)-dist(q,anchor))[0];if(tgt&&dist(tgt,anchor)<1500){const sq=army.filter(u=>!u.order&&!u.target&&!u.amb&&u.s.dom==='ground'&&canTarget(u.s,tgt.tg)).slice(0,4);for(const u of sq){u.order={type:'attack',target:tgt.tg};u.path=null;}}}
   // ammo & supply: dry or out-of-supply troops with nothing to shoot fall back to the nearest supply circle; Hard AI hunts enemy supply trucks; a couple of infantry take nearby towns
   if(T.ai.t%3===1){const P=supplyPoints()[id]||[];if(P.length)for(const u of army){if(u.am===undefined||u.sup||u.target||u.am>u.amx*.2)continue;let b=P[0],bd=1e9;for(const p of P){const d=Math.hypot(p.x-u.x,p.y-u.y);if(d<bd){bd=d;b=p;}}setMove(u,b.x+((u.id%7)-3)*14,b.y+((u.id%5)-2)*14,'move');}}
@@ -8562,32 +8563,29 @@ function separate(){const groups=SEP_G;groups.ground.length=groups.naval.length=
 
 /* ---------- oil derricks: capturable, and destructible ---------- */
 const OIL_HP=1500;
-/* ---------- tech buildings (Battle): Field Hospital, Airstrip, Radio Tower, Repair Depot ----------
-   ONE system with the derricks and power plants: they are G.oil rows with o.tb = the type, so capture (infantry stand next to
-   it ~6 s), the owner flag, shooting it down and the Construction Vehicle repair (8 s) are the code in updOil below.
-   Neutral at the start; the effect goes ONLY to the owner (not allies), is the same for every nation, and the numbers are
-   only here. Effects run on the host (clients see the result in the snapshot). Map data: tb:[[x,y,'hosp'|'air'|'radio'|'depot']]. */
+/* ---------- capturable buildings of Battle (Abdullah 2026-11-13 20:21 + 20:24 "Keep capturable quarries and mines and power plants and field hospitals") ----------
+   ONE system with the derricks: they are G.oil rows with o.tb = the type, so capture (infantry stand next to it ~6 s), the owner
+   flag, shooting it down and the Construction Vehicle repair (8 s) are the code in updOil below. Neutral at the start; the effect
+   goes ONLY to the owner (not allies), is the same for every nation, and the numbers are only here (TB). Income and healing run on
+   the host (clients see the result in the snapshot). Map data: tb:[[x,y,'quarry'|'mine'|'plant'|'hosp']] in 02d-battlemaps.js.
+   - Quarry: steady income, the same as an oil derrick.   - Mine: steady income, 30% more (14 vs 18 per 2 s, times the Battle income scale).
+   - Power plant: while you hold it alive the owner has the extra power it makes (tbPlants(team), read by the Battle power meter).
+   - Field Hospital: heals your infantry within 260 m (1.5% of their health per second), and infantry you train while you hold it
+     come out as veterans (rank 1). */
 const TB_HP=1200;
 const TB={
-  hosp:{name:'Field Hospital',r:260,heal:.015,eff:'Heals your infantry within 260 m (1.5% of their health every second). Infantry you train come out as veterans (rank 1) while you hold it.'},
-  air:{name:'Airstrip',cd:100,cap:2,eff:'Delivers a free Strike Drone every 100 s while you hold it (at most 2 waiting at once). Real, controllable drones - they fly only when you send them.'},
-  radio:{name:'Radio Tower',r:760,eff:'Reveals everything within 760 m of the tower for you, on the battlefield and the minimap, so enemy movements there show up.'},
-  depot:{name:'Repair Depot',r:260,rep:.015,eff:'Repairs your vehicles within 260 m (1.5% of their health every second).'}};
+  quarry:{name:'Quarry',inc:14,eff:'Pays you steady income, as much as an oil derrick, while you hold it.'},
+  mine:{name:'Mine',inc:18,eff:'Pays you steady income, 30% more than a quarry or an oil derrick, while you hold it.'},
+  plant:{name:'Power plant',pwr:1,eff:'Gives you its power on top of your own generators. Lose it and that power is gone.'},
+  hosp:{name:'Field Hospital',r:260,heal:.015,eff:'Heals your infantry within 260 m (1.5% of their health every second). Infantry you train come out as veterans (rank 1) while you hold it.'}};
 function tbOf(o){return o&&o.tb&&TB[o.tb]||null;}
 function tbHeld(team,k){if(!G||!G.oil)return false;for(const o of G.oil)if(o.tb===k&&!o.dead&&o.owner===team)return true;return false;}
+function tbPlants(team){let n=0;if(G&&G.oil)for(const o of G.oil)if(o.tb==='plant'&&!o.dead&&o.owner===team)n++;return n;}   // live power plants held by this team (the Battle power meter adds them)
 function tbAdd(M,N){for(const q of (M.tech||[])){if(!TB[q.k])continue;const o={x:q.x,y:q.y,owner:-1,cp:new Array(N).fill(0),inc:0,tb:q.k};o.i=G.oil.length;o.hp=o.max=TB_HP;o.dead=false;o.burn=0;o.rep=0;G.oil.push(o);o.tg=oilTarget(o);o.tg.kind='techb';o.tg.s.name=TB[q.k].name;}}
 const TBNB=[];
 function tbTick(dt){if(MODE==='client'||!G.oil)return;G.tbT=(G.tbT||0)+dt;if(G.tbT<.5)return;const st=G.tbT;G.tbT=0;
-  for(const o of G.oil){if(!o.tb)continue;const T=o.owner>=0?G.teams[o.owner]:null;
-    if(!T||T.out||T.reb||o.dead){for(const Q of G.teams)if(Q.reveals.some(r=>r.tb===o.i))Q.reveals=Q.reveals.filter(r=>r.tb!==o.i);continue;}
-    const D=TB[o.tb];
-    if(o.tb==='hosp'||o.tb==='depot'){const inf=o.tb==='hosp',rate=(inf?D.heal:D.rep)*st;
-      for(const e of nearby(o.x,o.y,D.r,TBNB)){if(e.dead||e.isB||e.team!==o.owner||e.hp>=e.max||e.s.dom!=='ground'||(e.s.cls==='inf')!==inf||e.inTun)continue;if(Math.hypot(e.x-o.x,e.y-o.y)>D.r)continue;e.hp=Math.min(e.max,e.hp+e.max*rate);}}
-    else if(o.tb==='radio'){for(const Q of G.teams)if(Q.reveals.some(r=>r.tb===o.i&&Q.id!==o.owner))Q.reveals=Q.reveals.filter(r=>r.tb!==o.i);T.reveals=T.reveals.filter(r=>r.tb!==o.i);T.reveals.push({x:o.x,y:o.y,r:D.r,t:1.2,tb:o.i});}
-    else if(o.tb==='air'){o.nt=(o.nt==null?D.cd:o.nt)-st;if(o.nt>0)continue;
-      let n=0;for(const e of G.ents)if(!e.dead&&!e.isB&&e.fromTb===o.i&&e.team===o.owner)n++;
-      if(n>=D.cap){o.nt=0;continue;}o.nt=D.cd;let s0=null;try{s0=stats(T.fac,'drone');}catch(_){}if(!s0||!s0.hp)continue;
-      const k=(o.dn=(o.dn||0)+1),a=k*2.4,u=addUnit(o.owner,'drone',o.x+Math.cos(a)*34,o.y+Math.sin(a)*34);if(u){u.fromTb=o.i;log(o.owner,'The Airstrip delivered a free Strike Drone.','g',o.x,o.y);}}}}
+  for(const o of G.oil){if(o.tb!=='hosp'||o.dead||o.owner<0)continue;const T=G.teams[o.owner];if(!T||T.out||T.reb)continue;const D=TB.hosp,rate=D.heal*st;
+    for(const e of nearby(o.x,o.y,D.r,TBNB)){if(e.dead||e.isB||e.team!==o.owner||e.hp>=e.max||e.s.dom!=='ground'||e.s.cls!=='inf'||e.inTun)continue;if(Math.hypot(e.x-o.x,e.y-o.y)>D.r)continue;e.hp=Math.min(e.max,e.hp+e.max*rate);}}}
 /* ---------- City buildings: infantry can garrison them; any of them can be shot or shelled down ----------
    Each street-grid lot is one building. Up to 4-10 infantry (more in taller blocks) move in: they are safe inside
    and fire out at 20% longer range, while the building soaks up the damage. Rifles barely scratch it; shells,
@@ -8811,7 +8809,7 @@ function updOil(dt){const N=G.teams.length;const here=OIL_HERE.length===N?OIL_HE
   if(o.dead){o.burn=Math.max(0,o.burn-dt);const pwOk=!(o.pw||o.tb)||(present.length&&G.ents.some(e=>e.kind==='dozer'&&!e.dead&&e.team===present[0]&&Math.hypot(e.x-o.x,e.y-o.y)<PW_R));if(pwOk&&present.length&&present.every(q=>ally(q,present[0]))){const t=present[0];o.cp[t]+=dt;if(o.cp[t]>=((o.pw||o.tb)?PW_FIX:12)){o.dead=false;o.hp=o.max*.4;o.owner=t;o.cp=o.cp.map(()=>0);log(t,o.tb?TB[o.tb].name+' repaired.':o.pw?'Power plant repaired.':'Oil derrick repaired and captured.','g',o.x,o.y);}}else for(let t=0;t<N;t++)if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);continue;}
   for(let t=0;t<N;t++){if(here[t]&&present.every(q=>ally(q,t))&&!ally(o.owner,t)){o.cp[t]+=dt;if(o.cp[t]>=6){const prev=o.owner;o.owner=t;o.cp=o.cp.map(()=>0);log(t,o.tb?TB[o.tb].name+' captured. '+TB[o.tb].eff:o.pw?'Power plant captured.':'Oil derrick captured.','g',o.x,o.y);if(prev>=0&&prev!==t){log(prev,o.tb?'The enemy captured our '+TB[o.tb].name+'!':o.pw?'The enemy captured one of our power plants!':'An oil derrick was captured by the enemy!','w',o.x,o.y);if(!o.pw&&!o.tb)pubNews('oil',t,prev);}}}else if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);}
   if(o.hp<o.max&&G.t-(o.hit??-99)>8)o.hp=Math.min(o.max,o.hp+o.max*.01*dt);
-  if(o.owner>=0&&!o.pw&&!o.tb){o.inc+=dt;if(o.inc>=2){o.inc=0;const T=G.teams[o.owner];T.credits+=Math.round(14*(T.F.mods.oil||1)*(G.bs||1)*incMul(T)*(G.conq?CQ_OIL:1));}}}
+  if(o.owner>=0&&!o.pw&&(!o.tb||TB[o.tb].inc)){o.inc+=dt;if(o.inc>=2){o.inc=0;const T=G.teams[o.owner];T.credits+=o.tb?Math.round(TB[o.tb].inc*(G.bs||1)*incMul(T)):Math.round(14*(T.F.mods.oil||1)*(G.bs||1)*incMul(T)*(G.conq?CQ_OIL:1));}}}
   econTick(dt);}
 // income buildings pay every 2 seconds; a team's extra ones earn less each
 // Sanctions: income multiplier for a team (1 normally; 0.8 while sanctioned, 0.92 with Smuggling Routes). T.sanc = sim time it ends.
@@ -11095,45 +11093,51 @@ function tlChunks(){const M=G.map;if(M._tlCk)return M._tlCk;const cs=M.cities||[
 /* ===== power plant model (Infrastructure): turbine hall, two striped stacks, a cooling tower, a transformer yard with pylons and a fence.
    Owner colour shows on the flag. Same builder API as the oil derrick (Bld/mesh). ===== */
 
-/* Tech buildings (Battle): four small original sites, each one merged mesh (Bld) + an owner flag. Look only; effects are in 03-sim.js (TB). */
-function techObj(o){const grp=new THREE.Group(),B=Bld(),dk='#2c2e2c',st='#b8b5aa',cn='#9a978d',tent='#cfc8b0',red='#b3322a',wh='#f1ede2',k=o.tb;
+/* Capturable buildings of Battle: Quarry, Mine, Field Hospital (the Power plant reuses plantObj). Each one merged mesh (Bld) + an owner flag.
+   Look only; effects are in 03-sim.js (TB). Real-world detail: stepped rock faces, crusher + conveyor, headframe + wheel, canvas tents. */
+function techObj(o){const k=o.tb;if(k==='plant'){const r=plantObj(o);r.tb=1;return r;}
+  const grp=new THREE.Group(),B=Bld(),dk='#2c2e2c',tent='#cfc8b0',red='#b3322a',wh='#f1ede2',rk='#a9a291',rk2='#8f8979',rk3='#7a7566',gv='#b9b29c';
   if(k==='hosp'){
-    B.box(66,1.6,46,0,.8,0,'#8a8474');                                                                           // packed-earth pad
-    for(const z of [-9,12]){B.box(28,9,14,-8,5.5,z,tent);B.cyl(7.4,7.4,28,3,-8,13.2,z,tent,0,0,Math.PI/2);B.box(.8,6,6,-22.4,4.5,z,'#5a5648');B.box(28,.8,.8,-8,10,z+7.2,'#8a846f');}   // two long canvas tents
-    B.box(14,8,10,22,5,-6,'#d9d6cc');B.box(14,1.2,11,22,9.6,-6,'#a6a39a');B.box(3,5,.8,22,3.5,-.9,'#5d7380');       // prefab ward
-    B.box(1.4,22,1.4,-30,11,-16,'#55595c');B.box(11,7,.8,-30,21,-16,wh);B.box(2.2,6,.9,-30,21,-15.5,red);B.box(6,2.2,.9,-30,21,-15.5,red);   // tall sign board with a red cross
-    B.box(15,3.2,7,10,3.4,16,'#e9e7df');B.box(6,3,6.6,14,6.4,16,'#d8d6ce');B.box(.8,2.4,.9,10,5.6,19.6,red);B.box(2.4,.8,.9,10,5.6,19.6,red);B.cyl(1.4,1.4,1.2,10,6,1.4,19.6,dk,Math.PI/2);B.cyl(1.4,1.4,1.2,10,15,1.4,19.6,dk,Math.PI/2);   // ambulance
-    for(let i=0;i<6;i++)B.box(2.6,1.8,2.6,-26+i*3.2,2.5,20,'#7d8a6b');                                           // supply crates
-  }else if(k==='air'){
-    B.box(120,.7,16,0,.4,0,'#3a3c3e');for(let i=-5;i<=5;i++)B.box(6,.3,1.2,i*10,.9,0,'#e8e4d4');                  // runway strip with dashes
-    B.box(6,.3,18,-58,.9,0,'#e8e4d4');B.box(6,.3,18,58,.9,0,'#e8e4d4');
-    B.box(26,10,18,-10,5.5,-22,'#9a978d');B.cyl(9.8,9.8,26,8,-10,10.2,-22,'#8a877d',0,0,Math.PI/2);B.box(.8,8,16,-23.4,5,-22,dk);B.box(.8,8,16,3.4,5,-22,dk);   // hangar with a rounded roof
-    B.box(7,5,7,24,3,-20,'#a9a69b');B.box(4,6,4,24,10,-20,'#a9a69b');B.box(6,3,6,24,14.5,-20,'#5d7380');B.box(7,.8,7,24,16.4,-20,'#6f6c63');   // control tower
-    B.box(.6,18,.6,40,9,-16,'#55595c');B.box(5,.9,.9,41.5,17,-16,'#e07a2a');B.box(2.2,2.2,.9,45,17,-16,'#f1ece0');   // windsock
-    B.cyl(1.6,1.6,7,10,-36,3.5,-8,'#6d6f6c',0,0,0);B.cyl(1.6,1.6,7,10,-30,3.5,-8,'#6d6f6c',0,0,0);                 // fuel drums
-    B.box(10,3.4,5,14,2,-8,'#c9a227');B.cyl(1.2,1.2,1,8,11,1.2,-5,dk,Math.PI/2);B.cyl(1.2,1.2,1,8,17,1.2,-5,dk,Math.PI/2);                       // tug
-  }else if(k==='radio'){
-    B.box(54,1.6,46,0,.8,0,'#7c796f');
-    for(const [sx,sz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){B.box(1.2,56,1.2,sx*3.4,28,sz*3.4,'#c7c3b8',-sz*.06,0,sx*.06);}   // four mast legs
-    for(let y=6;y<56;y+=7){B.box(8,.7,.7,0,y,3.4,'#b9b5aa');B.box(8,.7,.7,0,y,-3.4,'#b9b5aa');B.box(.7,.7,8,3.4,y,0,'#b9b5aa');B.box(.7,.7,8,-3.4,y,0,'#b9b5aa');}
-    for(const y of [18,36,54])B.box(1.4,1.4,1.4,0,y+3,0,red);B.box(.5,6,.5,0,60,0,'#55595c');B.cyl(.7,.7,1.2,8,0,64,0,'#d33',Math.PI/2);
-    B.cyl(5,5,1.6,16,-9,30,4,wh,Math.PI/2);B.cyl(3.4,3.4,1.6,14,8,22,-4,wh,Math.PI/2);B.box(.8,.8,6,-9,30,2,'#55595c');   // two dishes
-    B.box(14,8,9,16,5,12,'#8d8a80');B.box(15,1.2,10,16,9.4,12,'#6f6c63');B.box(3,5,.8,12,4,16.6,dk);B.box(7,.7,.7,16,11.4,12,'#55595c');B.box(2.4,3,2.4,-20,2.8,14,'#44484b');B.box(2.4,3,2.4,-15,2.8,14,'#44484b');   // transmitter hut + generators
-    for(const sx of [-25,25])B.box(.5,4,44,sx,2,0,'#44484b');for(const sz of [-22,22])B.box(50,4,.5,0,2,sz,'#44484b');
+    B.box(70,1.6,50,0,.8,0,'#8a8474');                                                                            // packed-earth pad
+    for(const z of [-9,12]){B.box(28,8,14,-8,5,z,tent);B.cyl(7.4,7.4,28,3,-8,12.6,z,tent,0,0,Math.PI/2);B.box(.8,6,6,-22.4,4.5,z,'#5a5648');B.box(28,.8,.8,-8,9.4,z+7.2,'#8a846f');
+      B.box(8,.6,.2,-12,9,z+7.3,wh);B.box(1.6,5,.3,-8,5.4,z+7.3,red);B.box(5,1.6,.3,-8,5.4,z+7.3,red);}              // two long canvas tents with a red cross panel each
+    B.box(14,8,10,22,5,-6,'#d9d6cc');B.box(14,1.2,11,22,9.6,-6,'#a6a39a');B.box(3,5,.8,22,3.5,-.9,'#5d7380');B.box(1.2,3.4,.4,22,6,-.7,red);B.box(3.4,1.2,.4,22,6,-.7,red);   // prefab ward with a window and a cross
+    B.box(1.4,22,1.4,-30,11,-18,'#55595c');B.box(12,8,.8,-30,21,-18,wh);B.box(2.4,6.4,.9,-30,21,-17.5,red);B.box(6.4,2.4,.9,-30,21,-17.5,red);   // tall sign board with a red cross (neutral)
+    B.box(16,3.2,7,10,3.4,19,'#e9e7df');B.box(6,3.4,6.6,15,6.6,19,'#d8d6ce');B.box(.8,2.4,.9,9,5.6,22.6,red);B.box(2.4,.8,.9,9,5.6,22.6,red);for(const x of [6,14])B.cyl(1.5,1.5,1.2,10,x,1.5,22.6,dk,Math.PI/2),B.cyl(1.5,1.5,1.2,10,x,1.5,15.4,dk,Math.PI/2);   // ambulance
+    B.box(3,.8,6.4,-24,2.2,-1,'#6a7360');B.box(.6,1.2,6.4,-22.6,1.8,-1,'#4b5246');B.box(3,.8,6.4,-20,2.2,-1,'#6a7360');   // stretchers
+    B.box(7,5,5,-26,4,26,'#5f6b4f');B.box(5,1,5,-26,6.8,26,dk);B.cyl(.6,.6,5,6,-24,8.8,27,'#55595c');B.cyl(2.8,2.8,2,10,-12,3,26,'#6d6f6c');   // generator and fuel drum
+    for(let i=0;i<5;i++)B.box(2.6,1.8,2.6,26+i*3.2,2.5,24,'#7d8a6b');for(let i=0;i<3;i++)B.box(2.6,1.8,2.6,28+i*3.2,4.3,24,'#8b9677');   // supply crates
+    for(const sx of [-34,34])B.box(.5,3,48,sx,2,0,'#6a6658');
+  }else if(k==='quarry'){
+    B.box(84,1.4,70,0,.5,0,gv);                                                                                      // gravel floor
+    for(let t=0;t<4;t++){const y=3.5+t*7,w=60-t*8,d=14-t*1.2;B.box(w,7,d,-4-t*3,y,-26+t*3,t%2?rk:rk2);B.box(w-2,.9,d+.6,-4-t*3,y+3.7,-26+t*3,'#b8b09a');}   // stepped cut rock faces (benches)
+    for(const x of [-26,-12,6,22])B.box(2.4,2.4,6,x,4.6,-18,rk3,.3,x*.1,.2);                                          // boulders at the toe of the face
+    B.box(14,7,12,-20,4.5,10,'#8a8f86');B.box(10,10,8,-20,12,10,'#7f847b');B.box(12,2,10,-20,18,10,'#6c7068');   // crusher hall on a platform
+    B.box(24,1.2,3,-4,7,10,dk,0,0,-.28);B.box(24,.6,3.6,-4,7.2,10,'#55595c',0,0,-.28);                              // conveyor belt, rising
+    for(const x of [-10,0,8])B.box(.8,7,.8,x,3.5,10,'#55595c');
+    for(const [x,z,h] of [[16,6,10],[22,8,7],[26,2,5]]){B.cyl(.4,h*.9,h,10,x,h/2+1,z,'#a39c88');}                    // conical stone piles
+    B.box(10,4,6,28,4.2,-6,'#c9a227');B.box(5,3.4,5.6,31,7.2,-6,'#d9b43a');B.cyl(1.6,1.6,1,10,25,2.4,-3,dk,Math.PI/2);B.cyl(1.6,1.6,1,10,31,2.4,-3,dk,Math.PI/2);B.cyl(1.6,1.6,1,10,25,2.4,-9,dk,Math.PI/2);B.cyl(1.6,1.6,1,10,31,2.4,-9,dk,Math.PI/2);   // dump truck
+    B.box(10,2,5,-4,2.5,-6,'#c9a227');B.box(5,.8,.8,2,6,-6,'#55595c',0,0,.7);B.box(3,1.6,2,6,7.6,-6,'#55595c');       // excavator
+    B.box(8,4,5,-34,3.8,24,'#8d8a80');B.box(8.6,.9,5.6,-34,6.2,24,'#6f6c63');                                          // site cabin
+    B.box(1.4,20,1.4,-36,10,-30,'#55595c');
   }else{
-    B.box(66,1.6,50,0,.8,0,'#7c796f');
-    for(const sx of [-22,22])for(const sz of [-8,8])B.box(1.8,14,1.8,sx,8.6,sz,'#8d8a80');B.box(48,1.4,22,0,16.2,0,'#6f6c63');B.box(48,.6,22,0,17.1,0,'#a43a2c');   // open service shed
-    B.box(3,2.4,16,-14,15,0,'#c9a227');B.box(3,2.4,16,14,15,0,'#c9a227');B.box(30,2,3,0,13.2,0,'#c9a227');B.cyl(.5,.5,8,6,0,9,0,'#55595c');B.box(3,1.6,3,0,4.8,0,'#3e4246');   // gantry crane with a hook
-    B.box(15,5,8,-4,3.9,0,'#5f6b4f');B.box(8,3,7,-9,7.4,0,'#55603f');B.box(15,1.8,2.6,-4,2.6,4.9,dk);B.box(15,1.8,2.6,-4,2.6,-4.9,dk);   // a half-fixed truck chassis under the crane
-    for(const [x,z] of [[26,-10],[26,-5],[29,-8]])B.cyl(2.6,2.6,2,10,x,3.2,z,dk,Math.PI/2);                       // tire stack
-    B.box(8,4,6,-28,3.6,14,'#8d8a80');B.box(8,.9,6.6,-28,6.1,14,'#6f6c63');B.box(10,2.6,4,26,2.8,16,'#7d8a6b');   // tool shack, spare parts crates
-    B.box(1.4,20,1.4,-30,10,-18,'#55595c');B.box(11,6,.8,-30,19,-18,wh);B.box(7,1.6,.9,-30,19,-17.5,red);B.box(1.6,5,.9,-30,19,-17.5,red);
+    B.box(76,1.4,66,0,.5,0,'#6f6a5c');                                                                                // trampled spoil ground
+    B.box(1.8,36,1.8,-8,18,-4,'#4b5056',0,0,.18);B.box(1.8,36,1.8,-2,18,-4,'#4b5056',0,0,-.18);B.box(1.8,36,1.8,-8,18,4,'#4b5056',0,0,.18);B.box(1.8,36,1.8,-2,18,4,'#4b5056',0,0,-.18);   // headframe legs
+    for(const y of [8,16,24])B.box(8,.8,.8,-5,y,-4,'#4b5056'),B.box(8,.8,.8,-5,y,4,'#4b5056');B.box(7,1.4,10,-5,36.5,0,'#3e4246');
+    B.cyl(5.6,5.6,1.4,18,-5,38,-3,'#b7421f',Math.PI/2);B.cyl(5.6,5.6,1.4,18,-5,38,3,'#b7421f',Math.PI/2);B.cyl(1.3,1.3,8,8,-5,38,0,dk,Math.PI/2);   // two winding wheels
+    B.box(14,8,12,-24,5,-2,'#8a8f86');B.box(15,1.2,13,-24,9.6,-2,'#6c7068');B.box(3,5,.8,-24,3.5,4.2,dk);                // winding house
+    B.box(10,9,9,10,6,-14,'#7c7870');B.box(12,2,11,10,11.6,-14,'#686459');B.box(5,3,5,10,2.6,-6,'#5a5648');             // ore hopper and chute
+    B.cyl(.4,14,13,12,24,7,-6,'#4a4640');B.cyl(.4,10,9,12,32,5,-12,'#524e44');B.cyl(.4,8,7,12,16,4,-24,'#46423a');     // spoil heaps (dark, steep)
+    B.box(34,.5,.8,6,1.7,20,'#55595c');B.box(34,.5,.8,6,1.7,23,'#55595c');for(let x=-10;x<=22;x+=4)B.box(.8,.4,5,x,1.4,21.5,'#5a5348');   // rail track
+    B.box(5,2.4,3.2,4,3.2,21.5,'#8c4a2a');B.box(5,2.4,3.2,12,3.2,21.5,'#8c4a2a');B.box(5,2.4,3.2,20,3.2,21.5,'#7a3e22');                  // ore carts
+    for(const x of [2,6,10,14,18,22])B.cyl(.7,.7,.5,8,x,1.9,19.3,dk,Math.PI/2);
+    B.box(.6,18,.6,-36,9,-30,'#55595c');B.box(5,2.2,3.6,-30,3.2,24,'#6a6a5a');B.box(3,2,3,-26,3,28,'#7d8a6b');
   }
   const base=mesh(B.geo());grp.add(base);
-  const flag=new THREE.Mesh(new THREE.PlaneGeometry(10,6),new THREE.MeshBasicMaterial({color:0x888888,side:THREE.DoubleSide}));flag.position.set(k==='radio'?20:-36,24,k==='air'?18:-28);grp.add(flag);
-  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,26,6),MAT.std);pole.position.set(k==='radio'?15:-41,13,k==='air'?18:-28);grp.add(pole);
+  const flag=new THREE.Mesh(new THREE.PlaneGeometry(10,6),new THREE.MeshBasicMaterial({color:0x888888,side:THREE.DoubleSide}));flag.position.set(-36,24,k==='quarry'?-26:-28);grp.add(flag);
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,26,6),MAT.std);pole.position.set(-41,13,k==='quarry'?-26:-28);grp.add(pole);
   grp.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
-  grp.scale.setScalar(k==='air'?1.5:1.6);grp.position.set(o.x,groundH(o.x,o.y),o.y);grp.rotation.y=k==='air'?0:(o.x*.01)%6;WORLD.add(grp);return{grp,arm:null,flag,crank:null,tb:1};}
+  grp.scale.setScalar(1.55);grp.position.set(o.x,groundH(o.x,o.y),o.y);grp.rotation.y=(o.x*.01)%6;WORLD.add(grp);return{grp,arm:null,flag,crank:null,tb:1};}
 function plantObj(o){const grp=new THREE.Group(),B=Bld(),cn='#9a978d',cd='#6f6c63',dk='#2c2e2c',st='#b8b5aa';
   B.box(64,2,50,0,1,0,'#7c796f');                                   // slab
   B.box(40,15,22,-6,9.5,-6,cn);B.box(40,1.6,23,-6,17.8,-6,cd);B.box(40,3,.8,-6,12,5.1,'#5d7380');B.box(8,10,.8,-20,6,5.1,dk);   // turbine hall, roof lip, window band, door
@@ -12303,13 +12307,13 @@ function renderFrame(dt){if(!G||!G.terrain||!R3||window.GLLOST)return;try{aarTic
   fogT-=dt;if(fogT<=0){fogT=.12;updateFog();}renderPost();drawHUD();{const w=performance.now();if(!(w-(G.mmT||0)<33)){G.mmT=w;drawMini();}}}  // minimap at ~30 Hz (it was redrawn every frame, up to 240x a second)
 
 
-/* minimap icon of a tech building (a black tile with the owner's colour and a small white sign: cross / plane / mast / wrench) */
+/* minimap icon of a capturable building (a black tile with the owner's colour and a small white sign: cross / coin / pick / bolt) */
 function tbMini(c,x,y,o){c.fillStyle='#0b0f0d';c.fillRect(x-6,y-6,12,12);c.fillStyle=o.dead?'#5a2a20':o.owner>=0?G.teams[o.owner].color:'#9a9a90';c.fillRect(x-4.6,y-4.6,9.2,9.2);
   c.fillStyle=o.dead?'#caa':'#fff';c.strokeStyle=c.fillStyle;c.lineWidth=1.3;
   if(o.tb==='hosp'){c.fillRect(x-1,y-3.4,2,6.8);c.fillRect(x-3.4,y-1,6.8,2);}
-  else if(o.tb==='air'){c.beginPath();c.moveTo(x,y-3.6);c.lineTo(x+.9,y-.5);c.lineTo(x+3.6,y+1);c.lineTo(x+.8,y+1);c.lineTo(x+.7,y+3.4);c.lineTo(x-.7,y+3.4);c.lineTo(x-.8,y+1);c.lineTo(x-3.6,y+1);c.lineTo(x-.9,y-.5);c.closePath();c.fill();}
-  else if(o.tb==='radio'){c.beginPath();c.moveTo(x,y-3.4);c.lineTo(x,y+3.4);c.moveTo(x-2.6,y-2.2);c.quadraticCurveTo(x-4,y,x-2.6,y+2.2);c.moveTo(x+2.6,y-2.2);c.quadraticCurveTo(x+4,y,x+2.6,y+2.2);c.stroke();}
-  else{c.beginPath();c.moveTo(x-3,y+3);c.lineTo(x+1.5,y-1.5);c.stroke();c.beginPath();c.arc(x+2,y-2,1.9,0,7);c.fill();}}
+  else if(o.tb==='quarry'){c.beginPath();c.moveTo(x-3.4,y+3);c.lineTo(x-1,y-1);c.lineTo(x+.8,y+1.6);c.lineTo(x+2.4,y-3);c.lineTo(x+3.6,y+3);c.closePath();c.fill();}
+  else if(o.tb==='mine'){c.beginPath();c.moveTo(x-3.4,y-1.6);c.quadraticCurveTo(x,y-5,x+3.4,y-1.6);c.stroke();c.beginPath();c.moveTo(x,y-2.6);c.lineTo(x,y+3.4);c.stroke();}
+  else{c.beginPath();c.moveTo(x+1.2,y-3.4);c.lineTo(x-2,y+.4);c.lineTo(x-.1,y+.4);c.lineTo(x-1.2,y+3.4);c.lineTo(x+2,y-.5);c.lineTo(x+.1,y-.5);c.closePath();c.fill();}}
 /* ================= REALISM (render only, orch/realism): garrison windows, floor-by-floor damage, living towns ================= */
 // Nothing here touches the simulation: it only reads G and draws. Garrisoned city buildings show dark silhouettes in their
 // windows and flash when the troops inside fire; a garrison that is losing HP shows holes and smoke from more and more

@@ -1232,6 +1232,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   aiNavyAct(T,mine);aiLanding(T,mine,anchor,pb,launched);
   if(T.ai.t%6===0)for(const u of mine)if(u.kind==='jet'&&u.state==='park'&&u.ammo>=u.s.ammo&&pb.length){const t=aiAirTarget(T,u,pb)||pb[Math.floor(Math.random()*pb.length)];u.order={type:'attack',target:t};u.state='fly';u.landed=false;}
   if(T.ai.t%4===0){const free=G.oil.filter(o=>!ally(o.owner,id)).sort((a,b)=>dist(a,anchor)-dist(b,anchor))[0];if(free){const inf=mine.find(u=>!u.isB&&u.kind==='inf'&&!u.order&&!u.target&&!u.amb);if(inf&&Math.hypot(free.x-anchor.x,free.y-anchor.y)<1700)setMove(inf,free.x,free.y,'move');}}
+  if(T.ai.t%7===3){const mineB=G.oil.find(o=>o.tb&&o.owner===id&&!o.dead&&G.ents.some(e=>!e.dead&&!e.isB&&e.team>=0&&e.team!==G.reb&&!ally(e.team,id)&&e.s.dom==='ground'&&Math.hypot(e.x-o.x,e.y-o.y)<220));if(mineB){const sq=army.filter(u=>!u.order&&!u.target&&!u.amb&&u.s.dom==='ground'&&u.s.cls==='inf'&&Math.hypot(u.x-mineB.x,u.y-mineB.y)<1200).slice(0,5);for(const u of sq)setMove(u,mineB.x,mineB.y,'amove');}}   // the AI defends the quarries, mines, plants and hospitals it holds
   if(T.ai.t%9===0){const tgt=G.oil.filter(o=>!o.dead&&o.owner>=0&&!ally(o.owner,id)).sort((p,q)=>dist(p,anchor)-dist(q,anchor))[0];if(tgt&&dist(tgt,anchor)<1500){const sq=army.filter(u=>!u.order&&!u.target&&!u.amb&&u.s.dom==='ground'&&canTarget(u.s,tgt.tg)).slice(0,4);for(const u of sq){u.order={type:'attack',target:tgt.tg};u.path=null;}}}
   // ammo & supply: dry or out-of-supply troops with nothing to shoot fall back to the nearest supply circle; Hard AI hunts enemy supply trucks; a couple of infantry take nearby towns
   if(T.ai.t%3===1){const P=supplyPoints()[id]||[];if(P.length)for(const u of army){if(u.am===undefined||u.sup||u.target||u.am>u.amx*.2)continue;let b=P[0],bd=1e9;for(const p of P){const d=Math.hypot(p.x-u.x,p.y-u.y);if(d<bd){bd=d;b=p;}}setMove(u,b.x+((u.id%7)-3)*14,b.y+((u.id%5)-2)*14,'move');}}
@@ -1384,32 +1385,29 @@ function separate(){const groups=SEP_G;groups.ground.length=groups.naval.length=
 
 /* ---------- oil derricks: capturable, and destructible ---------- */
 const OIL_HP=1500;
-/* ---------- tech buildings (Battle): Field Hospital, Airstrip, Radio Tower, Repair Depot ----------
-   ONE system with the derricks and power plants: they are G.oil rows with o.tb = the type, so capture (infantry stand next to
-   it ~6 s), the owner flag, shooting it down and the Construction Vehicle repair (8 s) are the code in updOil below.
-   Neutral at the start; the effect goes ONLY to the owner (not allies), is the same for every nation, and the numbers are
-   only here. Effects run on the host (clients see the result in the snapshot). Map data: tb:[[x,y,'hosp'|'air'|'radio'|'depot']]. */
+/* ---------- capturable buildings of Battle (Abdullah 2026-11-13 20:21 + 20:24 "Keep capturable quarries and mines and power plants and field hospitals") ----------
+   ONE system with the derricks: they are G.oil rows with o.tb = the type, so capture (infantry stand next to it ~6 s), the owner
+   flag, shooting it down and the Construction Vehicle repair (8 s) are the code in updOil below. Neutral at the start; the effect
+   goes ONLY to the owner (not allies), is the same for every nation, and the numbers are only here (TB). Income and healing run on
+   the host (clients see the result in the snapshot). Map data: tb:[[x,y,'quarry'|'mine'|'plant'|'hosp']] in 02d-battlemaps.js.
+   - Quarry: steady income, the same as an oil derrick.   - Mine: steady income, 30% more (14 vs 18 per 2 s, times the Battle income scale).
+   - Power plant: while you hold it alive the owner has the extra power it makes (tbPlants(team), read by the Battle power meter).
+   - Field Hospital: heals your infantry within 260 m (1.5% of their health per second), and infantry you train while you hold it
+     come out as veterans (rank 1). */
 const TB_HP=1200;
 const TB={
-  hosp:{name:'Field Hospital',r:260,heal:.015,eff:'Heals your infantry within 260 m (1.5% of their health every second). Infantry you train come out as veterans (rank 1) while you hold it.'},
-  air:{name:'Airstrip',cd:100,cap:2,eff:'Delivers a free Strike Drone every 100 s while you hold it (at most 2 waiting at once). Real, controllable drones - they fly only when you send them.'},
-  radio:{name:'Radio Tower',r:760,eff:'Reveals everything within 760 m of the tower for you, on the battlefield and the minimap, so enemy movements there show up.'},
-  depot:{name:'Repair Depot',r:260,rep:.015,eff:'Repairs your vehicles within 260 m (1.5% of their health every second).'}};
+  quarry:{name:'Quarry',inc:14,eff:'Pays you steady income, as much as an oil derrick, while you hold it.'},
+  mine:{name:'Mine',inc:18,eff:'Pays you steady income, 30% more than a quarry or an oil derrick, while you hold it.'},
+  plant:{name:'Power plant',pwr:1,eff:'Gives you its power on top of your own generators. Lose it and that power is gone.'},
+  hosp:{name:'Field Hospital',r:260,heal:.015,eff:'Heals your infantry within 260 m (1.5% of their health every second). Infantry you train come out as veterans (rank 1) while you hold it.'}};
 function tbOf(o){return o&&o.tb&&TB[o.tb]||null;}
 function tbHeld(team,k){if(!G||!G.oil)return false;for(const o of G.oil)if(o.tb===k&&!o.dead&&o.owner===team)return true;return false;}
+function tbPlants(team){let n=0;if(G&&G.oil)for(const o of G.oil)if(o.tb==='plant'&&!o.dead&&o.owner===team)n++;return n;}   // live power plants held by this team (the Battle power meter adds them)
 function tbAdd(M,N){for(const q of (M.tech||[])){if(!TB[q.k])continue;const o={x:q.x,y:q.y,owner:-1,cp:new Array(N).fill(0),inc:0,tb:q.k};o.i=G.oil.length;o.hp=o.max=TB_HP;o.dead=false;o.burn=0;o.rep=0;G.oil.push(o);o.tg=oilTarget(o);o.tg.kind='techb';o.tg.s.name=TB[q.k].name;}}
 const TBNB=[];
 function tbTick(dt){if(MODE==='client'||!G.oil)return;G.tbT=(G.tbT||0)+dt;if(G.tbT<.5)return;const st=G.tbT;G.tbT=0;
-  for(const o of G.oil){if(!o.tb)continue;const T=o.owner>=0?G.teams[o.owner]:null;
-    if(!T||T.out||T.reb||o.dead){for(const Q of G.teams)if(Q.reveals.some(r=>r.tb===o.i))Q.reveals=Q.reveals.filter(r=>r.tb!==o.i);continue;}
-    const D=TB[o.tb];
-    if(o.tb==='hosp'||o.tb==='depot'){const inf=o.tb==='hosp',rate=(inf?D.heal:D.rep)*st;
-      for(const e of nearby(o.x,o.y,D.r,TBNB)){if(e.dead||e.isB||e.team!==o.owner||e.hp>=e.max||e.s.dom!=='ground'||(e.s.cls==='inf')!==inf||e.inTun)continue;if(Math.hypot(e.x-o.x,e.y-o.y)>D.r)continue;e.hp=Math.min(e.max,e.hp+e.max*rate);}}
-    else if(o.tb==='radio'){for(const Q of G.teams)if(Q.reveals.some(r=>r.tb===o.i&&Q.id!==o.owner))Q.reveals=Q.reveals.filter(r=>r.tb!==o.i);T.reveals=T.reveals.filter(r=>r.tb!==o.i);T.reveals.push({x:o.x,y:o.y,r:D.r,t:1.2,tb:o.i});}
-    else if(o.tb==='air'){o.nt=(o.nt==null?D.cd:o.nt)-st;if(o.nt>0)continue;
-      let n=0;for(const e of G.ents)if(!e.dead&&!e.isB&&e.fromTb===o.i&&e.team===o.owner)n++;
-      if(n>=D.cap){o.nt=0;continue;}o.nt=D.cd;let s0=null;try{s0=stats(T.fac,'drone');}catch(_){}if(!s0||!s0.hp)continue;
-      const k=(o.dn=(o.dn||0)+1),a=k*2.4,u=addUnit(o.owner,'drone',o.x+Math.cos(a)*34,o.y+Math.sin(a)*34);if(u){u.fromTb=o.i;log(o.owner,'The Airstrip delivered a free Strike Drone.','g',o.x,o.y);}}}}
+  for(const o of G.oil){if(o.tb!=='hosp'||o.dead||o.owner<0)continue;const T=G.teams[o.owner];if(!T||T.out||T.reb)continue;const D=TB.hosp,rate=D.heal*st;
+    for(const e of nearby(o.x,o.y,D.r,TBNB)){if(e.dead||e.isB||e.team!==o.owner||e.hp>=e.max||e.s.dom!=='ground'||e.s.cls!=='inf'||e.inTun)continue;if(Math.hypot(e.x-o.x,e.y-o.y)>D.r)continue;e.hp=Math.min(e.max,e.hp+e.max*rate);}}}
 /* ---------- City buildings: infantry can garrison them; any of them can be shot or shelled down ----------
    Each street-grid lot is one building. Up to 4-10 infantry (more in taller blocks) move in: they are safe inside
    and fire out at 20% longer range, while the building soaks up the damage. Rifles barely scratch it; shells,
@@ -1633,7 +1631,7 @@ function updOil(dt){const N=G.teams.length;const here=OIL_HERE.length===N?OIL_HE
   if(o.dead){o.burn=Math.max(0,o.burn-dt);const pwOk=!(o.pw||o.tb)||(present.length&&G.ents.some(e=>e.kind==='dozer'&&!e.dead&&e.team===present[0]&&Math.hypot(e.x-o.x,e.y-o.y)<PW_R));if(pwOk&&present.length&&present.every(q=>ally(q,present[0]))){const t=present[0];o.cp[t]+=dt;if(o.cp[t]>=((o.pw||o.tb)?PW_FIX:12)){o.dead=false;o.hp=o.max*.4;o.owner=t;o.cp=o.cp.map(()=>0);log(t,o.tb?TB[o.tb].name+' repaired.':o.pw?'Power plant repaired.':'Oil derrick repaired and captured.','g',o.x,o.y);}}else for(let t=0;t<N;t++)if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);continue;}
   for(let t=0;t<N;t++){if(here[t]&&present.every(q=>ally(q,t))&&!ally(o.owner,t)){o.cp[t]+=dt;if(o.cp[t]>=6){const prev=o.owner;o.owner=t;o.cp=o.cp.map(()=>0);log(t,o.tb?TB[o.tb].name+' captured. '+TB[o.tb].eff:o.pw?'Power plant captured.':'Oil derrick captured.','g',o.x,o.y);if(prev>=0&&prev!==t){log(prev,o.tb?'The enemy captured our '+TB[o.tb].name+'!':o.pw?'The enemy captured one of our power plants!':'An oil derrick was captured by the enemy!','w',o.x,o.y);if(!o.pw&&!o.tb)pubNews('oil',t,prev);}}}else if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);}
   if(o.hp<o.max&&G.t-(o.hit??-99)>8)o.hp=Math.min(o.max,o.hp+o.max*.01*dt);
-  if(o.owner>=0&&!o.pw&&!o.tb){o.inc+=dt;if(o.inc>=2){o.inc=0;const T=G.teams[o.owner];T.credits+=Math.round(14*(T.F.mods.oil||1)*(G.bs||1)*incMul(T)*(G.conq?CQ_OIL:1));}}}
+  if(o.owner>=0&&!o.pw&&(!o.tb||TB[o.tb].inc)){o.inc+=dt;if(o.inc>=2){o.inc=0;const T=G.teams[o.owner];T.credits+=o.tb?Math.round(TB[o.tb].inc*(G.bs||1)*incMul(T)):Math.round(14*(T.F.mods.oil||1)*(G.bs||1)*incMul(T)*(G.conq?CQ_OIL:1));}}}
   econTick(dt);}
 // income buildings pay every 2 seconds; a team's extra ones earn less each
 // Sanctions: income multiplier for a team (1 normally; 0.8 while sanctioned, 0.92 with Smuggling Routes). T.sanc = sim time it ends.

@@ -345,10 +345,10 @@ function renderFrame(dt){if(!G||!G.terrain||!R3||window.GLLOST)return;try{aarTic
   fogT-=dt;if(fogT<=0){fogT=.12;updateFog();}renderPost();drawHUD();{const w=performance.now();if(!(w-(G.mmT||0)<33)){G.mmT=w;drawMini();}}}  // minimap at ~30 Hz (it was redrawn every frame, up to 240x a second)
 
 
-/* minimap icon of a tech building (a black tile with the owner's colour and a small white sign: cross / plane / mast / wrench) */
+/* minimap icon of a capturable building (a black tile with the owner's colour and a small white sign: cross / coin / pick / bolt) */
 function tbMini(c,x,y,o){c.fillStyle='#0b0f0d';c.fillRect(x-6,y-6,12,12);c.fillStyle=o.dead?'#5a2a20':o.owner>=0?G.teams[o.owner].color:'#9a9a90';c.fillRect(x-4.6,y-4.6,9.2,9.2);
   c.fillStyle=o.dead?'#caa':'#fff';c.strokeStyle=c.fillStyle;c.lineWidth=1.3;
   if(o.tb==='hosp'){c.fillRect(x-1,y-3.4,2,6.8);c.fillRect(x-3.4,y-1,6.8,2);}
-  else if(o.tb==='air'){c.beginPath();c.moveTo(x,y-3.6);c.lineTo(x+.9,y-.5);c.lineTo(x+3.6,y+1);c.lineTo(x+.8,y+1);c.lineTo(x+.7,y+3.4);c.lineTo(x-.7,y+3.4);c.lineTo(x-.8,y+1);c.lineTo(x-3.6,y+1);c.lineTo(x-.9,y-.5);c.closePath();c.fill();}
-  else if(o.tb==='radio'){c.beginPath();c.moveTo(x,y-3.4);c.lineTo(x,y+3.4);c.moveTo(x-2.6,y-2.2);c.quadraticCurveTo(x-4,y,x-2.6,y+2.2);c.moveTo(x+2.6,y-2.2);c.quadraticCurveTo(x+4,y,x+2.6,y+2.2);c.stroke();}
-  else{c.beginPath();c.moveTo(x-3,y+3);c.lineTo(x+1.5,y-1.5);c.stroke();c.beginPath();c.arc(x+2,y-2,1.9,0,7);c.fill();}}
+  else if(o.tb==='quarry'){c.beginPath();c.moveTo(x-3.4,y+3);c.lineTo(x-1,y-1);c.lineTo(x+.8,y+1.6);c.lineTo(x+2.4,y-3);c.lineTo(x+3.6,y+3);c.closePath();c.fill();}
+  else if(o.tb==='mine'){c.beginPath();c.moveTo(x-3.4,y-1.6);c.quadraticCurveTo(x,y-5,x+3.4,y-1.6);c.stroke();c.beginPath();c.moveTo(x,y-2.6);c.lineTo(x,y+3.4);c.stroke();}
+  else{c.beginPath();c.moveTo(x+1.2,y-3.4);c.lineTo(x-2,y+.4);c.lineTo(x-.1,y+.4);c.lineTo(x-1.2,y+3.4);c.lineTo(x+2,y-.5);c.lineTo(x+.1,y-.5);c.closePath();c.fill();}}
