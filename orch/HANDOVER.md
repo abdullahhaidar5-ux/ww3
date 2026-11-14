@@ -203,3 +203,5 @@ Abdullah: "Can we pause campaign for now and just finish developing conquest and
 - 20:06 Chicago ammo rule: "once the units has run out of ammunition they need to be resupplied if they are not near your area and control not that
   it is time based"; asked which games -> "Conquest only" (Battle + Test range: unlimited ammo, no badge). ammozone = trig_01VbbAbtN2JuMfQ4FFFFfYhe
   (Sonnet) fired 02:08Z. Overlaps testrange (badge in sandbox/Battle) - same direction, conductor merges.
+- 20:08 Chicago "Americans sound British". usvoice = trig_01WNsvGuJdmSyRmnzTvU1Bj7 (Sonnet, voice generation) fired 02:09Z: re-voice US lines with American
+  speakers, same files/radio treatment; also lists accents of other English-speaking nations.
