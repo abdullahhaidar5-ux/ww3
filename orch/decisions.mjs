@@ -44,6 +44,30 @@ const ck = (c, m) => { if (!c) fails.push(m); };
   else if (!/'src\/02\*\.js'/.test(m[0])) fails.push('gate.yml: mapsweep skip condition must watch \'src/02*.js\' (every map file: ' + mapFiles.join(', ') + ')'); }
 const srcFiles = fs.readdirSync(path.join(ROOT, 'src')).filter(f => f.endsWith('.js')).sort();
 const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')]));
+// weathergfx 2026-11-14 (Abdullah: weather "Pick in setup + Random", graphics "Low/Med/High/Ultra"): ONE Conditions table (CONDS in 01-data) drives the setup/lobby picker and the Test range picker; Random and unfitting picks resolve through condFit (deterministic from the seed); ONE graphics row (GFX_PRESETS: Low/Medium/High/Ultra), no second quality setting.
+{ const d = SRC['01-data.js'] || '', u = SRC['08-ui.js'] || '', s = SRC['03-sim.js'] || '';
+  ck(/const CONDS=\[/.test(d) && /function condFit\(/.test(d) && /function condTheme\(/.test(d), 'weathergfx: the Conditions table (CONDS / condFit / condTheme) is gone from 01-data.js');
+  ck(/condFit\(wxBase\(o\.w\)/.test(s) && /G\.wxB=wB/.test(s), 'weathergfx: newGame no longer resolves Conditions through condFit (Random and unfitting picks must follow the map and the seed)');
+  ck(/function condUI\(/.test(u) && /function sbCond\(/.test(u), 'weathergfx: the setup or Test range Conditions picker is gone from 08-ui.js');
+  ck(/const GFX_PRESETS=\[\['low','Low'.*\['auto','Medium'.*\['high','High'.*\['ultra','Ultra'/.test(u), 'weathergfx: Settings graphics row is not Low / Medium / High / Ultra any more');
+  ck(!/wxRandIdx\(G\.seed\)===4/.test(s), 'weathergfx: the old "Random = day or night only" rule is back in newGame'); }
+// battlerules2 (Abdullah 2026-11-13 21:28): realistic superweapons only, splash-only friendly fire, Brutal AI never cheats.
+{ const game = Object.entries(SRC).filter(([f]) => !f.startsWith('13')).map(([, t]) => t).join('\n');
+  // 1. no nuclear / chemical / biological weapon anywhere in the game code or data (names, text, effects)
+  const bad = game.match(/\b(nuke|nukes|nuclear|atomic|warhead yield|chemical weapon|bioweapon|biological weapon|sarin|anthrax|nerve agent|mustard gas|dirty bomb|radiological)\b/gi);
+  ck(!bad, 'no nuclear/chemical/biological weapons (Abdullah 2026-11-13): found ' + (bad && [...new Set(bad)].join(', ')));
+  ck(/SW_NAME=\{/.test(SRC['01-data.js']) && !/nuc|chem|bio/i.test((SRC['01-data.js'].match(/SW_NAME=\{[^}]*\}/) || [''])[0]), 'Strike Center names (SW_NAME) must exist and be conventional');
+  // 2. splash-only friendly fire: explode() may hurt allied UNITS at reduced strength; direct fire never reaches friendlies
+  const ex = (SRC['03-sim.js'].match(/function explode\([^]*?\n  if\(G\.civAt\)/) || [''])[0];
+  ck(/FF_SPLASH=\.5/.test(SRC['03-sim.js']) && /const fr=ally\(e\.team,team\)/.test(ex) && /!e\.isB/.test(ex) && /if\(fr\)m\*=FF_SPLASH/.test(ex), 'splash-only friendly fire: explode() hurts allied units at FF_SPLASH (50%), never buildings');
+  const dir = (SRC['03-sim.js'].match(/function updProj[^]*?\n(?=function )/) || [''])[0];
+  ck(!/ally\([^)]*\)\s*\)?\s*\{?\s*applyDmg/.test(dir), 'bullets must never hit friendlies');
+  // 3. Brutal AI = sharper tactics only: same income as Hard, no money/vision/cost bonus anywhere on the difficulty rows
+  const row = (SRC['03-sim.js'].match(/DIFF\.push\(Object\.assign\(\{\},DIFF\[2\],\{[^}]*\}\)\);/) || [''])[0];
+  ck(row && !/\b(inc|cash|money|credits|bonus|vis|sight|reveal|cost|income)\s*:/.test(row), 'Brutal AI (DIFF[3]) must not touch income, money, vision or cost: ' + row);
+  ck(/Brutal/.test(SRC['07-net.js']) && /Brutal/.test(SRC['08-ui.js']), 'Brutal must appear in the lobby (07-net) and Battle setup / Test range (08-ui)');
+  ck(!/T\.ai\.d\s*(===|>=)\s*3[^]{0,80}(credits\s*\+=|\.reveals\.push)/.test(SRC['03-sim.js']), 'Brutal AI must not get extra money or vision');
+}
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];
@@ -584,6 +608,11 @@ try {
       console.log('rally flag clicks', JSON.stringify({ s1, s2 })); ck(s1.rally && s1.flash && s1.sel === 0 && !s2.flag && s2.flags <= 1, 'rally flag must flash when set by a click and be gone after the next click on the ground: ' + JSON.stringify({ s1, s2 })); }
     ck(sl.mini === 0 && sl.world === 0, 'Battle draws supply lines (minimap ' + sl.mini + ', ground ' + sl.world + ' draw calls)'); ck(!sl.on && !sl.wanted, 'Battle supply overlay can be switched on'); ck(sl.chip, 'Battle shows the "Supply OK" chip'); ck(!sl.ui, 'Battle ammo row mentions in/out of supply'); }
   ck(bt.battle && !bt.conq, 'Battle game did not start in Battle mode');
+  // pacecap 2026-11-14 (Abdullah 2026-11-13 21:24 "unit cap: About 150"): Battle has a per-player population cap of 150 (infantry 1, light vehicles 2, tanks 3, aircraft 3; trucks/dozers free); training stops with "Unit limit reached", the top bar shows "units N/150"
+  { const pc = await ev(() => { const T = G.teams[ME]; const cap = popCap(); const tank = popOf(stats(T.fac, 'tank')), inf = popOf(stats(T.fac, 'inf')), harv = popOf(stats(T.fac, 'harv')), jet = popOf(stats(T.fac, 'jet'));
+      for (let i = 0; i < 160; i++) addUnit(ME, 'inf', 200 + i, 200); const used = popUsed(ME, 1); T.credits = 99999; const bk = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks'); if (bk) bk.built = 1; const ok = enqueue(ME, 'inf');
+      for (let i = 0; i < 30; i++) updateUI(); G.ents = G.ents.filter(e => !(e.team === ME && e.kind === 'inf' && e.y === 200 && e.x >= 200 && e.x < 360)); const hud = (document.getElementById('popCap') || {}).textContent || ''; return { cap, tank, inf, harv, jet, used, ok, hud }; });
+    console.log('pop cap', JSON.stringify(pc)); ck(pc.cap === 150 && pc.inf === 1 && pc.tank === 3 && pc.jet === 3 && pc.harv === 0, 'pop cap numbers wrong: ' + JSON.stringify(pc)); ck(pc.used >= 150 && !pc.ok, 'training is not blocked at the unit limit: ' + JSON.stringify(pc)); ck(/^units \d+\/150$/.test(pc.hud), 'top bar must show "units N/150", got "' + pc.hud + '"'); }
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
   ck(!bt.setupEnd, 'Battle has a no-fire setup phase'); ck(!bt.tax, 'Battle has town taxes'); ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');
   // dugout (Abdullah 2026-11-13 20:00): Dig in puts the squad inside a dugout (units off the map, the dugout holds them); move orders do nothing until they are taken out; select dugout + right-click ground releases them; a checkpoint keeps them inside
