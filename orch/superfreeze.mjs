@@ -54,7 +54,7 @@ for (const fac of FACS) {
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 500 }); const T0 = Date.now(), say = m => console.log('  [' + fac + ' +' + Math.round((Date.now() - T0) / 1000) + 's] ' + m); say('battle loaded');
   await page.evaluate(v => { window.__vaoDiag = !!v; }, E.VAO);
   const info = await page.evaluate(town => { const hq = G.ents.find(e => e.team === ME && e.kind === 'hq') || G.ents.find(e => e.team === ME && e.isB);
-    let up = G.ents.find(e => e.team === ME && e.kind === 'uplink'); if (!up) up = addBld(ME, 'uplink', hq.x + 120, hq.y + 60, 1); up.built = 1; up.hp = up.max;
+    let up = G.ents.find(e => e.team === ME && e.kind === 'uplink'); if (!up) up = addBld(ME, 'uplink', hq.x + 120, hq.y + 60, 1); up.built = 1; up.hp = up.max; for (let g = 0; g < 2; g++) { const gb = addBld(ME, 'gen', hq.x + 70 * g, hq.y + 230, true); gb.built = 1; gb.hp = gb.max; } try { for (let i = 0; i < 4; i++) battlePower(.5); } catch (e) {}
     QUAL.lock = 1; /* the frame-rate governor follows the test machine's speed (a detail step rebuilds the picture buffers): held still, the gate measures the strike */ const T = G.teams[ME]; T.credits = 50000; T.charge = T.sup.charge;
     let en = G.ents.find(e => e.isB && e.team !== ME && !e.dead) || hq; if (town && G.towns && G.towns.length) { en = G.towns.slice().sort((a, b) => Math.hypot(a.x - en.x, a.y - en.y) - Math.hypot(b.x - en.x, b.y - en.y))[0]; }
     // a mixed enemy force stands on the target, so the strike also kills many soldiers and vehicles in the same frames (wrecks, bodies, debris)

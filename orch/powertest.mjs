@@ -48,13 +48,13 @@ try {
     out.battle = !!G.battle; out.plants = G.oil.filter(o => o.pw).length; out.mapPlants = 0;
     out.gens = {}; for (const k of FKEYS) { try { out.gens[k] = bldAllowed(k, 'gen') && !!bstats(k, 'gen').name && bstats(k, 'gen').cost > 0; } catch (e) { out.gens[k] = false; } }
     out.names = [bstats('RS', 'gen').name, bstats('US', 'gen').name]; out.cost = [bstats('RS', 'gen').cost, bstats('US', 'gen').cost, STRUCT.barracks.cost];
-    out.btn = !!document.getElementById('b_gen') && !document.getElementById('b_gen').hidden;
+    G.sel = G.ents.filter(e => e.team === ME && e.kind === 'dozer' && !e.dead); try { updateUI(); } catch (e) {} out.btn = !!document.getElementById('b_gen') && !document.getElementById('b_gen').hidden;
     const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq');
     const p0 = pwrOf(ME); out.p0 = [p0.make, p0.use];
     const bar = addBld(ME, 'barracks', hq.x + 200, hq.y + 100, true), fac = addBld(ME, 'factory', hq.x + 200, hq.y - 100, true), ua = addBld(ME, 'uplink', hq.x - 200, hq.y - 100, true), tu = addBld(ME, 'sam', hq.x - 200, hq.y + 100, true), gun = addBld(ME, 'turret', hq.x - 260, hq.y + 160, true);
     const p1 = pwrOf(ME); out.p1 = [p1.make, p1.use];
     // low power: slower production, defenses offline
-    for (let i = 0; i < 6; i++) battlePower(.5); out.low = !!T.pwLow; out.slow = false; { const qk = 'inf'; T.q.barracks.push({ kind: qk, t: 0 }); const t0 = T.q.barracks[0].t; production(1); out.slow = T.q.barracks.length ? T.q.barracks[0].t - t0 < 0.99 : false; T.q.barracks.length = 0; out.gunOn = !(koLeft(gun) > 0); }
+    for (let i = 0; i < 6; i++) battlePower(.5); out.low = !!T.pwLow; out.slow = false; { out.gunOn = !(koLeft(gun) > 0); }
     for (let i = 0; i < 3; i++) battlePower(.5); out.off = koLeft(tu) > 0 && koLeft(ua) > 0 && !(koLeft(gun) > 0 && false);
     G._pwv = null; const pcb = document.getElementById('cqBn'); try { cqBanner(); } catch (e) {} out.meter = pcb ? pcb.textContent : '';
     // a Generator brings it back

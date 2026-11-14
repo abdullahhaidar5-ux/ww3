@@ -7879,7 +7879,7 @@ function updProj(dt){for(const p of G.proj){if(p.wpn!=='shell'&&p.wpn!=='bomb'&&
   else{p.x+=Math.cos(a)*st;p.y+=Math.sin(a)*st;}}G.proj=G.proj.filter(p=>!p.done);}
 /* Conquest missile rules: no strike before minute 8, each launch costs money, ~5 min recharge (charge fills at half speed), one salvo can take
    at most 40% of any building's max HP, missile-defence batteries (SAM sites) intercept part of a salvo, strikes near a town raise its unrest. */
-const CQ_STRIKE_MIN=480,CQ_STRIKE_COST=1500,CQ_STRIKE_CAP=.4,CQ_MD_P=.28,CQ_MD_R=520;
+const MSL_CAP=.4,MSL_MD_P=.28,MSL_MD_R=520;
 /* Battle superweapon announcements (Generals style): everybody is told when a Strike Center comes online (with the ~6 minute timer) and again when it is ready to fire. The on-screen countdown banner is view-only (06-view swBanner). */
 function swTick(T){if(T.reb||T.dummy||T.out)return;const nm=T.F.name,lg=(m,k)=>{for(const O of G.teams)if(!O.reb&&!O.dummy)log(O.id,m,O.id===T.id||ally(O.id,T.id)?'g':k||'r:msl');};
   if(T._upl&&!T._swA){T._swA=1;if(T.charge<T.sup.charge)lg(`${nm} Strike Center is online: ${T.sup.name} in ${Math.round((T.sup.charge-T.charge)/60*10)/10} min. Destroy it!`,'r:msl');}
@@ -7897,8 +7897,8 @@ function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!w
   T.charge=0;log(team,`${S.name} launched.`,'g');for(const O of G.teams)if(O.id!==team)log(O.id,`Warning: enemy ${S.name} inbound. Move your units!`,'r:msl',x,y);return true;}
 function addStrike(x,y,t,r,dmg,team,kind){G.strikes.push({x,y,t,r,dmg,team,kind});FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,kind==='sup'?1:0],team);}
 function updStrikes(dt){for(const s of G.strikes){s.t-=dt;if(s.t<=0){s.done=true;
-    if(G.battle&&s.kind==='sup'){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<CQ_MD_R){md++;if(d<nd){nd=d;nb=e;}}}
-      if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-CQ_MD_P,md))){if(nb)FXE('icpt',[nb.x|0,nb.y|0,s.x|0,s.y|0]);FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<CQ_MD_R))log(T.id,'Missile defense intercepted an incoming missile.','g');continue;}
+    if(G.battle&&s.kind==='sup'){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<MSL_MD_R){md++;if(d<nd){nd=d;nb=e;}}}
+      if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-MSL_MD_P,md))){if(nb)FXE('icpt',[nb.x|0,nb.y|0,s.x|0,s.y|0]);FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<MSL_MD_R))log(T.id,'Missile defense intercepted an incoming missile.','g');continue;}
     }
     G.curSid=s.kind==='sup'?s.sid|0:0;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?'super':s.kind==='bb'?'bb':'shell',s.kind);G.curSid=0;}}G.strikes=G.strikes.filter(s=>!s.done);}
 
@@ -17353,7 +17353,7 @@ body #sideTop{grid-column:1;grid-row:1/3;display:flex!important;align-items:cent
 body #sideTop{flex-direction:column;gap:6px}
 body #sideTop::after{content:'TACTICAL MAP';font:800 11px system-ui,sans-serif;letter-spacing:.3em;color:#aab59a;text-shadow:0 1px 0 #000}
 body #sideTop #mm{width:100%!important;height:auto!important;aspect-ratio:384/264;max-height:100%;border-radius:2px;box-shadow:0 0 0 2px #0b0d09,0 0 0 3px #5d6951,inset 0 0 18px rgba(0,0,0,.5)}
-/* centre: unit portrait + info. the .stat wrapper dissolves so its children sit in the bar grid */
+/* center: unit portrait + info. the .stat wrapper dissolves so its children sit in the bar grid */
 body #side>.stat{display:contents!important}
 body #side .stat>.hdr{grid-column:2;grid-row:1;display:flex!important;align-items:center;gap:10px;padding:0 12px!important;margin:0!important;min-width:0;border-radius:4px;
  background:linear-gradient(180deg,#10140f,#1b2118);box-shadow:inset 0 0 0 1px #070906,inset 0 0 0 2px #5a6650,0 1px 0 #7d8a6c}
@@ -17373,7 +17373,7 @@ body #side #info .ukUt b{font:800 19px system-ui,sans-serif;display:block;color:
 body #side #info .ukHp{height:12px!important;margin:5px 0!important;border-radius:2px;background:#050704!important;box-shadow:inset 0 0 0 1px #3d4733,0 1px 0 #6f7b5f}
 body #side #info .ukV{font-weight:700;font-size:14px}
 body #side #info .morale,body #side #info #ammoRow{font-size:13px}
-/* right of centre: tabs + big square button grid */
+/* right of center: tabs + big square button grid */
 body #side>.ccard{display:contents!important}
 body #side .cardhd{grid-column:3;grid-row:1;display:flex!important;align-items:flex-end;justify-content:space-between;gap:8px;min-width:0;margin:0!important;padding:0 2px!important}
 body #side .tabs{display:flex!important;gap:3px;align-items:flex-end}
@@ -17513,7 +17513,7 @@ function pqEnsure(){if(PQ.el)return;const d=document.createElement('div');d.id='
   const st=document.createElement('style');st.textContent='#pq .pqr{display:flex;align-items:center;gap:4px;background:rgba(14,20,16,.88);border:1px solid rgba(255,255,255,.14);border-radius:4px;padding:3px 6px}#pq .pqn{min-width:92px;font:700 11px system-ui,sans-serif;color:#cfe0c8}#pq .pqs{position:relative;width:46px;height:36px;border-radius:3px;background:linear-gradient(180deg,#36473d,#141b17);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);cursor:pointer;overflow:hidden}#pq .pqs.e{opacity:.28;cursor:default}#pq .pqs img{width:100%;height:100%;object-fit:contain;display:block}#pq .pqb{position:absolute;right:2px;bottom:2px;background:#e3b341;color:#1a1204;font:800 11px/1 system-ui,sans-serif;padding:1px 3px;border-radius:2px}#pq .pqp{position:absolute;left:0;bottom:0;height:4px;background:#6fe08a}#pq .pqh{color:#9db39a;font-weight:500;margin-left:4px}#pqm div{position:fixed;z-index:5;pointer-events:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 12px system-ui,sans-serif;color:#fff;text-shadow:0 1px 2px #000;transform:translate(-50%,-50%)}#pqm div i{position:absolute;inset:4px;border-radius:50%;background:rgba(10,16,12,.82);z-index:-1}#pqm div b{font:inherit}body.grandBattle #pq,body.grandBattle #pqm{display:none!important}#panel .pqx{display:none!important}';document.head.append(st);document.body.append(d);PQ.el=d;
   const m=document.createElement('div');m.id='pqm';document.body.append(m);PQ.map=m;}
 function pqPlace(){const p=$('panel');if(!p||!PQ.el)return;const r0=p.getBoundingClientRect(),tb=document.querySelector('.tabs'),rt=tb?tb.getBoundingClientRect():null,r={left:r0.left,width:r0.width,height:r0.height,top:rt&&rt.height&&rt.top<r0.top?rt.top:r0.top};if(!r.width||!r.height){PQ.el.style.left='8px';PQ.el.style.bottom='150px';return;}PQ.el.style.left=Math.max(4,r.left)+'px';PQ.el.style.bottom=Math.max(4,innerHeight-r.top+4)+'px';}
-function pqRender(force){if(!G||G.over||G.grand){if(PQ.el)PQ.el.hidden=true;return;}pqEnsure();const T=G.teams[ME],sel=pqSel().slice(0,4);
+function pqRender(force){if(!G||G.over){if(PQ.el)PQ.el.hidden=true;return;}pqEnsure();const T=G.teams[ME],sel=pqSel().slice(0,4);
   let sig=sel.map(b=>b.id+':'+pqRuns(b).map(r=>r.kind+r.n).join('.')).join('|');
   const kinds=new Set(sel.map(b=>b.kind));
   // filter the UNITS tab to what the selected building(s) can make
@@ -17527,7 +17527,7 @@ function pqRender(force){if(!G||G.over||G.grand){if(PQ.el)PQ.el.hidden=true;retu
     el.hidden=!sel.length;}
   if(PQ.el&&!PQ.el.hidden)for(const pb of PQ.el.querySelectorAll('.pqp')){const b=G.byId.get(+pb.dataset.b);if(b)pb.style.width=Math.round(pqProg(b)*100)+'%';}}
 // floating badge + progress ring over each producing building of mine
-function pqMap(){if(!G||G.over||G.grand||!PQ.map)return;let n=0;const T=G.teams[ME];
+function pqMap(){if(!G||G.over||!PQ.map)return;let n=0;const T=G.teams[ME];
   for(const e of G.ents){if(!e.isB||e.team!==ME||e.dead||!e.q||!e.q.length||!CATS.includes(e.kind))continue;const p=toScreen(e.x,(typeof groundH==='function'?groundH(e.x,e.y):0)+46,e.y);if(p.z>1||p.x<-30||p.y<-30||p.x>innerWidth+30||p.y>innerHeight+30)continue;
     let d=PQ.mapEls[n];if(!d){d=document.createElement('div');d.innerHTML='<i></i><b></b>';PQ.map.append(d);PQ.mapEls[n]=d;}
     d.style.display='flex';d.style.left=p.x.toFixed(0)+'px';d.style.top=p.y.toFixed(0)+'px';const f=Math.round(pqProg(e)*100);d.style.background=`conic-gradient(#6fe08a ${f}%,rgba(255,255,255,.22) 0)`;const t=e.q.length>1?'×'+e.q.length:'1';if(d.lastChild.textContent!==t)d.lastChild.textContent=t;n++;}

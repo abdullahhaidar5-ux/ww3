@@ -82,7 +82,7 @@ try {
   // ---- part A: Skip step, Exit tutorial, restart
   console.log('-- skip / exit / restart'); SHOTS = false;
   await startTut(); await waitStep(0);
-  ok(await ev(() => TUT === TUTB && TUT.length === 6 && TUT.map(s => s.k).join() === 'dep,bar,fac,sup,veh,atk'), 'the one tutorial is the Battle tutorial with a supply-lines step');
+  ok(await ev(() => TUT === TUTB && TUT.length === 7 && TUT.map(s => s.k).join() === 'gen,dep,bar,fac,sup,veh,atk'), 'the one tutorial is the Battle tutorial with a supply-lines step');
   for (let k = 0; k < 3; k++) { await page.click('#tutSkip'); await wait(250); }
   ok(await ev(() => TUTS.i === 3), 'Skip step moves to the next step (3 clicks -> step 4)');
   await page.click('#tutExit'); await wait(500);

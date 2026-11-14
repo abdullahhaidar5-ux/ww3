@@ -700,7 +700,7 @@ function updProj(dt){for(const p of G.proj){if(p.wpn!=='shell'&&p.wpn!=='bomb'&&
   else{p.x+=Math.cos(a)*st;p.y+=Math.sin(a)*st;}}G.proj=G.proj.filter(p=>!p.done);}
 /* Conquest missile rules: no strike before minute 8, each launch costs money, ~5 min recharge (charge fills at half speed), one salvo can take
    at most 40% of any building's max HP, missile-defence batteries (SAM sites) intercept part of a salvo, strikes near a town raise its unrest. */
-const CQ_STRIKE_MIN=480,CQ_STRIKE_COST=1500,CQ_STRIKE_CAP=.4,CQ_MD_P=.28,CQ_MD_R=520;
+const MSL_CAP=.4,MSL_MD_P=.28,MSL_MD_R=520;
 /* Battle superweapon announcements (Generals style): everybody is told when a Strike Center comes online (with the ~6 minute timer) and again when it is ready to fire. The on-screen countdown banner is view-only (06-view swBanner). */
 function swTick(T){if(T.reb||T.dummy||T.out)return;const nm=T.F.name,lg=(m,k)=>{for(const O of G.teams)if(!O.reb&&!O.dummy)log(O.id,m,O.id===T.id||ally(O.id,T.id)?'g':k||'r:msl');};
   if(T._upl&&!T._swA){T._swA=1;if(T.charge<T.sup.charge)lg(`${nm} Strike Center is online: ${T.sup.name} in ${Math.round((T.sup.charge-T.charge)/60*10)/10} min. Destroy it!`,'r:msl');}
@@ -718,8 +718,8 @@ function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!w
   T.charge=0;log(team,`${S.name} launched.`,'g');for(const O of G.teams)if(O.id!==team)log(O.id,`Warning: enemy ${S.name} inbound. Move your units!`,'r:msl',x,y);return true;}
 function addStrike(x,y,t,r,dmg,team,kind){G.strikes.push({x,y,t,r,dmg,team,kind});FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,kind==='sup'?1:0],team);}
 function updStrikes(dt){for(const s of G.strikes){s.t-=dt;if(s.t<=0){s.done=true;
-    if(G.battle&&s.kind==='sup'){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<CQ_MD_R){md++;if(d<nd){nd=d;nb=e;}}}
-      if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-CQ_MD_P,md))){if(nb)FXE('icpt',[nb.x|0,nb.y|0,s.x|0,s.y|0]);FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<CQ_MD_R))log(T.id,'Missile defense intercepted an incoming missile.','g');continue;}
+    if(G.battle&&s.kind==='sup'){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<MSL_MD_R){md++;if(d<nd){nd=d;nb=e;}}}
+      if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-MSL_MD_P,md))){if(nb)FXE('icpt',[nb.x|0,nb.y|0,s.x|0,s.y|0]);FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<MSL_MD_R))log(T.id,'Missile defense intercepted an incoming missile.','g');continue;}
     }
     G.curSid=s.kind==='sup'?s.sid|0:0;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?'super':s.kind==='bb'?'bb':'shell',s.kind);G.curSid=0;}}G.strikes=G.strikes.filter(s=>!s.done);}
 

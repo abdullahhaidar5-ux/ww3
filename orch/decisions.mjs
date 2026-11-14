@@ -271,7 +271,7 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(!['03h-economy.js', '08c-towns.js', '08c-economy.js'].some(f => srcFiles.includes(f)), 'one game: a Conquest-only module (03h-economy, 08c-towns, 08c-economy) is back');
   // Battle has supply lines (Abdullah 2026-11-13 20:19 "Bring supply lines into battle") and the ammo rule (20:06): refill inside your area, no timers, Test range unlimited
   const sim = SRC['03-sim.js'] || '', lg = SRC['03c-logistics.js'] || '', lgu = SRC['08c-logi.js'] || '';
-  ck(/G\.battle=!o\.camp&&!o\.sandbox/.test(sim), 'one game: every skirmish / online game must start as Battle (newGame G.battle)');
+  ck(/G\.battle=!o\.camp;/.test(sim), 'one game: every skirmish / online game must start as Battle (newGame G.battle)');
   ck(/function lgCover\(/.test(lg) && /lgCover\(\);G\.lgv=/.test(lg) && /G\.lg&&G\.lg\.bead/.test(sim) && /if\(G\.lg\)lgTick\(st\)/.test(sim), 'supply lines: lgCover (roads out of HQ + depots) must feed the supply area (supplyPoints beads) and run every supply tick');
   ck(/function ammoOn\(\)\{return !!G&&!G\.sandbox;\}/.test(sim) && /function hasAmmo\(u\)\{const s=u\.s;return ammoOn\(\)&&/.test(sim) && !/\b[ue]\.supT\b|G\.t-\([ue]\.supT/.test(Object.values(SRC).join('\n')), 'ammo rule: Battle tracks ammo (refill inside your area, no time-based out-of-supply penalty), Test range unlimited');
   ck(!/G\.battle\)\{LGU\.on=false|if\(G&&G\.battle\)return false|!G\.battle&&!G\.lg|G\.battle\|\|!G\.lg/.test(lgu), 'supply lines: the overlay / minimap lines must not be switched off in Battle'); }
