@@ -26,7 +26,12 @@ Abdullah 2026-11-13 20:05 Chicago, photo of a desert Battle fight on his Windows
 - Proof script: `node orch/groundshots.mjs before|after` (SHOTS=desert,close,fort,mountain,green,snow; MTN=<map>).
 
 ## Gate
-See the result line at the end of this file (one `orch/cigate.sh` run).
+- Local: `python3 orch/build.py --check` OK, `node orch/smoke.mjs` SMOKE PASS (592 s), `node orch/decisions.mjs` DECISIONS PASS.
+- GitHub: `orch/cigate.sh` pushed `gate/6200963203` (commit 6200963 = all the code of this branch; later commits are docs only)
+  at 04:22 UTC 2026-11-14, but the Actions queue had ~30 runs waiting (15 ahead of it) and it had not started after 40 min,
+  so this session stopped waiting. **Conductor: read the `gate/*` statuses of 6200963 (or re-run cigate on the branch head)
+  before landing.** No local smooth run (sandbox too slow, per CLAUDE.md). Expected cost: the ground shader skips the old
+  soil samples where the photo ground covers it and adds 5 small noise reads + 2-6 atlas reads; no new draw calls.
 
 ## Pictures (orch/concepts/groundreal/, before = main a3b627b, after = this branch)
 - `before-desert.jpg` / `after-desert.jpg` — Battle, Tar Basin (desert), firefight at normal play zoom (his photo's view)
