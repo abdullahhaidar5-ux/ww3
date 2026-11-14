@@ -7,16 +7,16 @@ function initPost(){try{
     fragmentShader:`uniform sampler2D tex;varying vec2 vUv;void main(){vec3 c=texture2D(tex,vUv).rgb;if(!(c.r==c.r&&c.g==c.g&&c.b==c.b)||max(c.r,max(c.g,c.b))>1e4)c=vec3(0.);c=min(c,vec3(60.));float l=dot(c,vec3(.2126,.7152,.0722));gl_FragColor=vec4(c*smoothstep(.95,2.6,l),1.);}`});
   POST.mBlur=new THREE.ShaderMaterial({uniforms:{tex:{value:null},dir:{value:new THREE.Vector2()}},vertexShader:FSV,depthTest:false,depthWrite:false,
     fragmentShader:`uniform sampler2D tex;uniform vec2 dir;varying vec2 vUv;void main(){vec4 c=texture2D(tex,vUv)*.227;c+=texture2D(tex,vUv+dir*1.385)*.316;c+=texture2D(tex,vUv-dir*1.385)*.316;c+=texture2D(tex,vUv+dir*3.231)*.07;c+=texture2D(tex,vUv-dir*3.231)*.07;gl_FragColor=c;}`});
-  POST.mFinal=new THREE.ShaderMaterial({uniforms:{tex:{value:null},b1:{value:null},b2:{value:null},t:{value:0},flash:{value:0},res:{value:new THREE.Vector2(1,1)},expo:{value:.92},gr:{value:new THREE.Vector3(1,1,1)},sat:{value:1},tg:{value:new THREE.Vector3(1,1,1)},tsat:{value:1},film:{value:0},vm:{value:0},dof:{value:0},fd:{value:.1},hz:{value:new THREE.Vector3(.62,.5,.36)}},vertexShader:FSV,depthTest:false,depthWrite:false,
-    fragmentShader:`uniform sampler2D tex,b1,b2,ao;uniform float t,flash,expo,aoK,fogK,sat,tsat,film,vm,dof,fd;uniform vec3 gr,tg,hz;uniform vec2 res;varying vec2 vUv;
+  POST.mFinal=new THREE.ShaderMaterial({uniforms:{tex:{value:null},b1:{value:null},b2:{value:null},t:{value:0},flash:{value:0},res:{value:new THREE.Vector2(1,1)},expo:{value:.92},gr:{value:new THREE.Vector3(1,1,1)},sat:{value:1},tg:{value:new THREE.Vector3(1,1,1)},tsat:{value:1},film:{value:0},vm:{value:0},dof:{value:0},fd:{value:.1},hz:{value:new THREE.Vector3(.62,.5,.36)},lkA:{value:new THREE.Vector4(1,0,0,1)},lkB:{value:new THREE.Vector4(1,1,1,1)},lkS:{value:new THREE.Vector3(1,1,1)},lkH:{value:new THREE.Vector3(1,1,1)}},vertexShader:FSV,depthTest:false,depthWrite:false,
+    fragmentShader:`uniform sampler2D tex,b1,b2,ao;uniform float t,flash,expo,aoK,fogK,sat,tsat,film,vm,dof,fd;uniform vec3 gr,tg,hz,lkS,lkH;uniform vec4 lkA,lkB;uniform vec2 res;varying vec2 vUv;
       vec3 aces(vec3 x){x*=.6;return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
       float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
       vec3 okc(vec3 c){return (c.r==c.r&&c.g==c.g&&c.b==c.b&&max(c.r,max(c.g,c.b))<1e4)?c:vec3(.5);}
       void main(){vec2 px=1./res;vec3 c=okc(texture2D(tex,vUv).rgb);
         if(dof>.01){float dz=texture2D(ao,vUv).a;float coc=dof*smoothstep(.04,.30,abs(dz-fd))*(dz>.001?1.:0.);if(coc>.02){vec3 acc=c;float wsum=1.;for(int i=0;i<8;i++){float an=float(i)*.785398+h(vUv*res)*.8;vec2 o=vec2(cos(an),sin(an))*coc*5.*px*(1.+float(i&1)*.6);acc+=okc(texture2D(tex,vUv+o).rgb);wsum+=1.;}c=acc/wsum;}}
         vec3 n=texture2D(tex,vUv+vec2(px.x,0.)).rgb+texture2D(tex,vUv-vec2(px.x,0.)).rgb+texture2D(tex,vUv+vec2(0.,px.y)).rgb+texture2D(tex,vUv-vec2(0.,px.y)).rgb;
-        c=c+(c-n*.25)*.35;vec4 oc4=texture2D(ao,vUv);vec3 oc=oc4.rgb;c*=mix(1.,oc.r,aoK)*mix(1.,oc.g,step(.01,aoK));float fgv=smoothstep(.05,.8,oc.b)*fogK;float lf=dot(c,vec3(.2126,.7152,.0722));c=mix(c,mix(vec3(lf),c,.55)*vec3(.58,.57,.58),fgv*.9);c=mix(c,hz*(.8+.4*lf),smoothstep(.32,.95,oc4.a)*.42*step(.01,aoK));
-        vec3 bl=okc(texture2D(b1,vUv).rgb)*.75+okc(texture2D(b2,vUv).rgb)*.9;bl=min(bl,vec3(8.));c+=bl*.5;
+        c=c+(c-n*.25)*.35*lkA.w;vec4 oc4=texture2D(ao,vUv);vec3 oc=oc4.rgb;c*=mix(1.,oc.r,aoK)*mix(1.,oc.g,step(.01,aoK));float fgv=smoothstep(.05,.8,oc.b)*fogK;float lf=dot(c,vec3(.2126,.7152,.0722));c=mix(c,mix(vec3(lf),c,.55)*vec3(.58,.57,.58),fgv*.9);c=mix(c,hz*(.8+.4*lf),smoothstep(.32,.95,oc4.a)*.42*lkB.z*step(.01,aoK));
+        vec3 bl=okc(texture2D(b1,vUv).rgb)*.75+okc(texture2D(b2,vUv).rgb)*.9;bl=min(bl,vec3(8.));c+=bl*.5*lkB.y;
         c*=expo*gr*tg*(1.+flash*1.5);float Lr=dot(c,vec3(.2126,.7152,.0722));
         if(vm>1.5){float hot=smoothstep(1.3,3.4,Lr);float cool=.05+.2*pow(clamp(Lr*2.6,0.,1.),.6);float hh=max(cool,hot);c=vec3(hh);}
         else if(vm>.5){float v=1.-exp(-Lr*3.6-.05);c=vec3(.22,1.,.34)*v*1.15;}
@@ -24,8 +24,9 @@ function initPost(){try{
         float l=dot(c,vec3(.299,.587,.114));c=mix(vec3(l),c,.78*sat*tsat);c=mix(c*vec3(.95,.98,1.04),c,smoothstep(.05,.45,l));c=mix(c,c*vec3(1.02,1.,.95),.6);if(film>0.){float fl=dot(c,vec3(.299,.587,.114));c=mix(vec3(fl),c,.9);c=mix(c*vec3(.93,.98,1.07),c*vec3(1.07,1.01,.92),smoothstep(.2,.7,fl));c=clamp((c-.5)*1.1+.5,0.,1.);}
         c=pow(c,vec3(1./2.2));
         c=(c-.5)*1.1+.5;c+=vec3(.012,.004,-.012)*(1.-l)+vec3(.03,.012,-.02)*l;
-        vec2 q=vUv-.5;c*=1.-dot(q,q)*.75;
-        c+=(h(vUv*res+t*61.)-.5)*(.022+.07*step(.5,vm)*step(vm,1.5));
+        vec2 q=vUv-.5;c*=1.-dot(q,q)*.75*lkA.x;
+        {float lk=dot(c,vec3(.299,.587,.114));c=(c-.5)*lkB.x+.5;c*=mix(lkS,lkH,smoothstep(.1,.8,lk));vec2 q3=q*vec2(res.x/res.y,1.);c*=1.-lkA.z*smoothstep(.3,.75,length(q3))*(.55+.45*sin(vUv.y*res.y*1.6));}
+        c+=(h(vUv*res+t*61.)-.5)*(.022+lkA.y+.07*step(.5,vm)*step(vm,1.5));
         if(vm>1.5){float g=dot(c,vec3(.333));c=vec3(g)+vec3(-.01,-.005,.015)*(1.-g);c=clamp((c-.08)*1.25,0.,1.);}
         else if(vm>.5){vec2 q2=(vUv-.5)*vec2(res.x/res.y,1.);float ring=smoothstep(.62,.9,length(q2));c*=1.-ring*.85;c*=.94+.06*sin(vUv.y*res.y*1.2);}
         gl_FragColor=vec4(clamp(c,0.,1.),1.);}`});
@@ -56,6 +57,17 @@ function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.rou
   POST.dRT=new THREE.WebGLRenderTarget(w>>1,h>>1,{minFilter:THREE.NearestFilter,magFilter:THREE.NearestFilter,depthBuffer:true});POST.dRT.depthTexture=new THREE.DepthTexture(w>>1,h>>1);POST.dRT.depthTexture.type=THREE.UnsignedIntType;
   const s2={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false};POST.aA=new THREE.WebGLRenderTarget(w>>1,h>>1,s2);POST.aB=new THREE.WebGLRenderTarget(w>>1,h>>1,s2);
   POST.bA=new THREE.WebGLRenderTarget(w>>2,h>>2,s);POST.bB=new THREE.WebGLRenderTarget(w>>2,h>>2,s);POST.bC=new THREE.WebGLRenderTarget(w>>3,h>>3,s);POST.bD=new THREE.WebGLRenderTarget(w>>3,h>>3,s);}
+// LOOK PRESETS (looktest, 2026-11-14): view only. ?look=a|b|c picks one of three looks for the same battle: A = today (nothing changes),
+// B = cinematic (warm low sun, deeper shadows, haze, stronger bloom, vignette), C = drone feed (cool, desaturated, contrast, sharp, grain,
+// sensor edges). `wx` overrides the battle-conditions row (04-gfx applyWeather, only when time of day is off); the rest are final-pass
+// numbers: v = vignette x, g = extra grain, e = edge-scanline strength, sh = sharpen x, k = contrast, bl = bloom x, hz = distance haze x,
+// s/h = shadow/highlight tint. Same single post chain, same passes: one shader, a few multiplies.
+const LOOKP={a:{n:'Today',wx:null,v:1,g:0,e:0,sh:1,k:1,bl:1,hz:1,s:[1,1,1],h:[1,1,1]},
+  b:{n:'Cinematic',wx:{sun:'#ffb36d',si:3.2,off:[-1250,400,-560],sky:'#8197c4',gnd:'#3e3024',hi:.78,fog:'#c9966a',fn:1000,ff:4800,expo:1.02,sr:3,hor:[.98,.68,.42],zen:[.28,.40,.66],gr:[1.07,1,.88],sat:1.06,amb:[1.03,.93,.82]},v:1.7,g:.012,e:0,sh:1.2,k:1.12,bl:1.7,hz:2.2,s:[.9,.95,1.08],h:[1.08,1.01,.88]},
+  c:{n:'Drone feed',wx:{sun:'#f4f7ff',si:3.0,off:[-650,1000,-450],sky:'#a2b8d6',gnd:'#575b60',hi:1.0,fog:'#a9b3bd',fn:1700,ff:6400,expo:.95,sr:1.5,hor:[.7,.77,.85],zen:[.34,.5,.76],gr:[.95,1,1.06],sat:.62,amb:[.94,.98,1.06]},v:1.35,g:.038,e:.32,sh:2.4,k:1.22,bl:.8,hz:.5,s:[.93,1,1.07],h:[1,1.01,1.02]}};
+let LOOKK='a';try{const q=(new URLSearchParams(location.search).get('look')||'a').toLowerCase();if(LOOKP[q])LOOKK=q;}catch(e){}
+function lookW(w){const L=LOOKP[LOOKK];if(!L||!L.wx||(typeof G!=='undefined'&&G&&G.todM))return w;return Object.assign({},w,L.wx);}
+function lookPost(F){const L=LOOKP[LOOKK]||LOOKP.a;F.lkA.value.set(L.v,L.g,L.e,L.sh);F.lkB.value.set(L.k,L.bl,L.hz,1);F.lkS.value.set(L.s[0],L.s[1],L.s[2]);F.lkH.value.set(L.h[0],L.h[1],L.h[2]);}
 // Theatre colour grade (purely visual): desert maps run warm and dusty, snow maps cold and a little desaturated,
 // green maps neutral with a blue-grey distance haze; a dusk battle pushes everything toward red. Multiplies on top of
 // the battle-conditions grade set by applyWeather (04-gfx). The haze colour is used by the distance haze (AO pass).
@@ -96,6 +108,6 @@ function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.se
   bl(POST.bA,POST.bB,POST.bA.width,POST.bA.height,1,0);bl(POST.bB,POST.bA,POST.bA.width,POST.bA.height,0,1);
   POST.mBlur.uniforms.tex.value=POST.bA.texture;POST.mBlur.uniforms.dir.value.set(0,0);pass(POST.mBlur,POST.bC);
   bl(POST.bC,POST.bD,POST.bC.width,POST.bC.height,1.5,0);bl(POST.bD,POST.bC,POST.bC.width,POST.bC.height,0,1.5);
-  const F=POST.mFinal.uniforms;F.tex.value=POST.rt.texture;F.b1.value=POST.bA.texture;F.b2.value=POST.bC.texture;F.t.value=performance.now()/1000%100;F.flash.value=flash;F.film.value=(!POST.phone&&fxLv()>=3)?1:0;postGrade(F);F.res.value.set(POST.w,POST.h);{let dv=0,fd=.1;try{if(QUAL.lv<1&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)&&cam.dist<520){dv=Math.max(0,Math.min(1,(520-cam.dist)/320))*.75;fd=Math.min(.6,cam.dist/2600);}}catch(e){}F.dof.value=dv;F.fd.value=fd;}
+  const F=POST.mFinal.uniforms;F.tex.value=POST.rt.texture;F.b1.value=POST.bA.texture;F.b2.value=POST.bC.texture;F.t.value=performance.now()/1000%100;F.flash.value=flash;F.film.value=(!POST.phone&&fxLv()>=3)?1:0;postGrade(F);lookPost(F);F.res.value.set(POST.w,POST.h);{let dv=0,fd=.1;try{if(QUAL.lv<1&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)&&cam.dist<520){dv=Math.max(0,Math.min(1,(520-cam.dist)/320))*.75;fd=Math.min(.6,cam.dist/2600);}}catch(e){}F.dof.value=dv;F.fd.value=fd;}
   pass(POST.mFinal,null);}
 
