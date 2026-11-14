@@ -1,0 +1,18 @@
+ww3-sim.js:864
+  if(kind==='econ'&&ECON[fac])s.name=ECON[fac];if(kind==='gen'&&GENN[fac])s.name=GENN[fac];if(kind==='uplink'&&UPLINK[fac])s.name=UPLINK[fac][0];s.hp=Math.round(s.hp*(m.bldHp||1));if(kind==='uplink'&&swBattle())s.cost=SW_COST,s.req=SW_REQ,s.time=40,s.limit=1;s.cost=kind==='econ'||(kind==='uplink'&&swBattle())?s.cost:Math.round(s.cost*(m.cost||1)*(RB&&(kind==='turret'||kind==='tunnel'||kind==='coast'||kind==='fort')?RB.fort:1)/25)*25;if(s.dmg)s.dmg*=(m.dmg||1);s.aa=s.aa||0;s.armor='bld';return sc[k]=s;}
+                                                                                                                                                                                                                                                                                                                                                             ^
+
+ReferenceError: RB is not defined
+    at bstats (ww3-sim.js:864:350)
+    at addBld (ww3-sim.js:2367:62)
+    at newGame (ww3-sim.js:2347:134)
+    at ww3-sim.js:5076:42
+    at sim (ww3-sim.js:5066:18)
+    at W.start (ww3-sim.js:5076:5)
+    at W.sightProbe (ww3-sim.js:5070:32)
+    at file:///home/runner/work/ww3/ww3/orch/headless.mjs:814:19
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+
+Node.js v22.23.4
+SKIP headless
