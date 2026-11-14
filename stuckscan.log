@@ -1,0 +1,14 @@
+conquest strait       stuck episodes   0  mover-seconds 3351
+conquest golan        stuck episodes   0  mover-seconds 3170
+conquest taiwan       stuck episodes   1  mover-seconds 2769
+conquest honshu       stuck episodes   1  mover-seconds 1980
+conquest volga        stuck episodes   0  mover-seconds 3567
+conquest rivers       stuck episodes   0  mover-seconds 2560
+battle   strait       stuck episodes   3  mover-seconds 4007
+battle   golan        stuck episodes   0  mover-seconds 3633
+battle   taiwan       stuck episodes   0  mover-seconds 3409
+battle   honshu       stuck episodes   0  mover-seconds 1509
+battle   volga        stuck episodes   0  mover-seconds 2110
+battle   rivers       stuck episodes   0  mover-seconds 1312
+total stuck episodes 5 {"open ground":2,"embedded in blocked tile/footprint":3}
+STUCKSCAN PASS (5 <= 8)
