@@ -19386,7 +19386,7 @@ function spyKit(B,attach,hand,hp,hv,cp,V,k){const HC=hp.clone().add(V(0,1.35*k,0
 // shared by every leader of the same look), re-painted (spyPaint with the colours below) and dressed in code-made clothes
 // that ride the bones. Both are FICTIONAL, generic people of their role - never the likeness of any real person: no
 // spectacles, no signature hairstyle, no real faces or names. View only: nothing here touches the simulation.
-//  Ayatollah (IR / RS / DW): an elderly senior cleric - white wrapped turban, full grey-white beard, a long light qaba robe
+//  Ayatollah (IR / RS / DW): an elderly senior cleric - black wrapped turban, full grey-white beard, a long light qaba robe
 //  under an open dark aba cloak with a thin gold edge, hands folded in front holding prayer beads.
 //  Dear Leader (KP): a middle-aged head of state - dark high-collared tunic suit, neat short dark hair,
 //  small gold collar stars, arms at his sides, upright.
@@ -19400,9 +19400,9 @@ function leaderKit(B,attach,hand,hp,hv,cp,V,k,fac){const DL=fac==='KP',HC=hp.clo
   const fy=B.footL?new THREE.Vector3().setFromMatrixPosition(B.footL.matrixWorld).y:hv.y-7*k,drop=(hv.y-fy)/k+.35;
   if(!DL){
     // (head pieces are placed on the skull's real centre, .3 forward of the neck line; the face reaches z 1.15-1.4)
-    // turban: wraps of white cloth crossing a little, set on the forehead, a soft rounded crown, a tail of cloth at the back
-    for(let i=0;i<3;i++){const t=mk(new THREE.TorusGeometry(.9*k,(.3-i*.03)*k,8,26),i===1?'#e4e0d5':'#eeeae0',0,.2+i*.22,.25,H);t.scale.set(.98-i*.05,1.2-i*.06,.8);t.rotation.x=Math.PI/2+(i===1?.14:-.1);t.rotation.y=i===1?.1:-.06;}
-    mk(sph(.9,16,10),'#ebe7dc',0,.62,.24,H).scale.set(.95,.72,1.14);mk(box(.42,.7,.14),'#e3dfd3',0,-.1,-.92,H).rotation.x=.14;
+    // turban: wraps of black cloth crossing a little, set on the forehead, a soft rounded crown, a tail of cloth at the back
+    for(let i=0;i<3;i++){const t=mk(new THREE.TorusGeometry(.9*k,(.3-i*.03)*k,8,26),i===1?'#1c1c1e':'#141416',0,.2+i*.22,.25,H);t.scale.set(.98-i*.05,1.2-i*.06,.8);t.rotation.x=Math.PI/2+(i===1?.14:-.1);t.rotation.y=i===1?.1:-.06;}
+    mk(sph(.9,16,10),'#18181a',0,.62,.24,H).scale.set(.95,.72,1.14);mk(box(.42,.7,.14),'#1a1a1c',0,-.1,-.92,H).rotation.x=.14;
     // grey hair showing below the turban at the back and sides
     {const g=new THREE.SphereGeometry(.9*k,14,8,Math.PI*.5+1.4,Math.PI*2-2.8,Math.PI*.45,Math.PI*.2);const h=mk(g,'#8d8984',0,-.05,.25,H);h.scale.set(.95,1,1.12);}
     // full beard, grey-white: painted onto the face (LDRLOOK.IR beard, spyPaint) and given body below the chin here
@@ -19648,7 +19648,7 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     else{const x=ty==='lancet'?-1.5:-2.4;for(const yy of ty==='mq'?[.3,0,.6]:[0,.2]){let n=0;for(const sg of [1,-1])if(dd('side',sg,x,yy,1.1,.66,'f:'+f,null,{fa:.6,fb:.6,maxw:1.3,tag:'flag'}))n++;if(n)break;}}
     const g=K.geo();if(g){g.userData.P=dP;yaw.add(kitMarker('drone|'+ty+'|'+f,g));}}catch(err){console.warn('drone kit',err);}
   SCN.add(o);return o;}
-// Stand-in until the soldier model arrives (leaderObj). The Ayatollah: a fictional senior cleric - layered white turban, full white beard, a pale grey
+// Stand-in until the soldier model arrives (leaderObj). The Ayatollah: a fictional senior cleric - layered black turban, full white beard, a pale grey
 // qaba robe to the ground under a dark brown aba cloak with thin gold edging, hands folded holding prayer beads.
 // The Dear Leader: a fictional, generic figure in a grey-black buttoned tunic suit with two escort generals (visual only)
 function dlBuild(o,yaw,B,P,T){
@@ -19681,7 +19681,7 @@ function leaderObj(e){const T=G.teams[e.team];if(MODELS.ready&&T&&(MODELS.proto.
   const o=clericModel(e);o.userData.bg=MODELS.gen|0;return o;}
 function clericModel(e){const o=clericModel0(e);if(o&&o.userData.parts&&o.userData.parts.body&&!o.userData._big){o.userData.parts.body.scale.multiplyScalar(1.15);o.userData._big=1;}return o;}// leaders stand as tall as the (x1.15) soldiers
 function clericModel0(e){const T=G.teams[e.team],o=new THREE.Group(),yaw=new THREE.Group();o.add(yaw);o.userData.parts={body:yaw};o.userData.model=true;o.userData.cleric=true;
-  const DL=T&&T.fac==='KP',B=Bld(),skin=DL?'#d8b48e':'#c69a78',robe=DL?'#3a3d3f':'#a8a397',aba=DL?'#2a2c2e':'#3b2d23',trim=DL?'#2a2c2e':'#b8963e',tur='#ece8dd',beard=DL?(DL?'#d8b48e':'#ecebe6'):'#ecebe6',P=(g,x,y,z,c,rx=0,ry=0,rz=0)=>{const m=new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(1,1,1));B._p.push({g,m,c:lin(c)});};
+  const DL=T&&T.fac==='KP',B=Bld(),skin=DL?'#d8b48e':'#c69a78',robe=DL?'#3a3d3f':'#a8a397',aba=DL?'#2a2c2e':'#3b2d23',trim=DL?'#2a2c2e':'#b8963e',tur='#18181a',beard=DL?(DL?'#d8b48e':'#ecebe6'):'#ecebe6',P=(g,x,y,z,c,rx=0,ry=0,rz=0)=>{const m=new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(1,1,1));B._p.push({g,m,c:lin(c)});};
   if(DL)return dlBuild(o,yaw,B,P,T);
   // qaba: smooth lathe from hem to shoulders, with soft folds
   {const pts=[];for(let k=0;k<=12;k++){const y=k/12*11.6;const r=3.05-1.05*Math.pow(k/12,.9)+(k===12?-.4:0);pts.push(new THREE.Vector2(r,y));}const g=new THREE.LatheGeometry(pts,24);const pa=g.attributes.position;for(let q=0;q<pa.count;q++){const x=pa.getX(q),z=pa.getZ(q),y=pa.getY(q),a=Math.atan2(z,x),f=1+.05*Math.sin(a*9)*(1-y/11.6);pa.setX(q,x*f);pa.setZ(q,z*f);}g.computeVertexNormals();P(g,0,0,0,robe);}
