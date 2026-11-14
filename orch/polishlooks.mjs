@@ -102,7 +102,9 @@ try {
     await battle(fac);
     if (WHAT !== 'blds') for (const kd of UNITS) {
       const r = await place(fac, kd, false); if (r !== 'ok') { console.log(fac, kd, r); continue; }
-      await frames(2); if (kd === 'heli') await aim(); await frames(2); await snap(`u-${fac}-${kd}`, `${fac}-units`);
+      await frames(2); if (kd === 'heli') await aim();
+      if (process.env.PROBE) console.log(kd, await page.evaluate(() => { const o = OBJ.get(window.__u.id), out = []; const b = new THREE.Box3(); o.updateMatrixWorld(true);
+        o.traverse(c => { if (c.isMesh) { b.setFromObject(c); const s = b.getSize(new THREE.Vector3()); out.push((c.name || '?') + '/' + (c.material && c.material.name || '') + ':' + [s.x, s.y, s.z].map(v => v.toFixed(1)).join('x') + '@y' + (b.min.y - o.position.y).toFixed(1)); } }); return out.join(' | '); })); await frames(2); await snap(`u-${fac}-${kd}`, `${fac}-units`);
     }
     if (WHAT !== 'units' && BFACS.includes(fac)) for (const kd of BLDS) {
       const r = await place(fac, kd, true); if (r !== 'ok') { console.log(fac, kd, r); continue; }
