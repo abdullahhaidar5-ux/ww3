@@ -18524,7 +18524,7 @@ function pqMap(){if(!G||G.over||G.grand||!PQ.map)return;let n=0;const T=G.teams[
 /* ZERO HOUR BAR v2 (Abdullah 15:02-15:05 sent three more Zero Hour shots): short steel bar with the nation's colour on the trim, minimap left,
    3 small side buttons, a dark panel with small picture buttons in 2 rows from the left (no words), unit orders as pictures at the right end,
    money plate on the top edge, portrait (or the nation's emblem when nothing is selected) on the right, thin rank bar, ▼ and ★ tabs on top right */
-html body #side{--gbH:clamp(176px,20vh,226px);--zb:clamp(64px,4.4vw,86px);--tc:#4f88c6;height:var(--gbH)!important;padding:12px 12px 8px!important;gap:0 8px!important;
+html body #side{--gbH:clamp(176px,20vh,226px);--zb:clamp(70px,calc((var(--gbH) - 44px)/1.6),120px);--tc:#4f88c6;height:var(--gbH)!important;padding:12px 12px 8px!important;gap:0 8px!important;
  grid-template-columns:clamp(196px,14.5vw,262px) 42px minmax(0,1fr) clamp(180px,13vw,240px) 22px!important;grid-template-rows:minmax(0,1fr)!important}
 html body #side::before{top:-14px!important;clip-path:polygon(0 14px,calc(50% - 130px) 14px,calc(50% - 108px) 0,calc(50% + 108px) 0,calc(50% + 130px) 14px,100% 14px,100% 100%,0 100%)!important;
  background:radial-gradient(circle at 8px 22px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 22px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),
@@ -18610,7 +18610,7 @@ function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
   const sig=(G.sel||[]).map(e=>e.id).join(',');if(sig!==ZH.sig){if(ZH.sig&&sig)ZH.star=false;ZH.sig=sig;}
   star.classList.toggle('on',ZH.star);{const pd=document.querySelector('.tabs button[data-tab="pow"] .dot');const d=star.querySelector('.dot');if(d)d.hidden=!(pd&&!pd.hidden&&getComputedStyle(pd).display!=='none');}
   const w=zhWant();if(w&&TAB!==w)showTab(w);sd.classList.toggle('zhpow',w==='pow');{const sb=$('supbtn');star.classList.toggle('rdy',!!(sb&&!sb.disabled)&&!ZH.star);}
-  {const od=document.querySelector('.orddock');const pn0=$('panel');if(od&&pn0&&innerWidth>=900){if(w==='none'&&!od.classList.contains('empty')){const r=pn0.getBoundingClientRect();od.classList.add('zhin');od.style.left=r.left+'px';od.style.top=r.top+'px';od.style.width=r.width+'px';od.style.height=r.height+'px';}else if(od.classList.contains('zhin')){od.classList.remove('zhin');od.style.left=od.style.top=od.style.width=od.style.height='';}}}
+  {const od=document.querySelector('.orddock');const pn0=$('panel');if(od&&pn0&&innerWidth>=900){if((w==='none'||w==='build')&&!od.classList.contains('empty')){const r=pn0.getBoundingClientRect();od.classList.add('zhin');od.style.left=r.left+'px';od.style.top=r.top+'px';od.style.width=r.width+'px';od.style.height=r.height+'px';}else if(od.classList.contains('zhin')){od.classList.remove('zhin');od.style.left=od.style.top=od.style.width=od.style.height='';}}}
   const pn=$('panel');if(pn){let e=pn.querySelector('.zhEmpty');const od2=document.querySelector('.orddock.zhin');const vis=!!od2||[...pn.querySelectorAll(':scope>[data-tab]')].some(b=>!b.hidden&&b.dataset.tab===TAB);
     if(!vis){if(!e){e=document.createElement('div');e.className='zhEmpty';pn.append(e);}e.textContent=w==='none'?'Select your Construction Vehicle to build, or a building to train units':'Nothing available here yet';e.hidden=false;}else if(e)e.hidden=true;}
   {const rk=document.querySelector('#side .sup.rk .bar i');if(rk){const wd=rk.style.width;if(wd&&rk.style.getPropertyValue('--rk')!==wd)rk.style.setProperty('--rk',wd);}}}
