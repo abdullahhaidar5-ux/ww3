@@ -1,7 +1,7 @@
-// Regression: firing a nation's superweapon strike in Conquest must not freeze the game.
+// Regression: firing a nation's superweapon strike in a Battle must not freeze the game.
 // Pass = launch works, no console/page errors, and no single simulation/FX function call (everything except the GPU draw, which is
 // software-rendered and seconds per frame in headless boxes, so the raw frame gaps are printed for information only) takes > LIMIT ms.
-// For each faction (default IR,RU,US) starts Conquest, builds an uplink, fires the strike, records requestAnimationFrame gaps
+// For each faction (default IR,RU,US) starts a Battle, builds an uplink, fires the strike, records requestAnimationFrame gaps
 // for 15 s and console errors. Prints per faction max gap; "SUPERFREEZE PASS" (see above).
 //   node orch/superfreeze.mjs [IR,RU,KP,US]   LIMIT=100 SHOT=1 (screenshots to orch/shots)
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import { createRequire } from 'node:module';import { fileURLToPath } from 'node:url';
@@ -26,13 +26,12 @@ for (const fac of FACS) {
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function', null, { timeout: 60000 });
   await page.evaluate(m => { window.__MAP = m; }, process.env.MAP || null);
-  await page.evaluate(f => { try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} setup.n = 1; setup.p = f; setup.mode = 'conquest'; if (window.__MAP) setup.map = window.__MAP; startSingle(); }, fac);
+  await page.evaluate(f => { try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} setup.n = 1; setup.p = f; if (window.__MAP) setup.map = window.__MAP; startSingle(); }, fac);
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 500 });
-  await page.evaluate(t => { window.__TOWN = t; }, !!process.env.TOWN);
   const info = await page.evaluate(() => { const hq = G.ents.find(e => e.team === ME && e.kind === 'hq') || G.ents.find(e => e.team === ME && e.isB);
     let up = G.ents.find(e => e.team === ME && e.kind === 'uplink'); if (!up) up = addBld(ME, 'uplink', hq.x + 120, hq.y + 60, 1); up.built = 1; up.hp = up.max;
-    const T = G.teams[ME]; T.credits = 50000; T.charge = T.sup.charge; G.t = Math.max(G.t, CQ_STRIKE_MIN + 5);
-    let en = G.ents.find(e => e.isB && e.team !== ME && !e.dead) || hq; if (window.__TOWN && G.towns && G.towns.length) { en = G.towns.slice().sort((a, b) => Math.hypot(a.x - en.x, a.y - en.y) - Math.hypot(b.x - en.x, b.y - en.y))[0]; }
+    const T = G.teams[ME]; T.credits = 50000; T.charge = T.sup.charge;
+    let en = G.ents.find(e => e.isB && e.team !== ME && !e.dead) || hq;
     window.__gaps = []; let last = performance.now(); (function loop() { const n = performance.now(); window.__gaps.push(n - last); try { const i = R3.info; (window.__ri = window.__ri || []).push([i.render.calls, i.render.triangles, i.programs ? i.programs.length : -1, i.memory.geometries, i.memory.textures, typeof PARTS !== 'undefined' ? PARTS.length : -1].join('/')); } catch (e) {} last = n; if (window.__ff && G && !G.over) for (let k = 0; k < 25; k++) simUpdate(0.05); requestAnimationFrame(loop); })();
     cam.x = en.x; cam.y = en.y; window.__tgt = [en.x, en.y]; return { sup: T.sup.name, working: working(ME, 'uplink'), n: T.sup.n }; });
   await page.evaluate(() => { window.__prof = {}; for (const n of ['bmTick', 'updStrikes', 'explode', 'megaBoom', 'boomFX', 'mslSpawn', 'mslLaunch', 'mslTrail', 'mushTick', 'sfxMega', 'sfxBoom', 'sfxLaunch', 'launch', 'simUpdate', 'renderFrame', 'updateUI', 'netTick', 'kcRec', 'rpRecTick', 'scroll', 'qualTick', 'fireTick', 'polBlast', 'collateral', 'lgBlast', 'dugBlast', 'ecBoom', 'damBlast', 'fireHit', 'applyDmg', 'physImpulse', 'opHit', 'hulkAdd', 'bfSmkAdd']) { const f = window[n] || (0, eval)('typeof ' + n + "==='function'?" + n + ':null'); if (!f) continue; const w = function () { const t = performance.now(); try { return f.apply(this, arguments); } finally { const d = performance.now() - t, q = window.__prof[n] = window.__prof[n] || { n: 0, tot: 0, max: 0 }; q.n++; q.tot += d; q.max = Math.max(q.max, d); } }; try { (0, eval)(n + '=arguments[0]'); } catch (e) {} try { window[n] = w; } catch (e) {} } });

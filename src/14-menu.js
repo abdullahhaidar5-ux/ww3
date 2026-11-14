@@ -7,7 +7,7 @@
    Recipe for a new screen: orch/HOWTO.md "Add a menu screen". ---------- */
 const MX={stack:['title'],cur:'title',screens:{},busy:0,thumbQ:[],thumbs:{},natQ:''};
 const MX_STEPS=[['c-map','Battlefield'],['c-nation','Nation'],['c-players','Players'],['c-opts','Battle options']];
-const MX_TITLES={'title':'','c-map':'Conquest','c-nation':'Conquest','c-players':'Conquest','c-opts':'Conquest','single':'Single player','online':'Multiplayer','extras':'Extras','credits':'Credits'};
+const MX_TITLES={'title':'','c-map':'Battle','c-nation':'Battle','c-players':'Battle','c-opts':'Battle','single':'Play','online':'Multiplayer','extras':'Extras','credits':'Credits'};
 function mxEl(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
 function mxClick(id){const e=document.getElementById(id);if(e){try{initAudio();}catch(_){}e.click();}}
 function mxTick(f){try{sfxUI(f);}catch(_){}}
@@ -125,16 +125,9 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 .mxcred{max-width:860px}.mxcred p{margin:0 0 12px;color:#8a9a92;font:400 12px/1.6 var(--mono);max-width:none}
 @media (max-width:1100px){.mxnat,.mxpl{grid-template-columns:1fr}#mxdet{position:static}}
 `;document.head.appendChild(s);}
-function mxModeName(){return typeof setup!=='undefined'&&setup.mode==='battle'?'Battle':'Conquest';}
-/* The two skirmish modes share the setup screens (battlefield, nation, players, options); this retitles them for the mode chosen on the main menu. */
-function mxSetMode(m){const was=typeof setup!=='undefined'?setup.mode:'';if(typeof setup!=='undefined')setup.mode=m==='battle'?'battle':'conquest';const B=m==='battle',nm=mxModeName();
-  /* each game has its own map list (Battle maps / Conquest battlefields): rebuild the list when the game changes */
-  {const ms=document.getElementById('mapSel'),L=typeof mapListKeys==='function'?mapListKeys():null;if(ms&&L&&(was!==setup.mode||(ms.options[0]||{}).value!==L[0]))try{if(typeof mapCards==='function')mapCards();if(typeof mxMapCards==='function')mxMapCards();if(typeof renderTeams==='function')renderTeams();}catch(e){}}
-  const sub=(id,t)=>{const e=document.querySelector('#ms-'+id+' .mxsub');if(e)e.textContent=t;};
-  sub('c-map',B?'Battle: a Command Center, a dozer and supply trucks - build your base and fight like Generals. Battle has its own maps: supply sources near every base, oil derricks to fight over, at least two attack routes.':'Conquest: towns pay the tax, a full base from the start. Every map has at least two real attack routes.');
-  for(const b of [MX.startP,MX.startO])if(b)b.textContent='Start '+nm.toLowerCase();
-  {const hm=document.querySelector('#ms-c-map .mxh');if(hm)hm.textContent=B?'Choose a Battle map':'Choose a battlefield';}
-  const h=document.querySelector('#ms-c-opts .mxh');if(h)h.textContent=nm+' options';}
+/* One game (Abdullah 2026-11-13 20:18): every setup screen is a Battle. Rebuild the map list when the menu opens on it (the Battle map list). */
+function mxModeName(){return 'Battle';}
+function mxMapSync(){const ms=document.getElementById('mapSel'),L=typeof mapListKeys==='function'?mapListKeys():null;if(ms&&L&&(ms.options[0]||{}).value!==L[0])try{if(typeof mapCards==='function')mapCards();if(typeof mxMapCards==='function')mxMapCards();if(typeof renderTeams==='function')renderTeams();}catch(e){}}
 function mxBuild(){
   const m=document.getElementById('menu');if(!m||document.getElementById('mx'))return;mxCss();m.classList.add('m3');
   const card=m.querySelector('.card'),g=id=>document.getElementById(id);
@@ -149,26 +142,26 @@ function mxBuild(){
   const T=scr('title');T.innerHTML='<h1 id="mxlogo">World War <span>3</span></h1><p id="mxtag">Real-time modern warfare, from one battle to the whole world.</p>';
   const menu=mxEl('div');menu.id='mxmenu';T.appendChild(menu);
   const item=(t,fn,cls,tip)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''),t);b.type='button';b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);if(tip)b.title=tip;menu.appendChild(b);return b;};
-  MX.cont=item('',()=>mxClick('svContinue'),'','Pick up where you left off: your latest Conquest or Battle');MX.cont.hidden=true;
-  item('Single player',()=>menuGo('single'),'','Conquest, Battle, missions and the tutorial');
-  item('Multiplayer',()=>menuGo('online'),'','Play online with friends: Conquest or Battle');
+  MX.cont=item('',()=>mxClick('svContinue'),'','Pick up where you left off: your latest Battle');MX.cont.hidden=true;
+  item('Play',()=>menuGo('single'),'','Battle against the computer, missions and the tutorial');
+  item('Multiplayer',()=>menuGo('online'),'','Play online with friends: start or join a Battle');
   item('Test range',()=>mxClick('sandbox'),'','Unlimited money and every unit against a passive target');
   item('Settings',()=>mxClick('openSettings'),'sep dim','Graphics, sound and mouse');
   item('Extras',()=>menuGo('extras'),'dim','Replays, encyclopedia, medals, map editor and more');
   item('Credits',()=>menuGo('credits'),'dim');
   const ver=mxEl('div');ver.id='mxver';ver.textContent='WORLD WAR 3';T.appendChild(ver);
-  /* --- conquest 1: battlefield --- */
-  const M=scr('c-map','<h2 class="mxh">Choose a battlefield</h2><p class="mxsub">Every map has at least two real attack routes. Click one to continue.</p>');
+  /* --- battle 1: map --- */
+  const M=scr('c-map','<h2 class="mxh">Choose a Battle map</h2><p class="mxsub">A Command Center, a dozer and supply trucks - build your base and keep your supply lines open. Battle maps first, then every other battlefield; every map has at least two attack routes.</p>');
   MX.grid=mxEl('div','mxgrid');M.appendChild(MX.grid);
-  foot(M,go('Random battlefield',()=>{const b=g('pickMap')&&g('pickMap').querySelector('.rndmap');if(b)b.click();mxMapMark();menuGo('c-nation');},'mxlink'),go('Next: Nation →',()=>menuGo('c-nation')));
-  /* --- conquest 2: nation --- */
+  foot(M,go('Random map',()=>{const b=g('pickMap')&&g('pickMap').querySelector('.rndmap');if(b)b.click();mxMapMark();menuGo('c-nation');},'mxlink'),go('Next: Nation →',()=>menuGo('c-nation')));
+  /* --- battle 2: nation --- */
   const N=scr('c-nation','<h2 class="mxh">Choose your nation</h2><p class="mxsub">Hover a nation to see its doctrine, morale style and strike. Click to choose.</p>');
   const nw=mxEl('div','mxnat'),nl=mxEl('div');const inp=mxEl('input');inp.id='mxnatin';inp.placeholder='Find a nation…';inp.autocomplete='off';inp.spellcheck=false;inp.oninput=mxNatFilter;
   nl.append(inp,g('pickP'));const det=mxEl('div');det.id='mxdet';nw.append(nl,det);N.appendChild(nw);
   const pp=g('pickP');pp.addEventListener('mouseover',e=>{const f=e.target.closest&&e.target.closest('.fac');if(f)mxNatShow(f);});pp.addEventListener('mouseleave',()=>mxNatShow());
   pp.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.fac')){mxTick(700);setTimeout(()=>{if(MX.cur==='c-nation')menuGo('c-players');},160);}},false);
   foot(N,go('Next: Players →',()=>menuGo('c-players')));
-  /* --- conquest 3: players --- */
+  /* --- battle 3: players --- */
   const P=scr('c-players','<h2 class="mxh">Players</h2><p class="mxsub">You against the computer. Change teams to play co-op or free-for-all; click a numbered spot on the map to choose where a side starts.</p>');
   const pw=mxEl('div','mxpl'),pl=mxEl('div'),pr=mxEl('div');
   const r1=mxEl('div','mxrow');r1.append(mxEl('div','mxlab','Main opponent'),g('aiFac'));
@@ -178,26 +171,22 @@ function mxBuild(){
   pl.append(r1,r2,r3,g('teamList'));const th=mxEl('p','mxsub','Players on the same team are allies: they share vision, never fight each other and win together.');th.style.marginTop='14px';pl.appendChild(th);
   pr.append(g('pickMap'));pw.append(pl,pr);P.appendChild(pw);
   MX.startP=go('Start battle',()=>mxClick('start'));foot(P,go('Battle options →',()=>menuGo('c-opts'),'mxlink'),MX.startP);
-  /* --- conquest 4: battle options --- */
+  /* --- battle 4: options --- */
   const O=scr('c-opts','<h2 class="mxh">Battle options</h2><p class="mxsub">Optional. The defaults are a good fight; start any time from the Players screen.</p>');
   const opt=(h,p,el)=>{const d=mxEl('div','mxopt');d.append(mxEl('h3','',h),mxEl('p','',p),el);O.appendChild(d);};
   opt('Doctrine','Your general’s battle doctrine: a free bonus for the whole battle. Or pick it in the first 2 minutes.',g('gdocSel'));
   opt('Conditions','Time of day and weather. Low sun, dusk and night change what you can see and how far.',g('wx'));
   opt('Season','Mud slows wheels, snow slows infantry. Roads matter more.',g('ssnRow'));
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
-  /* --- single player (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range") --- */
-  const SP=scr('single','<h2 class="mxh">Single player</h2><p class="mxsub">Two games. Pick one.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
+  /* --- Play (one game, Abdullah 2026-11-13 20:18; was "Single player", 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range") --- */
+  const SP=scr('single','<h2 class="mxh">Play</h2><p class="mxsub">Battle against the computer, the story missions, or learn the game.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
   const sitem=(t,d,fn,cls)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''));b.type='button';b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);sl.appendChild(b);return b;};
-  sitem('Battle','Generals-style skirmish: Command Center, supply trucks, tech up, destroy every enemy building',()=>{mxSetMode('battle');menuGo('c-map');});
+  sitem('Battle','Command Center, supply trucks and supply lines, tech up, destroy every enemy building',()=>{mxMapSync();menuGo('c-map');});
   sitem('Missions','The story missions',()=>mxClick('campaign'),'dim sep');
-  sitem('Tutorial','First time? A guided 10-minute battle',()=>mxClick('tutorial'),'dim');
-  sitem('Battle tutorial','First time in Battle? Supply Depot, Barracks, War Factory, attack',()=>{try{initAudio();startBattleTutorial();}catch(e){console.warn(e);}},'dim');
+  sitem('Tutorial','First time? A guided 10-minute Battle, supply lines included',()=>mxClick('tutorial'),'dim');
   sitem('Load game','Load a saved battle',()=>mxClick('svLoadBtn'),'dim');
   /* --- play online --- */
-  const OL=scr('online','<h2 class="mxh">Multiplayer</h2><p class="mxsub">One place to play online. Choose the game, then start one or join a friend: open games and invite codes or links for both are below.</p>');
-  const gl=mxEl('div','mxlist');gl.id='mxolg';OL.appendChild(gl);MX.olBtns={};
-  const gitem=(k,t,d)=>{const b=mxEl('button','mxi');b.type='button';b.dataset.g=k;b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);mxOnline(k);};b.onmouseenter=()=>mxTick(520);gl.appendChild(b);MX.olBtns[k]=b;};
-  gitem('battle','Battle','Generals-style: Command Center, supply trucks, tech tree');
+  const OL=scr('online','<h2 class="mxh">Multiplayer</h2><p class="mxsub">Play a Battle online: start one or join a friend - open games, invite codes and links are below.</p>');
   MX.olGo=mxEl('div','mxolgo');OL.appendChild(MX.olGo);
   const mp=[...card.querySelectorAll('.mode')].find(x=>x.querySelector('#playOnline'));if(mp)OL.appendChild(mp);
   {const lb=OL.querySelector('.label');if(lb)lb.textContent='Open games';const jc=OL.querySelector('#jcode');if(jc)jc.placeholder='Game code or invite link';}
@@ -214,13 +203,10 @@ function mxBuild(){
   new MutationObserver(()=>{if(!m.hidden)mxShown();}).observe(m,{attributes:true,attributeFilter:['hidden']});
   setInterval(mxPoll,500);
   MX.screens.title.classList.add('on');mxShown(true);}
-/* Multiplayer: which game the online screen is set for. Conquest/Battle use the shared battle lobby. */
-function mxOnline(k){if(k==='conquest'||k==='battle')MX.olG=k;k=MX.olG||'conquest';
-  mxSetMode(k);
-  for(const g in MX.olBtns)MX.olBtns[g].classList.toggle('on',g===k);
+/* Multiplayer: one game, Battle - the shared battle lobby. */
+function mxOnline(){mxMapSync();
   const po=document.getElementById('playOnline'),h=document.getElementById('host');
-  const cb=MX.olGo;if(cb){cb.innerHTML='';
-    cb.append(mxEl('span','mxolnote','Start a '+mxModeName()+' game below, or join one that is open.'));}
+  const cb=MX.olGo;if(cb){cb.innerHTML='';cb.append(mxEl('span','mxolnote','Start a Battle below, or join one that is open.'));}
   if(po)po.hidden=!!(typeof NET!=='undefined'&&(NET.code||NET.game));if(h)h.hidden=!!(typeof NET!=='undefined'&&(NET.code||NET.game));
   if(MX.cur!=='online')menuGo('online');}
 function mxMapCards(){

@@ -1356,12 +1356,13 @@ function oilTarget(o){const ALL=new Array(16).fill(true);return{oil:o,isB:true,k
 /* ---------- Ammo & SUPPLY LINES (Abdullah 2026-11-03; for Battle 2026-11-13 20:06 + 20:19 "Bring supply lines into battle") ----------
    Ground combat units carry u.am shots (max u.amx); every shot spends one. At 0 vehicles can't fire and infantry only plink with a sidearm
    (12% damage). YOUR AREA - where units refill (7% of a full load per second) - is: a circle around each of your finished buildings (Command
-   Center 380, Supply Depot 320 - half while the depot is cut off from your network -, any other base building 170), your supply trucks (230),
-   and your SUPPLY LINES: the roads that run out from your Command Center and Supply Depots (lgCover in 03c-logistics: up to LG_REACH of road from
-   each, over neutral junctions, never through an enemy base or depot, stopped by craters, blown bridges and enemy checkpoints; 120 either side).
+   Center 380, Supply Depot 320 - half while the depot is cut off from your network -, any other base building 170), every map building you
+   hold (derricks, power plants, quarries, mines, hospitals: 170; an ammo dump 340 and twice as fast), your supply trucks (230), and your SUPPLY
+   LINES: the roads that run out from those buildings (lgCover in 03c-logistics: up to LG_REACH of road from each, over neutral junctions, never
+   through an enemy base or depot; craters, blown bridges, enemy checkpoints and enemy troops standing on a road cut it; 120 either side).
    Outside it units fight on until their ammo is empty, then they must come back or get a supply truck - there are no timers.
    Test range: unlimited ammo, no badge. Host-only; clients get am/supply as bits of the unit snapshot. */
-const SUP_R={hq:380,depot:320,harv:230,base:170,road:120};
+const SUP_R={hq:380,depot:320,harv:230,base:170,road:120,ammo:340};   // ammo = a captured ammo dump (orch/techbldgs): the strongest point, refills twice as fast
 const SUP_NOB=['wall','gate','mine','tunnel'];
 function ammoOn(){return !!G&&!G.sandbox;}
 function hasAmmo(u){const s=u.s;return ammoOn()&&!!s&&!u.isB&&s.dom==='ground'&&s.dmg>0&&s.rof>0&&!s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker';}
@@ -1373,12 +1374,14 @@ function supplyPoints(){const N=G.teams.length,P=[];for(let i=0;i<N;i++)P.push([
   for(const e of G.ents){if(e.dead||e.inTun||e.team==null||e.team<0||e.team>=N)continue;let r=0;
     if(e.isB){if(e.built<1||SUP_NOB.includes(e.kind))continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot*(e.lcut?.5:1):SUP_R.base;}else if(e.kind==='harv')r=SUP_R.harv;
     if(r)add(e.team,{x:e.x,y:e.y,r});}
+  // every map building a side holds (oil derrick, power plant, quarry, mine, field hospital, ammo dump...: G.oil rows) is a forward supply point (Abdullah 2026-11-13 20:53)
+  if(G.oil)for(const o of G.oil)if(!o.dead&&o.owner>=0&&o.owner<N)add(o.owner,o.tb==='ammo'?{x:o.x,y:o.y,r:SUP_R.ammo,f:2}:{x:o.x,y:o.y,r:SUP_R.base});
   const B=G.lg&&G.lg.bead;if(B)for(let k=0;k<N&&k<B.length;k++)if(B[k])for(const p of B[k])add(k,p);
   return P;}
 function updSupply(dt){if(G.lgd)lgMines(dt);G.supT=(G.supT||0)+dt;if(G.supT<.5)return;const st=G.supT;G.supT=0;if(G.lg)lgTick(st);polTick(st);const P=supplyPoints();
-  for(const u of G.ents){if(u.dead||u.isB||u.inTun)continue;const pts=P[u.team];if(!pts)continue;let ins=false;for(const p of pts){if(Math.abs(p.x-u.x)<p.r&&Math.abs(p.y-u.y)<p.r&&Math.hypot(p.x-u.x,p.y-u.y)<p.r){ins=true;break;}}
+  for(const u of G.ents){if(u.dead||u.isB||u.inTun)continue;const pts=P[u.team];if(!pts)continue;let ins=false,fk=1;for(const p of pts){if(Math.abs(p.x-u.x)<p.r&&Math.abs(p.y-u.y)<p.r&&Math.hypot(p.x-u.x,p.y-u.y)<p.r){ins=true;if(p.f>fk)fk=p.f;if(fk>=2)break;}}
     u.sup=ins?1:0;
-    if(hasAmmo(u)){if(u.am===undefined)ammoInit(u);if(ins&&u.am<u.amx)u.am=Math.min(u.amx,u.am+u.amx*.07*st);}}
+    if(hasAmmo(u)){if(u.am===undefined)ammoInit(u);if(ins&&u.am<u.amx)u.am=Math.min(u.amx,u.am+u.amx*.07*fk*st);}}
   // low / empty warnings (once per 25 s per side, only when it matters)
   if(ammoOn())for(const T of G.teams){if(T.out||G.t-(T.amWarn??-99)<25)continue;let low=0,zero=0,n=0;for(const u of G.ents){if(u.team!==T.id||u.dead||u.isB||u.am===undefined)continue;n++;if(u.am<=0)zero++;else if(u.am<u.amx*.25)low++;}
     if(n&&zero>=Math.max(2,n*.2)){T.amWarn=G.t;log(T.id,'Out of ammo! Bring them back inside your supply area (buildings, depots, supply lines) or send a supply truck.','bad');}else if(n&&low+zero>=Math.max(2,n*.3)){T.amWarn=G.t;log(T.id,'Running low on ammo - your supply lines, depots and supply trucks refill it.','w');}}}

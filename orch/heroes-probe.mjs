@@ -23,7 +23,6 @@ for (let i = 0; i < facs.length; i += 2) {
       for(let j=0;j<4;j++){const u=addUnit(o,'tank',h.x+60+j*10,h.y+40);for(const t of G.teams)u.vs[t.id]=true;}
       for(let j=0;j<4;j++)addUnit(${k},'inf',h.x-20,h.y+j*8);
       const b=addBld(o,'barracks',h.x+90,h.y,true);for(const t of G.teams)b.vs[t.id]=true;
-      if(G.towns&&G.towns[0]){G.towns[0].x=h.x+50;G.towns[0].y=h.y-50;G.towns[0].ow=o;G.towns[0].reb=0;}
       const ok=heroAbility(h);return JSON.stringify([ok,h.s.hab,h.habT>G.t])})()`);
     console.log(pair[k], nm, r);
     ck(/\[true,/.test(r), pair[k] + ' ability should fire: ' + r);

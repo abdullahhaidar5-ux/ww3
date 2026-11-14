@@ -20,12 +20,11 @@ const ck = (c, m) => { if (!c) fails.push(m); };
 // key words must still be in one of the two files, and CLAUDE.md must stay short.
 { const rules = ['CLAUDE.md', 'orch/DECISIONS.md'].map(f => { try { return fs.readFileSync(path.join(ROOT, f), 'utf8'); } catch { return ''; } });
   const all = rules.join('\n').toLowerCase();
-  const KEYS = ['world simulator', 'what would really happen', 'no decorative or ambient aircraft', 'left-click selects', 'right-click moves', 'attack-move', 'w a s d', 'ctrl+a',
+  const KEYS = ['one game', 'abandon conquest and campaign', 'bring supply lines into battle', 'super super polished', 'no decorative or ambient aircraft', 'left-click selects', 'right-click moves', 'attack-move', 'w a s d', 'ctrl+a',
     'rotates the battle camera', 'pointer lock', 'no big ugly buttons', 'radwan training', 'lebanese shia', 'zaidi shia movement', 'iraqi shia brigades', 'palestine islamic brigade',
     'desert islamic faction', 'zealous', 'professional', 'home defenders', 'firepower-reliant', 'mountain fortress', 'bunker buster', 'dear leader', 'ayatollah', 'shared soundtrack',
-    'free art only', 'cloudflare', 'servers-live', 'autodeploy', 'play online', 'pc only', 'conquest', 'zero hour', 'supply lines', 'real time with pause', 'fight-it', 'army only',
-    'no production', 'realistic start', 'balanced', 'ai hard', 'smooth first', 'one system per idea', 'leftovers', 'grand campaign', 'missions', 'artifact', 'orch/brief.md',
-    'orch/decisions.md', 'never read', 'cigate.sh', 'no new runtime dependencies', 'multiplayer', '300 units', 'phone', 'end turn', 'eu4'];
+    'free art only', 'cloudflare', 'servers-live', 'autodeploy', 'play online', 'pc only', 'zero hour', 'supply lines', 'ammo rule', 'test range', 'ai hard', 'smooth first', 'one system per idea',
+    'leftovers', 'missions', 'artifact', 'orch/brief.md', 'orch/decisions.md', 'never read', 'cigate.sh', 'no new runtime dependencies', 'multiplayer', '300 units', 'phone'];
   const miss = KEYS.filter(k => !all.includes(k));
   if (miss.length) fails.push('decisions missing from CLAUDE.md + orch/DECISIONS.md: ' + miss.join(', '));
   const sz = fs.existsSync(path.join(ROOT, 'CLAUDE.md')) ? fs.statSync(path.join(ROOT, 'CLAUDE.md')).size : 0;
@@ -61,7 +60,8 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/UK\.match\(en\.f,en\.k/.test(enc) && /matchUp\(f,s\.kind,f\)/.test(idn), 'one language 3: Encyclopedia / Unit guide no longer use the computed BEATS / WEAK TO'); }
 { const fh = SRC['08l-firsthint.js'] || '', so = SRC['08b-social.js'] || '', mn = SRC['14-menu.js'] || '';
   ck(/FH_TEXT/.test(fh) && ['Battle', 'Mission', 'Test range'].every(m => fh.includes("'" + m + "':")) && !fh.includes("'Conquest':"), 'polishE: a mode lost its first-steps hint card');
-  ck(/const TUTB=\[/.test(so) && /function startBattleTutorial/.test(so) && /startBattleTutorial/.test(mn), 'polishE: the Battle tutorial is gone from the menu'); }
+  ck(/const TUTB=\[/.test(so) && /function startBattleTutorial/.test(so) && /startBattleTutorial\(\)/.test(so.slice(so.indexOf('function socialMenu'))), 'polishE: the Battle tutorial is gone from the menu');
+  ck(!/const TUTC=|function startTutorial\(|tutTown\(/.test(so) && /let TUT=TUTB;/.test(so) && /\{k:'sup',/.test(so) && /LGU\.on/.test(so), 'one game: the ONE tutorial is the Battle tutorial and it teaches the supply lines (step sup: press L)'); }
 // ---- fortline (Abdullah 2026-11-11 19:02 "only the construction vehicle can build a fortification line, other units just dig in"): the old infantry-builds-lines way must not come back
 { const t = SRC['03b-tactics.js'] || '', u = SRC['08c-tactui.js'] || '';
   ck(/function wallOrder\([^)]*\)\{us=us\.filter\(u=>u&&!u\.dead&&u\.kind==='dozer'\)/.test(t), 'fortline: wallOrder must accept Construction Vehicles only');
@@ -176,9 +176,9 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/k==='a'&&\(e\.ctrlKey\|\|e\.metaKey\)[^\n]*selectArmy\(\)/.test(u), 'Ctrl+A no longer selects the whole army in battle');
   ck(/k==='q'[^\n]*CROT\.hold=true/.test(u) && /function camRotSnap/.test(u), 'Q no longer rotates the battle camera');
   ck(!/\(Q\)|Q: army/.test(u), 'a tooltip/hint still says Q selects the army'); }
-// 3. Main menu order + naming (2026-11-07 21:41): Single player · Multiplayer · Test range, then small extras; no Classic.
+// 3. Main menu order + naming (2026-11-07 21:41; one game 2026-11-13 20:18): Play · Multiplayer · Test range, then small extras; no Classic.
 { const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).filter(Boolean).slice(0, 3);
-  ck(m.join('|') === 'Single player|Multiplayer|Test range', 'main menu order is ' + m.join(' · '));
+  ck(m.join('|') === 'Play|Multiplayer|Test range', 'main menu order is ' + m.join(' · '));
   for (const f of ['14-menu.js', '08d-lobby.js']) ck(!/['">]Classic[<'"]/.test(SRC[f]), 'Classic mode still named in ' + f); }
 // 4. ONE GAME (Abdullah 2026-11-13 20:18 "Abandon conquest and campaign entirely remove them from the game"): the grand campaign is gone -
 //    no src/13* modules, no lazy bundle / loader, no grand code path or typeof-guarded call into it anywhere in src/.
@@ -251,20 +251,20 @@ try {
     ck(L.b.join() === L.keys.join() && L.nk >= 116, 'Battle map list must be the Battle maps then every other battlefield, got ' + L.b.length + ' options (' + L.b.slice(0, 4).join(',') + ')');
     ck(!L.link, 'the map picker still has the "Conquest battlefields too" link');
     ck(L.facts.every(f => f && f.name && f.players >= 2 && f.size && f.theme && f.desc && f.supply >= 2 * f.players && f.oil >= 2), 'every Battle map needs a name, player count, size, theme, one line, supply sources and oil derricks'); }
-  // MENU STRUCTURE (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range", "These are distinct"; 21:38 three games): the top level is exactly Single player, Multiplayer, Test range (+ small extras)
-  { const big = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => b.offsetParent && !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => ((b.firstChild||{}).textContent||'').trim()).filter(Boolean));
-    ck(big.join('|') === 'Single player|Multiplayer|Test range', 'main menu top level should be exactly Single player|Multiplayer|Test range, got ' + big.join('|'));
+  // MENU STRUCTURE (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range"; one game 2026-11-13 20:18): the top level is exactly Play, Multiplayer, Test range (+ small extras)
+  { const big = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => b.offsetParent && !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => ((b.firstChild||{}).textContent||'').trim()));
+    ck(big.join('|') === 'Play|Multiplayer|Test range', 'main menu top level should be exactly Play|Multiplayer|Test range, got ' + big.join('|'));
     const sm = await ev(() => [...document.querySelectorAll('#mxmenu .mxi.dim')].map(b => b.textContent.trim()));
     ck(sm.every(t => /^(Settings|Extras|Credits)/.test(t)), 'only Settings/Extras/Credits may be small top-level extras, got ' + sm.join('|'));
     const all = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
-    for (const bad of ['Grand campaign', 'Conquest', 'Battle', 'Missions', 'Tutorial', 'Play online']) ck(!all.includes(bad), 'game mode "' + bad + '" must not be on the top level');
+    for (const bad of ['Grand campaign', 'Conquest', 'Battle', 'Missions', 'Tutorial', 'Play online', 'Single player']) ck(!all.includes(bad), '"' + bad + '" must not be on the top level');
     await ev(() => menuGo('single'));
-    const sp = await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).map(b => ((b.firstChild||{}).textContent||'').trim()));
-    ck(sp.filter(t => /^(Grand campaign|Conquest|Battle)$/.test(t)).join('|') === 'Conquest|Battle' && sp.includes('Missions') && sp.includes('Tutorial') && sp.includes('Load game') && !sp.some(t => /campaign/i.test(t)), 'Single player should list Conquest|Battle then Missions, Tutorial, Load game and NO Grand campaign (paused 2026-11-13), got ' + sp.join('|'));
-    ck(await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).every(b => b.querySelector('small'))), 'every Single player item needs a one-line description');
+    const sp = await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden && b.id !== 'mxContSP').map(b => ((b.firstChild||{}).textContent||'').trim()));
+    ck(sp.join('|') === 'Battle|Missions|Tutorial|Load game', 'Play should list exactly Battle, Missions, Tutorial, Load game, got ' + sp.join('|'));
+    ck(await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).every(b => b.querySelector('small'))), 'every Play item needs a one-line description');
+    ck(await ev(() => !/Conquest|campaign/i.test(document.getElementById('ms-single').textContent) && !/Conquest/i.test((document.getElementById('ms-c-map') || {}).textContent || '')), 'Play window / map screen still mention Conquest or the campaign');
     await ev(() => menuGo('online'));
-    const mpg = await ev(() => [...document.querySelectorAll('#ms-online #mxolg .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
-    ck(mpg.join('|') === 'Conquest|Battle', 'Multiplayer should offer Conquest|Battle only (campaign paused 2026-11-13), got ' + mpg.join('|'));
+    ck(await ev(() => !document.querySelector('#ms-online #mxolg') && !/Conquest|campaign/i.test(document.getElementById('ms-online').textContent)), 'Multiplayer must be Battle only (no game choice, no Conquest/campaign)');
     ck(await ev(() => typeof mxOnline === 'function' && !!document.getElementById('jcode') && typeof gnLobbyStart === 'undefined'), 'Multiplayer needs the join box, and no campaign lobby');
     await ev(() => menuGo('extras')); const ext = await ev(() => [...document.querySelectorAll('#ms-extras .mxi')].map(b => b.textContent.trim()));
     ck(!ext.some(t => /campaign/i.test(t)), 'Extras must not list the grand campaign (removed 2026-11-14), got ' + ext.join('|'));
@@ -377,7 +377,7 @@ try {
     const rf = await ev(() => { const T = G.teams[ME], hq = G.ents.find(e => e.team === ME && e.kind === 'hq' && !e.dead), vis = () => { try { syncScene(.016); } catch (e) {} return !!(RALLY && RALLY.visible); };
       T.rally = { x: hq.x + 90, y: hq.y + 90 }; G.sel = []; vis(); RV.fl = 0; const away = vis(); G.sel = [hq]; const sel = vis(); G.sel = []; const gone = vis(); G.sel = []; return { away, sel, gone }; });
     console.log('rally flag', JSON.stringify(rf)); ck(!rf.away && rf.sel && !rf.gone, 'rally flag must show only while a production building is selected: ' + JSON.stringify(rf));
-    ck(sl.mini === 0 && sl.world === 0, 'Battle draws supply lines (minimap ' + sl.mini + ', ground ' + sl.world + ' draw calls)'); ck(!sl.on && !sl.wanted, 'Battle supply overlay can be switched on'); ck(sl.chip, 'Battle shows the "Supply OK" chip'); ck(!sl.ui, 'Battle ammo row mentions in/out of supply'); }
+  }
   ck(bt.battle && !bt.towns, 'Battle game did not start in Battle mode (or has towns)');
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
   ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');

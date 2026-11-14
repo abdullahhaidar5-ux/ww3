@@ -9,7 +9,7 @@ const ED_TOOLS=[['pan','✋','Move','Drag to move the view. Two fingers or the m
   ['lower','🕳','Lower','Dig ponds and lakes (water).'],['flat','▭','Flatten','Clear mountains and ponds under the brush.'],
   ['river','🌊','River','Drag to draw a river. Add a bridge or the two sides cannot reach each other.'],['bridge','🌉','Bridge','Tap a river to put a bridge across it (or drag across the water).'],
   ['road','🛣','Road','Drag to lay a road.'],['forest','🌲','Forest','Paint woods: cover for infantry, slows vehicles.'],['rocks','🪨','Rocks','Stamp small rock outcrops.'],
-  ['town','🏘','Town','Tap to put a town of civilian buildings.'],['oil','🛢','Oil','Tap to put an oil derrick.'],['ham','🛖','Hamlet','Tap to put a hamlet: a few houses you can capture and tax. Put one safe hamlet behind each start and some in the middle.'],['supply','📦','Supply','Tap to put a supply field.'],
+  ['town','🏘','Town','Tap to put a town of civilian buildings.'],['oil','🛢','Oil','Tap to put an oil derrick.'],['ham','🛖','Hamlet','Tap to put a hamlet: a few houses infantry can garrison for cover. Put one behind each start and some in the middle.'],['supply','📦','Supply','Tap to put a supply field.'],
   ['start','🚩','Start','Tap to place a start position (numbered in the order placed).'],['erase','🧽','Erase','Remove anything under the brush.']];
 const ED_STYLE_NAMES=['Middle East','Russia','Europe','America','Yemen','Gulf city','Korea','Asia','Latin America','South Asia'];
 function edBlank(){return{nm:'My map',n:2,z:1,th:'desert',sl:[],rv:[],rg:[],rd:[],lk:[],pk:[],wd:[],ct:[],oil:[],hm:[],fl:[],br:[]};}

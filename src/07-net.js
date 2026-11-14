@@ -101,7 +101,7 @@ async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hos
   try{const g=await joinT('tc-'+code,20000,1);if(NET.code!==code){try{g.leave();}catch(e){}return;}NET.game=g;}catch(e){if(NET.code!==code)return;$('mpstatus').textContent=window.WW3_P2P?'Could not reach the online matchmaking service. Check your internet connection and try again.':'Could not open a game room. Try again in a moment.';cancelHost();return;}
   wireHost(NET.game);
   try{await NET.game.emit('lobby',{n:1,probe:1});}catch(e){if(e&&e.code==='not_permitted'){noPerm();cancelHost();return;}}
-  await NET.room.presence({g:{c:code,f:setup.p,s:'open',n:1,bm:setup.mode==='battle'?1:0,pw:NET.pw?1:undefined}}).catch(()=>{});renderLobby();renderGames();}
+  await NET.room.presence({g:{c:code,f:setup.p,s:'open',n:1,pw:NET.pw?1:undefined}}).catch(()=>{});renderLobby();renderGames();}
 /* ---------- Battles on Cloudflare (Stage 2: the battle runs on the World War 3 servers) ----------
    The creating player's page opens a battle room on the servers with its own key and sends its setup there; the
    server (a BattleRoom) becomes the host, and every human - the creator included - plays as an ordinary client: the
@@ -187,7 +187,7 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   // a Cloudflare battle is listed in the game list by the server itself; the owner's edits go to the server
   if(cfb){cfPush();return;}
   try{glBroadcast(mk,mx);}catch(e){}
-  NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,bm:setup.mode==='battle'?1:0,m:setup.map||'strait',mx,pw:NET.pw?1:undefined,sp:1,ns:(NET.lobbySpec||[]).length||undefined}}).catch(()=>{});}
+  NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,m:setup.map||'strait',mx,pw:NET.pw?1:undefined,sp:1,ns:(NET.lobbySpec||[]).length||undefined}}).catch(()=>{});}
 function lobbyTeams(){const nh=NET.lobby.length+1;return [...(NET.tm||[]).slice(0,nh),...(NET.ais||[]).map(a=>a.tm|0)];}
 // Start spots in the lobby: one per seat (players then computer players; -1 = Random). Picks made for one set of spots
 // (map and player count) are dropped when the set changes, so a number always means the spot the leader saw.

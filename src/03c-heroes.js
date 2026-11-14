@@ -23,9 +23,9 @@ const HABF={
     FXE('ping',[u.x|0,u.y|0,520],u.team);return true;},
   ambush(u){for(const e of G.ents)if(!e.dead&&!e.isB&&e.team===u.team&&e.s&&(e===u||isInf(e.s))&&Math.hypot(e.x-u.x,e.y-u.y)<220)e.hambT=G.t+8;return true;},
   cut(u){const L=G.lg,D=G.lgd;if(!L||!D||!L.cov)return false;let best=null,bd=260;   // crater the nearest enemy supply road within 260 m (the line is cut behind it, ~150 s)
-    for(let i=0;i<L.E.length;i++){if(D.cr[i]&&D.cr[i].t>G.t)continue;if(!L.cov.some((C,k)=>C&&C[i]&&!G.teams[k].reb&&!ally(k,u.team)))continue;const q=lgProj(L.E[i],u.x,u.y);if(q&&q.d<bd){bd=q.d;best={i,x:q.x,y:q.y};}}
+    for(let i=0;i<L.E.length;i++){if(D.cr[i]&&D.cr[i].t>G.t)continue;if(!L.cov.some((C,k)=>C&&C[i]&&C[i].v.length&&!G.teams[k].reb&&!ally(k,u.team)))continue;const q=lgProj(L.E[i],u.x,u.y);if(q&&q.d<bd){bd=q.d;best={i,x:q.x,y:q.y};}}
     if(!best)return false;D.cr[best.i]={x:Math.round(best.x),y:Math.round(best.y),t:G.t+LG_CRATER_T};D.v++;FXE('boom',[best.x|0,best.y|0,18,1]);
-    log(u.team,'Charges blown: the enemy supply road is cut.','g',best.x,best.y);for(let k=0;k<G.teams.length;k++){const C=L.cov[k];if(C&&C[best.i]&&!ally(k,u.team)&&!G.teams[k].reb)log(k,'Enemy fighters blew up one of our supply roads - the line is cut behind it.','bad',best.x,best.y);}return true;}
+    log(u.team,'Charges blown: the enemy supply road is cut.','g',best.x,best.y);for(let k=0;k<G.teams.length;k++){const C=L.cov[k];if(C&&C[best.i]&&C[best.i].v.length&&!ally(k,u.team)&&!G.teams[k].reb)log(k,'Enemy fighters blew up one of our supply roads - the line is cut behind it.','bad',best.x,best.y);}return true;}
 };
 function heroAbility(u){
   if(!u||u.dead||u.isB||u.kind!=='champ'||!u.s.hab||!HABF[u.s.hab])return false;const T=G.teams[u.team],ab=u.s.hab;

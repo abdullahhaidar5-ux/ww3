@@ -38,7 +38,7 @@ function aarPage(){try{aarSample();}catch(e){}if(!AAR.s.length||AAR.g!==G)return
   const W=520,H=Math.round(520*MAPH/MAPW);
   box.innerHTML='<div style="font:700 12px IBM Plex Mono,monospace;letter-spacing:.1em;color:#e3b341;margin-bottom:6px">AFTER-ACTION MAP</div><canvas width="'+W+'" height="'+H+'" style="width:100%;border:1px solid #3a463f;border-radius:3px;background:#0b0f0d;display:block"></canvas>'+
    '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><button type="button" id="aarPlay" style="background:#1f2a23;color:#cfe8d6;border:1px solid #4a5a50;border-radius:3px;padding:3px 10px;cursor:pointer">▶ Replay</button><input id="aarSl" type="range" min="0" max="'+(AAR.s.length-1)+'" value="'+(AAR.s.length-1)+'" style="flex:1"><span id="aarT" style="font:12px IBM Plex Mono,monospace;min-width:44px;text-align:right"></span></div>'+
-   '<div style="font-size:11.5px;opacity:.8;margin-top:4px">White line = front line · flag = town captured · red ! = revolt · orange burst = big fight · yellow cross = missile strike</div>';
+   '<div style="font-size:11.5px;opacity:.8;margin-top:4px">White line = front line · orange burst = big fight · yellow cross = missile strike</div>';
   ($('endStats')||$('ends')).after(box);
   const cv=box.querySelector('canvas'),sl=$('aarSl'),tt=$('aarT'),pb=$('aarPlay');
   const show=k=>{AAR.cur=k;aarDraw(cv,k);const t=AAR.s[Math.max(0,Math.min(AAR.s.length-1,k|0))].t;tt.textContent=Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');};

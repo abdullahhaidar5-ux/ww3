@@ -46,7 +46,7 @@ const DIFF_NAME = ['Easy', 'Normal', 'Hard'][DIFF];
 const MAPS_ARG = String(argS('maps', 'strait,oasis,plateau')).split(',').map(s => s.trim()).filter(Boolean);
 const FAC_ARG = argS('factions', '') ? argS('factions', '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : null;
 const SWAP = has('swap');
-const PAIRS = argS('pairs', '') ? argS('pairs', '').split(',').map(x => x.trim().toUpperCase().split('-')).filter(x => x.length === 2) : [], REAL = has('real');   // --pairs US-IR,RU-UA : only these matchups (GAMES each, sides alternate); --real : lobby Realistic mode
+const PAIRS = argS('pairs', '') ? argS('pairs', '').split(',').map(x => x.trim().toUpperCase().split('-')).filter(x => x.length === 2) : [], REAL = false;   // --real (Realistic balance) was removed with Conquest (2026-11-14)   // --pairs US-IR,RU-UA : only these matchups (GAMES each, sides alternate); --real : lobby Realistic mode
 const FULL = has('full'), DRY = has('dry'), REAL_CLOCK = has('real-clock');
 const ONLY = argS('match', '') !== '' ? Number(argS('match', '')) : null;
 const ADJ = Number(argS('adj', 1.5));

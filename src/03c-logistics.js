@@ -38,27 +38,56 @@ function lgCompute(){const L=G.lg,D=G.lgd,n=L.N.length,Nt=G.teams.length;
       (mode?L.trade:L.reach).push(seen);}}
   for(let j=L.nS;j<n;j++){const nd=L.N[j],e=G.byId.get(nd.e);if(!e)continue;const r=L.reach[nd.tm];e.lcut=r&&!r[j]&&!(e.air>G.t)?1:0;}
   lgCover();G.lgv=(G.lgv|0)+1;}
-// SUPPLY LINES per team: how far each road is covered from each end (Dijkstra over road length from the team's HQ base node and its own
-// depots/ports, LG_REACH each, half for a cut-off depot or a blockaded port; never through an enemy node, never over a closed road).
-// L.cov[k][i] = [from end a, from end b, dash]: dash = 1 for a closed road the network runs up to. L.bead[k] = circles along covered road (the area).
+// SUPPLY LINES per team (Abdullah 2026-11-13 20:19 / 20:43 "If you own a road do units get automatically supplied" - yes / 20:53 captured
+// buildings resupply). Sources: the team's base node (while its Command Center stands) and its depots/ports (graph nodes), and every other
+// finished building of the team and every map building it holds (derrick, power plant, quarry, mine, hospital... = G.oil rows) that stands
+// within LG_ATTACH of a road: the road is covered from there. Each source reaches LG_REACH along the roads (a cut-off depot or blockaded port half),
+// over neutral junctions, never through an enemy base/depot. A road is CUT for team k at a crater, a blown bridge, an enemy checkpoint
+// (lgBlk: the whole edge) and wherever an enemy ground unit stands on it (lgCuts): coverage stops there and the stretch the line would
+// have reached beyond the cut is marked dashed. L.cov[k][i] = {v:[[s0,s1],..] covered, d:[[s0,s1],..] cut} along edge i (road length from
+// end a); L.bead[k] = circles along the covered road = the road part of the supply area (03-sim supplyPoints). Deterministic, host and client alike.
+const LG_ATTACH=260,LG_CUTR=55;
+function lgIvAdd(L,a,b){if(b-a<1)return;L.push([a,b]);}
+function lgIvNorm(L){if(L.length<2)return L;L.sort((p,q)=>p[0]-q[0]);const o=[L[0].slice()];for(let i=1;i<L.length;i++){const t=o[o.length-1];if(L[i][0]<=t[1]+1)t[1]=Math.max(t[1],L[i][1]);else o.push(L[i].slice());}return o;}
+// enemy ground units standing on a road cut it: for team k, edge index -> sorted road positions of the cuts
+function lgCuts(k){const L=G.lg,out={};for(const u of G.ents){if(u.dead||u.isB||u.inTun||u.team==null||u.team<0||!u.s||u.s.dom!=='ground'||u.s.noAttack||u.kind==='harv'||u.kind==='dozer'||ally(u.team,k)||(G.teams[u.team]&&G.teams[u.team].reb&&!u.s))continue;
+    for(let i=0;i<L.E.length;i++){const e=L.E[i],b=e.bb;if(u.x<b[0]-LG_CUTR||u.x>b[2]+LG_CUTR||u.y<b[1]-LG_CUTR||u.y>b[3]+LG_CUTR)continue;const q=lgProj(e,u.x,u.y);if(q.d<LG_CUTR)(out[i]||(out[i]=[])).push(q.s);}}
+  for(const i in out)out[i].sort((a,b)=>a-b);return out;}
 function lgCover(){const L=G.lg,n=L.N.length,Nt=G.teams.length,adj=L.N.map(()=>[]);L.cov=[];L.bead=[];
   L.E.forEach((e,i)=>{if(e.a===e.b)return;adj[e.a].push([e.b,i,0]);adj[e.b].push([e.a,i,1]);});
   for(let k=0;k<Nt;k++){const T=G.teams[k];if(T.reb||T.out||!L.reach){L.cov.push(null);L.bead.push(null);continue;}
-    const left=new Float64Array(n).fill(-1),C={};
+    const left=new Float64Array(n).fill(-1),C={},cut=lgCuts(k),cv=i=>C[i]||(C[i]={v:[],d:[]});
+    // walk edge ei from road position s0 in direction dir (+1 = toward end b) with budget r: returns how far it got and whether it reached the end
+    const walk=(ei,s0,dir,r)=>{const e=L.E[ei],c=cv(ei),len=e.len;if(lgBlk(ei,k)){const a=Math.min(r,dir>0?len-s0:s0);lgIvAdd(c.d,dir>0?s0:s0-a,dir>0?s0+a:s0);return -1;}
+      const cs=cut[ei]||[];let lim=dir>0?len:0;for(const x of cs){if(dir>0&&x>s0+1){lim=x;break;}if(dir<0&&x<s0-1)lim=x;}
+      const room=dir>0?lim-s0:s0-lim,go=Math.min(r,room);lgIvAdd(c.v,dir>0?s0:s0-go,dir>0?s0+go:s0);
+      if(go<r&&lim!==(dir>0?len:0)){const more=Math.min(r-go,dir>0?len-lim:lim);lgIvAdd(c.d,dir>0?lim:lim-more,dir>0?lim+more:lim);return -1;}
+      return go>=room?r-room:-1;};
+    // node sources: the base (while its Command Center stands), own depots and ports
     for(let i=0;i<n;i++){const nd=L.N[i];if(!lgNodeOwn(nd,k))continue;let r=0;
-      if(nd.b>=0){if(hqOf(nd.b)&&ally(nd.b,k)&&G.ents.some(e=>e.kind==='hq'&&!e.dead&&e.team===nd.b&&Math.hypot(e.x-nd.x,e.y-nd.y)<700))r=LG_REACH;}
+      if(nd.b>=0){if(G.ents.some(e=>e.kind==='hq'&&!e.dead&&e.built>=1&&ally(e.team,k)&&Math.hypot(e.x-nd.x,e.y-nd.y)<700))r=LG_REACH;}
       else if(nd.e){const e=G.byId.get(nd.e);if(e&&!e.dead)r=LG_REACH*((e.lcut||(nd.port&&lgPortBlk(nd)))?.5:1);}
       if(r>left[i])left[i]=r;}
+    // building / captured-building sources: the nearest road within LG_ATTACH, covered both ways from the point closest to it
+    const src=[];for(const e of G.ents){if(e.dead||!e.isB||e.built<1||e.team==null||!ally(e.team,k)||e.kind==='hq'||e.kind==='depot'||e.kind==='shipyard'||e.kind==='wall'||e.kind==='gate'||e.kind==='mine'||e.kind==='garrison'||e.kind==='tunnel')continue;src.push(e);}
+    for(const o of G.oil||[])if(!o.dead&&o.owner>=0&&ally(o.owner,k))src.push(o);
+    for(const b of src){let best=null,bd=LG_ATTACH,bi=-1;for(let i=0;i<L.E.length;i++){const e=L.E[i],q0=e.bb;if(b.x<q0[0]-LG_ATTACH||b.x>q0[2]+LG_ATTACH||b.y<q0[1]-LG_ATTACH||b.y>q0[3]+LG_ATTACH)continue;const q=lgProj(e,b.x,b.y);if(q.d<bd){bd=q.d;best=q;bi=i;}}
+      if(!best)continue;const e=L.E[bi];const ra=walk(bi,best.s,-1,LG_REACH),rb=walk(bi,best.s,1,LG_REACH);
+      if(ra>left[e.a]&&!lgNodeFoe(L.N[e.a],k))left[e.a]=ra;if(rb>left[e.b]&&!lgNodeFoe(L.N[e.b],k))left[e.b]=rb;}
+    // spread over the network, farthest budget first (Dijkstra on remaining road length)
     const done=new Uint8Array(n);
     for(;;){let b=-1,bv=0;for(let i=0;i<n;i++)if(!done[i]&&left[i]>bv){bv=left[i];b=i;}if(b<0)break;done[b]=1;
-      for(const [j,ei,rev] of adj[b]){const e=L.E[ei],c=C[ei]||(C[ei]=[0,0,0]);
-        if(lgBlk(ei,k)){c[2]=1;const a=Math.min(bv,e.len*.5);if(rev)c[1]=Math.max(c[1],a);else c[0]=Math.max(c[0],a);continue;}
-        if(rev)c[1]=Math.max(c[1],Math.min(bv,e.len));else c[0]=Math.max(c[0],Math.min(bv,e.len));
-        const rest=bv-e.len;if(rest>0&&!lgNodeFoe(L.N[j],k)&&rest>left[j])left[j]=rest;}}
-    const bead=[];for(const ei in C){const c=C[ei];if(c[2])continue;const e=L.E[ei],cm=e.cum,P=e.pts,L0=e.len;
-      for(let s=0;s<=L0;s+=LG_ROADW){if(!(s<=c[0]||s>=L0-c[1]))continue;let m=1;while(m<cm.length-1&&cm[m]<s)m++;const f=cm[m]>cm[m-1]?(s-cm[m-1])/(cm[m]-cm[m-1]):0;
+      for(const [j,ei,rev] of adj[b]){const e=L.E[ei],rest=walk(ei,rev?e.len:0,rev?-1:1,bv);
+        if(rest>0&&!lgNodeFoe(L.N[j],k)&&rest>left[j]){left[j]=rest;done[j]=0;}}}
+    const bead=[];for(const ei in C){const c=C[ei];c.v=lgIvNorm(c.v);c.d=lgIvNorm(c.d);const e=L.E[ei],cm=e.cum,P=e.pts;
+      for(const [a,b2] of c.v)for(let s=a;s<=b2+.5;s+=LG_ROADW){let m=1;while(m<cm.length-1&&cm[m]<s)m++;const f=cm[m]>cm[m-1]?Math.max(0,Math.min(1,(s-cm[m-1])/(cm[m]-cm[m-1]))):0;
         bead.push({x:P[m-1][0]+(P[m][0]-P[m-1][0])*f,y:P[m-1][1]+(P[m][1]-P[m-1][1])*f,r:LG_ROADW,rd:1});}}
-    L.cov.push(C);L.bead.push(bead);}}
+    L.cov.push(C);L.bead.push(bead);}
+  let sg='';for(let k=0;k<Nt;k++){const C=L.cov[k];if(C)for(const ei in C){const c=C[ei];sg+=k+':'+ei+':'+c.v.map(q=>(q[0]|0)+'-'+(q[1]|0)).join(',')+'/'+c.d.length+';';}}if(sg!==L.csig){L.csig=sg;G.lgv=(G.lgv|0)+1;}}
+// cheap test: has anything that moves the supply lines changed since the last lgCover? (enemy units on roads, buildings, captures)
+function lgCoverSig(){const L=G.lg;let s='';for(const e of G.ents){if(e.dead)continue;if(e.isB){if(e.built>=1&&e.team!=null)s+='b'+e.id+',';continue;}if(!e.s||e.s.dom!=='ground'||e.inTun||e.s.noAttack)continue;
+    for(let i=0;i<L.E.length;i++){const b=L.E[i].bb;if(e.x<b[0]-LG_CUTR||e.x>b[2]+LG_CUTR||e.y<b[1]-LG_CUTR||e.y>b[3]+LG_CUTR)continue;const q=lgProj(L.E[i],e.x,e.y);if(q.d<LG_CUTR){s+='u'+e.team+':'+i+':'+((q.s/60)|0)+',';}}}
+  for(const o of G.oil||[])s+=o.dead?'x':(o.owner+1);return s;}
 // is road edge i closed for team k: cratered, over a blown bridge, or held by an enemy checkpoint
 function lgBlk(i,k){const D=G.lgd,c=D.cr[i];if(c&&c.t>G.t)return true;const e=G.lg.E[i],B=G.map.bridges;if(e&&e.br)for(const b of e.br)if(B[b]&&B[b].dead)return true;
   if(D.ck)for(const q of D.ck)if(q.ei===i&&!ally(q.team,k))return true;return false;}
@@ -69,6 +98,7 @@ function lgTick(st){if(!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;lgFix(D);if(L.r
   let s='';for(const k of Object.keys(D.cr))s+='c'+k;for(const t2 of G.teams)s+=t2.out?'o':'';s+='|'+D.rb.length+'|'+L.dsig+'|'+D.bv+'|';for(const q of D.ck)s+=q.id+',';for(let j=L.nS;j<L.N.length;j++)s+=lgPortBlk(L.N[j])?'b':'.';for(let j=L.nS;j<L.N.length;j++){const e=G.byId.get(L.N[j].e);if(e&&e.air>G.t)s+='a'+j;}for(const T of G.teams)s+=hqOf(T.id)?'h':'-';
   if(s!==L.sig||!L.reach){L.sig=s;lgCompute();
     for(let j=L.nS;j<L.N.length;j++){const e=G.byId.get(L.N[j].e);if(!e||e.kind!=='depot')continue;if(e.lcut&&!e.lcut0)log(e.team,'A forward Supply Depot is CUT OFF from your supply network - half range until a road links it again.','bad');else if(!e.lcut&&e.lcut0)log(e.team,'Your forward Supply Depot is back on the supply network.','g');e.lcut0=e.lcut;}}
+  if(L.reach){L.cvT=(L.cvT||0)+st;if(L.cvT>=1){L.cvT=0;const cs=lgCoverSig();if(cs!==L.cvs){L.cvs=cs;lgCover();}}}
   lgJobs(st);}
 // ---- building roads (to a forward depot: lgRoadTo) ----
 function lgPoint(job,s){const P=job.pts;let acc=0;for(let i=1;i<P.length;i++){const L=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);if(acc+L>=s){const f=L?(s-acc)/L:0;return[P[i-1][0]+(P[i][0]-P[i-1][0])*f,P[i-1][1]+(P[i][1]-P[i-1][1])*f];}acc+=L;}return P[P.length-1];}
@@ -88,17 +118,25 @@ function lgBlast(x,y,r,dmg,wpn,team){const L=G.lg,D=G.lgd;if(!L||!D||r<22||dmg<2
     for(let j=1;j<P.length;j++){const ax=P[j-1][0],ay=P[j-1][1],dx=P[j][0]-ax,dy=P[j][1]-ay,l2=dx*dx+dy*dy||1;const f=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/l2)),px=ax+dx*f,py=ay+dy*f,d=Math.hypot(px-x,py-y);if(d<bd){bd=d;bx=px;by=py;}}
     if(bd>m)continue;D.dm[i]=(D.dm[i]||0)+Math.min(300,dmg)*K;
     if(D.dm[i]>=LG_CRATER_HP){D.dm[i]=0;D.cr[i]={x:Math.round(bx),y:Math.round(by),t:G.t+LG_CRATER_T};D.v++;FXE('boom',[bx|0,by|0,18,1]);
-      for(let k=0;k<G.teams.length;k++){const C=L.cov&&L.cov[k];if(C&&C[i]&&!G.teams[k].reb)log(k,'A road on your supply lines is cratered - the line is cut behind it. A Construction Vehicle repairs it fast.','w',bx,by);}}}}
+      for(let k=0;k<G.teams.length;k++){const C=L.cov&&L.cov[k];if(C&&C[i]&&C[i].v.length&&!G.teams[k].reb)log(k,'A road on your supply lines is cratered - the line is cut behind it. A Construction Vehicle repairs it fast.','w',bx,by);}}}}
 // ---- AI: keeps its supply lines open (Battle AI plans around supply) ----
 function lgAI(T){lgAI2(T);}
 function lgAI2(T){if(!G.lgd||!G.lg.reach||T.ai.d<1||G.t<200)return;const D=G.lgd,L=G.lg,id=T.id,t=T.ai.t;lgFix(D);
   const idleDoz=()=>G.ents.filter(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&!u.order);
   // a crater on its own supply lines: send an idle Construction Vehicle to fill it (6x faster than waiting)
-  if(t%6===1){const C=L.cov&&L.cov[id];if(C)for(const k of Object.keys(D.cr)){const c=D.cr[k];if(!(c.t>G.t)||!C[k])continue;if(G.ents.some(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&Math.hypot(u.x-c.x,u.y-c.y)<200))continue;const dz=idleDoz();if(dz.length){setMove(dz[0],c.x,c.y,'move');break;}}}
+  if(t%6===1){const C=L.cov&&L.cov[id];if(C)for(const k of Object.keys(D.cr)){const c=D.cr[k];if(!(c.t>G.t)||!C[k]||!(C[k].v.length||C[k].d.length))continue;if(G.ents.some(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&Math.hypot(u.x-c.x,u.y-c.y)<200))continue;const dz=idleDoz();if(dz.length){setMove(dz[0],c.x,c.y,'move');break;}}}
+  // guard its own supply lines: enemy troops standing on one of its roads -> a few idle soldiers attack-move there (Abdullah 2026-11-13 20:43)
+  // cut the enemy's: now and then a small idle squad goes to stand on an enemy supply road away from the enemy base
+  if(t%5===2&&L.cov&&L.cov[id]){const idle=G.ents.filter(u=>u.team===id&&!u.dead&&!u.isB&&!u.inTun&&u.s&&u.s.dom==='ground'&&!u.s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer'&&!u.order&&!u.target&&!u.amb&&!(u.rout>G.t));
+    if(idle.length){const C=L.cov[id],cut=lgCuts(id);let gp=null;for(const ei in cut){const c=C[ei];if(!c)continue;const x=cut[ei].find(q=>c.d.some(v=>Math.abs(v[0]-q)<4)||c.v.some(v=>Math.abs(v[1]-q)<4));if(x!=null){gp=lgPoint(L.E[ei],x);break;}}
+      if(gp){for(const u of idle.slice(0,4))setMove(u,gp[0]+((u.id%5)-2)*16,gp[1]+((u.id%3)-1)*16,'amove');}
+      else if(T.ai.d>=1&&t%15===7&&idle.length>=4){const hq=hqOf(id);let best=null,bd=1e18;
+        for(let k=0;k<G.teams.length;k++){if(ally(k,id)||!L.cov[k]||G.teams[k].reb)continue;const eh=hqOf(k);for(const ei in L.cov[k]){const c=L.cov[k][ei];for(const v of c.v){const p=lgPoint(L.E[ei],(v[0]+v[1])/2);if(eh&&Math.hypot(p[0]-eh.x,p[1]-eh.y)<900)continue;const d=hq?Math.hypot(p[0]-hq.x,p[1]-hq.y):0;if(d<bd){bd=d;best=p;}}}}
+        if(best)for(const u of idle.filter(u=>isInf(u.s)).slice(0,3))setMove(u,best[0]+((u.id%5)-2)*14,best[1]+((u.id%3)-1)*14,'amove');}}}
   // a forward depot that is cut off or not linked: build a road to it
   if(t%17===8&&T.credits>1000&&!D.job.some(j=>j.team===id)){for(let j=L.nS;j<L.N.length;j++){const nd=L.N[j];if(nd.tm!==id||nd.port)continue;const e=G.byId.get(nd.e);if(e&&e.lcut){lgCmd(id,{k:'droad',tid:e.id,ids:[]});break;}}}
   // rebuild a blown bridge in its own (or neutral) land
-  if(t%9===4&&T.credits>1300){const B=G.map.bridges;for(let i=0;i<B.length;i++){const b=B[i];if(!b.dead)continue;const C=L.cov&&L.cov[id];if(!C||!L.E.some((e,ei)=>C[ei]&&e.br&&e.br.includes(i)))continue;
+  if(t%9===4&&T.credits>1300){const B=G.map.bridges;for(let i=0;i<B.length;i++){const b=B[i];if(!b.dead)continue;const C=L.cov&&L.cov[id];if(!C||!L.E.some((e,ei)=>C[ei]&&(C[ei].v.length||C[ei].d.length)&&e.br&&e.br.includes(i)))continue;
       if(G.ents.some(u=>u.order&&u.order.type==='lgj'&&u.order.bi===i))continue;const dz=idleDoz();if(dz.length){lgCmd(id,{k:'fixb',x:b.x,y:b.y,ids:[dz[0].id]});break;}}}
   // checkpoints and mines on the roads leaving its base and depots toward an enemy
   if((t%11===5&&T.credits>1500&&D.ck.filter(q=>q.team===id).length<2)||(t%13===7&&T.credits>1700&&D.mn.filter(m=>m.team===id).length<4)){const ck=t%11===5;
@@ -108,7 +146,7 @@ function lgAI2(T){if(!G.lgd||!G.lg.reach||T.ai.d<1||G.t<200)return;const D=G.lgd
           const sc=Math.hypot(p[0]-dz[0].x,p[1]-dz[0].y)+i;if(sc<bs){bs=sc;best=p;}}}
       if(best)lgCmd(id,{k:ck?'ckpt':'mine',x:best[0],y:best[1],ids:[dz[0].id]});}}
   // Hard: blow a bridge in its own land when a big enemy force is about to cross and few of its own troops are near
-  if(T.ai.d>=2&&t%10===6&&T.credits>800){const B=G.map.bridges;for(let i=0;i<B.length;i++){const b=B[i],s=D.bd[i];if(b.dead||(s&&s.ch)||!(L.cov&&L.cov[id]&&L.E.some((e,ei)=>L.cov[id][ei]&&e.br&&e.br.includes(i))))continue;let en=0,fr=0;
+  if(T.ai.d>=2&&t%10===6&&T.credits>800){const B=G.map.bridges;for(let i=0;i<B.length;i++){const b=B[i],s=D.bd[i];if(b.dead||(s&&s.ch)||!(L.cov&&L.cov[id]&&L.E.some((e,ei)=>L.cov[id][ei]&&L.cov[id][ei].v.length&&e.br&&e.br.includes(i))))continue;let en=0,fr=0;
       for(const e of nearby(b.x,b.y,700,LG_N)){if(e.dead||e.isB||!e.s||e.s.dom!=='ground'||e.team==null||e.team<0)continue;if(ally(e.team,id)){if(Math.hypot(e.x-b.x,e.y-b.y)<400)fr++;}else en++;}
       if(en>=6&&fr<3&&!G.ents.some(u=>u.order&&u.order.type==='lgj'&&u.order.bi===i)){const dz=G.ents.filter(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&Math.hypot(u.x-b.x,u.y-b.y)<1600);if(dz.length){lgCmd(id,{k:'demo',x:b.x,y:b.y,ids:[dz[0].id]});break;}}}}}
 

@@ -1,7 +1,7 @@
 // First-time-player audit (Lane D2, updated for menu v3 screens): boots the game like a new player, lists every VISIBLE control on the
 // title and on each menu screen (found by clicking visible text only), and flags: buttons with no text/tooltip, cryptic short labels,
 // jargon, screens with no visible way back. Usage: node orch/newplayer.mjs [--shot]
-// Screens walked: title, then Conquest (Battlefield > Nation > Players > Battle options), Play online, Extras, Credits.
+// Screens walked: title, then Play > Battle (Map > Nation > Players > Battle options), Play online, Extras, Credits.
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url'; import { createRequire } from 'node:module';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -33,7 +33,7 @@ const visit = async (name, id) => {
   const back = id === 'title' || items.some(i => /back/i.test(i.t)); if (!back) report.issues.push(`"${name}": no visible Back`);
   if (shot) { fs.mkdirSync(path.join(ROOT, 'orch/shots/laneD'), { recursive: true }); await pg.screenshot({ path: path.join(ROOT, `orch/shots/laneD/menu-${id}.png`) }); }
 };
-for (const [n, id] of [['title', 'title'], ['Single player', 'single'], ['Battlefield', 'c-map'], ['Nation', 'c-nation'], ['Players', 'c-players'], ['Battle options', 'c-opts'], ['Multiplayer', 'online'], ['Extras', 'extras'], ['Credits', 'credits']]) await visit(n, id);
+for (const [n, id] of [['title', 'title'], ['Play', 'single'], ['Battlefield', 'c-map'], ['Nation', 'c-nation'], ['Players', 'c-players'], ['Battle options', 'c-opts'], ['Multiplayer', 'online'], ['Extras', 'extras'], ['Credits', 'credits']]) await visit(n, id);
 // every title entry must be a real, visible, clickable item
 await pg.evaluate(() => menuHome());
 await pg.waitForFunction(() => { const t = document.getElementById('ms-title'); const c = t && getComputedStyle(t); return !!c && c.visibility === 'visible' && +c.opacity === 1; }, null, { timeout: 8000 }).catch(() => report.issues.push('the title menu never faded in'));

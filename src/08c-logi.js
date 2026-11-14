@@ -13,7 +13,9 @@ const LG_COL={mine:'#4ddc6a',foe:'#ff5a4a',neu:'#c9ced2'},LG_CLS=['mine','foe','
 function lgRoadCol(k){if(typeof SET!=='undefined'&&SET.cb&&typeof ID_CB!=='undefined')return k==='mine'?ID_CB[6]:k==='foe'?ID_CB[3]:LG_COL.neu;return LG_COL[k];}   // colour-blind mode: Okabe-Ito bluish green vs vermillion
 function lgTeamCls(o){return o==null||o<0||o>=G.teams.length?2:(!G.teams[o].reb&&ally(o,ME))?0:1;}
 // who supplies road edge i at distance s along it: 0 mine/ally, 1 enemy, 2 nobody; dash = that owner's line is closed on this road
-function lgSegCls(i,s,L0){const C=G.lg.cov;if(!C)return [2,0];let foe=null;for(let k=0;k<C.length;k++){const c=C[k]&&C[k][i];if(!c||G.teams[k].reb)continue;if(!(s<=c[0]||s>=L0-c[1]))continue;if(ally(k,ME))return [0,c[2]|0];if(!foe)foe=[1,c[2]|0];}return foe||[2,0];}
+function lgSegCls(i,s,L0){const C=G.lg.cov;if(!C)return [2,0];const inn=(V,x)=>V.some(q=>x>=q[0]-1&&x<=q[1]+1);let foe=null,fd=null;
+  for(let k=0;k<C.length;k++){const c=C[k]&&C[k][i];if(!c||G.teams[k].reb)continue;const on=inn(c.v,s),dd=!on&&inn(c.d,s);if(!on&&!dd)continue;if(ally(k,ME)){if(on)return [0,0];fd=fd||[0,1];}else if(on)foe=foe||[1,0];else fd=fd||[1,1];}
+  return foe||fd||[2,0];}
 function lgRoadSets(){const L=G.lg,D=G.lgd;if(!L||!D||!L.cov)return null;
   const key=(G.lgv|0)+'|'+L.E.length+'|'+ME;if(LGU.rs&&LGU.rk===key)return LGU.rs;
   const S=[[],[],[],[],[],[]];
@@ -63,7 +65,7 @@ function lgUiInit(){if(LGU.btn||typeof document==='undefined')return;const b=doc
   b.style.cssText='position:fixed;right:8px;bottom:222px;z-index:55;padding:5px 9px;font:600 12px system-ui,sans-serif;color:#e8f2e8;background:rgba(10,16,12,.86);border:1px solid #4a6a52;border-radius:6px;cursor:pointer;display:none';
   b.onclick=()=>lgToggle();document.body.appendChild(b);LGU.btn=b;}
 function lgUiTick(){lgUiInit();if(G&&G.lgM&&!(G.sel||[]).some(u=>!u.dead&&u.team===ME&&(u.kind==='dozer'||u.kind==='airlift'))){G.lgM=null;lgHint();}
-  if(G&&MODE==='client'&&G.lg&&G.lg.nS!=null&&performance.now()-(LGU.dt||0)>1000){LGU.dt=performance.now();const s0=G.lg.dsig;lgDyn();if(G.lg.dsig!==s0)try{lgCompute();}catch(e){}}
+  if(G&&MODE==='client'&&G.lg&&G.lg.nS!=null&&performance.now()-(LGU.dt||0)>1000){LGU.dt=performance.now();const s0=G.lg.dsig;lgDyn();if(G.lg.dsig!==s0)try{lgCompute();}catch(e){}else if(G.lg.reach)try{const cs=lgCoverSig();if(cs!==G.lg.cvs){G.lg.cvs=cs;lgCover();}}catch(e){}}
   if(!LGU.btn)return;const show=!!(G&&G.lgd&&!G.sandbox&&!G.over);const d=show?'block':'none';if(LGU.btn.style.display!==d)LGU.btn.style.display=d;
   if(show){const mmEl=document.getElementById('mm');if(mmEl){const r=mmEl.getBoundingClientRect();if(r.width){const y=Math.max(8,innerHeight-r.top+6);LGU.btn.style.bottom=y+'px';LGU.btn.style.right=Math.max(8,innerWidth-r.right)+'px';}}}}
 /* ---------- LOGISTICS stage 5b-9 interface (orch/logistics3): engineer jobs, airlift, depot panel, bridges, ports ---------- */

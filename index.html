@@ -8493,12 +8493,13 @@ function oilTarget(o){const ALL=new Array(16).fill(true);return{oil:o,isB:true,k
 /* ---------- Ammo & SUPPLY LINES (Abdullah 2026-11-03; for Battle 2026-11-13 20:06 + 20:19 "Bring supply lines into battle") ----------
    Ground combat units carry u.am shots (max u.amx); every shot spends one. At 0 vehicles can't fire and infantry only plink with a sidearm
    (12% damage). YOUR AREA - where units refill (7% of a full load per second) - is: a circle around each of your finished buildings (Command
-   Center 380, Supply Depot 320 - half while the depot is cut off from your network -, any other base building 170), your supply trucks (230),
-   and your SUPPLY LINES: the roads that run out from your Command Center and Supply Depots (lgCover in 03c-logistics: up to LG_REACH of road from
-   each, over neutral junctions, never through an enemy base or depot, stopped by craters, blown bridges and enemy checkpoints; 120 either side).
+   Center 380, Supply Depot 320 - half while the depot is cut off from your network -, any other base building 170), every map building you
+   hold (derricks, power plants, quarries, mines, hospitals: 170; an ammo dump 340 and twice as fast), your supply trucks (230), and your SUPPLY
+   LINES: the roads that run out from those buildings (lgCover in 03c-logistics: up to LG_REACH of road from each, over neutral junctions, never
+   through an enemy base or depot; craters, blown bridges, enemy checkpoints and enemy troops standing on a road cut it; 120 either side).
    Outside it units fight on until their ammo is empty, then they must come back or get a supply truck - there are no timers.
    Test range: unlimited ammo, no badge. Host-only; clients get am/supply as bits of the unit snapshot. */
-const SUP_R={hq:380,depot:320,harv:230,base:170,road:120};
+const SUP_R={hq:380,depot:320,harv:230,base:170,road:120,ammo:340};   // ammo = a captured ammo dump (orch/techbldgs): the strongest point, refills twice as fast
 const SUP_NOB=['wall','gate','mine','tunnel'];
 function ammoOn(){return !!G&&!G.sandbox;}
 function hasAmmo(u){const s=u.s;return ammoOn()&&!!s&&!u.isB&&s.dom==='ground'&&s.dmg>0&&s.rof>0&&!s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker';}
@@ -8510,12 +8511,14 @@ function supplyPoints(){const N=G.teams.length,P=[];for(let i=0;i<N;i++)P.push([
   for(const e of G.ents){if(e.dead||e.inTun||e.team==null||e.team<0||e.team>=N)continue;let r=0;
     if(e.isB){if(e.built<1||SUP_NOB.includes(e.kind))continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot*(e.lcut?.5:1):SUP_R.base;}else if(e.kind==='harv')r=SUP_R.harv;
     if(r)add(e.team,{x:e.x,y:e.y,r});}
+  // every map building a side holds (oil derrick, power plant, quarry, mine, field hospital, ammo dump...: G.oil rows) is a forward supply point (Abdullah 2026-11-13 20:53)
+  if(G.oil)for(const o of G.oil)if(!o.dead&&o.owner>=0&&o.owner<N)add(o.owner,o.tb==='ammo'?{x:o.x,y:o.y,r:SUP_R.ammo,f:2}:{x:o.x,y:o.y,r:SUP_R.base});
   const B=G.lg&&G.lg.bead;if(B)for(let k=0;k<N&&k<B.length;k++)if(B[k])for(const p of B[k])add(k,p);
   return P;}
 function updSupply(dt){if(G.lgd)lgMines(dt);G.supT=(G.supT||0)+dt;if(G.supT<.5)return;const st=G.supT;G.supT=0;if(G.lg)lgTick(st);polTick(st);const P=supplyPoints();
-  for(const u of G.ents){if(u.dead||u.isB||u.inTun)continue;const pts=P[u.team];if(!pts)continue;let ins=false;for(const p of pts){if(Math.abs(p.x-u.x)<p.r&&Math.abs(p.y-u.y)<p.r&&Math.hypot(p.x-u.x,p.y-u.y)<p.r){ins=true;break;}}
+  for(const u of G.ents){if(u.dead||u.isB||u.inTun)continue;const pts=P[u.team];if(!pts)continue;let ins=false,fk=1;for(const p of pts){if(Math.abs(p.x-u.x)<p.r&&Math.abs(p.y-u.y)<p.r&&Math.hypot(p.x-u.x,p.y-u.y)<p.r){ins=true;if(p.f>fk)fk=p.f;if(fk>=2)break;}}
     u.sup=ins?1:0;
-    if(hasAmmo(u)){if(u.am===undefined)ammoInit(u);if(ins&&u.am<u.amx)u.am=Math.min(u.amx,u.am+u.amx*.07*st);}}
+    if(hasAmmo(u)){if(u.am===undefined)ammoInit(u);if(ins&&u.am<u.amx)u.am=Math.min(u.amx,u.am+u.amx*.07*fk*st);}}
   // low / empty warnings (once per 25 s per side, only when it matters)
   if(ammoOn())for(const T of G.teams){if(T.out||G.t-(T.amWarn??-99)<25)continue;let low=0,zero=0,n=0;for(const u of G.ents){if(u.team!==T.id||u.dead||u.isB||u.am===undefined)continue;n++;if(u.am<=0)zero++;else if(u.am<u.amx*.25)low++;}
     if(n&&zero>=Math.max(2,n*.2)){T.amWarn=G.t;log(T.id,'Out of ammo! Bring them back inside your supply area (buildings, depots, supply lines) or send a supply truck.','bad');}else if(n&&low+zero>=Math.max(2,n*.3)){T.amWarn=G.t;log(T.id,'Running low on ammo - your supply lines, depots and supply trucks refill it.','w');}}}
@@ -8686,9 +8689,9 @@ const HABF={
     FXE('ping',[u.x|0,u.y|0,520],u.team);return true;},
   ambush(u){for(const e of G.ents)if(!e.dead&&!e.isB&&e.team===u.team&&e.s&&(e===u||isInf(e.s))&&Math.hypot(e.x-u.x,e.y-u.y)<220)e.hambT=G.t+8;return true;},
   cut(u){const L=G.lg,D=G.lgd;if(!L||!D||!L.cov)return false;let best=null,bd=260;   // crater the nearest enemy supply road within 260 m (the line is cut behind it, ~150 s)
-    for(let i=0;i<L.E.length;i++){if(D.cr[i]&&D.cr[i].t>G.t)continue;if(!L.cov.some((C,k)=>C&&C[i]&&!G.teams[k].reb&&!ally(k,u.team)))continue;const q=lgProj(L.E[i],u.x,u.y);if(q&&q.d<bd){bd=q.d;best={i,x:q.x,y:q.y};}}
+    for(let i=0;i<L.E.length;i++){if(D.cr[i]&&D.cr[i].t>G.t)continue;if(!L.cov.some((C,k)=>C&&C[i]&&C[i].v.length&&!G.teams[k].reb&&!ally(k,u.team)))continue;const q=lgProj(L.E[i],u.x,u.y);if(q&&q.d<bd){bd=q.d;best={i,x:q.x,y:q.y};}}
     if(!best)return false;D.cr[best.i]={x:Math.round(best.x),y:Math.round(best.y),t:G.t+LG_CRATER_T};D.v++;FXE('boom',[best.x|0,best.y|0,18,1]);
-    log(u.team,'Charges blown: the enemy supply road is cut.','g',best.x,best.y);for(let k=0;k<G.teams.length;k++){const C=L.cov[k];if(C&&C[best.i]&&!ally(k,u.team)&&!G.teams[k].reb)log(k,'Enemy fighters blew up one of our supply roads - the line is cut behind it.','bad',best.x,best.y);}return true;}
+    log(u.team,'Charges blown: the enemy supply road is cut.','g',best.x,best.y);for(let k=0;k<G.teams.length;k++){const C=L.cov[k];if(C&&C[best.i]&&C[best.i].v.length&&!ally(k,u.team)&&!G.teams[k].reb)log(k,'Enemy fighters blew up one of our supply roads - the line is cut behind it.','bad',best.x,best.y);}return true;}
 };
 function heroAbility(u){
   if(!u||u.dead||u.isB||u.kind!=='champ'||!u.s.hab||!HABF[u.s.hab])return false;const T=G.teams[u.team],ab=u.s.hab;
@@ -8762,27 +8765,56 @@ function lgCompute(){const L=G.lg,D=G.lgd,n=L.N.length,Nt=G.teams.length;
       (mode?L.trade:L.reach).push(seen);}}
   for(let j=L.nS;j<n;j++){const nd=L.N[j],e=G.byId.get(nd.e);if(!e)continue;const r=L.reach[nd.tm];e.lcut=r&&!r[j]&&!(e.air>G.t)?1:0;}
   lgCover();G.lgv=(G.lgv|0)+1;}
-// SUPPLY LINES per team: how far each road is covered from each end (Dijkstra over road length from the team's HQ base node and its own
-// depots/ports, LG_REACH each, half for a cut-off depot or a blockaded port; never through an enemy node, never over a closed road).
-// L.cov[k][i] = [from end a, from end b, dash]: dash = 1 for a closed road the network runs up to. L.bead[k] = circles along covered road (the area).
+// SUPPLY LINES per team (Abdullah 2026-11-13 20:19 / 20:43 "If you own a road do units get automatically supplied" - yes / 20:53 captured
+// buildings resupply). Sources: the team's base node (while its Command Center stands) and its depots/ports (graph nodes), and every other
+// finished building of the team and every map building it holds (derrick, power plant, quarry, mine, hospital... = G.oil rows) that stands
+// within LG_ATTACH of a road: the road is covered from there. Each source reaches LG_REACH along the roads (a cut-off depot or blockaded port half),
+// over neutral junctions, never through an enemy base/depot. A road is CUT for team k at a crater, a blown bridge, an enemy checkpoint
+// (lgBlk: the whole edge) and wherever an enemy ground unit stands on it (lgCuts): coverage stops there and the stretch the line would
+// have reached beyond the cut is marked dashed. L.cov[k][i] = {v:[[s0,s1],..] covered, d:[[s0,s1],..] cut} along edge i (road length from
+// end a); L.bead[k] = circles along the covered road = the road part of the supply area (03-sim supplyPoints). Deterministic, host and client alike.
+const LG_ATTACH=260,LG_CUTR=55;
+function lgIvAdd(L,a,b){if(b-a<1)return;L.push([a,b]);}
+function lgIvNorm(L){if(L.length<2)return L;L.sort((p,q)=>p[0]-q[0]);const o=[L[0].slice()];for(let i=1;i<L.length;i++){const t=o[o.length-1];if(L[i][0]<=t[1]+1)t[1]=Math.max(t[1],L[i][1]);else o.push(L[i].slice());}return o;}
+// enemy ground units standing on a road cut it: for team k, edge index -> sorted road positions of the cuts
+function lgCuts(k){const L=G.lg,out={};for(const u of G.ents){if(u.dead||u.isB||u.inTun||u.team==null||u.team<0||!u.s||u.s.dom!=='ground'||u.s.noAttack||u.kind==='harv'||u.kind==='dozer'||ally(u.team,k)||(G.teams[u.team]&&G.teams[u.team].reb&&!u.s))continue;
+    for(let i=0;i<L.E.length;i++){const e=L.E[i],b=e.bb;if(u.x<b[0]-LG_CUTR||u.x>b[2]+LG_CUTR||u.y<b[1]-LG_CUTR||u.y>b[3]+LG_CUTR)continue;const q=lgProj(e,u.x,u.y);if(q.d<LG_CUTR)(out[i]||(out[i]=[])).push(q.s);}}
+  for(const i in out)out[i].sort((a,b)=>a-b);return out;}
 function lgCover(){const L=G.lg,n=L.N.length,Nt=G.teams.length,adj=L.N.map(()=>[]);L.cov=[];L.bead=[];
   L.E.forEach((e,i)=>{if(e.a===e.b)return;adj[e.a].push([e.b,i,0]);adj[e.b].push([e.a,i,1]);});
   for(let k=0;k<Nt;k++){const T=G.teams[k];if(T.reb||T.out||!L.reach){L.cov.push(null);L.bead.push(null);continue;}
-    const left=new Float64Array(n).fill(-1),C={};
+    const left=new Float64Array(n).fill(-1),C={},cut=lgCuts(k),cv=i=>C[i]||(C[i]={v:[],d:[]});
+    // walk edge ei from road position s0 in direction dir (+1 = toward end b) with budget r: returns how far it got and whether it reached the end
+    const walk=(ei,s0,dir,r)=>{const e=L.E[ei],c=cv(ei),len=e.len;if(lgBlk(ei,k)){const a=Math.min(r,dir>0?len-s0:s0);lgIvAdd(c.d,dir>0?s0:s0-a,dir>0?s0+a:s0);return -1;}
+      const cs=cut[ei]||[];let lim=dir>0?len:0;for(const x of cs){if(dir>0&&x>s0+1){lim=x;break;}if(dir<0&&x<s0-1)lim=x;}
+      const room=dir>0?lim-s0:s0-lim,go=Math.min(r,room);lgIvAdd(c.v,dir>0?s0:s0-go,dir>0?s0+go:s0);
+      if(go<r&&lim!==(dir>0?len:0)){const more=Math.min(r-go,dir>0?len-lim:lim);lgIvAdd(c.d,dir>0?lim:lim-more,dir>0?lim+more:lim);return -1;}
+      return go>=room?r-room:-1;};
+    // node sources: the base (while its Command Center stands), own depots and ports
     for(let i=0;i<n;i++){const nd=L.N[i];if(!lgNodeOwn(nd,k))continue;let r=0;
-      if(nd.b>=0){if(hqOf(nd.b)&&ally(nd.b,k)&&G.ents.some(e=>e.kind==='hq'&&!e.dead&&e.team===nd.b&&Math.hypot(e.x-nd.x,e.y-nd.y)<700))r=LG_REACH;}
+      if(nd.b>=0){if(G.ents.some(e=>e.kind==='hq'&&!e.dead&&e.built>=1&&ally(e.team,k)&&Math.hypot(e.x-nd.x,e.y-nd.y)<700))r=LG_REACH;}
       else if(nd.e){const e=G.byId.get(nd.e);if(e&&!e.dead)r=LG_REACH*((e.lcut||(nd.port&&lgPortBlk(nd)))?.5:1);}
       if(r>left[i])left[i]=r;}
+    // building / captured-building sources: the nearest road within LG_ATTACH, covered both ways from the point closest to it
+    const src=[];for(const e of G.ents){if(e.dead||!e.isB||e.built<1||e.team==null||!ally(e.team,k)||e.kind==='hq'||e.kind==='depot'||e.kind==='shipyard'||e.kind==='wall'||e.kind==='gate'||e.kind==='mine'||e.kind==='garrison'||e.kind==='tunnel')continue;src.push(e);}
+    for(const o of G.oil||[])if(!o.dead&&o.owner>=0&&ally(o.owner,k))src.push(o);
+    for(const b of src){let best=null,bd=LG_ATTACH,bi=-1;for(let i=0;i<L.E.length;i++){const e=L.E[i],q0=e.bb;if(b.x<q0[0]-LG_ATTACH||b.x>q0[2]+LG_ATTACH||b.y<q0[1]-LG_ATTACH||b.y>q0[3]+LG_ATTACH)continue;const q=lgProj(e,b.x,b.y);if(q.d<bd){bd=q.d;best=q;bi=i;}}
+      if(!best)continue;const e=L.E[bi];const ra=walk(bi,best.s,-1,LG_REACH),rb=walk(bi,best.s,1,LG_REACH);
+      if(ra>left[e.a]&&!lgNodeFoe(L.N[e.a],k))left[e.a]=ra;if(rb>left[e.b]&&!lgNodeFoe(L.N[e.b],k))left[e.b]=rb;}
+    // spread over the network, farthest budget first (Dijkstra on remaining road length)
     const done=new Uint8Array(n);
     for(;;){let b=-1,bv=0;for(let i=0;i<n;i++)if(!done[i]&&left[i]>bv){bv=left[i];b=i;}if(b<0)break;done[b]=1;
-      for(const [j,ei,rev] of adj[b]){const e=L.E[ei],c=C[ei]||(C[ei]=[0,0,0]);
-        if(lgBlk(ei,k)){c[2]=1;const a=Math.min(bv,e.len*.5);if(rev)c[1]=Math.max(c[1],a);else c[0]=Math.max(c[0],a);continue;}
-        if(rev)c[1]=Math.max(c[1],Math.min(bv,e.len));else c[0]=Math.max(c[0],Math.min(bv,e.len));
-        const rest=bv-e.len;if(rest>0&&!lgNodeFoe(L.N[j],k)&&rest>left[j])left[j]=rest;}}
-    const bead=[];for(const ei in C){const c=C[ei];if(c[2])continue;const e=L.E[ei],cm=e.cum,P=e.pts,L0=e.len;
-      for(let s=0;s<=L0;s+=LG_ROADW){if(!(s<=c[0]||s>=L0-c[1]))continue;let m=1;while(m<cm.length-1&&cm[m]<s)m++;const f=cm[m]>cm[m-1]?(s-cm[m-1])/(cm[m]-cm[m-1]):0;
+      for(const [j,ei,rev] of adj[b]){const e=L.E[ei],rest=walk(ei,rev?e.len:0,rev?-1:1,bv);
+        if(rest>0&&!lgNodeFoe(L.N[j],k)&&rest>left[j]){left[j]=rest;done[j]=0;}}}
+    const bead=[];for(const ei in C){const c=C[ei];c.v=lgIvNorm(c.v);c.d=lgIvNorm(c.d);const e=L.E[ei],cm=e.cum,P=e.pts;
+      for(const [a,b2] of c.v)for(let s=a;s<=b2+.5;s+=LG_ROADW){let m=1;while(m<cm.length-1&&cm[m]<s)m++;const f=cm[m]>cm[m-1]?Math.max(0,Math.min(1,(s-cm[m-1])/(cm[m]-cm[m-1]))):0;
         bead.push({x:P[m-1][0]+(P[m][0]-P[m-1][0])*f,y:P[m-1][1]+(P[m][1]-P[m-1][1])*f,r:LG_ROADW,rd:1});}}
-    L.cov.push(C);L.bead.push(bead);}}
+    L.cov.push(C);L.bead.push(bead);}
+  let sg='';for(let k=0;k<Nt;k++){const C=L.cov[k];if(C)for(const ei in C){const c=C[ei];sg+=k+':'+ei+':'+c.v.map(q=>(q[0]|0)+'-'+(q[1]|0)).join(',')+'/'+c.d.length+';';}}if(sg!==L.csig){L.csig=sg;G.lgv=(G.lgv|0)+1;}}
+// cheap test: has anything that moves the supply lines changed since the last lgCover? (enemy units on roads, buildings, captures)
+function lgCoverSig(){const L=G.lg;let s='';for(const e of G.ents){if(e.dead)continue;if(e.isB){if(e.built>=1&&e.team!=null)s+='b'+e.id+',';continue;}if(!e.s||e.s.dom!=='ground'||e.inTun||e.s.noAttack)continue;
+    for(let i=0;i<L.E.length;i++){const b=L.E[i].bb;if(e.x<b[0]-LG_CUTR||e.x>b[2]+LG_CUTR||e.y<b[1]-LG_CUTR||e.y>b[3]+LG_CUTR)continue;const q=lgProj(L.E[i],e.x,e.y);if(q.d<LG_CUTR){s+='u'+e.team+':'+i+':'+((q.s/60)|0)+',';}}}
+  for(const o of G.oil||[])s+=o.dead?'x':(o.owner+1);return s;}
 // is road edge i closed for team k: cratered, over a blown bridge, or held by an enemy checkpoint
 function lgBlk(i,k){const D=G.lgd,c=D.cr[i];if(c&&c.t>G.t)return true;const e=G.lg.E[i],B=G.map.bridges;if(e&&e.br)for(const b of e.br)if(B[b]&&B[b].dead)return true;
   if(D.ck)for(const q of D.ck)if(q.ei===i&&!ally(q.team,k))return true;return false;}
@@ -8793,6 +8825,7 @@ function lgTick(st){if(!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;lgFix(D);if(L.r
   let s='';for(const k of Object.keys(D.cr))s+='c'+k;for(const t2 of G.teams)s+=t2.out?'o':'';s+='|'+D.rb.length+'|'+L.dsig+'|'+D.bv+'|';for(const q of D.ck)s+=q.id+',';for(let j=L.nS;j<L.N.length;j++)s+=lgPortBlk(L.N[j])?'b':'.';for(let j=L.nS;j<L.N.length;j++){const e=G.byId.get(L.N[j].e);if(e&&e.air>G.t)s+='a'+j;}for(const T of G.teams)s+=hqOf(T.id)?'h':'-';
   if(s!==L.sig||!L.reach){L.sig=s;lgCompute();
     for(let j=L.nS;j<L.N.length;j++){const e=G.byId.get(L.N[j].e);if(!e||e.kind!=='depot')continue;if(e.lcut&&!e.lcut0)log(e.team,'A forward Supply Depot is CUT OFF from your supply network - half range until a road links it again.','bad');else if(!e.lcut&&e.lcut0)log(e.team,'Your forward Supply Depot is back on the supply network.','g');e.lcut0=e.lcut;}}
+  if(L.reach){L.cvT=(L.cvT||0)+st;if(L.cvT>=1){L.cvT=0;const cs=lgCoverSig();if(cs!==L.cvs){L.cvs=cs;lgCover();}}}
   lgJobs(st);}
 // ---- building roads (to a forward depot: lgRoadTo) ----
 function lgPoint(job,s){const P=job.pts;let acc=0;for(let i=1;i<P.length;i++){const L=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);if(acc+L>=s){const f=L?(s-acc)/L:0;return[P[i-1][0]+(P[i][0]-P[i-1][0])*f,P[i-1][1]+(P[i][1]-P[i-1][1])*f];}acc+=L;}return P[P.length-1];}
@@ -8812,17 +8845,25 @@ function lgBlast(x,y,r,dmg,wpn,team){const L=G.lg,D=G.lgd;if(!L||!D||r<22||dmg<2
     for(let j=1;j<P.length;j++){const ax=P[j-1][0],ay=P[j-1][1],dx=P[j][0]-ax,dy=P[j][1]-ay,l2=dx*dx+dy*dy||1;const f=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/l2)),px=ax+dx*f,py=ay+dy*f,d=Math.hypot(px-x,py-y);if(d<bd){bd=d;bx=px;by=py;}}
     if(bd>m)continue;D.dm[i]=(D.dm[i]||0)+Math.min(300,dmg)*K;
     if(D.dm[i]>=LG_CRATER_HP){D.dm[i]=0;D.cr[i]={x:Math.round(bx),y:Math.round(by),t:G.t+LG_CRATER_T};D.v++;FXE('boom',[bx|0,by|0,18,1]);
-      for(let k=0;k<G.teams.length;k++){const C=L.cov&&L.cov[k];if(C&&C[i]&&!G.teams[k].reb)log(k,'A road on your supply lines is cratered - the line is cut behind it. A Construction Vehicle repairs it fast.','w',bx,by);}}}}
+      for(let k=0;k<G.teams.length;k++){const C=L.cov&&L.cov[k];if(C&&C[i]&&C[i].v.length&&!G.teams[k].reb)log(k,'A road on your supply lines is cratered - the line is cut behind it. A Construction Vehicle repairs it fast.','w',bx,by);}}}}
 // ---- AI: keeps its supply lines open (Battle AI plans around supply) ----
 function lgAI(T){lgAI2(T);}
 function lgAI2(T){if(!G.lgd||!G.lg.reach||T.ai.d<1||G.t<200)return;const D=G.lgd,L=G.lg,id=T.id,t=T.ai.t;lgFix(D);
   const idleDoz=()=>G.ents.filter(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&!u.order);
   // a crater on its own supply lines: send an idle Construction Vehicle to fill it (6x faster than waiting)
-  if(t%6===1){const C=L.cov&&L.cov[id];if(C)for(const k of Object.keys(D.cr)){const c=D.cr[k];if(!(c.t>G.t)||!C[k])continue;if(G.ents.some(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&Math.hypot(u.x-c.x,u.y-c.y)<200))continue;const dz=idleDoz();if(dz.length){setMove(dz[0],c.x,c.y,'move');break;}}}
+  if(t%6===1){const C=L.cov&&L.cov[id];if(C)for(const k of Object.keys(D.cr)){const c=D.cr[k];if(!(c.t>G.t)||!C[k]||!(C[k].v.length||C[k].d.length))continue;if(G.ents.some(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&Math.hypot(u.x-c.x,u.y-c.y)<200))continue;const dz=idleDoz();if(dz.length){setMove(dz[0],c.x,c.y,'move');break;}}}
+  // guard its own supply lines: enemy troops standing on one of its roads -> a few idle soldiers attack-move there (Abdullah 2026-11-13 20:43)
+  // cut the enemy's: now and then a small idle squad goes to stand on an enemy supply road away from the enemy base
+  if(t%5===2&&L.cov&&L.cov[id]){const idle=G.ents.filter(u=>u.team===id&&!u.dead&&!u.isB&&!u.inTun&&u.s&&u.s.dom==='ground'&&!u.s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer'&&!u.order&&!u.target&&!u.amb&&!(u.rout>G.t));
+    if(idle.length){const C=L.cov[id],cut=lgCuts(id);let gp=null;for(const ei in cut){const c=C[ei];if(!c)continue;const x=cut[ei].find(q=>c.d.some(v=>Math.abs(v[0]-q)<4)||c.v.some(v=>Math.abs(v[1]-q)<4));if(x!=null){gp=lgPoint(L.E[ei],x);break;}}
+      if(gp){for(const u of idle.slice(0,4))setMove(u,gp[0]+((u.id%5)-2)*16,gp[1]+((u.id%3)-1)*16,'amove');}
+      else if(T.ai.d>=1&&t%15===7&&idle.length>=4){const hq=hqOf(id);let best=null,bd=1e18;
+        for(let k=0;k<G.teams.length;k++){if(ally(k,id)||!L.cov[k]||G.teams[k].reb)continue;const eh=hqOf(k);for(const ei in L.cov[k]){const c=L.cov[k][ei];for(const v of c.v){const p=lgPoint(L.E[ei],(v[0]+v[1])/2);if(eh&&Math.hypot(p[0]-eh.x,p[1]-eh.y)<900)continue;const d=hq?Math.hypot(p[0]-hq.x,p[1]-hq.y):0;if(d<bd){bd=d;best=p;}}}}
+        if(best)for(const u of idle.filter(u=>isInf(u.s)).slice(0,3))setMove(u,best[0]+((u.id%5)-2)*14,best[1]+((u.id%3)-1)*14,'amove');}}}
   // a forward depot that is cut off or not linked: build a road to it
   if(t%17===8&&T.credits>1000&&!D.job.some(j=>j.team===id)){for(let j=L.nS;j<L.N.length;j++){const nd=L.N[j];if(nd.tm!==id||nd.port)continue;const e=G.byId.get(nd.e);if(e&&e.lcut){lgCmd(id,{k:'droad',tid:e.id,ids:[]});break;}}}
   // rebuild a blown bridge in its own (or neutral) land
-  if(t%9===4&&T.credits>1300){const B=G.map.bridges;for(let i=0;i<B.length;i++){const b=B[i];if(!b.dead)continue;const C=L.cov&&L.cov[id];if(!C||!L.E.some((e,ei)=>C[ei]&&e.br&&e.br.includes(i)))continue;
+  if(t%9===4&&T.credits>1300){const B=G.map.bridges;for(let i=0;i<B.length;i++){const b=B[i];if(!b.dead)continue;const C=L.cov&&L.cov[id];if(!C||!L.E.some((e,ei)=>C[ei]&&(C[ei].v.length||C[ei].d.length)&&e.br&&e.br.includes(i)))continue;
       if(G.ents.some(u=>u.order&&u.order.type==='lgj'&&u.order.bi===i))continue;const dz=idleDoz();if(dz.length){lgCmd(id,{k:'fixb',x:b.x,y:b.y,ids:[dz[0].id]});break;}}}
   // checkpoints and mines on the roads leaving its base and depots toward an enemy
   if((t%11===5&&T.credits>1500&&D.ck.filter(q=>q.team===id).length<2)||(t%13===7&&T.credits>1700&&D.mn.filter(m=>m.team===id).length<4)){const ck=t%11===5;
@@ -8832,7 +8873,7 @@ function lgAI2(T){if(!G.lgd||!G.lg.reach||T.ai.d<1||G.t<200)return;const D=G.lgd
           const sc=Math.hypot(p[0]-dz[0].x,p[1]-dz[0].y)+i;if(sc<bs){bs=sc;best=p;}}}
       if(best)lgCmd(id,{k:ck?'ckpt':'mine',x:best[0],y:best[1],ids:[dz[0].id]});}}
   // Hard: blow a bridge in its own land when a big enemy force is about to cross and few of its own troops are near
-  if(T.ai.d>=2&&t%10===6&&T.credits>800){const B=G.map.bridges;for(let i=0;i<B.length;i++){const b=B[i],s=D.bd[i];if(b.dead||(s&&s.ch)||!(L.cov&&L.cov[id]&&L.E.some((e,ei)=>L.cov[id][ei]&&e.br&&e.br.includes(i))))continue;let en=0,fr=0;
+  if(T.ai.d>=2&&t%10===6&&T.credits>800){const B=G.map.bridges;for(let i=0;i<B.length;i++){const b=B[i],s=D.bd[i];if(b.dead||(s&&s.ch)||!(L.cov&&L.cov[id]&&L.E.some((e,ei)=>L.cov[id][ei]&&L.cov[id][ei].v.length&&e.br&&e.br.includes(i))))continue;let en=0,fr=0;
       for(const e of nearby(b.x,b.y,700,LG_N)){if(e.dead||e.isB||!e.s||e.s.dom!=='ground'||e.team==null||e.team<0)continue;if(ally(e.team,id)){if(Math.hypot(e.x-b.x,e.y-b.y)<400)fr++;}else en++;}
       if(en>=6&&fr<3&&!G.ents.some(u=>u.order&&u.order.type==='lgj'&&u.order.bi===i)){const dz=G.ents.filter(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&Math.hypot(u.x-b.x,u.y-b.y)<1600);if(dz.length){lgCmd(id,{k:'demo',x:b.x,y:b.y,ids:[dz[0].id]});break;}}}}}
 
@@ -11901,7 +11942,7 @@ async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hos
   try{const g=await joinT('tc-'+code,20000,1);if(NET.code!==code){try{g.leave();}catch(e){}return;}NET.game=g;}catch(e){if(NET.code!==code)return;$('mpstatus').textContent=window.WW3_P2P?'Could not reach the online matchmaking service. Check your internet connection and try again.':'Could not open a game room. Try again in a moment.';cancelHost();return;}
   wireHost(NET.game);
   try{await NET.game.emit('lobby',{n:1,probe:1});}catch(e){if(e&&e.code==='not_permitted'){noPerm();cancelHost();return;}}
-  await NET.room.presence({g:{c:code,f:setup.p,s:'open',n:1,bm:setup.mode==='battle'?1:0,pw:NET.pw?1:undefined}}).catch(()=>{});renderLobby();renderGames();}
+  await NET.room.presence({g:{c:code,f:setup.p,s:'open',n:1,pw:NET.pw?1:undefined}}).catch(()=>{});renderLobby();renderGames();}
 /* ---------- Battles on Cloudflare (Stage 2: the battle runs on the World War 3 servers) ----------
    The creating player's page opens a battle room on the servers with its own key and sends its setup there; the
    server (a BattleRoom) becomes the host, and every human - the creator included - plays as an ordinary client: the
@@ -11987,7 +12028,7 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   // a Cloudflare battle is listed in the game list by the server itself; the owner's edits go to the server
   if(cfb){cfPush();return;}
   try{glBroadcast(mk,mx);}catch(e){}
-  NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,bm:setup.mode==='battle'?1:0,m:setup.map||'strait',mx,pw:NET.pw?1:undefined,sp:1,ns:(NET.lobbySpec||[]).length||undefined}}).catch(()=>{});}
+  NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,m:setup.map||'strait',mx,pw:NET.pw?1:undefined,sp:1,ns:(NET.lobbySpec||[]).length||undefined}}).catch(()=>{});}
 function lobbyTeams(){const nh=NET.lobby.length+1;return [...(NET.tm||[]).slice(0,nh),...(NET.ais||[]).map(a=>a.tm|0)];}
 // Start spots in the lobby: one per seat (players then computer players; -1 = Random). Picks made for one set of spots
 // (map and player count) are dropped when the set changes, so a number always means the spot the leader saw.
@@ -13753,7 +13794,7 @@ function skSides(){const f=rollAis();return f.map((_,i)=>({lab:i?'AI '+i:'You',c
 function skSt(n){if(setup.stK&&setup.stK!==spotsKey(setup.map,n)){setup.slot=-1;setup.st=[];setup.stK=null;}const o=[];for(let i=0;i<n;i++){const v=i?(setup.st||[])[i]:setup.slot;o.push(Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1);}return o;}
 function skSet(st){setup.slot=st[0];setup.st=st.slice();setup.stK=spotsKey(setup.map,st.length);renderTeams();}
 function prevMarks(){const cv=$('mapCv'),k=setup.map;if(!cv||!PREV[k])return;const sides=skSides(),st=skSt(sides.length);spotsDraw(cv,k,sides,st);const note=$('slotNote');if(note)note.textContent=spotsNote(st,sides);}
-/* the Conquest setup box's map preview (a full map generation, ~0.6 s) is drawn a few seconds after page load, never during a battle (orch/loadF) */
+/* the setup box's map preview (a full map generation, ~0.6 s) is drawn a few seconds after page load, never during a battle (orch/loadF) */
 function mapPrevWhenSeen(cv,fn){cv._pv=fn;if(cv._pt)return;const t=()=>{cv._pt=0;if(typeof G!=='undefined'&&G&&!G.over){cv._pt=setTimeout(t,2000);return;}const f=cv._pv;cv._pv=null;if(f)f();};cv._pt=setTimeout(t,Math.max(20,4500-performance.now()));}
 function mapPreview(k,cv){const c=cv.getContext('2d'),W=cv.width,H=cv.height;const old=srand;const M=(()=>{const keepB=BASES,keepS=BASE_SLOTS;setBases(MAPS[k].max,k);const m=mkMap(4242,k);const sl=BASES.slice();BASES=keepB;BASE_SLOTS=keepS;return{m,sl};})();srand=old;
   const id=c.createImageData(W,H);for(let j=0;j<H;j++)for(let i=0;i<W;i++){const wx=(i+.5)/W*MAPW,wy=(j+.5)/H*MAPH,e=M.m.edge(wx,wy),mt=M.m.mtn(wx,wy),q=(j*W+i)*4,sn=M.m.theme==='snow',gr=!sn&&M.m.theme==='green'&&!!MAPS[k].bm;const v=e>0?(sn?[150,180,196]:[44,92,102]):mt>0?(mt>(sn?20:75)?[236,240,246]:sn?[150,156,166]:[112,102,90]):e>-30?(sn?[220,226,234]:gr?[150,160,104]:[201,174,124]):(sn?[206,214,224]:gr?[112,140,84]:[168,130,90]);id.data.set([...v,255],q);}c.putImageData(id,0,0);
@@ -14252,14 +14293,14 @@ try{tkApply();}catch(e){}
 (function(){const card=document.querySelector('#menu .card');if(!card||document.getElementById('quickGo'))return;
   const st=document.createElement('style');st.textContent='#pickP{max-height:330px;overflow-y:auto;padding-right:4px}#pickP .fac:not(.on) .dc,#pickP .fac:not(.on) .sp,#pickP .fac:not(.on) .sw{display:none}#pickP .fac:not(.on){padding:6px 8px;align-items:center}#quickGo button{font-size:15px;padding:10px 18px}';document.head.append(st);
   const row=document.createElement('div');row.id='quickGo';row.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px';
-  const defs=[['▶ Tutorial',/tutorial/i,'First time? A guided 10-minute battle.',false],['Conquest',/^conquest/i,'A quick battle vs the AI with the nation and battlefield picked below.',true],['Missions',/^missions/i,'The story missions.',true]];
+  const defs=[['▶ Tutorial',/tutorial/i,'First time? A guided 10-minute battle.',false],['Battle',/^deploy vs ai/i,'A quick Battle vs the AI with the nation and map picked below.',true],['Missions',/^missions/i,'The story missions.',true]];
   for(const [t,re,tip,ghost] of defs){const b=document.createElement('button');b.type='button';b.className='big'+(ghost?'':' ghost');b.textContent=t;b.title=tip;
     b.onclick=()=>{const tgt=[...document.querySelectorAll('#menu .mode button, #menu #tutorial')].find(x=>re.test((x.textContent||'').trim()));if(tgt){tgt.scrollIntoView({block:'center'});tgt.click();}};row.append(b);}
   const nl=card.querySelector('.label');if(nl&&nl.textContent.trim()==='Your nation')nl.textContent='Your nation (scroll the list — the Battlefield and start buttons are below)';
   const first=card.querySelector('.row');(first||card.querySelector('h1')).after(row);})();
 
 /* ---------- first-time-player hints (Lane D2): hover text for menu buttons that had none (orch/newplayer.mjs lists them) ---------- */
-(function(){const TIPS={'1':'Fight 1 computer opponent','2':'Fight 2 computer opponents','3':'Fight 3 computer opponents','5':'Fight 5 computer opponents','7':'Fight 7 computer opponents (needs a big map)','clear day':'Bright daylight, long sight','golden hour':'Warm low sun, long shadows','overcast':'Gray sky, soft light','build':'Build and repair your base buildings','units':'Train soldiers and vehicles','powers':'Special strikes and abilities with a cooldown','conquest — deploy vs ai':'Play one battle against computer opponents: you get a full base and money, destroy the enemy base to win.','▶ watch a replay file':'Open a saved replay file (.json) from an earlier battle and watch it again.','🗺 map editor':'Draw your own battle map: terrain, resources and start positions.','join by code':'Type the invite code a friend sent you to join their online battle.','build':'Sidebar tab: buildings you can place in your base.','units':'Sidebar tab: soldiers and vehicles you can train.','powers':'Sidebar tab: special powers such as strikes and support, with cooldowns.','launch':'Fire the selected special power at the spot you click on the map.','medals':'Your achievements: medals earned in battles.'};
+(function(){const TIPS={'1':'Fight 1 computer opponent','2':'Fight 2 computer opponents','3':'Fight 3 computer opponents','5':'Fight 5 computer opponents','7':'Fight 7 computer opponents (needs a big map)','clear day':'Bright daylight, long sight','golden hour':'Warm low sun, long shadows','overcast':'Gray sky, soft light','build':'Build and repair your base buildings','units':'Train soldiers and vehicles','powers':'Special strikes and abilities with a cooldown','deploy vs ai':'Play one Battle against computer opponents: build your base from a Command Center, keep your supply lines open, destroy every enemy building to win.','▶ watch a replay file':'Open a saved replay file (.json) from an earlier battle and watch it again.','🗺 map editor':'Draw your own battle map: terrain, resources and start positions.','join by code':'Type the invite code a friend sent you to join their online battle.','build':'Sidebar tab: buildings you can place in your base.','units':'Sidebar tab: soldiers and vehicles you can train.','powers':'Sidebar tab: special powers such as strikes and support, with cooldowns.','launch':'Fire the selected special power at the spot you click on the map.','medals':'Your achievements: medals earned in battles.'};
 function fix(){try{for(const b of document.querySelectorAll('button')){if(b.title)continue;const t=TIPS[(b.textContent||'').trim().toLowerCase()];if(t)b.title=t;}}catch(e){}}
 setInterval(fix,2500);setTimeout(fix,500);})();
 /* ================= AFTER-ACTION MAP: a timeline of the whole match on the end screen =================
@@ -14302,7 +14343,7 @@ function aarPage(){try{aarSample();}catch(e){}if(!AAR.s.length||AAR.g!==G)return
   const W=520,H=Math.round(520*MAPH/MAPW);
   box.innerHTML='<div style="font:700 12px IBM Plex Mono,monospace;letter-spacing:.1em;color:#e3b341;margin-bottom:6px">AFTER-ACTION MAP</div><canvas width="'+W+'" height="'+H+'" style="width:100%;border:1px solid #3a463f;border-radius:3px;background:#0b0f0d;display:block"></canvas>'+
    '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><button type="button" id="aarPlay" style="background:#1f2a23;color:#cfe8d6;border:1px solid #4a5a50;border-radius:3px;padding:3px 10px;cursor:pointer">▶ Replay</button><input id="aarSl" type="range" min="0" max="'+(AAR.s.length-1)+'" value="'+(AAR.s.length-1)+'" style="flex:1"><span id="aarT" style="font:12px IBM Plex Mono,monospace;min-width:44px;text-align:right"></span></div>'+
-   '<div style="font-size:11.5px;opacity:.8;margin-top:4px">White line = front line · flag = town captured · red ! = revolt · orange burst = big fight · yellow cross = missile strike</div>';
+   '<div style="font-size:11.5px;opacity:.8;margin-top:4px">White line = front line · orange burst = big fight · yellow cross = missile strike</div>';
   ($('endStats')||$('ends')).after(box);
   const cv=box.querySelector('canvas'),sl=$('aarSl'),tt=$('aarT'),pb=$('aarPlay');
   const show=k=>{AAR.cur=k;aarDraw(cv,k);const t=AAR.s[Math.max(0,Math.min(AAR.s.length-1,k|0))].t;tt.textContent=Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');};
@@ -14364,7 +14405,7 @@ function idRingSeg(team){return ID_SEG[((team|0)+8)%8];}
 /* ---------- medals ---------- */
 const ID_MEDALS=(()=>{const n=(k,t,d)=>({k:'win_'+k,t,d,f:k,w:1});const M=[n('IR','Iran: Labbaik ya Hussein','Win a battle as Iran.'),n('RS','Lebanese Shia: Radwan\'s Sons','Win a battle as the Lebanese Shia.'),n('DW','Zaidi Shia Movement: Desert Raiders','Win a battle as the Zaidi Shia Movement.'),
   {k:'dw_notank',t:'Zaidi Shia Movement: Steel Untouched',d:'Win as the Zaidi Shia Movement without losing a single tank (you must have built some).',f:'DW',w:1},
-  {k:'rs_fort',t:'Lebanese Shia: Rock Stands',d:'Win a Conquest or Battle game as the Lebanese Shia with your Mountain Fortress still standing.',f:'RS',w:1},
+  {k:'rs_fort',t:'Lebanese Shia: Rock Stands',d:'Win a Battle as the Lebanese Shia with your Mountain Fortress still standing.',f:'RS',w:1},
   {k:'fort20',t:'Hold the Mountain',d:'Keep a Mountain Fortress standing for 20 minutes in one Conquest or Battle game.',w:1},
   {k:'ir_bb',t:'Fire and Fury',d:'Call in a Bunker Buster strike in Conquest, Battle, a mission or on the test range.',w:1}];
   for(const k of ['US','TR','IL','EU','FR','DE','UA','RU','SA','AE','PK','IN','CN','KP','KR','EG','CU','GB','AU','CA','DZ','MA','NG','ZA','ET','LY','SD','PL','AZ','JO','KD','IT','GR','ES','JP','TW','PH','VN','ID','TH','KZ','AF','OM','RV','OB','BI'])M.push(n(k,FACTIONS[k].name+': Victory','Win a battle as '+FACTIONS[k].name+'.'));
@@ -14931,7 +14972,9 @@ const LG_COL={mine:'#4ddc6a',foe:'#ff5a4a',neu:'#c9ced2'},LG_CLS=['mine','foe','
 function lgRoadCol(k){if(typeof SET!=='undefined'&&SET.cb&&typeof ID_CB!=='undefined')return k==='mine'?ID_CB[6]:k==='foe'?ID_CB[3]:LG_COL.neu;return LG_COL[k];}   // colour-blind mode: Okabe-Ito bluish green vs vermillion
 function lgTeamCls(o){return o==null||o<0||o>=G.teams.length?2:(!G.teams[o].reb&&ally(o,ME))?0:1;}
 // who supplies road edge i at distance s along it: 0 mine/ally, 1 enemy, 2 nobody; dash = that owner's line is closed on this road
-function lgSegCls(i,s,L0){const C=G.lg.cov;if(!C)return [2,0];let foe=null;for(let k=0;k<C.length;k++){const c=C[k]&&C[k][i];if(!c||G.teams[k].reb)continue;if(!(s<=c[0]||s>=L0-c[1]))continue;if(ally(k,ME))return [0,c[2]|0];if(!foe)foe=[1,c[2]|0];}return foe||[2,0];}
+function lgSegCls(i,s,L0){const C=G.lg.cov;if(!C)return [2,0];const inn=(V,x)=>V.some(q=>x>=q[0]-1&&x<=q[1]+1);let foe=null,fd=null;
+  for(let k=0;k<C.length;k++){const c=C[k]&&C[k][i];if(!c||G.teams[k].reb)continue;const on=inn(c.v,s),dd=!on&&inn(c.d,s);if(!on&&!dd)continue;if(ally(k,ME)){if(on)return [0,0];fd=fd||[0,1];}else if(on)foe=foe||[1,0];else fd=fd||[1,1];}
+  return foe||fd||[2,0];}
 function lgRoadSets(){const L=G.lg,D=G.lgd;if(!L||!D||!L.cov)return null;
   const key=(G.lgv|0)+'|'+L.E.length+'|'+ME;if(LGU.rs&&LGU.rk===key)return LGU.rs;
   const S=[[],[],[],[],[],[]];
@@ -14981,7 +15024,7 @@ function lgUiInit(){if(LGU.btn||typeof document==='undefined')return;const b=doc
   b.style.cssText='position:fixed;right:8px;bottom:222px;z-index:55;padding:5px 9px;font:600 12px system-ui,sans-serif;color:#e8f2e8;background:rgba(10,16,12,.86);border:1px solid #4a6a52;border-radius:6px;cursor:pointer;display:none';
   b.onclick=()=>lgToggle();document.body.appendChild(b);LGU.btn=b;}
 function lgUiTick(){lgUiInit();if(G&&G.lgM&&!(G.sel||[]).some(u=>!u.dead&&u.team===ME&&(u.kind==='dozer'||u.kind==='airlift'))){G.lgM=null;lgHint();}
-  if(G&&MODE==='client'&&G.lg&&G.lg.nS!=null&&performance.now()-(LGU.dt||0)>1000){LGU.dt=performance.now();const s0=G.lg.dsig;lgDyn();if(G.lg.dsig!==s0)try{lgCompute();}catch(e){}}
+  if(G&&MODE==='client'&&G.lg&&G.lg.nS!=null&&performance.now()-(LGU.dt||0)>1000){LGU.dt=performance.now();const s0=G.lg.dsig;lgDyn();if(G.lg.dsig!==s0)try{lgCompute();}catch(e){}else if(G.lg.reach)try{const cs=lgCoverSig();if(cs!==G.lg.cvs){G.lg.cvs=cs;lgCover();}}catch(e){}}
   if(!LGU.btn)return;const show=!!(G&&G.lgd&&!G.sandbox&&!G.over);const d=show?'block':'none';if(LGU.btn.style.display!==d)LGU.btn.style.display=d;
   if(show){const mmEl=document.getElementById('mm');if(mmEl){const r=mmEl.getBoundingClientRect();if(r.width){const y=Math.max(8,innerHeight-r.top+6);LGU.btn.style.bottom=y+'px';LGU.btn.style.right=Math.max(8,innerWidth-r.right)+'px';}}}}
 /* ---------- LOGISTICS stage 5b-9 interface (orch/logistics3): engineer jobs, airlift, depot panel, bridges, ports ---------- */
@@ -15762,7 +15805,7 @@ function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=nul
       h+='<div class="sec">Aid for teammates</div>';for(const O of oth.filter(O=>sameTm(O.id,ME)))h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b><button data-a="give" data-v="${O.id}" data-w="500" title="10% fee, arrives after 4 s">$500</button><button data-a="give" data-v="${O.id}" data-w="2000">$2000</button><button data-a="gift" data-v="${O.id}" ${sel?'':'disabled'} title="Give the selected units (up to 12, one gift per 20 s)">Give units</button></div>`;}
     if(ffa&&oth.length){h+='<div class="sec">Truce (free-for-all)</div>';
       for(const O of oth){const tr=truced(ME,O.id),k=ME<O.id?ME*32+O.id:O.id*32+ME,out=(G.tOff||[]).find(o=>o.f===ME&&o.t===O.id),oath=(O.oath||0)>G.t,me=(T.oath||0)>G.t;
-        h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b>${oath?'<small style="color:#ea5a40">oathbreaker</small>':''}`+(tr?`<small>truce ${ctFmt(G.truce[k]-G.t)}</small><button data-a="cfb" data-v="${O.id}" title="Breaking a truce: unrest in your towns and nobody trusts you for 4 minutes">Break</button>`
+        h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b>${oath?'<small style="color:#ea5a40">oathbreaker</small>':''}`+(tr?`<small>truce ${ctFmt(G.truce[k]-G.t)}</small><button data-a="cfb" data-v="${O.id}" title="Breaking a truce: nobody trusts you for 4 minutes">Break</button>`
           :out?`<small>offered · ${Math.ceil(out.e-G.t)} s</small>`:[60,120,180].map((d,di)=>`<button data-a="cf" data-v="${O.id}" data-w="${di}" ${me?'disabled':''}>${d/60} min</button>`).join(''))+'</div>';}
       if((T.oath||0)>G.t)h+=`<small style="color:#ea5a40">You are an oathbreaker for ${ctFmt(T.oath-G.t)}.</small>`;}
   }
@@ -15922,24 +15965,18 @@ function edgeTick(){const A=EDGE.a;if(!A.length&&!EDGE.el)return;const now=perfo
     q.b.style.display='';q.b.title=EDGE_K[q.kind][2]+': '+q.m+' - click to look';q.b.style.opacity=fade.toFixed(2);q.b.style.transform='translate('+x.toFixed(0)+'px,'+y.toFixed(0)+'px)';q.b.style.setProperty('--r',Math.atan2(vy,vx).toFixed(2)+'rad');}}
 /* ---------- What's new (one screen, newest first) ---------- */
 const WHATS_NEW=[
- ['Grand campaign is paused','We are finishing Conquest and Battle first. Single player and Multiplayer now offer Conquest and Battle. The Grand campaign is still there as a preview: Extras → Grand campaign (preview, paused). Continue now resumes your latest Conquest or Battle.'],
+ ['One game: Battle, now with supply lines','The game is now one game: Battle (Command Center, supply trucks, tech tree, destroy every enemy building). Conquest and the Grand campaign are gone. Battle has SUPPLY LINES: the roads running out of your Command Center and Supply Depots are green on the minimap (L shows them on the ground). Units refill ammo near your buildings and on those roads; far beyond them they fight until empty, then must come back or get a supply truck. Craters, blown bridges and enemy checkpoints cut a line (dashed) - your Construction Vehicle repairs a crater fast. Every old battlefield is now a Battle map, and the main menu is Play · Multiplayer · Test range.'],
+ ['The main menu shows your war','The main menu background now shows whatever Continue would take you back to: that battlefield with your front line drawn in.'],
  ['Every button says what it beats','Unit buttons now carry two small pictures: green = what this unit BEATS best, red = what it is most WEAK TO. Hold the mouse on a button for the full list with names. Point at an enemy unit (or select it) and the buttons that beat it light up green with "BEATS IT". The game works these out from the real damage, armor, range and price numbers against the nation you are fighting, so they are always true - the Encyclopedia and the Unit guide show the same.'],
- ['The main menu shows your war','The main menu background now shows whatever Continue would take you back to. A saved grand campaign: the map around your nation, your borders lit in your color and your last battle marked, won or lost. A saved battle: that battlefield, with a bright line where your front was against the enemy you could see. The bottom right corner says which war it is. With nothing saved it stays the calm world map.'],
  ['Commander\'s radio','Every report from the field - base under attack, enemy spotted, unit lost, building finished, a unit ready - is now one short line with a small icon at the top left of the battle (three lines at most, each fades after a few seconds). Lines marked with a small arrow know where it happened: click the line, or press Space, and the camera goes there. Settings has a switch for it.'],
  ['Edge alerts','When something happens away from where you are looking - your base or troops come under attack, a unit is lost, a unit or building is finished, a teammate pings the map - a small round marker with an arrow now sits on the edge of the screen pointing at it for about six seconds (three at most). Click it and the camera goes there. Settings has a switch for it.'],
  ['Cleaner sound','The sound is mixed properly now: even the biggest fight no longer crackles or distorts, unit voices stay clear over the guns (explosions and music step back a little while a soldier speaks), every button and menu item gives a soft click, and each battlefield has a quiet background of its own - dry desert wind, wind in the trees, or a thin winter howl - with the muffled thump of fighting elsewhere on the map.'],
- ['Three games: Grand campaign, Conquest, Battle','The main menu now has three separate games. Grand campaign runs a whole empire on the world map. Conquest is the town-and-tax battle with a full base. NEW: Battle plays like C&C Generals - you start with a Command Center and a dozer, supply trucks bring in your money, you build power, barracks, a War Factory and an airfield, tech up, earn general\'s points for powers, and win by destroying every enemy building. Pick Conquest or Battle in the online lobby too. Missions and the Tutorial are still in the menu, just smaller.'],
- ['New main menu: Single player, Multiplayer, Test range','The main menu is now Single player (Grand campaign, Conquest, Battle, Missions, Tutorial), Multiplayer and Test range. Multiplayer is the one place to play online: choose Grand campaign, Conquest or Battle, then start or join - open games and invite codes or links cover all three, each labeled Campaign, Conquest or Battle.'],
- ['Online grand campaign','Multiplayer → Grand campaign → Create a campaign lobby: pick a scenario and your nation, then share the invite code or link; friends pick a nation and tick Ready in the lobby, you press Start. Or Multiplayer → type the code or paste the invite link (or pick the campaign in the open games list) to enter theirs. Each friend leads a free nation (the AI runs the rest), sees the world through its own fog, and anyone can pause; the host sets the speed.'],
- ['Morale styles','Every nation now fights with one of four styles: Zealous (slow to break, banners rally the faithful, heavier losses), Professional (steady under artillery, rally fast near officers), Home defenders (much braver on home turf) and Firepower-reliant (break sooner, but stronger fire support). The style shows on the nation pick screen and in the Encyclopedia.'],
- ['One HUD','A single top bar now shows money, income, supply, world opinion and an Alerts button (click it for the last warnings). The Towns / Supply / Opinion / Sonar / Mines buttons switch the map and minimap layers on and off.'],
- ['Grand-map assets','The Ayatollah, the Dear Leader, the Mountain Fortress and the Bunker Buster are no longer in Conquest battles; they live on the grand map.'],
- ['Locals, knocked-out units, cover','All local militias, rebels and funded militias are one kind of unit with one minimap ring. EMP, hacks, sabotage and blackouts share one knocked-out marker (blue X on the minimap). Rubble, trenches and walls all count as cover.']];
+ ['Morale styles','Every nation now fights with one of four styles: Zealous (slow to break, banners rally the faithful, heavier losses), Professional (steady under artillery, rally fast near officers), Home defenders (much braver on home turf) and Firepower-reliant (break sooner, but stronger fire support). The style shows on the nation pick screen and in the Encyclopedia.']];
 function whatsNewPage(){const o=idOv('idNew',"What's new"),b=o.querySelector('.idbody');b.innerHTML='';for(const [h,t] of WHATS_NEW){const d=document.createElement('div');d.style.cssText='margin:10px 0;text-align:left';const a=document.createElement('div');a.style.cssText='font:700 17px system-ui,sans-serif;color:#f4e9c2';a.textContent=h;const p=document.createElement('div');p.style.cssText='font:500 15px/1.4 system-ui,sans-serif;color:#dfe5da';p.textContent=t;d.append(a,p);b.appendChild(d);}o.hidden=false;}
 (function(){const op=document.getElementById('openSettings');if(op&&op.parentNode){const b=document.createElement('button');b.className='big ghost';b.style.cssText='font-size:15px;padding:7px 16px';b.textContent="What's new";b.onclick=whatsNewPage;op.parentNode.appendChild(b);}
 })();
 /* Battle HUD never shows over the menus (Abdullah 2026-11-06 19:52 photo: "Why do these buttons remain" — the top bar, alerts feed,
-   Supply lines button, Conquest banner and town panel stayed on screen after leaving a battle). One rule: while the main menu is open,
+   Supply lines button and the battle banner stayed on screen after leaving a battle). One rule: while the main menu is open,
    body gets .inMenu and every battle-only overlay is hidden; nothing else changes. */
 function hudMenuWatch(){const m=document.getElementById('menu');if(!m||hudMenuWatch.on)return;hudMenuWatch.on=1;
   const st=document.createElement('style');st.textContent='body.inMenu #log,body.inMenu #hudBar,body.inMenu #hudFeed,body.inMenu #lgBtn,body.inMenu #cqBn,body.inMenu #townp{display:none!important}';document.head.appendChild(st);
@@ -16393,9 +16430,9 @@ try{const g=document.getElementById('sGfx');if(g)g.addEventListener('click',e=>{
 // `node orch/playtest-digest.mjs --card` from the newest lines of orch/HISTORY.md - do not edit it by hand.
 (function(){
 /*PLAYTEST-ITEMS*/
-const PLAYTEST_WEEK="2026-11-11";
+const PLAYTEST_WEEK="2026-11-14";
 const PLAYTEST_ITEMS=[
- ["73e2fb4b","The main menu is now Single player / Multiplayer / Test range (Grand campaign, Conquest, Battle, Missions, Tutorial inside Single player)"],
+ ["onegame1","One game: the main menu is Play / Multiplayer / Test range - every game is a Battle (Conquest and the Grand campaign are gone)"],
  ["7f51e67a","Buildings are called by their one official name everywhere (Strike Center, Defense Gun, War Factory, Anti-Air Missile Site); a check now stops old faction names or real groups' names from ever showing"],
  ["09179068","Computer opponent on Hard is smarter (same money): it goes round your weaker side, guards its artillery, keeps a few strike aircraft and sends them in with its ground attack"],
  ["92e530c3","Morocco (MA) now has its own Moroccan-Arabic soldier voices instead of a borrowed sheet"],
@@ -16404,7 +16441,7 @@ const PLAYTEST_ITEMS=[
  ["90b8b9be","Sound mix. Measured first: the old output clipped (+1.9 dB over full scale; unit voices bypassed the mixer)"],
  ["416cd5e6","Test range compound: the rooftop parapet frame (white concrete posts/caps) floated high above the roofs because the roof height was taken from the tallest part (radar dish/mast) instead of the.."],
  ["06e4b59f","Formation buttons show only with 2+ own units selected, so the bottom bar no longer widens/clips with a building (e.g. Shipyard) selected"],
- ["fcc81616","Dig-in/fortification line + campaign battles army-only (tabs, money, town tax panel hidden, banner), Conquest battlefield picker (search, filters, regions, paged, favorites/recent, keys)"]];
+ ["onegame2","Battle supply lines: press L - green roads out of your Command Center and depots refill ammo; crater an enemy road and watch its line go dashed"]];
 /*PLAYTEST-END*/
 const KEY='ww3_playtest_'+PLAYTEST_WEEK;
 let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){ST={};}
@@ -19197,7 +19234,7 @@ const ED_TOOLS=[['pan','✋','Move','Drag to move the view. Two fingers or the m
   ['lower','🕳','Lower','Dig ponds and lakes (water).'],['flat','▭','Flatten','Clear mountains and ponds under the brush.'],
   ['river','🌊','River','Drag to draw a river. Add a bridge or the two sides cannot reach each other.'],['bridge','🌉','Bridge','Tap a river to put a bridge across it (or drag across the water).'],
   ['road','🛣','Road','Drag to lay a road.'],['forest','🌲','Forest','Paint woods: cover for infantry, slows vehicles.'],['rocks','🪨','Rocks','Stamp small rock outcrops.'],
-  ['town','🏘','Town','Tap to put a town of civilian buildings.'],['oil','🛢','Oil','Tap to put an oil derrick.'],['ham','🛖','Hamlet','Tap to put a hamlet: a few houses you can capture and tax. Put one safe hamlet behind each start and some in the middle.'],['supply','📦','Supply','Tap to put a supply field.'],
+  ['town','🏘','Town','Tap to put a town of civilian buildings.'],['oil','🛢','Oil','Tap to put an oil derrick.'],['ham','🛖','Hamlet','Tap to put a hamlet: a few houses infantry can garrison for cover. Put one behind each start and some in the middle.'],['supply','📦','Supply','Tap to put a supply field.'],
   ['start','🚩','Start','Tap to place a start position (numbered in the order placed).'],['erase','🧽','Erase','Remove anything under the brush.']];
 const ED_STYLE_NAMES=['Middle East','Russia','Europe','America','Yemen','Gulf city','Korea','Asia','Latin America','South Asia'];
 function edBlank(){return{nm:'My map',n:2,z:1,th:'desert',sl:[],rv:[],rg:[],rd:[],lk:[],pk:[],wd:[],ct:[],oil:[],hm:[],fl:[],br:[]};}
@@ -19454,7 +19491,7 @@ try{edHashImport();}catch(e){}
    Recipe for a new screen: orch/HOWTO.md "Add a menu screen". ---------- */
 const MX={stack:['title'],cur:'title',screens:{},busy:0,thumbQ:[],thumbs:{},natQ:''};
 const MX_STEPS=[['c-map','Battlefield'],['c-nation','Nation'],['c-players','Players'],['c-opts','Battle options']];
-const MX_TITLES={'title':'','c-map':'Conquest','c-nation':'Conquest','c-players':'Conquest','c-opts':'Conquest','single':'Single player','online':'Multiplayer','extras':'Extras','credits':'Credits'};
+const MX_TITLES={'title':'','c-map':'Battle','c-nation':'Battle','c-players':'Battle','c-opts':'Battle','single':'Play','online':'Multiplayer','extras':'Extras','credits':'Credits'};
 function mxEl(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
 function mxClick(id){const e=document.getElementById(id);if(e){try{initAudio();}catch(_){}e.click();}}
 function mxTick(f){try{sfxUI(f);}catch(_){}}
@@ -19572,16 +19609,9 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 .mxcred{max-width:860px}.mxcred p{margin:0 0 12px;color:#8a9a92;font:400 12px/1.6 var(--mono);max-width:none}
 @media (max-width:1100px){.mxnat,.mxpl{grid-template-columns:1fr}#mxdet{position:static}}
 `;document.head.appendChild(s);}
-function mxModeName(){return typeof setup!=='undefined'&&setup.mode==='battle'?'Battle':'Conquest';}
-/* The two skirmish modes share the setup screens (battlefield, nation, players, options); this retitles them for the mode chosen on the main menu. */
-function mxSetMode(m){const was=typeof setup!=='undefined'?setup.mode:'';if(typeof setup!=='undefined')setup.mode=m==='battle'?'battle':'conquest';const B=m==='battle',nm=mxModeName();
-  /* each game has its own map list (Battle maps / Conquest battlefields): rebuild the list when the game changes */
-  {const ms=document.getElementById('mapSel'),L=typeof mapListKeys==='function'?mapListKeys():null;if(ms&&L&&(was!==setup.mode||(ms.options[0]||{}).value!==L[0]))try{if(typeof mapCards==='function')mapCards();if(typeof mxMapCards==='function')mxMapCards();if(typeof renderTeams==='function')renderTeams();}catch(e){}}
-  const sub=(id,t)=>{const e=document.querySelector('#ms-'+id+' .mxsub');if(e)e.textContent=t;};
-  sub('c-map',B?'Battle: a Command Center, a dozer and supply trucks - build your base and fight like Generals. Battle has its own maps: supply sources near every base, oil derricks to fight over, at least two attack routes.':'Conquest: towns pay the tax, a full base from the start. Every map has at least two real attack routes.');
-  for(const b of [MX.startP,MX.startO])if(b)b.textContent='Start '+nm.toLowerCase();
-  {const hm=document.querySelector('#ms-c-map .mxh');if(hm)hm.textContent=B?'Choose a Battle map':'Choose a battlefield';}
-  const h=document.querySelector('#ms-c-opts .mxh');if(h)h.textContent=nm+' options';}
+/* One game (Abdullah 2026-11-13 20:18): every setup screen is a Battle. Rebuild the map list when the menu opens on it (the Battle map list). */
+function mxModeName(){return 'Battle';}
+function mxMapSync(){const ms=document.getElementById('mapSel'),L=typeof mapListKeys==='function'?mapListKeys():null;if(ms&&L&&(ms.options[0]||{}).value!==L[0])try{if(typeof mapCards==='function')mapCards();if(typeof mxMapCards==='function')mxMapCards();if(typeof renderTeams==='function')renderTeams();}catch(e){}}
 function mxBuild(){
   const m=document.getElementById('menu');if(!m||document.getElementById('mx'))return;mxCss();m.classList.add('m3');
   const card=m.querySelector('.card'),g=id=>document.getElementById(id);
@@ -19596,26 +19626,26 @@ function mxBuild(){
   const T=scr('title');T.innerHTML='<h1 id="mxlogo">World War <span>3</span></h1><p id="mxtag">Real-time modern warfare, from one battle to the whole world.</p>';
   const menu=mxEl('div');menu.id='mxmenu';T.appendChild(menu);
   const item=(t,fn,cls,tip)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''),t);b.type='button';b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);if(tip)b.title=tip;menu.appendChild(b);return b;};
-  MX.cont=item('',()=>mxClick('svContinue'),'','Pick up where you left off: your latest Conquest or Battle');MX.cont.hidden=true;
-  item('Single player',()=>menuGo('single'),'','Conquest, Battle, missions and the tutorial');
-  item('Multiplayer',()=>menuGo('online'),'','Play online with friends: Conquest or Battle');
+  MX.cont=item('',()=>mxClick('svContinue'),'','Pick up where you left off: your latest Battle');MX.cont.hidden=true;
+  item('Play',()=>menuGo('single'),'','Battle against the computer, missions and the tutorial');
+  item('Multiplayer',()=>menuGo('online'),'','Play online with friends: start or join a Battle');
   item('Test range',()=>mxClick('sandbox'),'','Unlimited money and every unit against a passive target');
   item('Settings',()=>mxClick('openSettings'),'sep dim','Graphics, sound and mouse');
   item('Extras',()=>menuGo('extras'),'dim','Replays, encyclopedia, medals, map editor and more');
   item('Credits',()=>menuGo('credits'),'dim');
   const ver=mxEl('div');ver.id='mxver';ver.textContent='WORLD WAR 3';T.appendChild(ver);
-  /* --- conquest 1: battlefield --- */
-  const M=scr('c-map','<h2 class="mxh">Choose a battlefield</h2><p class="mxsub">Every map has at least two real attack routes. Click one to continue.</p>');
+  /* --- battle 1: map --- */
+  const M=scr('c-map','<h2 class="mxh">Choose a Battle map</h2><p class="mxsub">A Command Center, a dozer and supply trucks - build your base and keep your supply lines open. Battle maps first, then every other battlefield; every map has at least two attack routes.</p>');
   MX.grid=mxEl('div','mxgrid');M.appendChild(MX.grid);
-  foot(M,go('Random battlefield',()=>{const b=g('pickMap')&&g('pickMap').querySelector('.rndmap');if(b)b.click();mxMapMark();menuGo('c-nation');},'mxlink'),go('Next: Nation →',()=>menuGo('c-nation')));
-  /* --- conquest 2: nation --- */
+  foot(M,go('Random map',()=>{const b=g('pickMap')&&g('pickMap').querySelector('.rndmap');if(b)b.click();mxMapMark();menuGo('c-nation');},'mxlink'),go('Next: Nation →',()=>menuGo('c-nation')));
+  /* --- battle 2: nation --- */
   const N=scr('c-nation','<h2 class="mxh">Choose your nation</h2><p class="mxsub">Hover a nation to see its doctrine, morale style and strike. Click to choose.</p>');
   const nw=mxEl('div','mxnat'),nl=mxEl('div');const inp=mxEl('input');inp.id='mxnatin';inp.placeholder='Find a nation…';inp.autocomplete='off';inp.spellcheck=false;inp.oninput=mxNatFilter;
   nl.append(inp,g('pickP'));const det=mxEl('div');det.id='mxdet';nw.append(nl,det);N.appendChild(nw);
   const pp=g('pickP');pp.addEventListener('mouseover',e=>{const f=e.target.closest&&e.target.closest('.fac');if(f)mxNatShow(f);});pp.addEventListener('mouseleave',()=>mxNatShow());
   pp.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.fac')){mxTick(700);setTimeout(()=>{if(MX.cur==='c-nation')menuGo('c-players');},160);}},false);
   foot(N,go('Next: Players →',()=>menuGo('c-players')));
-  /* --- conquest 3: players --- */
+  /* --- battle 3: players --- */
   const P=scr('c-players','<h2 class="mxh">Players</h2><p class="mxsub">You against the computer. Change teams to play co-op or free-for-all; click a numbered spot on the map to choose where a side starts.</p>');
   const pw=mxEl('div','mxpl'),pl=mxEl('div'),pr=mxEl('div');
   const r1=mxEl('div','mxrow');r1.append(mxEl('div','mxlab','Main opponent'),g('aiFac'));
@@ -19625,26 +19655,22 @@ function mxBuild(){
   pl.append(r1,r2,r3,g('teamList'));const th=mxEl('p','mxsub','Players on the same team are allies: they share vision, never fight each other and win together.');th.style.marginTop='14px';pl.appendChild(th);
   pr.append(g('pickMap'));pw.append(pl,pr);P.appendChild(pw);
   MX.startP=go('Start battle',()=>mxClick('start'));foot(P,go('Battle options →',()=>menuGo('c-opts'),'mxlink'),MX.startP);
-  /* --- conquest 4: battle options --- */
+  /* --- battle 4: options --- */
   const O=scr('c-opts','<h2 class="mxh">Battle options</h2><p class="mxsub">Optional. The defaults are a good fight; start any time from the Players screen.</p>');
   const opt=(h,p,el)=>{const d=mxEl('div','mxopt');d.append(mxEl('h3','',h),mxEl('p','',p),el);O.appendChild(d);};
   opt('Doctrine','Your general’s battle doctrine: a free bonus for the whole battle. Or pick it in the first 2 minutes.',g('gdocSel'));
   opt('Conditions','Time of day and weather. Low sun, dusk and night change what you can see and how far.',g('wx'));
   opt('Season','Mud slows wheels, snow slows infantry. Roads matter more.',g('ssnRow'));
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
-  /* --- single player (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range") --- */
-  const SP=scr('single','<h2 class="mxh">Single player</h2><p class="mxsub">Two games. Pick one.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
+  /* --- Play (one game, Abdullah 2026-11-13 20:18; was "Single player", 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range") --- */
+  const SP=scr('single','<h2 class="mxh">Play</h2><p class="mxsub">Battle against the computer, the story missions, or learn the game.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
   const sitem=(t,d,fn,cls)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''));b.type='button';b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);sl.appendChild(b);return b;};
-  sitem('Battle','Generals-style skirmish: Command Center, supply trucks, tech up, destroy every enemy building',()=>{mxSetMode('battle');menuGo('c-map');});
+  sitem('Battle','Command Center, supply trucks and supply lines, tech up, destroy every enemy building',()=>{mxMapSync();menuGo('c-map');});
   sitem('Missions','The story missions',()=>mxClick('campaign'),'dim sep');
-  sitem('Tutorial','First time? A guided 10-minute battle',()=>mxClick('tutorial'),'dim');
-  sitem('Battle tutorial','First time in Battle? Supply Depot, Barracks, War Factory, attack',()=>{try{initAudio();startBattleTutorial();}catch(e){console.warn(e);}},'dim');
+  sitem('Tutorial','First time? A guided 10-minute Battle, supply lines included',()=>mxClick('tutorial'),'dim');
   sitem('Load game','Load a saved battle',()=>mxClick('svLoadBtn'),'dim');
   /* --- play online --- */
-  const OL=scr('online','<h2 class="mxh">Multiplayer</h2><p class="mxsub">One place to play online. Choose the game, then start one or join a friend: open games and invite codes or links for both are below.</p>');
-  const gl=mxEl('div','mxlist');gl.id='mxolg';OL.appendChild(gl);MX.olBtns={};
-  const gitem=(k,t,d)=>{const b=mxEl('button','mxi');b.type='button';b.dataset.g=k;b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);mxOnline(k);};b.onmouseenter=()=>mxTick(520);gl.appendChild(b);MX.olBtns[k]=b;};
-  gitem('battle','Battle','Generals-style: Command Center, supply trucks, tech tree');
+  const OL=scr('online','<h2 class="mxh">Multiplayer</h2><p class="mxsub">Play a Battle online: start one or join a friend - open games, invite codes and links are below.</p>');
   MX.olGo=mxEl('div','mxolgo');OL.appendChild(MX.olGo);
   const mp=[...card.querySelectorAll('.mode')].find(x=>x.querySelector('#playOnline'));if(mp)OL.appendChild(mp);
   {const lb=OL.querySelector('.label');if(lb)lb.textContent='Open games';const jc=OL.querySelector('#jcode');if(jc)jc.placeholder='Game code or invite link';}
@@ -19661,13 +19687,10 @@ function mxBuild(){
   new MutationObserver(()=>{if(!m.hidden)mxShown();}).observe(m,{attributes:true,attributeFilter:['hidden']});
   setInterval(mxPoll,500);
   MX.screens.title.classList.add('on');mxShown(true);}
-/* Multiplayer: which game the online screen is set for. Conquest/Battle use the shared battle lobby. */
-function mxOnline(k){if(k==='conquest'||k==='battle')MX.olG=k;k=MX.olG||'conquest';
-  mxSetMode(k);
-  for(const g in MX.olBtns)MX.olBtns[g].classList.toggle('on',g===k);
+/* Multiplayer: one game, Battle - the shared battle lobby. */
+function mxOnline(){mxMapSync();
   const po=document.getElementById('playOnline'),h=document.getElementById('host');
-  const cb=MX.olGo;if(cb){cb.innerHTML='';
-    cb.append(mxEl('span','mxolnote','Start a '+mxModeName()+' game below, or join one that is open.'));}
+  const cb=MX.olGo;if(cb){cb.innerHTML='';cb.append(mxEl('span','mxolnote','Start a Battle below, or join one that is open.'));}
   if(po)po.hidden=!!(typeof NET!=='undefined'&&(NET.code||NET.game));if(h)h.hidden=!!(typeof NET!=='undefined'&&(NET.code||NET.game));
   if(MX.cur!=='online')menuGo('online');}
 function mxMapCards(){

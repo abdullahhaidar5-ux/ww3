@@ -121,10 +121,10 @@ try {
       svLatest = null; mxWarTable(); const n = { on: cv(), cap: cap(), wt: mx.classList.contains('wt'), top: top() };   // only an old campaign save left: ignored
       localStorage.removeItem(K); localStorage.removeItem(K + '.i'); svLatest = oldL; mxWarTable();
       return { b, o, n, grand: typeof grandMenu }; });
-    const TOP = 'Single player|Multiplayer|Test range';
+    const TOP = 'Play|Multiplayer|Test range';
     if (wt.err || !wt.b.on || wt.b.lab || !/Testland.*Testmap.*2:05/.test(wt.b.cap) || wt.b.top !== TOP || wt.o.on || !/Oldmap/.test(wt.o.cap)
       || wt.n.on || wt.n.cap || wt.n.wt || wt.n.top !== TOP || wt.grand !== 'undefined')
-      fails.push('living main menu: ' + JSON.stringify(wt) + ' (expected: battle save -> battlefield + caption; old save -> caption only; no save (an old campaign save is ignored) -> calm picture, no caption; top level unchanged; no campaign code)');
+      fails.push('living main menu: ' + JSON.stringify(wt) + ' (expected: battle save -> battlefield + caption; old save -> caption only; no save (an old campaign save is ignored) -> calm picture, no caption; top level Play|Multiplayer|Test range; no campaign code)');
     else console.log('living main menu: your war drawn from the save note (battle, old, none; old campaign saves ignored)');
   }
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
