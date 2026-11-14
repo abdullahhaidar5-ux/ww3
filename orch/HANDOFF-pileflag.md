@@ -29,7 +29,12 @@ Abdullah (Fri 2026-11-13 19:52 Chicago, photo of Battle as Lebanese Shia, "In co
 - The old `pallet`/`crate`/`barrel` props stay in models/ (used elsewhere).
 
 ## Gate
-See the end of this file (filled in after `orch/cigate.sh`).
+- Local: `build.py` + `--check` OK, `smoke.mjs` SMOKE PASS (467 s), `decisions.mjs`: only failure was my own new click test expecting
+  to *see* the 1.5 s flash (a headless frame takes longer than 1.5 s); fixed in 2a2fec8 to check that the flash started.
+- GitHub gate pushed for code commit 2a2fec8 (`gate/2a2fec8bf4`, run https://github.com/abdullahhaidar5-ux/ww3/actions/runs/43549150882)
+  but it was still QUEUED (no runner) after ~50 min, behind other helpers' gates; results not seen by this run. The commit after it
+  only changes this handoff. The conductor should read the `gate/*` statuses of 2a2fec8 (or re-gate the branch head) before landing.
+  Earlier gate run for 4319a13 was cancelled by me (its test had the flash bug) to free runners.
 
 ## Pictures (orch/concepts/pileflag/, made by `node orch/pileflagshots.mjs --tag after`)
 - before-pile-*.jpg / after-pile-*.jpg: close and normal play zoom at full, half used, almost empty.
