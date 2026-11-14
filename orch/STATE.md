@@ -1,15 +1,23 @@
-# Conductor state — 2026-11-14 ~16:10 UTC
+# STATE — conductor run 2026-11-14 ~16:00 UTC
 
-main head a3b627b (train 13), still live. No other conductor active.
+main = 6c3916f (revert of the pileflag merge; gates: only the known-flaky audio / cfclient / tutorial red). Train `train/20261114-1610` (5 merged) gated as gate/e0645fd610; GitHub queue ~13 runs deep.
+Stale: train/20261114-1303 (based on pre-0256 main, own gate red: decisions, cfclient) — do not land; train/20261114-0900 = main.
 
-## Train 1303 (sweepfixA + ghostslot + orderfeel) gated: gate/df9c2a079a
-28 gates: all green except cfclient (known flaky; its own text says CFCLIENT PASS) and **decisions (2 real guard fails)**:
-1. nation cards still had `b.title=F.doctrine` (merge brought it back after sweepfixA removed it)
-2. menu text showed "classic" (map blurb "A classic invasion route", now visible because the battlefield picker is visited by the new guard)
-Fix commit fab21ebcb (removes the tooltip line, rewords the blurb), branch train/20261114-1606, gate pushed as gate/fab21ebcb9 (queued; runners are backed up - 567 gate branches). Local decisions/smoke are too slow here to verify.
-Next run: if gate/fab21ebcb9 green (cfclient flaky ok) -> fast-forward land train/20261114-1606 (rebase if main moved), wait for pages.
+| Branch | Last push (UTC) | Ahead of main | HANDOFF | Own gate | Train |
+|---|---|---|---|---|---|
+| freezefix | 11-13 03:04 | 12 | yes (ready, merged with main of 11-12) | none | IN train |
+| sweepfixB | 11-14 03:38 | 3 (2-row order dock) | yes | none | IN train |
+| battleclean2 | 11-14 04:00 | 8 | yes | 13 of 28 green, rest unreported | IN train |
+| dugout | 11-14 03:54 | 12 | yes | none | IN train |
+| unstuck | 11-14 01:59 | 2 | no | none | IN train (gate.yml + headless.mjs merged by hand) |
+| battlepower | 11-14 03:03 | 5 | yes | 27 statuses, none red | CONFLICT in src/08-ui, 08c-towns, 08i-hud — next train (needs a rebase by its owner or a small-hunk merge) |
+| bldqueue | 11-14 03:14 | 7 | yes | controls/tutorial/migrate* red (likely stale) | not yet (after battlepower) |
+| techbldgs | 11-14 03:42 | 11 | yes (part 1 ready alone) | none | next train |
+| groundreal / leaderlook / usvoice / ammozone | 11-14 03:55–05:29 | 4/11/3/7 | yes | gates were queued, no result | next trains |
+| looktest | 11-14 15:07 | 3 | yes — Abdullah picked B Cinematic 09:06 | none | next train |
+| onegame | 11-14 04:41 | 16 | yes | none | after the Battle branches |
+| nations20 | 11-14 03:33 | 5 | yes (NATIONS20-NOTE: Keep 22 not applied) | none | last |
+| orderfeel / ghostslot / testrange | | 1 each (handoff text only) | yes | green | already on main; nothing to land |
 
-## Held back
-testrange, sweepfixB: tutorial red in their own gates. pileflag: reverted from train (red). Others (battleclean2, dugout, battlepower, bldqueue, techbldgs, groundreal, leaderlook, usvoice, ammozone, onegame, nations20): handoffs present, not yet in a train; to follow after the current train lands (max 6 per train, one gate at a time because runners are backed up).
-No handoff: unstuck. looktest: needs Abdullah's pick. freezefix: old (2 days).
-Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
+Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans, anything only in src/13*.
+Lock with no orch branch: L3-economy, L5-unitlooks, army-standards, c-real-supply, finish-tokens, freezefix2, realwar, seamless-hud, spylook2 (age not checked; saved nothing).
