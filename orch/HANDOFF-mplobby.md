@@ -14,7 +14,7 @@
 - **Colour** is the team colour, shown as a read-only swatch (the sim has no per-player colour).
 - **Chat**: the lobby has no chat message; the box is a lobby log (joins/leaves) with a disabled input. Needs one new message to go live.
 - **Starting money / Game speed / Time limit** do not exist in Battle setup, so the options row has only Conditions. **Closed** slots do not exist (only Open / AI).
-- Dropped old conveniences: team presets (Free for all, 2 teams, Co-op vs AI), "All AI level", per-seat start-spot menus (the clickable numbered spots still sit on the map preview via the leader's canvas? NO: preview is plain; start spots: the leader's canvas is used as the preview, click a numbered spot to hand it over).
+- Dropped old conveniences: team presets (Free for all, 2 teams, Co-op vs AI), "All AI level", per-seat start-spot menus. Start spots still work: the leader's map preview is the numbered-spots canvas, click a spot to hand it to the next side.
 - Cloudflare leader changing own nation sends the same `pick` message guests use; I could not test that the server applies it for the owner seat. Please try: host, change nation, see if it sticks.
 - Old lobby CSS in the index.html page shell (`.seat`, `.lobhd`...) is shell, not src: left alone.
 - Run in a slow sandbox: decisions.mjs fails only on things already red on main (powertest timeout, CLAUDE.md size, american spelling in 08o-*, one-game gnLobby); mine pass. Smoke not run (too slow).
