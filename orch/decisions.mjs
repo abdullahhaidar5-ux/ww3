@@ -475,6 +475,10 @@ try {
   await page.waitForTimeout(2500);
   const fb = await ev(() => { const shown = [...document.querySelectorAll('button.btn')].filter(b => !b.hidden && b.offsetParent && !b.disabled && /^(b_|u_|g_)/.test(b.id)).map(b => b.id);
     const txt = (document.body.innerText || ''); return { shown, tax: /\bTax\b.*(rate|High|Low)|Invest/i.test(txt) ? (/.{20}(Invest|Tax rate).{20}/i.exec(txt) || [''])[0] : '', money: /\$\s?\d{1,3}(,\d{3})+/.test(txt) ? (/.{15}\$\s?\d{1,3}(,\d{3})+.{10}/.exec(txt) || [''])[0] : '', cr: G.teams[ME].credits, txtA: /Ayatollah|Dear Leader|Bunker Buster/.exec(txt) }; });
+  /* L3 light economy (2026-11-14): Battle always applies build time + upkeep profiles; Conquest and grand Fight-it do not; Realistic keeps full REAL_TIER. */
+  { const g = await ev(() => { const sv = G; try { const r = {}; G = { battle: 1, real: 0 }; r.usB = econBT('US'); r.usU = econUp('US'); r.irB = econBT('IR'); r.ruB = econBT('RU'); r.ruU = econUp('RU');
+      G = { battle: 0, real: 0 }; r.conq = econBT('US') + econUp('US') + econBT('IR'); G = { battle: 1, grand: {}, real: 0 }; r.grand = econBT('US') + econBT('IR'); return r; } finally { G = sv; } });
+    ck(g.usB > 1 && g.usU < 1 && g.irB < 1 && g.ruB === 1 && g.ruU === 1, 'L3 light economy profile wrong in Battle: ' + JSON.stringify(g)); ck(g.conq === 3 && g.grand === 2, 'L3 light economy must not touch Conquest or grand Fight-it: ' + JSON.stringify(g)); }
   { const g = await ev(() => ({ ban: ['cleric', 'bb'].every(k => conqBan(k)), fort: false, cl: roster('IR').barracks.includes('cleric'), made: G.ents.some(e => e.kind === 'cleric') }));
     ck(g.ban && !g.fort && !g.made, 'signature assets must be OUT of grand Fight-it battles: ' + JSON.stringify(g)); }
   console.log('fight-it', JSON.stringify(fb)); await shot('fightit-hud');

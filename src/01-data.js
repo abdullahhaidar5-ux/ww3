@@ -853,6 +853,12 @@ function realRowOf(fac){const t=realTierOf(fac);let r=t[2];try{if(msOf(fac).rout
 function realLine(fac){const t=realTierOf(fac);let z='';try{if(msOf(fac).rout===0)z=' Zealous: never breaks; cheap fortifications and fast recruiting at home.';}catch(e){}return t[0]+': '+t[2].sum.replace(/^[A-Za-z ]+: /,'')+z;}
 function realTierOf(fac){let m=.4;try{if(typeof GR_REAL==='object'&&GR_REAL.n[fac])m=GR_REAL.n[fac][1];}catch(e){}return REAL_TIER.find(r=>m>=r[1])||REAL_TIER[REAL_TIER.length-1];}
 function realTierName(fac){return realTierOf(fac)[0];}
+/* L3 economy profiles (Abdullah 2026-11-14 "Do all the dev work now", factiondesign report Q1 answer a): in every Battle (Generals rules) the rich/poor feel is ON in a light form - ONLY build time (bt) and
+   income upkeep (up), never cash, prices, HP or damage. Rich-expensive nations train 10% slower and a big army costs 10% of income; poorer-fast nations (Shia + KP + UA) train 25% faster. Everyone else is 1.0.
+   Realistic mode (G.real) keeps its full REAL_TIER rows instead. Static per nation + G.battle, so nothing new to checkpoint. Guard: orch/decisions.mjs "L3 light economy". */
+const ECON_LIGHT={US:[1.1,.9],GB:[1.1,.9],FR:[1.1,.9],DE:[1.1,.9],IL:[1.1,.9],JP:[1.1,.9],KR:[1.1,.9],SA:[1.1,.9],AE:[1.1,.9],IR:[.75,1],RS:[.75,1],DW:[.75,1],RV:[.75,1],OB:[.75,1],KP:[.75,1],UA:[.75,1]};
+function econBT(fac){const R=realRow(fac);if(R)return R.bt;try{if(G&&G.battle&&!G.grand){const e=ECON_LIGHT[fac];if(e)return e[0];}}catch(e){}return 1;}
+function econUp(fac){const R=realRow(fac);if(R)return R.up;try{if(G&&G.battle&&!G.grand){const e=ECON_LIGHT[fac];if(e)return e[1];}}catch(e){}return 1;}
 // null unless this battle is in Realistic mode - every caller then falls back to the equal Balanced numbers.
 function realRow(fac){try{if(typeof G!=='object'||!G||!G.real)return null;}catch(e){return null;}return realRowOf(fac);}
 function realSup(fac){const R=realRow(fac),S=FACTIONS[fac].sup;if(!R)return S;
