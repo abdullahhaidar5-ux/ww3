@@ -1,0 +1,90 @@
+[0s] pc: launching browser
+[0s] ctx
+[0s] guarded
+[0s] page
+[0s] pc: loading page
+[1s] pc: page loaded
+[1s] pc: menu ready
+[92s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",11712],["Loading 3D models…",2874
+[92s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",11712],["Loading 3D models…",2874
+[92s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",11712],["Loading 3D models…",2874
+[92s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",11712],["Loading 3D models…",2874
+[151s] pc: battle loaded in 150s
+[151s] pc: done {"tok":1,"tipI":7,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",11712],["Loading 3D models…",287
+[151s] pc: done {"tok":1,"tipI":7,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",11712],["Loading 3D models…",287
+[151s] pc: done {"tok":1,"tipI":7,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",11712],["Loading 3D models…",287
+[167s] pc: army in place
+[167s] pc: measuring 150 frames
+[177s] pc: warm-up done, 168 shaders
+[180s] pc: frame 10
+[182s] pc: frame 20
+[184s] pc: frame 30
+[186s] pc: frame 40
+[188s] pc: frame 50
+[190s] pc: frame 60
+[192s] pc: frame 70
+[194s] pc: frame 80
+[196s] pc: frame 90
+[197s] pc: frame 100
+[199s] pc: frame 110
+[201s] pc: frame 120
+[203s] pc: frame 130
+[205s] pc: frame 140
+[207s] pc: frame 150
+[212s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) draw calls rose to 5084 (baseline 1661, allowed up to 2551.5; +206%) | thousand triangles rose to 15700 (baseline 8426, allowed up to 12939; +86%)
+[212s] pc: launching browser
+[212s] ctx
+[212s] guarded
+[212s] page
+[212s] pc: loading page
+[213s] pc: page loaded
+[213s] pc: menu ready
+[306s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10860],["Loading 3D models…",2414
+[306s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10860],["Loading 3D models…",2414
+[306s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10860],["Loading 3D models…",2414
+[306s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10860],["Loading 3D models…",2414
+[367s] pc: done {"tok":1,"tipI":7,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10860],["Loading 3D models…",241
+[367s] pc: done {"tok":1,"tipI":7,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10860],["Loading 3D models…",241
+[367s] pc: battle loaded in 154s
+[367s] pc: done {"tok":1,"tipI":7,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10860],["Loading 3D models…",241
+[381s] pc: army in place
+[381s] pc: measuring 150 frames
+[393s] pc: warm-up done, 167 shaders
+[397s] pc: frame 10
+[399s] pc: frame 20
+[401s] pc: frame 30
+[402s] pc: frame 40
+[404s] pc: frame 50
+[406s] pc: frame 60
+[408s] pc: frame 70
+[410s] pc: frame 80
+[412s] pc: frame 90
+[414s] pc: frame 100
+[415s] pc: frame 110
+[417s] pc: frame 120
+[419s] pc: frame 130
+[421s] pc: frame 140
+[423s] pc: frame 150
+[428s] pc attempt 2: REGRESSED
+
+                       pc        
+units on screen        452       
+load time s            154.2     
+median frame ms        199.2     
+p95 frame ms           262.5     
+p99 frame ms           279.1     
+worst 1% FPS           3.5       
+frames >50 ms          150       
+first boom x median    1.57      
+2nd boom x median      1.24      
+weather/night x median 1.77      
+sim step p95 ms        14.9      
+draw calls             4932      
+k triangles            15595     
+heap MB/min            -109.3    
+runtime 7.1 min
+
+SMOOTH FAIL: 2 problem(s)
+  - pc: draw calls rose to 4932 (baseline 1661, allowed up to 2551.5; +197%)
+  - pc: thousand triangles rose to 15595 (baseline 8426, allowed up to 12939; +85%)
