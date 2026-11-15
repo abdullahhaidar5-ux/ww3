@@ -7,6 +7,7 @@ export function BATTLE_DRIVER() {
   B.pv = NET_PV;
   B.pvs = NET_PVS;   // a 'start' message with players' picked start spots ('st'): older games refuse it (07a)
   B.stClean = (st, n) => stClean(st, n);
+  B.pcClean = (pc, n) => pcClean(pc, n);   // picked player colours (01-data PCOLS): visual only
   B.facs = FKEYS.slice();
   B.mapMax = k => (MAPS[k] || MAPS.strait).max;
   B.regMap = code => registerCustomMap(code);   // a custom map from the map editor: returns its key (hash of its content) or null
@@ -37,12 +38,12 @@ export function BATTLE_DRIVER() {
     if (o.cm) registerCustomMap(o.cm);   // a custom map: known to this battle before the game is built
     const isAI = i => Array.isArray(o.aiD) && o.aiD[i] != null;
     TERR_DEFER = true;
-    const st = stClean(o.st, o.facs.length);
-    try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map((_, i) => isAI(i)), map: o.map, tm: o.tm, w: o.w | 0, st: st || undefined }); } finally { TERR_DEFER = false; }
+    const st = stClean(o.st, o.facs.length), pc = pcClean(o.pc, o.facs.length);
+    try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map((_, i) => isAI(i)), map: o.map, tm: o.tm, w: o.w | 0, st: st || undefined, pc: pc || undefined }); } finally { TERR_DEFER = false; }
     G.teams.forEach((T, i) => { T.ai = !T.reb && isAI(i) ? mkAI(o.aiD[i]) : null; });
     G.headless = true;
     NET.peers = o.peers.slice(); NET.toks = o.toks.slice(); NET.gen = 0; NET.code = o.code || null; NET.baseCode = o.code || null;
-    NET.startInfo = Object.assign({ seed: o.seed, facs: o.facs.slice(), map: o.map, tm: o.tm.slice(), w: o.w | 0, bm: o.bm ? 1 : 0, sv: 1 }, st ? { st } : {}, o.cm ? { cm: o.cm } : {});
+    NET.startInfo = Object.assign({ seed: o.seed, facs: o.facs.slice(), map: o.map, tm: o.tm.slice(), w: o.w | 0, bm: o.bm ? 1 : 0, sv: 1 }, st ? { st } : {}, pc ? { pc } : {}, o.cm ? { cm: o.cm } : {});
     return B.info();
   };
   // The checkpoint the host netcode just packed for its standby player (07b ckTick, every 8 s while a player is

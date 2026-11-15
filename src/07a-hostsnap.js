@@ -227,7 +227,7 @@ function specOf(peer){return (NET.specs||[]).find(s=>s.peer===peer)||null;}
 // the battle is running: add the spectator (if there is room) and send them the battle's start
 function specJoin(peer){if(MODE!=='host'||!G||!NET.startInfo||!NET.game)return false;if(NET.peers&&NET.peers.indexOf(peer)>=0)return false;NET.specs=NET.specs||[];
   if(!specOf(peer)){if(NET.specs.length>=SPEC_MAX){NET.game.emit('lobby',{n:0,to:peer,full:1,spec:1}).catch(()=>{});return false;}NET.specs.push({peer,sv:0});}
-  const si=NET.startInfo,st=Array.isArray(si.st)?{st:si.st}:{};
+  const si=NET.startInfo,st=Object.assign(Array.isArray(si.st)?{st:si.st}:{},Array.isArray(si.pc)?{pc:si.pc}:{});
   NET.game.emit('start',Object.assign({pv:st.st?NET_PVS:NET_PV,seed:si.seed,facs:si.facs,slot:0,to:peer,map:si.map,tm:si.tm,w:si.w|0,bm:si.bm?1:0,sp:1},ME<0||si.sv?{sv:1}:{},st)).catch(()=>{});
   if(NET.kf)NET.kf['s:'+peer]=0;return true;}
 function specGone(peer){if(NET.isSpec)delete NET.isSpec[peer];if(!NET.specs)return;const i=NET.specs.findIndex(s=>s.peer===peer);if(i<0)return;NET.specs.splice(i,1);
