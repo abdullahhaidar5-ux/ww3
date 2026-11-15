@@ -80,7 +80,7 @@ async function openGame(ctxOpts, saved) {
   await page.waitForFunction(() => G && !window.LOADING, null, { timeout: 600000, polling: 250 });
   // Freeze the battle (drawing and input keep running), place the test units, record every order sent to the battle.
   await page.evaluate(() => {
-    G.paused = true; SET.edge = 0; G.setupEnd = 0; /* Conquest: no setup phase in the control tests */
+    G.paused = true; SET.edge = 0;
     window.__acts = []; const o = doAct; doAct = function (a) { __acts.push(JSON.parse(JSON.stringify(a))); return o(a); };
     const hq = G.ents.find(b => b.team === ME && b.kind === 'hq'), eq = G.ents.find(b => b.team !== ME && b.kind === 'hq');
     // a patch of open, passable ground between the two bases
@@ -137,17 +137,18 @@ async function cancelChecks(page, { mode, ck }) {
   await page.evaluate(() => { try { MLOCK.broken = true; mlockOff(); } catch (e) {} G.place = G.aim = null; window.__acts = [];
     const T = G.teams[ME]; T.credits = 5000; let b = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks' && e.built >= 1);
     if (!b) { const h = G.byId.get(window.__HQ); b = addBld(ME, 'barracks', h.x + 150, h.y + 150, true); }
-    T.q.barracks = []; enqueue(ME, 'inf'); enqueue(ME, 'inf'); window.__CB = b.id; window.__C0 = T.credits; G.sel = [b]; updateUI(); });
+    b.q = []; enqueue(ME, 'inf', b.id); enqueue(ME, 'inf', b.id); window.__CB = b.id;   /* every production building has its own queue */
+    window.__C0 = T.credits; G.sel = [b]; updateUI(); });
   await wait(300);
   if (mode === 'touch') await page.evaluate(() => { TC.stripK = null; tcStrip(true); });
   const dis = await page.evaluate(() => { const b = document.querySelector('#info .cnBtn'); return b ? b.disabled : null; });
   ck(mode + ' Cancel is enabled with a queued building selected', mode === 'touch' ? !!(await page.$(btn)) : dis === false, JSON.stringify(await page.evaluate(() => ({ dis: String(document.querySelector('#info .cnBtn') && document.querySelector('#info .cnBtn').disabled), ui: TOUCHUI, t: TC.touch, ci: cancelInfo(), st: document.getElementById('tstrip') && document.getElementById('tstrip').className, hid: document.getElementById('tstrip') && document.getElementById('tstrip').hidden, menu: document.getElementById('menu').hidden, load: !!window.LOADING }))));
   await press(btn);
-  let r = await page.evaluate(() => ({ n: G.teams[ME].q.barracks.length, c: G.teams[ME].credits, c0: window.__C0 }));
+  let r = await page.evaluate(() => ({ n: (G.byId.get(window.__CB).q || []).length, c: G.teams[ME].credits, c0: window.__C0 }));
   ck(mode + ' Cancel removes the last queued unit and refunds it', r.n === 1 && r.c > r.c0, JSON.stringify(r));
   if (mode !== 'touch') {
     await page.keyboard.press('Backspace'); await wait(100);
-    r = await page.evaluate(() => ({ n: G.teams[ME].q.barracks.length }));
+    r = await page.evaluate(() => ({ n: (G.byId.get(window.__CB).q || []).length }));
     ck('Backspace cancels too', r.n === 0, JSON.stringify(r));
   }
   // a builder constructing a building
@@ -159,7 +160,7 @@ async function cancelChecks(page, { mode, ck }) {
   r = await page.evaluate(() => { const b = G.byId.get(window.__CB); return { gone: !b || b.dead, c: G.teams[ME].credits, c0: window.__C0 }; });
   ck(mode + ' Cancel on a constructing builder removes the building and refunds it', r.gone && r.c > r.c0, JSON.stringify(r));
   // placement
-  await page.evaluate(() => { G.sel = []; G.place = 'barracks'; updateUI(); });
+  await page.evaluate(() => { const d = G.ents.find(e => e.kind === 'dozer' && e.team === ME && !e.dead); G.sel = d ? [d] : []; G.place = 'barracks'; updateUI(); });   /* placing needs a Construction Vehicle selected */
   await wait(300);
   if (mode === 'touch') { await page.evaluate(() => { TC.stripK = null; tcStrip(true); }); await press('#tstrip button[data-k="no"]'); }
   else await press(btn);
@@ -312,7 +313,7 @@ try {
     await page.keyboard.press('t');
     check('T with nothing selected selects all own combat units', await page.evaluate(() => G.sel.length > 0 && G.sel.every(u => !u.isB && u.team === ME && !['harv', 'hacker', 'dozer'].includes(u.kind))));
     await page.evaluate(([A, B]) => { G.sel = [G.byId.get(A), G.byId.get(B)].filter(Boolean); updateUI(); }, [A, B]);
-    check('orders row has a Type (T) button', await page.evaluate(() => [...document.querySelectorAll('.cmdrow button')].some(b => /Type \(T\)/.test(b.textContent))));
+    check('orders row has a Same type (T) button', await page.evaluate(() => [...document.querySelectorAll('.cmdrow button')].some(b => /type \(T\)/i.test(b.getAttribute('aria-label') || b.textContent))));
   }
   await page.keyboard.press('x');
   a = await acts(page);
@@ -346,7 +347,7 @@ try {
   await page.mouse.click(V.hqGround.x, V.hqGround.y);
   a = await acts(page);
   check('left-click ground with a production building selected sets its rally point', a.some(x => x.t === 'rally'), JSON.stringify(a));
-  check('…and the building stays selected', (await sel(page)).length === 1);
+  check('…and the building is let go', (await sel(page)).length === 0);
 
   /* ---- mouse kept inside the game window (Pointer Lock) ---- */
   console.log(' mouse kept inside the game window');
@@ -447,7 +448,7 @@ try {
   await enterExitChecks(page, { mode: 'mouse', ck: check });
   await cancelChecks(page, { mode: 'mouse', ck: check });
   await powerChecks(page, { mode: 'mouse', ck: check });
-  await stanceChecks(page, { mode: 'mouse', ck: check });
+  // army stance was removed on purpose (Abdullah 2026-11-14 18:31 "Remove army stance option"): no stance checks
   // one-click powers: hotkey + 1 click, no-target = 1 press, Esc / right-click cancels
   await page.evaluate(() => { const T = G.teams[ME]; T.pw.barrage = { lv: 1, cd: 0 }; T.pw.sanc = { lv: 1, cd: 0 }; updateUI(); });
   await clear(page); await page.keyboard.press('b'); await wait(100);

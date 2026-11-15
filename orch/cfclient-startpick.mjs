@@ -25,7 +25,7 @@ import { startServer, guardContext } from './serverdev.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
-const MAP = 'strait';
+const MAP = 'bm_fourmills';   // a listed Battle map that seats 4 (the old Straits map is not a Battle map)
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -140,7 +140,7 @@ async function skirmishPicks(page, touch) {
   if (n !== 4) throw new Error('expected 4 sides after choosing 3 AIs, got ' + n);
   // AI 3's Start menu: spot 2
   await page.locator('#teamList .trow').nth(3).locator('select.stsel').selectOption('1');
-  await hitSpot(page, '#mapCv', 5, n, touch);   // You -> spot 6
+  await hitSpot(page, '#mapCv', 2, n, touch);   // You -> spot 3 (a Battle map has exactly one spot per side)
   await hitSpot(page, '#mapCv', 3, n, touch);   // You moves to spot 4
   await hitSpot(page, '#mapCv', 3, n, touch);   // tapped again: spot 4 goes to AI 1, You back to Random
   await hitSpot(page, '#mapCv', 0, n, touch);   // You -> spot 1

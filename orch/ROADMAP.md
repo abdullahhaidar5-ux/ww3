@@ -1,5 +1,8 @@
 # Roadmap — progress of all the big work
 
+> **2026-11-14 (onegame): the grand campaign and Conquest were removed** (Abdullah 2026-11-13 20:18 "Abandon conquest and campaign entirely remove them from the game"). Every grand-map / campaign / Conquest item below is closed and kept only as history; the game is Battle (+ Test range, Missions, Tutorial). See CLAUDE.md and orch/BRIEF.md.
+
+
 The Command Board's **Progress** section is built from this file (`orch/board.py`). ORCH updates the status tags
 every cycle (ORCH.md step 9); anyone who ships or starts an item updates its line here in the same commit.
 

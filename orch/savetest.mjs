@@ -29,7 +29,7 @@ try {
   if (exported.n !== 1) fails.push('save list has ' + exported.n + ' entries, expected 1');
   // --- A continues
   const postA = await run(A, POST * 3600, SEED + 1);
-  console.log(`A after +${POST} min: t=${postA.t.toFixed(1)} hash=${postA.h.h} units=${postA.h.units} money=${postA.h.money} towns=${postA.h.towns}`);
+  console.log(`A after +${POST} min: t=${postA.t.toFixed(1)} hash=${postA.h.h} units=${postA.h.units} money=${postA.h.money}`);
   // --- fresh page, load the save
   const C = await B.open();
   const lr = await C.evaluate(async ({ meta, packed }) => { window.__reseed(5); const r = await svLoad(meta, packed); return { ok: r.ok, msg: r.msg || '', paused: G && G.paused, sub: document.getElementById('pauseSub').textContent, t: G && G.t, h: G && svStateHash() }; }, exported);
@@ -40,8 +40,8 @@ try {
     if (lr.h.h !== pre.h.h) fails.push(`state right after load differs: ${lr.h.h} vs saved ${pre.h.h} (units ${lr.h.units}/${pre.h.units}, money ${lr.h.money}/${pre.h.money})`);
     await C.evaluate(() => window.__fakeClock(true));
     const postC = await run(C, POST * 3600, SEED + 1);
-    console.log(`C after +${POST} min: t=${postC.t.toFixed(1)} hash=${postC.h.h} units=${postC.h.units} money=${postC.h.money} towns=${postC.h.towns}`);
-    if (postC.h.h !== postA.h.h) fails.push(`replay differs after +${POST} min: A ${postA.h.h} (units ${postA.h.units}, money ${postA.h.money}, towns ${postA.h.towns}) vs C ${postC.h.h} (units ${postC.h.units}, money ${postC.h.money}, towns ${postC.h.towns})`);
+    console.log(`C after +${POST} min: t=${postC.t.toFixed(1)} hash=${postC.h.h} units=${postC.h.units} money=${postC.h.money}`);
+    if (postC.h.h !== postA.h.h) fails.push(`replay differs after +${POST} min: A ${postA.h.h} (units ${postA.h.units}, money ${postA.h.money}) vs C ${postC.h.h} (units ${postC.h.units}, money ${postC.h.money})`);
   }
   // --- reload the page: Continue works from IndexedDB
   await C.reload({ waitUntil: 'load' });

@@ -39,11 +39,11 @@ function navalMult(e,src){let m=1;if(!src||src.isB||!src.s)return m;
   if(!e.isB&&e.s&&e.s.swarm){if(src.s.cls==='ship')m*=1.3;else if(src.s.cls==='heli')m*=1.6;else if(src.s.aa&&src.s.dom==='naval')m*=1.15;}
   return m;}
 // ---- AI: builds fast boats, one minelayer and one sweeper; sends them where they matter ----
-function aiNavy2Pick(T,mine,opts,fleet){const has=k=>mine.some(e=>!e.dead&&!e.isB&&e.kind===k)||T.q.shipyard.some(i=>i.kind===k);
+function aiNavy2Pick(T,mine,opts,fleet){const has=k=>mine.some(e=>!e.dead&&!e.isB&&e.kind===k)||qItems(T,'shipyard').some(i=>i.kind===k);
   const foeLay=G.ents.some(e=>!e.dead&&!e.isB&&e.kind==='minel'&&!ally(e.team,T.id)),known=G.mines.some(m=>m.nav&&!ally(m.team,T.id)&&m.dt&&m.dt[T.id]>G.t);
   if(opts.includes('sweep')&&fleet.length>=2&&!has('sweep')&&(known||(foeLay&&G.t>420)))return['sweep'];
   if(opts.includes('minel')&&fleet.length>=2&&!has('minel')&&G.t>300&&navMines(T.id)<MINE_CAP-4)return['minel'];
-  const nf=fleet.filter(e=>e.kind==='fast').length+T.q.shipyard.filter(i=>i.kind==='fast').length;
+  const nf=fleet.filter(e=>e.kind==='fast').length+qItems(T,'shipyard').filter(i=>i.kind==='fast').length;
   if(opts.includes('fast')&&fleet.length>=1&&nf<Math.max(1,Math.floor(fleet.length*.4)))return['fast'];return null;}
 function aiNavy2(T,mine){const id=T.id,yd=mine.find(e=>e.isB&&e.kind==='shipyard'&&e.built>=1&&!e.dead);
   for(const u of mine){if(u.dead||u.isB)continue;

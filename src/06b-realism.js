@@ -27,7 +27,7 @@ function reWin(e,a,seed,minFl){const c=e.civ;if(!c||!c.b||!c.b.length)return nul
   const k=k0+Math.floor(rh(seed*7.13+c.i)*(k1-k0+1)),t=s*(k+.5)*WS,fl=Math.max(0,Math.floor((b.h-.4)/FH)-1),f0=Math.min(fl,minFl==null?1:minFl),fy=f0+Math.floor(rh(seed*3.7+c.i*1.9)*(fl-f0+1)),gy=groundH(b.x,b.y);
   return{x:wall===0?b.x+b.w/2:wall===1?b.x-b.w/2:t,z:wall===2?b.y+b.d/2:wall===3?b.y-b.d/2:t,y:gy+(fy+.55)*FH,nx,nz,FH,WS,tower};}
 function rh(n){const v=Math.sin(n*12.9898)*43758.5453;return v-Math.floor(v);}
-function reGarRefresh(){RE.gars.length=0;RE.gT=G.t;for(const e of G.ents)if(!e.dead&&e.kind==='garrison'&&e.civ){if(e.k==null)e.k=0;RE.gars.push(e);}}
+function reGarRefresh(){RE.gars.length=0;RE.gT=G.t;for(const e of G.ents)if(!e.dead&&e.kind==='garrison'&&e.civ&&!e.civ.dug){if(e.k==null)e.k=0;RE.gars.push(e);}}
 function reGarFx(dt){const lo=typeof fxPH==='function'&&fxPH()||(typeof gfxLow==='function'&&gfxLow());if(!RE.sil){RE.sil=rePool('sil',lo?8:20,2.6,3.4);RE.hole=rePool('hole',lo?8:22,5.5,5.5);}
   if(RE.sil[0]&&!RE.sil[0].parent){for(const m of RE.sil.concat(RE.hole))SCN.add(m);}RE.sil.forEach(q=>q.visible=false);RE.hole.forEach(q=>q.visible=false);if(cam.dist>650)return;let si=0,hi=0;
   for(const e of RE.gars){if(!inView(e.x,e.y,.15))continue;const f=e.hp/e.max,occ=MODE==='client'?(e.occN|0):(e.civ.occ?e.civ.occ.length:0);
@@ -77,5 +77,5 @@ function reDark(dt){let n=0;const now=G.t;for(let i=0;i<96;i+=3){const t=RE.shot
   if(typeof WXCITY!=='undefined'){if(RE.cityBase==null||Math.abs(WXCITY.value-RE.citySet)>1e-4)RE.cityBase=WXCITY.value;RE.citySet=RE.cityBase*(1-.85*RE.dark);WXCITY.value=RE.citySet;}}
 function realTick(dt){if(!G||!G.terrain||!(dt>0))return;if(window.NOREAL)return;if(RE.gG!==G){RE.gG=G;RE.civ.length=0;RE.cars.length=0;RE.shots.fill(0);RE.dark=0;if(RE_CIVM)for(const m of RE_CIVM.concat(RE_CARM)){m.count=0;if(!m.parent)SCN.add(m);}}if(G.t-RE.gT>.5)reGarRefresh();
   try{reDark(dt);}catch(e){}try{reGarFx(dt);}catch(e){if(!RE.er++)console.warn('realism garrison',e);}
-  const lo=typeof fxPH==='function'&&fxPH()||(typeof gfxLow==='function'&&gfxLow());if(!lo)try{reCivTick(dt);}catch(e){if(!RE.er++)console.warn('realism towns',e);}else if(RE_CIVM){for(const m of RE_CIVM.concat(RE_CARM))m.count=0;RE.civ.length=0;RE.cars.length=0;}}
+  const lo=typeof fxPH==='function'&&fxPH()||(typeof gfxLow==='function'&&gfxLow());if(!lo&&!G.battle)try{reCivTick(dt);}catch(e){if(!RE.er++)console.warn('realism towns',e);}else if(RE_CIVM){for(const m of RE_CIVM.concat(RE_CARM))m.count=0;RE.civ.length=0;RE.cars.length=0;}}
 RE.er=0;

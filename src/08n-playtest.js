@@ -4,9 +4,9 @@
 // `node orch/playtest-digest.mjs --card` from the newest lines of orch/HISTORY.md - do not edit it by hand.
 (function(){
 /*PLAYTEST-ITEMS*/
-const PLAYTEST_WEEK="2026-11-11";
+const PLAYTEST_WEEK="2026-11-14";
 const PLAYTEST_ITEMS=[
- ["73e2fb4b","The main menu is now Single player / Multiplayer / Test range (Grand campaign, Conquest, Battle, Missions, Tutorial inside Single player)"],
+ ["onegame1","One game: the main menu is Play / Multiplayer / Test range - every game is a Battle (Conquest and the Grand campaign are gone)"],
  ["7f51e67a","Buildings are called by their one official name everywhere (Strike Center, Defense Gun, War Factory, Anti-Air Missile Site); a check now stops old faction names or real groups' names from ever showing"],
  ["09179068","Computer opponent on Hard is smarter (same money): it goes round your weaker side, guards its artillery, keeps a few strike aircraft and sends them in with its ground attack"],
  ["92e530c3","Morocco (MA) now has its own Moroccan-Arabic soldier voices instead of a borrowed sheet"],
@@ -15,7 +15,7 @@ const PLAYTEST_ITEMS=[
  ["90b8b9be","Sound mix. Measured first: the old output clipped (+1.9 dB over full scale; unit voices bypassed the mixer)"],
  ["416cd5e6","Test range compound: the rooftop parapet frame (white concrete posts/caps) floated high above the roofs because the roof height was taken from the tallest part (radar dish/mast) instead of the.."],
  ["06e4b59f","Formation buttons show only with 2+ own units selected, so the bottom bar no longer widens/clips with a building (e.g. Shipyard) selected"],
- ["fcc81616","Dig-in/fortification line + campaign battles army-only (tabs, money, town tax panel hidden, banner), Conquest battlefield picker (search, filters, regions, paged, favorites/recent, keys)"]];
+ ["onegame2","Battle supply lines: press L - green roads out of your Command Center and depots refill ammo; crater an enemy road and watch its line go dashed"]];
 /*PLAYTEST-END*/
 const KEY='ww3_playtest_'+PLAYTEST_WEEK;
 let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){ST={};}

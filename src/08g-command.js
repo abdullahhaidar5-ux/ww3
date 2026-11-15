@@ -34,7 +34,8 @@ function ctPlanTick(){if(!G||G.over||G.paused||MODE==='spectate'||NET.spec)retur
       if(near>=Math.ceil(us.length*.7)||G.t-pl.tIss>100){pl.st='wait';pl.arr=G.t;if(s.t==='h'||pl.i===pl.steps.length-1){pl.st='done';pl.tDone=G.t;pushLog(`Plan ${pl.n} complete.`,'g');}}continue;}
     const s=pl.steps[pl.i+1];if(!s){pl.st='done';pl.tDone=G.t;continue;}
     if(ctTrigOk(pl,s,pl.i<0?pl.t0:pl.arr))ctStepFire(pl);}}
-function ctPlanStart(){const ids=selfSel().map(u=>u.id);if(!ids.length){pushLog('Select some units first, then draw their plan.','w');return;}CT.mode='plan';CT.draft={ids,steps:[]};ctUI();}
+function ctPlanStart(){return;}
+function ctPlanStart_old(){const ids=selfSel().map(u=>u.id);if(!ids.length){pushLog('Select some units first, then draw their plan.','w');return;}CT.mode='plan';CT.draft={ids,steps:[]};ctUI();}
 function ctPlanFinish(){const d=CT.draft;CT.mode=null;CT.draft=null;if(!d||!d.steps.length){ctUI();return;}
   for(const p of CT.plans)p.ids=p.ids.filter(i=>!d.ids.includes(i));CT.plans=CT.plans.filter(p=>p.ids.length);
   const pl={n:++CT.pid,ids:d.ids,steps:d.steps,i:-1,st:'wait',t0:G.t,arr:G.t,go:false};CT.plans.push(pl);pushLog(`Plan ${pl.n} set: ${pl.steps.length} step${pl.steps.length>1?'s':''}.`,'g');sfxUI(520);ctPlanTick();ctUI();}
@@ -95,8 +96,7 @@ window.addEventListener('contextmenu',e=>{if(CT.mode&&(e.target===cv||e.target==
 /* ---- keys (the one key table: O plan, Enter go / finish, , . / ping, ' draw, ; circle; Esc leaves a tool) ---- */
 window.addEventListener('keydown',e=>{if(!G||G.over||(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA'))||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key;
   if(k==='Escape'&&CT.mode){e.stopImmediatePropagation();e.preventDefault();ctToolOff();return;}
-  if(k==='Enter'){if(CT.mode==='plan'){e.preventDefault();ctPlanFinish();}else if(CT.plans.some(p=>p.st==='wait'&&p.steps[p.i+1]&&p.steps[p.i+1].trig==='go')){e.preventDefault();ctGoAll();}return;}
-  if(k==='o'||k==='O'){e.preventDefault();CT.mode==='plan'?ctPlanFinish():ctPlanStart();return;}
+  /* battle plans removed (Abdullah 2026-11-14 16:55 "Remove battle plans"): O is only Next formation again */
   const pm={',':'ping0','.':'ping1','/':'ping2',"'":'draw',';':'circle'}[k];if(pm&&ctTeamPlay()){e.preventDefault();CT.mode=CT.mode===pm?null:pm;CT.draft=null;ctUI();}},true);
 function ctTeamPlay(){return !!G&&!G.sandbox&&G.teams.some(O=>O.id!==ME&&!O.reb&&!O.out&&sameTm(O.id,ME));}
 /* ---- the panel ---- */
@@ -144,24 +144,21 @@ window.addEventListener('pointerdown',e=>{if(CT.mode!=='gsend'||!G||e.button!==0
   const us=sqList(i);ctFormSend(us,w.x,w.y,CT.form[i]||'line',MODK.shift?'amove':'move');speak(1);mark({x:w.x,y:w.y,r:20,t:0,d:.5,c:0x74d08f});ctUI(true);},true);
 function ctGroupName(i){return CT.names[i]?(CT_GN.includes(CT.names[i])?CT.names[i]+' '+i:CT.names[i]):'Group '+i;}
 function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=null;CT.mode=null;CT.draw=null;CT.names={};CT.form={};CT.sendG=0;CT.pid=0;CT.sig='';}   // a new battle starts clean
-  if(!G||G.over||RP.on||NET.spec){if(CTP)CTP.hidden=true;const b=$('ctBanner');if(b)b.hidden=true;const q=$('planBar');if(q)q.hidden=true;return;}const P=ctEl(),T=G.teams[ME];if(!T||T.reb){P.hidden=true;return;}ctBanner();ctPlanBar();
+  if(!G||G.over||RP.on||NET.spec){if(CTP)CTP.hidden=true;const b=$('ctBanner');if(b)b.hidden=true;const q=$('planBar');if(q)q.hidden=true;return;}const P=ctEl(),T=G.teams[ME];if(!T||T.reb){P.hidden=true;return;}ctBanner();ctPlanBar();P.hidden=true;return;   /* the COMMAND panel (battle groups list) is gone (Abdullah 2026-11-14 21:19 "This isn't needed anymore"); groups still work with 1-9 and Ctrl+number */
   const tp=ctTeamPlay(),ffa=ctFFA(),oth=G.teams.filter(O=>O.id!==ME&&!O.reb&&!O.out),sel=selfSel().length;
   const abA=typeof abMine==='function'?abMine():null,abT=abA&&abA.list.length?(abA.on!==false?' · ● on':' · ❚❚ paused'):'';
   let h=`<h4 data-a="tog"><span>Command</span><span class="abc" data-a="abtog" title="Auto-build: standing production orders (key U)">Auto-build [U]${abT}</span><small>${CT.open?'▾':'▸'}</small></h4>`;
   if(CT.open){
-    h+=`<div class="sec">Battle plans · key O</div><div class="row"><button class="${CT.mode==='plan'?'on':''}" data-a="plan" ${sel||CT.mode==='plan'?'':'disabled'}>${CT.mode==='plan'?'Finish plan':'Plan for selection'}</button>${CT.plans.some(p=>p.st==='wait'&&p.steps[p.i+1]&&p.steps[p.i+1].trig==='go')?'<button data-a="goall">GO ▶ (Enter)</button>':''}</div>`;
-    for(const p of CT.plans){const nx=p.steps[p.i+1],txt=p.st==='done'?'done':p.st==='move'?`step ${p.i+1}/${p.steps.length} under way`:nx?(nx.trig==='go'?`step ${p.i+2}: waiting for GO`:nx.trig==='timer'?`step ${p.i+2} in ${ctFmt(nx.sec-(G.t-(p.i<0?p.t0:p.arr)))}`:`step ${p.i+2} next`):'done';
-      h+=`<div class="row"><b>Plan ${p.n}</b><small>${ctMine(p.ids).length} units · ${txt}</small>${nx&&nx.trig==='go'&&p.st==='wait'?`<button data-a="go" data-v="${p.n}">GO ▶</button>`:''}<button data-a="pdel" data-v="${p.n}">✕</button></div>`;}
     h+='<div class="sec">Battle groups · keys 1-9 (Ctrl/Shift+number saves)</div>';let any=0;
     for(let i=1;i<=SQN;i++){const L=sqList(i);if(!L.length)continue;any=1;const hp=L.reduce((s,u)=>s+u.hp,0)/Math.max(1,L.reduce((s,u)=>s+u.max,0)),am=L.filter(u=>u.amx>0),ap=am.length?am.reduce((s,u)=>s+u.am,0)/am.reduce((s,u)=>s+u.amx,0):-1,f=CT.form[i]||'line';
       h+=`<div class="row" ><span class="nm" data-a="gname" data-v="${i}" data-n="${i}" title="Click: next name. Double-click: type a name">${ctGroupName(i)}</span><small>${L.length} units</small><span class="bar" title="Health ${Math.round(hp*100)}%"><i style="width:${Math.round(hp*100)}%;background:${hp>.6?'#74d08f':hp>.3?'#e3b341':'#ea5a40'}"></i></span>${ap>=0?`<span class="bar" title="Ammo ${Math.round(ap*100)}%"><i style="width:${Math.round(ap*100)}%;background:${ap>.4?'#6fb2ff':'#ea5a40'}"></i></span>`:''}</div>
       <div class="row"><button data-a="gsel" data-v="${i}">Select</button><button class="${CT.sendG===i?'on':''}" data-a="gsend" data-v="${i}" title="Then click the map (Shift: attack-move)">Send</button><button data-a="gform" data-v="${i}" title="Formation when sent">${f[0].toUpperCase()+f.slice(1)}</button><button data-a="ghold" data-v="${i}">Hold</button><button data-a="gstop" data-v="${i}">Stop</button></div>`;}
     if(!any)h+='<small>Select units and press Ctrl+1 to save a group.</small>';
     if(tp){h+=`<div class="sec">Pings &amp; drawing</div><div class="row">`+CT_PING.map((p,i)=>`<button class="${CT.mode==='ping'+i?'on':''}" data-a="tool" data-v="ping${i}" style="border-color:${p.c}" title="${[',','.','/'][i]} then click the map or minimap">${p.n}</button>`).join('')+`<button class="${CT.mode==='draw'?'on':''}" data-a="tool" data-v="draw" title="' then drag on the map">Draw</button><button class="${CT.mode==='circle'?'on':''}" data-a="tool" data-v="circle" title="; then drag from the center">Circle</button></div><div class="row">`+CF.LINES.map((l,i)=>`<button data-a="say" data-v="${i}">${l}</button>`).join('')+'</div>';
-      h+='<div class="sec">Aid for teammates</div>';for(const O of oth.filter(O=>sameTm(O.id,ME)))h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b><button data-a="give" data-v="${O.id}" data-w="500" title="10% fee, arrives after 4 s">$500</button><button data-a="give" data-v="${O.id}" data-w="2000">$2000</button><button data-a="gift" data-v="${O.id}" ${sel?'':'disabled'} title="Give the selected units (up to 12, one gift per 20 s)">Give units</button></div>`;}
+      h+='<div class="sec">Aid for teammates</div>';for(const O of oth.filter(O=>sameTm(O.id,ME)))h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b><button data-a="give" data-v="${O.id}" data-w="500" title="10% fee, arrives after 4 s">$500</button><button data-a="give" data-v="${O.id}" data-w="2000">$2000</button><button data-a="gift" data-v="${O.id}" ${sel?'':'disabled'} title="Give the selected units (up to 5, one gift per 2 min)">Give units</button></div>`;}
     if(ffa&&oth.length){h+='<div class="sec">Truce (free-for-all)</div>';
       for(const O of oth){const tr=truced(ME,O.id),k=ME<O.id?ME*32+O.id:O.id*32+ME,out=(G.tOff||[]).find(o=>o.f===ME&&o.t===O.id),oath=(O.oath||0)>G.t,me=(T.oath||0)>G.t;
-        h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b>${oath?'<small style="color:#ea5a40">oathbreaker</small>':''}`+(tr?`<small>truce ${ctFmt(G.truce[k]-G.t)}</small><button data-a="cfb" data-v="${O.id}" title="Breaking a truce: unrest in your towns and nobody trusts you for 4 minutes">Break</button>`
+        h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b>${oath?'<small style="color:#ea5a40">oathbreaker</small>':''}`+(tr?`<small>truce ${ctFmt(G.truce[k]-G.t)}</small><button data-a="cfb" data-v="${O.id}" title="Breaking a truce: nobody trusts you for 4 minutes">Break</button>`
           :out?`<small>offered · ${Math.ceil(out.e-G.t)} s</small>`:[60,120,180].map((d,di)=>`<button data-a="cf" data-v="${O.id}" data-w="${di}" ${me?'disabled':''}>${d/60} min</button>`).join(''))+'</div>';}
       if((T.oath||0)>G.t)h+=`<small style="color:#ea5a40">You are an oathbreaker for ${ctFmt(T.oath-G.t)}.</small>`;}
   }

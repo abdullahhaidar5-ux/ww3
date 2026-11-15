@@ -3,11 +3,11 @@
   "eng": "xtts",
   "lang": "en",
   "sold": [
-   "Damien Black",
-   "Dionisio Schuyler",
-   "Viktor Eka"
+   "clone:us_reagan",
+   "clone:us_truman",
+   "clone:us_ike"
   ],
-  "cmd": "Baldur Sanjin"
+  "cmd": "clone:us_ike"
  },
  "TR": {
   "eng": "xtts",
