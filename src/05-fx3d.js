@@ -353,7 +353,7 @@ function fxUpdate(dt){
   flagTick(dt);
   for(const p of PINGS)p.t+=dt;for(let i=PINGS.length-1;i>=0;i--)if(PINGS[i].t>=PINGS[i].d)PINGS.splice(i,1);
   washTick();wakeTick(dt);dustN=0;
-  gpuGcHook();gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}
+  gpuGcHook();if(typeof boneTrickle==='function')boneTrickle(dt);gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}
   if(G&&G.map&&G.map.theme==='snow'&&CAM&&typeof cam!=='undefined'){const n=Math.min(30,dt*Math.min(150,cam.dist*.16))|0;const R=Math.max(500,cam.dist*1.1);for(let i=0;i<n+(Math.random()<dt*20?1:0);i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(60,260),vx:rnd(8,22),vy:rnd(-4,6),vh:-rnd(26,40),f:1,c:[1.05,1.08,1.12],s:rnd(1.4,2.4),d:rnd(4,6.5),a:.85});}}
   try{weatherFX(dt);}catch(e){}
   shake*=Math.exp(-7*dt);flash=Math.max(0,flash-dt*1.6);}
@@ -561,18 +561,20 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
   lap('models',ts);ts=performance.now();
   // the merged one-mesh soldier and the shared plain materials
   if(!dead()){const grp=mk();
-    try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac))grp.add(o);}}catch(e){}
+    try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac)){grp.add(o);/* bone textures for the soldiers who appear later in the battle */if(typeof bonePoolWarm==='function'){const nbs=new Set();o.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});for(const k of keys){const pr=MODELS.proto[k];if(pr&&pr.scene)pr.scene.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});}for(const nb of nbs)bonePoolWarm(nb,PH?48:160);}}}}catch(e){}
     try{grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);gg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*3).fill(.5),3));grp.add(new THREE.Mesh(gg,gm));grp.add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
     for(const op of [.8,.12])grp.add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
     // an aircraft's exhaust plume is added when the unit is made (modelFor), not to the model itself: its shader and canvas texture are prepared here
     try{if(typeof jetPlumeMat==='function'){const pl=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());pl.renderOrder=3;grp.add(pl);}}catch(e){}
-    // a garrisoned house's flag and a building's scaffold (shared shapes, first seen mid-battle when squads run into houses)
-    try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));}}catch(e){}
     grp.traverse(c=>{c.frustumCulled=false;});await step('shared',grp);await frame();}
   // what a strike shows for the first time (PC): missiles, flames, rock chunks / warning markers, ping rings, rubble, banner / shock rings
   if(!PH&&!dead()){
     {const grp=mk();try{if(typeof mslWarm==='function')mslWarm(grp);for(const cg of chunkGeos()){const rk=new THREE.Mesh(cg,chunkMat('#4a4034'));rk.castShadow=true;rk.frustumCulled=false;rk.scale.setScalar(2);grp.add(rk);}}catch(e){console.warn('strike warm-up',e);}await step('missiles',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const KG=mkGeo(),bm2=new THREE.MeshBasicMaterial({color:0xea3a2c,transparent:true,opacity:.01,depthWrite:false});for(const g of [KG.ring,KG.inner,KG.disc,KG.bar,pingGeo()]){const m=new THREE.Mesh(g,bm2);m.frustumCulled=false;m.scale.setScalar(20);m.position.y=3;grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('markers',grp,0,1);await frame();}
+    // a garrisoned house's flag, marker and scaffold, and a supply truck's crate load (shared shapes, first drawn mid-battle when squads run into houses / a truck loads)
+    if(!dead()){const grp=mk();try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));
+        for(const q of G.teams)if(q&&q.fac&&FACTIONS[q.fac])grp.add(mesh(geoFor('garrison',q.fac,q,'main')));const gs=bstats(T.fac,'garrison');if(gs&&BH.garrison)grp.add(new THREE.LineSegments(scafGeo(gs.size+6,BH.garrison/BSC+6),scafMat()));}
+      if(typeof harvCargoGeo==='function')grp.add(mesh(harvCargoGeo()));grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
@@ -606,12 +608,14 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     // everything else hidden for a moment (lights stay)
     if(!dead()&&!isLate()&&!PH&&post()){const vis=units.filter(u=>u.visible),SL=8;let tl2=performance.now();
       const aoOn=POST.mAO&&POST.aoOn!==false&&POST.ovr&&POST.dRT;
+      // everything is drawn once even if it is outside the opening view (rocks, wrecks, depots across the map), so its shape is on the card before it is first seen
+      const unc=[];for(const u of vis)u.traverse(c=>{if((c.isMesh||c.isLine||c.isPoints)&&c.frustumCulled){c.frustumCulled=false;unc.push(c);}});
       for(let i=0;i<vis.length&&!dead()&&!isLate();i+=SL){MK('slice '+i);const mine=new Set(vis.slice(i,i+SL));for(const u of vis)u.visible=mine.has(u);const s0=performance.now();
         try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}
           R3.setRenderTarget(POST.rt);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
         R3.setRenderTarget(null);for(const u of vis)u.visible=true;const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push(['slice '+i,Math.round(d)]);
         if(performance.now()-tl2>30){await frame();tl2=performance.now();}}
-      for(const u of vis)u.visible=true;}
+      for(const u of vis)u.visible=true;for(const c of unc)c.frustumCulled=true;}
     // (no whole-scene draw here: the slices above prepared every variant; the last loading step draws the real first frame)
     if(!dead()&&!isLate()&&!PH){CAM.updateMatrixWorld();
       if(!dead()&&!isLate()&&typeof mwPipWarm==='function'){MK('pip');const m0=performance.now();mwPipWarm();(W.slow=W.slow||[]).push(['pip',Math.round(performance.now()-m0)]);await frame();}}}
@@ -631,7 +635,7 @@ function gpuGcHook(){if(!SCN||SCN.__gc)return;const rm=SCN.remove.bind(SCN);SCN.
 function gpuGc(){if(!GCQ.length||!SCN)return 0;if(!GC_PROTO){GC_PROTO=new Set();for(const k in MODELS.proto)MODELS.proto[k].scene.traverse(o=>{if(o.geometry)GC_PROTO.add(o.geometry);});}
   const used=new Set(),usedT=new Set();SCN.traverse(o=>{if(o.geometry)used.add(o.geometry);const m=o.material;if(m)for(const mm of (Array.isArray(m)?m:[m]))if(mm&&mm.map)usedT.add(mm.map);});
   const q=GCQ.splice(0,GCQ.length),seen=new Set();let n=0;
-  for(const root of q){if(root.parent)continue;root.traverse(o=>{const g=o.geometry;if(g&&!seen.has(g)&&!used.has(g)&&!GC_PROTO.has(g)&&!GC_KEEP.has(g)){seen.add(g);g.dispose();n++;}
+  for(const root of q){if(root.parent)continue;root.traverse(o=>{if(o.isSkinnedMesh&&o.skeleton&&!seen.has(o.skeleton)){seen.add(o.skeleton);if(typeof boneRelease==='function')boneRelease(o.skeleton);}const g=o.geometry;if(g&&!seen.has(g)&&!used.has(g)&&!GC_PROTO.has(g)&&!GC_KEEP.has(g)){seen.add(g);g.dispose();n++;}
     const m=o.material;if(m)for(const mm of (Array.isArray(m)?m:[m])){const t=mm&&mm.map;if(t&&t.isCanvasTexture&&!usedT.has(t)&&!seen.has(t)){seen.add(t);t.dispose();}}});}
   return n;}
 

@@ -57,12 +57,16 @@ const _OS=new THREE.Vector3();function onScr(x,h,y,m){if(!CAM)return true;_OS.se
 // cached for a second per squad.
 function SET_POSTURE(){return !window.NOPOSTURE;}
 function squadPost(e,o){if((e.supp||0)>.5)return 1;if(G.t-(e.lastFire||-9)>3)return 0;const ud=o.userData;if(!(G.t-(ud.cvT||-9)<1)){ud.cvT=G.t;try{ud.cv=coverAt(e.x,e.y)?1:0;}catch(_){ud.cv=0;}}return ud.cv?.5:0;}
+/* soldiers who step out of sight into a house, dugout, tunnel or vehicle keep their 3D figure (hidden) for up to 90 s: rebuilding
+   it when they come out made a new skeleton texture and re-sent the soldier shape to the card - a squad leaving a shelled
+   house in the middle of a strike was several new GPU objects in one frame (view only, nothing here touches the battle) */
+const PARK=new Map();
 function syncScene(dt){const live=new Set();
   /* haze limit (Abdullah 2026-11-15 00:40 "Keep camera, add haze limit"): with the low cinematic camera the view reaches the horizon, so units and
      buildings deep in the haze (75% fogged and beyond) are not drawn - nor shadowed or depth-passed. View only. */
   const FGo=SCN&&SCN.fog,FDc=FGo&&FGo.far>FGo.near?FGo.near+(FGo.far-FGo.near)*.75:1e9,FD2=FDc*FDc,CPx=CAM.position.x,CPz=CAM.position.z;
   // one object that fails to update must never freeze the whole picture: skip it (logged once) and draw the rest
-  for(const e of G.ents){try{if(e.dead)continue;live.add(e.id);let o=OBJ.get(e.id);if(o&&o.userData.tm!==undefined&&o.userData.tm!==e.team){SCN.remove(o);o=null;}if(!o){o=makeObj(e);o.userData.tm=e.team;if(!e.isB&&!o.userData.model)o.userData.bg=MODELS.gen|0;OBJ.set(e.id,o);}
+  for(const e of G.ents){try{if(e.dead)continue;live.add(e.id);let o=OBJ.get(e.id);if(o&&o.userData.tm!==undefined&&o.userData.tm!==e.team){SCN.remove(o);o=null;}if(!o&&PARK.size){const pk=PARK.get(e.id);if(pk){PARK.delete(e.id);if(pk.o.userData.tm===e.team){o=pk.o;o.visible=true;OBJ.set(e.id,o);}else SCN.remove(pk.o);}}if(!o){o=makeObj(e);o.userData.tm=e.team;if(!e.isB&&!o.userData.model)o.userData.bg=MODELS.gen|0;OBJ.set(e.id,o);}
     // a unit that had to start as a simple box figure (its 3D model was still loading - slow PC or connection) gets the real model as soon as it lands
     else if(o.userData.bg!==undefined&&o.userData.bg!==(MODELS.gen|0)){o.userData.bg=MODELS.gen|0;const m2=makeObj(e);if(m2&&m2.userData.model){SCN.remove(o);o=m2;o.userData.tm=e.team;OBJ.set(e.id,o);}else if(m2)SCN.remove(m2);}
     const v=vis(e);
@@ -139,7 +143,8 @@ function syncScene(dt){const live=new Set();
           part({x:e.x-ca*e.r*1.05+rnd(-2,2),y:e.y-sa*e.r*1.05+rnd(-2,2),h:WL+.6,vx:-ca*8,vy:-sa*8,f:.6,c:[.8,.88,.9],s:rnd(3,5)*big,g:3*big,d:rnd(.7,1.1),a:.24*(.4+sp*.6)});
           if(sp>.4)for(const sd of [-1,1])part({x:e.x+ca*e.r*.75+sa*sd*e.r*.25,y:e.y+sa*e.r*.75-ca*sd*e.r*.25,h:WL+2,vx:sa*sd*rnd(20,40)+ca*10,vy:-ca*sd*rnd(20,40)+sa*10,vh:rnd(10,30),grav:1,f:.7,c:[.92,.96,1],s:rnd(2,3.5)*big,g:6,d:rnd(.4,.7),a:.6});}}
       e.lx=e.x;e.ly=e.y;}}catch(err){if(!e._drawErr){e._drawErr=1;console.warn('draw skipped',e.kind,err);}}}
-  for(const [id,o] of OBJ)if(!live.has(id)){SCN.remove(o);OBJ.delete(id);}
+  for(const [id,o] of OBJ)if(!live.has(id)){OBJ.delete(id);if(o.userData.walker&&!o.userData.sinking&&PARK.size<160){o.visible=false;PARK.set(id,{o,t:performance.now()});}else SCN.remove(o);}
+  if(PARK.size){const now=performance.now();for(const [id,p] of PARK)if(now-p.t>90000){SCN.remove(p.o);PARK.delete(id);}}
   sdDumpTick();
   if(G.sceneryPos)for(const [sx,sy,k,wx,wy] of G.sceneryPos){if(k!==2||wx==null||Math.random()>dt*5||!inView(sx,sy,.2))continue;part({x:wx+rnd(-3,3),y:wy+rnd(-3,3),h:groundH(wx,wy)+10,vx:2,rise:rnd(40,52),c:C_SMOKE,c2:[.5,.48,.45],ck:.35,s:rnd(4,6),g:7,d:rnd(3,4),a:.2});}
   if(G.oilObj)G.oil.forEach((o,i)=>{const v=G.oilObj[i];const ph=G.t*1.6+i;
