@@ -353,7 +353,7 @@ function fxUpdate(dt){
   flagTick(dt);
   for(const p of PINGS)p.t+=dt;for(let i=PINGS.length-1;i>=0;i--)if(PINGS[i].t>=PINGS[i].d)PINGS.splice(i,1);
   washTick();wakeTick(dt);dustN=0;
-  gpuGcHook();gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}
+  gpuGcHook();if(typeof boneTrickle==='function')boneTrickle(dt);gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}
   if(G&&G.map&&G.map.theme==='snow'&&CAM&&typeof cam!=='undefined'){const n=Math.min(30,dt*Math.min(150,cam.dist*.16))|0;const R=Math.max(500,cam.dist*1.1);for(let i=0;i<n+(Math.random()<dt*20?1:0);i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(60,260),vx:rnd(8,22),vy:rnd(-4,6),vh:-rnd(26,40),f:1,c:[1.05,1.08,1.12],s:rnd(1.4,2.4),d:rnd(4,6.5),a:.85});}}
   try{weatherFX(dt);}catch(e){}
   shake*=Math.exp(-7*dt);flash=Math.max(0,flash-dt*1.6);}
@@ -561,7 +561,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
   lap('models',ts);ts=performance.now();
   // the merged one-mesh soldier and the shared plain materials
   if(!dead()){const grp=mk();
-    try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac)){grp.add(o);/* bone textures for the soldiers who appear later in the battle */if(typeof bonePoolWarm==='function'){const nbs=new Set();o.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});for(const k of keys){const pr=MODELS.proto[k];if(pr&&pr.scene)pr.scene.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});}for(const nb of nbs)bonePoolWarm(nb,PH?24:64);}}}}catch(e){}
+    try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac)){grp.add(o);/* bone textures for the soldiers who appear later in the battle */if(typeof bonePoolWarm==='function'){const nbs=new Set();o.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});for(const k of keys){const pr=MODELS.proto[k];if(pr&&pr.scene)pr.scene.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});}for(const nb of nbs)bonePoolWarm(nb,PH?48:160);}}}}catch(e){}
     try{grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);gg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*3).fill(.5),3));grp.add(new THREE.Mesh(gg,gm));grp.add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
     for(const op of [.8,.12])grp.add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
     // an aircraft's exhaust plume is added when the unit is made (modelFor), not to the model itself: its shader and canvas texture are prepared here
