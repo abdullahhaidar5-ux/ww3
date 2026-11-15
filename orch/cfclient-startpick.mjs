@@ -25,7 +25,7 @@ import { startServer, guardContext } from './serverdev.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
-const MAP = 'strait';
+const MAP = 'bm_fourmills';   // a listed Battle map that seats 4 (the old Straits map is not a Battle map)
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
