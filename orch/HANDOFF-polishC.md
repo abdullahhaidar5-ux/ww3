@@ -1,0 +1,4 @@
+# HANDOFF polishC (2026-11-15)
+1. L6 audio: NOT landed. origin/orch/L6-audio holds only the ORCH stop note (no audio/code; no merge base with main), handoff says blocked. This sandbox has no torch/XTTS (voices for RV OB GB FR DE JP impossible) and anthem sources were not fetchable. Missing: all new voices, anthems GB IR RS DW RV OB KP SA AE TR, per-group chatter wiring. Needs a GPU/XTTS machine or attached files (`python3 mus/an_pack.py <dir>`).
+2. Missions: added `marsh` (RV, map marshes) to src/12-campaign.js; IR/RS/DW missions already existed (pass, supply, fortress, town, finale). Guard in orch/decisions.mjs ("Shia missions"). Browser gates (decisions.mjs, camptest --only marsh) were too slow in this sandbox to finish - only build, --check and the guard's regexes were verified; run `node orch/camptest.mjs --only marsh` on a real machine.
+3. Map fairness: see orch/reports/mapfair.md.
