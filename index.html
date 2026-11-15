@@ -13999,7 +13999,7 @@ function genClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if
 function selClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if(!w)return false;
   if(units.length&&d.ctrl){if(forceFire(w,t,units))ordDone(d.shift);updateUI();return true;}
   if(units.length&&d.alt){waypoint(w,units);updateUI();return true;}
-  if(!units.length&&!t&&!d.shift&&prodSel()){issueCmd(w,null,true);updateUI();return true;}   /* rally flag = LEFT-click the ground with a production building selected (Abdullah 2026-11-14 21:27; right-click works too) */
+  if(!units.length&&!t&&!d.shift&&prodSel()){const keep=G.sel.slice();issueCmd(w,null,true);G.sel=keep.filter(e=>!e.dead);updateUI();return true;}   /* rally flag = LEFT-click the ground with a production building selected (Abdullah 2026-11-14 21:27; right-click works too) */
   return false;}
 function rightRelease(d){if(!G)return;
   if(d.box){const x0=Math.min(d.x0,mouse.x),x1=Math.max(d.x0,mouse.x),y0=Math.min(d.y0,mouse.y),y1=Math.max(d.y0,mouse.y);
