@@ -13585,7 +13585,7 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
   sub('pow','Level up');for(const k in POWERS){if(sigBan(T.fac,k))continue;const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
   /* doctrines removed (Abdullah 2026-11-14 "Remove doctrines") */
   
-  try{icoFill();icoWatch();}catch(e){}
+  try{icoWatch();}catch(e){}
   showTab(TAB);try{PQ.fk=null;PQ.sig='';PQ.tabFor='';}catch(e){}updateUI();}
 // General Doctrine picker: a big touch-friendly card for the first 2 minutes, plus the buttons in the Powers tab
 function docUI(T){{const ov=$('docPick');if(ov)ov.hidden=true;}return;if(!G||!T)return;const lock=Object.keys(T.gperk||{}).length>0||(G.t>GDOC_LATE&&!G.sandbox),pts=T.rank-T.spent;
@@ -18045,7 +18045,7 @@ function zhPowWin(){let w=$('zhPow');if(!ZH.star||!G){if(w)w.hidden=true;return;
      "Level up" list is folded in - an unlocked power's own row levels it up when you have a point */
   for(const b of src){if(b.classList.contains('sub')){if(/level up/i.test(b.textContent))continue;const s=document.createElement('div');s.className='zsub';s.textContent=b.textContent;body.append(s);continue;}if(b.style.display==='none'||b.hidden||/^pu_/.test(b.id))continue;
     const up=/^p_/.test(b.id)?$('pu_'+b.id.slice(2)):null,canUp=!!up&&!up.disabled&&!up.hidden&&up.style.display!=='none';
-    const x=document.createElement('button');x.type='button';x.className='zp';x.disabled=b.disabled&&!canUp;{const ic=b.querySelector(':scope>i.ic');if(ic)x.append(ic.cloneNode(true));}const n=document.createElement('b');n.textContent=(b.querySelector('.n')||{}).textContent||b.dataset.nm||'';x.append(n);
+    const x=document.createElement('button');x.type='button';x.className='zp';x.disabled=b.disabled&&!canUp;{const ic=b.querySelector(':scope>.zhIc');if(ic){const c=ic.cloneNode(true);c.className='ic';x.append(c);}}const n=document.createElement('b');n.textContent=(b.querySelector('.n')||{}).textContent||b.dataset.nm||'';x.append(n);
     const c=(b.querySelector('.c')||{}).textContent;if(c){const i=document.createElement('i');i.textContent=c;x.append(i);}const dd=b.dataset.desc;if(dd){const s=document.createElement('span');s.textContent=dd;x.append(s);}
     if(canUp){const u=document.createElement('i');u.className='zup';u.textContent='▲ Level up · 1 point';x.append(u);}
     x.title=b.title||'';x.onclick=()=>{(canUp&&b.disabled?up:b).click();setTimeout(()=>{w.dataset.sig='';zhPowWin();},50);};body.append(x);}}
@@ -18125,9 +18125,9 @@ function zhHolo(){const im=document.querySelector('#side #info .ukU>img');if(!im
 if(typeof updateUI==='function'){const _hU=updateUI;updateUI=function(){_hU.apply(this,arguments);try{zhHolo();}catch(e){}};}
 /* ICONS FOR UPGRADES AND POWERS (Abdullah 2026-11-14 21:39 "make sure every button has an icon that makes sense"): each upgrade / power picture
    button gets a line icon chosen from what it does (its name + the building it comes from), drawn inline from the one icon table
-   ORD_SVG (08-ui) so nothing flickers; set once per button. */
+   ICON_SVG (08-ui) so nothing flickers; set once per button. */
 {const S=(b,c)=>"<svg viewBox='0 0 48 48' fill='none' stroke='"+c+"' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'>"+b+"</svg>";
- Object.assign(ORD_SVG,{
+ Object.assign(ICON_SVG,{
   armor:S("<path d='M24 5l15 5v11c0 10-6.5 17-15 22C15.5 38 9 31 9 21V10z'/><path d='M15 18h18M15 25h18M17 32h14'/>",'#9fc6e0'),
   missile:S("<path d='M30 6c6 0 12 6 12 12L22 38l-12-12z'/><path d='M14 30l-6 10 10-6'/><circle cx='31' cy='17' r='3'/>",'#ff8a5a'),
   radar:S("<path d='M10 38a20 20 0 0 1 0-28'/><path d='M16 32a12 12 0 0 1 0-16'/><circle cx='24' cy='24' r='3'/><path d='M24 24l16-10'/><path d='M38 30a20 20 0 0 1-6 8'/>",'#7fe0d0'),
@@ -18158,7 +18158,7 @@ const ICON_POW=[[/para|drop|fighters|reinforce|airborne/i,'para'],[/reveal|watch
 function zhIconFor(nm,at,tab){if(tab==='pow')for(const [re,k] of ICON_POW)if(re.test(nm))return k;for(const [re,k] of ICON_RULES)if(re.test(nm))return k;return tab==='pow'?'star':ICON_BY_AT[at]||'star';}
 function zhIcons(){const pn=$('panel');if(!pn)return;for(const b of pn.querySelectorAll('.btn[data-tab="upg"]:not([data-ic]):not(.zhL),.btn[data-tab="pow"]:not([data-ic])')){
   const n=b.querySelector('.n'),nm=(n&&n.textContent||b.dataset.nm||'').replace(/^[▲\s]+/,''),k=zhIconFor(nm,b.dataset.from||((UPG||{})[String(b.id).replace(/^g_/,'')]||{}).at,b.dataset.tab);
-  b.dataset.ic=k;const i=document.createElement('i');i.className='zhIc';i.innerHTML=ORD_SVG[k]||ORD_SVG.star;b.prepend(i);}}
+  b.dataset.ic=k;const i=document.createElement('i');i.className='zhIc';i.innerHTML=ICON_SVG[k]||ICON_SVG.star;b.prepend(i);}}
 {const st=document.createElement('style');st.textContent=`html body #side #panel .btn[data-ic]::before{content:none!important}
 html body #side #panel .btn>.zhIc{position:absolute;left:0;right:0;top:9%;margin:auto;width:46%;height:52%;pointer-events:none;filter:drop-shadow(0 0 4px rgba(0,0,0,.85))}
 html body #side #panel .btn>.zhIc svg{display:block;width:100%;height:100%}`;document.head.appendChild(st);}
@@ -18170,7 +18170,7 @@ if(typeof updateUI==='function'){const _iU=updateUI;updateUI=function(){_iU.appl
 function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q)return;let b=document.getElementById('qpStrike');
   const own=!!sb&&!sb.hidden&&G&&G.ents&&G.ents.some(e=>e.isB&&e.team===ME&&!e.dead&&e.kind==='uplink'&&e.built>=1);
   if(!own){if(b)b.hidden=true;return;}
-  if(!b){b=document.createElement('button');b.id='qpStrike';b.type='button';b.innerHTML='<div class="qf"></div>'+(ORD_SVG.missile||'')+'<span class="qc"></span>';b.onclick=()=>{const s=$('supbtn');if(s&&!s.disabled){s.click();try{sfxUI(620);}catch(_){}}};
+  if(!b){b=document.createElement('button');b.id='qpStrike';b.type='button';b.innerHTML='<div class="qf"></div>'+(ICON_SVG.missile||'')+'<span class="qc"></span>';b.onclick=()=>{const s=$('supbtn');if(s&&!s.disabled){s.click();try{sfxUI(620);}catch(_){}}};
     let col=Q.querySelector('.qstr');if(!col){col=document.createElement('div');col.className='qstr';Q.insertBefore(col,Q.querySelector('.qtab'));}col.append(b);}
   Q.hidden=false;b.hidden=false;const nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),T=G.teams[ME],c=T&&T.sup&&T.sup.charge?Math.min(1,(T.charge||0)/T.sup.charge):1,rdy=!sb.disabled,k=nm+st+rdy+(G.aim==='sup')+Math.round(c*40);
   if(b.dataset.k===k)return;b.dataset.k=k;b.title=nm+(st?' - '+st:'')+(rdy?' - click, then click the target':'');b.setAttribute('aria-label',nm);
@@ -18252,17 +18252,8 @@ if(typeof updateUI==='function'){const _sU=updateUI;updateUI=function(){_sU.appl
   help:S(B,"<circle cx='24' cy='24' r='18'/><path d='M18 18c0-4 3-6 6-6s6 2 6 6c0 5-6 5-6 10M24 35v1'/>"),
   skull:S(R,"<path d='M10 24c0-9 6-16 14-16s14 7 14 16c0 5-2 8-5 10v6H15v-6c-3-2-5-5-5-10z'/><circle cx='18' cy='24' r='3'/><circle cx='30' cy='24' r='3'/><path d='M22 34v6M26 34v6'/>"),
  });
- /* upgrade -> icon: by what it improves (first effect in UPG[k].fx = [stat, unit class, factor]); power -> icon by type */
- const UPG_STAT={dmg:{inf:'rifle',atinf:'rocket',tank:'shell',air:'plane',jet:'plane',heli:'heli',drone:'drone',naval:'ship',ship:'ship',boat:'ship',arty:'shell',aa:'rocket',veh:'shell',all:'swords'},
-  hp:{_:'armor',inf:'vest',atinf:'vest',drone:'armor'},rng:{_:'scope'},spd:{_:'speed'},rof:{_:'rifle',arty:'shell'},xp:{_:'star'},courage:{_:'flag'},harv:{_:'cash'},salvage:{_:'cash'},
-  detect:{_:'radar'},build:{_:'clock'},regen:{_:'wrench'},taken:{_:'armor'},mis:{_:'armor'},camo:{_:'leaf'},splash:{_:'burst'}};
- const POW_IC={bounty:'cash',recon:'eye',para:'parachute',barrage:'shell',repair:'wrench',flare:'flare',mil:'troops',bb:'bomb',reinf:'tank',sanc:'ban'};
- const NAT_IC={strafe:'plane',drones:'drone',intel:'eye',supply:'crate',partisans:'troops',thermo:'burst',cash:'cash',mercs:'tank',emp:'bolt',shield:'armor',cyber:'bolt',wave:'troops',precise:'shell',smoke:'cloud',fervor:'flag',labbayk:'flag',raid:'speed'};
- window.icoUpg=function(k){const U=(typeof UPG!=='undefined'&&UPG[k])||null;if(!U||!U.fx||!U.fx.length)return 'star';const [st,cl]=U.fx[0],m=UPG_STAT[st]||{};return m[cl]||m._||'star';};
- window.icoPow=function(k,fac){if(k==='nat'){let t='';try{t=(natPow(fac)||{}).type;}catch(e){}return NAT_IC[t]||'bolt';}return POW_IC[k]||'bolt';};
  /* put the icon first in an element: <i class="ic">svg</i>; strips a leading glyph from text buttons. Once per button. */
  window.icoPut=function(el,key,keepText){if(!el||!ICON_SVG[key])return el;let i=el.querySelector(':scope>i.ic');if(!i){i=document.createElement('i');i.className='ic';el.prepend(i);}if(i.dataset.k!==key){i.dataset.k=key;i.innerHTML=ICON_SVG[key];}return el;};
- window.icoFill=function(root){/* every upgrade / power button in the grid */const T=G&&G.teams&&G.teams[ME];const fac=T?T.fac:'US';for(const b of (root||document).querySelectorAll('#panel .btn.wide')){const id=b.id||'';let k=null;if(id.startsWith('g_'))k=icoUpg(id.slice(2));else if(id.startsWith('p_')||id.startsWith('pu_'))k=icoPow(id.slice(id.indexOf('_')+1),fac);if(k)icoPut(b,k);}};
  /* HUD / menu / Test range buttons: id -> icon key (a function when it depends on the label) */
  const HUD={aPause:t=>/Resume/.test(t)?'play':'pause',aPauseM:t=>/Resume/.test(t)?'play':'pause',aMenu:()=>'menu',barGrip:t=>/▴/.test(t)?'up':'down',mmBtn:()=>'map',aMus:()=>'music',aSfx:()=>'sound',aVoc:()=>'voice',aSet:()=>'gear',aRestart:()=>'restart',aQuit:()=>'quit',aPhoto:()=>'camera',
   sbFold:()=>'target',sbNations:()=>'flag',hudAl:()=>'alert',hudHelp:()=>'help',sqMake:()=>'squad',sqAll:()=>'army',sbTargets:()=>'target',sbClear:()=>'trash',sbFight:()=>'swords',resumeBtn:()=>'play',pRestart:()=>'restart',pQuit:()=>'quit'};
@@ -18279,9 +18270,7 @@ if(typeof updateUI==='function'){const _sU=updateUI;updateUI=function(){_sU.appl
  const st=document.createElement('style');st.textContent=`i.ic{display:inline-flex;align-items:center;justify-content:center;font-style:normal;pointer-events:none}i.ic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1px #000)}
 button.hasico>i.ic,.menuitem>i.ic{width:1.15em;height:1.15em;vertical-align:-.22em;margin-right:.2em}
 button.hasico.ico1>i.ic,#aMenu>i.ic,#barGrip>i.ic,#mmBtn>i.ic,#zhStar>i.ic{width:1.25em;height:1.25em;margin:0}
-#sbx button>i.ic{width:20px!important;height:20px!important;margin:0 6px 0 0!important;flex:none}#sbCond button>i.ic{display:block;margin:0 auto 2px!important}html body #side #panel .btn.wide::before{content:none!important}
-html body #side #panel .btn.wide>i.ic{position:absolute;left:0;right:0;top:9%;margin:0 auto;width:calc(var(--zb,64px)*.42);height:calc(var(--zb,64px)*.42);display:flex}
-html body #side #panel .btn.wide>i.ic svg{filter:drop-shadow(0 2px 2px #000)}
+#sbx button>i.ic{width:20px!important;height:20px!important;margin:0 6px 0 0!important;flex:none}#sbCond button>i.ic{display:block;margin:0 auto 2px!important}
 .zp>i.ic{position:static;width:22px;height:22px;float:left;margin:0 8px 0 0}#zhSell>i.ic,#zhRep>i.ic,#zhLaunch>i.ic{width:1.3em;height:1.3em;margin-right:6px}.zsw button>i.ic{width:1.2em;height:1.2em;margin-right:5px;vertical-align:-.25em}`;document.head.append(st);}
 /* ================= AUDIO ENGINE: layered weapons, reverb, stereo, cinematic regional score ================= */
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};

@@ -67,17 +67,8 @@
   help:S(B,"<circle cx='24' cy='24' r='18'/><path d='M18 18c0-4 3-6 6-6s6 2 6 6c0 5-6 5-6 10M24 35v1'/>"),
   skull:S(R,"<path d='M10 24c0-9 6-16 14-16s14 7 14 16c0 5-2 8-5 10v6H15v-6c-3-2-5-5-5-10z'/><circle cx='18' cy='24' r='3'/><circle cx='30' cy='24' r='3'/><path d='M22 34v6M26 34v6'/>"),
  });
- /* upgrade -> icon: by what it improves (first effect in UPG[k].fx = [stat, unit class, factor]); power -> icon by type */
- const UPG_STAT={dmg:{inf:'rifle',atinf:'rocket',tank:'shell',air:'plane',jet:'plane',heli:'heli',drone:'drone',naval:'ship',ship:'ship',boat:'ship',arty:'shell',aa:'rocket',veh:'shell',all:'swords'},
-  hp:{_:'armor',inf:'vest',atinf:'vest',drone:'armor'},rng:{_:'scope'},spd:{_:'speed'},rof:{_:'rifle',arty:'shell'},xp:{_:'star'},courage:{_:'flag'},harv:{_:'cash'},salvage:{_:'cash'},
-  detect:{_:'radar'},build:{_:'clock'},regen:{_:'wrench'},taken:{_:'armor'},mis:{_:'armor'},camo:{_:'leaf'},splash:{_:'burst'}};
- const POW_IC={bounty:'cash',recon:'eye',para:'parachute',barrage:'shell',repair:'wrench',flare:'flare',mil:'troops',bb:'bomb',reinf:'tank',sanc:'ban'};
- const NAT_IC={strafe:'plane',drones:'drone',intel:'eye',supply:'crate',partisans:'troops',thermo:'burst',cash:'cash',mercs:'tank',emp:'bolt',shield:'armor',cyber:'bolt',wave:'troops',precise:'shell',smoke:'cloud',fervor:'flag',labbayk:'flag',raid:'speed'};
- window.icoUpg=function(k){const U=(typeof UPG!=='undefined'&&UPG[k])||null;if(!U||!U.fx||!U.fx.length)return 'star';const [st,cl]=U.fx[0],m=UPG_STAT[st]||{};return m[cl]||m._||'star';};
- window.icoPow=function(k,fac){if(k==='nat'){let t='';try{t=(natPow(fac)||{}).type;}catch(e){}return NAT_IC[t]||'bolt';}return POW_IC[k]||'bolt';};
  /* put the icon first in an element: <i class="ic">svg</i>; strips a leading glyph from text buttons. Once per button. */
  window.icoPut=function(el,key,keepText){if(!el||!ICON_SVG[key])return el;let i=el.querySelector(':scope>i.ic');if(!i){i=document.createElement('i');i.className='ic';el.prepend(i);}if(i.dataset.k!==key){i.dataset.k=key;i.innerHTML=ICON_SVG[key];}return el;};
- window.icoFill=function(root){/* every upgrade / power button in the grid */const T=G&&G.teams&&G.teams[ME];const fac=T?T.fac:'US';for(const b of (root||document).querySelectorAll('#panel .btn.wide')){const id=b.id||'';let k=null;if(id.startsWith('g_'))k=icoUpg(id.slice(2));else if(id.startsWith('p_')||id.startsWith('pu_'))k=icoPow(id.slice(id.indexOf('_')+1),fac);if(k)icoPut(b,k);}};
  /* HUD / menu / Test range buttons: id -> icon key (a function when it depends on the label) */
  const HUD={aPause:t=>/Resume/.test(t)?'play':'pause',aPauseM:t=>/Resume/.test(t)?'play':'pause',aMenu:()=>'menu',barGrip:t=>/▴/.test(t)?'up':'down',mmBtn:()=>'map',aMus:()=>'music',aSfx:()=>'sound',aVoc:()=>'voice',aSet:()=>'gear',aRestart:()=>'restart',aQuit:()=>'quit',aPhoto:()=>'camera',
   sbFold:()=>'target',sbNations:()=>'flag',hudAl:()=>'alert',hudHelp:()=>'help',sqMake:()=>'squad',sqAll:()=>'army',sbTargets:()=>'target',sbClear:()=>'trash',sbFight:()=>'swords',resumeBtn:()=>'play',pRestart:()=>'restart',pQuit:()=>'quit'};
@@ -94,7 +85,5 @@
  const st=document.createElement('style');st.textContent=`i.ic{display:inline-flex;align-items:center;justify-content:center;font-style:normal;pointer-events:none}i.ic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1px #000)}
 button.hasico>i.ic,.menuitem>i.ic{width:1.15em;height:1.15em;vertical-align:-.22em;margin-right:.2em}
 button.hasico.ico1>i.ic,#aMenu>i.ic,#barGrip>i.ic,#mmBtn>i.ic,#zhStar>i.ic{width:1.25em;height:1.25em;margin:0}
-#sbx button>i.ic{width:20px!important;height:20px!important;margin:0 6px 0 0!important;flex:none}#sbCond button>i.ic{display:block;margin:0 auto 2px!important}html body #side #panel .btn.wide::before{content:none!important}
-html body #side #panel .btn.wide>i.ic{position:absolute;left:0;right:0;top:9%;margin:0 auto;width:calc(var(--zb,64px)*.42);height:calc(var(--zb,64px)*.42);display:flex}
-html body #side #panel .btn.wide>i.ic svg{filter:drop-shadow(0 2px 2px #000)}
+#sbx button>i.ic{width:20px!important;height:20px!important;margin:0 6px 0 0!important;flex:none}#sbCond button>i.ic{display:block;margin:0 auto 2px!important}
 .zp>i.ic{position:static;width:22px;height:22px;float:left;margin:0 8px 0 0}#zhSell>i.ic,#zhRep>i.ic,#zhLaunch>i.ic{width:1.3em;height:1.3em;margin-right:6px}.zsw button>i.ic{width:1.2em;height:1.2em;margin-right:5px;vertical-align:-.25em}`;document.head.append(st);}

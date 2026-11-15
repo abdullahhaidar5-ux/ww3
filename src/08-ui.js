@@ -167,7 +167,7 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
   sub('pow','Level up');for(const k in POWERS){if(sigBan(T.fac,k))continue;const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
   /* doctrines removed (Abdullah 2026-11-14 "Remove doctrines") */
   
-  try{icoFill();icoWatch();}catch(e){}
+  try{icoWatch();}catch(e){}
   showTab(TAB);try{PQ.fk=null;PQ.sig='';PQ.tabFor='';}catch(e){}updateUI();}
 // General Doctrine picker: a big touch-friendly card for the first 2 minutes, plus the buttons in the Powers tab
 function docUI(T){{const ov=$('docPick');if(ov)ov.hidden=true;}return;if(!G||!T)return;const lock=Object.keys(T.gperk||{}).length>0||(G.t>GDOC_LATE&&!G.sandbox),pts=T.rank-T.spent;
