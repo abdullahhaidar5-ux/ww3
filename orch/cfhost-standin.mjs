@@ -107,8 +107,8 @@ class Battle {
     const S = this.simOrProbe(), mx = S.maxOf(this.map);
     const hs = this.humans.slice(0, mx), as = this.ais.slice(0, Math.max(0, mx - hs.length));
     const teams = new Set([...hs.map(h => h.tm | 0), ...as.map(a => a.tm | 0)]);
-    const ok = hs.length >= 2 && teams.size > 1;
-    const why = hs.length < 2 ? 'Waiting for at least one more player to join. You can also add computer players below.' : teams.size < 2 ? 'Everyone is on one team: put someone on another team to start.' : '';
+    const ok = hs.length >= 1 && hs.length + as.length >= 2 && teams.size > 1;   // one person may start alone vs computer players (2026-11-14)
+    const why = hs.length + as.length < 2 ? 'Add a computer player or wait for someone to join.' : teams.size < 2 ? 'Everyone is on one team: put someone on another team to start.' : '';
     return { c: this.code, pv: S.pv, map: this.map, mx, w: this.w, q: this.q, ok: ok ? 1 : 0, why,
       seats: [...hs.map(h => ({ h: 1, f: h.f, tm: h.tm | 0 })), ...as.map(a => ({ ai: 1, f: a.f, d: a.d | 0, tm: a.tm | 0 }))] };
   }

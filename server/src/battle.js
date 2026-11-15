@@ -193,7 +193,8 @@ export class BattleHost {
   }
   check() {
     const s = this.seats();
-    if (this.order.length < 2) return 'Waiting for at least one more player to join.';
+    // one person may start alone against computer players (Abdullah 2026-11-14 17:18 "a single player can get the multiplayer lobby started")
+    if (this.order.length < 1 || this.order.length + this.ais.length < 2) return 'Add a computer player or wait for someone to join.';
     if (this.order.length > this.mx()) return 'Too many players for this battlefield: pick a bigger one.';   // review R4
     if (new Set(s.map(x => x.tm)).size < 2) return 'Everyone is on one team: put someone on another team to start.';
     return '';
