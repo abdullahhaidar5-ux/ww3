@@ -1,0 +1,3 @@
+# polishG handoff (2026-11-15)
+Done: POWCOST/POWLV/powLvCost in src/01-data.js (light 1, medium 2, heavy 3; level 2 = unlock+1, level 3 = unlock+2); sim uses POWLV for area, duration, shells, troopers (+2 AT at level 3), heal, bunker buster damage; Bunker Buster can now level (old one-time lock removed); PCD cooldown .8/.6; RANKS got a 9th rank (110000). UI rows show "Unlock · N points", "Next: ..." and "Level up · N points". AI uses buyPower (same costs). Guard block "powers" at the end of orch/decisions.mjs.
+Open: balance check of AI point spending (AI waits until it can afford nat/bb); run orch/cigate.sh if wanted.

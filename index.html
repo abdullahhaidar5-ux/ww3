@@ -5741,10 +5741,25 @@ function gpowDesc(k,P,g){const f=(v,a,b)=>v&&Math.abs(v-1)>.01?(v>1?a:b)+' '+(v>
   return P.desc+(L.length?' ('+L.join(', ')+')':'')+(g.fx?'. Special: '+GFX_TXT[g.fx]+(k!=='bounty'?' (cooldown +10%)':' (bounty −10%)'):'');}
 const GFX_TXT={vet:'troops arrive as veterans',stealth:'troops land hidden and stay unseen until they move or fire',mark:'enemies in the area are marked - your forces do 25% more damage to them',detect:'also exposes hidden and stealthed enemy units in the area',fire:'leaves the ground burning for 8 seconds',emp:'disables enemy vehicles in the area for 4 seconds',smoke:'lays a smoke screen that hides your units inside it',rearm:'units in the area also fire 25% faster for 12 seconds',rally:'units in the area rally instantly and are fearless for 15 seconds',shield:'units in the area take 25% less damage for 12 seconds',salvage:'also refunds 15% of the cost of each unit you lose'};
 function powInfo(k,fac){const P0=POWERS[k];if(!P0)return null;const P=P0;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N=natPow(fac);return Object.assign({},P,N);}
-// General ranks get steadily harder to earn; each promotion gives a point. Powers unlock for 1 point and can be
-// raised to level 2 (2 more points) and level 3 (3 more): bigger effect, shorter cooldown.
-const RANKS=[0,2500,7000,14000,24000,38000,56000,80000];
-const PLV=[1,1.4,1.8],PCD=[1,.85,.7];
+// General ranks get steadily harder to earn; each promotion gives a point. Powers unlock for 1-3 points (by strength, POWCOST) and can be
+// raised to level 2 (unlock+1 points) and level 3 (unlock+2): bigger effect, shorter cooldown (POWLV).
+const RANKS=[0,2500,7000,14000,24000,38000,56000,80000,110000];   /* 9 points in a full game: about 3-4 powers unlocked and one or two raised */
+const PLV=[1,1.4,1.8],PCD=[1,.8,.6];
+/* General powers by strength (Abdullah 2026-11-15 00:22 "Make the general powers require more points and progressively get better"):
+   unlock = POWCOST (light 1, medium 2, heavy 3); level 2 costs unlock+1, level 3 unlock+2. Per level: rm = area x, dur = seconds, n = shells/troops, heal, dmg, cdm = cooldown x. */
+const POWCOST={bounty:1,recon:1,repair:1,para:2,barrage:2,bb:3,nat:3};
+const POWLV={
+  recon:{rm:[1,1.3,1.6],dur:[25,40,55],nx:['Reveals for 40 s over a wider area','Reveals for 55 s over the widest area']},
+  repair:{rm:[1,1.25,1.5],heal:[.6,.8,1],nx:['Heals 80% in a wider area','Heals 100% in the widest area']},
+  bounty:{nx:['22% of every kill (was 15%)','30% of every kill']},
+  para:{n:[5,8,11],at:[0,0,2],nx:['8 troopers instead of 5','11 troopers plus 2 extra anti-tank teams']},
+  barrage:{rm:[1,1.25,1.5],n:[10,14,20],nx:['14 shells over a wider area','20 shells over the widest area']},
+  bb:{rm:[1,1.4,1.8],dmg:[1500,1900,2400],nx:['Bigger blast (+40% radius, heavier bombs)','Huge blast (+80% radius, heaviest bombs)']},
+  nat:{rm:[1,1.25,1.5],nx:['Stronger and wider, faster to recharge','Strongest and widest, fastest to recharge']}};
+function powCostBase(k){return POWCOST[k]||2;}
+function powLvCost(k,lv){return lv>=3?99:powCostBase(k)+(lv|0);}   /* lv = the level you have now (0 = locked): 0 -> unlock cost, 1 -> level 2, 2 -> level 3 */
+function powLvVal(k,f,L,d){const t=POWLV[k];return t&&t[f]?t[f][Math.max(1,Math.min(3,L))-1]:d;}
+function powNext(k,lv){const t=POWLV[k];return lv>=3?'Max level':lv<1?'':(t&&t.nx?t.nx[lv-1]:'Stronger, faster cooldown');}
 // The national special unit is locked until general rank 2, and gets tougher and deadlier at ranks 4 and 6.
 const SPEC_RANK=2;function specMult(T){return T.rank>=6?1.4:T.rank>=4?1.2:1;}
 const VET=['','Veteran','Elite','Heroic'];
@@ -8031,8 +8046,8 @@ function gdPick(team,k){return false;const T=G.teams[team];if(!T||T.out||!GDOC[k
 function gdBuy(team,k){const T=G.teams[team],p=GDOC_PERKS[k];if(!T||T.out||!p||p.doc!==T.gdoc||T.gperk[k]||T.rank-T.spent<1||(p.req&&!T.gperk[p.req]))return false;T.spent+=1;T.gperk[k]=1;T._uk=null;log(team,`${p.name}: ${p.desc}.`,'g');return true;}
 function aiPerk(id){const T=G.teams[id],D=GDOC[T.gdoc];if(!D)return false;for(const p of D.perks)if(!T.gperk[p.k]&&(!p.req||T.gperk[p.req]))return gdBuy(id,p.k);return false;}
 function gdRecon(dt){for(const T of G.teams){if(T.out||!T.gdoc||!gdHas(T,'i2'))continue;T.rcT=(T.rcT||0)-dt;if(T.rcT>0)continue;T.rcT=75;const en=G.teams.filter(O=>O.id!==T.id&&!ally(O.id,T.id)&&!O.out);if(!en.length)continue;T.rcN=((T.rcN||0)+1);const O=en[T.rcN%en.length];const hq=hqOf(O.id);if(!hq)continue;const a=T.rcN*2.4;T.reveals.push({x:hq.x+Math.cos(a)*180,y:hq.y+Math.sin(a)*180,r:320,t:10});if(!T.ai)log(T.id,'Recon flight: enemy area revealed.','g');}}
-function powCost(T,key){const w=T.pw[key];return !w?1:(w.lv||1)>=3?99:(w.lv||1)+1;}
-function buyPower(team,key){const T=G.teams[team];if(sigBan(T.fac,key)||!POWERS[key]||(key==='bb'&&T.pw[key]))return false;const c=powCost(T,key);if(T.rank-T.spent<c)return false;T.spent+=c;if(!T.pw[key]){T.pw[key]={cd:Math.max(0,(key==='bb'?300:POW_OPEN)-G.t),lv:1};log(team,`${powInfo(key,T.fac).name} unlocked.`,'g');}else{T.pw[key].lv=(T.pw[key].lv||1)+1;log(team,`${powInfo(key,T.fac).name} upgraded to level ${T.pw[key].lv}.`,'g');}return true;}
+function powCost(T,key){const w=T.pw[key];return powLvCost(key,w?(w.lv||1):0);}
+function buyPower(team,key){const T=G.teams[team];if(sigBan(T.fac,key)||!POWERS[key])return false;const c=powCost(T,key);if(T.rank-T.spent<c)return false;T.spent+=c;if(!T.pw[key]){T.pw[key]={cd:Math.max(0,(key==='bb'?300:POW_OPEN)-G.t),lv:1};log(team,`${powInfo(key,T.fac).name} unlocked.`,'g');}else{T.pw[key].lv=(T.pw[key].lv||1)+1;log(team,`${powInfo(key,T.fac).name} upgraded to level ${T.pw[key].lv}.`,'g');}return true;}
 // unique per-nation effects layered on the shared general powers (GPOW .fx)
 function gpowFx(team,P,x,y,dur){const fx=P.fx,inR=e=>Math.hypot(e.x-x,e.y-y)<P.r;
   if(fx==='mark'){for(const e of G.ents)if(!e.dead&&!e.isB&&!ally(e.team,team)&&inR(e))e.mark=G.t+dur;}
@@ -8052,13 +8067,13 @@ function gprTick(dt){G.gprT=(G.gprT||0)-dt;if(G.gprT>0)return;G.gprT=.5;let any=
   for(const e of G.ents){if(e.dead||!e.isB||!(isTun(e)||isPost(e))||e.built<1)continue;for(const T of G.teams){if(!T.upg.gpr||T.id===e.team||ally(T.id,e.team))continue;
     for(const r of G.ents){if(r.dead||!r.isB||r.team!==T.id||r.built<1||(r.kind!=='hq'&&r.kind!=='uplink')||r.dis>G.t)continue;if(Math.hypot(r.x-e.x,r.y-e.y)<=GPR_R){e.detT=Math.max(e.detT||0,G.t+1);break;}}}}}
 function usePower(team,key,x,y){const ok=usePower0(team,key,x,y);if(ok&&G.teams[team]){const s=stOf(G.teams[team]);s.pw[key]=(s.pw[key]||0)+1;}return ok;}
-function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T.pw[key];if(sigBan(T.fac,key))return false;if(!P0||P0.passive||!w||w.cd>0)return false;if(key==='bb'&&(G.t<300||T.credits<P0.cash)){log(team,G.t<300?'Bunker Buster is not available in the first 5 minutes.':'Bunker Buster costs $'+P0.cash+'.','w');return false;}const L=Math.max(1,Math.min(3,w.lv||1)),M=PLV[L-1],P=Object.assign({},P0,{lv:L,M,cd:Math.round(P0.cd*PCD[L-1]),r:P0.r?Math.round(P0.r*(1+.2*(L-1))):P0.r});
+function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T.pw[key];if(sigBan(T.fac,key))return false;if(!P0||P0.passive||!w||w.cd>0)return false;if(key==='bb'&&(G.t<300||T.credits<P0.cash)){log(team,G.t<300?'Bunker Buster is not available in the first 5 minutes.':'Bunker Buster costs $'+P0.cash+'.','w');return false;}const L=Math.max(1,Math.min(3,w.lv||1)),M=PLV[L-1],P=Object.assign({},P0,{lv:L,M,cd:Math.round(P0.cd*PCD[L-1]),r:P0.r?Math.round(P0.r*powLvVal(key,'rm',L,1+.2*(L-1))):P0.r});
   if(key==='nat'){if(!natPower(team,P,x,y))return false;w.cd=P.cd;log(team,`${P.name}!`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} used ${P.name}.`,'w');pubNews('pow',team,-1,P.name);return true;}
-  const dur=(25+10*(L-1))*(P.tm||1);if(P.fx)gpowFx(team,P,x,y,dur);
+  const dur=powLvVal(key,'dur',L,25+10*(L-1))*(P.tm||1);if(P.fx)gpowFx(team,P,x,y,dur);
   if(key==='recon'){T.reveals.push({x,y,r:P.r,t:dur});FXE('ping',[x|0,y|0,P.r],team);}
   else if(key==='flare'){const d=Math.round(30*(1+.15*(L-1)));for(const O of G.teams)O.reveals.push({x,y,r:P.r,t:d});(G.flares=G.flares||[]).push({x,y,r:P.r,t:G.t+d});FXE('flare',[x|0,y|0,P.r|0,d]);log(team,'Illumination flares lit the field.','g');}
-  else if(key==='barrage'){const nS=Math.max(3,Math.round(10*M*(P.nm||1)));for(let i=0;i<nS;i++){const a=rnd(0,6.28),r=rnd(0,P.r);addStrike(x+Math.cos(a)*r,y+Math.sin(a)*r,1.5+i*.3*Math.min(1,10/nS*1.2),60,Math.round(230*(P.dm||1)),team,'bar');}for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+300))log(O.id,'Warning: incoming artillery barrage!','w');}
-  else if(key==='bb'){T.credits-=P.cash;addStrike(x,y,3,P.r,1500,team,'bb');addStrike(x,y,4.2,P.r,1500,team,'bb');for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+200))log(O.id,'Warning: incoming Bunker Buster!','w');}
+  else if(key==='barrage'){const nS=Math.max(3,Math.round(powLvVal('barrage','n',L,10)*(P.nm||1)));for(let i=0;i<nS;i++){const a=rnd(0,6.28),r=rnd(0,P.r);addStrike(x+Math.cos(a)*r,y+Math.sin(a)*r,1.5+i*.3*Math.min(1,10/nS*1.2),60,Math.round(230*(P.dm||1)),team,'bar');}for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+300))log(O.id,'Warning: incoming artillery barrage!','w');}
+  else if(key==='bb'){T.credits-=P.cash;addStrike(x,y,3,P.r,powLvVal('bb','dmg',L,1500),team,'bb');addStrike(x,y,4.2,P.r,powLvVal('bb','dmg',L,1500),team,'bb');for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+200))log(O.id,'Warning: incoming Bunker Buster!','w');}
   else if(key==='mil'){const sp=militiaSpot(team);if(!sp)return false;const mk=(k,n)=>{for(let i=0;i<n;i++){const q=nearestPassXY('ground',sp[0]+rnd(-55,55),sp[1]+rnd(-55,55))||sp;localSpawn(null,'fund',k,q[0],q[1],{team});}};mk('inf',5);mk('at',1);mk('jeep',1);
     const nm=powInfo('mil',T.fac).name.slice(5);log(team,`${nm} have arrived at the front.`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} funded a militia.`,'w');}
   else if(key==='reinf'){if(T.credits<P0.cash){log(team,'Reinforcements cost $'+P0.cash+'.','w');return false;}const bb=BASES[team]||BASES[0],hq=hqOf(team);if(!hq)return false;
@@ -8070,9 +8085,9 @@ function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T
       FXE('ping',[ep[0]|0,ep[1]|0,90],team);log(team,'Reinforcements have arrived.','g');}});}
   else if(key==='sanc'){let tg=null;for(const O of G.teams)if(O.id!==team&&!ally(O.id,team)&&!O.out&&!O.dummy&&(!tg||O.credits>tg.credits))tg=O;if(!tg)return false;
     const SD=60+10*(L-1);tg.sanc=G.t+SD;tg.sancSeen=true;log(team,`Sanctions imposed on ${tg.F.name}: their income is cut for ${SD} seconds.`,'g');log(tg.id,`SANCTIONED by ${T.F.name}! Income -${tg.upg.smug?8:20}% for ${SD} seconds.${tg.upg.smug?'':' Research Smuggling Routes to soften it.'}`,'w');}
-  else if(key==='repair'){for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*(.4+.2*L)*(P.pm||1));FXE('heal',[x|0,y|0,P.r],team);}
+  else if(key==='repair'){for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*powLvVal('repair','heal',L,.4+.2*L)*(P.pm||1));FXE('heal',[x|0,y|0,P.r],team);}
   else if(key==='para'){const p=nearestPassXY('ground',x,y);if(!p)return false;const bb=BASES[team]||BASES[0],sx=bb[0]<MAPW/2?-100:MAPW+100,sy=bb[1]<MAPH/2?-100:MAPH+100;FXE('plane',[sx,sy,p[0]|0,p[1]|0,team]);
-    G.timers.push({t:2.6,fn:()=>{const R=roster(T.fac).barracks;(()=>{const mx=P.mix||['inf','inf','inf','at','at','inf','at','inf','inf','at','inf'],nP=Math.max(2,Math.round((2+3*L)*(P.nm||1)));return Array.from({length:nP},(_,i)=>mx[i%mx.length]);})().forEach((k,i)=>{const q=nearestPassXY('ground',p[0]+rnd(-40,40),p[1]+rnd(-40,40))||p;const n=addUnit(team,k,q[0],q[1]);if(n&&P.fx==='vet'){n.rank=Math.max(n.rank||0,1);n.xp=Math.max(300,n.s.cost);}if(n&&P.fx==='stealth')n.stlT=1;});log(team,'Paratroopers have landed.','g');}});}
+    G.timers.push({t:2.6,fn:()=>{const R=roster(T.fac).barracks;(()=>{const mx=P.mix||['inf','inf','inf','at','at','inf','at','inf','inf','at','inf'],nP=Math.max(2,Math.round(powLvVal('para','n',L,2+3*L)*(P.nm||1)));return Array.from({length:nP},(_,i)=>mx[i%mx.length]).concat(Array(powLvVal('para','at',L,0)).fill('at'));})().forEach((k,i)=>{const q=nearestPassXY('ground',p[0]+rnd(-40,40),p[1]+rnd(-40,40))||p;const n=addUnit(team,k,q[0],q[1]);if(n&&P.fx==='vet'){n.rank=Math.max(n.rank||0,1);n.xp=Math.max(300,n.s.cost);}if(n&&P.fx==='stealth')n.stlT=1;});log(team,'Paratroopers have landed.','g');}});}
   else if(key==='hack'||key==='emp'){if(!mwPower(team,key,x,y,P,L,M))return false;}
   w.cd=P.cd;log(team,`${P.name} used.`);return true;}
 
@@ -8224,7 +8239,7 @@ function aiTroops(team,ok){const P=G.ents.filter(e=>e.team===team&&!e.dead&&!e.i
 // Is spot p safe for team id's Artillery Barrage? No: our own or allied ground troops are inside the area the shells
 // can land in (the barrage radius at its current level, plus each shell's 60 burst, plus a 40 margin), e.g. when our
 // infantry are mixed in with the enemy's. The AI then picks another target or holds fire.
-function aiShellOk(id){const T=G.teams[id],P=powInfo('barrage',T.fac),w=T.pw.barrage,L=Math.max(1,Math.min(3,(w&&w.lv)||1)),R=((P&&P.r)||180)*(1+.2*(L-1))+100;
+function aiShellOk(id){const T=G.teams[id],P=powInfo('barrage',T.fac),w=T.pw.barrage,L=Math.max(1,Math.min(3,(w&&w.lv)||1)),R=((P&&P.r)||180)*powLvVal('barrage','rm',L,1+.2*(L-1))+100;
   return p=>!G.ents.some(e=>!e.dead&&!e.isB&&e.s.dom==='ground'&&ally(e.team,id)&&Math.abs(e.x-p.x)<R&&Math.abs(e.y-p.y)<R&&Math.hypot(e.x-p.x,e.y-p.y)<R);}
 // Covert-operations doctrine (IL, AE): camouflaged infantry and AT teams go out in small groups to lie in wait, turn
 // invisible once still, and open fire only on enemies inside their own range (the first shot from hiding hits 50%
@@ -13607,7 +13622,7 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
     const s=stats(T.fac,k);mk('units','u_'+k,s.fake?'Decoy '+s.name:s.name,'$'+s.cost,null,ev=>pqAdd(k,ev&&ev.shiftKey?5:1),()=>pqCancelKind(k));}}
   const ups=upgList(T.fac);for(const c of CATS){const list=ups.filter(k=>UPG[k].at===c);if(!list.length)continue;sub('upg',STRUCT[c].name);for(const k of list){const U=UPG[k];{const ub=mk('upg','g_'+k,upgName(T.fac,k)+(U.sp?' ★':''),'$'+U.cost,U.desc,()=>doAct({t:'up',k}),null,true);ub.dataset.from=U.at;}}}
   for(const k in POWERS){if(sigBan(T.fac,k))continue;const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});}/* owned powers are used from the side rail / hotkey */},null,true);}
-  sub('pow','Level up');for(const k in POWERS){if(sigBan(T.fac,k))continue;const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
+  sub('pow','Level up');for(const k in POWERS){if(sigBan(T.fac,k))continue;const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'','Raise this power to its next level: stronger, wider, shorter cooldown.',()=>doAct({t:'buy',k}),null,true);}
   /* doctrines removed (Abdullah 2026-11-14 "Remove doctrines") */
   
   try{icoWatch();}catch(e){}
@@ -13771,8 +13786,8 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads
   for(const k of allUnits(T.fac)){const s=stats(T.fac,k),n=qItems(T,s.from).filter(x=>x.kind===k).length,has=done(ME,s.from);let first=0;for(const b of prodBlds(ME,s.from)){const q=b.q&&b.q[0];if(q&&q.kind===k)first=Math.max(first,q.p!=null&&MODE==='client'?q.p:q.t/prodTime(T,s));}
     const lk=specLock(T,k);const rbw=k==='cleric'&&(T.rebuy||0)>G.t?Math.ceil(T.rebuy-G.t):k==='champ'&&(T.hrb||0)>G.t?Math.ceil(T.hrb-G.t):0;setBtn('u_'+k,{dis:lk||!has||rbw>0||(T.credits<s.cost&&!n),cost:rbw?'Wait '+rebuyFmt(rbw):lk?`General rank ${k==='champ'?HERO_RANK:SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(rbw?`A new leader can be chosen in ${rebuyFmt(rbw)}. `:'')+(lk?(k==='champ'?`Unlocks at general rank ${HERO_RANK}. `:`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `):'')+(k==='champ'&&s.hab&&HAB[s.hab]?`Ability: ${HAB[s.hab].n} - ${HAB[s.hab].d} Cooldown ${HERO_CD} s; press E. Only one alive; ${HERO_REBUY} s wait after it falls. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(UNOTE[k]||UNOTE[s.cls]||'')});}
   for(const k of upgList(T.fac)){const U=UPG[k],r=T.rq[U.at],mine=r&&r.key===k;setBtn('g_'+k,{dis:T.upg[k]||!done(ME,U.at)||(!!r&&!mine)||T.credits<U.cost&&!mine,done:T.upg[k],cost:T.upg[k]?'Researched':mine?'Researching…':'$'+U.cost,p:mine?r.t/U.time:0,title:done(ME,U.at)?'':`Requires ${STRUCT[U.at].name}`});}
-  docUI(T);const pts=T.rank-T.spent;for(const k in POWERS){const P=powInfo(k,T.fac),w=T.pw[k];const lv=w?(w.lv||1):0;setBtn('p_'+k,{dis:w?true:pts<1,done:!!w,on:G.aim===k,cost:w?('Lv '+lv+' · '+(P.passive?'Active':'use it on the side rail'+(POW_KEY[k]?' ['+POW_KEY[k].toUpperCase()+']':''))):`Unlock · 1 point`});
-    {const b=$('pu_'+k);if(b){const c=lv>=1&&lv<3?lv+1:0;const dv=c?'':'none';if(b.style.display!==dv){b.style.display=dv;if(c)fitBtnNames();}if(c)setBtn('pu_'+k,{dis:pts<c,cost:`To level ${lv+1} · ${c} points`});}}}
+  docUI(T);const pts=T.rank-T.spent;for(const k in POWERS){const P=powInfo(k,T.fac),w=T.pw[k];const lv=w?(w.lv||1):0;setBtn('p_'+k,{dis:w?true:pts<powLvCost(k,0),done:!!w,on:G.aim===k,cost:w?('Lv '+lv+' · '+(P.passive?'Active':'use it on the side rail'+(POW_KEY[k]?' ['+POW_KEY[k].toUpperCase()+']':''))):`Unlock · ${powLvCost(k,0)} point${powLvCost(k,0)>1?'s':''}`});{const pb=$('p_'+k);if(pb)pb.dataset.nx=w?powNext(k,lv):'Level 2: '+powNext(k,1)+'. Level 3: '+powNext(k,2);}
+    {const b=$('pu_'+k);if(b){const c=lv>=1&&lv<3?powLvCost(k,lv):0;const dv=c?'':'none';if(b.style.display!==dv){b.style.display=dv;if(c)fitBtnNames();}if(c)setBtn('pu_'+k,{dis:pts<c,cost:`To level ${lv+1} · ${c} points`});}}}
   const dot=$('pdot');const tb=document.querySelector('.tabs button[data-tab="pow"]');if(tb){let d=tb.querySelector('.dot');if(pts>0&&!d){d=document.createElement('span');d.className='dot';tb.append(d);}else if(pts<=0&&d)d.remove();}
   const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
   $('supt').textContent=!up?'needs Strike Center':f>=1?'READY':`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;$('supbtn').disabled=!(up&&f>=1);
@@ -18029,7 +18044,8 @@ function zhPowWin(){let w=$('zhPow');if(!ZH.star||!G){if(w)w.hidden=true;return;
     const up=/^p_/.test(b.id)?$('pu_'+b.id.slice(2)):null,canUp=!!up&&!up.disabled&&!up.hidden&&up.style.display!=='none';
     const x=document.createElement('button');x.type='button';x.className='zp';x.disabled=b.disabled&&!canUp;{const ic=b.querySelector(':scope>.zhIc');if(ic){const c=ic.cloneNode(true);c.className='ic';x.append(c);}}const n=document.createElement('b');n.textContent=(b.querySelector('.n')||{}).textContent||b.dataset.nm||'';x.append(n);
     const c=(b.querySelector('.c')||{}).textContent;if(c){const i=document.createElement('i');i.textContent=c;x.append(i);}const dd=b.dataset.desc;if(dd){const s=document.createElement('span');s.textContent=dd;x.append(s);}
-    if(canUp){const u=document.createElement('i');u.className='zup';u.textContent='▲ Level up · 1 point';x.append(u);}
+    if(b.dataset.nx&&/^p_/.test(b.id)){const nx=document.createElement('span');nx.className='znx';nx.textContent=(/^Level 2/.test(b.dataset.nx)?'':'Next: ')+b.dataset.nx;x.append(nx);}
+    if(up&&up.style.display!=='none'){const u=document.createElement('i');u.className='zup';const m=/(\d+) point/.exec(up.textContent||'');u.textContent='▲ Level up · '+(m?m[1]:'')+' point'+(m&&m[1]>1?'s':'');x.append(u);}
     x.title=b.title||'';x.onclick=()=>{(canUp&&b.disabled?up:b).click();setTimeout(()=>{w.dataset.sig='';zhPowWin();},50);};body.append(x);}}
 if(typeof updateUI==='function'){const _zhU=updateUI;updateUI=function(){_zhU.apply(this,arguments);try{zhCtx();}catch(e){}};}
 /* hover card above the minimap */
@@ -18164,7 +18180,7 @@ function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q
 #qpStrike.rdy{border-color:#ffd23a;box-shadow:0 0 10px rgba(255,160,60,.7)}#qpStrike.arm{border-color:#ea5a40;background:linear-gradient(160deg,#7a2a1c,#4a1a12)}`;document.head.appendChild(st);}
 if(typeof updateUI==='function'){const _sU=updateUI;updateUI=function(){_sU.apply(this,arguments);try{qpStrike();}catch(e){}};}
 
-{const st=document.createElement('style');st.textContent='#zhPow .zp .zup{display:block;font-style:normal;color:#ffd23a;font-weight:700;font-size:12px;margin-top:2px}';document.head.appendChild(st);}
+{const st=document.createElement('style');st.textContent='#zhPow .zp .znx{display:block;color:#9fd0ff;font-size:12px;margin-top:2px}#zhPow .zp .zup{display:block;font-style:normal;color:#ffd23a;font-weight:700;font-size:12px;margin-top:2px}';document.head.appendChild(st);}
 /* ONE icon table for every button the player clicks (Abdullah 2026-11-14 21:39 "make sure every button has an icon that makes sense").
    ICON_SVG (declared in 08-ui.js with the order-dock icons) is extended here: same inline line style (48x48 box, stroke 3.2, one bright
    colour per icon), no emoji, no image files. Icons are made once per button (icoPut); a MutationObserver re-puts them only when

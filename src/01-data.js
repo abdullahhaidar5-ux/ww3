@@ -809,10 +809,25 @@ function gpowDesc(k,P,g){const f=(v,a,b)=>v&&Math.abs(v-1)>.01?(v>1?a:b)+' '+(v>
   return P.desc+(L.length?' ('+L.join(', ')+')':'')+(g.fx?'. Special: '+GFX_TXT[g.fx]+(k!=='bounty'?' (cooldown +10%)':' (bounty −10%)'):'');}
 const GFX_TXT={vet:'troops arrive as veterans',stealth:'troops land hidden and stay unseen until they move or fire',mark:'enemies in the area are marked - your forces do 25% more damage to them',detect:'also exposes hidden and stealthed enemy units in the area',fire:'leaves the ground burning for 8 seconds',emp:'disables enemy vehicles in the area for 4 seconds',smoke:'lays a smoke screen that hides your units inside it',rearm:'units in the area also fire 25% faster for 12 seconds',rally:'units in the area rally instantly and are fearless for 15 seconds',shield:'units in the area take 25% less damage for 12 seconds',salvage:'also refunds 15% of the cost of each unit you lose'};
 function powInfo(k,fac){const P0=POWERS[k];if(!P0)return null;const P=P0;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N=natPow(fac);return Object.assign({},P,N);}
-// General ranks get steadily harder to earn; each promotion gives a point. Powers unlock for 1 point and can be
-// raised to level 2 (2 more points) and level 3 (3 more): bigger effect, shorter cooldown.
-const RANKS=[0,2500,7000,14000,24000,38000,56000,80000];
-const PLV=[1,1.4,1.8],PCD=[1,.85,.7];
+// General ranks get steadily harder to earn; each promotion gives a point. Powers unlock for 1-3 points (by strength, POWCOST) and can be
+// raised to level 2 (unlock+1 points) and level 3 (unlock+2): bigger effect, shorter cooldown (POWLV).
+const RANKS=[0,2500,7000,14000,24000,38000,56000,80000,110000];   /* 9 points in a full game: about 3-4 powers unlocked and one or two raised */
+const PLV=[1,1.4,1.8],PCD=[1,.8,.6];
+/* General powers by strength (Abdullah 2026-11-15 00:22 "Make the general powers require more points and progressively get better"):
+   unlock = POWCOST (light 1, medium 2, heavy 3); level 2 costs unlock+1, level 3 unlock+2. Per level: rm = area x, dur = seconds, n = shells/troops, heal, dmg, cdm = cooldown x. */
+const POWCOST={bounty:1,recon:1,repair:1,para:2,barrage:2,bb:3,nat:3};
+const POWLV={
+  recon:{rm:[1,1.3,1.6],dur:[25,40,55],nx:['Reveals for 40 s over a wider area','Reveals for 55 s over the widest area']},
+  repair:{rm:[1,1.25,1.5],heal:[.6,.8,1],nx:['Heals 80% in a wider area','Heals 100% in the widest area']},
+  bounty:{nx:['22% of every kill (was 15%)','30% of every kill']},
+  para:{n:[5,8,11],at:[0,0,2],nx:['8 troopers instead of 5','11 troopers plus 2 extra anti-tank teams']},
+  barrage:{rm:[1,1.25,1.5],n:[10,14,20],nx:['14 shells over a wider area','20 shells over the widest area']},
+  bb:{rm:[1,1.4,1.8],dmg:[1500,1900,2400],nx:['Bigger blast (+40% radius, heavier bombs)','Huge blast (+80% radius, heaviest bombs)']},
+  nat:{rm:[1,1.25,1.5],nx:['Stronger and wider, faster to recharge','Strongest and widest, fastest to recharge']}};
+function powCostBase(k){return POWCOST[k]||2;}
+function powLvCost(k,lv){return lv>=3?99:powCostBase(k)+(lv|0);}   /* lv = the level you have now (0 = locked): 0 -> unlock cost, 1 -> level 2, 2 -> level 3 */
+function powLvVal(k,f,L,d){const t=POWLV[k];return t&&t[f]?t[f][Math.max(1,Math.min(3,L))-1]:d;}
+function powNext(k,lv){const t=POWLV[k];return lv>=3?'Max level':lv<1?'':(t&&t.nx?t.nx[lv-1]:'Stronger, faster cooldown');}
 // The national special unit is locked until general rank 2, and gets tougher and deadlier at ranks 4 and 6.
 const SPEC_RANK=2;function specMult(T){return T.rank>=6?1.4:T.rank>=4?1.2:1;}
 const VET=['','Veteran','Elite','Heroic'];

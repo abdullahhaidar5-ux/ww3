@@ -647,6 +647,16 @@ try {
     ck(o.mz && o.mz[0] === 'hilux' && !o.mz[1] && !o.mz[2] && !o.mz[3], 'OB must use no MBT / helicopter / jet / frigate model: ' + JSON.stringify(o.mz)); ck(o.zeal === 0, 'OB stays Zealous (never routs)'); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
+// powers 2026-11-15 (Abdullah 00:22 "Make the general powers require more points and progressively get better"): unlock cost by strength, dearer levels, growing effects
+{ const d = SRC['01-data.js'] || '', sm = SRC['03-sim.js'] || '', ui = SRC['08-ui.js'] || '';
+  const pc = d.match(/const POWCOST=\{([^}]*)\}/), c = {}; if (pc) for (const m of pc[1].matchAll(/(\w+):(\d+)/g)) c[m[1]] = +m[2];
+  ck(pc && c.recon === 1 && c.repair === 1 && c.bounty === 1 && c.para === 2 && c.barrage === 2 && c.bb === 3 && c.nat === 3, 'powers: unlock costs differ by strength (light 1, medium 2, heavy 3)');
+  ck(/function powLvCost\(k,lv\)\{return lv>=3\?99:powCostBase\(k\)\+\(lv\|0\)/.test(d) && /return powLvCost\(key,/.test(sm), 'powers: level 2 costs unlock+1, level 3 unlock+2 (so level 3 costs more than level 2), one rule used by buyPower');
+  for (const k of ['recon', 'repair', 'barrage', 'bb']) { const m = d.match(new RegExp(k + ':\\{(rm|[^}]*?rm):\\[([\\d.,]+)\\]')); const a = m && m[2].split(',').map(Number); ck(a && a.length === 3 && a[0] < a[1] && a[1] < a[2], 'powers: ' + k + ' area grows with every level'); }
+  { const m = d.match(/para:\{n:\[([\d,]+)\],at:\[([\d,]+)\]/); const n = m && m[1].split(',').map(Number), at = m && m[2].split(',').map(Number); ck(n && n[0] < n[1] && n[1] < n[2] && at[2] > at[1], 'powers: paratroopers grow per level and level 3 adds anti-tank teams'); }
+  ck(/n:\[10,14,20\]/.test(d) && /dmg:\[1500,1900,2400\]/.test(d) && /PCD=\[1,\.8,\.6\]/.test(d), 'powers: barrage shells, bunker buster blast and cooldown improve with level');
+  ck(!/Unlock · 1 point`/.test(ui) && !/about 40% stronger/.test(ui) && /powLvCost\(k,0\)/.test(ui), 'powers: no leftover "1 point" / "40% stronger" text, the row shows the real cost');
+}
 await browser.close(); server.close();
 }
 for (const f of fails) console.log('FAIL: ' + f);
