@@ -125,26 +125,7 @@ try {
   await page.screenshot({ path: path.join(OUT, 'ew-battle.png'), timeout: 150000 });
   const left = await page.evaluate(() => window.__exp());
   ck('spoof ends after 20 s', left === 0, left);
-  // Sanctions & smuggling: income of the target cuts 20% for 60 s (8% with Smuggling Routes + trickle), back to normal after
-  const sx = await page.evaluate(() => {
-    G.paused = true; const me = ME, en = G.teams.find(T => T.id !== me).id, E = G.teams[en], M = G.teams[me], hq = G.ents.find(b => b.team === en && b.kind === 'hq');
-    for (const T of G.teams.filter(Q => !Q.reb)) { T.sanc = 0; T.upg.smug = false; }
-    for (const e of G.ents) if (e.isB && e.kind === 'econ') e.dead = true;
-    const b = addBld(en, 'econ', hq.x + 300, hq.y + 300, true); b.built = 1; b.dis = 0;
-    const earn = () => { const c0 = E.credits; G.ecT = 2; econTick(0.01); const d = E.credits - c0; return d; };
-    const o = {}; b.acc = 0; let base = 0; for (let i = 0; i < 50; i++) base += earn(); o.base = base;
-    M.pw.sanc = { cd: 0, lv: 1 }; G.t = Math.max(G.t, 300); E.credits = 5000; M.credits = 100;
-    o.fired = usePower(me, 'sanc', 0, 0); o.cd = M.pw.sanc.cd; o.again = usePower(me, 'sanc', 0, 0); o.dur = Math.round(E.sanc - G.t);
-    b.acc = 0; let cut = 0; for (let i = 0; i < 50; i++) cut += earn(); o.cut = cut;
-    E.upg.smug = true; b.acc = 0; let sm = 0; for (let i = 0; i < 50; i++) sm += earn(); o.smug = sm;
-    const pk = JSON.parse(JSON.stringify(ckEncode())); E.sanc = 0; ckRestore(pk); o.ckKeeps = G.teams[en].sanc > G.t;
-    G.t = E.sanc + 1; b.acc = 0; let after = 0; for (let i = 0; i < 50; i++) after += earn(); o.after = after; o.unsanctioned = incMul(M);
-    return o;
-  });
-  ck('sanctions: 20% income cut', sx.fired && Math.abs(sx.cut / sx.base - .8) < .03, JSON.stringify(sx));
-  ck('sanctions: 60 s, long cooldown, no double-fire', sx.dur === 60 && sx.cd === 420 && !sx.again, JSON.stringify(sx));
-  ck('smuggling routes: only 8% cut plus trickle', sx.smug > sx.base * .92 && sx.smug < sx.base * .92 + 50 * 6 + 5, JSON.stringify(sx));
-  ck('sanctions survive checkpoint and end on time', sx.ckKeeps && sx.after > sx.base * .98 + 50 * 0 && sx.after < sx.base * 1.02 && sx.unsanctioned === 1, JSON.stringify(sx));
+  /* (Sanctions and Smuggling Routes are not in Battle: powBan keeps them out, the test went with the grand campaign) */
   // Tunnels deeper + proxy militias: Ground-Penetrating Radar reveals enemy tunnel entrances in range only, tunnel ambush bonus (+50% for 3 s), Fund Militia
   const tm = await page.evaluate(() => {
     G.paused = true; const me = ME, en = G.teams.find(T => T.id !== me).id, M = G.teams[me], E = G.teams[en], hq = G.ents.find(b => b.team === me && b.kind === 'hq'), o = {};
@@ -158,19 +139,10 @@ try {
     const mine = mk(me, -300), u = addUnit(me, 'inf', hq.x, hq.y + 100), tg = addUnit(en, 'inf', hq.x + 500, hq.y + 500);
     enterTunnel(u); unloadTunnel(mine); const base = specialMult(tg, 'gun', { s: u.s, isB: false, team: me });
     o.amb = specialMult(tg, 'gun', u) / base; G.t += 3.1; o.ambEnd = specialMult(tg, 'gun', u) / base;
-    // militia
-    M.pw.mil = { cd: 0, lv: 1 }; const before = new Set(G.ents.filter(e => e.team === me && !e.isB).map(e => e.id));
-    o.fired = usePower(me, 'mil', 0, 0); const nu = G.ents.filter(e => e.team === me && !e.isB && !before.has(e.id) && !e.dead);
-    o.n = nu.length; o.tech = nu.filter(e => e.kind === 'jeep').length; o.cd = M.pw.mil.cd; o.again = usePower(me, 'mil', 0, 0);
-    const pk = JSON.parse(JSON.stringify(ckEncode())); ckRestore(pk);
-    o.ck = G.ents.filter(e => e.team === me && !e.isB && !before.has(e.id) && !e.dead).length === o.n && G.teams[me].pw.mil.cd > 0;
-    o.names = [powInfo('mil', 'IR').name, powInfo('mil', 'US').name, powInfo('mil', 'RU').name, powInfo('mil', 'TR').name];
     return o;
   });
   ck('GPR: reveals tunnel in range, not out of range, not without the upgrade', tm.near === false && tm.far === true && tm.noUpg === true && tm.expires === true, JSON.stringify(tm));
   ck('tunnel ambush: +50% damage, gone after 3 s', Math.abs(tm.amb - 1.5) < .01 && Math.abs(tm.ambEnd - 1) < .01, JSON.stringify(tm));
-  ck('fund militia: 7 units owned by caster, cooldown blocks 2nd use, checkpoint keeps it', tm.fired && tm.n === 7 && tm.tech === 1 && tm.cd >= 400 && !tm.again && tm.ck, JSON.stringify(tm));
-  ck('fund militia names per nation', /Popular Mobilization/.test(tm.names[0]) && /Contractors/.test(tm.names[1]) && /PMC/.test(tm.names[2]) && /Local militia/.test(tm.names[3]), JSON.stringify(tm.names));
   // ---- Rubble (destructible cities): a fallen city block is cover for infantry and a wall for heavy vehicles ----
   // a fresh battle on South Lebanon (it has towns; the EW battle's map may not)
   await page.evaluate(() => { setup.map = 'lebanon'; setup.n = 1; startSingle(); });

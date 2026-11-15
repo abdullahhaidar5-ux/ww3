@@ -292,7 +292,7 @@ async function main() {
     await spec.evaluate((c) => { try { initAudio(); } catch (e) {} NET.wantSpec = 1; joinByCode(c); }, code);
     await waitFor(host, () => NET.lobbySpec && NET.lobbySpec.length === 1, null, 60000, 'the spectator to appear in the host lobby');
     await waitFor(spec, () => /Watching/.test(document.getElementById('mpstatus').textContent), null, 30000, 'the spectator to see "Watching"');
-    const l = await host.evaluate(() => ({ lobby: NET.lobby.length, spec: NET.lobbySpec.slice(), txt: document.getElementById('mpstatus').textContent }));
+    const l = await host.evaluate(() => ({ lobby: NET.lobby.length, spec: NET.lobbySpec.slice(), txt: document.getElementById('mpstatus').textContent + ' ' + ((document.getElementById('mpl') || {}).textContent || '') }));   /* the lobby is one framed screen now: the "N watching" note sits in it */
     specPeer = l.spec[0];
     console.log(`[${secs()}] spectator waiting in the lobby (players in lobby: ${l.lobby}; lobby shows "watching": ${/watching/.test(l.txt)})`);
     if (l.lobby !== 1) fail(`the spectator took a seat in the lobby (${l.lobby} players besides the host)`);
