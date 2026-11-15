@@ -137,6 +137,16 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(/function match\(/.test(kit) && /matchUp\(/.test(kit) && /UK\.match\(T\.fac,k,foeFac\(\),\{mini:1\}\)/.test(ui), 'one language 3: command buttons no longer carry the BEATS / WEAK TO pictures (UK.match in buildPanels)');
   ck(/function ctrTick\(/.test(ui) && /matchBeaters\(/.test(ui) && /ctrTick\(\)/.test(ui.replace(/function ctrTick\(/, '')), 'one language 3: pointing at an enemy no longer lights up the buttons that beat it (ctrTick)');
   ck(/UK\.match\(en\.f,en\.k/.test(enc) && /matchUp\(f,s\.kind,f\)/.test(idn), 'one language 3: Encyclopedia / Unit guide no longer use the computed BEATS / WEAK TO'); }
+// Seat fairness (Abdullah 2026-11-14 23:56 "Yes", mapfix): start position 1 must not shoot/think first, and caribbean + hormuzgate have point-exact starts
+{ const sim = SRC['03-sim.js'] || '', mp = SRC['02-map.js'] || '', rm = SRC['02b-realmaps.js'] || '', ck2 = SRC['07b-ckpt.js'] || '';
+  ck(/G\.upN=\(G\.upN\|0\)\+1/.test(sim) && /rv=G\.upN&1/.test(sim) && /G\.ents\[rv\?n-1-k:k\]/.test(sim), 'mapfix: the per-tick unit loop must alternate direction (G.upN parity) so team order is fair');
+  ck(/G\.teams\[\(q\+G\.upN\)%NT\]/.test(sim), 'mapfix: the AI think order must rotate with G.upN, not always start with team 0');
+  ck(/'upN'/.test(ck2), 'mapfix: G.upN must be in the checkpoint (host migration keeps the same tick order)');
+  ck(/mirRes:1/.test(mp.slice(mp.indexOf('caribbean:{'), mp.indexOf('caribbean:{') + 200)) && /mirRes:1/.test(rm.slice(rm.indexOf('hormuzgate:{'), rm.indexOf('hormuzgate:{') + 200)) && /D\.mirRes&&NB===2/.test(mp), 'mapfix: caribbean and hormuzgate must keep mirRes:1 (derricks and supply fields are the exact point mirror)');
+  ck(/hMir=D\.mirRes&&BASES\.length===2/.test(mp) && /msrc=D\.mirRes&&BASES\.length===2/.test(mp), 'mapfix: on mirRes maps the hamlets and cities of base 2\'s half are base 1\'s turned half a circle (equal garrisonable houses near both starts)');
+  const car = mp.slice(mp.indexOf('caribbean:{'), mp.indexOf('khyber:{'));
+  ck(!/Math\.sin\(q\*3|Math\.sin\(q\*7/.test(car) && /cities:mirrorList\(/.test(car), 'mapfix: caribbean coast shapes use even harmonics only and its cities are mirrored (equal coast for both starts)');
+  ck(!/w:a=>\.05\*Math\.sin\(a\*3\)/.test(rm.slice(rm.indexOf('hormuzgate:{'), rm.indexOf('tihama:{'))), 'mapfix: hormuzgate centre island needs an even-harmonic outline (point mirror)'); }
 { const fh = SRC['08l-firsthint.js'] || '', so = SRC['08b-social.js'] || '', mn = SRC['14-menu.js'] || '';
   ck(/FH_TEXT/.test(fh) && ['Battle', 'Mission', 'Test range'].every(m => fh.includes("'" + m + "':")) && !fh.includes("'Conquest':"), 'polishE: a mode lost its first-steps hint card');
   ck(/const TUTB=\[/.test(so) && /function startBattleTutorial/.test(so) && /startBattleTutorial\(\)/.test(so.slice(so.indexOf('function socialMenu'))), 'polishE: the Battle tutorial is gone from the menu');

@@ -26,3 +26,23 @@ bm_* maps (splitridge, ferryquarter, breakwater, fourmills, sixroads, tarbasin) 
 - No start position is significantly unfair (p<0.01) in any sample. Pooled over all maps position 1 wins slightly more often than position 2 (19:11 in the 52-game run), so part of any lean is a general seat effect, not the map.
 - **Caribbean** (13 of 16 games to position 1, score 66%) and **Hormuz Gate** (about 72%, score 66%) lean to position 1 even though supply, derricks and routes are mirrored (point symmetry) - both are naval maps, so the AI's navy/coast handling is the likeliest cause. Euphrates and Gulf lean to position 2 (32-35%), Hajar and Tihama to position 1 (about 69%) - inside the tolerance but worth a bigger sample.
 - No map data was changed: the static mirror is exact, so a fix would be a guess without a bigger sample (about 40 games per map). Next step: run `--round 4..9` on caribbean, hormuzgate, euphrates, hajar, tihama; if the lean holds, check the naval start (coast shape, water access) for the leaning side.
+
+## mapfix (2026-11-15, Abdullah 2026-11-14 23:56 "Yes": even out caribbean and hormuzgate)
+
+What was really unequal (found by dumping the ground grid and comparing every cell with its point mirror):
+- **Caribbean**: the island outline and the four cay outlines used odd wobble harmonics (sin 3q, sin 7q), which are not point-symmetric, and the two towns were not mirrors of each other (different size and spot). 4572 of 35953 ground cells (12.7%) differed from their mirror, mostly the coast. Now 190 (0.5%, one-cell coast rounding).
+- **Hormuz Gate**: the centre island outline used sin 3a (odd), and derricks were 2.5 / 1.5 by driving distance. Now equal (derricks 3.0 / 3.0, supply fields 4.0 / 4.0).
+- **Both maps**: the route-distance search picked near-tie spots, so derricks and supply fields were not exact mirrors (caribbean fields 3.0 / 4.0 in one layout), and the neutral hamlet houses and town blocks (garrisonable cover) were random per site. New map flag `mirRes:1` (2-player point-symmetric maps only): derricks, supply fields and hamlets come from base 1's half and the other half is the exact point mirror; a town that mirrors an earlier one is that town turned half a circle, house for house.
+- **Seat order in the simulation** (all games, all maps): gunfire hits at once and marks the target dead, and units were updated in creation order, so team 0's units fired first every tick; the AI always thought team 0 first. Now the unit loop runs forwards on even ticks and backwards on odd ticks (`G.upN`, in the checkpoint) and the AI think order rotates with `G.upN`.
+
+Results (AI vs AI, Normal, 15 min cap, `--counts 2`, rounds 4+; games per map; position 1 win share / score share):
+
+| state | caribbean | hormuzgate |
+|---|---|---|
+| before (16 games each) | 85% / 66% | 72% / 66% |
+| seat order + coast/derrick fixes (56 games each) | 71% / 61% | 57% / 54% |
+| plus mirrored towns, hamlets, fields (28 games each) | 68% / 55% | 82% / 65% |
+
+The lean did **not** go away in AI-vs-AI games: pooled over the later samples position 1 still wins about 70% on both maps (p about 0.06 and 0.001 for 28 games, but every game pair shares a seed, so the real sample is about half that). The map is now point-exact apart from random trees/rocks, so what is left is either the random forests (placed per seed, not mirrored) or AI behaviour at the coast (naval spot search `coastSpot` takes the first tie in scan order; in one probe the US seat built a shipyard by minute 4 while IR built a tunnel instead, which is a nation effect, not a seat effect). Euphrates and Gulf lean to position 2 in the same test, so a generic seat edge is not it.
+
+Next steps: (1) mirror the random forests/rocks for mirRes maps (G.treePos, in the render pass of mkMap), (2) break `coastSpot` ties by distance to the base instead of scan order, (3) run 40+ games per map on GitHub Actions to see whether the lean is gone; 28 games are not enough to read a 10-point change.

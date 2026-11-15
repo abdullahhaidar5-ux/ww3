@@ -32,11 +32,11 @@ Object.assign(MAPS,{
     water(M,R){const ph=R()*6.28;const rg=[];for(let y=-200;y<=900;y+=40)rg.push([960+45*Math.sin(y*.005+ph)+16*Math.sin(y*.016),y]);M.ridges.push({pts:rg,hw:()=>86});
       M.lakes.push({x:-330,y:1100,r:640,rx:.7,wob:q=>.06*Math.sin(q*4+ph)});
       const vr=[];for(let y=-200;y<=860;y+=40)vr.push([1600,y]);M.rivers.push({pts:vr,hw:()=>38});M.bridgeAt=[[0,.5]];M.bridgeFrac=true;mirrorMap(M,'x');mirrorMap(M,'y');}},
-  hormuzgate:{name:'Strait of Hormuz: Island Gate',min:2,max:4,sym:'quad',theme:'desert',ssn:1,home:['IR','AE'],fieldMinB:300,tag:'sea strait · island chain · two coasts · navies',
+  hormuzgate:{name:'Strait of Hormuz: Island Gate',min:2,max:4,sym:'quad',mirRes:1,theme:'desert',ssn:1,home:['IR','AE'],fieldMinB:300,tag:'sea strait · island chain · two coasts · navies',
     desc:'The narrow strait between the Iranian and Arabian coasts, wide gulf at both ends and a chain of three islands in the narrows. Bridges hop island to island; fleets fight for the water, tanks for the causeways.',
     slots:[[420,300],[2780,1900],[2780,300],[420,1900]],cities:Q4([[1000,450,100,'mideast'],[560,820,80,'gulfcity']]),
     water(M,R){const pts=[];for(let x=-200;x<=3400;x+=40)pts.push([x,1100]);M.rivers.push({pts,hw:(t,x)=>140+160*Math.min(1,Math.abs(x-1600)/1000)});
-      navIsle(M,{x:1600,y:1100,r:90,rx:2.1,w:a=>.05*Math.sin(a*3)});navIsle(M,{x:900,y:1100,r:60,rx:1.3,w:a=>.06*Math.sin(a*2)});navIsle(M,{x:2300,y:1100,r:60,rx:1.3,w:a=>.06*Math.sin(a*2)});
+      navIsle(M,{x:1600,y:1100,r:90,rx:2.1,w:a=>.05*Math.sin(a*4)})/* even harmonics only: the island must map onto itself under the point mirror (map fairness 2026-11-15) */;navIsle(M,{x:900,y:1100,r:60,rx:1.3,w:a=>.06*Math.sin(a*2)});navIsle(M,{x:2300,y:1100,r:60,rx:1.3,w:a=>.06*Math.sin(a*2)});
       M.bridgeAng.push([1600,960,0,1],[1600,1240,0,-1],[900,946,0,1],[900,1254,0,-1],[2300,946,0,1],[2300,1254,0,-1]);}},
   tihama:{name:'Yemen: Tihama and Highlands',min:2,max:6,sym:'quad',theme:'desert',rough:1.5,ssn:1,home:['DW','SA'],tag:'coastal plains · highland diamond · wadis',
     desc:'Hot coastal plains on both sides and a rugged highland diamond in the middle with the old capital inside. The wadi passes along the middle are the only easy way in; the ridge corners are for snipers and artillery.',
