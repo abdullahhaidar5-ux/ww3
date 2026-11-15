@@ -182,11 +182,11 @@ async function powerChecks(page, { mode, ck, tap }) {
   await page.waitForTimeout(600); await page.evaluate(() => updateUI());
   const bb2 = await btn('barrage'); await click(bb2.x, bb2.y); ck(mode + ' targeted power arms on button click', await page.evaluate(() => G.aim === 'barrage'), await page.evaluate(() => JSON.stringify({ aim: G.aim, pw: G.teams[ME].pw.barrage, paused: G.paused, el: document.elementFromPoint(innerWidth/2, 60)?.outerHTML.slice(0, 80) })));
   const vp = await page.evaluate(() => { for (let y = innerHeight * .5; y < innerHeight * .9; y += 20) for (let x = innerWidth * .3; x < innerWidth * .7; x += 20) { if (document.elementFromPoint(x, y) === cv && screenToWorld(x, y)) return { width: x * 2, height: y / 0.6 }; } return { width: innerWidth, height: innerHeight }; });
-  await click(vp.width / 2, vp.height * 0.6);
+  if (tap) await click(vp.width / 2, vp.height * 0.6); else await page.mouse.click(vp.width / 2, vp.height * 0.6, { button: 'right' });   // powers fire on RIGHT-click (2026-11-15 00:28)
   { const ac = await acts(page); ck(mode + ' targeted power fires after one map click', pw(ac).includes('barrage') && await page.evaluate(() => !G.aim), JSON.stringify([ac, vp, await page.evaluate(() => [JSON.stringify(window.__pd), MLOCK.on, LASTPT, G.aim, G.place, G.over, mouse.x, mouse.y, !!screenToWorld(mouse.x, mouse.y)])])); }
   if (!tap) {
     await page.evaluate(() => { G.teams[ME].pw.barrage.cd = 0; updateUI(); window.__acts = []; });
-    await page.keyboard.press('b'); await page.mouse.click(vp.width / 2, vp.height * 0.6);
+    await page.keyboard.press('b'); await page.mouse.click(vp.width / 2, vp.height * 0.6, { button: 'right' });
     ck(mode + ' hotkey + one click fires', pw(await acts(page)).includes('barrage'));
     await page.evaluate(() => { G.teams[ME].pw.barrage.cd = 0; updateUI(); });
     await page.keyboard.press('b'); const armed = await page.evaluate(() => { G.paused = false; return G.aim === 'barrage'; }); await page.keyboard.press('Escape');
@@ -455,10 +455,10 @@ try {
   check('power: B aims the barrage', await page.evaluate(() => G.aim === 'barrage'));
   await page.keyboard.press('Escape'); await wait(100);
   check('power: Esc cancels aiming, nothing fired', await page.evaluate(() => !G.aim) && !(await acts(page)).some(x => x.t === 'pow'));
-  await page.keyboard.press('b'); await wait(100); await page.mouse.click(640, 360); await wait(150);
-  { const a = await acts(page); check('power: hotkey + ONE click fires the barrage', a.some(x => x.t === 'pow' && x.k === 'barrage') && await page.evaluate(() => !G.aim), JSON.stringify(a)); }
   await page.keyboard.press('b'); await wait(100); await page.mouse.click(640, 360, { button: 'right' }); await wait(150);
-  check('power: right-click cancels aiming', await page.evaluate(() => !G.aim));
+  { const a = await acts(page); check('power: hotkey + ONE right-click fires the barrage', a.some(x => x.t === 'pow' && x.k === 'barrage') && await page.evaluate(() => !G.aim), JSON.stringify(a)); }
+  await page.keyboard.press('b'); await wait(100); await page.mouse.click(640, 360); await wait(150);
+  check('power: left-click cancels aiming', await page.evaluate(() => !G.aim));
   await page.keyboard.press('u'); await wait(150);
   { const a = await acts(page); check('power: no-target power fires on ONE key press', a.some(x => x.t === 'pow' && x.k === 'sanc'), JSON.stringify(a)); }
   await page.context().close();

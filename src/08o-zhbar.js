@@ -43,7 +43,7 @@ html body #side #panel{grid-column:3!important;grid-row:1!important;display:grid
  background:linear-gradient(180deg,#0c2522,#06140f)!important;box-shadow:inset 0 0 0 1px #000,inset 0 0 0 3px #39434c,0 0 0 2px #cfd7de!important}
 html body #side #panel .btn{position:relative!important;padding:0!important;margin:0!important;width:auto!important;height:auto!important;min-height:0!important;border-radius:1px!important;overflow:hidden;
  border:1px solid color-mix(in srgb,var(--tc) 75%,#fff)!important;background-color:#1b2a22!important;background-size:auto 60%!important;background-repeat:no-repeat!important;background-position:center 14%!important;box-shadow:inset 0 0 0 1px #000!important;transform:none!important}
-html body #side #panel .btn>*:not(.q):not(.p):not(.n):not(.ic){display:none!important}
+html body #side #panel .btn>*:not(.q):not(.p):not(.n):not(.ic):not(.zhIc){display:none!important}
 html body #side #panel .btn>.n{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;position:absolute!important;left:0;right:0;bottom:0;margin:0!important;padding:2px 3px!important;font:700 11px/1.15 system-ui,Segoe UI,sans-serif!important;color:#f2f6f8!important;text-align:center;white-space:normal!important;text-overflow:clip!important;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.8))!important;text-shadow:0 1px 1px #000}
 html body #side #panel .btn:not(.hasic){background-image:none!important}
 html body #side #panel .btn:not(.hasic)>.n{display:block!important;position:static!important;font:700 11px/1.15 system-ui,sans-serif!important;color:#e8eef2;white-space:normal;text-align:center;padding:3px}
@@ -362,7 +362,7 @@ if(typeof updateUI==='function'){const _iU=updateUI;updateUI=function(){_iU.appl
 
 /* STRIKE ON THE LEFT RAIL (Abdullah 2026-11-14 22:10 "Strike launch from the building and its own separate button like artillery barrage in left hand"):
    one rail button under the generals' powers, shown while you own a Strike Center; it fills up as the Strike charges, glows when READY,
-   one click arms it, then LEFT-click the target (right-click cancels) - the same as pressing LAUNCH on the building. */
+   one click arms it, then RIGHT-click the target (left-click cancels; Abdullah 2026-11-15 00:26) - the same as pressing LAUNCH on the building. */
 function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q)return;let b=document.getElementById('qpStrike');
   const own=!!sb&&!sb.hidden&&G&&G.ents&&G.ents.some(e=>e.isB&&e.team===ME&&!e.dead&&e.kind==='uplink'&&e.built>=1);
   if(!own){if(b)b.hidden=true;return;}
