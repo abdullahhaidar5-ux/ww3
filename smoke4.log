@@ -1,0 +1,23 @@
+3D models: 2 of 83 ready=true  (page open to models ready: 0.5s)
+Playtest card: 10 things to try, votes saved into the file
+living main menu: your war drawn from the save note (battle, old, none; old campaign saves ignored)
+battle: 2 players IR vs US on bm_splitridge
+loading screen finished after 52.8s
+building dressing: 64 building looks checked, nothing floats
+fortline: {"infWl":false,"oldForm":true,"n":16,"angs":3,"bent":true,"bad":false,"infBtns":["⛏ Dig in (I)"],"dzBtns":["⛏ Fortification line (I)","🔧 Fix vehicles"]}
+3D models for this battle: 59 of 59
+after 4.0 game-min: 24 units, 14 structures, per team 21/17 (peak 21/19), last chunk 351 ms
+peak memory (node + browser, summed RSS): 3009 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+SMOKE PASS (181s) — screenshots in orch/out/*.png (this run: orch/out/runs/20261115-000250-smoke/)
+live battle: IR vs US on bm_splitridge (loaded after 49 s)
+live end: t=180.12s, 31 units/buildings, hash 72672bb2; replay file 48 KB (16 KB per game-minute, 810 frames)
+replay loaded after 34 s: 810 frames, 19 keyframes
+replay to the end: hash 72672bb2 matches (31 units/buildings)
+screenshot orch/out/replay.png
+seek to 90 s showed 23 units/buildings
+seek to the middle, then to the end: hash 72672bb2 matches (31 units/buildings)
+(106 s)
+REPLAY PASS
