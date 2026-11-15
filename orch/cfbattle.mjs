@@ -104,7 +104,7 @@ async function openPage(tag) {
 }
 const waitFor = (page, fn, a, ms, what) => page.waitForFunction(fn, a, { timeout: ms, polling: 250 }).catch(() => { throw new Error('timed out waiting for ' + what); });
 async function shot(page, name) { try { fs.mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: path.join(OUT, name), timeout: 240000 }); } catch (e) { warns.push(`screenshot ${name}: ${String(e.message || e).split('\n')[0]}`); } }
-const status = p => p.evaluate(() => document.getElementById('mpstatus').textContent);
+const status = p => p.evaluate(() => (((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || '')));
 // a scripted lobby on the server (to fill the battle slots)
 // a battle someone else is playing (owner + friend greet, owner starts): it holds one of the 3 battle slots (a lobby
 // holds none: it claims its slot at Start)
@@ -138,8 +138,8 @@ async function main() {
   say(`1. three other battles take the 3 battle slots: ${dz.map(d => d.ctl).join(', ')}`);
   if (!dz.every(d => d.ctl === '!w started')) fail('could not start the 3 battles that fill the battle slots');
   await A.evaluate(() => newBattle());
-  await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf && document.querySelector('#mpstatus .lob'), null, 40000, 'the creator\'s battle to start in its own browser');
-  const fb = await A.evaluate(() => ({ st: document.getElementById('mpstatus').textContent, why: NET.fb || '' }));
+  await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf && document.querySelector('#mpl'), null, 40000, 'the creator\'s battle to start in its own browser');
+  const fb = await A.evaluate(() => ({ st: (((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || '')), why: NET.fb || '' }));
   say(`   server busy (${fb.why}) -> battle in this browser: "${fb.st.slice(0, 140)}"`);
   if (fb.why !== 'busy') fail(`the fallback did not come from the server saying "busy" (${fb.why})`);
   if (/Cloudflare|busy|\bhost/i.test(fb.st)) fail('the fallback lobby tells the player where the battle runs: ' + fb.st.slice(0, 200));
@@ -152,19 +152,19 @@ async function main() {
 
   // ---- 2. lobby on the server ----
   await A.evaluate(() => newBattle());
-  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpstatus .lob'), null, 30000, 'the creator\'s lobby on the server');
+  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpl'), null, 30000, 'the creator\'s lobby on the server');
   const code = await A.evaluate(() => NET.jcode);
   const SB = () => H(code, 'state');
   say(`2. lobby open on the server, code ${code.toUpperCase()}; creator status: "${(await status(A)).slice(0, 120)}"`);
   if (/Cloudflare|\bhost/i.test(await status(A))) fail('the creator\'s lobby tells the player where the battle runs');
   if ((await SB()).phase !== 'lobby') fail('no battle lobby on the server for code ' + code);
   await B.evaluate(c => { initAudio(); setup.p = 'RU'; joinByCode(c); }, code);
-  await waitFor(B, () => NET.via === 'wsb' && /Joined/.test(document.getElementById('mpstatus').textContent), null, 60000, 'the friend to join the battle on the server by code');
+  await waitFor(B, () => NET.via === 'wsb' && /Joined/.test((((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || ''))), null, 60000, 'the friend to join the battle on the server by code');
   say(`   friend joined: "${(await status(B)).slice(0, 120)}"`);
   await waitFor(A, () => NET.cf.blob.seats.filter(s => s.h).length === 2, null, 20000, 'the friend to appear in the creator\'s lobby');
-  await A.evaluate(() => { NET.tm = [0, 1]; renderLobby(); });
+  await A.evaluate(() => { setup.map = 'bm_sixroads'; NET.tm = [0, 1]; renderLobby(); });
   await A.waitForTimeout(600);
-  await A.evaluate(() => { document.querySelector('#mpstatus .addai').click(); });
+  await A.evaluate(() => { (() => { const s = document.querySelector('#mpl tr.open select'); s.value = '0'; s.onchange(); })(); });
   await A.waitForTimeout(600);
   await A.evaluate(() => { NET.ais.forEach(a => { a.f = 'CN'; a.d = 0; a.tm = 1; }); renderLobby(); });
   let L = await SB();
@@ -172,10 +172,10 @@ async function main() {
   say(`   server lobby: humans ${L.humans.map((h, i) => h.f + '/team ' + (L.tm[i] + 1)).join(', ')}; computer ${L.ais.map(a => a.f + '/team ' + (a.tm + 1)).join(', ')}`);
   if (L.ais.length !== 1 || L.tm.join() !== '0,1' || L.humans.map(h => h.f).join() !== 'US,RU') fail('lobby edits did not reach the server (teams / computer player / nations)');
   await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
-  await waitFor(A, () => !document.querySelector('#mpstatus .startbtn').disabled, null, 15000, 'Start to be enabled');
+  await waitFor(A, () => !document.querySelector('#mplPlay').disabled, null, 15000, 'Start to be enabled');
   await shot(A, 'cfe2e-lobby.png');
   await A.evaluate(() => { window.__stopLoop = true; }); await B.evaluate(() => { window.__stopLoop = true; });
-  await A.evaluate(() => document.querySelector('#mpstatus .startbtn').click());
+  await A.evaluate(() => document.querySelector('#mplPlay').click());
 
   // ---- 3. battle ----
   await waitFor(A, () => MODE === 'client' && G && G.teams.filter(Q => !Q.reb).length === 3, null, 300000, 'the creator to enter the battle');

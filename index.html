@@ -16359,7 +16359,7 @@ function mplShow(D){
     if(r.ed&&r.ed.f)fs.onchange=()=>r.ed.f(fs.value==='rand'?FKEYS[(Math.random()*FKEYS.length)|0]:fs.value);else fs.disabled=true;cn.append(fs);
     const ct=td(),ts=document.createElement('select');ts.setAttribute('aria-label','Team of '+(r.name||'player '+(i+1)));opt(ts,'n','None');for(let t=0;t<4;t++)opt(ts,t,'Team '+(t+1));ts.value=(r.tm|0)<4?String(r.tm|0):'n';
     if(r.ed&&r.ed.t)ts.onchange=()=>r.ed.t(mplTeam(ts.value,D.all));else ts.disabled=true;ct.append(ts);
-    const cr=td();if(r.host)cr.append(E('span','mrd on','✔ HOST'));else if(r.kind==='ai')cr.append(E('span','mrd on','✔ READY'));else cr.append(E('span','mrd'+(r.rd?' on':''),r.rd?'✔ READY':'…'));
+    const cr=td();if(r.host)cr.append(E('span','mrd on','★ LEADER'));else if(r.kind==='ai')cr.append(E('span','mrd on','✔ READY'));else cr.append(E('span','mrd'+(r.rd?' on':''),r.rd?'✔ READY':'…'));
     bd.append(tr);});
   tb.append(bd);L.append(tb);
   const ob=E('div','mopts');ob.id='mplOpts';

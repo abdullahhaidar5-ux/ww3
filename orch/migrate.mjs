@@ -308,7 +308,7 @@ const baseOf = (hp, k) => hp.evaluate((k) => { const b = G.ents.filter(e => e.te
   return [b.reduce((s, e) => s + e.x, 0) / b.length, b.reduce((s, e) => s + e.y, 0) / b.length]; }, k);
 const armies = (hp) => hp.evaluate(() => ({ t: G.t, teams: G.teams.filter(Q => !Q.reb).map(T => ({ ids: G.ents.filter(e => e.team === T.id && !e.dead).map(e => e.id), credits: Math.floor(T.credits),
   ai: !!T.ai, aiTook: !!T.aiTook, disc: T.discT || 0, out: !!T.out, q: G.ents.filter(e => e.isB && e.team === T.id && !e.dead).reduce((s, e) => s + (e.q || []).length, 0),   /* every production building has its own queue */
-   bi: T.ai ? T.ai.bi : null })) }));
+   bi: T.ai ? T.ai.bi : null, kinds: (() => { const m = {}; for (const e of G.ents) if (e.team === T.id && !e.dead) m[e.kind] = (m[e.kind] || 0) + 1; return Object.entries(m).map(([k, n]) => k + (n > 1 ? 'x' + n : '')).join(' '); })(), aiT: G.aiTT ? +(+G.aiTT[T.id] || 0).toFixed(1) : null, think: T.ai ? T.ai.t : null })) }));
 async function screenshot(pg, name) {
   await pg.evaluate(() => { try { updateUI(); renderFrame(0.016); } catch (e) { console.warn(e); } });
   await shot(pg, name);
@@ -360,7 +360,7 @@ async function main() {
   await cA.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'RU'; NET.hp = 900; joinByCode(c); }, code);   // host benchmarks pinned: A is the stronger PC, so A is the standby (07b sbPick)
   await waitFor(host, () => NET.lobby && NET.lobby.length === 1, null, 60000, 'client A to appear in the host lobby');
   await waitFor(cA, () => /Joined/.test(document.getElementById('mpstatus').textContent), null, 30000, 'client A to see "Joined"');
-  await cB.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'CN'; NET.hp = 400; joinByCode(c); }, code);
+  await cB.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'CN'; NET.hp = 50; joinByCode(c); }, code);   // far weaker than A, so a slow ping on A (busy runner, up to 2 s) never moves the standby to B
   await waitFor(host, () => NET.lobby && NET.lobby.length === 2, null, 60000, 'client B to appear in the host lobby');
   await waitFor(cB, () => /Joined/.test(document.getElementById('mpstatus').textContent), null, 30000, 'client B to see "Joined"');
   for (const p of [host, cA, cB]) await p.evaluate(() => { window.__stopLoop = true; });
@@ -535,7 +535,7 @@ async function main() {
   const posOf = (ids) => NH.evaluate((ids) => ids.map(id => { const e = G.byId.get(id); return e ? [e.x, e.y] : null; }), ids);
   const before = ord.n ? await posOf(ord.ids) : [];
   await NH.waitForTimeout(1500);
-  const aiT0 = { bi: T0.bi, ids: new Set(T0.ids) };
+  const aiT0 = { bi: T0.bi, ids: new Set(T0.ids), think: T0.think };
   const steps = Math.round(AFTER * 2); let lag2 = 0, orderChecked = false;
   for (let i = 0; i < steps; i++) {
     const s = await step(NH, [NC]); if (!s) return; if (i > 10) lag2 = Math.max(lag2, s.lag);
@@ -552,6 +552,7 @@ async function main() {
   const end = await armies(NH), E0 = end.teams[0];
   const fresh = E0.ids.filter(id => !aiT0.ids.has(id)).length;
   console.log(`[${secs()}] old host's side after ${AFTER} game-s under the AI: build step ${aiT0.bi} -> ${E0.bi}, ${fresh} new entities, ${E0.q} in production, $${E0.credits}`);
+  if (!E0.out && E0.ai && E0.bi === aiT0.bi && !fresh && !E0.q) console.log(`    old host's side under the AI: ${E0.kinds}; AI thoughts ${aiT0.think} -> ${E0.think}, next think in ${E0.aiT}s`);
   if (!E0.out && E0.ai && E0.bi === aiT0.bi && !fresh && !E0.q) fail(`the AI took over the old host's side but did nothing with it in ${AFTER} game-s (no building, no production, no new units)`);
   if (end.teams[ncS].ai || end.teams[ncS].disc) fail(`by the end ${ncN}'s side was AI-run / marked disconnected (ai=${end.teams[ncS].ai}, disc=${end.teams[ncS].disc})`);
   await settleCheck(NH, NC, ncS, `after: ${ncN} ${AFTER} game-s after the takeover`);
