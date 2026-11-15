@@ -47,6 +47,11 @@ function drawLogiWorld(c){if(!G||!G.lg||!G.lgd||G.over)return;
     c.setLineDash([]);if(done.length>1){c.strokeStyle='rgba(0,0,0,.5)';c.lineWidth=6;lgStroke(c,done);c.strokeStyle='#d9c27a';c.lineWidth=3;lgStroke(c,done);}
     if(todo.length>1){c.setLineDash([6,8]);c.strokeStyle='#f0d060';c.lineWidth=2;lgStroke(c,todo);c.setLineDash([]);}
     const fp=lgPoint(j,j.prog),p=toScreen(fp[0],groundH(fp[0],fp[1])+60,fp[1]);if(p.z<=1){c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-38,p.y-16,76,16);c.fillStyle='#f0d060';c.font='bold 11px system-ui,sans-serif';c.textAlign='center';c.fillText('ROAD '+Math.round(100*j.prog/Math.max(1,j.len))+'%',p.x,p.y-4);}}
+  // capture rings on road sections units are taking (view only)
+  if(D.rc)for(const k in D.rc){const q=D.rc[k];if(!(q.p>0)||q.c<0)continue;const e=L.E[k];if(!e)continue;const m=lgPoint(e,e.len/2);
+    if(!inView(m[0],m[1],.2))continue;const p=toScreen(m[0],groundH(m[0],m[1])+30,m[1]);if(p.z>1)continue;
+    c.lineWidth=5;c.strokeStyle='rgba(0,0,0,.55)';c.beginPath();c.arc(p.x,p.y,13,0,6.2832);c.stroke();
+    c.lineWidth=3;c.strokeStyle=lgRoadCol(lgTeamCls(q.c)===0?'mine':'foe');c.beginPath();c.arc(p.x,p.y,13,-1.5708,-1.5708+6.2832*Math.min(1,q.p));c.stroke();}
   try{drawLogi2(c);}catch(e){}
   c.restore();}
 function drawLogiMini(c,sx,sy){if(!G||!G.lg||!G.lgd)return;c.save();c.lineCap='round';

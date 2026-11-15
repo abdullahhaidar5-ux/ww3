@@ -483,6 +483,18 @@ try {
     console.log('battle supply lines', JSON.stringify(sl));
     ck(sl.mini > 0 && sl.world > 0 && sl.green > 0 && sl.cov > 0 && sl.beads > 0, 'Battle must draw your supply lines (green roads) on the minimap and, with L, on the ground: ' + JSON.stringify(sl));
     ck(sl.on && sl.wanted, 'L / the Supply lines button must switch the supply overlay on in Battle'); ck(sl.chip, 'Battle must show the Supply chip'); ck(sl.ui, 'the ammo row must say whether the unit is in your supply area');
+    // CAPTURABLE ROADS (Abdullah 2026-11-14 18:40 "Make it so that units can capture roads"): a ground unit standing on a neutral road section captures it in ~10 s, an air unit does not, an owned section is supply area
+    { const rc = await ev(() => { const L = G.lg, D = G.lgd; lgFix(D); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && e.s && e.s.dom === 'ground'); if (!u) return { err: 'no unit' };
+        let ei = -1; for (let i = 0; i < L.E.length && ei < 0; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 300 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) ei = i; } if (ei < 0) return { err: 'no neutral section' };
+        const e = L.E[ei], m = lgPoint(e, e.len / 2), ox = u.x, oy = u.y, os = u.s; const run = n => { for (let k = 0; k < n; k++) lgRoadCap(1); };
+        const hold = () => D.rc[ei] && D.rc[ei].o;
+        u.s = Object.assign({}, os, { dom: 'air' }); u.x = m[0]; u.y = m[1]; run(14); const air = hold();
+        u.s = os; run(4); const early = hold(); run(10); const got = hold();
+        lgCover(); const beads = (L.bead[ME] || []).some(b => Math.hypot(b.x - m[0], b.y - m[1]) < 150); const sup = supplyPoints()[ME].some(p => p.rd && Math.hypot(p.x - m[0], p.y - m[1]) < 150);
+        u.x = ox; u.y = oy; return { ei, air, early, got, beads, sup, ME }; });
+      console.log('road capture', JSON.stringify(rc));
+      ck(!rc.err, 'road capture test setup: ' + JSON.stringify(rc)); if (!rc.err) { ck(!(rc.air >= 0), 'an air unit must not capture a road section: ' + JSON.stringify(rc)); ck(!(rc.early >= 0), 'road capture takes ~10 s, not 4: ' + JSON.stringify(rc));
+        ck(rc.got === rc.ME, 'a ground unit standing on a neutral road section must capture it in ~10 s: ' + JSON.stringify(rc)); ck(rc.beads && rc.sup, 'a captured road section must count as the owner\'s supply area: ' + JSON.stringify(rc)); } }
     const am = await ev(() => { const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq'); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && hasAmmo(e)); if (!u || !hq) return { err: 'no unit/hq' };
       const step = () => { G.supT = 1; updSupply(0.01); }; const P = supplyPoints()[ME]; let far = null;
       for (let k = 0; k < 400 && !far; k++) { const x = (k * 977) % MAPW, y = (k * 613) % MAPH; if (P.every(p => Math.hypot(p.x - x, p.y - y) > p.r + 60)) far = { x, y }; }
