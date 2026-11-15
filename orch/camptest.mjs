@@ -1,4 +1,4 @@
-// Campaign test: each of the 5 missions loads, runs ~2 game-minutes with a simple scripted player and no errors, takes a
+// Campaign test: each of the 6 missions loads, runs ~2 game-minutes with a simple scripted player and no errors, takes a
 // screenshot (orch/shots/campaign/<id>.png), then its objectives are completed by script and the debrief must appear.
 //   node orch/camptest.mjs [--only pass] [--minutes 2]
 import http from 'node:http';
@@ -26,7 +26,7 @@ const { chromium: cr } = await loadPW();
 const browser = await cr.launch({ executablePath: chromium(), args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
 const ctx = await browser.newContext({ viewport: { width: 1600, height: 900 } }); await guardContext(ctx);
 const fails = [];
-const IDS = ['pass', 'supply', 'fortress', 'town', 'finale'].filter(i => !ONLY || i === ONLY);
+const IDS = ['pass', 'supply', 'fortress', 'town', 'finale', 'marsh'].filter(i => !ONLY || i === ONLY);
 for (const id of IDS) {
   const page = await ctx.newPage();
   const errs = [];
@@ -63,7 +63,7 @@ for (const id of IDS) {
     // complete the objectives by script
     const done = await page.evaluate((id) => { const c = G.camp, K = (e) => { try { kill(e, 0, null); } catch (x) {} };
       if (G.over) return { early: true, res: c.res };
-      if (id === 'pass') { c.t = c.T; for (const e of G.ents.filter(e => e.team === 1 && e.isB)) K(e); }
+      if (id === 'pass' || id === 'marsh') { c.t = c.T; for (const e of G.ents.filter(e => e.team === 1 && e.isB)) K(e); }
       else if (id === 'supply') { for (const u of c.trucks) { u.x = c.town[0]; u.y = c.town[1]; } }
       else if (id === 'fortress') { addBld(0, 'fort', BASES[0][0] + 200, BASES[0][1] + 200, true); c.t = c.T + 1; c.bbDone = c.bb.length; c.bb[1][1] = -1; }
       else if (id === 'town') { for (const e of G.ents.filter(e => e.team === 2)) K(e); const us = G.ents.filter(e => e.team === 0 && !e.isB && !e.dead);
