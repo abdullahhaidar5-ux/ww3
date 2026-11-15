@@ -566,13 +566,15 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     for(const op of [.8,.12])grp.add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
     // an aircraft's exhaust plume is added when the unit is made (modelFor), not to the model itself: its shader and canvas texture are prepared here
     try{if(typeof jetPlumeMat==='function'){const pl=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());pl.renderOrder=3;grp.add(pl);}}catch(e){}
-    // a garrisoned house's flag and a building's scaffold (shared shapes, first seen mid-battle when squads run into houses)
-    try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));}}catch(e){}
     grp.traverse(c=>{c.frustumCulled=false;});await step('shared',grp);await frame();}
   // what a strike shows for the first time (PC): missiles, flames, rock chunks / warning markers, ping rings, rubble, banner / shock rings
   if(!PH&&!dead()){
     {const grp=mk();try{if(typeof mslWarm==='function')mslWarm(grp);for(const cg of chunkGeos()){const rk=new THREE.Mesh(cg,chunkMat('#4a4034'));rk.castShadow=true;rk.frustumCulled=false;rk.scale.setScalar(2);grp.add(rk);}}catch(e){console.warn('strike warm-up',e);}await step('missiles',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const KG=mkGeo(),bm2=new THREE.MeshBasicMaterial({color:0xea3a2c,transparent:true,opacity:.01,depthWrite:false});for(const g of [KG.ring,KG.inner,KG.disc,KG.bar,pingGeo()]){const m=new THREE.Mesh(g,bm2);m.frustumCulled=false;m.scale.setScalar(20);m.position.y=3;grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('markers',grp,0,1);await frame();}
+    // a garrisoned house's flag, marker and scaffold, and a supply truck's crate load (shared shapes, first drawn mid-battle when squads run into houses / a truck loads)
+    if(!dead()){const grp=mk();try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));
+        for(const q of G.teams)if(q&&q.fac&&FACTIONS[q.fac])grp.add(mesh(geoFor('garrison',q.fac,q,'main')));const gs=bstats(T.fac,'garrison');if(gs&&BH.garrison)grp.add(new THREE.LineSegments(scafGeo(gs.size+6,BH.garrison/BSC+6),scafMat()));}
+      if(typeof harvCargoGeo==='function')grp.add(mesh(harvCargoGeo()));grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
@@ -606,12 +608,14 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     // everything else hidden for a moment (lights stay)
     if(!dead()&&!isLate()&&!PH&&post()){const vis=units.filter(u=>u.visible),SL=8;let tl2=performance.now();
       const aoOn=POST.mAO&&POST.aoOn!==false&&POST.ovr&&POST.dRT;
+      // everything is drawn once even if it is outside the opening view (rocks, wrecks, depots across the map), so its shape is on the card before it is first seen
+      const unc=[];for(const u of vis)u.traverse(c=>{if((c.isMesh||c.isLine||c.isPoints)&&c.frustumCulled){c.frustumCulled=false;unc.push(c);}});
       for(let i=0;i<vis.length&&!dead()&&!isLate();i+=SL){MK('slice '+i);const mine=new Set(vis.slice(i,i+SL));for(const u of vis)u.visible=mine.has(u);const s0=performance.now();
         try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}
           R3.setRenderTarget(POST.rt);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
         R3.setRenderTarget(null);for(const u of vis)u.visible=true;const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push(['slice '+i,Math.round(d)]);
         if(performance.now()-tl2>30){await frame();tl2=performance.now();}}
-      for(const u of vis)u.visible=true;}
+      for(const u of vis)u.visible=true;for(const c of unc)c.frustumCulled=true;}
     // (no whole-scene draw here: the slices above prepared every variant; the last loading step draws the real first frame)
     if(!dead()&&!isLate()&&!PH){CAM.updateMatrixWorld();
       if(!dead()&&!isLate()&&typeof mwPipWarm==='function'){MK('pip');const m0=performance.now();mwPipWarm();(W.slow=W.slow||[]).push(['pip',Math.round(performance.now()-m0)]);await frame();}}}

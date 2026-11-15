@@ -10579,7 +10579,7 @@ function meGeo(B,kp,tc,fac){const C=ME_C;let K;
   return true;}
 const GEO_ALIAS={bmt:'arty',champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',krb:'arty',fpvt:'at',tb2:'heli',cbr:'aa',jeep:'aa',raidlead:'aa'};
 function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];const key=kind+fac+team.color+part;if(GEO[key])return GEO[key];const tc=team.color,hc=camo(team),dk='#2b2d26',mt='#55574e',cn='#9a988c',cl='#7d7c70';const B=Bld();let s=FACTIONS[fac].units[kind]||{};
-  if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=B.geo();
+  if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=(typeof gcKeep==="function"?gcKeep(B.geo()):B.geo());
   switch(kind+':'+part){
     case 'spy:body':{/* plain clothes, no helmet, no rifle: trousers, dark jacket, bare head with a cap, satchel on a strap */B.box(2.6,5,3.2,0,2.5,0,'#46536a');B.box(3,4.2,3.6,0,6.6,0,'#2e3035');B.sph(1.6,0,9.8,0,'#b98a66');B.sph(1.7,0,10.3,0,'#22252a',1,.5,1);B.box(1.6,.25,1.4,1.9,10.2,0,'#22252a');B.box(2,2,.9,0,5.2,2.3,'#6a4a2f');break;}
     case 'inf:body':case 'at:body':case 'hacker:body':case 'hero:body':{const n={inf:3,at:2,hacker:2,hero:1}[kind];const pos=[[3,0],[-4,-5],[-4,5]].slice(0,n);if(n===2){pos[0]=[2,-3.5];pos[1]=[-3,3.5];}if(n===1)pos[0]=[0,0];
@@ -10698,7 +10698,7 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
       B.cyl(.45,.45,12,6,-14,83,-8,'#c0c4c6');B.cyl(5,.4,2,12,-8,52,-8,'#d8dcd4',0,0,Math.PI/2);break;}
     default:B.box(10,10,10,0,5,0,'#ff00ff');
   }
-  return GEO[key]=B.geo();}
+  return GEO[key]=(typeof gcKeep==='function'?gcKeep(B.geo()):B.geo());}
 /* garrison flag and building scaffold: one shared shape/material each (per team colour for the flag), made once and kept
    (a strike that sends a dozen squads into houses used to build ~4 new GPU shapes per house in the same frames) */
 const GARP=new Map(),SCAFG=new Map();let SCAFM=null;
@@ -11748,13 +11748,15 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     for(const op of [.8,.12])grp.add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
     // an aircraft's exhaust plume is added when the unit is made (modelFor), not to the model itself: its shader and canvas texture are prepared here
     try{if(typeof jetPlumeMat==='function'){const pl=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());pl.renderOrder=3;grp.add(pl);}}catch(e){}
-    // a garrisoned house's flag and a building's scaffold (shared shapes, first seen mid-battle when squads run into houses)
-    try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));}}catch(e){}
     grp.traverse(c=>{c.frustumCulled=false;});await step('shared',grp);await frame();}
   // what a strike shows for the first time (PC): missiles, flames, rock chunks / warning markers, ping rings, rubble, banner / shock rings
   if(!PH&&!dead()){
     {const grp=mk();try{if(typeof mslWarm==='function')mslWarm(grp);for(const cg of chunkGeos()){const rk=new THREE.Mesh(cg,chunkMat('#4a4034'));rk.castShadow=true;rk.frustumCulled=false;rk.scale.setScalar(2);grp.add(rk);}}catch(e){console.warn('strike warm-up',e);}await step('missiles',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const KG=mkGeo(),bm2=new THREE.MeshBasicMaterial({color:0xea3a2c,transparent:true,opacity:.01,depthWrite:false});for(const g of [KG.ring,KG.inner,KG.disc,KG.bar,pingGeo()]){const m=new THREE.Mesh(g,bm2);m.frustumCulled=false;m.scale.setScalar(20);m.position.y=3;grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('markers',grp,0,1);await frame();}
+    // a garrisoned house's flag, marker and scaffold, and a supply truck's crate load (shared shapes, first drawn mid-battle when squads run into houses / a truck loads)
+    if(!dead()){const grp=mk();try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));
+        for(const q of G.teams)if(q&&q.fac&&FACTIONS[q.fac])grp.add(mesh(geoFor('garrison',q.fac,q,'main')));const gs=bstats(T.fac,'garrison');if(gs&&BH.garrison)grp.add(new THREE.LineSegments(scafGeo(gs.size+6,BH.garrison/BSC+6),scafMat()));}
+      if(typeof harvCargoGeo==='function')grp.add(mesh(harvCargoGeo()));grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
@@ -11788,12 +11790,14 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     // everything else hidden for a moment (lights stay)
     if(!dead()&&!isLate()&&!PH&&post()){const vis=units.filter(u=>u.visible),SL=8;let tl2=performance.now();
       const aoOn=POST.mAO&&POST.aoOn!==false&&POST.ovr&&POST.dRT;
+      // everything is drawn once even if it is outside the opening view (rocks, wrecks, depots across the map), so its shape is on the card before it is first seen
+      const unc=[];for(const u of vis)u.traverse(c=>{if((c.isMesh||c.isLine||c.isPoints)&&c.frustumCulled){c.frustumCulled=false;unc.push(c);}});
       for(let i=0;i<vis.length&&!dead()&&!isLate();i+=SL){MK('slice '+i);const mine=new Set(vis.slice(i,i+SL));for(const u of vis)u.visible=mine.has(u);const s0=performance.now();
         try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}
           R3.setRenderTarget(POST.rt);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
         R3.setRenderTarget(null);for(const u of vis)u.visible=true;const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push(['slice '+i,Math.round(d)]);
         if(performance.now()-tl2>30){await frame();tl2=performance.now();}}
-      for(const u of vis)u.visible=true;}
+      for(const u of vis)u.visible=true;for(const c of unc)c.frustumCulled=true;}
     // (no whole-scene draw here: the slices above prepared every variant; the last loading step draws the real first frame)
     if(!dead()&&!isLate()&&!PH){CAM.updateMatrixWorld();
       if(!dead()&&!isLate()&&typeof mwPipWarm==='function'){MK('pip');const m0=performance.now();mwPipWarm();(W.slow=W.slow||[]).push(['pip',Math.round(performance.now()-m0)]);await frame();}}}
@@ -12162,12 +12166,16 @@ const _OS=new THREE.Vector3();function onScr(x,h,y,m){if(!CAM)return true;_OS.se
 // cached for a second per squad.
 function SET_POSTURE(){return !window.NOPOSTURE;}
 function squadPost(e,o){if((e.supp||0)>.5)return 1;if(G.t-(e.lastFire||-9)>3)return 0;const ud=o.userData;if(!(G.t-(ud.cvT||-9)<1)){ud.cvT=G.t;try{ud.cv=coverAt(e.x,e.y)?1:0;}catch(_){ud.cv=0;}}return ud.cv?.5:0;}
+/* soldiers who step out of sight into a house, dugout, tunnel or vehicle keep their 3D figure (hidden) for up to 90 s: rebuilding
+   it when they come out made a new skeleton texture and re-sent the soldier shape to the card - a squad leaving a shelled
+   house in the middle of a strike was several new GPU objects in one frame (view only, nothing here touches the battle) */
+const PARK=new Map();
 function syncScene(dt){const live=new Set();
   /* haze limit (Abdullah 2026-11-15 00:40 "Keep camera, add haze limit"): with the low cinematic camera the view reaches the horizon, so units and
      buildings deep in the haze (75% fogged and beyond) are not drawn - nor shadowed or depth-passed. View only. */
   const FGo=SCN&&SCN.fog,FDc=FGo&&FGo.far>FGo.near?FGo.near+(FGo.far-FGo.near)*.75:1e9,FD2=FDc*FDc,CPx=CAM.position.x,CPz=CAM.position.z;
   // one object that fails to update must never freeze the whole picture: skip it (logged once) and draw the rest
-  for(const e of G.ents){try{if(e.dead)continue;live.add(e.id);let o=OBJ.get(e.id);if(o&&o.userData.tm!==undefined&&o.userData.tm!==e.team){SCN.remove(o);o=null;}if(!o){o=makeObj(e);o.userData.tm=e.team;if(!e.isB&&!o.userData.model)o.userData.bg=MODELS.gen|0;OBJ.set(e.id,o);}
+  for(const e of G.ents){try{if(e.dead)continue;live.add(e.id);let o=OBJ.get(e.id);if(o&&o.userData.tm!==undefined&&o.userData.tm!==e.team){SCN.remove(o);o=null;}if(!o&&PARK.size){const pk=PARK.get(e.id);if(pk){PARK.delete(e.id);if(pk.o.userData.tm===e.team){o=pk.o;o.visible=true;OBJ.set(e.id,o);}else SCN.remove(pk.o);}}if(!o){o=makeObj(e);o.userData.tm=e.team;if(!e.isB&&!o.userData.model)o.userData.bg=MODELS.gen|0;OBJ.set(e.id,o);}
     // a unit that had to start as a simple box figure (its 3D model was still loading - slow PC or connection) gets the real model as soon as it lands
     else if(o.userData.bg!==undefined&&o.userData.bg!==(MODELS.gen|0)){o.userData.bg=MODELS.gen|0;const m2=makeObj(e);if(m2&&m2.userData.model){SCN.remove(o);o=m2;o.userData.tm=e.team;OBJ.set(e.id,o);}else if(m2)SCN.remove(m2);}
     const v=vis(e);
@@ -12244,7 +12252,8 @@ function syncScene(dt){const live=new Set();
           part({x:e.x-ca*e.r*1.05+rnd(-2,2),y:e.y-sa*e.r*1.05+rnd(-2,2),h:WL+.6,vx:-ca*8,vy:-sa*8,f:.6,c:[.8,.88,.9],s:rnd(3,5)*big,g:3*big,d:rnd(.7,1.1),a:.24*(.4+sp*.6)});
           if(sp>.4)for(const sd of [-1,1])part({x:e.x+ca*e.r*.75+sa*sd*e.r*.25,y:e.y+sa*e.r*.75-ca*sd*e.r*.25,h:WL+2,vx:sa*sd*rnd(20,40)+ca*10,vy:-ca*sd*rnd(20,40)+sa*10,vh:rnd(10,30),grav:1,f:.7,c:[.92,.96,1],s:rnd(2,3.5)*big,g:6,d:rnd(.4,.7),a:.6});}}
       e.lx=e.x;e.ly=e.y;}}catch(err){if(!e._drawErr){e._drawErr=1;console.warn('draw skipped',e.kind,err);}}}
-  for(const [id,o] of OBJ)if(!live.has(id)){SCN.remove(o);OBJ.delete(id);}
+  for(const [id,o] of OBJ)if(!live.has(id)){OBJ.delete(id);if(o.userData.walker&&!o.userData.sinking&&PARK.size<160){o.visible=false;PARK.set(id,{o,t:performance.now()});}else SCN.remove(o);}
+  if(PARK.size){const now=performance.now();for(const [id,p] of PARK)if(now-p.t>90000){SCN.remove(p.o);PARK.delete(id);}}
   sdDumpTick();
   if(G.sceneryPos)for(const [sx,sy,k,wx,wy] of G.sceneryPos){if(k!==2||wx==null||Math.random()>dt*5||!inView(sx,sy,.2))continue;part({x:wx+rnd(-3,3),y:wy+rnd(-3,3),h:groundH(wx,wy)+10,vx:2,rise:rnd(40,52),c:C_SMOKE,c2:[.5,.48,.45],ck:.35,s:rnd(4,6),g:7,d:rnd(3,4),a:.2});}
   if(G.oilObj)G.oil.forEach((o,i)=>{const v=G.oilObj[i];const ph=G.t*1.6+i;
@@ -14501,7 +14510,7 @@ function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=gen
   if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
-function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
+function resetScene(){if(typeof PARK!=='undefined'){for(const p of PARK.values())SCN.remove(p.o);PARK.clear();}if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
   for(const p of PINGS)if(p.m)SCN.remove(p.m);PINGS.length=0;if(typeof FIRES!=='undefined'){FIRES.length=0;for(const S of SHOCKS){S.t=S.d;S.m.material.opacity=0;S.m.scale.setScalar(.001);}}PARTS.length=0;TRACERS.length=0;VPROJ.length=0;ofReset();if(GHOST){SCN.remove(GHOST);GHOST=null;GHOSTK=null;}if(RALLY){SCN.remove(RALLY);RALLY=null;}for(const l of LIGHTS)l.intensity=0;}
 /* ---------- loading screen: shown the moment a battle starts (Test Range, Deploy vs AI, Play again, multiplayer) ---------- */
 // The battle itself (map, bases, units, AI) is set up at once and exactly as before; the slow drawing work (ground
@@ -14721,7 +14730,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
     ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();cam.yaw=0;cam.tyaw=0;/* every battle starts north-up */const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=300;cam.td=300;}],
-    ['Preparing graphics…',.78,()=>{LOAD.wstop=0;LOAD.wt=[performance.now(),0];LOAD.warm=null;
+    ['Preparing graphics…',.78,()=>{try{if(typeof sfxEnsure==='function')sfxEnsure();}catch(e){}/* the battle's sound echo (seconds of noise built in JS) and the effects clip start loading now, not on the first explosion */LOAD.wstop=0;LOAD.wt=[performance.now(),0];LOAD.warm=null;
       // chunked on every device: a few models per frame, progress on the loading screen; the watchdog below starts the battle even if it is unfinished
       // (what is left then goes through the same queue in the background)
       if(typeof warmShadersChunked!=='function')return;const r=warmShadersChunked((d,n)=>{if(live())loadStep('Preparing graphics… '+d+' of '+n,.78+.11*d/n);},()=>!live(),()=>!!LOAD.wstop);
@@ -18512,7 +18521,8 @@ return{unit:draw,bld:drawB,pal};})();
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};
 try{const v=JSON.parse(localStorage.getItem('ww3_audio')||'{}');if(v.m===false)AU.musicOn=false;if(v.s===false)AU.sfxOn=false;if(v.v===false)AU.voiceOn=false;}catch(e){}
 function saveAudio(){try{localStorage.setItem('ww3_audio',JSON.stringify({m:AU.musicOn,s:AU.sfxOn,v:AU.voiceOn}));}catch(e){}}
-function impulse(c,sec,decay){const n=c.sampleRate*sec,b=c.createBuffer(2,n,c.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<n;i++){const t=i/n;d[i]=(Math.random()*2-1)*Math.pow(1-t,decay)*(t<.003?t/.003:1);}}return b;}
+const IMPC=new Map();function impulse(c,sec,decay){const ck=c.sampleRate+'|'+sec+'|'+decay;if(IMPC.get(ck)&&IMPC.get(ck).c===c)return IMPC.get(ck).b;const b=impulse0(c,sec,decay);IMPC.set(ck,{c,b});return b;}
+function impulse0(c,sec,decay){const n=c.sampleRate*sec,b=c.createBuffer(2,n,c.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<n;i++){const t=i/n;d[i]=(Math.random()*2-1)*Math.pow(1-t,decay)*(t<.003?t/.003:1);}}return b;}
 // ----- Phone-proof sound start -----
 // Phones only allow sound after a real tap, iPhones mute Web Audio when the ringer switch is on silent, and calls, Siri
 // or switching apps "interrupt" the sound engine. Everything below makes sound start on the first tap, ignore the
@@ -20050,10 +20060,12 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     if(tex){const ob=src.onBeforeCompile,ck=src.customProgramCacheKey;mat.onBeforeCompile=(sh,r)=>{if(ob)ob.call(src,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\nvec4 sampledDiffuseColor=texture2D(map,vMapUv);if(vMapUv.x<-2.)sampledDiffuseColor=vec4(1.);diffuseColor*=sampledDiffuseColor;\n#endif');};
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
     E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
-  if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}
+  if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}if(typeof gcKeep==='function'){gcKeep(E.geo);gcKeep(E.lo);}/* shared by every soldier of this look: never freed by the GPU clean-up (re-sending it mid-battle was a hitch) */
   if(E.lo){const lm=new THREE.SkinnedMesh(E.lo,E.mat);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
+/* a supply truck's crate load: one shared shape for every truck (it was built new per truck) */
+let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
   // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
@@ -20345,7 +20357,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
     
     const m=mesh(B.geo());yaw.add(m);}}
   if(e.kind==='ammot'){const B=Bld();B.box(17,8,15,-6,22,0,'#5d6048');B.box(18,1,16,-6,26.6,0,'#4c5039');for(const z of [-5,0,5])B.box(3,3,3,-15.5,20,z,'#8a6a3a');B.box(7,4,6,5,21,0,'#8a6a3a');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
-  if(e.kind==='harv'){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
+  if(e.kind==='harv'){const cg=mesh(harvCargoGeo());o.add(cg);o.userData.parts.cargo=cg;}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}
 // polishlooks: rocket truck launcher = an open BM-21/Fajr-style tube pack (4 x 10 tubes with dark muzzles, side plates,

@@ -717,10 +717,12 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     if(tex){const ob=src.onBeforeCompile,ck=src.customProgramCacheKey;mat.onBeforeCompile=(sh,r)=>{if(ob)ob.call(src,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\nvec4 sampledDiffuseColor=texture2D(map,vMapUv);if(vMapUv.x<-2.)sampledDiffuseColor=vec4(1.);diffuseColor*=sampledDiffuseColor;\n#endif');};
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
     E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
-  if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}
+  if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}if(typeof gcKeep==='function'){gcKeep(E.geo);gcKeep(E.lo);}/* shared by every soldier of this look: never freed by the GPU clean-up (re-sending it mid-battle was a hitch) */
   if(E.lo){const lm=new THREE.SkinnedMesh(E.lo,E.mat);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
+/* a supply truck's crate load: one shared shape for every truck (it was built new per truck) */
+let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
   // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
@@ -1012,7 +1014,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
     
     const m=mesh(B.geo());yaw.add(m);}}
   if(e.kind==='ammot'){const B=Bld();B.box(17,8,15,-6,22,0,'#5d6048');B.box(18,1,16,-6,26.6,0,'#4c5039');for(const z of [-5,0,5])B.box(3,3,3,-15.5,20,z,'#8a6a3a');B.box(7,4,6,5,21,0,'#8a6a3a');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
-  if(e.kind==='harv'){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
+  if(e.kind==='harv'){const cg=mesh(harvCargoGeo());o.add(cg);o.userData.parts.cargo=cg;}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}
 // polishlooks: rocket truck launcher = an open BM-21/Fajr-style tube pack (4 x 10 tubes with dark muzzles, side plates,
