@@ -7,7 +7,7 @@ function mwPower(team,key,x,y,P,L,M){const T=G.teams[team],en=e=>!e.dead&&e.team
   if(key==='hack'){let best=null,bd=P.r;
     for(const e of G.ents){if(!e.isB||!en(e)||e.built<1||!MW.HACKABLE.includes(e.kind))continue;const d=Math.hypot(e.x-x,e.y-y);if(d<bd){bd=d;best=e;}}
     let plant=null;for(const o of G.oil||[]){if(!o.pw||o.dead||o.owner<0||ally(o.owner,team))continue;const d=Math.hypot(o.x-x,o.y-y);if(d<bd){bd=d;plant=o;best=null;}}
-    if(!best&&!plant){log(team,'Nothing to hack there: aim near an enemy radio tower, Strike Center, SAM site, Defense Gun or power plant.','w');return false;}
+    if(!best&&!plant){log(team,'Nothing to hack there: aim near an enemy radio tower, Strike Center, SAM site, Defense Gun, Generator or power plant.','w');return false;}
     const vt=best?best.team:plant.owner,dur=Math.round(MW.HACK_T*M*mwFw(vt)),tx=best?best.x:plant.x,ty=best?best.y:plant.y,nm=best?(bstats(G.teams[vt].fac,best.kind).name||best.kind):'power plant';
     koSet(best||plant,dur,'hack');G.teams[vt].mwHit=1;
     FXE('cyb',[tx|0,ty|0,dur,vt,best?best.id:-1]);

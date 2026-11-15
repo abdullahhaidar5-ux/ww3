@@ -37,7 +37,7 @@ const SEEN = () => { const out = []; const vis = e => { if (!e.isConnected) retu
   for (const e of document.querySelectorAll('[title]')) if (vis(e)) out.push(e.title); return out.join(' ¶ '); };
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+  await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => {});
   for (const [nat, kind] of [['IR', 'ay'], ['KP', 'dl']]) {
     await ev(n => { setup.p = n; setup.a = n === 'IR' ? 'US' : 'KR'; setup.n = 1; try { initAudio(); } catch (e) {} startSingle(); }, nat);

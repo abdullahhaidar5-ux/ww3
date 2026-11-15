@@ -4,7 +4,7 @@
    and host migration all see the same thing. No RNG. State: G.truce {pairKey: expiry}, G.tOff [{f,t,d,e,ai}], G.aidQ,
    T.oath (oathbreaker until), T.cfCd, T.mpT, T.giftT, T.aidT (all in the checkpoint: CK_G + team keys).
    Battle plans and battle groups are client-side (08g-command.js): they only issue ordinary orders. */
-const CF={DUR:[60,120,180],OFFER:25,OATH:240,COOL:180,UNREST:25,WARN:10,AID_FEE:.1,AID_DELAY:4,AID_CD:3,GIFT_CD:20,GIFT_MAX:12,
+const CF={DUR:[60,120,180],OFFER:25,OATH:240,COOL:180,UNREST:25,WARN:10,AID_FEE:.1,AID_DELAY:4,AID_CD:3,GIFT_CD:120,GIFT_MAX:5,
   PING_CD:.5,DRAW_CD:1.5,SAY_CD:1.5,DRAW_PTS:14,LINES:['Attack here!','Defend here!','Danger!','Need money','Need help','Thanks','Well done','Wait for me']};
 function sameTm(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm;}
 function truced(a,b){return !!(G&&G.truce)&&G.truce[a<b?a*32+b:b*32+a]>G.t;}
@@ -33,8 +33,8 @@ function cfAnswer(team,from,yes){const i=G.tOff.findIndex(o=>o.f===from&&o.t===t
   if(yes&&!G.teams[from].out&&!G.teams[team].out&&!truced(from,team)){cfStart(from,team,o.d);return true;}
   if(!G.teams[from].ai)log(from,`${ctName(team)} declined the truce.`,'w');return false;}
 function cfBreak(team,other){const k=team<other?team*32+other:other*32+team;if(!G.truce||!(G.truce[k]>G.t))return false;delete G.truce[k];const T=G.teams[team];
-  T.oath=G.t+CF.OATH;T.cfCd=G.t+CF.COOL;let n=0;if(G.towns)for(const t of G.towns)if(t.ow===team){t.un=Math.min(100,(t.un||0)+CF.UNREST);n++;}
-  log(team,`You broke the truce with ${ctName(other)}. Locals are uneasy (unrest +${CF.UNREST} in ${n} town${n===1?'':'s'}) and nobody will trust you for ${CF.OATH/60} minutes.`,'bad');
+  T.oath=G.t+CF.OATH;T.cfCd=G.t+CF.COOL;
+  log(team,`You broke the truce with ${ctName(other)}. Nobody will trust you for ${CF.OATH/60} minutes.`,'bad');
   for(const O of G.teams)if(O.id!==team&&!O.reb&&!O.out)log(O.id,`${ctName(team)} BROKE its truce with ${ctName(other)} - oathbreaker!`,'w');FXE('cfb',[team,other]);return true;}
 function ctTick(dt){if(!G.tOff)G.tOff=[];if(!G.aidQ)G.aidQ=[];
   for(let i=G.tOff.length-1;i>=0;i--){const o=G.tOff[i];if(G.t>=o.e){if(!G.teams[o.f].ai)log(o.f,`${ctName(o.t)} did not answer your truce offer.`,'w');G.tOff.splice(i,1);continue;}
@@ -49,7 +49,7 @@ function ctGive(from,to,amt){const A=G.teams[from],B=G.teams[to];if(!A||!B||from
   amt=Math.floor(Math.min(+amt||0,A.credits)/50)*50;if(amt<50)return false;const net=Math.floor(amt*(1-CF.AID_FEE));
   A.credits-=amt;A.gave=(A.gave||0)+amt;A.aidT=G.t+CF.AID_CD;(G.aidQ=G.aidQ||[]).push({f:from,to,amt:net,at:G.t+CF.AID_DELAY});
   log(from,`Sent $${amt} to ${ctName(to)} (fee $${amt-net}). It arrives in ${CF.AID_DELAY} seconds.`,'g');return true;}
-/* give control of units to a teammate: up to 12 combat units, not while they are being shot at, one gift per 20 s */
+/* give control of units to a teammate: up to 5 combat units, not while they are being shot at, one gift per 2 min */
 function ctGift(team,ids,to){const A=G.teams[team],B=G.teams[to];if(!A||!B||team===to||!sameTm(team,to)||A.out||B.out||(A.giftT||0)>G.t||!Array.isArray(ids))return false;
   const us=ids.slice(0,40).map(i=>G.byId.get(i)).filter(u=>u&&!u.isB&&!u.dead&&u.team===team&&u.kind!=='harv'&&u.kind!=='dozer'&&!u.inTun&&!(u.cargo&&u.cargo.length)&&G.t-(u.hitT||-99)>5).slice(0,CF.GIFT_MAX);
   if(!us.length)return false;A.giftT=G.t+CF.GIFT_CD;

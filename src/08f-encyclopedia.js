@@ -15,6 +15,7 @@ const ENC_NOTE={
   tank:'Main battle tanks combine a stabilized high-velocity gun, thick composite armor and a powerful engine. They lead armored assaults and break enemy lines, but need infantry and air-defence cover in towns and against anti-tank missiles.',
   arty:'Self-propelled guns and rocket launchers shell targets many kilometers away, then move before counter-battery fire arrives. Superb against massed troops and buildings, nearly helpless once the enemy reaches them.',
   aa:'Mobile air-defence vehicles carry radar-guided guns or short-range missiles to protect columns and bases from helicopters, jets and drones.',
+  ammot:'Ammo trucks follow the army: they top up the ammunition of friendly units close to them, carry a limited stock and reload inside your own area. Light armor, no weapon: keep them behind the front.',
   harv:'Supply trucks are the logistics backbone: fuel, ammunition and food move by road. Armies lose more equipment to broken supply than to enemy fire.',
   dozer:'Combat engineers build bridges, fortifications and camps and clear obstacles, often under fire. The heavy construction vehicle is how an army digs in and builds forward.',
   heli:'Attack helicopters hunt armor from behind hills and tree lines with guided missiles and cannon. Fast and flexible, they are vulnerable to air defense and massed small-arms fire.',
@@ -127,14 +128,19 @@ function encOpen(){if(!ENC.ov){const st=document.createElement('style');st.textC
     const ov=ENC.ov=encE('div');ov.id='enc';ov.hidden=true;
     const top=encE('div','etop');top.append(encE('h1','','📖 Encyclopedia'));
     const sq=encE('input');sq.type='search';sq.placeholder='Search units and buildings…';sq.setAttribute('aria-label','Search');sq.oninput=()=>{ENC.q=sq.value;encList();};top.append(sq);
-    const ns=encE('select');ns.setAttribute('aria-label','Nation');{const o=encE('option','','All nations');o.value='all';ns.append(o);for(const f of FKEYS){const o2=encE('option','',FACTIONS[f].name);o2.value=f;ns.append(o2);}}ns.onchange=()=>{ENC.f=ns.value;encList();};top.append(ns);ENC.ns=ns;
+    const ns=encE('select');ns.setAttribute('aria-label','Nation');{const o=encE('option','','All nations');o.value='all';ns.append(o);for(const f of FKEYS){const o2=encE('option','',FACTIONS[f].name);o2.value=f;ns.append(o2);}}ns.onchange=()=>{ENC.f=ns.value;encList();encNat();};top.append(ns);ENC.ns=ns;
     const ty=encE('div','etypes');for(const [v,l] of ENC_TYPES){const b=encE('button',v===ENC.type?'on':'',l);b.onclick=()=>{ENC.type=v;for(const x of ty.children)x.classList.toggle('on',x===b);encList();};ty.append(b);}top.append(ty,encE('span','ecount'));
     const cl=encE('button','eclose','Close ✕');cl.onclick=encClose;top.append(cl);ov.append(top);
     const body=encE('div','ebody'),cvw=encE('div','ecv');cvw.append(encE('div','emsg','Pick a unit or building from the list'),encE('div','ehint','Drag to rotate · wheel to zoom'));body.append(encE('div','elist'),cvw,encE('div','einfo'));ov.append(body);
     document.body.append(ov);addEventListener('keydown',e=>{if(ENC.on&&e.key==='Escape'){e.stopPropagation();encClose();}},true);}
-  ENC.on=true;ENC.ov.hidden=false;ENC.f=ENC.f==='all'?'all':(typeof setup==='object'&&FACTIONS[setup.p]?setup.p:'IR');ENC.ns.value=ENC.f;encList();
+  ENC.on=true;ENC.ov.hidden=false;ENC.f=ENC.f==='all'?'all':(typeof setup==='object'&&FACTIONS[setup.p]?setup.p:'IR');ENC.ns.value=ENC.f;encList();encNat();
   const first=encEntries().find(x=>x.f===ENC.f&&!x.b&&x.k==='tank')||encEntries().find(x=>x.f===ENC.f);
   if(first){encShow(first);setTimeout(encList,0);}encStart();}
+/* Encyclopedia + Unit guide are ONE page now (Abdullah 2026-11-14 22:09 "merge"): picking a nation shows its guide (how it fights)
+   in the info pane until a unit is picked; the full counter list per nation opens from there */
+function encNat(){if(!ENC.ov||ENC.sel&&ENC.sel.f===ENC.f)return;const P=ENC.ov.querySelector('.einfo');if(!P)return;const F=FACTIONS[ENC.f];P.innerHTML='';if(!F)return;
+  const h=encE('h2','',F.name);const t=encE('div','etx',String(F.doctrine||'').slice(0,600));P.append(h,t);
+  if(typeof idGuidePage==='function'){const b=encE('button','eclose','Units and what they beat →');b.style.cssText='margin:10px 6px;position:static';b.onclick=()=>{idGuidePage.cur=ENC.f;encClose();idGuidePage();};P.append(b);}}
 function encClose(){ENC.on=false;ENC.seq++;if(ENC.ov)ENC.ov.hidden=true;encClear();}
 function encMenu(){const row=document.getElementById('openMyb')||document.getElementById('openSettings');
   if(row&&!document.getElementById('openEnc')){const b=document.createElement('button');b.className='big ghost';b.id='openEnc';b.style.cssText='font-size:15px;padding:7px 16px;margin-left:6px';b.textContent='Encyclopedia';b.title='Browse every unit and building of every nation in 3D';b.onclick=()=>{try{initAudio();}catch(e){}encOpen();};row.after(b);}}

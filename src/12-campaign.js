@@ -29,7 +29,7 @@ const CH={
 
 // ---------- the five missions ----------
 const CAMPAIGN=[
-{id:'pass',n:1,title:'Hold the Pass',sub:'Lebanese Shia · Ridge defense',fac:'RS',enemy:'DE',enemyName:'Invasion Force',map:'khyber',
+{id:'pass',n:1,title:'Hold the Pass',sub:'Lebanese Shia · Ridge defense',fac:'RS',enemy:'FR',enemyName:'Invasion Force',map:'khyber',
  brief:['An invasion force is pushing up the only road into our valleys. Our main columns are still two hours away on the mountain tracks.','You hold a ridge above the road with a small garrison: riflemen, anti-tank teams, two tanks and a few emplacements. Hold it. Every minute you stand buys the valley time.','When the reinforcements arrive, do not let the enemy rest: take the fight back down the pass and destroy their forward base.'],
  obj:[['hold','Hold the ridge until reinforcements arrive'],['reinf','Reinforcements arrive'],['crush','Destroy the enemy forward base']],
  win:'The pass is ours. The valley is safe, and the road is closed to the invaders.',lose:'The ridge has fallen. The valley will have to be defended from the next line.',
@@ -91,7 +91,7 @@ const CAMPAIGN=[
   else if(!hq)c.lose('Headquarters was destroyed.');
   c.status=c.t<c.T?'Relief in '+campClock(c.T-c.t)+' · wave '+c.wave:null;}},
 
-{id:'town',n:4,title:'Retake the Town',sub:'Lebanese Shia + Zaidi Shia Movement · Street fight',fac:'RS',ally:'DW',enemy:'DE',enemyName:'Occupation Force',map:'aleppo',
+{id:'town',n:4,title:'Retake the Town',sub:'Lebanese Shia + Zaidi Shia Movement · Street fight',fac:'RS',ally:'DW',enemy:'FR',enemyName:'Occupation Force',map:'aleppo',
  brief:['An occupation force has seized the old town at the crossroads. Its streets and rooftops are held by infantry and anti-tank teams, with armor in the squares.','Lebanese Shia and Zaidi Shia Movement fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the town street by street. Put infantry into buildings to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves.'],
  obj:[['z0','Clear the southern approach'],['z1','Clear the west quarter'],['z2','Clear the east quarter'],['z3','Take the citadel square'],['z4','Clear the far gate'],['gar','Garrison a building to hold ground']],
  win:'The town is free. Both flags fly over the citadel.',lose:'The assault has failed. Our columns fall back.',
@@ -213,13 +213,6 @@ function campDebrief(c,won){
 }
 function campLeave(){try{if(MODE!=='single')leaveNet();}catch(e){}MODE='single';ME=0;G=null;try{kcReset();}catch(e){}try{$('end').hidden=true;$('menu').hidden=false;renderGames();}catch(e){}}
 
-// objectives panel (on screen during a mission)
-function campPanel(){
-  let el=document.getElementById('campHud');
-  if(!G||!G.camp||G.over&&G.camp.fin){if(el)el.hidden=true;return;}
-  const c=G.camp;if(!el){el=campEl('div','position:fixed;left:10px;top:92px;z-index:600;max-width:min(300px,62vw);background:rgba(12,16,10,.82);border:1px solid #5d6e49;border-radius:8px;padding:8px 10px;color:#efe9d6;font-size:15px;line-height:1.45;pointer-events:none;');el.id='campHud';document.body.appendChild(el);}
-  el.hidden=false;
-  el.innerHTML=`<b>${c.m.title}</b> <span style="opacity:.6">· ${CAMP_DIFF[c.diff]}</span><br>`+c.m.obj.map(o=>`<span style="${c.o[o[0]]?'color:#9fd36b':''}">${c.o[o[0]]?'☑':'☐'} ${o[1]}</span>`).join('<br>')+(c.status?`<br><b style="color:#f0d27a">${c.status}</b>`:'');
-}
-setInterval(()=>{try{campPanel();}catch(e){}},400);
+// the mission objective is shown in the one goal line under the top bar (cqBanner, 08c-goal; 2026-11-13 orderfeel)
+setInterval(()=>{try{if(G&&G.camp)cqBanner();}catch(e){}},400);
 (function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Missions';b.title='Five single-player missions for Iran, the Lebanese Shia and the Zaidi Shia Movement';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();

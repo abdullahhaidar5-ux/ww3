@@ -1,4 +1,4 @@
-// Menu v3 flow: title -> Conquest screens (click-through, Esc/Back one step) -> Start battle from the Players screen -> battle starts.
+// Menu v3 flow: title -> Play -> Battle screens (click-through, Esc/Back one step) -> Start battle from the Players screen -> battle starts.
 import http from 'http'; import fs from 'fs'; import path from 'path'; import { createRequire } from 'module';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const server = http.createServer((req, res) => { let p = decodeURIComponent(new URL(req.url, 'http://x').pathname); if (p.endsWith('/')) p += 'index.html';
@@ -15,8 +15,8 @@ const click = t => page.evaluate(t => { const e = [...document.querySelectorAll(
 try {
   await page.goto(`http://127.0.0.1:${server.address().port}/index.html`); await page.waitForFunction(() => typeof menuGo === 'function', null, { timeout: 60000 }); await page.waitForTimeout(1500);
   const step = async (want, label) => { try { await page.waitForFunction(w => MX.cur === w, want, { timeout: 8000 }); } catch { throw new Error(`${label}: on ${await cur()}, wanted ${want}`); } };
-  if (!await click('single player')) throw new Error('no Single player item'); await step('single', 'Single player');
-  if (!await click('conquest')) throw new Error('no Conquest item'); await step('c-map', 'Conquest');
+  if (!await click('play')) throw new Error('no Play item'); await step('single', 'Play');
+  if (!await click('battle')) throw new Error('no Battle item'); await step('c-map', 'Battle');
   await page.evaluate(() => document.querySelector('#mx .mxmap:nth-child(2)').click()); await step('c-nation', 'pick map');
   await page.evaluate(() => document.querySelector('#pickP .fac:nth-child(3)').click()); await step('c-players', 'pick nation');
   const me = await page.evaluate(() => setup.p); if (me !== 'IL') throw new Error('nation not set: ' + me);

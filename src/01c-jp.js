@@ -5,7 +5,7 @@
 FACTIONS.JP=F_('JP','Japan','#e8e8f0','ja-JP','eastasia','Maritime defense & precision: sensors see 12% farther, units self-repair, weapons deal 4% more damage, warships and submarines are 20% tougher and hit 10% harder, Type 10 tanks have better fire control.',{dmg:1.04,regen:3,sight:1.12},'hero',
   {inf:{name:'JGSDF Rifle Squad'},at:{name:'Type 01 LMAT Team'},hero:{name:'Special Forces Group Commando',demo:true},aa:{name:'Type 87 SPAAG'},tank:{name:'Type 10 Tank'},arty:{name:'Type 99 Howitzer'},heli:{name:'AH-64DJP Apache'},jet:{name:'F-2 Viper Zero'},boat:{name:'Hayabusa Missile Boat'},ship:{name:'Maya-class Aegis Destroyer'}},
   {name:'Type 12 Missile Salvo',charge:160,n:2,dmg:600,r:125,spread:80},'k2fcs');
-FKEYS.push('JP');
+
 UPLINK.JP=['Standoff Missile Command','vls'];
 ECON.JP='Electronics & Robotics Plant';
 COURAGE.JP=1.03;

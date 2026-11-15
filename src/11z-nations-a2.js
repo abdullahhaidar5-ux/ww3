@@ -30,8 +30,6 @@ for(const f of A2){Object.defineProperty(FLAGTEX,f,{configurable:true,enumerable
     Object.defineProperty(FLAGTEX,f,{value:t,writable:true,configurable:true,enumerable:true});return t;},
   set(v){Object.defineProperty(FLAGTEX,f,{value:v,writable:true,configurable:true,enumerable:true});}});}
 // names (militia, radio, adjective), home maps
-Object.assign(MIL_NAME,{BR:'Reservistas Locais',VE:'Milicia Territorial',MX:'Defensa Rural',AR:'Guardia Territorial',CO:'Reserva Local',CL:'Reserva Local',SE:'Hemvärnet'});
-Object.assign(STATION,{BR:'Rádio Nacional',VE:'Radio Nacional',MX:'Radio Nacional',AR:'Radio Nacional',CO:'Radio Nacional',CL:'Radio Nacional',SE:'Sveriges Radio'});
 Object.assign(TK_ADJ,{BR:'Brazilian',VE:'Venezuelan',MX:'Mexican',AR:'Argentine',CO:'Colombian',CL:'Chilean',SE:'Swedish'});
 for(const[m,l]of Object.entries({caribbean:['BR','VE','MX','CO'],heartland:['MX','AR'],delta:['VE'],zagros:['AR','CO','CL'],coral:['CL'],arctic:['SE'],taiga:['SE'],fulda:['SE'],anatolia:['AR']})){const M=MAPS[m];if(M){M.home=M.home||[];for(const f of l)if(!M.home.includes(f))M.home.push(f);}}
 }
