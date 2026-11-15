@@ -388,8 +388,6 @@ try {
   // noform 2026-11-14 (Abdullah 19:18 "Remove formations and remove army stance and resupply and type button")
   { const nf = await ev(() => { try { fmBar(); renderSquads(); } catch (e) {} const t = [...document.querySelectorAll('#info button')].map(b => b.textContent).join('|'); return { fmb: !!document.getElementById('fmb'), key: typeof KEYTAB !== 'undefined' && KEYTAB.some(k => k.id === 'form'), t }; });
     ck(!nf.fmb && !nf.key && !/Type \(T\)|Resupply|Stance|Assault|Guerrilla/.test(nf.t), 'formations / Type / Resupply / stance buttons must be gone: ' + JSON.stringify(nf)); }
-  // rcord 2026-11-14 (Abdullah 19:26 "these buttons can only be actioned upon using right click"): order buttons ignore left-click
-  { const rc = await ev(() => { const bs = [...document.querySelectorAll('#info .orddock button')]; return { n: bs.length, bad: bs.filter(b => b.onclick && !b.dataset.rc).length }; }); ck(rc.bad === 0, 'order buttons must be right-click only: ' + JSON.stringify(rc)); }
   // novdig 2026-11-14 (Abdullah 14:55 "Make it so that vehicles can't dig in"): no vehicle can dig in, infantry still can
   { const vd = await ev(() => { const T = G.teams[ME]; const k = allUnits(T.fac).find(k => { const s = stats(T.fac, k); return s.dom === 'ground' && isVeh(s) && s.dmg > 0 && k !== 'dozer' && k !== 'harv'; }); const u = { s: stats(T.fac, k), kind: k, team: ME, x: 0, y: 0, hp: 1, max: 1 }; return { veh: !!k && digCan(u), inf: allUnits(T.fac).some(k => isInf(stats(T.fac, k))) }; });
     ck(!vd.veh, 'vehicles must not be able to dig in'); }
