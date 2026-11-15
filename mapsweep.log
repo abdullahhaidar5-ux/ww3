@@ -1,0 +1,603 @@
+browser lock: skipped (--no-lock)
+map sweep: 51 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 5s)
+
+STATIC  636 map/player-count/seed combinations (4 seeds), 0 with issues
+  strait       4p ok   1.0min 0.52ms/step peak 11/11/9/12 earn 1584/1600/800/1600 1st 13/12/22/13s (34s, start 14s)
+  strait       8p ok   1.0min 0.69ms/step peak 10/10/11/9/11/11/9/9 earn 1600/1280/1536/1440/1920/1440/1280/1120 1st 13/14/14/13/12/13/14/17s (28s, start 25s)
+  oasis        2p ok   1.0min 0.21ms/step peak 11/8 earn 1280/1168 1st 14/15s (11s, start 10s)
+  oasis        4p ok   1.0min 0.36ms/step peak 11/9/9/10 earn 1600/1600/1008/1440 1st 13/13/22/14s (20s, start 18s)
+  oasis        8p ok   1.0min 0.69ms/step peak 12/12/11/8/12/11/9/12 earn 1440/1440/1440/960/1440/1440/1232/1440 1st 13/13/13/22/13/13/16/14s (26s, start 23s)
+  hormuz       2p ok   1.0min 0.27ms/step peak 10/9 earn 1440/1280 1st 13/19s (11s, start 10s)
+  hormuz       4p ok   1.0min 0.33ms/step peak 10/11/9/11 earn 1280/1280/1600/1280 1st 13/13/13/14s (19s, start 18s)
+  zagros       2p ok   1.0min 0.25ms/step peak 11/8 earn 1600/800 1st 13/13s (13s, start 12s)
+  mesopotamia  2p ok   1.0min 0.16ms/step peak 8/8 earn 1440/800 1st 13/13s (12s, start 12s)
+  mesopotamia  4p ok   1.0min 0.29ms/step peak 10/12/10/12 earn 1280/1600/1600/1584 1st 14/13/13/12s (19s, start 18s)
+  heartland    2p ok   1.0min 0.16ms/step peak 11/9 earn 1760/1280 1st 13/22s (12s, start 11s)
+  heartland    4p ok   1.0min 0.23ms/step peak 10/9/9/12 earn 1440/1280/1440/1584 1st 18/15/13/14s (13s, start 12s)
+  heartland    8p ok   1.0min 0.45ms/step peak 9/10/9/8/10/10/12/10 earn 1120/1600/1280/1280/1600/960/1600/1600 1st 19/13/16/13/13/22/13/13s (34s, start 32s)
+  fulda        4p ok   1.0min 0.73ms/step peak 10/10/10/11 earn 1440/1440/1600/1440 1st 13/14/13/14s (37s, start 18s)
+  fulda        8p ok   1.0min 0.67ms/step peak 12/9/10/9/9/11/10/8 earn 1600/1120/1584/1120/1440/1280/1280/1008 1st 13/20/13/21/12/14/14/18s (30s, start 28s)
+  emirates     2p ok   1.0min 0.27ms/step peak 12/9 earn 1600/1120 1st 12/12s (11s, start 10s)
+  emirates     4p ok   1.0min 0.38ms/step peak 9/11/9/9 earn 1568/1440/1280/1120 1st 13/14/19/17s (16s, start 15s)
+  taiwan       2p ok   1.0min 0.16ms/step peak 13/11 earn 1600/1600 1st 13/13s (12s, start 12s)
+  nile         2p ok   1.0min 0.25ms/step peak 10/9 earn 1600/880 1st 13/14s (15s, start 14s)
+  nile         4p ok   1.0min 0.33ms/step peak 11/9/11/9 earn 1760/1400/1600/1440 1st 12/12/12/13s (17s, start 16s)
+  nile         8p ok   1.0min 0.52ms/step peak 9/11/8/9/10/8/14/9 earn 1216/1280/960/1232/1440/960/1760/1440 1st 20/15/20/20/13/21/12/13s (33s, start 31s)
+  euphrates    2p ok   1.0min 0.32ms/step peak 9/11 earn 1600/1600 1st 13/13s (11s, start 9s)
+  gaza         2p ok   1.0min 0.22ms/step peak 11/9 earn 1440/1280 1st 14/13s (14s, start 13s)
+  taiga        4p ok   1.0min 0.46ms/step peak 9/10/10/10 earn 1168/1440/1600/1600 1st 13/13/13/13s (30s, start 28s)
+  caucasus     2p ok   1.0min 0.32ms/step peak 10/12 earn 1536/1600 1st 13/12s (13s, start 12s)
+  caucasus     4p ok   1.0min 0.48ms/step peak 11/13/9/10 earn 1600/1760/1280/1280 1st 13/12/14/15s (22s, start 20s)
+  tihama       2p ok   1.0min 0.23ms/step peak 11/8 earn 1600/800 1st 13/22s (14s, start 13s)
+  aegean       2p ok   1.0min 0.20ms/step peak 9/8 earn 1440/800 1st 13/23s (13s, start 12s)
+  aegean       4p ok   1.0min 0.41ms/step peak 10/9/9/10 earn 1440/1120/1376/1440 1st 13/19/17/14s (13s, start 12s)
+  rhine        2p ok   1.0min 0.32ms/step peak 11/8 earn 1600/800 1st 13/22s (15s, start 14s)
+  rhine        4p ok   1.0min 0.37ms/step peak 11/10/11/11 earn 1600/1232/1120/1600 1st 13/19/17/13s (20s, start 18s)
+  rhine        8p ok   1.0min 0.54ms/step peak 14/11/10/8/10/9/11/11 earn 1760/1440/1440/664/1600/1440/1440/1440 1st 13/13/13/22/12/13/13/13s (23s, start 21s)
+  coral        2p ok   1.0min 0.20ms/step peak 10/10 earn 1440/1440 1st 14/13s (13s, start 12s)
+  donbas       4p ok   1.0min 0.56ms/step peak 10/9/7/12 earn 1232/1280/800/1408 1st 15/15/16/14s (35s, start 33s)
+  beqaa        2p ok   1.0min 0.32ms/step peak 13/7 earn 1760/800 1st 12/22s (17s, start 16s)
+  beqaa        4p ok   1.0min 0.33ms/step peak 9/10/11/12 earn 1600/1280/1440/1760 1st 13/13/13/13s (20s, start 19s)
+  galileehills 2p ok   1.0min 0.20ms/step peak 10/10 earn 1440/1056 1st 13/22s (15s, start 14s)
+  galileehills 4p ok   1.0min 0.33ms/step peak 10/10/9/9 earn 1600/1600/1536/1440 1st 13/13/14/13s (26s, start 25s)
+  coastalplain 2p ok   1.0min 0.23ms/step peak 8/8 earn 1440/800 1st 13/22s (16s, start 15s)
+  coastalplain 4p ok   1.0min 0.34ms/step peak 10/9/11/9 earn 1440/1376/1600/1440 1st 13/13/12/13s (22s, start 21s)
+  tigristowns  2p ok   1.0min 0.17ms/step peak 11/8 earn 1600/800 1st 13/22s (13s, start 12s)
+  tigristowns  4p ok   1.0min 0.33ms/step peak 10/9/9/9 earn 1352/1280/1600/1280 1st 13/15/13/13s (19s, start 17s)
+  marshes      2p ok   1.0min 0.20ms/step peak 10/8 earn 1600/960 1st 13/22s (15s, start 14s)
+  latakiamtns  4p ok   1.0min 0.72ms/step peak 11/10/9/10 earn 1600/1600/1600/1600 1st 13/13/12/13s (33s, start 31s)
+  amman        2p ok   1.0min 0.32ms/step peak 11/9 earn 1440/1056 1st 13/22s (15s, start 14s)
+  amman        4p ok   1.0min 0.34ms/step peak 9/9/10/11 earn 1280/1440/1280/1600 1st 13/13/14/13s (21s, start 19s)
+  yarmouk      2p ok   1.0min 0.27ms/step peak 10/8 earn 1440/480 1st 13/22s (15s, start 14s)
+  yarmouk      4p ok   1.0min 0.63ms/step peak 11/9/11/10 earn 1600/1760/1440/1600 1st 13/12/13/13s (18s, start 16s)
+  duhok        2p ok   1.0min 0.31ms/step peak 8/10 earn 1280/1056 1st 14/22s (16s, start 15s)
+  duhok        4p ok   1.0min 0.38ms/step peak 10/10/9/10 earn 1600/1440/1280/1600 1st 13/14/14/13s (17s, start 16s)
+  dhofar       2p ok   1.0min 0.29ms/step peak 10/8 earn 1440/960 1st 13/22s (17s, start 16s)
+  dhofar       4p ok   1.0min 0.33ms/step peak 10/12/11/10 earn 1440/1440/1760/1600 1st 13/13/12/12s (20s, start 19s)
+  sanaa        2p ok   1.0min 0.27ms/step peak 10/9 earn 1568/960 1st 13/22s (13s, start 12s)
+  sanaa        4p ok   1.0min 0.24ms/step peak 9/8/10/10 earn 1440/1280/1440/1600 1st 13/13/13/12s (19s, start 18s)
+  saada        4p ok   1.0min 0.50ms/step peak 9/9/10/10 earn 1536/1600/1280/1512 1st 12/13/14/12s (28s, start 26s)
+  suezcanal    2p ok   1.0min 0.25ms/step peak 13/8 earn 1760/800 1st 13/22s (16s, start 15s)
+  suezcanal    4p ok   1.0min 0.52ms/step peak 11/11/9/10 earn 1440/1440/1440/1280 1st 13/13/14/14s (20s, start 18s)
+  alexandria   2p ok   1.0min 0.30ms/step peak 11/9 earn 1352/960 1st 13/22s (13s, start 12s)
+  alexandria   4p ok   1.0min 0.29ms/step peak 10/10/10/10 earn 1440/1584/1280/1512 1st 13/13/14/13s (19s, start 18s)
+  euphratesfront 2p ok   1.0min 0.35ms/step peak 12/8 earn 1440/960 1st 13/22s (16s, start 14s)
+  euphratesfront 4p ok   1.0min 0.32ms/step peak 10/9/9/10 earn 1280/1440/1280/1440 1st 14/13/14/13s (21s, start 20s)
+  blacksea     2p ok   1.0min 0.18ms/step peak 11/8 earn 1440/960 1st 13/22s (14s, start 14s)
+  rumaila      2p ok   1.0min 0.32ms/step peak 10/8 earn 1600/320 1st 13/55s (14s, start 13s)
+  rumaila      4p ok   1.0min 0.35ms/step peak 11/10/9/12 earn 1440/1440/1440/1584 1st 13/13/14/13s (17s, start 16s)
+  gazaharbour  4p ok   1.0min 0.52ms/step peak 10/11/10/11 earn 1440/1584/1440/1600 1st 13/13/13/13s (35s, start 33s)
+  sinjardesert 2p ok   1.0min 0.29ms/step peak 11/8 earn 1600/800 1st 13/22s (17s, start 15s)
+  sinjardesert 4p ok   1.0min 0.33ms/step peak 9/10/9/10 earn 1440/1600/1440/1440 1st 13/13/14/13s (18s, start 16s)
+  najafplain   2p ok   1.0min 0.19ms/step peak 10/8 earn 1440/640 1st 13/23s (16s, start 15s)
+  najafplain   4p ok   1.0min 0.28ms/step peak 10/8/12/9 earn 1440/1120/1440/1440 1st 13/15/13/13s (17s, start 16s)
+  bm_ferryquarter 2p ok   1.0min 0.12ms/step peak 11/9 earn 1280/1120 1st 17/17s (12s, start 12s)
+  bm_sixroads  2p ok   1.0min 0.19ms/step peak 9/8 earn 960/848 1st 20/19s (13s, start 12s)
+  bm_sixroads  4p ok   1.0min 0.24ms/step peak 9/9/8/9 earn 960/960/1056/1120 1st 18/19/18/20s (18s, start 17s)
+  euphrates    2p ok   1.0min 0.16ms/step peak 11/10 earn 1600/1600 1st 13/13s (15s, start 14s)
+  caribbean    2p ok   1.0min 0.52ms/step peak 11/8 earn 1600/800 1st 13/23s (42s, start 41s)
+  arctic       2p ok   1.0min 0.26ms/step peak 12/8 earn 1600/1056 1st 13/14s (16s, start 15s)
+  marshes      2p ok   1.0min 0.31ms/step peak 9/8 earn 1600/960 1st 13/22s (16s, start 15s)
+  hawizeh      2p ok   1.0min 0.37ms/step peak 12/10 earn 1600/1600 1st 13/13s (15s, start 13s)
+  hawizeh      4p ok   1.0min 0.63ms/step peak 10/12/9/10 earn 1440/1600/1120/1720 1st 12/12/13/13s (17s, start 15s)
+  mesopotamia  2p ok   1.0min 0.19ms/step peak 8/8 earn 1440/800 1st 13/13s (13s, start 12s)
+  mesopotamia  4p ok   1.0min 0.39ms/step peak 12/11/11/12 earn 1280/1600/1600/1280 1st 14/13/13/13s (22s, start 20s)
+  aegean       2p ok   1.0min 0.21ms/step peak 8/8 earn 1440/800 1st 13/23s (12s, start 11s)
+  aegean       4p ok   1.0min 0.30ms/step peak 10/10/9/9 earn 1440/1120/1120/1568 1st 13/20/21/13s (20s, start 19s)
+  oasis        4p ok   1.0min 0.67ms/step peak 11/13/8/10 earn 1600/1600/960/1600 1st 13/13/22/13s (23s, start 20s)
+  oasis        8p ok   1.0min 0.60ms/step peak 12/10/10/10/11/11/10/11 earn 1536/1440/1440/960/1440/1584/1120/1440 1st 13/13/13/22/13/13/16/14s (27s, start 25s)
+  kuwait       2p ok   1.0min 0.22ms/step peak 10/10 earn 1760/1440 1st 12/13s (12s, start 11s)
+  kuwait       4p ok   1.0min 0.41ms/step peak 11/11/10/10 earn 1600/1440/1600/1280 1st 12/13/14/13s (18s, start 16s)
+  kuwait       8p ok   1.0min 0.43ms/step peak 9/9/10/12/12/10/10/9 earn 1440/1440/1440/1760/1584/1280/1280/960 1st 13/13/13/13/13/14/14/20s (25s, start 24s)
+  plateau      2p ok   1.0min 0.19ms/step peak 10/10 earn 1600/1600 1st 12/13s (12s, start 11s)
+  plateau      4p ok   1.0min 0.25ms/step peak 13/10/10/9 earn 1600/1600/1280/1600 1st 13/13/14/13s (14s, start 13s)
+  plateau      8p ok   1.0min 0.31ms/step peak 11/11/11/8/10/11/11/12 earn 1440/1280/1440/800/1440/1280/1120/1056 1st 13/13/13/22/13/14/14/16s (18s, start 17s)
+
+BATTLES
+map          pl  min  ms/st  peak ents         harvest earned        result
+strait        2    -      -                                          FAIL start: started bm_splitridge with 2 players
+strait        4  1.0   0.52  11/11/9/12        2k/2k/800/2k          ok
+strait        8  1.0   0.69  10/10/11/9/11/11/9/9 2k/1k/2k/1k/2k/1k/1k/1k ok
+oasis         2  1.0   0.21  11/8              1k/1k                 ok
+oasis         4  1.0   0.36  11/9/9/10         2k/2k/1k/1k           ok
+oasis         8  1.0   0.69  12/12/11/8/12/11/9/12 1k/1k/1k/960/1k/1k/1k/1k ok
+hormuz        2  1.0   0.27  10/9              1k/1k                 ok
+hormuz        4  1.0   0.33  10/11/9/11        1k/1k/2k/1k           ok
+zagros        2  1.0   0.25  11/8              2k/800                ok
+mesopotamia   2  1.0   0.16  8/8               1k/800                ok
+mesopotamia   4  1.0   0.29  10/12/10/12       1k/2k/2k/2k           ok
+heartland     2  1.0   0.16  11/9              2k/1k                 ok
+heartland     4  1.0   0.23  10/9/9/12         1k/1k/1k/2k           ok
+heartland     8  1.0   0.45  9/10/9/8/10/10/12/10 1k/2k/1k/1k/2k/960/2k/2k ok
+fulda         2    -      -                                          FAIL start: started bm_ferryquarter with 2 players
+fulda         4  1.0   0.73  10/10/10/11       1k/1k/2k/1k           ok
+fulda         8  1.0   0.67  12/9/10/9/9/11/10/8 2k/1k/2k/1k/1k/1k/1k/1k ok
+emirates      2  1.0   0.27  12/9              2k/1k                 ok
+emirates      4  1.0   0.38  9/11/9/9          2k/1k/1k/1k           ok
+taiwan        2  1.0   0.16  13/11             2k/2k                 ok
+nile          2  1.0   0.25  10/9              2k/880                ok
+nile          4  1.0   0.33  11/9/11/9         2k/1k/2k/1k           ok
+nile          8  1.0   0.52  9/11/8/9/10/8/14/9 1k/1k/960/1k/1k/960/2k/1k ok
+euphrates     2  1.0   0.32  9/11              2k/2k                 ok
+gaza          2  1.0   0.22  11/9              1k/1k                 ok
+taiga         2    -      -                                          FAIL start: started bm_splitridge with 2 players
+taiga         4  1.0   0.46  9/10/10/10        1k/1k/2k/2k           ok
+caucasus      2  1.0   0.32  10/12             2k/2k                 ok
+caucasus      4  1.0   0.48  11/13/9/10        2k/2k/1k/1k           ok
+tihama        2  1.0   0.23  11/8              2k/800                ok
+aegean        2  1.0   0.20  9/8               1k/800                ok
+aegean        4  1.0   0.41  10/9/9/10         1k/1k/1k/1k           ok
+rhine         2  1.0   0.32  11/8              2k/800                ok
+rhine         4  1.0   0.37  11/10/11/11       2k/1k/1k/2k           ok
+rhine         8  1.0   0.54  14/11/10/8/10/9/11/11 2k/1k/1k/664/2k/1k/1k/1k ok
+coral         2  1.0   0.20  10/10             1k/1k                 ok
+donbas        2    -      -                                          FAIL start: started bm_ferryquarter with 2 players
+donbas        4  1.0   0.56  10/9/7/12         1k/1k/800/1k          ok
+beqaa         2  1.0   0.32  13/7              2k/800                ok
+beqaa         4  1.0   0.33  9/10/11/12        2k/1k/1k/2k           ok
+galileehills  2  1.0   0.20  10/10             1k/1k                 ok
+galileehills  4  1.0   0.33  10/10/9/9         2k/2k/2k/1k           ok
+coastalplain  2  1.0   0.23  8/8               1k/800                ok
+coastalplain  4  1.0   0.34  10/9/11/9         1k/1k/2k/1k           ok
+tigristowns   2  1.0   0.17  11/8              2k/800                ok
+tigristowns   4  1.0   0.33  10/9/9/9          1k/1k/2k/1k           ok
+marshes       2  1.0   0.20  10/8              2k/960                ok
+latakiamtns   2    -      -                                          FAIL start: started bm_ferryquarter with 2 players
+latakiamtns   4  1.0   0.72  11/10/9/10        2k/2k/2k/2k           ok
+amman         2  1.0   0.32  11/9              1k/1k                 ok
+amman         4  1.0   0.34  9/9/10/11         1k/1k/1k/2k           ok
+yarmouk       2  1.0   0.27  10/8              1k/480                ok
+yarmouk       4  1.0   0.63  11/9/11/10        2k/2k/1k/2k           ok
+duhok         2  1.0   0.31  8/10              1k/1k                 ok
+duhok         4  1.0   0.38  10/10/9/10        2k/1k/1k/2k           ok
+dhofar        2  1.0   0.29  10/8              1k/960                ok
+dhofar        4  1.0   0.33  10/12/11/10       1k/1k/2k/2k           ok
+sanaa         2  1.0   0.27  10/9              2k/960                ok
+sanaa         4  1.0   0.24  9/8/10/10         1k/1k/1k/2k           ok
+saada         2    -      -                                          FAIL start: started bm_breakwater with 2 players
+saada         4  1.0   0.50  9/9/10/10         2k/2k/1k/2k           ok
+suezcanal     2  1.0   0.25  13/8              2k/800                ok
+suezcanal     4  1.0   0.52  11/11/9/10        1k/1k/1k/1k           ok
+alexandria    2  1.0   0.30  11/9              1k/960                ok
+alexandria    4  1.0   0.29  10/10/10/10       1k/2k/1k/2k           ok
+euphratesfront  2  1.0   0.35  12/8              1k/960                ok
+euphratesfront  4  1.0   0.32  10/9/9/10         1k/1k/1k/1k           ok
+blacksea      2  1.0   0.18  11/8              1k/960                ok
+rumaila       2  1.0   0.32  10/8              2k/320                ok
+rumaila       4  1.0   0.35  11/10/9/12        1k/1k/1k/2k           ok
+gazaharbour   2    -      -                                          FAIL start: started bm_splitridge with 2 players
+gazaharbour   4  1.0   0.52  10/11/10/11       1k/2k/1k/2k           ok
+sinjardesert  2  1.0   0.29  11/8              2k/800                ok
+sinjardesert  4  1.0   0.33  9/10/9/10         1k/2k/1k/1k           ok
+najafplain    2  1.0   0.19  10/8              1k/640                ok
+najafplain    4  1.0   0.28  10/8/12/9         1k/1k/1k/1k           ok
+bm_ferryquarter  2  1.0   0.12  11/9              1k/1k                 ok
+bm_sixroads   2  1.0   0.19  9/8               960/848               ok
+bm_sixroads   4  1.0   0.24  9/9/8/9           960/960/1k/1k         ok
+euphrates     2  1.0   0.16  11/10             2k/2k                 ok
+caribbean     2  1.0   0.52  11/8              2k/800                ok
+arctic        2  1.0   0.26  12/8              2k/1k                 ok
+marshes       2  1.0   0.31  9/8               2k/960                ok
+hawizeh       2  1.0   0.37  12/10             2k/2k                 ok
+hawizeh       4  1.0   0.63  10/12/9/10        1k/2k/1k/2k           ok
+mesopotamia   2  1.0   0.19  8/8               1k/800                ok
+mesopotamia   4  1.0   0.39  12/11/11/12       1k/2k/2k/1k           ok
+aegean        2  1.0   0.21  8/8               1k/800                ok
+aegean        4  1.0   0.30  10/10/9/9         1k/1k/1k/2k           ok
+oasis         2    -      -                                          FAIL start: started bm_splitridge with 2 players
+oasis         4  1.0   0.67  11/13/8/10        2k/2k/960/2k          ok
+oasis         8  1.0   0.60  12/10/10/10/11/11/10/11 2k/1k/1k/960/1k/2k/1k/1k ok
+kuwait        2  1.0   0.22  10/10             2k/1k                 ok
+kuwait        4  1.0   0.41  11/11/10/10       2k/1k/2k/1k           ok
+kuwait        8  1.0   0.43  9/9/10/12/12/10/10/9 1k/1k/1k/2k/2k/1k/1k/960 ok
+plateau       2  1.0   0.19  10/10             2k/2k                 ok
+plateau       4  1.0   0.25  13/10/10/9        2k/2k/1k/2k           ok
+plateau       8  1.0   0.31  11/11/11/8/10/11/11/12 1k/1k/1k/800/1k/1k/1k/1k ok
+peak memory (node + browser): 3985 MB
+
+MAPSWEEP FAIL (2355s): 0 static, 8/98 battles — overviews in orch/out/maps/
+browser lock: skipped (--no-lock)
+map sweep: 50 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 5s)
+
+STATIC  644 map/player-count/seed combinations (4 seeds), 0 with issues
+  rivers       4p ok   1.0min 0.56ms/step peak 10/11/11/11 earn 1760/1600/1600/1600 1st 12/12/12/12s (36s, start 34s)
+  gulf         2p ok   1.0min 0.25ms/step peak 8/10 earn 1760/1600 1st 12/13s (15s, start 14s)
+  gulf         4p ok   1.0min 0.33ms/step peak 10/10/9/9 earn 1512/1440/1120/1120 1st 13/13/19/19s (17s, start 16s)
+  arctic       2p ok   1.0min 0.22ms/step peak 11/8 earn 1600/1056 1st 13/14s (14s, start 13s)
+  lebanon      2p ok   1.0min 0.19ms/step peak 11/11 earn 1408/1760 1st 14/13s (11s, start 10s)
+  lebanon      4p ok   1.0min 0.38ms/step peak 9/10/12/8 earn 1280/1280/1760/800 1st 13/15/12/22s (19s, start 18s)
+  yemen        2p ok   1.0min 0.15ms/step peak 9/9 earn 1600/1056 1st 13/22s (14s, start 13s)
+  yemen        4p ok   1.0min 0.37ms/step peak 10/11/10/9 earn 1600/1600/1280/1120 1st 13/12/14/15s (18s, start 16s)
+  bosphorus    2p ok   1.0min 0.23ms/step peak 11/9 earn 1600/960 1st 13/22s (16s, start 15s)
+  bosphorus    4p ok   1.0min 0.34ms/step peak 11/9/12/10 earn 1600/1440/1760/1440 1st 13/13/12/13s (21s, start 20s)
+  dnipro       4p ok   1.0min 0.65ms/step peak 11/9/11/11 earn 1760/1032/1600/1600 1st 12/12/13/13s (30s, start 27s)
+  dnipro       8p ok   1.0min 0.61ms/step peak 9/9/9/10/11/9/10/11 earn 960/1120/1280/1232/1600/800/1440/1440 1st 17/14/15/19/13/22/13/13s (26s, start 24s)
+  indus        2p ok   1.0min 0.28ms/step peak 9/9 earn 1280/1440 1st 13/12s (14s, start 13s)
+  indus        4p ok   1.0min 0.33ms/step peak 12/10/10/10 earn 1440/1280/1440/1568 1st 13/14/13/13s (29s, start 28s)
+  honshu       2p ok   1.0min 0.25ms/step peak 11/8 earn 1440/960 1st 13/22s (12s, start 11s)
+  honshu       4p ok   1.0min 0.32ms/step peak 10/11/9/9 earn 1536/1440/1216/1120 1st 13/14/17/17s (16s, start 15s)
+  caribbean    2p ok   1.0min 0.16ms/step peak 9/8 earn 1760/800 1st 12/22s (9s, start 9s)
+  caspian      2p ok   1.0min 0.23ms/step peak 11/10 earn 1760/1120 1st 13/16s (14s, start 13s)
+  anatolia     2p ok   1.0min 0.21ms/step peak 9/10 earn 1760/1600 1st 13/13s (15s, start 14s)
+  anatolia     4p ok   1.0min 0.33ms/step peak 9/9/9/10 earn 1584/1440/1280/1440 1st 13/14/15/13s (18s, start 17s)
+  hawizeh      4p ok   1.0min 0.62ms/step peak 9/13/10/10 earn 1440/1600/1560/1600 1st 12/12/13/13s (28s, start 26s)
+  crimea       2p ok   1.0min 0.34ms/step peak 11/9 earn 1760/1600 1st 12/13s (15s, start 14s)
+  crimea       4p ok   1.0min 0.35ms/step peak 10/11/10/10 earn 1440/1440/1280/1280 1st 13/13/14/14s (19s, start 18s)
+  najd         2p ok   1.0min 0.30ms/step peak 10/11 earn 1600/1600 1st 13/12s (17s, start 16s)
+  najd         4p ok   1.0min 0.50ms/step peak 11/10/10/11 earn 1440/1440/1280/1120 1st 13/14/15/19s (23s, start 21s)
+  najd         8p ok   1.0min 0.58ms/step peak 9/8/11/10/12/10/10/9 earn 1440/1440/1584/1760/1600/1280/1280/1280 1st 13/13/13/13/13/14/13/17s (29s, start 27s)
+  yangtze      2p ok   1.0min 0.15ms/step peak 9/10 earn 1280/1600 1st 13/13s (13s, start 13s)
+  yangtze      4p ok   1.0min 0.28ms/step peak 11/10/9/11 earn 1600/1440/1280/1440 1st 13/13/14/13s (18s, start 17s)
+  yangtze      8p ok   1.0min 0.37ms/step peak 9/9/9/10/9/11/9/11 earn 1120/1120/1440/1440/1440/1440/1120/1120 1st 21/13/13/20/14/13/13/17s (28s, start 26s)
+  hindukush    2p ok   1.0min 0.19ms/step peak 10/10 earn 1760/1600 1st 13/13s (15s, start 14s)
+  hindukush    4p ok   1.0min 0.24ms/step peak 11/8/9/10 earn 1440/1192/1280/1280 1st 14/13/14/14s (17s, start 16s)
+  hindukush    8p ok   1.0min 0.43ms/step peak 10/10/11/11/12/10/11/10 earn 1600/1600/1600/1600/1600/1280/1584/1120 1st 14/13/13/13/12/13/13/16s (23s, start 22s)
+  harbour      2p ok   1.0min 0.18ms/step peak 11/11 earn 1600/1440 1st 13/13s (13s, start 12s)
+  harbour      4p ok   1.0min 0.29ms/step peak 10/10/11/10 earn 1600/1056/1280/1600 1st 13/22/14/13s (18s, start 17s)
+  golanplateau 4p ok   1.0min 0.51ms/step peak 11/9/12/9 earn 1600/1280/1760/1440 1st 12/13/12/13s (32s, start 30s)
+  hormuzgate   2p ok   1.0min 0.40ms/step peak 10/8 earn 1536/800 1st 12/22s (15s, start 13s)
+  jordanvalley 2p ok   1.0min 0.22ms/step peak 10/8 earn 1600/704 1st 13/22s (14s, start 13s)
+  jordanvalley 4p ok   1.0min 0.47ms/step peak 11/11/8/11 earn 1600/1280/1600/1120 1st 12/14/13/13s (21s, start 19s)
+  eilatgulf    2p ok   1.0min 0.17ms/step peak 10/9 earn 1440/960 1st 13/22s (16s, start 15s)
+  eilatgulf    4p ok   1.0min 0.25ms/step peak 10/10/10/10 earn 1600/1440/1600/1280 1st 13/14/13/14s (19s, start 18s)
+  anbardesert  2p ok   1.0min 0.21ms/step peak 7/8 earn 1120/800 1st 13/22s (15s, start 14s)
+  anbardesert  4p ok   1.0min 0.29ms/step peak 10/11/11/11 earn 1600/1584/1600/1920 1st 13/12/12/12s (20s, start 18s)
+  euphratesvalley 2p ok   1.0min 0.17ms/step peak 10/8 earn 1600/960 1st 13/22s (17s, start 16s)
+  euphratesvalley 4p ok   1.0min 0.27ms/step peak 10/10/11/9 earn 1440/1600/1600/1600 1st 13/13/12/13s (19s, start 18s)
+  ghouta       4p ok   1.0min 0.77ms/step peak 9/10/11/9 earn 1600/1600/1600/1600 1st 13/13/12/13s (34s, start 32s)
+  petra        2p ok   1.0min 0.32ms/step peak 9/9 earn 1536/960 1st 13/22s (13s, start 12s)
+  petra        4p ok   1.0min 0.33ms/step peak 11/10/12/10 earn 1600/1600/1440/1440 1st 13/13/14/13s (20s, start 19s)
+  erbil        2p ok   1.0min 0.23ms/step peak 13/8 earn 1760/960 1st 13/22s (15s, start 14s)
+  erbil        4p ok   1.0min 0.30ms/step peak 11/10/9/12 earn 1600/1600/1720/1600 1st 12/13/13/12s (18s, start 17s)
+  zabriver     2p ok   1.0min 0.23ms/step peak 12/9 earn 1600/960 1st 12/22s (19s, start 19s)
+  zabriver     4p ok   1.0min 0.40ms/step peak 10/9/11/8 earn 1600/1600/1600/1280 1st 13/12/12/13s (19s, start 17s)
+  hajar        2p ok   1.0min 0.20ms/step peak 12/8 earn 1600/800 1st 13/22s (13s, start 12s)
+  hodeidah     2p ok   1.0min 0.21ms/step peak 10/8 earn 1280/960 1st 14/22s (16s, start 15s)
+  hodeidah     4p ok   1.0min 0.28ms/step peak 9/9/8/12 earn 1440/1600/1440/1600 1st 13/13/13/13s (18s, start 16s)
+  adenport     4p ok   1.0min 0.57ms/step peak 10/9/9/10 earn 1600/1440/1352/1440 1st 13/13/14/13s (32s, start 29s)
+  cairo        2p ok   1.0min 0.26ms/step peak 13/8 earn 1600/960 1st 12/22s (17s, start 16s)
+  cairo        4p ok   1.0min 0.37ms/step peak 11/11/11/10 earn 1600/1696/1600/1600 1st 12/13/12/12s (19s, start 18s)
+  redseahills  2p ok   1.0min 0.22ms/step peak 12/8 earn 1760/960 1st 13/22s (16s, start 15s)
+  redseahills  4p ok   1.0min 0.44ms/step peak 9/11/10/10 earn 1440/1280/1584/1440 1st 13/13/13/13s (22s, start 21s)
+  aegeancoast  2p ok   1.0min 0.25ms/step peak 11/10 earn 1600/1408 1st 13/21s (14s, start 13s)
+  aegeancoast  4p ok   1.0min 0.28ms/step peak 10/10/10/11 earn 1280/1440/1440/1600 1st 13/13/13/13s (23s, start 22s)
+  amarah       2p ok   1.0min 0.22ms/step peak 11/8 earn 1600/800 1st 13/22s (13s, start 12s)
+  amarah       4p ok   1.0min 0.23ms/step peak 11/10/9/8 earn 1600/1600/1440/1600 1st 12/13/14/12s (21s, start 19s)
+  rafahborder  2p ok   1.0min 0.19ms/step peak 11/8 earn 1600/960 1st 13/22s (16s, start 16s)
+  rafahborder  4p ok   1.0min 0.28ms/step peak 11/8/11/9 earn 1440/1280/1440/1536 1st 13/13/14/12s (18s, start 17s)
+  deirez       4p ok   1.0min 0.52ms/step peak 10/10/9/9 earn 1600/1600/1600/1536 1st 13/12/13/13s (28s, start 26s)
+  gazanorth    2p ok   1.0min 0.22ms/step peak 10/9 earn 1440/880 1st 14/23s (14s, start 13s)
+  gazanorth    4p ok   1.0min 0.35ms/step peak 8/11/13/10 earn 1568/1440/1440/1600 1st 13/13/13/13s (18s, start 17s)
+  hamadesert   2p ok   1.0min 0.23ms/step peak 10/8 earn 1440/800 1st 13/22s (14s, start 13s)
+  hamadesert   4p ok   1.0min 0.41ms/step peak 9/10/9/11 earn 1440/1512/1440/1440 1st 13/13/14/13s (22s, start 20s)
+  bm_breakwater 2p ok   1.0min 0.18ms/step peak 10/9 earn 1120/1120 1st 20/19s (12s, start 12s)
+  bm_breakwater 4p ok   1.0min 0.15ms/step peak 9/9/8/8 earn 1120/1120/640/960 1st 21/20/19/19s (16s, start 15s)
+  lebanon      2p ok   1.0min 0.22ms/step peak 11/10 earn 1408/1760 1st 13/13s (17s, start 16s)
+  lebanon      4p ok   1.0min 0.49ms/step peak 9/10/10/9 earn 1440/1280/1600/1120 1st 13/15/12/22s (20s, start 19s)
+  tihama       2p ok   1.0min 0.18ms/step peak 11/8 earn 1600/800 1st 13/22s (12s, start 11s)
+  hormuzgate   2p ok   1.0min 0.51ms/step peak 9/8 earn 1536/800 1st 12/22s (40s, start 38s)
+  khyber       2p ok   1.0min 0.28ms/step peak 10/13 earn 1600/1936 1st 12/12s (12s, start 11s)
+  blacksea     2p ok   1.0min 0.19ms/step peak 11/8 earn 1440/960 1st 13/22s (16s, start 15s)
+  islands      2p ok   1.0min 0.27ms/step peak 9/9 earn 1600/1192 1st 13/21s (15s, start 14s)
+  islands      4p ok   1.0min 0.34ms/step peak 13/10/11/10 earn 1600/1760/1280/1600 1st 12/12/13/13s (18s, start 17s)
+  persia       2p ok   1.0min 0.20ms/step peak 12/10 earn 1600/1408 1st 13/14s (14s, start 13s)
+  persia       4p ok   1.0min 0.28ms/step peak 10/8/11/12 earn 1280/1120/1600/1600 1st 16/15/13/13s (18s, start 17s)
+  dmziron      2p ok   1.0min 0.19ms/step peak 10/8 earn 1280/0 1st 14/-1s (21s, start 20s)
+  dmziron      4p ok   1.0min 0.30ms/step peak 9/9/10/11 earn 1280/1440/1280/1408 1st 15/14/15/14s (21s, start 20s)
+  atoll        4p ok   1.0min 0.57ms/step peak 10/9/10/9 earn 1440/1120/1440/1440 1st 14/14/13/13s (30s, start 14s)
+  atoll        8p ok   1.0min 0.60ms/step peak 9/9/9/12/9/9/10/11 earn 1440/1280/1120/1600/1440/1440/1440/1440 1st 13/14/18/13/14/14/13/13s (24s, start 22s)
+  rhine        2p ok   1.0min 0.17ms/step peak 11/8 earn 1600/800 1st 13/22s (14s, start 13s)
+  rhine        4p ok   1.0min 0.36ms/step peak 11/10/9/10 earn 1600/1408/1280/1600 1st 13/17/20/13s (18s, start 16s)
+  rhine        8p ok   1.0min 0.66ms/step peak 12/10/10/8/10/13/11/10 earn 1760/1440/1280/800/1600/1600/1584/1280 1st 13/13/13/22/13/12/13/13s (27s, start 24s)
+
+BATTLES
+map          pl  min  ms/st  peak ents         harvest earned        result
+rivers        2    -      -                                          FAIL start: started bm_splitridge with 2 players
+rivers        4  1.0   0.56  10/11/11/11       2k/2k/2k/2k           ok
+gulf          2  1.0   0.25  8/10              2k/2k                 ok
+gulf          4  1.0   0.33  10/10/9/9         2k/1k/1k/1k           ok
+arctic        2  1.0   0.22  11/8              2k/1k                 ok
+lebanon       2  1.0   0.19  11/11             1k/2k                 ok
+lebanon       4  1.0   0.38  9/10/12/8         1k/1k/2k/800          ok
+yemen         2  1.0   0.15  9/9               2k/1k                 ok
+yemen         4  1.0   0.37  10/11/10/9        2k/2k/1k/1k           ok
+bosphorus     2  1.0   0.23  11/9              2k/960                ok
+bosphorus     4  1.0   0.34  11/9/12/10        2k/1k/2k/1k           ok
+dnipro        2    -      -                                          FAIL start: started bm_ferryquarter with 2 players
+dnipro        4  1.0   0.65  11/9/11/11        2k/1k/2k/2k           ok
+dnipro        8  1.0   0.61  9/9/9/10/11/9/10/11 960/1k/1k/1k/2k/800/1k/1k ok
+indus         2  1.0   0.28  9/9               1k/1k                 ok
+indus         4  1.0   0.33  12/10/10/10       1k/1k/1k/2k           ok
+honshu        2  1.0   0.25  11/8              1k/960                ok
+honshu        4  1.0   0.32  10/11/9/9         2k/1k/1k/1k           ok
+caribbean     2  1.0   0.16  9/8               2k/800                ok
+caspian       2  1.0   0.23  11/10             2k/1k                 ok
+anatolia      2  1.0   0.21  9/10              2k/2k                 ok
+anatolia      4  1.0   0.33  9/9/9/10          2k/1k/1k/1k           ok
+hawizeh       2    -      -                                          FAIL start: started bm_ferryquarter with 2 players
+hawizeh       4  1.0   0.62  9/13/10/10        1k/2k/2k/2k           ok
+crimea        2  1.0   0.34  11/9              2k/2k                 ok
+crimea        4  1.0   0.35  10/11/10/10       1k/1k/1k/1k           ok
+najd          2  1.0   0.30  10/11             2k/2k                 ok
+najd          4  1.0   0.50  11/10/10/11       1k/1k/1k/1k           ok
+najd          8  1.0   0.58  9/8/11/10/12/10/10/9 1k/1k/2k/2k/2k/1k/1k/1k ok
+yangtze       2  1.0   0.15  9/10              1k/2k                 ok
+yangtze       4  1.0   0.28  11/10/9/11        2k/1k/1k/1k           ok
+yangtze       8  1.0   0.37  9/9/9/10/9/11/9/11 1k/1k/1k/1k/1k/1k/1k/1k ok
+hindukush     2  1.0   0.19  10/10             2k/2k                 ok
+hindukush     4  1.0   0.24  11/8/9/10         1k/1k/1k/1k           ok
+hindukush     8  1.0   0.43  10/10/11/11/12/10/11/10 2k/2k/2k/2k/2k/1k/2k/1k ok
+harbour       2  1.0   0.18  11/11             2k/1k                 ok
+harbour       4  1.0   0.29  10/10/11/10       2k/1k/1k/2k           ok
+golanplateau  2    -      -                                          FAIL start: started bm_ferryquarter with 2 players
+golanplateau  4  1.0   0.51  11/9/12/9         2k/1k/2k/1k           ok
+hormuzgate    2  1.0   0.40  10/8              2k/800                ok
+jordanvalley  2  1.0   0.22  10/8              2k/704                ok
+jordanvalley  4  1.0   0.47  11/11/8/11        2k/1k/2k/1k           ok
+eilatgulf     2  1.0   0.17  10/9              1k/960                ok
+eilatgulf     4  1.0   0.25  10/10/10/10       2k/1k/2k/1k           ok
+anbardesert   2  1.0   0.21  7/8               1k/800                ok
+anbardesert   4  1.0   0.29  10/11/11/11       2k/2k/2k/2k           ok
+euphratesvalley  2  1.0   0.17  10/8              2k/960                ok
+euphratesvalley  4  1.0   0.27  10/10/11/9        1k/2k/2k/2k           ok
+ghouta        2    -      -                                          FAIL start: started bm_ferryquarter with 2 players
+ghouta        4  1.0   0.77  9/10/11/9         2k/2k/2k/2k           ok
+petra         2  1.0   0.32  9/9               2k/960                ok
+petra         4  1.0   0.33  11/10/12/10       2k/2k/1k/1k           ok
+erbil         2  1.0   0.23  13/8              2k/960                ok
+erbil         4  1.0   0.30  11/10/9/12        2k/2k/2k/2k           ok
+zabriver      2  1.0   0.23  12/9              2k/960                ok
+zabriver      4  1.0   0.40  10/9/11/8         2k/2k/2k/1k           ok
+hajar         2  1.0   0.20  12/8              2k/800                ok
+hodeidah      2  1.0   0.21  10/8              1k/960                ok
+hodeidah      4  1.0   0.28  9/9/8/12          1k/2k/1k/2k           ok
+adenport      2    -      -                                          FAIL start: started bm_breakwater with 2 players
+adenport      4  1.0   0.57  10/9/9/10         2k/1k/1k/1k           ok
+cairo         2  1.0   0.26  13/8              2k/960                ok
+cairo         4  1.0   0.37  11/11/11/10       2k/2k/2k/2k           ok
+redseahills   2  1.0   0.22  12/8              2k/960                ok
+redseahills   4  1.0   0.44  9/11/10/10        1k/1k/2k/1k           ok
+aegeancoast   2  1.0   0.25  11/10             2k/1k                 ok
+aegeancoast   4  1.0   0.28  10/10/10/11       1k/1k/1k/2k           ok
+amarah        2  1.0   0.22  11/8              2k/800                ok
+amarah        4  1.0   0.23  11/10/9/8         2k/2k/1k/2k           ok
+rafahborder   2  1.0   0.19  11/8              2k/960                ok
+rafahborder   4  1.0   0.28  11/8/11/9         1k/1k/1k/2k           ok
+deirez        2    -      -                                          FAIL start: started bm_breakwater with 2 players
+deirez        4  1.0   0.52  10/10/9/9         2k/2k/2k/2k           ok
+gazanorth     2  1.0   0.22  10/9              1k/880                ok
+gazanorth     4  1.0   0.35  8/11/13/10        2k/1k/1k/2k           ok
+hamadesert    2  1.0   0.23  10/8              1k/800                ok
+hamadesert    4  1.0   0.41  9/10/9/11         1k/2k/1k/1k           ok
+bm_breakwater  2  1.0   0.18  10/9              1k/1k                 ok
+bm_breakwater  4  1.0   0.15  9/9/8/8           1k/1k/640/960         ok
+lebanon       2  1.0   0.22  11/10             1k/2k                 ok
+lebanon       4  1.0   0.49  9/10/10/9         1k/1k/2k/1k           ok
+tihama        2  1.0   0.18  11/8              2k/800                ok
+hormuzgate    2  1.0   0.51  9/8               2k/800                ok
+khyber        2  1.0   0.28  10/13             2k/2k                 ok
+blacksea      2  1.0   0.19  11/8              1k/960                ok
+islands       2  1.0   0.27  9/9               2k/1k                 ok
+islands       4  1.0   0.34  13/10/11/10       2k/2k/1k/2k           ok
+persia        2  1.0   0.20  12/10             2k/1k                 ok
+persia        4  1.0   0.28  10/8/11/12        1k/1k/2k/2k           ok
+dmziron       2  1.0   0.19  10/8              1k/0                  ok
+dmziron       4  1.0   0.30  9/9/10/11         1k/1k/1k/1k           ok
+atoll         2    -      -                                          FAIL start: started bm_splitridge with 2 players
+atoll         4  1.0   0.57  10/9/10/9         1k/1k/1k/1k           ok
+atoll         8  1.0   0.60  9/9/9/12/9/9/10/11 1k/1k/1k/2k/1k/1k/1k/1k ok
+rhine         2  1.0   0.17  11/8              2k/800                ok
+rhine         4  1.0   0.36  11/10/9/10        2k/1k/1k/2k           ok
+rhine         8  1.0   0.66  12/10/10/8/10/13/11/10 2k/1k/1k/800/2k/2k/2k/1k ok
+peak memory (node + browser): 3583 MB
+
+MAPSWEEP FAIL (2327s): 0 static, 8/97 battles — overviews in orch/out/maps/
+browser lock: skipped (--no-lock)
+map sweep: 50 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 10s)
+
+STATIC  652 map/player-count/seed combinations (4 seeds), 0 with issues
+  delta        4p ok   1.0min 0.69ms/step peak 11/10/11/13 earn 1440/1440/1600/1760 1st 13/13/13/12s (31s, start 28s)
+  plateau      2p ok   1.0min 0.28ms/step peak 9/9 earn 1600/1600 1st 12/13s (11s, start 10s)
+  plateau      4p ok   1.0min 0.47ms/step peak 12/10/9/9 earn 1600/1600/1280/1440 1st 13/13/14/13s (21s, start 19s)
+  plateau      8p ok   1.0min 0.50ms/step peak 11/11/11/9/11/9/10/10 earn 1440/1280/1440/880/1440/1280/1280/1232 1st 13/13/13/22/13/14/14/16s (27s, start 25s)
+  islands      2p ok   1.0min 0.20ms/step peak 8/9 earn 1120/1120 1st 13/21s (10s, start 10s)
+  islands      4p ok   1.0min 0.31ms/step peak 11/11/9/11 earn 1600/1760/1440/1440 1st 12/12/13/13s (19s, start 17s)
+  persia       2p ok   1.0min 0.21ms/step peak 12/11 earn 1600/1584 1st 13/14s (12s, start 11s)
+  persia       4p ok   1.0min 0.33ms/step peak 9/9/10/10 earn 1120/1280/1536/1600 1st 15/15/12/13s (17s, start 15s)
+  volga        2p ok   1.0min 0.22ms/step peak 9/10 earn 1600/1536 1st 13/12s (15s, start 15s)
+  volga        4p ok   1.0min 0.29ms/step peak 10/8/9/9 earn 1440/640/1536/1280 1st 14/24/13/13s (18s, start 17s)
+  volga        8p ok   1.0min 0.64ms/step peak 9/8/10/9/10/10/10/12 earn 1120/960/1120/800/1280/1056/1440/1440 1st 19/16/15/22/15/22/14/14s (30s, start 27s)
+  golan        2p ok   1.0min 0.16ms/step peak 9/13 earn 1280/1760 1st 14/13s (15s, start 15s)
+  golan        4p ok   1.0min 0.28ms/step peak 9/9/12/9 earn 1440/1600/1584/1600 1st 14/12/13/13s (17s, start 16s)
+  rubalkhali   4p ok   1.0min 0.51ms/step peak 11/10/9/10 earn 1440/1440/1440/1440 1st 13/13/13/13s (30s, start 28s)
+  kashmir      2p ok   1.0min 0.22ms/step peak 10/9 earn 1760/1600 1st 13/13s (15s, start 14s)
+  kashmir      4p ok   1.0min 0.41ms/step peak 11/12/12/9 earn 1600/1600/1440/1440 1st 13/13/13/13s (16s, start 14s)
+  dmz          2p ok   1.0min 0.22ms/step peak 10/11 earn 1600/1280 1st 13/14s (16s, start 15s)
+  dmz          4p ok   1.0min 0.30ms/step peak 9/10/9/10 earn 1440/1440/1600/1440 1st 13/14/13/14s (17s, start 16s)
+  dmz          8p ok   1.0min 0.55ms/step peak 12/10/12/8/9/12/9/10 earn 1600/1440/1600/800/1280/1440/1120/1280 1st 12/13/13/24/14/14/18/14s (28s, start 26s)
+  khyber       2p ok   1.0min 0.17ms/step peak 11/13 earn 1600/1936 1st 12/12s (14s, start 13s)
+  aleppo       2p ok   1.0min 0.23ms/step peak 10/11 earn 1280/1440 1st 13/13s (15s, start 14s)
+  babelmandeb  2p ok   1.0min 0.17ms/step peak 10/13 earn 1600/1600 1st 13/13s (13s, start 13s)
+  babelmandeb  4p ok   1.0min 0.25ms/step peak 10/11/9/10 earn 1280/1440/1120/1536 1st 13/14/14/13s (16s, start 16s)
+  sahara       4p ok   1.0min 0.50ms/step peak 8/9/12/10 earn 1168/1440/1440/1440 1st 13/13/13/14s (32s, start 16s)
+  punjab       2p ok   1.0min 0.29ms/step peak 10/11 earn 1440/1440 1st 13/14s (14s, start 13s)
+  punjab       4p ok   1.0min 0.47ms/step peak 10/9/10/10 earn 1440/1440/1440/1280 1st 13/14/13/14s (19s, start 17s)
+  ural         2p ok   1.0min 0.23ms/step peak 12/7 earn 1760/800 1st 12/22s (14s, start 13s)
+  ural         4p ok   1.0min 0.35ms/step peak 10/9/9/10 earn 1440/1120/1280/1280 1st 14/18/17/15s (17s, start 15s)
+  ural         8p ok   1.0min 0.60ms/step peak 9/10/9/9/9/11/10/8 earn 1352/1280/1280/800/1280/1440/1408/1120 1st 14/14/14/23/14/13/14/15s (25s, start 22s)
+  kuwait       2p ok   1.0min 0.23ms/step peak 11/9 earn 1760/1440 1st 12/13s (14s, start 13s)
+  kuwait       4p ok   1.0min 0.29ms/step peak 13/9/10/9 earn 1600/1440/1440/1280 1st 12/13/14/13s (17s, start 16s)
+  kuwait       8p ok   1.0min 0.52ms/step peak 9/9/10/10/10/9/10/11 earn 1440/1440/1600/1440/1440/1440/1280/1232 1st 13/13/13/13/13/13/14/20s (25s, start 23s)
+  gulfoil      2p ok   1.0min 0.21ms/step peak 11/10 earn 1760/1760 1st 12/12s (13s, start 12s)
+  gulfoil      4p ok   1.0min 0.38ms/step peak 10/12/11/11 earn 1352/1440/1440/1440 1st 14/13/13/13s (15s, start 13s)
+  gulfoil      8p ok   1.0min 0.40ms/step peak 13/10/10/10/10/12/11/12 earn 1600/1584/1440/1440/1440/1760/1440/1600 1st 13/13/13/13/13/12/13/13s (24s, start 22s)
+  atoll        2p ok   1.0min 0.36ms/step peak 10/10 earn 1440/1440 1st 13/14s (21s, start 20s)
+  atoll        4p ok   1.0min 0.44ms/step peak 10/9/9/9 earn 1440/1120/1440/1440 1st 14/14/13/13s (19s, start 17s)
+  atoll        8p ok   1.0min 0.46ms/step peak 11/9/10/11/10/9/9/13 earn 1440/1280/1280/1600/1440/1440/1568/1584 1st 13/14/20/13/14/13/13/13s (22s, start 21s)
+  dmziron      4p ok   1.0min 0.69ms/step peak 9/9/9/9 earn 1280/1376/1280/1280 1st 15/14/15/14s (36s, start 33s)
+  negev        2p ok   1.0min 0.38ms/step peak 11/8 earn 1440/960 1st 13/22s (13s, start 12s)
+  negev        4p ok   1.0min 0.26ms/step peak 10/9/9/11 earn 1600/1600/1440/1280 1st 13/13/14/14s (20s, start 19s)
+  carmelcoast  2p ok   1.0min 0.23ms/step peak 10/8 earn 1600/960 1st 13/22s (15s, start 14s)
+  carmelcoast  4p ok   1.0min 0.35ms/step peak 12/10/9/9 earn 1600/1440/1584/1440 1st 13/13/13/13s (21s, start 20s)
+  mosulcity    2p ok   1.0min 0.19ms/step peak 10/7 earn 1600/800 1st 12/21s (14s, start 13s)
+  mosulcity    4p ok   1.0min 0.30ms/step peak 11/13/10/11 earn 1600/1760/1696/1760 1st 12/12/12/12s (15s, start 14s)
+  basraport    2p ok   1.0min 0.24ms/step peak 10/9 earn 1440/960 1st 13/22s (26s, start 25s)
+  basraport    4p ok   1.0min 0.28ms/step peak 9/9/9/11 earn 1120/1600/1280/1600 1st 13/12/13/13s (17s, start 16s)
+  homsgap      2p ok   1.0min 0.19ms/step peak 11/8 earn 1440/800 1st 13/22s (16s, start 16s)
+  homsgap      4p ok   1.0min 0.27ms/step peak 10/11/11/9 earn 1536/1440/1440/1600 1st 13/13/14/13s (18s, start 17s)
+  palmyra      4p ok   1.0min 0.46ms/step peak 10/10/9/10 earn 1440/1280/1440/1440 1st 13/13/13/13s (31s, start 29s)
+  aqabagulf    2p ok   1.0min 0.33ms/step peak 9/8 earn 1440/640 1st 13/22s (17s, start 16s)
+  aqabagulf    4p ok   1.0min 0.45ms/step peak 9/10/9/9 earn 1440/1584/1440/1440 1st 13/13/14/13s (19s, start 17s)
+  sulaymaniyah 2p ok   1.0min 0.26ms/step peak 11/9 earn 1720/960 1st 13/22s (16s, start 15s)
+  sulaymaniyah 4p ok   1.0min 0.29ms/step peak 11/12/10/11 earn 1440/1440/1408/1440 1st 13/13/14/13s (18s, start 17s)
+  kirkukfields 2p ok   1.0min 0.23ms/step peak 12/8 earn 1600/960 1st 13/22s (18s, start 17s)
+  kirkukfields 4p ok   1.0min 0.35ms/step peak 10/10/8/10 earn 1440/1440/1280/1536 1st 13/13/13/13s (23s, start 21s)
+  muscatbay    2p ok   1.0min 0.19ms/step peak 11/9 earn 1600/960 1st 13/22s (17s, start 17s)
+  muscatbay    4p ok   1.0min 0.26ms/step peak 10/8/11/10 earn 1600/1280/1440/1440 1st 13/13/14/13s (20s, start 18s)
+  marib        2p ok   1.0min 0.17ms/step peak 9/8 earn 1440/896 1st 13/22s (15s, start 14s)
+  marib        4p ok   1.0min 0.39ms/step peak 11/9/10/9 earn 1600/1440/1600/1600 1st 12/13/13/13s (18s, start 16s)
+  babmandeb    4p ok   1.0min 0.58ms/step peak 11/9/10/8 earn 1280/1584/1440/1280 1st 13/13/14/13s (32s, start 29s)
+  sinaipeninsula 2p ok   1.0min 0.20ms/step peak 10/9 earn 1440/800 1st 13/22s (16s, start 15s)
+  sinaipeninsula 4p ok   1.0min 0.32ms/step peak 10/11/10/11 earn 1536/1280/1440/1280 1st 13/15/13/14s (21s, start 20s)
+  taurus       2p ok   1.0min 0.26ms/step peak 10/8 earn 1600/640 1st 13/22s (15s, start 14s)
+  taurus       4p ok   1.0min 0.29ms/step peak 9/8/10/9 earn 1440/1440/1584/1440 1st 13/13/14/13s (17s, start 16s)
+  konyaplain   2p ok   1.0min 0.26ms/step peak 10/8 earn 1600/800 1st 13/22s (16s, start 15s)
+  konyaplain   4p ok   1.0min 0.28ms/step peak 12/10/12/11 earn 1760/1440/1600/1280 1st 13/13/13/14s (25s, start 24s)
+  samawa       2p ok   1.0min 0.32ms/step peak 10/7 earn 1600/704 1st 13/22s (14s, start 13s)
+  samawa       4p ok   1.0min 0.32ms/step peak 12/8/10/9 earn 1600/1280/1600/1440 1st 13/13/13/13s (21s, start 20s)
+  gazaorchard  2p ok   1.0min 0.37ms/step peak 10/9 earn 1600/1056 1st 13/22s (16s, start 15s)
+  gazaorchard  4p ok   1.0min 0.26ms/step peak 13/9/9/9 earn 1760/1280/1536/1600 1st 13/13/14/13s (18s, start 17s)
+  jazira       4p ok   1.0min 0.50ms/step peak 9/10/10/9 earn 1440/1760/1440/1440 1st 13/13/13/14s (31s, start 29s)
+  gazawadi     2p ok   1.0min 0.32ms/step peak 11/9 earn 1280/960 1st 13/22s (17s, start 15s)
+  gazawadi     4p ok   1.0min 0.30ms/step peak 13/9/10/9 earn 1760/1280/1440/1440 1st 13/13/13/13s (23s, start 22s)
+  bm_splitridge 2p ok   1.0min 0.15ms/step peak 9/9 earn 960/960 1st 19/20s (10s, start 9s)
+  bm_fourmills 2p ok   1.0min 0.25ms/step peak 8/8 earn 800/800 1st 22/24s (15s, start 14s)
+  bm_fourmills 4p ok   1.0min 0.33ms/step peak 9/10/8/9 earn 800/800/480/800 1st 22/22/33/22s (13s, start 12s)
+  gulf         2p ok   1.0min 0.25ms/step peak 14/10 earn 1936/1600 1st 12/13s (13s, start 12s)
+  gulf         4p ok   1.0min 0.40ms/step peak 8/9/9/9 earn 1512/1600/1120/1280 1st 13/13/17/19s (16s, start 15s)
+  zagros       2p ok   1.0min 0.19ms/step peak 10/8 earn 1600/960 1st 13/13s (13s, start 12s)
+  taiwan       2p ok   1.0min 0.34ms/step peak 12/10 earn 1600/1600 1st 13/13s (47s, start 46s)
+  hajar        2p ok   1.0min 0.34ms/step peak 12/8 earn 1600/800 1st 13/22s (12s, start 11s)
+  yemen        2p ok   1.0min 0.23ms/step peak 10/9 earn 1600/1056 1st 13/22s (16s, start 15s)
+  yemen        4p ok   1.0min 0.35ms/step peak 10/11/10/9 earn 1600/1600/1280/1120 1st 13/12/14/15s (21s, start 20s)
+  donbas       2p ok   1.0min 0.19ms/step peak 10/8 earn 1280/800 1st 14/22s (17s, start 16s)
+  donbas       4p ok   1.0min 0.37ms/step peak 9/9/10/10 earn 1232/1280/1120/1280 1st 15/15/16/14s (19s, start 18s)
+  taiga        2p ok   1.0min 0.20ms/step peak 11/8 earn 1280/800 1st 13/13s (12s, start 11s)
+  taiga        4p ok   1.0min 0.32ms/step peak 9/10/11/9 earn 1352/1280/1760/1600 1st 13/13/12/14s (18s, start 16s)
+  rubalkhali   2p ok   1.0min 0.31ms/step peak 12/9 earn 1600/960 1st 13/22s (13s, start 11s)
+  rubalkhali   4p ok   1.0min 0.22ms/step peak 10/9/10/9 earn 1440/1440/1600/1280 1st 13/13/13/13s (17s, start 16s)
+  hindukush    4p ok   1.0min 0.31ms/step peak 11/9/10/10 earn 1600/1536/1440/1120 1st 13/13/13/14s (18s, start 17s)
+  hindukush    8p ok   1.0min 0.33ms/step peak 12/12/10/11/10/11/9/11 earn 1720/1600/1600/1600/1600/1280/1280/1232 1st 14/13/13/13/12/13/13/16s (12s, start 11s)
+  yangtze      2p ok   1.0min 0.16ms/step peak 9/10 earn 1280/1600 1st 13/13s (6s, start 6s)
+  yangtze      4p ok   1.0min 0.21ms/step peak 11/10/9/11 earn 1440/1440/1120/1440 1st 13/13/14/13s (8s, start 7s)
+  yangtze      8p ok   1.0min 0.27ms/step peak 9/9/11/11/8/11/13/10 earn 1280/1280/1440/1440/1440/1440/1440/1120 1st 19/13/13/20/14/13/13/17s (13s, start 12s)
+
+BATTLES
+map          pl  min  ms/st  peak ents         harvest earned        result
+delta         2    -      -                                          FAIL start: started bm_splitridge with 2 players
+delta         4  1.0   0.69  11/10/11/13       1k/1k/2k/2k           ok
+plateau       2  1.0   0.28  9/9               2k/2k                 ok
+plateau       4  1.0   0.47  12/10/9/9         2k/2k/1k/1k           ok
+plateau       8  1.0   0.50  11/11/11/9/11/9/10/10 1k/1k/1k/880/1k/1k/1k/1k ok
+islands       2  1.0   0.20  8/9               1k/1k                 ok
+islands       4  1.0   0.31  11/11/9/11        2k/2k/1k/1k           ok
+persia        2  1.0   0.21  12/11             2k/2k                 ok
+persia        4  1.0   0.33  9/9/10/10         1k/1k/2k/2k           ok
+volga         2  1.0   0.22  9/10              2k/2k                 ok
+volga         4  1.0   0.29  10/8/9/9          1k/640/2k/1k          ok
+volga         8  1.0   0.64  9/8/10/9/10/10/10/12 1k/960/1k/800/1k/1k/1k/1k ok
+golan         2  1.0   0.16  9/13              1k/2k                 ok
+golan         4  1.0   0.28  9/9/12/9          1k/2k/2k/2k           ok
+rubalkhali    2    -      -                                          FAIL start: started bm_breakwater with 2 players
+rubalkhali    4  1.0   0.51  11/10/9/10        1k/1k/1k/1k           ok
+kashmir       2  1.0   0.22  10/9              2k/2k                 ok
+kashmir       4  1.0   0.41  11/12/12/9        2k/2k/1k/1k           ok
+dmz           2  1.0   0.22  10/11             2k/1k                 ok
+dmz           4  1.0   0.30  9/10/9/10         1k/1k/2k/1k           ok
+dmz           8  1.0   0.55  12/10/12/8/9/12/9/10 2k/1k/2k/800/1k/1k/1k/1k ok
+khyber        2  1.0   0.17  11/13             2k/2k                 ok
+aleppo        2  1.0   0.23  10/11             1k/1k                 ok
+babelmandeb   2  1.0   0.17  10/13             2k/2k                 ok
+babelmandeb   4  1.0   0.25  10/11/9/10        1k/1k/1k/2k           ok
+sahara        2    -      -                                          FAIL start: started bm_splitridge with 2 players
+sahara        4  1.0   0.50  8/9/12/10         1k/1k/1k/1k           ok
+punjab        2  1.0   0.29  10/11             1k/1k                 ok
+punjab        4  1.0   0.47  10/9/10/10        1k/1k/1k/1k           ok
+ural          2  1.0   0.23  12/7              2k/800                ok
+ural          4  1.0   0.35  10/9/9/10         1k/1k/1k/1k           ok
+ural          8  1.0   0.60  9/10/9/9/9/11/10/8 1k/1k/1k/800/1k/1k/1k/1k ok
+kuwait        2  1.0   0.23  11/9              2k/1k                 ok
+kuwait        4  1.0   0.29  13/9/10/9         2k/1k/1k/1k           ok
+kuwait        8  1.0   0.52  9/9/10/10/10/9/10/11 1k/1k/2k/1k/1k/1k/1k/1k ok
+gulfoil       2  1.0   0.21  11/10             2k/2k                 ok
+gulfoil       4  1.0   0.38  10/12/11/11       1k/1k/1k/1k           ok
+gulfoil       8  1.0   0.40  13/10/10/10/10/12/11/12 2k/2k/1k/1k/1k/2k/1k/2k ok
+atoll         2  1.0   0.36  10/10             1k/1k                 ok
+atoll         4  1.0   0.44  10/9/9/9          1k/1k/1k/1k           ok
+atoll         8  1.0   0.46  11/9/10/11/10/9/9/13 1k/1k/1k/2k/1k/1k/2k/2k ok
+dmziron       2    -      -                                          FAIL start: started bm_ferryquarter with 2 players
+dmziron       4  1.0   0.69  9/9/9/9           1k/1k/1k/1k           ok
+negev         2  1.0   0.38  11/8              1k/960                ok
+negev         4  1.0   0.26  10/9/9/11         2k/2k/1k/1k           ok
+carmelcoast   2  1.0   0.23  10/8              2k/960                ok
+carmelcoast   4  1.0   0.35  12/10/9/9         2k/1k/2k/1k           ok
+mosulcity     2  1.0   0.19  10/7              2k/800                ok
+mosulcity     4  1.0   0.30  11/13/10/11       2k/2k/2k/2k           ok
+basraport     2  1.0   0.24  10/9              1k/960                ok
+basraport     4  1.0   0.28  9/9/9/11          1k/2k/1k/2k           ok
+homsgap       2  1.0   0.19  11/8              1k/800                ok
+homsgap       4  1.0   0.27  10/11/11/9        2k/1k/1k/2k           ok
+palmyra       2    -      -                                          FAIL start: started bm_breakwater with 2 players
+palmyra       4  1.0   0.46  10/10/9/10        1k/1k/1k/1k           ok
+aqabagulf     2  1.0   0.33  9/8               1k/640                ok
+aqabagulf     4  1.0   0.45  9/10/9/9          1k/2k/1k/1k           ok
+sulaymaniyah  2  1.0   0.26  11/9              2k/960                ok
+sulaymaniyah  4  1.0   0.29  11/12/10/11       1k/1k/1k/1k           ok
+kirkukfields  2  1.0   0.23  12/8              2k/960                ok
+kirkukfields  4  1.0   0.35  10/10/8/10        1k/1k/1k/2k           ok
+muscatbay     2  1.0   0.19  11/9              2k/960                ok
+muscatbay     4  1.0   0.26  10/8/11/10        2k/1k/1k/1k           ok
+marib         2  1.0   0.17  9/8               1k/896                ok
+marib         4  1.0   0.39  11/9/10/9         2k/1k/2k/2k           ok
+babmandeb     2    -      -                                          FAIL start: started bm_breakwater with 2 players
+babmandeb     4  1.0   0.58  11/9/10/8         1k/2k/1k/1k           ok
+sinaipeninsula  2  1.0   0.20  10/9              1k/800                ok
+sinaipeninsula  4  1.0   0.32  10/11/10/11       2k/1k/1k/1k           ok
+taurus        2  1.0   0.26  10/8              2k/640                ok
+taurus        4  1.0   0.29  9/8/10/9          1k/1k/2k/1k           ok
+konyaplain    2  1.0   0.26  10/8              2k/800                ok
+konyaplain    4  1.0   0.28  12/10/12/11       2k/1k/2k/1k           ok
+samawa        2  1.0   0.32  10/7              2k/704                ok
+samawa        4  1.0   0.32  12/8/10/9         2k/1k/2k/1k           ok
+gazaorchard   2  1.0   0.37  10/9              2k/1k                 ok
+gazaorchard   4  1.0   0.26  13/9/9/9          2k/1k/2k/2k           ok
+jazira        2    -      -                                          FAIL start: started bm_breakwater with 2 players
+jazira        4  1.0   0.50  9/10/10/9         1k/2k/1k/1k           ok
+gazawadi      2  1.0   0.32  11/9              1k/960                ok
+gazawadi      4  1.0   0.30  13/9/10/9         2k/1k/1k/1k           ok
+bm_splitridge  2  1.0   0.15  9/9               960/960               ok
+bm_fourmills  2  1.0   0.25  8/8               800/800               ok
+bm_fourmills  4  1.0   0.33  9/10/8/9          800/800/480/800       ok
+gulf          2  1.0   0.25  14/10             2k/2k                 ok
+gulf          4  1.0   0.40  8/9/9/9           2k/2k/1k/1k           ok
+zagros        2  1.0   0.19  10/8              2k/960                ok
+taiwan        2  1.0   0.34  12/10             2k/2k                 ok
+hajar         2  1.0   0.34  12/8              2k/800                ok
+yemen         2  1.0   0.23  10/9              2k/1k                 ok
+yemen         4  1.0   0.35  10/11/10/9        2k/2k/1k/1k           ok
+donbas        2  1.0   0.19  10/8              1k/800                ok
+donbas        4  1.0   0.37  9/9/10/10         1k/1k/1k/1k           ok
+taiga         2  1.0   0.20  11/8              1k/800                ok
+taiga         4  1.0   0.32  9/10/11/9         1k/1k/2k/2k           ok
+rubalkhali    2  1.0   0.31  12/9              2k/960                ok
+rubalkhali    4  1.0   0.22  10/9/10/9         1k/1k/2k/1k           ok
+hindukush     2    -      -                                          FAIL start: started bm_splitridge with 2 players
+hindukush     4  1.0   0.31  11/9/10/10        2k/2k/1k/1k           ok
+hindukush     8  1.0   0.33  12/12/10/11/10/11/9/11 2k/2k/2k/2k/2k/1k/1k/1k ok
+yangtze       2  1.0   0.16  9/10              1k/2k                 ok
+yangtze       4  1.0   0.21  11/10/9/11        1k/1k/1k/1k           ok
+yangtze       8  1.0   0.27  9/9/11/11/8/11/13/10 1k/1k/1k/1k/1k/1k/1k/1k ok
+peak memory (node + browser): 3820 MB
+
+MAPSWEEP FAIL (2401s): 0 static, 8/103 battles — overviews in orch/out/maps/
+MAPSWEEP FAIL (a shard failed, see above)
