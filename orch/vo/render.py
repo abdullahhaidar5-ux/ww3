@@ -32,7 +32,9 @@ os.makedirs(CACHE, exist_ok=True)
 # voices that stay natural and intelligible in shouted delivery; score p808 + 0.8*tough - 2*cer)
 X = 'xtts'
 CAST = {
-    'RS': dict(eng=X, lang='ar', sold=['Damien Black', 'Baldur Sanjin', 'Dionisio Schuyler'], cmd='Viktor Eka'),
+    # RS (2026-11-15 "Lebanese dialogue doesn't sound Lebanese enough"): XTTS clones of three real Lebanese male speakers
+    # (MASC corpus, CC BY 4.0; refs + credits in tools/voices/refs/CREDITS.md) so the accent is Lebanese, not studio MSA
+    'RS': dict(eng=X, lang='ar', sold=['clone:lb_vlog', 'clone:lb_tech', 'clone:lb_narr'], cmd='clone:lb_narr'),
     'DW': dict(eng=X, lang='ar', sold=['Dionisio Schuyler', 'Viktor Eka', 'Damjan Chapman'], cmd='Baldur Sanjin'),
     'SA': dict(eng=X, lang='ar', sold=['Baldur Sanjin', 'Damjan Chapman'], cmd='Damien Black'),
     'AE': dict(eng=X, lang='ar', sold=['Viktor Eka', 'Luis Moray'], cmd='Dionisio Schuyler'),

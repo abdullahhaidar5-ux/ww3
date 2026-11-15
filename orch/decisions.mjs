@@ -212,6 +212,12 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(ids.length >= 3 && ids.every(v => /^clone:us_[a-z]+$/.test(v)), 'usvoice: the US cast must use the cloned American voices (clone:us_*): ' + JSON.stringify(ids));
   for (const v of new Set(ids)) ck(fs.existsSync(path.join(ROOT, 'tools', 'voices', 'refs', v.slice(6) + '.flac')), 'usvoice: missing reference clip for ' + v);
   ck(/US unit voices[^<]{0,200}public.domain/i.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'usvoice: menu credits do not name the American voice source'); }
+// rsvoice (Abdullah 2026-11-15 "Lebanese dialogue doesn't sound Lebanese enough" -> "Both, best quality"): RS lines are Lebanese colloquial and the
+// RS cast is XTTS cloned from real Lebanese speakers (MASC corpus, CC BY 4.0; tools/voices/refs/lb_*.flac), never the old studio speakers.
+{ const rn = fs.readFileSync(path.join(ROOT, 'orch', 'vo', 'render.py'), 'utf8'), m = rn.match(/'RS': dict\(([^\n]*)\)/), ids = m ? [...m[1].matchAll(/'(clone:[a-z_]+|[A-Z][a-z]+ [A-Z][a-z]+)'/g)].map(x => x[1]) : [];
+  ck(ids.length >= 3 && ids.every(v => /^clone:lb_[a-z]+$/.test(v)), 'rsvoice: the RS cast must use the cloned Lebanese voices (clone:lb_*): ' + JSON.stringify(ids));
+  for (const v of new Set(ids)) ck(fs.existsSync(path.join(ROOT, 'tools', 'voices', 'refs', v.slice(6) + '.flac')), 'rsvoice: missing reference clip for ' + v);
+  ck(/Lebanese unit voices[^<]{0,300}MASC/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'rsvoice: menu credits do not name the Lebanese voice source (MASC)'); }
 
 // ---------- static checks ----------
 // polishP2 "Never lose progress": one save system. Battles autosave into 3 rolling slots (08d-save.js) and the menu's Continue (first item) resumes the newest. Runtime proof: orch/polishtest.mjs (gate/save).

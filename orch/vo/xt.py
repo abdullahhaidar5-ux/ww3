@@ -2,6 +2,12 @@ import torch,numpy as np
 torch.set_num_threads(2)
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
+import TTS.tts.models.xtts as _X, soundfile as _sf, librosa as _lr
+def _load_audio(p,sr):   # torchaudio.load needs torchcodec (often broken on CPU-only installs): read the reference with soundfile
+    a,r=_sf.read(p,dtype='float32',always_2d=True);a=a.mean(1)
+    if r!=sr: a=_lr.resample(a,orig_sr=r,target_sr=sr)
+    return torch.from_numpy(np.clip(a,-1,1))[None]
+_X.load_audio=_load_audio
 _m=None
 def model():
     global _m
