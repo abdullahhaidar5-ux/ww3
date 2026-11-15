@@ -1341,7 +1341,7 @@ function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.mi
   G.mT=(G.mT||0)-dt;if(G.mT<=0){G.mT=.2;updMines();}
   for(const T of G.teams){T._upl=false;T._tun=false;}for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const T=G.teams[e.team];if(!T)continue;if(e.kind==='tunnel')T._tun=true;else if(e.kind==='uplink'&&!(e.dis>G.t))T._upl=true;}
   for(const T of G.teams){if(!T.tun.length)continue;for(const u of T.tun)u.hp=Math.min(u.max,u.hp+12*dt);if(!T._tun){log(T.id,`Our last tunnel was destroyed. ${T.tun.length} units inside were lost.`,'w');T.tun=[];}}
-  for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt*(G.conq?.5:1));if(G.battle)swTick(T);for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
+  for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt*(G.conq?.5:1)*(G.sandbox&&T.id===0?30:1));   /* Test range: the strike recharges in seconds (Abdullah 2026-11-14 18:26) */if(G.battle)swTick(T);for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
     {let j=0;for(const r of T.reveals){r.t-=dt;if(r.t>0)T.reveals[j++]=r;}T.reveals.length=j;}}
   // expired smoke screens and shields are dropped once a second (they were kept for the whole match and scanned every frame)
   if(!(G.prT>G.t)){G.prT=G.t+1;for(const k of ['smokes','shields'])if(Array.isArray(G[k])&&G[k].length){let j=0;const A=G[k];for(const S of A)if(S.t>G.t)A[j++]=S;A.length=j;}}

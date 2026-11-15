@@ -15,7 +15,7 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 #menu.m3{background:#05080a;display:block;padding:0;overflow:hidden;z-index:20}
 #menu.m3>.card{display:none}
 #mx{position:absolute;inset:0;font-family:var(--display);color:var(--fg);user-select:none}
-#mxbg{position:absolute;inset:0;background:#0a0f0d url(menu-bg.webp) 30% center/cover no-repeat}   /* ONE static picture (menu-bg.webp, made with orch/menubgshots.mjs); a CSS background so the menu never waits for it and works without it */
+#mxbg{position:absolute;inset:0;background:#0a0f0d url(menu-bg2.webp) 25% center/cover no-repeat}   /* ONE static picture (menu-bg.webp, made with orch/menubgshots.mjs); a CSS background so the menu never waits for it and works without it */
 #mxfade{position:absolute;inset:0;background:linear-gradient(270deg,rgba(5,8,10,.92) 0,rgba(5,8,10,.82) calc(var(--mxw,34vw) + 4vw),rgba(5,8,10,.35) calc(var(--mxw,34vw) + 24vw),rgba(5,8,10,0) 75%),linear-gradient(0deg,rgba(5,8,10,.5),rgba(5,8,10,0) 28%)}
 #mxtop{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:18px;padding:0 clamp(24px,5vw,72px);z-index:3}
 #mxtop[hidden]{display:none!important}
