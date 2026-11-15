@@ -129,6 +129,13 @@ html body #side #zhTop #zhPw.low{color:#ff8a78}
 html body #side #zhTop #popCap{font:700 12px system-ui,sans-serif!important;color:#cfe3f5!important;letter-spacing:.04em}
 html body #side #zhTop #popCap::before{content:"👥";margin-right:6px;font-size:13px}
 html body #side.min #zhTop{display:none!important}
+
+/* upgrades are square picture buttons like everything else (Abdullah 18:20 "Why are supply tunnels just floating make it look better") */
+html body #side #panel .btn.wide{grid-column:auto!important;width:auto!important;height:auto!important;padding:0!important;justify-content:flex-start!important;background-image:radial-gradient(circle at 50% 36%,#3d5a48,#12201a 72%)!important}
+html body #side #panel .btn.wide::before{content:"▲";position:absolute;left:0;right:0;top:12%;text-align:center;font:900 calc(var(--zb)*.3) system-ui,sans-serif;color:#f4d96a;text-shadow:0 2px 3px #000}
+html body #side #panel .btn.wide>.n{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;position:absolute!important;left:0;right:0;bottom:0;margin:0!important;padding:2px 3px!important;font:700 11px/1.15 system-ui,sans-serif!important;color:#f2f6f8!important;text-align:center!important;white-space:normal!important;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.8))!important}
+html body #side #panel .btn.wide>.c,html body #side #panel .btn.wide>.d{display:none!important}
+html body #side #panel .btn.wide.done::after,html body #side #panel .btn.wide[data-done="1"]::after{content:"✓";position:absolute;right:4px;top:2px;color:#7fe08a;font:900 16px system-ui}
 #zhTip{position:fixed;left:10px;z-index:60;width:clamp(240px,22vw,380px);pointer-events:none;padding:10px 14px;border-radius:4px;color:#e9efdc;font:14px/1.4 system-ui,sans-serif;
  background:linear-gradient(180deg,rgba(14,22,40,.95),rgba(8,14,30,.95));box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px #3a5ea8,0 4px 14px rgba(0,0,0,.6)}
 #zhTip b{display:block;text-align:center;font-size:16px;margin-bottom:4px}#zhTip .zc{color:#f4d96a;font-weight:700}#zhTip .zd{color:#c9d3bd;margin-top:3px}#zhTip .zw{color:#ff9a7a;margin-top:3px}`;document.head.append(st);}
