@@ -66,8 +66,8 @@ const TUTB=[
   hl:()=>tutBPlace('barracks',120,90),cam:()=>tutHQ(),ok:()=>!!tutBld('barracks')},
  {k:'fac',t:'The War Factory builds tanks and other vehicles. It needs a Barracks first.',a:'With your Dozer selected, open Build and place a War Factory next to your base. Right-click a half-built building with another Dozer to help.',
   hl:()=>tutBPlace('factory',150,-60),cam:()=>tutHQ(),ok:()=>!!tutBld('factory')},
- {k:'sup',t:'SUPPLY LINES: your troops carry limited ammo. They refill near your buildings and along your supply lines - the roads running out from your Command Center and Supply Depots (green). Outside them they fight until they are empty, then come back or need an Ammo Truck (War Factory). Craters and blown bridges cut a line (dashed).',a:'Press L to show your supply lines.',
-  hl:()=>({d:'#lgBtn'}),cam:()=>tutHQ(),ok:()=>!!(typeof LGU!=='undefined'&&LGU.on)},
+ {k:'sup',t:'SUPPLY LINES: troops refill ammo near your buildings and along your supply roads (green). Outside them they fight until empty, then must come back or get an Ammo Truck (War Factory). Craters and blown bridges cut a line.',a:'Press L to show your supply lines (the minimap shows them too).',
+  hl:()=>({d:'#mm'}),cam:()=>tutHQ(),ok:()=>!!(typeof LGU!=='undefined'&&LGU.on)},
  {k:'veh',t:'Now put the factory to work. A selected production building shows what it can make and its own queue. Vehicles are built only in the War Factory.',a:'Click your War Factory, then click a vehicle to train it.',
   hl:()=>{const b=tutBld('factory');if(!b)return{w:tutHQ()};return G.sel.includes(b)?{d:'#u_tank'}:{w:b};},cam:()=>tutBld('factory'),
   enter:()=>{TUTS.k0=tutMob().length;},ok:()=>tutMob().length>TUTS.k0},
@@ -125,7 +125,7 @@ function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&
   if(ok&&performance.now()-(TUTS.e0||0)>=1500)tutAdvance(false);}   /* every tip stays up at least 1.5 s before it is ticked off: a step your men finish on their own (they shoot by themselves) used to flash by unread */
 setInterval(()=>{try{tutCheck();}catch(e){}},400);setInterval(()=>{try{tutHLTick();}catch(e){}},120);
 function startBattleTutorial(){TUT=TUTB;MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
-  const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
+  const mk=MAPS[setup.map]&&!MAPS[setup.map].manual&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';   /* the tutorial teaches supply lines: it needs a map with roads between the bases (the hand-drawn Battle maps have none yet) */
   TERR_DEFER=true;try{newGame({w:setup.w|0,seed:(window.__tutSeed||Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
   const T=G.teams[0];G.tut=true;G.docDis=1;T.credits+=1500;if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
   try{const eh=G.ents.find(e=>e.team===1&&e.kind==='hq');if(eh){eh.max=eh.hp=Math.min(eh.max,1500);}}catch(e){}

@@ -562,7 +562,7 @@ async function main() {
     if (ticks % 100 === 0) await liveCheck();
     if (checks.has(ticks)) { await settleCheck(`check @${(ticks / 600).toFixed(1)} min`); if (ticks === 1500 || ticks === total) await screenshots(); }
     if (ticks % 300 === 0) await client.evaluate(() => { // keep the client's production busy, like a player would
-      try { const R = roster(G.teams[ME].fac); for (const c of CATS) if (R[c] && R[c][0] && !G.teams[ME].q[c].length) doAct({ t: 'q', k: R[c][0] }); } catch (e) {} });
+      try { const R = roster(G.teams[ME].fac); for (const c of CATS) if (R[c] && R[c][0] && !G.ents.some(e => e.isB && e.team === ME && e.kind === c && !e.dead && (e.q || []).length)) doAct({ t: 'q', k: R[c][0] }); } catch (e) {} });
   }
   if (!order.n) warns.push('client had no units at the start, so the order round-trip was not tested');
   const stK = SRV ? '__ww3WsStats' : '__fpStats';

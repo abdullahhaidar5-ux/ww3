@@ -25,6 +25,8 @@ const KEYTAB=[
   {id:'stop',ctx:'battle',grp:'Orders',name:'Stop',def:'x'},
   {id:'ret',ctx:'battle',grp:'Orders',name:'Return to base',def:'r'},
   {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (dozers: trench)',def:'i'},
+  {id:'sell',ctx:'battle',grp:'Orders',name:'Sell the selected building (3 s, half its price back)',def:'v'},
+  {id:'rep',ctx:'battle',grp:'Orders',name:'Repair the selected building (toggle; costs money while it heals)',def:'o'},
   {id:'resup',ctx:'battle',grp:'Orders',name:'Resupply ammunition',def:'z'},
   {id:'abil',ctx:'battle',grp:'Orders',name:'Unit or leader ability, sonar ping, Recon power (with Shift: leader\'s ultimate)',def:'e'},
   {ctx:'battle',grp:'Orders',name:'Cancel the last item being built or trained',fix:'Backspace · Delete'},

@@ -28,6 +28,8 @@ const ck = (c, m) => { if (!c) fails.push(m); };
 { const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./upgsimple.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "upgsimple guard: " + (r.stdout || "").trim().split("\n").slice(0, 4).join(" | ")); }
 // techbldgs 2026-11-14 (Abdullah 2026-11-13 20:21 / 20:24): the capturable Battle buildings (quarry, mine, power plant, field hospital) are ONE system on the derrick code: capturable, effect only for the owner, destroyable and repairable, state in the checkpoint; every Battle map has them (symmetry: orch/battlemapfair.mjs --static)
 { const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./techbldgs.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "capturable Battle buildings rules failed: " + String(r.stdout).slice(0, 400));
+// zhfeel 2026-11-15 (Abdullah 2026-11-14 19:52 "Huccum!" make it feel like Generals Zero Hour): build clock wipe + queue number on the bar buttons, Sell refunds 50% and removes the building after 3 s, Repair restores hp and costs money, Generals-style cursors (runtime proof: orch/zhfeel.mjs)
+{ const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./zhfeel.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "zhfeel guard: orch/zhfeel.mjs failed: " + (r.stdout || "").split("\n").filter(l => /FAIL/.test(l)).slice(0, 3).join(" | ")); }
   const bm = fs.readFileSync(path.join(ROOT, "src/02d-battlemaps.js"), "utf8"); const ids = [...bm.matchAll(/^  (\w+):\{nm:/gm)].map(x => x[1]); ck(ids.length > 0 && ids.every(id => { const i = bm.indexOf("  " + id + ":{nm:"); return /\n    tb:\[\[/.test(bm.slice(i, i + 1400)); }), "every Battle map must list its capturable buildings (tb:[[x,y,type]])"); }
 
 // Rules files (orch/loadF): CLAUDE.md = short current rules, orch/DECISIONS.md = the full dated record. Every standing decision's
@@ -473,7 +475,7 @@ try {
   // ---- BATTLE (Generals rules + supply lines): Command Center + dozer + supply truck, no towns/tax, supply trucks pay
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
-  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.map = 'bm_sixroads'; try { initAudio(); } catch (e) {} startSingle(); });   /* a Battle map with roads out of the base (supply lines follow roads) */
+  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.map = 'lebanon'; try { initAudio(); } catch (e) {} startSingle(); });   /* a Battle map whose roads run out of the bases (supply lines follow roads) */
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('battle-mode game never finished loading'));
   await page.waitForTimeout(1500);
   const bt = await ev(() => { const T = G.teams[ME], mine = G.ents.filter(e => e.team === ME && !e.dead); const c0 = T.credits;
@@ -545,6 +547,19 @@ try {
   // ---- drones fly from the Airfield (Abdullah 2026-11-08); nations without an airfield keep them at the War Factory
   { const d = await ev(() => ['TR', 'UA', 'IR', 'RS'].map(f => [f, stats(f, 'drone').from, roster(f).airfield.includes('drone'), roster(f).factory.includes('drone'), !!FACTIONS[f].noAir]));
     for (const [f, from, inAir, inFac, noAir] of d) { const want = noAir ? 'factory' : 'airfield'; ck(from === want && inAir === (want === 'airfield') && inFac === (want === 'factory'), `drone for ${f} built from ${from} (want ${want})`); } }
+  // ---- announcer (Abdullah 2026-11-14 "Huccum!"): every status line exists in every announcer language, repeats are throttled, never two at once, volume slider in Settings
+  { const A = await ev(() => { const keys = ['building','complete','unit','upgrade','funds','lowPower','powerBack','baseAtk','unitsAtk','unitLost','bldLost','cantBuild','strikeReady','enemyStrike','lineCut','roadTaken','reinf'];
+      const miss = []; for (const L of ['en','fa','ar','ru','zh','he']) for (const k of keys) if (!ANN_TXT[L] || !ANN_TXT[L][k]) miss.push(L + '.' + k);
+      const st = { last: {}, busy: 0 }; const g1 = annGate('unit', 1000, false, st), g2 = annGate('unit', 3000, false, st), g3 = annGate('unit', 8000, false, st);
+      const b1 = annGate('baseAtk', 20000, false, st), b2 = annGate('baseAtk', 30000, false, st), b3 = annGate('baseAtk', 41000, false, st);
+      const st2 = { last: {}, busy: 5000 }; const ov = annGate('funds', 1000, false, st2);
+      const st3 = { last: {}, busy: 0 }; const t1 = annGate('unit', 1000, true, st3), t2 = annGate('unit', 10000, true, st3);
+      return { miss, rep: [g1, g2, g3], atk: [b1, b2, b3], ov, test: [t1, t2], slider: !!document.getElementById('sAnn'), hooked: String(pushLog).includes('annFromLog') }; });
+    ck(!A.miss.length, 'announcer table is missing lines: ' + A.miss.join(','));
+    ck(A.rep.join() === 'true,false,true', 'announcer must not repeat the same line within 6 s: ' + A.rep);
+    ck(A.atk.join() === 'true,false,true', 'announcer under-attack lines must be once per 20 s: ' + A.atk);
+    ck(A.ov === false, 'announcer must not start a line while another is playing'); ck(A.test.join() === 'true,false', 'announcer must be throttled more in the Test range');
+    ck(A.slider && A.hooked, 'announcer needs its Settings > Audio slider (sAnn) and the pushLog hook'); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
 await browser.close(); server.close();
