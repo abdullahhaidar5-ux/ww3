@@ -645,6 +645,13 @@ try {
     for (const k of ['atk', 'mortar', 'hero', 'drone', 'tank', 'aa', 'arty']) ck(o.all.includes(k), 'OB roster lacks ' + k);
     ck(!o.names.some(n => /Abrams|Main Battle|Bulldozer|Frigate|Patrol Launch/i.test(n)), 'OB unit names must not read as a regular army: ' + o.names.join(','));
     ck(o.mz && o.mz[0] === 'hilux' && !o.mz[1] && !o.mz[2] && !o.mz[3], 'OB must use no MBT / helicopter / jet / frigate model: ' + JSON.stringify(o.mz)); ck(o.zeal === 0, 'OB stays Zealous (never routs)'); }
+  // polishF IR (Abdullah 2026-11-15 00:19 "Give the Iranians something else besides a shahed truck what's the point"): Iran has the Zolfaghar Missile Launcher (ballistic missile truck, far longer reach than the Fateh, max 2) and NO Shahed launcher truck
+  { const o = await ev(() => { const R = roster('IR'), all = allUnits('IR'), b = stats('IR', 'bmt'), a = stats('IR', 'arty'); return { fac: R.factory.includes('bmt'), names: all.map(k => stats('IR', k).name), name: b.name, rng: b.rng, arty: a.rng, lim: b.limit, from: b.from, missile: !!b.missile, icon: UK.iconBranch('bmt', false, b), others: ['US', 'RU', 'RS', 'OB'].some(f => allUnits(f).includes('bmt')), drone: stats('IR', 'drone').name }; });
+    ck(o.fac && o.name === 'Zolfaghar Missile Launcher' && o.from === 'factory' && o.missile, 'IR must build the Zolfaghar Missile Launcher at the War Factory: ' + JSON.stringify(o));
+    ck(o.rng >= o.arty * 1.6 && o.lim === 2, 'Zolfaghar must reach much farther than the Fateh launcher and be limited to 2: ' + o.rng + ' vs ' + o.arty + ' limit ' + o.lim);
+    ck(!o.names.some(n => /shahed.*(truck|launch)|(truck|launch).*shahed/i.test(n)), 'Iran must not have a Shahed launcher truck: ' + o.names.join(',')); ck(/Shahed/.test(o.drone), 'the Shahed-136 stays Iran\'s drone');
+    ck(o.icon === 'bmt' && !o.others, 'the Zolfaghar has its own bar picture and only Iran builds it');
+    const sm = fs.readFileSync(path.join(ROOT, 'src/03-sim.js'), 'utf8'); ck(/s\.src\.s\.missile|src\.s&&src\.s\.missile/.test(sm) && /s\.kind==='bm'/.test(sm) && /filter\(k=>k!=='bmt'\|\|T\.credits>2600\)/.test(sm), 'ballistic missile: fire() must launch a bm strike, updStrikes must let air defence shoot it down, the AI builds it only when rich'); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
 await browser.close(); server.close();

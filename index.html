@@ -5909,6 +5909,20 @@ SPECIAL_TIP.krb=u=>'Massed 240 mm rockets: a ripple of '+(u.ripple||12)+' that b
   delete U.heli;delete U.jet;delete U.ship;   /* no helicopter, jet or frigate for OB */
   if(typeof XL==='object')XL.OB={};   /* Egypt's Abrams discount copied here by the base-nation row: not for a technical */
   if(typeof BAL==='object'&&BAL.OB)delete BAL.OB.arty;}}
+/* ---- IR Zolfaghar Missile Launcher (Abdullah 2026-11-15 00:19 "Give the Iranians something else besides a shahed truck what's the point" -> his pick: a BALLISTIC MISSILE TRUCK) ----
+   A War Factory vehicle, separate from the Fateh-110 launcher (arty slot): far longer reach, ONE big guided missile per launch, slow reload, expensive, max 2.
+   The shot is a G.strikes entry of kind 'bm' (flight time grows with distance, saved in checkpoints like every strike): it can be shot down in flight by
+   missile-defence sites, Iron-Dome-type batteries and flak AA near the target (updStrikes in 03-sim). Military targets only (it fires at what the unit targets).
+   The AI builds one only when rich (AI filter in 03-sim). Iran has no Shahed launcher truck: the Shahed-136 drone is its drone slot. */
+BASE.bmt=Object.assign({},BASE.arty,{name:'Zolfaghar Missile Launcher',rocket:true,missile:true,rng:900,minr:260,dmg:760,splash:105,rof:32,hp:260,cost:1900,time:24,limit:2,
+  desc:'One big guided ballistic missile per launch, from far beyond any gun. Reloads slowly, costs a lot, you can have two. Air defence (missile-defence sites, Iron Dome, flak) can shoot it down in flight. Fragile: hide it behind your lines.'});
+if(typeof KINDS!=='undefined'&&!KINDS.includes('bmt'))KINDS.push('bmt');
+{const F=FACTIONS.IR;if(F){F.extra=[...(F.extra||[]),'bmt'].filter((k,i,a)=>a.indexOf(k)===i);F.units=F.units||{};F.units.bmt=Object.assign({},F.units.bmt||{},{name:'Zolfaghar Missile Launcher'});}}
+/* the launch: called from fire() for any unit whose stats say missile:true */
+function bmLaunch(src,t,dmg,splash){const d=Math.hypot(t.x-src.x,t.y-src.y),ft=+(2.5+d/300).toFixed(2),r=splash||105;
+  G.strikes.push({x:t.x,y:t.y,t:ft,r,dmg,team:src.team,kind:'bm'});
+  FXE('strike',[t.x|0,t.y|0,ft,r|0,1,1],src.team);FXE('bmis',[src.x|0,src.y|0,t.x|0,t.y|0,ft,0]);
+  if(t.team!=null&&t.team>=0&&G.teams[t.team]&&!ally(t.team,src.team)&&G.t-(G.teams[t.team].bmWarn??-99)>8){G.teams[t.team].bmWarn=G.t;log(t.team,'Warning: enemy ballistic missile inbound. Move your units!','r:msl',t.x,t.y);}}
 /* ================= MAP: sea channel, bridges, grid, pathfinding ================= */
 const COSB=0.894,BT=[0.894,0.447],BN=[-0.447,0.894];
 /* Maps: each defines water features (rivers, lakes), bridges, base slots (in fill order) and a symmetry used to place supply fairly.
@@ -7538,7 +7552,7 @@ function updDozer(u,dt){u.building=false;const o=u.order;
 const MOVE={inf:[9,140],at:[9,140],hacker:[9,140],hero:[10,160],harv:[2.2,40],dozer:[2.2,40],tank:[1.7,34],aa:[2.1,42],arty:[1.8,32],boat:[1.6,40],ship:[.55,10],heli:[2.3,55],drone:[3,80]};
 // Vehicle handling: tracked vehicles pivot on the spot, wheeled ones need speed to turn (a turning circle) and slow
 // into tight corners; everything ground-based labours uphill and runs a little faster downhill.
-const WHEELED=new Set(['harv','dozer','jeep','ew','krb','cbr','raidlead','idome','aa']);
+const WHEELED=new Set(['bmt','harv','dozer','jeep','ew','krb','cbr','raidlead','idome','aa']);
 function isWheeled(u){const s=u.s;return WHEELED.has(u.kind)||(u.kind==='arty'&&s.rocket)||/Technical/.test(s.name||'');}
 // Fixed-wing flight (Shahed-type drones): they never stop or hover - they hold cruise speed, turn in smooth arcs
 // limited by bank angle, and tighten the turn only in the final dive onto a target.
@@ -7708,7 +7722,7 @@ function nearestEnemy(src,range,s,minEff,foc){s=s||src.s;let best=null,bd=1e9;fo
   if(src.kind==='drone'&&G.t-(e._dvT??-9)<3&&src._dvTg!==e)sc+=(e._dv||0)*55;   /* swarm: each drone dives on its own target */
   if(sc<bd){bd=sc;best=e;}}
   if(best&&src.kind==='drone'&&src._dvTg!==best){src._dvTg=best;if(G.t-(best._dvT??-9)>=3)best._dv=0;best._dv=(best._dv||0)+1;best._dvT=G.t;}return best;}
-function fire(src,t,dmg,wpn,splash){if(!src.isB)try{bfShoutFire(src,t,wpn,splash);}catch(_){}if(!src.isB&&!src._rip&&splash&&src.s.cls==='arty'&&wpn==='shell'){const gap=G.t-(src._arT??-99);src._arT=G.t;if(gap>25){dmg*=.3;if(t.team!=null&&t.team>=0&&G.teams[t.team]&&G.t-(G.teams[t.team].spotWarn??-99)>12){G.teams[t.team].spotWarn=G.t;log(t.team,'Spotting round! Artillery is zeroing in - move out before the salvo.','r');}}}  /* RF3: a new fire mission opens with a weak spotting round; the full salvo follows after the shells' flight time, so the target can run */
+function fire(src,t,dmg,wpn,splash){if(src.s&&src.s.missile&&!src.isB){bmLaunch(src,t,dmg,splash);return;}if(!src.isB)try{bfShoutFire(src,t,wpn,splash);}catch(_){}if(!src.isB&&!src._rip&&splash&&src.s.cls==='arty'&&wpn==='shell'){const gap=G.t-(src._arT??-99);src._arT=G.t;if(gap>25){dmg*=.3;if(t.team!=null&&t.team>=0&&G.teams[t.team]&&G.t-(G.teams[t.team].spotWarn??-99)>12){G.teams[t.team].spotWarn=G.t;log(t.team,'Spotting round! Artillery is zeroing in - move out before the salvo.','r');}}}  /* RF3: a new fire mission opens with a weak spotting round; the full salvo follows after the shells' flight time, so the target can run */
   if(!src.isB&&!src._rip&&hasAmmo(src)){if(src.am===undefined)ammoInit(src);if(src.am<=0){if(!isInf(src.s))return;dmg*=.12;}else src.am--;}if(!src.isB){const ss=src.s;if(ss.finisher&&!t.isB&&t.s&&isVeh(t.s)&&t.hp<t.max*.5)dmg*=1.4;if(ss.dom==='air'&&!t.isB&&saSpotted(src.team,t))dmg*=1.3;
   if(ss.ripple&&!src._rip){for(let k=1;k<ss.ripple;k++)G.timers.push({t:.16*k,fn:()=>{if(!src.dead&&!t.dead){src._rip=1;try{fire(src,t,dmg,wpn,splash);}finally{src._rip=0;}}}});}}
   if(!src.isB&&src.s.ambush&&hiddenNow(src)){dmg*=2;FXE('txt',[t.x|0,t.y|0,'AMBUSH',src.team,t.team]);}else if(!src.isB&&src.s.camo&&(DOCT[G.teams[src.team].fac]||{}).covert&&hiddenNow(src)){dmg*=1.5;FXE('txt',[t.x|0,t.y|0,'AMBUSH',src.team,t.team]);}src.lastFire=G.t;if(!src.isB&&(wpn==='shell'&&src.s.dom==='ground'||src.s.cls==='arty')){src.cbrT=G.t+10;if(G.cbrTeams&&G.t-(src.cbpT??-99)>8&&src.s.cls==='arty'){src.cbpT=G.t;for(const O of G.teams)if(G.cbrTeams&(1<<O.id)&&!ally(O.id,src.team))FXE('ping',[src.x|0,src.y|0,70],O.id);}}
@@ -7998,7 +8012,8 @@ function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!w
   T.charge=0;log(team,`${S.name} launched.`,'g');for(const O of G.teams)if(O.id!==team)log(O.id,`Warning: enemy ${S.name} inbound. Move your units!`,'r:msl',x,y);return true;}
 function addStrike(x,y,t,r,dmg,team,kind){G.strikes.push({x,y,t,r,dmg,team,kind});FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,kind==='sup'?1:0],team);}
 function updStrikes(dt){for(const s of G.strikes){s.t-=dt;if(s.t<=0){s.done=true;
-    if(G.battle&&s.kind==='sup'){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<MD_R){md++;if(d<nd){nd=d;nb=e;}}}
+    if(G.battle&&(s.kind==='sup'||s.kind==='bm')){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<MD_R){md++;if(d<nd){nd=d;nb=e;}}}
+      if(s.kind==='bm')for(const e of G.ents)if(!e.isB&&!e.dead&&e.s&&!ally(e.team,s.team)&&e.team>=0&&(e.kind==='idome'||(e.s.cls==='aa'&&e.s.wpn==='flak'&&e.s.aa>=2))){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<(e.kind==='idome'?MD_R:MD_R*.6)){md+=e.kind==='idome'?2:1;if(d<nd){nd=d;nb=e;}}}   /* Iron-Dome-type batteries count double, flak AA once */
       if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-MD_P,md))){if(nb)FXE('icpt',[nb.x|0,nb.y|0,s.x|0,s.y|0]);FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<MD_R))log(T.id,'Missile defense intercepted an incoming missile.','g');continue;}
       }
     G.curSid=s.kind==='sup'?s.sid|0:0;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?'super':s.kind==='bb'?'bb':'shell',s.kind);G.curSid=0;}}G.strikes=G.strikes.filter(s=>!s.done);}
@@ -8444,7 +8459,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   // strike aircraft per 8 ground units (1 to 3, by battle size) - it buys the aircraft first and the other buildings
   // save for it, the same way it saves for vehicles. Same money as everyone: it only spends it in a different order.
   const airN=mine.filter(e=>!e.isB&&e.s.dom==='air'&&e.kind!=='drone'&&!e.s.noAttack).length,wantAir=!!DIFF[T.ai.d??1].air&&!thin&&G.t>300&&done(id,'airfield')&&armyN>=10&&airN<Math.max(1,Math.min(Math.round(3*(G.bs||1)),Math.floor(armyN/8)));let aSv=0;
-  for(const cat of wantAir?['airfield','shipyard','factory','barracks']:wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){{const qb=qPick(id,cat);if(!qb||(qb.q?qb.q.length:0)>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;}let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift'&&k!=='ammot').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
+  for(const cat of wantAir?['airfield','shipyard','factory','barracks']:wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){{const qb=qPick(id,cat);if(!qb||(qb.q?qb.q.length:0)>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;}let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='bmt'||T.credits>2600).filter(k=>k!=='lander'&&k!=='airlift'&&k!=='ammot').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
     if(cat==='factory'){opts=enemyAir>=2?['aa','aa',...opts]:opts.filter(k=>k!=='aa'||srand()<.2);
       // Heavy-barrage doctrine (RU, CN, KP): keep a real artillery park - about a fifth of the army, 2 to 8 guns
       if(DC.barrage&&opts.includes('arty')&&unitCount(id,'arty')<Math.min(Math.round(8*(G.bs||1)),Math.max(2,Math.round(armyN*.2))))opts=['arty','arty','arty',...opts];}
@@ -10502,7 +10517,7 @@ function meGeo(B,kp,tc,fac){const C=ME_C;let K;
     case 'uplink:door':B.box(18,2,36,0,0,0,'#9d978a');B.box(2,2.2,36,8,0,0,'#4a4639');B.box(14,.3,32,0,1.1,0,'#a89f8a');break;
     default:return false;}
   return true;}
-const GEO_ALIAS={champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',krb:'arty',cbr:'aa',jeep:'aa',raidlead:'aa'};
+const GEO_ALIAS={bmt:'arty',champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',krb:'arty',cbr:'aa',jeep:'aa',raidlead:'aa'};
 function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];const key=kind+fac+team.color+part;if(GEO[key])return GEO[key];const tc=team.color,hc=camo(team),dk='#2b2d26',mt='#55574e',cn='#9a988c',cl='#7d7c70';const B=Bld();let s=FACTIONS[fac].units[kind]||{};
   if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=B.geo();
   switch(kind+':'+part){
@@ -17188,6 +17203,7 @@ function iconClass(k,s){s=s||{};const nm=String(s.name||''),cl=s.cls||'';k=Strin
   if(k==='atgm')return'atgmv';
   if(/^(ifv|apc)$/.test(k)||/^veh/.test(k))return'apc';
   if(k==='jeep'||k==='raidlead'||/technical/i.test(nm))return'jeep';
+  if(k==='bmt')return'bmt';
   if(k==='arty'||/arty|mlrs|how/.test(k))return(s.rocket||/rocket|launcher|mlrs|tos-|himars|phl|grad|fateh|smerch|uragan|bm-/i.test(nm))?'mlrs':'gun';
   if(k==='aa')return'spaa';
   if(k==='ew')return'ew';
@@ -18332,6 +18348,7 @@ function draw(c,K,W,H,o){o=o||{};const P=pal(o.fac,o.col),bg=!!o.bld||false;c.sa
     fp([[24,-2],[34,-4],[34,22],[22,22]],'#c9a227');c.fillStyle='#0007';for(let i=0;i<4;i++)c.fillRect(24+i*2.4,-2+i*5,2,5);ln(10,10,26,10,4,'#444');stripe(-20,0,9);break;
   case'gun':shadow(0,25,36);trk(-34,12,64,13,6);fp([[-32,13],[-30,4],[14,4],[24,12]],P.paint);fp([[-24,4],[-20,-10],[8,-10],[12,4]],lt(P.paint,.04));camo(-30,-10,42,25);
     ln(4,-4,40,-24,6.6,'#2f3437');rr(36,-29,8,8,1.5,'#3a4044');ln(-24,10,-36,14,3,'#333');stripe(-22,-3,10);break;
+  case'bmt':shadow(0,25,36);fp([[-34,17],[-34,8],[8,8],[8,17]],'#3a3f40');cab(10,17);c.save();c.translate(-12,5);c.rotate(-.55);rr(-26,-8,56,16,6,'#cfd3d0');fp([[30,-8],[44,0],[30,8]],'#b83a30');rr(-26,-8,10,16,3,'#8a8f8c');ln(4,-8,4,8,2,'#444');c.restore();stripe(-33,10,9);for(const x of[-24,-10,6,22])wh(x,19,6);break;
   case'mlrs':shadow(0,25,36);fp([[-34,17],[-34,8],[8,8],[8,17]],'#3a3f40');cab(10,17);c.save();c.translate(-12,6);c.rotate(-.42);rr(-24,-14,52,15,2,P.paint);for(let i=0;i<3;i++){ci(24,-10+i*4.6,2.1,'#15181a');ci(24,-10+i*4.6,.9,'#8a5a30');}c.restore();
     stripe(-33,10,9);for(const x of[-24,-10,6,22])wh(x,19,6);break;
   case'spaa':shadow(0,25,36);trk(-32,12,62,13,6);fp([[-30,13],[-28,3],[28,3],[30,13]],P.paint);fp([[-14,3],[-14,-8],[14,-8],[18,3]],lt(P.paint,.04));camo(-30,-8,58,20);ln(-2,-6,32,-26,4,'#2f3437');ln(8,-4,38,-20,4,'#2f3437');
@@ -18719,7 +18736,7 @@ for(const T of [VO_MAP,VOR,VOH,RADT]){if(T.EU){if(!T.FR)T.FR=T.EU;if(!T.DE)T.DE=
 /* Abdullah 2026-11-07 19:54 "Iraqis have a British accent": nations without their own recorded pack fell back to the browser's speech voice, which is English on most PCs. Borrow the nearest recorded native-language pack instead (same language family / dialect area) until each gets its own. */
 {const VO_ALIAS={IQ:'SA',SY:'RS',JO:'RS',BI:'SA',OM:'SA',KW:'SA',LY:'EG',SD:'EG',DZ:'EG',MA:'EG',AZ:'TR',KZ:'RU'};for(const T of [VO_MAP,VOR,VOH,RADT])for(const k in VO_ALIAS)if(!T[k]&&T[VO_ALIAS[k]])T[k]=T[VO_ALIAS[k]];for(const k in VO_ALIAS)if(!VO_SHEET[k])VO_SHEET[k]=VO_ALIAS[k];}
 // Role voices (2026-11-03): every unit type speaks its own lines. Unit kind -> voice role; clips live in vo/CODE_r.mp3 (VOR above).
-const VO_ROLE={inf:'inf',at:'at',atk:'at',atgm:'at',tank:'tank',hero:'elite',saka:'elite',guer:'elite',recon:'elite',hacker:'elite',aa:'veh',arty:'veh',mortar:'veh',idome:'veh',ew:'veh',krb:'veh',cbr:'veh',jeep:'veh',raidlead:'veh',heli:'pilot',jet:'pilot',airlift:'pilot',drone:'pilot',boat:'navy',ship:'navy',lander:'navy',dozer:'eng',harv:'eng',sapper:'eng',medic:'eng',cleric:'leader',officer:'leader',commissar:'leader'};
+const VO_ROLE={inf:'inf',at:'at',atk:'at',atgm:'at',tank:'tank',hero:'elite',saka:'elite',guer:'elite',recon:'elite',hacker:'elite',aa:'veh',arty:'veh',mortar:'veh',idome:'veh',ew:'veh',krb:'veh',bmt:'veh',cbr:'veh',jeep:'veh',raidlead:'veh',heli:'pilot',jet:'pilot',airlift:'pilot',drone:'pilot',boat:'navy',ship:'navy',lander:'navy',dozer:'eng',harv:'eng',sapper:'eng',medic:'eng',cleric:'leader',officer:'leader',commissar:'leader'};
 const VORB={},VORP={},VORL={};
 function voRLoad(fac){if(!AU.ctx||!VOR[fac]||VORB[fac])return;VORB[fac]='loading';fetch('vo/'+(VO_SHEET[fac]||fac)+'_r.mp3?v=1').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{VORB[fac]=buf;}).catch(e=>{VORB[fac]='fail';});}
 function voRPlay(fac,kind){const buf=VORB[fac],M=VOR[fac];if(!buf||typeof buf==='string'||!M||kind>2||!auOn()||!G||!G.sel)return false;const us=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(!us.length)return false;
@@ -20199,6 +20216,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
   else if(e.kind==='arty'){if(e.s&&e.s.rocket||!MIL_TANK[T.fac]&&!MODELS.proto.tank)c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};else{const tc=MIL_TANK[T.fac]&&MIL_TANK[T.fac].m!=='technical'&&MIL_TANK[T.fac].m!=='toontank'?MIL_TANK[T.fac]:MCFG.tank;c=Object.assign({},tc,{size:tc.size*1.08,extra:'gun'});if(MIL_TANK[T.fac]&&(MIL_TANK[T.fac].m==='technical'||MIL_TANK[T.fac].m==='toontank'))c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};}}
   if(c&&(c.m==='boat'||c.m==='ship')&&T&&T.fac)c=Object.assign({},c,{tint:navyPaint(T.fac,c.m),tk:e.kind==='lander'?.6:.88});
+  if(e.kind==='bmt')c={m:truckKey(T.fac),fit:'z',size:36,extra:'bm'};   /* Zolfaghar missile truck: a truck with one big tilted missile */
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
@@ -20233,6 +20251,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   if(c.extra==='zu23'){const B=Bld(),D='#2a2c28',S='#4f5446';B.box(7,1.6,6,-5,9.6,0,S);B.cyl(1.4,1.6,1.6,10,-5,11,0,D);B.box(4,3.2,4.6,-5,13,0,S);B.box(.4,3,5.4,-3,13.6,0,S);for(const z of [-1.1,1.1]){B.cyl(.32,.32,13,8,1.2,16.2,z,D,0,0,Math.PI/2-.42);B.cyl(.5,.5,1.6,8,-3.2,13.6,z,D,0,0,Math.PI/2-.42);}const g=mesh(B.geo());g.castShadow=true;o.add(g);o.userData.parts.turret=g;}
   if(c.extra==='dshk'){const B=Bld();B.cyl(.5,.6,6,8,-6,9,0,'#2b2d2a');B.box(3,1.6,2.2,-6,12.6,0,'#33352f');B.cyl(.35,.35,9,8,-1.5,13,0,'#1e1f1d',0,0,Math.PI/2);B.box(.4,2.2,2.6,-6.8,13.4,0,'#4a4d45');const g=mesh(B.geo());g.castShadow=true;o.add(g);}
   if(c.extra==='samtruck'){const pg=PROCB.samSite(),sp=new THREE.Group(),hm=mesh(pg[1]);hm.scale.setScalar(.9);sp.add(hm);sp.position.set(-7,10.4,0);o.add(sp);o.userData.parts.turret=sp;}
+  if(c.extra==='bm'){const B=Bld();B.cyl(1.7,1.7,24,10,0,0,0,'#d6d9d4',0,0,Math.PI/2);B.cyl(0,1.7,7,10,15.5,0,0,'#b53a2e',0,0,-Math.PI/2);B.box(3,.4,6,-11,0,0,'#7a7f7b');B.box(3,6,.4,-11,0,0,'#7a7f7b');B.box(8,1.6,3.4,-2,-3.2,0,'#3a3d36');const g=mesh(B.geo());g.position.set(-5,13,0);g.rotation.z=.62;o.add(g);o.userData.parts.turret=g;}
   if(c.extra==='mlrs'){const g=new THREE.Group(),G2=mlrsGeo(),bm=mesh(G2[0]),m=mesh(G2[1]);m.position.y=1.6;m.rotation.z=.32;g.add(bm);g.add(m);g.position.set(-6,8.8,0);o.add(g);o.userData.parts.turret=g;}
   if(c.extra==='crane'){const B=Bld(),Y='#d9a21f',D='#3a3a34';B.box(9,4,10,-7,9,0,Y);B.cyl(2.2,2.6,3,10,-7,12,0,D);B.box(2,2,2,-7,14,0,D);const g=new THREE.Group();const arm=mesh((()=>{const A=Bld();A.box(26,2.2,2.2,13,0,0,Y);A.box(2,6,1,25,-3,0,D);A.box(1.2,1.2,1.2,25,-6.5,0,'#222');return A.geo();})());arm.rotation.z=.42;g.add(arm);g.position.set(-7,14,0);g.rotation.y=.5;o.add(g);o.userData.parts.crane=g;
     B.box(2.4,6.5,20,17,3.2,0,Y);B.box(1,1,18,18.6,0.6,0,D);B.box(5,1.2,1.2,14.5,4.2,-6,D);B.box(5,1.2,1.2,14.5,4.2,6,D);B.box(1.6,1.6,1.6,1,17.5,-4,'#f0a020');o.add(mesh(B.geo()));}
