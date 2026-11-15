@@ -1,0 +1,89 @@
+  page: shader warm-up 5194 ms, 62 models, 120 objects in 648 steps (longest 347 ms), 114 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 39 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=204 normal=39ms (quiet max 223) longest=210ms three(progs/geo/tex)=+0/+-17/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":15,"bufKB":11,"vao":13,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 210ms@3.0s {} ; 138ms@0.1s {} ; 134ms@3.8s {"aud":1} ; 133ms@4.3s {"vao":1} ; 121ms@4.1s {"vao":1}
+  frames that made the GPU work (5):
+    0.34s 62ms {"buf":3,"bufKB":5.1,"vao":1} three geo/tex 595/248
+    3.25s 91ms {"aud":1} three geo/tex 573/248
+    3.55s 75ms {"aud":2} three geo/tex 573/248
+    3.79s 134ms {"aud":1} three geo/tex 573/248
+    11.58s 101ms {"buf":12,"bufKB":5.7,"vao":7} three geo/tex 577/248
+  shapes that entered the scene during the strike (look here for the ones built or re-sent):
+    0.1s RingGeometry 114v MeshBasicMaterial
+    0.1s RingGeometry 114v MeshBasicMaterial
+    0.1s CircleGeometry 50v MeshBasicMaterial
+    0.1s PlaneGeometry 4v MeshBasicMaterial
+    0.1s BufferGeometry 378v MeshStandardMaterial
+    0.1s ConeGeometry 22v MeshBasicMaterial
+    0.4s BufferGeometry 144v MeshStandardMaterial
+    3.0s IcosahedronGeometry 60v MeshStandardMaterial
+    3.0s IcosahedronGeometry 60v MeshStandardMaterial
+    3.0s IcosahedronGeometry 60v MeshStandardMaterial
+    3.0s IcosahedronGeometry 60v MeshStandardMaterial
+    3.0s IcosahedronGeometry 60v MeshStandardMaterial
+    3.0s RingGeometry 130v MeshBasicMaterial
+IR worst JS call (not drawing): simUpdate 147ms; FAIL: 13 new meshes (max 6)
+  page: shader warm-up 3034 ms, 65 models, 125 objects in 678 steps (longest 104 ms), 122 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 34 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=169 normal=34ms (quiet max 92) longest=251ms three(progs/geo/tex)=+0/+10/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":32,"bufKB":14,"vao":20,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 251ms@3.0s {"vao":1} ; 132ms@3.3s {"vao":1} ; 122ms@4.2s {} ; 114ms@3.2s {"aud":2} ; 111ms@5.8s {}
+  frames that made the GPU work (5):
+    3.09s 70ms {"buf":2,"bufKB":3.3,"vao":1} three geo/tex 671/317
+    3.21s 114ms {"aud":2} three geo/tex 671/317
+    3.43s 73ms {"aud":1} three geo/tex 671/317
+    3.49s 47ms {"aud":1} three geo/tex 671/317
+    7.99s 79ms {"buf":30,"bufKB":10.9,"vao":10} three geo/tex 681/317
+  shapes that entered the scene during the strike (look here for the ones built or re-sent):
+    0.3s RingGeometry 114v MeshBasicMaterial
+    0.3s RingGeometry 114v MeshBasicMaterial
+    0.3s CircleGeometry 50v MeshBasicMaterial
+    0.3s PlaneGeometry 4v MeshBasicMaterial
+    0.3s BufferGeometry 378v MeshStandardMaterial
+    0.3s ConeGeometry 22v MeshBasicMaterial
+    3.1s IcosahedronGeometry 60v MeshStandardMaterial
+    3.1s IcosahedronGeometry 60v MeshStandardMaterial
+    3.1s IcosahedronGeometry 60v MeshStandardMaterial
+    3.1s IcosahedronGeometry 60v MeshStandardMaterial
+    3.1s IcosahedronGeometry 60v MeshStandardMaterial
+    3.1s RingGeometry 130v MeshBasicMaterial
+    8.0s BufferGeometry 36v MeshStandardMaterial
+    8.0s CylinderGeometry 40v MeshStandardMaterial
+    8.0s PlaneGeometry 4v MeshStandardMaterial
+    8.0s WireframeGeometry 144v LineBasicMaterial
+    8.0s CylinderGeometry 40v MeshStandardMaterial
+    8.0s PlaneGeometry 4v MeshStandardMaterial
+    8.0s WireframeGeometry 144v LineBasicMaterial
+    8.0s CylinderGeometry 40v MeshStandardMaterial
+    8.0s PlaneGeometry 4v MeshStandardMaterial
+    8.0s WireframeGeometry 144v LineBasicMaterial
+RU worst JS call (not drawing): simUpdate 175ms; FAIL: 20 new meshes (max 6); longest frame 251 ms is 159 ms over the longest quiet frame 92 ms (max 150)
+  page: shader warm-up 2465 ms, 59 models, 114 objects in 662 steps (longest 108 ms), 106 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 37 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=183 normal=37ms (quiet max 179) longest=191ms three(progs/geo/tex)=+0/+-21/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":12,"bufKB":4,"vao":8,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 191ms@3.0s {} ; 148ms@3.3s {} ; 130ms@4.3s {} ; 113ms@0.5s {} ; 104ms@3.6s {"aud":3}
+  frames that made the GPU work (3):
+    3.26s 26ms {"aud":1} three geo/tex 557/216
+    3.56s 104ms {"aud":3} three geo/tex 557/216
+    8.82s 101ms {"buf":12,"bufKB":4.5,"vao":7} three geo/tex 561/216
+  shapes that entered the scene during the strike (look here for the ones built or re-sent):
+    0.3s RingGeometry 114v MeshBasicMaterial
+    0.3s RingGeometry 114v MeshBasicMaterial
+    0.3s CircleGeometry 50v MeshBasicMaterial
+    0.3s PlaneGeometry 4v MeshBasicMaterial
+    0.3s BufferGeometry 450v MeshStandardMaterial
+    0.3s ConeGeometry 22v MeshBasicMaterial
+    3.3s IcosahedronGeometry 60v MeshStandardMaterial
+    3.3s IcosahedronGeometry 60v MeshStandardMaterial
+    3.3s IcosahedronGeometry 60v MeshStandardMaterial
+    3.3s IcosahedronGeometry 60v MeshStandardMaterial
+    3.3s IcosahedronGeometry 60v MeshStandardMaterial
+    3.3s RingGeometry 130v MeshBasicMaterial
+    8.8s BufferGeometry 36v MeshStandardMaterial
+    8.8s CylinderGeometry 40v MeshStandardMaterial
+    8.8s PlaneGeometry 4v MeshStandardMaterial
+    8.8s WireframeGeometry 144v LineBasicMaterial
+US worst JS call (not drawing): simUpdate 146ms; FAIL: 8 new meshes (max 6)
+SUPERFREEZE FAIL
