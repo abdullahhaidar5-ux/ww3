@@ -26,7 +26,7 @@ function radFeed(m,k,x,y,nat){const el=document.getElementById('log');if(!el||!m
   if(x==null&&RADF.tp&&now-RADF.tp.t<400&&(k==='bad'||k==='w'||k==='g')){x=RADF.tp.x;y=RADF.tp.y;}
   const d=document.createElement('div'),K=radKind(m),i=document.createElement('i');d.className=k||'';i.className=K[1];i.textContent=K[2];d.append(i,document.createTextNode(m));d._t=now;d._k=k;
   if(nat&&nat!==m){const sm=document.createElement('small');sm.textContent=nat;d.append(sm);}
-  if(x!=null&&y!=null){radPin(d,x,y);try{mmPing(x,y,K[1]==='atk'?'a':/strike|missile|launch|nuke|bomb|barrage/i.test(m)?'s':(k==='g'||/ready|complete|finished|built|captured|done/i.test(m))?'g':'');}catch(e){}}
+  if(x!=null&&y!=null){radPin(d,x,y);try{mmPing(x,y,K[1]==='atk'?'a':/strike|missile|launch|bomb|barrage/i.test(m)?'s':(k==='g'||/ready|complete|finished|built|captured|done/i.test(m))?'g':'');}catch(e){}}
   setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},6000);el.append(d);while(el.children.length>3)el.firstChild.remove();RADF.last=d;RADF.n++;return d;}
 function radPin(d,x,y){d._p={x,y};d.classList.add('go');d.title='Click to look there (or press Space)';d.addEventListener('click',e=>{e.stopPropagation();radGo(d._p);});RADF.pos={x,y,g:G};}
 /* the town ping raised beside a town report tells where it happened */

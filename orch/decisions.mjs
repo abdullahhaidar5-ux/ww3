@@ -509,7 +509,7 @@ try {
     ck(sl.on && sl.wanted, 'L / the Supply lines button must switch the supply overlay on in Battle'); ck(sl.chip, 'Battle must show the Supply chip'); ck(sl.ui, 'the ammo row must say whether the unit is in your supply area');
     // CAPTURABLE ROADS (Abdullah 2026-11-14 18:40 "Make it so that units can capture roads"): a ground unit standing on a neutral road section captures it in ~10 s, an air unit does not, an owned section is supply area
     { const rc = await ev(() => { const L = G.lg, D = G.lgd; lgFix(D); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && e.s && e.s.dom === 'ground'); if (!u) return { err: 'no unit' };
-        let ei = -1; for (let i = 0; i < L.E.length && ei < 0; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 300 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) ei = i; } if (ei < 0) return { err: 'no neutral section' };
+        let ei = -1, nn = 0; for (let i = 0; i < L.E.length; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 120 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) { nn++; if (ei < 0 || e.len > L.E[ei].len) ei = i; } } if (ei < 0) return { err: 'no neutral section', edges: L.E.length, owned: L.E.filter((e, i) => lgRcOwner(i) >= 0).length };   /* the longest neutral, open section (map-independent) */
         const e = L.E[ei], m = lgPoint(e, e.len / 2), ox = u.x, oy = u.y, os = u.s; const run = n => { for (let k = 0; k < n; k++) lgRoadCap(1); };
         const hold = () => D.rc[ei] && D.rc[ei].o;
         u.s = Object.assign({}, os, { dom: 'air' }); u.x = m[0]; u.y = m[1]; run(14); const air = hold();
