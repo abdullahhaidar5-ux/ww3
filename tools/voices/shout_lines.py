@@ -178,3 +178,12 @@ contact fr:Contact devant !|de:Feindkontakt!
 tank fr:Char !|de:Panzer!
 medic fr:Médic !|de:Sanitäter!
 ''')
+_s('OB', '''
+rpg آر بي جي!|قذيفة!
+manDown إصابة!|في واحد انصاب!
+reload عم بعبّي!|غطّوني، بعبّي!
+grenade قنبلة!|انبطحوا، قنبلة!
+contact اشتباك قدّام!|العدو قدّامنا!
+tank دبابة!|مدرّعة، مدرّعة!
+medic إسعاف!|بدنا مسعف!
+''')

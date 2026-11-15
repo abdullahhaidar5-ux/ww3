@@ -268,7 +268,21 @@ hsel Las Avispas esperan órdenes.
 hmove En movimiento.
 hatk ¡Contacto! ¡Fuego!
 hab ¡Ejecuten! ¡Patria o muerte!''')
+_b('OB', '''
+base القاعدة تحت الهجوم!
+air طيران معادي جاي!
+armL مدرّعات العدو عالجناح الشمال!
+armR مدرّعات العدو عالجناح اليمين!
+town_taken البلدة صارت إلنا.
+town_lost خسرنا البلدة!
+msl صاروخ! خدوا ساتر!
+lost خسرنا مجموعة.
+hero فرقة النخبة جاهزة.
+hsel جاهزين يا قائد.
+hmove ماشيين، على بركة الله.
+hatk اشتباك! الله أكبر، نار!
+hab نفّذوا! يلّا يلّا!''')
 ROLES = KEYS
 RV = {k: (('cmd', 'cmd', 0) if k in KEYS[:9] else (2, 'grim', 0)) for k in KEYS}
 if __name__ == '__main__':
-    assert len(R) == 18 and all(set(v) == set(KEYS) for v in R.values()); print('ok', len(R))
+    assert len(R) == 19 and all(set(v) == set(KEYS) for v in R.values()); print('ok', len(R))

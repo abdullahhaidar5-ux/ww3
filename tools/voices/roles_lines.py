@@ -197,3 +197,15 @@ navy de:Besatzung auf Gefechtsstation.|fr:Navire prêt. / fr:En avant toute.|de:
 eng fr:Génie prêt.|de:Pioniere bereit. / de:Wir rücken zur Baustelle.|fr:En route pour le chantier. / fr:Mines prêtes !|de:Wir kämpfen auch!
 leader fr:Commandant en ligne.|de:Ich höre, Kommandant. / fr:Suivez-moi.|de:Mir nach! / fr:À l’attaque ! Vive l’Europe !|de:Vorwärts, für Europa!
 ''')
+# OB: fictional Palestine Islamic Brigade - Palestinian (Levantine) Arabic, own lines, no Shia invocations (Abdullah 2026-11-15 00:21 "Palestinians have ... Shia dialogue")
+R['OB'] = _p('OB', '''
+inf جاهزين يا شباب.|تحت أمرك يا قائد. / ماشيين، على بركة الله.|يلّا يا شباب، قدّام. / نار!|الله أكبر، عليهم!
+elite القنّاص جاهز.|بهدوء، جاهزين. / بنمشي بالسكوت.|بنلفّ عليهم من الجنب. / شايفه، طلقة وحدة.|الهدف وقع.
+at فريق القاذف جاهز.|الآر بي جي جاهز. / بنحمل القذائف، ماشيين.|عالكمين يا شباب. / مدرّعة! اضرب!|القذيفة طلعت!
+tank الطاقم جاهز.|المدرّعة جاهزة يا قائد. / المدرّعة ماشية.|قدّام يا سوّاق! / نار!|اضرب، اضرب!
+veh الطاقم جاهز.|السيارة جاهزة. / ماشيين، بسرعة.|عالطريق يا سوّاق. / الرشّاش، نار!|إسناد، نار!
+pilot المسيّرة جاهزة.|المشغّل جاهز. / المسيّرة طايرة.|عالهدف، ماشيين. / الهدف عالشاشة، اضرب!|نزّلها عليهم!
+navy القارب جاهز.|البحّارة جاهزين. / عالبحر، بسرعة!|المحرّك على آخره. / نار عالهدف!|اضرب!
+eng المهندسين جاهزين.|جاهزين للشغل. / عالموقع يا شباب.|رايحين عالورشة. / الألغام جاهزة!|احنا كمان بنقاتل!
+leader القائد عالخط.|أوامرك يا شباب. / اتبعوني.|على بركة الله، معي. / هجوم!|ثابتين يا رجال، قدّام!
+''')
