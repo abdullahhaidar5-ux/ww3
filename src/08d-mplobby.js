@@ -112,7 +112,7 @@ function mplShow(D){
     const keys=(typeof BATTLE_MAPS!=='undefined'&&BATTLE_MAPS.length?BATTLE_MAPS:Object.keys(MAPS)).filter(k=>MAPS[k]&&(MAPS[k].max||8)>=Math.max(2,D.nn||1));
     for(const k of keys){const o=document.createElement('option');o.value=k;const M=MAPS[k];o.textContent=(M.name||k)+'  ('+(M.min||2)+'–'+(M.max||8)+')';s.append(o);}
     if(!keys.includes(D.mk)){const o=document.createElement('option');o.value=D.mk;o.textContent=(MAPS[D.mk]||{}).name||D.mk;s.prepend(o);}s.value=D.mk;
-    s.onchange=()=>{if(!ms)return;if(![...ms.options].some(o=>o.value===s.value)){const o=document.createElement('option');o.value=s.value;o.textContent=(MAPS[s.value]||{}).name||s.value;ms.append(o);}ms.value=s.value;if(ms.onchange)ms.onchange();else try{ms.dispatchEvent(new Event('change'));}catch(e){}try{renderLobby();}catch(e){}};
+    s.onchange=()=>{const v=s.value;if(!MAPS[v])return;/* set the map directly: the old #mapSel only had a change handler after its picker page was opened, so the pick was lost (Abdullah 19:13 "stuck on one map") */setup.map=v;setup.slot=-1;setup.st=[];setup.stK=null;try{if(MAPS[v].bm||(typeof BM_KEYS!=='undefined'&&BM_KEYS.includes(v)))SET.bmap=v;else SET.map=v;saveSet();}catch(e){}if(ms){if(![...ms.options].some(o=>o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=(MAPS[v]||{}).name||v;ms.append(o);}ms.value=v;}try{syncAiN();}catch(e){}try{renderLobby();}catch(e){}};
     R.append(s);}   /* the dropdown is the one way to pick the map (Abdullah 18:54 "There should not be a separate map selection page") */
   if(D.spotNote)R.append(E('div','mmapn',D.spotNote));
   if(D.invite)R.append(D.invite);

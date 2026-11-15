@@ -136,7 +136,7 @@ function cfNetText(){return 'Online'+(NET.ping?` · ping ${Math.round(NET.ping)}
 const TEAM_COL=['#7fb8e6','#ea5a40','#74d08f','#e3b341','#c58af0','#f08ab4','#6fe0d0','#c9c9c9'];
 // Host lobby: game code and player count at the top, the Start button right under it, one row per seat (taken or
 // open) with each player's nation and team, quick team presets, and the invite steps at the bottom.
-async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=='single'||!cfb&&(!NET.code||NET.code==='join'))return;const mk=cfb&&MAPS[cfb.map]?cfb.map:setup.map,mx=cfb&&cfb.mx>1?Math.min(cfb.mx|0,(MAPS[mk]||MAPS.strait).max):(MAPS[mk]||MAPS.strait).max,mapN=(MAPS[mk]||MAPS.strait).name;
+async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=='single'||!cfb&&(!NET.code||NET.code==='join'))return;const mk=MAPS[setup.map]?setup.map:cfb&&MAPS[cfb.map]?cfb.map:'strait',mx=cfb&&cfb.mx>1?Math.min(cfb.mx|0,(MAPS[mk]||MAPS.strait).max):(MAPS[mk]||MAPS.strait).max,mapN=(MAPS[mk]||MAPS.strait).name;
   NET.ais=NET.ais||[];if(NET.lobby.length+1+NET.ais.length>mx)NET.ais.splice(Math.max(0,mx-1-NET.lobby.length));
   if(NET.lobby.length+1>mx&&!cfb){const drop=NET.lobby.splice(mx-1);for(const p of drop)NET.game.emit('lobby',{n:0,to:p.peer,full:1}).catch(()=>{});}
   let names={};try{if(NET.user){const ids=NET.lobby.map(p=>p.by).filter(Boolean);if(ids.length)names=await NET.user.profiles(ids);}}catch(e){}
@@ -173,7 +173,7 @@ function lobPc(){return [NET.pc0>=0?NET.pc0:-1,...NET.lobby.map(p=>p.c>=0?p.c:-1
 function lobbyTeams(){const nh=NET.lobby.length+1;return [...(NET.tm||[]).slice(0,nh),...(NET.ais||[]).map(a=>a.tm|0)];}
 // Start spots in the lobby: one per seat (players then computer players; -1 = Random). Picks made for one set of spots
 // (map and player count) are dropped when the set changes, so a number always means the spot the leader saw.
-function lobMap(){const b=NET.cf&&NET.cf.own&&NET.cf.blob;return b&&MAPS[b.map]?b.map:setup.map||'strait';}
+function lobMap(){const b=NET.cf&&NET.cf.own&&NET.cf.blob;return MAPS[setup.map]?setup.map:b&&MAPS[b.map]?b.map:'strait';}
 function lobSt(){const nh=NET.lobby.length+1,ais=NET.ais||[],n=nh+ais.length,key=spotsKey(lobMap(),n);
   if(NET.stK&&NET.stK!==key){NET.st=[];ais.forEach(a=>a.st=-1);}NET.stK=key;
   const raw=[...Array.from({length:nh},(_,i)=>(NET.st||[])[i]),...ais.map(a=>a.st)],o=[];for(const v of raw)o.push(Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1);return o;}
