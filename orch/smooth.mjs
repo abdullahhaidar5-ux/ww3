@@ -128,8 +128,8 @@ async function battleProfile(name) {
         const a = run(false), b = run(true); R3.info.autoReset = true;
         const top = Object.entries(by).sort((x, y) => y[1] - x[1]).slice(0, 6);
         try { syncScene(.016); } catch (e) {}
-        const bk = {}; for (const e of G.ents) { if (e.dead) continue; const ob = OBJ.get(e.id); if (!ob) continue; let n = 0; ob.traverse(m => { if (m.isMesh && !m.isInstancedMesh && vis(m)) n++; }); const k = (e.isB ? 'B:' : 'U:') + e.kind; bk[k] = bk[k] || [0, 0]; bk[k][0] += n; bk[k][1]++; }   /* meshes that draw one by one, per unit/building kind: what to merge or instance first */
-        const byKind = Object.entries(bk).sort((x, y) => y[1][0] - x[1][0]).slice(0, 14).map(([k, v]) => k + ' ' + v[0] + ' meshes / ' + v[1] + ' objects');
+        const bk = {}; for (const e of G.ents) { if (e.dead) continue; const ob = OBJ.get(e.id); if (!ob) continue; let n = 0; ob.traverse(m => { if (m.isMesh && !m.isInstancedMesh && vis(m)) n++; }); const k = (e.isB ? 'B:' : 'U:') + e.kind; bk[k] = bk[k] || [0, 0]; bk[k][0] += n; bk[k][1]++; if (e.kind === 'factory' && n > ((bk.__fk && bk.__fk.length) || 0)) { const L = []; ob.traverse(m => { if (m.isMesh && !m.isInstancedMesh && vis(m)) L.push((m.name || '-') + '/' + (m.material && (m.material.name || m.material.type)) + '/' + (m.geometry && m.geometry.attributes.position.count) + (m.castShadow ? '/cs' : '')); }); bk.__fk = L; } }   /* meshes that draw one by one, per unit/building kind: what to merge or instance first */
+        const byKind = Object.entries(bk).filter(([k]) => k !== '__fk').sort((x, y) => y[1][0] - x[1][0]).slice(0, 14).map(([k, v]) => k + ' ' + v[0] + ' meshes / ' + v[1] + ' objects').concat(bk.__fk ? ['factory parts: ' + bk.__fk.join(' ; ')] : []);
         return { rpT, log, total, auto, mUpd, rNo, rSh, rNoMat, vcount, travMs: +trav.toFixed(1), callsNoShadow: a, callsWithShadow: b, top, byKind };
       }), null, 0));
     }
