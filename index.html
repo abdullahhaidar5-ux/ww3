@@ -16200,6 +16200,7 @@ body.mplon #menu{visibility:hidden}
 #mpl .mmid{flex:1;font-size:16px;opacity:.82;min-width:0}
 #mpl .mft .mback{margin-left:auto}
 #mpl .lkinv{padding:8px 10px}
+.mpldd{width:100%;margin:6px 0 4px;padding:8px 10px;font:700 15px system-ui,sans-serif;color:#eef3f6;background:#0d1418;border:2px solid #5f7f9f;border-radius:4px}
 `;document.head.appendChild(s);
 const _t=LK.toast;LK.toast=function(m){try{mplLog(m);}catch(e){}return _t(m);};})();
 function mplLog(m){MPL.log.push(String(m));if(MPL.log.length>80)MPL.log.shift();const l=document.getElementById('mplLog');if(l){const d=document.createElement('div');d.textContent=String(m);l.append(d);l.scrollTop=l.scrollHeight;}}
@@ -16241,7 +16242,13 @@ function mplShow(D){
   const R=E('div','mright'),pv=E('div','mpv');let cv=D.spots;
   if(!cv){cv=document.createElement('canvas');cv.width=384;cv.height=264;setTimeout(()=>{try{mapPreview(D.mk,cv);}catch(e){}},30);}
   pv.append(cv);R.append(pv);const m=MAPS[D.mk]||{};R.append(E('div','mmap',m.name||D.mk),E('div','mmapn',(m.bm&&typeof bmInfo==='function'?(()=>{const I=bmInfo(D.mk);return I.players+' players · '+I.size+' · '+I.theme;})():(m.min||2)+'–'+(m.max||D.mx)+' players')));
-  if(D.onMap){const b=E('button','mbtn sec','SELECT MAP');b.id='mplSelMap';b.onclick=D.onMap;R.append(b);}
+  /* map dropdown (Abdullah 2026-11-14 18:39 "select maps from a drop down in lobby"): every map that fits the room, in the one Battle list; the host picks, others see the name */
+  if(D.onMap){const ms=document.getElementById('mapSel'),s=document.createElement('select');s.id='mplMapDd';s.className='mpldd';s.setAttribute('aria-label','Battlefield');
+    const keys=(typeof BATTLE_MAPS!=='undefined'&&BATTLE_MAPS.length?BATTLE_MAPS:Object.keys(MAPS)).filter(k=>MAPS[k]&&(MAPS[k].max||8)>=Math.max(2,D.nn||1));
+    for(const k of keys){const o=document.createElement('option');o.value=k;const M=MAPS[k];o.textContent=(M.name||k)+'  ('+(M.min||2)+'–'+(M.max||8)+')';s.append(o);}
+    if(!keys.includes(D.mk)){const o=document.createElement('option');o.value=D.mk;o.textContent=(MAPS[D.mk]||{}).name||D.mk;s.prepend(o);}s.value=D.mk;
+    s.onchange=()=>{if(!ms)return;if(![...ms.options].some(o=>o.value===s.value)){const o=document.createElement('option');o.value=s.value;o.textContent=(MAPS[s.value]||{}).name||s.value;ms.append(o);}ms.value=s.value;if(ms.onchange)ms.onchange();else try{ms.dispatchEvent(new Event('change'));}catch(e){}try{renderLobby();}catch(e){}};
+    R.append(s);const b=E('button','mbtn sec','BROWSE MAPS…');b.id='mplSelMap';b.onclick=D.onMap;R.append(b);}
   if(D.spotNote)R.append(E('div','mmapn',D.spotNote));
   if(D.invite)R.append(D.invite);
   fr.append(R);
