@@ -574,7 +574,10 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     // a garrisoned house's flag, marker and scaffold, and a supply truck's crate load (shared shapes, first drawn mid-battle when squads run into houses / a truck loads)
     if(!dead()){const grp=mk();try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));
         for(const q of G.teams)if(q&&q.fac&&FACTIONS[q.fac])grp.add(mesh(geoFor('garrison',q.fac,q,'main')));const gs=bstats(T.fac,'garrison');if(gs&&BH.garrison)grp.add(new THREE.LineSegments(scafGeo(gs.size+6,BH.garrison/BSC+6),scafMat()));}
-      if(typeof harvCargoGeo==='function')grp.add(mesh(harvCargoGeo()));grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
+      if(typeof harvCargoGeo==='function')grp.add(mesh(harvCargoGeo()));
+      // every side's riflemen and anti-tank teams in all their kit variants: a fresh squad from the barracks mid-battle used to merge its soldier shapes on the spot
+      for(const q of G.teams){if(!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;for(const kd of ['inf','at']){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;
+        for(const id of [1,2,5]){try{const o=makeObj({id:900000+id,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}}}grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
