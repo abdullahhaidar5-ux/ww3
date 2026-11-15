@@ -282,7 +282,63 @@ hsel جاهزين يا قائد.
 hmove ماشيين، على بركة الله.
 hatk اشتباك! الله أكبر، نار!
 hab نفّذوا! يلّا يلّا!''')
+_b('FR', '''
+base La base est attaquée !
+air Avions ennemis en approche !
+armL Blindés ennemis, flanc gauche !
+armR Blindés ennemis, flanc droit !
+town_taken Village sécurisé.
+town_lost On a perdu le village !
+msl Tir de missile ! À couvert !
+lost Unité perdue.
+hero Forces spéciales prêtes.
+hsel Commandos en attente.
+hmove On y va.
+hatk Contact ! Feu !
+hab Exécution ! Go !''')
+_b('DE', '''
+base Die Basis wird angegriffen!
+air Feindliche Flugzeuge im Anflug!
+armL Feindpanzer, linke Flanke!
+armR Feindpanzer, rechte Flanke!
+town_taken Ort gesichert.
+town_lost Wir haben den Ort verloren!
+msl Raketenstart! Deckung!
+lost Einheit verloren.
+hero Kommandotrupp bereit.
+hsel Trupp wartet.
+hmove Abmarsch.
+hatk Kontakt! Feuer!
+hab Ausführen! Los!''')
+_b('GB', '''
+base Base under attack!
+air Enemy aircraft inbound!
+armL Enemy armour, left flank!
+armR Enemy armour, right flank!
+town_taken Town secured.
+town_lost We've lost the town!
+msl Missile launch! Take cover!
+lost We've lost a unit.
+hero Special forces ready, sir.
+hsel Patrol standing by.
+hmove Moving out.
+hatk Contact! Engaging!
+hab Go, go, go!''')
+_b('RV', '''
+base القاعدة تنضرب!
+air طيران معادي جاي!
+armL دبابات العدو عالجناح اليسار!
+armR دبابات العدو عالجناح اليمين!
+town_taken المنطقة صارت إلنا.
+town_lost خسرنا المنطقة!
+msl صاروخ! انبطحوا!
+lost خسرنا مجموعة.
+hero فرقة الأبطال جاهزة.
+hsel حاضرين يا حجي.
+hmove ماشين، يا علي.
+hatk اشتباك! يا حسين، نار!
+hab نفّذوا! يا علي مدد!''')
 ROLES = KEYS
 RV = {k: (('cmd', 'cmd', 0) if k in KEYS[:9] else (2, 'grim', 0)) for k in KEYS}
 if __name__ == '__main__':
-    assert len(R) == 19 and all(set(v) == set(KEYS) for v in R.values()); print('ok', len(R))
+    assert len(R) == 23 and all(set(v) == set(KEYS) for v in R.values()); print('ok', len(R))

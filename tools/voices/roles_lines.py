@@ -209,3 +209,48 @@ navy القارب جاهز.|البحّارة جاهزين. / عالبحر، بس
 eng المهندسين جاهزين.|جاهزين للشغل. / عالموقع يا شباب.|رايحين عالورشة. / الألغام جاهزة!|احنا كمان بنقاتل!
 leader القائد عالخط.|أوامرك يا شباب. / اتبعوني.|على بركة الله، معي. / هجوم!|ثابتين يا رجال، قدّام!
 ''')
+# FR / DE / GB / RV: own lines (Abdullah 2026-11-15 00:21 "All factions should have appropriate quotes dialogue"; FR/DE used EU's mixed fr/de sheet, GB had none, RV borrowed Yemen's)
+R['FR'] = _p('FR', '''
+inf Prêt, mon lieutenant.|À vos ordres. / En route.|Compris, on avance. / Feu !|Ouvrez le feu !
+elite Commandos prêts.|On est discrets. / On se faufile.|On les contourne. / Cible en vue, tir.|Une balle, un ennemi.
+at Équipe antichar prête.|Missile prêt. / On prend les missiles.|En position. / Char en vue, tir !|Missile parti !
+tank Équipage prêt.|Le canon est chargé. / Le char avance.|En avant, pilote ! / Canon, feu !|Obus perforant, feu !
+veh Équipage prêt.|Véhicule prêt. / On démarre.|Plein gaz ! / Tir d'appui !|Artillerie, feu !
+pilot Pilote prêt.|Prêt au décollage. / Décollage.|Cap sur l'objectif. / Cible verrouillée, tir !|Bombe larguée !
+navy Équipage aux postes.|Navire paré. / En avant toute.|On appareille. / Pièces, feu !|Feu sur l'ennemi !
+eng Génie prêt.|Prêts à construire. / On va au chantier.|En route. / Mines prêtes !|Le génie se bat aussi !
+leader Le commandant écoute.|Vos ordres. / Suivez-moi.|Pour la France ! / À l'assaut !|En avant, avec moi !
+''')
+R['DE'] = _p('DE', '''
+inf Bereit, Herr Leutnant.|Zu Befehl. / Wir rücken vor.|Verstanden, Abmarsch. / Feuer!|Feuer frei!
+elite Kommando bereit.|Wir bleiben unsichtbar. / Wir schleichen uns ran.|Wir umgehen sie. / Ziel erfasst, Schuss.|Ein Schuss, ein Treffer.
+at Panzerabwehr bereit.|Rakete bereit. / Raketen aufnehmen.|In Stellung. / Panzer im Visier, Feuer!|Rakete raus!
+tank Besatzung bereit.|Kanone geladen. / Panzer marsch.|Vorwärts, Fahrer! / Kanone, Feuer!|Panzergranate, Feuer!
+veh Besatzung bereit.|Fahrzeug bereit. / Wir fahren los.|Vollgas! / Feuerunterstützung!|Artillerie, Feuer!
+pilot Pilot bereit.|Startklar. / Wir starten.|Kurs auf das Ziel. / Ziel aufgeschaltet, Feuer!|Bombe abgeworfen!
+navy Besatzung auf Station.|Schiff klar. / Volle Fahrt voraus.|Wir laufen aus. / Geschütze, Feuer!|Feuer auf den Feind!
+eng Pioniere bereit.|Bereit zum Bauen. / Zur Baustelle.|Wir sind unterwegs. / Minen bereit!|Pioniere kämpfen auch!
+leader Kommandeur hört.|Ihre Befehle. / Mir nach!|Für Deutschland! / Angriff!|Vorwärts, mir nach!
+''')
+R['GB'] = _p('GB', '''
+inf Ready, sir.|Standing by. / Moving out.|On our way. / Open fire!|Engaging, engaging!
+elite Who dares wins.|Ready and quiet. / Moving silent.|Going round the flank. / Target down.|One shot, sir.
+at Anti-tank team ready.|Javelin up. / Shifting position.|Moving to cover. / Tank in sight, firing!|Missile away!
+tank Crew ready.|Gun's loaded, sir. / Driver, advance.|Tanks moving. / Gunner, fire!|Sabot, fire!
+veh Crew ready.|Wagon's ready. / Mounting up.|Foot down! / Fire support!|Guns, fire!
+pilot Pilot ready.|Ready for take-off. / Wheels up.|Inbound to target. / Target locked, firing!|Bombs gone!
+navy Ship's company ready.|All stations manned. / Full ahead.|Under way. / Guns, fire!|Fire on the enemy!
+eng Sappers ready.|Ready to build. / Off to the site.|On our way. / Mines ready!|Sappers fight too!
+leader Commander here.|Go ahead. / Follow me.|For King and country! / Charge!|Up and at them!
+''')
+R['RV'] = _p('RV', '''
+inf حاضرين يا حجي.|تأمر، يا علي مدد. / ماشين هسّه.|يلّه يا شباب، كدّام. / نار!|يا حسين، عليهم!
+elite القنّاص جاهز.|بهدوء، حاضرين. / نمشي بلا صوت.|نلف عليهم من الصوب. / شايفه، طلقة وحدة.|طاح الهدف.
+at فريق الصواريخ جاهز.|ضد الدروع حاضرين. / نشيل الصواريخ، ماشين.|للموقع يا رجال. / دبابة! اضرب!|الصاروخ طلع!
+tank طاقم الدبابة جاهز.|المدفع جاهز يا حجي. / الدبابة ماشية.|كدّام يا سايق! / مدفعي، نار!|يا حيدر، نار!
+veh الطاقم جاهز.|العجلة جاهزة. / نطلع هسّه.|دوس بنزين! / نار إسناد!|المدفعية، نار!
+pilot الطيار جاهز.|جاهزين للطيران. / نطير.|للهدف، ماشين. / الهدف بالمنظار، نار!|نزّلناها!
+navy الزورق جاهز.|البحّارة حاضرين. / للشط، بسرعة!|المكينة على الآخر. / نار عالهدف!|اضرب!
+eng المهندسين حاضرين.|جاهزين للبناء. / للموقع يا شباب.|رايحين للشغل. / الألغام جاهزة!|احنه هم نقاتل!
+leader القائد على الخط.|تأمرون يا أبطال. / تعالوا وياي.|يا علي، وياي. / هجوم!|لبيك يا حسين، كدّام!
+''')

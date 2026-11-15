@@ -187,3 +187,39 @@ contact اشتباك قدّام!|العدو قدّامنا!
 tank دبابة!|مدرّعة، مدرّعة!
 medic إسعاف!|بدنا مسعف!
 ''')
+_s('FR', '''
+rpg RPG !|Roquette !
+manDown Homme à terre !|Un blessé !
+reload Je recharge !|Couvrez-moi, je recharge !
+grenade Grenade !|À terre, grenade !
+contact Contact devant !|Contact, contact !
+tank Char !|Blindé, blindé !
+medic Infirmier !|Il faut un infirmier !
+''')
+_s('DE', '''
+rpg Panzerfaust!|Rakete!
+manDown Mann am Boden!|Verwundeter!
+reload Lade nach!|Deckung, lade nach!
+grenade Granate!|Runter, Granate!
+contact Feindkontakt vorne!|Kontakt, Kontakt!
+tank Panzer!|Panzer, Panzer!
+medic Sanitäter!|Brauche einen Sanitäter!
+''')
+_s('GB', '''
+rpg RPG!|Rocket, take cover!
+manDown Man down!|Casualty!
+reload Changing mag!|Cover me, reloading!
+grenade Grenade!|Get down, grenade!
+contact Contact front!|Contact, contact!
+tank Tank!|Armour, armour!
+medic Medic!|Need a medic!
+''')
+_s('RV', '''
+rpg آر بي جي!|صاروخ!
+manDown يا علي! انصاب!|جريح!
+reload دا أعبّي!|غطّوني، دا أعبّي!
+grenade رمّانة!|انبطحوا، رمّانة!
+contact اشتباك كدّام!|العدو كدّامنا!
+tank دبابة!|دبابة، دبابة!
+medic مسعف!|نريد مسعف!
+''')
