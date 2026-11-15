@@ -98,7 +98,7 @@ function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],
 // Fields units and buildings pick up as the battle runs, declared (as undefined: same meaning as missing) when each is
 // made, so every unit has the same shape. Units growing fields in different orders gave the engine dozens of shapes,
 // and each new one threw away the compiled code of the hot loops (~80 times a game-minute): 10-30 ms hitches.
-const U_LATE='gr,habT,insT,ordT,hambT,rlyT,am,amx,sup,amW,fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,mz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,cbpT,fl,low,_dv,_dvT,_dvTg,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,flT,_fc,cvRes,amb,spT,landed,wxw,toT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,_dv,_dvT,dead'.split(',');
+const U_LATE='gr,habT,insT,ordT,hambT,apsT,rlyT,am,amx,sup,amW,fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,mz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,cbpT,fl,low,_dv,_dvT,_dvTg,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,flT,_fc,cvRes,amb,spT,landed,wxw,toT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,_dv,_dvT,dead'.split(',');
 function addUnit(team,kind,x,y){const T=G.teams[team],s0=stats(T.fac,kind),sm=kind===T.F.special?specMult(T):1,s=sm>1?Object.assign({},s0,{hp:Math.round(s0.hp*sm),dmg:s0.dmg*sm,name:s0.name+(sm>=1.4?' (Elite)':' (Veteran)')}):s0;const a=baseFacing(team);
   const u={id:G.nid++,isB:false,team,kind,s,x,y,ang:a,va:a,tang:a,hp:s.hp,max:s.hp,r:s.r,cd:0,order:null,target:null,lastHit:-99,lastFire:-99,state:'go',cargo:0,xp:0,rank:0,ammo:s.ammo||0,vs:new Array(G.teams.length).fill(false)};
   for(const k of U_LATE)u[k]=undefined;
@@ -188,7 +188,7 @@ function enqueue(team,kind,bid){const T=G.teams[team],s=stats(T.fac,kind);if(kin
 function dequeue(team,kind,bid,idx){const T=G.teams[team];let b=bid?G.byId.get(bid):null,i=-1;if(b&&b.isB&&b.team===team&&b.q&&b.q.length){i=idx!=null&&b.q[idx]&&(!kind||b.q[idx].kind===kind)?idx:-1;if(i<0&&kind)for(let j=b.q.length-1;j>=0;j--)if(b.q[j].kind===kind){i=j;break;}}
   else{b=null;const s=BASE[kind];if(!s)return;const L=prodBlds(team,s.from).reverse();for(const o of L){if(!o.q)continue;for(let j=o.q.length-1;j>=0;j--)if(o.q[j].kind===kind){b=o;i=j;break;}if(b)break;}}
   if(!b||i<0)return;const it=b.q.splice(i,1)[0];T.credits+=it.c||0;stSp(T,-(it.c||0));}
-function prodTime(T,s){let t=s.time/(1+((G&&G.bs)||1)*.6-.6);t*=upgK(T,s.kind,'build');return t;}
+function prodTime(T,s){let t=s.time/(1+((G&&G.bs)||1)*.6-.6);if(s.from!=='hq')t*=econBT(T.fac);t*=upgK(T,s.kind,'build');return t;}   /* L3 light economy: rich nations train slower, poorer ones faster */
 function production(dt){for(const b of G.ents){if(!b.isB||!b.q||!b.q.length)continue;if(b.dead){qRefund(b);continue;}if(b.built<1||b.dis>G.t||b.sell)continue;const T=G.teams[b.team];if(!T)continue;
     const it=b.q[0],s=stats(T.fac,it.kind);it.t+=dt*(G.ec?ecSpeedMul(T.id,[b]):1)*ldProd(T,[b],s);if(it.t>=prodTime(T,s)){if(popFull(T,it.kind,1)){it.t=prodTime(T,s);popWarn(T);continue;}b.q.shift();spawnFrom(T,b,it.kind);}}
   for(const T of G.teams){
@@ -271,7 +271,7 @@ function updDozer(u,dt){u.building=false;const o=u.order;
 const MOVE={inf:[9,140],at:[9,140],hacker:[9,140],hero:[10,160],harv:[2.2,40],dozer:[2.2,40],tank:[1.7,34],aa:[2.1,42],arty:[1.8,32],boat:[1.6,40],ship:[.55,10],heli:[2.3,55],drone:[3,80]};
 // Vehicle handling: tracked vehicles pivot on the spot, wheeled ones need speed to turn (a turning circle) and slow
 // into tight corners; everything ground-based labours uphill and runs a little faster downhill.
-const WHEELED=new Set(['harv','dozer','jeep','ew','cbr','raidlead','idome','aa']);
+const WHEELED=new Set(['harv','dozer','jeep','ew','krb','cbr','raidlead','idome','aa']);
 function isWheeled(u){const s=u.s;return WHEELED.has(u.kind)||(u.kind==='arty'&&s.rocket)||/Technical/.test(s.name||'');}
 // Fixed-wing flight (Shahed-type drones): they never stop or hover - they hold cruise speed, turn in smooth arcs
 // limited by bank angle, and tighten the turn only in the final dive onto a target.
@@ -1335,7 +1335,7 @@ function unloadTransport(tr){const C=tr.cargo||[];if(!C.length)return;const dom=
 function fortUnits(b){return b.gar||(b.gar=[]);}
 // The Mountain Fortress is standalone: it keeps its own garrison (FORT_CAP), apart from the shared tunnel network
 function enterTunnel(u,b){const f=b&&b.kind==='fort';const T=G.teams[u.team],L=f?fortUnits(b):T.tun,cap=f?FORT_CAP:tunCap(u.team);if(L.length>=cap){u.order=null;log(u.team,f?`The Mountain Fortress is full (${cap} units).`:`The tunnel network is full (${cap} units).`,'w');return;}u.order=null;u.target=null;u.inTun=true;G.byId.delete(u.id);L.push(u);}
-function unloadTunnel(b){const f=b.kind==='fort';const T=G.teams[b.team];const L=f?fortUnits(b):T.tun;const n=L.length;if(!n)return;L.forEach((u,i)=>{const a=i/n*6.283+(f?(i*.37)%.3:Math.random()*.3),r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;u.ambT=G.t+3;G.ents.push(u);G.byId.set(u.id,u);});
+function unloadTunnel(b){const f=b.kind==='fort';const T=G.teams[b.team];const L=f?fortUnits(b):T.tun;const n=L.length;if(!n)return;L.forEach((u,i)=>{const a=i/n*6.283+(f?(i*.37)%.3:Math.random()*.3),r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;u.ambT=G.t+(u.s.tunAmb?SIG.tunAmbT:3);G.ents.push(u);G.byId.set(u.id,u);});
   const out=L.slice();if(f)b.gar=[];else T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the ${f?'Mountain Fortress':'tunnel'}.`,'g');return out;}
 function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
 function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,t:0,next:1e9};return;}
@@ -1354,7 +1354,7 @@ function simUpdate(dt){G.t+=dt;if(typeof fmTick==='function')fmTick(dt);gdRecon(
   G.mT=(G.mT||0)-dt;if(G.mT<=0){G.mT=.2;updMines();}
   for(const T of G.teams){T._upl=false;T._tun=false;}for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const T=G.teams[e.team];if(!T)continue;if(e.kind==='tunnel'&&!isPost(e))T._tun=true;else if(e.kind==='uplink'&&!(e.dis>G.t))T._upl=true;}
   for(const T of G.teams){if(!T.tun.length)continue;for(const u of T.tun)u.hp=Math.min(u.max,u.hp+12*dt);if(!T._tun){log(T.id,`Our last tunnel was destroyed. ${T.tun.length} units inside were lost.`,'w');T.tun=[];}}
-  for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt*(G.conq?.5:1)*(G.sandbox&&T.id===0?30:1));   /* Test range: the strike recharges in seconds (Abdullah 2026-11-14 18:26) */if(G.battle)swTick(T);for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
+  for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt*(G.sandbox&&T.id===0?30:1));   /* Test range: the strike recharges in seconds (Abdullah 2026-11-14 18:26) */if(G.battle)swTick(T);for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
     {let j=0;for(const r of T.reveals){r.t-=dt;if(r.t>0)T.reveals[j++]=r;}T.reveals.length=j;}}
   // expired smoke screens and shields are dropped once a second (they were kept for the whole match and scanned every frame)
   if(!(G.prT>G.t)){G.prT=G.t+1;for(const k of ['smokes','shields'])if(Array.isArray(G[k])&&G[k].length){let j=0;const A=G[k];for(const S of A)if(S.t>G.t)A[j++]=S;A.length=j;}}
@@ -1519,7 +1519,7 @@ function updOil(dt){const N=G.teams.length;const here=OIL_HERE.length===N?OIL_HE
   econTick(dt);}
 // income buildings pay every 2 seconds; a team's extra ones earn less each
 // Sanctions: income multiplier for a team (1 normally; 0.8 while sanctioned, 0.92 with Smuggling Routes). T.sanc = sim time it ends.
-function incMul(T){return T.sanc>G.t?(T.upg.smug?.92:.8):1;}
+function incMul(T){return (T.sanc>G.t?(T.upg.smug?.92:.8):1)*econUp(T.fac);}
 function econTick(dt){G.ecT=(G.ecT||0)+dt;if(G.ecT<2)return;G.ecT-=2;for(const T of G.teams)if(T.sanc>G.t&&T.upg.smug&&!T.dummy)T.credits+=6;  // smuggling trickle: 3 cash/s while sanctioned
 const per={};for(const b of G.ents){if(b.dead||!b.isB||b.kind!=='econ'||b.built<1)continue;const k=per[b.team]=(per[b.team]||0)+1;const T=G.teams[b.team];if(T.dummy)continue;
   const v=b.s.inc*2*(ECON_RATE[k-1]||0)*((b.dis||0)>G.t?0:1)*incMul(T);b.acc=(b.acc||0)+v;const w=Math.floor(b.acc);if(w>0){b.acc-=w;T.credits+=w;}}}

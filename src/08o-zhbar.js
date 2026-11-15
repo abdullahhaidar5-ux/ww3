@@ -54,7 +54,7 @@ html body #side #panel .btn .p{position:absolute!important;left:0;bottom:0;heigh
 html body #side #panel .zhEmpty{display:none!important}
 /* unit orders as pictures at the right end of the panel */
 .orddock.zhin{right:auto!important;bottom:auto!important;min-width:0!important;padding:6px!important;background:none!important;box-shadow:none!important;border:0!important;display:flex!important;flex-wrap:wrap;justify-content:center;align-content:center;gap:4px;pointer-events:none}
-.orddock.zhin.zhb{justify-content:center;align-content:center;flex-wrap:wrap}   /* centred, no flipped rows (Abdullah 21:24 "not centered") */
+.orddock.zhin.zhb{justify-content:center;align-content:center;flex-wrap:wrap}   /* centered, no flipped rows (Abdullah 21:24 "not centered") */
 #fmb.zhfm{position:fixed!important;z-index:8;display:flex!important;justify-content:center;gap:6px!important;margin:0!important}
 #fmb.zhfm button{min-width:86px;height:32px;font:700 13px system-ui,sans-serif!important;border:1px solid #9fc0e0!important;border-radius:3px!important;background:radial-gradient(circle at 50% 40%,#3b5566,#101a20 80%)!important;color:#eef3f6!important;padding:0 10px!important;cursor:pointer}
 .orddock.zhin .cmdrow{display:contents!important}
@@ -62,7 +62,7 @@ html body #side #panel .zhEmpty{display:none!important}
  background:radial-gradient(circle at 50% 40%,#3b5566,#101a20 80%)!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important}
 .orddock.zhin button>i{position:static!important;margin:0!important;transform:none!important;display:block!important;width:100%!important;flex:1 1 100%!important;text-align:center!important;line-height:1!important;padding:0!important;font-size:30px!important;font-style:normal;filter:drop-shadow(0 1px 1px #000)}
 .orddock.zhin button:hover{box-shadow:inset 0 0 0 2px #fff,0 0 8px #6fb0ff!important}
-/* order buttons, Zero Hour look (Abdullah 2026-11-14 21:04 "Make these buttons sexier"): steel plate, coloured line icon, name under it, hotkey in the corner */
+/* order buttons, Zero Hour look (Abdullah 2026-11-14 21:04 "Make these buttons sexier"): steel plate, colored line icon, name under it, hotkey in the corner */
 .orddock.zhin button{flex-direction:column!important;gap:2px!important;position:relative!important;font:700 11px/1 system-ui,sans-serif!important;letter-spacing:.06em;text-transform:uppercase;color:#d9e4ea!important;border:1px solid #6f8ea4!important;border-radius:3px!important;background:linear-gradient(180deg,#34444e 0%,#1b252c 45%,#0d1418 100%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -2px 6px rgba(0,0,0,.6),0 2px 4px rgba(0,0,0,.5)!important;transition:transform .08s,box-shadow .12s,border-color .12s}
 .orddock.zhin button>i svg{display:block;width:100%;height:100%}
 .orddock.zhin button>i{flex:0 0 auto!important;width:56%!important;height:52%!important;font-size:0!important;background:center/contain no-repeat;filter:drop-shadow(0 0 4px rgba(0,0,0,.8))}
@@ -107,7 +107,7 @@ html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 #cmdP{bottom:auto!important;top:64px!important;left:10px!important;right:auto!important}
 html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
 #hudLyB{display:none!important}
-#pq{display:none!important}   /* the grey queue strip above the bar is gone (Abdullah 18:33); queue counts stay on the buttons */
+#pq{display:none!important}   /* the gray queue strip above the bar is gone (Abdullah 18:33); queue counts stay on the buttons */
 #news,#mwPip{display:none!important}
 .stanceBtn,[data-k="sn"]{display:none!important}   /* army stance removed */
 #pwMeter{display:none!important}   /* power lives in the bar's top console now */
@@ -234,14 +234,17 @@ function zhPowWin(){let w=$('zhPow');if(!ZH.star||!G){if(w)w.hidden=true;return;
     w.querySelector('.zph button').onclick=()=>{ZH.star=false;zhPowWin();zhCtx();};addEventListener('keydown',e=>{if(e.key==='Escape'&&ZH.star){ZH.star=false;zhPowWin();zhCtx();}},true);}
   w.hidden=false;if(sd){const r=sd.getBoundingClientRect();w.style.bottom=(innerHeight-r.top+34)+'px';w.style.setProperty('--tc',getComputedStyle(sd).getPropertyValue('--tc'));}
   const body=w.querySelector('.zpb'),rk=document.querySelector('#side .sup.rk .lbl'),src=[...document.querySelectorAll('#panel>[data-tab="pow"]')];
-  const sig=src.map(b=>(b.className.includes('sub')?'s':'')+b.id+(b.disabled?1:0)+(b.hidden?1:0)+(b.textContent||'').length).join('|')+'|'+(rk?rk.textContent:'')+'|'+(($('supt')||{}).textContent||'')+(($('supbtn')||{}).disabled?1:0);if(w.dataset.sig===sig)return;w.dataset.sig=sig;
+  const sig=src.map(b=>(b.className.includes('sub')?'s':'')+b.id+(b.disabled?1:0)+(b.hidden?1:0)+(b.style.display==='none'?1:0)+(b.textContent||'').length).join('|')+'|'+(rk?rk.textContent:'')+'|'+(($('supt')||{}).textContent||'')+(($('supbtn')||{}).disabled?1:0);if(w.dataset.sig===sig)return;w.dataset.sig=sig;
   body.innerHTML='';if(rk){const d=document.createElement('div');d.className='zrk';d.textContent=rk.textContent.trim();body.append(d);}
-  {const sb=$('supbtn'),d=document.createElement('div');d.className='zsw';d.innerHTML='<div><b></b><small></small></div><button type="button">LAUNCH</button>';d.querySelector('b').textContent=(($('supname')||{}).textContent||'Strike');d.querySelector('small').textContent=(($('supt')||{}).textContent||'');
-    const lb=d.querySelector('button');lb.disabled=!sb||sb.disabled;lb.onclick=()=>{if(sb&&!sb.disabled)sb.click();};body.append(d);}
-  for(const b of src){if(b.classList.contains('sub')){const s=document.createElement('div');s.className='zsub';s.textContent=b.textContent;body.append(s);continue;}if(b.style.display==='none')continue;
-    const x=document.createElement('button');x.type='button';x.className='zp';x.disabled=b.disabled;const n=document.createElement('b');n.textContent=(b.querySelector('.n')||{}).textContent||b.dataset.nm||'';x.append(n);
+  /* the Strike is launched from its building and its own rail button, not from the General window (Abdullah 2026-11-14 22:10) */
+  /* ONE row per power (Abdullah 2026-11-14 22:15 "Make these powers just general upgrades. Make sure there aren't too many upgrades"): the separate
+     "Level up" list is folded in - an unlocked power's own row levels it up when you have a point */
+  for(const b of src){if(b.classList.contains('sub')){if(/level up/i.test(b.textContent))continue;const s=document.createElement('div');s.className='zsub';s.textContent=b.textContent;body.append(s);continue;}if(b.style.display==='none'||b.hidden||/^pu_/.test(b.id))continue;
+    const up=/^p_/.test(b.id)?$('pu_'+b.id.slice(2)):null,canUp=!!up&&!up.disabled&&!up.hidden&&up.style.display!=='none';
+    const x=document.createElement('button');x.type='button';x.className='zp';x.disabled=b.disabled&&!canUp;const n=document.createElement('b');n.textContent=(b.querySelector('.n')||{}).textContent||b.dataset.nm||'';x.append(n);
     const c=(b.querySelector('.c')||{}).textContent;if(c){const i=document.createElement('i');i.textContent=c;x.append(i);}const dd=b.dataset.desc;if(dd){const s=document.createElement('span');s.textContent=dd;x.append(s);}
-    x.title=b.title||'';x.onclick=()=>{b.click();setTimeout(()=>{w.dataset.sig='';zhPowWin();},50);};body.append(x);}}
+    if(canUp){const u=document.createElement('i');u.className='zup';u.textContent='▲ Level up · 1 point';x.append(u);}
+    x.title=b.title||'';x.onclick=()=>{(canUp&&b.disabled?up:b).click();setTimeout(()=>{w.dataset.sig='';zhPowWin();},50);};body.append(x);}}
 if(typeof updateUI==='function'){const _zhU=updateUI;updateUI=function(){_zhU.apply(this,arguments);try{zhCtx();}catch(e){}};}
 /* hover card above the minimap */
 {let tip=null;const show=b=>{if(!tip){tip=document.createElement('div');tip.id='zhTip';document.body.append(tip);}const sd=$('side'),r=sd?sd.getBoundingClientRect():null;
@@ -356,3 +359,23 @@ function zhIcons(){const pn=$('panel');if(!pn)return;for(const b of pn.querySele
 html body #side #panel .btn>.zhIc{position:absolute;left:0;right:0;top:9%;margin:auto;width:46%;height:52%;pointer-events:none;filter:drop-shadow(0 0 4px rgba(0,0,0,.85))}
 html body #side #panel .btn>.zhIc svg{display:block;width:100%;height:100%}`;document.head.appendChild(st);}
 if(typeof updateUI==='function'){const _iU=updateUI;updateUI=function(){_iU.apply(this,arguments);try{zhIcons();}catch(e){}};}
+
+/* STRIKE ON THE LEFT RAIL (Abdullah 2026-11-14 22:10 "Strike launch from the building and its own separate button like artillery barrage in left hand"):
+   one rail button under the generals' powers, shown while you own a Strike Center; it fills up as the Strike charges, glows when READY,
+   one click arms it, then LEFT-click the target (right-click cancels) - the same as pressing LAUNCH on the building. */
+function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q)return;let b=document.getElementById('qpStrike');
+  const own=!!sb&&!sb.hidden&&G&&G.ents&&G.ents.some(e=>e.isB&&e.team===ME&&!e.dead&&e.kind==='uplink'&&e.built>=1);
+  if(!own){if(b)b.hidden=true;return;}
+  if(!b){b=document.createElement('button');b.id='qpStrike';b.type='button';b.innerHTML='<div class="qf"></div>'+(ORD_SVG.missile||'')+'<span class="qc"></span>';b.onclick=()=>{const s=$('supbtn');if(s&&!s.disabled){s.click();try{sfxUI(620);}catch(_){}}};
+    let col=Q.querySelector('.qstr');if(!col){col=document.createElement('div');col.className='qstr';Q.insertBefore(col,Q.querySelector('.qtab'));}col.append(b);}
+  Q.hidden=false;b.hidden=false;const nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),T=G.teams[ME],c=T&&T.sup&&T.sup.charge?Math.min(1,(T.charge||0)/T.sup.charge):1,rdy=!sb.disabled,k=nm+st+rdy+(G.aim==='sup')+Math.round(c*40);
+  if(b.dataset.k===k)return;b.dataset.k=k;b.title=nm+(st?' - '+st:'')+(rdy?' - click, then click the target':'');b.setAttribute('aria-label',nm);
+  b.className=(G.aim==='sup'?'arm ':'')+(rdy?'rdy':'');const f=b.querySelector('.qf');f.style.background=c<1?'conic-gradient(rgba(0,0,0,.68) '+Math.round(360*(1-c))+'deg,transparent 0)':'none';b.querySelector('.qc').textContent=rdy?'READY':Math.round(c*100)+'%';}
+{const st=document.createElement('style');st.textContent=`#qpow .qstr{display:flex;flex-direction:column;gap:6px;margin-top:8px}#qpow.off .qstr{display:none}
+#qpStrike{pointer-events:auto;position:relative;overflow:hidden;width:56px;height:56px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;border:1px solid #c97a3a;background:linear-gradient(160deg,#3a2418,#1a100a);color:#ffb07a;cursor:pointer}
+#qpStrike svg{width:30px;height:30px;position:relative;margin-top:-6px;pointer-events:none}#qpStrike .qf{position:absolute;inset:0;pointer-events:none}
+#qpStrike .qc{position:absolute;bottom:2px;left:0;right:0;text-align:center;font:800 9px/1 system-ui,sans-serif;letter-spacing:.05em;color:#ffd9b0;pointer-events:none}
+#qpStrike.rdy{border-color:#ffd23a;box-shadow:0 0 10px rgba(255,160,60,.7)}#qpStrike.arm{border-color:#ea5a40;background:linear-gradient(160deg,#7a2a1c,#4a1a12)}`;document.head.appendChild(st);}
+if(typeof updateUI==='function'){const _sU=updateUI;updateUI=function(){_sU.apply(this,arguments);try{qpStrike();}catch(e){}};}
+
+{const st=document.createElement('style');st.textContent='#zhPow .zp .zup{display:block;font-style:normal;color:#ffd23a;font-weight:700;font-size:12px;margin-top:2px}';document.head.appendChild(st);}

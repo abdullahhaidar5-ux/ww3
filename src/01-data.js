@@ -250,7 +250,7 @@ for(const k in HEROES){const F=FACTIONS[k];if(!F)continue;F.units=F.units||{};F.
 // Electronic warfare beyond RU: nations with a real EW arm can also build the jamming/spoof truck from the War Factory (same stats, max 2, General rank gate in the UI).
 for(const [k,nm] of [['US','AN/ULQ EW Vehicle'],['CN','PLA EW Jamming Truck'],['IR','IRGC EW Truck'],['IL','IDF EW Truck']]){const F=FACTIONS[k];if(!F||F.special==='ew')continue;F.extra=[...(F.extra||[]),'ew'];F.units=F.units||{};F.units.ew=Object.assign({},F.units.ew||{},{name:nm});}
 const SPECIAL_TIP={atgm:()=>'Long-range wire-guided anti-tank missiles: outranges tanks, but thin-skinned. Keep it behind your armor.',saka:()=>'Elite fast-moving commandos with grenades that hurt clustered infantry and garrisons.',hero:u=>u.mark?'Stealthed commando. Plants charges on buildings, and every target it hits is laser-marked: all your forces do 25% more damage to it for 6 seconds.':u.demo?'Stealthed commando. Right-click an enemy building to plant explosives.':'Stealthed sniper. Picks off infantry from very long range.',
-  mortar:u=>u.ripple?'Hidden rocket launchers: fire a ripple of 4 rockets that blankets an area, then reload. Hide when standing still. Cannot fire at close range.':u.droneSpot?'Indirect fire from long range, devastating against infantry in the open. Drone-guided: 40% more range against targets a friendly drone can see. Cannot fire at close range.':'Indirect fire from long range: devastating against infantry in the open. Cannot fire at close range.',recon:u=>'Unarmed, hides when still. Sees 520 meters and marks every enemy near it: your forces do 25% more damage to marked targets.',
+  mortar:u=>u.ripple?'Hidden rocket launchers: fire a ripple of '+u.ripple+' rockets that blankets an area, then reload. Hide when standing still. Cannot fire at close range.':u.droneSpot?'Indirect fire from long range, devastating against infantry in the open. Drone-guided: 40% more range against targets a friendly drone can see. Cannot fire at close range.':'Indirect fire from long range: devastating against infantry in the open. Cannot fire at close range.',recon:u=>'Unarmed, hides when still. Sees 520 meters and marks every enemy near it: your forces do 25% more damage to marked targets.',
   officer:u=>'Nearby infantry do 20% more damage and can\'t be suppressed.',medic:u=>'Heals nearby infantry, and kneels beside wounded soldiers (red-cross icon, 32 s before they bleed out) to get them back on their feet in 4 seconds with their veterancy. '+(u.revive?'Also heals vehicles, and about a third of infantry killed by blasts near the medics return 8 seconds later.':'Also heals nearby vehicles.'),commissar:u=>'Nearby infantry fire 25% faster and can\'t be suppressed.',
   sapper:u=>'Lays hidden anti-tank mines when standing still (up to 8). Enemy vehicles that drive over them are badly damaged.',guer:u=>'Hides when standing still; the first volley from hiding does double damage.',
   atk:u=>u.finisher?'Long-range anti-tank team that hides when standing still. Tank hunters: 40% more damage to vehicles already below half health.':'Long-range anti-tank team that hides when standing still.',idome:u=>'Shoots down incoming shells, rockets and missiles: friendly units and buildings nearby take 55% less damage from them.',
@@ -663,7 +663,7 @@ const SHIA5={IR:1,RS:1,DW:1,RV:1,OB:1};   /* L2: cheap fortifications (x0.6 in B
 const BB_NAT={US:1,IL:1,RU:1,CN:1},FORT_NAT={IR:1,RS:1,AF:1,KD:1,DW:1,KP:1};
 /* upgsimple (Abdullah 2026-11-14 "simplify the list of upgrades and powers it's too much"): a nation's general powers are Recon, Paradrop, Barrage, Repair + its own national power
    (+ Bunker Buster for US/IL/RU/CN) = 5-6, plus the passive Cash Bounty. Everything else in POWERS (flares, militia, reinforcements, sanctions, cyber, EMP) is not offered in Conquest/Battle (the grand map keeps them). */
-const POW_KEEP=['bounty','recon','para','barrage','repair','bb'];
+const POW_KEEP=['bounty','recon','para','barrage','repair','bb','nat'];   /* + the nation's own power on J (Abdullah 2026-11-14 22:11 "J bring back") */
 function powBan(k){return !!POWERS[k]&&POW_KEEP.indexOf(k)<0;}
 function sigBan(fac,k){return powBan(k)||(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
 /* power use of a building for the Build button: + needs power, - gives power (Generator); 0 = no power use (one POWER table) */
@@ -773,6 +773,10 @@ const NATPOW={US:{name:'Shock and Awe',type:'strafe',cd:200,r:140,desc:'A-10 gun
   CU:{name:'Revolutionary Fervor',type:'fervor',cd:200,desc:'All your units are fearless and deal 15% more damage for 25s',self:true},
   RS:{name:'Labbayk Ya Hussein',type:'labbayk',cd:200,desc:'Infantry heal 50%, become fearless and deal 20% more damage for 25s',self:true},
   DW:{name:'Desert Raid',type:'raid',cd:190,r:450,desc:'Vehicles move 35% faster for 25s and the target area is revealed',self:false}};
+/* L3 light economy (Battle only): [train-time x, income x]; rich high-tech nations train slower and earn a bit less, poorer fast nations train faster */
+const ECON_LIGHT={US:[1.1,.9],GB:[1.1,.9],FR:[1.1,.9],DE:[1.1,.9],IL:[1.1,.9],JP:[1.1,.9],KR:[1.1,.9],SA:[1.1,.9],AE:[1.1,.9],IR:[.75,1],RS:[.75,1],DW:[.75,1],RV:[.75,1],OB:[.75,1],KP:[.75,1],UA:[.75,1]};
+function econBT(fac){try{if(G&&G.battle){const e=ECON_LIGHT[fac];if(e)return e[0];}}catch(e){}return 1;}
+function econUp(fac){return 1;}   /* no income cut for rich nations (Abdullah 2026-11-14 22:32): they only train 10% slower */
 function natPow(fac){return NATPOW[fac]||NATPOW.US;}
 // Each nation's take on the five shared general powers. Every nation trades strengths for weaknesses so the totals
 // stay even (checked in tests): m = bounty %, rm = radius, tm = duration, nm = count/shells, dm = shell damage,
@@ -864,6 +868,13 @@ for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   ECON[k]=N.econ||(k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board');
   if(N.sub)SUBN[k]=N.sub;if(N.md)MDN[k]=N.md;if(N.coast)COASTN[k]=N.coast;if(N.trn)TRN[k]=N.trn;
   UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b.toLowerCase()+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
+/* distinct national powers (Abdullah 2026-11-14 22:14 "give them their own"): RV, GB, FR and DE all shared the same supply-drop power; each gets its
+   own now (fictional names, existing power types). OB keeps Rubble Cover. */
+Object.assign(NATPOW,{
+ RV:{name:'Marsh Rocket Salvo',type:'precise',cd:180,r:90,desc:'Rocket trucks fire eight rockets onto a tight area'},
+ GB:{name:'SAS Raid',type:'partisans',n:4,cd:200,r:90,desc:'Four special forces soldiers drop in at the target and strike'},
+ FR:{name:'Rafale Strike',type:'strafe',cd:200,r:140,desc:'A Rafale bombing run: a line of bombs across the target'},
+ DE:{name:'Panzer Reserve',type:'mercs',cd:230,desc:'Two Leopard tanks and two air-defence vehicles roll out of your HQ',self:true}});
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};

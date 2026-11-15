@@ -101,13 +101,9 @@ try {
     console.log(`3D models: ${m.n} of ${m.of} ready=${m.ready} ${m.err} (page open to models ready: ${(m.t / 1000).toFixed(1)}s)`);
     if (!m.ready) warns.push('3D models did not load at the menu: ' + m.err); }
   await shot(page, 'menu.png');
-  { // Playtest card (Extras): 10 things to try, thumbs + note per row, and the saved file carries the votes
-    const pt = await page.evaluate(() => { if (typeof wwPlaytest !== 'function') return { no: 1 }; wwPlaytest(); const o = document.getElementById('idPlay');
-      const rows = o ? o.querySelectorAll('.ptrow').length : 0; const v = o && o.querySelector('.ptv'); if (v) v.click(); const d = wwPlaytestData(); if (v) v.click();
-      const menu = [...document.querySelectorAll('button.mxi')].some(b => b.textContent === 'Playtest card'); if (o) o.hidden = true;
-      return { rows, save: !!document.getElementById('ptSave'), vote: d.items[0] && d.items[0].vote, kind: d.kind, n: d.items.length, menu }; });
-    if (pt.no || pt.rows !== 10 || !pt.save || pt.vote !== 1 || pt.kind !== 'ww3-playtest' || pt.n !== 10 || !pt.menu) fails.push('Playtest card (Extras) is broken: ' + JSON.stringify(pt));
-    else console.log('Playtest card: 10 things to try, votes saved into the file'); }
+  { // Playtest card removed (Abdullah 2026-11-14 22:09 "Play test remove"), Unit guide merged into the Encyclopedia (22:09 "merge")
+    const pt = await page.evaluate(() => ({ fn: typeof wwPlaytest, menu: [...document.querySelectorAll('button.mxi')].filter(b => /Playtest card|Unit guide|Report a problem/.test(b.textContent)).map(b => b.textContent) }));
+    if (pt.fn !== 'undefined' || pt.menu.length) fails.push('Playtest card / Unit guide / Report a problem must be gone from Extras: ' + JSON.stringify(pt)); }
   if (!ART) { // main menu top level (the war-table background was removed; one static picture)
     const wt = await page.evaluate(() => ({ top: [...document.querySelectorAll('#mxmenu .mxi')].filter(b => !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => b.textContent.trim()).join('|'), grand: typeof grandMenu, wt: typeof mxWarTable }));
     if (wt.top !== 'Play|Multiplayer|Test range' || wt.grand !== 'undefined' || wt.wt !== 'undefined') fails.push('main menu top level: ' + JSON.stringify(wt));
