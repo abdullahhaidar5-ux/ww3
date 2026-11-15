@@ -41,3 +41,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-15 06:20Z c73e5b53 **RED** (27 gates) failing: cfclient,controls,decisions,migrate,migrate-down,save,smooth-pc,superfreeze,tutorial — Merge origin/main into orch/icons
 - 2026-11-15 07:02Z 37a0b2dd **RED** (28 gates) failing: cfclient,controls,decisions,mapsweep,migrate,migrate-abrupt,migrate-down,save,smooth-pc,superfreeze — Merge remote-tracking branch 'origin/main' into HEAD
 - 2026-11-15 07:48Z 43afc192 **RED** (27 gates) failing: cfclient,controls,controlscheck,decisions,migrate,migrate-down,save,smooth-pc,superfreeze — Merge origin/main
+- 2026-11-15 08:34Z 841cfdc0 **RED** (27 gates) failing: cfclient,controls,controlscheck,decisions,migrate-dual,save,smooth-pc,superfreeze — Balance nudges after the AI tournament: US stronger-fewer penalty halv
