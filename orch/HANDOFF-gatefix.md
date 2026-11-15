@@ -16,4 +16,17 @@ mpsync (watching note is in the new lobby screen `#mpl`), migrate (3-seat map `b
 `CLAUDE.md` was 31 KB with merged duplicate bullets; trimmed to ~18 KB (stale Conquest/grand bullets and duplicates removed, capturable-buildings rule kept).
 
 ## Final gate table
-(filled in at the end of the run, see below)
+Gate run on eb97c5c083: 20 green, 8 red.
+
+Red: gate/cfclient, gate/controls, gate/controlscheck, gate/decisions, gate/migrate-dual, gate/save, gate/smooth-pc, gate/superfreeze
+
+Still open (not fixed this run):
+- gate/smooth-pc: draw calls still over the allowance (merged building decor props; instance or share kit props across buildings, do not raise the budget).
+- gate/superfreeze: strike impact effects (rings, debris icosahedrons) create new meshes/textures at strike time; pre-create them in the warm-up.
+- gate/save: save hash still differs after a reload (tick timers fixed; check rubble/other derived state with orch/savediverge.mjs).
+- gate/migrate-dual: AI did not act after taking over the old host's side.
+- gate/cfclient: leader's Cloudflare lobby timed out (startpick).
+- gate/controls: 10 of 130 checks fail; the CI log hides which (run node orch/controls.mjs and grep FAIL).
+
+Green: gate/art-mpsync, gate/art-smoke, gate/audio, gate/check, gate/decals, gate/ew, gate/headless, gate/icons, gate/loadfreeze, gate/mapsweep, gate/migrate, gate/migrate-abrupt, gate/migrate-down, gate/mpsync, gate/mpsync-server, gate/servertest, gate/smoke4, gate/smooth-mp, gate/stuckscan, gate/tutorial
+
