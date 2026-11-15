@@ -16275,7 +16275,7 @@ function mplShow(D){
   pv.append(cv);R.append(pv);const m=MAPS[D.mk]||{};R.append(E('div','mmap',m.name||D.mk),E('div','mmapn',(m.bm&&typeof bmInfo==='function'?(()=>{const I=bmInfo(D.mk);return I.players+' players · '+I.size+' · '+I.theme;})():(m.min||2)+'–'+(m.max||D.mx)+' players')));
   /* map dropdown (Abdullah 2026-11-14 18:39 "select maps from a drop down in lobby"): every map that fits the room, in the one Battle list; the host picks, others see the name */
   if(D.onMap){const ms=document.getElementById('mapSel'),s=document.createElement('select');s.id='mplMapDd';s.className='mpldd';s.setAttribute('aria-label','Battlefield');
-    const keys=(typeof BATTLE_MAPS!=='undefined'&&BATTLE_MAPS.length?BATTLE_MAPS:Object.keys(MAPS)).filter(k=>MAPS[k]&&(MAPS[k].max||8)>=Math.max(2,D.nn||1));
+    const keys=(typeof BM_KEYS!=='undefined'&&BM_KEYS.length?BM_KEYS:typeof BATTLE_MAPS!=='undefined'?BATTLE_MAPS.map(r=>Array.isArray(r)?r[0]:r):Object.keys(MAPS)).filter(k=>MAPS[k]&&(MAPS[k].max||8)>=Math.max(2,D.nn||1));   /* BATTLE_MAPS rows are [key,min,max]: reading them as names left ONE map in the list (Abdullah 21:22 "Multiplayer map selection is stuck") */
     for(const k of keys){const o=document.createElement('option');o.value=k;const M=MAPS[k];o.textContent=(M.name||k)+'  ('+(M.min||2)+'–'+(M.max||8)+')';s.append(o);}
     if(!keys.includes(D.mk)){const o=document.createElement('option');o.value=D.mk;o.textContent=(MAPS[D.mk]||{}).name||D.mk;s.prepend(o);}s.value=D.mk;
     s.onchange=()=>{const v=s.value;if(!MAPS[v])return;/* set the map directly: the old #mapSel only had a change handler after its picker page was opened, so the pick was lost (Abdullah 19:13 "stuck on one map") */setup.map=v;setup.slot=-1;setup.st=[];setup.stK=null;try{if(MAPS[v].bm||(typeof BM_KEYS!=='undefined'&&BM_KEYS.includes(v)))SET.bmap=v;else SET.map=v;saveSet();}catch(e){}if(ms){if(![...ms.options].some(o=>o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=(MAPS[v]||{}).name||v;ms.append(o);}ms.value=v;}try{syncAiN();}catch(e){}try{renderLobby();}catch(e){}};
@@ -17978,7 +17978,12 @@ function zhWant(){if(!G)return null;const s=(G.sel||[]).filter(e=>e&&!e.dead&&e.
   if(s.some(u=>u.kind==='dozer'))return 'build';const b=s.find(e=>e.isB);if(b){if(typeof CATS!=='undefined'&&CATS.includes(b.kind))return 'units';return 'upg';}return 'none';}
 function zhSelB(){return(G.sel||[]).filter(e=>e&&!e.dead&&e.isB&&e.team===ME&&e.built>=1&&!e.civ&&e.kind!=='garrison'&&!e.sell);}
 function zhIsRep(b){return !!b.rep;}
-function sellSel(){if(!G||G.over)return;const ids=zhSelB().map(e=>e.id);if(!ids.length)return;doAct({t:'sell',ids});try{sfxUI(300);}catch(_){}ZH.sig='';}
+/* Sell asks for a confirm click (Abdullah 2026-11-14 21:22 "Confirm sell"): the first click turns the button red "Confirm?" for 3 s, the second sells */
+function sellSel(){if(!G||G.over)return;const ids=zhSelB().map(e=>e.id);if(!ids.length)return;const sl=$('zhSell'),k=ids.join(','),now=performance.now();
+  if(!ZH.sellArm||ZH.sellArm.k!==k||now>ZH.sellArm.t){ZH.sellArm={k,t:now+3000};if(sl){sl.classList.add('arm');const n=sl.querySelector('.n');if(n){ZH.sellLab=n.textContent;n.textContent='Confirm?';}}try{sfxUI(520);}catch(_){}
+    setTimeout(()=>{if(ZH.sellArm&&ZH.sellArm.k===k&&performance.now()>=ZH.sellArm.t){ZH.sellArm=null;const b=$('zhSell');if(b){b.classList.remove('arm');const n=b.querySelector('.n');if(n)n.textContent=ZH.sellLab||'Sell';}}},3050);return;}
+  ZH.sellArm=null;if(sl){sl.classList.remove('arm');const n=sl.querySelector('.n');if(n)n.textContent=ZH.sellLab||'Sell';}doAct({t:'sell',ids});try{sfxUI(300);}catch(_){}ZH.sig='';}
+{const st=document.createElement('style');st.textContent='#zhSell.arm{box-shadow:inset 0 0 0 2px #ff5a48,0 0 12px rgba(255,90,72,.7)!important;animation:zhArm .5s ease-in-out infinite alternate}#zhSell.arm .n{color:#ff8a78!important}@keyframes zhArm{to{filter:brightness(1.35)}}';document.head.appendChild(st);}
 function repairSel(){if(!G||G.over)return;const bl=zhSelB();if(!bl.length)return;const on=!bl.every(b=>zhIsRep(b));doAct({t:'rep',ids:bl.map(e=>e.id),on});try{sfxUI(520);}catch(_){}}
 function zhCtx(){if(!G)return;const sd=$('side');if(!sd)return;
   let star=$('zhStar');if(!star){star=document.createElement('button');star.id='zhStar';star.type='button';star.title='Generals\' powers and Strike';star.innerHTML='★★★<i class="dot" hidden></i>';
@@ -21432,6 +21437,17 @@ body:has(#menu:not([hidden])) #settings *{max-width:100%;min-width:0!important;b
 body:has(#menu:not([hidden])) #settings input,body:has(#menu:not([hidden])) #settings select{min-width:0!important;flex:1 1 120px}
 #mxcrumb{background:linear-gradient(180deg,rgba(6,11,14,.98) 62%,rgba(6,11,14,0));padding-bottom:14px!important}
 #menu.m3 #teamList .trow>:not(span):not(select){flex:0 0 auto}
+/* Test range, clean and straightforward (Abdullah 2026-11-14 21:23): numbered steps 1 Map · 2 Target · 3 Your nation, compact one-line nation plates, no search box */
+#ms-t-range{counter-reset:trs}
+#ms-t-range .mxlab{counter-increment:trs;display:flex;align-items:center;gap:8px;margin:0 0 8px;font:700 13px var(--display)!important;letter-spacing:.16em;color:#cfe3ea!important}
+#ms-t-range .mxlab::before{content:counter(trs);display:inline-grid;place-items:center;width:22px;height:22px;clip-path:var(--cut);background:var(--gold);color:#120e04;font:800 13px var(--display);letter-spacing:0}
+#ms-t-range .mxrow{display:block!important;margin:0!important}
+#ms-t-range .mxrow select{width:100%!important}
+#ms-t-range #mxtrin{display:none!important}
+#ms-t-range #pickP{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}
+#ms-t-range #pickP .fac{min-height:0!important;height:42px;padding:0 10px!important;gap:8px!important;font-size:14px!important;align-items:center}
+#ms-t-range #pickP .fac .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px!important;letter-spacing:.05em}
+#ms-t-range #pickP .fac :is(.ins,.ic,canvas,img){transform:scale(.8)}
 `;document.head.appendChild(s);}
 /* One game (Abdullah 2026-11-13 20:18): every setup screen is a Battle. Rebuild the map list when the menu opens on it (the Battle map list). */
 function mxModeName(){return 'Battle';}

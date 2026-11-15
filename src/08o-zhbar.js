@@ -188,7 +188,12 @@ function zhWant(){if(!G)return null;const s=(G.sel||[]).filter(e=>e&&!e.dead&&e.
   if(s.some(u=>u.kind==='dozer'))return 'build';const b=s.find(e=>e.isB);if(b){if(typeof CATS!=='undefined'&&CATS.includes(b.kind))return 'units';return 'upg';}return 'none';}
 function zhSelB(){return(G.sel||[]).filter(e=>e&&!e.dead&&e.isB&&e.team===ME&&e.built>=1&&!e.civ&&e.kind!=='garrison'&&!e.sell);}
 function zhIsRep(b){return !!b.rep;}
-function sellSel(){if(!G||G.over)return;const ids=zhSelB().map(e=>e.id);if(!ids.length)return;doAct({t:'sell',ids});try{sfxUI(300);}catch(_){}ZH.sig='';}
+/* Sell asks for a confirm click (Abdullah 2026-11-14 21:22 "Confirm sell"): the first click turns the button red "Confirm?" for 3 s, the second sells */
+function sellSel(){if(!G||G.over)return;const ids=zhSelB().map(e=>e.id);if(!ids.length)return;const sl=$('zhSell'),k=ids.join(','),now=performance.now();
+  if(!ZH.sellArm||ZH.sellArm.k!==k||now>ZH.sellArm.t){ZH.sellArm={k,t:now+3000};if(sl){sl.classList.add('arm');const n=sl.querySelector('.n');if(n){ZH.sellLab=n.textContent;n.textContent='Confirm?';}}try{sfxUI(520);}catch(_){}
+    setTimeout(()=>{if(ZH.sellArm&&ZH.sellArm.k===k&&performance.now()>=ZH.sellArm.t){ZH.sellArm=null;const b=$('zhSell');if(b){b.classList.remove('arm');const n=b.querySelector('.n');if(n)n.textContent=ZH.sellLab||'Sell';}}},3050);return;}
+  ZH.sellArm=null;if(sl){sl.classList.remove('arm');const n=sl.querySelector('.n');if(n)n.textContent=ZH.sellLab||'Sell';}doAct({t:'sell',ids});try{sfxUI(300);}catch(_){}ZH.sig='';}
+{const st=document.createElement('style');st.textContent='#zhSell.arm{box-shadow:inset 0 0 0 2px #ff5a48,0 0 12px rgba(255,90,72,.7)!important;animation:zhArm .5s ease-in-out infinite alternate}#zhSell.arm .n{color:#ff8a78!important}@keyframes zhArm{to{filter:brightness(1.35)}}';document.head.appendChild(st);}
 function repairSel(){if(!G||G.over)return;const bl=zhSelB();if(!bl.length)return;const on=!bl.every(b=>zhIsRep(b));doAct({t:'rep',ids:bl.map(e=>e.id),on});try{sfxUI(520);}catch(_){}}
 function zhCtx(){if(!G)return;const sd=$('side');if(!sd)return;
   let star=$('zhStar');if(!star){star=document.createElement('button');star.id='zhStar';star.type='button';star.title='Generals\' powers and Strike';star.innerHTML='★★★<i class="dot" hidden></i>';

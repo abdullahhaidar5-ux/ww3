@@ -403,6 +403,8 @@ try {
   // noform 2026-11-14 (Abdullah 19:18 "Remove formations and remove army stance and resupply and type button")
   { const nf = await ev(() => { try { fmBar(); renderSquads(); } catch (e) {} const t = [...document.querySelectorAll('#info button')].map(b => b.textContent).join('|'); return { fmb: !!document.getElementById('fmb'), key: typeof KEYTAB !== 'undefined' && KEYTAB.some(k => k.id === 'form'), t }; });
     ck(!nf.fmb && !nf.key && !/Type \(T\)|Resupply|Stance|Assault|Guerrilla/.test(nf.t), 'formations / Type / Resupply / stance buttons must be gone: ' + JSON.stringify(nf)); }
+  // mpmap 2026-11-14 (Abdullah 21:22 "Multiplayer map selection is stuck"): the lobby map list is the Battle map list, not one map
+  { const mm = await ev(() => { const D = { onMap: 1, nn: 2, mk: BM_KEYS[0] }; const ks = (BM_KEYS).filter(k => MAPS[k] && (MAPS[k].max || 8) >= 2); return ks.length; }); ck(mm >= 10, 'lobby map list too short: ' + mm); }
   // trmap 2026-11-14 (Abdullah 21:07 "In test range map selection doesn't work"): every map in the Test range list is kept when picked
   { const tb = await ev(() => BM_KEYS.filter(k => MAPS[k] && MAPS[k].min <= 2 && MAPS[k].max >= 2 && trBmap(k) !== k)); ck(!tb.length, 'Test range map picks must stick: ' + JSON.stringify(tb)); }
   // novdig 2026-11-14 (Abdullah 14:55 "Make it so that vehicles can't dig in"): no vehicle can dig in, infantry still can

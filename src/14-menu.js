@@ -198,6 +198,17 @@ body:has(#menu:not([hidden])) #settings *{max-width:100%;min-width:0!important;b
 body:has(#menu:not([hidden])) #settings input,body:has(#menu:not([hidden])) #settings select{min-width:0!important;flex:1 1 120px}
 #mxcrumb{background:linear-gradient(180deg,rgba(6,11,14,.98) 62%,rgba(6,11,14,0));padding-bottom:14px!important}
 #menu.m3 #teamList .trow>:not(span):not(select){flex:0 0 auto}
+/* Test range, clean and straightforward (Abdullah 2026-11-14 21:23): numbered steps 1 Map · 2 Target · 3 Your nation, compact one-line nation plates, no search box */
+#ms-t-range{counter-reset:trs}
+#ms-t-range .mxlab{counter-increment:trs;display:flex;align-items:center;gap:8px;margin:0 0 8px;font:700 13px var(--display)!important;letter-spacing:.16em;color:#cfe3ea!important}
+#ms-t-range .mxlab::before{content:counter(trs);display:inline-grid;place-items:center;width:22px;height:22px;clip-path:var(--cut);background:var(--gold);color:#120e04;font:800 13px var(--display);letter-spacing:0}
+#ms-t-range .mxrow{display:block!important;margin:0!important}
+#ms-t-range .mxrow select{width:100%!important}
+#ms-t-range #mxtrin{display:none!important}
+#ms-t-range #pickP{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}
+#ms-t-range #pickP .fac{min-height:0!important;height:42px;padding:0 10px!important;gap:8px!important;font-size:14px!important;align-items:center}
+#ms-t-range #pickP .fac .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px!important;letter-spacing:.05em}
+#ms-t-range #pickP .fac :is(.ins,.ic,canvas,img){transform:scale(.8)}
 `;document.head.appendChild(s);}
 /* One game (Abdullah 2026-11-13 20:18): every setup screen is a Battle. Rebuild the map list when the menu opens on it (the Battle map list). */
 function mxModeName(){return 'Battle';}
