@@ -94,7 +94,7 @@ function mplShow(D){
     for(const k of keys){const o=document.createElement('option');o.value=k;const M=MAPS[k];o.textContent=(M.name||k)+'  ('+(M.min||2)+'–'+(M.max||8)+')';s.append(o);}
     if(!keys.includes(D.mk)){const o=document.createElement('option');o.value=D.mk;o.textContent=(MAPS[D.mk]||{}).name||D.mk;s.prepend(o);}s.value=D.mk;
     s.onchange=()=>{if(!ms)return;if(![...ms.options].some(o=>o.value===s.value)){const o=document.createElement('option');o.value=s.value;o.textContent=(MAPS[s.value]||{}).name||s.value;ms.append(o);}ms.value=s.value;if(ms.onchange)ms.onchange();else try{ms.dispatchEvent(new Event('change'));}catch(e){}try{renderLobby();}catch(e){}};
-    R.append(s);const b=E('button','mbtn sec','BROWSE MAPS…');b.id='mplSelMap';b.onclick=D.onMap;R.append(b);}
+    R.append(s);}   /* the dropdown is the one way to pick the map (Abdullah 18:54 "There should not be a separate map selection page") */
   if(D.spotNote)R.append(E('div','mmapn',D.spotNote));
   if(D.invite)R.append(D.invite);
   fr.append(R);
