@@ -495,6 +495,21 @@ try {
     ck(am.empty && am.empty.am === 0 && am.empty.sup === 0, 'ammo rule: an empty unit outside your area stays empty: ' + JSON.stringify(am));
     ck(am.road && am.road.sup === 1 && am.road.am > 0, 'ammo rule: a unit standing on your supply line (road) refills: ' + JSON.stringify(am));
     ck(am.back && am.back.sup === 1 && am.back.am > 0, 'ammo rule: a unit back at your base refills: ' + JSON.stringify(am)); ck(am.sb === false, 'ammo rule: Test range must have unlimited ammo');
+  // AMMO TRUCK (Abdullah 2026-11-13 21:46 "Separate ammo truck"): the money truck (harv) never refills ammo; every nation builds an Ammo Truck (kind 'ammot') at the War Factory that refills units next to it from a limited stock.
+  { const at = await ev(() => { const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq'); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && hasAmmo(e)); if (!u || !hq || typeof addUnit !== 'function') return { err: 'no unit/hq' };
+      const allN = Object.keys(FACTIONS).every(f => roster(f).factory.includes('ammot') && stats(f, 'ammot').noAttack && stats(f, 'ammot').from === 'factory');
+      const step = () => { G.supT = 1; updSupply(0.01); }; const P = supplyPoints()[ME]; let far = null; for (let k = 0; k < 400 && !far; k++) { const x = (k * 977) % MAPW, y = (k * 613) % MAPH; if (P.every(p => Math.hypot(p.x - x, p.y - y) > p.r + 120)) far = { x, y }; }
+      if (u.am === undefined) ammoInit(u); u.x = far.x; u.y = far.y; u.am = 3;
+      const hv = addUnit(ME, 'harv', far.x + 20, far.y); step(); step(); const harvAm = u.am; const harvSup = u.sup;
+      const tr = addUnit(ME, 'ammot', far.x - 30, far.y); step(); const stock0 = tr.am, cap = tr.amx, sup = u.sup;
+      for (let i = 0; i < 12; i++) step(); const filled = u.am, stock1 = tr.am;
+      const noHarvPt = !supplyPoints()[ME].some(p => Math.abs(p.x - hv.x) < 1 && Math.abs(p.y - hv.y) < 1);
+      return { allN, harvAm, harvSup, stock0, cap, filled, amx: u.amx, sup, stock1, noHarvPt }; });
+    console.log('ammotruck', JSON.stringify(at));
+    ck(!at.err && at.allN, 'every nation must have an Ammo Truck (noAttack, from the War Factory): ' + JSON.stringify(at));
+    ck(!at.err && at.harvAm === 3 && at.harvSup === 0 && at.noHarvPt, 'the money truck (harv) must never refill ammo or count as a supply point: ' + JSON.stringify(at));
+    ck(!at.err && at.filled > 3 && at.stock1 < at.stock0 && at.stock0 < at.cap && at.sup === 1, 'an Ammo Truck must refill a nearby unit from its limited stock: ' + JSON.stringify(at));
+    ck(!/supply truck[^'"]{0,40}(refill|resupplies)|(refill|resupplies)[^'"]{0,40}supply truck/i.test(Object.entries(SRC).filter(([k]) => !k.startsWith('13')).map(([, v]) => v).join('\n')), 'text still says the supply truck refills ammo'); }
     // battleclean 2026-11-12 (Abdullah 2026-11-11 19:45 "Once I click this should disappear"): the rally flag shows only while a production building is selected (or a 1.5 s flash after setting it)
     const rf = await ev(() => { const T = G.teams[ME], hq = G.ents.find(e => e.team === ME && e.kind === 'hq' && !e.dead), vis = () => { try { syncScene(.016); } catch (e) {} return !!(RALLY && RALLY.visible); };
       T.rally = { x: hq.x + 90, y: hq.y + 90 }; G.sel = []; vis(); RV.fl = 0; const away = vis(); G.sel = [hq]; const sel = vis(); G.sel = []; const gone = vis(); G.sel = []; return { away, sel, gone }; });

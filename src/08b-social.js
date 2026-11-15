@@ -66,7 +66,7 @@ const TUTB=[
   hl:()=>tutBPlace('barracks',120,90),cam:()=>tutHQ(),ok:()=>!!tutBld('barracks')},
  {k:'fac',t:'The War Factory builds tanks and other vehicles. It needs a Barracks first.',a:'With your Dozer selected, open Build and place a War Factory next to your base. Right-click a half-built building with another Dozer to help.',
   hl:()=>tutBPlace('factory',150,-60),cam:()=>tutHQ(),ok:()=>!!tutBld('factory')},
- {k:'sup',t:'SUPPLY LINES: your troops carry limited ammo. They refill near your buildings and along your supply lines - the roads running out from your Command Center and Supply Depots (green). Outside them they fight until they are empty, then come back or need a supply truck. Craters and blown bridges cut a line (dashed).',a:'Press L to show your supply lines.',
+ {k:'sup',t:'SUPPLY LINES: your troops carry limited ammo. They refill near your buildings and along your supply lines - the roads running out from your Command Center and Supply Depots (green). Outside them they fight until they are empty, then come back or need an Ammo Truck (War Factory). Craters and blown bridges cut a line (dashed).',a:'Press L to show your supply lines.',
   hl:()=>({d:'#lgBtn'}),cam:()=>tutHQ(),ok:()=>!!(typeof LGU!=='undefined'&&LGU.on)},
  {k:'veh',t:'Now put the factory to work. A selected production building shows what it can make and its own queue. Vehicles are built only in the War Factory.',a:'Click your War Factory, then click a vehicle to train it.',
   hl:()=>{const b=tutBld('factory');if(!b)return{w:tutHQ()};return G.sel.includes(b)?{d:'#u_tank'}:{w:b};},cam:()=>tutBld('factory'),
