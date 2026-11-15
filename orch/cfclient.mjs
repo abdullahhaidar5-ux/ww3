@@ -107,7 +107,7 @@ async function openPage(tag) {
 }
 const waitFor = (page, fn, a, ms, what) => page.waitForFunction(fn, a, { timeout: ms, polling: 250 }).catch(() => { throw new Error('timed out waiting for ' + what); });
 async function shot(page, name) { try { fs.mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: path.join(OUT, name), timeout: 240000 }); } catch (e) { warns.push(`screenshot ${name}: ${String(e.message || e).split('\n')[0]}`); } }
-const status = p => p.evaluate(() => document.getElementById('mpstatus').textContent);
+const status = p => p.evaluate(() => (((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || '')));
 // visible words on the page that talk about hosting (Abdullah: none at all). \bhost: "Ghost" units are fine.
 const hostWords = p => p.evaluate(() => { const t = (document.body.innerText || '') + ' ' + [...document.querySelectorAll('button,input,select,[title],[aria-label]')].filter(e => e.offsetParent).map(e => (e.title || '') + ' ' + (e.placeholder || '') + ' ' + (e.getAttribute('aria-label') || '')).join(' ');
   return [...new Set((t.match(/[^.\n]{0,40}\bhost[^.\n]{0,40}/gi) || []).map(x => x.trim()))]; });
@@ -132,8 +132,8 @@ async function main() {
   await busyReady;
   P.route(p => p.startsWith('/battle/') ? BUSY.url : null);
   await A.evaluate(() => document.getElementById('host').click());
-  await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf && document.querySelector('#mpstatus .lob'), null, 40000, 'the creator\'s battle to start in its own browser');
-  const fb = await A.evaluate(() => ({ st: document.getElementById('mpstatus').textContent, why: NET.fb || '' }));
+  await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf && document.querySelector('#mpl'), null, 40000, 'the creator\'s battle to start in its own browser');
+  const fb = await A.evaluate(() => ({ st: (((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || '')), why: NET.fb || '' }));
   say(`1. server busy (${fb.why}) -> battle in this browser; lobby: "${fb.st.slice(0, 140)}"`);
   if (fb.why !== 'busy') fail(`the fallback did not come from the server saying "busy" (${fb.why})`);
   if (/Cloudflare|busy|browser|server/i.test(fb.st)) fail('the fallback lobby tells the player where the battle runs: ' + fb.st.slice(0, 200));
@@ -144,7 +144,7 @@ async function main() {
 
   // ---- 2. lobby on Cloudflare ----
   await A.evaluate(() => document.getElementById('host').click());
-  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpstatus .lob'), null, 30000, 'the creator\'s lobby on the server');
+  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpl'), null, 30000, 'the creator\'s lobby on the server');
   const code = await A.evaluate(() => NET.jcode);
   say(`2. lobby open on the server, code ${code.toUpperCase()}; creator status: "${(await status(A)).slice(0, 120)}"`);
   if (/Cloudflare/.test(await status(A))) fail('the creator\'s lobby tells the player where the battle runs');
@@ -160,14 +160,14 @@ async function main() {
   await noHost(B, 'game list');
   // one tap on "Play online": the only open battle is the creator's, so the friend joins it
   await B.evaluate(() => { initAudio(); setup.p = 'RU'; document.getElementById('playOnline').click(); });
-  await waitFor(B, c => NET.via === 'wsb' && NET.jcode === c && /Joined/.test(document.getElementById('mpstatus').textContent), code, 60000, 'the friend\'s "Play online" to join the creator\'s battle');
+  await waitFor(B, c => NET.via === 'wsb' && NET.jcode === c && /Joined/.test((((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || ''))), code, 60000, 'the friend\'s "Play online" to join the creator\'s battle');
   say(`friend joined with "Play online": "${(await status(B)).slice(0, 120)}"`);
   await noHost(B, 'joined lobby');
   await waitFor(A, () => NET.cf.blob.seats.filter(s => s.h).length === 2, null, 20000, 'the friend to appear in the creator\'s lobby');
   // teams 1 vs 2 plus one Easy computer player on the friend's team, as a player would set them in the lobby
-  await A.evaluate(() => { NET.tm = [0, 1]; renderLobby(); });
+  await A.evaluate(() => { setup.map = 'bm_sixroads'; NET.tm = [0, 1]; renderLobby(); });
   await A.waitForTimeout(600);
-  await A.evaluate(() => { document.querySelector('#mpstatus .addai').click(); });
+  await A.evaluate(() => { (() => { const s = document.querySelector('#mpl tr.open select'); s.value = '0'; s.onchange(); })(); });
   await A.waitForTimeout(600);
   await A.evaluate(() => { NET.ais.forEach(a => { a.f = 'CN'; a.d = 0; a.tm = 1; }); renderLobby(); });
   // the friend's lobby comes from the server, so this is what the server holds
@@ -177,10 +177,10 @@ async function main() {
   say(`server lobby (as the friend sees it): ${seats.map(s => `${s.h ? 'player' : 'computer'} ${s.f}/team ${s.tm + 1}`).join(', ')}`);
   if (!(await lobOk())) fail('lobby edits did not reach the server (teams / computer player)');
   await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
-  await waitFor(A, () => !document.querySelector('#mpstatus .startbtn').disabled, null, 15000, 'Start to be enabled');
+  await waitFor(A, () => !document.querySelector('#mplPlay').disabled, null, 15000, 'Start to be enabled');
   await shot(A, 'cf-lobby.png');
   await A.evaluate(() => { window.__stopLoop = true; }); await B.evaluate(() => { window.__stopLoop = true; });
-  await A.evaluate(() => document.querySelector('#mpstatus .startbtn').click());
+  await A.evaluate(() => document.querySelector('#mplPlay').click());
 
   // ---- 3. battle ----
   await waitFor(A, () => MODE === 'client' && G && G.teams.filter(Q => !Q.reb).length === 3, null, 300000, 'the creator to enter the battle');

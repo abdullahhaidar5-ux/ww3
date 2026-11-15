@@ -88,7 +88,7 @@ async function load(page, url) {
 async function openPage(tag, url = URL0) { const page = await ctx.newPage(); watch(page, tag); await load(page, url); return page; }
 const waitFor = (page, fn, a, ms, what) => page.waitForFunction(fn, a, { timeout: ms, polling: 250 }).catch(() => { throw new Error('timed out waiting for ' + what); });
 async function shot(page, name) { try { fs.mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: path.join(OUT, name), timeout: 120000 }); } catch (e) { warns.push(`screenshot ${name}: ${String(e.message || e).split('\n')[0]}`); } }
-const status = p => p.evaluate(() => document.getElementById('mpstatus').textContent);
+const status = p => p.evaluate(() => (((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || '')));
 const pwRx = new RegExp([PW, encodeURIComponent(PW), Buffer.from(PW).toString('base64').replace(/=+$/, '')].map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'));
 // type into the password prompt and press its Join button, like a player
 async function answer(page, pw) {
@@ -109,7 +109,7 @@ async function main() {
   await A.evaluate(() => { if (typeof menuGo === 'function') menuGo('online'); });   // the new menu keeps the online card on its own screen
   await A.fill('#hostpw', PW);
   await A.evaluate(() => newBattle());
-  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpstatus .lob'), null, 40000, 'the creator\'s Cloudflare lobby');
+  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpl'), null, 40000, 'the creator\'s Cloudflare lobby');
   const code = await A.evaluate(() => NET.jcode);
   const lobA = await status(A), inv = await A.evaluate(() => [inviteLink(), inviteText()]);
   say(`1. protected battle open on Cloudflare, code ${code.toUpperCase()}; invite link ${inv[0]}`);
@@ -143,12 +143,12 @@ async function main() {
   await B.evaluate(() => renderGames());
   await B.evaluate(() => [...document.querySelectorAll('#games .game')].find(x => x.textContent.includes('🔒')).querySelector('button').click());
   await answer(B, 'yalla 2026 n');
-  await waitFor(B, () => /Wrong password/.test(document.getElementById('mpstatus').textContent) && !!document.getElementById('joinpw'), null, 20000, '"Wrong password" for a wrong password');
+  await waitFor(B, () => /Wrong password/.test((((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || ''))) && !!document.getElementById('joinpw'), null, 20000, '"Wrong password" for a wrong password');
   say(`   wrong password -> "${(await status(B)).slice(0, 60)}"`);
   if (await B.evaluate(() => !!NET.game)) fail('the friend stayed connected after a wrong password');
   await shot(B, 'pw-wrong.png');
   await answer(B, PW);
-  await waitFor(B, () => NET.via === 'wsb' && /Joined/.test(document.getElementById('mpstatus').textContent), null, 40000, 'the friend to join with the right password');
+  await waitFor(B, () => NET.via === 'wsb' && /Joined/.test((((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || ''))), null, 40000, 'the friend to join with the right password');
   await waitFor(A, () => NET.cf.blob.seats.filter(s => s.h).length === 2, null, 20000, 'the friend to appear in the creator\'s lobby');
   say(`   right password -> "${(await status(B)).slice(0, 80)}"; creator's lobby has 2 players`);
 
@@ -156,7 +156,7 @@ async function main() {
   await B.evaluate(() => leaveNet());
   await waitFor(A, () => NET.cf.blob.seats.filter(s => s.h).length === 1, null, 20000, 'the friend to leave the creator\'s lobby');
   await load(B, inv[0]);
-  await waitFor(B, () => NET.via === 'wsb' && /Joined/.test(document.getElementById('mpstatus').textContent), null, 40000, 'the friend to join from the invite link');
+  await waitFor(B, () => NET.via === 'wsb' && /Joined/.test((((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || ''))), null, 40000, 'the friend to join from the invite link');
   const addr = await B.evaluate(() => location.href);
   say(`3. invite link joined in one go; address bar now ${addr.replace(ORIGIN, '')}`);
   if (/pw=/.test(addr)) fail('the password stayed in the address bar after joining from the invite link');
@@ -173,13 +173,13 @@ async function main() {
   const rr = await (await fetch(`${SRV.url}/room-test/${bcode}`)).text();
   if (pwRx.test(rr) || !/"h":"/.test(rr)) fail('the relay room should keep only a salted hash: ' + rr.slice(0, 160));
   await B.evaluate(c => { initAudio(); document.getElementById('jcode').value = c.toUpperCase(); joinByCode(c); }, bcode);
-  await waitFor(B, () => !!document.getElementById('joinpw') && /password protected/i.test(document.getElementById('mpstatus').textContent), null, 40000, 'the friend to be asked for the password (join by code)');
+  await waitFor(B, () => !!document.getElementById('joinpw') && /password protected/i.test((((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || ''))), null, 40000, 'the friend to be asked for the password (join by code)');
   say(`4. browser-hosted ${bcode.toUpperCase()}: join by code asks "${(await status(B)).slice(0, 70)}"`);
   await answer(B, 'wrong');
-  await waitFor(B, () => /Wrong password/.test(document.getElementById('mpstatus').textContent), null, 40000, '"Wrong password" from the browser-hosted game');
+  await waitFor(B, () => /Wrong password/.test((((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || ''))), null, 40000, '"Wrong password" from the browser-hosted game');
   await answer(B, PW);
   await waitFor(A, () => NET.lobby.length === 1, null, 40000, 'the friend in the browser host\'s lobby');
-  await waitFor(B, () => /Joined/.test(document.getElementById('mpstatus').textContent), null, 20000, 'the friend to be told it joined');
+  await waitFor(B, () => /Joined/.test((((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || ''))), null, 20000, 'the friend to be told it joined');
   say(`   right password -> friend: "${(await status(B)).slice(0, 80)}"`);
   await shot(A, 'pw-browserhost.png');
 }
