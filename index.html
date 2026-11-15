@@ -7427,7 +7427,7 @@ function enqueue(team,kind,bid){const T=G.teams[team],s=stats(T.fac,kind);if(kin
 function dequeue(team,kind,bid,idx){const T=G.teams[team];let b=bid?G.byId.get(bid):null,i=-1;if(b&&b.isB&&b.team===team&&b.q&&b.q.length){i=idx!=null&&b.q[idx]&&(!kind||b.q[idx].kind===kind)?idx:-1;if(i<0&&kind)for(let j=b.q.length-1;j>=0;j--)if(b.q[j].kind===kind){i=j;break;}}
   else{b=null;const s=BASE[kind];if(!s)return;const L=prodBlds(team,s.from).reverse();for(const o of L){if(!o.q)continue;for(let j=o.q.length-1;j>=0;j--)if(o.q[j].kind===kind){b=o;i=j;break;}if(b)break;}}
   if(!b||i<0)return;const it=b.q.splice(i,1)[0];T.credits+=it.c||0;stSp(T,-(it.c||0));}
-function prodTime(T,s){let t=s.time/(1+((G&&G.bs)||1)*.6-.6);t*=upgK(T,s.kind,'build');return t;}
+function prodTime(T,s){let t=s.time/(1+((G&&G.bs)||1)*.6-.6);if(s.from!=='hq')t*=econBT(T.fac);t*=upgK(T,s.kind,'build');return t;}   /* L3 light economy: rich nations train slower, poorer ones faster */
 function production(dt){for(const b of G.ents){if(!b.isB||!b.q||!b.q.length)continue;if(b.dead){qRefund(b);continue;}if(b.built<1||b.dis>G.t||b.sell)continue;const T=G.teams[b.team];if(!T)continue;
     const it=b.q[0],s=stats(T.fac,it.kind);it.t+=dt*(G.ec?ecSpeedMul(T.id,[b]):1)*ldProd(T,[b],s);if(it.t>=prodTime(T,s)){if(popFull(T,it.kind,1)){it.t=prodTime(T,s);popWarn(T);continue;}b.q.shift();spawnFrom(T,b,it.kind);}}
   for(const T of G.teams){
@@ -8757,7 +8757,7 @@ function updOil(dt){const N=G.teams.length;const here=OIL_HERE.length===N?OIL_HE
   econTick(dt);}
 // income buildings pay every 2 seconds; a team's extra ones earn less each
 // Sanctions: income multiplier for a team (1 normally; 0.8 while sanctioned, 0.92 with Smuggling Routes). T.sanc = sim time it ends.
-function incMul(T){return T.sanc>G.t?(T.upg.smug?.92:.8):1;}
+function incMul(T){return (T.sanc>G.t?(T.upg.smug?.92:.8):1)*econUp(T.fac);}
 function econTick(dt){G.ecT=(G.ecT||0)+dt;if(G.ecT<2)return;G.ecT-=2;for(const T of G.teams)if(T.sanc>G.t&&T.upg.smug&&!T.dummy)T.credits+=6;  // smuggling trickle: 3 cash/s while sanctioned
 const per={};for(const b of G.ents){if(b.dead||!b.isB||b.kind!=='econ'||b.built<1)continue;const k=per[b.team]=(per[b.team]||0)+1;const T=G.teams[b.team];if(T.dummy)continue;
   const v=b.s.inc*2*(ECON_RATE[k-1]||0)*((b.dis||0)>G.t?0:1)*incMul(T);b.acc=(b.acc||0)+v;const w=Math.floor(b.acc);if(w>0){b.acc-=w;T.credits+=w;}}}
