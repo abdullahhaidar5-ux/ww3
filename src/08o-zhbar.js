@@ -236,8 +236,7 @@ function zhPowWin(){let w=$('zhPow');if(!ZH.star||!G){if(w)w.hidden=true;return;
   const body=w.querySelector('.zpb'),rk=document.querySelector('#side .sup.rk .lbl'),src=[...document.querySelectorAll('#panel>[data-tab="pow"]')];
   const sig=src.map(b=>(b.className.includes('sub')?'s':'')+b.id+(b.disabled?1:0)+(b.hidden?1:0)+(b.textContent||'').length).join('|')+'|'+(rk?rk.textContent:'')+'|'+(($('supt')||{}).textContent||'')+(($('supbtn')||{}).disabled?1:0);if(w.dataset.sig===sig)return;w.dataset.sig=sig;
   body.innerHTML='';if(rk){const d=document.createElement('div');d.className='zrk';d.textContent=rk.textContent.trim();body.append(d);}
-  {const sb=$('supbtn'),d=document.createElement('div');d.className='zsw';d.innerHTML='<div><b></b><small></small></div><button type="button">LAUNCH</button>';d.querySelector('b').textContent=(($('supname')||{}).textContent||'Strike');d.querySelector('small').textContent=(($('supt')||{}).textContent||'');
-    const lb=d.querySelector('button');lb.disabled=!sb||sb.disabled;lb.onclick=()=>{if(sb&&!sb.disabled)sb.click();};body.append(d);}
+  /* the Strike is launched from its building and its own rail button, not from the General window (Abdullah 2026-11-14 22:10) */
   for(const b of src){if(b.classList.contains('sub')){const s=document.createElement('div');s.className='zsub';s.textContent=b.textContent;body.append(s);continue;}if(b.style.display==='none')continue;
     const x=document.createElement('button');x.type='button';x.className='zp';x.disabled=b.disabled;const n=document.createElement('b');n.textContent=(b.querySelector('.n')||{}).textContent||b.dataset.nm||'';x.append(n);
     const c=(b.querySelector('.c')||{}).textContent;if(c){const i=document.createElement('i');i.textContent=c;x.append(i);}const dd=b.dataset.desc;if(dd){const s=document.createElement('span');s.textContent=dd;x.append(s);}
@@ -356,3 +355,21 @@ function zhIcons(){const pn=$('panel');if(!pn)return;for(const b of pn.querySele
 html body #side #panel .btn>.zhIc{position:absolute;left:0;right:0;top:9%;margin:auto;width:46%;height:52%;pointer-events:none;filter:drop-shadow(0 0 4px rgba(0,0,0,.85))}
 html body #side #panel .btn>.zhIc svg{display:block;width:100%;height:100%}`;document.head.appendChild(st);}
 if(typeof updateUI==='function'){const _iU=updateUI;updateUI=function(){_iU.apply(this,arguments);try{zhIcons();}catch(e){}};}
+
+/* STRIKE ON THE LEFT RAIL (Abdullah 2026-11-14 22:10 "Strike launch from the building and its own separate button like artillery barrage in left hand"):
+   one rail button under the generals' powers, shown while you own a Strike Center; it fills up as the Strike charges, glows when READY,
+   one click arms it, then LEFT-click the target (right-click cancels) - the same as pressing LAUNCH on the building. */
+function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q)return;let b=document.getElementById('qpStrike');
+  const own=!!sb&&!sb.hidden&&G&&G.ents&&G.ents.some(e=>e.isB&&e.team===ME&&!e.dead&&e.kind==='uplink'&&e.built>=1);
+  if(!own){if(b)b.hidden=true;return;}
+  if(!b){b=document.createElement('button');b.id='qpStrike';b.type='button';b.innerHTML='<div class="qf"></div>'+(ORD_SVG.missile||'')+'<span class="qc"></span>';b.onclick=()=>{const s=$('supbtn');if(s&&!s.disabled){s.click();try{sfxUI(620);}catch(_){}}};
+    let col=Q.querySelector('.qstr');if(!col){col=document.createElement('div');col.className='qstr';Q.insertBefore(col,Q.querySelector('.qtab'));}col.append(b);}
+  Q.hidden=false;b.hidden=false;const nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),T=G.teams[ME],c=T&&T.sup&&T.sup.charge?Math.min(1,(T.charge||0)/T.sup.charge):1,rdy=!sb.disabled,k=nm+st+rdy+(G.aim==='sup')+Math.round(c*40);
+  if(b.dataset.k===k)return;b.dataset.k=k;b.title=nm+(st?' - '+st:'')+(rdy?' - click, then click the target':'');b.setAttribute('aria-label',nm);
+  b.className=(G.aim==='sup'?'arm ':'')+(rdy?'rdy':'');const f=b.querySelector('.qf');f.style.background=c<1?'conic-gradient(rgba(0,0,0,.68) '+Math.round(360*(1-c))+'deg,transparent 0)':'none';b.querySelector('.qc').textContent=rdy?'READY':Math.round(c*100)+'%';}
+{const st=document.createElement('style');st.textContent=`#qpow .qstr{display:flex;flex-direction:column;gap:6px;margin-top:8px}#qpow.off .qstr{display:none}
+#qpStrike{pointer-events:auto;position:relative;overflow:hidden;width:56px;height:56px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;border:1px solid #c97a3a;background:linear-gradient(160deg,#3a2418,#1a100a);color:#ffb07a;cursor:pointer}
+#qpStrike svg{width:30px;height:30px;position:relative;margin-top:-6px;pointer-events:none}#qpStrike .qf{position:absolute;inset:0;pointer-events:none}
+#qpStrike .qc{position:absolute;bottom:2px;left:0;right:0;text-align:center;font:800 9px/1 system-ui,sans-serif;letter-spacing:.05em;color:#ffd9b0;pointer-events:none}
+#qpStrike.rdy{border-color:#ffd23a;box-shadow:0 0 10px rgba(255,160,60,.7)}#qpStrike.arm{border-color:#ea5a40;background:linear-gradient(160deg,#7a2a1c,#4a1a12)}`;document.head.appendChild(st);}
+if(typeof updateUI==='function'){const _sU=updateUI;updateUI=function(){_sU.apply(this,arguments);try{qpStrike();}catch(e){}};}
