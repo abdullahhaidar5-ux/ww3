@@ -1,4 +1,4 @@
-// Menu background shots -> orch/shots/menubg/: stages a dusk clash (IR vs US) with the battle engine, 1920x1080, HUD hidden.
+// Menu background shots -> orch/shots/menubg/: stages a dusk clash (IR vs US) with the battle engine, 2560x1440 (--vw/--vh), HUD hidden, no rings/markers.
 //   node orch/menubgshots.mjs [--map zagros] [--w 1] [--seed 7] [--cams 6]
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath } from 'node:url'; import { createRequire } from 'node:module';
@@ -16,13 +16,13 @@ await new Promise(r => server.listen(0, '127.0.0.1', r));
 const O = `http://127.0.0.1:${server.address().port}`;
 const exe = (() => { const b = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers'; try { for (const d of fs.readdirSync(b).filter(d => d.startsWith('chromium-')).sort().reverse()) { const e = path.join(b, d, 'chrome-linux64', 'chrome'); if (fs.existsSync(e)) return e; } } catch {} })();
 const browser = await pw.chromium.launch({ executablePath: exe, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+const ctx = await browser.newContext({ viewport: { width: +argS('vw', 2560), height: +argS('vh', 1440) }, deviceScaleFactor: 1 });
 const page = await ctx.newPage();
 await page.route('**/*', r => r.request().url().startsWith(O) ? r.continue() : r.abort());
 page.on('pageerror', e => console.log('PAGEERR', e.message.slice(0, 200)));
 await page.goto(O + '/index.html', { waitUntil: 'load', timeout: 180000 });
 await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 120000 });
-await page.evaluate(([map, w, seed, a, b]) => { window.__stopLoop = true; try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {}
+await page.evaluate(([map, w, seed, a, b]) => { window.__stopLoop = true; try { LOOKP.b.bl = 1.0; } catch (e) {} try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {}
   try { SET.gfx = 'ultra'; applyGfx(); } catch (e) {} try { initAudio(); AU.musicOn = false; AU.sfxOn = false; AU.voiceOn = false; applyAudio(); } catch (e) {}
   Object.assign(setup, { map, n: 1, p: a, a: b, others: [], tm: [], slot: -1, seed, w }); startSingle(); }, [MAP, W, SEED, A, B]);
 await page.waitForFunction(() => !window.LOADING, null, { timeout: 900000, polling: 500 });
@@ -58,6 +58,7 @@ const views = [[0, 0, 230, -0.2, 0], [0, 40, 200, -0.16, 0.5], [-40, -30, 260, -
 for (let i = 0; i < N; i++) { const v = views[i % views.length];
   await page.evaluate(async ([v]) => { const [cx, cy] = window.__C; for (let k = 0; k < 1; k++) { cam.dist = cam.td = v[2]; cam.x = cam.tx = cx + v[0]; cam.y = cam.ty = cy + v[1]; cam.tilt = v[3]; cam.yaw = cam.tyaw = v[4]; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; for (let f = 0; f < 6; f++) renderFrame(1 / 60); } }, [v]);
   await step(40);
+  await page.evaluate(() => { try { G.sel = []; ORDM.list.length = 0; } catch (e) {} });
   const d = await page.evaluate(() => { for (let f = 0; f < 5; f++) renderFrame(1 / 60); renderFrame(1 / 60); return R3.domElement.toDataURL('image/png'); }); // same task as the draw: the buffer is still there
   fs.writeFileSync(path.join(ROOT, 'orch/shots/menubg', `raw-${MAP}-${SEED}-${i}.png`), Buffer.from(d.split(',')[1], 'base64')); console.log('shot', i, Date.now() - T0); }
 await browser.close(); server.close(); process.exit(0);
