@@ -25,7 +25,8 @@ let TS_Q=0;function tsFitSoon(){if(TS_Q)return;TS_Q=requestAnimationFrame(()=>{T
 function tsApply(){tsCss();const z=tsVal(),h=document.documentElement;h.style.setProperty('--ts',String(z));h.classList.toggle('ts-on',z>1);
   /* the page is only watched for new panels while a bigger text size is on (at 100% there is nothing to fit) */
   if(z>1&&!TS_OBS){TS_OBS=new MutationObserver(tsFitSoon);TS_OBS.observe(document.body,{childList:true,subtree:true});}else if(z<=1&&TS_OBS){TS_OBS.disconnect();TS_OBS=null;}
-  if(z>1||TS_WAS>1){try{dispatchEvent(new Event('resize'));}catch(e){}}TS_WAS=z;tsFitSoon();}
+  if(z>1||TS_WAS>1){try{dispatchEvent(new Event('resize'));}catch(e){}}TS_WAS=z;tsFitSoon();
+  try{if(typeof G!=='undefined'&&G&&typeof zhCtx==='function')zhCtx();}catch(e){}}   /* the Zero Hour bar places its order dock in window pixels: re-place it now, not at the next UI refresh */
 function tsSet(v){v=+v;SET.ts=TS_STEPS.includes(v)?v:1;try{saveSet();}catch(e){}tsApply();}
 function tsInstall(){const body=document.getElementById('setBody');if(!body||document.getElementById('sTs'))return;
   const l=document.createElement('div');l.className='label';l.textContent='Text size (menus, panels and the command bar)';
