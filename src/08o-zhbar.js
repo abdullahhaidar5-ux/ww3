@@ -49,8 +49,8 @@ html body #side #panel .btn:not(.hasic){background-image:none!important}
 html body #side #panel .btn:not(.hasic)>.n{display:block!important;position:static!important;font:700 11px/1.15 system-ui,sans-serif!important;color:#e8eef2;white-space:normal;text-align:center;padding:3px}
 html body #side #panel .btn:hover:not(:disabled){box-shadow:inset 0 0 0 2px #fff,0 0 8px var(--tc)!important}
 html body #side #panel .btn:disabled,html body #side #panel .btn.dis{filter:grayscale(.9) brightness(.5)!important}
-html body #side #panel .btn .q{position:absolute!important;right:3px;top:2px;font:800 14px system-ui,sans-serif!important;color:#fff;text-shadow:0 0 3px #000,0 1px 1px #000}
-html body #side #panel .btn .p{position:absolute!important;left:0;bottom:0;height:100%!important;background:rgba(0,0,0,.55)!important;box-shadow:none!important;border-radius:0!important;opacity:.9}
+html body #side #panel .btn .q{position:absolute!important;right:3px;top:2px;font:900 26px/1 system-ui,sans-serif!important;color:#fff;text-shadow:0 0 4px #000,0 2px 2px #000,0 0 8px #000;z-index:3}
+html body #side #panel .btn .p{position:absolute!important;left:0;bottom:0;height:100%!important;box-shadow:none!important;border-radius:0!important;pointer-events:none}
 html body #side #panel .zhEmpty{display:none!important}
 /* unit orders as pictures at the right end of the panel */
 .orddock.zhin{right:auto!important;bottom:auto!important;min-width:0!important;padding:6px!important;background:none!important;box-shadow:none!important;border:0!important;display:flex!important;flex-wrap:wrap;justify-content:center;align-content:center;gap:4px;pointer-events:none}
@@ -142,6 +142,12 @@ html body #side #panel .btn.wide.done::after,html body #side #panel .btn.wide[da
 
 html body #side #panel .btn.zhL{background-image:radial-gradient(circle at 50% 38%,#8a2a18,#2a0c06 75%)!important;border-color:#ff9a6a!important}
 html body #side #panel .btn.zhL::before{content:"🚀";position:absolute;left:0;right:0;top:10%;text-align:center;font-size:calc(var(--zb)*.32)}
+/* Sell ($) and Repair (wrench) for the selected building(s): original line icons, drawn here */
+html body #side #panel .btn.zhSR{background-color:#1b2a22!important;background-size:auto 56%!important;background-position:center 12%!important;background-repeat:no-repeat!important}
+html body #side #panel .btn.zhSR.zhSell{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='26' fill='%23274a2b' stroke='%23f2d35a' stroke-width='4'/%3E%3Ctext x='32' y='45' font-family='Arial,sans-serif' font-weight='900' font-size='38' text-anchor='middle' fill='%23f2d35a'%3E$%3C/text%3E%3C/svg%3E")!important}
+html body #side #panel .btn.zhSR.zhRep{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='26' fill='%23263c52' stroke='%238fd0ff' stroke-width='4'/%3E%3Cpath d='M41 14a10 10 0 0 0-11 13L15 42a4 4 0 0 0 6 6l15-15a10 10 0 0 0 13-11l-6 6-5-1-1-5z' fill='%238fd0ff'/%3E%3C/svg%3E")!important}
+html body #side #panel .btn.zhSR.on{box-shadow:inset 0 0 0 2px #8fd0ff,0 0 10px #8fd0ff!important}
+html body #side #panel .btn.zhSR:disabled{filter:grayscale(.9) brightness(.5)!important}
 html body #side #panel .btn.zhL.rdy{box-shadow:inset 0 0 0 2px #ffd23a,0 0 12px #ff7a3a!important;animation:zhPulse 1.2s ease-in-out infinite}
 #zhTip{position:fixed;left:10px;z-index:60;width:clamp(240px,22vw,380px);pointer-events:none;padding:10px 14px;border-radius:4px;color:#e9efdc;font:14px/1.4 system-ui,sans-serif;
  background:linear-gradient(180deg,rgba(14,22,40,.95),rgba(8,14,30,.95));box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px #3a5ea8,0 4px 14px rgba(0,0,0,.6)}
@@ -152,6 +158,10 @@ const ZH={star:false,sig:'',pow:0};
    ★ -> generals' powers + Strike; nothing that can act -> an empty grid (as in Zero Hour) */
 function zhWant(){if(!G)return null;const s=(G.sel||[]).filter(e=>e&&!e.dead&&e.team===ME);
   if(s.some(u=>u.kind==='dozer'))return 'build';const b=s.find(e=>e.isB);if(b){if(typeof CATS!=='undefined'&&CATS.includes(b.kind))return 'units';return 'upg';}return 'none';}
+function zhSelB(){return(G.sel||[]).filter(e=>e&&!e.dead&&e.isB&&e.team===ME&&e.built>=1&&!e.civ&&e.kind!=='garrison'&&!e.sell);}
+function zhIsRep(b){return !!b.rep;}
+function sellSel(){if(!G||G.over)return;const ids=zhSelB().map(e=>e.id);if(!ids.length)return;doAct({t:'sell',ids});try{sfxUI(300);}catch(_){}ZH.sig='';}
+function repairSel(){if(!G||G.over)return;const bl=zhSelB();if(!bl.length)return;const on=!bl.every(b=>zhIsRep(b));doAct({t:'rep',ids:bl.map(e=>e.id),on});try{sfxUI(520);}catch(_){}}
 function zhCtx(){if(!G)return;const sd=$('side');if(!sd)return;
   let star=$('zhStar');if(!star){star=document.createElement('button');star.id='zhStar';star.type='button';star.title='Generals\' powers and Strike';star.innerHTML='★★★<i class="dot" hidden></i>';
     star.onclick=()=>{ZH.star=!ZH.star;ZH.sig='';zhPowWin();zhCtx();};sd.append(star);}
@@ -168,6 +178,14 @@ function zhCtx(){if(!G)return;const sd=$('side');if(!sd)return;
   const w=zhWant();if(w&&TAB!==w)showTab(w);
   /* a production building shows ONLY the units it makes (War Factory = vehicles, Barracks = infantry, ...) */
   {const pnF=$('panel'),sb=(G.sel||[]).find(e=>e&&!e.dead&&e.isB&&e.team===ME);if(pnF&&w==='units'&&sb){const T=G.teams[ME];for(const u of pnF.querySelectorAll(':scope>[data-tab="units"]')){if(u.classList.contains('sub')){u.hidden=true;continue;}const k=u.id.slice(2);let ok=false;try{ok=stats(T.fac,k).from===sb.kind;}catch(e){}if(u.hidden===ok)u.hidden=!ok;}}}
+  /* Sell + Repair: shown while one of your finished buildings is selected (sim: act 'sell' / 'rep' in 03-sim.js; keys V / O) */
+  {const pnS=$('panel');if(pnS){const bl=zhSelB();let sl=$('zhSell'),rp=$('zhRep');
+    if(!sl||sl.parentNode!==pnS){sl=document.createElement('button');sl.id='zhSell';sl.type='button';sl.className='btn hasic zhSR zhSell';sl.innerHTML='<span class="n"></span>';sl.onclick=()=>sellSel();try{sl.style.setProperty('cursor',curCss('sell'),'important');}catch(e){}pnS.append(sl);
+      rp=document.createElement('button');rp.id='zhRep';rp.type='button';rp.className='btn hasic zhSR zhRep';rp.innerHTML='<span class="n"></span>';rp.onclick=()=>repairSel();try{rp.style.setProperty('cursor',curCss('repair'),'important');}catch(e){}pnS.append(rp);}
+    const T=G.teams[ME];let ref=0,hurt=0,rep=0;for(const b of bl){ref+=Math.floor(bstats(T.fac,b.kind).cost*SELL_PCT);if(b.hp<b.max)hurt++;if(zhIsRep(b))rep++;}
+    const k=bl.length+'|'+ref+'|'+hurt+'|'+rep;if(sl.dataset.k!==k){sl.dataset.k=k;sl.hidden=rp.hidden=!bl.length;
+      sl.querySelector('.n').textContent='Sell $'+ref;sl.dataset.nm='Sell';sl.dataset.desc='Sell the selected building'+(bl.length>1?'s':'')+' for half its price after a 3 second sell-off ['+kbShow((KB.cur.sell||'v'))+'].';
+      rp.querySelector('.n').textContent=rep?'Repairing':'Repair';rp.dataset.nm='Repair';rp.dataset.desc='Repair the selected building'+(bl.length>1?'s':'')+' over time. It costs a quarter of its price for a full repair, paid as it heals. Press again to stop ['+kbShow((KB.cur.rep||'o'))+'].';rp.disabled=!hurt&&!rep;rp.classList.toggle('on',!!rep);}}}
   /* the strike building gets its own LAUNCH button (Abdullah 18:26 "Missile city ... there is no way to use it") */
   {const pnL=$('panel');if(pnL){let lb=$('zhLaunch');if(!lb||lb.parentNode!==pnL){lb=document.createElement('button');lb.id='zhLaunch';lb.type='button';lb.className='btn zhL';lb.dataset.tab='upg';lb.dataset.from='uplink';lb.innerHTML='<span class="n"></span>';lb.onclick=()=>{const sb=$('supbtn');if(sb&&!sb.disabled)sb.click();};pnL.prepend(lb);}
     const sb=$('supbtn'),nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),dis=!sb||sb.disabled,lbl='LAUNCH '+nm+(st?' · '+st:'');if(lb.dataset.k!==lbl+dis){lb.dataset.k=lbl+dis;lb.querySelector('.n').textContent=dis?nm+(st?' · '+st:''):'LAUNCH '+nm;lb.dataset.nm=lb.querySelector('.n').textContent;lb.dataset.desc='Fire your strike: click LAUNCH, then right-click the target on the map.';lb.disabled=dis;lb.classList.toggle('rdy',!dis);}}}
@@ -177,7 +195,7 @@ function zhCtx(){if(!G)return;const sd=$('side');if(!sd)return;
       if(w==='build'){od.style.left=(r.right-ow)+'px';od.style.top=r.top+'px';od.style.width=ow+'px';od.style.height=r.height+'px';}
       else{od.style.left=r.left+'px';od.style.top=(r.top+(fmOn?44:0))+'px';od.style.width=r.width+'px';od.style.height=(r.height-(fmOn?44:0))+'px';}
       if(fm){if(fmOn){fm.classList.add('zhfm');fm.style.left=r.left+'px';fm.style.width=r.width+'px';fm.style.top=(r.top+6)+'px';}else fm.classList.remove('zhfm');}if(w==='build'){pn0.style.removeProperty('padding-right');const nc=Math.max(2,Math.floor((r.width-ow-16)/(zb+4)));pn0.style.setProperty('grid-template-columns','repeat('+nc+','+Math.round(zb)+'px)','important');}else pn0.style.removeProperty('grid-template-columns');}else if(od.classList.contains('zhin')){od.classList.remove('zhin');{const fm=document.getElementById('fmb');if(fm)fm.classList.remove('zhfm');}pn0.style.removeProperty('padding-right');od.style.left=od.style.top=od.style.width=od.style.height='';}}}
-  const pn=$('panel');if(pn){let e=pn.querySelector('.zhEmpty');const od2=document.querySelector('.orddock.zhin');const vis=!!od2||[...pn.querySelectorAll(':scope>[data-tab]')].some(b=>!b.hidden&&b.dataset.tab===TAB);
+  const pn=$('panel');if(pn){let e=pn.querySelector('.zhEmpty');const od2=document.querySelector('.orddock.zhin');const vis=!!od2||[...pn.querySelectorAll(':scope>[data-tab]')].some(b=>!b.hidden&&b.dataset.tab===TAB)||(!!$('zhSell')&&!$('zhSell').hidden);
     if(!vis){if(!e){e=document.createElement('div');e.className='zhEmpty';pn.append(e);}e.textContent=w==='none'?'Select your Construction Vehicle to build, or a building to train units':'Nothing available here yet';e.hidden=false;}else if(e)e.hidden=true;}
   {const rk=document.querySelector('#side .sup.rk .bar i');if(rk){const wd=rk.style.width;if(wd&&rk.style.getPropertyValue('--rk')!==wd)rk.style.setProperty('--rk',wd);}}}
 
