@@ -392,8 +392,9 @@ function fmLayout(type,n,sp,W,lat){const S={S:[],A:[],I:[],F:[],R:[]},put=(r,f,s
     d=rows('I',d,W,ls,rs);rows('R',d-rs*.3,W,ls*(sd?1:1.4),rs*(sd?1:1.3));}
   return S;}
 // us = movers; destination centre (cx,cy), facing (fx,fy); lat = sideways spacing wanted (drag lines); keep = hold slots at the slowest unit's pace
-function fmApply(us,type,cx,cy,fx,fy,mode,keep,lat,wid){const m=us.filter(u=>u&&!u.isB&&u.s&&u.s.spd>0&&u.kind!=='harv'&&u.kind!=='dozer');const n=m.length;if(!n)return;
-  if(!FM_TYPES.includes(type))type='line';const L=Math.hypot(fx,fy)||1;fx/=L;fy/=L;const px=-fy,py=fx,gnd=m.filter(u=>u.s.dom==='ground'),oth=m.filter(u=>u.s.dom!=='ground');
+/* every selected unit that can move takes a place in the formation - infantry, vehicles, trucks, aircraft and boats (Abdullah 2026-11-14 18:15 "units can all form a formation") */
+function fmApply(us,type,cx,cy,fx,fy,mode,keep,lat,wid){const m=us.filter(u=>u&&!u.isB&&u.s&&u.s.spd>0);const n=m.length;if(!n)return;
+  if(!FM_TYPES.includes(type))type='line';const L=Math.hypot(fx,fy)||1;fx/=L;fy/=L;const px=-fy,py=fx,gnd=m,oth=[];
   const by={S:[],A:[],I:[],F:[],R:[]};for(const u of gnd)by[fmRole(u)].push(u);const cnt={};for(const r in by)cnt[r]=by[r].length;
   const sp=Math.max(18,...gnd.map(u=>u.r*2.6),20);const W=wid||Math.max(3,Math.ceil(Math.sqrt(gnd.length)*1.7));const S=fmLayout(type,cnt,sp,W,lat);
   let ox=0,oy=0;for(const u of gnd){ox+=u.x;oy+=u.y;}if(gnd.length){ox/=gnd.length;oy/=gnd.length;}
