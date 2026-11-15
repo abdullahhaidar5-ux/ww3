@@ -1,0 +1,72 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:35501
+[1s] pages loaded; this machine's host benchmark: 799
+  ✗ timed out waiting for the creator's lobby on the server
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFOVER FAIL: timed out waiting for the creator's lobby on the server (34s)
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:40789
+[2s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[5s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+  ✗ timed out waiting for the creator's battle to start in its own browser
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E FAIL: timed out waiting for the creator's battle to start in its own browser (47s)
+local game server http://127.0.0.1:44515
+[1s] both pages loaded
+  ✗ timed out waiting for the creator's Cloudflare lobby
+--- server log (tail) ---
+
+creator status: 
+friend status: 
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFPASSWORD FAIL: timed out waiting for the creator's Cloudflare lobby (42s)
+local game server http://127.0.0.1:34025
+[1s] page loaded
+  ✗ page.evaluate: TypeError: startSpots is not iterable (cannot read property Symbol(Symbol.iterator))
+    at eval (eval at evaluate (:311:30), <anonymous>:1:272)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+--- server log (tail) ---
+
+  warn: player console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFSTARTPICK FAIL: page.evaluate: TypeError: startSpots is not iterable (cannot read property Symbol(Symbol.iterator))
+    at eval (eval at evaluate (:311:30), <anonymous>:1:272)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (6s)
+local game server http://127.0.0.1:36703 (pages reach it through http://127.0.0.1:39989); over-budget server http://127.0.0.1:38461
+[1s] 0. menu: "▶ Play online" and "+ New battle"
+  ✗ timed out waiting for the creator's battle to start in its own browser
+--- server log (tail) ---
+
+ ⛅️ wrangler 4.153.0 (update available 4.162.0)
+───────────────────────────────────────────────
+[custom build] Running: node build-sim.mjs
+[custom build] battle sim up to date: gen/battle-sim.js (785 KB)
+[custom build] 
+Your Worker has access to the following bindings:
+Binding                             Resource                  Mode
+env.ROOMS (GameRoom)                Durable Object            local
+env.LOBBY (Lobby)                   Durable Object            local
+env.BUDGET (Budget)                 Durable Object            local
+env.BATTLES (BattleRoom)            Durable Object            local
+env.OVERRUN_GUARD ("(hidden)")      Environment Variable      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:36703
+[wrangler:info] GET /health 200 OK (382ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (22ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (6ms)
+[wrangler:info] GET /turn 200 OK (6ms)
+[wrangler:info] GET /room/arnlbx 101 Switching Protocols (22ms)
+
+creator log: []
+friend log: []
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT FAIL: timed out waiting for the creator's battle to start in its own browser (43s)
