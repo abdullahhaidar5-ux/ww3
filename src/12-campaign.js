@@ -1,5 +1,5 @@
-// ===== 12-campaign: single-player mini-campaign for the Shia factions (IR, RS, DW) =====
-// Five scripted missions on the real simulation and the existing maps. Scripting runs on the host of a single-player
+// ===== 12-campaign: single-player mini-campaign for the Shia factions (IR, RS, DW, RV) =====
+// Six scripted missions on the real simulation and the existing maps. Scripting runs on the host of a single-player
 // battle only (MODE 'single'); skirmish and online play never touch this. Randomness is a seeded mulberry (c.R).
 // Fiction: the opposing side is always a generic "coalition" - no real people or real recent events are depicted.
 const CAMP_KEY='ww3camp1',CAMP_DIFF=['Easy','Medium','Hard'],CAMP_MUL=[.7,1,1.4];
@@ -136,7 +136,26 @@ const CAMPAIGN=[
   if(!c.o.fac&&fac===0)c.o.fac=true;if(!c.o.hq&&hq===0)c.o.hq=true;
   c.status=null;if(c.o.hq)c.win();
   else if(CH.combat(0)===0&&G.teams[0].credits<250)c.lose('The assault force is destroyed.');
-  else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and force lost.');}}
+  else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and force lost.');}},
+
+{id:'marsh',n:6,title:'Hold the Causeway',sub:'Iraqi Shia Brigades · South Iraq · Marsh defence',fac:'RV',enemy:'GB',enemyName:'Expeditionary Force',map:'marshes',
+ brief:['An expeditionary force has landed on the southern coast and is pushing up the causeways between the reed marshes toward a shrine town. Our volunteer brigades are still gathering from the villages and need time to arrive.','You hold the causeway crossing with a militia garrison: riflemen, anti-tank teams, a few vehicles and emplacements. The enemy can only come along the narrow causeways, so make them pay for every metre. Keep your supply area around the crossing: units refill ammunition only inside it.','When the volunteer brigades arrive, take the fight back down the causeway and destroy the enemy forward base.'],
+ obj:[['hold','Hold the causeway until the brigades arrive'],['reinf','The volunteer brigades arrive'],['crush','Destroy the enemy forward base']],
+ win:'The causeway is ours and the shrine town is safe. The invaders are driven back to the sea.',lose:'The crossing has fallen. The town must be held from the next line.',
+ setup(c){const d=c.mul;c.T=600;const R=CH.pt(.2,0);c.ridge=R;c.focus=R;G.teams[0].credits=500;
+  CH.base(0,BASES[0][0],BASES[0][1]);const g=[];
+  g.push(...CH.units(0,'inf',Math.round(14/Math.max(.8,d)+3),R[0],R[1],70),...CH.units(0,'at',4,R[0],R[1],50),...CH.units(0,'tank',2,R[0],R[1],50));
+  for(const o of [-100,0,100]){const p=CH.pt(.23,o);CH.bld(0,'turret',p[0],p[1]);}c.garrison=g;
+  CH.base(1,BASES[1][0],BASES[1][1]);const q=CH.pt(.86,0);for(const o of [-130,0,130]){const p=CH.pt(.8,o);CH.bld(1,'turret',p[0],p[1]);}CH.bld(1,'barracks',q[0],q[1]);
+  G.teams[1].credits=500;c.wave=0;c.nextWave=30;},
+ tick(c,dt){const d=c.mul;
+  if(c.t<c.T+60&&c.t>=c.nextWave){c.nextWave+=Math.round(55/Math.max(.7,d)),c.wave++;const k=c.wave,s=CH.pt(.8,0);let us=[...CH.units(1,'inf',(4+k*1.3)*d,s[0],s[1],90),...CH.units(1,'at',1+k*.35*d,s[0],s[1],70)];if(k>=3)us.push(...CH.units(1,'tank',(k-1)*.6*d,s[0],s[1],70));if(k>=6)us.push(...CH.units(1,'arty',d>1?2:1,s[0],s[1],70));CH.go(1,us,c.ridge[0],c.ridge[1],true);if(k===1)CH.say('Contact! An enemy column is coming up the causeway.','w');}
+  if(!c.o.reinf&&c.t>=c.T){c.o.hold=c.o.reinf=true;const b=CH.pt(.02,0);const r=[...CH.units(0,'inf',14,b[0],b[1],90),...CH.units(0,'tank',4,b[0],b[1],90),...CH.units(0,'at',4,b[0],b[1],60),...CH.units(0,'arty',2,b[0],b[1],60)];CH.go(0,r,c.ridge[0],c.ridge[1],true);CH.say('The volunteer brigades have arrived! Counter-attack down the causeway.','g');G.teams[0].credits+=1500;}
+  if(c.o.reinf&&!c.o.crush&&CH.blds(1).length===0)c.o.crush=true;
+  if(c.o.crush)c.win();
+  else if(!c.o.reinf&&c.t>5&&CH.combat(0)===0)c.lose('Every defender at the crossing has fallen.');
+  else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Headquarters and garrison are gone.');
+  c.status=c.o.reinf?null:'Brigades arrive in '+campClock(c.T-c.t);}}
 ];
 function campClock(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
 
@@ -174,7 +193,7 @@ function campBtn(txt,fn,ghost){const b=campEl('button','font-size:18px;padding:1
 function campMenu(){
   const s=campLoad(),root=campEl('div');
   root.appendChild(campEl('h1','margin:6px 0 4px;font-size:30px;letter-spacing:.04em;','MISSIONS'));
-  root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;','Five missions for the Shia factions. Replay any mission on Easy, Medium or Hard; your best times are saved on this device.'));
+  root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;','Six missions for the Shia factions. Replay any mission on Easy, Medium or Hard; your best times are saved on this device.'));
   for(const m of CAMPAIGN){const r=s[m.id]||{},done=Object.keys(r);const card=campEl('div','border:1px solid #3d4733;border-radius:10px;padding:12px 14px;margin:10px 0;background:rgba(40,48,32,.5);cursor:pointer;');
     card.innerHTML=`<div style="font-size:20px;font-weight:bold">${done.length?'✓ ':''}${m.n}. ${m.title}</div><div style="opacity:.8;font-size:15px">${m.sub}</div><div style="font-size:14px;opacity:.7;margin-top:4px">${done.length?CAMP_DIFF.filter(k=>r[k]).map(k=>k+' '+campClock(r[k])).join(' · '):'Not yet completed'}</div>`;
     card.onclick=()=>campBrief(m);root.appendChild(card);}

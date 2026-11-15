@@ -195,7 +195,7 @@ let SUPC={t:-9,P:null};
 function ringOn(c,x,y,r,col,fill){c.beginPath();for(let i=0;i<=40;i++){const a=i/40*6.2832,px=x+Math.cos(a)*r,py=y+Math.sin(a)*r,p=toScreen(px,groundH(px,py)+2,py);if(p.z>1)return;if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);}if(fill){c.fillStyle=fill;c.fill();}c.strokeStyle=col;c.stroke();}
 function supplyWanted(){return !!(KEYO||G.sel.some(u=>!u.isB&&u.team===ME&&u.am!==undefined));}
 let KEYO=false;
-try{addEventListener('keydown',e=>{if(e.key==='o'||e.key==='O')KEYO=true;});addEventListener('keyup',e=>{if(e.key==='o'||e.key==='O')KEYO=false;});addEventListener('blur',()=>{KEYO=false;});}catch(_){}
+try{if(0)addEventListener('keydown',e=>{if(e.key==='o'||e.key==='O')KEYO=true;});   /* hold-O supply view removed: O is Repair, L shows supply lines (UI audit 2026-11-14) */addEventListener('keyup',e=>{if(e.key==='o'||e.key==='O')KEYO=false;});addEventListener('blur',()=>{KEYO=false;});}catch(_){}
 function drawSupplyTowns(c){if(!G||G.over)return;try{ammoRowTick();}catch(_){}
   if(supplyWanted()){if(G.t-SUPC.t>.3||!SUPC.P){SUPC={t:G.t,P:supplyPoints()[ME]||[]};}c.lineWidth=1.4;c.setLineDash([7,6]);for(const q of SUPC.P){if(q.rd||!inView(q.x,q.y,1.6))continue;ringOn(c,q.x,q.y,q.r,'rgba(150,215,255,.55)','rgba(120,190,255,.06)');}c.setLineDash([]);}
   try{drawLogiWorld(c);hudTick();edgeTick();}catch(e){}}

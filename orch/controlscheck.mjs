@@ -92,14 +92,14 @@ await page.evaluate(() => { G.paused = false; G.t0keep = G.t; }); await page.key
 await setSel(await page.evaluate(() => window.__U)); await page.keyboard.press('g'); check('G arms guard', await page.evaluate(() => G.defm === true));
 await page.evaluate(() => { G.paused = false; }); await page.keyboard.press('Escape'); await frames(1); await page.evaluate(() => { G.paused = true; }); check('Esc cancels guard', await page.evaluate(() => !G.defm));
 
-// ---- rally point: right-click ground with a production building selected sets it (the flag shows only while selected)
+// ---- rally point: LEFT-click ground with a production building selected sets it (CLAUDE.md Controls, 2026-11-14 0f823e2a; the flag shows only while selected)
 const rb = await page.evaluate(() => { const T = G.teams[ME]; let b = G.ents.find(e => e.team === ME && e.isB && e.built >= 1 && ['barracks', 'factory'].includes(e.kind)); if (!b) { const h = G.byId.get(window.__HQ); b = addBld(ME, 'barracks', h.x - 220, h.y + 40, true); } G.sel = [b]; updateUI(); camTarget(); centerOn(b.x, b.y, true); return b.id; });
 await frames(3);
 const spot = await page.evaluate(async id => { const b = G.byId.get(id); for (const [dx, dy] of [[0, 140], [140, 0], [-140, 0], [0, -140], [120, 120], [-120, 120]]) { const wx = b.x + dx, wy = b.y + dy; if (!passXY('ground', wx, wy)) continue; const p = toScreen(wx, groundH(wx, wy), wy), R = cv.getBoundingClientRect(), x = R.left + p.x, y = R.top + p.y; const el = document.elementFromPoint(x, y); if (el === cv && !pickAt(p.x, p.y, false)) return { x, y, wx, wy }; } return null; }, rb);
 if (!spot) check('a free spot to set the rally point on', false); else {
-  await page.mouse.click(spot.x, spot.y, { button: 'right' }); await frames(2);
+  await page.mouse.click(spot.x, spot.y); await frames(2);
   const r = await page.evaluate(id => { const b = G.byId.get(id); return { rally: b.rally || b.rp || null, sel: G.sel.map(e => e.id) }; }, rb); const aq = await acts();
-  check('right-click ground with a production building selected sets its rally point', !!(r.rally || aq.some(x => /ral/i.test(x.t))), JSON.stringify({ r, aq }).slice(0, 200));
+  check('left-click ground with a production building selected sets its rally point', !!(r.rally || aq.some(x => /ral/i.test(x.t))), JSON.stringify({ r, aq }).slice(0, 200));
   check('…and the building stays selected', r.sel.includes(rb));
 }
 console.log(errors.length ? 'page errors: ' + errors.slice(0, 3).join(' | ') : 'no page errors');

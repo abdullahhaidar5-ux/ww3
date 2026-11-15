@@ -10,6 +10,8 @@ const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
 // (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
 // end of the sim step)
 const ckSafe=(k,v)=>k==='oil'?undefined:v;   /* an order aimed at an oil derrick points at the derrick row, which points back at its target (circular): leave the row out when comparing */
+/* underscore fields are caches and are not saved, EXCEPT these, which the simulation reads to decide things (2026-11-14 savesync: a loaded save or a migrated host played on differently): _fc, artillery first-shot clock _arT (damage), cover cache _cvT/_cvK (who sees whom), AI target spreading _dv/_dvT/_dvTg */
+const CK_UKEEP=new Set(['_fc','_arT','_cvT','_cvK','_dv','_dvT','_dvTg']);
 function ckEncode(){const ids=new Map();for(const e of G.ents)if(!e.inTun)ids.set(e,e.id);const fi=new Map(G.fields.map((f,i)=>[f,i])),oi=new Map(G.oil.map((o,i)=>[o,i])),ci=new Map((G.civ||[]).map((c,i)=>[c,i]));
   const S=[],SI=new Map();const sref=s=>{let i=SI.get(s);if(i==null){i=S.length;SI.set(s,i);S.push(s);}return i;};
   const seen=new WeakSet();
@@ -19,7 +21,7 @@ function ckEncode(){const ids=new Map();for(const e of G.ents)if(!e.inTun)ids.se
     // a unit kept off the map (inside a tunnel or the Mountain Fortress) shares its stat block through the table too
     const unit=!Array.isArray(v)&&typeof v.id==='number'&&typeof v.kind==='string'&&v.s&&typeof v.s==='object'&&!ids.has(v);
     let out;if(Array.isArray(v)){out=v.map(x=>{const y=enc(x,depth+1);return y===undefined?null:y;});}else{out={};for(const k in v){if(unit&&(k==='s'||k==='vs'||k==='_vr'||k[0]==='_')){if(k==='s')out.$s=sref(v.s);continue;}const y=enc(v[k],depth+1);if(y!==undefined)out[k]=y;}}seen.delete(v);return out;};
-  const ents=G.ents.filter(e=>!e.dead&&!e.inTun).map(e=>{const o={};for(const k in e){if(k==='s'){o.$s=sref(e.s);continue;}if(k==='vs'||k==='_vr'||(k[0]==='_'&&k!=='_fc'))continue;const y=enc(e[k],1);if(y!==undefined)o[k]=y;}if(e.vs){let m=0;for(let i=0;i<e.vs.length&&i<31;i++)if(e.vs[i])m|=1<<i;o.$vs=m;}return o;});  // who sees it: the AI decides from this, and it is only refreshed every few ticks
+  const ents=G.ents.filter(e=>!e.dead&&!e.inTun).map(e=>{const o={};for(const k in e){if(k==='s'){o.$s=sref(e.s);continue;}if(k==='vs'||k==='_vr'||(k[0]==='_'&&!CK_UKEEP.has(k)))continue;const y=enc(e[k],1);if(y!==undefined)o[k]=y;}if(e.vs){let m=0;for(let i=0;i<e.vs.length&&i<31;i++)if(e.vs[i])m|=1<<i;o.$vs=m;}return o;});  // who sees it: the AI decides from this, and it is only refreshed every few ticks
   const teams=G.teams.map(T=>{const o={};for(const k in T){if(CK_TEAM_SKIP.has(k))continue;const y=enc(T[k],1);if(y!==undefined)o[k]=y;}o.$ai=!!T.ai;o.$aiD=T.ai?T.ai.d+10*(T.ai.p|0):null;o.$aiS=T.ai?enc(T.ai,1):null;o.aiTook=!!T.aiTook;return o;});
   const g={};for(const k of CK_G)if(G[k]!==undefined){const y=enc(G[k],1);if(y!==undefined)g[k]=y;}
   const fields=G.fields.map(f=>({amt:f.amt,owner:f.owner}));

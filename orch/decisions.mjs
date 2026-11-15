@@ -77,6 +77,12 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/Brutal/.test(SRC['07-net.js']) && /Brutal/.test(SRC['08-ui.js']), 'Brutal must appear in the lobby (07-net) and Battle setup / Test range (08-ui)');
   ck(!/T\.ai\.d\s*(===|>=)\s*3[^]{0,80}(credits\s*\+=|\.reveals\.push)/.test(SRC['03-sim.js']), 'Brutal AI must not get extra money or vision');
 }
+// ---- Base looks (L4, Abdullah 2026-11-14): three base families on ONE switch baseStyle(fac) = me | soviet | west (src/11c-bases.js); the yard
+// wall of every non-ME base is drawn by baseYard (one merged mesh), never a second wall system next to it.
+{ const b = SRC['11c-bases.js'] || '', m = SRC['11-models.js'] || '';
+  ck(/function baseStyle\(/.test(b) && /function baseYard\(/.test(b) && /function baseSlabKit\(/.test(b) && /'soviet'/.test(b) && /'west'/.test(b), 'base looks: 11c-bases.js lost baseStyle / baseYard / baseSlabKit or a family');
+  ck(/baseYard\(e,o,P,RR,gate,BP\)/.test(m) && /baseSlabKit\(B,e,T,s\)/.test(m) && /baseTint\(T\.fac,RT\)/.test(m), 'base looks: 11-models no longer calls baseYard / baseSlabKit / baseTint');
+  ck(/OBX=\['OB','BI'\]/.test(b), 'base looks: OB/BI no longer use the Middle-Eastern compound family'); }
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];
@@ -272,6 +278,11 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
 { const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).filter(Boolean).slice(0, 3);
   ck(m.join('|') === 'Play|Multiplayer|Test range', 'main menu order is ' + m.join(' · '));
   for (const f of ['14-menu.js', '08d-lobby.js']) ck(!/['">]Classic[<'"]/.test(SRC[f]), 'Classic mode still named in ' + f); }
+// Shia missions (Abdullah 2026-11-14 "begin polishing"): the story Missions hold at least one mission for each of IR, RS, DW and RV, each on a real map with a briefing, goals, win and lose text.
+{ const M = SRC['12-campaign.js'] || '';
+  for (const f of ['IR', 'RS', 'DW', 'RV']) ck(new RegExp("\\{id:'[a-z]+',n:\\d+,title:'[^']+',sub:'[^']+',fac:'" + f + "'").test(M), 'missions: no story mission for ' + f);
+  for (const m of M.matchAll(/\{id:'([a-z]+)',n:\d+,[^\n]*?map:'([a-z0-9_]+)'/g)) ck(new RegExp('^\\s+' + m[2] + ':\\{', 'm').test(SRC['02-map.js']), 'missions: ' + m[1] + ' uses map ' + m[2] + ' which does not exist');
+  ck((M.match(/\bbrief:\[/g) || []).length >= 6 && (M.match(/\bwin:'/g) || []).length >= 6 && (M.match(/\blose:'/g) || []).length >= 6, 'missions: every mission needs brief, win and lose text (6 expected)'); }
 // 4. ONE GAME (Abdullah 2026-11-13 20:18 "Abandon conquest and campaign entirely remove them from the game"): the grand campaign is gone -
 //    no src/13* modules, no lazy bundle / loader, no grand code path or typeof-guarded call into it anywhere in src/.
 { const all = Object.values(SRC).join('\n');
@@ -405,6 +416,9 @@ try {
     ck(!nf.fmb && !nf.key && !/Type \(T\)|Resupply|Stance|Assault|Guerrilla/.test(nf.t), 'formations / Type / Resupply / stance buttons must be gone: ' + JSON.stringify(nf)); }
   // mpmap 2026-11-14 (Abdullah 21:22 "Multiplayer map selection is stuck"): the lobby map list is the Battle map list, not one map
   { const mm = await ev(() => { const D = { onMap: 1, nn: 2, mk: BM_KEYS[0] }; const ks = (BM_KEYS).filter(k => MAPS[k] && (MAPS[k].max || 8) >= 2); return ks.length; }); ck(mm >= 10, 'lobby map list too short: ' + mm); }
+  // uiaudit 2026-11-14 (Abdullah 21:55 "find duplicates and remove them"): every letter in the key table belongs to one job only; dead power keys are gone
+  { const kd = await ev(() => { const d = KEYTAB.filter(r => r.def).map(r => r.def); const dup = d.filter((k, i) => d.indexOf(k) !== i); const dead = Object.keys(POW_KEY).filter(k => typeof powBan === 'function' && powBan(k)); return { dup, dead, names: KEYTAB.filter(r => /Stop$|Return to base|Conquest|go" signal/.test(r.name)).map(r => r.name) }; });
+    ck(!kd.dup.length && !kd.dead.length && !kd.names.length, 'key table must have no duplicate or dead keys: ' + JSON.stringify(kd)); }
   // trmap 2026-11-14 (Abdullah 21:07 "In test range map selection doesn't work"): every map in the Test range list is kept when picked
   { const tb = await ev(() => BM_KEYS.filter(k => MAPS[k] && MAPS[k].min <= 2 && MAPS[k].max >= 2 && trBmap(k) !== k)); ck(!tb.length, 'Test range map picks must stick: ' + JSON.stringify(tb)); }
   // novdig 2026-11-14 (Abdullah 14:55 "Make it so that vehicles can't dig in"): no vehicle can dig in, infantry still can
@@ -455,6 +469,11 @@ try {
   // leadersC (Abdullah 2026-11-07 22:5x "these factions never rout in any form of the game"): Zealous never rout, retreat, bail out or fall back - in any mode
   { const z = await ev(() => { const out = {}; for (const k of ['IR', 'RS', 'DW', 'RV', 'KP', 'OB', 'BI']) out[k] = fearlessT({ fac: k, mart: 0, fervor: 0 }, { s: { cls: 'inf', dom: 'ground' } }); out.US = fearlessT({ fac: 'US', mart: 0, fervor: 0 }, { s: { cls: 'inf', dom: 'ground' } }); return out; });
     for (const k of ['IR', 'RS', 'DW', 'RV', 'KP', 'OB', 'BI']) ck(z[k], 'Zealous ' + k + ' can rout in battle (fearlessT false)'); ck(!z.US, 'a non-Zealous nation became unbreakable');
+    /* L2 faction mechanics guard (2026-11-14): Hidden Firing Post for RV/OB, cheap Shia forts in Battle, US/IL stronger-fewer, Gulf IADS range */
+    { const m = await ev(() => { const o = {}; o.rv = bldAllowed('RV', 'tunnel') && bstats('RV', 'tunnel').name === 'Hidden Firing Post' && bstats('RV', 'tunnel').cost <= 400; o.ob = bldAllowed('OB', 'tunnel') && !FACTIONS.OB.tunnels && !FACTIONS.RV.tunnels; o.irNet = !!FACTIONS.IR.tunnels && bstats('IR', 'tunnel').name !== 'Hidden Firing Post'; o.usNot = !bldAllowed('US', 'tunnel');
+        const had = G.battle; G.battle = 1; const a = bstats('RS', 'turret').cost; G.battle = 0; const b = bstats('RS', 'turret').cost; G.battle = had; o.fort = a < b && a <= Math.round(b * .6 / 25) * 25 + 25;
+        o.us = FMECH.US.cost === 1.08 && FMECH.IL.hp === 1.08 && typeof fmTick === 'function'; o.iads = !!IADS_NAT.SA && !!IADS_NAT.AE && typeof isPost === 'function'; return o; });
+      for (const k in m) ck(m[k], 'L2 faction mechanic broken: ' + k + ' ' + JSON.stringify(m)); }
     for (const f of ['03-sim.js', '03b-tactics.js']) ck(/msOf\([^)]*\)\.rout[!=]==0/.test(SRC[f]), 'no Zealous rout guard in ' + f); }
   ck(cq.battle && cq.towns, 'a single-player skirmish did not start as Battle (or still has towns)');
   ck(cq.ban.cleric, 'Ayatollah (cleric) is missing from the Battle roster for IR'); ck(cq.ban.fort, 'Mountain Fortress is not buildable in Battle for IR');
@@ -520,7 +539,7 @@ try {
     ck(sl.on && sl.wanted, 'L / the Supply lines button must switch the supply overlay on in Battle'); ck(sl.chip, 'Battle must show the Supply chip'); ck(sl.ui, 'the ammo row must say whether the unit is in your supply area');
     // CAPTURABLE ROADS (Abdullah 2026-11-14 18:40 "Make it so that units can capture roads"): a ground unit standing on a neutral road section captures it in ~10 s, an air unit does not, an owned section is supply area
     { const rc = await ev(() => { const L = G.lg, D = G.lgd; lgFix(D); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && e.s && e.s.dom === 'ground'); if (!u) return { err: 'no unit' };
-        let ei = -1; for (let i = 0; i < L.E.length && ei < 0; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 300 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) ei = i; } if (ei < 0) return { err: 'no neutral section' };
+        let ei = -1, nn = 0; for (let i = 0; i < L.E.length; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 120 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) { nn++; if (ei < 0 || e.len > L.E[ei].len) ei = i; } } if (ei < 0) return { err: 'no neutral section', edges: L.E.length, owned: L.E.filter((e, i) => lgRcOwner(i) >= 0).length };   /* the longest neutral, open section (map-independent) */
         const e = L.E[ei], m = lgPoint(e, e.len / 2), ox = u.x, oy = u.y, os = u.s; const run = n => { for (let k = 0; k < n; k++) lgRoadCap(1); };
         const hold = () => D.rc[ei] && D.rc[ei].o;
         u.s = Object.assign({}, os, { dom: 'air' }); u.x = m[0]; u.y = m[1]; run(14); const air = hold();
@@ -582,6 +601,9 @@ try {
     ck(A.atk.join() === 'true,false,true', 'announcer under-attack lines must be once per 20 s: ' + A.atk);
     ck(A.ov === false, 'announcer must not start a line while another is playing'); ck(A.test.join() === 'true,false', 'announcer must be throttled more in the Test range');
     ck(A.slider && A.hooked, 'announcer needs its Settings > Audio slider (sAnn) and the pushLog hook'); }
+  // L3 light economy (2026-11-14; income cut removed 22:32): in Battle rich nations train 10% slower, poorer fast nations 25% faster; income the same for all
+  { const g = await ev(() => { const sv = G; try { G = { battle: 1 }; return { usB: econBT('US'), usU: econUp('US'), irB: econBT('IR'), ruB: econBT('RU') }; } finally { G = sv; } });
+    ck(g.usB > 1 && g.usU === 1 && g.irB < 1 && g.ruB === 1, 'L3 light economy profile wrong in Battle: ' + JSON.stringify(g)); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
 await browser.close(); server.close();
