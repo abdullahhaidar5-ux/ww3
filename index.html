@@ -5593,7 +5593,7 @@ const SHIA={IR:1,RS:1,DW:1};
 const BB_NAT={US:1,IL:1,RU:1,CN:1},FORT_NAT={IR:1,RS:1,AF:1,KD:1,DW:1,KP:1};
 /* upgsimple (Abdullah 2026-11-14 "simplify the list of upgrades and powers it's too much"): a nation's general powers are Recon, Paradrop, Barrage, Repair + its own national power
    (+ Bunker Buster for US/IL/RU/CN) = 5-6, plus the passive Cash Bounty. Everything else in POWERS (flares, militia, reinforcements, sanctions, cyber, EMP) is not offered in Conquest/Battle (the grand map keeps them). */
-const POW_KEEP=['bounty','recon','para','barrage','repair','bb'];
+const POW_KEEP=['bounty','recon','para','barrage','repair','bb','nat'];   /* + the nation's own power on J (Abdullah 2026-11-14 22:11 "J bring back") */
 function powBan(k){return !!POWERS[k]&&POW_KEEP.indexOf(k)<0;}
 function sigBan(fac,k){return powBan(k)||(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
 /* power use of a building for the Build button: + needs power, - gives power (Generator); 0 = no power use (one POWER table) */
@@ -5794,6 +5794,13 @@ for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   ECON[k]=N.econ||(k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board');
   if(N.sub)SUBN[k]=N.sub;if(N.md)MDN[k]=N.md;if(N.coast)COASTN[k]=N.coast;if(N.trn)TRN[k]=N.trn;
   UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b.toLowerCase()+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
+/* distinct national powers (Abdullah 2026-11-14 22:14 "give them their own"): RV, GB, FR and DE all shared the same supply-drop power; each gets its
+   own now (fictional names, existing power types). OB keeps Rubble Cover. */
+Object.assign(NATPOW,{
+ RV:{name:'Marsh Rocket Salvo',type:'precise',cd:180,r:90,desc:'Rocket trucks fire eight rockets onto a tight area'},
+ GB:{name:'SAS Raid',type:'partisans',n:4,cd:200,r:90,desc:'Four special forces soldiers drop in at the target and strike'},
+ FR:{name:'Rafale Strike',type:'strafe',cd:200,r:140,desc:'A Rafale bombing run: a line of bombs across the target'},
+ DE:{name:'Panzer Reserve',type:'mercs',cd:230,desc:'Two Leopard tanks and two air-defence vehicles roll out of your HQ',self:true}});
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
@@ -12579,6 +12586,7 @@ const KEYTAB=[
   {id:'p_repair',ctx:'battle',grp:'General\'s powers',name:'Repair',def:'y'},
   {id:'p_bb',ctx:'battle',grp:'General\'s powers',name:'Bunker Buster',def:'n'},
   {id:'supl',ctx:'battle',grp:'Camera',name:'Show supply lines on the ground',def:'l'},
+  {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
   {id:'pause',ctx:'battle',grp:'Game',name:'Pause (single player) / photo mode',def:'p'},
   {ctx:'battle',grp:'Game',name:'Menu · cancel · one step back',fix:'Esc'},
   {ctx:'battle',grp:'Game',name:'Team play: ping, draw, circle on the map',fix:', . / \' ;'},
@@ -13548,7 +13556,7 @@ function docUI(T){{const ov=$('docPick');if(ov)ov.hidden=true;}return;if(!G||!T)
     const lb=document.createElement('button');lb.textContent='✕';lb.title='Later';lb.setAttribute('aria-label','Later');lb.style.cssText='pointer-events:auto;min-width:44px;min-height:44px;background:none;border:1px solid #667;color:#cbd;border-radius:8px';lb.onclick=()=>{G.docDis=1;ov.hidden=true;};bx.append(lb);}
   ov.hidden=false;}
 // One-click powers (Abdullah 2026-10-31): a no-target power fires at once; a targeted one aims (circle follows the cursor) and the next map click/tap fires it. Hotkeys below; Esc / right-click cancels.
-const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',bb:'n'};   /* only the powers Battle offers (upgsimple); L = supply lines, no longer also Flares (UI audit 2026-11-14) */
+const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',bb:'n',nat:'j'};   /* only the powers Battle offers (upgsimple); L = supply lines, no longer also Flares (UI audit 2026-11-14) */
 function powGo(k){if(!G||G.over)return false;const T=G.teams[ME],P=T&&powInfo(k,T.fac);if(!P||!T.pw[k]||P.passive||T.pw[k].cd>0)return false;if(P.self){doAct({t:'pow',k,x:0,y:0});return true;}G.place=null;G.amove=false;G.defm=false;G.aim=k;updateUI();return true;}
 /* ---------- one-click powers: a strip of buttons always on screen; hotkey/button arms, next map click fires ---------- */
 let QPSIG='',QPEL=null,QPDRAG=null,QPSEEN=null,QPRDY=null,QPTIP=null,QPTK=null,QPLP=0,QPOFF=false;
@@ -15329,7 +15337,7 @@ function idInit(){if(document.getElementById('idCss'))return;const st=document.c
 .idpv{display:flex;align-items:center;gap:10px;font-size:18px;margin-bottom:8px}.idpv canvas{width:56px!important;height:56px!important}.idsel{background:var(--panel2);color:var(--fg);border:1px solid var(--line);padding:9px;font:inherit;width:100%;margin-bottom:8px}
 .idu{border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:6px 0;font-size:13px;line-height:1.45}.idut{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.idut b{font-size:16px}.idut span{opacity:.7}.idut em{margin-left:auto;color:#e3b341;font-style:normal}
 .idu .g{color:#74d08f}.idu .r{color:#ea8a7a}.idu .d{opacity:.7}`;document.head.appendChild(st);
-  const op=document.getElementById('openSettings');if(op&&op.parentNode){for(const [t,f] of [['Medals',idMedalsPage],['Profile',idProfilePage],['Unit guide',idGuidePage]]){const b=document.createElement('button');b.className='big ghost';b.style.cssText='font-size:15px;padding:7px 16px';b.textContent=t;b.onclick=f;op.parentNode.appendChild(b);}op.parentNode.style.flexWrap='wrap';}
+  const op=document.getElementById('openSettings');if(op&&op.parentNode){for(const [t,f] of [['Medals',idMedalsPage],['Profile',idProfilePage]]){const b=document.createElement('button');b.className='big ghost';b.style.cssText='font-size:15px;padding:7px 16px';b.textContent=t;b.onclick=f;op.parentNode.appendChild(b);}op.parentNode.style.flexWrap='wrap';}
   const tx=document.getElementById('sTxt');if(tx){const l=document.createElement('div');l.className='label';l.textContent='Colourblind mode (safe team colors from the next battle; shapes on the minimap and selection rings now)';const sg=document.createElement('div');sg.className='seg';sg.id='sCb';sg.innerHTML='<button data-v="1">On</button><button data-v="0">Off</button>';
     const pr=document.createElement('div');pr.className='label';pr.innerHTML='Your color and emblem are in the main menu under <b>Profile</b>.';const after=tx.nextSibling;tx.parentNode.insertBefore(l,after);tx.parentNode.insertBefore(sg,after);tx.parentNode.insertBefore(pr,after);
     const sync=()=>sg.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',(+b.dataset.v)===(SET.cb?1:0));b.onclick=()=>{SET.cb=+b.dataset.v;saveSet();sync();};});sync();}}
@@ -16647,14 +16655,19 @@ function encOpen(){if(!ENC.ov){const st=document.createElement('style');st.textC
     const ov=ENC.ov=encE('div');ov.id='enc';ov.hidden=true;
     const top=encE('div','etop');top.append(encE('h1','','📖 Encyclopedia'));
     const sq=encE('input');sq.type='search';sq.placeholder='Search units and buildings…';sq.setAttribute('aria-label','Search');sq.oninput=()=>{ENC.q=sq.value;encList();};top.append(sq);
-    const ns=encE('select');ns.setAttribute('aria-label','Nation');{const o=encE('option','','All nations');o.value='all';ns.append(o);for(const f of FKEYS){const o2=encE('option','',FACTIONS[f].name);o2.value=f;ns.append(o2);}}ns.onchange=()=>{ENC.f=ns.value;encList();};top.append(ns);ENC.ns=ns;
+    const ns=encE('select');ns.setAttribute('aria-label','Nation');{const o=encE('option','','All nations');o.value='all';ns.append(o);for(const f of FKEYS){const o2=encE('option','',FACTIONS[f].name);o2.value=f;ns.append(o2);}}ns.onchange=()=>{ENC.f=ns.value;encList();encNat();};top.append(ns);ENC.ns=ns;
     const ty=encE('div','etypes');for(const [v,l] of ENC_TYPES){const b=encE('button',v===ENC.type?'on':'',l);b.onclick=()=>{ENC.type=v;for(const x of ty.children)x.classList.toggle('on',x===b);encList();};ty.append(b);}top.append(ty,encE('span','ecount'));
     const cl=encE('button','eclose','Close ✕');cl.onclick=encClose;top.append(cl);ov.append(top);
     const body=encE('div','ebody'),cvw=encE('div','ecv');cvw.append(encE('div','emsg','Pick a unit or building from the list'),encE('div','ehint','Drag to rotate · wheel to zoom'));body.append(encE('div','elist'),cvw,encE('div','einfo'));ov.append(body);
     document.body.append(ov);addEventListener('keydown',e=>{if(ENC.on&&e.key==='Escape'){e.stopPropagation();encClose();}},true);}
-  ENC.on=true;ENC.ov.hidden=false;ENC.f=ENC.f==='all'?'all':(typeof setup==='object'&&FACTIONS[setup.p]?setup.p:'IR');ENC.ns.value=ENC.f;encList();
+  ENC.on=true;ENC.ov.hidden=false;ENC.f=ENC.f==='all'?'all':(typeof setup==='object'&&FACTIONS[setup.p]?setup.p:'IR');ENC.ns.value=ENC.f;encList();encNat();
   const first=encEntries().find(x=>x.f===ENC.f&&!x.b&&x.k==='tank')||encEntries().find(x=>x.f===ENC.f);
   if(first){encShow(first);setTimeout(encList,0);}encStart();}
+/* Encyclopedia + Unit guide are ONE page now (Abdullah 2026-11-14 22:09 "merge"): picking a nation shows its guide (how it fights)
+   in the info pane until a unit is picked; the full counter list per nation opens from there */
+function encNat(){if(!ENC.ov||ENC.sel&&ENC.sel.f===ENC.f)return;const P=ENC.ov.querySelector('.einfo');if(!P)return;const F=FACTIONS[ENC.f];P.innerHTML='';if(!F)return;
+  const h=encE('h2','',F.name);const t=encE('div','etx',String(F.doctrine||'').slice(0,600));P.append(h,t);
+  if(typeof idGuidePage==='function'){const b=encE('button','eclose','Units and what they beat →');b.style.cssText='margin:10px 6px;position:static';b.onclick=()=>{idGuidePage.cur=ENC.f;encClose();idGuidePage();};P.append(b);}}
 function encClose(){ENC.on=false;ENC.seq++;if(ENC.ov)ENC.ov.hidden=true;encClear();}
 function encMenu(){const row=document.getElementById('openMyb')||document.getElementById('openSettings');
   if(row&&!document.getElementById('openEnc')){const b=document.createElement('button');b.className='big ghost';b.id='openEnc';b.style.cssText='font-size:15px;padding:7px 16px;margin-left:6px';b.textContent='Encyclopedia';b.title='Browse every unit and building of every nation in 3D';b.onclick=()=>{try{initAudio();}catch(e){}encOpen();};row.after(b);}}
@@ -17489,55 +17502,6 @@ function benchTick(dt){if(!benchWant())return;
 try{const _qt=qualTick;qualTick=function(dt){_qt(dt);try{benchTick(dt);}catch(e){}};}catch(e){}
 /* choosing a quality by hand is final: the check never overrides the player */
 try{const g=document.getElementById('sGfx');if(g)g.addEventListener('click',e=>{if(e.target&&e.target.tagName==='BUTTON'&&typeof SET!=='undefined'&&!SET.gfxB){SET.gfxB=1;BENCH.done=true;try{saveSet();}catch(_){}}});}catch(e){}
-// Playtest card (Extras -> Playtest card): 10 things to try this week, thumbs up/down + one short note each, saved as one small
-// file to send to Abdullah. Same route as "Report a problem" (src/08k-report.js): when its report file maker is in the page
-// the game state and last errors ride along. No names, emails or addresses. The list is written by
-// `node orch/playtest-digest.mjs --card` from the newest lines of orch/HISTORY.md - do not edit it by hand.
-(function(){
-/*PLAYTEST-ITEMS*/
-const PLAYTEST_WEEK="2026-11-14";
-const PLAYTEST_ITEMS=[
- ["onegame1","One game: the main menu is Play / Multiplayer / Test range - every game is a Battle (Conquest and the Grand campaign are gone)"],
- ["7f51e67a","Buildings are called by their one official name everywhere (Strike Center, Defense Gun, War Factory, Anti-Air Missile Site); a check now stops old faction names or real groups' names from ever showing"],
- ["09179068","Computer opponent on Hard is smarter (same money): it goes round your weaker side, guards its artillery, keeps a few strike aircraft and sends them in with its ground attack"],
- ["92e530c3","Morocco (MA) now has its own Moroccan-Arabic soldier voices instead of a borrowed sheet"],
- ["437b49e3","Jordan (JO) and the Desert Islamic Faction (BI) now have their own Arabic soldier voices (Jordanian and Gulf wording)"],
- ["9129d991","Settings → Controls → \"Keyboard keys\" lists every key of the game from the one key table and lets you pick your own letters"],
- ["90b8b9be","Sound mix. Measured first: the old output clipped (+1.9 dB over full scale; unit voices bypassed the mixer)"],
- ["416cd5e6","Test range compound: the rooftop parapet frame (white concrete posts/caps) floated high above the roofs because the roof height was taken from the tallest part (radar dish/mast) instead of the.."],
- ["06e4b59f","Formation buttons show only with 2+ own units selected, so the bottom bar no longer widens/clips with a building (e.g. Shipyard) selected"],
- ["onegame2","Battle supply lines: press L - green roads out of your Command Center and depots refill ammo; crater an enemy road and watch its line go dashed"]];
-/*PLAYTEST-END*/
-const KEY='ww3_playtest_'+PLAYTEST_WEEK;
-let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){ST={};}
-function keep(){try{localStorage.setItem(KEY,JSON.stringify(ST));}catch(e){}}
-function data(){return {kind:'ww3-playtest',made:new Date().toISOString().slice(0,10),week:PLAYTEST_WEEK,version:(typeof NET_PV==='number'?NET_PV:0),
-  items:PLAYTEST_ITEMS.map(([id,text])=>({id,text,vote:(ST[id]&&ST[id].v)|0,note:String(ST[id]&&ST[id].n||'').slice(0,200)}))};}
-async function save(msg){const f=data();
-  try{if(typeof window.wwReportFile==='function'){const r=await window.wwReportFile('');f.state=r.state;f.errors=r.errors;f.screen=r.screen;}}catch(e){}
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(f)],{type:'application/json'}));a.download='ww3-playtest-'+f.made+'.json';
-  document.body.appendChild(a);a.click();a.remove();if(msg)msg.textContent='Saved. Please send that file to Abdullah on Discord.';return f;}
-function card(){const o=idOv('idPlay','Playtest card'),b=o.querySelector('.idbody');b.innerHTML='';
-  const top=document.createElement('div');top.style.cssText='font:500 15px/1.4 system-ui,sans-serif;color:#dfe5da;margin:4px 0 10px;text-align:left';
-  top.textContent='Ten new things to try this week. Give each one you tried a thumbs up or down and a short note, then save the file and send it to Abdullah.';b.appendChild(top);
-  PLAYTEST_ITEMS.forEach(([id,text],i)=>{const s=ST[id]||(ST[id]={v:0,n:''});
-    const d=document.createElement('div');d.className='ptrow';d.style.cssText='margin:8px 0;padding:8px 0;border-top:1px solid rgba(255,255,255,.12);text-align:left';
-    const t=document.createElement('div');t.style.cssText='font:500 15px/1.4 system-ui,sans-serif;color:#dfe5da';t.textContent=(i+1)+'. '+text;
-    const r=document.createElement('div');r.style.cssText='display:flex;gap:8px;align-items:center;margin-top:6px';
-    const mk=(v,label,tip)=>{const x=document.createElement('button');x.type='button';x.className='ghost ptv';x.textContent=label;x.title=tip;x.setAttribute('aria-pressed','false');
-      x.style.cssText='font-size:16px;padding:3px 10px;min-width:44px';x.onclick=()=>{s.v=s.v===v?0:v;keep();paint();};return x;};
-    const up=mk(1,'👍','Good'),dn=mk(-1,'👎','Needs work');
-    const paint=()=>{for(const [x,v] of [[up,1],[dn,-1]]){const on=s.v===v;x.setAttribute('aria-pressed',on?'true':'false');x.style.outline=on?'2px solid #f4e9c2':'none';x.style.opacity=on||!s.v?'1':'.45';}};
-    const n=document.createElement('input');n.type='text';n.maxLength=200;n.placeholder='One-line note (optional)';n.value=s.n||'';
-    n.style.cssText='flex:1;min-width:0;background:#0b0e12;color:#dde;border:1px solid #3a424c;border-radius:4px;padding:5px 8px;font:500 14px system-ui,sans-serif';
-    n.oninput=()=>{s.n=n.value;keep();};n.addEventListener('keydown',e=>e.stopPropagation());
-    r.append(up,dn,n);d.append(t,r);b.appendChild(d);paint();});
-  const f=document.createElement('div');f.style.cssText='display:flex;gap:10px;align-items:center;margin-top:10px';
-  const sv=document.createElement('button');sv.type='button';sv.className='ghost';sv.id='ptSave';sv.textContent='Save playtest file';
-  const msg=document.createElement('span');msg.id='ptMsg';msg.style.cssText='font:500 13px system-ui,sans-serif;color:#dfe5da';
-  msg.textContent='No names, emails or addresses are included.';sv.onclick=()=>save(msg);f.append(sv,msg);b.appendChild(f);o.hidden=false;}
-window.wwPlaytest=card;window.wwPlaytestData=data;
-})();
 /* ================= READABILITY (queue "Readability", orch/polishP2): text size + colour-blind extras =================
    TEXT SIZE (Settings: 100 / 115 / 130 %): one switch, SET.ts. Every text surface that is ordinary page content is listed in
    TS_ROOTS and is laid out a little smaller and shown enlarged by the same factor (CSS zoom), so each panel keeps its own
@@ -18031,14 +17995,17 @@ function zhPowWin(){let w=$('zhPow');if(!ZH.star||!G){if(w)w.hidden=true;return;
     w.querySelector('.zph button').onclick=()=>{ZH.star=false;zhPowWin();zhCtx();};addEventListener('keydown',e=>{if(e.key==='Escape'&&ZH.star){ZH.star=false;zhPowWin();zhCtx();}},true);}
   w.hidden=false;if(sd){const r=sd.getBoundingClientRect();w.style.bottom=(innerHeight-r.top+34)+'px';w.style.setProperty('--tc',getComputedStyle(sd).getPropertyValue('--tc'));}
   const body=w.querySelector('.zpb'),rk=document.querySelector('#side .sup.rk .lbl'),src=[...document.querySelectorAll('#panel>[data-tab="pow"]')];
-  const sig=src.map(b=>(b.className.includes('sub')?'s':'')+b.id+(b.disabled?1:0)+(b.hidden?1:0)+(b.textContent||'').length).join('|')+'|'+(rk?rk.textContent:'')+'|'+(($('supt')||{}).textContent||'')+(($('supbtn')||{}).disabled?1:0);if(w.dataset.sig===sig)return;w.dataset.sig=sig;
+  const sig=src.map(b=>(b.className.includes('sub')?'s':'')+b.id+(b.disabled?1:0)+(b.hidden?1:0)+(b.style.display==='none'?1:0)+(b.textContent||'').length).join('|')+'|'+(rk?rk.textContent:'')+'|'+(($('supt')||{}).textContent||'')+(($('supbtn')||{}).disabled?1:0);if(w.dataset.sig===sig)return;w.dataset.sig=sig;
   body.innerHTML='';if(rk){const d=document.createElement('div');d.className='zrk';d.textContent=rk.textContent.trim();body.append(d);}
-  {const sb=$('supbtn'),d=document.createElement('div');d.className='zsw';d.innerHTML='<div><b></b><small></small></div><button type="button">LAUNCH</button>';d.querySelector('b').textContent=(($('supname')||{}).textContent||'Strike');d.querySelector('small').textContent=(($('supt')||{}).textContent||'');
-    const lb=d.querySelector('button');lb.disabled=!sb||sb.disabled;lb.onclick=()=>{if(sb&&!sb.disabled)sb.click();};body.append(d);}
-  for(const b of src){if(b.classList.contains('sub')){const s=document.createElement('div');s.className='zsub';s.textContent=b.textContent;body.append(s);continue;}if(b.style.display==='none')continue;
-    const x=document.createElement('button');x.type='button';x.className='zp';x.disabled=b.disabled;const n=document.createElement('b');n.textContent=(b.querySelector('.n')||{}).textContent||b.dataset.nm||'';x.append(n);
+  /* the Strike is launched from its building and its own rail button, not from the General window (Abdullah 2026-11-14 22:10) */
+  /* ONE row per power (Abdullah 2026-11-14 22:15 "Make these powers just general upgrades. Make sure there aren't too many upgrades"): the separate
+     "Level up" list is folded in - an unlocked power's own row levels it up when you have a point */
+  for(const b of src){if(b.classList.contains('sub')){if(/level up/i.test(b.textContent))continue;const s=document.createElement('div');s.className='zsub';s.textContent=b.textContent;body.append(s);continue;}if(b.style.display==='none'||b.hidden||/^pu_/.test(b.id))continue;
+    const up=/^p_/.test(b.id)?$('pu_'+b.id.slice(2)):null,canUp=!!up&&!up.disabled&&!up.hidden&&up.style.display!=='none';
+    const x=document.createElement('button');x.type='button';x.className='zp';x.disabled=b.disabled&&!canUp;const n=document.createElement('b');n.textContent=(b.querySelector('.n')||{}).textContent||b.dataset.nm||'';x.append(n);
     const c=(b.querySelector('.c')||{}).textContent;if(c){const i=document.createElement('i');i.textContent=c;x.append(i);}const dd=b.dataset.desc;if(dd){const s=document.createElement('span');s.textContent=dd;x.append(s);}
-    x.title=b.title||'';x.onclick=()=>{b.click();setTimeout(()=>{w.dataset.sig='';zhPowWin();},50);};body.append(x);}}
+    if(canUp){const u=document.createElement('i');u.className='zup';u.textContent='▲ Level up · 1 point';x.append(u);}
+    x.title=b.title||'';x.onclick=()=>{(canUp&&b.disabled?up:b).click();setTimeout(()=>{w.dataset.sig='';zhPowWin();},50);};body.append(x);}}
 if(typeof updateUI==='function'){const _zhU=updateUI;updateUI=function(){_zhU.apply(this,arguments);try{zhCtx();}catch(e){}};}
 /* hover card above the minimap */
 {let tip=null;const show=b=>{if(!tip){tip=document.createElement('div');tip.id='zhTip';document.body.append(tip);}const sd=$('side'),r=sd?sd.getBoundingClientRect():null;
@@ -18153,6 +18120,26 @@ function zhIcons(){const pn=$('panel');if(!pn)return;for(const b of pn.querySele
 html body #side #panel .btn>.zhIc{position:absolute;left:0;right:0;top:9%;margin:auto;width:46%;height:52%;pointer-events:none;filter:drop-shadow(0 0 4px rgba(0,0,0,.85))}
 html body #side #panel .btn>.zhIc svg{display:block;width:100%;height:100%}`;document.head.appendChild(st);}
 if(typeof updateUI==='function'){const _iU=updateUI;updateUI=function(){_iU.apply(this,arguments);try{zhIcons();}catch(e){}};}
+
+/* STRIKE ON THE LEFT RAIL (Abdullah 2026-11-14 22:10 "Strike launch from the building and its own separate button like artillery barrage in left hand"):
+   one rail button under the generals' powers, shown while you own a Strike Center; it fills up as the Strike charges, glows when READY,
+   one click arms it, then LEFT-click the target (right-click cancels) - the same as pressing LAUNCH on the building. */
+function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q)return;let b=document.getElementById('qpStrike');
+  const own=!!sb&&!sb.hidden&&G&&G.ents&&G.ents.some(e=>e.isB&&e.team===ME&&!e.dead&&e.kind==='uplink'&&e.built>=1);
+  if(!own){if(b)b.hidden=true;return;}
+  if(!b){b=document.createElement('button');b.id='qpStrike';b.type='button';b.innerHTML='<div class="qf"></div>'+(ORD_SVG.missile||'')+'<span class="qc"></span>';b.onclick=()=>{const s=$('supbtn');if(s&&!s.disabled){s.click();try{sfxUI(620);}catch(_){}}};
+    let col=Q.querySelector('.qstr');if(!col){col=document.createElement('div');col.className='qstr';Q.insertBefore(col,Q.querySelector('.qtab'));}col.append(b);}
+  Q.hidden=false;b.hidden=false;const nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),T=G.teams[ME],c=T&&T.sup&&T.sup.charge?Math.min(1,(T.charge||0)/T.sup.charge):1,rdy=!sb.disabled,k=nm+st+rdy+(G.aim==='sup')+Math.round(c*40);
+  if(b.dataset.k===k)return;b.dataset.k=k;b.title=nm+(st?' - '+st:'')+(rdy?' - click, then click the target':'');b.setAttribute('aria-label',nm);
+  b.className=(G.aim==='sup'?'arm ':'')+(rdy?'rdy':'');const f=b.querySelector('.qf');f.style.background=c<1?'conic-gradient(rgba(0,0,0,.68) '+Math.round(360*(1-c))+'deg,transparent 0)':'none';b.querySelector('.qc').textContent=rdy?'READY':Math.round(c*100)+'%';}
+{const st=document.createElement('style');st.textContent=`#qpow .qstr{display:flex;flex-direction:column;gap:6px;margin-top:8px}#qpow.off .qstr{display:none}
+#qpStrike{pointer-events:auto;position:relative;overflow:hidden;width:56px;height:56px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;border:1px solid #c97a3a;background:linear-gradient(160deg,#3a2418,#1a100a);color:#ffb07a;cursor:pointer}
+#qpStrike svg{width:30px;height:30px;position:relative;margin-top:-6px;pointer-events:none}#qpStrike .qf{position:absolute;inset:0;pointer-events:none}
+#qpStrike .qc{position:absolute;bottom:2px;left:0;right:0;text-align:center;font:800 9px/1 system-ui,sans-serif;letter-spacing:.05em;color:#ffd9b0;pointer-events:none}
+#qpStrike.rdy{border-color:#ffd23a;box-shadow:0 0 10px rgba(255,160,60,.7)}#qpStrike.arm{border-color:#ea5a40;background:linear-gradient(160deg,#7a2a1c,#4a1a12)}`;document.head.appendChild(st);}
+if(typeof updateUI==='function'){const _sU=updateUI;updateUI=function(){_sU.apply(this,arguments);try{qpStrike();}catch(e){}};}
+
+{const st=document.createElement('style');st.textContent='#zhPow .zp .zup{display:block;font-style:normal;color:#ffd23a;font-weight:700;font-size:12px;margin-top:2px}';document.head.appendChild(st);}
 /* ================= AUDIO ENGINE: layered weapons, reverb, stereo, cinematic regional score ================= */
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};
 try{const v=JSON.parse(localStorage.getItem('ww3_audio')||'{}');if(v.m===false)AU.musicOn=false;if(v.s===false)AU.sfxOn=false;if(v.v===false)AU.voiceOn=false;}catch(e){}
@@ -21579,7 +21566,7 @@ function mxBuild(){
   const ex=(t,fn,tip)=>{const b=mxEl('button','mxi',t);b.type='button';b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);if(tip)b.title=tip;el.appendChild(b);};
   const byText=t=>()=>{const b=[...card.querySelectorAll('button')].find(x=>(x.textContent||'').trim().toLowerCase().replace(/\u2019/g,"'")===t);if(b){try{initAudio();}catch(_){}b.click();}};
   ex('Watch a replay',()=>mxClick('rpOpen'),'Open a replay file');ex('Map editor',()=>mxClick('edBtn'),'Draw your own battlefield');
-  ex('My battles',()=>mxClick('openMyb'));ex('Encyclopedia',()=>mxClick('openEnc'));ex('Unit guide',byText('unit guide'));ex('Medals',byText('medals'));ex('Profile',byText('profile'));ex('What’s new',byText('what’s new')||byText("what's new"));/* Report a problem lives in Settings only (UI audit 2026-11-14: it was in Extras too) */ex('Playtest card',()=>{if(typeof wwPlaytest==='function')wwPlaytest();},'Ten new things to try this week - thumbs up or down, a short note, save the file');
+  ex('My battles',()=>mxClick('openMyb'));ex('Encyclopedia',()=>mxClick('openEnc'));ex('Medals',byText('medals'));ex('Profile',byText('profile'));ex('What’s new',byText('what’s new')||byText("what's new"));/* Report a problem lives in Settings only (UI audit 2026-11-14: it was in Extras too) */
   /* --- credits --- */
   const C=scr('credits','<h2 class="mxh">Credits</h2><p class="mxsub">Free art, sound and music only, every author credited.</p>');const cw=mxEl('div','mxcred');for(const p of card.querySelectorAll('p.credits'))cw.appendChild(p);C.appendChild(cw);
   /* --- wiring --- */

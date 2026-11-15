@@ -661,7 +661,7 @@ const SHIA={IR:1,RS:1,DW:1};
 const BB_NAT={US:1,IL:1,RU:1,CN:1},FORT_NAT={IR:1,RS:1,AF:1,KD:1,DW:1,KP:1};
 /* upgsimple (Abdullah 2026-11-14 "simplify the list of upgrades and powers it's too much"): a nation's general powers are Recon, Paradrop, Barrage, Repair + its own national power
    (+ Bunker Buster for US/IL/RU/CN) = 5-6, plus the passive Cash Bounty. Everything else in POWERS (flares, militia, reinforcements, sanctions, cyber, EMP) is not offered in Conquest/Battle (the grand map keeps them). */
-const POW_KEEP=['bounty','recon','para','barrage','repair','bb'];
+const POW_KEEP=['bounty','recon','para','barrage','repair','bb','nat'];   /* + the nation's own power on J (Abdullah 2026-11-14 22:11 "J bring back") */
 function powBan(k){return !!POWERS[k]&&POW_KEEP.indexOf(k)<0;}
 function sigBan(fac,k){return powBan(k)||(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
 /* power use of a building for the Build button: + needs power, - gives power (Generator); 0 = no power use (one POWER table) */
@@ -862,6 +862,13 @@ for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   ECON[k]=N.econ||(k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board');
   if(N.sub)SUBN[k]=N.sub;if(N.md)MDN[k]=N.md;if(N.coast)COASTN[k]=N.coast;if(N.trn)TRN[k]=N.trn;
   UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b.toLowerCase()+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
+/* distinct national powers (Abdullah 2026-11-14 22:14 "give them their own"): RV, GB, FR and DE all shared the same supply-drop power; each gets its
+   own now (fictional names, existing power types). OB keeps Rubble Cover. */
+Object.assign(NATPOW,{
+ RV:{name:'Marsh Rocket Salvo',type:'precise',cd:180,r:90,desc:'Rocket trucks fire eight rockets onto a tight area'},
+ GB:{name:'SAS Raid',type:'partisans',n:4,cd:200,r:90,desc:'Four special forces soldiers drop in at the target and strike'},
+ FR:{name:'Rafale Strike',type:'strafe',cd:200,r:140,desc:'A Rafale bombing run: a line of bombs across the target'},
+ DE:{name:'Panzer Reserve',type:'mercs',cd:230,desc:'Two Leopard tanks and two air-defence vehicles roll out of your HQ',self:true}});
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
