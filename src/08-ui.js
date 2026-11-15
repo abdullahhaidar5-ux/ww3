@@ -56,7 +56,7 @@ function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb,cnt=P.map(()=>0),cap=P.leng
   i=best(p=>p.pt);if(i>=0&&P[i].pt>0)A.push(['Power Player',i,P[i].pt+' general power'+(P[i].pt===1?'':'s')+' used'+(P[i].pk?' (most: '+esPow(P[i].f,P[i].pk)+')':'')]);
   return A;}
 const ES_OP=['World opinion',p=>p.op==null?'-':p.op+' / 100 (low '+(p.ol==null?p.op:p.ol)+')'];
-const ES_ROWS=[['Units built',p=>p.b],['Units lost',p=>p.lu],['Enemy units destroyed',p=>p.ku],['Structures destroyed',p=>p.kb],['Structures lost',p=>p.lb],
+const ES_ROWS=[['Units built',p=>p.b],['Units lost',p=>p.lu],['Enemy units destroyed',p=>p.ku],['Buildings built',p=>p.bb==null?'-':p.bb],['Structures destroyed',p=>p.kb],['Structures lost',p=>p.lb],['Supplies collected',p=>p.sc==null?'-':esM(p.sc)],["General's powers used",p=>p.pt|0],['Score',p=>p.sco==null?'-':p.sco],
   ['Enemy value destroyed',p=>esM(p.vd)],['Money earned',p=>esM(p.me)],['Money spent',p=>esM(p.ms)],['General rank',p=>p.r],['Time alive',p=>esT(p.ta)]];
 // ghostslot 2026-11-14: stats from an older server/save may still carry the hidden militia team (tm 900, always last) - drop it; Battle has no world opinion
 function esClean(S){if(!S||!Array.isArray(S.p))return S;const keep=S.p.map(p=>!(p&&(p.tm===900||p.rb)));if(keep.every(Boolean))return S;const C=Object.assign({},S);C.p=S.p.filter((_,i)=>keep[i]);if(Array.isArray(S.a))C.a=S.a.filter((_,i)=>keep[i]);return C;}

@@ -26,7 +26,7 @@ function radFeed(m,k,x,y,nat){const el=document.getElementById('log');if(!el||!m
   if(x==null&&RADF.tp&&now-RADF.tp.t<400&&(k==='bad'||k==='w'||k==='g')){x=RADF.tp.x;y=RADF.tp.y;}
   const d=document.createElement('div'),K=radKind(m),i=document.createElement('i');d.className=k||'';i.className=K[1];i.textContent=K[2];d.append(i,document.createTextNode(m));d._t=now;d._k=k;
   if(nat&&nat!==m){const sm=document.createElement('small');sm.textContent=nat;d.append(sm);}
-  if(x!=null&&y!=null)radPin(d,x,y);
+  if(x!=null&&y!=null){radPin(d,x,y);try{mmPing(x,y,K[1]==='atk'?'a':/strike|missile|launch|nuke|bomb|barrage/i.test(m)?'s':(k==='g'||/ready|complete|finished|built|captured|done/i.test(m))?'g':'');}catch(e){}}
   setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},6000);el.append(d);while(el.children.length>3)el.firstChild.remove();RADF.last=d;RADF.n++;return d;}
 function radPin(d,x,y){d._p={x,y};d.classList.add('go');d.title='Click to look there (or press Space)';d.addEventListener('click',e=>{e.stopPropagation();radGo(d._p);});RADF.pos={x,y,g:G};}
 /* the town ping raised beside a town report tells where it happened */
@@ -48,5 +48,5 @@ function heroSpeak(fac,kind){if(!G||!G.sel||!VOH[fac])return false;const h=G.sel
 /* Promotion cue (presentation, 2026-11-14): a rising two-note chime for your own units (louder per rank); Elite and Heroic also get the nation's existing
    "ready" hero line (vo radio sheet key hsel) - a dedicated "promoted" line per nation does not exist yet (see orch/HANDOFF-presentation.md). View/audio only. */
 const VETC={t:0};
-function vetCue(id,r){if(!G||!G.byId||!AU.ctx||!auOn())return;const u=G.byId.get(id);if(!u||u.team!==ME)return;const n=performance.now();if(n-VETC.t<350)return;VETC.t=n;
+function vetCue(id,r){if(!G||!G.byId||!AU.ctx||!auOn())return;const u=G.byId.get(id);if(!u||u.team!==ME)return;try{if(typeof FLOATS!=='undefined'&&VET[r]&&FLOATS.length<40)FLOATS.push({x:u.x,y:u.y,s:'PROMOTED · '+VET[r].toUpperCase(),t0:performance.now(),c:'#ffd84a'});}catch(e){}const n=performance.now();if(n-VETC.t<350)return;VETC.t=n;
   try{sfxUI(560+r*160);}catch(e){}if(r>=2&&AU.voiceOn){const fac=G.teams[ME].fac;vohLoad(fac);try{vohPlay(fac,'hsel',false);}catch(e){}}}

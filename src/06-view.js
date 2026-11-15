@@ -277,9 +277,16 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
      for(const q of P.pts){const b=sc(q);c.lineTo(b.x,b.y);}c.stroke();c.setLineDash([]);c.fillStyle='#e3b341';P.pts.forEach((q,i)=>{const b=sc(q);c.beginPath();c.moveTo(b.x,b.y-7);c.lineTo(b.x+7,b.y);c.lineTo(b.x,b.y+7);c.lineTo(b.x-7,b.y);c.closePath();c.fill();if(P.pts.length>1){c.font='600 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='#1a1408';c.fillText(String(i+1),b.x,b.y+3.5);c.fillStyle='#e3b341';}});}}
   if(typeof wallPreview==='function')wallPreview(c);
   if(drag&&drag.box){c.strokeStyle='#8af0a6';c.lineWidth=1;c.fillStyle='rgba(116,208,143,.1)';const x=Math.min(drag.x0,mouse.x),y=Math.min(drag.y0,mouse.y);c.fillRect(x,y,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));c.strokeRect(x+.5,y+.5,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));}
+  if(G.place&&mouse.in&&STRUCT[G.place]){const w=screenToWorld(mouse.x,mouse.y);if(w)plFoot(c,w,!G.placeWhy||G.placeWhy==='dz');}   // placement footprint (Zero Hour grid)
   if(G.aim){const w=screenToWorld(mouse.x,mouse.y);if(w){const r=G.aim==='sup'?G.teams[ME].sup.r+G.teams[ME].sup.spread:G.aim==='ldrA'?60:(powInfo(G.aim,G.teams[ME].fac).r||60);c.strokeStyle='#ea5a40';c.lineWidth=1.5;c.setLineDash([6,4]);c.beginPath();
     for(let i=0;i<=40;i++){const a=i/40*6.28,p=toScreen(w.x+Math.cos(a)*r,groundH(w.x,w.y),w.y+Math.sin(a)*r);i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y);}c.stroke();c.setLineDash([]);}}
   if(flash>0){c.fillStyle=`rgba(255,236,210,${flash*.45})`;c.fillRect(0,0,VW,VH);}}
+/* Placement footprint (Zero Hour): a grid of CELL/2 squares under the ghost, green where the building can stand, red where the ground (water, bridge, cliff) or the spot is wrong. Only while placing; <=64 cells. View only. */
+function plFoot(c,w,ok){const s=bstats(G.teams[ME].fac,G.place),n=Math.max(2,Math.min(8,Math.round(s.size/(CELL/2)))),st=s.size/n,x0=w.x-s.size/2,y0=w.y-s.size/2;c.save();c.lineWidth=1;
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){const wx=x0+i*st,wy=y0+j*st,cx=Math.floor((wx+st/2)/CELL),cy=Math.floor((wy+st/2)/CELL),bad=!ok||cx<0||cy<0||cx>=GW||cy>=GH||G.grid[cy*GW+cx]!==0;
+    const a=toScreen(wx,groundH(wx,wy)+1,wy),b=toScreen(wx+st,groundH(wx+st,wy)+1,wy),d=toScreen(wx+st,groundH(wx+st,wy+st)+1,wy+st),e=toScreen(wx,groundH(wx,wy+st)+1,wy+st);if(a.z>1)continue;
+    c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.lineTo(d.x,d.y);c.lineTo(e.x,e.y);c.closePath();c.fillStyle=bad?'rgba(234,70,50,.38)':'rgba(90,230,120,.30)';c.fill();c.strokeStyle=bad?'rgba(255,120,100,.7)':'rgba(150,255,170,.6)';c.stroke();}
+  c.restore();}
 // Tactical minimap: desaturated terrain with contour-style mountains, grid squares (A-H / 1-6), fog of war,
 // unit symbols by type (dot infantry, square armour, triangle aircraft, hull ships), contact flashes where your units
 // are taking fire, strike warning rings, squad tags, a radar sweep and a bracketed camera box.
@@ -297,6 +304,9 @@ function mmBase(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH;const c=docum
   return c;}
 function mmGrid(x,y){return 'ABCDEFGH'[Math.max(0,Math.min(7,Math.floor(x/MAPW*MMG.cols)))]+(Math.max(0,Math.min(5,Math.floor(y/MAPH*MMG.rows)))+1);}
 const MMC=[];let mmFogT=0;
+/* Radar events (Zero Hour): a pulsing ring on the minimap where your side is attacked (red), a strike is launched (yellow) or something finishes (green). Ring pool of 12, no allocation per frame. View only. */
+const MMP=[];const MMP_C={a:'255,80,60',s:'255,214,70',g:'110,230,140'};
+function mmPing(x,y,k){if(!k)return;const t=performance.now()/1000;if(MMP.length>=12)MMP.shift();MMP.push({x,y,k,t});}
 // Electronic warfare on the minimap (view only). Where an enemy jamming truck covers our units the minimap there turns
 // to static and hides every contact under it; radar-spoof ghosts show as enemy armour moving toward us. A working
 // Strike Center sees through them: drawn faded with a "?". Our own spoof's ghosts show as faint outlines.
@@ -359,6 +369,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
   // contact flashes where we're under fire
   for(let i=MMC.length-1;i>=0;i--){const m=MMC[i],a=now-m.t;if(a>1.4){MMC.splice(i,1);continue;}c.strokeStyle=`rgba(255,80,60,${1-a/1.4})`;c.lineWidth=1.5;c.beginPath();c.arc(m.x*sx,m.y*sy,3+a*9,0,7);c.stroke();}
   if(MMC.length>40)MMC.splice(0,MMC.length-40);
+  for(let i=MMP.length-1;i>=0;i--){const m=MMP[i],a=now-m.t;if(a>3.2){MMP.splice(i,1);continue;}const col=MMP_C[m.k];for(let j=0;j<2;j++){const q=(a*1.1+j*.5)%1;c.strokeStyle='rgba('+col+','+((1-a/3.2)*(1-q)).toFixed(2)+')';c.lineWidth=2;c.beginPath();c.arc(m.x*sx,m.y*sy,3+q*14,0,7);c.stroke();}c.fillStyle='rgba('+col+','+(1-a/3.2).toFixed(2)+')';c.beginPath();c.arc(m.x*sx,m.y*sy,2.4,0,7);c.fill();}
   if((performance.now()/250|0)%2){c.fillStyle='#ea5a40';for(const m of MARKERS){c.beginPath();c.arc(m.x*sx,m.y*sy,5,0,7);c.fill();}}
   // squad tags
   if(G.sq)for(let i=1;i<=5;i++){const L=(G.sq[i]||[]).map(id=>G.byId.get(id)).filter(u=>u&&!u.dead);if(!L.length)continue;const x=L.reduce((a,u)=>a+u.x,0)/L.length*sx,y=L.reduce((a,u)=>a+u.y,0)/L.length*sy;c.fillStyle='rgba(5,8,7,.8)';c.fillRect(x+5,y-12,10,10);c.fillStyle='#e3b341';c.font='700 9px IBM Plex Mono, monospace';c.textAlign='center';c.textBaseline='middle';c.fillText(i,x+10,y-6.5);c.textAlign='left';c.textBaseline='alphabetic';}

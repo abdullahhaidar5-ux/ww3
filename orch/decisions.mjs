@@ -344,6 +344,13 @@ const ev = (fn, a) => page.evaluate(fn, a);
 const SEEN = () => { const out = []; const vis = e => { if (!e.isConnected) return false; for (let n = e; n && n.nodeType === 1; n = n.parentElement) { const s = getComputedStyle(n); if (n.hidden || s.display === 'none' || s.visibility === 'hidden' || +s.opacity === 0) return false; } const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); for (let t; (t = w.nextNode());) { const s = t.nodeValue.trim(); if (s && t.parentElement && vis(t.parentElement)) out.push(s); }
   for (const e of document.querySelectorAll('[title]')) if (vis(e)) out.push(e.title); return out.join(' ¶ '); };
+// zhfeel2 (2026-11-15): Zero Hour feel guards - radar pings on the minimap, rank chevrons + Promoted text, squad numbers, placement footprint, score screen rows.
+{ const has = (f, re, m) => ck(re.test(SRC[f] || ''), 'zhfeel2: ' + m);
+  has('06-view.js', /function mmPing/, 'minimap radar ping (mmPing) is gone'); has('09b-radio.js', /mmPing\(x,y/, 'radio events no longer ping the minimap');
+  has('06-view.js', /rank chevrons/, 'rank chevrons are gone'); has('09b-radio.js', /PROMOTED/, 'Promoted floating text is gone');
+  has('08-ui.js', /sqLast/, 'double-tap squad number centering is gone'); has('06-view.js', /function plFoot/, 'placement footprint grid (plFoot) is gone');
+  has('08-ui.js', /Supplies collected/, 'score screen lost its Supplies collected row'); has('08-ui.js', /\['Score'/, 'score screen lost its Score row');
+  has('03-sim.js', /sco:Math\.round/, 'endStats lost the score'); }
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
