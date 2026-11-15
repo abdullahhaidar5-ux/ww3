@@ -1,0 +1,49 @@
+  page: shader warm-up 5787 ms, 62 models, 120 objects in 658 steps (longest 428 ms), 114 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 35 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=211 normal=35ms (quiet max 259) longest=238ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":3,"bufKB":5,"vao":6,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 238ms@3.1s {} ; 205ms@3.4s {"aud":3} ; 182ms@4.8s {"vao":2} ; 131ms@5.3s {} ; 130ms@3.6s {}
+  frames that made the GPU work (3):
+    3.24s 112ms {"aud":1} three geo/tex 580/248
+    3.42s 205ms {"aud":3} three geo/tex 580/248
+    3.90s 113ms {"buf":3,"bufKB":5.1,"vao":1} three geo/tex 580/248
+IR worst JS call (not drawing): simUpdate 173ms; ok
+  page: shader warm-up 3183 ms, 65 models, 125 objects in 664 steps (longest 288 ms), 121 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 29 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=192 normal=29ms (quiet max 226) longest=242ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":5,"bufKB":6,"vao":7,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 242ms@3.0s {"buf":2,"bufKB":1.4,"vao":2} ; 227ms@3.3s {"vao":1} ; 125ms@8.9s {} ; 119ms@3.7s {} ; 118ms@7.5s {}
+  frames that made the GPU work (5):
+    3.01s 242ms {"buf":2,"bufKB":1.4,"vao":2} three geo/tex 681/317
+    3.25s 41ms {"aud":2} three geo/tex 681/317
+    3.43s 89ms {"buf":3,"bufKB":5.1,"vao":1} three geo/tex 682/317
+    3.55s 51ms {"aud":1} three geo/tex 682/317
+    3.61s 60ms {"aud":1} three geo/tex 682/317
+  shapes that entered the scene during the strike (look here for the ones built or re-sent):
+    0.1s RingGeometry 114v MeshBasicMaterial
+    0.1s RingGeometry 114v MeshBasicMaterial
+    0.1s CircleGeometry 50v MeshBasicMaterial
+    0.1s PlaneGeometry 4v MeshBasicMaterial
+    0.1s BufferGeometry 378v MeshStandardMaterial
+    0.1s ConeGeometry 22v MeshBasicMaterial
+    2.7s BufferGeometry 144v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s RingGeometry 130v MeshBasicMaterial
+RU worst JS call (not drawing): simUpdate 195ms; FAIL: 7 new meshes (max 6)
+  page: shader warm-up 2630 ms, 59 models, 114 objects in 665 steps (longest 110 ms), 107 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 29 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=205 normal=29ms (quiet max 208) longest=266ms three(progs/geo/tex)=+0/+1/+8 gl={"sh":0,"prog":0,"tex":8,"texUp":8,"texKB":13,"buf":6,"bufKB":6,"vao":6,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 266ms@3.0s {} ; 179ms@3.4s {"tex":4,"texUp":4,"texKB":6.3,"aud":3} ; 125ms@3.8s {} ; 125ms@7.9s {} ; 123ms@6.0s {}
+  frames that made the GPU work (5):
+    2.62s 29ms {"buf":3,"bufKB":5.1,"vao":2} three geo/tex 565/216
+    3.21s 95ms {"aud":1} three geo/tex 565/216
+    3.39s 179ms {"tex":4,"texUp":4,"texKB":6.3,"aud":3} three geo/tex 565/220
+    3.63s 89ms {"tex":4,"texUp":4,"texKB":6.3} three geo/tex 565/224
+    9.36s 76ms {"buf":3,"bufKB":1.3,"vao":2} three geo/tex 566/224
+US worst JS call (not drawing): simUpdate 162ms; FAIL: 8 new textures (max 2)
+SUPERFREEZE FAIL
