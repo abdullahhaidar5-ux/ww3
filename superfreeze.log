@@ -1,0 +1,23 @@
+  page: shader warm-up 9973 ms, 62 models, 120 objects in 661 steps (longest 1224 ms), 113 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 48 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=false frames=217 normal=48ms (quiet max 334) longest=135ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 135ms@0.0s {} ; 133ms@7.3s {} ; 128ms@2.2s {} ; 124ms@1.6s {} ; 124ms@5.0s {}
+IR worst JS call (not drawing): simUpdate 42ms; FAIL: launch failed
+  page: shader warm-up 5802 ms, 65 models, 125 objects in 681 steps (longest 673 ms), 120 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 48 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=false frames=174 normal=48ms (quiet max 296) longest=127ms three(progs/geo/tex)=+0/+1/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":3,"bufKB":5,"vao":2,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 127ms@3.5s {"buf":3,"bufKB":5.1,"vao":2} ; 124ms@1.5s {} ; 121ms@8.7s {} ; 120ms@1.7s {} ; 118ms@4.9s {}
+  frames that made the GPU work (1):
+    3.49s 127ms {"buf":3,"bufKB":5.1,"vao":2} three geo/tex 681/317
+RU worst JS call (not drawing): simUpdate 52ms; FAIL: launch failed
+  page: shader warm-up 4375 ms, 59 models, 114 objects in 662 steps (longest 642 ms), 105 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +18s] normal frame 50 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=false frames=183 normal=50ms (quiet max 244) longest=132ms three(progs/geo/tex)=+0/+-27/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":3,"bufKB":5,"vao":1,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 132ms@6.0s {} ; 132ms@7.1s {} ; 131ms@5.3s {} ; 130ms@6.5s {} ; 129ms@3.5s {}
+  frames that made the GPU work (1):
+    1.24s 105ms {"buf":3,"bufKB":5.1,"vao":1} three geo/tex 594/216
+US worst JS call (not drawing): simUpdate 26ms; FAIL: launch failed
+SUPERFREEZE FAIL
