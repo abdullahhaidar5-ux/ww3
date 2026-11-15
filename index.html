@@ -16798,7 +16798,7 @@ window.addEventListener('pointerdown',e=>{if(CT.mode!=='gsend'||!G||e.button!==0
   const us=sqList(i);ctFormSend(us,w.x,w.y,CT.form[i]||'line',MODK.shift?'amove':'move');speak(1);mark({x:w.x,y:w.y,r:20,t:0,d:.5,c:0x74d08f});ctUI(true);},true);
 function ctGroupName(i){return CT.names[i]?(CT_GN.includes(CT.names[i])?CT.names[i]+' '+i:CT.names[i]):'Group '+i;}
 function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=null;CT.mode=null;CT.draw=null;CT.names={};CT.form={};CT.sendG=0;CT.pid=0;CT.sig='';}   // a new battle starts clean
-  if(!G||G.over||RP.on||NET.spec){if(CTP)CTP.hidden=true;const b=$('ctBanner');if(b)b.hidden=true;const q=$('planBar');if(q)q.hidden=true;return;}const P=ctEl(),T=G.teams[ME];if(!T||T.reb){P.hidden=true;return;}ctBanner();ctPlanBar();
+  if(!G||G.over||RP.on||NET.spec){if(CTP)CTP.hidden=true;const b=$('ctBanner');if(b)b.hidden=true;const q=$('planBar');if(q)q.hidden=true;return;}const P=ctEl(),T=G.teams[ME];if(!T||T.reb){P.hidden=true;return;}ctBanner();ctPlanBar();P.hidden=true;return;   /* the COMMAND panel (battle groups list) is gone (Abdullah 2026-11-14 21:19 "This isn't needed anymore"); groups still work with 1-9 and Ctrl+number */
   const tp=ctTeamPlay(),ffa=ctFFA(),oth=G.teams.filter(O=>O.id!==ME&&!O.reb&&!O.out),sel=selfSel().length;
   const abA=typeof abMine==='function'?abMine():null,abT=abA&&abA.list.length?(abA.on!==false?' · ● on':' · ❚❚ paused'):'';
   let h=`<h4 data-a="tog"><span>Command</span><span class="abc" data-a="abtog" title="Auto-build: standing production orders (key U)">Auto-build [U]${abT}</span><small>${CT.open?'▾':'▸'}</small></h4>`;
