@@ -137,6 +137,16 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(/function match\(/.test(kit) && /matchUp\(/.test(kit) && /UK\.match\(T\.fac,k,foeFac\(\),\{mini:1\}\)/.test(ui), 'one language 3: command buttons no longer carry the BEATS / WEAK TO pictures (UK.match in buildPanels)');
   ck(/function ctrTick\(/.test(ui) && /matchBeaters\(/.test(ui) && /ctrTick\(\)/.test(ui.replace(/function ctrTick\(/, '')), 'one language 3: pointing at an enemy no longer lights up the buttons that beat it (ctrTick)');
   ck(/UK\.match\(en\.f,en\.k/.test(enc) && /matchUp\(f,s\.kind,f\)/.test(idn), 'one language 3: Encyclopedia / Unit guide no longer use the computed BEATS / WEAK TO'); }
+// Seat fairness (Abdullah 2026-11-14 23:56 "Yes", mapfix): start position 1 must not shoot/think first, and caribbean + hormuzgate have point-exact starts
+{ const sim = SRC['03-sim.js'] || '', mp = SRC['02-map.js'] || '', rm = SRC['02b-realmaps.js'] || '', ck2 = SRC['07b-ckpt.js'] || '';
+  ck(/G\.upN=\(G\.upN\|0\)\+1/.test(sim) && /rv=G\.upN&1/.test(sim) && /G\.ents\[rv\?n-1-k:k\]/.test(sim), 'mapfix: the per-tick unit loop must alternate direction (G.upN parity) so team order is fair');
+  ck(/G\.teams\[\(q\+G\.upN\)%NT\]/.test(sim), 'mapfix: the AI think order must rotate with G.upN, not always start with team 0');
+  ck(/'upN'/.test(ck2), 'mapfix: G.upN must be in the checkpoint (host migration keeps the same tick order)');
+  ck(/mirRes:1/.test(mp.slice(mp.indexOf('caribbean:{'), mp.indexOf('caribbean:{') + 200)) && /mirRes:1/.test(rm.slice(rm.indexOf('hormuzgate:{'), rm.indexOf('hormuzgate:{') + 200)) && /D\.mirRes&&NB===2/.test(mp), 'mapfix: caribbean and hormuzgate must keep mirRes:1 (derricks and supply fields are the exact point mirror)');
+  ck(/hMir=D\.mirRes&&BASES\.length===2/.test(mp) && /msrc=D\.mirRes&&BASES\.length===2/.test(mp), 'mapfix: on mirRes maps the hamlets and cities of base 2\'s half are base 1\'s turned half a circle (equal garrisonable houses near both starts)');
+  const car = mp.slice(mp.indexOf('caribbean:{'), mp.indexOf('khyber:{'));
+  ck(!/Math\.sin\(q\*3|Math\.sin\(q\*7/.test(car) && /cities:mirrorList\(/.test(car), 'mapfix: caribbean coast shapes use even harmonics only and its cities are mirrored (equal coast for both starts)');
+  ck(!/w:a=>\.05\*Math\.sin\(a\*3\)/.test(rm.slice(rm.indexOf('hormuzgate:{'), rm.indexOf('tihama:{'))), 'mapfix: hormuzgate centre island needs an even-harmonic outline (point mirror)'); }
 { const fh = SRC['08l-firsthint.js'] || '', so = SRC['08b-social.js'] || '', mn = SRC['14-menu.js'] || '';
   ck(/FH_TEXT/.test(fh) && ['Battle', 'Mission', 'Test range'].every(m => fh.includes("'" + m + "':")) && !fh.includes("'Conquest':"), 'polishE: a mode lost its first-steps hint card');
   ck(/const TUTB=\[/.test(so) && /function startBattleTutorial/.test(so) && /startBattleTutorial\(\)/.test(so.slice(so.indexOf('function socialMenu'))), 'polishE: the Battle tutorial is gone from the menu');
@@ -507,6 +517,12 @@ try {
         const had = G.battle; G.battle = 1; const a = bstats('RS', 'turret').cost; G.battle = 0; const b = bstats('RS', 'turret').cost; G.battle = had; o.fort = a < b && a <= Math.round(b * .6 / 25) * 25 + 25;
         o.us = FMECH.US.cost === 1.08 && FMECH.IL.hp === 1.08 && typeof fmTick === 'function'; o.iads = !!IADS_NAT.SA && !!IADS_NAT.AE && typeof isPost === 'function'; return o; });
       for (const k in m) ck(m[k], 'L2 faction mechanic broken: ' + k + ' ' + JSON.stringify(m)); }
+    /* polishD guard (2026-11-15): UA FPV team, TR Bayraktar, IR Shahed truck are in their rosters + AI list; FPV hits vehicles only; Hidden Firing Post holds 4 infantry (own list, in the checkpoint) */
+    { const m = await ev(() => { const o = {}; o.fpv = roster('UA').barracks.includes('fpvt') && stats('UA', 'fpvt').vehOnly === 1 && roster('IR').barracks.indexOf('fpvt') < 0;
+        o.tb2 = roster('TR').airfield.includes('tb2') && stats('TR', 'tb2').dom === 'air' && !!SIGU.tb2 && !roster('US').airfield.includes('tb2'); o.shl = !roster('IR').factory.includes('shl') && roster('IR').factory.includes('bmt') && !BASE.shl;
+        const inf = { isB: 0, s: { armor: 'light', dom: 'ground' }, landed: 0 }, veh = { isB: 0, s: { armor: 'heavy', dom: 'ground' }, landed: 0 }; o.vo = !canTarget(stats('UA', 'fpvt'), inf) && canTarget(stats('UA', 'fpvt'), veh);
+        o.krb = roster('KP').factory.includes('krb'); o.post = POST_CAP === 4 && typeof enterTunnel === 'function'; o.ai = typeof aiSigWant === 'function' && AI_SIG.some(r => r[0] === 'krb') && !AI_SIG.some(r => r[0] === 'shl') && AI_SIG.some(r => r[0] === 'tb2') && AI_SIG.some(r => r[0] === 'fpvt'); return o; });
+      for (const k in m) ck(m[k], 'polishD signature/post broken: ' + k + ' ' + JSON.stringify(m)); }
     for (const f of ['03-sim.js', '03b-tactics.js']) ck(/msOf\([^)]*\)\.rout[!=]==0/.test(SRC[f]), 'no Zealous rout guard in ' + f); }
   ck(cq.battle && cq.towns, 'a single-player skirmish did not start as Battle (or still has towns)');
   ck(cq.ban.cleric, 'Ayatollah (cleric) is missing from the Battle roster for IR'); ck(cq.ban.fort, 'Mountain Fortress is not buildable in Battle for IR');
@@ -654,6 +670,16 @@ try {
     const sm = fs.readFileSync(path.join(ROOT, 'src/03-sim.js'), 'utf8'); ck(/s\.src\.s\.missile|src\.s&&src\.s\.missile/.test(sm) && /s\.kind==='bm'/.test(sm) && /filter\(k=>k!=='bmt'\|\|T\.credits>2600\)/.test(sm), 'ballistic missile: fire() must launch a bm strike, updStrikes must let air defence shoot it down, the AI builds it only when rich'); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
+// powers 2026-11-15 (Abdullah 00:22 "Make the general powers require more points and progressively get better"): unlock cost by strength, dearer levels, growing effects
+{ const d = SRC['01-data.js'] || '', sm = SRC['03-sim.js'] || '', ui = SRC['08-ui.js'] || '';
+  const pc = d.match(/const POWCOST=\{([^}]*)\}/), c = {}; if (pc) for (const m of pc[1].matchAll(/(\w+):(\d+)/g)) c[m[1]] = +m[2];
+  ck(pc && c.recon === 1 && c.repair === 1 && c.bounty === 1 && c.para === 2 && c.barrage === 2 && c.bb === 3 && c.nat === 3, 'powers: unlock costs differ by strength (light 1, medium 2, heavy 3)');
+  ck(/function powLvCost\(k,lv\)\{return lv>=3\?99:powCostBase\(k\)\+\(lv\|0\)/.test(d) && /return powLvCost\(key,/.test(sm), 'powers: level 2 costs unlock+1, level 3 unlock+2 (so level 3 costs more than level 2), one rule used by buyPower');
+  for (const k of ['recon', 'repair', 'barrage', 'bb']) { const m = d.match(new RegExp(k + ':\\{(rm|[^}]*?rm):\\[([\\d.,]+)\\]')); const a = m && m[2].split(',').map(Number); ck(a && a.length === 3 && a[0] < a[1] && a[1] < a[2], 'powers: ' + k + ' area grows with every level'); }
+  { const m = d.match(/para:\{n:\[([\d,]+)\],at:\[([\d,]+)\]/); const n = m && m[1].split(',').map(Number), at = m && m[2].split(',').map(Number); ck(n && n[0] < n[1] && n[1] < n[2] && at[2] > at[1], 'powers: paratroopers grow per level and level 3 adds anti-tank teams'); }
+  ck(/n:\[10,14,20\]/.test(d) && /dmg:\[1500,1900,2400\]/.test(d) && /PCD=\[1,\.8,\.6\]/.test(d), 'powers: barrage shells, bunker buster blast and cooldown improve with level');
+  ck(!/Unlock · 1 point`/.test(ui) && !/about 40% stronger/.test(ui) && /powLvCost\(k,0\)/.test(ui), 'powers: no leftover "1 point" / "40% stronger" text, the row shows the real cost');
+}
 await browser.close(); server.close();
 }
 for (const f of fails) console.log('FAIL: ' + f);

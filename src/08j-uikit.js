@@ -93,6 +93,7 @@ function iconClass(k,s){s=s||{};const nm=String(s.name||''),cl=s.cls||'';k=Strin
   if(k==='arty'||/arty|mlrs|how/.test(k))return(s.rocket||/rocket|launcher|mlrs|tos-|himars|phl|grad|fateh|smerch|uragan|bm-/i.test(nm))?'mlrs':'gun';
   if(k==='aa')return'spaa';
   if(k==='ew')return'ew';
+  if(k==='krb')return'mlrs';if(k==='tb2')return'male';if(k==='fpvt')return'quad';
   if(k==='cbr')return'radarv';
   if(k==='airlift'||(/heli|transport|chinook|mi-8|nh90|bell 214|z-8/i.test(nm)&&s.noAttack))return'lift';
   if(k==='heli'||/heli|chop/.test(k))return'heli';

@@ -147,11 +147,11 @@ const MAPS={
     cities:[[1050,1000,200,'mideast'],[2420,1100,90,'mideast'],[1100,1850,80,'mideast']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([820+60*Math.sin(y*.004+ph),y]);M.rivers.push({pts,hw:()=>75});
       const can=[];for(let y=-200;y<=MAPH+200;y+=40)can.push([2550+8*Math.sin(y*.002),y]);M.rivers.push({pts:can,hw:()=>38});M.bridgeAt=[[0,.25],[0,.5],[0,.78],[1,.3],[1,.7]];M.bridgeFrac=true;}},
-  caribbean:{name:'Caribbean Island',min:2,max:4,sym:'point',theme:'green',home:['CU','AU','ES','PH','ID'],tag:'tropical island · beaches · naval-heavy',desc:'A long tropical island in warm seas: Havana on the north shore, palm-fringed cays and landings on the beaches.',
+  caribbean:{name:'Caribbean Island',min:2,max:4,sym:'point',mirRes:1,theme:'green',home:['CU','AU','ES','PH','ID'],tag:'tropical island · beaches · naval-heavy',desc:'A long tropical island in warm seas: Havana on the north shore, palm-fringed cays and landings on the beaches.',
     slots:[[700,900],[2500,1300],[1250,1450],[1950,750]],
-    cities:[[1300,780,160,'latin'],[2150,1380,110,'latin']],
-    water(M,R){M.lakes.push({x:1600,y:1100,r:6000,rx:1,wob:()=>0});const w=R()*6.28;M.islands.push({x:1600,y:1100,r:520,rx:2.6,rot:-.12,wob:q=>.12*Math.sin(q*3+w)+.07*Math.sin(q*7+w*2)});
-      for(const [x,y] of [[500,300],[2700,1900],[2800,350],[400,1850]])M.islands.push({x,y,r:90,rx:1.6,rot:.4,wob:q=>.15*Math.sin(q*3+x)});}},
+    cities:mirrorList([[1300,780,160,'latin']],'p'),
+    water(M,R){M.lakes.push({x:1600,y:1100,r:6000,rx:1,wob:()=>0});const w=R()*6.28;M.islands.push({x:1600,y:1100,r:520,rx:2.6,rot:-.12,wob:q=>.12*Math.sin(q*2+w)+.07*Math.sin(q*4+w*2)});
+      for(const [x,y] of [[500,300],[2700,1900],[2800,350],[400,1850]])M.islands.push({x,y,r:90,rx:1.6,rot:.4,wob:q=>.15*Math.sin(q*2)});}},
   // ---- 2026-10-30 maps (Maps squad): 20 more theatres, every one symmetric so each start position gets the same ground ----
   khyber:{name:'Khyber Pass: Gate of Fortresses',min:2,max:2,sym:'point',rough:1.5,home:['PK','AF'],tag:'mountain pass · two goat tracks · duel',desc:'A duel through the Spin Ghar range: one narrow pass split by a rock fort in the middle, and a long goat track along each edge to outflank it.',
     slots:[[420,1500],[2780,700]],cities:mirrorList([[1020,1280,85,'southasia']],'p'),
@@ -457,14 +457,17 @@ function mkMap(seed,mk,ssn){
       if(bc>=0&&(!bf||bcr.sp<=bf.r.sp+.04*E0&&bcr.m<=bf.r.m*1.3))PRIZE=bc;
       else if(bf){const cnt={};for(const q of CITIES)cnt[q[3]]=(cnt[q[3]]||0)+1;let st=M.theme==='snow'?'russia':M.theme==='green'?'europe':'mideast',bn=0;for(const k in cnt)if(cnt[k]>bn){bn=cnt[k];st=k;}
         CITIES.push([bf.x/WK,bf.y/WK,84,st]);PRIZE=CITIES.length-1;}}}
-  if(CITIES.length){const CR=mulberry((seed|0)*13+7);for(const [cxd,cyd,rd,style] of CITIES){const cx=cxd*WK,cy=cyd*WK,r=rd*Math.pow(WK,.78)*1.3;M.cities.push({x:cx,y:cy,r,style,prize:M.cities.length===PRIZE});
+  if(CITIES.length){const CR=mulberry((seed|0)*13+7),CRECS=[];for(const [cxd,cyd,rd,style] of CITIES){const cx=cxd*WK,cy=cyd*WK,r=rd*Math.pow(WK,.78)*1.3;M.cities.push({x:cx,y:cy,r,style,prize:M.cities.length===PRIZE});
+    // D.mirRes (2 players): a city that is the point mirror of an earlier one is that city turned half a circle, building for building (equal cover and garrisons near both starts)
+    const rec={x:cx,y:cy,cells:[],b0:M.cityBlds.length},msrc=D.mirRes&&BASES.length===2?CRECS.find(c=>Math.hypot(c.x-(MAPW-cx),c.y-(MAPH-cy))<40):null;
+    if(msrc){const mc=M.cities[M.cities.length-1];mc.x=MAPW-msrc.x;mc.y=MAPH-msrc.y;for(const [i,j] of msrc.cells){const mi=GW-1-i,mj=GH-1-j;if(mi>=1&&mj>=1&&mi<GW-1&&mj<GH-1&&grid[mj*GW+mi]===0)grid[mj*GW+mi]=3;}for(const b of msrc.blds)M.cityBlds.push(Object.assign({},b,{x:MAPW-b.x,y:MAPH-b.y}));continue;}CRECS.push(rec);
     const i0=Math.floor((cx-r)/CELL),i1=Math.ceil((cx+r)/CELL),j0=Math.floor((cy-r)/CELL),j1=Math.ceil((cy+r)/CELL),sx=Math.floor(cx/CELL),sy=Math.floor(cy/CELL);
     for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){if(i<1||j<1||i>=GW-1||j>=GH-1)continue;const x=i*CELL+CELL/2,y=j*CELL+CELL/2,d=Math.hypot(x-cx,y-cy);if(d>r)continue;
       if(((i-sx)%4+4)%4===0||((j-sy)%4+4)%4===0)continue;if(grid[j*GW+i]!==0)continue;if(BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<400))continue;
-      if(M.edge(x,y)>-50||M.mtn(x,y)>-40)continue;const core=1-d/r;if(CR()>.42+.6*core)continue;grid[j*GW+i]=3;
+      if(M.edge(x,y)>-50||M.mtn(x,y)>-40)continue;const core=1-d/r;if(CR()>.42+.6*core)continue;grid[j*GW+i]=3;rec.cells.push([i,j]);
       const tall=style==='russia'?18+core*46*CR():style==='america'?(core>.55?28+core*70*CR():8+CR()*5):style==='yemen'?16+CR()*22:style==='japan'?10+CR()*10+core*16*CR():style==='gulfcity'?(core>.35?45+core*110*CR():12+CR()*8):style==='korea'?24+core*50*CR():style==='asia'?14+core*38*CR():style==='europe'?9+CR()*9:style==='latin'?7+CR()*8:style==='southasia'?8+CR()*12:8+CR()*10+core*16*CR();
       if(CR()<.55&&tall<30){for(const [ox,oy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){if(CR()<.15)continue;M.cityBlds.push({x:x+ox*CELL*.24,y:y+oy*CELL*.24,w:CELL*(.36+CR()*.1),d:CELL*(.36+CR()*.1),h:tall*(.6+CR()*.7),style,core,v:CR()});}}
-      else M.cityBlds.push({x,y,w:CELL*(.74+CR()*.18),d:CELL*(.74+CR()*.18),h:tall,style,core,v:CR()});}}}
+      else M.cityBlds.push({x,y,w:CELL*(.74+CR()*.18),d:CELL*(.74+CR()*.18),h:tall,style,core,v:CR()});}rec.blds=M.cityBlds.slice(rec.b0);}}
   M.cityNear=(x,y,pad)=>M.cities.some(c=>Math.hypot(x-c.x,y-c.y)<c.r+(pad||0));
   {const reach=new Uint8Array(GW*GH),st=[];const s0=[Math.floor(BASES[0][0]/CELL),Math.floor(BASES[0][1]/CELL)];st.push(s0[1]*GW+s0[0]);reach[st[0]]=1;
    while(st.length){const c=st.pop(),cx=c%GW,cy=(c/GW)|0;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const k=ny*GW+nx;if(reach[k])continue;const v=grid[k];if(v===0||v===2){reach[k]=1;st.push(k);}}}M.reach=reach;}
@@ -520,6 +523,11 @@ function mkMap(seed,mk,ssn){
      // contested oil: a forward derrick for every base, the same route length out towards the middle of the map
      const DCt=gridDist(grid,MAPW/2,MAPH/2);
      for(let i=0;i<NB;i++)addO(best(p=>Math.abs(p.d[i]-.46*E)+.3*DCt[cellOf(p.x,p.y)],(p,rl)=>mine(p,i,.02*E*rl)&&Math.abs(p.d[i]-.46*E)<.08*E/rl&&okO(p,rl,300*Math.min(1,WK),240)));}
+   // EXACT MIRROR (D.mirRes, a 2-player point-symmetric map): the route-distance search above picks near-ties, so the two sides got
+   // slightly different spots. Keep the derricks/fields on base 1's half and replace the other half by their point mirror.
+   if(D.mirRes&&NB===2&&(D.sym==='point'||D.sym==='quad')){const W2=MAPW/2,H2=MAPH/2,ax=BASES[0][0]-W2,ay=BASES[0][1]-H2,half=p=>{const d=(p.x-W2)*ax+(p.y-H2)*ay;return d>1?1:d<-1?-1:(p.x>W2||(p.x===W2&&p.y>H2)?1:-1);};
+     for(const key of ['fields','oil']){const L=M[key],mine1=L.filter(p=>half(p)>0),oth=L.filter(p=>half(p)<0),use=mine1.length>=oth.length?mine1:oth.map(p=>Object.assign({},p,{x:MAPW-p.x,y:MAPH-p.y}));
+       const out=[];for(const p of use){out.push(p);const q=Object.assign({},p,{x:MAPW-p.x,y:MAPH-p.y});if(p.cp)q.cp=[0,0];if(Math.hypot(q.x-p.x,q.y-p.y)>60)out.push(q);}M[key]=out;}}
    // HAMLETS (Conquest): small villages worth fighting over, placed with the same fairness rules as the oil - one safe
    // hamlet behind every base, one forward hamlet at the same driving distance for everyone, and contested ones
    // equally far from each pair of neighbours (so every map has something to take on at least two routes)
@@ -571,12 +579,18 @@ function mkMap(seed,mk,ssn){
   {const cnt={};for(const q of CITIES)cnt[q[3]]=(cnt[q[3]]||0)+1;let st=D.hstyle||'europe',bn=0;for(const k in cnt)if(cnt[k]>bn){bn=cnt[k];st=k;}
    st=({gulfcity:'yemen',america:'europe',latin:'latin',southasia:'southasia'})[st]||st;
    const OFF=[[0,0],[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,-2],[2,-2],[-2,2],[4,0],[0,4],[-4,0],[0,-4]];
-   for(const h of M.hamlets){const HR=mulberry((seed|0)*17+Math.round(h.x*7+h.y*3)),want=2+Math.floor(HR()*4),i0=Math.floor(h.x/CELL),j0=Math.floor(h.y/CELL);let got=0;
+   // D.mirRes (2 players): hamlets on base 1's half, the other half their point mirror with the houses turned half a circle (equal garrisons and cover near both starts)
+   const HREC=[],hMir=D.mirRes&&BASES.length===2&&(D.sym==='point'||D.sym==='quad');
+   if(hMir){const W2=MAPW/2,H2=MAPH/2,ax=BASES[0][0]-W2,ay=BASES[0][1]-H2,half=p=>{const d=(p.x-W2)*ax+(p.y-H2)*ay;return d>1?1:d<-1?-1:(p.x>W2?1:-1);},A=M.hamlets.filter(h=>half(h)>0),B=M.hamlets.filter(h=>half(h)<0),use=A.length>=B.length?A:B.map(h=>({x:MAPW-h.x,y:MAPH-h.y}));
+     M.hamlets=[];for(const h of use){M.hamlets.push({x:h.x,y:h.y});M.hamlets.push({x:MAPW-h.x,y:MAPH-h.y,mirOf:M.hamlets.length-1});}}
+   for(const h of M.hamlets){const hi=M.hamlets.indexOf(h),src=h.mirOf!=null?HREC[h.mirOf]:null;
+     if(src){for(const [i,j] of src.cells){const mi=GW-1-i,mj=GH-1-j;if(mi>=1&&mj>=1&&mi<GW-1&&mj<GH-1&&grid[mj*GW+mi]===0)grid[mj*GW+mi]=3;}for(const b of src.blds)M.cityBlds.push(Object.assign({},b,{x:MAPW-b.x,y:MAPH-b.y}));h.n=src.n;h.style=src.style;HREC[hi]=src;continue;}
+     const HR=mulberry((seed|0)*17+Math.round(h.x*7+h.y*3)),want=2+Math.floor(HR()*4),i0=Math.floor(h.x/CELL),j0=Math.floor(h.y/CELL);let got=0;const hb0=M.cityBlds.length,hcells=[];
      const ord=OFF.map(o=>[HR(),o]).sort((a,b)=>a[0]-b[0]).map(q=>q[1]);ord.unshift([0,0]);
      for(const [dx,dy] of ord){if(got>=want)break;const i=i0+dx,j=j0+dy;if(i<1||j<1||i>=GW-1||j>=GH-1||grid[j*GW+i]!==0)continue;const x=i*CELL+CELL/2,y=j*CELL+CELL/2;if(M.edge(x,y)>-50||M.mtn(x,y)>-40)continue;
-       if(BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<400))continue;grid[j*GW+i]=3;got++;
+       if(BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<400))continue;grid[j*GW+i]=3;got++;hcells.push([i,j]);
        M.cityBlds.push({x,y,w:CELL*(.62+HR()*.2),d:CELL*(.62+HR()*.2),h:5+HR()*6,style:st,core:.15,v:HR(),ham:1});}
-     h.n=got;h.style=st;}
+     h.n=got;h.style=st;HREC[hi]={cells:hcells,blds:M.cityBlds.slice(hb0),n:got,style:st};}
    M.hamlets=M.hamlets.filter(h=>h.n>=2);
    for(const h of M.hamlets)M.cities.push({x:h.x,y:h.y,r:CELL*3.4,style:h.style,ham:true});}
   // ROAD NET (Conquest): roads base -> rear towns -> middle hamlets -> centre prize town, on at least two routes. Pure
