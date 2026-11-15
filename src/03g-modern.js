@@ -41,3 +41,7 @@ function aiModern(id,T,mine,en){if(G.t<240)return;
     if(s.aps&&wpn==='at'&&!(src&&src.s&&src.s.dom==='air')&&G.t>=(e.apsT||0)){e.apsT=G.t+s.aps;m*=.05;FXE('boom',[e.x|0,e.y|0,8,0]);}   // APS soaks one anti-tank hit per 8 s
     if(s.mass){let n=0;for(const v of G.ents)if(v!==e&&!v.dead&&!v.isB&&v.team===e.team&&v.s&&v.s.mass&&Math.hypot(v.x-e.x,v.y-e.y)<SIG.massR&&++n>=SIG.massN)break;if(n>=SIG.massN)m*=SIG.massK;}}
   return m;};}
+
+/* ---- AI buys the signature units on purpose (L1/polishD; pure sim state, no RNG) ---- */
+const AI_SIG=[['krb','factory',2,10],['shl','factory',2,10],['tb2','airfield',2,8],['fpvt','barracks',3,6]];
+function aiSigWant(T,id,cat,armyN){const o=[];for(const [k,c,mx,ma] of AI_SIG){if(c!==cat||armyN<ma||!allUnits(T.fac).includes(k))continue;if(SIGU[k]&&T.rank<SPEC_RANK)continue;if(unitCount(id,k)>=mx)continue;o.push(k,k,k);}return o;}

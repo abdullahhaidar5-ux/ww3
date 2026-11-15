@@ -507,6 +507,12 @@ try {
         const had = G.battle; G.battle = 1; const a = bstats('RS', 'turret').cost; G.battle = 0; const b = bstats('RS', 'turret').cost; G.battle = had; o.fort = a < b && a <= Math.round(b * .6 / 25) * 25 + 25;
         o.us = FMECH.US.cost === 1.08 && FMECH.IL.hp === 1.08 && typeof fmTick === 'function'; o.iads = !!IADS_NAT.SA && !!IADS_NAT.AE && typeof isPost === 'function'; return o; });
       for (const k in m) ck(m[k], 'L2 faction mechanic broken: ' + k + ' ' + JSON.stringify(m)); }
+    /* polishD guard (2026-11-15): UA FPV team, TR Bayraktar, IR Shahed truck are in their rosters + AI list; FPV hits vehicles only; Hidden Firing Post holds 4 infantry (own list, in the checkpoint) */
+    { const m = await ev(() => { const o = {}; o.fpv = roster('UA').barracks.includes('fpvt') && stats('UA', 'fpvt').vehOnly === 1 && roster('IR').barracks.indexOf('fpvt') < 0;
+        o.tb2 = roster('TR').airfield.includes('tb2') && stats('TR', 'tb2').dom === 'air' && !!SIGU.tb2 && !roster('US').airfield.includes('tb2'); o.shl = roster('IR').factory.includes('shl') && stats('IR', 'shl').rng > stats('IR', 'arty').rng && !roster('TR').factory.includes('shl');
+        const inf = { isB: 0, s: { armor: 'light', dom: 'ground' }, landed: 0 }, veh = { isB: 0, s: { armor: 'heavy', dom: 'ground' }, landed: 0 }; o.vo = !canTarget(stats('UA', 'fpvt'), inf) && canTarget(stats('UA', 'fpvt'), veh);
+        o.krb = roster('KP').factory.includes('krb'); o.post = POST_CAP === 4 && typeof enterTunnel === 'function'; o.ai = typeof aiSigWant === 'function' && AI_SIG.some(r => r[0] === 'krb') && AI_SIG.some(r => r[0] === 'shl') && AI_SIG.some(r => r[0] === 'tb2') && AI_SIG.some(r => r[0] === 'fpvt'); return o; });
+      for (const k in m) ck(m[k], 'polishD signature/post broken: ' + k + ' ' + JSON.stringify(m)); }
     for (const f of ['03-sim.js', '03b-tactics.js']) ck(/msOf\([^)]*\)\.rout[!=]==0/.test(SRC[f]), 'no Zealous rout guard in ' + f); }
   ck(cq.battle && cq.towns, 'a single-player skirmish did not start as Battle (or still has towns)');
   ck(cq.ban.cleric, 'Ayatollah (cleric) is missing from the Battle roster for IR'); ck(cq.ban.fort, 'Mountain Fortress is not buildable in Battle for IR');
