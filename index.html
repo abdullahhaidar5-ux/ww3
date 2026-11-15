@@ -12614,11 +12614,10 @@ const KEYTAB=[
   {id:'amove',ctx:'battle',grp:'Orders',name:'Attack-move (then right-click)',def:'f'},
   {id:'guard',ctx:'battle',grp:'Orders',name:'Guard (then right-click)',def:'g'},
   {id:'stop',ctx:'battle',grp:'Orders',name:'Halt',def:'x'},
-  {id:'ret',ctx:'battle',grp:'Orders',name:'Retreat',def:'r'},
+  {id:'ret',ctx:'battle',grp:'Orders',name:'Retreat (units with ammo fall back to the nearest supply point and refill, the rest to base)',def:'r'},
   {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (Construction Vehicles: fortification line)',def:'i'},
   {id:'sell',ctx:'battle',grp:'Orders',name:'Sell the selected building (press twice to confirm; half its price back)',def:'v'},
   {id:'rep',ctx:'battle',grp:'Orders',name:'Repair the selected building (toggle; costs money while it heals)',def:'o'},
-  {id:'resup',ctx:'battle',grp:'Orders',name:'Resupply ammunition',def:'z'},
   {id:'abil',ctx:'battle',grp:'Orders',name:'Unit or leader ability, sonar ping, Recon power (with Shift: leader\'s ultimate)',def:'e'},
   {ctx:'battle',grp:'Orders',name:'Cancel the last item being built or trained',fix:'Backspace · Delete'},
   {id:'p_para',ctx:'battle',grp:'General\'s powers',name:'Airborne drop',def:'c'},
@@ -12628,13 +12627,14 @@ const KEYTAB=[
   {id:'supl',ctx:'battle',grp:'Camera',name:'Show supply lines on the ground',def:'l'},
   {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
   {id:'vision',ctx:'battle',grp:'Game',name:'Night vision / thermal view (at night)',def:'`'},
-  {id:'pause',ctx:'battle',grp:'Game',name:'Pause (single player) / photo mode',def:'p'},
+  {id:'pause',ctx:'battle',grp:'Game',name:'Pause',def:'p'},
+  {ctx:'battle',grp:'Game',name:'Photo mode',fix:'F8'},
   {ctx:'battle',grp:'Game',name:'Menu · cancel · one step back',fix:'Esc'},
   {ctx:'battle',grp:'Game',name:'Team play: ping, draw, circle on the map',fix:', . / \' ;'},
 ];
 const KB={cur:{},map:{battle:{}},dead:{battle:{}},win:false,onKey:null};
-const KB_FIXED='wasd',KB_CODE={BracketLeft:'[',BracketRight:']',Backslash:'\\',Backquote:'`'},KB_SPARE='\\ ` F2 F4 F8 F9';   // every letter has a job already, so a few spare keys can be chosen too
-function kbOk(k){return /^[a-z\[\]\\`]$/.test(k)||/^F[2489]$/.test(k);}
+const KB_FIXED='wasd',KB_CODE={BracketLeft:'[',BracketRight:']',Backslash:'\\',Backquote:'`'},KB_SPARE='\\ ` F2 F4 F9';   // every letter has a job already, so a few spare keys can be chosen too
+function kbOk(k){return /^[a-z\[\]\\`]$/.test(k)||/^F[249]$/.test(k);}
 function kbShow(k){return !k?'':k.length===1?k.toUpperCase():k;}
 function kbPhys(e){const k=e.key||'';return KB_CODE[e.code]||(k.length===1?k.toLowerCase():k);}
 function kbCodeOf(k){for(const c in KB_CODE)if(KB_CODE[c]===k)return c;return 'Key'+k.toUpperCase();}
@@ -13772,7 +13772,7 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads
     if(e.rank)b.textContent=b.textContent.replace(' · '+VET[e.rank],'');tx.append(b);if(e.rank){const v=document.createElement('span');v.className='ukV vet'+e.rank;v.innerHTML=vetStripes(e.rank)+' ';v.append(document.createTextNode(VET[e.rank]));tx.append(v);}const hb=document.createElement('i');hb.className='ukHp';hb.innerHTML='<b style="width:'+Math.round(hp*100)+'%;background:'+(hp>.66?'#6fc24a':hp>.33?'#e3b83a':'#d9503f')+'"></b>';tx.append(hb,sp);el.append(u);}
   else if(s.length>1&&s.every(e=>!e.isB)){const c={};for(const e of s)c[e.kind]=(c[e.kind]||0)+1;const g=document.createElement('div');g.className='ukG';for(const k of Object.keys(c).slice(0,8)){const w=document.createElement('span'),n=document.createElement('em');n.textContent='×'+c[k];w.append(UK.icon(k,(G.teams[s[0].team]||{}).color,0,(s.find(e=>e.kind===k)||{}).s),n);w.dataset.tt=c[k]+'× '+(s.find(e=>e.kind===k).s.name);g.append(w);}el.append(g,b,sp);}
   else el.append(b,sp);if(tip.textContent)el.append(tip);
-  {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: right-click target…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: right-click spot…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Halt (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;const bcn=document.createElement('button');bcn.className='cnBtn';bcn.textContent='✕ Cancel';{const ci=cancelInfo();bcn.disabled=!ci;bcn.title=ci?ci.tip+' (Backspace / Delete)':'Nothing to cancel (select a building with a queue or a builder)';bcn.onclick=e=>doCancel(e.shiftKey);if(ci)r.classList.remove('off');}const bt=document.createElement('button');bt.textContent='▣ Type (T)';bt.title='Select every one of your units on the map that is the same type as the selection (hotkey T)';bt.onclick=selectTypes;const bq=document.createElement('button');bq.textContent='⛽ Resupply (Z)';bq.title='Send the selected units to the nearest supply point (HQ, Supply Depot or a building you hold) to refill ammo';bq.onclick=resupplySel;{const df=s.some(u=>u.defend),rt=s.some(u=>u.retreat),sl=stanceLabel(),sm=/^(\S+) (.*)$/.exec(sl)||['','◈',sl||'Stance'];ordLab(ba,'⚔',G.amove?(TOUCHUI?'Tap map…':'Right-click…'):'Attack','F');ordLab(bd,(df&&!G.defm?'✓ ':'')+'🛡',G.defm?(TOUCHUI?'Tap map…':'Right-click…'):'Guard','G');ordLab(bt,'▣','Same type','T');ordLab(bs,'■','Halt','X');ordLab(br,'↩',rt?'Retreating…':'Retreat','R');ordLab(bv,sm[1],sm[2],'V');ordLab(bq,'⛽','Resupply','Z');ordLab(bcn,'✕','Cancel','Del');}const bldOnly=(()=>{const o=s.filter(u=>!u.isB&&u.team===ME&&!u.dead);return o.length>0&&o.every(u=>u.kind==='dozer');})();
+  {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: right-click target…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: right-click spot…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Halt (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{retSel();};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;const bcn=document.createElement('button');bcn.className='cnBtn';bcn.textContent='✕ Cancel';{const ci=cancelInfo();bcn.disabled=!ci;bcn.title=ci?ci.tip+' (Backspace / Delete)':'Nothing to cancel (select a building with a queue or a builder)';bcn.onclick=e=>doCancel(e.shiftKey);if(ci)r.classList.remove('off');}const bt=document.createElement('button');bt.textContent='▣ Type (T)';bt.title='Select every one of your units on the map that is the same type as the selection (hotkey T)';bt.onclick=selectTypes;const bq=document.createElement('button');bq.textContent='⛽ Resupply (Z)';bq.title='Send the selected units to the nearest supply point (HQ, Supply Depot or a building you hold) to refill ammo';bq.onclick=resupplySel;{const df=s.some(u=>u.defend),rt=s.some(u=>u.retreat),sl=stanceLabel(),sm=/^(\S+) (.*)$/.exec(sl)||['','◈',sl||'Stance'];ordLab(ba,'⚔',G.amove?(TOUCHUI?'Tap map…':'Right-click…'):'Attack','F');ordLab(bd,(df&&!G.defm?'✓ ':'')+'🛡',G.defm?(TOUCHUI?'Tap map…':'Right-click…'):'Guard','G');ordLab(bt,'▣','Same type','T');ordLab(bs,'■','Halt','X');ordLab(br,'↩',rt?'Retreating…':'Retreat','R');ordLab(bv,sm[1],sm[2],'V');ordLab(bq,'⛽','Resupply','Z');ordLab(bcn,'✕','Cancel','Del');}const bldOnly=(()=>{const o=s.filter(u=>!u.isB&&u.team===ME&&!u.dead);return o.length>0&&o.every(u=>u.kind==='dozer');})();
   /* order: Attack, Guard, Halt, Retreat (Dig in joins after them in ordDock); Construction Vehicles get Cancel instead (Abdullah 2026-11-14 21:05) */
   if(bldOnly){r.className='cmdrow';r.append(bcn);}else r.append(ba,bd,bs,br);/* Type, Resupply and stance buttons removed (Abdullah 2026-11-14 19:18); T and Z hotkeys stay */if(!can&&!bldOnly){const why='Select combat units to use orders';for(const x of r.children){if(x===bcn)continue;x.disabled=true;x.title=why;}}else{ba.title+=' (hotkey F)';bs.title='Halt: stop moving and hold position (hotkey X)';}if(can)el.append(r);else el.append(r);try{tactRow(el,s);if(typeof lgRow==='function')lgRow(el,s);}catch(_){}ordDock(el);}
   {const ap=$('app'),o=!!el.querySelector('.cmdrow:not(.off)');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
@@ -14073,7 +14073,6 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)for(const pk in POW_KEY)if(POW_KEY[pk]===k){powGo(pk);break;}
   
   if(k==='i'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)tactKey();
-  if(k==='z'&&!e.ctrlKey&&!e.metaKey&&!e.altKey)resupplySel();
   if(k==='v'&&!e.ctrlKey&&!e.metaKey&&!e.altKey)sellSel();
   if(k==='o'&&!e.ctrlKey&&!e.metaKey&&!e.altKey)repairSel();
   if(k==='l'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.lgd&&!G.sandbox)lgToggle();
@@ -14081,7 +14080,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='e'||k==='E'){const lu=G.sel.find(u=>!u.isB&&u.kind==='cleric'&&u.team===ME&&!u.dead);if(lu){ldrKey(e.shiftKey||k==='E');return;}}
   if(k==='e'){const hu=G.sel.find(u=>!u.isB&&u.kind==='champ'&&u.team===ME&&!u.dead);if(hu)doAct({t:'hab',tid:hu.id});else{const ps=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead&&u.s&&u.s.dom==='naval'&&u.s.sonar);if(ps.length)doAct({t:'ping',ids:ps.map(u=>u.id)});}}
   if(k==='x'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
-  if(k==='r'&&!e.ctrlKey&&!e.metaKey){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length){doAct({t:'ret',ids});speak(2);}}
+  if(k==='r'&&!e.ctrlKey&&!e.metaKey)retSel();
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
   if(k===' '&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.repeat&&!G.over)radJump();
   if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(ZMIN,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(zmax(),cam.td*1.15);}
@@ -14197,6 +14196,9 @@ function stDisp(u){return u.st>=2?u.st:1;}
 function stUnits(){if(!G)return[];const m=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead&&!u.s.noAttack);return m.length?m:G.ents.filter(u=>!u.isB&&u.team===ME&&!u.dead&&!u.s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer');}
 function stanceLabel(){const us=stUnits();if(!us.length)return'';const d=stDisp(us[0]),mixed=us.some(u=>stDisp(u)!==d);return STANCES[d][1]+' '+STANCES[d][0]+(mixed?'+':'');}
 /* ---- ammo & supply UI ---- */
+/* Retreat (R) = fall back to refill (Abdullah 2026-11-14 23:16 "Why not make it R"): units that carry ammo go to the nearest supply point and refill,
+   the rest fall back to base; the old Z resupply key is gone */
+function retSel(){if(!G||G.over)return;const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead),am=own.filter(u=>u.am!==undefined).map(u=>u.id),rt=own.filter(u=>u.am===undefined).map(u=>u.id);if(am.length)doAct({t:'resup',ids:am});if(rt.length)doAct({t:'ret',ids:rt});if(own.length)try{speak(2);}catch(_){}}
 function resupplySel(){if(!G||G.over)return;const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead&&u.am!==undefined).map(u=>u.id);if(!ids.length)return;doAct({t:'resup',ids});try{speak(1);}catch(_){}}
 function ammoRowHTML(s){if(!ammoOn())return '';const us=s.filter(u=>!u.isB&&u.team===ME&&u.am!==undefined&&u.amx&&!u.dead);if(!us.length)return '';
   if(us.length===1){const u=us[0],f=u.am/u.amx,col=u.am<=0?'#ff6a50':f<.3?'#f2d14a':'#c9b784';
@@ -15779,9 +15781,9 @@ function phCapture(){const L=PH_LOOKS[PHX.look],W=cv.width,H=cv.height,c=documen
   {const g=x.createRadialGradient(W/2,H*.48,Math.min(W,H)*.2,W/2,H*.48,Math.hypot(W,H)*.5);g.addColorStop(.0,'rgba(0,0,0,0)');g.addColorStop(.55,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${L.vig})`);x.fillStyle=g;x.fillRect(0,0,W,H);}
   c.toBlob(b=>{if(!b)return;if(PHX.url)xsTry(()=>URL.revokeObjectURL(PHX.url));PHX.blob=b;PHX.url=URL.createObjectURL(b);const im=$('phPrev').querySelector('img');im.src=PHX.url;$('phDl').href=PHX.url;$('phShare').textContent='Share';$('phPrev').classList.add('on');PHX.size=W+'x'+H;},'image/png');}
 // entry points: the P key (Shift+P still pauses), and a button next to Pause
-addEventListener('keydown',e=>{const k=e.key;if((k!=='p'&&k!=='P')||e.shiftKey||e.ctrlKey||e.metaKey||e.altKey||PHX.on)return;if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;
+addEventListener('keydown',e=>{const k=e.key;if(k!=='F8'||e.shiftKey||e.ctrlKey||e.metaKey||e.altKey||PHX.on)return;if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;
   if(!G||G.over||G.paused||($('pauseOv')&&!$('pauseOv').hidden)||KC.on)return;if(phEnter()){e.preventDefault();e.stopImmediatePropagation();}},true);
-(function(){const ref=$('aPauseM');if(ref){const b=document.createElement('button');b.id='aPhoto';b.setAttribute('role','menuitem');b.textContent='📷 Photo mode (P)';ref.after(b);
+(function(){const ref=$('aPauseM');if(ref){const b=document.createElement('button');b.id='aPhoto';b.setAttribute('role','menuitem');b.textContent='📷 Photo mode (F8)';ref.after(b);
     b.onclick=()=>{xsTry(()=>menuOpen(false));$('amenu').hidden=true;phEnter();};}})();
 /* ---------- Battle goal line + power meter numbers (was inside the Conquest town file; Conquest and the town UI are gone, 2026-11-14) ---------- */
 /* Battle power meter numbers (same derivation on host and clients, refreshed twice a second) */

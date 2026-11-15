@@ -23,11 +23,10 @@ const KEYTAB=[
   {id:'amove',ctx:'battle',grp:'Orders',name:'Attack-move (then right-click)',def:'f'},
   {id:'guard',ctx:'battle',grp:'Orders',name:'Guard (then right-click)',def:'g'},
   {id:'stop',ctx:'battle',grp:'Orders',name:'Halt',def:'x'},
-  {id:'ret',ctx:'battle',grp:'Orders',name:'Retreat',def:'r'},
+  {id:'ret',ctx:'battle',grp:'Orders',name:'Retreat (units with ammo fall back to the nearest supply point and refill, the rest to base)',def:'r'},
   {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (Construction Vehicles: fortification line)',def:'i'},
   {id:'sell',ctx:'battle',grp:'Orders',name:'Sell the selected building (press twice to confirm; half its price back)',def:'v'},
   {id:'rep',ctx:'battle',grp:'Orders',name:'Repair the selected building (toggle; costs money while it heals)',def:'o'},
-  {id:'resup',ctx:'battle',grp:'Orders',name:'Resupply ammunition',def:'z'},
   {id:'abil',ctx:'battle',grp:'Orders',name:'Unit or leader ability, sonar ping, Recon power (with Shift: leader\'s ultimate)',def:'e'},
   {ctx:'battle',grp:'Orders',name:'Cancel the last item being built or trained',fix:'Backspace · Delete'},
   {id:'p_para',ctx:'battle',grp:'General\'s powers',name:'Airborne drop',def:'c'},
@@ -37,13 +36,14 @@ const KEYTAB=[
   {id:'supl',ctx:'battle',grp:'Camera',name:'Show supply lines on the ground',def:'l'},
   {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
   {id:'vision',ctx:'battle',grp:'Game',name:'Night vision / thermal view (at night)',def:'`'},
-  {id:'pause',ctx:'battle',grp:'Game',name:'Pause (single player) / photo mode',def:'p'},
+  {id:'pause',ctx:'battle',grp:'Game',name:'Pause',def:'p'},
+  {ctx:'battle',grp:'Game',name:'Photo mode',fix:'F8'},
   {ctx:'battle',grp:'Game',name:'Menu · cancel · one step back',fix:'Esc'},
   {ctx:'battle',grp:'Game',name:'Team play: ping, draw, circle on the map',fix:', . / \' ;'},
 ];
 const KB={cur:{},map:{battle:{}},dead:{battle:{}},win:false,onKey:null};
-const KB_FIXED='wasd',KB_CODE={BracketLeft:'[',BracketRight:']',Backslash:'\\',Backquote:'`'},KB_SPARE='\\ ` F2 F4 F8 F9';   // every letter has a job already, so a few spare keys can be chosen too
-function kbOk(k){return /^[a-z\[\]\\`]$/.test(k)||/^F[2489]$/.test(k);}
+const KB_FIXED='wasd',KB_CODE={BracketLeft:'[',BracketRight:']',Backslash:'\\',Backquote:'`'},KB_SPARE='\\ ` F2 F4 F9';   // every letter has a job already, so a few spare keys can be chosen too
+function kbOk(k){return /^[a-z\[\]\\`]$/.test(k)||/^F[249]$/.test(k);}
 function kbShow(k){return !k?'':k.length===1?k.toUpperCase():k;}
 function kbPhys(e){const k=e.key||'';return KB_CODE[e.code]||(k.length===1?k.toLowerCase():k);}
 function kbCodeOf(k){for(const c in KB_CODE)if(KB_CODE[c]===k)return c;return 'Key'+k.toUpperCase();}
