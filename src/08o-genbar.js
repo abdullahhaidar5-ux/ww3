@@ -33,7 +33,7 @@ body #sideTop{grid-column:1;grid-row:1/3;display:flex!important;align-items:cent
 body #sideTop{flex-direction:column;gap:6px}
 body #sideTop::after{content:'TACTICAL MAP';font:800 11px system-ui,sans-serif;letter-spacing:.3em;color:#aab59a;text-shadow:0 1px 0 #000}
 body #sideTop #mm{width:100%!important;height:auto!important;aspect-ratio:384/264;max-height:100%;border-radius:2px;box-shadow:0 0 0 2px #0b0d09,0 0 0 3px #5d6951,inset 0 0 18px rgba(0,0,0,.5)}
-/* centre: unit portrait + info. the .stat wrapper dissolves so its children sit in the bar grid */
+/* center: unit portrait + info. the .stat wrapper dissolves so its children sit in the bar grid */
 body #side>.stat{display:contents!important}
 body #side .stat>.hdr{grid-column:2;grid-row:1;display:flex!important;align-items:center;gap:10px;padding:0 12px!important;margin:0!important;min-width:0;border-radius:4px;
  background:linear-gradient(180deg,#10140f,#1b2118);box-shadow:inset 0 0 0 1px #070906,inset 0 0 0 2px #5a6650,0 1px 0 #7d8a6c}
@@ -53,7 +53,7 @@ body #side #info .ukUt b{font:800 19px system-ui,sans-serif;display:block;color:
 body #side #info .ukHp{height:12px!important;margin:5px 0!important;border-radius:2px;background:#050704!important;box-shadow:inset 0 0 0 1px #3d4733,0 1px 0 #6f7b5f}
 body #side #info .ukV{font-weight:700;font-size:14px}
 body #side #info .morale,body #side #info #ammoRow{font-size:13px}
-/* right of centre: tabs + big square button grid */
+/* right of center: tabs + big square button grid */
 body #side>.ccard{display:contents!important}
 body #side .cardhd{grid-column:3;grid-row:1;display:flex!important;align-items:flex-end;justify-content:space-between;gap:8px;min-width:0;margin:0!important;padding:0 2px!important}
 body #side .tabs{display:flex!important;gap:3px;align-items:flex-end}

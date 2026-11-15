@@ -4,7 +4,7 @@
    Money sits in a plate on the top edge in the middle; the ★ button (top right) opens the generals' powers + Strike in the same grid.
    Hovering a picture shows its name, cost and text in a card above the minimap, as in Zero Hour. Hotkey letters and the Auto-build toggle are hidden. */
 {const st=document.createElement('style');st.textContent=`@media(min-width:900px){
-/* ZERO HOUR BAR v2 (Abdullah 15:02-15:05 sent three more Zero Hour shots): short steel bar with the nation's colour on the trim, minimap left,
+/* ZERO HOUR BAR v2 (Abdullah 15:02-15:05 sent three more Zero Hour shots): short steel bar with the nation's color on the trim, minimap left,
    3 small side buttons, a dark panel with small picture buttons in 2 rows from the left (no words), unit orders as pictures at the right end,
    money plate on the top edge, portrait (or the nation's emblem when nothing is selected) on the right, thin rank bar, ▼ and ★ tabs on top right */
 html body #side{--gbH:clamp(176px,20vh,226px);--zb:clamp(70px,calc((var(--gbH) - 44px)/1.6),120px);--tc:#4f88c6;height:var(--gbH)!important;padding:12px 12px 8px!important;gap:0 8px!important;
@@ -138,7 +138,7 @@ const ZH={star:false,sig:'',pow:0};
    ★ -> generals' powers + Strike; nothing that can act -> an empty grid (as in Zero Hour) */
 function zhWant(){if(!G)return null;const s=(G.sel||[]).filter(e=>e&&!e.dead&&e.team===ME);
   if(s.some(u=>u.kind==='dozer'))return 'build';const b=s.find(e=>e.isB);if(b){if(typeof CATS!=='undefined'&&CATS.includes(b.kind))return 'units';return 'upg';}return 'none';}
-function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
+function zhCtx(){if(!G)return;const sd=$('side');if(!sd)return;
   let star=$('zhStar');if(!star){star=document.createElement('button');star.id='zhStar';star.type='button';star.title='Generals\' powers and Strike';star.innerHTML='★★★<i class="dot" hidden></i>';
     star.onclick=()=>{ZH.star=!ZH.star;ZH.sig='';zhPowWin();zhCtx();};sd.append(star);}
   {const T=G.teams[ME];if(T&&sd.dataset.tc!==T.color){sd.dataset.tc=T.color;sd.style.setProperty('--tc',T.color);}}
