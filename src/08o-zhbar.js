@@ -43,7 +43,7 @@ html body #side #panel{grid-column:3!important;grid-row:1!important;display:grid
  background:linear-gradient(180deg,#0c2522,#06140f)!important;box-shadow:inset 0 0 0 1px #000,inset 0 0 0 3px #39434c,0 0 0 2px #cfd7de!important}
 html body #side #panel .btn{position:relative!important;padding:0!important;margin:0!important;width:auto!important;height:auto!important;min-height:0!important;border-radius:1px!important;overflow:hidden;
  border:1px solid color-mix(in srgb,var(--tc) 75%,#fff)!important;background-color:#1b2a22!important;background-size:auto 60%!important;background-repeat:no-repeat!important;background-position:center 14%!important;box-shadow:inset 0 0 0 1px #000!important;transform:none!important}
-html body #side #panel .btn>*:not(.q):not(.p):not(.n){display:none!important}
+html body #side #panel .btn>*:not(.q):not(.p):not(.n):not(.ic){display:none!important}
 html body #side #panel .btn>.n{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;position:absolute!important;left:0;right:0;bottom:0;margin:0!important;padding:2px 3px!important;font:700 11px/1.15 system-ui,Segoe UI,sans-serif!important;color:#f2f6f8!important;text-align:center;white-space:normal!important;text-overflow:clip!important;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.8))!important;text-shadow:0 1px 1px #000}
 html body #side #panel .btn:not(.hasic){background-image:none!important}
 html body #side #panel .btn:not(.hasic)>.n{display:block!important;position:static!important;font:700 11px/1.15 system-ui,sans-serif!important;color:#e8eef2;white-space:normal;text-align:center;padding:3px}
@@ -193,7 +193,7 @@ function sellSel(){if(!G||G.over)return;const ids=zhSelB().map(e=>e.id);if(!ids.
 {const st=document.createElement('style');st.textContent='#zhSell.arm{box-shadow:inset 0 0 0 2px #ff5a48,0 0 12px rgba(255,90,72,.7)!important;animation:zhArm .5s ease-in-out infinite alternate}#zhSell.arm .n{color:#ff8a78!important}@keyframes zhArm{to{filter:brightness(1.35)}}';document.head.appendChild(st);}
 function repairSel(){if(!G||G.over)return;const bl=zhSelB();if(!bl.length)return;const on=!bl.every(b=>zhIsRep(b));doAct({t:'rep',ids:bl.map(e=>e.id),on});try{sfxUI(520);}catch(_){}}
 function zhCtx(){if(!G)return;const sd=$('side');if(!sd)return;
-  let star=$('zhStar');if(!star){star=document.createElement('button');star.id='zhStar';star.type='button';star.title='Generals\' powers and Strike';star.innerHTML='★★★<i class="dot" hidden></i>';
+  let star=$('zhStar');if(!star){star=document.createElement('button');star.id='zhStar';star.type='button';star.title='Generals\' powers and Strike';star.innerHTML='<i class="dot" hidden></i>';try{icoPut(star,'star');}catch(_){}
     star.onclick=()=>{ZH.star=!ZH.star;ZH.sig='';zhPowWin();zhCtx();};sd.append(star);}
   {const T=G.teams[ME];if(T&&sd.dataset.tc!==T.color){sd.dataset.tc=T.color;sd.style.setProperty('--tc',T.color);}}
   {let pw=$('zhPw');if(G.battle&&typeof pwView==='function'){if(!pw){pw=document.createElement('div');pw.id='zhPw';pw.innerHTML='<span></span><span class="zb"><i></i></span>';sd.append(pw);}const v=pwView(),k=v.make+'|'+v.use;if(pw.dataset.k!==k){pw.dataset.k=k;pw.classList.toggle('low',!!v.low);pw.firstChild.textContent='⚡ POWER '+v.use+' / '+v.make;pw.querySelector('i').style.width=Math.round(100*Math.min(1,v.use/Math.max(1,v.make)))+'%';pw.title=v.low?'LOW POWER: build a Generator - powered buildings are offline':'Power used / produced';}}else if(pw)pw.remove();}
@@ -210,14 +210,14 @@ function zhCtx(){if(!G)return;const sd=$('side');if(!sd)return;
   {const pnF=$('panel'),sb=(G.sel||[]).find(e=>e&&!e.dead&&e.isB&&e.team===ME);if(pnF&&w==='units'&&sb){const T=G.teams[ME];for(const u of pnF.querySelectorAll(':scope>[data-tab="units"]')){if(u.classList.contains('sub')){u.hidden=true;continue;}const k=u.id.slice(2);let ok=false;try{ok=stats(T.fac,k).from===sb.kind;}catch(e){}if(u.hidden===ok)u.hidden=!ok;}}}
   /* Sell + Repair: shown while one of your finished buildings is selected (sim: act 'sell' / 'rep' in 03-sim.js; keys V / O) */
   {const pnS=$('panel');if(pnS){const bl=zhSelB();let sl=$('zhSell'),rp=$('zhRep');
-    if(!sl||sl.parentNode!==pnS){sl=document.createElement('button');sl.id='zhSell';sl.type='button';sl.className='btn hasic zhSR zhSell';sl.innerHTML='<span class="n"></span>';sl.onclick=()=>sellSel();try{sl.style.setProperty('cursor',curCss('sell'),'important');}catch(e){}pnS.append(sl);
-      rp=document.createElement('button');rp.id='zhRep';rp.type='button';rp.className='btn hasic zhSR zhRep';rp.innerHTML='<span class="n"></span>';rp.onclick=()=>repairSel();try{rp.style.setProperty('cursor',curCss('repair'),'important');}catch(e){}pnS.append(rp);}
+    if(!sl||sl.parentNode!==pnS){sl=document.createElement('button');sl.id='zhSell';sl.type='button';sl.className='btn hasic zhSR zhSell';sl.innerHTML='<span class="n"></span>';try{icoPut(sl,'sell');}catch(_){}sl.onclick=()=>sellSel();try{sl.style.setProperty('cursor',curCss('sell'),'important');}catch(e){}pnS.append(sl);
+      rp=document.createElement('button');rp.id='zhRep';rp.type='button';rp.className='btn hasic zhSR zhRep';rp.innerHTML='<span class="n"></span>';try{icoPut(rp,'wrench');}catch(_){}rp.onclick=()=>repairSel();try{rp.style.setProperty('cursor',curCss('repair'),'important');}catch(e){}pnS.append(rp);}
     const T=G.teams[ME];let ref=0,hurt=0,rep=0;for(const b of bl){ref+=Math.floor(bstats(T.fac,b.kind).cost*SELL_PCT);if(b.hp<b.max)hurt++;if(zhIsRep(b))rep++;}
     const k=bl.length+'|'+ref+'|'+hurt+'|'+rep;if(sl.dataset.k!==k){sl.dataset.k=k;sl.hidden=rp.hidden=!bl.length;
       sl.querySelector('.n').textContent='Sell $'+ref;sl.dataset.nm='Sell';sl.dataset.desc='Sell the selected building'+(bl.length>1?'s':'')+' for half its price after a 3 second sell-off ['+kbShow((KB.cur.sell||'v'))+'].';
       rp.querySelector('.n').textContent=rep?'Repairing':'Repair';rp.dataset.nm='Repair';rp.dataset.desc='Repair the selected building'+(bl.length>1?'s':'')+' over time. It costs a quarter of its price for a full repair, paid as it heals. Press again to stop ['+kbShow((KB.cur.rep||'o'))+'].';rp.disabled=!hurt&&!rep;rp.classList.toggle('on',!!rep);}}}
   /* the strike building gets its own LAUNCH button (Abdullah 18:26 "Missile city ... there is no way to use it") */
-  {const pnL=$('panel');if(pnL){let lb=$('zhLaunch');if(!lb||lb.parentNode!==pnL){lb=document.createElement('button');lb.id='zhLaunch';lb.type='button';lb.className='btn zhL';lb.dataset.tab='upg';lb.dataset.from='uplink';lb.innerHTML='<span class="n"></span>';lb.onclick=()=>{const sb=$('supbtn');if(sb&&!sb.disabled)sb.click();};pnL.prepend(lb);}
+  {const pnL=$('panel');if(pnL){let lb=$('zhLaunch');if(!lb||lb.parentNode!==pnL){lb=document.createElement('button');lb.id='zhLaunch';lb.type='button';lb.className='btn zhL';lb.dataset.tab='upg';lb.dataset.from='uplink';lb.innerHTML='<span class="n"></span>';try{icoPut(lb,'rocket');}catch(_){}lb.onclick=()=>{const sb=$('supbtn');if(sb&&!sb.disabled)sb.click();};pnL.prepend(lb);}
     const sb=$('supbtn'),nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),dis=!sb||sb.disabled,lbl='LAUNCH '+nm+(st?' · '+st:'');if(lb.dataset.k!==lbl+dis){lb.dataset.k=lbl+dis;lb.querySelector('.n').textContent=dis?nm+(st?' · '+st:''):'LAUNCH '+nm;lb.dataset.nm=lb.querySelector('.n').textContent;lb.dataset.desc='Fire your strike: click LAUNCH, then click the target on the map.';lb.disabled=dis;lb.classList.toggle('rdy',!dis);}}}
   /* a selected building shows its own upgrades next to its units (upgrades are researched at their building: Abdullah 14:37) */
   {const pnU=$('panel'),sb=(G.sel||[]).find(e=>e&&!e.dead&&e.isB&&e.team===ME);if(pnU)for(const u of pnU.querySelectorAll(':scope>[data-tab="upg"]')){const want=!!sb&&u.dataset.from===sb.kind&&(w==='units'||w==='upg');if(u.classList.contains('sub')){u.hidden=true;continue;}if(u.hidden===want)u.hidden=!want;}}sd.classList.toggle('zhpow',w==='pow');{const sb=$('supbtn');star.classList.toggle('rdy',!!(sb&&!sb.disabled)&&!ZH.star);}
@@ -241,7 +241,7 @@ function zhPowWin(){let w=$('zhPow');if(!ZH.star||!G){if(w)w.hidden=true;return;
      "Level up" list is folded in - an unlocked power's own row levels it up when you have a point */
   for(const b of src){if(b.classList.contains('sub')){if(/level up/i.test(b.textContent))continue;const s=document.createElement('div');s.className='zsub';s.textContent=b.textContent;body.append(s);continue;}if(b.style.display==='none'||b.hidden||/^pu_/.test(b.id))continue;
     const up=/^p_/.test(b.id)?$('pu_'+b.id.slice(2)):null,canUp=!!up&&!up.disabled&&!up.hidden&&up.style.display!=='none';
-    const x=document.createElement('button');x.type='button';x.className='zp';x.disabled=b.disabled&&!canUp;const n=document.createElement('b');n.textContent=(b.querySelector('.n')||{}).textContent||b.dataset.nm||'';x.append(n);
+    const x=document.createElement('button');x.type='button';x.className='zp';x.disabled=b.disabled&&!canUp;{const ic=b.querySelector(':scope>.zhIc');if(ic){const c=ic.cloneNode(true);c.className='ic';x.append(c);}}const n=document.createElement('b');n.textContent=(b.querySelector('.n')||{}).textContent||b.dataset.nm||'';x.append(n);
     const c=(b.querySelector('.c')||{}).textContent;if(c){const i=document.createElement('i');i.textContent=c;x.append(i);}const dd=b.dataset.desc;if(dd){const s=document.createElement('span');s.textContent=dd;x.append(s);}
     if(canUp){const u=document.createElement('i');u.className='zup';u.textContent='▲ Level up · 1 point';x.append(u);}
     x.title=b.title||'';x.onclick=()=>{(canUp&&b.disabled?up:b).click();setTimeout(()=>{w.dataset.sig='';zhPowWin();},50);};body.append(x);}}
@@ -321,9 +321,9 @@ function zhHolo(){const im=document.querySelector('#side #info .ukU>img');if(!im
 if(typeof updateUI==='function'){const _hU=updateUI;updateUI=function(){_hU.apply(this,arguments);try{zhHolo();}catch(e){}};}
 /* ICONS FOR UPGRADES AND POWERS (Abdullah 2026-11-14 21:39 "make sure every button has an icon that makes sense"): each upgrade / power picture
    button gets a line icon chosen from what it does (its name + the building it comes from), drawn inline from the one icon table
-   ORD_SVG (08-ui) so nothing flickers; set once per button. */
+   ICON_SVG (08-ui) so nothing flickers; set once per button. */
 {const S=(b,c)=>"<svg viewBox='0 0 48 48' fill='none' stroke='"+c+"' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'>"+b+"</svg>";
- Object.assign(ORD_SVG,{
+ Object.assign(ICON_SVG,{
   armor:S("<path d='M24 5l15 5v11c0 10-6.5 17-15 22C15.5 38 9 31 9 21V10z'/><path d='M15 18h18M15 25h18M17 32h14'/>",'#9fc6e0'),
   missile:S("<path d='M30 6c6 0 12 6 12 12L22 38l-12-12z'/><path d='M14 30l-6 10 10-6'/><circle cx='31' cy='17' r='3'/>",'#ff8a5a'),
   radar:S("<path d='M10 38a20 20 0 0 1 0-28'/><path d='M16 32a12 12 0 0 1 0-16'/><circle cx='24' cy='24' r='3'/><path d='M24 24l16-10'/><path d='M38 30a20 20 0 0 1-6 8'/>",'#7fe0d0'),
@@ -354,7 +354,7 @@ const ICON_POW=[[/para|drop|fighters|reinforce|airborne/i,'para'],[/reveal|watch
 function zhIconFor(nm,at,tab){if(tab==='pow')for(const [re,k] of ICON_POW)if(re.test(nm))return k;for(const [re,k] of ICON_RULES)if(re.test(nm))return k;return tab==='pow'?'star':ICON_BY_AT[at]||'star';}
 function zhIcons(){const pn=$('panel');if(!pn)return;for(const b of pn.querySelectorAll('.btn[data-tab="upg"]:not([data-ic]):not(.zhL),.btn[data-tab="pow"]:not([data-ic])')){
   const n=b.querySelector('.n'),nm=(n&&n.textContent||b.dataset.nm||'').replace(/^[▲\s]+/,''),k=zhIconFor(nm,b.dataset.from||((UPG||{})[String(b.id).replace(/^g_/,'')]||{}).at,b.dataset.tab);
-  b.dataset.ic=k;const i=document.createElement('i');i.className='zhIc';i.innerHTML=ORD_SVG[k]||ORD_SVG.star;b.prepend(i);}}
+  b.dataset.ic=k;const i=document.createElement('i');i.className='zhIc';i.innerHTML=ICON_SVG[k]||ICON_SVG.star;b.prepend(i);}}
 {const st=document.createElement('style');st.textContent=`html body #side #panel .btn[data-ic]::before{content:none!important}
 html body #side #panel .btn>.zhIc{position:absolute;left:0;right:0;top:9%;margin:auto;width:46%;height:52%;pointer-events:none;filter:drop-shadow(0 0 4px rgba(0,0,0,.85))}
 html body #side #panel .btn>.zhIc svg{display:block;width:100%;height:100%}`;document.head.appendChild(st);}
@@ -366,7 +366,7 @@ if(typeof updateUI==='function'){const _iU=updateUI;updateUI=function(){_iU.appl
 function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q)return;let b=document.getElementById('qpStrike');
   const own=!!sb&&!sb.hidden&&G&&G.ents&&G.ents.some(e=>e.isB&&e.team===ME&&!e.dead&&e.kind==='uplink'&&e.built>=1);
   if(!own){if(b)b.hidden=true;return;}
-  if(!b){b=document.createElement('button');b.id='qpStrike';b.type='button';b.innerHTML='<div class="qf"></div>'+(ORD_SVG.missile||'')+'<span class="qc"></span>';b.onclick=()=>{const s=$('supbtn');if(s&&!s.disabled){s.click();try{sfxUI(620);}catch(_){}}};
+  if(!b){b=document.createElement('button');b.id='qpStrike';b.type='button';b.innerHTML='<div class="qf"></div>'+(ICON_SVG.missile||'')+'<span class="qc"></span>';b.onclick=()=>{const s=$('supbtn');if(s&&!s.disabled){s.click();try{sfxUI(620);}catch(_){}}};
     let col=Q.querySelector('.qstr');if(!col){col=document.createElement('div');col.className='qstr';Q.insertBefore(col,Q.querySelector('.qtab'));}col.append(b);}
   Q.hidden=false;b.hidden=false;const nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),T=G.teams[ME],c=T&&T.sup&&T.sup.charge?Math.min(1,(T.charge||0)/T.sup.charge):1,rdy=!sb.disabled,k=nm+st+rdy+(G.aim==='sup')+Math.round(c*40);
   if(b.dataset.k===k)return;b.dataset.k=k;b.title=nm+(st?' - '+st:'')+(rdy?' - click, then click the target':'');b.setAttribute('aria-label',nm);
