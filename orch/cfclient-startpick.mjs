@@ -159,22 +159,20 @@ async function pickerClip(page) {
     return { x, y: Math.max(0, a.top + scrollY - 30), width: Math.min(innerWidth - x, Math.max(a.right, b.right) - x + 8), height: b.bottom - a.top + 40 }; });
 }
 
-// the leader's lobby picks (3 seats: leader, friend, computer): leader on 5, friend on 3, computer on 7
+// the leader's lobby picks (3 seats on a 4-spot map: leader, friend, computer): leader on 3, friend on 1, computer on 4.
+// The lobby (08d-mplobby) has no per-row Start menu: clicking a numbered spot on the map hands it to the next player (spotsCycle).
 async function lobbyPicks(A) {
   await A.evaluate(() => { if (typeof menuGo === 'function') menuGo('online'); });   // the lobby lives on the Multiplayer screen
-  await A.locator('.seat.open .addai').first().click({ timeout: 30000 });
+  await waitFor(A, () => !!document.querySelector('#mpl tr.open select'), null, 30000, 'an open slot in the lobby');
+  await A.evaluate(() => { const s = document.querySelector('#mpl tr.open select'); s.value = '0'; s.onchange(); });   // open slot -> AI (first level)
   say('   computer player added');
   await waitFor(A, () => NET.ais.length === 1 && !!document.getElementById('lobSpots'), null, 20000, 'the computer player in the lobby');
   await A.waitForTimeout(400);
   const n = await A.evaluate(() => NET.lobby.length + 1 + NET.ais.length);
-  await hitSpot(A, '#lobSpots', 6, n);   // leader -> 7
-  await hitSpot(A, '#lobSpots', 6, n);   // friend -> 7
-  await hitSpot(A, '#lobSpots', 6, n);   // computer -> 7
-  await hitSpot(A, '#lobSpots', 4, n);   // leader -> 5
-  await A.locator('#mpstatus .seat').nth(1).locator('select.stsel').selectOption('2');   // friend's Start menu: 3
+  for (const k of [3, 3, 3, 0, 0, 2]) { await hitSpot(A, '#lobSpots', k, n); await A.waitForTimeout(150); }   // 4 -> leader, friend, computer; 1 -> leader, friend; 3 -> leader
   await A.waitForTimeout(300);
   const st = await A.evaluate(() => lobSt());
-  if (JSON.stringify(st) !== JSON.stringify([4, 2, 6])) fail(`lobby picks are ${JSON.stringify(st)}, expected [4,2,6]`);
+  if (JSON.stringify(st) !== JSON.stringify([2, 0, 3])) fail(`lobby picks are ${JSON.stringify(st)}, expected [2,0,3]`);
   return st;
 }
 
@@ -220,7 +218,7 @@ async function mpSteps() {
   B = await openPage('friend');
   await A.evaluate(m => { initAudio(); setup.p = 'IR'; const s = document.getElementById('mapSel'); s.value = m; s.onchange(); }, MAP);
   await A.evaluate(() => newBattle());
-  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpstatus .lob'), null, 40000, 'the leader\'s Cloudflare lobby');
+  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpl'), null, 40000, 'the leader\'s Cloudflare lobby');
   const code = await A.evaluate(() => NET.jcode);
   say(`3. leader's Cloudflare lobby ${code}`);
   await B.evaluate(c => { initAudio(); setup.p = 'RU'; joinByCode(c); }, code);
@@ -235,7 +233,7 @@ async function mpSteps() {
   // the host's own battle don't need them)
   await Promise.all([A, B].map(p => p.evaluate(() => { window.__stopLoop = true; })));
   await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
-  await A.evaluate(() => document.querySelector('#mpstatus .startbtn').click());
+  await A.evaluate(() => document.querySelector('#mplPlay').click());
   const [a3, b3] = await Promise.all([mpBases(A, 'client', '3. Cloudflare leader', st3), mpBases(B, 'client', '3. Cloudflare friend', st3, true)]);
   if (JSON.stringify(a3.bases) !== JSON.stringify(b3.bases)) fail(`3. leader and friend disagree on the bases: ${JSON.stringify(a3.bases)} vs ${JSON.stringify(b3.bases)}`);
   if (b3.hq[1] !== true) fail('3. the friend\'s own HQ is not on its picked spot in the server\'s snapshots');
@@ -246,7 +244,7 @@ async function mpSteps() {
   await Promise.all([load(A), load(B)]);
   await A.evaluate(m => { initAudio(); setup.p = 'IR'; const s = document.getElementById('mapSel'); s.value = m; s.onchange(); }, MAP);
   await A.evaluate(() => hostGame());
-  await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf && document.querySelector('#mpstatus .lob'), null, 40000, 'the leader to host in its browser');
+  await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf && document.querySelector('#mpl'), null, 40000, 'the leader to host in its browser');
   const bcode = await A.evaluate(() => NET.code);
   await B.evaluate(c => { initAudio(); setup.p = 'RU'; joinByCode(c); }, bcode);
   await waitFor(A, () => NET.lobby.length === 1, null, 40000, 'the friend in the browser host\'s lobby');
@@ -256,7 +254,7 @@ async function mpSteps() {
   // the host's own battle don't need them)
   await Promise.all([A, B].map(p => p.evaluate(() => { window.__stopLoop = true; })));
   await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
-  await A.evaluate(() => document.querySelector('#mpstatus .startbtn').click());
+  await A.evaluate(() => document.querySelector('#mplPlay').click());
   const [a4, b4] = await Promise.all([mpBases(A, 'host', '4. browser host', st4, true), mpBases(B, 'client', '4. browser-hosted friend', st4)]);
   if (JSON.stringify(a4.bases) !== JSON.stringify(b4.bases)) fail(`4. host and friend disagree on the bases: ${JSON.stringify(a4.bases)} vs ${JSON.stringify(b4.bases)}`);
   if (!a4.hq.every(v => v === true)) fail('4. the host did not put every HQ on its spot');

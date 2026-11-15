@@ -91,7 +91,7 @@ async function openPage(tag) {
 }
 const waitFor = (page, fn, a, ms, what) => page.waitForFunction(fn, a, { timeout: ms, polling: 250 }).catch(() => { throw new Error('timed out waiting for ' + what); });
 async function shot(page, name) { try { fs.mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: path.join(OUT, name), timeout: 240000 }); } catch (e) { warns.push(`screenshot ${name}: ${String(e.message || e).split('\n')[0]}`); } }
-const status = p => p.evaluate(() => document.getElementById('mpstatus').textContent);
+const status = p => p.evaluate(() => (((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || '')));
 
 let A, B;
 async function main() {
@@ -107,17 +107,17 @@ async function main() {
 
   // ---- 1. lobby + start ----
   await A.evaluate(() => newBattle());
-  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpstatus .lob'), null, 30000, 'the creator\'s lobby on the server');
+  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpl'), null, 30000, 'the creator\'s lobby on the server');
   const code = await A.evaluate(() => NET.jcode);
   const SB = () => H(code, 'state');
   await B.evaluate(c => joinByCode(c), code);
-  await waitFor(B, () => NET.via === 'wsb' && /Joined/.test(document.getElementById('mpstatus').textContent), null, 60000, 'the friend to join by code');
+  await waitFor(B, () => NET.via === 'wsb' && /Joined/.test((((document.getElementById('mpstatus') || {}).textContent || '') + ' ' + ((document.getElementById('mpl') || {}).textContent || ''))), null, 60000, 'the friend to join by code');
   await waitFor(A, () => NET.cf.blob.seats.filter(s => s.h).length === 2, null, 20000, 'the friend in the creator\'s lobby');
   await A.evaluate(() => { NET.tm = [0, 1]; renderLobby(); });
   await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
-  await waitFor(A, () => !document.querySelector('#mpstatus .startbtn').disabled, null, 15000, 'Start to be enabled');
+  await waitFor(A, () => !document.querySelector('#mplPlay').disabled, null, 15000, 'Start to be enabled');
   await A.evaluate(() => { window.__stopLoop = true; }); await B.evaluate(() => { window.__stopLoop = true; });
-  await A.evaluate(() => document.querySelector('#mpstatus .startbtn').click());
+  await A.evaluate(() => document.querySelector('#mplPlay').click());
   for (const [p, who] of [[A, 'creator'], [B, 'friend']]) {
     await waitFor(p, () => MODE === 'client' && G && G.teams.filter(Q => !Q.reb).length === 2, null, 300000, `the ${who} to enter the battle`);
     await waitFor(p, () => G && window.LOADING === false, null, 600000, `the ${who} to finish loading`);
