@@ -226,7 +226,7 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
 // Menu background (Abdullah 2026-11-14 17:07 "Have an epic static main menu background"): ONE static picture, no live shell battle, no war table.
 { const m = SRC['14-menu.js'] || '', all = Object.values(SRC).join('\n');
   ck(!/mxShell|mxshell|G\.shell\b|SH\.on/.test(all) && !/mxWarTable|mxWarSrc|#mxwt/.test(all), 'menu background: the live shell battle / war table are back (one static picture only)');
-  ck(/#mxbg\{[^}]*url\(menu-bg\.webp\)/.test(m) && !/mxpan/.test(m) && fs.existsSync(path.join(ROOT, 'menu-bg2.webp')) && fs.statSync(path.join(ROOT, 'menu-bg2.webp')).size < 450000, 'menu background: #mxbg must be a CSS background of menu-bg2.webp (static, under 450 KB)'); }
+  ck(/#mxbg\{[^}]*url\(menu-bg\.webp\)/.test(m) && !/mxpan/.test(m) && fs.existsSync(path.join(ROOT, 'menu-bg3.webp')) && fs.statSync(path.join(ROOT, 'menu-bg3.webp')).size < 450000, 'menu background: #mxbg must be a CSS background of menu-bg3.webp (static, under 450 KB)'); }
 // 0a. Game feel (2026-11-09 22:44): shell impacts match the surface (water spray / road chips / the map's soil) and tanks rock when they fire.
 { const f = SRC['05-fx3d.js'], v = SRC['06-view.js'];
   ck(/function impactSurf\(/.test(f) && /function splashFX\(/.test(f) && /if\(wet\)splashFX\(x,y,s,big\)/.test(f), 'game feel: explosions no longer check the surface they hit (water spray is gone)');
@@ -475,7 +475,7 @@ try {
   // ---- BATTLE (Generals rules + supply lines): Command Center + dozer + supply truck, no towns/tax, supply trucks pay
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
-  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.map = 'bm_sixroads'; try { initAudio(); } catch (e) {} startSingle(); });   /* a Battle map with roads out of the base (supply lines follow roads) */
+  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.map = 'lebanon'; try { initAudio(); } catch (e) {} startSingle(); });   /* a Battle map whose roads run out of the bases (supply lines follow roads) */
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('battle-mode game never finished loading'));
   await page.waitForTimeout(1500);
   const bt = await ev(() => { const T = G.teams[ME], mine = G.ents.filter(e => e.team === ME && !e.dead); const c0 = T.credits;

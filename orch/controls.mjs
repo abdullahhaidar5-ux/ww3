@@ -160,7 +160,7 @@ async function cancelChecks(page, { mode, ck }) {
   r = await page.evaluate(() => { const b = G.byId.get(window.__CB); return { gone: !b || b.dead, c: G.teams[ME].credits, c0: window.__C0 }; });
   ck(mode + ' Cancel on a constructing builder removes the building and refunds it', r.gone && r.c > r.c0, JSON.stringify(r));
   // placement
-  await page.evaluate(() => { G.sel = []; G.place = 'barracks'; updateUI(); });
+  await page.evaluate(() => { const d = G.ents.find(e => e.kind === 'dozer' && e.team === ME && !e.dead); G.sel = d ? [d] : []; G.place = 'barracks'; updateUI(); });   /* placing needs a Construction Vehicle selected */
   await wait(300);
   if (mode === 'touch') { await page.evaluate(() => { TC.stripK = null; tcStrip(true); }); await press('#tstrip button[data-k="no"]'); }
   else await press(btn);
