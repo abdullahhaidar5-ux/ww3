@@ -67,7 +67,7 @@ html body #side #panel .zhEmpty{display:none!important}
 .orddock.zhin button>i svg{display:block;width:100%;height:100%}
 .orddock.zhin button>i{flex:0 0 auto!important;width:56%!important;height:52%!important;font-size:0!important;background:center/contain no-repeat;filter:drop-shadow(0 0 4px rgba(0,0,0,.8))}
 .orddock.zhin button>kbd{display:block!important;position:absolute!important;top:3px;right:4px;font:700 10px/1 var(--mono,monospace)!important;color:#9fb6c4!important;background:none!important;border:0!important;padding:0!important;opacity:.85}
-.orddock.zhin button:hover{border-color:#ffd36a!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 0 10px rgba(255,200,90,.55)!important;transform:translateY(-1px)}
+.orddock.zhin button:hover{border-color:#ffd36a!important;box-shadow:inset 0 0 0 1px #ffd36a,inset 0 1px 0 rgba(255,255,255,.25)!important}
 .orddock.zhin button:active{transform:translateY(1px);box-shadow:inset 0 2px 8px rgba(0,0,0,.8)!important}
 .orddock.zhin button.on{border-color:#74d08f!important;box-shadow:inset 0 0 12px rgba(116,208,143,.45),0 0 8px rgba(116,208,143,.5)!important}
 .orddock.zhin{flex-direction:row!important;flex-wrap:wrap!important;align-content:center!important;align-items:center!important}
@@ -294,9 +294,9 @@ html body #side #info .ukU>img{display:none!important}
 .zhHolo::before{content:'';position:absolute;left:-30%;right:-30%;bottom:-6%;height:46%;transform:perspective(160px) rotateX(58deg);transform-origin:50% 100%;
  background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--hc) 45%,transparent) 0 1px,transparent 1px 22px),repeating-linear-gradient(0deg,color-mix(in srgb,var(--hc) 45%,transparent) 0 1px,transparent 1px 22px);
  -webkit-mask:linear-gradient(0deg,#000 10%,transparent);mask:linear-gradient(0deg,#000 10%,transparent);opacity:.55}
-.zhHolo::after{content:'';position:absolute;left:0;right:0;top:-30%;height:26%;background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--hc) 30%,transparent) 80%,color-mix(in srgb,var(--hc) 70%,#fff) 98%,transparent);animation:zhScan 2.6s linear infinite;pointer-events:none;mix-blend-mode:screen}
+.zhHolo::after{content:'';position:absolute;left:0;right:0;top:-30%;height:26%;background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--hc) 30%,transparent) 80%,color-mix(in srgb,var(--hc) 70%,#fff) 98%,transparent);animation:zhScan 2.6s linear infinite;animation-delay:var(--ad,0s);pointer-events:none;mix-blend-mode:screen}
 @keyframes zhScan{to{transform:translateY(560%)}}
-.zhHoloG{position:absolute;inset:9% 8% 7%;filter:drop-shadow(0 0 5px var(--hc)) drop-shadow(0 0 14px color-mix(in srgb,var(--hc) 60%,transparent));animation:zhFlick 4s steps(1) infinite}
+.zhHoloG{position:absolute;inset:9% 8% 7%;filter:drop-shadow(0 0 5px var(--hc)) drop-shadow(0 0 14px color-mix(in srgb,var(--hc) 60%,transparent));animation:zhFlick 4s steps(1) infinite;animation-delay:var(--fd,0s)}
 @keyframes zhFlick{0%,100%{opacity:1}47%{opacity:.82}48%{opacity:1}83%{opacity:.9}}
 .zhHoloF{position:absolute;inset:0;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat;
  background:repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 1px,transparent 1px 3px),linear-gradient(180deg,#f2feff 0%,var(--hc) 45%,var(--hd) 100%)}
@@ -311,6 +311,7 @@ html body #side #info .ukU>img{display:none!important}
 }`;document.head.appendChild(st);}
 function zhHolo(){const im=document.querySelector('#side #info .ukU>img');if(!im||innerWidth<900)return;const e=(G&&G.sel||[]).find(u=>u&&!u.dead);
   let h=im.parentElement.querySelector('.zhHolo');if(!h){h=document.createElement('div');h.className='zhHolo';h.innerHTML='<div class="zhHoloG"><div class="zhHoloF"></div><div class="zhHoloD"></div></div><div class="zhHoloC"></div>';im.after(h);}
+  {const t=performance.now();h.style.setProperty('--ad',-(t%2600)+'ms');h.style.setProperty('--fd',-(t%4000)+'ms');}   /* the panel is rebuilt often: keep the scan on the clock so it never restarts (no flashing) */
   const m='url("'+im.src+'")';if(h.dataset.src!==im.src){h.dataset.src=im.src;h.style.setProperty('--m',m);}
   h.classList.toggle('foe',!!e&&e.team!==ME&&!(typeof ally==='function'&&ally(e.team,ME)));
   const c=h.lastChild;if(e&&e.s){const cl=String(e.s.cls||e.s.dom||'unit').toUpperCase(),hp=Math.round(100*Math.max(0,e.hp)/(e.max||1))+'%';if(c.dataset.l!==cl)c.dataset.l=cl;if(c.dataset.r!==hp)c.dataset.r=hp;}}
