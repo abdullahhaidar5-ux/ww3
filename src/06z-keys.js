@@ -36,6 +36,7 @@ const KEYTAB=[
   {id:'p_bb',ctx:'battle',grp:'General\'s powers',name:'Bunker Buster',def:'n'},
   {id:'supl',ctx:'battle',grp:'Camera',name:'Show supply lines on the ground',def:'l'},
   {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
+  {id:'vision',ctx:'battle',grp:'Game',name:'Night vision / thermal view (at night)',def:'`'},
   {id:'pause',ctx:'battle',grp:'Game',name:'Pause (single player) / photo mode',def:'p'},
   {ctx:'battle',grp:'Game',name:'Menu · cancel · one step back',fix:'Esc'},
   {ctx:'battle',grp:'Game',name:'Team play: ping, draw, circle on the map',fix:', . / \' ;'},

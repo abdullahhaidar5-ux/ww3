@@ -34,6 +34,22 @@ const ck = (c, m) => { if (!c) fails.push(m); };
 
 // Rules files (orch/loadF): CLAUDE.md = short current rules, orch/DECISIONS.md = the full dated record. Every standing decision's
 // key words must still be in one of the two files, and CLAUDE.md must stay short.
+// ---- UI audit guards (Abdullah 2026-11-14 21:55 "find duplicates and remove them"): ONE key table, no key twice, every handled letter has a row, no stale hints
+{ const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8'); const kt = rd('src/06z-keys.js');
+  const defs = [...kt.matchAll(/\{id:'(\w+)'[^}]*?def:'([^']+)'/g)].map(m => [m[1], m[2]]); const seen = {};
+  for (const [id, d] of defs) { ck(!seen[d], 'key table: "' + d + '" is bound twice (' + seen[d] + ' and ' + id + ')'); seen[d] = id; ck(!'wasd'.includes(d), 'key table: W A S D only scroll the camera, row ' + id + ' uses ' + d); }
+  ck(defs.length > 20, 'key table: could not read the rows');
+  const fixedLetters = new Set(['a']);   // Ctrl+A has a fixed row
+  const handled = new Set(); const ui = rd('src/08-ui.js'), i0 = ui.indexOf("window.addEventListener('keydown'"), i1 = ui.indexOf("window.addEventListener('keyup'", i0);
+  for (const m of ui.slice(i0, i1).matchAll(/\bk==='([a-z])'/g)) handled.add(m[1]);
+  for (const f of fs.readdirSync(path.join(ROOT, 'src')).filter(f => f.endsWith('.js'))) { const t = rd('src/' + f);
+    for (const line of t.split('\n')) { if (!/addEventListener\('keydown'/.test(line) || /^\s*\/\//.test(line)) continue; if (f === '06z-keys.js' || f === '12-editor.js' || f === '08c-extras.js' && /PHX\.on\)return/.test(line.slice(0, 120))) continue;
+      for (const m of line.matchAll(/e\.key(?:!==|===)'([a-zA-Z])'/g)) handled.add(m[1].toLowerCase()); } }
+  const rowKeys = new Set(defs.map(d => d[1]));
+  for (const k of handled) ck(rowKeys.has(k) || fixedLetters.has(k) || 'wasd'.includes(k), 'key "' + k.toUpperCase() + '" is handled in src/ but has no row in the key table (src/06z-keys.js)');
+  for (const f of fs.readdirSync(path.join(ROOT, 'src')).filter(f => /^(06|08|09|10|12|14)/.test(f) && f.endsWith('.js'))) { const t = rd('src/' + f);
+    ck(!/right-click (to )?(place|launch|build|deploy)/i.test(t), f + ': a hint still says right-click places / launches (left-click deploys, right-click cancels)');
+    ck(!/hold to talk|Voice commands/.test(t.replace(/\/\*[^]*?\*\/|\/\/[^\n]*/g, '')), f + ': voice commands were removed (2026-11-14 16:57), no leftovers'); } }
 { const rules = ['CLAUDE.md', 'orch/DECISIONS.md'].map(f => { try { return fs.readFileSync(path.join(ROOT, f), 'utf8'); } catch { return ''; } });
   const all = rules.join('\n').toLowerCase();
   const KEYS = ['one game', 'abandon conquest and campaign', 'bring supply lines into battle', 'super super polished', 'no decorative or ambient aircraft', 'left-click selects', 'right-click moves', 'attack-move', 'w a s d', 'ctrl+a',
