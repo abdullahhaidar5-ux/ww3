@@ -1,0 +1,91 @@
+  page: shader warm-up 7117 ms, 62 models, 120 objects in 668 steps (longest 1317 ms), 114 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 66 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=196 normal=66ms (quiet max 162) longest=288ms three(progs/geo/tex)=+0/+3/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":12,"bufKB":45,"vao":9,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 288ms@3.1s {} ; 238ms@1.2s {} ; 194ms@9.4s {} ; 176ms@3.5s {"aud":3} ; 175ms@4.7s {}
+  frames that made the GPU work (5):
+    0.30s 58ms {"buf":4,"bufKB":3,"vao":5} three geo/tex 579/248
+    3.24s 103ms {"buf":2,"bufKB":35.6,"vao":1,"aud":1} three geo/tex 579/248
+    3.54s 176ms {"aud":3} three geo/tex 579/248
+    6.60s 59ms {"buf":3,"bufKB":5.1,"vao":1} three geo/tex 580/248
+    8.70s 65ms {"buf":3,"bufKB":1.3,"vao":2} three geo/tex 580/248
+  shapes that entered the scene during the strike (look here for the ones built or re-sent):
+    0.4s RingGeometry 114v MeshBasicMaterial
+    0.4s RingGeometry 114v MeshBasicMaterial
+    0.4s CircleGeometry 50v MeshBasicMaterial
+    0.4s PlaneGeometry 4v MeshBasicMaterial
+    0.4s BufferGeometry 378v MeshStandardMaterial
+    0.4s ConeGeometry 22v MeshBasicMaterial
+    0.4s BufferGeometry 36v MeshStandardMaterial
+    0.4s CylinderGeometry 40v MeshStandardMaterial
+    0.4s PlaneGeometry 4v MeshStandardMaterial
+    0.4s WireframeGeometry 144v LineBasicMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s RingGeometry 130v MeshBasicMaterial
+    6.8s BufferGeometry 144v MeshStandardMaterial
+IR worst JS call (not drawing): simUpdate 202ms; FAIL: 9 new meshes (max 6)
+  page: shader warm-up 3509 ms, 65 models, 125 objects in 661 steps (longest 170 ms), 120 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 56 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=147 normal=56ms (quiet max 160) longest=343ms three(progs/geo/tex)=+0/+1/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":10,"bufKB":10,"vao":11,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 343ms@3.0s {"vao":1} ; 302ms@0.7s {} ; 195ms@3.3s {} ; 181ms@5.2s {} ; 166ms@5.0s {}
+  frames that made the GPU work (5):
+    3.28s 76ms {"buf":2,"bufKB":2.9,"vao":4,"aud":2} three geo/tex 684/317
+    3.40s 79ms {"buf":2,"bufKB":0.9,"vao":2} three geo/tex 684/317
+    3.52s 108ms {"aud":2} three geo/tex 684/317
+    6.04s 83ms {"buf":3,"bufKB":5.1,"vao":2} three geo/tex 685/317
+    6.28s 70ms {"buf":3,"bufKB":1.3,"vao":2} three geo/tex 685/317
+  shapes that entered the scene during the strike (look here for the ones built or re-sent):
+    0.4s RingGeometry 114v MeshBasicMaterial
+    0.4s RingGeometry 114v MeshBasicMaterial
+    0.4s CircleGeometry 50v MeshBasicMaterial
+    0.4s PlaneGeometry 4v MeshBasicMaterial
+    0.4s BufferGeometry 378v MeshStandardMaterial
+    0.4s ConeGeometry 22v MeshBasicMaterial
+    0.7s BufferGeometry 264v MeshStandardMaterial in Object_2/RootNode/Object_4/soldierLo/
+    0.7s BufferGeometry 4094v MeshStandardMaterial in Object_2/RootNode/Object_4/soldier/
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s RingGeometry 130v MeshBasicMaterial
+    6.0s BufferGeometry 144v MeshStandardMaterial
+RU worst JS call (not drawing): simUpdate 227ms; FAIL: 11 new meshes (max 6); longest frame 343 ms is 183 ms over the longest quiet frame 160 ms (max 150)
+  page: shader warm-up 2781 ms, 59 models, 114 objects in 658 steps (longest 133 ms), 106 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 49 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=166 normal=49ms (quiet max 143) longest=350ms three(progs/geo/tex)=+0/+1/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":10,"bufKB":10,"vao":8,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 350ms@3.0s {} ; 305ms@0.2s {} ; 298ms@0.2s {} ; 191ms@0.4s {} ; 172ms@6.4s {}
+  frames that made the GPU work (5):
+    3.28s 96ms {"aud":2} three geo/tex 566/216
+    3.52s 148ms {"aud":2} three geo/tex 566/216
+    4.18s 155ms {"buf":4,"bufKB":4.1,"vao":3} three geo/tex 566/216
+    5.62s 76ms {"buf":3,"bufKB":5.1,"vao":1} three geo/tex 567/216
+    5.86s 90ms {"buf":3,"bufKB":1.3,"vao":1} three geo/tex 567/216
+  shapes that entered the scene during the strike (look here for the ones built or re-sent):
+    0.4s RingGeometry 114v MeshBasicMaterial
+    0.4s RingGeometry 114v MeshBasicMaterial
+    0.4s CircleGeometry 50v MeshBasicMaterial
+    0.4s PlaneGeometry 4v MeshBasicMaterial
+    0.4s BufferGeometry 450v MeshStandardMaterial
+    0.4s ConeGeometry 22v MeshBasicMaterial
+    0.4s BufferGeometry 264v MeshStandardMaterial in Object_2/RootNode/Object_4/soldierLo/
+    0.4s BufferGeometry 4094v MeshStandardMaterial in Object_2/RootNode/Object_4/soldier/
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s IcosahedronGeometry 60v MeshStandardMaterial
+    3.2s RingGeometry 130v MeshBasicMaterial
+    3.9s BufferGeometry 263v MeshStandardMaterial in Object_2/RootNode/Object_4/soldierLo/
+    3.9s BufferGeometry 4130v MeshStandardMaterial in Object_2/RootNode/Object_4/soldier/
+    3.9s BufferGeometry 264v MeshStandardMaterial in Object_2/RootNode/Object_4/soldierLo/
+    3.9s BufferGeometry 4094v MeshStandardMaterial in Object_2/RootNode/Object_4/soldier/
+    5.7s BufferGeometry 144v MeshStandardMaterial
+US worst JS call (not drawing): simUpdate 213ms; FAIL: 8 new meshes (max 6); longest frame 350 ms is 206 ms over the longest quiet frame 143 ms (max 150)
+SUPERFREEZE FAIL
