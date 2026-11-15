@@ -74,7 +74,7 @@ async function reloadMenu() { await page.reload({ waitUntil: 'load', timeout: 12
 async function placeNear(k, spots) { await ev(() => { const d = G.ents.find(e => e.kind === 'dozer' && e.team === ME && !e.dead); if (d) { G.sel = [d]; updateUI(); } }); await wait(200);   /* the Build tab shows only while a Construction Vehicle is selected (a player clicks the Dozer first) */
   await page.click('.tabs button[data-tab="build"]').catch(() => {}); await wait(300); await page.click('#b_' + k); await wait(300);
   const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; });
-  for (const [dx, dy] of spots) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); await wait(500); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y, { button: 'right' }); await wait(500);
+  for (const [dx, dy] of spots) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); await wait(500); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y); await wait(500);
     if (await ev((k) => G.ents.some(e => e.isB && e.team === ME && e.kind === k && !e.dead), k)) return true; if (!(await ev((k) => G.place === k, k))) { await page.click('#b_' + k); await wait(300); } }
   return false; }
 const builtUp = async (k) => { for (let n = 0; n < 120 && !(await ev((k) => G.ents.some(e => e.isB && e.team === ME && e.kind === k && !e.dead && e.built >= 1), k)); n++) await ff(3); return ev((k) => G.ents.some(e => e.isB && e.team === ME && e.kind === k && e.built >= 1), k); };
@@ -121,7 +121,7 @@ try {
     const tEnd = Date.now() + 10 * 60 * 1000;
     for (let k = 0; Date.now() < tEnd; k++) { if (await ev(() => G.over)) break;
       const tg = await ev(() => { const b = G.ents.find(e => e.isB && e.team === 1 && !e.dead); return b ? { x: b.x, y: b.y } : null; }); if (!tg) { await ff(5); continue; }
-      await ev(([x, y]) => centerOn(x, y, true), [tg.x, tg.y]); await ev(() => { G.sel = tutUnits(); }); const p = await scr(tg.x, tg.y, 0); await click(p.x, p.y, { button: 'right' });
+      await ev(([x, y]) => centerOn(x, y, true), [tg.x, tg.y]); await ev(() => { G.sel = tutUnits(); }); const p = await scr(tg.x, tg.y, 0); await click(p.x, p.y);
       if (k % 2 === 0) console.log('    attack round', k, JSON.stringify(await ev(() => ({ t: G.t | 0, mine: tutUnits().length, foe: G.ents.filter(e => e.team === 1 && !e.dead).length }))));
       await ff(12); await wait(200); if (k === 1) await shot('06c-attack'); } }
   await page.waitForFunction(() => document.getElementById('tutReady'), null, { timeout: 300000 }).catch(() => bad('no "You are ready" screen after the win'));

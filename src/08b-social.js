@@ -58,11 +58,11 @@ const tutPanelBtn=id=>document.getElementById(id);
 const tutMob=()=>G.ents.filter(e=>!e.isB&&e.team===ME&&!e.dead&&!['harv','dozer','hacker'].includes(e.kind));
 const tutBPlace=(k,dx,dy)=>{if(tutBld(k))return{w:tutBld(k)};{const z=tutDzHl();if(z)return z;}if(G.place===k){const h=tutHQ();return{w:h?{x:h.x+dx,y:h.y+dy}:null};}return{d:'#b_'+k};};
 const TUTB=[
- {k:'gen',t:'Welcome to Battle! Air defense, the Strike Center, radio and the Airfield need power. Build a Generator; capturing map power plants adds more.',a:'Click your Dozer (Construction Vehicle), open Build, click Generator, then right-click the ground near your base.',
+ {k:'gen',t:'Welcome to Battle! Air defense, the Strike Center, radio and the Airfield need power. Build a Generator; capturing map power plants adds more.',a:'Click your Dozer (Construction Vehicle), open Build, click Generator, then click the ground near your base.',
   hl:()=>tutBPlace('gen',-100,-110),cam:()=>tutHQ(),ok:()=>!!tutBld('gen')},
- {k:'dep',t:'Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.',a:'Click your Dozer, open Build, click Supply Depot, then right-click the ground near your base.',
+ {k:'dep',t:'Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.',a:'Click your Dozer, open Build, click Supply Depot, then click the ground near your base.',
   hl:()=>tutBPlace('depot',-130,90),cam:()=>tutHQ(),ok:()=>!!tutBld('depot')},
- {k:'bar',t:'Barracks train infantry, and they unlock the rest of your tech tree.',a:'Click your Dozer, open Build, click Barracks, then right-click next to your base. Hold Shift to line up several buildings.',
+ {k:'bar',t:'Barracks train infantry, and they unlock the rest of your tech tree.',a:'Click your Dozer, open Build, click Barracks, then click next to your base. Hold Shift to line up several buildings.',
   hl:()=>tutBPlace('barracks',120,90),cam:()=>tutHQ(),ok:()=>!!tutBld('barracks')},
  {k:'fac',t:'The War Factory builds tanks and other vehicles. It needs a Barracks first.',a:'With your Dozer selected, open Build and place a War Factory next to your base. Right-click a half-built building with another Dozer to help.',
   hl:()=>tutBPlace('factory',150,-60),cam:()=>tutHQ(),ok:()=>!!tutBld('factory')},
