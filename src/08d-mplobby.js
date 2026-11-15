@@ -17,7 +17,10 @@ body.mplon #menu{visibility:hidden}
 #mpl h1{margin:0;font-size:34px;letter-spacing:.14em;font-weight:700;color:#eef3e8;text-shadow:0 0 14px #7fb88a66}
 #mpl .mcode{font:700 26px var(--mono,monospace);letter-spacing:.2em;color:#e3b341}
 #mpl .mnet{margin-left:auto;font-size:15px;opacity:.7}
-#mpl .mleft{display:flex;flex-direction:column;gap:12px;min-height:0}
+#mpl .mleft{display:flex;flex-direction:column;gap:12px;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;padding-right:4px}
+/* laptops (1536x~690 after browser bars): rows shrink and the player list scrolls inside its column - nothing spills over the map or the chat */
+@media (max-height:860px),(max-width:1650px){#mpl h1{font-size:26px}#mpl .mcode{font-size:20px}#mpl .mfr{gap:10px 16px;padding:16px 20px 14px}#mpl table{border-spacing:0 3px}#mpl th{font-size:12px}#mpl td{padding:4px 7px;font-size:16px}#mpl select{font-size:15px;min-height:30px}#mpl td select{max-width:170px}#mpl .mrd{font-size:13px}#mpl .msw{width:40px;height:18px}#mpl .mbtn{font-size:18px;padding:9px 26px;min-width:180px}#mpl .mmap{font-size:20px}#mpl .mmapn{font-size:15px}#mpl .mpv canvas{max-height:26vh}#mpl .mlog{height:clamp(44px,8vh,80px);font-size:14px}#mpl .mmid{font-size:14px}}
+@media (max-width:1350px){#mpl .mfr{grid-template-columns:minmax(0,2.3fr) minmax(250px,1fr)}#mpl td select{max-width:135px}#mpl td{padding:4px 5px}#mpl .msw{width:26px}#mpl .mnm{gap:6px}}
 #mpl table{width:100%;border-collapse:separate;border-spacing:0 5px}
 #mpl th{text-align:left;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:#b9c7b6;padding:2px 10px;font-weight:600}
 #mpl td{padding:7px 10px;background:#1b211d;font-size:19px;border-top:1px solid #3b4a3d;border-bottom:1px solid #3b4a3d;vertical-align:middle}
