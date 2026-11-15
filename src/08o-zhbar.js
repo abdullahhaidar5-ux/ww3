@@ -280,3 +280,36 @@ function zhCamPaint(){if(!G||!G.teams||!G.teams[ME])return;const f=G.teams[ME].f
 {const _z=zhCtx;zhCtx=function(){_z();try{if(innerWidth>=900)zhCamPaint();}catch(e){}};}
 /* the battlefield grows into the space when the bar is folded down, and shrinks back when it returns (Abdullah 16:54 "When dropping down the screen should expand") */
 if(typeof barMin==='function'){const _zb=barMin;barMin=function(v){const r=_zb.apply(this,arguments);if(v!=null){const fx=()=>{try{barH();resize();}catch(e){}};requestAnimationFrame(fx);setTimeout(fx,120);}return r;};}
+/* HOLOGRAM PORTRAIT (Abdullah 2026-11-14 21:09 "This is not sexy. Something cooler."): the selected unit's picture becomes a glowing tactical
+   hologram - its silhouette filled with a cyan light gradient and scanlines (red for an enemy), a perspective grid floor, a scan bar sweeping
+   down, corner brackets and two readouts (class, health). Pure CSS on two divs; the scan is a compositor animation, nothing per frame in JS. */
+{const st=document.createElement('style');st.textContent=`@media(min-width:900px){
+html body #side #info .ukU>img{display:none!important}
+.zhHolo{--hc:#5fe6f2;--hd:#0b6f86;position:relative;width:100%;height:calc(var(--gbH) - 80px);overflow:hidden;border-radius:3px;
+ background:radial-gradient(ellipse at 50% 85%,color-mix(in srgb,var(--hc) 22%,transparent),transparent 60%),radial-gradient(ellipse at 50% 40%,#0b1c24,#03080b 75%);
+ box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--hc) 55%,transparent),inset 0 0 30px rgba(0,0,0,.9),0 0 12px color-mix(in srgb,var(--hc) 25%,transparent)}
+.zhHolo.foe{--hc:#ff6b58;--hd:#7a1a12}
+.zhHolo::before{content:'';position:absolute;left:-30%;right:-30%;bottom:-6%;height:46%;transform:perspective(160px) rotateX(58deg);transform-origin:50% 100%;
+ background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--hc) 45%,transparent) 0 1px,transparent 1px 22px),repeating-linear-gradient(0deg,color-mix(in srgb,var(--hc) 45%,transparent) 0 1px,transparent 1px 22px);
+ -webkit-mask:linear-gradient(0deg,#000 10%,transparent);mask:linear-gradient(0deg,#000 10%,transparent);opacity:.55}
+.zhHolo::after{content:'';position:absolute;left:0;right:0;top:-30%;height:26%;background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--hc) 30%,transparent) 80%,color-mix(in srgb,var(--hc) 70%,#fff) 98%,transparent);animation:zhScan 2.6s linear infinite;pointer-events:none;mix-blend-mode:screen}
+@keyframes zhScan{to{transform:translateY(560%)}}
+.zhHoloG{position:absolute;inset:9% 8% 7%;filter:drop-shadow(0 0 5px var(--hc)) drop-shadow(0 0 14px color-mix(in srgb,var(--hc) 60%,transparent));animation:zhFlick 4s steps(1) infinite}
+@keyframes zhFlick{0%,100%{opacity:1}47%{opacity:.82}48%{opacity:1}83%{opacity:.9}}
+.zhHoloF{position:absolute;inset:0;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat;
+ background:repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 1px,transparent 1px 3px),linear-gradient(180deg,#f2feff 0%,var(--hc) 45%,var(--hd) 100%)}
+.zhHoloD{position:absolute;inset:0;background:var(--m) center/contain no-repeat;filter:grayscale(1) contrast(1.6);mix-blend-mode:multiply;opacity:.35;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+.zhHoloC{position:absolute;inset:5px;pointer-events:none;background:
+ linear-gradient(var(--hc),var(--hc)) 0 0/14px 2px no-repeat,linear-gradient(var(--hc),var(--hc)) 0 0/2px 14px no-repeat,
+ linear-gradient(var(--hc),var(--hc)) 100% 0/14px 2px no-repeat,linear-gradient(var(--hc),var(--hc)) 100% 0/2px 14px no-repeat,
+ linear-gradient(var(--hc),var(--hc)) 0 100%/14px 2px no-repeat,linear-gradient(var(--hc),var(--hc)) 0 100%/2px 14px no-repeat,
+ linear-gradient(var(--hc),var(--hc)) 100% 100%/14px 2px no-repeat,linear-gradient(var(--hc),var(--hc)) 100% 100%/2px 14px no-repeat;opacity:.85}
+.zhHoloC::before,.zhHoloC::after{position:absolute;top:4px;font:700 10px/1 var(--mono,monospace);letter-spacing:.12em;color:var(--hc);text-shadow:0 0 6px var(--hc)}
+.zhHoloC::before{content:attr(data-l);left:20px}.zhHoloC::after{content:attr(data-r);right:20px}
+}`;document.head.appendChild(st);}
+function zhHolo(){const im=document.querySelector('#side #info .ukU>img');if(!im||innerWidth<900)return;const e=(G&&G.sel||[]).find(u=>u&&!u.dead);
+  let h=im.parentElement.querySelector('.zhHolo');if(!h){h=document.createElement('div');h.className='zhHolo';h.innerHTML='<div class="zhHoloG"><div class="zhHoloF"></div><div class="zhHoloD"></div></div><div class="zhHoloC"></div>';im.after(h);}
+  const m='url("'+im.src+'")';if(h.dataset.src!==im.src){h.dataset.src=im.src;h.style.setProperty('--m',m);}
+  h.classList.toggle('foe',!!e&&e.team!==ME&&!(typeof ally==='function'&&ally(e.team,ME)));
+  const c=h.lastChild;if(e&&e.s){const cl=String(e.s.cls||e.s.dom||'unit').toUpperCase(),hp=Math.round(100*Math.max(0,e.hp)/(e.max||1))+'%';if(c.dataset.l!==cl)c.dataset.l=cl;if(c.dataset.r!==hp)c.dataset.r=hp;}}
+if(typeof updateUI==='function'){const _hU=updateUI;updateUI=function(){_hU.apply(this,arguments);try{zhHolo();}catch(e){}};}
