@@ -16180,6 +16180,8 @@ return K;})();
    Colour: a picker per row (pcPicker; you change your own row, the leader the computer rows; r.pc/r.pcTaken/r.nat/r.ed.c). Chat: the lobby has no chat message yet, so the box shows the
    lobby log (joins, leaves) and its input is disabled until a chat message exists. */
 const MPL={el:null,log:[],key:''};
+/* a finished pick (change) lets go of the control first, so the redraw it asks for happens at once; only an OPEN list or typing holds redraws back */
+document.addEventListener('change',e=>{const t=e.target;if(MPL.el&&t&&MPL.el.contains(t)&&t.tagName==='SELECT'){try{t.blur();}catch(_){}}},true);
 (function(){const s=document.createElement('style');s.id='mplCss';s.textContent=`
 body.mplon #menu{visibility:hidden}
 #mpl{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:2vh 2vw;background:radial-gradient(ellipse at center,#0006 20%,#000d 100%);font-family:inherit;color:#e4eadf;animation:lkIn .25s ease-out}
@@ -16249,6 +16251,10 @@ function pcPicker(cur,taken,natCol,onPick,label,ed){const b=document.createEleme
     const away=ev=>{if(!pop.contains(ev.target)){pcPop();document.removeEventListener('mousedown',away,true);}};setTimeout(()=>document.addEventListener('mousedown',away,true),0);};
   return b;}
 function mplShow(D){
+  /* no redraw while you are using a dropdown or typing in the lobby (Abdullah 2026-11-14 21:38 "map selection in multiplayer is very jumpy"):
+     the lobby is redrawn on every server update, which closed the open list; the newest picture is drawn as soon as you leave the control */
+  {const ae=document.activeElement;if(MPL.el&&ae&&MPL.el.contains(ae)&&(ae.tagName==='SELECT'||ae.tagName==='INPUT')){MPL.pend=D;if(!ae._mplB){ae._mplB=1;const go=()=>{setTimeout(()=>{const P=MPL.pend;MPL.pend=null;if(P)mplShow(P);},0);};ae.addEventListener('blur',go,{once:true});ae.addEventListener('change',go,{once:true});}return;}}
+  MPL.pend=null;
   pcPop();
   const E=(t,c,x)=>{const d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d;};
   const opt=(s,v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;s.append(o);};
@@ -16279,7 +16285,7 @@ function mplShow(D){
   L.append(ob);fr.append(L);
   // ---- right: map
   const R=E('div','mright'),pv=E('div','mpv');let cv=D.spots;
-  if(!cv){cv=document.createElement('canvas');cv.width=384;cv.height=264;setTimeout(()=>{try{mapPreview(D.mk,cv);}catch(e){}},30);}
+  if(!cv){if(MPL.pv&&MPL.pv.k===D.mk)cv=MPL.pv.c;else{cv=document.createElement('canvas');cv.width=384;cv.height=264;MPL.pv={k:D.mk,c:cv};setTimeout(()=>{try{mapPreview(D.mk,cv);}catch(e){}},30);}}   /* keep the drawn map preview between redraws (no flicker) */
   pv.append(cv);R.append(pv);const m=MAPS[D.mk]||{};R.append(E('div','mmap',m.name||D.mk),E('div','mmapn',(m.bm&&typeof bmInfo==='function'?(()=>{const I=bmInfo(D.mk);return I.players+' players · '+I.size+' · '+I.theme;})():(m.min||2)+'–'+(m.max||D.mx)+' players')));
   /* map dropdown (Abdullah 2026-11-14 18:39 "select maps from a drop down in lobby"): every map that fits the room, in the one Battle list; the host picks, others see the name */
   if(D.onMap){const ms=document.getElementById('mapSel'),s=document.createElement('select');s.id='mplMapDd';s.className='mpldd';s.setAttribute('aria-label','Battlefield');
