@@ -1,0 +1,6 @@
+  day {"inf":280,"tank":280,"heli":340,"b":340} 
+  night {"inf":210,"tank":266,"heli":323,"b":255}
+NIGHT FAIL
+  x night: infantry sight is not x0.6
+  x night: tank/heli (thermal) sight is not x0.9
+SKIP headless
