@@ -6,10 +6,10 @@ const VISN={mode:0,pts:null,n:0,btn:null,t:0,cap:1600};
 function visionDark(){try{return G&&G.todM?todDark():0;}catch(e){return 0;}}
 function visionSet(m){VISN.mode=m;if(VISN.btn){VISN.btn.textContent=m===1?'NIGHT VISION':m===2?'THERMAL':'NORMAL VIEW';VISN.btn.dataset.m=m;}if(VISN.pts)VISN.pts.visible=m===2;}
 function visionCycle(){if(!G)return;if(visionDark()<.3&&VISN.mode===0)return;visionSet((VISN.mode+1)%3);}
-function visionBtn(){if(VISN.btn||typeof document==='undefined')return;const b=document.createElement('button');b.id='visbtn';b.type='button';b.hidden=true;b.title='Night vision / thermal (N)';
+function visionBtn(){if(VISN.btn||typeof document==='undefined')return;const b=document.createElement('button');b.id='visbtn';b.type='button';b.hidden=true;b.title='Night vision / thermal ('+(typeof kbKey==='function'&&kbKey('vision')||'`')+')';
   b.style.cssText='position:fixed;top:34px;right:6px;z-index:30;font:700 12px IBM Plex Mono,monospace;letter-spacing:.06em;padding:5px 10px;border:1px solid #6fd68a;border-radius:3px;background:rgba(5,12,8,.78);color:#8ff0a8;cursor:pointer';
   b.onclick=()=>visionCycle();b.onmousedown=e=>e.stopPropagation();b.textContent='NORMAL VIEW';document.body.appendChild(b);VISN.btn=b;}
-if(typeof addEventListener!=='undefined')addEventListener('keydown',e=>{if(e.key!=='n'&&e.key!=='N')return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target&&e.target.tagName;if(t==='INPUT'||t==='SELECT'||t==='TEXTAREA')return;visionCycle();});
+if(typeof addEventListener!=='undefined')addEventListener('keydown',e=>{if(e.key!=='`')return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target&&e.target.tagName;if(t==='INPUT'||t==='SELECT'||t==='TEXTAREA')return;visionCycle();});
 function visionPts(){if(VISN.pts)return VISN.pts;const N=VISN.cap,g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(N*3),3).setUsage(THREE.DynamicDrawUsage));g.setAttribute('size',new THREE.BufferAttribute(new Float32Array(N),1).setUsage(THREE.DynamicDrawUsage));g.setAttribute('heat',new THREE.BufferAttribute(new Float32Array(N),1).setUsage(THREE.DynamicDrawUsage));
   const m=new THREE.ShaderMaterial({transparent:true,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending,uniforms:{sc:{value:600}},
     vertexShader:'attribute float size;attribute float heat;varying float vH;uniform float sc;void main(){vH=heat;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=clamp(size*sc/-mv.z,2.,90.);gl_Position=projectionMatrix*mv;}',
