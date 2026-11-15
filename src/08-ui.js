@@ -975,7 +975,7 @@ function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=gen
   if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
-function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
+function resetScene(){if(typeof PARK!=='undefined'){for(const p of PARK.values())SCN.remove(p.o);PARK.clear();}if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
   for(const p of PINGS)if(p.m)SCN.remove(p.m);PINGS.length=0;if(typeof FIRES!=='undefined'){FIRES.length=0;for(const S of SHOCKS){S.t=S.d;S.m.material.opacity=0;S.m.scale.setScalar(.001);}}PARTS.length=0;TRACERS.length=0;VPROJ.length=0;ofReset();if(GHOST){SCN.remove(GHOST);GHOST=null;GHOSTK=null;}if(RALLY){SCN.remove(RALLY);RALLY=null;}for(const l of LIGHTS)l.intensity=0;}
 /* ---------- loading screen: shown the moment a battle starts (Test Range, Deploy vs AI, Play again, multiplayer) ---------- */
 // The battle itself (map, bases, units, AI) is set up at once and exactly as before; the slow drawing work (ground
@@ -1195,7 +1195,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
     ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();cam.yaw=0;cam.tyaw=0;/* every battle starts north-up */const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=300;cam.td=300;}],
-    ['Preparing graphics…',.78,()=>{LOAD.wstop=0;LOAD.wt=[performance.now(),0];LOAD.warm=null;
+    ['Preparing graphics…',.78,()=>{try{if(typeof sfxEnsure==='function')sfxEnsure();}catch(e){}/* the battle's sound echo (seconds of noise built in JS) and the effects clip start loading now, not on the first explosion */LOAD.wstop=0;LOAD.wt=[performance.now(),0];LOAD.warm=null;
       // chunked on every device: a few models per frame, progress on the loading screen; the watchdog below starts the battle even if it is unfinished
       // (what is left then goes through the same queue in the background)
       if(typeof warmShadersChunked!=='function')return;const r=warmShadersChunked((d,n)=>{if(live())loadStep('Preparing graphics… '+d+' of '+n,.78+.11*d/n);},()=>!live(),()=>!!LOAD.wstop);

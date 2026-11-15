@@ -46,3 +46,21 @@ Results (AI vs AI, Normal, 15 min cap, `--counts 2`, rounds 4+; games per map; p
 The lean did **not** go away in AI-vs-AI games: pooled over the later samples position 1 still wins about 70% on both maps (p about 0.06 and 0.001 for 28 games, but every game pair shares a seed, so the real sample is about half that). The map is now point-exact apart from random trees/rocks, so what is left is either the random forests (placed per seed, not mirrored) or AI behaviour at the coast (naval spot search `coastSpot` takes the first tie in scan order; in one probe the US seat built a shipyard by minute 4 while IR built a tunnel instead, which is a nation effect, not a seat effect). Euphrates and Gulf lean to position 2 in the same test, so a generic seat edge is not it.
 
 Next steps: (1) mirror the random forests/rocks for mirRes maps (G.treePos, in the render pass of mkMap), (2) break `coastSpot` ties by distance to the base instead of scan order, (3) run 40+ games per map on GitHub Actions to see whether the lean is gone; 28 games are not enough to read a 10-point change.
+
+## mapfix2 (2026-11-15, Abdullah 2026-11-15 04:09 "Yes": finish map fairness)
+
+**Real cause found: a supply truck stuck at a corner of the Command HQ.** A per-side probe (same nation in both seats, credits/buildings every 10 s) showed seat 2 behind at minute 2 on caribbean and hormuzgate in every seed (2 buildings started vs 8 on caribbean seed 101), while euphrates was even. Tracing the trucks: seat 2's first truck came back to the HQ at a diagonal, stopped against the HQ's corner and stayed "returning" with 160 supplies for the rest of the game. The unload test was distance to the HQ's *centre* < half its size + 26; the HQ is a 90-wide square, so from a corner the truck can never get that close (corner ≈ 64 + truck radius 12 = 76 > 71). Which side's truck reaches a corner depends on the path (grid cells round down, so the mirrored route is not exactly mirrored) - on these two maps it was always base 2. Losing one of two trucks from second 12 = about a third less money for the whole game, which is the 70-80% lean.
+
+Fix (`src/03-sim.js` updHarv): a truck unloads when it is within 26 of the HQ/depot's **edge** (distance to the square, not its centre) - identical for a truck at a side, and a truck at a corner now unloads. Deterministic plain math, same on host, clients and Cloudflare servers. Guard: `orch/decisions.mjs` "mapfix2". Other centre-distance tests (dozer building, entering tunnels, repair) were checked: their margins are wide enough that a corner still counts for every building size.
+
+Results (AI vs AI, Normal, 15 min cap, `node orch/mapfair.mjs --battles --counts 2 --maps caribbean,hormuzgate --round N`; position 1 win share / score share):
+
+| state | caribbean | hormuzgate | pooled seat 1 : seat 2 (decided games) |
+|---|---|---|---|
+| before, main (rounds 4-12, 36 games each) | **81% / 63%** (p<0.001) | **72% / 63%** (p=0.008) | 43 : 5 |
+| after (rounds 4-33, 120 games each) | **46% / 48%** (p=0.36) | **57% / 54%** (p=0.12) | 82 : 75 |
+| after, same rounds as before (4-13, 40 each) | 45% / 50% | 51% / 52% | 25 : 28 |
+
+Pooled seat check over the 13 two-player maps of the first table (rounds 4-5, 104 games, `--maps arctic,...,zagros`): position 1 won 33, position 2 won 33 of the decided games (was 19:11 before mapfix). Per map with 8 games: every map 44-56% except khyber 69% and lebanon 25% (p 0.29 / 0.16, too few games to read).
+
+Both maps are now inside 40-60%. The earlier mapfix work (alternating tick order, mirrored coasts/derricks/towns) stays: it removed real asymmetries, but the truck was the big one.

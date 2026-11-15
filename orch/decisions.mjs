@@ -147,6 +147,7 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(/hMir=D\.mirRes&&BASES\.length===2/.test(mp) && /msrc=D\.mirRes&&BASES\.length===2/.test(mp), 'mapfix: on mirRes maps the hamlets and cities of base 2\'s half are base 1\'s turned half a circle (equal garrisonable houses near both starts)');
   const car = mp.slice(mp.indexOf('caribbean:{'), mp.indexOf('khyber:{'));
   ck(!/Math\.sin\(q\*3|Math\.sin\(q\*7/.test(car) && /cities:mirrorList\(/.test(car), 'mapfix: caribbean coast shapes use even harmonics only and its cities are mirrored (equal coast for both starts)');
+  ck(/if\(!best\)return;if\(Math\.hypot\(Math\.max\(0,Math\.abs\(best\.x-u\.x\)-best\.size\/2\),Math\.max\(0,Math\.abs\(best\.y-u\.y\)-best\.size\/2\)\)<26\)/.test(sim), 'mapfix2: a supply truck unloads by distance to the HQ/depot EDGE, not its centre (a truck stuck at the HQ corner gave seat 1 a third more money on caribbean/hormuzgate)');
   ck(!/w:a=>\.05\*Math\.sin\(a\*3\)/.test(rm.slice(rm.indexOf('hormuzgate:{'), rm.indexOf('tihama:{'))), 'mapfix: hormuzgate centre island needs an even-harmonic outline (point mirror)'); }
 { const fh = SRC['08l-firsthint.js'] || '', so = SRC['08b-social.js'] || '', mn = SRC['14-menu.js'] || '';
   ck(/FH_TEXT/.test(fh) && ['Battle', 'Mission', 'Test range'].every(m => fh.includes("'" + m + "':")) && !fh.includes("'Conquest':"), 'polishE: a mode lost its first-steps hint card');

@@ -577,7 +577,7 @@ function meGeo(B,kp,tc,fac){const C=ME_C;let K;
   return true;}
 const GEO_ALIAS={bmt:'arty',champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',krb:'arty',fpvt:'at',tb2:'heli',cbr:'aa',jeep:'aa',raidlead:'aa'};
 function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];const key=kind+fac+team.color+part;if(GEO[key])return GEO[key];const tc=team.color,hc=camo(team),dk='#2b2d26',mt='#55574e',cn='#9a988c',cl='#7d7c70';const B=Bld();let s=FACTIONS[fac].units[kind]||{};
-  if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=B.geo();
+  if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=(typeof gcKeep==="function"?gcKeep(B.geo()):B.geo());
   switch(kind+':'+part){
     case 'spy:body':{/* plain clothes, no helmet, no rifle: trousers, dark jacket, bare head with a cap, satchel on a strap */B.box(2.6,5,3.2,0,2.5,0,'#46536a');B.box(3,4.2,3.6,0,6.6,0,'#2e3035');B.sph(1.6,0,9.8,0,'#b98a66');B.sph(1.7,0,10.3,0,'#22252a',1,.5,1);B.box(1.6,.25,1.4,1.9,10.2,0,'#22252a');B.box(2,2,.9,0,5.2,2.3,'#6a4a2f');break;}
     case 'inf:body':case 'at:body':case 'hacker:body':case 'hero:body':{const n={inf:3,at:2,hacker:2,hero:1}[kind];const pos=[[3,0],[-4,-5],[-4,5]].slice(0,n);if(n===2){pos[0]=[2,-3.5];pos[1]=[-3,3.5];}if(n===1)pos[0]=[0,0];
@@ -696,7 +696,7 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
       B.cyl(.45,.45,12,6,-14,83,-8,'#c0c4c6');B.cyl(5,.4,2,12,-8,52,-8,'#d8dcd4',0,0,Math.PI/2);break;}
     default:B.box(10,10,10,0,5,0,'#ff00ff');
   }
-  return GEO[key]=B.geo();}
+  return GEO[key]=(typeof gcKeep==='function'?gcKeep(B.geo()):B.geo());}
 /* garrison flag and building scaffold: one shared shape/material each (per team colour for the flag), made once and kept
    (a strike that sends a dozen squads into houses used to build ~4 new GPU shapes per house in the same frames) */
 const GARP=new Map(),SCAFG=new Map();let SCAFM=null;

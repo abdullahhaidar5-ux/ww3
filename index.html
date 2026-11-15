@@ -7992,7 +7992,7 @@ function angDiff(a,b){return((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;}
 function updHarv(u,dt){const T=G.teams[u.team];
   if(u.order){if(Math.hypot(u.order.x-u.x,u.order.y-u.y)<10)u.order=null;else{navTo(u,u.order.x,u.order.y,dt);return;}}
   if(u.state==='ret'){let best=u.drop&&!u.drop.dead&&G.t<(u.dropT||0)?u.drop:null,bd=best?dist(best,u):1e9;if(!best){for(const e of G.ents)if(e.isB&&e.team===u.team&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead){const d=dist(e,u);if(d<bd){bd=d;best=e;}}u.drop=best;u.dropT=G.t+1.5;}
-    if(!best)return;if(bd<best.size/2+26){{const g=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T)),s=stOf(T);s.sc=(s.sc|0)+g;}T.credits+=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T));u.cargo=0;u.state='go';}else navTo(u,best.x,best.y,dt);return;}
+    if(!best)return;if(Math.hypot(Math.max(0,Math.abs(best.x-u.x)-best.size/2),Math.max(0,Math.abs(best.y-u.y)-best.size/2))<26){/* unload by distance to the building's EDGE (it is square): a truck that reached a corner used to stay 'returning' forever (mapfix2) */{const g=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T)),s=stOf(T);s.sc=(s.sc|0)+g;}T.credits+=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T));u.cargo=0;u.state='go';}else navTo(u,best.x,best.y,dt);return;}
   if(!u.field||u.field.amt<=0){if(G.t<(u.fldT||0))return;u.fldT=G.t+1.5;const drops=G.ents.filter(e=>e.isB&&e.team===u.team&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead);let best=null,bd=1e9;const gr=regions('ground'),rg=gr[Math.floor(u.y/CELL)*GW+Math.floor(u.x/CELL)];let bdd=0;for(const f of G.fields)if(f.amt>0){{const fr=gr[Math.floor(f.y/CELL)*GW+Math.floor(f.x/CELL)];if(rg&&fr&&fr!==rg)continue;}/* never a field this truck can't drive to */let dd=1e9;for(const b of drops)dd=Math.min(dd,dist(b,f));let foe=0;if(T.ai)for(const b of nearby(f.x,f.y,700,HV_N))if(b.isB&&!b.dead&&b.team>=0&&!ally(b.team,u.team)){foe=1500;break;}/* AI trucks keep out of enemy bases while any other field is left */const d=dist(f,u)*.6+(drops.length?dd:0)+(los('ground',u.x,u.y,f.x,f.y)?0:900)+foe;if(d<bd){bd=d;best=f;bdd=dd;}}u.field=best;if(!best)return;if(T.ai&&bdd>900&&bdd<1e9)T.ai.depF=best;}
   const f=u.field;if(u.state==='go'){if(dist(f,u)<f.r+6){u.state='gather';u.gt=0;}else navTo(u,f.x,f.y,dt);}
   else if(u.state==='gather'){u.gt+=dt;if(u.gt>=3){const take=Math.min(Math.round(160*upgT(T,'harv')*(T.F.mods.harv||1)),f.amt);f.amt-=take;u.cargo=take;u.state='ret';}}}
@@ -8468,6 +8468,8 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
     let g=0;for(const u of mine){if(g>=3)break;if(u.isB||u.kind==='dozer'||u.kind==='harv'||u.kind==='hacker'||u.s.noAttack||u.s.dom!=='ground'||u.order||u.target)continue;if(Math.hypot(u.x-b.x,u.y-b.y)<700){g++;if(Math.hypot(u.x-b.x,u.y-b.y)>150)setMove(u,b.x+((u.id%5)-2)*30,b.y+((u.id%3)-1)*40,'amove');}}}}
   let ORD=aiPers(T).ord?[...aiPers(T).ord,...AIORDER]:AIORDER;if(G.battle)ORD=[...ORD.filter(k=>k!=='uplink'),...(T.ai.d>=2?['uplink']:[])];   /* Battle: only Hard and Brutal build the late $5000 Strike Center, after everything else */
   while(ORD[T.ai.bi]&&(!bldAllowed(T.fac,ORD[T.ai.bi])||ORD[T.ai.bi]==='shipyard'))T.ai.bi++;
+  /* a side the AI takes over mid-battle (host left, 07b ckpt) starts its build list at 0: steps it already owns are done, not saved up for again (it used to hoard for a second Barracks and never trained anyone) */
+  while(ORD[T.ai.bi]&&STRUCT[ORD[T.ai.bi]]){const k=ORD[T.ai.bi];let had=0,before=0;for(const e of mine)if(e.isB&&e.kind===k)had++;for(let i=0;i<T.ai.bi;i++)if(ORD[i]===k)before++;if(had<=before)break;T.ai.bi++;}
   if(T.ai.bi>1&&!mine.some(e=>e.kind==='barracks'))T.ai.re='barracks';else if(T.ai.bi>2&&!mine.some(e=>e.kind==='factory'))T.ai.re='factory';else T.ai.re=null;
   if(G.battle&&bldAllowed(T.fac,'gen')){const pw=pwrOf(id),nx=POWER.use[ORD[T.ai.bi]]||0;if(!mine.some(e=>e.kind==='gen'&&e.built<1)&&(pw.use>pw.make||(nx&&pw.use+nx>pw.make)))T.ai.re='gen';}   /* Battle power: a Generator before the first electronic building, keep power positive, rebuild lost ones */
   if(T.ai.re&&!mine.some(e=>e.isB&&e.built<1)){const s=bstats(T.fac,T.ai.re);if(T.credits>=s.cost){const p=aiFindSpot(id,T.ai.re,anchor);if(p)placeBld(id,T.ai.re,p[0],p[1]);}}
@@ -10579,7 +10581,7 @@ function meGeo(B,kp,tc,fac){const C=ME_C;let K;
   return true;}
 const GEO_ALIAS={bmt:'arty',champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',krb:'arty',fpvt:'at',tb2:'heli',cbr:'aa',jeep:'aa',raidlead:'aa'};
 function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];const key=kind+fac+team.color+part;if(GEO[key])return GEO[key];const tc=team.color,hc=camo(team),dk='#2b2d26',mt='#55574e',cn='#9a988c',cl='#7d7c70';const B=Bld();let s=FACTIONS[fac].units[kind]||{};
-  if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=B.geo();
+  if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=(typeof gcKeep==="function"?gcKeep(B.geo()):B.geo());
   switch(kind+':'+part){
     case 'spy:body':{/* plain clothes, no helmet, no rifle: trousers, dark jacket, bare head with a cap, satchel on a strap */B.box(2.6,5,3.2,0,2.5,0,'#46536a');B.box(3,4.2,3.6,0,6.6,0,'#2e3035');B.sph(1.6,0,9.8,0,'#b98a66');B.sph(1.7,0,10.3,0,'#22252a',1,.5,1);B.box(1.6,.25,1.4,1.9,10.2,0,'#22252a');B.box(2,2,.9,0,5.2,2.3,'#6a4a2f');break;}
     case 'inf:body':case 'at:body':case 'hacker:body':case 'hero:body':{const n={inf:3,at:2,hacker:2,hero:1}[kind];const pos=[[3,0],[-4,-5],[-4,5]].slice(0,n);if(n===2){pos[0]=[2,-3.5];pos[1]=[-3,3.5];}if(n===1)pos[0]=[0,0];
@@ -10698,7 +10700,7 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
       B.cyl(.45,.45,12,6,-14,83,-8,'#c0c4c6');B.cyl(5,.4,2,12,-8,52,-8,'#d8dcd4',0,0,Math.PI/2);break;}
     default:B.box(10,10,10,0,5,0,'#ff00ff');
   }
-  return GEO[key]=B.geo();}
+  return GEO[key]=(typeof gcKeep==='function'?gcKeep(B.geo()):B.geo());}
 /* garrison flag and building scaffold: one shared shape/material each (per team colour for the flag), made once and kept
    (a strike that sends a dozen squads into houses used to build ~4 new GPU shapes per house in the same frames) */
 const GARP=new Map(),SCAFG=new Map();let SCAFM=null;
@@ -11535,7 +11537,7 @@ function fxUpdate(dt){
   flagTick(dt);
   for(const p of PINGS)p.t+=dt;for(let i=PINGS.length-1;i>=0;i--)if(PINGS[i].t>=PINGS[i].d)PINGS.splice(i,1);
   washTick();wakeTick(dt);dustN=0;
-  gpuGcHook();gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}
+  gpuGcHook();if(typeof boneTrickle==='function')boneTrickle(dt);gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}
   if(G&&G.map&&G.map.theme==='snow'&&CAM&&typeof cam!=='undefined'){const n=Math.min(30,dt*Math.min(150,cam.dist*.16))|0;const R=Math.max(500,cam.dist*1.1);for(let i=0;i<n+(Math.random()<dt*20?1:0);i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(60,260),vx:rnd(8,22),vy:rnd(-4,6),vh:-rnd(26,40),f:1,c:[1.05,1.08,1.12],s:rnd(1.4,2.4),d:rnd(4,6.5),a:.85});}}
   try{weatherFX(dt);}catch(e){}
   shake*=Math.exp(-7*dt);flash=Math.max(0,flash-dt*1.6);}
@@ -11743,18 +11745,20 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
   lap('models',ts);ts=performance.now();
   // the merged one-mesh soldier and the shared plain materials
   if(!dead()){const grp=mk();
-    try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac))grp.add(o);}}catch(e){}
+    try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac)){grp.add(o);/* bone textures for the soldiers who appear later in the battle */if(typeof bonePoolWarm==='function'){const nbs=new Set();o.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});for(const k of keys){const pr=MODELS.proto[k];if(pr&&pr.scene)pr.scene.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});}for(const nb of nbs)bonePoolWarm(nb,PH?48:160);}}}}catch(e){}
     try{grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);gg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*3).fill(.5),3));grp.add(new THREE.Mesh(gg,gm));grp.add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
     for(const op of [.8,.12])grp.add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
     // an aircraft's exhaust plume is added when the unit is made (modelFor), not to the model itself: its shader and canvas texture are prepared here
     try{if(typeof jetPlumeMat==='function'){const pl=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());pl.renderOrder=3;grp.add(pl);}}catch(e){}
-    // a garrisoned house's flag and a building's scaffold (shared shapes, first seen mid-battle when squads run into houses)
-    try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));}}catch(e){}
     grp.traverse(c=>{c.frustumCulled=false;});await step('shared',grp);await frame();}
   // what a strike shows for the first time (PC): missiles, flames, rock chunks / warning markers, ping rings, rubble, banner / shock rings
   if(!PH&&!dead()){
     {const grp=mk();try{if(typeof mslWarm==='function')mslWarm(grp);for(const cg of chunkGeos()){const rk=new THREE.Mesh(cg,chunkMat('#4a4034'));rk.castShadow=true;rk.frustumCulled=false;rk.scale.setScalar(2);grp.add(rk);}}catch(e){console.warn('strike warm-up',e);}await step('missiles',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const KG=mkGeo(),bm2=new THREE.MeshBasicMaterial({color:0xea3a2c,transparent:true,opacity:.01,depthWrite:false});for(const g of [KG.ring,KG.inner,KG.disc,KG.bar,pingGeo()]){const m=new THREE.Mesh(g,bm2);m.frustumCulled=false;m.scale.setScalar(20);m.position.y=3;grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('markers',grp,0,1);await frame();}
+    // a garrisoned house's flag, marker and scaffold, and a supply truck's crate load (shared shapes, first drawn mid-battle when squads run into houses / a truck loads)
+    if(!dead()){const grp=mk();try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));
+        for(const q of G.teams)if(q&&q.fac&&FACTIONS[q.fac])grp.add(mesh(geoFor('garrison',q.fac,q,'main')));const gs=bstats(T.fac,'garrison');if(gs&&BH.garrison)grp.add(new THREE.LineSegments(scafGeo(gs.size+6,BH.garrison/BSC+6),scafMat()));}
+      if(typeof harvCargoGeo==='function')grp.add(mesh(harvCargoGeo()));grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
@@ -11788,12 +11792,14 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     // everything else hidden for a moment (lights stay)
     if(!dead()&&!isLate()&&!PH&&post()){const vis=units.filter(u=>u.visible),SL=8;let tl2=performance.now();
       const aoOn=POST.mAO&&POST.aoOn!==false&&POST.ovr&&POST.dRT;
+      // everything is drawn once even if it is outside the opening view (rocks, wrecks, depots across the map), so its shape is on the card before it is first seen
+      const unc=[];for(const u of vis)u.traverse(c=>{if((c.isMesh||c.isLine||c.isPoints)&&c.frustumCulled){c.frustumCulled=false;unc.push(c);}});
       for(let i=0;i<vis.length&&!dead()&&!isLate();i+=SL){MK('slice '+i);const mine=new Set(vis.slice(i,i+SL));for(const u of vis)u.visible=mine.has(u);const s0=performance.now();
         try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}
           R3.setRenderTarget(POST.rt);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
         R3.setRenderTarget(null);for(const u of vis)u.visible=true;const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push(['slice '+i,Math.round(d)]);
         if(performance.now()-tl2>30){await frame();tl2=performance.now();}}
-      for(const u of vis)u.visible=true;}
+      for(const u of vis)u.visible=true;for(const c of unc)c.frustumCulled=true;}
     // (no whole-scene draw here: the slices above prepared every variant; the last loading step draws the real first frame)
     if(!dead()&&!isLate()&&!PH){CAM.updateMatrixWorld();
       if(!dead()&&!isLate()&&typeof mwPipWarm==='function'){MK('pip');const m0=performance.now();mwPipWarm();(W.slow=W.slow||[]).push(['pip',Math.round(performance.now()-m0)]);await frame();}}}
@@ -11813,7 +11819,7 @@ function gpuGcHook(){if(!SCN||SCN.__gc)return;const rm=SCN.remove.bind(SCN);SCN.
 function gpuGc(){if(!GCQ.length||!SCN)return 0;if(!GC_PROTO){GC_PROTO=new Set();for(const k in MODELS.proto)MODELS.proto[k].scene.traverse(o=>{if(o.geometry)GC_PROTO.add(o.geometry);});}
   const used=new Set(),usedT=new Set();SCN.traverse(o=>{if(o.geometry)used.add(o.geometry);const m=o.material;if(m)for(const mm of (Array.isArray(m)?m:[m]))if(mm&&mm.map)usedT.add(mm.map);});
   const q=GCQ.splice(0,GCQ.length),seen=new Set();let n=0;
-  for(const root of q){if(root.parent)continue;root.traverse(o=>{const g=o.geometry;if(g&&!seen.has(g)&&!used.has(g)&&!GC_PROTO.has(g)&&!GC_KEEP.has(g)){seen.add(g);g.dispose();n++;}
+  for(const root of q){if(root.parent)continue;root.traverse(o=>{if(o.isSkinnedMesh&&o.skeleton&&!seen.has(o.skeleton)){seen.add(o.skeleton);if(typeof boneRelease==='function')boneRelease(o.skeleton);}const g=o.geometry;if(g&&!seen.has(g)&&!used.has(g)&&!GC_PROTO.has(g)&&!GC_KEEP.has(g)){seen.add(g);g.dispose();n++;}
     const m=o.material;if(m)for(const mm of (Array.isArray(m)?m:[m])){const t=mm&&mm.map;if(t&&t.isCanvasTexture&&!usedT.has(t)&&!seen.has(t)){seen.add(t);t.dispose();}}});}
   return n;}
 
@@ -12162,12 +12168,16 @@ const _OS=new THREE.Vector3();function onScr(x,h,y,m){if(!CAM)return true;_OS.se
 // cached for a second per squad.
 function SET_POSTURE(){return !window.NOPOSTURE;}
 function squadPost(e,o){if((e.supp||0)>.5)return 1;if(G.t-(e.lastFire||-9)>3)return 0;const ud=o.userData;if(!(G.t-(ud.cvT||-9)<1)){ud.cvT=G.t;try{ud.cv=coverAt(e.x,e.y)?1:0;}catch(_){ud.cv=0;}}return ud.cv?.5:0;}
+/* soldiers who step out of sight into a house, dugout, tunnel or vehicle keep their 3D figure (hidden) for up to 90 s: rebuilding
+   it when they come out made a new skeleton texture and re-sent the soldier shape to the card - a squad leaving a shelled
+   house in the middle of a strike was several new GPU objects in one frame (view only, nothing here touches the battle) */
+const PARK=new Map();
 function syncScene(dt){const live=new Set();
   /* haze limit (Abdullah 2026-11-15 00:40 "Keep camera, add haze limit"): with the low cinematic camera the view reaches the horizon, so units and
      buildings deep in the haze (75% fogged and beyond) are not drawn - nor shadowed or depth-passed. View only. */
   const FGo=SCN&&SCN.fog,FDc=FGo&&FGo.far>FGo.near?FGo.near+(FGo.far-FGo.near)*.75:1e9,FD2=FDc*FDc,CPx=CAM.position.x,CPz=CAM.position.z;
   // one object that fails to update must never freeze the whole picture: skip it (logged once) and draw the rest
-  for(const e of G.ents){try{if(e.dead)continue;live.add(e.id);let o=OBJ.get(e.id);if(o&&o.userData.tm!==undefined&&o.userData.tm!==e.team){SCN.remove(o);o=null;}if(!o){o=makeObj(e);o.userData.tm=e.team;if(!e.isB&&!o.userData.model)o.userData.bg=MODELS.gen|0;OBJ.set(e.id,o);}
+  for(const e of G.ents){try{if(e.dead)continue;live.add(e.id);let o=OBJ.get(e.id);if(o&&o.userData.tm!==undefined&&o.userData.tm!==e.team){SCN.remove(o);o=null;}if(!o&&PARK.size){const pk=PARK.get(e.id);if(pk){PARK.delete(e.id);if(pk.o.userData.tm===e.team){o=pk.o;o.visible=true;OBJ.set(e.id,o);}else SCN.remove(pk.o);}}if(!o){o=makeObj(e);o.userData.tm=e.team;if(!e.isB&&!o.userData.model)o.userData.bg=MODELS.gen|0;OBJ.set(e.id,o);}
     // a unit that had to start as a simple box figure (its 3D model was still loading - slow PC or connection) gets the real model as soon as it lands
     else if(o.userData.bg!==undefined&&o.userData.bg!==(MODELS.gen|0)){o.userData.bg=MODELS.gen|0;const m2=makeObj(e);if(m2&&m2.userData.model){SCN.remove(o);o=m2;o.userData.tm=e.team;OBJ.set(e.id,o);}else if(m2)SCN.remove(m2);}
     const v=vis(e);
@@ -12244,7 +12254,8 @@ function syncScene(dt){const live=new Set();
           part({x:e.x-ca*e.r*1.05+rnd(-2,2),y:e.y-sa*e.r*1.05+rnd(-2,2),h:WL+.6,vx:-ca*8,vy:-sa*8,f:.6,c:[.8,.88,.9],s:rnd(3,5)*big,g:3*big,d:rnd(.7,1.1),a:.24*(.4+sp*.6)});
           if(sp>.4)for(const sd of [-1,1])part({x:e.x+ca*e.r*.75+sa*sd*e.r*.25,y:e.y+sa*e.r*.75-ca*sd*e.r*.25,h:WL+2,vx:sa*sd*rnd(20,40)+ca*10,vy:-ca*sd*rnd(20,40)+sa*10,vh:rnd(10,30),grav:1,f:.7,c:[.92,.96,1],s:rnd(2,3.5)*big,g:6,d:rnd(.4,.7),a:.6});}}
       e.lx=e.x;e.ly=e.y;}}catch(err){if(!e._drawErr){e._drawErr=1;console.warn('draw skipped',e.kind,err);}}}
-  for(const [id,o] of OBJ)if(!live.has(id)){SCN.remove(o);OBJ.delete(id);}
+  for(const [id,o] of OBJ)if(!live.has(id)){OBJ.delete(id);if(o.userData.walker&&!o.userData.sinking&&PARK.size<160){o.visible=false;PARK.set(id,{o,t:performance.now()});}else SCN.remove(o);}
+  if(PARK.size){const now=performance.now();for(const [id,p] of PARK)if(now-p.t>90000){SCN.remove(p.o);PARK.delete(id);}}
   sdDumpTick();
   if(G.sceneryPos)for(const [sx,sy,k,wx,wy] of G.sceneryPos){if(k!==2||wx==null||Math.random()>dt*5||!inView(sx,sy,.2))continue;part({x:wx+rnd(-3,3),y:wy+rnd(-3,3),h:groundH(wx,wy)+10,vx:2,rise:rnd(40,52),c:C_SMOKE,c2:[.5,.48,.45],ck:.35,s:rnd(4,6),g:7,d:rnd(3,4),a:.2});}
   if(G.oilObj)G.oil.forEach((o,i)=>{const v=G.oilObj[i];const ph=G.t*1.6+i;
@@ -14503,7 +14514,7 @@ function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=gen
   if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
-function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
+function resetScene(){if(typeof PARK!=='undefined'){for(const p of PARK.values())SCN.remove(p.o);PARK.clear();}if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
   for(const p of PINGS)if(p.m)SCN.remove(p.m);PINGS.length=0;if(typeof FIRES!=='undefined'){FIRES.length=0;for(const S of SHOCKS){S.t=S.d;S.m.material.opacity=0;S.m.scale.setScalar(.001);}}PARTS.length=0;TRACERS.length=0;VPROJ.length=0;ofReset();if(GHOST){SCN.remove(GHOST);GHOST=null;GHOSTK=null;}if(RALLY){SCN.remove(RALLY);RALLY=null;}for(const l of LIGHTS)l.intensity=0;}
 /* ---------- loading screen: shown the moment a battle starts (Test Range, Deploy vs AI, Play again, multiplayer) ---------- */
 // The battle itself (map, bases, units, AI) is set up at once and exactly as before; the slow drawing work (ground
@@ -14723,7 +14734,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
     ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();cam.yaw=0;cam.tyaw=0;/* every battle starts north-up */const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=300;cam.td=300;}],
-    ['Preparing graphics…',.78,()=>{LOAD.wstop=0;LOAD.wt=[performance.now(),0];LOAD.warm=null;
+    ['Preparing graphics…',.78,()=>{try{if(typeof sfxEnsure==='function')sfxEnsure();}catch(e){}/* the battle's sound echo (seconds of noise built in JS) and the effects clip start loading now, not on the first explosion */LOAD.wstop=0;LOAD.wt=[performance.now(),0];LOAD.warm=null;
       // chunked on every device: a few models per frame, progress on the loading screen; the watchdog below starts the battle even if it is unfinished
       // (what is left then goes through the same queue in the background)
       if(typeof warmShadersChunked!=='function')return;const r=warmShadersChunked((d,n)=>{if(live())loadStep('Preparing graphics… '+d+' of '+n,.78+.11*d/n);},()=>!live(),()=>!!LOAD.wstop);
@@ -18516,7 +18527,8 @@ return{unit:draw,bld:drawB,pal};})();
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};
 try{const v=JSON.parse(localStorage.getItem('ww3_audio')||'{}');if(v.m===false)AU.musicOn=false;if(v.s===false)AU.sfxOn=false;if(v.v===false)AU.voiceOn=false;}catch(e){}
 function saveAudio(){try{localStorage.setItem('ww3_audio',JSON.stringify({m:AU.musicOn,s:AU.sfxOn,v:AU.voiceOn}));}catch(e){}}
-function impulse(c,sec,decay){const n=c.sampleRate*sec,b=c.createBuffer(2,n,c.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<n;i++){const t=i/n;d[i]=(Math.random()*2-1)*Math.pow(1-t,decay)*(t<.003?t/.003:1);}}return b;}
+const IMPC=new Map();function impulse(c,sec,decay){const ck=c.sampleRate+'|'+sec+'|'+decay;if(IMPC.get(ck)&&IMPC.get(ck).c===c)return IMPC.get(ck).b;const b=impulse0(c,sec,decay);IMPC.set(ck,{c,b});return b;}
+function impulse0(c,sec,decay){const n=c.sampleRate*sec,b=c.createBuffer(2,n,c.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<n;i++){const t=i/n;d[i]=(Math.random()*2-1)*Math.pow(1-t,decay)*(t<.003?t/.003:1);}}return b;}
 // ----- Phone-proof sound start -----
 // Phones only allow sound after a real tap, iPhones mute Web Audio when the ringer switch is on silent, and calls, Siri
 // or switching apps "interrupt" the sound engine. Everything below makes sound start on the first tap, ignore the
@@ -20019,6 +20031,18 @@ function lowSoldierGeo(g){const pa=g.attributes.position,n=pa.count,ix=g.index.a
   for(const nm of ['color','uv','skinIndex','skinWeight']){const A=g.attributes[nm];if(!A)continue;const sz=A.itemSize,arr=new (nm==='skinIndex'?Uint16Array:Float32Array)(m*sz);for(let r=0;r<m;r++)for(let k=0;k<sz;k++)arr[r*sz+k]=A.getComponent(first[r],k);lo.setAttribute(nm,new THREE.BufferAttribute(arr,sz));}
   // normals: rebuilt from the thinned faces, so the rounded far soldier still shades smoothly
   lo.setIndex(new THREE.BufferAttribute(m>65535?new Uint32Array(idx):new Uint16Array(idx),1));lo.computeVertexNormals();return lo;}
+/* Every soldier figure has its own skeleton, and three.js gives each skeleton a small float texture (its bone positions) made on
+   the figure's first draw: a squad appearing mid-battle (fresh from the barracks, out of a house) was new GPU textures in that
+   frame. Soldiers now take an already-prepared bone texture from a pool filled while the battle loads (bonePoolWarm), and the
+   GPU clean-up (gpuGc) hands it back when the figure is gone for good. An empty pool simply falls back to three.js. */
+const BONEP=new Map();
+function boneSize(n){let s=Math.sqrt(n*4);s=Math.ceil(s/4)*4;return Math.max(s,4);}
+function bonePool(skel){if(!skel||skel.boneTexture||!skel.bones||typeof SCN==='undefined'||!SCN||!SCN.__gc)return;/* battle scene only (not the command-bar portrait or encyclopedia stages) */const L=BONEP.get(boneSize(skel.bones.length)),p=L&&L.pop();if(!p)return;p.arr.fill(0);p.arr.set(skel.boneMatrices);skel.boneMatrices=p.arr;skel.boneTexture=p.tex;p.tex.needsUpdate=true;}
+function bonePoolWarm(n,want){if(typeof R3==='undefined'||!R3)return;const sz=boneSize(n);let L=BONEP.get(sz);if(!L)BONEP.set(sz,L=[]);
+  for(let i=L.length;i<want;i++){const arr=new Float32Array(sz*sz*4),tex=new THREE.DataTexture(arr,sz,sz,THREE.RGBAFormat,THREE.FloatType);tex.needsUpdate=true;tex.userData.bp=sz;try{R3.initTexture(tex);}catch(e){}L.push({arr,tex});}}
+/* a long battle with many squads empties the pool: when one runs low (<32), one texture is added every half second */
+let BONET=0;function boneTrickle(dt){if((BONET-=dt)>0||!BONEP.size)return;BONET=.5;for(const [sz,L] of BONEP)if(L.length<32){const arr=new Float32Array(sz*sz*4),tex=new THREE.DataTexture(arr,sz,sz,THREE.RGBAFormat,THREE.FloatType);tex.needsUpdate=true;tex.userData.bp=sz;try{R3.initTexture(tex);}catch(e){}L.push({arr,tex});return;}}
+function boneRelease(skel){const t=skel&&skel.boneTexture;if(!t||!t.userData||!t.userData.bp)return;skel.boneTexture=null;skel.boneMatrices=new Float32Array(skel.bones.length*16);let L=BONEP.get(t.userData.bp);if(!L)BONEP.set(t.userData.bp,L=[]);if(L.length<256)L.push({arr:t.image.data,tex:t});}
 function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false;const sk=[];inner.traverse(o=>{if(o.isSkinnedMesh)sk.push(o);});if(!sk.length)return false;
   const skel=sk[0].skeleton;if(!skel||sk.some(o=>!o.skeleton||o.skeleton.bones.length!==skel.bones.length||o.skeleton.bones.some((b,i)=>b!==skel.bones[i])||Array.isArray(o.material)||!o.geometry.attributes.skinIndex))return false;
   const gear=[];skel.bones.forEach((b,bi)=>{for(const c of b.children)if(c.isMesh&&c.userData.gear&&!c.isSkinnedMesh)gear.push([c,bi]);});
@@ -20054,10 +20078,12 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     if(tex){const ob=src.onBeforeCompile,ck=src.customProgramCacheKey;mat.onBeforeCompile=(sh,r)=>{if(ob)ob.call(src,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\nvec4 sampledDiffuseColor=texture2D(map,vMapUv);if(vMapUv.x<-2.)sampledDiffuseColor=vec4(1.);diffuseColor*=sampledDiffuseColor;\n#endif');};
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
     E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
-  if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}
+  if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}if(typeof gcKeep==='function'){gcKeep(E.geo);gcKeep(E.lo);}/* shared by every soldier of this look: never freed by the GPU clean-up (re-sending it mid-battle was a hitch) */
   if(E.lo){const lm=new THREE.SkinnedMesh(E.lo,E.mat);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
-  sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
+  sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());bonePool(skel);for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
+/* a supply truck's crate load: one shared shape for every truck (it was built new per truck) */
+let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
   // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
@@ -20349,7 +20375,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
     
     const m=mesh(B.geo());yaw.add(m);}}
   if(e.kind==='ammot'){const B=Bld();B.box(17,8,15,-6,22,0,'#5d6048');B.box(18,1,16,-6,26.6,0,'#4c5039');for(const z of [-5,0,5])B.box(3,3,3,-15.5,20,z,'#8a6a3a');B.box(7,4,6,5,21,0,'#8a6a3a');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
-  if(e.kind==='harv'){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
+  if(e.kind==='harv'){const cg=mesh(harvCargoGeo());o.add(cg);o.userData.parts.cargo=cg;}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}
 // polishlooks: rocket truck launcher = an open BM-21/Fajr-style tube pack (4 x 10 tubes with dark muzzles, side plates,
