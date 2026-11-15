@@ -285,7 +285,7 @@ return {E,drawUnit,drawBld,iconBranch,icon,tabs,chip,sec,card,seg,link,tipHide,m
     add($$('pRestart'));const q=$$('pQuit');if(q){q.textContent='Quit to menu';add(q,'dng');}
     row.replaceWith(m);const k=document.createElement('div');k.className='ukKeys';k.textContent='Esc or P — resume';card.append(k);}
   /* Settings: one tab per job (Gameplay · Controls · Graphics · Audio); rows keep their ids and handlers, only move into panes */
-  const SET_TAB=[['aud',/^(sMus|sTrk|myF|myN|myNx|sFx|sVo)/,/music|soundtrack|volume|voice|radio chatter|sound/i],['gfx',/^(sGfx|sFps|sHp)/,/graphic|quality|frame-rate|shadow|resolution|painterly|bloom|\bfps\b|health bar/i],['ctl',/^(sScr|sZm|sInv|sDbl|sTol|sMmc|sMpan|sEdge|sM[A-Z])/,/mouse|scroll|zoom|click|cursor|hotkey|keyboard|camera|drag/i]];
+  const SET_TAB=[['aud',/^(sMus|sTrk|myF|myN|myNx|sFx|sVo|sAnn)/,/music|soundtrack|volume|voice|radio chatter|sound/i],['gfx',/^(sGfx|sFps|sHp)/,/graphic|quality|frame-rate|shadow|resolution|painterly|bloom|\bfps\b|health bar/i],['ctl',/^(sScr|sZm|sInv|sDbl|sTol|sMmc|sMpan|sEdge|sM[A-Z])/,/mouse|scroll|zoom|click|cursor|hotkey|keyboard|camera|drag/i]];
   function setTabs(){const body=$$('setBody');if(!body)return;let P=body._ukP;
     if(!P){const h1=body.querySelector('h1');const host=document.createElement('div');P=body._ukP=UK.tabs(host,[['game','Gameplay'],['ctl','Controls'],['gfx','Graphics'],['aud','Audio']],(UK._setTab||'gfx'),k=>{UK._setTab=k;});
       const kids=[...host.childNodes];if(h1)h1.after(...kids);else body.prepend(...kids);body._ukBar=kids[0];}

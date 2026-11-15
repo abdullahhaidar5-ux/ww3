@@ -207,7 +207,7 @@ function critIcons(c,x,y,crit){let i=0;for(const b of [1,2,4]){if(!(crit&b))cont
 function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW,VH);
   try{drawSupplyTowns(c);}catch(_){}
   for(const e of G.ents){if(e.dead||!vis(e))continue;const sel=G.sel.includes(e);if(G.battle&&e.isB&&e.built>=1&&POWER.use[e.kind]&&(e.disv||e.dis>G.t)){const q=toScreen(e.x,unitH(e)+BH[e.kind]+24,e.y);if(q.z<=1){const lp=ally(e.team,ME)&&pwView().low;c.save();c.textAlign='center';c.font='700 10px system-ui,sans-serif';c.fillStyle='rgba(0,0,0,.72)';c.fillRect(q.x-30,q.y-9,60,14);c.fillStyle=lp?'#ff6a55':'#7fd0ff';c.fillText('\u26A1 '+(lp?'NO POWER':'OFFLINE'),q.x,q.y+2);c.strokeStyle=c.fillStyle;c.lineWidth=1.4;c.beginPath();c.moveTo(q.x-26,q.y+3);c.lineTo(q.x-18,q.y-7);c.stroke();c.restore();}}   /* Battle: small no-power marker on an electronic building that is switched off */
-    if(SET.hp!=='all'&&!sel&&e.hp>=e.max&&!(e.rank>0)&&!(e.isB&&e.built<1)&&!e.hacking&&!e.planting&&!(e.building&&e.team===ME)&&!((e.supp||0)>.5&&!e.isB)&&!(e.rout>G.t||e.routV)&&!(e.team===ME&&!e.isB&&(()=>{const m=moraleOf(e);return m&&m.v<.995;})())&&!(e.team===ME&&G.sqOf&&G.sqOf[e.id])&&!(e.mark>G.t||e.markV)&&!(e.am!==undefined&&e.amx&&ally(e.team,ME)&&(e.am<e.amx*.3))&&!(e.crit&&!e.isB))continue;
+    if(SET.hp!=='all'&&!sel&&!(e.isB&&e.sell)&&e.hp>=e.max&&!(e.rank>0)&&!(e.isB&&e.built<1)&&!e.hacking&&!e.planting&&!(e.building&&e.team===ME)&&!((e.supp||0)>.5&&!e.isB)&&!(e.rout>G.t||e.routV)&&!(e.team===ME&&!e.isB&&(()=>{const m=moraleOf(e);return m&&m.v<.995;})())&&!(e.team===ME&&G.sqOf&&G.sqOf[e.id])&&!(e.mark>G.t||e.markV)&&!(e.am!==undefined&&e.amx&&ally(e.team,ME)&&(e.am<e.amx*.3))&&!(e.crit&&!e.isB))continue;
     const top=e.isB?BH[e.kind]+8:entHeightMid(e)+(e.s.dom==='air'?14:16);const p=toScreen(e.x,unitH(e)+top,e.y);if(p.z>1||p.x<-40||p.y<-40||p.x>VW+40||p.y>VH+40)continue;
     const w=Math.max(e.isB?24:14,Math.min(e.isB?80:46,(e.isB?e.size*.7:e.r*2)*PPU));   /* orderfeel: small bars, not clutter */
     if(sel||e.hp<e.max||SET.hp==='all'){const f=Math.max(0,e.hp/e.max);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,p.y-1,w+2,5);c.fillStyle=f>.5?'#74d08f':f>.25?'#e3b341':'#ea5a40';c.fillRect(p.x-w/2,p.y,w*f,3);if(w>=30){c.fillStyle='rgba(0,0,0,.45)';for(let i=1;i<5;i++)c.fillRect(p.x-w/2+w*i/5,p.y,1,3);}}
@@ -230,6 +230,8 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
     if(!e.isB&&(e.supp||0)>.5&&e.s&&e.s.dom!=='air'){const f=toScreen(e.x,unitH(e),e.y),pu=.5+.5*Math.sin(performance.now()/160);
       if(f.z<=1){c.strokeStyle='rgba(234,90,64,'+(.35+.35*pu)+')';c.lineWidth=1.6;c.beginPath();c.ellipse(f.x,f.y,Math.max(7,e.r*PPU*1.1),Math.max(3.5,e.r*PPU*.55),0,0,7);c.stroke();}
       const ix=p.x-w/2-8,iy=p.y-2;c.fillStyle='rgba(30,10,8,.8)';c.beginPath();c.moveTo(ix-5,iy-5);c.lineTo(ix+5,iy-5);c.lineTo(ix+5,iy+2);c.lineTo(ix,iy+7);c.lineTo(ix-5,iy+2);c.closePath();c.fill();c.strokeStyle='#ea5a40';c.lineWidth=1.2;c.stroke();c.beginPath();c.moveTo(ix,iy-3);c.lineTo(ix,iy+2);c.moveTo(ix-2.5,iy);c.lineTo(ix,iy+3);c.lineTo(ix+2.5,iy);c.stroke();}
+    if(e.isB&&e.rep&&e.hp<e.max){const bob=Math.sin(performance.now()/260)*2,wx=p.x+w/2+9,wy=p.y-3+bob;c.save();c.translate(wx,wy);c.rotate(-.7);c.fillStyle='rgba(12,22,32,.85)';c.beginPath();c.arc(0,0,9,0,7);c.fill();c.strokeStyle='#8fd0ff';c.lineWidth=1.3;c.stroke();c.lineWidth=2.4;c.lineCap='round';c.beginPath();c.moveTo(0,6);c.lineTo(0,-2);c.stroke();c.lineWidth=2;c.beginPath();c.arc(0,-4.5,3,.5,Math.PI*2-.5);c.stroke();c.restore();}   // Zero Hour: a wrench floats over a building that repairs itself
+    if(e.isB&&e.sell){c.font='700 12px Saira Condensed, sans-serif';c.textAlign='center';c.fillStyle='#f2d35a';c.strokeStyle='rgba(0,0,0,.8)';c.lineWidth=3;const t='SELLING'+(MODE==='client'?'':' '+Math.max(0,Math.ceil(e.sell-G.t))+'s');c.strokeText(t,p.x,p.y+22);c.fillText(t,p.x,p.y+22);}
     if(e.isB&&e.built<1){c.fillStyle='#000';c.fillRect(p.x-w/2,p.y+7,w,4);c.fillStyle='#e3b341';c.fillRect(p.x-w/2,p.y+7,w*e.built,4);if(e.stall&&e.team===ME){c.font='600 11px Saira Condensed, sans-serif';c.textAlign='center';c.fillStyle='#e3b341';c.fillText('WAITING FOR CONSTRUCTION VEHICLE',p.x,p.y+24);}}
     if(!e.isB&&e.team!==ME&&(e.mark>G.t||e.markV)){c.strokeStyle='#ea5a40';c.lineWidth=1.5;c.beginPath();c.arc(p.x,p.y-14,6,0,7);c.moveTo(p.x-9,p.y-14);c.lineTo(p.x+9,p.y-14);c.moveTo(p.x,p.y-23);c.lineTo(p.x,p.y-5);c.stroke();}
     {const rt=MODE==='client'?e.routV:e.rout>G.t,sh=!rt&&(MODE==='client'?e.shakV:(!e.isB&&e.s&&canRout(e)&&(e.fear||0)>courageOf(e)*.65));
@@ -275,9 +277,16 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
      for(const q of P.pts){const b=sc(q);c.lineTo(b.x,b.y);}c.stroke();c.setLineDash([]);c.fillStyle='#e3b341';P.pts.forEach((q,i)=>{const b=sc(q);c.beginPath();c.moveTo(b.x,b.y-7);c.lineTo(b.x+7,b.y);c.lineTo(b.x,b.y+7);c.lineTo(b.x-7,b.y);c.closePath();c.fill();if(P.pts.length>1){c.font='600 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='#1a1408';c.fillText(String(i+1),b.x,b.y+3.5);c.fillStyle='#e3b341';}});}}
   if(typeof wallPreview==='function')wallPreview(c);
   if(drag&&drag.box){c.strokeStyle='#8af0a6';c.lineWidth=1;c.fillStyle='rgba(116,208,143,.1)';const x=Math.min(drag.x0,mouse.x),y=Math.min(drag.y0,mouse.y);c.fillRect(x,y,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));c.strokeRect(x+.5,y+.5,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));}
+  if(G.place&&mouse.in&&STRUCT[G.place]){const w=screenToWorld(mouse.x,mouse.y);if(w)plFoot(c,w,!G.placeWhy||G.placeWhy==='dz');}   // placement footprint (Zero Hour grid)
   if(G.aim){const w=screenToWorld(mouse.x,mouse.y);if(w){const r=G.aim==='sup'?G.teams[ME].sup.r+G.teams[ME].sup.spread:G.aim==='ldrA'?60:(powInfo(G.aim,G.teams[ME].fac).r||60);c.strokeStyle='#ea5a40';c.lineWidth=1.5;c.setLineDash([6,4]);c.beginPath();
     for(let i=0;i<=40;i++){const a=i/40*6.28,p=toScreen(w.x+Math.cos(a)*r,groundH(w.x,w.y),w.y+Math.sin(a)*r);i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y);}c.stroke();c.setLineDash([]);}}
   if(flash>0){c.fillStyle=`rgba(255,236,210,${flash*.45})`;c.fillRect(0,0,VW,VH);}}
+/* Placement footprint (Zero Hour): a grid of CELL/2 squares under the ghost, green where the building can stand, red where the ground (water, bridge, cliff) or the spot is wrong. Only while placing; <=64 cells. View only. */
+function plFoot(c,w,ok){const s=bstats(G.teams[ME].fac,G.place),n=Math.max(2,Math.min(8,Math.round(s.size/(CELL/2)))),st=s.size/n,x0=w.x-s.size/2,y0=w.y-s.size/2;c.save();c.lineWidth=1;
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){const wx=x0+i*st,wy=y0+j*st,cx=Math.floor((wx+st/2)/CELL),cy=Math.floor((wy+st/2)/CELL),bad=!ok||cx<0||cy<0||cx>=GW||cy>=GH||G.grid[cy*GW+cx]!==0;
+    const a=toScreen(wx,groundH(wx,wy)+1,wy),b=toScreen(wx+st,groundH(wx+st,wy)+1,wy),d=toScreen(wx+st,groundH(wx+st,wy+st)+1,wy+st),e=toScreen(wx,groundH(wx,wy+st)+1,wy+st);if(a.z>1)continue;
+    c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.lineTo(d.x,d.y);c.lineTo(e.x,e.y);c.closePath();c.fillStyle=bad?'rgba(234,70,50,.38)':'rgba(90,230,120,.30)';c.fill();c.strokeStyle=bad?'rgba(255,120,100,.7)':'rgba(150,255,170,.6)';c.stroke();}
+  c.restore();}
 // Tactical minimap: desaturated terrain with contour-style mountains, grid squares (A-H / 1-6), fog of war,
 // unit symbols by type (dot infantry, square armour, triangle aircraft, hull ships), contact flashes where your units
 // are taking fire, strike warning rings, squad tags, a radar sweep and a bracketed camera box.
@@ -295,6 +304,9 @@ function mmBase(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH;const c=docum
   return c;}
 function mmGrid(x,y){return 'ABCDEFGH'[Math.max(0,Math.min(7,Math.floor(x/MAPW*MMG.cols)))]+(Math.max(0,Math.min(5,Math.floor(y/MAPH*MMG.rows)))+1);}
 const MMC=[];let mmFogT=0;
+/* Radar events (Zero Hour): a pulsing ring on the minimap where your side is attacked (red), a strike is launched (yellow) or something finishes (green). Ring pool of 12, no allocation per frame. View only. */
+const MMP=[];const MMP_C={a:'255,80,60',s:'255,214,70',g:'110,230,140'};
+function mmPing(x,y,k){if(!k)return;const t=performance.now()/1000;if(MMP.length>=12)MMP.shift();MMP.push({x,y,k,t});}
 // Electronic warfare on the minimap (view only). Where an enemy jamming truck covers our units the minimap there turns
 // to static and hides every contact under it; radar-spoof ghosts show as enemy armour moving toward us. A working
 // Strike Center sees through them: drawn faded with a "?". Our own spoof's ghosts show as faint outlines.
@@ -357,6 +369,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
   // contact flashes where we're under fire
   for(let i=MMC.length-1;i>=0;i--){const m=MMC[i],a=now-m.t;if(a>1.4){MMC.splice(i,1);continue;}c.strokeStyle=`rgba(255,80,60,${1-a/1.4})`;c.lineWidth=1.5;c.beginPath();c.arc(m.x*sx,m.y*sy,3+a*9,0,7);c.stroke();}
   if(MMC.length>40)MMC.splice(0,MMC.length-40);
+  for(let i=MMP.length-1;i>=0;i--){const m=MMP[i],a=now-m.t;if(a>3.2){MMP.splice(i,1);continue;}const col=MMP_C[m.k];for(let j=0;j<2;j++){const q=(a*1.1+j*.5)%1;c.strokeStyle='rgba('+col+','+((1-a/3.2)*(1-q)).toFixed(2)+')';c.lineWidth=2;c.beginPath();c.arc(m.x*sx,m.y*sy,3+q*14,0,7);c.stroke();}c.fillStyle='rgba('+col+','+(1-a/3.2).toFixed(2)+')';c.beginPath();c.arc(m.x*sx,m.y*sy,2.4,0,7);c.fill();}
   if((performance.now()/250|0)%2){c.fillStyle='#ea5a40';for(const m of MARKERS){c.beginPath();c.arc(m.x*sx,m.y*sy,5,0,7);c.fill();}}
   // squad tags
   if(G.sq)for(let i=1;i<=5;i++){const L=(G.sq[i]||[]).map(id=>G.byId.get(id)).filter(u=>u&&!u.dead);if(!L.length)continue;const x=L.reduce((a,u)=>a+u.x,0)/L.length*sx,y=L.reduce((a,u)=>a+u.y,0)/L.length*sy;c.fillStyle='rgba(5,8,7,.8)';c.fillRect(x+5,y-12,10,10);c.fillStyle='#e3b341';c.font='700 9px IBM Plex Mono, monospace';c.textAlign='center';c.textBaseline='middle';c.fillText(i,x+10,y-6.5);c.textAlign='left';c.textBaseline='alphabetic';}

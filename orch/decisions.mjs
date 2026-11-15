@@ -28,6 +28,8 @@ const ck = (c, m) => { if (!c) fails.push(m); };
 { const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./upgsimple.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "upgsimple guard: " + (r.stdout || "").trim().split("\n").slice(0, 4).join(" | ")); }
 // techbldgs 2026-11-14 (Abdullah 2026-11-13 20:21 / 20:24): the capturable Battle buildings (quarry, mine, power plant, field hospital) are ONE system on the derrick code: capturable, effect only for the owner, destroyable and repairable, state in the checkpoint; every Battle map has them (symmetry: orch/battlemapfair.mjs --static)
 { const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./techbldgs.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "capturable Battle buildings rules failed: " + String(r.stdout).slice(0, 400));
+// zhfeel 2026-11-15 (Abdullah 2026-11-14 19:52 "Huccum!" make it feel like Generals Zero Hour): build clock wipe + queue number on the bar buttons, Sell refunds 50% and removes the building after 3 s, Repair restores hp and costs money, Generals-style cursors (runtime proof: orch/zhfeel.mjs)
+{ const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./zhfeel.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "zhfeel guard: orch/zhfeel.mjs failed: " + (r.stdout || "").split("\n").filter(l => /FAIL/.test(l)).slice(0, 3).join(" | ")); }
   const bm = fs.readFileSync(path.join(ROOT, "src/02d-battlemaps.js"), "utf8"); const ids = [...bm.matchAll(/^  (\w+):\{nm:/gm)].map(x => x[1]); ck(ids.length > 0 && ids.every(id => { const i = bm.indexOf("  " + id + ":{nm:"); return /\n    tb:\[\[/.test(bm.slice(i, i + 1400)); }), "every Battle map must list its capturable buildings (tb:[[x,y,type]])"); }
 
 // Rules files (orch/loadF): CLAUDE.md = short current rules, orch/DECISIONS.md = the full dated record. Every standing decision's
@@ -224,7 +226,7 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
 // Menu background (Abdullah 2026-11-14 17:07 "Have an epic static main menu background"): ONE static picture, no live shell battle, no war table.
 { const m = SRC['14-menu.js'] || '', all = Object.values(SRC).join('\n');
   ck(!/mxShell|mxshell|G\.shell\b|SH\.on/.test(all) && !/mxWarTable|mxWarSrc|#mxwt/.test(all), 'menu background: the live shell battle / war table are back (one static picture only)');
-  ck(/#mxbg\{[^}]*url\(menu-bg\.webp\)/.test(m) && !/mxpan/.test(m) && fs.existsSync(path.join(ROOT, 'menu-bg2.webp')) && fs.statSync(path.join(ROOT, 'menu-bg2.webp')).size < 450000, 'menu background: #mxbg must be a CSS background of menu-bg2.webp (static, under 450 KB)'); }
+  ck(/#mxbg\{[^}]*url\(menu-bg\.webp\)/.test(m) && !/mxpan/.test(m) && fs.existsSync(path.join(ROOT, 'menu-bg3.webp')) && fs.statSync(path.join(ROOT, 'menu-bg3.webp')).size < 450000, 'menu background: #mxbg must be a CSS background of menu-bg3.webp (static, under 450 KB)'); }
 // 0a. Game feel (2026-11-09 22:44): shell impacts match the surface (water spray / road chips / the map's soil) and tanks rock when they fire.
 { const f = SRC['05-fx3d.js'], v = SRC['06-view.js'];
   ck(/function impactSurf\(/.test(f) && /function splashFX\(/.test(f) && /if\(wet\)splashFX\(x,y,s,big\)/.test(f), 'game feel: explosions no longer check the surface they hit (water spray is gone)');
@@ -342,6 +344,13 @@ const ev = (fn, a) => page.evaluate(fn, a);
 const SEEN = () => { const out = []; const vis = e => { if (!e.isConnected) return false; for (let n = e; n && n.nodeType === 1; n = n.parentElement) { const s = getComputedStyle(n); if (n.hidden || s.display === 'none' || s.visibility === 'hidden' || +s.opacity === 0) return false; } const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); for (let t; (t = w.nextNode());) { const s = t.nodeValue.trim(); if (s && t.parentElement && vis(t.parentElement)) out.push(s); }
   for (const e of document.querySelectorAll('[title]')) if (vis(e)) out.push(e.title); return out.join(' ¶ '); };
+// zhfeel2 (2026-11-15): Zero Hour feel guards - radar pings on the minimap, rank chevrons + Promoted text, squad numbers, placement footprint, score screen rows.
+{ const has = (f, re, m) => ck(re.test(SRC[f] || ''), 'zhfeel2: ' + m);
+  has('06-view.js', /function mmPing/, 'minimap radar ping (mmPing) is gone'); has('09b-radio.js', /mmPing\(x,y/, 'radio events no longer ping the minimap');
+  has('06-view.js', /rank chevrons/, 'rank chevrons are gone'); has('09b-radio.js', /PROMOTED/, 'Promoted floating text is gone');
+  has('08-ui.js', /sqLast/, 'double-tap squad number centering is gone'); has('06-view.js', /function plFoot/, 'placement footprint grid (plFoot) is gone');
+  has('08-ui.js', /Supplies collected/, 'score screen lost its Supplies collected row'); has('08-ui.js', /\['Score'/, 'score screen lost its Score row');
+  has('03-sim.js', /sco:Math\.round/, 'endStats lost the score'); }
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
@@ -545,6 +554,19 @@ try {
   // ---- drones fly from the Airfield (Abdullah 2026-11-08); nations without an airfield keep them at the War Factory
   { const d = await ev(() => ['TR', 'UA', 'IR', 'RS'].map(f => [f, stats(f, 'drone').from, roster(f).airfield.includes('drone'), roster(f).factory.includes('drone'), !!FACTIONS[f].noAir]));
     for (const [f, from, inAir, inFac, noAir] of d) { const want = noAir ? 'factory' : 'airfield'; ck(from === want && inAir === (want === 'airfield') && inFac === (want === 'factory'), `drone for ${f} built from ${from} (want ${want})`); } }
+  // ---- announcer (Abdullah 2026-11-14 "Huccum!"): every status line exists in every announcer language, repeats are throttled, never two at once, volume slider in Settings
+  { const A = await ev(() => { const keys = ['building','complete','unit','upgrade','funds','lowPower','powerBack','baseAtk','unitsAtk','unitLost','bldLost','cantBuild','strikeReady','enemyStrike','lineCut','roadTaken','reinf'];
+      const miss = []; for (const L of ['en','fa','ar','ru','zh','he']) for (const k of keys) if (!ANN_TXT[L] || !ANN_TXT[L][k]) miss.push(L + '.' + k);
+      const st = { last: {}, busy: 0 }; const g1 = annGate('unit', 1000, false, st), g2 = annGate('unit', 3000, false, st), g3 = annGate('unit', 8000, false, st);
+      const b1 = annGate('baseAtk', 20000, false, st), b2 = annGate('baseAtk', 30000, false, st), b3 = annGate('baseAtk', 41000, false, st);
+      const st2 = { last: {}, busy: 5000 }; const ov = annGate('funds', 1000, false, st2);
+      const st3 = { last: {}, busy: 0 }; const t1 = annGate('unit', 1000, true, st3), t2 = annGate('unit', 10000, true, st3);
+      return { miss, rep: [g1, g2, g3], atk: [b1, b2, b3], ov, test: [t1, t2], slider: !!document.getElementById('sAnn'), hooked: String(pushLog).includes('annFromLog') }; });
+    ck(!A.miss.length, 'announcer table is missing lines: ' + A.miss.join(','));
+    ck(A.rep.join() === 'true,false,true', 'announcer must not repeat the same line within 6 s: ' + A.rep);
+    ck(A.atk.join() === 'true,false,true', 'announcer under-attack lines must be once per 20 s: ' + A.atk);
+    ck(A.ov === false, 'announcer must not start a line while another is playing'); ck(A.test.join() === 'true,false', 'announcer must be throttled more in the Test range');
+    ck(A.slider && A.hooked, 'announcer needs its Settings > Audio slider (sAnn) and the pushLog hook'); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
 await browser.close(); server.close();
