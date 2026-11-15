@@ -10364,7 +10364,7 @@ function buildWorld(tc){
         const gl=new THREE.Mesh(lg,LAMPM);gl.position.set(s2+3.6,20.2,z);grp.add(gl);}
     }
     for(let s=-L/2+50;s<L/2-30;s+=70){const pl=new THREE.Mesh(new THREE.BoxGeometry(12,26,58),pm);pl.position.set(s,-10,0);pl.castShadow=true;grp.add(pl);}
-    WORLD.add(grp);if(typeof BRGRP!=='undefined')BRGRP.set(b,grp);}
+    try{mergeByMat(grp);}catch(e){console.warn('bridge merge',e);}WORLD.add(grp);if(typeof BRGRP!=='undefined')BRGRP.set(b,grp);}
   // trees (instanced)
   try{scenery();}catch(e){console.warn('scenery',e);}
   warScenery();
@@ -10453,6 +10453,19 @@ function rockGeo(seed,det,sq,rough){const g=new THREE.IcosahedronGeometry(1,det)
   g.computeVertexNormals();const N=g.attributes.normal,A=new Map();for(let i=0;i<P.count;i++){const key=Math.round(P.getX(i)*500)+','+Math.round(P.getY(i)*500)+','+Math.round(P.getZ(i)*500);let a=A.get(key);if(!a){a=[0,0,0];A.set(key,a);}a[0]+=N.getX(i);a[1]+=N.getY(i);a[2]+=N.getZ(i);}
   for(let i=0;i<P.count;i++){const a=A.get(Math.round(P.getX(i)*500)+','+Math.round(P.getY(i)*500)+','+Math.round(P.getZ(i)*500)),l=Math.hypot(a[0],a[1],a[2])||1;N.setXYZ(i,a[0]/l,a[1]/l,a[2]/l);}return g;}
 const ROCKV=new Array(6);
+/* A group of plain single-material meshes becomes one mesh per material (a bridge's piers, balls, lamps and rails were
+   ~150 separate draws each, twice per frame). Pieces at or below y=-5 (pillars under the deck) are merged apart and kept
+   at y=-10, because a blown bridge hides only the children above y=-5 (08c-logi lgGfx). */
+function mergeByMat(grp){const by=new Map(),keep=[];
+  for(const c of grp.children){const m=c.material;if(!c.isMesh||c.isInstancedMesh||Array.isArray(m)||c.children.length||!c.geometry){keep.push(c);continue;}
+    const lo=c.position.y<=-5,k=m.uuid+(lo?'L':'H');let e=by.get(k);if(!e){e={m,lo,L:[],cs:false,rs:false};by.set(k,e);}
+    c.updateMatrix();const g=c.geometry.index?c.geometry.toNonIndexed():c.geometry.clone();g.applyMatrix4(c.matrix);if(lo)g.translate(0,10,0);if(!g.attributes.normal)g.computeVertexNormals();e.L.push(g);e.cs=e.cs||c.castShadow;e.rs=e.rs||c.receiveShadow;}
+  if(!by.size)return grp;for(const c of grp.children.slice())grp.remove(c);for(const c of keep)grp.add(c);
+  for(const e of by.values()){let n=0;for(const g of e.L)n+=g.attributes.position.count;const P=new Float32Array(n*3),N=new Float32Array(n*3);let o=0;
+    for(const g of e.L){P.set(g.attributes.position.array,o*3);N.set(g.attributes.normal.array,o*3);o+=g.attributes.position.count;g.dispose();}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P,3));g.setAttribute('normal',new THREE.BufferAttribute(N,3));g.computeBoundingSphere();g.computeBoundingBox();
+    const ms=new THREE.Mesh(g,e.m);if(e.lo)ms.position.y=-10;ms.castShadow=e.cs;ms.receiveShadow=e.rs;grp.add(ms);}
+  return grp;}
 function Bld(){const parts=[];const E=new THREE.Euler();const add=(g,x,y,z,c,rx=0,ry=0,rz=0)=>{TMPM.compose(TMP.set(x,y,z),TMPQ.setFromEuler(E.set(rx,ry,rz)),new THREE.Vector3(1,1,1));parts.push({g,m:TMPM.clone(),c:typeof c==='string'?lin(c):c});return api;};
   const api={box:(w,h,d,x,y,z,c,rx,ry,rz)=>add(new THREE.BoxGeometry(w,h,d),x,y,z,c,rx,ry,rz),cyl:(rt,rb,h,seg,x,y,z,c,rx,ry,rz)=>add(new THREE.CylinderGeometry(rt,rb,h,seg),x,y,z,c,rx,ry,rz),rock:(w,h,d,x,y,z,c,rx,ry,rz,sd)=>{const vi=(sd==null?Math.random()*6:sd)%6|0,g=ROCKV[vi]||(ROCKV[vi]=rockGeo(11+vi*5,1,.7));const gg=g.clone();gg.scale(w/2,h/.7/2,d/2);return add(gg,x,y,z,c,rx,ry,rz);},
     cone:(r,h,seg,x,y,z,c,rx,ry,rz)=>add(new THREE.ConeGeometry(r,h,seg),x,y,z,c,rx,ry,rz),sph:(r,x,y,z,c,sx=1,sy=1,sz=1)=>{const g=new THREE.SphereGeometry(r,10,8);g.scale(sx,sy,sz);return add(g,x,y,z,c);},
@@ -10686,6 +10699,13 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
     default:B.box(10,10,10,0,5,0,'#ff00ff');
   }
   return GEO[key]=B.geo();}
+/* garrison flag and building scaffold: one shared shape/material each (per team colour for the flag), made once and kept
+   (a strike that sends a dozen squads into houses used to build ~4 new GPU shapes per house in the same frames) */
+const GARP=new Map(),SCAFG=new Map();let SCAFM=null;
+function garParts(col){let p=GARP.get(col);if(p)return p;const pole=GARP.pole||(GARP.pole=gcKeep(new THREE.CylinderGeometry(.35,.35,16,6))),mPole=GARP.mPole||(GARP.mPole=new THREE.MeshStandardMaterial({color:0x8a8a84}));
+  if(!GARP.cloth){GARP.cloth=gcKeep(new THREE.PlaneGeometry(10,6));GARP.base=Float32Array.from(GARP.cloth.attributes.position.array);}const cloth=GARP.cloth;p={pole,mPole,cloth,base:GARP.base,mCloth:new THREE.MeshStandardMaterial({color:new THREE.Color(col),side:THREE.DoubleSide,emissive:new THREE.Color(col),emissiveIntensity:.25})};GARP.set(col,p);return p;}
+function scafGeo(sw,sh){sw=Math.round(sw);sh=Math.round(sh);const k=sw+'|'+sh;let g=SCAFG.get(k);if(!g){const nseg=Math.max(2,Math.round(sw/14));g=gcKeep(new THREE.WireframeGeometry(new THREE.BoxGeometry(sw,sh,sw,nseg,Math.max(2,Math.round(sh/9)),nseg)));SCAFG.set(k,g);}return g;}
+function scafMat(){return SCAFM||(SCAFM=new THREE.LineBasicMaterial({color:0x8f8b80,transparent:true,opacity:.85}));}
 function mesh(g){const m=new THREE.Mesh(g,MAT.std);m.castShadow=true;m.receiveShadow=true;return m;}
 function makeObj(e){mats();if(e.kind==='cleric')return leaderObj(e);if(!e.isB&&e.s&&e.s.fake&&e.kind!==e.s.fake){const q=Object.create(e);q.kind=e.s.fake;const o=makeObj(q);if(o){o.userData.fakeOf=e.kind;return o;}}if(!e.isB){const mo=modelFor(e);if(mo)return mo;}const T=G.teams[e.team],f=T.fac,k=e.kind,o=new THREE.Group();o.userData.parts={};const P=o.userData.parts;
   const add=(part,parent=o)=>{const m=mesh(geoFor(k,f,T,part));parent.add(m);P[part]=m;return m;};
@@ -10693,9 +10713,9 @@ function makeObj(e){mats();if(e.kind==='cleric')return leaderObj(e);if(!e.isB&&e
     else if(k==='shipyard'){add('main');if(!(meY&&bldModel(eS,o,T))){const c=add('crane');c.position.set(22,5,22);}}else if(k==='uplink'){add('main');const m=add('missile');m.position.y=4;const a=mesh(geoFor(k,f,T,'door')),b=mesh(geoFor(k,f,T,'door'));const HY=UPHY[(UPLINK[f]||[])[1]]||27.5;a.position.set(-9,HY,0);b.position.set(9,HY,0);b.rotation.y=Math.PI;o.add(a);o.add(b);P.da=a;P.db=b;P.hy=HY-27.5;}
     else add('main');
     if(!mb&&(k==='airfield'||k==='uplink'))bldModel(eS,o,T);
-    if(k==='garrison'){const c=civAtXYAny(e.x,e.y),h=c?c.h:14;const fg=new THREE.Group();const pole=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,16,6),new THREE.MeshStandardMaterial({color:0x8a8a84}));pole.position.y=8;fg.add(pole);const fl=new THREE.Mesh(new THREE.PlaneGeometry(10,6),new THREE.MeshStandardMaterial({color:new THREE.Color(T.color),side:THREE.DoubleSide,emissive:new THREE.Color(T.color),emissiveIntensity:.25}));fl.position.set(5,13,0);fl.userData.base=Float32Array.from(fl.geometry.attributes.position.array);fg.add(fl);fg.position.y=h;o.add(fg);P.flag=fl;}
+    if(k==='garrison'){const c=civAtXYAny(e.x,e.y),h=c?c.h:14;const GP=garParts(T.color),fg=new THREE.Group();const pole=new THREE.Mesh(GP.pole,GP.mPole);pole.position.y=8;fg.add(pole);const fl=new THREE.Mesh(GP.cloth,GP.mCloth);fl.position.set(5,13,0);fl.userData.base=GP.base;fg.add(fl);fg.position.y=h;o.add(fg);P.flag=fl;}
     decorateBld(eS,o);
-    const sw=eS.size+6,sh=BH[k]/BSC+6,nseg=Math.max(2,Math.round(sw/14)),sc=new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.BoxGeometry(sw,sh,sw,nseg,Math.max(2,Math.round(sh/9)),nseg)),new THREE.LineBasicMaterial({color:0x8f8b80,transparent:true,opacity:.85}));sc.position.y=sh/2;o.add(sc);P.scaf=sc;}
+    const sw=eS.size+6,sh=BH[k]/BSC+6,sc=new THREE.LineSegments(scafGeo(sw,sh),scafMat());sc.position.y=sh/2;o.add(sc);P.scaf=sc;}
   else{const c=e.s.cls;o.scale.setScalar(c==='ship'?1.15:['inf','at','hacker','hero'].includes(c)?1.7:1.3);
     if(['inf','at','hacker','hero'].includes(c))add('body');
     else if(c==='tank'||c==='arty'||c==='aa'){add('hull');const t=add('turret');t.position.set(c==='arty'&&!e.s.rocket?-4:0,10,0);}
@@ -11728,6 +11748,8 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     for(const op of [.8,.12])grp.add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
     // an aircraft's exhaust plume is added when the unit is made (modelFor), not to the model itself: its shader and canvas texture are prepared here
     try{if(typeof jetPlumeMat==='function'){const pl=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());pl.renderOrder=3;grp.add(pl);}}catch(e){}
+    // a garrisoned house's flag and a building's scaffold (shared shapes, first seen mid-battle when squads run into houses)
+    try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));}}catch(e){}
     grp.traverse(c=>{c.frustumCulled=false;});await step('shared',grp);await frame();}
   // what a strike shows for the first time (PC): missiles, flames, rock chunks / warning markers, ping rings, rubble, banner / shock rings
   if(!PH&&!dead()){
