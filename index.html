@@ -9992,7 +9992,7 @@ function ldAI(id,T,mine,en){const k=LDKT[id];if(!k||T.ai.t%3)return;const u=LDU[
   if(L.c1<=G.t){if(k==='ay'){if(foes.length>=4)ldCast(id,'a');}else{let best=null,bd=1e9;for(const e of foes){const d=Math.hypot(e.x-u.x,e.y-u.y);if(d<bd){bd=d;best=e;}}if(best)ldCast(id,'a',best.x,best.y);}}}
 /* L2 Faction mechanics (orch/reports/factiondesign.md, Abdullah 2026-11-14 "Do all the dev work now"; answers = RECOMMENDED).
    1) Shia group: RV/OB Hidden Firing Post (see FACTIONS.post, isPost in 03-sim), cheap fortifications x0.6 in Battle for IR RS DW RV OB (SHIA5 in 01-data).
-   2) US / IL "fewer but stronger" (stats only, Q6a): cost +8%, hp +8%, unit build time +10% on top of their own mods; off in Realistic (REAL_TIER already does it).
+   2) US / IL "fewer but stronger" (stats only, Q6a): cost +8%, hp +8%, unit build time +10% on top of their own mods.
    3) Gulf (SA AE) integrated air defence: SAM sites / AA vehicles with another one of the team within 300 m get +10% range (rngOf reads e.iadsT).
    (Europe perks and RU/CN platoon bonus belong to lane L1 / data already in place.) The iads flag is re-derived every second, so it is not saved in checkpoints. */
 const FMECH={US:{cost:1.04,hp:1.08,time:1.05},IL:{cost:1.08,hp:1.08,time:1.1}};
@@ -17054,7 +17054,7 @@ function hudTick(force){try{hudDeclutter();}catch(e){}if(!G||!G.teams||!G.teams[
   const sb=!!G.sandbox;const sig=[sb?1:0,Math.floor(T.credits),cut,HUDS.unread,HUDS.open?1:0,HUDS.al.length,HD_KEYS.map(hudOn).join('')].join('|');if(sig===HUDS.sig)return;HUDS.sig=sig;
   b.querySelector('#hudM').textContent='$'+Math.floor(T.credits).toLocaleString('en-US');b.querySelector('#hudM').title='Money: supply trucks, oil derricks and the buildings you capture pay it.';
   const s=b.querySelector('#hudS');s.textContent=cut?'Supply: '+cut+' depot'+(cut>1?'s':'')+' cut off':'Supply lines OK';s.style.color=cut?'#ff9a8a':'#9be39b';s.title='Supply Depots of yours that no road links to your Command Center (they reach half as far). Build a road to them or clear the crater.';s.hidden=sb;   /* Test range: unlimited ammo, no supply chip */
-  const a=b.querySelector('#hudAl');{const tx='\u26A0 '+(HUDS.unread||HUDS.al.length);if(a.dataset.tx!==tx){a.dataset.tx=tx;a.textContent=tx;}}a.classList.toggle('hot',!!HUDS.unread);   /* toggle, never overwrite: the icon pass adds .hasico (it sizes the alert icon) */
+  const a=b.querySelector('#hudAl');{const tx='\u26A0 '+(HUDS.unread||HUDS.al.length);if(a.dataset.tx!==tx){a.dataset.tx=tx;a.textContent=tx;try{if(typeof icoPut==='function')icoPut(a,'alert');}catch(_){}}}a.classList.toggle('hot',!!HUDS.unread);   /* toggle, never overwrite: the icon pass adds .hasico (it sizes the alert icon) */
   for(const x of b.querySelectorAll('#hudOv button')){x.classList.toggle('on',!!hudOn(x.dataset.o));if(x.dataset.o==='supply')x.hidden=sb;}
   let f=document.getElementById('hudFeed');if(!HUDS.open){if(f)f.remove();}else{if(!f){f=document.createElement('div');f.id='hudFeed';document.body.appendChild(f);}
     f.innerHTML='';if(!HUDS.al.length){const d=document.createElement('div');d.textContent='No alerts yet.';f.appendChild(d);}
