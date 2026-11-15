@@ -11729,7 +11729,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
   const ex=[],step=async(name,grp,wait,keep)=>{MK('step '+name);const s0=performance.now(),lt=isLate();let tcomp=0,ttex=0;
     if(!lt)SCN.add(grp);
     try{if(post()){sizePost();R3.setRenderTarget(POST.rt);}const c0=performance.now();const p=R3.compileAsync(grp,CAM,SCN);tcomp=performance.now()-c0;R3.setRenderTarget(null);await Promise.race([p,new Promise(r=>setTimeout(r,wait||4000))]);const u0=performance.now();await upTex(grp);ttex=performance.now()-u0;}catch(e){console.warn('warm-up',e);R3.setRenderTarget(null);}
-    if(!lt&&!PH&&!keep){MK('draw '+name);try{drawOnly([grp]);}catch(e){}}if(keep&&!lt)ex.push(grp);else if(!lt)unscene(grp);const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push([name,Math.round(d),Math.round(tcomp),Math.round(ttex)]);};
+    if(!lt&&!PH){MK('draw '+name);try{drawOnly([grp],keep?1:0);}catch(e){}}/* kept groups too (with the depth pass): their programs link step by step, not all in the final extras draw */if(keep&&!lt)ex.push(grp);else if(!lt)unscene(grp);const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push([name,Math.round(d),Math.round(tcomp),Math.round(ttex)]);};
   const MK=n=>{LOAD.wmark=n;},mk=()=>{const g=new THREE.Group();g.position.set(bx,gy,by);return g;};
   const lap=(n,t)=>{W.stage.push([n,Math.round(performance.now()-t)]);};
   const BATCH=PH?4:1;let ts=performance.now();
@@ -11759,9 +11759,12 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     if(!dead()){const grp=mk();try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));
         for(const q of G.teams)if(q&&q.fac&&FACTIONS[q.fac])grp.add(mesh(geoFor('garrison',q.fac,q,'main')));const gs=bstats(T.fac,'garrison');if(gs&&BH.garrison)grp.add(new THREE.LineSegments(scafGeo(gs.size+6,BH.garrison/BSC+6),scafMat()));}
       if(typeof harvCargoGeo==='function')grp.add(mesh(harvCargoGeo()));
-      // every side's riflemen and anti-tank teams in all their kit variants: a fresh squad from the barracks mid-battle used to merge its soldier shapes on the spot
-      for(const q of G.teams){if(!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;for(const kd of ['inf','at']){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;
-        for(const id of [1,2,5]){try{const o=makeObj({id:900000+id,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}}}grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
+      grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
+    // every side's riflemen and anti-tank teams in all their kit variants, one side per step: a fresh squad from the barracks mid-battle used to merge its soldier shapes (and link their shaders) on the spot
+    for(const q of G.teams){if(dead()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;const grp=mk();
+      for(const kd of ['inf','at']){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;
+        for(const id of [1,2,5]){try{const o=makeObj({id:900000+id,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}}
+      grp.traverse(c=>{c.frustumCulled=false;});await step('soldiers '+q.fac,grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
