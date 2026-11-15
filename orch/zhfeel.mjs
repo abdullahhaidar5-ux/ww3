@@ -49,10 +49,10 @@ try {
     const cost = bstats(T.fac, 'gen').cost, c0 = T.credits, lost0 = T.lost; G.sel = [gen]; act(ME, { t: 'sell', ids: [gen.id] });
     out.sellSet = !!gen.sell; simUpdate(1); out.still = !gen.dead; simUpdate(2.5); out.gone = !!gen.dead && !G.byId.has(gen.id); out.refund = T.credits - c0; out.wantRefund = Math.floor(cost * .5); out.lost = T.lost - lost0;
     // ---- Repair: restores hp and costs money; toggles off at full hp
-    bar.hp = bar.max * .4; const c1 = T.credits, h1 = bar.hp; act(ME, { t: 'rep', ids: [bar.id] }); out.repOn = !!bar.rep; for (let i = 0; i < 10; i++) simUpdate(1);
-    out.healed = bar.hp > h1; out.spent = c1 - T.credits; for (let i = 0; i < 60 && bar.rep; i++) simUpdate(1); out.full = bar.hp === bar.max && !bar.rep; out.spentAll = c1 - T.credits; out.wantSpent = bstats(T.fac, 'barracks').cost * .25 * .6;
+    bar.hp = bar.max * .4; const c1 = T.credits, h1 = bar.hp; act(ME, { t: 'rep', ids: [bar.id] }); out.repOn = !!bar.rep; for (let i = 0; i < 10; i++) sellTick(1);
+    out.healed = bar.hp > h1; out.spent = c1 - T.credits; for (let i = 0; i < 60 && bar.rep; i++) sellTick(1); out.full = bar.hp === bar.max && !bar.rep; out.spentAll = c1 - T.credits; out.wantSpent = bstats(T.fac, 'barracks').cost * .25 * .6;
     // broke: repair pauses
-    bar.hp = bar.max * .5; T.credits = 0; act(ME, { t: 'rep', ids: [bar.id] }); simUpdate(2); out.brokeHp = bar.hp === bar.max * .5; bar.rep = 0; T.credits = 30000;
+    bar.hp = bar.max * .5; T.credits = 0; act(ME, { t: 'rep', ids: [bar.id] }); sellTick(2); out.brokeHp = bar.hp === bar.max * .5; bar.rep = 0; T.credits = 30000;
     // sell with a queue refunds the queue; checkpoint carries sell/rep
     const b2 = addBld(ME, 'barracks', hq.x - 200, hq.y + 100, true); b2.hp = b2.max * .5; act(ME, { t: 'rep', ids: [b2.id] }); try { const ck = ckEncode(); const o = ck.ents.find(e => e.id === b2.id); out.ck = !!o && o.rep === 1; } catch (e) { out.ck = String(e); }
     // another team's building cannot be sold
