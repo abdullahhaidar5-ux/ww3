@@ -535,7 +535,7 @@ async function main() {
   const posOf = (ids) => NH.evaluate((ids) => ids.map(id => { const e = G.byId.get(id); return e ? [e.x, e.y] : null; }), ids);
   const before = ord.n ? await posOf(ord.ids) : [];
   await NH.waitForTimeout(1500);
-  const aiT0 = { bi: T0.bi, ids: new Set(T0.ids), think: T0.think };
+  const aiT0 = { bi: T0.bi, ids: new Set(T0.ids), think: T0.think, credits: T0.credits };
   const steps = Math.round(AFTER * 2); let lag2 = 0, orderChecked = false;
   for (let i = 0; i < steps; i++) {
     const s = await step(NH, [NC]); if (!s) return; if (i > 10) lag2 = Math.max(lag2, s.lag);
@@ -549,11 +549,17 @@ async function main() {
   if (!ord.n) warns.push(`${ncN} had no units after the takeover, so the order round-trip was not tested`);
   if (lag2 > 1.5) fail(`after the takeover, ${ncN} fell ${lag2.toFixed(1)} game-s behind the new host`);
   // the AI must actually be playing the old host's side
-  const end = await armies(NH), E0 = end.teams[0];
-  const fresh = E0.ids.filter(id => !aiT0.ids.has(id)).length;
-  console.log(`[${secs()}] old host's side after ${AFTER} game-s under the AI: build step ${aiT0.bi} -> ${E0.bi}, ${fresh} new entities, ${E0.q} in production, $${E0.credits}`);
-  if (!E0.out && E0.ai && E0.bi === aiT0.bi && !fresh && !E0.q) console.log(`    old host's side under the AI: ${E0.kinds}; AI thoughts ${aiT0.think} -> ${E0.think}, next think in ${E0.aiT}s`);
-  if (!E0.out && E0.ai && E0.bi === aiT0.bi && !fresh && !E0.q) fail(`the AI took over the old host's side but did nothing with it in ${AFTER} game-s (no building, no production, no new units)`);
+  let end = await armies(NH), E0 = end.teams[0];
+  const idle = (E) => !E.out && E.ai && E.bi === aiT0.bi && !E.ids.some(id => !aiT0.ids.has(id)) && !E.q;
+  console.log(`[${secs()}] old host's side after ${AFTER} game-s under the AI: build step ${aiT0.bi} -> ${E0.bi}, ${E0.ids.filter(id => !aiT0.ids.has(id)).length} new entities, ${E0.q} in production, $${aiT0.credits} -> $${E0.credits}`);
+  // a side that was nearly broke when it was handed over is still saving for its next truck or building: give it up to
+  // another 60 game-s (a Battle supply truck brings ~$8/s) before calling it idle
+  let extra = 0;
+  if (idle(E0)) { console.log(`    old host's side under the AI: ${E0.kinds}; AI thoughts ${aiT0.think} -> ${E0.think}, next think in ${E0.aiT}s; waiting up to 60 more game-s`);
+    for (let i = 0; i < 120 && idle(E0); i++) { const s = await step(NH, [NC]); if (!s || s.over) break; extra += .5; if (i % 10 === 9) { end = await armies(NH); E0 = end.teams[0]; } }
+    end = await armies(NH); E0 = end.teams[0];
+    console.log(`[${secs()}] old host's side after ${AFTER + extra} game-s under the AI: build step ${aiT0.bi} -> ${E0.bi}, ${E0.ids.filter(id => !aiT0.ids.has(id)).length} new entities, ${E0.q} in production, $${E0.credits}`); }
+  if (idle(E0)) fail(`the AI took over the old host's side but did nothing with it in ${AFTER + extra} game-s (no building, no production, no new units)`);
   if (end.teams[ncS].ai || end.teams[ncS].disc) fail(`by the end ${ncN}'s side was AI-run / marked disconnected (ai=${end.teams[ncS].ai}, disc=${end.teams[ncS].disc})`);
   await settleCheck(NH, NC, ncS, `after: ${ncN} ${AFTER} game-s after the takeover`);
   if (ART) for (const [p, n] of [[NH, 'new host'], [NC, ncN]]) { const j = judgeRoomStats(n, await p.evaluate(() => window.__fpStats)); j.fails.forEach(fail); warns.push(...j.warns); }
