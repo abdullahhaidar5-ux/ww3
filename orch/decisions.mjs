@@ -76,6 +76,8 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/function condUI\(/.test(u) && /function sbCond\(/.test(u), 'weathergfx: the setup or Test range Conditions picker is gone from 08-ui.js');
   ck(/const GFX_PRESETS=\[\['low','Low'.*\['auto','Medium'.*\['high','High'.*\['ultra','Ultra'/.test(u), 'weathergfx: Settings graphics row is not Low / Medium / High / Ultra any more');
   ck(!/wxRandIdx\(G\.seed\)===4/.test(s), 'weathergfx: the old "Random = day or night only" rule is back in newGame'); }
+// upgicons 2026-11-15 (Abdullah 00:23 "Buttons were still missing icons"): the bar's hide-everything rule must spare the upgrade / power icon (.zhIc)
+ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{display:none/.test(SRC['08o-zhbar.js'] || ''), 'upgicons: the command-bar rule that hides button children also hides the upgrade/power icons (.zhIc)');
 // rclaunch 2026-11-15 (Abdullah 00:26 "Make road jobs and launch right click", 00:28 powers too): generals' powers and the Strike LAUNCH fire on right-click (left cancels); road jobs run on right-click (left cancels)
 { const u = SRC['08-ui.js'] || '', l = SRC['08c-logi.js'] || '';
   ck(/function rightPress\(e\)[^]*?if\(G\.aim\)\{placeOrAim\(w,false\)/.test(u), 'rclaunch: right-click must fire the armed power / Strike (rightPress)');
