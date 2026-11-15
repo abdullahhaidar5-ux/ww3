@@ -405,6 +405,9 @@ try {
     ck(!nf.fmb && !nf.key && !/Type \(T\)|Resupply|Stance|Assault|Guerrilla/.test(nf.t), 'formations / Type / Resupply / stance buttons must be gone: ' + JSON.stringify(nf)); }
   // mpmap 2026-11-14 (Abdullah 21:22 "Multiplayer map selection is stuck"): the lobby map list is the Battle map list, not one map
   { const mm = await ev(() => { const D = { onMap: 1, nn: 2, mk: BM_KEYS[0] }; const ks = (BM_KEYS).filter(k => MAPS[k] && (MAPS[k].max || 8) >= 2); return ks.length; }); ck(mm >= 10, 'lobby map list too short: ' + mm); }
+  // uiaudit 2026-11-14 (Abdullah 21:55 "find duplicates and remove them"): every letter in the key table belongs to one job only; dead power keys are gone
+  { const kd = await ev(() => { const d = KEYTAB.filter(r => r.def).map(r => r.def); const dup = d.filter((k, i) => d.indexOf(k) !== i); const dead = Object.keys(POW_KEY).filter(k => typeof powBan === 'function' && powBan(k)); return { dup, dead, names: KEYTAB.filter(r => /Stop$|Return to base|Conquest|go" signal/.test(r.name)).map(r => r.name) }; });
+    ck(!kd.dup.length && !kd.dead.length && !kd.names.length, 'key table must have no duplicate or dead keys: ' + JSON.stringify(kd)); }
   // trmap 2026-11-14 (Abdullah 21:07 "In test range map selection doesn't work"): every map in the Test range list is kept when picked
   { const tb = await ev(() => BM_KEYS.filter(k => MAPS[k] && MAPS[k].min <= 2 && MAPS[k].max >= 2 && trBmap(k) !== k)); ck(!tb.length, 'Test range map picks must stick: ' + JSON.stringify(tb)); }
   // novdig 2026-11-14 (Abdullah 14:55 "Make it so that vehicles can't dig in"): no vehicle can dig in, infantry still can

@@ -12148,7 +12148,7 @@ let SUPC={t:-9,P:null};
 function ringOn(c,x,y,r,col,fill){c.beginPath();for(let i=0;i<=40;i++){const a=i/40*6.2832,px=x+Math.cos(a)*r,py=y+Math.sin(a)*r,p=toScreen(px,groundH(px,py)+2,py);if(p.z>1)return;if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);}if(fill){c.fillStyle=fill;c.fill();}c.strokeStyle=col;c.stroke();}
 function supplyWanted(){return !!(KEYO||G.sel.some(u=>!u.isB&&u.team===ME&&u.am!==undefined));}
 let KEYO=false;
-try{addEventListener('keydown',e=>{if(e.key==='o'||e.key==='O')KEYO=true;});addEventListener('keyup',e=>{if(e.key==='o'||e.key==='O')KEYO=false;});addEventListener('blur',()=>{KEYO=false;});}catch(_){}
+try{if(0)addEventListener('keydown',e=>{if(e.key==='o'||e.key==='O')KEYO=true;});   /* hold-O supply view removed: O is Repair, L shows supply lines (UI audit 2026-11-14) */addEventListener('keyup',e=>{if(e.key==='o'||e.key==='O')KEYO=false;});addEventListener('blur',()=>{KEYO=false;});}catch(_){}
 function drawSupplyTowns(c){if(!G||G.over)return;try{ammoRowTick();}catch(_){}
   if(supplyWanted()){if(G.t-SUPC.t>.3||!SUPC.P){SUPC={t:G.t,P:supplyPoints()[ME]||[]};}c.lineWidth=1.4;c.setLineDash([7,6]);for(const q of SUPC.P){if(q.rd||!inView(q.x,q.y,1.6))continue;ringOn(c,q.x,q.y,q.r,'rgba(150,215,255,.55)','rgba(120,190,255,.06)');}c.setLineDash([]);}
   try{drawLogiWorld(c);hudTick();edgeTick();}catch(e){}}
@@ -12566,10 +12566,10 @@ const KEYTAB=[
   {ctx:'battle',grp:'Selection',name:'Select squad / make the selection a squad',fix:'1 – 9 · Ctrl + 1 – 9'},
   {id:'amove',ctx:'battle',grp:'Orders',name:'Attack-move (then right-click)',def:'f'},
   {id:'guard',ctx:'battle',grp:'Orders',name:'Guard (then right-click)',def:'g'},
-  {id:'stop',ctx:'battle',grp:'Orders',name:'Stop',def:'x'},
-  {id:'ret',ctx:'battle',grp:'Orders',name:'Return to base',def:'r'},
-  {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (dozers: trench)',def:'i'},
-  {id:'sell',ctx:'battle',grp:'Orders',name:'Sell the selected building (3 s, half its price back)',def:'v'},
+  {id:'stop',ctx:'battle',grp:'Orders',name:'Halt',def:'x'},
+  {id:'ret',ctx:'battle',grp:'Orders',name:'Retreat',def:'r'},
+  {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (Construction Vehicles: fortification line)',def:'i'},
+  {id:'sell',ctx:'battle',grp:'Orders',name:'Sell the selected building (press twice to confirm; half its price back)',def:'v'},
   {id:'rep',ctx:'battle',grp:'Orders',name:'Repair the selected building (toggle; costs money while it heals)',def:'o'},
   {id:'resup',ctx:'battle',grp:'Orders',name:'Resupply ammunition',def:'z'},
   {id:'abil',ctx:'battle',grp:'Orders',name:'Unit or leader ability, sonar ping, Recon power (with Shift: leader\'s ultimate)',def:'e'},
@@ -12577,17 +12577,10 @@ const KEYTAB=[
   {id:'p_para',ctx:'battle',grp:'General\'s powers',name:'Airborne drop',def:'c'},
   {id:'p_barrage',ctx:'battle',grp:'General\'s powers',name:'Artillery barrage',def:'b'},
   {id:'p_repair',ctx:'battle',grp:'General\'s powers',name:'Repair',def:'y'},
-  {id:'p_mil',ctx:'battle',grp:'General\'s powers',name:'Militia',def:'m'},
   {id:'p_bb',ctx:'battle',grp:'General\'s powers',name:'Bunker Buster',def:'n'},
-  {id:'p_sanc',ctx:'battle',grp:'General\'s powers',name:'Sanctions / open the auto-build list',def:'u'},
-  {id:'p_reinf',ctx:'battle',grp:'General\'s powers',name:'Reinforcements',def:'k'},
-  {id:'p_flare',ctx:'battle',grp:'General\'s powers',name:'Flares / show supply lines (Conquest)',def:'l'},
-  {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
-  {id:'p_hack',ctx:'battle',grp:'General\'s powers',name:'Cyber attack',def:'['},
-  {id:'p_emp',ctx:'battle',grp:'General\'s powers',name:'EMP',def:']'},
+  {id:'supl',ctx:'battle',grp:'Camera',name:'Show supply lines on the ground',def:'l'},
   {id:'pause',ctx:'battle',grp:'Game',name:'Pause (single player) / photo mode',def:'p'},
   {ctx:'battle',grp:'Game',name:'Menu · cancel · one step back',fix:'Esc'},
-  {ctx:'battle',grp:'Game',name:'Team play: give the "go" signal',fix:'Enter'},
   {ctx:'battle',grp:'Game',name:'Team play: ping, draw, circle on the map',fix:', . / \' ;'},
 ];
 const KB={cur:{},map:{battle:{}},dead:{battle:{}},win:false,onKey:null};
@@ -13555,7 +13548,7 @@ function docUI(T){{const ov=$('docPick');if(ov)ov.hidden=true;}return;if(!G||!T)
     const lb=document.createElement('button');lb.textContent='✕';lb.title='Later';lb.setAttribute('aria-label','Later');lb.style.cssText='pointer-events:auto;min-width:44px;min-height:44px;background:none;border:1px solid #667;color:#cbd;border-radius:8px';lb.onclick=()=>{G.docDis=1;ov.hidden=true;};bx.append(lb);}
   ov.hidden=false;}
 // One-click powers (Abdullah 2026-10-31): a no-target power fires at once; a targeted one aims (circle follows the cursor) and the next map click/tap fires it. Hotkeys below; Esc / right-click cancels.
-const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',mil:'m',bb:'n',sanc:'u',reinf:'k',flare:'l',nat:'j'};
+const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',bb:'n'};   /* only the powers Battle offers (upgsimple); L = supply lines, no longer also Flares (UI audit 2026-11-14) */
 function powGo(k){if(!G||G.over)return false;const T=G.teams[ME],P=T&&powInfo(k,T.fac);if(!P||!T.pw[k]||P.passive||T.pw[k].cd>0)return false;if(P.self){doAct({t:'pow',k,x:0,y:0});return true;}G.place=null;G.amove=false;G.defm=false;G.aim=k;updateUI();return true;}
 /* ---------- one-click powers: a strip of buttons always on screen; hotkey/button arms, next map click fires ---------- */
 let QPSIG='',QPEL=null,QPDRAG=null,QPSEEN=null,QPRDY=null,QPTIP=null,QPTK=null,QPLP=0,QPOFF=false;
@@ -14786,7 +14779,7 @@ function syncSettings(){gfxRow();const segs=[['sGfx','gfx',String],['sHp','hp',S
   for(const [id,k] of [['sMus','mus'],['sFx','fx'],['sVo','vo'],['sScr','scr'],['sZm','zm']]){const el=$(id);if(!el)continue;el.value=SET[k];const out=$(id+'V');if(out)out.textContent=SET[k]+'%';el.oninput=()=>{SET[k]=+el.value;if(out)out.textContent=SET[k]+'%';saveSet();if(k!=='scr'&&k!=='zm')applyAudio();};}
   syncMouseUI();}
 // Settings > Mouse: a scheme preset (Generals / Alternate mouse setup / Custom) and a choice for each mouse function
-const MOPT=[['sMpre','Mouse scheme',null,[['std','Standard (default)'],['gen','Generals'],['custom','Custom']]],
+const MOPT=[['sMpre','Mouse scheme',null,[['std','Standard (default)'],['gen','Classic left-click'],['custom','Custom']]],
   ['sMLock','Keep the mouse inside the game window (PC, during a battle)','mLock',[['1','On'],['0','Off']]],
   ['sMLG','Left-click on the ground with units selected','mLG',[['move','Move'],['desel','Deselect']]],
   ['sMRC','Right-click','mRC',[['cancel','Deselect & cancel'],['order','Move & attack']]],
@@ -14805,7 +14798,7 @@ const MOPT=[['sMpre','Mouse scheme',null,[['std','Standard (default)'],['gen','G
 function syncMouseUI(){const pre=mPreset();
   for(const [id,,k] of MOPT){const el=$(id);if(!el)continue;for(const b of el.querySelectorAll('button')){const v=b.dataset.v;b.classList.toggle('on',k?String(SET[k])===v:v===pre);if(id==='sMpre'&&v==='custom')b.disabled=pre!=='custom';
       b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing'||k==='mLock'||k==='mKeep')?+v:v;if(k==='mLock'&&!SET.mLock)try{mlockOff();}catch(_){}else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
-  const n=$('sMpreN');if(n)n.textContent=pre==='std'?'Standard: left-click selects, right-click moves and attacks, right-drag draws a line. F then right-click: attack-move.':pre==='gen'?'Command & Conquer Generals: left-click selects and gives orders, right-click deselects, right-drag scrolls.':'Custom: your own mix of the choices below.';
+  const n=$('sMpreN');if(n)n.textContent=pre==='std'?'Standard: left-click selects, right-click moves and attacks, right-drag draws a line. F then right-click: attack-move.':pre==='gen'?'Classic left-click: left-click selects and gives orders, right-click deselects, right-drag scrolls.':'Custom: your own mix of the choices below.';
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
   const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
@@ -16875,7 +16868,7 @@ setInterval(()=>{try{if(typeof G!=='undefined'&&G&&G.teams)abUI();else if(AB.el)
    (a 3 s corner camera cut to the event, rendered by the main renderer with a scissor, never takes input) and the
    spectators' scoreboard. All view-only: nothing here touches the simulation. The News toggle in Settings covers the PiP too. */
 const MWV={pip:null,pipAt:0,hk:[],mm:0,cam:null,vp:null};
-POW_KEY.hack='[';POW_KEY.emp=']';
+/* Cyber attack / EMP keys removed: Battle does not offer those powers (UI audit 2026-11-14) */
 (()=>{const st=document.createElement('style');st.textContent='#mwPip{position:fixed;left:14px;top:62px;width:240px;height:135px;z-index:40;border:2px solid #e23b33;box-shadow:0 4px 16px #000a;pointer-events:none;display:none}#mwPip .t{position:absolute;left:-2px;top:-20px;background:#e23b33;color:#fff;font:800 12px system-ui,sans-serif;letter-spacing:.08em;padding:2px 8px}#mwPip .x{position:absolute;left:0;right:0;bottom:0;background:rgba(8,10,12,.82);color:#fff;font:600 12px system-ui,sans-serif;padding:3px 7px}#mwFlash{position:fixed;inset:0;z-index:39;pointer-events:none;background:#7fd0ff;opacity:0;transition:opacity .5s}#mwScore{position:fixed;left:50%;top:58px;transform:translateX(-50%);z-index:59;background:rgba(10,14,12,.82);border:1px solid #4a5a48;border-radius:8px;padding:5px 10px;color:#e8eadf;font:600 13px system-ui,sans-serif;display:none}#mwScore div{display:flex;gap:10px;align-items:center;white-space:nowrap}#mwScore i{width:10px;height:10px;border-radius:50%;display:inline-block}#mwScore span{min-width:46px;text-align:right}';document.head.appendChild(st);})();
 function mwPipEl(show,label){let el=document.getElementById('mwPip');if(!el){el=document.createElement('div');el.id='mwPip';el.innerHTML='<div class="t">BREAKING NEWS</div><div class="x"></div>';document.body.appendChild(el);}
   if(show){el.lastChild.textContent=label||'';}el.style.display=show?'block':'none';}
@@ -17004,7 +16997,7 @@ function edgeTick(){const A=EDGE.a;if(!A.length&&!EDGE.el)return;const now=perfo
 /* ---------- What's new (one screen, newest first) ---------- */
 const WHATS_NEW=[
  ['Test range: pick both nations','Test range now opens a small window: choose your nation, the target nation (it can be the same one) and a map, then Start. Inside the range, "Change nations…" in the Test range box restarts it with a new pair, no trip through the main menu.'],
- ['Battle runs on Generators','Build a Generator (Build tab, about the price of a Barracks) to power your electronic buildings: air defense, coastal missiles, the Strike Center, Radio & TV, the Airfield and your minimap radar. Your top bar shows power produced and used: green is fine, red means LOW POWER and those buildings go offline until you build another Generator or capture a map power plant. Barracks, War Factory, Depot and defense guns never need power. Blowing up enemy Generators is a real tactic. Conquest keeps its map power plants.'],
+ ['Battle runs on Generators','Build a Generator (Build tab, about the price of a Barracks) to power your electronic buildings: air defense, coastal missiles, the Strike Center, Radio & TV, the Airfield and your minimap radar. Your top bar shows power produced and used: green is fine, red means LOW POWER and those buildings go offline until you build another Generator or capture a map power plant. Barracks, War Factory, Depot and defense guns never need power. Blowing up enemy Generators is a real tactic.'],
  ['Every building has its own queue','Like Generals: infantry come only from a Barracks, vehicles from a War Factory, aircraft from an Airfield, ships from a Shipyard. Select the building to see what it can make and its own queue (progress bar on the first unit, ×3 badges). Click = add one, Shift+click = add five, right-click a queued icon = cancel one with a full refund. Two Barracks build two soldiers at the same time; each unit walks out of its own building to that building\'s rally point. With nothing selected the Units tab still works and picks the least busy building. A destroyed building refunds its queue. The old +50% speed for a second building is gone.'],
  ['One game: Battle, now with supply lines','The game is now one game: Battle (Command Center, supply trucks, tech tree, destroy every enemy building). Conquest and the Grand campaign are gone. Battle has SUPPLY LINES: the roads running out of your Command Center and Supply Depots are green on the minimap (L shows them on the ground). Units refill ammo near your buildings and on those roads; far beyond them they fight until empty, then must come back or get an Ammo Truck from the War Factory. Craters, blown bridges and enemy checkpoints cut a line (dashed) - your Construction Vehicle repairs a crater fast. Every old battlefield is now a Battle map, and the main menu is Play · Multiplayer · Test range.'],
  ['The main menu shows your war','The main menu background now shows whatever Continue would take you back to: that battlefield with your front line drawn in.'],
@@ -21579,7 +21572,7 @@ function mxBuild(){
   const ex=(t,fn,tip)=>{const b=mxEl('button','mxi',t);b.type='button';b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);if(tip)b.title=tip;el.appendChild(b);};
   const byText=t=>()=>{const b=[...card.querySelectorAll('button')].find(x=>(x.textContent||'').trim().toLowerCase().replace(/\u2019/g,"'")===t);if(b){try{initAudio();}catch(_){}b.click();}};
   ex('Watch a replay',()=>mxClick('rpOpen'),'Open a replay file');ex('Map editor',()=>mxClick('edBtn'),'Draw your own battlefield');
-  ex('My battles',()=>mxClick('openMyb'));ex('Encyclopedia',()=>mxClick('openEnc'));ex('Unit guide',byText('unit guide'));ex('Medals',byText('medals'));ex('Profile',byText('profile'));ex('What’s new',byText('what’s new')||byText("what's new"));ex('Report a problem',()=>mxClick('rpMenu'),'Opens a pre-filled bug report');ex('Playtest card',()=>{if(typeof wwPlaytest==='function')wwPlaytest();},'Ten new things to try this week - thumbs up or down, a short note, save the file');
+  ex('My battles',()=>mxClick('openMyb'));ex('Encyclopedia',()=>mxClick('openEnc'));ex('Unit guide',byText('unit guide'));ex('Medals',byText('medals'));ex('Profile',byText('profile'));ex('What’s new',byText('what’s new')||byText("what's new"));/* Report a problem lives in Settings only (UI audit 2026-11-14: it was in Extras too) */ex('Playtest card',()=>{if(typeof wwPlaytest==='function')wwPlaytest();},'Ten new things to try this week - thumbs up or down, a short note, save the file');
   /* --- credits --- */
   const C=scr('credits','<h2 class="mxh">Credits</h2><p class="mxsub">Free art, sound and music only, every author credited.</p>');const cw=mxEl('div','mxcred');for(const p of card.querySelectorAll('p.credits'))cw.appendChild(p);C.appendChild(cw);
   /* --- wiring --- */
