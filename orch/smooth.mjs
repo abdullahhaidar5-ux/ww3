@@ -266,7 +266,7 @@ async function mpProfile() {
     await Promise.all([host, c1, c2].map(p => p.evaluate(async () => { const t0 = performance.now(); while (!MODELS.loading && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 250));
       await Promise.race([Promise.resolve(MODELS.loading), new Promise(r => setTimeout(r, 240000))]); })));
     LOG('mp: pages open'); await waitFor(host, () => !!NET.room, null, 30000, 'host network room');
-    const code = await host.evaluate(async () => { try { initAudio(); } catch (e) {} setup.p = 'US';
+    const code = await host.evaluate(async () => { try { initAudio(); } catch (e) {} setup.p = 'US'; setup.map = 'bm_sixroads';
       await Promise.race([typeof hostBrowser === 'function' ? hostBrowser() : hostGame(), new Promise(r => setTimeout(r, 20000))]); return NET.game ? NET.code : null; });
     if (!code) throw new Error('host could not open a game'); LOG('mp: lobby ' + code);
     for (const [i, c] of clients.entries()) {

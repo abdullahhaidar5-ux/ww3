@@ -108,24 +108,10 @@ try {
       return { rows, save: !!document.getElementById('ptSave'), vote: d.items[0] && d.items[0].vote, kind: d.kind, n: d.items.length, menu }; });
     if (pt.no || pt.rows !== 10 || !pt.save || pt.vote !== 1 || pt.kind !== 'ww3-playtest' || pt.n !== 10 || !pt.menu) fails.push('Playtest card (Extras) is broken: ' + JSON.stringify(pt));
     else console.log('Playtest card: 10 things to try, votes saved into the file'); }
-  if (!ART) { // living main menu (idea 9): the background shows your war - drawn from the newest save's small note.
-    // Three cases: a saved battle with a sketch (battlefield + front line), an old save without one (caption only), and no save (the calm picture, no caption).
-    // Old grand-campaign saves (removed 2026-11-14) are ignored.
-    const wt = await page.evaluate(async () => { if (typeof mxWarTable !== 'function') return { err: 'mxWarTable missing' }; const K = 'ww3grand1', oldL = svLatest, mx = document.getElementById('mx');
-      const d = btoa(String.fromCharCode(0, 16, 1, 8, 2, 8)), cap = () => (document.getElementById('mxwar') || {}).textContent || '', cv = () => !!mx.querySelector('#mxbg canvas#mxwt');
-      const top = () => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => b.textContent.trim()).join('|');
-      localStorage.setItem(K, '{"v":1}'); localStorage.setItem(K + '.i', JSON.stringify({ ts: 5, me: 'IR', n: 'Iran', d: 'Mar 2027', over: 0 }));
-      svLatest = { id: 'm:t', ts: 9, mapName: 'Testmap', facName: 'Testland', t: 125, wt: { w: 8, h: 4, d, c: [40, 160, 80], e: [150, 62, 50] } };
-      mxWarTable(); const b = { on: cv(), lab: !!mx.querySelector('.mxwtl.bat'), cap: cap(), top: top() };
-      svLatest = { id: 'm:old', ts: 10, mapName: 'Oldmap', facName: 'Testland', t: 5 }; mxWarTable(); const o = { on: cv(), cap: cap() };   // a save made before this feature: caption only, calm picture
-      svLatest = null; mxWarTable(); const n = { on: cv(), cap: cap(), wt: mx.classList.contains('wt'), top: top() };   // only an old campaign save left: ignored
-      localStorage.removeItem(K); localStorage.removeItem(K + '.i'); svLatest = oldL; mxWarTable();
-      return { b, o, n, grand: typeof grandMenu }; });
-    const TOP = 'Play|Multiplayer|Test range';
-    if (wt.err || !wt.b.on || wt.b.lab || !/Testland.*Testmap.*2:05/.test(wt.b.cap) || wt.b.top !== TOP || wt.o.on || !/Oldmap/.test(wt.o.cap)
-      || wt.n.on || wt.n.cap || wt.n.wt || wt.n.top !== TOP || wt.grand !== 'undefined')
-      fails.push('living main menu: ' + JSON.stringify(wt) + ' (expected: battle save -> battlefield + caption; old save -> caption only; no save (an old campaign save is ignored) -> calm picture, no caption; top level Play|Multiplayer|Test range; no campaign code)');
-    else console.log('living main menu: your war drawn from the save note (battle, old, none; old campaign saves ignored)');
+  if (!ART) { // main menu top level (the war-table background was removed; one static picture)
+    const wt = await page.evaluate(() => ({ top: [...document.querySelectorAll('#mxmenu .mxi')].filter(b => !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => b.textContent.trim()).join('|'), grand: typeof grandMenu, wt: typeof mxWarTable }));
+    if (wt.top !== 'Play|Multiplayer|Test range' || wt.grand !== 'undefined' || wt.wt !== 'undefined') fails.push('main menu top level: ' + JSON.stringify(wt));
+    else console.log('main menu: top level Play|Multiplayer|Test range, no campaign, no war table');
   }
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
