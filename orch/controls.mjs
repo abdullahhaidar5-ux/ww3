@@ -319,9 +319,9 @@ try {
   a = await acts(page);
   check('X stops the selected units', a.some(x => x.t === 'stop'), JSON.stringify(a));
   await page.evaluate(() => { G.place = 'barracks'; updateUI(); });
-  await page.mouse.click(g[0].x, g[0].y);
+  await page.mouse.click(g[0].x, g[0].y, { button: 'right' });
   a = await acts(page);
-  check('left-click cancels building placement (no order)', await page.evaluate(() => !G.place) && !a.length, JSON.stringify(a));
+  check('right-click cancels building placement (no order)', await page.evaluate(() => !G.place) && !a.length, JSON.stringify(a));
   // right-drag line / right-drag with nothing selected
   await setSel([A, B, C]);
   await page.mouse.move(V.line[0].x, V.line[0].y); await page.mouse.down({ button: 'right' });

@@ -226,7 +226,7 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
 // Menu background (Abdullah 2026-11-14 17:07 "Have an epic static main menu background"): ONE static picture, no live shell battle, no war table.
 { const m = SRC['14-menu.js'] || '', all = Object.values(SRC).join('\n');
   ck(!/mxShell|mxshell|G\.shell\b|SH\.on/.test(all) && !/mxWarTable|mxWarSrc|#mxwt/.test(all), 'menu background: the live shell battle / war table are back (one static picture only)');
-  ck(/#mxbg\{[^}]*url\(menu-bg\.webp\)/.test(m) && !/mxpan/.test(m) && fs.existsSync(path.join(ROOT, 'menu-bg3.webp')) && fs.statSync(path.join(ROOT, 'menu-bg3.webp')).size < 450000, 'menu background: #mxbg must be a CSS background of menu-bg3.webp (static, under 450 KB)'); }
+  ck(/#mxbg\{[^}]*url\(menu-world\.webp\)/.test(m) && !/mxpan/.test(m) && fs.existsSync(path.join(ROOT, 'menu-world.webp')) && fs.statSync(path.join(ROOT, 'menu-world.webp')).size < 450000 && !fs.existsSync(path.join(ROOT, 'menu-bg3.webp')), 'menu background: #mxbg must be a CSS background of menu-world.webp, the epic world map (Abdullah 2026-11-14 21:02; static, under 450 KB)'); }
 // 0a. Game feel (2026-11-09 22:44): shell impacts match the surface (water spray / road chips / the map's soil) and tanks rock when they fire.
 { const f = SRC['05-fx3d.js'], v = SRC['06-view.js'];
   ck(/function impactSurf\(/.test(f) && /function splashFX\(/.test(f) && /if\(wet\)splashFX\(x,y,s,big\)/.test(f), 'game feel: explosions no longer check the surface they hit (water spray is gone)');
