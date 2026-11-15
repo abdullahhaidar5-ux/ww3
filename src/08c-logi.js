@@ -107,8 +107,8 @@ function drawLogiMini2(c,sx,sy){const D=G.lgd,B=G.map.bridges||[];if(!D.mn)retur
   for(const e of G.ents)if(!e.dead&&e.isB&&e.kind==='shipyard'&&lgBlkd(e)){c.strokeStyle='#ff4a3a';c.lineWidth=1.5;c.beginPath();c.arc(e.x*sx,e.y*sy,6,0,7);c.stroke();}}
 // command bar buttons + one-click targeting (left-click picks the spot, right-click cancels)
 function lgMode(k){G.lgM=G.lgM===k?null:k;G.wallM=null;G.wallP=null;G.amove=false;G.defm=false;G.place=null;G.aim=null;try{sfxUI(560);}catch(e){}updateUI();}
-const LG_HINT={mine:'Mine a road: click a spot on a road',ckpt:'Checkpoint: click a spot on a road',demo:'Blow a bridge: click the bridge',fixb:'Rebuild a bridge: click the blown bridge',pont:'Pontoon bridge: click on a narrow river',alift:'Airlift: click one of your Supply Depots'};
-function lgHint(){const h=typeof wallHintEl==='function'?wallHintEl():null;if(!h)return;if(G&&G.lgM){h.hidden=false;h.textContent=LG_HINT[G.lgM]+' · right-click to cancel';}else if(!G||!G.wallM)h.hidden=true;}
+const LG_HINT={mine:'Mine a road: right-click a spot on a road',ckpt:'Checkpoint: right-click a spot on a road',demo:'Blow a bridge: right-click the bridge',fixb:'Rebuild a bridge: right-click the blown bridge',pont:'Pontoon bridge: right-click on a narrow river',alift:'Airlift: right-click one of your Supply Depots'};
+function lgHint(){const h=typeof wallHintEl==='function'?wallHintEl():null;if(!h)return;if(G&&G.lgM){h.hidden=false;h.textContent=LG_HINT[G.lgM]+' · left-click or Esc cancels';}else if(!G||!G.wallM)h.hidden=true;}
 function lgRow(el,s){if(!G||G.sandbox||!G.lgd)return;const own=s.filter(u=>u.team===ME&&!u.dead);
   const doz=own.filter(u=>!u.isB&&u.kind==='dozer'),hel=own.filter(u=>!u.isB&&u.kind==='airlift'),dep=own.length===1&&own[0].isB&&(own[0].kind==='depot'||own[0].kind==='shipyard')&&!(own[0].built<1)?own[0]:null;
   if(G.lgM&&!(G.lgM==='alift'?hel.length:doz.length))G.lgM=null;lgHint();if(!doz.length&&!hel.length&&!dep)return;
@@ -124,7 +124,7 @@ function lgRow(el,s){if(!G||G.sandbox||!G.lgd)return;const own=s.filter(u=>u.tea
     const sp=document.createElement('span');sp.style.cssText='font:600 12px system-ui,sans-serif;align-self:center;padding:0 6px;color:'+(/CUT|BLOCK/.test(st)?'#ff8a75':'#9fe8a8');sp.textContent=st;r.append(sp);
     if(dep.kind==='depot')mk('⚑ Rally here','New units from your barracks and factories gather at this depot.',()=>{doAct({t:'rally',x:dep.x,y:dep.y});try{mark({x:dep.x,y:dep.y,r:22,t:0,d:.8,c:0x7ee88f});sfxUI(560);}catch(e){}});
     mk('🛣 Road to here','Build a road from your network to this '+(dep.kind==='depot'?'depot':'port')+' (selected or nearest Construction Vehicle).',()=>{doAct({t:'lg',k:'droad',tid:dep.id,ids:[]});try{sfxUI(560);}catch(e){}});}}
-function lgPointer(e){if(!G||G.over||!G.lgM)return;if(e.button===1)return;if(e.button===2){e.stopImmediatePropagation();e.preventDefault();G.lgM=null;updateUI();return;}   /* road jobs: left-click does it, right-click cancels (Abdullah 2026-11-14 21:17 specials with left-click) */e.stopImmediatePropagation();e.preventDefault();
+function lgPointer(e){if(!G||G.over||!G.lgM)return;if(e.button===1)return;if(e.button===0){e.stopImmediatePropagation();e.preventDefault();G.lgM=null;updateUI();return;}e.stopImmediatePropagation();e.preventDefault();   /* road jobs: RIGHT-click does it, left-click cancels (Abdullah 2026-11-15 00:26 "Make road jobs and launch right click") */   /* road jobs: left-click does it, right-click cancels (Abdullah 2026-11-14 21:17 specials with left-click) */e.stopImmediatePropagation();e.preventDefault();
   mpos(e);const w=screenToWorld(mouse.x,mouse.y);if(!w)return;const k=G.lgM;
   if(k==='alift'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind==='airlift'&&!u.dead).map(u=>u.id);let tid=0,ti=-1,bd=1e9;
     for(const b of G.ents)if(b.isB&&!b.dead&&b.team===ME&&b.kind==='depot'){const d=Math.hypot(b.x-w.x,b.y-w.y);if(d<130&&d<bd){bd=d;tid=b.id;}}

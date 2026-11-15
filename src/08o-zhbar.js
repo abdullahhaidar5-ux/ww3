@@ -362,7 +362,7 @@ if(typeof updateUI==='function'){const _iU=updateUI;updateUI=function(){_iU.appl
 
 /* STRIKE ON THE LEFT RAIL (Abdullah 2026-11-14 22:10 "Strike launch from the building and its own separate button like artillery barrage in left hand"):
    one rail button under the generals' powers, shown while you own a Strike Center; it fills up as the Strike charges, glows when READY,
-   one click arms it, then LEFT-click the target (right-click cancels) - the same as pressing LAUNCH on the building. */
+   one click arms it, then RIGHT-click the target (left-click cancels; Abdullah 2026-11-15 00:26) - the same as pressing LAUNCH on the building. */
 function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q)return;let b=document.getElementById('qpStrike');
   const own=!!sb&&!sb.hidden&&G&&G.ents&&G.ents.some(e=>e.isB&&e.team===ME&&!e.dead&&e.kind==='uplink'&&e.built>=1);
   if(!own){if(b)b.hidden=true;return;}
