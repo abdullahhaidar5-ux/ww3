@@ -1,0 +1,33 @@
+  page: shader warm-up 4228 ms, 62 models, 120 objects in 672 steps (longest 224 ms), 115 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 24 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=false frames=332 normal=24ms (quiet max 164) longest=91ms three(progs/geo/tex)=+0/+-18/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":12,"bufKB":6,"vao":7,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 91ms@10.0s {} ; 82ms@11.5s {} ; 78ms@8.7s {} ; 77ms@1.0s {} ; 77ms@9.5s {}
+  frames that made the GPU work (1):
+    8.34s 24ms {"buf":12,"bufKB":5.7,"vao":7} three geo/tex 583/248
+  shapes that entered the scene during the strike (look here for the ones built or re-sent):
+    8.3s BufferGeometry 36v MeshStandardMaterial
+    8.3s CylinderGeometry 40v MeshStandardMaterial
+    8.3s PlaneGeometry 4v MeshStandardMaterial
+    8.3s WireframeGeometry 252v LineBasicMaterial
+IR worst JS call (not drawing): simUpdate 31ms; FAIL: launch failed; 7 new meshes (max 6)
+  page: shader warm-up 2504 ms, 65 models, 125 objects in 678 steps (longest 100 ms), 122 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 27 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=false frames=267 normal=27ms (quiet max 161) longest=122ms three(progs/geo/tex)=+0/+-21/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":12,"bufKB":6,"vao":7,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 122ms@8.6s {} ; 82ms@0.3s {} ; 77ms@0.8s {} ; 76ms@4.3s {} ; 75ms@2.3s {}
+  frames that made the GPU work (1):
+    7.25s 27ms {"buf":12,"bufKB":5.7,"vao":7} three geo/tex 684/317
+  shapes that entered the scene during the strike (look here for the ones built or re-sent):
+    7.3s BufferGeometry 36v MeshStandardMaterial
+    7.3s CylinderGeometry 40v MeshStandardMaterial
+    7.3s PlaneGeometry 4v MeshStandardMaterial
+    7.3s WireframeGeometry 252v LineBasicMaterial
+RU worst JS call (not drawing): updateUI 34ms; FAIL: launch failed; 7 new meshes (max 6)
+  page: shader warm-up 2185 ms, 59 models, 114 objects in 648 steps (longest 94 ms), 106 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +18s] normal frame 27 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=false frames=260 normal=27ms (quiet max 93) longest=113ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 113ms@9.0s {} ; 85ms@5.8s {} ; 83ms@4.0s {} ; 81ms@1.9s {} ; 79ms@7.3s {}
+US worst JS call (not drawing): updateUI 23ms; FAIL: launch failed
+SUPERFREEZE FAIL
