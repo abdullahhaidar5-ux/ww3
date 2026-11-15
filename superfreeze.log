@@ -1,0 +1,31 @@
+  page: shader warm-up 4524 ms, 62 models, 120 objects in 651 steps (longest 204 ms), 115 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 26 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=239 normal=26ms (quiet max 151) longest=169ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":2,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 169ms@3.0s {} ; 139ms@6.6s {} ; 97ms@4.4s {} ; 94ms@5.2s {"vao":1} ; 90ms@0.1s {}
+  frames that made the GPU work (3):
+    3.19s 84ms {"aud":1} three geo/tex 578/248
+    3.37s 81ms {"aud":2} three geo/tex 578/248
+    5.49s 86ms {"aud":1} three geo/tex 578/248
+IR worst JS call (not drawing): simUpdate 127ms; ok
+  page: shader warm-up 2663 ms, 65 models, 125 objects in 661 steps (longest 89 ms), 121 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 24 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=202 normal=24ms (quiet max 71) longest=195ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":4,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 195ms@3.0s {} ; 106ms@3.3s {"vao":1} ; 93ms@5.0s {} ; 92ms@7.0s {} ; 87ms@6.8s {}
+  frames that made the GPU work (2):
+    3.26s 80ms {"aud":2} three geo/tex 678/317
+    3.60s 48ms {"aud":2} three geo/tex 678/317
+RU worst JS call (not drawing): simUpdate 133ms; ok
+  page: shader warm-up 2089 ms, 59 models, 114 objects in 669 steps (longest 78 ms), 106 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 25 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=222 normal=25ms (quiet max 73) longest=162ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":2,"bufKB":1,"vao":1,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 162ms@3.0s {} ; 103ms@3.3s {} ; 99ms@6.6s {} ; 88ms@3.1s {} ; 83ms@4.2s {}
+  frames that made the GPU work (4):
+    3.26s 42ms {"aud":1} three geo/tex 561/216
+    3.50s 68ms {"aud":1} three geo/tex 561/216
+    3.56s 67ms {"aud":2} three geo/tex 561/216
+    4.50s 25ms {"buf":2,"bufKB":0.7,"vao":1} three geo/tex 561/216
+US worst JS call (not drawing): simUpdate 121ms; ok
+SUPERFREEZE PASS
