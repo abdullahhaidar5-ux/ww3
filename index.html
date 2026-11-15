@@ -5794,6 +5794,13 @@ for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   ECON[k]=N.econ||(k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board');
   if(N.sub)SUBN[k]=N.sub;if(N.md)MDN[k]=N.md;if(N.coast)COASTN[k]=N.coast;if(N.trn)TRN[k]=N.trn;
   UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b.toLowerCase()+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
+/* distinct national powers (Abdullah 2026-11-14 22:14 "give them their own"): RV, GB, FR and DE all shared the same supply-drop power; each gets its
+   own now (fictional names, existing power types). OB keeps Rubble Cover. */
+Object.assign(NATPOW,{
+ RV:{name:'Marsh Rocket Salvo',type:'precise',cd:180,r:90,desc:'Rocket trucks fire eight rockets onto a tight area'},
+ GB:{name:'SAS Raid',type:'partisans',n:4,cd:200,r:90,desc:'Four special forces soldiers drop in at the target and strike'},
+ FR:{name:'Rafale Strike',type:'strafe',cd:200,r:140,desc:'A Rafale bombing run: a line of bombs across the target'},
+ DE:{name:'Panzer Reserve',type:'mercs',cd:230,desc:'Two Leopard tanks and two air-defence vehicles roll out of your HQ',self:true}});
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
