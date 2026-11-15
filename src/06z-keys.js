@@ -36,6 +36,7 @@ const KEYTAB=[
   {id:'supl',ctx:'battle',grp:'Camera',name:'Show supply lines on the ground',def:'l'},
   {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
   {id:'vision',ctx:'battle',grp:'Game',name:'Night vision / thermal view (at night)',def:'`'},
+  {id:'abuild',ctx:'battle',grp:'Game',name:'Auto-build list (open / close)',def:'u'},
   {id:'pause',ctx:'battle',grp:'Game',name:'Pause',def:'p'},
   {ctx:'battle',grp:'Game',name:'Photo mode',fix:'F8'},
   {ctx:'battle',grp:'Game',name:'Menu · cancel · one step back',fix:'Esc'},

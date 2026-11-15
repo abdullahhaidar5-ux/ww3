@@ -59,7 +59,7 @@ try {
     const foe = G.ents.find(e => e.isB && e.team !== ME && !e.dead); act(ME, { t: 'sell', ids: [foe.id] }); out.foeSafe = !foe.sell;
     // ---- bar: clock wipe + queue number on a unit button, Sell/Repair buttons on a selected building
     bar.hp = bar.max * .5; bar.q = []; enqueue(ME, 'inf', bar.id); enqueue(ME, 'inf', bar.id); enqueue(ME, 'inf', bar.id); for (let i = 0; i < 3; i++) simUpdate(1); G.sel = [bar]; try { showTab('units'); updateUI(); zhCtx(); updateUI(); } catch (e) { out.err = String(e); }
-    const ub = document.getElementById('u_inf'); out.clock = ub ? ub.querySelector('.p').style.background : ''; out.qn = ub ? ub.querySelector('.q').textContent : '';
+    const ub = document.getElementById('u_inf'); out.clock = ub ? ub.querySelector('.p').style.background : ''; out.qn = ub ? ub.querySelector('.q').textContent : ''; out.qlen = (bar.q || []).filter(i => i.kind === 'inf').length;   /* a fast unit may already have come out during the 3 s: the badge must show what is still queued */
     const sb = document.getElementById('zhSell'), rb = document.getElementById('zhRep'); out.sellBtn = !!sb && !sb.hidden; out.repBtn = !!rb && !rb.hidden; out.sellTxt = sb ? sb.textContent : ''; out.keys = KEYTAB.filter(x => x.id === 'sell' || x.id === 'rep').map(x => x.def).join('');
     return out; });
   console.log('zhfeel', JSON.stringify(r));
@@ -70,7 +70,7 @@ try {
   ck(r.full && Math.abs(r.spentAll - r.wantSpent) < 2, 'a full repair costs a quarter of the price, then switches itself off ' + JSON.stringify([r.full, r.spentAll, r.wantSpent]));
   ck(r.brokeHp, 'Repair must pause while there is no money');
   ck(r.ck === true, 'repair/sell state must be in the checkpoint ' + r.ck); ck(r.foeSafe, 'an enemy building must not be sellable');
-  ck(/conic-gradient/.test(r.clock) && r.qn === '3', 'a unit being built shows the clock wipe and the queue count as a number ' + JSON.stringify([r.clock, r.qn]));
+  ck(/conic-gradient/.test(r.clock) && r.qlen >= 2 && r.qn === String(r.qlen), 'a unit being built shows the clock wipe and the queue count as a number ' + JSON.stringify([r.clock, r.qn, r.qlen]));
   ck(r.sellBtn && r.repBtn && /Sell \$/.test(r.sellTxt) && r.keys === 'vo', 'a selected building must show Sell and Repair buttons, keys V / O ' + JSON.stringify([r.sellBtn, r.repBtn, r.sellTxt, r.keys]));
   await page.screenshot({ path: path.join(ROOT, 'orch', 'shots', 'zhfeel.jpg'), type: 'jpeg', quality: 85, timeout: 120000 }).catch(() => console.log('  (screenshot skipped)'));
   // ---- cursors
