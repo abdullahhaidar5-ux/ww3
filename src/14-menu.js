@@ -15,23 +15,8 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 #menu.m3{background:#05080a;display:block;padding:0;overflow:hidden;z-index:20}
 #menu.m3>.card{display:none}
 #mx{position:absolute;inset:0;font-family:var(--display);color:var(--fg);user-select:none}
-#mxbg{position:absolute;inset:-3%;background:#0a0f0d center/cover no-repeat;animation:mxpan 70s ease-in-out infinite alternate;filter:saturate(1.2) brightness(.8) contrast(1.1)}
-#mxwt{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .9s}
-#mxwt.on{opacity:1}
-#mx.wt #mxbg{filter:saturate(1.1) brightness(.95)}
-#mx.wt #mxfade{background:radial-gradient(120% 105% at 68% 48%,rgba(5,8,10,0),rgba(5,8,10,.72) 92%),linear-gradient(90deg,rgba(5,8,10,.93),rgba(5,8,10,.55) 42%,rgba(5,8,10,.08) 72%)}
-.mxwtl{position:absolute;transform:translate(-50%,-50%);pointer-events:none;opacity:0;transition:opacity .9s .3s;text-align:center;white-space:nowrap}
-#mxwt.on~.mxwtl{opacity:1}
-.mxwtl.bat{transform:translate(-50%,-14px);font:500 11px var(--mono);color:#f2f4ec;text-shadow:0 1px 4px #000}
-.mxwtl.bat svg{display:block;margin:0 auto 4px;width:28px;height:28px;filter:drop-shadow(0 1px 3px #000)}
-.mxwtl.bat b{display:block;font:700 16px var(--display);letter-spacing:.12em;text-transform:uppercase;color:#ffd666}
-#mxwar{position:absolute;right:clamp(24px,5vw,72px);bottom:58px;text-align:right;pointer-events:none;white-space:nowrap;text-shadow:0 1px 6px #000,0 0 18px rgba(0,0,0,.8)}
-@media (max-width:1100px){#mxwar{display:none}}
-#mxwar i{display:block;font:500 11px var(--mono);font-style:normal;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
-#mxwar b{display:block;font:700 24px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;color:#f2f4ec;margin:3px 0 2px}
-#mxwar span{display:block;font:400 12px var(--mono);color:#c3cdc6}
-@keyframes mxpan{from{transform:scale(1.02) translate3d(-1%,0,0)}to{transform:scale(1.12) translate3d(1.5%,-1%,0)}}
-#mxfade{position:absolute;inset:0;background:radial-gradient(130% 100% at 70% 45%,rgba(5,8,10,.35),rgba(5,8,10,.85) 85%),linear-gradient(90deg,rgba(5,8,10,.9),rgba(5,8,10,.55) 60%,rgba(5,8,10,.4))}
+#mxbg{position:absolute;inset:0;background:#0a0f0d url(menu-bg.webp) 30% center/cover no-repeat}   /* ONE static picture (menu-bg.webp, made with orch/menubgshots.mjs); a CSS background so the menu never waits for it and works without it */
+#mxfade{position:absolute;inset:0;background:linear-gradient(270deg,rgba(5,8,10,.92) 0,rgba(5,8,10,.82) calc(var(--mxw,34vw) + 4vw),rgba(5,8,10,.35) calc(var(--mxw,34vw) + 24vw),rgba(5,8,10,0) 75%),linear-gradient(0deg,rgba(5,8,10,.5),rgba(5,8,10,0) 28%)}
 #mxtop{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:18px;padding:0 clamp(24px,5vw,72px);z-index:3}
 #mxtop[hidden]{display:none!important}
 .mxback{font:600 17px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:none;border:0;padding:6px 2px;cursor:pointer}
@@ -126,11 +111,6 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 @media (max-width:1100px){.mxnat,.mxpl{grid-template-columns:1fr}#mxdet{position:static}}
 /* ---- Generals-style layout (Abdullah 2026-11-14): one right column of metal plates on every menu screen, Back bottom-left, the battle (or the picture) fills the rest ---- */
 #menu.m3,body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen){--mxw:clamp(460px,35vw,620px);--st1:#4a5445;--st2:#2e352c;--st3:#1b201a;--hi:#7d8a6c;--gold:#e8c85c}
-#menu.m3.sh{background:transparent}
-#mx.sh #mxbg,#mx.sh #mxwt,#mx.sh .mxwtl,#mx.sh #mxwar{display:none}
-#mx.sh #mxfade{background:radial-gradient(125% 110% at 38% 50%,rgba(5,8,10,0) 48%,rgba(5,8,10,.68) 100%),linear-gradient(90deg,rgba(5,8,10,.12),rgba(5,8,10,.2) 55%,rgba(5,8,10,.55))}
-body.mxshell #side,body.mxshell #stage>*:not(#cv),body.mxshell>*:not(#app):not(.overlay):not(#campScreen):not(#uiDlg):not(#gModal):not(script):not(style){display:none!important}
-#mxfade{background:radial-gradient(125% 110% at 38% 50%,rgba(5,8,10,.25),rgba(5,8,10,.8) 90%),linear-gradient(90deg,rgba(5,8,10,.35),rgba(5,8,10,.5))}
 #mxbody{left:auto;right:0;top:0;bottom:0;width:var(--mxw);background:linear-gradient(180deg,rgba(27,32,26,.9),rgba(20,24,19,.93));border-left:2px solid #11140f;box-shadow:-1px 0 0 rgba(125,138,108,.35),-26px 0 70px rgba(0,0,0,.55)}
 #mxtop{position:absolute;inset:0;height:auto;padding:0;display:block;pointer-events:none}
 #mxtop .mxback{position:absolute;left:clamp(24px,3vw,52px);bottom:clamp(22px,4vh,46px);pointer-events:auto;font:700 19px var(--display);letter-spacing:.14em;color:#e6e8dc;padding:10px 26px;background:linear-gradient(180deg,var(--st1),var(--st2) 55%,var(--st3));border:1px solid #11140f;border-top-color:var(--hi);box-shadow:0 2px 0 #0b0d0a,0 6px 18px rgba(0,0,0,.5)}
@@ -191,7 +171,7 @@ function mxMapSync(){const ms=document.getElementById('mapSel'),L=typeof mapList
 function mxBuild(){
   const m=document.getElementById('menu');if(!m||document.getElementById('mx'))return;mxCss();m.classList.add('m3');
   const card=m.querySelector('.card'),g=id=>document.getElementById(id);
-  const mx=mxEl('div');mx.id='mx';const bg=mxEl('div');bg.id='mxbg';try{bg.style.backgroundImage='url(art/menu-bg.jpg)';}catch(_){}
+  const mx=mxEl('div');mx.id='mx';const bg=mxEl('div');bg.id='mxbg';
   const fade=mxEl('div');fade.id='mxfade';
   const top=mxEl('div');top.id='mxtop';top.hidden=true;const bk=mxEl('button','mxback','‹ Back');bk.type='button';bk.title='One step back (Esc)';bk.onclick=menuBack;const cr=mxEl('div');cr.id='mxcrumb';top.append(bk,cr);
   const body=mxEl('div');body.id='mxbody';mx.append(bg,fade,top,body);m.appendChild(mx);
@@ -268,7 +248,7 @@ function mxBuild(){
   const C=scr('credits','<h2 class="mxh">Credits</h2><p class="mxsub">Free art, sound and music only, every author credited.</p>');const cw=mxEl('div','mxcred');for(const p of card.querySelectorAll('p.credits'))cw.appendChild(p);C.appendChild(cw);
   /* --- wiring --- */
   document.addEventListener('keydown',mxKey,true);
-  new MutationObserver(()=>{if(!m.hidden)mxShown();else mxShellStop();}).observe(m,{attributes:true,attributeFilter:['hidden']});
+  new MutationObserver(()=>{if(!m.hidden)mxShown();}).observe(m,{attributes:true,attributeFilter:['hidden']});
   setInterval(mxPoll,500);
   MX.screens.title.classList.add('on');mxShown(true);}
 /* Multiplayer: one game, Battle - the shared battle lobby. */
@@ -306,7 +286,7 @@ function mxTrStart(){const p=setup.p,a=document.getElementById('aiFac').value||s
   document.getElementById('menu').hidden=true;startSandbox({p,a,map});}
 function mxMapMark(){if(!MX.grid)return;const sel=document.getElementById('mapSel');for(const b of MX.grid.children)b.classList.toggle('on',sel&&b.dataset.k===sel.value);}
 function mxThumbRun(){if(MX.thumbRun)return;MX.thumbRun=1;const step=()=>{const k=MX.thumbQ.shift();if(!k){MX.thumbRun=0;return;}
-  if(typeof G!=='undefined'&&G&&!G.over&&!G.shell){MX.thumbQ.unshift(k);setTimeout(step,800);return;}
+  if(typeof G!=='undefined'&&G&&!G.over){MX.thumbQ.unshift(k);setTimeout(step,800);return;}
   try{if(typeof MAPS!=='undefined'&&MAPS[k]){mapPreview(k,MX.thumbs[k]);MX.thumbs[k].classList.add('rd');}}catch(e){}setTimeout(step,30);};setTimeout(step,60);}
 function mxNatFilter(v){const q=(typeof v==='string'?v:document.getElementById('mxnatin').value).trim().toLowerCase();MX.natQ=q;for(const f of document.querySelectorAll('#pickP .fac'))f.style.display=!q||(f.querySelector('.nm').textContent||'').toLowerCase().includes(q)?'':'none';}
 function mxNatShow(f){f=f||document.querySelector('#pickP .fac.on');const d=document.getElementById('mxdet');if(!d||!f)return;const t=c=>(f.querySelector(c)||{}).textContent||'';
@@ -332,78 +312,7 @@ function menuBack(){if(MX.cur==='t-range'&&MX.trIn){mxTrClose();return;}if(MX.st
 function menuHome(){for(const k in MX.screens)MX.screens[k].classList.remove('on','left');MX.stack=['title'];MX.cur='title';MX.screens.title.classList.add('on');mxCrumb();}
 function mxEnter(id){mxTrHome(id);if(id==='c-map')mxMapCards();if(id==='c-nation'){mxNatFilter();mxNatShow();}if(id==='c-players'||id==='c-opts'){mxStartSync();mxPlayersSync();try{if(typeof renderTeams==='function')renderTeams();}catch(_){}}
   if(id==='online')mxOnline();if(id==='title')mxContSync();}
-/* The war table (living main menu): the background shows YOUR war - whatever "Continue" would resume.
-   Battle saved: that battlefield with the front line between your forces and the enemy you could see (sketch in the save's list entry, svFront in 08d-save.js).
-   Nothing saved (or an old save without a sketch): the calm world-map picture. Drawn once per save. */
-function mxWarSrc(){let b=null;try{b=typeof svLatest!=='undefined'?svLatest:null;}catch(_){}
-  const clk=t=>{t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
-  if(b)return {key:'b'+b.id+'|'+b.ts,wt:b.wt&&b.wt.d?b.wt:null,k:'Your war · '+(b.camp?'Mission':'Battle'),h:b.facName+' · '+b.mapName,l:clk(b.t)+' into the fight'+(b.wt&&b.wt.e?' — the bright line is your front':'')};
-  return null;}
-function mxWarTable(){const bg=document.getElementById('mxbg'),mn=document.getElementById('menu');if(!bg||(mn&&mn.hidden))return;   /* never draw behind a running battle; the next time the menu shows it is drawn */
-  const src=mxWarSrc(),wt=src&&src.wt,key=src?src.key:'',mx=bg.parentNode,esc=t=>String(t).replace(/[&<>"]/g,ch=>'&#'+ch.charCodeAt(0)+';');
-  if(MX.wtKey===key)return;MX.wtKey=key;for(const e of mx.querySelectorAll('#mxwt,.mxwtl,#mxwar'))e.remove();mx.classList.toggle('wt',!!wt);if(!src)return;
-  const cap=mxEl('div');cap.id='mxwar';cap.innerHTML='<i>'+esc(src.k)+'</i><b>'+esc(src.h)+'</b><span>'+esc(src.l)+'</span>';(MX.screens.title||mx).appendChild(cap);if(!wt)return;
-  try{const W=wt.w|0,H=wt.h|0,g=new Uint8Array(W*H),bin=atob(wt.d);let o=0,k=0;while(o<bin.length&&k<W*H){const v=bin.charCodeAt(o++);let run=0,sh=0,b;do{b=bin.charCodeAt(o++);run|=(b&127)<<sh;sh+=7;}while(b&128&&o<bin.length);g.fill(v,k,Math.min(W*H,k+run));k+=run;}
-    const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;},CW=1600,CH=900;
-    /* small mask picture: red = land, green = your land, blue = a border between two countries / the two sides */
-    const sm=mk(W,H),sx=sm.getContext('2d'),sd=sx.createImageData(W,H),q=sd.data;for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,v=g[i],j=i*4;q[j]=v?255:0;q[j+1]=v===1?255:0;q[j+2]=v&&((x+1<W&&g[i+1]&&g[i+1]!==v)||(y+1<H&&g[i+W]&&g[i+W]!==v))?255:0;q[j+3]=255;}sx.putImageData(sd,0,0);
-    const up=mk(CW,CH),ux=up.getContext('2d',{willReadFrequently:true});ux.imageSmoothingEnabled=true;ux.imageSmoothingQuality='high';try{ux.filter='blur('+(W<400?4:2.2)+'px)';}catch(_){}ux.drawImage(sm,0,0,CW,CH);const U=ux.getImageData(0,0,CW,CH).data;
-    const bl=mk(CW/4,CH/4),bx=bl.getContext('2d',{willReadFrequently:true});try{bx.filter='blur(7px)';}catch(_){}bx.drawImage(sm,0,0,CW/4,CH/4);const B=bx.getImageData(0,0,CW/4,CH/4).data,BW=CW/4;
-    const cv=mk(CW,CH);cv.id='mxwt';const cx=cv.getContext('2d'),od=cx.createImageData(CW,CH),d=od.data,c=(wt.c||[200,170,80]).map(v=>wt.e?v*.6+85:v),en=wt.e,L=v=>Math.min(255,v*.5+150);
-    for(let y=0;y<CH;y++)for(let x=0;x<CW;x++){const i=y*CW+x,j=i*4,land=U[j]>127,mine=land&&U[j+1]>127,bj=((y>>2)*BW+(x>>2))*4,gl=B[bj]/255,gm=B[bj+1]/255,n=(((x*73856093)^(y*19349663))&7)-3.5;let r,gg,b;
-      if(!land){r=13+gl*26+gm*c[0]*.2;gg=25+gl*42+gm*c[1]*.2;b=38+gl*54+gm*c[2]*.2;if(x%100===0||y%100===0){r+=6;gg+=9;b+=11;}}
-      else{const sh=(gl-.6)*30+n*.9;r=92+sh;gg=101+sh;b=88+sh;const bo=Math.min(1,U[j+2]/255*1.6)*.6;if(!en){r+=(40-r)*bo;gg+=(46-gg)*bo;b+=(42-b)*bo;}
-        if(mine){const k=en?.36:.62,q=en?.6:.42;r=r*q+c[0]*k;gg=gg*q+c[1]*k;b=b*q+c[2]*k;}else if(en){r=r*.4+en[0]*.13;gg=gg*.4+en[1]*.13;b=b*.4+en[2]*.13;}
-        const e=x>2&&y>2&&x<CW-3&&y<CH-3;if(e&&(U[j-12]<=127||U[j+12]<=127||U[j-CW*12]<=127||U[j+CW*12]<=127)){const k=en?.45:1;r+=48*k;gg+=56*k;b+=54*k;}   /* coast line */
-        if(e&&mine&&!en&&(U[j-11]<=127||U[j+13]<=127||U[j-CW*12+1]<=127||U[j+CW*12+1]<=127)){r=L(c[0]);gg=L(c[1]);b=L(c[2]);}   /* your border */
-        if(en){const f=Math.max(0,Math.min(.9,(U[j+2]/255-.2)*4));r+=(255-r)*f;gg+=(214-gg)*f;b+=(102-b)*f;}}   /* battle: the front line */
-      d[j]=r;d[j+1]=gg;d[j+2]=b;d[j+3]=255;}
-    cx.putImageData(od,0,0);bg.appendChild(cv);
-    const lab=(cls,fx,fy,html)=>{const e=mxEl('div','mxwtl '+cls);e.style.left=(fx*100).toFixed(2)+'%';e.style.top=(fy*100).toFixed(2)+'%';e.innerHTML=html;bg.appendChild(e);return e;};
-    if(wt.b)lab('bat',wt.b[0],wt.b[1],'<svg viewBox="0 0 28 28" fill="none" stroke="#ffd666" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l15 15M23 5L8 20M6 17l5 5M22 17l-5 5M4 24l4-4M24 24l-4-4"/></svg><b>'+esc(wt.b[2])+'</b>Last battle · '+esc(wt.b[3])+(wt.b.length>4?' · '+(wt.b[4]?'won':'lost'):''));
-    requestAnimationFrame(()=>cv.classList.add('on'));}catch(e){for(const el of bg.querySelectorAll('#mxwt,.mxwtl'))el.remove();mx.classList.remove('wt');}}
-/* ---------- the shell battle (Abdullah 2026-11-14 14:31 "make the background like generals"): a live AI-vs-AI Battle behind the menu, like Zero Hour's shell map ----------
-   A small Battle on a 2-player Battle map, both sides computer-played, no sound effects (music only), a slow cinematic camera that drifts between the fights.
-   It is the normal engine (G.shell marks it): nothing is saved or recorded, fog is off, and it stops the moment any real game replaces G or the menu closes.
-   Automated browsers (navigator.webdriver: smoke, smooth and the other gates) skip it unless the page has ?shell=1. */
-const SH={on:0,busy:0,tok:0,g:null,x:0,y:0,d:240,yaw:0,tx:0,ty:0,pt:0,t0:0};
-function mxShellWant(){const m=document.getElementById('menu');if(!m||m.hidden||SH.on||SH.busy)return false;if(typeof G!=='undefined'&&G&&!G.over&&!G.shell)return false;
-  if(navigator.webdriver&&!/[?&]shell=1/.test(location.search))return false;if(/[?&]shell=0/.test(location.search))return false;if(typeof BM_KEYS==='undefined'||!BM_KEYS.length||typeof newGame!=='function')return false;return true;}
-function mxShellStop(){SH.tok++;const was=SH.on;SH.on=0;SH.busy=0;document.body.classList.remove('mxshell');const mx=document.getElementById('mx');if(mx)mx.classList.remove('sh');
-  const m=document.getElementById('menu');if(m)m.classList.remove('sh');
-  if(SH.g&&G===SH.g){G.over=true;G.paused=false;}SH.g=null;
-  if(was)try{window.dispatchEvent(new Event('resize'));}catch(_){}}
-async function mxShellStart(){if(!mxShellWant())return;SH.busy=1;const tok=++SH.tok,alive=()=>tok===SH.tok&&!document.getElementById('menu').hidden;
-  try{const keys=BM_KEYS.filter(k=>MAPS[k]&&MAPS[k].min<=2&&MAPS[k].max>=2);if(!keys.length){SH.busy=0;return;}
-    const map=keys[(Math.random()*keys.length)|0],ks=FKEYS.filter(k=>k!=='RS'&&k!=='DW'),ok=ks.filter(k=>{try{return upgList(k).every(u=>STRUCT[UPG[u].at]);}catch(_){return false;}});const a=(ok.length?ok:ks)[(Math.random()*(ok.length||ks.length))|0];let b=a;while(b===a)b=ks[(Math.random()*ks.length)|0];
-    MODE='single';ME=0;TERR_DEFER=true;try{newGame({battle:1,seed:(Math.random()*1e9)|0,facs:[a,b],ai:[true,true],map,w:0,tm:[0,1],bs:1,slot:-1});
-      G.shell=1;G.paused=true;G.teams.forEach(T=>{if(T.ai){T.ai=mkAI(2);T.credits=12000;}});}finally{TERR_DEFER=false;}
-    const g=G;SH.g=g;
-    try{await modelsFor([a,b],()=>{});}catch(e){}
-    if(!alive()||G!==g){if(G===g){g.over=true;}SH.busy=0;return;}
-    await new Promise(r=>setTimeout(r,30));if(!alive()||G!==g){if(G===g)g.over=true;SH.busy=0;return;}
-    paintTerrainNow();const tc=g.terrain;g.terrain=null;if(!R3)initGfx();else resetScene();
-    buildWorld(tc||g.terrain);document.body.classList.add('mxshell');resize();try{window.dispatchEvent(new Event('resize'));}catch(_){}resize();
-    try{buildPanels();}catch(e){}cam.yaw=0;cam.tyaw=0;cam.dist=240;cam.td=240;const [bx,by]=BASES[0],[cx,cy]=BASES[1]||BASES[0];SH.x=bx+60;SH.y=by+40;SH.tx=SH.x;SH.ty=SH.y;SH.d=240;SH.pt=9;centerOn(SH.x,SH.y,true);
-    g.terrain=tc;try{renderFrame(1/60);}catch(e){}
-    if(!alive()||G!==g){SH.busy=0;return;}
-    g.paused=false;last=performance.now();g.acc=0;SH.on=1;SH.busy=0;SH.t0=performance.now();
-    const mx=document.getElementById('mx');if(mx)mx.classList.add('sh');document.getElementById('menu').classList.add('sh');
-    requestAnimationFrame(mxShellCam);
-  }catch(e){console.warn('shell battle',e);mxShellStop();}}
-/* the camera: a slow low pan between the fights. Every ~12 s it picks the hottest contact (a unit of one side with an enemy unit close by); with none yet, it drifts across the middle of the map. */
-function mxShellCam(now){if(!SH.on)return;const g=SH.g;if(G!==g||g.over||document.getElementById('menu').hidden){mxShellStop();return;}
-  const dt=Math.min(.05,Math.max(0,(now-(SH.lt||now))/1000));SH.lt=now;
-  if((SH.pt-=dt)<=0){SH.pt=12+Math.random()*6;let best=null,bs=0;const U=g.ents.filter(e=>!e.isB&&!e.dead&&e.team<g.N&&e.s&&e.s.dom!=='air');
-    for(let i=0;i<U.length;i+=Math.max(1,(U.length/60)|0)){const e=U[i];let n=0,m=0;for(const o of U){if(Math.abs(o.x-e.x)>130||Math.abs(o.y-e.y)>130)continue;if(o.team===e.team)m++;else n++;}const sc=Math.min(n,m)*2+n*.2;if(n&&sc>bs){bs=sc;best=e;}}
-    if(best){SH.tx=best.x;SH.ty=best.y;}else{SH.k=(SH.k||0)^1;const a=BASES[SH.k]||BASES[0];SH.tx=a[0]+(Math.random()-.5)*140;SH.ty=a[1]+(Math.random()-.5)*140;}   /* no fight yet: look in on a base, then the other */
-    SH.tx=Math.max(120,Math.min(MAPW-120,SH.tx));SH.ty=Math.max(120,Math.min(MAPH-120,SH.ty));SH.td=best?190+Math.random()*60:260;}
-  const dx=SH.tx-SH.x,dy=SH.ty-SH.y,dd=Math.hypot(dx,dy),mv=Math.min(dd,(14+dd*.18)*dt);if(dd>.01){SH.x+=dx/dd*mv;SH.y+=dy/dd*mv;}
-  SH.d+=(SH.td-SH.d)*(1-Math.exp(-dt*.5));SH.yaw=Math.sin((now-SH.t0)/1000*.045)*.5;
-  camTarget();cam.tx=SH.x;cam.ty=SH.y;cam.td=SH.d;cam.tyaw=SH.yaw;
-  requestAnimationFrame(mxShellCam);}
-function mxShellSoon(){clearTimeout(MX.shT);MX.shT=setTimeout(()=>{if(mxShellWant())mxShellStart();},2500);}
-function mxShown(first){if(!first&&MX.cur!=='title')menuHome();mxContSync();mxShellSoon();try{if(typeof svMenuSync==='function')svMenuSync();else mxWarTable();}catch(_){}}   /* svMenuSync finds the newest save, then calls mxWarTable */
+function mxShown(first){if(!first&&MX.cur!=='title')menuHome();mxContSync();try{if(typeof svMenuSync==='function')svMenuSync();}catch(_){}}
 function mxKey(e){if(e.key!=='Escape')return;const m=document.getElementById('menu');if(!m||m.hidden||(MX.stack.length<2&&!(MX.trIn&&MX.cur==='t-range')))return;
   if(document.querySelector('.overlay:not(#menu):not([hidden]),#campScreen,#gModal,#edOv.on'))return;if(e.target&&/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)&&e.target.id!=='mxnatin')return;
   e.preventDefault();e.stopImmediatePropagation();menuBack();}
