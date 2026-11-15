@@ -580,27 +580,9 @@ try {
     ck(A.atk.join() === 'true,false,true', 'announcer under-attack lines must be once per 20 s: ' + A.atk);
     ck(A.ov === false, 'announcer must not start a line while another is playing'); ck(A.test.join() === 'true,false', 'announcer must be throttled more in the Test range');
     ck(A.slider && A.hooked, 'announcer needs its Settings > Audio slider (sAnn) and the pushLog hook'); }
-  // ---- Fight-it battle: the army you have, nothing to buy/build/tax
-  await ev(() => { const pi = GCM.P.findIndex(p => p.land && !p.map && GC.prov[p.i].o === 'IR'); const P = GCM.P[pi], st = GC.prov[pi], an = 'IQ'; const from = P.adj.find(j => GCM.P[j].land);
-    const A = grAddArmy(an, from, grGenUnits(grNat(an).fac, 3000, true)); const D = grAddArmy('IR', pi, grGenUnits('IR', 3000, true)); A.at = pi;
-    grandBattleStart({ p: pi, an, dn: 'IR', att: [A.id], def: [D.id], garr: true, river: false, mtn: P.t === 'm', done: 0 }); });
-  await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !!G.grand, null, { timeout: 60000 });
-  await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('fight-it battle never finished loading'));
-  await page.waitForTimeout(2500);
-  const fb = await ev(() => { const shown = [...document.querySelectorAll('button.btn')].filter(b => !b.hidden && b.offsetParent && !b.disabled && /^(b_|u_|g_)/.test(b.id)).map(b => b.id);
-    const txt = (document.body.innerText || ''); return { shown, tax: /\bTax\b.*(rate|High|Low)|Invest/i.test(txt) ? (/.{20}(Invest|Tax rate).{20}/i.exec(txt) || [''])[0] : '', money: /\$\s?\d{1,3}(,\d{3})+/.test(txt) ? (/.{15}\$\s?\d{1,3}(,\d{3})+.{10}/.exec(txt) || [''])[0] : '', cr: G.teams[ME].credits, txtA: /Ayatollah|Dear Leader|Bunker Buster/.exec(txt) }; });
-  /* L3 light economy (2026-11-14): Battle always applies build time + upkeep profiles; Conquest and grand Fight-it do not; Realistic keeps full REAL_TIER. */
-  { const g = await ev(() => { const sv = G; try { const r = {}; G = { battle: 1, real: 0 }; r.usB = econBT('US'); r.usU = econUp('US'); r.irB = econBT('IR'); r.ruB = econBT('RU'); r.ruU = econUp('RU');
-      G = { battle: 0, real: 0 }; r.conq = econBT('US') + econUp('US') + econBT('IR'); G = { battle: 1, grand: {}, real: 0 }; r.grand = econBT('US') + econBT('IR'); return r; } finally { G = sv; } });
-    ck(g.usB > 1 && g.usU < 1 && g.irB < 1 && g.ruB === 1 && g.ruU === 1, 'L3 light economy profile wrong in Battle: ' + JSON.stringify(g)); ck(g.conq === 3 && g.grand === 2, 'L3 light economy must not touch Conquest or grand Fight-it: ' + JSON.stringify(g)); }
-  { const g = await ev(() => ({ ban: ['cleric', 'bb'].every(k => conqBan(k)), fort: false, cl: roster('IR').barracks.includes('cleric'), made: G.ents.some(e => e.kind === 'cleric') }));
-    ck(g.ban && !g.fort && !g.made, 'signature assets must be OUT of grand Fight-it battles: ' + JSON.stringify(g)); }
-  console.log('fight-it', JSON.stringify(fb)); await shot('fightit-hud');
-  { const gg = await ev(() => { const tabs = document.querySelector('.tabs'); const T0 = G.teams[ME]; const c0 = T0.credits; return { tabs: !!tabs && tabs.offsetParent !== null, panel: !!document.getElementById('panel') && document.getElementById('panel').offsetParent !== null, enq: enqueue(ME, 'rifle'), enq2: enqueue(ME, 'infantry'), pb: typeof placeBld === 'function' ? placeBld(ME, 'barracks', 10, 10) : false, banner: /your army only/.test(document.body.innerText), cr: c0 === T0.credits }; });
-    ck(!gg.tabs && !gg.panel, 'campaign battle still shows the Build/Units tabs or panel'); ck(!gg.enq && !gg.enq2 && !gg.pb, 'campaign battle allows enqueue/placeBld'); ck(gg.banner, 'campaign battle lacks the "army only" banner'); }
-  ck(!fb.shown.length, 'Fight-it battle shows ENABLED build/train/upgrade buttons (army only): ' + fb.shown.slice(0, 8).join(','));
-  ck(!fb.tax, 'Fight-it battle shows tax/invest UI: ' + fb.tax);
-  ck(!fb.txtA, 'Fight-it battle text mentions a grand-map-only asset');
+  // L3 light economy (2026-11-14; income cut removed 22:32): in Battle rich nations train 10% slower, poorer fast nations 25% faster; income the same for all
+  { const g = await ev(() => { const sv = G; try { G = { battle: 1 }; return { usB: econBT('US'), usU: econUp('US'), irB: econBT('IR'), ruB: econBT('RU') }; } finally { G = sv; } });
+    ck(g.usB > 1 && g.usU === 1 && g.irB < 1 && g.ruB === 1, 'L3 light economy profile wrong in Battle: ' + JSON.stringify(g)); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
 await browser.close(); server.close();

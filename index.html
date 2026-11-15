@@ -5706,7 +5706,7 @@ const NATPOW={US:{name:'Shock and Awe',type:'strafe',cd:200,r:140,desc:'A-10 gun
 /* L3 light economy (Battle only): [train-time x, income x]; rich high-tech nations train slower and earn a bit less, poorer fast nations train faster */
 const ECON_LIGHT={US:[1.1,.9],GB:[1.1,.9],FR:[1.1,.9],DE:[1.1,.9],IL:[1.1,.9],JP:[1.1,.9],KR:[1.1,.9],SA:[1.1,.9],AE:[1.1,.9],IR:[.75,1],RS:[.75,1],DW:[.75,1],RV:[.75,1],OB:[.75,1],KP:[.75,1],UA:[.75,1]};
 function econBT(fac){try{if(G&&G.battle){const e=ECON_LIGHT[fac];if(e)return e[0];}}catch(e){}return 1;}
-function econUp(fac){try{if(G&&G.battle){const e=ECON_LIGHT[fac];if(e)return e[1];}}catch(e){}return 1;}
+function econUp(fac){return 1;}   /* no income cut for rich nations (Abdullah 2026-11-14 22:32): they only train 10% slower */
 function natPow(fac){return NATPOW[fac]||NATPOW.US;}
 // Each nation's take on the five shared general powers. Every nation trades strengths for weaknesses so the totals
 // stay even (checked in tests): m = bounty %, rm = radius, tm = duration, nm = count/shells, dm = shell damage,
