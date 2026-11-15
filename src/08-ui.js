@@ -632,7 +632,7 @@ let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.p
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.aim&&LASTPT!=='touch'){G.aim=null;updateUI();return;}   /* powers / Strike: left-click cancels, right-click fires (00:26 / 00:28) */
   if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}   /* buildings, generals' powers and the Strike are deployed with LEFT-click (Abdullah 2026-11-14 21:01 / 21:17); right-click cancels */   /* buildings are placed with LEFT-click (Abdullah 2026-11-14 21:01 "Make left click build"); right-click cancels */
-  if(G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();return;}   /* Generals: every map action is a RIGHT-click; left-click cancels it (Abdullah 2026-11-14 19:34) */
+  if((G.aim||G.amove||G.defm)&&!leftOrders()){G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();return;}   /* Generals: every map action is a RIGHT-click; left-click cancels it (Abdullah 2026-11-14 19:34). The 'Classic left-click' mouse scheme (Settings > Mouse) gives orders with left-click, so there F/G targets are left-clicks too */
   if(0){G.amove=false;G.defm=false;updateUI();return;}   /* Attack / Guard targets are given with RIGHT-click; left-click cancels (Abdullah 2026-11-14 19:30) */
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,ctrl:e.ctrlKey||e.metaKey,alt:e.altKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
@@ -1461,7 +1461,7 @@ const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a t
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
   P.push('Double-click: all of a type');P.push('Ctrl+click: force-fire · Alt+click: waypoint');
-  P.push('F then right-click: attack-move · G then right-click: defend area · X: stop');P.push('R: retreat');
+  P.push(L?'F then click: attack-move · G then click: defend area · X: stop':'F then right-click: attack-move · G then right-click: defend area · X: stop');P.push('R: retreat');
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Get out: right-click your selected transport (Alt+right-click a spot: drive there, unload) · building or tunnel selected, right-click the ground');

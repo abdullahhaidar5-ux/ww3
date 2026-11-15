@@ -5942,7 +5942,7 @@ SPECIAL_TIP.fpvt=u=>'Short-range FPV drones that only attack vehicles. '+(u.amCa
    missile-defence sites, Iron-Dome-type batteries and flak AA near the target (updStrikes in 03-sim). Military targets only (it fires at what the unit targets).
    The AI builds one only when rich (AI filter in 03-sim). Iran has no Shahed launcher truck: the Shahed-136 drone is its drone slot. */
 BASE.bmt=Object.assign({},BASE.arty,{name:'Zolfaghar Missile Launcher',rocket:true,missile:true,rng:900,minr:260,dmg:760,splash:105,rof:32,hp:260,cost:1900,time:24,limit:2,
-  desc:'One big guided ballistic missile per launch, from far beyond any gun. Reloads slowly, costs a lot, you can have two. Air defence (missile-defence sites, Iron Dome, flak) can shoot it down in flight. Fragile: hide it behind your lines.'});
+  desc:'One big guided ballistic missile per launch, from far beyond any gun. Reloads slowly, costs a lot, you can have two. Air defense (missile-defence sites, Iron Dome, flak) can shoot it down in flight. Fragile: hide it behind your lines.'});
 if(typeof KINDS!=='undefined'&&!KINDS.includes('bmt'))KINDS.push('bmt');
 {const F=FACTIONS.IR;if(F){F.extra=[...(F.extra||[]),'bmt'].filter((k,i,a)=>a.indexOf(k)===i);F.units=F.units||{};F.units.bmt=Object.assign({},F.units.bmt||{},{name:'Zolfaghar Missile Launcher'});}}
 /* the launch: called from fire() for any unit whose stats say missile:true */
@@ -12713,6 +12713,7 @@ const KEYTAB=[
   {id:'supl',ctx:'battle',grp:'Camera',name:'Show supply lines on the ground',def:'l'},
   {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
   {id:'vision',ctx:'battle',grp:'Game',name:'Night vision / thermal view (at night)',def:'`'},
+  {id:'abuild',ctx:'battle',grp:'Game',name:'Auto-build list (open / close)',def:'u'},
   {id:'pause',ctx:'battle',grp:'Game',name:'Pause',def:'p'},
   {ctx:'battle',grp:'Game',name:'Photo mode',fix:'F8'},
   {ctx:'battle',grp:'Game',name:'Menu · cancel · one step back',fix:'Esc'},
@@ -14137,7 +14138,7 @@ let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.p
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.aim&&LASTPT!=='touch'){G.aim=null;updateUI();return;}   /* powers / Strike: left-click cancels, right-click fires (00:26 / 00:28) */
   if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}   /* buildings, generals' powers and the Strike are deployed with LEFT-click (Abdullah 2026-11-14 21:01 / 21:17); right-click cancels */   /* buildings are placed with LEFT-click (Abdullah 2026-11-14 21:01 "Make left click build"); right-click cancels */
-  if(G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();return;}   /* Generals: every map action is a RIGHT-click; left-click cancels it (Abdullah 2026-11-14 19:34) */
+  if((G.aim||G.amove||G.defm)&&!leftOrders()){G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();return;}   /* Generals: every map action is a RIGHT-click; left-click cancels it (Abdullah 2026-11-14 19:34). The 'Classic left-click' mouse scheme (Settings > Mouse) gives orders with left-click, so there F/G targets are left-clicks too */
   if(0){G.amove=false;G.defm=false;updateUI();return;}   /* Attack / Guard targets are given with RIGHT-click; left-click cancels (Abdullah 2026-11-14 19:30) */
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,ctrl:e.ctrlKey||e.metaKey,alt:e.altKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
@@ -14966,7 +14967,7 @@ const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a t
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
   P.push('Double-click: all of a type');P.push('Ctrl+click: force-fire · Alt+click: waypoint');
-  P.push('F then right-click: attack-move · G then right-click: defend area · X: stop');P.push('R: retreat');
+  P.push(L?'F then click: attack-move · G then click: defend area · X: stop':'F then right-click: attack-move · G then right-click: defend area · X: stop');P.push('R: retreat');
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Get out: right-click your selected transport (Alt+right-click a spot: drive there, unload) · building or tunnel selected, right-click the ground');
@@ -21362,8 +21363,8 @@ const CAMPAIGN=[
   else if(CH.combat(0)===0&&G.teams[0].credits<250)c.lose('The assault force is destroyed.');
   else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and force lost.');}},
 
-{id:'marsh',n:6,title:'Hold the Causeway',sub:'Iraqi Shia Brigades · South Iraq · Marsh defence',fac:'RV',enemy:'GB',enemyName:'Expeditionary Force',map:'marshes',
- brief:['An expeditionary force has landed on the southern coast and is pushing up the causeways between the reed marshes toward a shrine town. Our volunteer brigades are still gathering from the villages and need time to arrive.','You hold the causeway crossing with a militia garrison: riflemen, anti-tank teams, a few vehicles and emplacements. The enemy can only come along the narrow causeways, so make them pay for every metre. Keep your supply area around the crossing: units refill ammunition only inside it.','When the volunteer brigades arrive, take the fight back down the causeway and destroy the enemy forward base.'],
+{id:'marsh',n:6,title:'Hold the Causeway',sub:'Iraqi Shia Brigades · South Iraq · Marsh defense',fac:'RV',enemy:'GB',enemyName:'Expeditionary Force',map:'marshes',
+ brief:['An expeditionary force has landed on the southern coast and is pushing up the causeways between the reed marshes toward a shrine town. Our volunteer brigades are still gathering from the villages and need time to arrive.','You hold the causeway crossing with a militia garrison: riflemen, anti-tank teams, a few vehicles and emplacements. The enemy can only come along the narrow causeways, so make them pay for every meter. Keep your supply area around the crossing: units refill ammunition only inside it.','When the volunteer brigades arrive, take the fight back down the causeway and destroy the enemy forward base.'],
  obj:[['hold','Hold the causeway until the brigades arrive'],['reinf','The volunteer brigades arrive'],['crush','Destroy the enemy forward base']],
  win:'The causeway is ours and the shrine town is safe. The invaders are driven back to the sea.',lose:'The crossing has fallen. The town must be held from the next line.',
  setup(c){const d=c.mul;c.T=600;const R=CH.pt(.2,0);c.ridge=R;c.focus=R;G.teams[0].credits=500;

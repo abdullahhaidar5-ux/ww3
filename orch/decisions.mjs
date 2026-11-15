@@ -38,7 +38,7 @@ const ck = (c, m) => { if (!c) fails.push(m); };
 { const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8'); const kt = rd('src/06z-keys.js');
   const defs = [...kt.matchAll(/\{id:'(\w+)'[^}]*?def:'([^']+)'/g)].map(m => [m[1], m[2]]); const seen = {};
   for (const [id, d] of defs) { ck(!seen[d], 'key table: "' + d + '" is bound twice (' + seen[d] + ' and ' + id + ')'); seen[d] = id; ck(!'wasd'.includes(d), 'key table: W A S D only scroll the camera, row ' + id + ' uses ' + d); }
-  ck(defs.length > 20, 'key table: could not read the rows');
+  ck(defs.length >= 18, 'key table: could not read the rows');   // parse sanity only: the table shrank to ~20 letter rows after the 2026-11-14 UI audit (Z, Type, stance keys removed)
   const fixedLetters = new Set(['a']);   // Ctrl+A has a fixed row
   const handled = new Set(); const ui = rd('src/08-ui.js'), i0 = ui.indexOf("window.addEventListener('keydown'"), i1 = ui.indexOf("window.addEventListener('keyup'", i0);
   for (const m of ui.slice(i0, i1).matchAll(/\bk==='([a-z])'/g)) handled.add(m[1]);
@@ -238,7 +238,7 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
 //     A hotkey added to a handler without a row fails here. W A S D are camera-only and never rebindable. Runtime proof: orch/polishtest.mjs (gate/save).
 { const kt = SRC['06z-keys.js'] || '', ui = SRC['08-ui.js'] || '', all = Object.entries(SRC).filter(([f]) => /^0[689]/.test(f) || f === '03i-leaders.js').map(x => x[1]).join('\n');
   const defs = new Set([...kt.matchAll(/ctx:'battle'[^}]*def:'(.)'/g)].map(m => m[1]));
-  ck(defs.size >= 24 && /KB_FIXED='wasd'/.test(kt) && !['w', 'a', 's', 'd'].some(k => defs.has(k)), 'keys: the key table is gone or W A S D became rebindable');
+  ck(defs.size >= 18 && /KB_FIXED='wasd'/.test(kt) && !['w', 'a', 's', 'd'].some(k => defs.has(k)), 'keys: the key table is gone or W A S D became rebindable');
   const hk = ui.slice(ui.indexOf("window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'"), ui.indexOf("window.addEventListener('keyup'"));
   const used = new Set([...hk.matchAll(/k==='([a-z])'/g)].map(m => m[1])); for (const m of all.matchAll(/POW_KEY(?:=\{([^}]*)\}|\.\w+='(.)')/g)) { if (m[2]) used.add(m[2]); else for (const x of m[1].matchAll(/:'(.)'/g)) used.add(x[1]); }
   for (const m of all.matchAll(/e\.key==='([a-z])'\|\|e\.key==='[A-Z]'/g)) used.add(m[1]);

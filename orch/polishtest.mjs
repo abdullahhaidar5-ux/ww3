@@ -33,7 +33,7 @@ try {
     const btn = document.getElementById('sKeys'); const inCtl = !!btn && !!btn.closest('[data-pp="ctl"],.uk-pane') ; btn.click();
     const w = document.getElementById('kbWin'); const rows = w ? w.querySelectorAll('.kbrow').length : 0;
     const r = { btn: !!btn, win: !!w, rows, all: rows === KEYTAB.length, setHidden: document.getElementById('settings').hidden,
-      wasd: kbSet('stop', 'w'), used: kbSet('stop', 'f'), digit: kbSet('stop', '1'), tab: kbSet('stop', 'Tab'), fixed: kbSet('nope', 'c'), ok: kbSet('stop', 'F8'), back: kbSet('amove', 'x'), swap2: kbSet('stop', 'x') };
+      wasd: kbSet('stop', 'w'), used: kbSet('stop', 'f'), digit: kbSet('stop', '1'), tab: kbSet('stop', 'Tab'), fixed: kbSet('nope', 'c'), ok: kbSet('stop', 'F9'), back: kbSet('amove', 'x'), swap2: kbSet('stop', 'x') };
     r.cur = { stop: KB.cur.stop, amove: KB.cur.amove }; r.stored = localStorage.getItem('ww3_keys');
     // letters used by the handlers must all be rows of the table
     r.dupes = ['battle'].map(c => { const d = KEYTAB.filter(x => x.def && x.ctx === c).map(x => x.def); return d.length - new Set(d).size; });
@@ -44,7 +44,7 @@ try {
   ck(k1.btn && k1.win && k1.all && k1.rows > 30, 'Keyboard keys window missing or does not list every row of the key table'); ck(k1.setHidden, 'Settings must step aside while the Keyboard keys window is open (one job per window)');
   ck(/W, A, S and D/.test(k1.wasd), 'W A S D must be refused: ' + k1.wasd); ck(/already used for "Attack-move"/.test(k1.used), 'a key in use must be refused with a plain message: ' + k1.used);
   ck(/Only letters/.test(k1.digit) && /Only letters/.test(k1.tab) && k1.fixed, 'digits / unknown actions must be refused'); ck(k1.ok === '' && k1.back === '' && /already used/.test(k1.swap2), 'rebinding to a free key failed: ' + JSON.stringify([k1.ok, k1.back, k1.swap2]));
-  ck(k1.cur.stop === 'F8' && k1.cur.amove === 'x' && /"stop":"F8"/.test(k1.stored || ''), 'rebinding is not stored'); ck(!k1.dupes[0] && !k1.dupes[1] && !k1.pow.length, 'key table has duplicate letters or misses a power key: ' + JSON.stringify([k1.dupes, k1.pow]));
+  ck(k1.cur.stop === 'F9' && k1.cur.amove === 'x' && /"stop":"F9"/.test(k1.stored || ''), 'rebinding is not stored'); ck(!k1.dupes[0] && !k1.dupes[1] && !k1.pow.length, 'key table has duplicate letters or misses a power key: ' + JSON.stringify([k1.dupes, k1.pow]));
   // Esc: first cancels "press a key", then closes the window and Settings is back
   await Q.click('#kbWin .kbk[data-id="hq"]'); await Q.keyboard.press('x'); const refused = await Q.evaluate(() => document.querySelector('#kbWin .kbmsg').textContent);
   await Q.keyboard.press('Escape'); const still = await Q.evaluate(() => !!document.getElementById('kbWin')); await Q.keyboard.press('Escape');
@@ -55,18 +55,19 @@ try {
   await Q.waitForFunction(() => !window.LOADING && typeof G !== 'undefined' && G && G.ents.some(e => !e.isB && e.team === ME), null, { timeout: 900000, polling: 250 });
   const press = async (key) => { await Q.evaluate(() => { G.amove = false; G.sel = G.ents.filter(e => !e.isB && e.team === ME && !e.dead).slice(0, 3); window.__stops = 0; if (!window.__da) { window.__da = doAct; doAct = function (a) { if (a && a.t === 'stop') window.__stops++; return window.__da.apply(this, arguments); }; } });
     await Q.keyboard.press(key); return Q.evaluate(() => ({ am: !!G.amove, stops: window.__stops })); };
-  const bx = await press('x'), bf = await press('f'), bb = await press('F8');
+  const bx = await press('x'), bf = await press('f'), bb = await press('F9');   // F8 is photo mode now (fixed key); F9 is a spare key
   await Q.evaluate(() => kbReset()); const rx = await press('x'), rf = await press('f');
   console.log('battle keys', JSON.stringify({ bx, bf, bb, rx, rf }));
   ck(bx.am && !bx.stops && !bf.am && !bf.stops && bb.stops === 1 && !bb.am, 'rebound keys do not work in battle: ' + JSON.stringify({ bx, bf, bb }));
   ck(rx.stops === 1 && !rx.am && rf.am, 'Reset to defaults did not restore the standard keys: ' + JSON.stringify({ rx, rf }));
   // first-launch graphics check: picks once from a 3 s measurement, never again, never for a returning player
+  //   (a PC with lots of headroom gets Ultra since the Ultra preset came in, 2026-11-14 weathergfx)
   const bn = await Q.evaluate(() => { const picks = [benchPick(20, 0, .004, 60), benchPick(60, 0, .004, 60), benchPick(58, 0, .012, 60), benchPick(60, 2, .004, 60), benchPick(140, 0, .003, 144)];
     const auto0 = benchWant(); window.__bench = 1; delete SET.gfxB; SET.gfx = 'auto'; BENCH.done = false; BENCH.t = 0; BENCH.n = 0; BENCH.skip = 0; G.paused = false; QUAL.lv = 0; QUAL.cost = .004;
     for (let i = 0; i < 200; i++) benchTick(1 / 60); const r1 = BENCH.res && BENCH.res.pick, g1 = SET.gfx, once = SET.gfxB === 1 && !benchWant(); window.__bench = 0; return { picks, auto0, r1, g1, once }; });
   console.log('bench', JSON.stringify(bn));
-  ck(bn.picks.join() === 'low,high,auto,low,high', 'graphics check picks the wrong preset: ' + bn.picks); ck(!bn.auto0, 'graphics check must not run in automated tests / for returning players');
-  ck(bn.r1 === 'high' && bn.g1 === 'high' && bn.once, 'graphics check did not set the preset exactly once: ' + JSON.stringify(bn));
+  ck(bn.picks.join() === 'low,ultra,auto,low,ultra', 'graphics check picks the wrong preset: ' + bn.picks); ck(!bn.auto0, 'graphics check must not run in automated tests / for returning players');
+  ck(bn.r1 === 'ultra' && bn.g1 === 'ultra' && bn.once, 'graphics check did not set the preset exactly once: ' + JSON.stringify(bn));
   // text size in a battle: the command bar grows, the battlefield shrinks to make room, nothing reaches past the window, the minimap still maps clicks
   for (const [W, H] of [[1366, 768]]) { await Q.setViewportSize({ width: W, height: H }); await Q.evaluate(() => { tsSet(1.3); G.paused = false; });   // the tight case; the build grid (#panel) scrolls sideways by design at every size await Q.waitForTimeout(1200);
     const hb = await Q.evaluate(() => { const r = (id) => { const e = document.getElementById(id); if (!e || !e.getClientRects().length) return null; const b = e.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom].map(Math.round); };
