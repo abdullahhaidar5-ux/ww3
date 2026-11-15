@@ -220,6 +220,13 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(ids.length >= 3 && ids.every(v => /^clone:lb_[a-z]+$/.test(v)), 'rsvoice: the RS cast must use the cloned Lebanese voices (clone:lb_*): ' + JSON.stringify(ids));
   for (const v of new Set(ids)) ck(fs.existsSync(path.join(ROOT, 'tools', 'voices', 'refs', v.slice(6) + '.flac')), 'rsvoice: missing reference clip for ' + v);
   ck(/Lebanese unit voices[^<]{0,300}MASC/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'rsvoice: menu credits do not name the Lebanese voice source (MASC)'); }
+// rvvoice (Abdullah 2026-11-15 04:09 "Yes" to re-recording RV with the gritty pipeline): RV lines are south-Iraqi colloquial and the RV cast is
+// XTTS cloned from real Iraqi speakers (MASC corpus, CC BY 4.0; tools/voices/refs/iq_*.flac), never the old studio speakers.
+{ const cast = JSON.parse(fs.readFileSync(path.join(ROOT, 'orch', 'vo', 'cast.json'), 'utf8')).RV || {};
+  const ids = [].concat(cast.sold || [], cast.cmd || []);
+  ck(ids.length >= 2 && ids.every(v => /^clone:iq_[a-z]+$/.test(v)), 'rvvoice: the RV cast must use the cloned Iraqi voices (clone:iq_*): ' + JSON.stringify(ids));
+  for (const v of new Set(ids)) ck(fs.existsSync(path.join(ROOT, 'tools', 'voices', 'refs', v.slice(6) + '.flac')), 'rvvoice: missing reference clip for ' + v);
+  ck(/south-Iraqi unit voices[^<]{0,300}MASC/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'rvvoice: menu credits do not name the Iraqi voice source (MASC)'); }
 
 // ---------- static checks ----------
 // polishP2 "Never lose progress": one save system. Battles autosave into 3 rolling slots (08d-save.js) and the menu's Continue (first item) resumes the newest. Runtime proof: orch/polishtest.mjs (gate/save).

@@ -15,3 +15,9 @@ Same source and licence as above (MASC, CC BY 4.0, dev/test splits); speakers pi
 - pal_host.flac: MASC video eLR5XvLcNWk (~107 Hz) - OB commander + third soldier voice
 - pal_talk.flac: MASC video 8-rto97tYC0 (~125 Hz) - first soldier voice
 - pal_story.flac: MASC video XshQZopat4A (~116 Hz) - second soldier voice
+
+# Iraqi voice references (RV unit voices, 2026-11-15 voices2)
+Same source and licence as above (MASC, CC BY 4.0), train split (transcript csv scanned for Iraqi markers: جان/جانت, هيجي, علمود, اهوايه, شكو, ماكو, اكو, هسه, يكدر/يكول; only the matching clips were kept while streaming shards train_03, train_05, train_07). Per the dataset terms no attempt was made to identify the speakers.
+- iq_narr.flac: one Baghdadi-dialect narrator (MASC videos wB0xAwXYpxI, yARgV0Aou_0, 0cAbIxbSim4, 1JBXSAib85U; ~150 Hz, DNSMOS P.808 3.6-3.95) - RV commander + second soldier voice
+- iq_rap.flac: one Baghdadi-dialect male rapper (MASC video F0TqulOsxGA, six clips, ~100 Hz); his vocal was separated from the backing music with Demucs (htdemucs, MIT) before cloning - first soldier voice
+Checked and not used: Mozilla Common Voice (no adult Iraqi male), MASC dev/test (no Iraqi-labelled speakers), other Iraqi MASC videos (songs/poems or music beds, a female speaker, noisy field reports).
