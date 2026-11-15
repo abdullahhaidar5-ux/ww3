@@ -441,9 +441,9 @@ function issueCmd(w,t,rally){
 // Saved settings from before 2026-10-29 are moved to Standard once (ctl2). mAK is always 'f' now (F attack-move, X stop).
 // Touch and pen have no right button, so a tap selects or orders as before. The cursor shows what a click will do.
 let lastR={t:0,id:0},rDown=0;
-const MDEF={mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f',mRS:100,mCur:1,mPing:1,mLock:1,mKeep:0};
+const MDEF={mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f',mRS:100,mCur:1,mPing:1,mLock:1,mKeep:1};
 const MPRE={std:{mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none'},gen:{mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll'}};
-if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;
+if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;if(SET.keep3!==1){SET.mKeep=1;SET.keep3=1;try{saveSet();}catch(_){}}   /* Abdullah 2026-11-14 18:07 "Right click should not unselect the units selected" */
 function mPreset(){for(const p in MPRE)if(Object.keys(MPRE[p]).every(k=>SET[k]===MPRE[p][k]))return p;return 'custom';}
 function stdMouse(){return mPreset()==='std';}
 function leftOrders(){return SET.mLG==='move';}
