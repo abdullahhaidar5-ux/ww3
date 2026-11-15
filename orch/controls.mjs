@@ -137,17 +137,18 @@ async function cancelChecks(page, { mode, ck }) {
   await page.evaluate(() => { try { MLOCK.broken = true; mlockOff(); } catch (e) {} G.place = G.aim = null; window.__acts = [];
     const T = G.teams[ME]; T.credits = 5000; let b = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks' && e.built >= 1);
     if (!b) { const h = G.byId.get(window.__HQ); b = addBld(ME, 'barracks', h.x + 150, h.y + 150, true); }
-    T.q.barracks = []; enqueue(ME, 'inf'); enqueue(ME, 'inf'); window.__CB = b.id; window.__C0 = T.credits; G.sel = [b]; updateUI(); });
+    b.q = []; enqueue(ME, 'inf', b.id); enqueue(ME, 'inf', b.id); window.__CB = b.id;   /* every production building has its own queue */
+    window.__C0 = T.credits; G.sel = [b]; updateUI(); });
   await wait(300);
   if (mode === 'touch') await page.evaluate(() => { TC.stripK = null; tcStrip(true); });
   const dis = await page.evaluate(() => { const b = document.querySelector('#info .cnBtn'); return b ? b.disabled : null; });
   ck(mode + ' Cancel is enabled with a queued building selected', mode === 'touch' ? !!(await page.$(btn)) : dis === false, JSON.stringify(await page.evaluate(() => ({ dis: String(document.querySelector('#info .cnBtn') && document.querySelector('#info .cnBtn').disabled), ui: TOUCHUI, t: TC.touch, ci: cancelInfo(), st: document.getElementById('tstrip') && document.getElementById('tstrip').className, hid: document.getElementById('tstrip') && document.getElementById('tstrip').hidden, menu: document.getElementById('menu').hidden, load: !!window.LOADING }))));
   await press(btn);
-  let r = await page.evaluate(() => ({ n: G.teams[ME].q.barracks.length, c: G.teams[ME].credits, c0: window.__C0 }));
+  let r = await page.evaluate(() => ({ n: (G.byId.get(window.__CB).q || []).length, c: G.teams[ME].credits, c0: window.__C0 }));
   ck(mode + ' Cancel removes the last queued unit and refunds it', r.n === 1 && r.c > r.c0, JSON.stringify(r));
   if (mode !== 'touch') {
     await page.keyboard.press('Backspace'); await wait(100);
-    r = await page.evaluate(() => ({ n: G.teams[ME].q.barracks.length }));
+    r = await page.evaluate(() => ({ n: (G.byId.get(window.__CB).q || []).length }));
     ck('Backspace cancels too', r.n === 0, JSON.stringify(r));
   }
   // a builder constructing a building

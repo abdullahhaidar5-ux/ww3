@@ -431,7 +431,8 @@ try {
   await shot('battle-ir');
   // fixes1 (2026-11-11): the hover card of a build button must really show what the unit beats and what it is weak to: at least one
   // picture + name in each row (a stale screenshot showed the two row labels with nothing in them). Real mouse hover on a button.
-  { await ev(() => { window.__tab0 = TAB; showTab('units'); }); await page.waitForTimeout(300);
+  { await ev(() => { window.__tab0 = TAB; const T = G.teams[ME]; let b = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks' && e.built >= 1 && !e.dead); if (!b) { const h = G.ents.find(e => e.team === ME && e.kind === 'hq'); b = addBld(ME, 'barracks', h.x + 150, h.y + 150, true); } G.sel = [b]; updateUI(); showTab('units'); });   /* the unit buttons show only while a production building is selected */
+    await page.waitForTimeout(300);
     const bx = await ev(() => { const b = document.getElementById('u_at') || document.getElementById('u_inf'); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
     await page.mouse.move(bx.x - 20, bx.y); await page.mouse.move(bx.x, bx.y, { steps: 3 }); await page.waitForTimeout(500);
     const hc = await ev(() => { const d = document.getElementById('ctip'), out = { hover: !!d && !d.hidden, bad: [] }; const rows = () => [...d.querySelectorAll('.uk-mu .mr')].map(r => { const q = d.getBoundingClientRect();
@@ -462,7 +463,7 @@ try {
   // ---- BATTLE (Generals rules + supply lines): Command Center + dozer + supply truck, no towns/tax, supply trucks pay
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
-  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; try { initAudio(); } catch (e) {} startSingle(); });
+  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.map = 'bm_sixroads'; try { initAudio(); } catch (e) {} startSingle(); });   /* a Battle map with roads out of the base (supply lines follow roads) */
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('battle-mode game never finished loading'));
   await page.waitForTimeout(1500);
   const bt = await ev(() => { const T = G.teams[ME], mine = G.ents.filter(e => e.team === ME && !e.dead); const c0 = T.credits;
