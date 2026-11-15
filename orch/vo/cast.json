@@ -149,11 +149,10 @@
   "eng": "xtts",
   "lang": "ar",
   "sold": [
-   "Gilberto Mathias",
-   "Viktor Eka",
-   "Luis Moray"
+   "clone:iq_rap",
+   "clone:iq_narr"
   ],
-  "cmd": "Baldur Sanjin"
+  "cmd": "clone:iq_narr"
  },
  "SY": {
   "eng": "xtts",
