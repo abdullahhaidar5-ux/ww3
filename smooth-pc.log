@@ -1,0 +1,79 @@
+[0s] pc: launching browser
+[2s] ctx
+[2s] guarded
+[2s] page
+[2s] pc: loading page
+[3s] pc: page loaded
+[3s] pc: menu ready
+[25s] pc: LOADING {"tok":1,"tipI":7,"tipT":102,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",11339],["Loading 3D models…",517]
+[49s] pc: battle loaded in 46s
+[49s] pc: done {"tok":1,"tipI":10,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",11339],["Loading 3D models…",51
+[56s] pc: army in place
+[56s] pc: measuring 150 frames
+[65s] pc: warm-up done, 163 shaders
+[66s] pc: frame 10
+[67s] pc: frame 20
+[69s] pc: frame 30
+[70s] pc: frame 40
+[71s] pc: frame 50
+[72s] pc: frame 60
+[73s] pc: frame 70
+[74s] pc: frame 80
+[75s] pc: frame 90
+[76s] pc: frame 100
+[77s] pc: frame 110
+[78s] pc: frame 120
+[79s] pc: frame 130
+[80s] pc: frame 140
+[81s] pc: frame 150
+[84s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) draw calls rose to 2720 (baseline 1661, allowed up to 2551.5; +64%)
+[84s] pc: launching browser
+[84s] ctx
+[84s] guarded
+[84s] page
+[84s] pc: loading page
+[85s] pc: page loaded
+[85s] pc: menu ready
+[106s] pc: LOADING {"tok":1,"tipI":7,"tipT":102,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10094],["Loading 3D models…",534]
+[128s] pc: battle loaded in 43s
+[128s] pc: done {"tok":1,"tipI":10,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10094],["Loading 3D models…",53
+[135s] pc: army in place
+[135s] pc: measuring 150 frames
+[145s] pc: warm-up done, 155 shaders
+[147s] pc: frame 10
+[149s] pc: frame 20
+[150s] pc: frame 30
+[151s] pc: frame 40
+[152s] pc: frame 50
+[153s] pc: frame 60
+[154s] pc: frame 70
+[155s] pc: frame 80
+[156s] pc: frame 90
+[157s] pc: frame 100
+[158s] pc: frame 110
+[159s] pc: frame 120
+[160s] pc: frame 130
+[161s] pc: frame 140
+[162s] pc: frame 150
+[164s] pc attempt 2: REGRESSED
+
+                       pc        
+units on screen        347       
+load time s            43.33     
+median frame ms        85.2      
+p95 frame ms           215       
+p99 frame ms           282.5     
+worst 1% FPS           3.44      
+frames >50 ms          149       
+first boom x median    1.08      
+2nd boom x median      1.27      
+weather/night x median 1.35      
+sim step p95 ms        9.2       
+draw calls             2719      
+k triangles            6574      
+heap MB/min            -88.64    
+runtime 2.7 min
+
+SMOOTH FAIL: 1 problem(s)
+  - pc: draw calls rose to 2719 (baseline 1661, allowed up to 2551.5; +64%)
