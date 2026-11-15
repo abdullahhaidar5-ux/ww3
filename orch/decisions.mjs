@@ -545,6 +545,19 @@ try {
   // ---- drones fly from the Airfield (Abdullah 2026-11-08); nations without an airfield keep them at the War Factory
   { const d = await ev(() => ['TR', 'UA', 'IR', 'RS'].map(f => [f, stats(f, 'drone').from, roster(f).airfield.includes('drone'), roster(f).factory.includes('drone'), !!FACTIONS[f].noAir]));
     for (const [f, from, inAir, inFac, noAir] of d) { const want = noAir ? 'factory' : 'airfield'; ck(from === want && inAir === (want === 'airfield') && inFac === (want === 'factory'), `drone for ${f} built from ${from} (want ${want})`); } }
+  // ---- announcer (Abdullah 2026-11-14 "Huccum!"): every status line exists in every announcer language, repeats are throttled, never two at once, volume slider in Settings
+  { const A = await ev(() => { const keys = ['building','complete','unit','upgrade','funds','lowPower','powerBack','baseAtk','unitsAtk','unitLost','bldLost','cantBuild','strikeReady','enemyStrike','lineCut','roadTaken','reinf'];
+      const miss = []; for (const L of ['en','fa','ar','ru','zh','he']) for (const k of keys) if (!ANN_TXT[L] || !ANN_TXT[L][k]) miss.push(L + '.' + k);
+      const st = { last: {}, busy: 0 }; const g1 = annGate('unit', 1000, false, st), g2 = annGate('unit', 3000, false, st), g3 = annGate('unit', 8000, false, st);
+      const b1 = annGate('baseAtk', 20000, false, st), b2 = annGate('baseAtk', 30000, false, st), b3 = annGate('baseAtk', 41000, false, st);
+      const st2 = { last: {}, busy: 5000 }; const ov = annGate('funds', 1000, false, st2);
+      const st3 = { last: {}, busy: 0 }; const t1 = annGate('unit', 1000, true, st3), t2 = annGate('unit', 10000, true, st3);
+      return { miss, rep: [g1, g2, g3], atk: [b1, b2, b3], ov, test: [t1, t2], slider: !!document.getElementById('sAnn'), hooked: String(pushLog).includes('annFromLog') }; });
+    ck(!A.miss.length, 'announcer table is missing lines: ' + A.miss.join(','));
+    ck(A.rep.join() === 'true,false,true', 'announcer must not repeat the same line within 6 s: ' + A.rep);
+    ck(A.atk.join() === 'true,false,true', 'announcer under-attack lines must be once per 20 s: ' + A.atk);
+    ck(A.ov === false, 'announcer must not start a line while another is playing'); ck(A.test.join() === 'true,false', 'announcer must be throttled more in the Test range');
+    ck(A.slider && A.hooked, 'announcer needs its Settings > Audio slider (sAnn) and the pushLog hook'); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
 await browser.close(); server.close();
