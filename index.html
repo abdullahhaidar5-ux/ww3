@@ -5942,7 +5942,7 @@ SPECIAL_TIP.fpvt=u=>'Short-range FPV drones that only attack vehicles. '+(u.amCa
    missile-defence sites, Iron-Dome-type batteries and flak AA near the target (updStrikes in 03-sim). Military targets only (it fires at what the unit targets).
    The AI builds one only when rich (AI filter in 03-sim). Iran has no Shahed launcher truck: the Shahed-136 drone is its drone slot. */
 BASE.bmt=Object.assign({},BASE.arty,{name:'Zolfaghar Missile Launcher',rocket:true,missile:true,rng:900,minr:260,dmg:760,splash:105,rof:32,hp:260,cost:1900,time:24,limit:2,
-  desc:'One big guided ballistic missile per launch, from far beyond any gun. Reloads slowly, costs a lot, you can have two. Air defence (missile-defence sites, Iron Dome, flak) can shoot it down in flight. Fragile: hide it behind your lines.'});
+  desc:'One big guided ballistic missile per launch, from far beyond any gun. Reloads slowly, costs a lot, you can have two. Air defense (missile-defence sites, Iron Dome, flak) can shoot it down in flight. Fragile: hide it behind your lines.'});
 if(typeof KINDS!=='undefined'&&!KINDS.includes('bmt'))KINDS.push('bmt');
 {const F=FACTIONS.IR;if(F){F.extra=[...(F.extra||[]),'bmt'].filter((k,i,a)=>a.indexOf(k)===i);F.units=F.units||{};F.units.bmt=Object.assign({},F.units.bmt||{},{name:'Zolfaghar Missile Launcher'});}}
 /* the launch: called from fire() for any unit whose stats say missile:true */
@@ -9992,7 +9992,7 @@ function ldAI(id,T,mine,en){const k=LDKT[id];if(!k||T.ai.t%3)return;const u=LDU[
   if(L.c1<=G.t){if(k==='ay'){if(foes.length>=4)ldCast(id,'a');}else{let best=null,bd=1e9;for(const e of foes){const d=Math.hypot(e.x-u.x,e.y-u.y);if(d<bd){bd=d;best=e;}}if(best)ldCast(id,'a',best.x,best.y);}}}
 /* L2 Faction mechanics (orch/reports/factiondesign.md, Abdullah 2026-11-14 "Do all the dev work now"; answers = RECOMMENDED).
    1) Shia group: RV/OB Hidden Firing Post (see FACTIONS.post, isPost in 03-sim), cheap fortifications x0.6 in Battle for IR RS DW RV OB (SHIA5 in 01-data).
-   2) US / IL "fewer but stronger" (stats only, Q6a): cost +8%, hp +8%, unit build time +10% on top of their own mods; off in Realistic (REAL_TIER already does it).
+   2) US / IL "fewer but stronger" (stats only, Q6a): cost +8%, hp +8%, unit build time +10% on top of their own mods.
    3) Gulf (SA AE) integrated air defence: SAM sites / AA vehicles with another one of the team within 300 m get +10% range (rngOf reads e.iadsT).
    (Europe perks and RU/CN platoon bonus belong to lane L1 / data already in place.) The iads flag is re-derived every second, so it is not saved in checkpoints. */
 const FMECH={US:{cost:1.04,hp:1.08,time:1.05},IL:{cost:1.08,hp:1.08,time:1.1}};
@@ -12744,6 +12744,7 @@ const KEYTAB=[
   {id:'supl',ctx:'battle',grp:'Camera',name:'Show supply lines on the ground',def:'l'},
   {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
   {id:'vision',ctx:'battle',grp:'Game',name:'Night vision / thermal view (at night)',def:'`'},
+  {id:'abuild',ctx:'battle',grp:'Game',name:'Auto-build list (open / close)',def:'u'},
   {id:'pause',ctx:'battle',grp:'Game',name:'Pause',def:'p'},
   {ctx:'battle',grp:'Game',name:'Photo mode',fix:'F8'},
   {ctx:'battle',grp:'Game',name:'Menu · cancel · one step back',fix:'Esc'},
@@ -14101,7 +14102,8 @@ function rightPress(e){const w=screenToWorld(mouse.x,mouse.y);if(!w)return false
   if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(MODK.shift);return false;}
   return true;}
 function orderClick(sh){if(!G||G.over)return;G.qShift=!!sh;const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
-  if(G.place||G.aim){G.place=null;G.aim=null;updateUI();return;}if(G.defm){defendAt(w);return;}
+  if(G.aim){placeOrAim(w,!!sh);return;}   /* generals' powers, the Strike LAUNCH and road jobs fire on RIGHT-click (Abdullah 2026-11-15 00:26 / 00:28) */
+  if(G.place){G.place=null;updateUI();return;}if(G.defm){defendAt(w);return;}
   const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
   if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(sh);return;}
   G.amove=false;const bsel=!units.length&&G.sel.some(b=>b.isB&&b.team===ME);if(!units.length&&!bsel)return;
@@ -14166,9 +14168,9 @@ function rightClickAct(sh){if(exitClick())return;if(rightOrders())orderClick(sh)
 function lineOrder(r){const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!w1||!ids.length)return;doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);ordMark(r.am?'lna':'ln',r.w0.x,r.w0.y,null,{x2:w1.x,y2:w1.y});ordDone(MODK.shift);updateUI();}
 let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';hintDev(LASTPT);if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
-  if(G.aim&&LASTPT!=='touch'){G.aim=null;updateUI();return;}   /* powers / Strike: left-click cancels, right-click fires (00:26 / 00:28) */
+  if(G.aim&&LASTPT!=='touch'&&!leftOrders()){G.aim=null;updateUI();return;}   /* powers / Strike: left-click cancels, right-click fires (00:26 / 00:28) */
   if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}   /* buildings, generals' powers and the Strike are deployed with LEFT-click (Abdullah 2026-11-14 21:01 / 21:17); right-click cancels */   /* buildings are placed with LEFT-click (Abdullah 2026-11-14 21:01 "Make left click build"); right-click cancels */
-  if(G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();return;}   /* Generals: every map action is a RIGHT-click; left-click cancels it (Abdullah 2026-11-14 19:34) */
+  if((G.aim||G.amove||G.defm)&&!leftOrders()){G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();return;}   /* Generals: every map action is a RIGHT-click; left-click cancels it (Abdullah 2026-11-14 19:34). The 'Classic left-click' mouse scheme (Settings > Mouse) gives orders with left-click, so there F/G targets are left-clicks too */
   if(0){G.amove=false;G.defm=false;updateUI();return;}   /* Attack / Guard targets are given with RIGHT-click; left-click cancels (Abdullah 2026-11-14 19:30) */
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,ctrl:e.ctrlKey||e.metaKey,alt:e.altKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
@@ -14997,7 +14999,7 @@ const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a t
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
   P.push('Double-click: all of a type');P.push('Ctrl+click: force-fire · Alt+click: waypoint');
-  P.push('F then right-click: attack-move · G then right-click: defend area · X: stop');P.push('R: retreat');
+  P.push(L?'F then click: attack-move · G then click: defend area · X: stop':'F then right-click: attack-move · G then right-click: defend area · X: stop');P.push('R: retreat');
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Get out: right-click your selected transport (Alt+right-click a spot: drive there, unload) · building or tunnel selected, right-click the ground');
@@ -16390,7 +16392,7 @@ function mplShow(D){
     if(r.ed&&r.ed.f)fs.onchange=()=>r.ed.f(fs.value==='rand'?FKEYS[(Math.random()*FKEYS.length)|0]:fs.value);else fs.disabled=true;cn.append(fs);
     const ct=td(),ts=document.createElement('select');ts.setAttribute('aria-label','Team of '+(r.name||'player '+(i+1)));opt(ts,'n','None');for(let t=0;t<4;t++)opt(ts,t,'Team '+(t+1));ts.value=(r.tm|0)<4?String(r.tm|0):'n';
     if(r.ed&&r.ed.t)ts.onchange=()=>r.ed.t(mplTeam(ts.value,D.all));else ts.disabled=true;ct.append(ts);
-    const cr=td();if(r.host)cr.append(E('span','mrd on','✔ HOST'));else if(r.kind==='ai')cr.append(E('span','mrd on','✔ READY'));else cr.append(E('span','mrd'+(r.rd?' on':''),r.rd?'✔ READY':'…'));
+    const cr=td();if(r.host)cr.append(E('span','mrd on','★ LEADER'));else if(r.kind==='ai')cr.append(E('span','mrd on','✔ READY'));else cr.append(E('span','mrd'+(r.rd?' on':''),r.rd?'✔ READY':'…'));
     bd.append(tr);});
   tb.append(bd);L.append(tb);
   const ob=E('div','mopts');ob.id='mplOpts';
@@ -17083,7 +17085,7 @@ function hudTick(force){try{hudDeclutter();}catch(e){}if(!G||!G.teams||!G.teams[
   const sb=!!G.sandbox;const sig=[sb?1:0,Math.floor(T.credits),cut,HUDS.unread,HUDS.open?1:0,HUDS.al.length,HD_KEYS.map(hudOn).join('')].join('|');if(sig===HUDS.sig)return;HUDS.sig=sig;
   b.querySelector('#hudM').textContent='$'+Math.floor(T.credits).toLocaleString('en-US');b.querySelector('#hudM').title='Money: supply trucks, oil derricks and the buildings you capture pay it.';
   const s=b.querySelector('#hudS');s.textContent=cut?'Supply: '+cut+' depot'+(cut>1?'s':'')+' cut off':'Supply lines OK';s.style.color=cut?'#ff9a8a':'#9be39b';s.title='Supply Depots of yours that no road links to your Command Center (they reach half as far). Build a road to them or clear the crater.';s.hidden=sb;   /* Test range: unlimited ammo, no supply chip */
-  const a=b.querySelector('#hudAl');{const tx='\u26A0 '+(HUDS.unread||HUDS.al.length);if(a.dataset.tx!==tx){a.dataset.tx=tx;a.textContent=tx;}}a.classList.toggle('hot',!!HUDS.unread);   /* toggle, never overwrite: the icon pass adds .hasico (it sizes the alert icon) */
+  const a=b.querySelector('#hudAl');{const tx='\u26A0 '+(HUDS.unread||HUDS.al.length);if(a.dataset.tx!==tx){a.dataset.tx=tx;a.textContent=tx;try{if(typeof icoPut==='function')icoPut(a,'alert');}catch(_){}}}a.classList.toggle('hot',!!HUDS.unread);   /* toggle, never overwrite: the icon pass adds .hasico (it sizes the alert icon) */
   for(const x of b.querySelectorAll('#hudOv button')){x.classList.toggle('on',!!hudOn(x.dataset.o));if(x.dataset.o==='supply')x.hidden=sb;}
   let f=document.getElementById('hudFeed');if(!HUDS.open){if(f)f.remove();}else{if(!f){f=document.createElement('div');f.id='hudFeed';document.body.appendChild(f);}
     f.innerHTML='';if(!HUDS.al.length){const d=document.createElement('div');d.textContent='No alerts yet.';f.appendChild(d);}
@@ -21396,8 +21398,8 @@ const CAMPAIGN=[
   else if(CH.combat(0)===0&&G.teams[0].credits<250)c.lose('The assault force is destroyed.');
   else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and force lost.');}},
 
-{id:'marsh',n:6,title:'Hold the Causeway',sub:'Iraqi Shia Brigades · South Iraq · Marsh defence',fac:'RV',enemy:'GB',enemyName:'Expeditionary Force',map:'marshes',
- brief:['An expeditionary force has landed on the southern coast and is pushing up the causeways between the reed marshes toward a shrine town. Our volunteer brigades are still gathering from the villages and need time to arrive.','You hold the causeway crossing with a militia garrison: riflemen, anti-tank teams, a few vehicles and emplacements. The enemy can only come along the narrow causeways, so make them pay for every metre. Keep your supply area around the crossing: units refill ammunition only inside it.','When the volunteer brigades arrive, take the fight back down the causeway and destroy the enemy forward base.'],
+{id:'marsh',n:6,title:'Hold the Causeway',sub:'Iraqi Shia Brigades · South Iraq · Marsh defense',fac:'RV',enemy:'GB',enemyName:'Expeditionary Force',map:'marshes',
+ brief:['An expeditionary force has landed on the southern coast and is pushing up the causeways between the reed marshes toward a shrine town. Our volunteer brigades are still gathering from the villages and need time to arrive.','You hold the causeway crossing with a militia garrison: riflemen, anti-tank teams, a few vehicles and emplacements. The enemy can only come along the narrow causeways, so make them pay for every meter. Keep your supply area around the crossing: units refill ammunition only inside it.','When the volunteer brigades arrive, take the fight back down the causeway and destroy the enemy forward base.'],
  obj:[['hold','Hold the causeway until the brigades arrive'],['reinf','The volunteer brigades arrive'],['crush','Destroy the enemy forward base']],
  win:'The causeway is ours and the shrine town is safe. The invaders are driven back to the sea.',lose:'The crossing has fallen. The town must be held from the next line.',
  setup(c){const d=c.mul;c.T=600;const R=CH.pt(.2,0);c.ridge=R;c.focus=R;G.teams[0].credits=500;

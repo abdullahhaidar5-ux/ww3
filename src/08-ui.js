@@ -565,7 +565,8 @@ function rightPress(e){const w=screenToWorld(mouse.x,mouse.y);if(!w)return false
   if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(MODK.shift);return false;}
   return true;}
 function orderClick(sh){if(!G||G.over)return;G.qShift=!!sh;const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
-  if(G.place||G.aim){G.place=null;G.aim=null;updateUI();return;}if(G.defm){defendAt(w);return;}
+  if(G.aim){placeOrAim(w,!!sh);return;}   /* generals' powers, the Strike LAUNCH and road jobs fire on RIGHT-click (Abdullah 2026-11-15 00:26 / 00:28) */
+  if(G.place){G.place=null;updateUI();return;}if(G.defm){defendAt(w);return;}
   const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
   if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(sh);return;}
   G.amove=false;const bsel=!units.length&&G.sel.some(b=>b.isB&&b.team===ME);if(!units.length&&!bsel)return;
@@ -630,9 +631,9 @@ function rightClickAct(sh){if(exitClick())return;if(rightOrders())orderClick(sh)
 function lineOrder(r){const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!w1||!ids.length)return;doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);ordMark(r.am?'lna':'ln',r.w0.x,r.w0.y,null,{x2:w1.x,y2:w1.y});ordDone(MODK.shift);updateUI();}
 let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';hintDev(LASTPT);if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
-  if(G.aim&&LASTPT!=='touch'){G.aim=null;updateUI();return;}   /* powers / Strike: left-click cancels, right-click fires (00:26 / 00:28) */
+  if(G.aim&&LASTPT!=='touch'&&!leftOrders()){G.aim=null;updateUI();return;}   /* powers / Strike: left-click cancels, right-click fires (00:26 / 00:28) */
   if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}   /* buildings, generals' powers and the Strike are deployed with LEFT-click (Abdullah 2026-11-14 21:01 / 21:17); right-click cancels */   /* buildings are placed with LEFT-click (Abdullah 2026-11-14 21:01 "Make left click build"); right-click cancels */
-  if(G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();return;}   /* Generals: every map action is a RIGHT-click; left-click cancels it (Abdullah 2026-11-14 19:34) */
+  if((G.aim||G.amove||G.defm)&&!leftOrders()){G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();return;}   /* Generals: every map action is a RIGHT-click; left-click cancels it (Abdullah 2026-11-14 19:34). The 'Classic left-click' mouse scheme (Settings > Mouse) gives orders with left-click, so there F/G targets are left-clicks too */
   if(0){G.amove=false;G.defm=false;updateUI();return;}   /* Attack / Guard targets are given with RIGHT-click; left-click cancels (Abdullah 2026-11-14 19:30) */
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,ctrl:e.ctrlKey||e.metaKey,alt:e.altKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
@@ -1461,7 +1462,7 @@ const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a t
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
   P.push('Double-click: all of a type');P.push('Ctrl+click: force-fire · Alt+click: waypoint');
-  P.push('F then right-click: attack-move · G then right-click: defend area · X: stop');P.push('R: retreat');
+  P.push(L?'F then click: attack-move · G then click: defend area · X: stop':'F then right-click: attack-move · G then right-click: defend area · X: stop');P.push('R: retreat');
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Get out: right-click your selected transport (Alt+right-click a spot: drive there, unload) · building or tunnel selected, right-click the ground');

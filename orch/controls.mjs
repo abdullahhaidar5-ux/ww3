@@ -141,9 +141,15 @@ async function cancelChecks(page, { mode, ck }) {
     window.__C0 = T.credits; G.sel = [b]; updateUI(); });
   await wait(300);
   if (mode === 'touch') await page.evaluate(() => { TC.stripK = null; tcStrip(true); });
-  const dis = await page.evaluate(() => { const b = document.querySelector('#info .cnBtn'); return b ? b.disabled : null; });
-  ck(mode + ' Cancel is enabled with a queued building selected', mode === 'touch' ? !!(await page.$(btn)) : dis === false, JSON.stringify(await page.evaluate(() => ({ dis: String(document.querySelector('#info .cnBtn') && document.querySelector('#info .cnBtn').disabled), ui: TOUCHUI, t: TC.touch, ci: cancelInfo(), st: document.getElementById('tstrip') && document.getElementById('tstrip').className, hid: document.getElementById('tstrip') && document.getElementById('tstrip').hidden, menu: document.getElementById('menu').hidden, load: !!window.LOADING }))));
-  await press(btn);
+  if (mode === 'touch') {
+    ck(mode + ' Cancel is enabled with a queued building selected', !!(await page.$(btn)), JSON.stringify(await page.evaluate(() => ({ ui: TOUCHUI, t: TC.touch, ci: cancelInfo(), st: document.getElementById('tstrip') && document.getElementById('tstrip').className, hid: document.getElementById('tstrip') && document.getElementById('tstrip').hidden, menu: document.getElementById('menu').hidden, load: !!window.LOADING }))));
+    await press(btn);
+  } else {
+    // Generals: a building's queue is cancelled by RIGHT-clicking a queued icon (CLAUDE.md Controls; the ✕ Cancel button is for Construction Vehicles only, Abdullah 2026-11-14 21:05)
+    const q = await page.evaluate(() => { pqRender(true); const el = document.querySelector('#pq .pqs:not(.e)'); if (!el) return false; el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 })); return true; });
+    ck(mode + ' a queued building shows its queue icons (right-click one cancels it)', q);
+    await wait(150);
+  }
   let r = await page.evaluate(() => ({ n: (G.byId.get(window.__CB).q || []).length, c: G.teams[ME].credits, c0: window.__C0 }));
   ck(mode + ' Cancel removes the last queued unit and refunds it', r.n === 1 && r.c > r.c0, JSON.stringify(r));
   if (mode !== 'touch') {
@@ -216,7 +222,7 @@ try {
     { mLG: 'move', mRC: 'cancel', mRDU: 'line', mRDN: 'scroll', mAK: 'a', mRS: 100, mCur: 1, mPing: 1 });
   const scheme = await page.evaluate(() => ({ pre: mPreset(), mAK: SET.mAK, saved: JSON.parse(localStorage.getItem('ww3_settings') || '{}'), hint: $('hint').textContent }));
   check('default mouse scheme is Standard (old saved Generals default migrated once)', scheme.pre === 'std' && scheme.saved.mRC === 'order' && scheme.saved.ctl2 === 1, JSON.stringify(scheme).slice(0, 200));
-  check('on-screen hint: left selects, right moves/attacks, F attack-move', /Left-click or drag: select/.test(scheme.hint) && /Right-click: move \/ attack/.test(scheme.hint) && /F then click: attack-move/.test(scheme.hint), scheme.hint.slice(0, 160));
+  check('on-screen hint: left selects, right moves/attacks, F attack-move', /Left-click or drag: select/.test(scheme.hint) && /Right-click: move \/ attack/.test(scheme.hint) && /F then right-click: attack-move/.test(scheme.hint), scheme.hint.slice(0, 160));
   { const txt = await page.evaluate(() => [...document.querySelectorAll('#hint,#settings,#side,#info')].map(e => e.textContent).join(' '));
     check('no text says A attack-moves or S stops', !/\bA\b[^·]{0,12}(then click|attack-move)|\bS: stop|Attack \(A\)/.test(txt), (txt.match(/.{30}\bA\b.{30}/) || [''])[0]); }
   let V = await view(page);
@@ -285,8 +291,9 @@ try {
   check('F arms attack-move', await page.evaluate(() => G.amove === true));
   await page.mouse.click(g[1].x, g[1].y);
   a = await acts(page);
-  check('F then left-click ground = attack-move order', a.some(x => x.t === 'go' && x.mode === 'amove'), JSON.stringify(a));
-  check('…selection kept after attack-move', sameIds(await sel(page), [A, B]));
+  // unit orders are RIGHT-click (CLAUDE.md Controls, Abdullah 2026-11-14 19:34): F then left-click cancels attack-move, no order
+  check('F then left-click ground cancels attack-move (no order)', !a.length && await page.evaluate(() => !G.amove), JSON.stringify(a));
+  check('…selection kept after the cancel', sameIds(await sel(page), [A, B]));
   await page.keyboard.press('f');
   await page.mouse.click(g[2].x, g[2].y, { button: 'right' });
   a = await acts(page);
@@ -302,9 +309,9 @@ try {
   check('Alt+click = waypoint (queued move)', a.some(x => x.t === 'go' && x.q === 1), JSON.stringify(a));
   await page.keyboard.press('g');
   check('G arms guard', await page.evaluate(() => G.defm === true));
-  await page.mouse.click(g[2].x, g[2].y);
+  await page.mouse.click(g[2].x, g[2].y, { button: 'right' });
   a = await acts(page);
-  check('G then click ground = guard-area order', a.some(x => x.t === 'def'), JSON.stringify(a));
+  check('G then right-click ground = guard-area order', a.some(x => x.t === 'def'), JSON.stringify(a));
   { // T = Type: every own unit of the selected type(s) on the whole map; nothing selected = all own combat units
     const r = await page.evaluate(([A]) => { const u = G.byId.get(A), far = addUnit(u.team, u.kind, 90, 90); G.sel = [u]; return { id: far.id, kind: u.kind }; }, [A]);
     await page.keyboard.press('t');
@@ -313,12 +320,14 @@ try {
     await page.keyboard.press('t');
     check('T with nothing selected selects all own combat units', await page.evaluate(() => G.sel.length > 0 && G.sel.every(u => !u.isB && u.team === ME && !['harv', 'hacker', 'dozer'].includes(u.kind))));
     await page.evaluate(([A, B]) => { G.sel = [G.byId.get(A), G.byId.get(B)].filter(Boolean); updateUI(); }, [A, B]);
-    check('orders row has a Same type (T) button', await page.evaluate(() => [...document.querySelectorAll('.cmdrow button')].some(b => /type \(T\)/i.test(b.getAttribute('aria-label') || b.textContent))));
+    // the Type / Resupply / stance buttons were removed from the orders row (Abdullah 2026-11-14 19:18); the T hotkey stays
+    check('orders row has no Same type button any more (T hotkey only)', await page.evaluate(() => ![...document.querySelectorAll('.cmdrow button')].some(b => /type \(T\)/i.test(b.getAttribute('aria-label') || b.textContent))));
   }
   await page.keyboard.press('x');
   a = await acts(page);
   check('X stops the selected units', a.some(x => x.t === 'stop'), JSON.stringify(a));
-  await page.evaluate(() => { G.place = 'barracks'; updateUI(); });
+  // placing needs a Construction Vehicle selected (without one the placement is dropped and right-click is a plain move)
+  await page.evaluate(() => { const h = G.byId.get(window.__HQ) || G.ents.find(e => e.team === ME && e.isB); const d = G.ents.find(e => e.kind === 'dozer' && e.team === ME && !e.dead) || addUnit(ME, 'dozer', h.x + 60, h.y + 60); G.sel = [d]; G.place = 'barracks'; updateUI(); window.__acts = []; });
   await page.mouse.click(g[0].x, g[0].y, { button: 'right' });
   a = await acts(page);
   check('right-click cancels building placement (no order)', await page.evaluate(() => !G.place) && !a.length, JSON.stringify(a));
@@ -380,10 +389,13 @@ try {
   check('lock: the cursor stays inside the window at the edge', L.x === 0 && L.on, JSON.stringify(L));
   check('lock: edge scrolling works at the window edge', cx1 < cx0 - 20, JSON.stringify({ cx0, cx1 }));
   await page.mouse.move(800, 450); await page.evaluate(() => { SET.edge = 0; MLOCK.x = 800; MLOCK.y = 450; });
-  // the command bar still works: a click on the Units tab goes to the tab under the game cursor
-  { const tb = await page.evaluate(() => { const b = [...document.querySelectorAll('.tabs button')].find(b => /units/i.test(b.textContent)); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
-    await page.mouse.move(tb.x, tb.y, { steps: 3 }); await page.mouse.click(tb.x, tb.y); await wait(100);
-    check('lock: clicking a command-bar tab under the game cursor works', await page.evaluate(() => TAB === 'units' && MLOCK.on), await page.evaluate(() => TAB)); }
+  // the command bar still works: a click on the ★ (generals' powers) button goes to the button under the game cursor
+  //   (Zero Hour bar: the grid follows the selection, so there are no clickable tabs any more; the ★ is the one bar button always there)
+  { const tb = await page.evaluate(() => { const b = document.getElementById('zhStar'); if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, s0: ZH.star }; });
+    if (tb) { await page.mouse.move(tb.x, tb.y, { steps: 3 }); await page.mouse.click(tb.x, tb.y); await wait(100); }
+    const r = await page.evaluate(() => ({ star: ZH.star, on: MLOCK.on }));
+    check('lock: clicking a command-bar button under the game cursor works', !!tb && r.star !== tb.s0 && r.on, JSON.stringify({ tb, r }));
+    if (tb && r.star !== tb.s0) await page.evaluate(() => { document.getElementById('zhStar').click(); }); }
   await page.mouse.move(V.U[0].x, V.U[0].y, { steps: 3 });
   await setSel([A, B]); await page.keyboard.press('f');
   await page.keyboard.press('Escape'); await wait(150); L = await lk();
@@ -459,8 +471,11 @@ try {
   { const a = await acts(page); check('power: hotkey + ONE right-click fires the barrage', a.some(x => x.t === 'pow' && x.k === 'barrage') && await page.evaluate(() => !G.aim), JSON.stringify(a)); }
   await page.keyboard.press('b'); await wait(100); await page.mouse.click(640, 360); await wait(150);
   check('power: left-click cancels aiming', await page.evaluate(() => !G.aim));
-  await page.keyboard.press('u'); await wait(150);
-  { const a = await acts(page); check('power: no-target power fires on ONE key press', a.some(x => x.t === 'pow' && x.k === 'sanc'), JSON.stringify(a)); }
+  // U is the auto-build list (key table row 'abuild'); Sanctions is not offered in Battle (src/01-data.js POWERS note), so it has no hotkey
+  //   (no dead power keys, UI audit 2026-11-14) - a no-target power still fires on one click of its button (powerChecks above)
+  { const o0 = await page.evaluate(() => !!AB.open); await page.keyboard.press('u'); await wait(150); const a = await acts(page); const o1 = await page.evaluate(() => !!AB.open);
+    check('U opens / closes the auto-build list and fires no power', o1 !== o0 && !a.some(x => x.t === 'pow'), JSON.stringify({ o0, o1, a }));
+    if (o1 !== o0) { await page.keyboard.press('u'); await wait(100); } }
   await page.context().close();
 
   /* ================= phone (touch) ================= */

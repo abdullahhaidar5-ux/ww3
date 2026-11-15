@@ -28,6 +28,7 @@ const OUT = path.join(ROOT, 'orch', 'out', 'maps');
 const argS = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const MINUTES = Number(argS('minutes', 3));
 const PLAYERS = String(argS('players', '2,4,8')).split(',').map(Number).filter(n => n >= 2 && n <= 8);
+const ONLY_PLAYERS = argS('players', '') !== ''; // --players given: run only those counts
 const ONLY = argS('maps', '') ? argS('maps', '').split(',') : null;
 const SEED = Number(argS('seed', 1234));
 const BATCH = Number(argS('batch', 6)); // battles: maps per browser page before a fresh one (memory: one page for all 116 maps died at ~5 GB)
@@ -256,7 +257,9 @@ async function openPage() {
 // HELPERS is defined above openPage's first call
 await openPage();
 // every Battle map (src/02d-battlemaps.js) and every other battlefield (the old Conquest maps)
-let keys = await page.evaluate(() => MAP_KEYS.concat(typeof BM_KEYS !== 'undefined' ? BM_KEYS : []).map(k => [k, MAPS[k].max, MAPS[k].min || 2]));
+let keys = await page.evaluate(() => [...new Set(MAP_KEYS.concat(typeof BM_KEYS !== 'undefined' ? BM_KEYS : []))].map(k => [k, MAPS[k].max, MAPS[k].min || 2, typeof BM_KEYS === 'undefined' || BM_KEYS.includes(k)]));
+// Battles run only on the maps a player can pick for Battle (BM_KEYS, the maptrim allow-list, at the player counts it lists):
+// an unlisted old battlefield is never started as a Battle - the game sends it to a listed map (battleMapFix) - so it only gets the static checks.
 if (ONLY) keys = keys.filter(([k]) => ONLY.includes(k));
 // --shard 2/3: every third map starting with the second (the gate runs the shards side by side: 122 maps no longer fit in one 45-minute job)
 { const sh = String(argS('shard', '')).match(/^(\d+)\/(\d+)$/); if (sh) keys = keys.filter((_, i) => i % +sh[2] === +sh[1] - 1); }
@@ -324,8 +327,9 @@ const runs = [], shots = [];
 if (!STATIC_ONLY) {
   const FAC = await page.evaluate(() => FKEYS.slice());
   let ri = 0, mapsOnPage = BATCH; // the first map opens a fresh page (the static checks used the old one)
-  for (const [k, max] of keys) {
-    const ns = PLAYERS.filter(n => n <= max);
+  for (const [k, max, min, listed] of keys) {
+    if (!listed) continue;
+    let ns = PLAYERS.filter(n => n <= max && n >= min); if (!ns.length && !ONLY_PLAYERS) ns = [min];
     if (ns.length && mapsOnPage++ >= BATCH) { await openPage(); mapsOnPage = 1; } // fresh page every BATCH maps (a new page's first start is slow)
     for (const n of ns) {
       const run = { k, n, fails: [], warn: [] }; cur = run; runs.push(run);

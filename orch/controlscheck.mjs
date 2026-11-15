@@ -100,7 +100,8 @@ if (!spot) check('a free spot to set the rally point on', false); else {
   await page.mouse.click(spot.x, spot.y); await frames(2);
   const r = await page.evaluate(id => { const b = G.byId.get(id); return { rally: b.rally || b.rp || null, sel: G.sel.map(e => e.id) }; }, rb); const aq = await acts();
   check('left-click ground with a production building selected sets its rally point', !!(r.rally || aq.some(x => /ral/i.test(x.t))), JSON.stringify({ r, aq }).slice(0, 200));
-  check('…and the building stays selected', r.sel.includes(rb));
+  // setting the rally flag lets the building go, so the cursor stops being a flag (Abdullah 2026-11-14 19:06; Shift keeps it; CLAUDE.md Controls / HANDOFF-orch1)
+  check('…and the building lets go afterwards (no flag cursor left)', !r.sel.includes(rb), JSON.stringify(r.sel));
 }
 console.log(errors.length ? 'page errors: ' + errors.slice(0, 3).join(' | ') : 'no page errors');
 if (errors.length) bad++;
