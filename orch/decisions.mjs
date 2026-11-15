@@ -77,6 +77,12 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/Brutal/.test(SRC['07-net.js']) && /Brutal/.test(SRC['08-ui.js']), 'Brutal must appear in the lobby (07-net) and Battle setup / Test range (08-ui)');
   ck(!/T\.ai\.d\s*(===|>=)\s*3[^]{0,80}(credits\s*\+=|\.reveals\.push)/.test(SRC['03-sim.js']), 'Brutal AI must not get extra money or vision');
 }
+// ---- Base looks (L4, Abdullah 2026-11-14): three base families on ONE switch baseStyle(fac) = me | soviet | west (src/11c-bases.js); the yard
+// wall of every non-ME base is drawn by baseYard (one merged mesh), never a second wall system next to it.
+{ const b = SRC['11c-bases.js'] || '', m = SRC['11-models.js'] || '';
+  ck(/function baseStyle\(/.test(b) && /function baseYard\(/.test(b) && /function baseSlabKit\(/.test(b) && /'soviet'/.test(b) && /'west'/.test(b), 'base looks: 11c-bases.js lost baseStyle / baseYard / baseSlabKit or a family');
+  ck(/baseYard\(e,o,P,RR,gate,BP\)/.test(m) && /baseSlabKit\(B,e,T,s\)/.test(m) && /baseTint\(T\.fac,RT\)/.test(m), 'base looks: 11-models no longer calls baseYard / baseSlabKit / baseTint');
+  ck(/OBX=\['OB','BI'\]/.test(b), 'base looks: OB/BI no longer use the Middle-Eastern compound family'); }
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];
