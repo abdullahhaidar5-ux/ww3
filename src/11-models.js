@@ -90,7 +90,7 @@ function fetchModel(url){const ac=typeof AbortController!=='undefined'?new Abort
 const MQ={bytes:{},parsed:{},need:0,ld:null,bg:[],bgRun:0};MODELS.failed=[];
 // a nation's own hardware: its tank, militia technical, helicopter, jet and bulldozer models
 function nationModelKeys(f){const s=new Set();for(const kind in RMAP){const rk=RMAP[kind][f];if(rk&&RMOD[rk])s.add(RMOD[rk].m);}
-  if(MIL_TANK[f])s.add(MIL_TANK[f].m);if(f==='RS'||f==='DW')s.add(RMOD.zu.m);s.add(solKey(f));if(f==='KP')s.add('sol_m');/* the Dear Leader's body: the bare-faced soldier (KP's own wears a mask) */if(MEFAC.has(f))for(const k in BME)s.add(BME[k].m);return s;}
+  if(MIL_TANK[f])s.add(MIL_TANK[f].m);if(f==='RS'||f==='DW'||f==='OB')s.add(RMOD.zu.m);s.add(solKey(f));if(f==='KP')s.add('sol_m');/* the Dear Leader's body: the bare-faced soldier (KP's own wears a mask) */if(MEFAC.has(f))for(const k in BME)s.add(BME[k].m);return s;}
 // every model that belongs to some nation (or to no unit yet, like the spare realistic models) is loaded only for a
 // battle with that nation; everything else is shared and always loaded
 function modelKeysFor(facs){if(typeof MODEL_FILES==='undefined')return[];const nat=new Set();
@@ -950,7 +950,7 @@ function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
     im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}}
 const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',FR:'#3f4636',DE:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',IQ:'#5f5f3e',GB:'#5a5a3e',AU:'#6a6246',CA:'#434d33',SY:'#5a5a3c',CU:'#2e3a2c'};   // hero squad uniform colours
 function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='champ')c=Object.assign({},c,{tint:CHAMP_TINT[T.fac]||c.tint});if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
-  if(e.kind==='aa'&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
+  if(e.kind==='aa'&&!/Technical/.test(e.s.name||'')&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
   else if(e.kind==='arty'){if(e.s&&e.s.rocket||!MIL_TANK[T.fac]&&!MODELS.proto.tank)c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};else{const tc=MIL_TANK[T.fac]&&MIL_TANK[T.fac].m!=='technical'&&MIL_TANK[T.fac].m!=='toontank'?MIL_TANK[T.fac]:MCFG.tank;c=Object.assign({},tc,{size:tc.size*1.08,extra:'gun'});if(MIL_TANK[T.fac]&&(MIL_TANK[T.fac].m==='technical'||MIL_TANK[T.fac].m==='toontank'))c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};}}
   if(c&&(c.m==='boat'||c.m==='ship')&&T&&T.fac)c=Object.assign({},c,{tint:navyPaint(T.fac,c.m),tk:e.kind==='lander'?.6:.88});
@@ -1453,9 +1453,10 @@ const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
  NATX_FLAG.LY=c=>{c.rect('#4a4f55',0,0,c.W,c.H);c.rect('#a89466',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};
  NATX_FLAG.SD=c=>{c.rect('#4b5246',0,0,c.W,c.H);c.rect('#a89a6e',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};}
 // nation-obbd: Palestine Islamic Brigade (OB, was Olive Brigades) and Desert Islamic Faction (BI, was Black Desert Insurgency). Looks on shared models; ORIGINAL emblems in the printed-cloth style (no real group's banner, seal, shahada or slogan).
-{const L={ OB:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#6b6a52',ca:'#7a7556',cb:'#3a3a2c',uni:'#5d6048',pat:1},cx:{p:1,s:1,c:'#6b6a52',t:'#3c6b3a',w:3},ax:{b:'#878d91',p:3,h:{b:'#aeb09a',p:3}},ch:'#4a5036',rt:'#aeb09a',nv:'slav'},
+{const L={ OB:{tk:'hilux',he:null,je:null,sol:'sol_e',fl:{veh:'#6b6a52',ca:'#7a7556',cb:'#3a3a2c',uni:'#5d6048',pat:1},cx:{p:1,s:1,c:'#6b6a52',t:'#3c6b3a',w:3},ax:{b:'#878d91',p:3,h:{b:'#aeb09a',p:3}},ch:'#4a5036',rt:'#aeb09a',nv:'slav'},
  BI:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#9a8a62',ca:'#a89a6c',cb:'#3a3a3e',uni:'#8f8460',pat:0},cx:{p:0,s:1,c:'#9a8a62',t:'#3b3b3f',w:3},ax:{b:'#878d91',p:3,h:{b:'#bfb08a',p:3}},ch:'#5a5238',rt:'#bfb08a',nv:'slav'}};
  for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;if(q.nv)NATX_NAVY[k]=q.nv;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
+RMAP.boat.OB='spb';MIL_TANK.OB={m:'technical',fit:'z',size:29};delete RMAP.ship.OB;   /* OB: pickup technicals + rocket trucks, no tank/jet/helicopter/frigate model */
  // OB "Palestine Islamic Brigade" (Abdullah 2026-11-07 19:40): ORIGINAL emblem — an old house key crossed with an olive branch on a sand/olive shield, cream printed cloth, red/green/black foot band, name in Arabic. No real group's banner, seal, shahada or slogan.
  NATX_FLAG.OB=c=>{const{x,W,H}=c;emCloth(x,W,H,'#efe6cf',23);
   x.fillStyle='#2b2b2b';x.fillRect(0,H*.84,W,H*.16);x.fillStyle='#b3262e';x.fillRect(0,H*.84,W*.34,H*.16);x.fillStyle='#2f6b3a';x.fillRect(W*.66,H*.84,W*.34,H*.16);

@@ -630,6 +630,14 @@ try {
   // L3 light economy (2026-11-14; income cut removed 22:32): in Battle rich nations train 10% slower, poorer fast nations 25% faster; income the same for all
   { const g = await ev(() => { const sv = G; try { G = { battle: 1 }; return { usB: econBT('US'), usU: econUp('US'), irB: econBT('IR'), ruB: econBT('RU') }; } finally { G = sv; } });
     ck(g.usB > 1 && g.usU === 1 && g.irB < 1 && g.ruB === 1, 'L3 light economy profile wrong in Battle: ' + JSON.stringify(g)); }
+  // polishF OB (Abdullah 2026-11-15 00:20 "Palestinian units are not realistic"): the Palestine Islamic Brigade is a light urban resistance force - no tank, jet, helicopter, ship or airfield of a regular army (roster + models)
+  { const o = await ev(() => { const R = roster('OB'), all = allUnits('OB'); return { all, air: R.airfield.length, ships: R.shipyard, names: all.map(k => stats('OB', k).name), noAir: !!FACTIONS.OB.noAir, noShip: !!FACTIONS.OB.noShip, mz: typeof RMAP === 'object' ? [RMAP.tank.OB, RMAP.heli.OB || null, RMAP.jet.OB || null, RMAP.ship.OB || null] : null, zeal: msOf('OB').rout }; });
+    ck(o.air === 0 && o.noAir && o.noShip, 'OB must have no airfield units (no jets/helicopters): ' + o.air);
+    for (const k of ['jet', 'heli', 'airlift', 'sub', 'ship', 'minel', 'sweep', 'dtank2']) ck(!o.all.includes(k), 'OB roster must not contain ' + k);
+    ck(o.ships.every(k => ['boat', 'fast', 'lander'].includes(k)), 'OB may only build skiffs / landing craft at sea: ' + o.ships);
+    for (const k of ['atk', 'mortar', 'hero', 'drone', 'tank', 'aa', 'arty']) ck(o.all.includes(k), 'OB roster lacks ' + k);
+    ck(!o.names.some(n => /Abrams|Main Battle|Bulldozer|Frigate|Patrol Launch/i.test(n)), 'OB unit names must not read as a regular army: ' + o.names.join(','));
+    ck(o.mz && o.mz[0] === 'hilux' && !o.mz[1] && !o.mz[2] && !o.mz[3], 'OB must use no MBT / helicopter / jet / frigate model: ' + JSON.stringify(o.mz)); ck(o.zeal === 0, 'OB stays Zealous (never routs)'); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
 await browser.close(); server.close();

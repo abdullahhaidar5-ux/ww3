@@ -5527,8 +5527,8 @@ Object.assign(NEWNAT,{
 // ---- nation-obbd (Abdullah 2026-11-06 21:26/21:29): OB "Palestine Islamic Brigade" (renamed 2026-11-07 19:40, was Olive Brigades) (fictional Gaza urban-resistance faction) and BI "Black Desert Insurgency" (fictional desert insurgent movement; code BI because BD = Bangladesh).
 // Inspired-by only: never a real group's name, flag, emblem, slogan or leader. Military-vs-military: no terror, hostage, suicide-attack or civilian-target mechanics. Both ZEALOUS (never rout). Egypt base = equal power per tier.
 Object.assign(NEWNAT,{
- OB:{base:'EG',name:'Palestine Islamic Brigade',color:'#3c6b3a',lang:'ar-PS',doctrine:'Palestine Islamic Brigade, the dense-city defenders of Gaza: light, cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armor.',mods:{infCost:.85,infTime:.9,vehHp:.92},
-  units:{inf:'Brigade Fighter Squad',at:'RPG Ambush Team',hero:'Rubble Marksman Team',aa:'Improvised AA Truck',tank:'Armored Bulldozer Carrier',arty:'Improvised Rocket Battery',heli:'Strike Drone Flight',jet:'Long-Range Rocket Salvo',boat:'Coastal Fishing Skiff',ship:'Coastal Patrol Launch'},
+ OB:{base:'EG',name:'Palestine Islamic Brigade',color:'#3c6b3a',lang:'ar-PS',doctrine:'Palestine Islamic Brigade, a fictional light urban resistance force of a dense coastal city: rifle squads, RPG and ATGM teams, snipers and mortars, armed technicals, home-made rocket trucks and quadcopter drone teams. No tanks, jets, helicopters or warships. Cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armor.',mods:{infCost:.85,infTime:.9,vehHp:.92},
+  units:{inf:'Brigade Fighter Squad',at:'RPG Ambush Team',hero:'Rubble Marksman Team',aa:'ZU-23 Technical',tank:'Armed Technical',arty:'Home-Made Rocket Battery',heli:'Quadcopter Drone Team',jet:'Long-Range Rocket Salvo',boat:'Coastal Fishing Skiff',ship:'Coastal Skiff'},
   sup:{name:'Rocket Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
   special:['recon',{name:'Rooftop Observers'}],hero:['Rubble Marksman Team','demo'],
   doct:{name:'Urban Labyrinth',ambush:1,homeland:1},
@@ -5600,7 +5600,7 @@ function powBan(k){return !!POWERS[k]&&POW_KEEP.indexOf(k)<0;}
 function sigBan(fac,k){return powBan(k)||(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
 /* power use of a building for the Build button: + needs power, - gives power (Generator); 0 = no power use (one POWER table) */
 function pwNeed(k){return POWER.use[k]?POWER.use[k]:(k!=='hq'&&POWER.make[k]?-POWER.make[k]:0);}
-function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')?['cleric']:[]),'spy'],factory:['aa','tank','arty','ammot',...(F.extra||[]).filter(k=>stats(fac,k).from!=='airfield'),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift',...(F.extra||[]).filter(k=>stats(fac,k).from==='airfield')],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
+function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')?['cleric']:[]),...(F.extra||[]).filter(k=>stats(fac,k).from==='barracks'),'spy'],factory:['aa','tank','arty','ammot',...(F.extra||[]).filter(k=>stats(fac,k).from!=='airfield'&&stats(fac,k).from!=='barracks'),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift',...(F.extra||[]).filter(k=>stats(fac,k).from==='airfield')],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
 function bldAllowed(fac,k){if(sigBan(fac,k))return false;if(k==='gen')return typeof G!=='undefined'&&!!G&&!!G.battle;   /* Conquest: the Revenue Center is gone - territory pays
   */if(k==='fort')return !!FORT_NAT[fac];if(k==='tunnel')return !!(FACTIONS[fac].tunnels||FACTIONS[fac].post);return !(k==='airfield'&&FACTIONS[fac].noAir);}
@@ -5888,6 +5888,27 @@ BASE.krb=Object.assign({},BASE.arty,{name:'KN-25 240 mm Rocket Battery',rocket:t
   f('KP',U=>{U.krb={};});
   if(FACTIONS.KP)FACTIONS.KP.extra=[...(FACTIONS.KP.extra||[]),'krb'];}
 SPECIAL_TIP.krb=u=>'Massed 240 mm rockets: a ripple of '+(u.ripple||12)+' that blankets an area, then a slow reload. Fragile; keep it behind your lines. Needs General rank.';
+/* ---- OB "Palestine Islamic Brigade": a light urban resistance force (Abdullah 2026-11-15 00:20 "Palestinian units are not realistic" / "They have wrong unit types") ----
+   Before this OB borrowed Egypt's army (tanks, jets, attack helicopters, frigate) and only renamed it. Now it has no regular-army heavy kit:
+   AK rifle squads, RPG teams, ATGM teams, snipers, mortars, armed technicals (heavy MG, ZU-23), home-made rocket trucks and quadcopter drone teams.
+   No jets / airfield / helicopters / warships (noAir, noShip); a coastal skiff stays. Fictional, inspired-by only; military vs military.
+   Same slots as every nation (the bar, queues, AI and saves read roster()); the "Long-Range Rocket Salvo" stays its general's power. */
+{const F=FACTIONS.OB;if(F){F.noAir=true;F.noShip=true;F.light=true;F.extra=[...(F.extra||[]),'atk','mortar','hero','drone'].filter((k,i,a)=>a.indexOf(k)===i);
+  const U=F.units;
+  U.inf={name:'Brigade Fighter Squad',desc:'Rifle squad with AK-pattern rifles. Cheap, fights best from rubble and its own streets.'};
+  U.at={name:'RPG Ambush Team',hp:105,rng:185,dmg:44,cost:275,desc:'RPG gunners that wait in rubble and strike vehicles from close range.'};
+  U.atk={name:'ATGM Team',hp:120,cost:475,desc:'Guided anti-tank missiles from a hidden position, longer reach than an RPG.'};
+  U.mortar={name:'Mortar Team',cost:425,desc:'Light mortar team that lobs shells from behind buildings.'};
+  U.hero={name:'Sniper Team',hp:130,cost:700,time:14,limit:2,desc:'Marksman and spotter; hidden until they fire.'};
+  U.tank={name:'Armed Technical',hp:320,spd:92,rng:200,dmg:22,rof:.3,wpn:'gun',aa:1,cost:450,time:6,desc:'Pickup truck with a heavy machine gun. Fast and cheap, but any real armor kills it.'};
+  U.aa={name:'ZU-23 Technical',hp:260,spd:88,cost:400,desc:'Pickup with a twin 23 mm gun: shoots down low aircraft and drones, and rakes infantry.'};
+  U.arty={name:'Home-Made Rocket Battery',rocket:true,hp:200,rng:400,minr:100,dmg:62,splash:52,rof:3.6,cost:650,time:9,desc:'Truck with home-made rocket rails. Inaccurate, but a salvo hurts a crowded street.'};
+  U.drone={name:'Quadcopter Drone Team',hp:45,spd:85,dmg:110,splash:30,cost:150,time:5,desc:'Small quadcopters that drop light munitions on military targets. One use.'};
+  U.boat={name:'Coastal Fishing Skiff',hp:320,spd:120,cost:450};
+  U.fast=Object.assign({},U.fast||{},{name:'Fast Coastal Skiff'});
+  delete U.heli;delete U.jet;delete U.ship;   /* no helicopter, jet or frigate for OB */
+  if(typeof XL==='object')XL.OB={};   /* Egypt's Abrams discount copied here by the base-nation row: not for a technical */
+  if(typeof BAL==='object'&&BAL.OB)delete BAL.OB.arty;}}
 /* ================= MAP: sea channel, bridges, grid, pathfinding ================= */
 const COSB=0.894,BT=[0.894,0.447],BN=[-0.447,0.894];
 /* Maps: each defines water features (rivers, lakes), bridges, base slots (in fill order) and a symmetry used to place supply fairly.
@@ -19292,7 +19313,7 @@ function fetchModel(url){const ac=typeof AbortController!=='undefined'?new Abort
 const MQ={bytes:{},parsed:{},need:0,ld:null,bg:[],bgRun:0};MODELS.failed=[];
 // a nation's own hardware: its tank, militia technical, helicopter, jet and bulldozer models
 function nationModelKeys(f){const s=new Set();for(const kind in RMAP){const rk=RMAP[kind][f];if(rk&&RMOD[rk])s.add(RMOD[rk].m);}
-  if(MIL_TANK[f])s.add(MIL_TANK[f].m);if(f==='RS'||f==='DW')s.add(RMOD.zu.m);s.add(solKey(f));if(f==='KP')s.add('sol_m');/* the Dear Leader's body: the bare-faced soldier (KP's own wears a mask) */if(MEFAC.has(f))for(const k in BME)s.add(BME[k].m);return s;}
+  if(MIL_TANK[f])s.add(MIL_TANK[f].m);if(f==='RS'||f==='DW'||f==='OB')s.add(RMOD.zu.m);s.add(solKey(f));if(f==='KP')s.add('sol_m');/* the Dear Leader's body: the bare-faced soldier (KP's own wears a mask) */if(MEFAC.has(f))for(const k in BME)s.add(BME[k].m);return s;}
 // every model that belongs to some nation (or to no unit yet, like the spare realistic models) is loaded only for a
 // battle with that nation; everything else is shared and always loaded
 function modelKeysFor(facs){if(typeof MODEL_FILES==='undefined')return[];const nat=new Set();
@@ -20152,7 +20173,7 @@ function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
     im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}}
 const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',FR:'#3f4636',DE:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',IQ:'#5f5f3e',GB:'#5a5a3e',AU:'#6a6246',CA:'#434d33',SY:'#5a5a3c',CU:'#2e3a2c'};   // hero squad uniform colours
 function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='champ')c=Object.assign({},c,{tint:CHAMP_TINT[T.fac]||c.tint});if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
-  if(e.kind==='aa'&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
+  if(e.kind==='aa'&&!/Technical/.test(e.s.name||'')&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
   else if(e.kind==='arty'){if(e.s&&e.s.rocket||!MIL_TANK[T.fac]&&!MODELS.proto.tank)c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};else{const tc=MIL_TANK[T.fac]&&MIL_TANK[T.fac].m!=='technical'&&MIL_TANK[T.fac].m!=='toontank'?MIL_TANK[T.fac]:MCFG.tank;c=Object.assign({},tc,{size:tc.size*1.08,extra:'gun'});if(MIL_TANK[T.fac]&&(MIL_TANK[T.fac].m==='technical'||MIL_TANK[T.fac].m==='toontank'))c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};}}
   if(c&&(c.m==='boat'||c.m==='ship')&&T&&T.fac)c=Object.assign({},c,{tint:navyPaint(T.fac,c.m),tk:e.kind==='lander'?.6:.88});
@@ -20655,9 +20676,10 @@ const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
  NATX_FLAG.LY=c=>{c.rect('#4a4f55',0,0,c.W,c.H);c.rect('#a89466',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};
  NATX_FLAG.SD=c=>{c.rect('#4b5246',0,0,c.W,c.H);c.rect('#a89a6e',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};}
 // nation-obbd: Palestine Islamic Brigade (OB, was Olive Brigades) and Desert Islamic Faction (BI, was Black Desert Insurgency). Looks on shared models; ORIGINAL emblems in the printed-cloth style (no real group's banner, seal, shahada or slogan).
-{const L={ OB:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#6b6a52',ca:'#7a7556',cb:'#3a3a2c',uni:'#5d6048',pat:1},cx:{p:1,s:1,c:'#6b6a52',t:'#3c6b3a',w:3},ax:{b:'#878d91',p:3,h:{b:'#aeb09a',p:3}},ch:'#4a5036',rt:'#aeb09a',nv:'slav'},
+{const L={ OB:{tk:'hilux',he:null,je:null,sol:'sol_e',fl:{veh:'#6b6a52',ca:'#7a7556',cb:'#3a3a2c',uni:'#5d6048',pat:1},cx:{p:1,s:1,c:'#6b6a52',t:'#3c6b3a',w:3},ax:{b:'#878d91',p:3,h:{b:'#aeb09a',p:3}},ch:'#4a5036',rt:'#aeb09a',nv:'slav'},
  BI:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#9a8a62',ca:'#a89a6c',cb:'#3a3a3e',uni:'#8f8460',pat:0},cx:{p:0,s:1,c:'#9a8a62',t:'#3b3b3f',w:3},ax:{b:'#878d91',p:3,h:{b:'#bfb08a',p:3}},ch:'#5a5238',rt:'#bfb08a',nv:'slav'}};
  for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;if(q.nv)NATX_NAVY[k]=q.nv;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
+RMAP.boat.OB='spb';MIL_TANK.OB={m:'technical',fit:'z',size:29};delete RMAP.ship.OB;   /* OB: pickup technicals + rocket trucks, no tank/jet/helicopter/frigate model */
  // OB "Palestine Islamic Brigade" (Abdullah 2026-11-07 19:40): ORIGINAL emblem — an old house key crossed with an olive branch on a sand/olive shield, cream printed cloth, red/green/black foot band, name in Arabic. No real group's banner, seal, shahada or slogan.
  NATX_FLAG.OB=c=>{const{x,W,H}=c;emCloth(x,W,H,'#efe6cf',23);
   x.fillStyle='#2b2b2b';x.fillRect(0,H*.84,W,H*.16);x.fillStyle='#b3262e';x.fillRect(0,H*.84,W*.34,H*.16);x.fillStyle='#2f6b3a';x.fillRect(W*.66,H*.84,W*.34,H*.16);
