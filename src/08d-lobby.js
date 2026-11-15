@@ -2,7 +2,7 @@
    UI only. Guests send one small 'pick' message {f:nation, t:team, r:ready}; a browser host answers with a 'lobr' roster,
    a Cloudflare battle sends the same facts inside its 'blob' (seats[].r). The leader's Start button lights when every
    friend is ready (07-net renderLobby); a leader can always press "Start anyway". No sim state is touched. */
-const GLB={landing:null,me:{f:null,t:-1,r:0},roster:null,el:null,sent:0};
+const GLB={landing:null,me:{f:null,t:-1,r:0,c:-1},roster:null,el:null,sent:0};
 (function(){const s=document.createElement('style');s.textContent=`
 #glob{position:fixed;inset:0;z-index:300;background:rgba(6,9,8,.94);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit;color:#e8efe9}
 #glob .gbox{animation:lkIn .25s ease-out;width:min(600px,100%);max-height:100%;overflow:auto;background:#121a16;border:1px solid #2d4a3a;border-radius:10px;padding:18px 18px 16px;box-shadow:0 10px 40px #000a}
@@ -14,17 +14,17 @@ const GLB={landing:null,me:{f:null,t:-1,r:0},roster:null,el:null,sent:0};
 function glName(r,k){return r.me?'You':r.h?'Leader':'Friend '+k;}
 // what the lobby looks like to a guest: from the Cloudflare blob or the browser host's roster
 function glData(){const B=NET.cf&&NET.cf.blob;
-  if(B&&!B.own&&Array.isArray(B.seats)){const rows=B.seats.filter(s=>s.h).map((s,k)=>({me:k===(B.you|0),h:k===0,f:s.f,tm:s.tm|0,rd:s.r}));
-    for(const s of B.seats)if(s.ai)rows.push({ai:1,f:s.f,tm:s.tm|0});return {map:B.map,mx:B.mx|0,rows,srv:1,w:B.w};}
-  const R=GLB.rg===NET.game?GLB.roster:null;if(R&&Array.isArray(R.r))return {map:R.m,mx:R.mx|0,rows:R.r.map(x=>({me:x.p===NET.myPeer,h:!!x.h,ai:!!x.ai,f:x.f,tm:x.t|0,rd:x.h||x.ai?undefined:x.d})),srv:0};
+  if(B&&!B.own&&Array.isArray(B.seats)){const rows=B.seats.filter(s=>s.h).map((s,k)=>({me:k===(B.you|0),h:k===0,f:s.f,tm:s.tm|0,rd:s.r,c:s.c>=0?s.c|0:-1}));
+    for(const s of B.seats)if(s.ai)rows.push({ai:1,f:s.f,tm:s.tm|0,c:s.c>=0?s.c|0:-1});return {map:B.map,mx:B.mx|0,rows,srv:1,w:B.w};}
+  const R=GLB.rg===NET.game?GLB.roster:null;if(R&&Array.isArray(R.r))return {map:R.m,mx:R.mx|0,rows:R.r.map(x=>({me:x.p===NET.myPeer,h:!!x.h,ai:!!x.ai,f:x.f,tm:x.t|0,rd:x.h||x.ai?undefined:x.d,c:x.c>=0?x.c|0:-1})),srv:0};
   return null;}
-function glSend(){if(!NET.game||MODE!=='single'||NET.wantSpec)return;const m=GLB.me;NET.game.emit('pick',{f:m.f,t:m.t,r:m.r?1:0}).catch(()=>{});}
+function glSend(){if(!NET.game||MODE!=='single'||NET.wantSpec)return;const m=GLB.me;NET.game.emit('pick',{f:m.f,t:m.t,r:m.r?1:0,c:m.c>=0?m.c:-1}).catch(()=>{});}
 // the browser host tells everybody in the lobby who is here (called from renderLobby; an old guest page ignores it)
 function glBroadcast(mk,mx){if(!NET.game||MODE!=='single'||NET.cf&&NET.cf.own)return;
-  const r=[{p:NET.myPeer||'',h:1,f:setup.p,t:NET.tm[0]|0}];NET.lobby.forEach((p,k)=>r.push({p:p.peer,f:p.f,t:NET.tm[k+1]|0,d:p.r?1:0}));(NET.ais||[]).forEach(a=>r.push({ai:1,f:a.f,t:a.tm|0}));
+  const r=[{p:NET.myPeer||'',h:1,f:setup.p,t:NET.tm[0]|0,c:NET.pc0>=0?NET.pc0:-1}];NET.lobby.forEach((p,k)=>r.push({p:p.peer,f:p.f,t:NET.tm[k+1]|0,d:p.r?1:0,c:p.c>=0?p.c:-1}));(NET.ais||[]).forEach(a=>r.push({ai:1,f:a.f,t:a.tm|0,c:a.c>=0?a.c:-1}));
   NET.game.emit('lobr',{m:mk,mx,r}).catch(()=>{});}
 function glRender(){const guest=MODE==='single'&&NET.game&&NET.code==='join'&&!(NET.cf&&NET.cf.own);
-  if(guest&&NET.joined&&GLB.g!==NET.game&&!NET.wantSpec){GLB.g=NET.game;GLB.me={f:setup.p,t:-1,r:0};glSend();}
+  if(guest&&NET.joined&&GLB.g!==NET.game&&!NET.wantSpec){GLB.g=NET.game;GLB.me={f:setup.p,t:-1,r:0,c:pcLoad()};glSend();}
   if(!guest&&!GLB.landing){if(GLB.el){GLB.el.remove();GLB.el=null;}return;}
   if(MODE!=='single'&&GLB.el){GLB.el.remove();GLB.el=null;GLB.landing=null;return;}
   const D=guest&&!NET.wantSpec?glData():null;
@@ -45,8 +45,8 @@ function glRender(){const guest=MODE==='single'&&NET.game&&NET.code==='join'&&!(
   // keep a select the person is using open: only redraw when something changed
   if(GLB.el){GLB.el.remove();GLB.el=null;}
   const key=JSON.stringify([D.rows,GLB.me,D.mx,D.w,MPL.el?1:0]);if(GLB.key===key&&MPL.el)return;GLB.key=key;
-  const rows=D.rows.map((r,k)=>r.ai?{kind:'ai',d:r.d|0,f:r.f,tm:r.tm|0,ed:null}:{kind:'human',you:!!r.me,host:!!r.h,name:glName(r,k),f:r.me?GLB.me.f:r.f,tm:r.me&&GLB.me.t>=0?GLB.me.t:r.tm|0,rd:r.me?GLB.me.r:r.rd,
-    ed:r.me?{f:v=>{GLB.me.f=v;setup.p=v;try{facCards();}catch(e){}glSend();glRender();},t:v=>{GLB.me.t=v;glSend();glRender();}}:null});
+  const pcA=D.rows.map(r=>r.c>=0?r.c:-1),rows=D.rows.map((r,k)=>r.ai?{kind:'ai',d:r.d|0,f:r.f,tm:r.tm|0,pc:pcA[k],pcTaken:pcTakenOf(pcA,k),nat:(FACTIONS[r.f]||{}).color,ed:null}:{kind:'human',you:!!r.me,host:!!r.h,name:glName(r,k),f:r.me?GLB.me.f:r.f,tm:r.me&&GLB.me.t>=0?GLB.me.t:r.tm|0,rd:r.me?GLB.me.r:r.rd,pc:pcA[k],pcTaken:pcTakenOf(pcA,k),nat:(FACTIONS[r.me?GLB.me.f:r.f]||{}).color,
+    ed:r.me?{c:v=>{GLB.me.c=v;pcSave(v);glSend();glRender();},f:v=>{GLB.me.f=v;setup.p=v;try{facCards();}catch(e){}glSend();glRender();},t:v=>{GLB.me.t=v;glSend();glRender();}}:null});
   for(let i=D.rows.length;i<mx;i++)rows.push({kind:'open'});
   mplShow({code:lobbyCode(),mk:D.map,mx,nn:D.rows.length,rows,all,w:D.w,net:typeof cfNetText==='function'?cfNetText():'',notes:['Waiting for the leader to start'],
     ready:{on:!!GLB.me.r,fn:()=>{GLB.me.r=GLB.me.r?0:1;glSend();glRender();}},back:()=>{try{leaveNet();}catch(e){}GLB.landing=null;mplHide();glRender();}});

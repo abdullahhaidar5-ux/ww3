@@ -4971,6 +4971,7 @@ let srand=Math.random;const srnd=(a,b)=>a+srand()*(b-a);
 // dom: ground | naval | air ; alt: low | high (air only); aa: 0 none, 1 low air, 2 all air
 const BASE={
   harv:{name:'Supply Truck',cls:'harv',hp:450,spd:62,rng:0,dmg:0,rof:1,cost:600,time:8,from:'hq',armor:'heavy',r:12,dom:'ground',noAttack:true},
+  ammot:{name:'Ammo Truck',cls:'ammot',hp:380,spd:66,rng:0,dmg:0,rof:1,cost:450,time:9,from:'factory',armor:'light',r:12,dom:'ground',noAttack:true},
   dozer:{name:'Construction Vehicle',cls:'dozer',hp:420,spd:64,rng:0,dmg:0,rof:1,cost:800,time:10,from:'hq',armor:'heavy',r:12,dom:'ground',noAttack:true},
   // Shia factions only: while their Ayatollah lives, none of their soldiers ever break. If he falls, his martyrdom
   // inspires them: no fear and +10% damage for 30 seconds. One at a time; unarmed, so keep him safe.
@@ -5553,6 +5554,10 @@ for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctr
 // The data rows of removed nations stay (old saves, hidden base rows such as EU) but are in no list a player or the AI can reach.
 const PLAYABLE=['IR','RS','DW','RV','OB','US','GB','FR','DE','IL','UA','RU','CN','KP','IN','JP','KR','PK','SA','AE','TR','EG'];   /* Abdullah 2026-11-14 "Keep 22": the 18 + IN JP DE KR */
 const FKEYS=PLAYABLE.filter(k=>FACTIONS[k]||k==='JP');   /* JP's row is added by 01c-jp.js right after */
+/* Player colours (Abdullah 2026-11-14 18:57 "players can choose their color"): 12 clearly different colours + "Nation colour" (= no pick, the faction default).
+   A seat's pick is an index into PCOLS (-1 = nation colour). The lobby, the servers and newGame all carry the array `pc`; pcClean makes it safe (unique, in range). */
+const PCOLS=[{k:'red',n:'Red',c:'#e03a3a'},{k:'blue',n:'Blue',c:'#3a78e0'},{k:'green',n:'Green',c:'#2fae4e'},{k:'yellow',n:'Yellow',c:'#f0d23a'},{k:'orange',n:'Orange',c:'#f08a2a'},{k:'purple',n:'Purple',c:'#9a52d6'},{k:'cyan',n:'Cyan',c:'#2fd0d6'},{k:'pink',n:'Pink',c:'#f27fb8'},{k:'white',n:'White',c:'#f0f0f0'},{k:'grey',n:'Black / Gray',c:'#4a4f57'},{k:'brown',n:'Brown',c:'#8a5a34'},{k:'lime',n:'Lime',c:'#a6e22e'}];
+function pcClean(a,n){if(!Array.isArray(a))return null;const o=[];for(let i=0;i<n;i++){const v=a[i];o.push(Number.isInteger(v)&&v>=0&&v<PCOLS.length&&!o.includes(v)?v:-1);}return o.some(v=>v>=0)?o:null;}
 // An old save / replay / online slot naming a removed nation falls back to a kept nation of the same morale style.
 const NATFALL={EU:'FR',PL:'FR',IQ:'RV',SY:'RS',BI:'OB',AF:'DW',KD:'RS',CU:'UA',AU:'GB',CA:'GB'};
 function natFix(f){if(FKEYS.includes(f))return f;if(NATFALL[f])return NATFALL[f];const st=MORALE_STYLE[f];return {zeal:'IR',prof:'RU',home:'UA',fire:'SA'}[st]||'US';}
@@ -5563,7 +5568,7 @@ function natFix(f){if(FKEYS.includes(f))return f;if(NATFALL[f])return NATFALL[f]
    matchR(a,b) = exchange ratio dollar for dollar, including who outranges whom; >= MATCH_WIN "beats", <= 1/MATCH_WIN "weak to".
    UNOTE keeps only the tactical notes that are not a counter list. View/UI only: the simulation never reads these. */
 const UNOTE={inf:'Takes 35% less damage in woods or beside buildings; gets suppressed under heavy fire',hacker:'Disables buildings',hero:'Picks off infantry from long range',
-  champ:'Elite squad: tough, accurate, one special ability (see the button when selected) · Only one at a time',harv:'Gathers supply · Also resupplies ammo around it',dozer:'Builds and repairs',
+  champ:'Elite squad: tough, accurate, one special ability (see the button when selected) · Only one at a time',harv:'Gathers supply (money)',ammot:'Refills ammo for friendly units close to it · Limited stock',dozer:'Builds and repairs',
   tank:'Thickest armor in front: side hits do 20% more damage, rear hits 60% more',drone:'Explodes on groups of vehicles and infantry',ship:'Shells coasts and boats from long range'};
 const MATCH_K=['inf','at','tank','aa','arty','heli','jet','drone'],MATCH_SEA=['boat','ship','sub'],MATCH_B=['turret','sam'],MATCH_WIN=1.5,matchC={};
 function matchS(fac,k){return STRUCT[k]?Object.assign({},bstats(fac,k),{armor:'bld',dom:'ground',spd:0}):stats(fac,k);}
@@ -5593,7 +5598,7 @@ function powBan(k){return !!POWERS[k]&&POW_KEEP.indexOf(k)<0;}
 function sigBan(fac,k){return powBan(k)||(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
 /* power use of a building for the Build button: + needs power, - gives power (Generator); 0 = no power use (one POWER table) */
 function pwNeed(k){return POWER.use[k]?POWER.use[k]:(k!=='hq'&&POWER.make[k]?-POWER.make[k]:0);}
-function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')?['cleric']:[]),'spy'],factory:['aa','tank','arty',...(F.extra||[]).filter(k=>stats(fac,k).from!=='airfield'),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift',...(F.extra||[]).filter(k=>stats(fac,k).from==='airfield')],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
+function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')?['cleric']:[]),'spy'],factory:['aa','tank','arty','ammot',...(F.extra||[]).filter(k=>stats(fac,k).from!=='airfield'),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift',...(F.extra||[]).filter(k=>stats(fac,k).from==='airfield')],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
 function bldAllowed(fac,k){if(sigBan(fac,k))return false;if(k==='gen')return typeof G!=='undefined'&&!!G&&!!G.battle;   /* Conquest: the Revenue Center is gone - territory pays
   */if(k==='fort')return !!FORT_NAT[fac];if(k==='tunnel')return !!FACTIONS[fac].tunnels;return !(k==='airfield'&&FACTIONS[fac].noAir);}
@@ -7278,13 +7283,16 @@ function mkTeam(id,fac,ai){const F=FACTIONS[fac];return{id,fac,F,sup:swSup(fac),
 // Allies can send each other money (in steps of $50, never more than you have).
 function giveMoney(from,to,amt){return ctGive(from,to,amt);}   // allied aid: fee + delay live in 03d-command
 function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm||(!!G.truce&&G.truce[a<b?a*32+b:b*32+a]>G.t);}   // a running truce (03d-command) counts as friendly for fire; sameTm() is the strict team test (vision, victory, aid)
+/* a picked player colour (01-data PCOLS) replaces the nation colour of that team; visual only, same on host, clients and servers */
+function pcApply(pc){const P=pcClean(pc,G.teams.length)||G.teams.map(()=>-1);G.pcP=P;G.teams.forEach((T,i)=>{if(P[i]>=0){T.color=PCOLS[P[i]].c;T.dark=shade(T.color,.45);}});}
 function newGame(o){const N=o.facs.length;if((o.battle||o.sandbox)&&!o.camp&&!o.keepMap&&typeof battleMapFix==='function'&&MAPS[o.map]&&!MAPS[o.map].custom)o.map=battleMapFix(o.map,N);const mk=MAPS[o.map]&&(N<=(MAPS[o.map].maxFull||MAPS[o.map].max)||o.camp)?o.map:'strait';setWorld(worldScaleFor(N,mk));setBases(N,mk,mk===o.map?(Array.isArray(o.st)?o.st:o.slot):-1);if(o.camp)while(BASES.length<N)BASES.push(BASES[BASES.length-1]);
   const ssn=wxSsn(o.w)||seasonOf(mk),wB=condFit(wxBase(o.w),condTheme(mk,o.w),o.seed);if(o.sandbox)o.battle=1;/* Test range = a Battle game with test tools on top (Abdullah 2026-11-14 13:51) */NO_TOWNS=!!o.battle&&!o.camp&&!o.grand;let M;try{M=mkMap(o.seed,mk,ssn);}finally{NO_TOWNS=false;}
   G={t:0,ssn,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
      map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};for(const k of G_LATE)G[k]=undefined;initCiv();initDams();initRoads();G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});G.battle=!o.camp;if(G.battle)tbAdd(M,N);
-  G.bs=BATTLE;G.real=o.real?1:0;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.real=o.real?1:0;G.teams.forEach(T=>{T.credits=T.reb?0:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
+  G.bs=BATTLE;G.real=o.real?1:0;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));pcApply(o.pc);{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.real=o.real?1:0;G.teams.forEach(T=>{T.credits=T.reb?0:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
   {const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'];const cd=(p,q)=>{const a=hexRGB(p),b=hexRGB(q);return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);};
-   for(let i=1;i<N;i++){const T=G.teams[i];if(G.teams.slice(0,i).some(P=>cd(P.color,T.color)<.45)){const c=ALT.find(c=>G.teams.slice(0,i).every(P=>cd(P.color,c)>=.45))||ALT[i%ALT.length];T.color=c;T.dark=shade(c,.45);}}}
+   /* a picked player colour (G.pcP) is never changed; the other teams move away from it (and from earlier teams) when too close */
+   for(let i=0;i<N;i++){if(G.pcP[i]>=0)continue;const T=G.teams[i],pv=G.teams.filter((_,k)=>k!==i&&(G.pcP[k]>=0||k<i));if(pv.some(P=>cd(P.color,T.color)<.45)){const c=ALT.find(c=>pv.every(P=>cd(P.color,c)>=.45))||ALT[i%ALT.length];T.color=c;T.dark=shade(c,.45);}}}
   paintTerrain(M);
   G.cover=new Uint8Array(GW*GH);for(const [x,y] of (G.treePos||[])){const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);if(cx>=0&&cy>=0&&cx<GW&&cy<GH)G.cover[cy*GW+cx]=Math.min(255,G.cover[cy*GW+cx]+1);}
   G.wood=G.cover.slice(); // trees per cell (before city cover is added): woods slow vehicles
@@ -7604,8 +7612,9 @@ function fmLayout(type,n,sp,W,lat){const S={S:[],A:[],I:[],F:[],R:[]},put=(r,f,s
     d=rows('I',d,W,ls,rs);rows('R',d-rs*.3,W,ls*(sd?1:1.4),rs*(sd?1:1.3));}
   return S;}
 // us = movers; destination centre (cx,cy), facing (fx,fy); lat = sideways spacing wanted (drag lines); keep = hold slots at the slowest unit's pace
-function fmApply(us,type,cx,cy,fx,fy,mode,keep,lat,wid){const m=us.filter(u=>u&&!u.isB&&u.s&&u.s.spd>0&&u.kind!=='harv'&&u.kind!=='dozer');const n=m.length;if(!n)return;
-  if(!FM_TYPES.includes(type))type='line';const L=Math.hypot(fx,fy)||1;fx/=L;fy/=L;const px=-fy,py=fx,gnd=m.filter(u=>u.s.dom==='ground'),oth=m.filter(u=>u.s.dom!=='ground');
+/* every selected unit that can move takes a place in the formation - infantry, vehicles, trucks, aircraft and boats (Abdullah 2026-11-14 18:15 "units can all form a formation") */
+function fmApply(us,type,cx,cy,fx,fy,mode,keep,lat,wid){const m=us.filter(u=>u&&!u.isB&&u.s&&u.s.spd>0);const n=m.length;if(!n)return;
+  if(!FM_TYPES.includes(type))type='line';const L=Math.hypot(fx,fy)||1;fx/=L;fy/=L;const px=-fy,py=fx,gnd=m,oth=[];
   const by={S:[],A:[],I:[],F:[],R:[]};for(const u of gnd)by[fmRole(u)].push(u);const cnt={};for(const r in by)cnt[r]=by[r].length;
   const sp=Math.max(18,...gnd.map(u=>u.r*2.6),20);const W=wid||Math.max(3,Math.ceil(Math.sqrt(gnd.length)*1.7));const S=fmLayout(type,cnt,sp,W,lat);
   let ox=0,oy=0;for(const u of gnd){ox+=u.x;oy+=u.y;}if(gnd.length){ox/=gnd.length;oy/=gnd.length;}
@@ -8332,6 +8341,8 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   // then trucks up to 3-4.
   const harvs=mine.filter(e=>e.kind==='harv'&&!e.cv).length,dzN=mine.filter(e=>e.kind==='dozer').length;
   if(hq&&!qItems(T,'hq').length){if(!harvs)enqueue(id,'harv');else if(!dzN)enqueue(id,'dozer');else if(harvs<3+(G.t>300?1:0))enqueue(id,'harv');}
+  /* Ammo trucks (Abdullah 2026-11-13 21:46 "Separate ammo truck"): one per 8 combat units, two at 18+, from the War Factory; they idle behind the front and drive to thirsty units (updAmmoTrucks). */
+  if(ammoOn()&&done(id,'factory')&&T.ai.t%6===2&&!qItems(T,'factory').some(i=>i.kind==='ammot')){const nA=mine.filter(e=>!e.isB&&!e.s.noAttack&&e.s.dom==='ground'&&!['harv','dozer','hacker'].includes(e.kind)).length,want=Math.min(2,nA>=8?1+(nA>=18?1:0):0);if(unitCount(id,'ammot')<want&&T.credits>=stats(T.fac,'ammot').cost+250)enqueue(id,'ammot');}
   aiExpand(T,mine,hq);
   {const fnd=mine.filter(e=>e.isB&&e.nd&&e.built<1);const dzs=mine.filter(e=>e.kind==='dozer');for(const b of fnd){if(dzs.some(u=>u.order&&u.order.type==='build'&&u.order.target===b))continue;const fr=dzs.filter(u=>(!u.order||u.order.type!=='build')&&!(u.dzFlee>G.t)).sort((p,q)=>dist(p,b)-dist(q,b))[0];if(fr){fr.order={type:'build',target:b};fr.path=null;}}}
   // protect the builders: while an AI Construction Vehicle works on a foundation, up to 3 idle fighters stand guard at it; a dozer under fire backs off to the HQ (its building pauses) and returns when clear
@@ -8372,7 +8383,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   // strike aircraft per 8 ground units (1 to 3, by battle size) - it buys the aircraft first and the other buildings
   // save for it, the same way it saves for vehicles. Same money as everyone: it only spends it in a different order.
   const airN=mine.filter(e=>!e.isB&&e.s.dom==='air'&&e.kind!=='drone'&&!e.s.noAttack).length,wantAir=!!DIFF[T.ai.d??1].air&&!thin&&G.t>300&&done(id,'airfield')&&armyN>=10&&airN<Math.max(1,Math.min(Math.round(3*(G.bs||1)),Math.floor(armyN/8)));let aSv=0;
-  for(const cat of wantAir?['airfield','shipyard','factory','barracks']:wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){{const qb=qPick(id,cat);if(!qb||(qb.q?qb.q.length:0)>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;}let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
+  for(const cat of wantAir?['airfield','shipyard','factory','barracks']:wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){{const qb=qPick(id,cat);if(!qb||(qb.q?qb.q.length:0)>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;}let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift'&&k!=='ammot').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
     if(cat==='factory'){opts=enemyAir>=2?['aa','aa',...opts]:opts.filter(k=>k!=='aa'||srand()<.2);
       // Heavy-barrage doctrine (RU, CN, KP): keep a real artillery park - about a fifth of the army, 2 to 8 guns
       if(DC.barrage&&opts.includes('arty')&&unitCount(id,'arty')<Math.min(Math.round(8*(G.bs||1)),Math.max(2,Math.round(armyN*.2))))opts=['arty','arty','arty',...opts];}
@@ -8548,7 +8559,7 @@ function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.mi
   G.mT=(G.mT||0)-dt;if(G.mT<=0){G.mT=.2;updMines();}
   for(const T of G.teams){T._upl=false;T._tun=false;}for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const T=G.teams[e.team];if(!T)continue;if(e.kind==='tunnel')T._tun=true;else if(e.kind==='uplink'&&!(e.dis>G.t))T._upl=true;}
   for(const T of G.teams){if(!T.tun.length)continue;for(const u of T.tun)u.hp=Math.min(u.max,u.hp+12*dt);if(!T._tun){log(T.id,`Our last tunnel was destroyed. ${T.tun.length} units inside were lost.`,'w');T.tun=[];}}
-  for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt);if(G.battle)swTick(T);for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
+  for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt*(G.conq?.5:1)*(G.sandbox&&T.id===0?30:1));   /* Test range: the strike recharges in seconds (Abdullah 2026-11-14 18:26) */if(G.battle)swTick(T);for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
     {let j=0;for(const r of T.reveals){r.t-=dt;if(r.t>0)T.reveals[j++]=r;}T.reveals.length=j;}}
   // expired smoke screens and shields are dropped once a second (they were kept for the whole match and scanned every frame)
   if(!(G.prT>G.t)){G.prT=G.t+1;for(const k of ['smokes','shields'])if(Array.isArray(G[k])&&G[k].length){let j=0;const A=G[k];for(const S of A)if(S.t>G.t)A[j++]=S;A.length=j;}}
@@ -8653,34 +8664,49 @@ function oilTarget(o){const ALL=new Array(16).fill(true);return{oil:o,isB:true,k
    Ground combat units carry u.am shots (max u.amx); every shot spends one. At 0 vehicles can't fire and infantry only plink with a sidearm
    (12% damage). YOUR AREA - where units refill (7% of a full load per second) - is: a circle around each of your finished buildings (Command
    Center 380, Supply Depot 320 - half while the depot is cut off from your network -, any other base building 170), every map building you
-   hold (derricks, power plants, quarries, mines, hospitals: 170; an ammo dump 340 and twice as fast), your supply trucks (230), and your SUPPLY
+   hold (derricks, power plants, quarries, mines, hospitals: 170; an ammo dump 340 and twice as fast), and your SUPPLY
    LINES: the roads that run out from those buildings (lgCover in 03c-logistics: up to LG_REACH of road from each, over neutral junctions, never
    through an enemy base or depot; craters, blown bridges, enemy checkpoints and enemy troops standing on a road cut it; 120 either side).
-   Outside it units fight on until their ammo is empty, then they must come back or get a supply truck - there are no timers.
+   Outside it units fight on until their ammo is empty, then they must come back or get an Ammo Truck (kind 'ammot', updAmmoTrucks; the money truck 'harv' never refills ammo) - there are no timers.
    Test range: unlimited ammo, no badge. Host-only; clients get am/supply as bits of the unit snapshot. */
-const SUP_R={hq:380,depot:320,harv:230,base:170,road:120,ammo:340};   // ammo = a captured ammo dump (orch/techbldgs): the strongest point, refills twice as fast
+const AMMOT_R=170,AMMOT_CAP=800,AMMOT_FILL=.12,AMMOT_RATE=.22,AMMOT_N=6;   /* Ammo Truck (Abdullah 2026-11-13 21:46 "Separate ammo truck"): serve radius, stock in shots, refill per second inside your area (share of stock), share of a unit's magazine given per second (~5 s to fill), units served at once */
+const SUP_R={hq:380,depot:320,base:170,road:120,ammo:340};   // ammo = a captured ammo dump (orch/techbldgs): the strongest point, refills twice as fast
 const SUP_NOB=['wall','gate','mine','tunnel'];
 function ammoOn(){return !!G&&!G.sandbox;}
 function hasAmmo(u){const s=u.s;return ammoOn()&&!!s&&!u.isB&&s.dom==='ground'&&s.dmg>0&&s.rof>0&&!s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker';}
-function ammoCap(s){if(s.cls==='arty'||s.wpn==='missile')return 20;return Math.max(16,Math.min(300,Math.round(200/s.rof)));}
+function ammoCap(s){if(s.cls==='ammot')return AMMOT_CAP;if(s.cls==='arty'||s.wpn==='missile')return 20;return Math.max(16,Math.min(300,Math.round(200/s.rof)));}
 function ammoInit(u){u.amx=ammoCap(u.s);u.am=u.amx;}
-// every team's area as circles {x,y,r} (allies share): buildings, supply trucks, and the beads along its supply lines (G.lg.bead from lgCover)
+// every team's area as circles {x,y,r} (allies share): buildings, held map buildings, and the beads along its supply lines (G.lg.bead from lgCover)
 function supplyPoints(){const N=G.teams.length,P=[];for(let i=0;i<N;i++)P.push([]);
   const add=(o,p)=>{for(let t=0;t<N;t++)if(ally(o,t))P[t].push(p);};
   for(const e of G.ents){if(e.dead||e.inTun||e.team==null||e.team<0||e.team>=N)continue;let r=0;
-    if(e.isB){if(e.built<1||SUP_NOB.includes(e.kind))continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot*(e.lcut?.5:1):SUP_R.base;}else if(e.kind==='harv')r=SUP_R.harv;
+    if(e.isB){if(e.built<1||SUP_NOB.includes(e.kind))continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot*(e.lcut?.5:1):SUP_R.base;}
     if(r)add(e.team,{x:e.x,y:e.y,r});}
   // every map building a side holds (oil derrick, power plant, quarry, mine, field hospital, ammo dump...: G.oil rows) is a forward supply point (Abdullah 2026-11-13 20:53)
   if(G.oil)for(const o of G.oil)if(!o.dead&&o.owner>=0&&o.owner<N)add(o.owner,o.tb==='ammo'?{x:o.x,y:o.y,r:SUP_R.ammo,f:2}:{x:o.x,y:o.y,r:SUP_R.base});
   const B=G.lg&&G.lg.bead;if(B)for(let k=0;k<N&&k<B.length;k++)if(B[k])for(const p of B[k])add(k,p);
   return P;}
+/* Ammo Truck (kind 'ammot'): u.am = its stock of shots, u.amx = capacity (the fields the unit bar, snapshot and checkpoint already carry). Inside your area it reloads; units of its side within AMMOT_R get refilled over ~5 s, up to AMMOT_N at once, thirstiest first; a unit it serves counts as supplied. An idle truck drives to the nearest thirsty unit outside your area and parks 150 behind it (toward home), or back to your area to reload when low. Host only; no RNG. */
+function updAmmoTrucks(P,st){if(!ammoOn())return;
+  for(const t of G.ents){if(t.dead||t.isB||t.kind!=='ammot'||t.inTun)continue;if(t.am===undefined){t.amx=AMMOT_CAP;t.am=AMMOT_CAP;}
+    if(t.sup&&t.am<t.amx)t.am=Math.min(t.amx,t.am+t.amx*AMMOT_FILL*st);
+    const need=[];let thirsty=null,td=1e9;
+    for(const u of G.ents){if(u.dead||u.isB||u.inTun||u.team!==t.team||u===t||u.am===undefined||u.kind==='ammot'||!(u.amx>0))continue;const d=Math.hypot(u.x-t.x,u.y-t.y);
+      if(u.am<u.amx&&d<AMMOT_R)need.push(u);
+      if(!u.sup&&u.am<u.amx*.5&&d<1100&&d<td){td=d;thirsty=u;}}
+    if(t.am>0){for(const u of need)u.sup=1;need.sort((a,b)=>a.am/a.amx-b.am/b.amx);
+      for(const u of need.slice(0,AMMOT_N)){const give=Math.min(u.amx-u.am,u.amx*AMMOT_RATE*st,t.am);if(give<=0)break;u.am+=give;t.am-=give;}}
+    if(!t.order&&!t.path&&!t.target){const pts=P[t.team]||[];let b=null,bd=1e9;for(const p of pts){const d=Math.hypot(p.x-t.x,p.y-t.y);if(d<bd){bd=d;b=p;}}
+      if(t.am<t.amx*.2&&b&&!t.sup)setMove(t,b.x,b.y,'move');
+      else if(thirsty&&t.am>t.amx*.1&&td>AMMOT_R*.6){const H=hqOf(t.team),hx=H?H.x-thirsty.x:0,hy=H?H.y-thirsty.y:0,hl=Math.max(1,Math.hypot(hx,hy));setMove(t,thirsty.x+hx/hl*150,thirsty.y+hy/hl*150,'move');}}}}
 function updSupply(dt){if(G.lgd)lgMines(dt);G.supT=(G.supT||0)+dt;if(G.supT<.5)return;const st=G.supT;G.supT=0;if(G.lg)lgTick(st);polTick(st);const P=supplyPoints();
   for(const u of G.ents){if(u.dead||u.isB||u.inTun)continue;const pts=P[u.team];if(!pts)continue;let ins=false,fk=1;for(const p of pts){if(Math.abs(p.x-u.x)<p.r&&Math.abs(p.y-u.y)<p.r&&Math.hypot(p.x-u.x,p.y-u.y)<p.r){ins=true;if(p.f>fk)fk=p.f;if(fk>=2)break;}}
     u.sup=ins?1:0;
     if(hasAmmo(u)){if(u.am===undefined)ammoInit(u);if(ins&&u.am<u.amx)u.am=Math.min(u.amx,u.am+u.amx*.07*fk*st);}}
+  updAmmoTrucks(P,st);
   // low / empty warnings (once per 25 s per side, only when it matters)
   if(ammoOn())for(const T of G.teams){if(T.out||G.t-(T.amWarn??-99)<25)continue;let low=0,zero=0,n=0;for(const u of G.ents){if(u.team!==T.id||u.dead||u.isB||u.am===undefined)continue;n++;if(u.am<=0)zero++;else if(u.am<u.amx*.25)low++;}
-    if(n&&zero>=Math.max(2,n*.2)){T.amWarn=G.t;log(T.id,'Out of ammo! Bring them back inside your supply area (buildings, depots, supply lines) or send a supply truck.','bad');}else if(n&&low+zero>=Math.max(2,n*.3)){T.amWarn=G.t;log(T.id,'Running low on ammo - your supply lines, depots and supply trucks refill it.','w');}}}
+    if(n&&zero>=Math.max(2,n*.2)){T.amWarn=G.t;log(T.id,'Out of ammo! Bring them back inside your supply area (buildings, depots, supply lines) or call an Ammo Truck.','bad');}else if(n&&low+zero>=Math.max(2,n*.3)){T.amWarn=G.t;log(T.id,'Running low on ammo - your supply lines and depots refill it, or send an Ammo Truck.','w');}}}
 /* Roads: the map's road network is the supply-line graph (03c-logistics). Battle has no towns: the old town and hamlet buildings are plain
    civilian buildings any infantry can garrison (G.civ, c.ti=-1). */
 function initRoads(){for(const c of G.civ)c.ti=-1;lgInit();}
@@ -8952,7 +8978,9 @@ function lgInit(){const M=G.map,L=G.lg={N:[],E:[],reach:null,trade:null,sig:'',r
   BASES.forEach((b,i)=>L.N.push({x:b[0],y:b[1],b:i,t:-1}));
   for(const c of (M.cities||[]))L.N.push({x:c.x,y:c.y,b:-1,t:-1});   // road junctions (old town centres): neutral
   const nodeAt=p=>{let b=-1,bd=300;L.N.forEach((n,i)=>{const d=Math.hypot(n.x-p[0],n.y-p[1]);if(d<bd){bd=d;b=i;}});return b;};
-  for(const rp of (M.roadNet||[])){if(!rp||rp.length<2)continue;const a=nodeAt(rp[0]),b=nodeAt(rp[rp.length-1]);if(a<0||b<0||a===b)continue;L.E.push(lgEdge(a,b,rp,-1));}
+  // Battle maps carry hand-laid roads (M.roads, map-kit units x WK) and no town road net: those roads are the graph; an end that meets no base or crossroad makes a node of its own
+  let RN=M.roadNet||[];if(!RN.length&&M.roads&&M.roads.length){RN=M.roads.map(r=>r.map(q=>[q[0]*WK,q[1]*WK]));const nd0=nodeAt;for(const rp of RN)for(const q of [rp[0],rp[rp.length-1]])if(nd0(q)<0)L.N.push({x:q[0],y:q[1],b:-1,t:-1});}
+  for(const rp of RN){if(!rp||rp.length<2)continue;const a=nodeAt(rp[0]),b=nodeAt(rp[rp.length-1]);if(a<0||b<0||a===b)continue;L.E.push(lgEdge(a,b,rp,-1));}
   L.n0=L.E.length;L.nS=L.N.length;L.nB0=(M.bridges||[]).length;L.bvA=0;L.en={};L.dsig='';L.dl=[];}
 function lgEdge(a,b,pts,team){const cum=[0];let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(let i=0;i<pts.length;i++){if(i)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));x0=Math.min(x0,pts[i][0]);y0=Math.min(y0,pts[i][1]);x1=Math.max(x1,pts[i][0]);y1=Math.max(y1,pts[i][1]);}return{a,b,pts,cum,len:cum[cum.length-1],team,bb:[x0,y0,x1,y1]};}
 // stamp a polyline into the road mask (same footprint as the map's roads) so units drive faster on it and the ground shows gravel
@@ -8992,12 +9020,12 @@ function lgIvNorm(L){if(L.length<2)return L;L.sort((p,q)=>p[0]-q[0]);const o=[L[
 function lgCuts(k){const L=G.lg,out={};for(const u of G.ents){if(u.dead||u.isB||u.inTun||u.team==null||u.team<0||!u.s||u.s.dom!=='ground'||u.s.noAttack||u.kind==='harv'||u.kind==='dozer'||ally(u.team,k)||(G.teams[u.team]&&G.teams[u.team].reb&&!u.s))continue;
     for(let i=0;i<L.E.length;i++){const e=L.E[i],b=e.bb;if(u.x<b[0]-LG_CUTR||u.x>b[2]+LG_CUTR||u.y<b[1]-LG_CUTR||u.y>b[3]+LG_CUTR)continue;const q=lgProj(e,u.x,u.y);if(q.d<LG_CUTR)(out[i]||(out[i]=[])).push(q.s);}}
   for(const i in out)out[i].sort((a,b)=>a-b);return out;}
-function lgCover(){const L=G.lg,n=L.N.length,Nt=G.teams.length,adj=L.N.map(()=>[]);L.cov=[];L.bead=[];
+function lgCover(){const L=G.lg,D=G.lgd,n=L.N.length,Nt=G.teams.length,adj=L.N.map(()=>[]);L.cov=[];L.bead=[];
   L.E.forEach((e,i)=>{if(e.a===e.b)return;adj[e.a].push([e.b,i,0]);adj[e.b].push([e.a,i,1]);});
   for(let k=0;k<Nt;k++){const T=G.teams[k];if(T.reb||T.out||!L.reach){L.cov.push(null);L.bead.push(null);continue;}
     const left=new Float64Array(n).fill(-1),C={},cut=lgCuts(k),cv=i=>C[i]||(C[i]={v:[],d:[]});
     // walk edge ei from road position s0 in direction dir (+1 = toward end b) with budget r: returns how far it got and whether it reached the end
-    const walk=(ei,s0,dir,r)=>{const e=L.E[ei],c=cv(ei),len=e.len;if(lgBlk(ei,k)){const a=Math.min(r,dir>0?len-s0:s0);lgIvAdd(c.d,dir>0?s0:s0-a,dir>0?s0+a:s0);return -1;}
+    const walk=(ei,s0,dir,r)=>{const e=L.E[ei],c=cv(ei),len=e.len;if(lgBlk(ei,k)||lgRcFoe(ei,k)){const a=Math.min(r,dir>0?len-s0:s0);lgIvAdd(c.d,dir>0?s0:s0-a,dir>0?s0+a:s0);return -1;}
       const cs=cut[ei]||[];let lim=dir>0?len:0;for(const x of cs){if(dir>0&&x>s0+1){lim=x;break;}if(dir<0&&x<s0-1)lim=x;}
       const room=dir>0?lim-s0:s0-lim,go=Math.min(r,room);lgIvAdd(c.v,dir>0?s0:s0-go,dir>0?s0+go:s0);
       if(go<r&&lim!==(dir>0?len:0)){const more=Math.min(r-go,dir>0?len-lim:lim);lgIvAdd(c.d,dir>0?lim:lim-more,dir>0?lim+more:lim);return -1;}
@@ -9013,6 +9041,10 @@ function lgCover(){const L=G.lg,n=L.N.length,Nt=G.teams.length,adj=L.N.map(()=>[
     for(const b of src){let best=null,bd=LG_ATTACH,bi=-1;for(let i=0;i<L.E.length;i++){const e=L.E[i],q0=e.bb;if(b.x<q0[0]-LG_ATTACH||b.x>q0[2]+LG_ATTACH||b.y<q0[1]-LG_ATTACH||b.y>q0[3]+LG_ATTACH)continue;const q=lgProj(e,b.x,b.y);if(q.d<bd){bd=q.d;best=q;bi=i;}}
       if(!best)continue;const e=L.E[bi];const ra=walk(bi,best.s,-1,LG_REACH),rb=walk(bi,best.s,1,LG_REACH);
       if(ra>left[e.a]&&!lgNodeFoe(L.N[e.a],k))left[e.a]=ra;if(rb>left[e.b]&&!lgNodeFoe(L.N[e.b],k))left[e.b]=rb;}
+    // captured road sections (lgRoadCap): a section a side holds is its supply area whole, and passes half a reach on past both ends
+    if(D.rc)for(const ei in D.rc){const q=D.rc[ei];if(!(q.o>=0)||!ally(q.o,k))continue;const e=L.E[ei];if(!e||e.a===e.b||lgBlk(+ei,k))continue;
+      const ra=walk(+ei,e.len,-1,e.len+LG_REACH*.5),rb=walk(+ei,0,1,e.len+LG_REACH*.5);
+      if(ra>left[e.a]&&!lgNodeFoe(L.N[e.a],k))left[e.a]=ra;if(rb>left[e.b]&&!lgNodeFoe(L.N[e.b],k))left[e.b]=rb;}
     // spread over the network, farthest budget first (Dijkstra on remaining road length)
     const done=new Uint8Array(n);
     for(;;){let b=-1,bv=0;for(let i=0;i<n;i++)if(!done[i]&&left[i]>bv){bv=left[i];b=i;}if(b<0)break;done[b]=1;
@@ -9026,7 +9058,7 @@ function lgCover(){const L=G.lg,n=L.N.length,Nt=G.teams.length,adj=L.N.map(()=>[
 // cheap test: has anything that moves the supply lines changed since the last lgCover? (enemy units on roads, buildings, captures)
 function lgCoverSig(){const L=G.lg;let s='';for(const e of G.ents){if(e.dead)continue;if(e.isB){if(e.built>=1&&e.team!=null)s+='b'+e.id+',';continue;}if(!e.s||e.s.dom!=='ground'||e.inTun||e.s.noAttack)continue;
     for(let i=0;i<L.E.length;i++){const b=L.E[i].bb;if(e.x<b[0]-LG_CUTR||e.x>b[2]+LG_CUTR||e.y<b[1]-LG_CUTR||e.y>b[3]+LG_CUTR)continue;const q=lgProj(L.E[i],e.x,e.y);if(q.d<LG_CUTR){s+='u'+e.team+':'+i+':'+((q.s/60)|0)+',';}}}
-  for(const o of G.oil||[])s+=o.dead?'x':(o.owner+1);return s;}
+  for(const o of G.oil||[])s+=o.dead?'x':(o.owner+1);if(G.lgd&&G.lgd.rc)for(const i in G.lgd.rc)s+='r'+i+':'+G.lgd.rc[i].o;return s;}
 // is road edge i closed for team k: cratered, over a blown bridge, or held by an enemy checkpoint
 function lgBlk(i,k){const D=G.lgd,c=D.cr[i];if(c&&c.t>G.t)return true;const e=G.lg.E[i],B=G.map.bridges;if(e&&e.br)for(const b of e.br)if(B[b]&&B[b].dead)return true;
   if(D.ck)for(const q of D.ck)if(q.ei===i&&!ally(q.team,k))return true;return false;}
@@ -9038,7 +9070,33 @@ function lgTick(st){if(!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;lgFix(D);if(L.r
   if(s!==L.sig||!L.reach){L.sig=s;lgCompute();
     for(let j=L.nS;j<L.N.length;j++){const e=G.byId.get(L.N[j].e);if(!e||e.kind!=='depot')continue;if(e.lcut&&!e.lcut0)log(e.team,'A forward Supply Depot is CUT OFF from your supply network - half range until a road links it again.','bad');else if(!e.lcut&&e.lcut0)log(e.team,'Your forward Supply Depot is back on the supply network.','g');e.lcut0=e.lcut;}}
   if(L.reach){L.cvT=(L.cvT||0)+st;if(L.cvT>=1){L.cvT=0;const cs=lgCoverSig();if(cs!==L.cvs){L.cvs=cs;lgCover();}}}
-  lgJobs(st);}
+  lgRoadCap(st);lgJobs(st);}
+
+/* ---------- CAPTURABLE ROADS (Abdullah 2026-11-14 18:40 "Make it so that units can capture roads": sections, any ground unit) ----------
+   A SECTION = one edge of the road graph (between two crossroads / bases / depots / road ends). D.rc[edge] = {o: owner team or -1, c: team now capturing,
+   p: progress 0..1}. Ground units of one side standing within LG_CUTR of a section nobody of theirs holds, with no enemy ground unit on it, capture it in
+   ~10 s (LG_RCT; more units = faster, like derricks; contested = paused; progress fades when left alone). A section covered by a side's HQ/depot reach counts as that side's
+   until someone takes it. A held section is that side's supply area whole (lgCover) and passes half a reach on; one held by an enemy closes the road for you.
+   Host only, once a second, no RNG; clients get D.rc in the lg pack. */
+const LG_RCT=10;
+function lgRcFoe(i,k){const D=G.lgd,q=D&&D.rc&&D.rc[i];return !!(q&&q.o>=0&&q.o<G.teams.length&&!ally(q.o,k));}
+// who holds section i right now: explicit owner, else the side whose HQ/depot reach covers it, else -1
+function lgRcOwner(i){const D=G.lgd,q=D.rc&&D.rc[i];if(q&&q.o>=0)return q.o;const C=G.lg.cov;if(C)for(let k=0;k<C.length;k++){const c=C[k]&&C[k][i];if(c&&c.v.length&&!G.teams[k].reb)return k;}return -1;}
+function lgRoadCap(st){if(MODE==='client')return;const L=G.lg,D=G.lgd;if(!L||!D||!L.E.length)return;lgFix(D);L.rcA=(L.rcA||0)+st;if(L.rcA<1)return;const dt=L.rcA;L.rcA=0;
+  const Nt=G.teams.length,NE=L.E.length;if(!L.rcN||L.rcN.length!==NE*Nt)L.rcN=new Int16Array(NE*Nt);const N=L.rcN;N.fill(0);let any=false;
+  for(const u of G.ents){if(u.dead||u.isB||u.inTun||u.team==null||u.team<0||u.team>=Nt||!u.s||u.s.dom!=='ground'||G.teams[u.team].reb||G.teams[u.team].out)continue;
+    for(let i=0;i<NE;i++){const b=L.E[i].bb;if(L.E[i].a===L.E[i].b||u.x<b[0]-LG_CUTR||u.x>b[2]+LG_CUTR||u.y<b[1]-LG_CUTR||u.y>b[3]+LG_CUTR)continue;
+      if(lgProj(L.E[i],u.x,u.y).d<LG_CUTR){N[i*Nt+u.team]++;any=true;}}}
+  let ch=false;
+  for(const k of Object.keys(D.rc)){const q=D.rc[k];if(q.p>0&&!(any&&N[k*Nt+q.c]>0)){q.p=Math.max(0,q.p-.05*dt);if(q.p<=0)q.c=-1;}}
+  if(any)for(let i=0;i<NE;i++){let a=-1,na=0,foe=false;for(let t=0;t<Nt;t++){const n=N[i*Nt+t];if(n>na){na=n;a=t;}}if(a<0)continue;
+    for(let t=0;t<Nt;t++)if(N[i*Nt+t]&&!ally(t,a)){foe=true;break;}if(foe)continue;   // contested: paused
+    const own=lgRcOwner(i);if(own>=0&&ally(own,a))continue;
+    let q=D.rc[i];if(!q)q=D.rc[i]={o:-1,c:-1,p:0};
+    if(q.c!==a&&q.c>=0&&!ally(q.c,a)){q.p=Math.max(0,q.p-.25*dt);if(q.p<=0)q.c=a;continue;}
+    q.c=a;q.p+=dt/LG_RCT*(1+.5*(Math.min(na,6)-1));
+    if(q.p>=1){const prev=own;q.o=a;q.p=0;q.c=-1;ch=true;D.v++;log(a,'Road captured.','g');if(prev>=0&&!ally(prev,a))log(prev,'Road lost.','bad');}}
+  if(ch){L.cvs=null;}}
 // ---- building roads (to a forward depot: lgRoadTo) ----
 function lgPoint(job,s){const P=job.pts;let acc=0;for(let i=1;i<P.length;i++){const L=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);if(acc+L>=s){const f=L?(s-acc)/L:0;return[P[i-1][0]+(P[i][0]-P[i-1][0])*f,P[i-1][1]+(P[i][1]-P[i-1][1])*f];}acc+=L;}return P[P.length-1];}
 function dozeRoad(u,dt){const o=u.order;if(!o||o.type!=='road')return false;const D=G.lgd,job=D&&D.job.find(j=>j.id===o.job);if(!job||job.done){u.order=null;return false;}
@@ -9072,6 +9130,12 @@ function lgAI2(T){if(!G.lgd||!G.lg.reach||T.ai.d<1||G.t<200)return;const D=G.lgd
       else if(T.ai.d>=1&&t%15===7&&idle.length>=4){const hq=hqOf(id);let best=null,bd=1e18;
         for(let k=0;k<G.teams.length;k++){if(ally(k,id)||!L.cov[k]||G.teams[k].reb)continue;const eh=hqOf(k);for(const ei in L.cov[k]){const c=L.cov[k][ei];for(const v of c.v){const p=lgPoint(L.E[ei],(v[0]+v[1])/2);if(eh&&Math.hypot(p[0]-eh.x,p[1]-eh.y)<900)continue;const d=hq?Math.hypot(p[0]-hq.x,p[1]-hq.y):0;if(d<bd){bd=d;best=p;}}}}
         if(best)for(const u of idle.filter(u=>isInf(u.s)).slice(0,3))setMove(u,best[0]+((u.id%5)-2)*14,best[1]+((u.id%3)-1)*14,'amove');}}}
+  // capture roads (lgRoadCap): retake a section the enemy holds near its base, else walk a small idle squad onto the nearest section toward the enemy that is not yet its own
+  if(t%7===3&&G.lg.E.length){const hq=hqOf(id);if(hq){const idle=G.ents.filter(u=>u.team===id&&!u.dead&&!u.isB&&!u.inTun&&u.s&&u.s.dom==='ground'&&!u.s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer'&&!u.order&&!u.target&&!u.amb&&!(u.rout>G.t));
+      if(idle.length>=3){let eh=null,ed=1e18;for(let k=0;k<G.teams.length;k++){if(ally(k,id)||G.teams[k].reb||G.teams[k].out)continue;const h=hqOf(k),d=h?Math.hypot(h.x-hq.x,h.y-hq.y):1e18;if(h&&d<ed){ed=d;eh=h;}}
+        let best=null,bs=1e18;for(let i=0;i<L.E.length;i++){const e=L.E[i];if(e.a===e.b||lgBlk(i,id))continue;const o=lgRcOwner(i);if(o>=0&&ally(o,id))continue;const p=lgPoint(e,e.len/2),dh=Math.hypot(p[0]-hq.x,p[1]-hq.y);if(dh>2200)continue;
+          const q=D.rc[i],lost=q&&q.o>=0&&!ally(q.o,id);const sc=lost?dh-5000:(eh?Math.hypot(p[0]-eh.x,p[1]-eh.y):dh);if(sc<bs){bs=sc;best=p;}}
+        if(best)for(const u of idle.slice(0,4))setMove(u,best[0]+((u.id%5)-2)*14,best[1]+((u.id%3)-1)*14,'amove');}}}
   // a forward depot that is cut off or not linked: build a road to it
   if(t%17===8&&T.credits>1000&&!D.job.some(j=>j.team===id)){for(let j=L.nS;j<L.N.length;j++){const nd=L.N[j];if(nd.tm!==id||nd.port)continue;const e=G.byId.get(nd.e);if(e&&e.lcut){lgCmd(id,{k:'droad',tid:e.id,ids:[]});break;}}}
   // rebuild a blown bridge in its own (or neutral) land
@@ -9090,13 +9154,14 @@ function lgAI2(T){if(!G.lgd||!G.lg.reach||T.ai.d<1||G.t<200)return;const D=G.lgd
       if(en>=6&&fr<3&&!G.ents.some(u=>u.order&&u.order.type==='lgj'&&u.order.bi===i)){const dz=G.ents.filter(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&Math.hypot(u.x-b.x,u.y-b.y)<1600);if(dz.length){lgCmd(id,{k:'demo',x:b.x,y:b.y,ids:[dz[0].id]});break;}}}}}
 
 // ---- network packs (host -> clients, only the dynamic part; lives in teamGlobals) ----
-function lgPack(){const D=G.lgd;if(!D)return 0;lgFix(D);const L=G.lg,B=G.map.bridges||[],dy=[];for(let j=L.nS;j<L.N.length;j++){const e=G.byId.get(L.N[j].e);if(e)dy.push(e);}return{rb:D.rb.map(r=>[r.a,r.b,r.team,r.pts.flat(),r.dp||0]),mn:D.mn.map(m=>[m.id,m.team,m.x,m.y]),ck:D.ck.map(q=>[q.id,q.team,q.x,q.y,q.ei]),pt:D.pt.map(p=>[p.x,p.y,p.h,p.nx,p.ny,p.team]),bv:D.bv,bd:Object.keys(D.bd).map(k=>{const q=D.bd[k],c=q.ch;return[+k,q.dead?1:0,q.hp==null?100:Math.round(100*q.hp/lgBrMax(B[k])),c?Math.max(0,Math.ceil(c.t-G.t)):-1,c?c.team:-1,c?c.x:0,c?c.y:0];}),dc:dy.filter(e=>e.lcut).map(e=>e.id),pb:dy.filter(e=>e.blk).map(e=>e.id),cr:Object.keys(D.cr).map(k=>[+k,D.cr[k].x,D.cr[k].y,Math.round(D.cr[k].t-G.t)]),jb:D.job.map(j=>[j.id,j.team,j.a,j.b,Math.round(j.len),Math.round(j.prog/20)*20,j.pts.flat()])};}
+function lgPack(){const D=G.lgd;if(!D)return 0;lgFix(D);const L=G.lg,B=G.map.bridges||[],dy=[];for(let j=L.nS;j<L.N.length;j++){const e=G.byId.get(L.N[j].e);if(e)dy.push(e);}return{rb:D.rb.map(r=>[r.a,r.b,r.team,r.pts.flat(),r.dp||0]),mn:D.mn.map(m=>[m.id,m.team,m.x,m.y]),ck:D.ck.map(q=>[q.id,q.team,q.x,q.y,q.ei]),pt:D.pt.map(p=>[p.x,p.y,p.h,p.nx,p.ny,p.team]),bv:D.bv,bd:Object.keys(D.bd).map(k=>{const q=D.bd[k],c=q.ch;return[+k,q.dead?1:0,q.hp==null?100:Math.round(100*q.hp/lgBrMax(B[k])),c?Math.max(0,Math.ceil(c.t-G.t)):-1,c?c.team:-1,c?c.x:0,c?c.y:0];}),dc:dy.filter(e=>e.lcut).map(e=>e.id),pb:dy.filter(e=>e.blk).map(e=>e.id),cr:Object.keys(D.cr).map(k=>[+k,D.cr[k].x,D.cr[k].y,Math.round(D.cr[k].t-G.t)]),rc:Object.keys(D.rc).map(k=>{const q=D.rc[k];return[+k,q.o,q.c,Math.round(q.p*100)];}),jb:D.job.map(j=>[j.id,j.team,j.a,j.b,Math.round(j.len),Math.round(j.prog/20)*20,j.pts.flat()])};}
 function lgApply(d){const D=G.lgd;if(!D||!d||typeof d!=='object')return;const un=a=>{const o=[];for(let i=0;i+1<a.length;i+=2)o.push([a[i],a[i+1]]);return o;};
   lgFix(D);let rs=0;if((d.rb||[]).length!==D.rb.length){D.rb=d.rb.map(r=>({a:r[0],b:r[1],team:r[2],pts:un(r[3]),dp:r[4]||0}));D.v++;rs=1;}
   D.mn=(d.mn||[]).map(m=>({id:m[0],team:m[1],x:m[2],y:m[3]}));D.ck=(d.ck||[]).map(q=>({id:q[0],team:q[1],x:q[2],y:q[3],ei:q[4],dg:[]}));
   if((d.pt||[]).length!==D.pt.length){D.pt=(d.pt||[]).map(p=>({x:p[0],y:p[1],h:p[2],nx:p[3],ny:p[4],team:p[5]}));rs=1;}
   D.bd={};for(const b of d.bd||[])D.bd[b[0]]={dead:b[1],hpp:b[2],ch:b[3]>=0?{t:G.t+b[3],team:b[4],x:b[5],y:b[6]}:null};if((d.bv|0)!==D.bv){D.bv=d.bv|0;rs=1;}
   G.lgDc=new Set(d.dc||[]);G.lgPb=new Set(d.pb||[]);if(rs)lgSync();
+  {const o={};for(const q of d.rc||[])o[q[0]]={o:q[1],c:q[2],p:q[3]/100};D.rc=o;}
   D.cr={};for(const c of d.cr||[])D.cr[c[0]]={x:c[1],y:c[2],t:G.t+c[3]};D.job=(d.jb||[]).map(j=>({id:j[0],team:j[1],a:j[2],b:j[3],len:j[4],prog:j[5],pts:un(j[6]),done:0}));
   if(MODE==='client'&&G.lg.nS!=null){lgDyn();lgCompute();for(let j=G.lg.nS;j<G.lg.N.length;j++){const e=G.byId.get(G.lg.N[j].e);if(e)e.lcut=G.lgDc.has(e.id)?1:0;}lgCover();}
   G.lgv=(G.lgv|0)+1;}
@@ -9119,7 +9184,7 @@ function lgApply(d){const D=G.lgd;if(!D||!d||typeof d!=='object')return;const un
    All host-side and deterministic (no random numbers); clients get it all in the lg pack. Same numbers for every nation. */
 const LGC={mine:100,ckpt:250,demo:200,fixb:500,pont:300},LGT={mine:3,ckpt:8,demo:4,fixb:40,pont:20};
 const LG_MINE_MAX=8,LG_CK_MAX=3,LG_PONT_MAX=2,LG_CHG=30,LG_AIRC=150,LG_AIRT=120,LG_N=[];
-function lgFix(D){if(!D.mn){D.mn=[];D.ck=[];D.bd={};D.pt=[];D.bv=0;}}
+function lgFix(D){if(!D.mn){D.mn=[];D.ck=[];D.bd={};D.pt=[];D.bv=0;}if(!D.rc)D.rc={};}
 function lgBrMax(b){return b&&b.pont?800:2400;}
 // closest point of a road polyline: distance, arc-length position, point, direction
 function lgProj(e,x,y){const P=e.pts;let bd=1e18,bs=0,bx=0,by=0,ba=0;for(let j=1;j<P.length;j++){const ax=P[j-1][0],ay=P[j-1][1],dx=P[j][0]-ax,dy=P[j][1]-ay,l2=dx*dx+dy*dy||1;
@@ -10376,7 +10441,8 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
       else{B.box(16,9,14,-6,4.5,0,hc);B.box(8,.6,14.2,-6,9.1,0,tc);B.cyl(1.3,1.6,28,8,14,7,0,mt,0,0,Math.PI/2-.2);B.cyl(2,2,3,8,27,9.8,0,dk,0,0,Math.PI/2-.2);}break;
     case 'aa:hull':B.box(28,5,6,0,3.5,-7.5,dk);B.box(28,5,6,0,3.5,7.5,dk);B.box(27,5,15,0,7.5,0,hc);B.box(24,.6,2,0,10.2,-6.6,tc);break;
     case 'aa:turret':B.box(12,7,11,0,3.5,0,hc);B.cyl(.8,.8,16,6,8,7,-4,mt,0,0,Math.PI/2-.6);B.cyl(.8,.8,16,6,8,7,4,mt,0,0,Math.PI/2-.6);B.cyl(4,4,.6,12,-4,10,0,cn,.3);B.box(1,4,1,-4,8,0,dk);break;
-    case 'harv:hull':for(const x of [-10,-2,9])for(const z of [-8,8])B.cyl(3,3,3,10,x,3,z,'#202119',Math.PI/2);B.box(24,4,15,-2,6,0,dk);B.box(17,7,15,-5,11,0,'#6c6a5c');B.box(8,9,15,11,10.5,0,hc);B.box(.5,4,12,15.2,12,0,'#7fa7b5');B.box(8,.6,15.2,11,15.2,0,tc);break;
+    case 'ammot:hull':case 'harv:hull':for(const x of [-10,-2,9])for(const z of [-8,8])B.cyl(3,3,3,10,x,3,z,'#202119',Math.PI/2);B.box(24,4,15,-2,6,0,dk);B.box(17,7,15,-5,11,0,'#6c6a5c');B.box(8,9,15,11,10.5,0,hc);B.box(.5,4,12,15.2,12,0,'#7fa7b5');B.box(8,.6,15.2,11,15.2,0,tc);break;
+    case 'ammot:cargo':B.box(17,8,15.5,-5,17.5,0,'#5d6048');B.box(18,1,16.5,-5,22,0,'#4c5039');for(const z of [-5,0,5])B.box(3,3,3,-14.5,17,z,'#8a6a3a');B.box(.8,4,12,-14,18,0,'#8a6a3a');break;
     case 'harv:cargo':for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,17,z,'#c99a2e');break;
     case 'drone:body':B.cone(11,24,3,0,0,0,'#c4bea9',0,0,-Math.PI/2);B.box(3,2.5,3,-10,0,0,'#7a7566');B.cone(2.5,6,3,-8,0,-8,tc,0,0,-Math.PI/2);B.cone(2.5,6,3,-8,0,8,tc,0,0,-Math.PI/2);break;
     case 'heli:body':B.sph(7,4,0,0,hc,1.5,.8,.8);B.cyl(1.6,3,22,8,-14,1,0,hc,0,0,Math.PI/2);B.box(5,7,1.2,-24,4,0,hc);B.box(6,1,9,-22,4,0,hc);B.sph(3.8,10,1.5,0,'#6f8fa0',1.2,.75,.8);
@@ -10492,7 +10558,7 @@ function makeObj(e){mats();if(e.kind==='cleric')return leaderObj(e);if(!e.isB&&e
   else{const c=e.s.cls;o.scale.setScalar(c==='ship'?1.15:['inf','at','hacker','hero'].includes(c)?1.7:1.3);
     if(['inf','at','hacker','hero'].includes(c))add('body');
     else if(c==='tank'||c==='arty'||c==='aa'){add('hull');const t=add('turret');t.position.set(c==='arty'&&!e.s.rocket?-4:0,10,0);}
-    else if(c==='harv'){add('hull');add('cargo');}
+    else if(c==='harv'||c==='ammot'){add('hull');add('cargo');}
     else if(c==='dozer'){const h=new THREE.Mesh(geoFor('harv',f,T,'hull'),MAT.std);h.castShadow=true;o.add(h);P.hull=h;const B=Bld();B.box(2.4,6.5,20,15,3.2,0,'#d9a21f');B.box(20,2,2,-2,20,0,'#d9a21f');const cm=new THREE.Mesh(B.geo(),MAT.std);o.add(cm);}
     else if(c==='drone')add('body');
     else if(c==='heli'){add('body');const r=add('rotor');r.position.set(1,8.6,0);r.castShadow=false;}
@@ -12054,7 +12120,7 @@ function swBanner(){if(!G||!G.battle||G.over){if(SWB.el&&SWB.el.style.display!==
   if(h!==SWB.h){SWB.h=h;SWB.el.innerHTML=h;}SWB.el.style.display=h?'block':'none';}
 function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,sx=W/MAPW,sy=H/MAPH;c.globalCompositeOperation='source-over';
   // a replay or a spectator showing everything: no fog at all
-  if((RP.on&&!RP.fog)||(NET.spec&&NET.specAll)||G.shell){c.fillStyle='#000';c.fillRect(0,0,W,H);FOGC.getContext('2d').drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}
+  if((RP.on&&!RP.fog)||(NET.spec&&NET.specAll)){c.fillStyle='#000';c.fillRect(0,0,W,H);FOGC.getContext('2d').drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}
   let X=FOGC.x;if(!X){X=FOGC.x=document.createElement('canvas');X.width=W;X.height=H;FOGC.xN=0;}
   const hs=[];{const sk=(G.teams[ME].F.mods.sight||1)*1.08;for(const e of G.ents)if(e.team===ME&&!e.dead)hs.push(e.x,e.y,(!e.isB&&e.s.vis?e.s.vis:e.isB?340:e.s.dom==='air'?340:e.s.dom==='naval'?380:280)*sk);}
   for(const r of (G.teams[ME].reveals||[]))hs.push(r.x,r.y,r.r);
@@ -12065,7 +12131,7 @@ function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,
 const VGL={};function vetGlow(r){const k=r>2?3:2;if(VGL[k])return VGL[k];const cv=document.createElement('canvas');cv.width=cv.height=64;const x=cv.getContext('2d'),g=x.createRadialGradient(32,32,4,32,32,31),c=k===3?'255,205,90':'150,200,255';g.addColorStop(0,'rgba('+c+',.0)');g.addColorStop(.55,'rgba('+c+',.28)');g.addColorStop(.8,'rgba('+c+',.55)');g.addColorStop(1,'rgba('+c+',0)');x.fillStyle=g;x.fillRect(0,0,64,64);return VGL[k]=cv;}
 const RKV=new Map();   // rank-up flash: last rank seen per unit (view only)
 const SHORTN={inf:'INF',at:'ANTI-TANK',aa:'ANTI-AIR',tank:'TANK',arty:'ARTILLERY',apc:'CARRIER',hero:'HERO',champ:'HERO',hacker:'HACKER',dozer:'DOZER',demo:'DEMO',sniper:'SNIPER',mlrs:'MLRS',ifv:'CARRIER'};
-/* Supply area: faint rings around your buildings / depots / supply trucks show while ammo units are selected or while O is held;
+/* Supply area: faint rings around your buildings / depots show while ammo units are selected or while O is held;
    the supply lines on the roads show at the same time (08c-logi lgWanted). */
 let SUPC={t:-9,P:null};
 function ringOn(c,x,y,r,col,fill){c.beginPath();for(let i=0;i<=40;i++){const a=i/40*6.2832,px=x+Math.cos(a)*r,py=y+Math.sin(a)*r,p=toScreen(px,groundH(px,py)+2,py);if(p.z>1)return;if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);}if(fill){c.fillStyle=fill;c.fill();}c.strokeStyle=col;c.stroke();}
@@ -12090,7 +12156,7 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
     if(e.crit&&!e.isB)critIcons(c,p.x-w/2-8,p.y+2,e.crit);
     if(ammoOn()&&e.am!==undefined&&e.amx&&!e.isB&&ally(e.team,ME)){const fa=e.am/e.amx,low=fa<.3,oos=!e.sup&&e.am<=0;
       if(sel||low){const y=p.y+(sel||e.hp<e.max||SET.hp==='all'?9:4);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,y-1,w+2,4);const fl=e.am<=0&&((performance.now()/260)|0)%2;c.fillStyle=e.am<=0?(fl?'#ff5a40':'#8a2a20'):low?'#f2d14a':'#c9b784';c.fillRect(p.x-w/2,y,Math.max(e.am<=0?w:2,w*fa),2);}
-      if(oos){const ix=p.x+w/2+7,iy=p.y+(sel?3:2);c.fillStyle='rgba(0,0,0,.7)';c.beginPath();c.arc(ix,iy,6,0,7);c.fill();c.strokeStyle='#ff8a5a';c.lineWidth=1.6;c.strokeRect(ix-3,iy-2.5,6,5);c.beginPath();c.moveTo(ix-5,iy+5);c.lineTo(ix+5,iy-5);c.stroke();if(mouse.in&&Math.hypot(mouse.x-ix,mouse.y-iy)<9){const tx='Out of ammo - bring it back to your supply area or send a supply truck';c.font='600 11px system-ui,sans-serif';c.textAlign='left';const tw=c.measureText(tx).width;c.fillStyle='rgba(0,0,0,.85)';c.fillRect(ix+9,iy-10,tw+10,19);c.fillStyle='#ffb090';c.fillText(tx,ix+14,iy+3);}}}
+      if(oos){const ix=p.x+w/2+7,iy=p.y+(sel?3:2);c.fillStyle='rgba(0,0,0,.7)';c.beginPath();c.arc(ix,iy,6,0,7);c.fill();c.strokeStyle='#ff8a5a';c.lineWidth=1.6;c.strokeRect(ix-3,iy-2.5,6,5);c.beginPath();c.moveTo(ix-5,iy+5);c.lineTo(ix+5,iy-5);c.stroke();if(mouse.in&&Math.hypot(mouse.x-ix,mouse.y-iy)<9){const tx='Out of ammo - bring it back to your supply area or send an Ammo Truck';c.font='600 11px system-ui,sans-serif';c.textAlign='left';const tw=c.measureText(tx).width;c.fillStyle='rgba(0,0,0,.85)';c.fillRect(ix+9,iy-10,tw+10,19);c.fillStyle='#ffb090';c.fillText(tx,ix+14,iy+3);}}}
     if(e.aband&&!e.isB){c.font='bold 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='rgba(0,0,0,.7)';c.fillText('ABANDONED',p.x+1,p.y-4);c.fillStyle=ally(e.team,ME)?'#e3b341':'#ffd166';c.fillText('ABANDONED',p.x,p.y-5);c.textAlign='left';}
     {const mo=!e.isB?moraleOf(e):null;if(mo&&(mo.v<.995||mo.st==='routing')&&(ally(e.team,ME)||sel||mo.v<.66)){const y=p.y+(sel||e.hp<e.max||SET.hp==='all'?5:0);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,y-1,w+2,4);c.fillStyle=MOR_COL[mo.st];c.fillRect(p.x-w/2,y,Math.max(2,w*mo.v),2);if(mo.st==='fearless'){c.fillStyle='#5fd38a';c.beginPath();c.arc(p.x+w/2+5,y+1,2.2,0,7);c.fill();}}}
     if(!e.isB&&e.team===ME&&G.sqOf&&G.sqOf[e.id]){const q=G.sqOf[e.id];c.fillStyle='rgba(0,0,0,.7)';c.fillRect(p.x-w/2-13,p.y-3,10,10);c.fillStyle='#e3b341';c.font='700 10px IBM Plex Mono, monospace';c.textAlign='center';c.fillText(q,p.x-w/2-8,p.y+5);}
@@ -12474,12 +12540,10 @@ const KEYTAB=[
   {ctx:'battle',grp:'Selection',name:'Select your whole army',fix:'Ctrl + A'},
   {id:'seltype',ctx:'battle',grp:'Selection',name:'Select every unit of the same type',def:'t'},
   {ctx:'battle',grp:'Selection',name:'Select squad / make the selection a squad',fix:'1 – 9 · Ctrl + 1 – 9'},
-  {id:'amove',ctx:'battle',grp:'Orders',name:'Attack-move (then click)',def:'f'},
-  {id:'guard',ctx:'battle',grp:'Orders',name:'Guard (then click)',def:'g'},
+  {id:'amove',ctx:'battle',grp:'Orders',name:'Attack-move (then right-click)',def:'f'},
+  {id:'guard',ctx:'battle',grp:'Orders',name:'Guard (then right-click)',def:'g'},
   {id:'stop',ctx:'battle',grp:'Orders',name:'Stop',def:'x'},
   {id:'ret',ctx:'battle',grp:'Orders',name:'Return to base',def:'r'},
-  {id:'stance',ctx:'battle',grp:'Orders',name:'Next stance',def:'v'},
-  {id:'form',ctx:'battle',grp:'Orders',name:'Next formation',def:'o'},
   {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (dozers: trench)',def:'i'},
   {id:'resup',ctx:'battle',grp:'Orders',name:'Resupply ammunition',def:'z'},
   {id:'abil',ctx:'battle',grp:'Orders',name:'Unit or leader ability, sonar ping, Recon power (with Shift: leader\'s ultimate)',def:'e'},
@@ -12621,7 +12685,7 @@ function wireHost(g){
   g.on('hello',m=>{if(m.sameTab)return;if(m.data&&m.data.sp){if(!(NET.peers&&NET.peers.indexOf(m.peer)>=0)&&!NET.lobby.some(p=>p.peer===m.peer)){(NET.isSpec=NET.isSpec||{})[m.peer]=1;browserSpec(m.peer);}return;}hostHello(m.peer,m.by,m.data&&m.data.f,null,m.data&&typeof m.data.pw==='string'?m.data.pw:'');});
   g.on('cmd',m=>hostCmd(m.peer,m.data));
   // a friend in the lobby picks their nation / team / Ready (08d-lobby); only the browser host's own lobby uses it
-  g.on('pick',m=>{if(m.sameTab||MODE!=='single')return;const p=NET.lobby.find(q=>q.peer===m.peer),d=m.data;if(!p||!d||typeof d!=='object')return;if(typeof d.f==='string')p.f=natFix(d.f);p.r=d.r?1:0;if(typeof d.t==='number'&&d.t>=0&&d.t<8)NET.tm[NET.lobby.indexOf(p)+1]=d.t|0;renderLobby();});
+  g.on('pick',m=>{if(m.sameTab||MODE!=='single')return;const p=NET.lobby.find(q=>q.peer===m.peer),d=m.data;if(!p||!d||typeof d!=='object')return;if(typeof d.f==='string')p.f=natFix(d.f);p.r=d.r?1:0;if(typeof d.t==='number'&&d.t>=0&&d.t<8)NET.tm[NET.lobby.indexOf(p)+1]=d.t|0;if(d.c!==undefined){const k=NET.lobby.indexOf(p)+1,v=Number.isInteger(d.c)&&d.c>=0&&d.c<PCOLS.length?d.c:-1;if(v<0||!pcTakenOf(lobPc(),k).has(v))p.c=v;}renderLobby();});
   // the battle half (orders, pings, reconnects, keyframe requests) is shared with the server host (07a-hostsnap)
   g.onPeers(ch=>{for(const q of ch.joined.concat(ch.updated)){if(q.sameTab||!q.presence)continue;hostPres(q,hostHello);}});
   g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);if(NET.lobbySpec)NET.lobbySpec=NET.lobbySpec.filter(x=>x!==q.peer);if(NET.isSpec)delete NET.isSpec[q.peer];renderLobby();}else hostGone(q.peer);}});
@@ -12639,7 +12703,7 @@ async function newBattle(){if(!NET.room||NET.code||NET.game)return;NET.hostNote=
 function quickPick(){if(!NET.room)return [];return NET.room.peers().filter(p=>!p.sameTab&&p.presence&&p.presence.g&&p.presence.g.s==='open'&&FKEYS.includes(p.presence.g.f)&&!p.presence.g.pw&&!p.presence.g.lk&&(p.presence.g.n|0)<(p.presence.g.mx||8)).sort((x,y)=>((y.presence.g.cf|0)-(x.presence.g.cf|0))||((y.presence.g.n|0)-(x.presence.g.n|0))).slice(0,2);}
 async function playOnline(){if(!NET.room||NET.code||NET.game||NET.qp)return;NET.qp=1;try{for(const p of pwVal()?[]:quickPick()){const r=await joinGame(p);if(r===true||NET.game||NET.code)return;}if(!NET.code&&!NET.game)await newBattle();}finally{NET.qp=0;}}
 // Host in this browser (today's way; also the fallback when Cloudflare can't host). note: shown at the top of the lobby
-async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hostNote=note||'';NET.ais=[];NET.st=[];NET.stK=null;const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];mpIn(1);
+async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hostNote=note||'';NET.ais=[];NET.st=[];NET.stK=null;NET.pc0=pcLoad();const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];mpIn(1);
   $('mpstatus').textContent='Connecting…';
   // the matchmaking service can hang without ever answering: give up after 20 s with the same message as a refusal
   try{const g=await joinT('tc-'+code,20000,1);if(NET.code!==code){try{g.leave();}catch(e){}return;}NET.game=g;}catch(e){if(NET.code!==code)return;$('mpstatus').textContent=window.WW3_P2P?'Could not reach the online matchmaking service. Check your internet connection and try again.':'Could not open a game room. Try again in a moment.';cancelHost();return;}
@@ -12657,7 +12721,7 @@ function cfOK(){try{return !!(NET.room&&typeof NET.room.cf==='function'&&NET.roo
 async function hostCF(again){if(!NET.room||NET.code||NET.game)return;const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a'),key=Math.random().toString(36).slice(2,12)+Math.random().toString(36).slice(2,10);
   NET.cf={own:1,key,blob:null,pend:null};mpIn(1);
   const r=await joinGame({peer:'ww3-'+code,presence:{g:{c:code,s:'open',cf:1}}},{via:'wsb',own:key});
-  if(r===true){NET.lobby=[];NET.ais=[];NET.tm=[0];NET.st=[];NET.stK=null;cfPush(true);return;}
+  if(r===true){NET.lobby=[];NET.ais=[];NET.tm=[0];NET.st=[];NET.stK=null;NET.pc0=pcLoad();cfPush(true);return;}
   NET.cf=null;
   if(r&&r.why==='taken'&&!again){mpIn(0);return hostCF(1);}
   // the server is over today's free allowance, unreachable or refusing: the battle quietly starts in this browser
@@ -12666,20 +12730,20 @@ async function hostCF(again){if(!NET.room||NET.code||NET.game)return;const code=
   return hostBrowser();}
 // the owner's lobby settings as the server wants them ('bset')
 // (start spots, 'st', only when someone picked one: a lobby without picks sends exactly what it did before)
-function cfCfg(){const nh=NET.lobby.length+1,st=lobSt(),o={map:setup.map||'strait',w:setup.w|0,tm:(NET.tm||[]).slice(0,nh).map(v=>v|0),ais:(NET.ais||[]).map((a,j)=>Object.assign({f:a.f,d:a.d|0,tm:a.tm|0},a.p?{p:persCode(a.p)}:{},st[nh+j]>=0?{st:st[nh+j]}:{}))};if(st.slice(0,nh).some(v=>v>=0))o.st=st.slice(0,nh);if(MAPS[o.map]&&MAPS[o.map].custom)o.cm=customMapCode(o.map);return o;}
-function cfCfgOf(b){const hs=(b.seats||[]).filter(s=>s.h),as=(b.seats||[]).filter(s=>s.ai),o={map:b.map,w:b.w|0,tm:hs.map(s=>s.tm|0),ais:as.map(s=>Object.assign({f:s.f,d:s.d|0,tm:s.tm|0},s.p?{p:persCode(s.p)}:{},s.st>=0?{st:s.st|0}:{}))};if(hs.some(s=>s.st>=0))o.st=hs.map(s=>s.st>=0?s.st|0:-1);if(b.cm&&MAPS[b.map]&&MAPS[b.map].custom)o.cm=b.cm;return o;}
+function cfCfg(){const nh=NET.lobby.length+1,st=lobSt(),o={map:setup.map||'strait',w:setup.w|0,tm:(NET.tm||[]).slice(0,nh).map(v=>v|0),ais:(NET.ais||[]).map((a,j)=>Object.assign({f:a.f,d:a.d|0,tm:a.tm|0},a.p?{p:persCode(a.p)}:{},st[nh+j]>=0?{st:st[nh+j]}:{},a.c>=0?{c:a.c}:{}))};if(NET.pc0>=0)o.pc0=NET.pc0;if(st.slice(0,nh).some(v=>v>=0))o.st=st.slice(0,nh);if(MAPS[o.map]&&MAPS[o.map].custom)o.cm=customMapCode(o.map);return o;}
+function cfCfgOf(b){const hs=(b.seats||[]).filter(s=>s.h),as=(b.seats||[]).filter(s=>s.ai),o={map:b.map,w:b.w|0,tm:hs.map(s=>s.tm|0),ais:as.map(s=>Object.assign({f:s.f,d:s.d|0,tm:s.tm|0},s.p?{p:persCode(s.p)}:{},s.st>=0?{st:s.st|0}:{},s.c>=0?{c:s.c|0}:{}))};if(hs[0]&&hs[0].c>=0)o.pc0=hs[0].c|0;if(hs.some(s=>s.st>=0))o.st=hs.map(s=>s.st>=0?s.st|0:-1);if(b.cm&&MAPS[b.map]&&MAPS[b.map].custom)o.cm=b.cm;return o;}
 // send the owner's edits (only real changes); until the server's answer reflects them, older lobby states are ignored
 function cfPush(force){const C=NET.cf;if(!C||!C.own||!NET.game)return;const js=JSON.stringify(cfCfg());if(!force&&(C.blob&&JSON.stringify(cfCfgOf(C.blob))===js||C.pend&&C.pend.js===js))return;
   C.pend={js,until:performance.now()+2500};NET.game.emit('bset',JSON.parse(js)).catch(()=>{});}
 // the lobby from the server: mirror it into the lobby the host screen draws (NET.lobby / NET.tm / NET.ais)
 function cfApply(){const C=NET.cf,b=C&&C.blob;if(!b)return false;const js=JSON.stringify(cfCfgOf(b));if(C.pend){if(C.pend.js!==js&&performance.now()<C.pend.until)return false;C.pend=null;}
-  const hs=(b.seats||[]).filter(s=>s.h);NET.lobby=hs.slice(1).map((s,i)=>({peer:'seat'+(i+1),by:null,f:FKEYS.includes(s.f)?s.f:'US'}));NET.tm=hs.map(s=>s.tm|0);NET.st=hs.map(s=>s.st>=0?s.st|0:-1);NET.ais=(b.seats||[]).filter(s=>s.ai).map(s=>({f:FKEYS.includes(s.f)?s.f:FKEYS[0],d:s.d|0,p:persCode(s.p),tm:s.tm|0,st:s.st>=0?s.st|0:-1}));return true;}
+  const hs=(b.seats||[]).filter(s=>s.h);NET.lobby=hs.slice(1).map((s,i)=>({peer:'seat'+(i+1),by:null,f:FKEYS.includes(s.f)?s.f:'US',c:s.c>=0?s.c|0:-1}));NET.pc0=hs[0]&&hs[0].c>=0?hs[0].c|0:-1;NET.tm=hs.map(s=>s.tm|0);NET.st=hs.map(s=>s.st>=0?s.st|0:-1);NET.ais=(b.seats||[]).filter(s=>s.ai).map(s=>({f:FKEYS.includes(s.f)?s.f:FKEYS[0],d:s.d|0,p:persCode(s.p),tm:s.tm|0,st:s.st>=0?s.st|0:-1,c:s.c>=0?s.c|0:-1}));return true;}
 // the lobby's connection line, the same wherever the battle runs: "Online · ping 42 ms" (in battle: fpsHud)
 function cfNetText(){return 'Online'+(NET.ping?` · ping ${Math.round(NET.ping)} ms`:'');}
 const TEAM_COL=['#7fb8e6','#ea5a40','#74d08f','#e3b341','#c58af0','#f08ab4','#6fe0d0','#c9c9c9'];
 // Host lobby: game code and player count at the top, the Start button right under it, one row per seat (taken or
 // open) with each player's nation and team, quick team presets, and the invite steps at the bottom.
-async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=='single'||!cfb&&(!NET.code||NET.code==='join'))return;const mk=cfb&&MAPS[cfb.map]?cfb.map:setup.map,mx=cfb&&cfb.mx>1?Math.min(cfb.mx|0,(MAPS[mk]||MAPS.strait).max):(MAPS[mk]||MAPS.strait).max,mapN=(MAPS[mk]||MAPS.strait).name;
+async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=='single'||!cfb&&(!NET.code||NET.code==='join'))return;const mk=MAPS[setup.map]?setup.map:cfb&&MAPS[cfb.map]?cfb.map:'strait',mx=cfb&&cfb.mx>1?Math.min(cfb.mx|0,(MAPS[mk]||MAPS.strait).max):(MAPS[mk]||MAPS.strait).max,mapN=(MAPS[mk]||MAPS.strait).name;
   NET.ais=NET.ais||[];if(NET.lobby.length+1+NET.ais.length>mx)NET.ais.splice(Math.max(0,mx-1-NET.lobby.length));
   if(NET.lobby.length+1>mx&&!cfb){const drop=NET.lobby.splice(mx-1);for(const p of drop)NET.game.emit('lobby',{n:0,to:p.peer,full:1}).catch(()=>{});}
   let names={};try{if(NET.user){const ids=NET.lobby.map(p=>p.by).filter(Boolean);if(ids.length)names=await NET.user.profiles(ids);}}catch(e){}
@@ -12692,12 +12756,12 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   const hint=cfb&&cfb.why&&!NET.cf.pend?String(cfb.why):nh+NET.ais.length<2?'Add a computer player to an open slot, or wait for someone to join.':!teamsOk?'Everyone is on one team: put someone on another team to start.':waitN>0?`Waiting for ${waitN} friend${waitN>1?'s':''} to press Ready…`:rdys.length?'Everyone is ready: press PLAY GAME!':'Everyone ready? Press PLAY GAME. Players can still join until you do.';
   const rows=[],push=()=>{renderLobby();},setTm=(get)=>(v)=>{get(v);push();};
   const myF=f=>{setup.p=f;try{facCards();}catch(e){}if(cfb){try{GLB.me.f=f;glSend();}catch(e){}}push();};
-  const hs=cfb?(cfb.seats||[]).filter(s=>s.h):null;
+  const hs=cfb?(cfb.seats||[]).filter(s=>s.h):null,pcA=lobPc();
   for(let k=0;k<nh;k++){const p=k?NET.lobby[k-1]:null,hv=hs?hs[k]:null,f=hv?(FKEYS.includes(hv.f)?hv.f:k===0?setup.p:'US'):k===0?setup.p:p.f;
-    rows.push({kind:'human',you:k===0,host:k===0,name:k===0?'You':hv?'Friend '+k:(p.by&&names[p.by]&&names[p.by].name)||'Friend '+k,f,tm:NET.tm[k]|0,rd:k===0?1:hv?hv.r:p.r?1:0,ed:{f:k===0?myF:null,t:setTm(v=>{NET.tm[k]=v;})}});}
+    rows.push({kind:'human',you:k===0,host:k===0,name:k===0?'You':hv?'Friend '+k:(p.by&&names[p.by]&&names[p.by].name)||'Friend '+k,f,tm:NET.tm[k]|0,rd:k===0?1:hv?hv.r:p.r?1:0,pc:pcA[k],pcTaken:pcTakenOf(pcA,k),nat:(FACTIONS[f]||{}).color,ed:{c:k===0?(v=>{NET.pc0=v;pcSave(v);push();}):null,f:k===0?myF:null,t:setTm(v=>{NET.tm[k]=v;})}});}
   const aiPers=(a,i)=>persSel(()=>persCode(a.p),v=>{a.p=v;if(NET.cf&&NET.cf.own)cfPush();},'Style of computer player '+(i+1));
-  NET.ais.forEach((a,j)=>{const i=nh+j;rows.push({kind:'ai',d:a.d|0,f:a.f,tm:a.tm|0,pers:aiPers(a,i),ed:{f:v=>{a.f=v;push();},t:setTm(v=>{a.tm=v;}),slot:d=>{if(d<0)NET.ais.splice(j,1);else a.d=d;push();}}});});
-  for(let i=nn;i<mx;i++)rows.push({kind:'open',ed:{slot:d=>{const used=new Set([setup.p,...NET.lobby.map(p=>p.f),...NET.ais.map(a=>a.f)]);const f=FKEYS.find(k=>!used.has(k))||FKEYS[(Math.random()*FKEYS.length)|0];NET.ais.push({f,d,tm:nn%Math.max(2,nn+1)});push();}}});
+  NET.ais.forEach((a,j)=>{const i=nh+j;rows.push({kind:'ai',d:a.d|0,f:a.f,tm:a.tm|0,pers:aiPers(a,i),pc:pcA[i],pcTaken:pcTakenOf(pcA,i),nat:(FACTIONS[a.f]||{}).color,ed:{c:v=>{a.c=v;push();},f:v=>{a.f=v;push();},t:setTm(v=>{a.tm=v;}),slot:d=>{if(d<0)NET.ais.splice(j,1);else a.d=d;push();}}});});
+  for(let i=nn;i<mx;i++)rows.push({kind:'open',ed:{slot:d=>{const used=new Set([setup.p,...NET.lobby.map(p=>p.f),...NET.ais.map(a=>a.f)]);const f=FKEYS.find(k=>!used.has(k))||FKEYS[(Math.random()*FKEYS.length)|0];NET.ais.push({f,d,tm:nn%Math.max(2,nn+1),c:pcFree(lobPc(),99)});push();}}});
   const ms=$('mapSel'),sides=lobSides(nn),stv=lobSt();let spots=null;
   {const cv=document.createElement('canvas');cv.id='lobSpots';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Start positions: click a numbered spot to choose who starts there');spotsDraw(cv,mk,sides,stv);cv.onclick=e=>{const k=spotsHit(cv,e,mk,nn);if(k<0)return;try{sfxUI(700);}catch(_){}lobSet(spotsCycle(lobSt(),k));};spots=cv;}
   const notes=[];if(NET.hostNote)notes.push(NET.hostNote);if(NET.pw)notes.push('🔒 Password protected');{const sw=cfb?cfb.ns|0:(NET.lobbySpec||[]).length;if(sw)notes.push('👁 '+sw+' watching');}
@@ -12711,10 +12775,12 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   if(cfb){cfPush();return;}
   try{glBroadcast(mk,mx);}catch(e){}
   NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,m:setup.map||'strait',mx,pw:NET.pw?1:undefined,sp:1,ns:(NET.lobbySpec||[]).length||undefined}}).catch(()=>{});}
+// player colours per seat (humans, then computer players): a PCOLS index or -1 = nation colour (01-data PCOLS, 08d-mplobby picker)
+function lobPc(){return [NET.pc0>=0?NET.pc0:-1,...NET.lobby.map(p=>p.c>=0?p.c:-1),...(NET.ais||[]).map(a=>a.c>=0?a.c:-1)];}
 function lobbyTeams(){const nh=NET.lobby.length+1;return [...(NET.tm||[]).slice(0,nh),...(NET.ais||[]).map(a=>a.tm|0)];}
 // Start spots in the lobby: one per seat (players then computer players; -1 = Random). Picks made for one set of spots
 // (map and player count) are dropped when the set changes, so a number always means the spot the leader saw.
-function lobMap(){const b=NET.cf&&NET.cf.own&&NET.cf.blob;return b&&MAPS[b.map]?b.map:setup.map||'strait';}
+function lobMap(){const b=NET.cf&&NET.cf.own&&NET.cf.blob;return MAPS[setup.map]?setup.map:b&&MAPS[b.map]?b.map:'strait';}
 function lobSt(){const nh=NET.lobby.length+1,ais=NET.ais||[],n=nh+ais.length,key=spotsKey(lobMap(),n);
   if(NET.stK&&NET.stK!==key){NET.st=[];ais.forEach(a=>a.st=-1);}NET.stK=key;
   const raw=[...Array.from({length:nh},(_,i)=>(NET.st||[])[i]),...ais.map(a=>a.st)],o=[];for(const v of raw)o.push(Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1);return o;}
@@ -12724,7 +12790,7 @@ function lobSides(n){const nh=NET.lobby.length+1,cfb=NET.cf&&NET.cf.own&&NET.cf.
 function launchMP(){if(NET.cf&&NET.cf.own){if(MODE!=='single'||!NET.game)return;const c=cfCfg();NET.cf.pend=null;NET.game.emit('bset',Object.assign(c,{seed:(Math.random()*1e9)|0,start:1})).catch(()=>{});$('mpstatus').querySelectorAll('.startbtn').forEach(b=>{b.disabled=true;b.textContent='Starting…';});return;}
   if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const ais=(NET.ais||[]).slice(0,Math.max(0,(MAPS[setup.map]||MAPS.strait).max-1-NET.lobby.length)).map(a=>({f:FKEYS.includes(a.f)?a.f:FKEYS[0],d:Math.max(0,Math.min(3,a.d|0)),p:persCode(a.p),tm:Math.max(0,Math.min(7,a.tm|0))}));const facs=[setup.p,...NET.lobby.map(p=>p.f),...ais.map(a=>a.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer),...ais.map(()=>null)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null),...ais.map(()=>null)];
   const aiD=[null,...NET.lobby.map(()=>null),...ais.map(a=>(a.d|0)+10*persCode(a.p))];NET.opp=NET.peers[1];
-  const map=setup.map||'strait',cmx=MAPS[map]&&MAPS[map].custom?{cm:customMapCode(map)}:{};const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};const ids=idLobbyIds().slice(0,facs.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0,ids},sp,cmx)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp,cmx);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st,ids);NET.specs=[];for(const q of LS)specJoin(q);}
+  const map=setup.map||'strait',cmx=MAPS[map]&&MAPS[map].custom?{cm:customMapCode(map)}:{};const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};const pcl=pcClean(lobPc().slice(0,facs.length),facs.length),pp=pcl?{pc:pcl}:{};const ids=idLobbyIds().slice(0,facs.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0,ids},sp,cmx,pp)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp,cmx,pp);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st,ids,0,0,pcl);NET.specs=[];for(const q of LS)specJoin(q);}
 // Joining: each player has a reconnect token for this game (kept for the browser tab), so if the link drops - or the
 // page is reloaded - they rejoin as the same commander. Client handlers are wired by wireClient() so a reconnect can
 // rebuild them on the new connection.
@@ -12746,7 +12812,7 @@ function wireClient(g){
   // An old host sends no 'w': the player's own menu choice stays, as before.
   if(typeof d.w==='number'&&d.w>=-31&&d.w<=39){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
   // sv: the host is the game server (Cloudflare), which has no side of its own, so this player may be slot 0
-  NET.sv=d.sv?1:0;NET.spec=d.sp?1:0;NET.specAll=NET.spec;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length),Array.isArray(d.ids)?d.ids.map(idClean):null);});
+  NET.sv=d.sv?1:0;NET.spec=d.sp?1:0;NET.specAll=NET.spec;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length),Array.isArray(d.ids)?d.ids.map(idClean):null,0,0,pcClean(d.pc,d.facs.length));});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
   g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();if(m.data.to)NET.lastRxMe=NET.lastRx;applySnap(m.data);}});
   g.on('evt',m=>{if(ok(m)){NET.lastRx=performance.now();applyEvents(m.data);}});
@@ -13150,7 +13216,7 @@ function specOf(peer){return (NET.specs||[]).find(s=>s.peer===peer)||null;}
 // the battle is running: add the spectator (if there is room) and send them the battle's start
 function specJoin(peer){if(MODE!=='host'||!G||!NET.startInfo||!NET.game)return false;if(NET.peers&&NET.peers.indexOf(peer)>=0)return false;NET.specs=NET.specs||[];
   if(!specOf(peer)){if(NET.specs.length>=SPEC_MAX){NET.game.emit('lobby',{n:0,to:peer,full:1,spec:1}).catch(()=>{});return false;}NET.specs.push({peer,sv:0});}
-  const si=NET.startInfo,st=Array.isArray(si.st)?{st:si.st}:{};
+  const si=NET.startInfo,st=Object.assign(Array.isArray(si.st)?{st:si.st}:{},Array.isArray(si.pc)?{pc:si.pc}:{});
   NET.game.emit('start',Object.assign({pv:st.st?NET_PVS:NET_PV,seed:si.seed,facs:si.facs,slot:0,to:peer,map:si.map,tm:si.tm,w:si.w|0,bm:si.bm?1:0,sp:1},ME<0||si.sv?{sv:1}:{},st)).catch(()=>{});
   if(NET.kf)NET.kf['s:'+peer]=0;return true;}
 function specGone(peer){if(NET.isSpec)delete NET.isSpec[peer];if(!NET.specs)return;const i=NET.specs.findIndex(s=>s.peer===peer);if(i<0)return;NET.specs.splice(i,1);
@@ -13606,10 +13672,10 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads
   const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
   $('supt').textContent=!up?'needs Strike Center':f>=1?'READY':`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;$('supbtn').disabled=!(up&&f>=1);
   const nx=RANKS[T.rank]||null,pr=RANKS[T.rank-1];$('rankname').textContent=`General rank ${T.rank}`+(pts>0?` · ${pts} point${pts>1?'s':''} to spend`:'');$('rankbar').style.width=(nx?Math.min(1,(T.gxp-pr)/(nx-pr))*100:100)+'%';$('rankt').textContent=nx?`${Math.floor(T.gxp)}/${nx} XP`:'Max rank';
-  const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+(stdMouse()?' · Esc cancels':' · right-click or Esc cancels'));}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:G.aim==='ldrA'?LDS.dl.a.n:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
+  const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+' · right-click to place · left-click or Esc cancels');}else if(G.aim){md.hidden=false;mdSet(`Right-click a target for ${G.aim==='sup'?T.sup.name:G.aim==='ldrA'?LDS.dl.a.n:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: right-click a destination (left-click cancels)');}else if(G.defm){md.hidden=false;mdSet('Defend area: right-click the spot to hold (left-click cancels)');}else md.hidden=true;if(TOUCHUI)touchHud(md);
   const s=G.sel.filter(e=>!e.dead);const el=$('info');el.innerHTML='';const b=document.createElement('b'),sp=document.createElement('span'),tip=document.createElement('span');tip.className='tip';
   if(s.length===1){const e=s[0];b.textContent=e.s.name+(e.s.fake&&e.team===ME?' (decoy)':'')+(e.rank?` · ${VET[e.rank]}`:'');sp.textContent=` ${Math.ceil(e.hp)} / ${e.max} HP`+(e.isB&&e.built<1?` · building ${Math.floor(e.built*100)}%`:'')+((e.dis>G.t||e.disv)?(G.teams[e.team]&&G.teams[e.team].blk&&['sam','turret','coast','uplink'].includes(e.kind)?' · NO POWER':' · HACKED'):'')+(e.kind==='jet'?` · ${e.landed?'parked':'airborne'}`:'');
-    tip.textContent=e.kind==='spy'?'Plain clothes, no weapon. Hidden from the enemy until it acts or is spotted (the eye above it means: hidden). Pick a job in the card above, then right-click a target.':e.s.fake&&e.team===ME?'A fake: looks, moves and shows up like the real thing, but has no gun and dies in one hit. Enemies right next to it see through it.':e.kind==='hacker'?'Right-click an enemy building to disable it. Idle hackers earn cash.':e.s.demo?'Stealthed. Right-click an enemy building to plant explosives.':e.kind==='hero'?'Stealthed until it fires. Snipes infantry from long range.':e.kind==='jet'?'Right-click a target to strike. Jets return to the airfield to rearm.':e.kind==='harv'?'Right-click a supply field to send it there.':e.kind==='dozer'?'Builds everything: pick a building under Build, then click the map. Right-click an unfinished building to help. Repairs buildings it stands next to.':e.isB&&isTun(e)&&e.team===ME?`Units inside: ${MODE==='client'?(T.tunN|0):T.tun.length} of 12. Select units and right-click a tunnel to send them in; they heal inside and can come out of any tunnel. With the tunnel selected, ${TOUCHUI?'tap':'right-click'} the ground to bring them out there.`:e.isB&&e.kind==='garrison'&&e.team===ME?`Troops inside fire from the ${e.s&&e.s.dugout?'dugout':'windows'}. ${TOUCHUI?'Tap':'Right-click'} the ground to bring them out and send them there; ${TOUCHUI?'tap':'right-click'} an enemy to focus fire.`:!e.isB&&e.s&&e.s.cap&&e.team===ME?(TOUCHUI?'Select infantry and tap this to board. With it selected, tap it again to unload here.':'Select infantry and right-click this to board. With it selected, right-click it to unload here, or Alt+right-click a spot to drive there and unload.'):e.isB&&e.nd&&e.built<1?(e.stall?'Waiting for a Construction Vehicle to arrive and build it.':'A Construction Vehicle is building this.'):e.isB&&e.team===ME&&CATS.includes(e.kind)?'Right-click the ground to set the rally point.':'';}
+    tip.textContent=e.kind==='spy'?'Plain clothes, no weapon. Hidden from the enemy until it acts or is spotted (the eye above it means: hidden). Pick a job in the card above, then right-click a target.':e.s.fake&&e.team===ME?'A fake: looks, moves and shows up like the real thing, but has no gun and dies in one hit. Enemies right next to it see through it.':e.kind==='hacker'?'Right-click an enemy building to disable it. Idle hackers earn cash.':e.s.demo?'Stealthed. Right-click an enemy building to plant explosives.':e.kind==='hero'?'Stealthed until it fires. Snipes infantry from long range.':e.kind==='jet'?'Right-click a target to strike. Jets return to the airfield to rearm.':e.kind==='harv'?'Right-click a supply field to send it there.':e.kind==='dozer'?'Builds everything: pick a building under Build, then right-click the map. Right-click an unfinished building to help. Repairs buildings it stands next to.':e.isB&&isTun(e)&&e.team===ME?`Units inside: ${MODE==='client'?(T.tunN|0):T.tun.length} of 12. Select units and right-click a tunnel to send them in; they heal inside and can come out of any tunnel. With the tunnel selected, ${TOUCHUI?'tap':'right-click'} the ground to bring them out there.`:e.isB&&e.kind==='garrison'&&e.team===ME?`Troops inside fire from the ${e.s&&e.s.dugout?'dugout':'windows'}. ${TOUCHUI?'Tap':'Right-click'} the ground to bring them out and send them there; ${TOUCHUI?'tap':'right-click'} an enemy to focus fire.`:!e.isB&&e.s&&e.s.cap&&e.team===ME?(TOUCHUI?'Select infantry and tap this to board. With it selected, tap it again to unload here.':'Select infantry and right-click this to board. With it selected, right-click it to unload here, or Alt+right-click a spot to drive there and unload.'):e.isB&&e.nd&&e.built<1?(e.stall?'Waiting for a Construction Vehicle to arrive and build it.':'A Construction Vehicle is building this.'):e.isB&&e.team===ME&&CATS.includes(e.kind)?'Right-click the ground to set the rally point.':'';}
   else if(s.length){const c={};for(const e of s)c[e.s.name]=(c[e.s.name]||0)+1;b.textContent=`${s.length} selected`;sp.textContent=' '+Object.entries(c).map(([n,v])=>`${v}× ${n}`).join(' · ');}
   else{sp.textContent=TOUCHUI?'Tap a unit or building to select it. Double-tap a unit to select all of that type on screen.':'Click to select units or a building. Double-click selects all of a type on screen.';}
   if(s.length===1&&!s[0].isB&&s[0].aband)tip.textContent=ally(s[0].team,ME)?'Abandoned - the crew bailed out. Select infantry and right-click it to re-crew it before the enemy captures it.':'Abandoned enemy vehicle - select infantry and right-click it to capture it.';
@@ -13618,14 +13684,14 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads
   {const ms=s.filter(e=>!e.isB).map(moraleOf).filter(Boolean);if(ms.length){const avg=ms.reduce((a,m)=>a+m.v,0)/ms.length,fl=ms.every(m=>m.st==='fearless'),ls=ms.filter(m=>m.st==='last').length,rt=ms.filter(m=>m.st==='routing').length;const T0=G.teams[s[0].team],why=NOBREAK[T0.fac]?'never break':T0.clr?'Ayatollah':(T0.mart||0)>G.t?'martyrdom':'fervor';const st=fl?'fearless':ls>ms.length/2?'last':rt>ms.length/2?'routing':avg>.66?'steady':avg>.35?'shaken':'breaking';
     const mb=document.createElement('div');mb.className='morale';mb.innerHTML=`<span class="ml">Morale</span><span class="mbar"><i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i></span><span class="mt" style="color:${MOR_COL[st]}">${fl?'Fearless ('+why+')':MOR_TXT[st]+(st==='last'?'':' '+Math.round(avg*100)+'%')}${rt&&!fl?' · '+rt+' routing':''}${ls&&st!=='last'?' · '+ls+' last stand':''}</span>`;
     mb.title='Morale falls when units take fire, see comrades die or are outnumbered, and recovers out of combat. At zero they break and run back to base, ignoring orders, and take 25% extra damage while running. They rally fast near their HQ, a friendly-held building or an officer. Surrounded troops make a last stand instead (fearless but pinned). Crews bail out of badly damaged vehicles, which infantry can re-crew or capture. '+(fl?(NOBREAK[T0.fac]?'North Korean troops never break.':'Zealous troops fight on and never break.'):'Veterans, heroes, officers and cover help.');sp.after(mb);}}
-  {const h=ammoRowHTML(s);if(h){const ar=document.createElement('div');ar.className='morale';ar.id='ammoRow';ar.innerHTML=h;ar.title='Ammo: every shot spends one. Empty vehicles can\'t fire and infantry only plink with sidearms. Troops refill automatically inside your supply area: near your buildings, Supply Depots and supply trucks, and along your supply lines on the roads (L). Outside it they fight until they are empty.';el.append(ar);}}
+  {const h=ammoRowHTML(s);if(h){const ar=document.createElement('div');ar.className='morale';ar.id='ammoRow';ar.innerHTML=h;ar.title='Ammo: every shot spends one. Empty vehicles can\'t fire and infantry only plink with sidearms. Troops refill automatically inside your supply area: near your buildings and Supply Depots, along your supply lines on the roads (L), or next to an Ammo Truck. Outside it they fight until they are empty.';el.append(ar);}}
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
   if(s.length===1&&!s[0].isB){const e=s[0],u=document.createElement('div'),tx=document.createElement('div'),hp=Math.max(0,Math.min(1,e.hp/e.max));u.className='ukU';tx.className='ukUt';u.append(UK.icon(e.kind,(G.teams[e.team]||{}).color,0,e.s),tx);   /* ingameui slice 2: selected-unit card */
     if(e.rank)b.textContent=b.textContent.replace(' · '+VET[e.rank],'');tx.append(b);if(e.rank){const v=document.createElement('span');v.className='ukV vet'+e.rank;v.innerHTML=vetStripes(e.rank)+' ';v.append(document.createTextNode(VET[e.rank]));tx.append(v);}const hb=document.createElement('i');hb.className='ukHp';hb.innerHTML='<b style="width:'+Math.round(hp*100)+'%;background:'+(hp>.66?'#6fc24a':hp>.33?'#e3b83a':'#d9503f')+'"></b>';tx.append(hb,sp);el.append(u);}
   else if(s.length>1&&s.every(e=>!e.isB)){const c={};for(const e of s)c[e.kind]=(c[e.kind]||0)+1;const g=document.createElement('div');g.className='ukG';for(const k of Object.keys(c).slice(0,8)){const w=document.createElement('span'),n=document.createElement('em');n.textContent='×'+c[k];w.append(UK.icon(k,(G.teams[s[0].team]||{}).color,0,(s.find(e=>e.kind===k)||{}).s),n);w.dataset.tt=c[k]+'× '+(s.find(e=>e.kind===k).s.name);g.append(w);}el.append(g,b,sp);}
   else el.append(b,sp);if(tip.textContent)el.append(tip);
-  {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;const bcn=document.createElement('button');bcn.className='cnBtn';bcn.textContent='✕ Cancel';{const ci=cancelInfo();bcn.disabled=!ci;bcn.title=ci?ci.tip+' (Backspace / Delete)':'Nothing to cancel (select a building with a queue or a builder)';bcn.onclick=e=>doCancel(e.shiftKey);if(ci)r.classList.remove('off');}const bt=document.createElement('button');bt.textContent='▣ Type (T)';bt.title='Select every one of your units on the map that is the same type as the selection (hotkey T)';bt.onclick=selectTypes;const bq=document.createElement('button');bq.textContent='⛽ Resupply (Z)';bq.title='Send the selected units to the nearest supply point (HQ, Supply Depot, supply truck or held town) to refill ammo';bq.onclick=resupplySel;{const df=s.some(u=>u.defend),rt=s.some(u=>u.retreat),sl=stanceLabel(),sm=/^(\S+) (.*)$/.exec(sl)||['','◈',sl||'Stance'];ordLab(ba,'⚔',G.amove?(TOUCHUI?'Tap map…':'Click map…'):'Attack','F');ordLab(bd,(df&&!G.defm?'✓ ':'')+'🛡',G.defm?(TOUCHUI?'Tap map…':'Click map…'):'Guard','G');ordLab(bt,'▣','Same type','T');ordLab(bs,'■','Stop','X');ordLab(br,'↩',rt?'Retreating…':'Retreat','R');ordLab(bv,sm[1],sm[2],'V');ordLab(bq,'⛽','Resupply','Z');ordLab(bcn,'✕','Cancel','Del');}r.append(ba,bd,bt,bs,br,bv,bq,bcn);if(!can){const why='Select combat units to use orders';for(const x of r.children){if(x===bcn)continue;x.disabled=true;x.title=why;}}else{ba.title+=' (hotkey F)';bs.title='Stop: halt and hold fire position (hotkey X)';}if(can)el.append(r);else el.append(r);try{tactRow(el,s);if(typeof lgRow==='function')lgRow(el,s);}catch(_){}ordDock(el);}
+  {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: right-click target…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: right-click spot…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;const bcn=document.createElement('button');bcn.className='cnBtn';bcn.textContent='✕ Cancel';{const ci=cancelInfo();bcn.disabled=!ci;bcn.title=ci?ci.tip+' (Backspace / Delete)':'Nothing to cancel (select a building with a queue or a builder)';bcn.onclick=e=>doCancel(e.shiftKey);if(ci)r.classList.remove('off');}const bt=document.createElement('button');bt.textContent='▣ Type (T)';bt.title='Select every one of your units on the map that is the same type as the selection (hotkey T)';bt.onclick=selectTypes;const bq=document.createElement('button');bq.textContent='⛽ Resupply (Z)';bq.title='Send the selected units to the nearest supply point (HQ, Supply Depot or a building you hold) to refill ammo';bq.onclick=resupplySel;{const df=s.some(u=>u.defend),rt=s.some(u=>u.retreat),sl=stanceLabel(),sm=/^(\S+) (.*)$/.exec(sl)||['','◈',sl||'Stance'];ordLab(ba,'⚔',G.amove?(TOUCHUI?'Tap map…':'Right-click…'):'Attack','F');ordLab(bd,(df&&!G.defm?'✓ ':'')+'🛡',G.defm?(TOUCHUI?'Tap map…':'Right-click…'):'Guard','G');ordLab(bt,'▣','Same type','T');ordLab(bs,'■','Stop','X');ordLab(br,'↩',rt?'Retreating…':'Retreat','R');ordLab(bv,sm[1],sm[2],'V');ordLab(bq,'⛽','Resupply','Z');ordLab(bcn,'✕','Cancel','Del');}r.append(ba,bd,bs,br,bcn);/* Type, Resupply and stance buttons removed (Abdullah 2026-11-14 19:18); T and Z hotkeys stay */if(!can){const why='Select combat units to use orders';for(const x of r.children){if(x===bcn)continue;x.disabled=true;x.title=why;}}else{ba.title+=' (hotkey F)';bs.title='Stop: halt and hold fire position (hotkey X)';}if(can)el.append(r);else el.append(r);try{tactRow(el,s);if(typeof lgRow==='function')lgRow(el,s);}catch(_){}ordDock(el);}
   {const ap=$('app'),o=!!el.querySelector('.cmdrow:not(.off)');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   {const trs=s.filter(u=>!u.isB&&u.s&&u.s.cap&&u.team===ME&&!u.dead);if(trs.length>1&&trs.length===s.filter(u=>!u.isB).length){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Unload all '+trs.length+' transports';ub.title=(TOUCHUI?'Or tap one of them again':'Or right-click one of them')+' to unload them all';ub.onpointerdown=ev=>{ev.preventDefault();for(const tr of trs)doAct({t:'unl',tid:tr.id});};el.append(ub);}}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
@@ -13651,7 +13717,7 @@ let FMP=null,FMKEEP=1;const FMINFO={line:['Line','Wide front: most guns bear at 
 function fmGoX(){const s=sqOfSel()>0;return {fm:(s||(FMP&&FMKEEP))?1:0,fp:FMP||undefined};}
 function fmPick(k){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);FMP=k;if(k&&ids.length>1){doAct({t:'form',ids,f:k,fm:FMKEEP?1:0});speak(1);}sfxUI(520);fmBar();}
 function fmCycle(){const o=[null,...Object.keys(FMINFO)];fmPick(o[(o.indexOf(FMP)+1)%o.length]);pushLog('Formation: '+(FMP?FMINFO[FMP][0]:'Free'),'g');}
-function fmBar(){const sb=document.querySelector('.sqbar');if(!sb)return;let el=document.getElementById('fmb');if(!el){el=document.createElement('div');el.id='fmb';el.style.cssText='display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;font:12px system-ui,sans-serif';sb.append(el);}
+function fmBar(){return;/* formations removed (Abdullah 2026-11-14 19:18 "Remove formations"); squads and the right-drag infantry line stay */const sb=document.querySelector('.sqbar');if(!sb)return;let el=document.getElementById('fmb');if(!el){el=document.createElement('div');el.id='fmb';el.style.cssText='display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;font:12px system-ui,sans-serif';sb.append(el);}
   el.textContent='';const add=(t,k,tip)=>{const b=document.createElement('button');b.textContent=t;b.title=tip;b.style.cssText='padding:2px 6px;border:1px solid #556;border-radius:4px;background:'+((k===FMP&&k!==undefined)?'#3d5a3a':'#1d2420')+';color:#e8efe6;cursor:pointer;font:inherit';b.onclick=()=>{if(k==='keep'){FMKEEP=FMKEEP?0:1;fmBar();}else fmPick(k);};el.append(b);};
   add('Free',null,'No formation: units go where you send them (O cycles formations).');for(const k in FMINFO)add(FMINFO[k][0],k,FMINFO[k][0]+': '+FMINFO[k][1]+' The game puts armor in front, infantry beside/behind, anti-tank teams on the flanks, artillery and AA at the rear.');
   add(FMKEEP?'Hold: on':'Hold: off','keep','Hold formation while moving: units match the slowest unit\'s speed and keep their slots on move and attack-move orders.');}
@@ -13662,7 +13728,7 @@ function renderSquads(){const el=$('sqs');if(!el||!G)return;if(!document.getElem
   {let shown=false;for(let i=1;i<=SQN;i++){const b=el.children[i-1],has=sqList(i).length>0;if(has){b.style.display='';}else if(!shown){shown=true;b.style.display='';b.innerHTML='+ Squad';b.title='Put the selected units in a new squad (or Ctrl+'+i+')';}else b.style.display='none';}}
   const mk=$('sqMake');if(mk)mk.disabled=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).length<1;}
 function selectTypes(){if(!G||G.over)return;const mine=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead),ks=new Set(mine.map(u=>u.kind));G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(ks.size?ks.has(u.kind):!['harv','hacker','dozer'].includes(u.kind)));if(G.sel.length)speak(0);updateUI();}
-function selectArmy(){if(!G)return;G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);if(G.sel.length)speak(0);updateUI();}
+function selectArmy(){if(!G)return;G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer','ammot'].includes(u.kind)&&!u.dead);if(G.sel.length)speak(0);updateUI();}
 {const mk=$('sqMake');if(mk&&!$('sqAll')){const w=document.createElement('span');w.className='sqbtns';const a=document.createElement('button');a.id='sqAll';a.textContent='All army';a.title='Select every combat unit you have (Ctrl+A)';a.onclick=selectArmy;mk.replaceWith(w);w.append(a,mk);}}
 if($('sqMake'))$('sqMake').onclick=()=>{if(!G)return;let i=0;for(let k=1;k<=SQN;k++)if(!sqList(k).length){i=k;break;}if(!i)i=1;sqAssign(i);};
 /* ---------- input ---------- */
@@ -13681,7 +13747,7 @@ function issueCmdD(w,t,rally){const had=G.sel.some(u=>!u.isB&&u.team===ME&&!u.de
 function issueCmd(w,t,rally){
     {const x=exitIntent(t,MODK.alt);if(x)return doExit(x,w,t);}
     const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
-    if(rally&&!units.length&&G.sel.some(b=>b.isB&&b.team===ME)){doAct({t:'rally',x:w.x,y:w.y,ids:G.sel.filter(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)).map(b=>b.id)});pushLog('Rally point set for the selected building.');try{RV.fl=performance.now()+1500;}catch(e){}if(!SET.mKeep&&!G.qShift)G.sel=[];return true;}
+    if(rally&&!units.length&&G.sel.some(b=>b.isB&&b.team===ME)){doAct({t:'rally',x:w.x,y:w.y,ids:G.sel.filter(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)).map(b=>b.id)});pushLog('Rally point set for the selected building.');try{RV.fl=performance.now()+1500;}catch(e){}if(!G.qShift){G.sel=[];try{updateUI();}catch(e){}}return true;}   /* setting a rally point always lets the building go (Abdullah 2026-11-14 19:06; "keep units selected" is for unit orders only) */
     if(!units.length)return false;const ids=units.map(u=>u.id);
     if(spyIssue(w,t,units))return true;
     if(!t){const di=damAt(w);if(di>=0){doAct({t:'atkDam',ids,fi:di});speak(2);markT(G.dams[di].x,G.dams[di].y,40,null,'atk');pushLog('Attacking the dam - if it breaks, the valley floods.');return true;}}
@@ -13725,7 +13791,7 @@ function issueCmd(w,t,rally){
 let lastR={t:0,id:0},rDown=0;
 const MDEF={mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f',mRS:100,mCur:1,mPing:1,mLock:1,mKeep:1};
 const MPRE={std:{mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none'},gen:{mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll'}};
-if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;if(SET.keep3!==1){SET.mKeep=1;SET.keep3=1;try{saveSet();}catch(_){}}   /* Abdullah 2026-11-14 18:07 "Right click should not unselect the units selected" */
+if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;if(SET.keep3!==1){SET.mKeep=1;SET.keep3=1;try{saveSet();}catch(_){}}SET.tk=0;   /* Breaking-news ticker and its corner clip removed (Abdullah 2026-11-14 18:32 "Remove breaking news clip") */   /* Abdullah 2026-11-14 18:07 "Right click should not unselect the units selected" */
 function mPreset(){for(const p in MPRE)if(Object.keys(MPRE[p]).every(k=>SET[k]===MPRE[p][k]))return p;return 'custom';}
 function stdMouse(){return mPreset()==='std';}
 function leftOrders(){return SET.mLG==='move';}
@@ -13832,7 +13898,7 @@ function rightPress(e){const w=screenToWorld(mouse.x,mouse.y);if(!w)return false
   if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(MODK.shift);return false;}
   return true;}
 function orderClick(sh){if(!G||G.over)return;G.qShift=!!sh;const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
-  if(G.place||G.aim){G.place=null;G.aim=null;updateUI();return;}if(G.defm){defendAt(w);return;}
+  if(G.place||G.aim){placeOrAim(w,sh);return;}if(G.defm){defendAt(w);return;}
   const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
   if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(sh);return;}
   G.amove=false;const bsel=!units.length&&G.sel.some(b=>b.isB&&b.team===ME);if(!units.length&&!bsel)return;
@@ -13852,8 +13918,7 @@ function genClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if
 function selClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if(!w)return false;
   if(units.length&&d.ctrl){if(forceFire(w,t,units))ordDone(d.shift);updateUI();return true;}
   if(units.length&&d.alt){waypoint(w,units);updateUI();return true;}
-  if(!units.length&&!t&&!d.shift&&prodSel()){issueCmd(w,null,true);updateUI();return true;}
-  return false;}
+  return false;}   /* rally point = right-click the ground (Abdullah 2026-11-14 19:34); left-click only selects */
 function rightRelease(d){if(!G)return;
   if(d.box){const x0=Math.min(d.x0,mouse.x),x1=Math.max(d.x0,mouse.x),y0=Math.min(d.y0,mouse.y),y1=Math.max(d.y0,mouse.y);
     const got=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u)+4,u.y);return p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1;})());G.sel=d.shift?[...new Set([...G.sel,...got])]:got;}
@@ -13897,7 +13962,8 @@ function rightClickAct(sh){if(exitClick())return;if(rightOrders())orderClick(sh)
 function lineOrder(r){const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!w1||!ids.length)return;doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);ordMark(r.am?'lna':'ln',r.w0.x,r.w0.y,null,{x2:w1.x,y2:w1.y});ordDone(MODK.shift);updateUI();}
 let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';hintDev(LASTPT);if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
-  if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}
+  if(G.place||G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();return;}   /* Generals: every map action is a RIGHT-click; left-click cancels it (Abdullah 2026-11-14 19:34) */
+  if(0){G.amove=false;G.defm=false;updateUI();return;}   /* Attack / Guard targets are given with RIGHT-click; left-click cancels (Abdullah 2026-11-14 19:30) */
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,ctrl:e.ctrlKey||e.metaKey,alt:e.altKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
 cv.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){LASTPT='mouse';mouse.in=true;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;}else if(e.pointerType==='touch'&&touchMove(e))return;mpos(e);if(RDRAG&&e.pointerId===RDRAG.id){if(Math.hypot(mouse.x-RDRAG.x0,mouse.y-RDRAG.y0)>(RDRAG.gen&&!RDRAG.line?(SET.tol||8):22))RDRAG.moved=true;return;}if(mpan&&e.pointerId===mpan.id){const k=cam.dist/700*(SET.scr||100)/100;cam.x-=(e.clientX-mpan.x)*k;cam.y-=(e.clientY-mpan.y)*k*1.4;mpan.x=e.clientX;mpan.y=e.clientY;return;}if(drag&&Math.hypot(mouse.x-drag.x0,mouse.y-drag.y0)>(drag.pt==='touch'?Math.max(SET.tol||8,16):(SET.tol||8)))drag.box=true;});
@@ -13918,8 +13984,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='t'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){selectTypes();}
   if(k==='f'&&G.sel.some(u=>!u.isB)){G.amove=true;G.defm=false;}if(k==='g'&&G.sel.some(u=>!u.isB&&u.team===ME)){G.defm=true;G.amove=false;}
   if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)for(const pk in POW_KEY)if(POW_KEY[pk]===k){powGo(pk);break;}
-  if(k==='v'&&!e.ctrlKey&&!e.metaKey)cycleStance();
-  if(k==='o'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)fmCycle();
+  
   if(k==='i'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)tactKey();
   if(k==='z'&&!e.ctrlKey&&!e.metaKey&&!e.altKey)resupplySel();
   if(k==='l'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.lgd&&!G.sandbox)lgToggle();
@@ -14046,11 +14111,11 @@ function stanceLabel(){const us=stUnits();if(!us.length)return'';const d=stDisp(
 function resupplySel(){if(!G||G.over)return;const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead&&u.am!==undefined).map(u=>u.id);if(!ids.length)return;doAct({t:'resup',ids});try{speak(1);}catch(_){}}
 function ammoRowHTML(s){if(!ammoOn())return '';const us=s.filter(u=>!u.isB&&u.team===ME&&u.am!==undefined&&u.amx&&!u.dead);if(!us.length)return '';
   if(us.length===1){const u=us[0],f=u.am/u.amx,col=u.am<=0?'#ff6a50':f<.3?'#f2d14a':'#c9b784';
-    return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.ceil(u.am)}/${u.amx} · ${u.sup?'In your supply area':u.am<=0?'OUT OF AMMO - bring it back or send a supply truck':'Outside your supply area'}</span>`;}
+    return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.ceil(u.am)}/${u.amx} · ${u.sup?'In your supply area':u.am<=0?'OUT OF AMMO - bring it back or send an Ammo Truck':'Outside your supply area'}</span>`;}
   let sum=0,mx=0,low=0,zero=0,oos=0;for(const u of us){sum+=u.am;mx+=u.amx;if(u.am<=0)zero++;else if(u.am<u.amx*.3)low++;if(!u.sup&&u.am<=0)oos++;}const f=sum/mx,col=zero?'#ff6a50':f<.3?'#f2d14a':'#c9b784';
   return `<span class="ml">Ammo</span><span class="mbar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="mt" style="color:${col}">${Math.round(f*100)}%${zero?' · '+zero+' empty':''}${low?' · '+low+' low':''}${oos?' · '+oos+' need resupply':''}</span>`;}
 let AMT=0;function ammoRowTick(){if(performance.now()-AMT<400)return;AMT=performance.now();const el=document.getElementById('ammoRow');if(el&&G)el.innerHTML=ammoRowHTML(G.sel.filter(e=>!e.dead));}
-function cycleStance(){const us=stUnits();if(!us.length)return;const c=stDisp(us[0]),n=c===1?2:c===2?3:1;doAct({t:'stance',ids:us.map(u=>u.id),v:n});sfxUI(480+n*40);if(typeof updateUI==='function')updateUI();}
+function cycleStance(){return;/* army stance removed (Abdullah 2026-11-14 18:31 "Remove army stance option") */const us=stUnits();if(!us.length)return;const c=stDisp(us[0]),n=c===1?2:c===2?3:1;doAct({t:'stance',ids:us.map(u=>u.id),v:n});sfxUI(480+n*40);if(typeof updateUI==='function')updateUI();}
 function tcOwn(){return G?G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead):[];}
 function tcXY(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
 function tcMid(){const a=[...TC.ids.values()];return{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};}
@@ -14133,7 +14198,7 @@ window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
 /* ---- command strip (touch only, while units are selected) and build / fire confirm ---- */
 const TC_BTN=[['am','⚔','Attack','Attack-move: tap a spot, they fight everything on the way'],['gd','🛡','Guard','Guard: tap the spot to hold'],['st','■','Stop','Stop'],
   ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all your units of the selected types on the whole map (T)'],['all','★','Army','Select your whole army (Ctrl+A)'],
-  ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['rs','⛽','Supply','Resupply: send the selected units to the nearest point of your supply area (buildings, depots, trucks, supply lines) to refill ammo'],['dg','⛏','Dig in','Dig in: soldiers dig foxholes where they stand; a Construction Vehicle builds a fortification line (trench with sandbag parapet) where you draw it'],['ds','✕','Clear','Deselect']];
+  ['rt','↩','Retreat','Retreat to the nearest base building'],['rs','⛽','Supply','Resupply: send the selected units to the nearest point of your supply area (buildings, depots, trucks, supply lines) to refill ammo'],['dg','⛏','Dig in','Dig in: soldiers dig foxholes where they stand; a Construction Vehicle builds a fortification line (trench with sandbag parapet) where you draw it'],['ds','✕','Clear','Deselect']];
 const TC_CN=['cn','✕','Cancel','Cancel: stop placing, remove the last queued item, or cancel the unfinished building'];
 function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   if(k==='am'){G.amove=!G.amove;G.defm=false;TC.lineArm=false;}
@@ -14242,7 +14307,7 @@ function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [
 // texture, 3D world, shader warm-up) then runs in steps with a frame in between, so the screen shows the theatre, the
 // nations, a progress bar and a tip instead of freezing. The battle clock is held until the battlefield is on screen.
 const LOAD={tok:0,tipI:0,tipT:null,cv:null};
-const LOAD_TIPS=['Supply: your troops carry limited ammo and refill it inside your supply area: around your buildings, Supply Depots and supply trucks, and along the green supply lines on the roads (L shows them). Crater an enemy road or hunt its supply trucks to starve the front.','Armor is thickest at the front: hits on a vehicle\'s side do 20% more damage, from behind 60% more. Flank them.',
+const LOAD_TIPS=['Supply: your troops carry limited ammo and refill it inside your supply area: around your buildings and Supply Depots, along the green supply lines on the roads (L shows them), or beside an Ammo Truck from your War Factory. Crater an enemy road or hunt its Ammo Trucks to starve the front.','Armor is thickest at the front: hits on a vehicle\'s side do 20% more damage, from behind 60% more. Flank them.',
   'Infantry in woods or beside buildings take less damage. Fight from cover.',
   'Firing downhill helps and firing uphill hurts. Take the high ground.',
   'Infantry under heavy fire get suppressed: they shoot and move slower until it wears off.',
@@ -14464,7 +14529,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
   if(!g.ldHold)pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
   setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}try{vohLoad(g.teams[ME].fac);}catch(_){}},0);}
-function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({battle:1,w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length)});G.teams.forEach((T,i)=>{if(T.ai)T.ai=mkAI(Math.max(0,Math.min(3,setup.d|0))+10*persCode((setup.pers||[])[i]));});}finally{TERR_DEFER=false;}afterStart();}
+function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({battle:1,w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length),pc:pcClean(skPc(facs.length),facs.length)});G.teams.forEach((T,i)=>{if(T.ai)T.ai=mkAI(Math.max(0,Math.min(3,setup.d|0))+10*persCode((setup.pers||[])[i]));});}finally{TERR_DEFER=false;}afterStart();}
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 /* Test range (Abdullah 2026-11-13 19:59 "Why can't I choose nations in test range"): the nations come from the Test range window (src/14-menu.js, screen t-range); the old auto-pick is gone. */
 const TR_KEY='ww3_testrange';
@@ -14476,7 +14541,7 @@ function startSandbox(c){c=c&&c.p?c:trLoad();setup.p=c.p;setup.a=c.a;if(MAPS[c.m
   const facs=[setup.p,setup.a];
   MODE='single';ME=0;
   TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,w:setup.w|0,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids,rl,bm){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0,real:rl?1:0,battle:bm?1:0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(!T.reb&&isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids,rl,bm,pc){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0,real:rl?1:0,battle:bm?1:0},st?{st}:{},pc?{pc}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(!T.reb&&isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
@@ -14611,10 +14676,12 @@ function rollAis(){const n=Math.max(1,Math.min((MAPS[setup.map]||MAPS.strait).ma
 // AI personality picker (Balanced, Tank Rush, Guerrilla, Artillery Turtle, Air Power, Random=9) shared by the skirmish and lobby seat menus
 function persSel(get,set,label){const s=document.createElement('select');s.className='persel';s.setAttribute('aria-label',label);s.title='AI style';PERS.forEach((P,i)=>{const o=document.createElement('option');o.value=i;o.textContent=P.name;o.title=P.d;s.append(o);});const r=document.createElement('option');r.value=9;r.textContent='Random style';s.append(r);s.value=get();s.onchange=()=>set(+s.value);return s;}
 function persCode(p){p=p|0;return p===9||(p>0&&p<PERS.length)?p:0;}
-function renderTeams(){const el=$('teamList');if(!el)return;const facs=rollAis();el.innerHTML='';const N=facs.length,sides=skSides(),st=skSt(N);
+/* player colours of the single-player Battle (Players step): setup.pc[i] = PCOLS index or -1 (nation colour). You start on the colour you picked last time; every computer player takes the first free colour. */
+function skPc(n){const o=[],P=setup.pc=setup.pc||[];if(P.init!==1){P.init=1;P[0]=pcLoad();}for(let i=0;i<n;i++){const raw=P[i];let v=Number.isInteger(raw)&&raw>=0&&raw<PCOLS.length&&!o.includes(raw)?raw:-1;if(v<0&&i>0&&raw!==-2)v=pcFree(o,99);o.push(v);}for(let i=0;i<n;i++)if(!(o[i]<0&&P[i]===-2))P[i]=o[i];return o;}
+function renderTeams(){const el=$('teamList');if(!el)return;const facs=rollAis();el.innerHTML='';const N=facs.length,sides=skSides(),st=skSt(N),pcs=skPc(N);
   facs.forEach((f,i)=>{const row=document.createElement('div');row.className='trow sp';const nm=document.createElement('span');nm.textContent=(i===0?'You · ':`AI ${i} · `)+FACTIONS[f].name;
     const s=document.createElement('select');s.setAttribute('aria-label','Team for '+nm.textContent);for(let t=0;t<Math.max(2,N);t++){const o=document.createElement('option');o.value=t;o.textContent='Team '+(t+1);s.append(o);}s.value=setup.tm[i];
-    s.onchange=()=>{setup.tm[i]=+s.value;checkTeams();prevMarks();};if(i>0){setup.pers=setup.pers||[];row.append(nm,persSel(()=>persCode(setup.pers[i]),v=>{setup.pers[i]=v;},'AI style for '+nm.textContent),s,spotsSel(i,setup.map,sides,st,skSet,()=>skSt(N)));}else row.append(nm,s,spotsSel(i,setup.map,sides,st,skSet,()=>skSt(N)));el.append(row);});
+    s.onchange=()=>{setup.tm[i]=+s.value;checkTeams();prevMarks();};if(i>0){setup.pers=setup.pers||[];row.append(nm,persSel(()=>persCode(setup.pers[i]),v=>{setup.pers[i]=v;},'AI style for '+nm.textContent),s,spotsSel(i,setup.map,sides,st,skSet,()=>skSt(N)));}else row.append(nm,s,spotsSel(i,setup.map,sides,st,skSet,()=>skSt(N)));{const cb=pcPicker(pcs[i],pcTakenOf(pcs,i),FACTIONS[f].color,v=>{setup.pc[i]=v<0&&i>0?-2:v;if(i===0)pcSave(v);renderTeams();},'Color for '+nm.textContent,true);cb.title='Player color';row.insertBefore(cb,row.firstChild.nextSibling);}el.append(row);});
   if(N>=2){const pr=document.createElement('div');pr.className='presets';const pb=(lab,fn)=>{const b=document.createElement('button');b.className='chip';b.textContent=lab;b.title={'Me vs all':'You against every other player','Free for all':'Everyone fights everyone','Co-op: me + allies vs AI':'You and half the players vs the rest'}[lab]||'';b.onclick=()=>{setup.tm=facs.map((_,i)=>fn(i));renderTeams();};pr.append(b);};pb('Me vs all',i=>i?1:0);pb('Free for all',i=>i);if(N>=3)pb('Co-op: me + allies vs AI',i=>i<Math.ceil(N/2)?0:1);el.append(pr);}
   checkTeams();prevMarks();}
 function checkTeams(){const ok=new Set(setup.tm).size>1;const b=$('start');if(!b)return;b.disabled=!ok;b.title=ok?'':'Put at least one player on a different team.';}
@@ -14694,16 +14761,16 @@ const MOPT=[['sMpre','Mouse scheme',null,[['std','Standard (default)'],['gen','G
 function syncMouseUI(){const pre=mPreset();
   for(const [id,,k] of MOPT){const el=$(id);if(!el)continue;for(const b of el.querySelectorAll('button')){const v=b.dataset.v;b.classList.toggle('on',k?String(SET[k])===v:v===pre);if(id==='sMpre'&&v==='custom')b.disabled=pre!=='custom';
       b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing'||k==='mLock'||k==='mKeep')?+v:v;if(k==='mLock'&&!SET.mLock)try{mlockOff();}catch(_){}else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
-  const n=$('sMpreN');if(n)n.textContent=pre==='std'?'Standard: left-click selects, right-click moves and attacks, right-drag draws a line. F then click: attack-move.':pre==='gen'?'Command & Conquer Generals: left-click selects and gives orders, right-click deselects, right-drag scrolls.':'Custom: your own mix of the choices below.';
+  const n=$('sMpreN');if(n)n.textContent=pre==='std'?'Standard: left-click selects, right-click moves and attacks, right-drag draws a line. F then right-click: attack-move.':pre==='gen'?'Command & Conquer Generals: left-click selects and gives orders, right-click deselects, right-drag scrolls.':'Custom: your own mix of the choices below.';
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
   const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
-const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · O: formation · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Ctrl+A: army · Q: rotate view (hold + mouse; tap: 45°; Home: north) · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
+const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then right-click: attack-move · G then right-click: defend area · X: stop · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Ctrl+A: army · Q: rotate view (hold + mouse; tap: 45°; Home: north) · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
 // the on-screen hint follows the chosen mouse functions (the Standard preset has its own fixed text)
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
   P.push('Double-click: all of a type');P.push('Ctrl+click: force-fire · Alt+click: waypoint');
-  P.push('F then click: attack-move · G then click: defend area · X: stop');P.push('R: retreat');
+  P.push('F then right-click: attack-move · G then right-click: defend area · X: stop');P.push('R: retreat');
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Get out: right-click your selected transport (Alt+right-click a spot: drive there, unload) · building or tunnel selected, right-click the ground');
@@ -14819,7 +14886,7 @@ $('again').onclick=()=>{initAudio();try{if(NET.ownW!=null){wxSet(NET.ownW);NET.o
 // that saves the best frame as a PNG for sharing.
 const KC={G:null,on:false,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0,R:null};
 const KC_SPAN=9,KC_DT=.25,KC_TAIL=1.2;
-function kcOff(){return !!(navigator.webdriver&&!window.__killcam)||!!(G&&(G.headless||G.shell));}
+function kcOff(){return !!(navigator.webdriver&&!window.__killcam)||!!(G&&G.headless);}
 function kcReset(){if(KC.url)try{URL.revokeObjectURL(KC.url);}catch(e){}try{hlReset();}catch(e){}Object.assign(KC,{G,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0});const a=$('kcSave');if(a)a.hidden=true;}
 function kcFx(type,args){if(!G||G.over||KC.on||kcOff())return;if(KC.G!==G)kcReset();const t=G.t;KC.fx.push([t,type,args]);
   if(type==='die'){const [id,x,y,ki,isB,team]=args,k=KINDS[ki];const v=(isB?STRUCT[k]&&STRUCT[k].cost:BASE[k]&&BASE[k].cost)||150;
@@ -15031,7 +15098,7 @@ function tkPoll(){try{if(!G||!TK.on||TK.G!==G){if(!G||TK.G!==G)clearInterval(TK.
 }catch(e){}}
 if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
-{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
+/* (War news settings toggle removed with the ticker, 2026-11-14) */ if(0){const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
   const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}
 /* ---------- laneD D2 (first-time-player audit): with 54 nations the real start buttons were ~3700px down the menu.
    A quick-start row sits at the top (it just presses the real buttons below), and the nation list is a compact,
@@ -15046,7 +15113,7 @@ try{tkApply();}catch(e){}
   const first=card.querySelector('.row');(first||card.querySelector('h1')).after(row);})();
 
 /* ---------- first-time-player hints (Lane D2): hover text for menu buttons that had none (orch/newplayer.mjs lists them) ---------- */
-(function(){const TIPS={'1':'Fight 1 computer opponent','2':'Fight 2 computer opponents','3':'Fight 3 computer opponents','5':'Fight 5 computer opponents','7':'Fight 7 computer opponents (needs a big map)','clear day':'Bright daylight, long sight','golden hour':'Warm low sun, long shadows','overcast':'Gray sky, soft light','build':'Build and repair your base buildings','units':'Train soldiers and vehicles','powers':'Special strikes and abilities with a cooldown','deploy vs ai':'Play one Battle against computer opponents: build your base from a Command Center, keep your supply lines open, destroy every enemy building to win.','▶ watch a replay file':'Open a saved replay file (.json) from an earlier battle and watch it again.','🗺 map editor':'Draw your own battle map: terrain, resources and start positions.','join by code':'Type the invite code a friend sent you to join their online battle.','build':'Sidebar tab: buildings you can place in your base.','units':'Sidebar tab: soldiers and vehicles you can train.','powers':'Sidebar tab: special powers such as strikes and support, with cooldowns.','launch':'Fire the selected special power at the spot you click on the map.','medals':'Your achievements: medals earned in battles.'};
+(function(){const TIPS={'1':'Fight 1 computer opponent','2':'Fight 2 computer opponents','3':'Fight 3 computer opponents','5':'Fight 5 computer opponents','7':'Fight 7 computer opponents (needs a big map)','clear day':'Bright daylight, long sight','golden hour':'Warm low sun, long shadows','overcast':'Gray sky, soft light','build':'Build and repair your base buildings','units':'Train soldiers and vehicles','powers':'Special strikes and abilities with a cooldown','deploy vs ai':'Play one Battle against computer opponents: build your base from a Command Center, keep your supply lines open, destroy every enemy building to win.','▶ watch a replay file':'Open a saved replay file (.json) from an earlier battle and watch it again.','🗺 map editor':'Draw your own battle map: terrain, resources and start positions.','join by code':'Type the invite code a friend sent you to join their online battle.','build':'Sidebar tab: buildings you can place in your base.','units':'Sidebar tab: soldiers and vehicles you can train.','powers':'Sidebar tab: special powers such as strikes and support, with cooldowns.','launch':'Fire the selected special power at the spot you right-click on the map.','medals':'Your achievements: medals earned in battles.'};
 function fix(){try{for(const b of document.querySelectorAll('button')){if(b.title)continue;const t=TIPS[(b.textContent||'').trim().toLowerCase()];if(t)b.title=t;}}catch(e){}}
 setInterval(fix,2500);setTimeout(fix,500);})();
 
@@ -15124,7 +15191,8 @@ function idStart(){const ids=IDS_PEND;IDS_PEND=null;if(!G||!G.teams)return;const
   const want=G.teams.map((T,i)=>{const d=idClean(ids?ids[i]:(i===ME&&MODE==='single'?idSelf():null));T.emb=d&&d.e||'';return d&&d.c||'';});
   const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'],out=[];
   if(SET.cb){G.teams.forEach((T,i)=>{T.color=ID_CB[i%ID_CB.length];T.dark=shade(T.color,.45);});return;}
-  for(let i=0;i<N;i++)if(want[i]&&!out.some(c=>c&&cd(c,want[i])<.45))out[i]=want[i];
+  const PK=G.pcP||[];for(let i=0;i<N;i++)if(PK[i]>=0)out[i]=G.teams[i].color;   // a colour picked in the lobby wins over the profile colour and is never moved
+  for(let i=0;i<N;i++)if(!out[i]&&want[i]&&!out.some(c=>c&&cd(c,want[i])<.45))out[i]=want[i];
   for(let i=0;i<N;i++){if(out[i])continue;let c=G.teams[i].color;if(out.some(q=>q&&cd(q,c)<.45))c=ALT.find(a=>out.every(q=>!q||cd(q,a)>=.45))||ALT[i%ALT.length];out[i]=c;}
   G.teams.forEach((T,i)=>{if(T.color!==out[i]){T.color=out[i];T.dark=shade(out[i],.45);}});}
 /* ---------- emblems ---------- */
@@ -15430,15 +15498,15 @@ const tutPanelBtn=id=>document.getElementById(id);
 const tutMob=()=>G.ents.filter(e=>!e.isB&&e.team===ME&&!e.dead&&!['harv','dozer','hacker'].includes(e.kind));
 const tutBPlace=(k,dx,dy)=>{if(tutBld(k))return{w:tutBld(k)};{const z=tutDzHl();if(z)return z;}if(G.place===k){const h=tutHQ();return{w:h?{x:h.x+dx,y:h.y+dy}:null};}return{d:'#b_'+k};};
 const TUTB=[
- {k:'gen',t:'Welcome to Battle! Air defense, the Strike Center, radio and the Airfield need power. Build a Generator; capturing map power plants adds more.',a:'Click your Dozer (Construction Vehicle), open Build, click Generator, then click the ground near your base.',
+ {k:'gen',t:'Welcome to Battle! Air defense, the Strike Center, radio and the Airfield need power. Build a Generator; capturing map power plants adds more.',a:'Click your Dozer (Construction Vehicle), open Build, click Generator, then right-click the ground near your base.',
   hl:()=>tutBPlace('gen',-100,-110),cam:()=>tutHQ(),ok:()=>!!tutBld('gen')},
- {k:'dep',t:'Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.',a:'Click your Dozer, open Build, click Supply Depot, then click the ground near your base.',
+ {k:'dep',t:'Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.',a:'Click your Dozer, open Build, click Supply Depot, then right-click the ground near your base.',
   hl:()=>tutBPlace('depot',-130,90),cam:()=>tutHQ(),ok:()=>!!tutBld('depot')},
- {k:'bar',t:'Barracks train infantry, and they unlock the rest of your tech tree.',a:'Click your Dozer, open Build, click Barracks, then click next to your base. Hold Shift to line up several buildings.',
+ {k:'bar',t:'Barracks train infantry, and they unlock the rest of your tech tree.',a:'Click your Dozer, open Build, click Barracks, then right-click next to your base. Hold Shift to line up several buildings.',
   hl:()=>tutBPlace('barracks',120,90),cam:()=>tutHQ(),ok:()=>!!tutBld('barracks')},
  {k:'fac',t:'The War Factory builds tanks and other vehicles. It needs a Barracks first.',a:'With your Dozer selected, open Build and place a War Factory next to your base. Right-click a half-built building with another Dozer to help.',
   hl:()=>tutBPlace('factory',150,-60),cam:()=>tutHQ(),ok:()=>!!tutBld('factory')},
- {k:'sup',t:'SUPPLY LINES: troops refill ammo near your buildings and along your supply roads (green). Outside them they fight until empty, then must come back or get a supply truck. Craters and blown bridges cut a line.',a:'Press L to show your supply lines (the minimap shows them too).',
+ {k:'sup',t:'SUPPLY LINES: troops refill ammo near your buildings and along your supply roads (green). Outside them they fight until empty, then must come back or get an Ammo Truck (War Factory). Craters and blown bridges cut a line.',a:'Press L to show your supply lines (the minimap shows them too).',
   hl:()=>({d:'#mm'}),cam:()=>tutHQ(),ok:()=>!!(typeof LGU!=='undefined'&&LGU.on)},
  {k:'veh',t:'Now put the factory to work. A selected production building shows what it can make and its own queue. Vehicles are built only in the War Factory.',a:'Click your War Factory, then click a vehicle to train it.',
   hl:()=>{const b=tutBld('factory');if(!b)return{w:tutHQ()};return G.sel.includes(b)?{d:'#u_tank'}:{w:b};},cam:()=>tutBld('factory'),
@@ -15794,6 +15862,11 @@ function drawLogiWorld(c){if(!G||!G.lg||!G.lgd||G.over)return;
     c.setLineDash([]);if(done.length>1){c.strokeStyle='rgba(0,0,0,.5)';c.lineWidth=6;lgStroke(c,done);c.strokeStyle='#d9c27a';c.lineWidth=3;lgStroke(c,done);}
     if(todo.length>1){c.setLineDash([6,8]);c.strokeStyle='#f0d060';c.lineWidth=2;lgStroke(c,todo);c.setLineDash([]);}
     const fp=lgPoint(j,j.prog),p=toScreen(fp[0],groundH(fp[0],fp[1])+60,fp[1]);if(p.z<=1){c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-38,p.y-16,76,16);c.fillStyle='#f0d060';c.font='bold 11px system-ui,sans-serif';c.textAlign='center';c.fillText('ROAD '+Math.round(100*j.prog/Math.max(1,j.len))+'%',p.x,p.y-4);}}
+  // capture rings on road sections units are taking (view only)
+  if(D.rc)for(const k in D.rc){const q=D.rc[k];if(!(q.p>0)||q.c<0)continue;const e=L.E[k];if(!e)continue;const m=lgPoint(e,e.len/2);
+    if(!inView(m[0],m[1],.2))continue;const p=toScreen(m[0],groundH(m[0],m[1])+30,m[1]);if(p.z>1)continue;
+    c.lineWidth=5;c.strokeStyle='rgba(0,0,0,.55)';c.beginPath();c.arc(p.x,p.y,13,0,6.2832);c.stroke();
+    c.lineWidth=3;c.strokeStyle=lgRoadCol(lgTeamCls(q.c)===0?'mine':'foe');c.beginPath();c.arc(p.x,p.y,13,-1.5708,-1.5708+6.2832*Math.min(1,q.p));c.stroke();}
   try{drawLogi2(c);}catch(e){}
   c.restore();}
 function drawLogiMini(c,sx,sy){if(!G||!G.lg||!G.lgd)return;c.save();c.lineCap='round';
@@ -15849,8 +15922,8 @@ function drawLogiMini2(c,sx,sy){const D=G.lgd,B=G.map.bridges||[];if(!D.mn)retur
   for(const e of G.ents)if(!e.dead&&e.isB&&e.kind==='shipyard'&&lgBlkd(e)){c.strokeStyle='#ff4a3a';c.lineWidth=1.5;c.beginPath();c.arc(e.x*sx,e.y*sy,6,0,7);c.stroke();}}
 // command bar buttons + one-click targeting (left-click picks the spot, right-click cancels)
 function lgMode(k){G.lgM=G.lgM===k?null:k;G.wallM=null;G.wallP=null;G.amove=false;G.defm=false;G.place=null;G.aim=null;try{sfxUI(560);}catch(e){}updateUI();}
-const LG_HINT={mine:'Mine a road: click a spot on a road',ckpt:'Checkpoint: click a spot on a road',demo:'Blow a bridge: click the bridge',fixb:'Rebuild a bridge: click the blown bridge',pont:'Pontoon bridge: click on a narrow river',alift:'Airlift: click one of your Supply Depots'};
-function lgHint(){const h=typeof wallHintEl==='function'?wallHintEl():null;if(!h)return;if(G&&G.lgM){h.hidden=false;h.textContent=LG_HINT[G.lgM]+' · right-click to cancel';}else if(!G||!G.wallM)h.hidden=true;}
+const LG_HINT={mine:'Mine a road: right-click a spot on a road',ckpt:'Checkpoint: right-click a spot on a road',demo:'Blow a bridge: right-click the bridge',fixb:'Rebuild a bridge: right-click the blown bridge',pont:'Pontoon bridge: right-click on a narrow river',alift:'Airlift: right-click one of your Supply Depots'};
+function lgHint(){const h=typeof wallHintEl==='function'?wallHintEl():null;if(!h)return;if(G&&G.lgM){h.hidden=false;h.textContent=LG_HINT[G.lgM]+' · left-click to cancel';}else if(!G||!G.wallM)h.hidden=true;}
 function lgRow(el,s){if(!G||G.sandbox||!G.lgd)return;const own=s.filter(u=>u.team===ME&&!u.dead);
   const doz=own.filter(u=>!u.isB&&u.kind==='dozer'),hel=own.filter(u=>!u.isB&&u.kind==='airlift'),dep=own.length===1&&own[0].isB&&(own[0].kind==='depot'||own[0].kind==='shipyard')&&!(own[0].built<1)?own[0]:null;
   if(G.lgM&&!(G.lgM==='alift'?hel.length:doz.length))G.lgM=null;lgHint();if(!doz.length&&!hel.length&&!dep)return;
@@ -15866,7 +15939,7 @@ function lgRow(el,s){if(!G||G.sandbox||!G.lgd)return;const own=s.filter(u=>u.tea
     const sp=document.createElement('span');sp.style.cssText='font:600 12px system-ui,sans-serif;align-self:center;padding:0 6px;color:'+(/CUT|BLOCK/.test(st)?'#ff8a75':'#9fe8a8');sp.textContent=st;r.append(sp);
     if(dep.kind==='depot')mk('⚑ Rally here','New units from your barracks and factories gather at this depot.',()=>{doAct({t:'rally',x:dep.x,y:dep.y});try{mark({x:dep.x,y:dep.y,r:22,t:0,d:.8,c:0x7ee88f});sfxUI(560);}catch(e){}});
     mk('🛣 Road to here','Build a road from your network to this '+(dep.kind==='depot'?'depot':'port')+' (selected or nearest Construction Vehicle).',()=>{doAct({t:'lg',k:'droad',tid:dep.id,ids:[]});try{sfxUI(560);}catch(e){}});}}
-function lgPointer(e){if(!G||G.over||!G.lgM)return;e.stopImmediatePropagation();e.preventDefault();if(e.button===2){G.lgM=null;updateUI();return;}
+function lgPointer(e){if(!G||G.over||!G.lgM)return;if(e.button===1)return;if(e.button===0){e.stopImmediatePropagation();e.preventDefault();G.lgM=null;updateUI();return;}   /* road jobs: right-click does it, left-click cancels (Abdullah 2026-11-14 19:34) */e.stopImmediatePropagation();e.preventDefault();
   mpos(e);const w=screenToWorld(mouse.x,mouse.y);if(!w)return;const k=G.lgM;
   if(k==='alift'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind==='airlift'&&!u.dead).map(u=>u.id);let tid=0,ti=-1,bd=1e9;
     for(const b of G.ents)if(b.isB&&!b.dead&&b.team===ME&&b.kind==='depot'){const d=Math.hypot(b.x-w.x,b.y-w.y);if(d<130&&d<bd){bd=d;tid=b.id;}}
@@ -15938,7 +16011,7 @@ function wallPreview(c){if(!G||!G.wallM||!G.wallP)return;const w=screenToWorld(m
    UI only. Guests send one small 'pick' message {f:nation, t:team, r:ready}; a browser host answers with a 'lobr' roster,
    a Cloudflare battle sends the same facts inside its 'blob' (seats[].r). The leader's Start button lights when every
    friend is ready (07-net renderLobby); a leader can always press "Start anyway". No sim state is touched. */
-const GLB={landing:null,me:{f:null,t:-1,r:0},roster:null,el:null,sent:0};
+const GLB={landing:null,me:{f:null,t:-1,r:0,c:-1},roster:null,el:null,sent:0};
 (function(){const s=document.createElement('style');s.textContent=`
 #glob{position:fixed;inset:0;z-index:300;background:rgba(6,9,8,.94);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit;color:#e8efe9}
 #glob .gbox{animation:lkIn .25s ease-out;width:min(600px,100%);max-height:100%;overflow:auto;background:#121a16;border:1px solid #2d4a3a;border-radius:10px;padding:18px 18px 16px;box-shadow:0 10px 40px #000a}
@@ -15950,17 +16023,17 @@ const GLB={landing:null,me:{f:null,t:-1,r:0},roster:null,el:null,sent:0};
 function glName(r,k){return r.me?'You':r.h?'Leader':'Friend '+k;}
 // what the lobby looks like to a guest: from the Cloudflare blob or the browser host's roster
 function glData(){const B=NET.cf&&NET.cf.blob;
-  if(B&&!B.own&&Array.isArray(B.seats)){const rows=B.seats.filter(s=>s.h).map((s,k)=>({me:k===(B.you|0),h:k===0,f:s.f,tm:s.tm|0,rd:s.r}));
-    for(const s of B.seats)if(s.ai)rows.push({ai:1,f:s.f,tm:s.tm|0});return {map:B.map,mx:B.mx|0,rows,srv:1,w:B.w};}
-  const R=GLB.rg===NET.game?GLB.roster:null;if(R&&Array.isArray(R.r))return {map:R.m,mx:R.mx|0,rows:R.r.map(x=>({me:x.p===NET.myPeer,h:!!x.h,ai:!!x.ai,f:x.f,tm:x.t|0,rd:x.h||x.ai?undefined:x.d})),srv:0};
+  if(B&&!B.own&&Array.isArray(B.seats)){const rows=B.seats.filter(s=>s.h).map((s,k)=>({me:k===(B.you|0),h:k===0,f:s.f,tm:s.tm|0,rd:s.r,c:s.c>=0?s.c|0:-1}));
+    for(const s of B.seats)if(s.ai)rows.push({ai:1,f:s.f,tm:s.tm|0,c:s.c>=0?s.c|0:-1});return {map:B.map,mx:B.mx|0,rows,srv:1,w:B.w};}
+  const R=GLB.rg===NET.game?GLB.roster:null;if(R&&Array.isArray(R.r))return {map:R.m,mx:R.mx|0,rows:R.r.map(x=>({me:x.p===NET.myPeer,h:!!x.h,ai:!!x.ai,f:x.f,tm:x.t|0,rd:x.h||x.ai?undefined:x.d,c:x.c>=0?x.c|0:-1})),srv:0};
   return null;}
-function glSend(){if(!NET.game||MODE!=='single'||NET.wantSpec)return;const m=GLB.me;NET.game.emit('pick',{f:m.f,t:m.t,r:m.r?1:0}).catch(()=>{});}
+function glSend(){if(!NET.game||MODE!=='single'||NET.wantSpec)return;const m=GLB.me;NET.game.emit('pick',{f:m.f,t:m.t,r:m.r?1:0,c:m.c>=0?m.c:-1}).catch(()=>{});}
 // the browser host tells everybody in the lobby who is here (called from renderLobby; an old guest page ignores it)
 function glBroadcast(mk,mx){if(!NET.game||MODE!=='single'||NET.cf&&NET.cf.own)return;
-  const r=[{p:NET.myPeer||'',h:1,f:setup.p,t:NET.tm[0]|0}];NET.lobby.forEach((p,k)=>r.push({p:p.peer,f:p.f,t:NET.tm[k+1]|0,d:p.r?1:0}));(NET.ais||[]).forEach(a=>r.push({ai:1,f:a.f,t:a.tm|0}));
+  const r=[{p:NET.myPeer||'',h:1,f:setup.p,t:NET.tm[0]|0,c:NET.pc0>=0?NET.pc0:-1}];NET.lobby.forEach((p,k)=>r.push({p:p.peer,f:p.f,t:NET.tm[k+1]|0,d:p.r?1:0,c:p.c>=0?p.c:-1}));(NET.ais||[]).forEach(a=>r.push({ai:1,f:a.f,t:a.tm|0,c:a.c>=0?a.c:-1}));
   NET.game.emit('lobr',{m:mk,mx,r}).catch(()=>{});}
 function glRender(){const guest=MODE==='single'&&NET.game&&NET.code==='join'&&!(NET.cf&&NET.cf.own);
-  if(guest&&NET.joined&&GLB.g!==NET.game&&!NET.wantSpec){GLB.g=NET.game;GLB.me={f:setup.p,t:-1,r:0};glSend();}
+  if(guest&&NET.joined&&GLB.g!==NET.game&&!NET.wantSpec){GLB.g=NET.game;GLB.me={f:setup.p,t:-1,r:0,c:pcLoad()};glSend();}
   if(!guest&&!GLB.landing){if(GLB.el){GLB.el.remove();GLB.el=null;}return;}
   if(MODE!=='single'&&GLB.el){GLB.el.remove();GLB.el=null;GLB.landing=null;return;}
   const D=guest&&!NET.wantSpec?glData():null;
@@ -15981,8 +16054,8 @@ function glRender(){const guest=MODE==='single'&&NET.game&&NET.code==='join'&&!(
   // keep a select the person is using open: only redraw when something changed
   if(GLB.el){GLB.el.remove();GLB.el=null;}
   const key=JSON.stringify([D.rows,GLB.me,D.mx,D.w,MPL.el?1:0]);if(GLB.key===key&&MPL.el)return;GLB.key=key;
-  const rows=D.rows.map((r,k)=>r.ai?{kind:'ai',d:r.d|0,f:r.f,tm:r.tm|0,ed:null}:{kind:'human',you:!!r.me,host:!!r.h,name:glName(r,k),f:r.me?GLB.me.f:r.f,tm:r.me&&GLB.me.t>=0?GLB.me.t:r.tm|0,rd:r.me?GLB.me.r:r.rd,
-    ed:r.me?{f:v=>{GLB.me.f=v;setup.p=v;try{facCards();}catch(e){}glSend();glRender();},t:v=>{GLB.me.t=v;glSend();glRender();}}:null});
+  const pcA=D.rows.map(r=>r.c>=0?r.c:-1),rows=D.rows.map((r,k)=>r.ai?{kind:'ai',d:r.d|0,f:r.f,tm:r.tm|0,pc:pcA[k],pcTaken:pcTakenOf(pcA,k),nat:(FACTIONS[r.f]||{}).color,ed:null}:{kind:'human',you:!!r.me,host:!!r.h,name:glName(r,k),f:r.me?GLB.me.f:r.f,tm:r.me&&GLB.me.t>=0?GLB.me.t:r.tm|0,rd:r.me?GLB.me.r:r.rd,pc:pcA[k],pcTaken:pcTakenOf(pcA,k),nat:(FACTIONS[r.me?GLB.me.f:r.f]||{}).color,
+    ed:r.me?{c:v=>{GLB.me.c=v;pcSave(v);glSend();glRender();},f:v=>{GLB.me.f=v;setup.p=v;try{facCards();}catch(e){}glSend();glRender();},t:v=>{GLB.me.t=v;glSend();glRender();}}:null});
   for(let i=D.rows.length;i<mx;i++)rows.push({kind:'open'});
   mplShow({code:lobbyCode(),mk:D.map,mx,nn:D.rows.length,rows,all,w:D.w,net:typeof cfNetText==='function'?cfNetText():'',notes:['Waiting for the leader to start'],
     ready:{on:!!GLB.me.r,fn:()=>{GLB.me.r=GLB.me.r?0:1;glSend();glRender();}},back:()=>{try{leaveNet();}catch(e){}GLB.landing=null;mplHide();glRender();}});
@@ -16060,7 +16133,7 @@ return K;})();
    08d-lobby glRender (guest) turn their lobby into one description D and call mplShow(D); the screen only draws it and calls back.
    Frame: title + room code (top-left) | players table Player / Colour / Nation / Team + ready marks | map preview + SELECT MAP | options row
    | lobby log + chat line | PLAY GAME (leader) or READY (guest) bottom-left, BACK bottom-right.
-   Colour is the team colour (read-only swatch: the sim has no separate player colour). Chat: the lobby has no chat message yet, so the box shows the
+   Colour: a picker per row (pcPicker; you change your own row, the leader the computer rows; r.pc/r.pcTaken/r.nat/r.ed.c). Chat: the lobby has no chat message yet, so the box shows the
    lobby log (joins, leaves) and its input is disabled until a chat message exists. */
 const MPL={el:null,log:[],key:''};
 (function(){const s=document.createElement('style');s.id='mplCss';s.textContent=`
@@ -16083,6 +16156,8 @@ body.mplon #menu{visibility:hidden}
 #mpl select:not(:disabled):hover,#mpl select:not(:disabled):focus{border-color:#7fb88a;box-shadow:0 0 8px #7fb88a66}
 #mpl .mnm{display:flex;align-items:center;gap:10px;min-width:0}#mpl .mnm b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mpl .mtag{font-size:12px;padding:2px 8px;border-radius:9px;background:#33443b;text-transform:uppercase;letter-spacing:.06em}
+#mpl .pcb{display:flex;align-items:center;gap:8px;cursor:pointer;background:#101511;border:1px solid #55685a;border-radius:4px;padding:3px 8px;min-height:36px;color:#e4eadf;font:inherit;font-size:15px}#mpl .pcb:hover{border-color:#7fb88a;box-shadow:0 0 8px #7fb88a66}#mpl .pcb[disabled]{cursor:default;border-color:transparent;background:transparent;box-shadow:none}#mpl .pcb i{display:inline-block;width:34px;height:20px;border-radius:3px;background:var(--pc);box-shadow:0 0 0 1px #000a}
+#pcpop{position:fixed;z-index:400;background:#121a16;border:1px solid #7fb88a;border-radius:6px;padding:8px;box-shadow:0 8px 28px #000c;display:grid;grid-template-columns:repeat(4,44px);gap:6px;font-family:inherit}#pcpop button{width:44px;height:30px;border-radius:4px;border:2px solid #000a;cursor:pointer;background:var(--pc);padding:0;position:relative}#pcpop button:hover:not(:disabled){border-color:#fff}#pcpop button.on{border-color:#fff;box-shadow:0 0 8px #fff}#pcpop button:disabled{opacity:.22;cursor:not-allowed}#pcpop .pcn{grid-column:1/-1;background:#222c26;color:#e4eadf;width:auto;height:auto;padding:5px 8px;font:600 13px inherit;font-family:inherit;text-align:left}#pcpop .pcn.on{border-color:#fff}
 #mpl .msw{display:inline-block;width:64px;height:22px;border-radius:3px;background:var(--tc);box-shadow:0 0 0 1px #000a,0 0 8px var(--tc)}
 #mpl .mrd{font-size:15px;font-weight:700;letter-spacing:.05em;color:#8d9b8c}#mpl .mrd.on{color:#6fe39a}
 #mpl .mopts{display:flex;flex-wrap:wrap;gap:10px 26px;align-items:center;padding:10px 14px;border:1px solid #3b4a3d;border-radius:4px;background:#141915;font-size:17px}
@@ -16103,6 +16178,7 @@ body.mplon #menu{visibility:hidden}
 #mpl .mmid{flex:1;font-size:16px;opacity:.82;min-width:0}
 #mpl .mft .mback{margin-left:auto}
 #mpl .lkinv{padding:8px 10px}
+.mpldd{width:100%;margin:6px 0 4px;padding:8px 10px;font:700 15px system-ui,sans-serif;color:#eef3f6;background:#0d1418;border:2px solid #5f7f9f;border-radius:4px}
 `;document.head.appendChild(s);
 const _t=LK.toast;LK.toast=function(m){try{mplLog(m);}catch(e){}return _t(m);};})();
 function mplLog(m){MPL.log.push(String(m));if(MPL.log.length>80)MPL.log.shift();const l=document.getElementById('mplLog');if(l){const d=document.createElement('div');d.textContent=String(m);l.append(d);l.scrollTop=l.scrollHeight;}}
@@ -16112,7 +16188,24 @@ function mplTeam(v,all){if(v!=='n')return +v;for(const t of [4,5,6,7,0,1,2,3])if
 // D: {code, mk, mx, nn, rows:[{kind:'human'|'ai'|'open', name, you, host, f, tm, rd, d, ed:{f,t,slot}|null, pers}], all:[team numbers],
 //     onMap, spots (canvas|null), w, setW, invite (element|null), net (text), notes:[text], start:{label,disabled,glow,fn,anyway,hint}|null,
 //     ready:{on,fn}|null, back}
+/* ---- player colour picker (Abdullah 2026-11-14 18:57): one popover shared by the online lobby (this file, 08d-lobby guest view) and the single-player Players step (08-ui renderTeams).
+   cur = PCOLS index or -1 (nation colour); taken = indexes other rows hold (greyed out); onPick(i) is called with the new index (-1 = nation colour). ed=false: shows the colour only. */
+function pcLoad(){try{const v=parseInt(localStorage.getItem('ww3_pcol'),10);return Number.isInteger(v)&&v>=0&&v<PCOLS.length?v:-1;}catch(e){return -1;}}
+function pcSave(v){try{localStorage.setItem('ww3_pcol',String(v));}catch(e){}}
+function pcTakenOf(pc,self){return new Set((pc||[]).filter((v,i)=>i!==self&&v>=0));}
+function pcFree(pc,n){const used=new Set((pc||[]).slice(0,n).filter(v=>v>=0));const k=PCOLS.findIndex((_,i)=>!used.has(i));return k;}
+function pcPop(){const o=document.getElementById('pcpop');if(o)o.remove();}
+function pcPicker(cur,taken,natCol,onPick,label,ed){const b=document.createElement('button');b.type='button';b.className='pcb';b.setAttribute('aria-label',label||'Color');
+  const col=cur>=0&&PCOLS[cur]?PCOLS[cur].c:natCol||'#888',i=document.createElement('i');i.style.setProperty('--pc',col);b.append(i,document.createTextNode(cur>=0&&PCOLS[cur]?PCOLS[cur].n:'Nation'));
+  if(!ed){b.disabled=true;return b;}
+  b.onclick=e=>{e.stopPropagation();if(document.getElementById('pcpop')){pcPop();return;}const pop=document.createElement('div');pop.id='pcpop';
+    const nat=document.createElement('button');nat.type='button';nat.className='pcn'+(cur<0?' on':'');nat.textContent='Nation color (default)';nat.onclick=()=>{pcPop();onPick(-1);};pop.append(nat);
+    PCOLS.forEach((c,k)=>{const q=document.createElement('button');q.type='button';q.style.setProperty('--pc',c.c);q.title=c.n+(taken.has(k)?' (taken)':'');q.setAttribute('aria-label',c.n);q.disabled=taken.has(k);if(k===cur)q.className='on';q.onclick=()=>{pcPop();onPick(k);};pop.append(q);});
+    document.body.append(pop);const r=b.getBoundingClientRect();pop.style.left=Math.max(4,Math.min(r.left,innerWidth-pop.offsetWidth-6))+'px';pop.style.top=(r.bottom+4+pop.offsetHeight>innerHeight?Math.max(4,r.top-pop.offsetHeight-4):r.bottom+4)+'px';
+    const away=ev=>{if(!pop.contains(ev.target)){pcPop();document.removeEventListener('mousedown',away,true);}};setTimeout(()=>document.addEventListener('mousedown',away,true),0);};
+  return b;}
 function mplShow(D){
+  pcPop();
   const E=(t,c,x)=>{const d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d;};
   const opt=(s,v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;s.append(o);};
   const prevLog=MPL.el&&MPL.el.querySelector('#mplLog'),keepTop=prevLog?prevLog.scrollTop:0;
@@ -16125,7 +16218,7 @@ function mplShow(D){
     if(r.kind==='ai'){nm.append(E('span','mtag','AI'));if(r.ed&&r.ed.slot){const s=document.createElement('select');s.setAttribute('aria-label','Computer player '+(i+1));opt(s,'',"Open (remove)");AI_LEVELS.forEach((n,d)=>opt(s,d,n));s.value=String(r.d|0);s.onchange=()=>r.ed.slot(s.value===''?-1:+s.value);nm.append(s);if(r.pers)nm.append(r.pers);}else nm.append(E('b','',AI_LEVELS[r.d|0]));}
     else{nm.append(LK.flag(r.f),E('b','',r.name));if(r.you){nm.append(E('span','mtag','you'));const pg=LK.ping();if(pg)nm.append(pg);}if(r.host&&!r.you)nm.append(E('span','mtag','leader'));}
     c1.append(nm);
-    const sw=E('span','msw');td().append(sw);
+    td().append(r.kind==='open'?E('span','',''):pcPicker(r.pc>=0?r.pc:-1,r.pcTaken||new Set(),r.nat||'#888',v=>r.ed.c(v),'Color of '+(r.name||'player '+(i+1)),!!(r.ed&&r.ed.c)));
     const cn=td(),fs=document.createElement('select');fs.setAttribute('aria-label','Nation of '+(r.name||'player '+(i+1)));opt(fs,'rand','Random');for(const k of FKEYS)opt(fs,k,FACTIONS[k].name);fs.value=FKEYS.includes(r.f)?r.f:'rand';
     if(r.ed&&r.ed.f)fs.onchange=()=>r.ed.f(fs.value==='rand'?FKEYS[(Math.random()*FKEYS.length)|0]:fs.value);else fs.disabled=true;cn.append(fs);
     const ct=td(),ts=document.createElement('select');ts.setAttribute('aria-label','Team of '+(r.name||'player '+(i+1)));opt(ts,'n','None');for(let t=0;t<4;t++)opt(ts,t,'Team '+(t+1));ts.value=(r.tm|0)<4?String(r.tm|0):'n';
@@ -16144,7 +16237,13 @@ function mplShow(D){
   const R=E('div','mright'),pv=E('div','mpv');let cv=D.spots;
   if(!cv){cv=document.createElement('canvas');cv.width=384;cv.height=264;setTimeout(()=>{try{mapPreview(D.mk,cv);}catch(e){}},30);}
   pv.append(cv);R.append(pv);const m=MAPS[D.mk]||{};R.append(E('div','mmap',m.name||D.mk),E('div','mmapn',(m.bm&&typeof bmInfo==='function'?(()=>{const I=bmInfo(D.mk);return I.players+' players · '+I.size+' · '+I.theme;})():(m.min||2)+'–'+(m.max||D.mx)+' players')));
-  if(D.onMap){const b=E('button','mbtn sec','SELECT MAP');b.id='mplSelMap';b.onclick=D.onMap;R.append(b);}
+  /* map dropdown (Abdullah 2026-11-14 18:39 "select maps from a drop down in lobby"): every map that fits the room, in the one Battle list; the host picks, others see the name */
+  if(D.onMap){const ms=document.getElementById('mapSel'),s=document.createElement('select');s.id='mplMapDd';s.className='mpldd';s.setAttribute('aria-label','Battlefield');
+    const keys=(typeof BATTLE_MAPS!=='undefined'&&BATTLE_MAPS.length?BATTLE_MAPS:Object.keys(MAPS)).filter(k=>MAPS[k]&&(MAPS[k].max||8)>=Math.max(2,D.nn||1));
+    for(const k of keys){const o=document.createElement('option');o.value=k;const M=MAPS[k];o.textContent=(M.name||k)+'  ('+(M.min||2)+'–'+(M.max||8)+')';s.append(o);}
+    if(!keys.includes(D.mk)){const o=document.createElement('option');o.value=D.mk;o.textContent=(MAPS[D.mk]||{}).name||D.mk;s.prepend(o);}s.value=D.mk;
+    s.onchange=()=>{const v=s.value;if(!MAPS[v])return;/* set the map directly: the old #mapSel only had a change handler after its picker page was opened, so the pick was lost (Abdullah 19:13 "stuck on one map") */setup.map=v;setup.slot=-1;setup.st=[];setup.stK=null;try{if(MAPS[v].bm||(typeof BM_KEYS!=='undefined'&&BM_KEYS.includes(v)))SET.bmap=v;else SET.map=v;saveSet();}catch(e){}if(ms){if(![...ms.options].some(o=>o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=(MAPS[v]||{}).name||v;ms.append(o);}ms.value=v;}try{syncAiN();}catch(e){}try{renderLobby();}catch(e){}};
+    R.append(s);}   /* the dropdown is the one way to pick the map (Abdullah 18:54 "There should not be a separate map selection page") */
   if(D.spotNote)R.append(E('div','mmapn',D.spotNote));
   if(D.invite)R.append(D.invite);
   fr.append(R);
@@ -16318,7 +16417,7 @@ async function svMenuSync(){const cb=$('svContinue');if(!cb)return;let L=[];try{
   svLatest=L.find(m=>!svCheck(m))||null;
   cb.hidden=!svLatest;cb.dataset.kind=svLatest?'battle':'';
   if(svLatest)cb.textContent='▶ Continue — '+svLatest.mapName+' · '+svLatest.facName+' · '+svClock(svLatest.t);
-  const lb=$('svLoadBtn');if(lb)lb.hidden=false;try{if(typeof mxWarTable==='function')mxWarTable();}catch(e){}}
+  const lb=$('svLoadBtn');if(lb)lb.hidden=false;}
 function svInstall(){const rs=$('resumeBtn');if(rs&&!$('svSave')){const b=document.createElement('button');b.id='svSave';b.type='button';b.className='big ghost';b.textContent='Save game';b.onclick=()=>svSaveDialog();rs.after(b);}
   const st=$('start');if(st&&!$('svLoadBtn')){const l=document.createElement('button');l.id='svLoadBtn';l.type='button';l.className='big ghost';l.textContent='Load game';l.title='Load a saved battle (or a .ww3save file)';l.onclick=()=>svLoadDialog();
     const c=document.createElement('button');c.id='svContinue';c.type='button';c.className='big';c.hidden=true;c.onclick=async()=>{if(!svLatest)return;c.disabled=true;const r=await svLoadId(svLatest.id);c.disabled=false;if(!r.ok)uiDialog(r.msg,{yes:'OK',no:'Close'},()=>{});};
@@ -16392,6 +16491,7 @@ const ENC_NOTE={
   tank:'Main battle tanks combine a stabilized high-velocity gun, thick composite armor and a powerful engine. They lead armored assaults and break enemy lines, but need infantry and air-defence cover in towns and against anti-tank missiles.',
   arty:'Self-propelled guns and rocket launchers shell targets many kilometers away, then move before counter-battery fire arrives. Superb against massed troops and buildings, nearly helpless once the enemy reaches them.',
   aa:'Mobile air-defence vehicles carry radar-guided guns or short-range missiles to protect columns and bases from helicopters, jets and drones.',
+  ammot:'Ammo trucks follow the army: they top up the ammunition of friendly units close to them, carry a limited stock and reload inside your own area. Light armor, no weapon: keep them behind the front.',
   harv:'Supply trucks are the logistics backbone: fuel, ammunition and food move by road. Armies lose more equipment to broken supply than to enemy fire.',
   dozer:'Combat engineers build bridges, fortifications and camps and clear obstacles, often under fire. The heavy construction vehicle is how an army digs in and builds forward.',
   heli:'Attack helicopters hunt armor from behind hills and tree lines with guided missiles and cannon. Fast and flexible, they are vulnerable to air defense and massed small-arms fire.',
@@ -16729,7 +16829,7 @@ POW_KEY.hack='[';POW_KEY.emp=']';
 (()=>{const st=document.createElement('style');st.textContent='#mwPip{position:fixed;left:14px;top:62px;width:240px;height:135px;z-index:40;border:2px solid #e23b33;box-shadow:0 4px 16px #000a;pointer-events:none;display:none}#mwPip .t{position:absolute;left:-2px;top:-20px;background:#e23b33;color:#fff;font:800 12px system-ui,sans-serif;letter-spacing:.08em;padding:2px 8px}#mwPip .x{position:absolute;left:0;right:0;bottom:0;background:rgba(8,10,12,.82);color:#fff;font:600 12px system-ui,sans-serif;padding:3px 7px}#mwFlash{position:fixed;inset:0;z-index:39;pointer-events:none;background:#7fd0ff;opacity:0;transition:opacity .5s}#mwScore{position:fixed;left:50%;top:58px;transform:translateX(-50%);z-index:59;background:rgba(10,14,12,.82);border:1px solid #4a5a48;border-radius:8px;padding:5px 10px;color:#e8eadf;font:600 13px system-ui,sans-serif;display:none}#mwScore div{display:flex;gap:10px;align-items:center;white-space:nowrap}#mwScore i{width:10px;height:10px;border-radius:50%;display:inline-block}#mwScore span{min-width:46px;text-align:right}';document.head.appendChild(st);})();
 function mwPipEl(show,label){let el=document.getElementById('mwPip');if(!el){el=document.createElement('div');el.id='mwPip';el.innerHTML='<div class="t">BREAKING NEWS</div><div class="x"></div>';document.body.appendChild(el);}
   if(show){el.lastChild.textContent=label||'';}el.style.display=show?'block':'none';}
-function mwPipShow(x,y,label,delay){if(typeof SET!=='undefined'&&SET.tk===0)return;if(typeof MODE!=='undefined'&&MODE==='replay')return;
+function mwPipShow(x,y,label,delay){return;if(typeof SET!=='undefined'&&SET.tk===0)return;if(typeof MODE!=='undefined'&&MODE==='replay')return;
   const g0=G,go=()=>{if(!G||G!==g0||G.over||(window.LOADING))return;const now=performance.now();if((MWV.pip&&MWV.pip.until>now)||now-MWV.pipAt<6000)return;MWV.pipAt=now;MWV.pip={x,y,until:now+3000,G};mwPipEl(true,label);};
   if(delay>0)setTimeout(go,delay*1000);else go();}
 // The corner picture is drawn into its own small off-screen picture with the same settings as the main view and then
@@ -16856,7 +16956,7 @@ const WHATS_NEW=[
  ['Test range: pick both nations','Test range now opens a small window: choose your nation, the target nation (it can be the same one) and a map, then Start. Inside the range, "Change nations…" in the Test range box restarts it with a new pair, no trip through the main menu.'],
  ['Battle runs on Generators','Build a Generator (Build tab, about the price of a Barracks) to power your electronic buildings: air defense, coastal missiles, the Strike Center, Radio & TV, the Airfield and your minimap radar. Your top bar shows power produced and used: green is fine, red means LOW POWER and those buildings go offline until you build another Generator or capture a map power plant. Barracks, War Factory, Depot and defense guns never need power. Blowing up enemy Generators is a real tactic. Conquest keeps its map power plants.'],
  ['Every building has its own queue','Like Generals: infantry come only from a Barracks, vehicles from a War Factory, aircraft from an Airfield, ships from a Shipyard. Select the building to see what it can make and its own queue (progress bar on the first unit, ×3 badges). Click = add one, Shift+click = add five, right-click a queued icon = cancel one with a full refund. Two Barracks build two soldiers at the same time; each unit walks out of its own building to that building\'s rally point. With nothing selected the Units tab still works and picks the least busy building. A destroyed building refunds its queue. The old +50% speed for a second building is gone.'],
- ['One game: Battle, now with supply lines','The game is now one game: Battle (Command Center, supply trucks, tech tree, destroy every enemy building). Conquest and the Grand campaign are gone. Battle has SUPPLY LINES: the roads running out of your Command Center and Supply Depots are green on the minimap (L shows them on the ground). Units refill ammo near your buildings and on those roads; far beyond them they fight until empty, then must come back or get a supply truck. Craters, blown bridges and enemy checkpoints cut a line (dashed) - your Construction Vehicle repairs a crater fast. Every old battlefield is now a Battle map, and the main menu is Play · Multiplayer · Test range.'],
+ ['One game: Battle, now with supply lines','The game is now one game: Battle (Command Center, supply trucks, tech tree, destroy every enemy building). Conquest and the Grand campaign are gone. Battle has SUPPLY LINES: the roads running out of your Command Center and Supply Depots are green on the minimap (L shows them on the ground). Units refill ammo near your buildings and on those roads; far beyond them they fight until empty, then must come back or get an Ammo Truck from the War Factory. Craters, blown bridges and enemy checkpoints cut a line (dashed) - your Construction Vehicle repairs a crater fast. Every old battlefield is now a Battle map, and the main menu is Play · Multiplayer · Test range.'],
  ['The main menu shows your war','The main menu background now shows whatever Continue would take you back to: that battlefield with your front line drawn in.'],
  ['Every button says what it beats','Unit buttons now carry two small pictures: green = what this unit BEATS best, red = what it is most WEAK TO. Hold the mouse on a button for the full list with names. Point at an enemy unit (or select it) and the buttons that beat it light up green with "BEATS IT". The game works these out from the real damage, armor, range and price numbers against the nation you are fighting, so they are always true - the Encyclopedia and the Unit guide show the same.'],
  ['Commander\'s radio','Every report from the field - base under attack, enemy spotted, unit lost, building finished, a unit ready - is now one short line with a small icon at the top left of the battle (three lines at most, each fades after a few seconds). Lines marked with a small arrow know where it happened: click the line, or press Space, and the camera goes there. Settings has a switch for it.'],
@@ -17736,6 +17836,9 @@ html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 #cmdP{bottom:auto!important;top:64px!important;left:10px!important;right:auto!important}
 html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
 #hudLyB{display:none!important}
+#pq{display:none!important}   /* the grey queue strip above the bar is gone (Abdullah 18:33); queue counts stay on the buttons */
+#news,#mwPip{display:none!important}
+.stanceBtn,[data-k="sn"]{display:none!important}   /* army stance removed */
 #pwMeter{display:none!important}   /* power lives in the bar's top console now */
 /* ▼ folds the whole bar down off the screen; only the ▼/★ tabs stay (Abdullah 16:33 "Make this down arrow minimize the entire bar") */
 html body #side.min{height:0!important;min-height:0!important;padding:0!important;overflow:visible!important;background:none!important;box-shadow:none!important;border:0!important}
@@ -17783,6 +17886,17 @@ html body #side #zhTop #zhPw.low{color:#ff8a78}
 html body #side #zhTop #popCap{font:700 12px system-ui,sans-serif!important;color:#cfe3f5!important;letter-spacing:.04em}
 html body #side #zhTop #popCap::before{content:"👥";margin-right:6px;font-size:13px}
 html body #side.min #zhTop{display:none!important}
+
+/* upgrades are square picture buttons like everything else (Abdullah 18:20 "Why are supply tunnels just floating make it look better") */
+html body #side #panel .btn.wide{grid-column:auto!important;width:auto!important;height:auto!important;padding:0!important;justify-content:flex-start!important;background-image:radial-gradient(circle at 50% 36%,#3d5a48,#12201a 72%)!important}
+html body #side #panel .btn.wide::before{content:"▲";position:absolute;left:0;right:0;top:12%;text-align:center;font:900 calc(var(--zb)*.3) system-ui,sans-serif;color:#f4d96a;text-shadow:0 2px 3px #000}
+html body #side #panel .btn.wide>.n{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;position:absolute!important;left:0;right:0;bottom:0;margin:0!important;padding:2px 3px!important;font:700 11px/1.15 system-ui,sans-serif!important;color:#f2f6f8!important;text-align:center!important;white-space:normal!important;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.8))!important}
+html body #side #panel .btn.wide>.c,html body #side #panel .btn.wide>.d{display:none!important}
+html body #side #panel .btn.wide.done::after,html body #side #panel .btn.wide[data-done="1"]::after{content:"✓";position:absolute;right:4px;top:2px;color:#7fe08a;font:900 16px system-ui}
+
+html body #side #panel .btn.zhL{background-image:radial-gradient(circle at 50% 38%,#8a2a18,#2a0c06 75%)!important;border-color:#ff9a6a!important}
+html body #side #panel .btn.zhL::before{content:"🚀";position:absolute;left:0;right:0;top:10%;text-align:center;font-size:calc(var(--zb)*.32)}
+html body #side #panel .btn.zhL.rdy{box-shadow:inset 0 0 0 2px #ffd23a,0 0 12px #ff7a3a!important;animation:zhPulse 1.2s ease-in-out infinite}
 #zhTip{position:fixed;left:10px;z-index:60;width:clamp(240px,22vw,380px);pointer-events:none;padding:10px 14px;border-radius:4px;color:#e9efdc;font:14px/1.4 system-ui,sans-serif;
  background:linear-gradient(180deg,rgba(14,22,40,.95),rgba(8,14,30,.95));box-shadow:inset 0 0 0 1px #000,inset 0 0 0 2px #3a5ea8,0 4px 14px rgba(0,0,0,.6)}
 #zhTip b{display:block;text-align:center;font-size:16px;margin-bottom:4px}#zhTip .zc{color:#f4d96a;font-weight:700}#zhTip .zd{color:#c9d3bd;margin-top:3px}#zhTip .zw{color:#ff9a7a;margin-top:3px}`;document.head.append(st);}
@@ -17806,6 +17920,11 @@ function zhCtx(){if(!G)return;const sd=$('side');if(!sd)return;
   const sig=(G.sel||[]).map(e=>e.id).join(',');if(sig!==ZH.sig)ZH.sig=sig;try{zhPowWin();}catch(e){}
   star.classList.toggle('on',ZH.star);{const pd=document.querySelector('.tabs button[data-tab="pow"] .dot');const d=star.querySelector('.dot');if(d)d.hidden=!(pd&&!pd.hidden&&getComputedStyle(pd).display!=='none');}
   const w=zhWant();if(w&&TAB!==w)showTab(w);
+  /* a production building shows ONLY the units it makes (War Factory = vehicles, Barracks = infantry, ...) */
+  {const pnF=$('panel'),sb=(G.sel||[]).find(e=>e&&!e.dead&&e.isB&&e.team===ME);if(pnF&&w==='units'&&sb){const T=G.teams[ME];for(const u of pnF.querySelectorAll(':scope>[data-tab="units"]')){if(u.classList.contains('sub')){u.hidden=true;continue;}const k=u.id.slice(2);let ok=false;try{ok=stats(T.fac,k).from===sb.kind;}catch(e){}if(u.hidden===ok)u.hidden=!ok;}}}
+  /* the strike building gets its own LAUNCH button (Abdullah 18:26 "Missile city ... there is no way to use it") */
+  {const pnL=$('panel');if(pnL){let lb=$('zhLaunch');if(!lb||lb.parentNode!==pnL){lb=document.createElement('button');lb.id='zhLaunch';lb.type='button';lb.className='btn zhL';lb.dataset.tab='upg';lb.dataset.from='uplink';lb.innerHTML='<span class="n"></span>';lb.onclick=()=>{const sb=$('supbtn');if(sb&&!sb.disabled)sb.click();};pnL.prepend(lb);}
+    const sb=$('supbtn'),nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),dis=!sb||sb.disabled,lbl='LAUNCH '+nm+(st?' · '+st:'');if(lb.dataset.k!==lbl+dis){lb.dataset.k=lbl+dis;lb.querySelector('.n').textContent=dis?nm+(st?' · '+st:''):'LAUNCH '+nm;lb.dataset.nm=lb.querySelector('.n').textContent;lb.dataset.desc='Fire your strike: click LAUNCH, then right-click the target on the map.';lb.disabled=dis;lb.classList.toggle('rdy',!dis);}}}
   /* a selected building shows its own upgrades next to its units (upgrades are researched at their building: Abdullah 14:37) */
   {const pnU=$('panel'),sb=(G.sel||[]).find(e=>e&&!e.dead&&e.isB&&e.team===ME);if(pnU)for(const u of pnU.querySelectorAll(':scope>[data-tab="upg"]')){const want=!!sb&&u.dataset.from===sb.kind&&(w==='units'||w==='upg');if(u.classList.contains('sub')){u.hidden=true;continue;}if(u.hidden===want)u.hidden=!want;}}sd.classList.toggle('zhpow',w==='pow');{const sb=$('supbtn');star.classList.toggle('rdy',!!(sb&&!sb.disabled)&&!ZH.star);}
   {const od=document.querySelector('.orddock');const pn0=$('panel');if(od&&pn0&&innerWidth>=900){if((w==='none'||w==='build')&&!od.classList.contains('empty')){const r=pn0.getBoundingClientRect(),n=od.querySelectorAll('button').length,zb=(()=>{const b=[...pn0.querySelectorAll('.btn.hasic')].find(b=>!b.hidden&&b.offsetWidth>20);return b?b.getBoundingClientRect().width:90;})(),cols=w==='build'?Math.ceil(n/2):Math.max(1,Math.ceil(r.width/(zb+4))),ow=Math.min(r.width,cols*(zb+4)+12);od.classList.add('zhin');od.classList.toggle('zhb',w==='build');const fm=document.getElementById('fmb'),fmOn=w==='none'&&fm&&!fm.hidden&&fm.style.display!=='none'&&fm.children.length;
@@ -17941,7 +18060,7 @@ function auOn(){return !!(AU.ctx&&AU.ctx.state==='running');}
 function martyrSwell(team){try{if(!AU.ctx||!AU.musicOn||!AU.mus||!G||!ally(team,ME))return;const n=performance.now();if(n-(AU.swellT||0)<20000)return;AU.swellT=n;const c=AU.ctx,t=c.currentTime,g=AU.musBus.gain;g.setTargetAtTime(musBase()*1.41,t,.8);g.setTargetAtTime(musBase(),t+6,1.2);}catch(e){}}
 function musBase(){return .19*(SET.mus/70);}
 function applyAudio(){if(AU.ctx){AU.sfx.gain.value=AU.sfxOn?SET.fx/100:0;if(AU.ui)AU.ui.gain.value=AU.sfxOn?Math.min(1,SET.fx/100):0;AU.musBus.gain.value=AU.musicOn?musBase():0;}const set=(id,on,l)=>{const b=$(id);if(b){b.textContent=l+(on?' on':' off');b.classList.toggle('on',on);}};set('aMus',AU.musicOn,'Music');set('aSfx',AU.sfxOn,'Sound');set('aVoc',AU.voiceOn,'Voices');}
-function spatial(x,y){if(!G||G.shell||!CAM)return null;const d=Math.hypot(x-cam.x,y-cam.y),r=cam.dist*1.25;if(d>r*1.8)return null;const v=Math.max(0,1-d/(r*1.8))*Math.pow(900/cam.dist,.5);TMP.set(x,0,y).project(CAM);return{v,pan:Math.max(-1,Math.min(1,TMP.x*.8)),far:Math.min(1,d/(r*1.8))};}
+function spatial(x,y){if(!G||!CAM)return null;const d=Math.hypot(x-cam.x,y-cam.y),r=cam.dist*1.25;if(d>r*1.8)return null;const v=Math.max(0,1-d/(r*1.8))*Math.pow(900/cam.dist,.5);TMP.set(x,0,y).project(CAM);return{v,pan:Math.max(-1,Math.min(1,TMP.x*.8)),far:Math.min(1,d/(r*1.8))};}
 function bus(sp){const c=AU.ctx,g=c.createGain();g.gain.value=sp.v;let n=g;if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=sp.pan;g.connect(p);n=p;}const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900+16000*Math.pow(1-sp.far,1.8);
   // battle sound in 3D (realism): far fire is a muffled low rumble (high end rolled off, low end lifted), close fire a sharp crack
   let pre=n;const lo=typeof fxPH==='function'&&fxPH();if(!lo){if(sp.far>.3){const sh=c.createBiquadFilter();sh.type='lowshelf';sh.frequency.value=220;sh.gain.value=(sp.far-.3)*9;n.connect(sh);pre=sh;}else if(sp.far<.22){const pk=c.createBiquadFilter();pk.type='peaking';pk.frequency.value=3000;pk.Q.value=.9;pk.gain.value=5*(1-sp.far/.22);n.connect(pk);pre=pk;}}
@@ -18659,7 +18778,7 @@ let WALKSIGN=1;
 /* ================= ART ASSETS: real 3D models (Quaternius, Kenney, Zsky, KolosStudios, Alex Safayan, angelo raffaele Catalano, jeremy, Jarlan Perez via Poly Pizza) ================= */
 const MODELS={ready:false,proto:{},tinted:{},loading:null,flipX:{}};
 const MCFG={
-  tank:{m:'tank',fit:'z',size:38},harv:{m:'truck',fit:'z',size:34},dozer:{m:'truck',fit:'z',size:34,extra:'crane'},
+  tank:{m:'tank',fit:'z',size:38},harv:{m:'truck',fit:'z',size:34},ammot:{m:'truck',fit:'z',size:34},dozer:{m:'truck',fit:'z',size:34,extra:'crane'},
   mortar:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],extra:'mortar'},recon:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#4a5242',tk:.5},officer:{m:'soldier',fit:'y',size:15.7,tint:'#3d4a36',tk:.5},medic:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#e8e4da',tk:.35},
   commissar:{m:'soldier',fit:'y',size:15.7,tint:'#5b4a3a',tk:.5},sapper:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#6a5a3c',tk:.4},guer:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#4c5a3a',tk:.55},atk:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],tint:'#3c4434',tk:.5},
   idome:{m:'truck',fit:'z',size:36,extra:'samtruck'},ew:{m:'truck',fit:'z',size:35,extra:'dish'},cbr:{m:'truck',fit:'z',size:35,extra:'dish'},jeep:{m:'truck',fit:'z',size:26},atgm:{m:'truck',fit:'z',size:27,extra:'samtruck',tint:'#55603f',tk:.4},saka:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#a08a5c',tk:.5},raidlead:{m:'truck',fit:'z',size:28,extra:'mg'},
@@ -18687,9 +18806,9 @@ Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abr
 // China keeps the T-90, South Korea the Abrams-like K1 stand-in)
 Object.assign(RMAP.tank,{UA:'oplot',IR:'t72',KP:'t62',CU:'t55',TR:'leo2'});
 RMAP.arty={};RMAP.airlift={};RMAP.jeep={SA:'humvee'};RMAP.raidlead={DW:'hilux'};
-for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k]={};
-for(const f of WESTVEH){RMAP.arty[f]='g6';RMAP.airlift[f]='uh60';for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k][f]='m35';}
-for(const f of EASTVEH){if(f!=='RS'&&f!=='DW')RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
+for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k]={};
+for(const f of WESTVEH){RMAP.arty[f]='g6';RMAP.airlift[f]='uh60';for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]='m35';}
+for(const f of EASTVEH){if(f!=='RS'&&f!=='DW')RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
 // Faction-unique helicopters and warships (Objaverse / Sketchfab, CC BY, authors in the menu credits): Russia flies the Mi-28,
 // Egypt the Ka-52, Turkey, Pakistan and Iran an AH-1 Cobra-type gunship; Western navies a Type 45 destroyer (Germany an F123
 // frigate), Russia/China/North Korea/Ukraine/India/Pakistan/Cuba/Iran a Russian-style destroyer; the Shia nations'
@@ -19659,6 +19778,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
      fl.geometry.translate(-H*.375,0,0);fl.position.set(x,y0+H*.95+H*.82,z);fl.rotation.y=ax==='x'?(fwd>0?0:Math.PI):(fwd>0?-Math.PI/2:Math.PI/2);yaw.add(fl);o.userData.parts.pennant=fl;fl.userData.base=Float32Array.from(fl.geometry.attributes.position.array);}
     
     const m=mesh(B.geo());yaw.add(m);}}
+  if(e.kind==='ammot'){const B=Bld();B.box(17,8,15,-6,22,0,'#5d6048');B.box(18,1,16,-6,26.6,0,'#4c5039');for(const z of [-5,0,5])B.box(3,3,3,-15.5,20,z,'#8a6a3a');B.box(7,4,6,5,21,0,'#8a6a3a');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
   if(e.kind==='harv'){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}
@@ -20977,23 +21097,8 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 #menu.m3{background:#05080a;display:block;padding:0;overflow:hidden;z-index:20}
 #menu.m3>.card{display:none}
 #mx{position:absolute;inset:0;font-family:var(--display);color:var(--fg);user-select:none}
-#mxbg{position:absolute;inset:-3%;background:#0a0f0d center/cover no-repeat;animation:mxpan 70s ease-in-out infinite alternate;filter:saturate(1.2) brightness(.8) contrast(1.1)}
-#mxwt{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .9s}
-#mxwt.on{opacity:1}
-#mx.wt #mxbg{filter:saturate(1.1) brightness(.95)}
-#mx.wt #mxfade{background:radial-gradient(120% 105% at 68% 48%,rgba(5,8,10,0),rgba(5,8,10,.72) 92%),linear-gradient(90deg,rgba(5,8,10,.93),rgba(5,8,10,.55) 42%,rgba(5,8,10,.08) 72%)}
-.mxwtl{position:absolute;transform:translate(-50%,-50%);pointer-events:none;opacity:0;transition:opacity .9s .3s;text-align:center;white-space:nowrap}
-#mxwt.on~.mxwtl{opacity:1}
-.mxwtl.bat{transform:translate(-50%,-14px);font:500 11px var(--mono);color:#f2f4ec;text-shadow:0 1px 4px #000}
-.mxwtl.bat svg{display:block;margin:0 auto 4px;width:28px;height:28px;filter:drop-shadow(0 1px 3px #000)}
-.mxwtl.bat b{display:block;font:700 16px var(--display);letter-spacing:.12em;text-transform:uppercase;color:#ffd666}
-#mxwar{position:absolute;right:clamp(24px,5vw,72px);bottom:58px;text-align:right;pointer-events:none;white-space:nowrap;text-shadow:0 1px 6px #000,0 0 18px rgba(0,0,0,.8)}
-@media (max-width:1100px){#mxwar{display:none}}
-#mxwar i{display:block;font:500 11px var(--mono);font-style:normal;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
-#mxwar b{display:block;font:700 24px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;color:#f2f4ec;margin:3px 0 2px}
-#mxwar span{display:block;font:400 12px var(--mono);color:#c3cdc6}
-@keyframes mxpan{from{transform:scale(1.02) translate3d(-1%,0,0)}to{transform:scale(1.12) translate3d(1.5%,-1%,0)}}
-#mxfade{position:absolute;inset:0;background:radial-gradient(130% 100% at 70% 45%,rgba(5,8,10,.35),rgba(5,8,10,.85) 85%),linear-gradient(90deg,rgba(5,8,10,.9),rgba(5,8,10,.55) 60%,rgba(5,8,10,.4))}
+#mxbg{position:absolute;inset:0;background:#0a0f0d url(menu-bg2.webp) 25% center/cover no-repeat}   /* ONE static picture (menu-bg.webp, made with orch/menubgshots.mjs); a CSS background so the menu never waits for it and works without it */
+#mxfade{position:absolute;inset:0;background:linear-gradient(270deg,rgba(5,8,10,.92) 0,rgba(5,8,10,.82) calc(var(--mxw,34vw) + 4vw),rgba(5,8,10,.35) calc(var(--mxw,34vw) + 24vw),rgba(5,8,10,0) 75%),linear-gradient(0deg,rgba(5,8,10,.5),rgba(5,8,10,0) 28%)}
 #mxtop{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:18px;padding:0 clamp(24px,5vw,72px);z-index:3}
 #mxtop[hidden]{display:none!important}
 .mxback{font:600 17px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:none;border:0;padding:6px 2px;cursor:pointer}
@@ -21088,11 +21193,6 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 @media (max-width:1100px){.mxnat,.mxpl{grid-template-columns:1fr}#mxdet{position:static}}
 /* ---- Generals-style layout (Abdullah 2026-11-14): one right column of metal plates on every menu screen, Back bottom-left, the battle (or the picture) fills the rest ---- */
 #menu.m3,body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen){--mxw:clamp(460px,35vw,620px);--st1:#4a5445;--st2:#2e352c;--st3:#1b201a;--hi:#7d8a6c;--gold:#e8c85c}
-#menu.m3.sh{background:transparent}
-#mx.sh #mxbg,#mx.sh #mxwt,#mx.sh .mxwtl,#mx.sh #mxwar{display:none}
-#mx.sh #mxfade{background:radial-gradient(125% 110% at 38% 50%,rgba(5,8,10,0) 48%,rgba(5,8,10,.68) 100%),linear-gradient(90deg,rgba(5,8,10,.12),rgba(5,8,10,.2) 55%,rgba(5,8,10,.55))}
-body.mxshell #side,body.mxshell #stage>*:not(#cv),body.mxshell>*:not(#app):not(.overlay):not(#campScreen):not(#uiDlg):not(#gModal):not(script):not(style){display:none!important}
-#mxfade{background:radial-gradient(125% 110% at 38% 50%,rgba(5,8,10,.25),rgba(5,8,10,.8) 90%),linear-gradient(90deg,rgba(5,8,10,.35),rgba(5,8,10,.5))}
 #mxbody{left:auto;right:0;top:0;bottom:0;width:var(--mxw);background:linear-gradient(180deg,rgba(27,32,26,.9),rgba(20,24,19,.93));border-left:2px solid #11140f;box-shadow:-1px 0 0 rgba(125,138,108,.35),-26px 0 70px rgba(0,0,0,.55)}
 #mxtop{position:absolute;inset:0;height:auto;padding:0;display:block;pointer-events:none}
 #mxtop .mxback{position:absolute;left:clamp(24px,3vw,52px);bottom:clamp(22px,4vh,46px);pointer-events:auto;font:700 19px var(--display);letter-spacing:.14em;color:#e6e8dc;padding:10px 26px;background:linear-gradient(180deg,var(--st1),var(--st2) 55%,var(--st3));border:1px solid #11140f;border-top-color:var(--hi);box-shadow:0 2px 0 #0b0d0a,0 6px 18px rgba(0,0,0,.5)}
@@ -21153,7 +21253,7 @@ function mxMapSync(){const ms=document.getElementById('mapSel'),L=typeof mapList
 function mxBuild(){
   const m=document.getElementById('menu');if(!m||document.getElementById('mx'))return;mxCss();m.classList.add('m3');
   const card=m.querySelector('.card'),g=id=>document.getElementById(id);
-  const mx=mxEl('div');mx.id='mx';const bg=mxEl('div');bg.id='mxbg';try{bg.style.backgroundImage='url(art/menu-bg.jpg)';}catch(_){}
+  const mx=mxEl('div');mx.id='mx';const bg=mxEl('div');bg.id='mxbg';
   const fade=mxEl('div');fade.id='mxfade';
   const top=mxEl('div');top.id='mxtop';top.hidden=true;const bk=mxEl('button','mxback','‹ Back');bk.type='button';bk.title='One step back (Esc)';bk.onclick=menuBack;const cr=mxEl('div');cr.id='mxcrumb';top.append(bk,cr);
   const body=mxEl('div');body.id='mxbody';mx.append(bg,fade,top,body);m.appendChild(mx);
@@ -21230,7 +21330,7 @@ function mxBuild(){
   const C=scr('credits','<h2 class="mxh">Credits</h2><p class="mxsub">Free art, sound and music only, every author credited.</p>');const cw=mxEl('div','mxcred');for(const p of card.querySelectorAll('p.credits'))cw.appendChild(p);C.appendChild(cw);
   /* --- wiring --- */
   document.addEventListener('keydown',mxKey,true);
-  new MutationObserver(()=>{if(!m.hidden)mxShown();else mxShellStop();}).observe(m,{attributes:true,attributeFilter:['hidden']});
+  new MutationObserver(()=>{if(!m.hidden)mxShown();}).observe(m,{attributes:true,attributeFilter:['hidden']});
   setInterval(mxPoll,500);
   MX.screens.title.classList.add('on');mxShown(true);}
 /* Multiplayer: one game, Battle - the shared battle lobby. */
@@ -21268,7 +21368,7 @@ function mxTrStart(){const p=setup.p,a=document.getElementById('aiFac').value||s
   document.getElementById('menu').hidden=true;startSandbox({p,a,map});}
 function mxMapMark(){if(!MX.grid)return;const sel=document.getElementById('mapSel');for(const b of MX.grid.children)b.classList.toggle('on',sel&&b.dataset.k===sel.value);}
 function mxThumbRun(){if(MX.thumbRun)return;MX.thumbRun=1;const step=()=>{const k=MX.thumbQ.shift();if(!k){MX.thumbRun=0;return;}
-  if(typeof G!=='undefined'&&G&&!G.over&&!G.shell){MX.thumbQ.unshift(k);setTimeout(step,800);return;}
+  if(typeof G!=='undefined'&&G&&!G.over){MX.thumbQ.unshift(k);setTimeout(step,800);return;}
   try{if(typeof MAPS!=='undefined'&&MAPS[k]){mapPreview(k,MX.thumbs[k]);MX.thumbs[k].classList.add('rd');}}catch(e){}setTimeout(step,30);};setTimeout(step,60);}
 function mxNatFilter(v){const q=(typeof v==='string'?v:document.getElementById('mxnatin').value).trim().toLowerCase();MX.natQ=q;for(const f of document.querySelectorAll('#pickP .fac'))f.style.display=!q||(f.querySelector('.nm').textContent||'').toLowerCase().includes(q)?'':'none';}
 function mxNatShow(f){f=f||document.querySelector('#pickP .fac.on');const d=document.getElementById('mxdet');if(!d||!f)return;const t=c=>(f.querySelector(c)||{}).textContent||'';
@@ -21294,78 +21394,7 @@ function menuBack(){if(MX.cur==='t-range'&&MX.trIn){mxTrClose();return;}if(MX.st
 function menuHome(){for(const k in MX.screens)MX.screens[k].classList.remove('on','left');MX.stack=['title'];MX.cur='title';MX.screens.title.classList.add('on');mxCrumb();}
 function mxEnter(id){mxTrHome(id);if(id==='c-map')mxMapCards();if(id==='c-nation'){mxNatFilter();mxNatShow();}if(id==='c-players'||id==='c-opts'){mxStartSync();mxPlayersSync();try{if(typeof renderTeams==='function')renderTeams();}catch(_){}}
   if(id==='online')mxOnline();if(id==='title')mxContSync();}
-/* The war table (living main menu): the background shows YOUR war - whatever "Continue" would resume.
-   Battle saved: that battlefield with the front line between your forces and the enemy you could see (sketch in the save's list entry, svFront in 08d-save.js).
-   Nothing saved (or an old save without a sketch): the calm world-map picture. Drawn once per save. */
-function mxWarSrc(){let b=null;try{b=typeof svLatest!=='undefined'?svLatest:null;}catch(_){}
-  const clk=t=>{t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
-  if(b)return {key:'b'+b.id+'|'+b.ts,wt:b.wt&&b.wt.d?b.wt:null,k:'Your war · '+(b.camp?'Mission':'Battle'),h:b.facName+' · '+b.mapName,l:clk(b.t)+' into the fight'+(b.wt&&b.wt.e?' — the bright line is your front':'')};
-  return null;}
-function mxWarTable(){const bg=document.getElementById('mxbg'),mn=document.getElementById('menu');if(!bg||(mn&&mn.hidden))return;   /* never draw behind a running battle; the next time the menu shows it is drawn */
-  const src=mxWarSrc(),wt=src&&src.wt,key=src?src.key:'',mx=bg.parentNode,esc=t=>String(t).replace(/[&<>"]/g,ch=>'&#'+ch.charCodeAt(0)+';');
-  if(MX.wtKey===key)return;MX.wtKey=key;for(const e of mx.querySelectorAll('#mxwt,.mxwtl,#mxwar'))e.remove();mx.classList.toggle('wt',!!wt);if(!src)return;
-  const cap=mxEl('div');cap.id='mxwar';cap.innerHTML='<i>'+esc(src.k)+'</i><b>'+esc(src.h)+'</b><span>'+esc(src.l)+'</span>';(MX.screens.title||mx).appendChild(cap);if(!wt)return;
-  try{const W=wt.w|0,H=wt.h|0,g=new Uint8Array(W*H),bin=atob(wt.d);let o=0,k=0;while(o<bin.length&&k<W*H){const v=bin.charCodeAt(o++);let run=0,sh=0,b;do{b=bin.charCodeAt(o++);run|=(b&127)<<sh;sh+=7;}while(b&128&&o<bin.length);g.fill(v,k,Math.min(W*H,k+run));k+=run;}
-    const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;},CW=1600,CH=900;
-    /* small mask picture: red = land, green = your land, blue = a border between two countries / the two sides */
-    const sm=mk(W,H),sx=sm.getContext('2d'),sd=sx.createImageData(W,H),q=sd.data;for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,v=g[i],j=i*4;q[j]=v?255:0;q[j+1]=v===1?255:0;q[j+2]=v&&((x+1<W&&g[i+1]&&g[i+1]!==v)||(y+1<H&&g[i+W]&&g[i+W]!==v))?255:0;q[j+3]=255;}sx.putImageData(sd,0,0);
-    const up=mk(CW,CH),ux=up.getContext('2d',{willReadFrequently:true});ux.imageSmoothingEnabled=true;ux.imageSmoothingQuality='high';try{ux.filter='blur('+(W<400?4:2.2)+'px)';}catch(_){}ux.drawImage(sm,0,0,CW,CH);const U=ux.getImageData(0,0,CW,CH).data;
-    const bl=mk(CW/4,CH/4),bx=bl.getContext('2d',{willReadFrequently:true});try{bx.filter='blur(7px)';}catch(_){}bx.drawImage(sm,0,0,CW/4,CH/4);const B=bx.getImageData(0,0,CW/4,CH/4).data,BW=CW/4;
-    const cv=mk(CW,CH);cv.id='mxwt';const cx=cv.getContext('2d'),od=cx.createImageData(CW,CH),d=od.data,c=(wt.c||[200,170,80]).map(v=>wt.e?v*.6+85:v),en=wt.e,L=v=>Math.min(255,v*.5+150);
-    for(let y=0;y<CH;y++)for(let x=0;x<CW;x++){const i=y*CW+x,j=i*4,land=U[j]>127,mine=land&&U[j+1]>127,bj=((y>>2)*BW+(x>>2))*4,gl=B[bj]/255,gm=B[bj+1]/255,n=(((x*73856093)^(y*19349663))&7)-3.5;let r,gg,b;
-      if(!land){r=13+gl*26+gm*c[0]*.2;gg=25+gl*42+gm*c[1]*.2;b=38+gl*54+gm*c[2]*.2;if(x%100===0||y%100===0){r+=6;gg+=9;b+=11;}}
-      else{const sh=(gl-.6)*30+n*.9;r=92+sh;gg=101+sh;b=88+sh;const bo=Math.min(1,U[j+2]/255*1.6)*.6;if(!en){r+=(40-r)*bo;gg+=(46-gg)*bo;b+=(42-b)*bo;}
-        if(mine){const k=en?.36:.62,q=en?.6:.42;r=r*q+c[0]*k;gg=gg*q+c[1]*k;b=b*q+c[2]*k;}else if(en){r=r*.4+en[0]*.13;gg=gg*.4+en[1]*.13;b=b*.4+en[2]*.13;}
-        const e=x>2&&y>2&&x<CW-3&&y<CH-3;if(e&&(U[j-12]<=127||U[j+12]<=127||U[j-CW*12]<=127||U[j+CW*12]<=127)){const k=en?.45:1;r+=48*k;gg+=56*k;b+=54*k;}   /* coast line */
-        if(e&&mine&&!en&&(U[j-11]<=127||U[j+13]<=127||U[j-CW*12+1]<=127||U[j+CW*12+1]<=127)){r=L(c[0]);gg=L(c[1]);b=L(c[2]);}   /* your border */
-        if(en){const f=Math.max(0,Math.min(.9,(U[j+2]/255-.2)*4));r+=(255-r)*f;gg+=(214-gg)*f;b+=(102-b)*f;}}   /* battle: the front line */
-      d[j]=r;d[j+1]=gg;d[j+2]=b;d[j+3]=255;}
-    cx.putImageData(od,0,0);bg.appendChild(cv);
-    const lab=(cls,fx,fy,html)=>{const e=mxEl('div','mxwtl '+cls);e.style.left=(fx*100).toFixed(2)+'%';e.style.top=(fy*100).toFixed(2)+'%';e.innerHTML=html;bg.appendChild(e);return e;};
-    if(wt.b)lab('bat',wt.b[0],wt.b[1],'<svg viewBox="0 0 28 28" fill="none" stroke="#ffd666" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l15 15M23 5L8 20M6 17l5 5M22 17l-5 5M4 24l4-4M24 24l-4-4"/></svg><b>'+esc(wt.b[2])+'</b>Last battle · '+esc(wt.b[3])+(wt.b.length>4?' · '+(wt.b[4]?'won':'lost'):''));
-    requestAnimationFrame(()=>cv.classList.add('on'));}catch(e){for(const el of bg.querySelectorAll('#mxwt,.mxwtl'))el.remove();mx.classList.remove('wt');}}
-/* ---------- the shell battle (Abdullah 2026-11-14 14:31 "make the background like generals"): a live AI-vs-AI Battle behind the menu, like Zero Hour's shell map ----------
-   A small Battle on a 2-player Battle map, both sides computer-played, no sound effects (music only), a slow cinematic camera that drifts between the fights.
-   It is the normal engine (G.shell marks it): nothing is saved or recorded, fog is off, and it stops the moment any real game replaces G or the menu closes.
-   Automated browsers (navigator.webdriver: smoke, smooth and the other gates) skip it unless the page has ?shell=1. */
-const SH={on:0,busy:0,tok:0,g:null,x:0,y:0,d:240,yaw:0,tx:0,ty:0,pt:0,t0:0};
-function mxShellWant(){return false;/* off (Abdullah 2026-11-14 17:07 asked for a static menu picture; the live menu battle also left the Test range white) */const m=document.getElementById('menu');if(!m||m.hidden||SH.on||SH.busy)return false;if(typeof G!=='undefined'&&G&&!G.over&&!G.shell)return false;
-  if(navigator.webdriver&&!/[?&]shell=1/.test(location.search))return false;if(/[?&]shell=0/.test(location.search))return false;if(typeof BM_KEYS==='undefined'||!BM_KEYS.length||typeof newGame!=='function')return false;return true;}
-function mxShellStop(){SH.tok++;const was=SH.on;SH.on=0;SH.busy=0;document.body.classList.remove('mxshell');const mx=document.getElementById('mx');if(mx)mx.classList.remove('sh');
-  const m=document.getElementById('menu');if(m)m.classList.remove('sh');
-  if(SH.g&&G===SH.g){G.over=true;G.paused=false;}SH.g=null;
-  if(was)try{window.dispatchEvent(new Event('resize'));}catch(_){}}
-async function mxShellStart(){if(!mxShellWant())return;SH.busy=1;const tok=++SH.tok,alive=()=>tok===SH.tok&&!document.getElementById('menu').hidden;
-  try{const keys=BM_KEYS.filter(k=>MAPS[k]&&MAPS[k].min<=2&&MAPS[k].max>=2);if(!keys.length){SH.busy=0;return;}
-    const map=keys[(Math.random()*keys.length)|0],ks=FKEYS.filter(k=>k!=='RS'&&k!=='DW'),ok=ks.filter(k=>{try{return upgList(k).every(u=>STRUCT[UPG[u].at]);}catch(_){return false;}});const a=(ok.length?ok:ks)[(Math.random()*(ok.length||ks.length))|0];let b=a;while(b===a)b=ks[(Math.random()*ks.length)|0];
-    MODE='single';ME=0;TERR_DEFER=true;try{newGame({battle:1,seed:(Math.random()*1e9)|0,facs:[a,b],ai:[true,true],map,w:0,tm:[0,1],bs:1,slot:-1});
-      G.shell=1;G.paused=true;G.teams.forEach(T=>{if(T.ai){T.ai=mkAI(2);T.credits=12000;}});}finally{TERR_DEFER=false;}
-    const g=G;SH.g=g;
-    try{await modelsFor([a,b],()=>{});}catch(e){}
-    if(!alive()||G!==g){if(G===g){g.over=true;}SH.busy=0;return;}
-    await new Promise(r=>setTimeout(r,30));if(!alive()||G!==g){if(G===g)g.over=true;SH.busy=0;return;}
-    paintTerrainNow();const tc=g.terrain;g.terrain=null;if(!R3)initGfx();else resetScene();
-    buildWorld(tc||g.terrain);document.body.classList.add('mxshell');resize();try{window.dispatchEvent(new Event('resize'));}catch(_){}resize();
-    try{buildPanels();}catch(e){}cam.yaw=0;cam.tyaw=0;cam.dist=240;cam.td=240;const [bx,by]=BASES[0],[cx,cy]=BASES[1]||BASES[0];SH.x=bx+60;SH.y=by+40;SH.tx=SH.x;SH.ty=SH.y;SH.d=240;SH.pt=9;centerOn(SH.x,SH.y,true);
-    g.terrain=tc;try{renderFrame(1/60);}catch(e){}
-    if(!alive()||G!==g){SH.busy=0;return;}
-    g.paused=false;last=performance.now();g.acc=0;SH.on=1;SH.busy=0;SH.t0=performance.now();
-    const mx=document.getElementById('mx');if(mx)mx.classList.add('sh');document.getElementById('menu').classList.add('sh');
-    requestAnimationFrame(mxShellCam);
-  }catch(e){console.warn('shell battle',e);mxShellStop();}}
-/* the camera: a slow low pan between the fights. Every ~12 s it picks the hottest contact (a unit of one side with an enemy unit close by); with none yet, it drifts across the middle of the map. */
-function mxShellCam(now){if(!SH.on)return;const g=SH.g;if(G!==g||g.over||document.getElementById('menu').hidden){mxShellStop();return;}
-  const dt=Math.min(.05,Math.max(0,(now-(SH.lt||now))/1000));SH.lt=now;
-  if((SH.pt-=dt)<=0){SH.pt=12+Math.random()*6;let best=null,bs=0;const U=g.ents.filter(e=>!e.isB&&!e.dead&&e.team<g.N&&e.s&&e.s.dom!=='air');
-    for(let i=0;i<U.length;i+=Math.max(1,(U.length/60)|0)){const e=U[i];let n=0,m=0;for(const o of U){if(Math.abs(o.x-e.x)>130||Math.abs(o.y-e.y)>130)continue;if(o.team===e.team)m++;else n++;}const sc=Math.min(n,m)*2+n*.2;if(n&&sc>bs){bs=sc;best=e;}}
-    if(best){SH.tx=best.x;SH.ty=best.y;}else{SH.k=(SH.k||0)^1;const a=BASES[SH.k]||BASES[0];SH.tx=a[0]+(Math.random()-.5)*140;SH.ty=a[1]+(Math.random()-.5)*140;}   /* no fight yet: look in on a base, then the other */
-    SH.tx=Math.max(120,Math.min(MAPW-120,SH.tx));SH.ty=Math.max(120,Math.min(MAPH-120,SH.ty));SH.td=best?190+Math.random()*60:260;}
-  const dx=SH.tx-SH.x,dy=SH.ty-SH.y,dd=Math.hypot(dx,dy),mv=Math.min(dd,(14+dd*.18)*dt);if(dd>.01){SH.x+=dx/dd*mv;SH.y+=dy/dd*mv;}
-  SH.d+=(SH.td-SH.d)*(1-Math.exp(-dt*.5));SH.yaw=Math.sin((now-SH.t0)/1000*.045)*.5;
-  camTarget();cam.tx=SH.x;cam.ty=SH.y;cam.td=SH.d;cam.tyaw=SH.yaw;
-  requestAnimationFrame(mxShellCam);}
-function mxShellSoon(){clearTimeout(MX.shT);MX.shT=setTimeout(()=>{if(mxShellWant())mxShellStart();},2500);}
-function mxShown(first){if(!first&&MX.cur!=='title')menuHome();mxContSync();mxShellSoon();try{if(typeof svMenuSync==='function')svMenuSync();else mxWarTable();}catch(_){}}   /* svMenuSync finds the newest save, then calls mxWarTable */
+function mxShown(first){if(!first&&MX.cur!=='title')menuHome();mxContSync();try{if(typeof svMenuSync==='function')svMenuSync();}catch(_){}}
 function mxKey(e){if(e.key!=='Escape')return;const m=document.getElementById('menu');if(!m||m.hidden||(MX.stack.length<2&&!(MX.trIn&&MX.cur==='t-range')))return;
   if(document.querySelector('.overlay:not(#menu):not([hidden]),#campScreen,#gModal,#edOv.on'))return;if(e.target&&/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)&&e.target.id!=='mxnatin')return;
   e.preventDefault();e.stopImmediatePropagation();menuBack();}

@@ -66,13 +66,16 @@ function mkTeam(id,fac,ai){const F=FACTIONS[fac];return{id,fac,F,sup:swSup(fac),
 // Allies can send each other money (in steps of $50, never more than you have).
 function giveMoney(from,to,amt){return ctGive(from,to,amt);}   // allied aid: fee + delay live in 03d-command
 function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm||(!!G.truce&&G.truce[a<b?a*32+b:b*32+a]>G.t);}   // a running truce (03d-command) counts as friendly for fire; sameTm() is the strict team test (vision, victory, aid)
+/* a picked player colour (01-data PCOLS) replaces the nation colour of that team; visual only, same on host, clients and servers */
+function pcApply(pc){const P=pcClean(pc,G.teams.length)||G.teams.map(()=>-1);G.pcP=P;G.teams.forEach((T,i)=>{if(P[i]>=0){T.color=PCOLS[P[i]].c;T.dark=shade(T.color,.45);}});}
 function newGame(o){const N=o.facs.length;if((o.battle||o.sandbox)&&!o.camp&&!o.keepMap&&typeof battleMapFix==='function'&&MAPS[o.map]&&!MAPS[o.map].custom)o.map=battleMapFix(o.map,N);const mk=MAPS[o.map]&&(N<=(MAPS[o.map].maxFull||MAPS[o.map].max)||o.camp)?o.map:'strait';setWorld(worldScaleFor(N,mk));setBases(N,mk,mk===o.map?(Array.isArray(o.st)?o.st:o.slot):-1);if(o.camp)while(BASES.length<N)BASES.push(BASES[BASES.length-1]);
   const ssn=wxSsn(o.w)||seasonOf(mk),wB=condFit(wxBase(o.w),condTheme(mk,o.w),o.seed);if(o.sandbox)o.battle=1;/* Test range = a Battle game with test tools on top (Abdullah 2026-11-14 13:51) */NO_TOWNS=!!o.battle&&!o.camp&&!o.grand;let M;try{M=mkMap(o.seed,mk,ssn);}finally{NO_TOWNS=false;}
   G={t:0,ssn,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
      map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};for(const k of G_LATE)G[k]=undefined;initCiv();initDams();initRoads();G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});G.battle=!o.camp;if(G.battle)tbAdd(M,N);
-  G.bs=BATTLE;G.real=o.real?1:0;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.real=o.real?1:0;G.teams.forEach(T=>{T.credits=T.reb?0:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
+  G.bs=BATTLE;G.real=o.real?1:0;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));pcApply(o.pc);{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.real=o.real?1:0;G.teams.forEach(T=>{T.credits=T.reb?0:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
   {const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'];const cd=(p,q)=>{const a=hexRGB(p),b=hexRGB(q);return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);};
-   for(let i=1;i<N;i++){const T=G.teams[i];if(G.teams.slice(0,i).some(P=>cd(P.color,T.color)<.45)){const c=ALT.find(c=>G.teams.slice(0,i).every(P=>cd(P.color,c)>=.45))||ALT[i%ALT.length];T.color=c;T.dark=shade(c,.45);}}}
+   /* a picked player colour (G.pcP) is never changed; the other teams move away from it (and from earlier teams) when too close */
+   for(let i=0;i<N;i++){if(G.pcP[i]>=0)continue;const T=G.teams[i],pv=G.teams.filter((_,k)=>k!==i&&(G.pcP[k]>=0||k<i));if(pv.some(P=>cd(P.color,T.color)<.45)){const c=ALT.find(c=>pv.every(P=>cd(P.color,c)>=.45))||ALT[i%ALT.length];T.color=c;T.dark=shade(c,.45);}}}
   paintTerrain(M);
   G.cover=new Uint8Array(GW*GH);for(const [x,y] of (G.treePos||[])){const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);if(cx>=0&&cy>=0&&cx<GW&&cy<GH)G.cover[cy*GW+cx]=Math.min(255,G.cover[cy*GW+cx]+1);}
   G.wood=G.cover.slice(); // trees per cell (before city cover is added): woods slow vehicles
@@ -392,8 +395,9 @@ function fmLayout(type,n,sp,W,lat){const S={S:[],A:[],I:[],F:[],R:[]},put=(r,f,s
     d=rows('I',d,W,ls,rs);rows('R',d-rs*.3,W,ls*(sd?1:1.4),rs*(sd?1:1.3));}
   return S;}
 // us = movers; destination centre (cx,cy), facing (fx,fy); lat = sideways spacing wanted (drag lines); keep = hold slots at the slowest unit's pace
-function fmApply(us,type,cx,cy,fx,fy,mode,keep,lat,wid){const m=us.filter(u=>u&&!u.isB&&u.s&&u.s.spd>0&&u.kind!=='harv'&&u.kind!=='dozer');const n=m.length;if(!n)return;
-  if(!FM_TYPES.includes(type))type='line';const L=Math.hypot(fx,fy)||1;fx/=L;fy/=L;const px=-fy,py=fx,gnd=m.filter(u=>u.s.dom==='ground'),oth=m.filter(u=>u.s.dom!=='ground');
+/* every selected unit that can move takes a place in the formation - infantry, vehicles, trucks, aircraft and boats (Abdullah 2026-11-14 18:15 "units can all form a formation") */
+function fmApply(us,type,cx,cy,fx,fy,mode,keep,lat,wid){const m=us.filter(u=>u&&!u.isB&&u.s&&u.s.spd>0);const n=m.length;if(!n)return;
+  if(!FM_TYPES.includes(type))type='line';const L=Math.hypot(fx,fy)||1;fx/=L;fy/=L;const px=-fy,py=fx,gnd=m,oth=[];
   const by={S:[],A:[],I:[],F:[],R:[]};for(const u of gnd)by[fmRole(u)].push(u);const cnt={};for(const r in by)cnt[r]=by[r].length;
   const sp=Math.max(18,...gnd.map(u=>u.r*2.6),20);const W=wid||Math.max(3,Math.ceil(Math.sqrt(gnd.length)*1.7));const S=fmLayout(type,cnt,sp,W,lat);
   let ox=0,oy=0;for(const u of gnd){ox+=u.x;oy+=u.y;}if(gnd.length){ox/=gnd.length;oy/=gnd.length;}
@@ -1120,6 +1124,8 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   // then trucks up to 3-4.
   const harvs=mine.filter(e=>e.kind==='harv'&&!e.cv).length,dzN=mine.filter(e=>e.kind==='dozer').length;
   if(hq&&!qItems(T,'hq').length){if(!harvs)enqueue(id,'harv');else if(!dzN)enqueue(id,'dozer');else if(harvs<3+(G.t>300?1:0))enqueue(id,'harv');}
+  /* Ammo trucks (Abdullah 2026-11-13 21:46 "Separate ammo truck"): one per 8 combat units, two at 18+, from the War Factory; they idle behind the front and drive to thirsty units (updAmmoTrucks). */
+  if(ammoOn()&&done(id,'factory')&&T.ai.t%6===2&&!qItems(T,'factory').some(i=>i.kind==='ammot')){const nA=mine.filter(e=>!e.isB&&!e.s.noAttack&&e.s.dom==='ground'&&!['harv','dozer','hacker'].includes(e.kind)).length,want=Math.min(2,nA>=8?1+(nA>=18?1:0):0);if(unitCount(id,'ammot')<want&&T.credits>=stats(T.fac,'ammot').cost+250)enqueue(id,'ammot');}
   aiExpand(T,mine,hq);
   {const fnd=mine.filter(e=>e.isB&&e.nd&&e.built<1);const dzs=mine.filter(e=>e.kind==='dozer');for(const b of fnd){if(dzs.some(u=>u.order&&u.order.type==='build'&&u.order.target===b))continue;const fr=dzs.filter(u=>(!u.order||u.order.type!=='build')&&!(u.dzFlee>G.t)).sort((p,q)=>dist(p,b)-dist(q,b))[0];if(fr){fr.order={type:'build',target:b};fr.path=null;}}}
   // protect the builders: while an AI Construction Vehicle works on a foundation, up to 3 idle fighters stand guard at it; a dozer under fire backs off to the HQ (its building pauses) and returns when clear
@@ -1160,7 +1166,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   // strike aircraft per 8 ground units (1 to 3, by battle size) - it buys the aircraft first and the other buildings
   // save for it, the same way it saves for vehicles. Same money as everyone: it only spends it in a different order.
   const airN=mine.filter(e=>!e.isB&&e.s.dom==='air'&&e.kind!=='drone'&&!e.s.noAttack).length,wantAir=!!DIFF[T.ai.d??1].air&&!thin&&G.t>300&&done(id,'airfield')&&armyN>=10&&airN<Math.max(1,Math.min(Math.round(3*(G.bs||1)),Math.floor(armyN/8)));let aSv=0;
-  for(const cat of wantAir?['airfield','shipyard','factory','barracks']:wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){{const qb=qPick(id,cat);if(!qb||(qb.q?qb.q.length:0)>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;}let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
+  for(const cat of wantAir?['airfield','shipyard','factory','barracks']:wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){{const qb=qPick(id,cat);if(!qb||(qb.q?qb.q.length:0)>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;}let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift'&&k!=='ammot').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
     if(cat==='factory'){opts=enemyAir>=2?['aa','aa',...opts]:opts.filter(k=>k!=='aa'||srand()<.2);
       // Heavy-barrage doctrine (RU, CN, KP): keep a real artillery park - about a fifth of the army, 2 to 8 guns
       if(DC.barrage&&opts.includes('arty')&&unitCount(id,'arty')<Math.min(Math.round(8*(G.bs||1)),Math.max(2,Math.round(armyN*.2))))opts=['arty','arty','arty',...opts];}
@@ -1336,7 +1342,7 @@ function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.mi
   G.mT=(G.mT||0)-dt;if(G.mT<=0){G.mT=.2;updMines();}
   for(const T of G.teams){T._upl=false;T._tun=false;}for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const T=G.teams[e.team];if(!T)continue;if(e.kind==='tunnel')T._tun=true;else if(e.kind==='uplink'&&!(e.dis>G.t))T._upl=true;}
   for(const T of G.teams){if(!T.tun.length)continue;for(const u of T.tun)u.hp=Math.min(u.max,u.hp+12*dt);if(!T._tun){log(T.id,`Our last tunnel was destroyed. ${T.tun.length} units inside were lost.`,'w');T.tun=[];}}
-  for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt);if(G.battle)swTick(T);for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
+  for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt*(G.conq?.5:1)*(G.sandbox&&T.id===0?30:1));   /* Test range: the strike recharges in seconds (Abdullah 2026-11-14 18:26) */if(G.battle)swTick(T);for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
     {let j=0;for(const r of T.reveals){r.t-=dt;if(r.t>0)T.reveals[j++]=r;}T.reveals.length=j;}}
   // expired smoke screens and shields are dropped once a second (they were kept for the whole match and scanned every frame)
   if(!(G.prT>G.t)){G.prT=G.t+1;for(const k of ['smokes','shields'])if(Array.isArray(G[k])&&G[k].length){let j=0;const A=G[k];for(const S of A)if(S.t>G.t)A[j++]=S;A.length=j;}}
@@ -1441,34 +1447,49 @@ function oilTarget(o){const ALL=new Array(16).fill(true);return{oil:o,isB:true,k
    Ground combat units carry u.am shots (max u.amx); every shot spends one. At 0 vehicles can't fire and infantry only plink with a sidearm
    (12% damage). YOUR AREA - where units refill (7% of a full load per second) - is: a circle around each of your finished buildings (Command
    Center 380, Supply Depot 320 - half while the depot is cut off from your network -, any other base building 170), every map building you
-   hold (derricks, power plants, quarries, mines, hospitals: 170; an ammo dump 340 and twice as fast), your supply trucks (230), and your SUPPLY
+   hold (derricks, power plants, quarries, mines, hospitals: 170; an ammo dump 340 and twice as fast), and your SUPPLY
    LINES: the roads that run out from those buildings (lgCover in 03c-logistics: up to LG_REACH of road from each, over neutral junctions, never
    through an enemy base or depot; craters, blown bridges, enemy checkpoints and enemy troops standing on a road cut it; 120 either side).
-   Outside it units fight on until their ammo is empty, then they must come back or get a supply truck - there are no timers.
+   Outside it units fight on until their ammo is empty, then they must come back or get an Ammo Truck (kind 'ammot', updAmmoTrucks; the money truck 'harv' never refills ammo) - there are no timers.
    Test range: unlimited ammo, no badge. Host-only; clients get am/supply as bits of the unit snapshot. */
-const SUP_R={hq:380,depot:320,harv:230,base:170,road:120,ammo:340};   // ammo = a captured ammo dump (orch/techbldgs): the strongest point, refills twice as fast
+const AMMOT_R=170,AMMOT_CAP=800,AMMOT_FILL=.12,AMMOT_RATE=.22,AMMOT_N=6;   /* Ammo Truck (Abdullah 2026-11-13 21:46 "Separate ammo truck"): serve radius, stock in shots, refill per second inside your area (share of stock), share of a unit's magazine given per second (~5 s to fill), units served at once */
+const SUP_R={hq:380,depot:320,base:170,road:120,ammo:340};   // ammo = a captured ammo dump (orch/techbldgs): the strongest point, refills twice as fast
 const SUP_NOB=['wall','gate','mine','tunnel'];
 function ammoOn(){return !!G&&!G.sandbox;}
 function hasAmmo(u){const s=u.s;return ammoOn()&&!!s&&!u.isB&&s.dom==='ground'&&s.dmg>0&&s.rof>0&&!s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker';}
-function ammoCap(s){if(s.cls==='arty'||s.wpn==='missile')return 20;return Math.max(16,Math.min(300,Math.round(200/s.rof)));}
+function ammoCap(s){if(s.cls==='ammot')return AMMOT_CAP;if(s.cls==='arty'||s.wpn==='missile')return 20;return Math.max(16,Math.min(300,Math.round(200/s.rof)));}
 function ammoInit(u){u.amx=ammoCap(u.s);u.am=u.amx;}
-// every team's area as circles {x,y,r} (allies share): buildings, supply trucks, and the beads along its supply lines (G.lg.bead from lgCover)
+// every team's area as circles {x,y,r} (allies share): buildings, held map buildings, and the beads along its supply lines (G.lg.bead from lgCover)
 function supplyPoints(){const N=G.teams.length,P=[];for(let i=0;i<N;i++)P.push([]);
   const add=(o,p)=>{for(let t=0;t<N;t++)if(ally(o,t))P[t].push(p);};
   for(const e of G.ents){if(e.dead||e.inTun||e.team==null||e.team<0||e.team>=N)continue;let r=0;
-    if(e.isB){if(e.built<1||SUP_NOB.includes(e.kind))continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot*(e.lcut?.5:1):SUP_R.base;}else if(e.kind==='harv')r=SUP_R.harv;
+    if(e.isB){if(e.built<1||SUP_NOB.includes(e.kind))continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot*(e.lcut?.5:1):SUP_R.base;}
     if(r)add(e.team,{x:e.x,y:e.y,r});}
   // every map building a side holds (oil derrick, power plant, quarry, mine, field hospital, ammo dump...: G.oil rows) is a forward supply point (Abdullah 2026-11-13 20:53)
   if(G.oil)for(const o of G.oil)if(!o.dead&&o.owner>=0&&o.owner<N)add(o.owner,o.tb==='ammo'?{x:o.x,y:o.y,r:SUP_R.ammo,f:2}:{x:o.x,y:o.y,r:SUP_R.base});
   const B=G.lg&&G.lg.bead;if(B)for(let k=0;k<N&&k<B.length;k++)if(B[k])for(const p of B[k])add(k,p);
   return P;}
+/* Ammo Truck (kind 'ammot'): u.am = its stock of shots, u.amx = capacity (the fields the unit bar, snapshot and checkpoint already carry). Inside your area it reloads; units of its side within AMMOT_R get refilled over ~5 s, up to AMMOT_N at once, thirstiest first; a unit it serves counts as supplied. An idle truck drives to the nearest thirsty unit outside your area and parks 150 behind it (toward home), or back to your area to reload when low. Host only; no RNG. */
+function updAmmoTrucks(P,st){if(!ammoOn())return;
+  for(const t of G.ents){if(t.dead||t.isB||t.kind!=='ammot'||t.inTun)continue;if(t.am===undefined){t.amx=AMMOT_CAP;t.am=AMMOT_CAP;}
+    if(t.sup&&t.am<t.amx)t.am=Math.min(t.amx,t.am+t.amx*AMMOT_FILL*st);
+    const need=[];let thirsty=null,td=1e9;
+    for(const u of G.ents){if(u.dead||u.isB||u.inTun||u.team!==t.team||u===t||u.am===undefined||u.kind==='ammot'||!(u.amx>0))continue;const d=Math.hypot(u.x-t.x,u.y-t.y);
+      if(u.am<u.amx&&d<AMMOT_R)need.push(u);
+      if(!u.sup&&u.am<u.amx*.5&&d<1100&&d<td){td=d;thirsty=u;}}
+    if(t.am>0){for(const u of need)u.sup=1;need.sort((a,b)=>a.am/a.amx-b.am/b.amx);
+      for(const u of need.slice(0,AMMOT_N)){const give=Math.min(u.amx-u.am,u.amx*AMMOT_RATE*st,t.am);if(give<=0)break;u.am+=give;t.am-=give;}}
+    if(!t.order&&!t.path&&!t.target){const pts=P[t.team]||[];let b=null,bd=1e9;for(const p of pts){const d=Math.hypot(p.x-t.x,p.y-t.y);if(d<bd){bd=d;b=p;}}
+      if(t.am<t.amx*.2&&b&&!t.sup)setMove(t,b.x,b.y,'move');
+      else if(thirsty&&t.am>t.amx*.1&&td>AMMOT_R*.6){const H=hqOf(t.team),hx=H?H.x-thirsty.x:0,hy=H?H.y-thirsty.y:0,hl=Math.max(1,Math.hypot(hx,hy));setMove(t,thirsty.x+hx/hl*150,thirsty.y+hy/hl*150,'move');}}}}
 function updSupply(dt){if(G.lgd)lgMines(dt);G.supT=(G.supT||0)+dt;if(G.supT<.5)return;const st=G.supT;G.supT=0;if(G.lg)lgTick(st);polTick(st);const P=supplyPoints();
   for(const u of G.ents){if(u.dead||u.isB||u.inTun)continue;const pts=P[u.team];if(!pts)continue;let ins=false,fk=1;for(const p of pts){if(Math.abs(p.x-u.x)<p.r&&Math.abs(p.y-u.y)<p.r&&Math.hypot(p.x-u.x,p.y-u.y)<p.r){ins=true;if(p.f>fk)fk=p.f;if(fk>=2)break;}}
     u.sup=ins?1:0;
     if(hasAmmo(u)){if(u.am===undefined)ammoInit(u);if(ins&&u.am<u.amx)u.am=Math.min(u.amx,u.am+u.amx*.07*fk*st);}}
+  updAmmoTrucks(P,st);
   // low / empty warnings (once per 25 s per side, only when it matters)
   if(ammoOn())for(const T of G.teams){if(T.out||G.t-(T.amWarn??-99)<25)continue;let low=0,zero=0,n=0;for(const u of G.ents){if(u.team!==T.id||u.dead||u.isB||u.am===undefined)continue;n++;if(u.am<=0)zero++;else if(u.am<u.amx*.25)low++;}
-    if(n&&zero>=Math.max(2,n*.2)){T.amWarn=G.t;log(T.id,'Out of ammo! Bring them back inside your supply area (buildings, depots, supply lines) or send a supply truck.','bad');}else if(n&&low+zero>=Math.max(2,n*.3)){T.amWarn=G.t;log(T.id,'Running low on ammo - your supply lines, depots and supply trucks refill it.','w');}}}
+    if(n&&zero>=Math.max(2,n*.2)){T.amWarn=G.t;log(T.id,'Out of ammo! Bring them back inside your supply area (buildings, depots, supply lines) or call an Ammo Truck.','bad');}else if(n&&low+zero>=Math.max(2,n*.3)){T.amWarn=G.t;log(T.id,'Running low on ammo - your supply lines and depots refill it, or send an Ammo Truck.','w');}}}
 /* Roads: the map's road network is the supply-line graph (03c-logistics). Battle has no towns: the old town and hamlet buildings are plain
    civilian buildings any infantry can garrison (G.civ, c.ti=-1). */
 function initRoads(){for(const c of G.civ)c.ti=-1;lgInit();}

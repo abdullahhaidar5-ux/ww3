@@ -182,7 +182,7 @@ async function powerChecks(page, { mode, ck, tap }) {
   await page.waitForTimeout(600); await page.evaluate(() => updateUI());
   const bb2 = await btn('barrage'); await click(bb2.x, bb2.y); ck(mode + ' targeted power arms on button click', await page.evaluate(() => G.aim === 'barrage'), await page.evaluate(() => JSON.stringify({ aim: G.aim, pw: G.teams[ME].pw.barrage, paused: G.paused, el: document.elementFromPoint(innerWidth/2, 60)?.outerHTML.slice(0, 80) })));
   const vp = await page.evaluate(() => { for (let y = innerHeight * .5; y < innerHeight * .9; y += 20) for (let x = innerWidth * .3; x < innerWidth * .7; x += 20) { if (document.elementFromPoint(x, y) === cv && screenToWorld(x, y)) return { width: x * 2, height: y / 0.6 }; } return { width: innerWidth, height: innerHeight }; });
-  await click(vp.width / 2, vp.height * 0.6);
+  await click(vp.width / 2, vp.height * 0.6, { button: 'right' });
   { const ac = await acts(page); ck(mode + ' targeted power fires after one map click', pw(ac).includes('barrage') && await page.evaluate(() => !G.aim), JSON.stringify([ac, vp, await page.evaluate(() => [JSON.stringify(window.__pd), MLOCK.on, LASTPT, G.aim, G.place, G.over, mouse.x, mouse.y, !!screenToWorld(mouse.x, mouse.y)])])); }
   if (!tap) {
     await page.evaluate(() => { G.teams[ME].pw.barrage.cd = 0; updateUI(); window.__acts = []; });
@@ -319,9 +319,9 @@ try {
   a = await acts(page);
   check('X stops the selected units', a.some(x => x.t === 'stop'), JSON.stringify(a));
   await page.evaluate(() => { G.place = 'barracks'; updateUI(); });
-  await page.mouse.click(g[0].x, g[0].y, { button: 'right' });
+  await page.mouse.click(g[0].x, g[0].y);
   a = await acts(page);
-  check('right-click cancels building placement (no order)', await page.evaluate(() => !G.place) && !a.length, JSON.stringify(a));
+  check('left-click cancels building placement (no order)', await page.evaluate(() => !G.place) && !a.length, JSON.stringify(a));
   // right-drag line / right-drag with nothing selected
   await setSel([A, B, C]);
   await page.mouse.move(V.line[0].x, V.line[0].y); await page.mouse.down({ button: 'right' });
@@ -344,10 +344,10 @@ try {
   await page.mouse.click(V.HQ.x, V.HQ.y);
   check('left-click own building selects it', sameIds(await sel(page), [await page.evaluate(() => window.__HQ)]), JSON.stringify(await sel(page)));
   check('rally-point ground is clickable', V.hqGround.ok, JSON.stringify(V.hqGround));
-  await page.mouse.click(V.hqGround.x, V.hqGround.y);
+  await page.mouse.click(V.hqGround.x, V.hqGround.y, { button: 'right' });
   a = await acts(page);
-  check('left-click ground with a production building selected sets its rally point', a.some(x => x.t === 'rally'), JSON.stringify(a));
-  check('…and the building stays selected', (await sel(page)).length === 1);
+  check('right-click ground with a production building selected sets its rally point', a.some(x => x.t === 'rally'), JSON.stringify(a));
+  check('…and the building is let go', (await sel(page)).length === 0);
 
   /* ---- mouse kept inside the game window (Pointer Lock) ---- */
   console.log(' mouse kept inside the game window');
@@ -448,7 +448,7 @@ try {
   await enterExitChecks(page, { mode: 'mouse', ck: check });
   await cancelChecks(page, { mode: 'mouse', ck: check });
   await powerChecks(page, { mode: 'mouse', ck: check });
-  await stanceChecks(page, { mode: 'mouse', ck: check });
+  // army stance was removed on purpose (Abdullah 2026-11-14 18:31 "Remove army stance option"): no stance checks
   // one-click powers: hotkey + 1 click, no-target = 1 press, Esc / right-click cancels
   await page.evaluate(() => { const T = G.teams[ME]; T.pw.barrage = { lv: 1, cd: 0 }; T.pw.sanc = { lv: 1, cd: 0 }; updateUI(); });
   await clear(page); await page.keyboard.press('b'); await wait(100);

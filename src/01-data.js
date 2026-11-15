@@ -39,6 +39,7 @@ let srand=Math.random;const srnd=(a,b)=>a+srand()*(b-a);
 // dom: ground | naval | air ; alt: low | high (air only); aa: 0 none, 1 low air, 2 all air
 const BASE={
   harv:{name:'Supply Truck',cls:'harv',hp:450,spd:62,rng:0,dmg:0,rof:1,cost:600,time:8,from:'hq',armor:'heavy',r:12,dom:'ground',noAttack:true},
+  ammot:{name:'Ammo Truck',cls:'ammot',hp:380,spd:66,rng:0,dmg:0,rof:1,cost:450,time:9,from:'factory',armor:'light',r:12,dom:'ground',noAttack:true},
   dozer:{name:'Construction Vehicle',cls:'dozer',hp:420,spd:64,rng:0,dmg:0,rof:1,cost:800,time:10,from:'hq',armor:'heavy',r:12,dom:'ground',noAttack:true},
   // Shia factions only: while their Ayatollah lives, none of their soldiers ever break. If he falls, his martyrdom
   // inspires them: no fear and +10% damage for 30 seconds. One at a time; unarmed, so keep him safe.
@@ -621,6 +622,10 @@ for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctr
 // The data rows of removed nations stay (old saves, hidden base rows such as EU) but are in no list a player or the AI can reach.
 const PLAYABLE=['IR','RS','DW','RV','OB','US','GB','FR','DE','IL','UA','RU','CN','KP','IN','JP','KR','PK','SA','AE','TR','EG'];   /* Abdullah 2026-11-14 "Keep 22": the 18 + IN JP DE KR */
 const FKEYS=PLAYABLE.filter(k=>FACTIONS[k]||k==='JP');   /* JP's row is added by 01c-jp.js right after */
+/* Player colours (Abdullah 2026-11-14 18:57 "players can choose their color"): 12 clearly different colours + "Nation colour" (= no pick, the faction default).
+   A seat's pick is an index into PCOLS (-1 = nation colour). The lobby, the servers and newGame all carry the array `pc`; pcClean makes it safe (unique, in range). */
+const PCOLS=[{k:'red',n:'Red',c:'#e03a3a'},{k:'blue',n:'Blue',c:'#3a78e0'},{k:'green',n:'Green',c:'#2fae4e'},{k:'yellow',n:'Yellow',c:'#f0d23a'},{k:'orange',n:'Orange',c:'#f08a2a'},{k:'purple',n:'Purple',c:'#9a52d6'},{k:'cyan',n:'Cyan',c:'#2fd0d6'},{k:'pink',n:'Pink',c:'#f27fb8'},{k:'white',n:'White',c:'#f0f0f0'},{k:'grey',n:'Black / Gray',c:'#4a4f57'},{k:'brown',n:'Brown',c:'#8a5a34'},{k:'lime',n:'Lime',c:'#a6e22e'}];
+function pcClean(a,n){if(!Array.isArray(a))return null;const o=[];for(let i=0;i<n;i++){const v=a[i];o.push(Number.isInteger(v)&&v>=0&&v<PCOLS.length&&!o.includes(v)?v:-1);}return o.some(v=>v>=0)?o:null;}
 // An old save / replay / online slot naming a removed nation falls back to a kept nation of the same morale style.
 const NATFALL={EU:'FR',PL:'FR',IQ:'RV',SY:'RS',BI:'OB',AF:'DW',KD:'RS',CU:'UA',AU:'GB',CA:'GB'};
 function natFix(f){if(FKEYS.includes(f))return f;if(NATFALL[f])return NATFALL[f];const st=MORALE_STYLE[f];return {zeal:'IR',prof:'RU',home:'UA',fire:'SA'}[st]||'US';}
@@ -631,7 +636,7 @@ function natFix(f){if(FKEYS.includes(f))return f;if(NATFALL[f])return NATFALL[f]
    matchR(a,b) = exchange ratio dollar for dollar, including who outranges whom; >= MATCH_WIN "beats", <= 1/MATCH_WIN "weak to".
    UNOTE keeps only the tactical notes that are not a counter list. View/UI only: the simulation never reads these. */
 const UNOTE={inf:'Takes 35% less damage in woods or beside buildings; gets suppressed under heavy fire',hacker:'Disables buildings',hero:'Picks off infantry from long range',
-  champ:'Elite squad: tough, accurate, one special ability (see the button when selected) · Only one at a time',harv:'Gathers supply · Also resupplies ammo around it',dozer:'Builds and repairs',
+  champ:'Elite squad: tough, accurate, one special ability (see the button when selected) · Only one at a time',harv:'Gathers supply (money)',ammot:'Refills ammo for friendly units close to it · Limited stock',dozer:'Builds and repairs',
   tank:'Thickest armor in front: side hits do 20% more damage, rear hits 60% more',drone:'Explodes on groups of vehicles and infantry',ship:'Shells coasts and boats from long range'};
 const MATCH_K=['inf','at','tank','aa','arty','heli','jet','drone'],MATCH_SEA=['boat','ship','sub'],MATCH_B=['turret','sam'],MATCH_WIN=1.5,matchC={};
 function matchS(fac,k){return STRUCT[k]?Object.assign({},bstats(fac,k),{armor:'bld',dom:'ground',spd:0}):stats(fac,k);}
@@ -661,7 +666,7 @@ function powBan(k){return !!POWERS[k]&&POW_KEEP.indexOf(k)<0;}
 function sigBan(fac,k){return powBan(k)||(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
 /* power use of a building for the Build button: + needs power, - gives power (Generator); 0 = no power use (one POWER table) */
 function pwNeed(k){return POWER.use[k]?POWER.use[k]:(k!=='hq'&&POWER.make[k]?-POWER.make[k]:0);}
-function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')?['cleric']:[]),'spy'],factory:['aa','tank','arty',...(F.extra||[]).filter(k=>stats(fac,k).from!=='airfield'),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift',...(F.extra||[]).filter(k=>stats(fac,k).from==='airfield')],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
+function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')?['cleric']:[]),'spy'],factory:['aa','tank','arty','ammot',...(F.extra||[]).filter(k=>stats(fac,k).from!=='airfield'),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift',...(F.extra||[]).filter(k=>stats(fac,k).from==='airfield')],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
 function bldAllowed(fac,k){if(sigBan(fac,k))return false;if(k==='gen')return typeof G!=='undefined'&&!!G&&!!G.battle;   /* Conquest: the Revenue Center is gone - territory pays
   */if(k==='fort')return !!FORT_NAT[fac];if(k==='tunnel')return !!FACTIONS[fac].tunnels;return !(k==='airfield'&&FACTIONS[fac].noAir);}

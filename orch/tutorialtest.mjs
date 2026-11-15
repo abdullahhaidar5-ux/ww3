@@ -74,7 +74,7 @@ async function reloadMenu() { await page.reload({ waitUntil: 'load', timeout: 12
 async function placeNear(k, spots) { await ev(() => { const d = G.ents.find(e => e.kind === 'dozer' && e.team === ME && !e.dead); if (d) { G.sel = [d]; updateUI(); } }); await wait(200);   /* the Build tab shows only while a Construction Vehicle is selected (a player clicks the Dozer first) */
   await page.click('.tabs button[data-tab="build"]').catch(() => {}); await wait(300); await page.click('#b_' + k); await wait(300);
   const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; });
-  for (const [dx, dy] of spots) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); await wait(500); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y); await wait(500);
+  for (const [dx, dy] of spots) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); await wait(500); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y, { button: 'right' }); await wait(500);
     if (await ev((k) => G.ents.some(e => e.isB && e.team === ME && e.kind === k && !e.dead), k)) return true; if (!(await ev((k) => G.place === k, k))) { await page.click('#b_' + k); await wait(300); } }
   return false; }
 const builtUp = async (k) => { for (let n = 0; n < 120 && !(await ev((k) => G.ents.some(e => e.isB && e.team === ME && e.kind === k && !e.dead && e.built >= 1), k)); n++) await ff(3); return ev((k) => G.ents.some(e => e.isB && e.team === ME && e.kind === k && e.built >= 1), k); };

@@ -178,7 +178,7 @@ function swBanner(){if(!G||!G.battle||G.over){if(SWB.el&&SWB.el.style.display!==
   if(h!==SWB.h){SWB.h=h;SWB.el.innerHTML=h;}SWB.el.style.display=h?'block':'none';}
 function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,sx=W/MAPW,sy=H/MAPH;c.globalCompositeOperation='source-over';
   // a replay or a spectator showing everything: no fog at all
-  if((RP.on&&!RP.fog)||(NET.spec&&NET.specAll)||G.shell){c.fillStyle='#000';c.fillRect(0,0,W,H);FOGC.getContext('2d').drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}
+  if((RP.on&&!RP.fog)||(NET.spec&&NET.specAll)){c.fillStyle='#000';c.fillRect(0,0,W,H);FOGC.getContext('2d').drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}
   let X=FOGC.x;if(!X){X=FOGC.x=document.createElement('canvas');X.width=W;X.height=H;FOGC.xN=0;}
   const hs=[];{const sk=(G.teams[ME].F.mods.sight||1)*1.08;for(const e of G.ents)if(e.team===ME&&!e.dead)hs.push(e.x,e.y,(!e.isB&&e.s.vis?e.s.vis:e.isB?340:e.s.dom==='air'?340:e.s.dom==='naval'?380:280)*sk);}
   for(const r of (G.teams[ME].reveals||[]))hs.push(r.x,r.y,r.r);
@@ -189,7 +189,7 @@ function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,
 const VGL={};function vetGlow(r){const k=r>2?3:2;if(VGL[k])return VGL[k];const cv=document.createElement('canvas');cv.width=cv.height=64;const x=cv.getContext('2d'),g=x.createRadialGradient(32,32,4,32,32,31),c=k===3?'255,205,90':'150,200,255';g.addColorStop(0,'rgba('+c+',.0)');g.addColorStop(.55,'rgba('+c+',.28)');g.addColorStop(.8,'rgba('+c+',.55)');g.addColorStop(1,'rgba('+c+',0)');x.fillStyle=g;x.fillRect(0,0,64,64);return VGL[k]=cv;}
 const RKV=new Map();   // rank-up flash: last rank seen per unit (view only)
 const SHORTN={inf:'INF',at:'ANTI-TANK',aa:'ANTI-AIR',tank:'TANK',arty:'ARTILLERY',apc:'CARRIER',hero:'HERO',champ:'HERO',hacker:'HACKER',dozer:'DOZER',demo:'DEMO',sniper:'SNIPER',mlrs:'MLRS',ifv:'CARRIER'};
-/* Supply area: faint rings around your buildings / depots / supply trucks show while ammo units are selected or while O is held;
+/* Supply area: faint rings around your buildings / depots show while ammo units are selected or while O is held;
    the supply lines on the roads show at the same time (08c-logi lgWanted). */
 let SUPC={t:-9,P:null};
 function ringOn(c,x,y,r,col,fill){c.beginPath();for(let i=0;i<=40;i++){const a=i/40*6.2832,px=x+Math.cos(a)*r,py=y+Math.sin(a)*r,p=toScreen(px,groundH(px,py)+2,py);if(p.z>1)return;if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);}if(fill){c.fillStyle=fill;c.fill();}c.strokeStyle=col;c.stroke();}
@@ -214,7 +214,7 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
     if(e.crit&&!e.isB)critIcons(c,p.x-w/2-8,p.y+2,e.crit);
     if(ammoOn()&&e.am!==undefined&&e.amx&&!e.isB&&ally(e.team,ME)){const fa=e.am/e.amx,low=fa<.3,oos=!e.sup&&e.am<=0;
       if(sel||low){const y=p.y+(sel||e.hp<e.max||SET.hp==='all'?9:4);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,y-1,w+2,4);const fl=e.am<=0&&((performance.now()/260)|0)%2;c.fillStyle=e.am<=0?(fl?'#ff5a40':'#8a2a20'):low?'#f2d14a':'#c9b784';c.fillRect(p.x-w/2,y,Math.max(e.am<=0?w:2,w*fa),2);}
-      if(oos){const ix=p.x+w/2+7,iy=p.y+(sel?3:2);c.fillStyle='rgba(0,0,0,.7)';c.beginPath();c.arc(ix,iy,6,0,7);c.fill();c.strokeStyle='#ff8a5a';c.lineWidth=1.6;c.strokeRect(ix-3,iy-2.5,6,5);c.beginPath();c.moveTo(ix-5,iy+5);c.lineTo(ix+5,iy-5);c.stroke();if(mouse.in&&Math.hypot(mouse.x-ix,mouse.y-iy)<9){const tx='Out of ammo - bring it back to your supply area or send a supply truck';c.font='600 11px system-ui,sans-serif';c.textAlign='left';const tw=c.measureText(tx).width;c.fillStyle='rgba(0,0,0,.85)';c.fillRect(ix+9,iy-10,tw+10,19);c.fillStyle='#ffb090';c.fillText(tx,ix+14,iy+3);}}}
+      if(oos){const ix=p.x+w/2+7,iy=p.y+(sel?3:2);c.fillStyle='rgba(0,0,0,.7)';c.beginPath();c.arc(ix,iy,6,0,7);c.fill();c.strokeStyle='#ff8a5a';c.lineWidth=1.6;c.strokeRect(ix-3,iy-2.5,6,5);c.beginPath();c.moveTo(ix-5,iy+5);c.lineTo(ix+5,iy-5);c.stroke();if(mouse.in&&Math.hypot(mouse.x-ix,mouse.y-iy)<9){const tx='Out of ammo - bring it back to your supply area or send an Ammo Truck';c.font='600 11px system-ui,sans-serif';c.textAlign='left';const tw=c.measureText(tx).width;c.fillStyle='rgba(0,0,0,.85)';c.fillRect(ix+9,iy-10,tw+10,19);c.fillStyle='#ffb090';c.fillText(tx,ix+14,iy+3);}}}
     if(e.aband&&!e.isB){c.font='bold 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='rgba(0,0,0,.7)';c.fillText('ABANDONED',p.x+1,p.y-4);c.fillStyle=ally(e.team,ME)?'#e3b341':'#ffd166';c.fillText('ABANDONED',p.x,p.y-5);c.textAlign='left';}
     {const mo=!e.isB?moraleOf(e):null;if(mo&&(mo.v<.995||mo.st==='routing')&&(ally(e.team,ME)||sel||mo.v<.66)){const y=p.y+(sel||e.hp<e.max||SET.hp==='all'?5:0);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,y-1,w+2,4);c.fillStyle=MOR_COL[mo.st];c.fillRect(p.x-w/2,y,Math.max(2,w*mo.v),2);if(mo.st==='fearless'){c.fillStyle='#5fd38a';c.beginPath();c.arc(p.x+w/2+5,y+1,2.2,0,7);c.fill();}}}
     if(!e.isB&&e.team===ME&&G.sqOf&&G.sqOf[e.id]){const q=G.sqOf[e.id];c.fillStyle='rgba(0,0,0,.7)';c.fillRect(p.x-w/2-13,p.y-3,10,10);c.fillStyle='#e3b341';c.font='700 10px IBM Plex Mono, monospace';c.textAlign='center';c.fillText(q,p.x-w/2-8,p.y+5);}

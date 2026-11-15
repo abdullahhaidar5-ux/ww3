@@ -78,7 +78,7 @@ function wireHost(g){
   g.on('hello',m=>{if(m.sameTab)return;if(m.data&&m.data.sp){if(!(NET.peers&&NET.peers.indexOf(m.peer)>=0)&&!NET.lobby.some(p=>p.peer===m.peer)){(NET.isSpec=NET.isSpec||{})[m.peer]=1;browserSpec(m.peer);}return;}hostHello(m.peer,m.by,m.data&&m.data.f,null,m.data&&typeof m.data.pw==='string'?m.data.pw:'');});
   g.on('cmd',m=>hostCmd(m.peer,m.data));
   // a friend in the lobby picks their nation / team / Ready (08d-lobby); only the browser host's own lobby uses it
-  g.on('pick',m=>{if(m.sameTab||MODE!=='single')return;const p=NET.lobby.find(q=>q.peer===m.peer),d=m.data;if(!p||!d||typeof d!=='object')return;if(typeof d.f==='string')p.f=natFix(d.f);p.r=d.r?1:0;if(typeof d.t==='number'&&d.t>=0&&d.t<8)NET.tm[NET.lobby.indexOf(p)+1]=d.t|0;renderLobby();});
+  g.on('pick',m=>{if(m.sameTab||MODE!=='single')return;const p=NET.lobby.find(q=>q.peer===m.peer),d=m.data;if(!p||!d||typeof d!=='object')return;if(typeof d.f==='string')p.f=natFix(d.f);p.r=d.r?1:0;if(typeof d.t==='number'&&d.t>=0&&d.t<8)NET.tm[NET.lobby.indexOf(p)+1]=d.t|0;if(d.c!==undefined){const k=NET.lobby.indexOf(p)+1,v=Number.isInteger(d.c)&&d.c>=0&&d.c<PCOLS.length?d.c:-1;if(v<0||!pcTakenOf(lobPc(),k).has(v))p.c=v;}renderLobby();});
   // the battle half (orders, pings, reconnects, keyframe requests) is shared with the server host (07a-hostsnap)
   g.onPeers(ch=>{for(const q of ch.joined.concat(ch.updated)){if(q.sameTab||!q.presence)continue;hostPres(q,hostHello);}});
   g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);if(NET.lobbySpec)NET.lobbySpec=NET.lobbySpec.filter(x=>x!==q.peer);if(NET.isSpec)delete NET.isSpec[q.peer];renderLobby();}else hostGone(q.peer);}});
@@ -96,7 +96,7 @@ async function newBattle(){if(!NET.room||NET.code||NET.game)return;NET.hostNote=
 function quickPick(){if(!NET.room)return [];return NET.room.peers().filter(p=>!p.sameTab&&p.presence&&p.presence.g&&p.presence.g.s==='open'&&FKEYS.includes(p.presence.g.f)&&!p.presence.g.pw&&!p.presence.g.lk&&(p.presence.g.n|0)<(p.presence.g.mx||8)).sort((x,y)=>((y.presence.g.cf|0)-(x.presence.g.cf|0))||((y.presence.g.n|0)-(x.presence.g.n|0))).slice(0,2);}
 async function playOnline(){if(!NET.room||NET.code||NET.game||NET.qp)return;NET.qp=1;try{for(const p of pwVal()?[]:quickPick()){const r=await joinGame(p);if(r===true||NET.game||NET.code)return;}if(!NET.code&&!NET.game)await newBattle();}finally{NET.qp=0;}}
 // Host in this browser (today's way; also the fallback when Cloudflare can't host). note: shown at the top of the lobby
-async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hostNote=note||'';NET.ais=[];NET.st=[];NET.stK=null;const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];mpIn(1);
+async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hostNote=note||'';NET.ais=[];NET.st=[];NET.stK=null;NET.pc0=pcLoad();const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];mpIn(1);
   $('mpstatus').textContent='Connecting…';
   // the matchmaking service can hang without ever answering: give up after 20 s with the same message as a refusal
   try{const g=await joinT('tc-'+code,20000,1);if(NET.code!==code){try{g.leave();}catch(e){}return;}NET.game=g;}catch(e){if(NET.code!==code)return;$('mpstatus').textContent=window.WW3_P2P?'Could not reach the online matchmaking service. Check your internet connection and try again.':'Could not open a game room. Try again in a moment.';cancelHost();return;}
@@ -114,7 +114,7 @@ function cfOK(){try{return !!(NET.room&&typeof NET.room.cf==='function'&&NET.roo
 async function hostCF(again){if(!NET.room||NET.code||NET.game)return;const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a'),key=Math.random().toString(36).slice(2,12)+Math.random().toString(36).slice(2,10);
   NET.cf={own:1,key,blob:null,pend:null};mpIn(1);
   const r=await joinGame({peer:'ww3-'+code,presence:{g:{c:code,s:'open',cf:1}}},{via:'wsb',own:key});
-  if(r===true){NET.lobby=[];NET.ais=[];NET.tm=[0];NET.st=[];NET.stK=null;cfPush(true);return;}
+  if(r===true){NET.lobby=[];NET.ais=[];NET.tm=[0];NET.st=[];NET.stK=null;NET.pc0=pcLoad();cfPush(true);return;}
   NET.cf=null;
   if(r&&r.why==='taken'&&!again){mpIn(0);return hostCF(1);}
   // the server is over today's free allowance, unreachable or refusing: the battle quietly starts in this browser
@@ -123,20 +123,20 @@ async function hostCF(again){if(!NET.room||NET.code||NET.game)return;const code=
   return hostBrowser();}
 // the owner's lobby settings as the server wants them ('bset')
 // (start spots, 'st', only when someone picked one: a lobby without picks sends exactly what it did before)
-function cfCfg(){const nh=NET.lobby.length+1,st=lobSt(),o={map:setup.map||'strait',w:setup.w|0,tm:(NET.tm||[]).slice(0,nh).map(v=>v|0),ais:(NET.ais||[]).map((a,j)=>Object.assign({f:a.f,d:a.d|0,tm:a.tm|0},a.p?{p:persCode(a.p)}:{},st[nh+j]>=0?{st:st[nh+j]}:{}))};if(st.slice(0,nh).some(v=>v>=0))o.st=st.slice(0,nh);if(MAPS[o.map]&&MAPS[o.map].custom)o.cm=customMapCode(o.map);return o;}
-function cfCfgOf(b){const hs=(b.seats||[]).filter(s=>s.h),as=(b.seats||[]).filter(s=>s.ai),o={map:b.map,w:b.w|0,tm:hs.map(s=>s.tm|0),ais:as.map(s=>Object.assign({f:s.f,d:s.d|0,tm:s.tm|0},s.p?{p:persCode(s.p)}:{},s.st>=0?{st:s.st|0}:{}))};if(hs.some(s=>s.st>=0))o.st=hs.map(s=>s.st>=0?s.st|0:-1);if(b.cm&&MAPS[b.map]&&MAPS[b.map].custom)o.cm=b.cm;return o;}
+function cfCfg(){const nh=NET.lobby.length+1,st=lobSt(),o={map:setup.map||'strait',w:setup.w|0,tm:(NET.tm||[]).slice(0,nh).map(v=>v|0),ais:(NET.ais||[]).map((a,j)=>Object.assign({f:a.f,d:a.d|0,tm:a.tm|0},a.p?{p:persCode(a.p)}:{},st[nh+j]>=0?{st:st[nh+j]}:{},a.c>=0?{c:a.c}:{}))};if(NET.pc0>=0)o.pc0=NET.pc0;if(st.slice(0,nh).some(v=>v>=0))o.st=st.slice(0,nh);if(MAPS[o.map]&&MAPS[o.map].custom)o.cm=customMapCode(o.map);return o;}
+function cfCfgOf(b){const hs=(b.seats||[]).filter(s=>s.h),as=(b.seats||[]).filter(s=>s.ai),o={map:b.map,w:b.w|0,tm:hs.map(s=>s.tm|0),ais:as.map(s=>Object.assign({f:s.f,d:s.d|0,tm:s.tm|0},s.p?{p:persCode(s.p)}:{},s.st>=0?{st:s.st|0}:{},s.c>=0?{c:s.c|0}:{}))};if(hs[0]&&hs[0].c>=0)o.pc0=hs[0].c|0;if(hs.some(s=>s.st>=0))o.st=hs.map(s=>s.st>=0?s.st|0:-1);if(b.cm&&MAPS[b.map]&&MAPS[b.map].custom)o.cm=b.cm;return o;}
 // send the owner's edits (only real changes); until the server's answer reflects them, older lobby states are ignored
 function cfPush(force){const C=NET.cf;if(!C||!C.own||!NET.game)return;const js=JSON.stringify(cfCfg());if(!force&&(C.blob&&JSON.stringify(cfCfgOf(C.blob))===js||C.pend&&C.pend.js===js))return;
   C.pend={js,until:performance.now()+2500};NET.game.emit('bset',JSON.parse(js)).catch(()=>{});}
 // the lobby from the server: mirror it into the lobby the host screen draws (NET.lobby / NET.tm / NET.ais)
 function cfApply(){const C=NET.cf,b=C&&C.blob;if(!b)return false;const js=JSON.stringify(cfCfgOf(b));if(C.pend){if(C.pend.js!==js&&performance.now()<C.pend.until)return false;C.pend=null;}
-  const hs=(b.seats||[]).filter(s=>s.h);NET.lobby=hs.slice(1).map((s,i)=>({peer:'seat'+(i+1),by:null,f:FKEYS.includes(s.f)?s.f:'US'}));NET.tm=hs.map(s=>s.tm|0);NET.st=hs.map(s=>s.st>=0?s.st|0:-1);NET.ais=(b.seats||[]).filter(s=>s.ai).map(s=>({f:FKEYS.includes(s.f)?s.f:FKEYS[0],d:s.d|0,p:persCode(s.p),tm:s.tm|0,st:s.st>=0?s.st|0:-1}));return true;}
+  const hs=(b.seats||[]).filter(s=>s.h);NET.lobby=hs.slice(1).map((s,i)=>({peer:'seat'+(i+1),by:null,f:FKEYS.includes(s.f)?s.f:'US',c:s.c>=0?s.c|0:-1}));NET.pc0=hs[0]&&hs[0].c>=0?hs[0].c|0:-1;NET.tm=hs.map(s=>s.tm|0);NET.st=hs.map(s=>s.st>=0?s.st|0:-1);NET.ais=(b.seats||[]).filter(s=>s.ai).map(s=>({f:FKEYS.includes(s.f)?s.f:FKEYS[0],d:s.d|0,p:persCode(s.p),tm:s.tm|0,st:s.st>=0?s.st|0:-1,c:s.c>=0?s.c|0:-1}));return true;}
 // the lobby's connection line, the same wherever the battle runs: "Online · ping 42 ms" (in battle: fpsHud)
 function cfNetText(){return 'Online'+(NET.ping?` · ping ${Math.round(NET.ping)} ms`:'');}
 const TEAM_COL=['#7fb8e6','#ea5a40','#74d08f','#e3b341','#c58af0','#f08ab4','#6fe0d0','#c9c9c9'];
 // Host lobby: game code and player count at the top, the Start button right under it, one row per seat (taken or
 // open) with each player's nation and team, quick team presets, and the invite steps at the bottom.
-async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=='single'||!cfb&&(!NET.code||NET.code==='join'))return;const mk=cfb&&MAPS[cfb.map]?cfb.map:setup.map,mx=cfb&&cfb.mx>1?Math.min(cfb.mx|0,(MAPS[mk]||MAPS.strait).max):(MAPS[mk]||MAPS.strait).max,mapN=(MAPS[mk]||MAPS.strait).name;
+async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=='single'||!cfb&&(!NET.code||NET.code==='join'))return;const mk=MAPS[setup.map]?setup.map:cfb&&MAPS[cfb.map]?cfb.map:'strait',mx=cfb&&cfb.mx>1?Math.min(cfb.mx|0,(MAPS[mk]||MAPS.strait).max):(MAPS[mk]||MAPS.strait).max,mapN=(MAPS[mk]||MAPS.strait).name;
   NET.ais=NET.ais||[];if(NET.lobby.length+1+NET.ais.length>mx)NET.ais.splice(Math.max(0,mx-1-NET.lobby.length));
   if(NET.lobby.length+1>mx&&!cfb){const drop=NET.lobby.splice(mx-1);for(const p of drop)NET.game.emit('lobby',{n:0,to:p.peer,full:1}).catch(()=>{});}
   let names={};try{if(NET.user){const ids=NET.lobby.map(p=>p.by).filter(Boolean);if(ids.length)names=await NET.user.profiles(ids);}}catch(e){}
@@ -149,12 +149,12 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   const hint=cfb&&cfb.why&&!NET.cf.pend?String(cfb.why):nh+NET.ais.length<2?'Add a computer player to an open slot, or wait for someone to join.':!teamsOk?'Everyone is on one team: put someone on another team to start.':waitN>0?`Waiting for ${waitN} friend${waitN>1?'s':''} to press Ready…`:rdys.length?'Everyone is ready: press PLAY GAME!':'Everyone ready? Press PLAY GAME. Players can still join until you do.';
   const rows=[],push=()=>{renderLobby();},setTm=(get)=>(v)=>{get(v);push();};
   const myF=f=>{setup.p=f;try{facCards();}catch(e){}if(cfb){try{GLB.me.f=f;glSend();}catch(e){}}push();};
-  const hs=cfb?(cfb.seats||[]).filter(s=>s.h):null;
+  const hs=cfb?(cfb.seats||[]).filter(s=>s.h):null,pcA=lobPc();
   for(let k=0;k<nh;k++){const p=k?NET.lobby[k-1]:null,hv=hs?hs[k]:null,f=hv?(FKEYS.includes(hv.f)?hv.f:k===0?setup.p:'US'):k===0?setup.p:p.f;
-    rows.push({kind:'human',you:k===0,host:k===0,name:k===0?'You':hv?'Friend '+k:(p.by&&names[p.by]&&names[p.by].name)||'Friend '+k,f,tm:NET.tm[k]|0,rd:k===0?1:hv?hv.r:p.r?1:0,ed:{f:k===0?myF:null,t:setTm(v=>{NET.tm[k]=v;})}});}
+    rows.push({kind:'human',you:k===0,host:k===0,name:k===0?'You':hv?'Friend '+k:(p.by&&names[p.by]&&names[p.by].name)||'Friend '+k,f,tm:NET.tm[k]|0,rd:k===0?1:hv?hv.r:p.r?1:0,pc:pcA[k],pcTaken:pcTakenOf(pcA,k),nat:(FACTIONS[f]||{}).color,ed:{c:k===0?(v=>{NET.pc0=v;pcSave(v);push();}):null,f:k===0?myF:null,t:setTm(v=>{NET.tm[k]=v;})}});}
   const aiPers=(a,i)=>persSel(()=>persCode(a.p),v=>{a.p=v;if(NET.cf&&NET.cf.own)cfPush();},'Style of computer player '+(i+1));
-  NET.ais.forEach((a,j)=>{const i=nh+j;rows.push({kind:'ai',d:a.d|0,f:a.f,tm:a.tm|0,pers:aiPers(a,i),ed:{f:v=>{a.f=v;push();},t:setTm(v=>{a.tm=v;}),slot:d=>{if(d<0)NET.ais.splice(j,1);else a.d=d;push();}}});});
-  for(let i=nn;i<mx;i++)rows.push({kind:'open',ed:{slot:d=>{const used=new Set([setup.p,...NET.lobby.map(p=>p.f),...NET.ais.map(a=>a.f)]);const f=FKEYS.find(k=>!used.has(k))||FKEYS[(Math.random()*FKEYS.length)|0];NET.ais.push({f,d,tm:nn%Math.max(2,nn+1)});push();}}});
+  NET.ais.forEach((a,j)=>{const i=nh+j;rows.push({kind:'ai',d:a.d|0,f:a.f,tm:a.tm|0,pers:aiPers(a,i),pc:pcA[i],pcTaken:pcTakenOf(pcA,i),nat:(FACTIONS[a.f]||{}).color,ed:{c:v=>{a.c=v;push();},f:v=>{a.f=v;push();},t:setTm(v=>{a.tm=v;}),slot:d=>{if(d<0)NET.ais.splice(j,1);else a.d=d;push();}}});});
+  for(let i=nn;i<mx;i++)rows.push({kind:'open',ed:{slot:d=>{const used=new Set([setup.p,...NET.lobby.map(p=>p.f),...NET.ais.map(a=>a.f)]);const f=FKEYS.find(k=>!used.has(k))||FKEYS[(Math.random()*FKEYS.length)|0];NET.ais.push({f,d,tm:nn%Math.max(2,nn+1),c:pcFree(lobPc(),99)});push();}}});
   const ms=$('mapSel'),sides=lobSides(nn),stv=lobSt();let spots=null;
   {const cv=document.createElement('canvas');cv.id='lobSpots';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Start positions: click a numbered spot to choose who starts there');spotsDraw(cv,mk,sides,stv);cv.onclick=e=>{const k=spotsHit(cv,e,mk,nn);if(k<0)return;try{sfxUI(700);}catch(_){}lobSet(spotsCycle(lobSt(),k));};spots=cv;}
   const notes=[];if(NET.hostNote)notes.push(NET.hostNote);if(NET.pw)notes.push('🔒 Password protected');{const sw=cfb?cfb.ns|0:(NET.lobbySpec||[]).length;if(sw)notes.push('👁 '+sw+' watching');}
@@ -168,10 +168,12 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   if(cfb){cfPush();return;}
   try{glBroadcast(mk,mx);}catch(e){}
   NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,m:setup.map||'strait',mx,pw:NET.pw?1:undefined,sp:1,ns:(NET.lobbySpec||[]).length||undefined}}).catch(()=>{});}
+// player colours per seat (humans, then computer players): a PCOLS index or -1 = nation colour (01-data PCOLS, 08d-mplobby picker)
+function lobPc(){return [NET.pc0>=0?NET.pc0:-1,...NET.lobby.map(p=>p.c>=0?p.c:-1),...(NET.ais||[]).map(a=>a.c>=0?a.c:-1)];}
 function lobbyTeams(){const nh=NET.lobby.length+1;return [...(NET.tm||[]).slice(0,nh),...(NET.ais||[]).map(a=>a.tm|0)];}
 // Start spots in the lobby: one per seat (players then computer players; -1 = Random). Picks made for one set of spots
 // (map and player count) are dropped when the set changes, so a number always means the spot the leader saw.
-function lobMap(){const b=NET.cf&&NET.cf.own&&NET.cf.blob;return b&&MAPS[b.map]?b.map:setup.map||'strait';}
+function lobMap(){const b=NET.cf&&NET.cf.own&&NET.cf.blob;return MAPS[setup.map]?setup.map:b&&MAPS[b.map]?b.map:'strait';}
 function lobSt(){const nh=NET.lobby.length+1,ais=NET.ais||[],n=nh+ais.length,key=spotsKey(lobMap(),n);
   if(NET.stK&&NET.stK!==key){NET.st=[];ais.forEach(a=>a.st=-1);}NET.stK=key;
   const raw=[...Array.from({length:nh},(_,i)=>(NET.st||[])[i]),...ais.map(a=>a.st)],o=[];for(const v of raw)o.push(Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1);return o;}
@@ -181,7 +183,7 @@ function lobSides(n){const nh=NET.lobby.length+1,cfb=NET.cf&&NET.cf.own&&NET.cf.
 function launchMP(){if(NET.cf&&NET.cf.own){if(MODE!=='single'||!NET.game)return;const c=cfCfg();NET.cf.pend=null;NET.game.emit('bset',Object.assign(c,{seed:(Math.random()*1e9)|0,start:1})).catch(()=>{});$('mpstatus').querySelectorAll('.startbtn').forEach(b=>{b.disabled=true;b.textContent='Starting…';});return;}
   if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const ais=(NET.ais||[]).slice(0,Math.max(0,(MAPS[setup.map]||MAPS.strait).max-1-NET.lobby.length)).map(a=>({f:FKEYS.includes(a.f)?a.f:FKEYS[0],d:Math.max(0,Math.min(3,a.d|0)),p:persCode(a.p),tm:Math.max(0,Math.min(7,a.tm|0))}));const facs=[setup.p,...NET.lobby.map(p=>p.f),...ais.map(a=>a.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer),...ais.map(()=>null)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null),...ais.map(()=>null)];
   const aiD=[null,...NET.lobby.map(()=>null),...ais.map(a=>(a.d|0)+10*persCode(a.p))];NET.opp=NET.peers[1];
-  const map=setup.map||'strait',cmx=MAPS[map]&&MAPS[map].custom?{cm:customMapCode(map)}:{};const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};const ids=idLobbyIds().slice(0,facs.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0,ids},sp,cmx)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp,cmx);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st,ids);NET.specs=[];for(const q of LS)specJoin(q);}
+  const map=setup.map||'strait',cmx=MAPS[map]&&MAPS[map].custom?{cm:customMapCode(map)}:{};const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};const pcl=pcClean(lobPc().slice(0,facs.length),facs.length),pp=pcl?{pc:pcl}:{};const ids=idLobbyIds().slice(0,facs.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0,ids},sp,cmx,pp)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp,cmx,pp);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st,ids,0,0,pcl);NET.specs=[];for(const q of LS)specJoin(q);}
 // Joining: each player has a reconnect token for this game (kept for the browser tab), so if the link drops - or the
 // page is reloaded - they rejoin as the same commander. Client handlers are wired by wireClient() so a reconnect can
 // rebuild them on the new connection.
@@ -203,7 +205,7 @@ function wireClient(g){
   // An old host sends no 'w': the player's own menu choice stays, as before.
   if(typeof d.w==='number'&&d.w>=-31&&d.w<=39){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
   // sv: the host is the game server (Cloudflare), which has no side of its own, so this player may be slot 0
-  NET.sv=d.sv?1:0;NET.spec=d.sp?1:0;NET.specAll=NET.spec;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length),Array.isArray(d.ids)?d.ids.map(idClean):null);});
+  NET.sv=d.sv?1:0;NET.spec=d.sp?1:0;NET.specAll=NET.spec;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length),Array.isArray(d.ids)?d.ids.map(idClean):null,0,0,pcClean(d.pc,d.facs.length));});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
   g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();if(m.data.to)NET.lastRxMe=NET.lastRx;applySnap(m.data);}});
   g.on('evt',m=>{if(ok(m)){NET.lastRx=performance.now();applyEvents(m.data);}});

@@ -18,6 +18,12 @@ const ck = (c, m) => { if (!c) fails.push(m); };
 
 // battlepower 2026-11-14 (Abdullah 2026-11-13 20:11): Battle power comes from Generators, Conquest keeps its map plants (runtime proof: orch/powertest.mjs)
 { const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./powertest.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "battlepower: orch/powertest.mjs failed - " + String(r.stdout || '').split('\n').filter(l => /FAIL/.test(l)).slice(0, 3).join(' | ')); }
+// pcolor 2026-11-15 (Abdullah 2026-11-14 18:57 "Make it so players can choose their color"): a picked colour reaches T.color, two seats cannot share one, every lobby/setup row has a picker (runtime proof: orch/pcolor.mjs) + the colour travels in the seat data of the server, the stand-in and the start message
+{ const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./pcolor.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "pcolor: orch/pcolor.mjs failed - " + String(r.stdout || '').split('\n').filter(l => /FAIL/.test(l)).slice(0, 3).join(' | '));
+  const rd = f => fs.readFileSync(path.join(ROOT, f), "utf8"); const sv = rd("server/src/battle.js"), sd = rd("server/src/battle-driver.js"), so = rd("orch/cfhost-standin.mjs"), nt = rd("src/07-net.js");
+  ck(/pcTaken\(id, v\)/.test(sv) && /\.\.\.cc\(this\.players\.get\(id\)\.c\)/.test(sv) && /sp\.pc = pc/.test(sv) && /pcClean/.test(sd), "pcolor: server/src/battle.js must keep the seat colour (pick, seats(), start pc) and one colour per seat");
+  ck(/pcTaken\(id, v\)/.test(so) && /pc0/.test(so) && /pcClean/.test(so), "pcolor: orch/cfhost-standin.mjs must mirror the server colour rules");
+  ck(/o\.pc0=NET\.pc0/.test(nt) && /pcClean\(d\.pc,d\.facs\.length\)/.test(nt), "pcolor: the lobby must send the colour to the server (pc0 / ais[].c) and the client must read start.pc"); }
 // upgsimple 2026-11-14 (Abdullah 14:31 "simplify the list of upgrades and powers"): upgrades belong to a building (data-from), at most 4 per building, at most 6 active powers per nation, power buildings marked (orch/upgsimple.mjs)
 { const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./upgsimple.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "upgsimple guard: " + (r.stdout || "").trim().split("\n").slice(0, 4).join(" | ")); }
 // techbldgs 2026-11-14 (Abdullah 2026-11-13 20:21 / 20:24): the capturable Battle buildings (quarry, mine, power plant, field hospital) are ONE system on the derrick code: capturable, effect only for the owner, destroyable and repairable, state in the checkpoint; every Battle map has them (symmetry: orch/battlemapfair.mjs --static)
@@ -180,9 +186,6 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(!/GC\.scars|grScar\(|GC\.lastB|GC\.vets|grVeteran/.test(all), 'living menu: battle scars / named veterans (ideas 11 and 8) must stay out - no GC.scars, grScar, GC.vets in src/');
   ck(!/GR_LASTB|svFront|grWarTable|\bwt\b/.test(ck7), 'living menu: the last-battle note and the front sketch are display notes - they must not enter the checkpoint (src/07b-ckpt.js)');
   ck(/function svFront\(\)/.test(sv) && /thumb:svThumb\(\),wt:svFront\(\)/.test(sv) && !/ckEncode\(\)[^\n]*svFront/.test(sv), 'living menu: a battle save must carry the front sketch in its list entry only (svMeta wt:svFront() in 08d-save.js)');
-  const f = (m.match(/function mxWarSrc\(\)[\s\S]*?\nfunction mxShown/) || [''])[0];
-  ck(f && !/svGrandInfo/.test(f) && /svLatest/.test(f) && !/loadGrand|grLoad|grMap|GCM|GM_P|grNew|\bGC\b/.test(f), 'living menu: mxWarSrc / mxWarTable must draw from the save notes only (no campaign code)');
-  ck(/async function svMenuSync\(\)[\s\S]{0,900}mxWarTable\(\)/.test(sv) && /function mxShown\(first\)\{[^\n]*svMenuSync\(\)/.test(m), 'living menu: the background must be redrawn whenever the menu is shown (mxShown -> svMenuSync -> mxWarTable)');
 }
 // polishP2 "Settings": the one key table (src/06z-keys.js KEYTAB) lists every key the battle handlers listen to; the Keyboard keys window (08m-controls.js) shows that table.
 //     A hotkey added to a handler without a row fails here. W A S D are camera-only and never rebindable. Runtime proof: orch/polishtest.mjs (gate/save).
@@ -218,6 +221,10 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/SET\.edgeAl===0/.test(et) && /'sEdgeAl','edgeAl'/.test(hud) && /'sRadio','radio'/.test(hud) && /SET\.radio===0/.test(SRC['09b-radio.js'] || '') && /body\.inMenu #log,/.test(hud) && /body\.inMenu #edgeAl/.test(hud), 'radio + edge alerts: each needs its own Settings switch (sRadio / sEdgeAl) and both must be hidden in menus');
   ck(!/'[^'\n]*[Aa]rmour[^'\n]*','r:/.test(Object.values(SRC).join('\n')), 'radio: report lines use American spelling (armor, never armour)');
   ck((hud.match(/function edgeAlert\(/g) || []).length === 1 && !Object.entries(SRC).some(([f, t]) => f !== '08i-hud.js' && /EDGE\.a\.(push|unshift)\(/.test(t)), 'edge alerts: one alert list only (08i-hud.js)'); }
+// Menu background (Abdullah 2026-11-14 17:07 "Have an epic static main menu background"): ONE static picture, no live shell battle, no war table.
+{ const m = SRC['14-menu.js'] || '', all = Object.values(SRC).join('\n');
+  ck(!/mxShell|mxshell|G\.shell\b|SH\.on/.test(all) && !/mxWarTable|mxWarSrc|#mxwt/.test(all), 'menu background: the live shell battle / war table are back (one static picture only)');
+  ck(/#mxbg\{[^}]*url\(menu-bg\.webp\)/.test(m) && !/mxpan/.test(m) && fs.existsSync(path.join(ROOT, 'menu-bg2.webp')) && fs.statSync(path.join(ROOT, 'menu-bg2.webp')).size < 450000, 'menu background: #mxbg must be a CSS background of menu-bg2.webp (static, under 450 KB)'); }
 // 0a. Game feel (2026-11-09 22:44): shell impacts match the surface (water spray / road chips / the map's soil) and tanks rock when they fire.
 { const f = SRC['05-fx3d.js'], v = SRC['06-view.js'];
   ck(/function impactSurf\(/.test(f) && /function splashFX\(/.test(f) && /if\(wet\)splashFX\(x,y,s,big\)/.test(f), 'game feel: explosions no longer check the surface they hit (water spray is gone)');
@@ -384,6 +391,9 @@ try {
   ck(!d.fk.includes('EU'), 'EU still in FKEYS (retired from menus)');
   // nodoc 2026-11-14 (Abdullah 16:54 "Remove doctrines"): no doctrine can be picked and no doctrine buttons exist
   { const nd = await ev(() => ({ pick: gdPick(ME, GDOC_KEYS[0]), btn: !!document.querySelector('#panel [id^="dc_"],#panel [id^="dp_"],#gdocSel') })); ck(!nd.pick && !nd.btn, 'doctrines must be gone: ' + JSON.stringify(nd)); }
+  // noform 2026-11-14 (Abdullah 19:18 "Remove formations and remove army stance and resupply and type button")
+  { const nf = await ev(() => { try { fmBar(); renderSquads(); } catch (e) {} const t = [...document.querySelectorAll('#info button')].map(b => b.textContent).join('|'); return { fmb: !!document.getElementById('fmb'), key: typeof KEYTAB !== 'undefined' && KEYTAB.some(k => k.id === 'form'), t }; });
+    ck(!nf.fmb && !nf.key && !/Type \(T\)|Resupply|Stance|Assault|Guerrilla/.test(nf.t), 'formations / Type / Resupply / stance buttons must be gone: ' + JSON.stringify(nf)); }
   // novdig 2026-11-14 (Abdullah 14:55 "Make it so that vehicles can't dig in"): no vehicle can dig in, infantry still can
   // ---- nations20 (Abdullah 2026-11-13 20:31-20:33): exactly 22 playable nations (Keep 22, 2026-11-14), in every picker
   { const W = 'IR RS DW RV OB US GB FR DE IL UA RU CN KP IN JP KR PK SA AE TR EG'.split(' ').sort().join(' ');
@@ -484,6 +494,18 @@ try {
     console.log('battle supply lines', JSON.stringify(sl));
     ck(sl.mini > 0 && sl.world > 0 && sl.green > 0 && sl.cov > 0 && sl.beads > 0, 'Battle must draw your supply lines (green roads) on the minimap and, with L, on the ground: ' + JSON.stringify(sl));
     ck(sl.on && sl.wanted, 'L / the Supply lines button must switch the supply overlay on in Battle'); ck(sl.chip, 'Battle must show the Supply chip'); ck(sl.ui, 'the ammo row must say whether the unit is in your supply area');
+    // CAPTURABLE ROADS (Abdullah 2026-11-14 18:40 "Make it so that units can capture roads"): a ground unit standing on a neutral road section captures it in ~10 s, an air unit does not, an owned section is supply area
+    { const rc = await ev(() => { const L = G.lg, D = G.lgd; lgFix(D); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && e.s && e.s.dom === 'ground'); if (!u) return { err: 'no unit' };
+        let ei = -1; for (let i = 0; i < L.E.length && ei < 0; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 300 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) ei = i; } if (ei < 0) return { err: 'no neutral section' };
+        const e = L.E[ei], m = lgPoint(e, e.len / 2), ox = u.x, oy = u.y, os = u.s; const run = n => { for (let k = 0; k < n; k++) lgRoadCap(1); };
+        const hold = () => D.rc[ei] && D.rc[ei].o;
+        u.s = Object.assign({}, os, { dom: 'air' }); u.x = m[0]; u.y = m[1]; run(14); const air = hold();
+        u.s = os; run(4); const early = hold(); run(10); const got = hold();
+        lgCover(); const beads = (L.bead[ME] || []).some(b => Math.hypot(b.x - m[0], b.y - m[1]) < 150); const sup = supplyPoints()[ME].some(p => p.rd && Math.hypot(p.x - m[0], p.y - m[1]) < 150);
+        u.x = ox; u.y = oy; return { ei, air, early, got, beads, sup, ME }; });
+      console.log('road capture', JSON.stringify(rc));
+      ck(!rc.err, 'road capture test setup: ' + JSON.stringify(rc)); if (!rc.err) { ck(!(rc.air >= 0), 'an air unit must not capture a road section: ' + JSON.stringify(rc)); ck(!(rc.early >= 0), 'road capture takes ~10 s, not 4: ' + JSON.stringify(rc));
+        ck(rc.got === rc.ME, 'a ground unit standing on a neutral road section must capture it in ~10 s: ' + JSON.stringify(rc)); ck(rc.beads && rc.sup, 'a captured road section must count as the owner\'s supply area: ' + JSON.stringify(rc)); } }
     const am = await ev(() => { const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq'); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && hasAmmo(e)); if (!u || !hq) return { err: 'no unit/hq' };
       const step = () => { G.supT = 1; updSupply(0.01); }; const P = supplyPoints()[ME]; let far = null;
       for (let k = 0; k < 400 && !far; k++) { const x = (k * 977) % MAPW, y = (k * 613) % MAPH; if (P.every(p => Math.hypot(p.x - x, p.y - y) > p.r + 60)) far = { x, y }; }
@@ -496,6 +518,21 @@ try {
     ck(am.empty && am.empty.am === 0 && am.empty.sup === 0, 'ammo rule: an empty unit outside your area stays empty: ' + JSON.stringify(am));
     ck(am.road && am.road.sup === 1 && am.road.am > 0, 'ammo rule: a unit standing on your supply line (road) refills: ' + JSON.stringify(am));
     ck(am.back && am.back.sup === 1 && am.back.am > 0, 'ammo rule: a unit back at your base refills: ' + JSON.stringify(am)); ck(am.sb === false, 'ammo rule: Test range must have unlimited ammo');
+  // AMMO TRUCK (Abdullah 2026-11-13 21:46 "Separate ammo truck"): the money truck (harv) never refills ammo; every nation builds an Ammo Truck (kind 'ammot') at the War Factory that refills units next to it from a limited stock.
+  { const at = await ev(() => { const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq'); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && hasAmmo(e)); if (!u || !hq || typeof addUnit !== 'function') return { err: 'no unit/hq' };
+      const allN = Object.keys(FACTIONS).every(f => roster(f).factory.includes('ammot') && stats(f, 'ammot').noAttack && stats(f, 'ammot').from === 'factory');
+      const step = () => { G.supT = 1; updSupply(0.01); }; const P = supplyPoints()[ME]; let far = null; for (let k = 0; k < 400 && !far; k++) { const x = (k * 977) % MAPW, y = (k * 613) % MAPH; if (P.every(p => Math.hypot(p.x - x, p.y - y) > p.r + 120)) far = { x, y }; }
+      if (u.am === undefined) ammoInit(u); u.x = far.x; u.y = far.y; u.am = 3;
+      const hv = addUnit(ME, 'harv', far.x + 20, far.y); step(); step(); const harvAm = u.am; const harvSup = u.sup;
+      const tr = addUnit(ME, 'ammot', far.x - 30, far.y); step(); const stock0 = tr.am, cap = tr.amx, sup = u.sup;
+      for (let i = 0; i < 12; i++) step(); const filled = u.am, stock1 = tr.am;
+      const noHarvPt = !supplyPoints()[ME].some(p => Math.abs(p.x - hv.x) < 1 && Math.abs(p.y - hv.y) < 1);
+      return { allN, harvAm, harvSup, stock0, cap, filled, amx: u.amx, sup, stock1, noHarvPt }; });
+    console.log('ammotruck', JSON.stringify(at));
+    ck(!at.err && at.allN, 'every nation must have an Ammo Truck (noAttack, from the War Factory): ' + JSON.stringify(at));
+    ck(!at.err && at.harvAm === 3 && at.harvSup === 0 && at.noHarvPt, 'the money truck (harv) must never refill ammo or count as a supply point: ' + JSON.stringify(at));
+    ck(!at.err && at.filled > 3 && at.stock1 < at.stock0 && at.stock0 < at.cap && at.sup === 1, 'an Ammo Truck must refill a nearby unit from its limited stock: ' + JSON.stringify(at));
+    ck(!/supply truck[^'"]{0,40}(refill|resupplies)|(refill|resupplies)[^'"]{0,40}supply truck/i.test(Object.entries(SRC).filter(([k]) => !k.startsWith('13')).map(([, v]) => v).join('\n')), 'text still says the supply truck refills ammo'); }
     // battleclean 2026-11-12 (Abdullah 2026-11-11 19:45 "Once I click this should disappear"): the rally flag shows only while a production building is selected (or a 1.5 s flash after setting it)
     const rf = await ev(() => { const T = G.teams[ME], hq = G.ents.find(e => e.team === ME && e.kind === 'hq' && !e.dead), vis = () => { try { syncScene(.016); } catch (e) {} return !!(RALLY && RALLY.visible); };
       T.rally = { x: hq.x + 90, y: hq.y + 90 }; G.sel = []; vis(); RV.fl = 0; const away = vis(); G.sel = [hq]; const sel = vis(); G.sel = []; const gone = vis(); G.sel = []; return { away, sel, gone }; });

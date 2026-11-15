@@ -3,7 +3,7 @@
    08d-lobby glRender (guest) turn their lobby into one description D and call mplShow(D); the screen only draws it and calls back.
    Frame: title + room code (top-left) | players table Player / Colour / Nation / Team + ready marks | map preview + SELECT MAP | options row
    | lobby log + chat line | PLAY GAME (leader) or READY (guest) bottom-left, BACK bottom-right.
-   Colour is the team colour (read-only swatch: the sim has no separate player colour). Chat: the lobby has no chat message yet, so the box shows the
+   Colour: a picker per row (pcPicker; you change your own row, the leader the computer rows; r.pc/r.pcTaken/r.nat/r.ed.c). Chat: the lobby has no chat message yet, so the box shows the
    lobby log (joins, leaves) and its input is disabled until a chat message exists. */
 const MPL={el:null,log:[],key:''};
 (function(){const s=document.createElement('style');s.id='mplCss';s.textContent=`
@@ -26,6 +26,8 @@ body.mplon #menu{visibility:hidden}
 #mpl select:not(:disabled):hover,#mpl select:not(:disabled):focus{border-color:#7fb88a;box-shadow:0 0 8px #7fb88a66}
 #mpl .mnm{display:flex;align-items:center;gap:10px;min-width:0}#mpl .mnm b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #mpl .mtag{font-size:12px;padding:2px 8px;border-radius:9px;background:#33443b;text-transform:uppercase;letter-spacing:.06em}
+#mpl .pcb{display:flex;align-items:center;gap:8px;cursor:pointer;background:#101511;border:1px solid #55685a;border-radius:4px;padding:3px 8px;min-height:36px;color:#e4eadf;font:inherit;font-size:15px}#mpl .pcb:hover{border-color:#7fb88a;box-shadow:0 0 8px #7fb88a66}#mpl .pcb[disabled]{cursor:default;border-color:transparent;background:transparent;box-shadow:none}#mpl .pcb i{display:inline-block;width:34px;height:20px;border-radius:3px;background:var(--pc);box-shadow:0 0 0 1px #000a}
+#pcpop{position:fixed;z-index:400;background:#121a16;border:1px solid #7fb88a;border-radius:6px;padding:8px;box-shadow:0 8px 28px #000c;display:grid;grid-template-columns:repeat(4,44px);gap:6px;font-family:inherit}#pcpop button{width:44px;height:30px;border-radius:4px;border:2px solid #000a;cursor:pointer;background:var(--pc);padding:0;position:relative}#pcpop button:hover:not(:disabled){border-color:#fff}#pcpop button.on{border-color:#fff;box-shadow:0 0 8px #fff}#pcpop button:disabled{opacity:.22;cursor:not-allowed}#pcpop .pcn{grid-column:1/-1;background:#222c26;color:#e4eadf;width:auto;height:auto;padding:5px 8px;font:600 13px inherit;font-family:inherit;text-align:left}#pcpop .pcn.on{border-color:#fff}
 #mpl .msw{display:inline-block;width:64px;height:22px;border-radius:3px;background:var(--tc);box-shadow:0 0 0 1px #000a,0 0 8px var(--tc)}
 #mpl .mrd{font-size:15px;font-weight:700;letter-spacing:.05em;color:#8d9b8c}#mpl .mrd.on{color:#6fe39a}
 #mpl .mopts{display:flex;flex-wrap:wrap;gap:10px 26px;align-items:center;padding:10px 14px;border:1px solid #3b4a3d;border-radius:4px;background:#141915;font-size:17px}
@@ -46,6 +48,7 @@ body.mplon #menu{visibility:hidden}
 #mpl .mmid{flex:1;font-size:16px;opacity:.82;min-width:0}
 #mpl .mft .mback{margin-left:auto}
 #mpl .lkinv{padding:8px 10px}
+.mpldd{width:100%;margin:6px 0 4px;padding:8px 10px;font:700 15px system-ui,sans-serif;color:#eef3f6;background:#0d1418;border:2px solid #5f7f9f;border-radius:4px}
 `;document.head.appendChild(s);
 const _t=LK.toast;LK.toast=function(m){try{mplLog(m);}catch(e){}return _t(m);};})();
 function mplLog(m){MPL.log.push(String(m));if(MPL.log.length>80)MPL.log.shift();const l=document.getElementById('mplLog');if(l){const d=document.createElement('div');d.textContent=String(m);l.append(d);l.scrollTop=l.scrollHeight;}}
@@ -55,7 +58,24 @@ function mplTeam(v,all){if(v!=='n')return +v;for(const t of [4,5,6,7,0,1,2,3])if
 // D: {code, mk, mx, nn, rows:[{kind:'human'|'ai'|'open', name, you, host, f, tm, rd, d, ed:{f,t,slot}|null, pers}], all:[team numbers],
 //     onMap, spots (canvas|null), w, setW, invite (element|null), net (text), notes:[text], start:{label,disabled,glow,fn,anyway,hint}|null,
 //     ready:{on,fn}|null, back}
+/* ---- player colour picker (Abdullah 2026-11-14 18:57): one popover shared by the online lobby (this file, 08d-lobby guest view) and the single-player Players step (08-ui renderTeams).
+   cur = PCOLS index or -1 (nation colour); taken = indexes other rows hold (greyed out); onPick(i) is called with the new index (-1 = nation colour). ed=false: shows the colour only. */
+function pcLoad(){try{const v=parseInt(localStorage.getItem('ww3_pcol'),10);return Number.isInteger(v)&&v>=0&&v<PCOLS.length?v:-1;}catch(e){return -1;}}
+function pcSave(v){try{localStorage.setItem('ww3_pcol',String(v));}catch(e){}}
+function pcTakenOf(pc,self){return new Set((pc||[]).filter((v,i)=>i!==self&&v>=0));}
+function pcFree(pc,n){const used=new Set((pc||[]).slice(0,n).filter(v=>v>=0));const k=PCOLS.findIndex((_,i)=>!used.has(i));return k;}
+function pcPop(){const o=document.getElementById('pcpop');if(o)o.remove();}
+function pcPicker(cur,taken,natCol,onPick,label,ed){const b=document.createElement('button');b.type='button';b.className='pcb';b.setAttribute('aria-label',label||'Color');
+  const col=cur>=0&&PCOLS[cur]?PCOLS[cur].c:natCol||'#888',i=document.createElement('i');i.style.setProperty('--pc',col);b.append(i,document.createTextNode(cur>=0&&PCOLS[cur]?PCOLS[cur].n:'Nation'));
+  if(!ed){b.disabled=true;return b;}
+  b.onclick=e=>{e.stopPropagation();if(document.getElementById('pcpop')){pcPop();return;}const pop=document.createElement('div');pop.id='pcpop';
+    const nat=document.createElement('button');nat.type='button';nat.className='pcn'+(cur<0?' on':'');nat.textContent='Nation color (default)';nat.onclick=()=>{pcPop();onPick(-1);};pop.append(nat);
+    PCOLS.forEach((c,k)=>{const q=document.createElement('button');q.type='button';q.style.setProperty('--pc',c.c);q.title=c.n+(taken.has(k)?' (taken)':'');q.setAttribute('aria-label',c.n);q.disabled=taken.has(k);if(k===cur)q.className='on';q.onclick=()=>{pcPop();onPick(k);};pop.append(q);});
+    document.body.append(pop);const r=b.getBoundingClientRect();pop.style.left=Math.max(4,Math.min(r.left,innerWidth-pop.offsetWidth-6))+'px';pop.style.top=(r.bottom+4+pop.offsetHeight>innerHeight?Math.max(4,r.top-pop.offsetHeight-4):r.bottom+4)+'px';
+    const away=ev=>{if(!pop.contains(ev.target)){pcPop();document.removeEventListener('mousedown',away,true);}};setTimeout(()=>document.addEventListener('mousedown',away,true),0);};
+  return b;}
 function mplShow(D){
+  pcPop();
   const E=(t,c,x)=>{const d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d;};
   const opt=(s,v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;s.append(o);};
   const prevLog=MPL.el&&MPL.el.querySelector('#mplLog'),keepTop=prevLog?prevLog.scrollTop:0;
@@ -68,7 +88,7 @@ function mplShow(D){
     if(r.kind==='ai'){nm.append(E('span','mtag','AI'));if(r.ed&&r.ed.slot){const s=document.createElement('select');s.setAttribute('aria-label','Computer player '+(i+1));opt(s,'',"Open (remove)");AI_LEVELS.forEach((n,d)=>opt(s,d,n));s.value=String(r.d|0);s.onchange=()=>r.ed.slot(s.value===''?-1:+s.value);nm.append(s);if(r.pers)nm.append(r.pers);}else nm.append(E('b','',AI_LEVELS[r.d|0]));}
     else{nm.append(LK.flag(r.f),E('b','',r.name));if(r.you){nm.append(E('span','mtag','you'));const pg=LK.ping();if(pg)nm.append(pg);}if(r.host&&!r.you)nm.append(E('span','mtag','leader'));}
     c1.append(nm);
-    const sw=E('span','msw');td().append(sw);
+    td().append(r.kind==='open'?E('span','',''):pcPicker(r.pc>=0?r.pc:-1,r.pcTaken||new Set(),r.nat||'#888',v=>r.ed.c(v),'Color of '+(r.name||'player '+(i+1)),!!(r.ed&&r.ed.c)));
     const cn=td(),fs=document.createElement('select');fs.setAttribute('aria-label','Nation of '+(r.name||'player '+(i+1)));opt(fs,'rand','Random');for(const k of FKEYS)opt(fs,k,FACTIONS[k].name);fs.value=FKEYS.includes(r.f)?r.f:'rand';
     if(r.ed&&r.ed.f)fs.onchange=()=>r.ed.f(fs.value==='rand'?FKEYS[(Math.random()*FKEYS.length)|0]:fs.value);else fs.disabled=true;cn.append(fs);
     const ct=td(),ts=document.createElement('select');ts.setAttribute('aria-label','Team of '+(r.name||'player '+(i+1)));opt(ts,'n','None');for(let t=0;t<4;t++)opt(ts,t,'Team '+(t+1));ts.value=(r.tm|0)<4?String(r.tm|0):'n';
@@ -87,7 +107,13 @@ function mplShow(D){
   const R=E('div','mright'),pv=E('div','mpv');let cv=D.spots;
   if(!cv){cv=document.createElement('canvas');cv.width=384;cv.height=264;setTimeout(()=>{try{mapPreview(D.mk,cv);}catch(e){}},30);}
   pv.append(cv);R.append(pv);const m=MAPS[D.mk]||{};R.append(E('div','mmap',m.name||D.mk),E('div','mmapn',(m.bm&&typeof bmInfo==='function'?(()=>{const I=bmInfo(D.mk);return I.players+' players · '+I.size+' · '+I.theme;})():(m.min||2)+'–'+(m.max||D.mx)+' players')));
-  if(D.onMap){const b=E('button','mbtn sec','SELECT MAP');b.id='mplSelMap';b.onclick=D.onMap;R.append(b);}
+  /* map dropdown (Abdullah 2026-11-14 18:39 "select maps from a drop down in lobby"): every map that fits the room, in the one Battle list; the host picks, others see the name */
+  if(D.onMap){const ms=document.getElementById('mapSel'),s=document.createElement('select');s.id='mplMapDd';s.className='mpldd';s.setAttribute('aria-label','Battlefield');
+    const keys=(typeof BATTLE_MAPS!=='undefined'&&BATTLE_MAPS.length?BATTLE_MAPS:Object.keys(MAPS)).filter(k=>MAPS[k]&&(MAPS[k].max||8)>=Math.max(2,D.nn||1));
+    for(const k of keys){const o=document.createElement('option');o.value=k;const M=MAPS[k];o.textContent=(M.name||k)+'  ('+(M.min||2)+'–'+(M.max||8)+')';s.append(o);}
+    if(!keys.includes(D.mk)){const o=document.createElement('option');o.value=D.mk;o.textContent=(MAPS[D.mk]||{}).name||D.mk;s.prepend(o);}s.value=D.mk;
+    s.onchange=()=>{const v=s.value;if(!MAPS[v])return;/* set the map directly: the old #mapSel only had a change handler after its picker page was opened, so the pick was lost (Abdullah 19:13 "stuck on one map") */setup.map=v;setup.slot=-1;setup.st=[];setup.stK=null;try{if(MAPS[v].bm||(typeof BM_KEYS!=='undefined'&&BM_KEYS.includes(v)))SET.bmap=v;else SET.map=v;saveSet();}catch(e){}if(ms){if(![...ms.options].some(o=>o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=(MAPS[v]||{}).name||v;ms.append(o);}ms.value=v;}try{syncAiN();}catch(e){}try{renderLobby();}catch(e){}};
+    R.append(s);}   /* the dropdown is the one way to pick the map (Abdullah 18:54 "There should not be a separate map selection page") */
   if(D.spotNote)R.append(E('div','mmapn',D.spotNote));
   if(D.invite)R.append(D.invite);
   fr.append(R);
