@@ -36,3 +36,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-14 17:45Z 6c3916f9 **RED** (28 gates) failing: audio,cfclient,grandlive,tutorial — Revert "Train: merge orch/pileflag"
 - 2026-11-14 19:25Z 71094e33 **RED** (27 gates) failing: cfclient,controls,tutorial — Train: merge orch/battleclean2
 - 2026-11-14 20:28Z daebfc24 **RED** (29 gates) failing: audio,superfreeze,tutorial — Land (push-fast): merge orch/usvoice
+- 2026-11-15 03:35Z b44c8209 **RED** (27 gates) failing: cfclient,controls,controlscheck,decisions,migrate-dual,save,smoke4,smooth-mp,smooth-pc,superfreeze — Merge origin/main into menubg3
