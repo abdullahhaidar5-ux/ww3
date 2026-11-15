@@ -384,6 +384,14 @@ try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => {});
+  // cameos 2026-11-15 (Abdullah 2026-11-14 23:58): every buildable unit/building kind of every PLAYABLE nation gets a non-empty, painted picture (src/08q-cameos.js via UK.drawUnit / UK.drawBld)
+  { const bad = await ev(() => { const out = [], cv = document.createElement('canvas'); cv.width = 104; cv.height = 80; const x = cv.getContext('2d');
+      const px = () => { const d = x.getImageData(0, 0, 104, 80).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) n++; return n; };
+      for (const f of PLAYABLE) { const F = FACTIONS[f]; if (!F) continue; const ks = new Set([...Object.keys(BASE).filter(k => BASE[k].from), ...Object.keys(F.units || {}).filter(k => (F.units[k] || {}).from || BASE[k])]);
+        for (const k of ks) { let s; try { s = stats(f, k); } catch (e) { continue; } if (!s || !s.from) continue; x.clearRect(0, 0, 104, 80); try { UK.drawUnit(x, k, 104, 80, '#4a90d9', s, f, false); } catch (e) { out.push(f + ':' + k + ' ' + e.message); continue; } if (px() < 400) out.push(f + ':' + k + ' empty'); }
+        for (const k of Object.keys(STRUCT)) { if (!STRUCT[k].cost || STRUCT[k].fake) continue; let s; try { s = bstats(f, k); } catch (e) { continue; } x.clearRect(0, 0, 104, 80); try { UK.drawBld(x, k, 104, 80, s, f, false, '#4a90d9'); } catch (e) { out.push(f + ':#' + k + ' ' + e.message); continue; } if (px() < 400) out.push(f + ':#' + k + ' empty'); } }
+      return out; });
+    ck(!bad.length, 'cameos: every buildable unit/building of every playable nation needs a painted picture: ' + bad.slice(0, 8).join(' | ')); }
   // ---- menus as a player
   const menu = await ev(() => [...document.querySelectorAll('#menu button, #menu .mx-item, .mx-item')].filter(b => b.offsetParent).map(b => b.textContent.trim()).filter(Boolean).slice(0, 12));
   console.log('menu items', JSON.stringify(menu)); await shot('menu');
