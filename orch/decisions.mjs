@@ -425,6 +425,17 @@ try {
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('IR battle never finished loading'));
   await page.waitForTimeout(2500);
   /* (moved after the battle starts: there is no game behind the menu any more) */
+  /* icons (Abdullah 2026-11-14 21:39 "every button has an icon that makes sense"): one table ICON_SVG (src/08-ui.js + 08p-icons.js), inline svg line icons.
+     Every upgrade / power button in the bar, every order-dock button and the HUD buttons carry an svg icon (units / buildings keep their drawn canvas picture). */
+  { const I = await ev(() => { const noIc = b => !b.querySelector('svg') && !b.querySelector('canvas'); const vis = b => { for (let n = b; n && n.nodeType === 1; n = n.parentElement) { if (n.hidden || getComputedStyle(n).display === 'none') return false; } return true; };
+      const wide = [...document.querySelectorAll('#panel .btn.wide')].filter(noIc).map(b => b.id);
+      const f = G.ents.filter(u => u.team === ME && !u.dead && !u.isB).slice(0, 3); G.sel = f; try { updateUI(); } catch (e) {}
+      const dock = [...document.querySelectorAll('.orddock button, .cmdrow button')].filter(b => vis(b) && noIc(b)).map(b => b.textContent.trim().slice(0, 20));
+      const hud = ['aPause', 'aMenu', 'barGrip', 'mmBtn', 'sbFold', 'aSet', 'aRestart', 'aQuit'].filter(id => { const b = document.getElementById(id); return b && noIc(b); });
+      const n = document.querySelectorAll('#panel .btn.wide').length; return { wide, dock, hud, n, tbl: typeof ICON_SVG === 'object' && Object.keys(ICON_SVG).length, up: typeof icoUpg === 'function' && Object.keys(UPG).slice(0, 40).map(k => ICON_SVG[icoUpg(k)] ? '' : k).filter(Boolean) }; });
+    ck(I.tbl >= 60, 'icons: the shared ICON_SVG table has only ' + I.tbl + ' icons'); ck(I.n > 0 && !I.wide.length, 'icons: upgrade / power buttons without an svg icon: ' + I.wide.slice(0, 6).join(','));
+    ck(!I.dock.length, 'icons: order dock buttons without an svg icon: ' + I.dock.join(' | ')); ck(!I.hud.length, 'icons: HUD buttons without an svg icon: ' + I.hud.join(','));
+    ck(!I.up.length, 'icons: upgrades mapped to a missing icon: ' + I.up.join(',')); }
   { const vd = await ev(() => { const T = G.teams[ME]; const k = allUnits(T.fac).find(k => { const s = stats(T.fac, k); return s.dom === 'ground' && isVeh(s) && s.dmg > 0 && k !== 'dozer' && k !== 'harv'; }); const u = { s: stats(T.fac, k), kind: k, team: ME, x: 0, y: 0, hp: 1, max: 1 }; return { veh: !!k && digCan(u), inf: allUnits(T.fac).some(k => isInf(stats(T.fac, k))) }; });
     ck(!vd.veh, 'vehicles must not be able to dig in'); }
   const cq = await ev(() => { const T = G.teams[ME]; const ban = { cleric: roster(T.fac).barracks.includes('cleric'), fort: bldAllowed(T.fac, 'fort'), bb: false, bbIR: sigBan('IR', 'bb'), bbUS: sigBan('US', 'bb'), fortUS: bldAllowed('US', 'fort'), powIR: typeof POWERS.bb === 'object' };

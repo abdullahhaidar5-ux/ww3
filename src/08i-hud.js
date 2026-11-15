@@ -24,7 +24,7 @@ function hudTick(force){try{hudDeclutter();}catch(e){}if(!G||!G.teams||!G.teams[
   const sb=!!G.sandbox;const sig=[sb?1:0,Math.floor(T.credits),cut,HUDS.unread,HUDS.open?1:0,HUDS.al.length,HD_KEYS.map(hudOn).join('')].join('|');if(sig===HUDS.sig)return;HUDS.sig=sig;
   b.querySelector('#hudM').textContent='$'+Math.floor(T.credits).toLocaleString('en-US');b.querySelector('#hudM').title='Money: supply trucks, oil derricks and the buildings you capture pay it.';
   const s=b.querySelector('#hudS');s.textContent=cut?'Supply: '+cut+' depot'+(cut>1?'s':'')+' cut off':'Supply lines OK';s.style.color=cut?'#ff9a8a':'#9be39b';s.title='Supply Depots of yours that no road links to your Command Center (they reach half as far). Build a road to them or clear the crater.';s.hidden=sb;   /* Test range: unlimited ammo, no supply chip */
-  const a=b.querySelector('#hudAl');a.textContent='\u26A0 '+(HUDS.unread||HUDS.al.length);a.className=HUDS.unread?'hot':'';
+  const a=b.querySelector('#hudAl');{const tx='\u26A0 '+(HUDS.unread||HUDS.al.length);if(a.dataset.tx!==tx){a.dataset.tx=tx;a.textContent=tx;}}a.className=HUDS.unread?'hot':'';
   for(const x of b.querySelectorAll('#hudOv button')){x.className=hudOn(x.dataset.o)?'on':'';if(x.dataset.o==='supply')x.hidden=sb;}
   let f=document.getElementById('hudFeed');if(!HUDS.open){if(f)f.remove();}else{if(!f){f=document.createElement('div');f.id='hudFeed';document.body.appendChild(f);}
     f.innerHTML='';if(!HUDS.al.length){const d=document.createElement('div');d.textContent='No alerts yet.';f.appendChild(d);}
