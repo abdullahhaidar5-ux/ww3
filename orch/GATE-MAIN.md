@@ -46,3 +46,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-15 10:55Z e1b493e4 **RED** (28 gates) failing: audio,cfclient,controls,controlscheck,decisions,loadfreeze,mapsweep,migrate-dual,save,smooth-pc,superfreeze — Voices: Palestinian units re-recorded with voices cloned from real sou
 - 2026-11-15 11:25Z 9d128c80 **RED** (28 gates) failing: decisions,migrate-down,migrate-dual,save,superfreeze — Merge redfixC
 - 2026-11-15 12:54Z a11728d8 **RED** (28 gates) failing: decisions,loadfreeze,tutorial — Merge redfixC
+- 2026-11-15 13:23Z eb5d5b88 **RED** (28 gates) failing: decisions,icons,save — redfixC handoff update
