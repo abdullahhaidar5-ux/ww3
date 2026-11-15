@@ -1,0 +1,54 @@
+  page: shader warm-up 5241 ms, 62 models, 120 objects in 645 steps (longest 303 ms), 114 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 30 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=223 normal=30ms (quiet max 185) longest=222ms three(progs/geo/tex)=+0/+-22/+12 gl={"sh":0,"prog":0,"tex":12,"texUp":12,"texKB":19,"buf":25,"bufKB":955,"vao":15,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 222ms@3.0s {} ; 161ms@9.3s {"tex":4,"texUp":4,"texKB":6.3,"buf":14,"bufKB":616.3,"vao":2} ; 146ms@5.6s {"tex":4,"texUp":4,"texKB":6.3,"buf":7,"bufKB":301.9,"vao":3} ; 115ms@5.3s {} ; 110ms@3.9s {"tex":4,"texUp":4,"texKB":6.3,"vao":1}
+  frames that made the GPU work (7):
+    3.08s 57ms {"buf":4,"bufKB":37,"vao":3} three geo/tex 576/248
+    3.20s 105ms {"aud":2} three geo/tex 576/248
+    3.44s 40ms {"aud":1} three geo/tex 576/248
+    3.50s 57ms {"aud":1} three geo/tex 576/248
+    3.90s 110ms {"tex":4,"texUp":4,"texKB":6.3,"vao":1} three geo/tex 576/252
+    5.58s 146ms {"tex":4,"texUp":4,"texKB":6.3,"buf":7,"bufKB":301.9,"vao":3} three geo/tex 577/256
+    9.31s 161ms {"tex":4,"texUp":4,"texKB":6.3,"buf":14,"bufKB":616.3,"vao":2} three geo/tex 579/260
+  shapes that entered the scene during the strike (look here for the ones built or re-sent):
+    0.3s RingGeometry 114v MeshBasicMaterial
+    0.3s RingGeometry 114v MeshBasicMaterial
+    0.3s CircleGeometry 50v MeshBasicMaterial
+    0.3s PlaneGeometry 4v MeshBasicMaterial
+    0.3s BufferGeometry 378v MeshStandardMaterial
+    0.3s ConeGeometry 22v MeshBasicMaterial
+    3.3s IcosahedronGeometry 60v MeshStandardMaterial
+    3.3s IcosahedronGeometry 60v MeshStandardMaterial
+    3.3s IcosahedronGeometry 60v MeshStandardMaterial
+    3.3s IcosahedronGeometry 60v MeshStandardMaterial
+    3.3s IcosahedronGeometry 60v MeshStandardMaterial
+    3.3s RingGeometry 130v MeshBasicMaterial
+    5.8s BufferGeometry 263v MeshStandardMaterial in Object_2/RootNode/Object_4/soldierLo/
+    5.8s BufferGeometry 4130v MeshStandardMaterial in Object_2/RootNode/Object_4/soldier/
+    9.4s BufferGeometry 260v MeshStandardMaterial in Object_2/RootNode/Object_4/soldierLo/
+    9.4s BufferGeometry 3974v MeshStandardMaterial in Object_2/RootNode/Object_4/soldier/
+    9.4s BufferGeometry 260v MeshStandardMaterial in Object_2/RootNode/Object_4/soldierLo/
+    9.4s BufferGeometry 4469v MeshStandardMaterial in Object_2/RootNode/Object_4/soldier/
+IR worst JS call (not drawing): simUpdate 129ms; FAIL: 12 new textures (max 2); 15 new meshes (max 6)
+  page: shader warm-up 2574 ms, 65 models, 125 objects in 688 steps (longest 103 ms), 121 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 31 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=176 normal=31ms (quiet max 178) longest=233ms three(progs/geo/tex)=+0/+-25/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":2,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 233ms@3.0s {"vao":1} ; 101ms@4.2s {} ; 98ms@5.7s {} ; 98ms@5.5s {} ; 98ms@1.9s {}
+  frames that made the GPU work (3):
+    3.25s 83ms {"aud":2} three geo/tex 677/317
+    3.43s 84ms {"aud":1} three geo/tex 677/317
+    3.49s 67ms {"aud":1} three geo/tex 677/317
+RU worst JS call (not drawing): simUpdate 171ms; ok
+  page: shader warm-up 2203 ms, 59 models, 114 objects in 648 steps (longest 95 ms), 106 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 31 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=195 normal=31ms (quiet max 103) longest=195ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":1,"fbo":0,"read":0,"img":0,"url":0,"aud":4,"cnv":0}
+  worst frames: 195ms@3.0s {"vao":1} ; 127ms@3.4s {"aud":2} ; 112ms@7.2s {} ; 103ms@6.5s {} ; 102ms@10.1s {}
+  frames that made the GPU work (3):
+    3.18s 83ms {"aud":1} three geo/tex 563/216
+    3.42s 127ms {"aud":2} three geo/tex 563/216
+    4.08s 54ms {"aud":1} three geo/tex 563/216
+US worst JS call (not drawing): simUpdate 147ms; ok
+SUPERFREEZE FAIL
