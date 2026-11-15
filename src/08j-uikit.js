@@ -82,6 +82,7 @@ const st=E('style');st.id='ukCss';st.textContent=`
    Iran), and NOTHING that is not infantry falls back to the soldier. iconClass() is also what the tests read (UK.iconBranch). */
 function iconClass(k,s){s=s||{};const nm=String(s.name||''),cl=s.cls||'';k=String(k||'');
   if(/^d(tank|sam|arty)$/.test(k))k=k==='dsam'?'sam':k.slice(1);
+  if(k==='ammot')return'ammo';
   if(k==='jeep'||k==='raidlead'||/technical/i.test(nm))return'jeep';
   if(k==='tank'||/tank|mbt/.test(k))return'tank';
   if(k==='sam'||k==='idome')return'samv';
@@ -121,7 +122,7 @@ function iconClass(k,s){s=s||{};const nm=String(s.name||''),cl=s.cls||'';k=Strin
   if(k==='recon')return'recon';
   if(cl&&cl!=='inf'&&s.dom==='ground')return'apc';
   return'inf';}
-function drawUnit(c,k,W,H,col,st){const K=iconClass(k,st);c.save();c.translate(W/2,H/2);const s=Math.min(W/100,H/76);c.scale(s,s);
+function drawUnit(c,k,W,H,col,st,fac,bg){const K=iconClass(k,st);if(K!=='ayatollah'&&K!=='dearleader'&&typeof CAMEO==='object'){CAMEO.unit(c,K,W,H,{col,fac:fac||curFac(),bg});return;}c.save();c.translate(W/2,H/2);const s=Math.min(W/100,H/76);c.scale(s,s);
   const L='#e9e4d4',D='#0b130f',DM='#0008';c.fillStyle=L;c.strokeStyle=L;c.lineWidth=3;c.lineCap='round';
   const rect=(x,y,w,h,f)=>{c.fillStyle=f||L;c.fillRect(x,y,w,h);},line=(x1,y1,x2,y2,w,f)=>{c.strokeStyle=D;c.lineWidth=w+2.4;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.strokeStyle=f||L;c.lineWidth=w;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();},
     poly=(pts,f)=>{c.fillStyle=f||L;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fill();},dot=(x,y,r,f)=>{c.fillStyle=f||DM;c.beginPath();c.arc(x,y,r,0,7);c.fill();},
@@ -190,7 +191,8 @@ function bldClass(k,st){k=String(k||'');const nm=String((st&&st.name)||'');
   if(/uplink/.test(k))return'uplink';if(/coast/.test(k))return'coast';if(/sam/.test(k))return'sam';if(/turret|gun|battery/.test(k))return'turret';
   if(/econ|oil/.test(k))return/oil|gas|pipeline|petrol|crude|derrick|refiner/i.test(nm)||k==='oil'?'oil':'bank';
   if(/tunnel/.test(k))return'tunnel';if(/fort/.test(k))return'fort';if(/radio/.test(k))return'radio';if(/hq/.test(k))return'hq';if(/barracks/.test(k))return'barracks';return'house';}
-function drawBld(c,k,W,H,st){const K=bldClass(k,st);c.save();c.translate(W/2,H/2);const s=Math.min(W/100,H/76);c.scale(s,s);c.fillStyle='#e9e4d4';c.strokeStyle='#e9e4d4';c.lineWidth=3;c.lineCap='round';
+function curFac(){try{return typeof T!=='undefined'&&T?T.fac:null;}catch(e){return null;}}
+function drawBld(c,k,W,H,st,fac,bg,col){const K=bldClass(k,st);if(typeof CAMEO==='object'){CAMEO.bld(c,K,W,H,{col:col||(typeof T!=='undefined'&&T&&T.color)||'#7a8a6a',fac:fac||curFac(),bg});return;}c.save();c.translate(W/2,H/2);const s=Math.min(W/100,H/76);c.scale(s,s);c.fillStyle='#e9e4d4';c.strokeStyle='#e9e4d4';c.lineWidth=3;c.lineCap='round';
   const D='#101a24';
   switch(K){
   case'factory':c.beginPath();c.moveTo(-28,16);for(let i=0;i<3;i++){c.lineTo(-28+i*16,-2);c.lineTo(-12+i*16,-10);c.lineTo(-12+i*16,-2);}c.lineTo(22,16);c.closePath();c.fill();c.fillRect(22,-22,7,38);break;
@@ -226,7 +228,7 @@ function card(o){const b=E('button','uk-card'+(o.on===false?' off':'')+(o.sel?' 
 function seg(names,cur,fn,tips){const s=E('div','uk-seg');names.forEach((n,i)=>{const b=E('button',i===cur?'on':'',n);b.type='button';if(tips&&tips[i])b.dataset.tt=tips[i];b.onclick=()=>fn(i);s.appendChild(b);});return s;}
 function link(t,fn,tip,dim){const b=E('button','uk-link'+(dim?' dim':''),t);b.type='button';if(tip)b.dataset.tt=tip;b.onclick=fn;return b;}
 /* ---- the one tooltip: any element with data-tt (plain text or JSON {t,d,r:[[k,v]],w}) or a title attribute inside game UI ---- */
-const icC={};function icon(k,col,bld,st){const key=k+'|'+col+'|'+(bld?1:0)+(st&&st.name?'|'+st.name:'');let u=icC[key];if(!u){const cv=document.createElement('canvas');cv.width=104;cv.height=80;const x=cv.getContext('2d');try{if(bld)drawBld(x,k,104,80);else drawUnit(x,k,104,80,col||'#7a8a6a',st);}catch(e){}u=icC[key]=cv.toDataURL();}const im=document.createElement('img');im.src=u;im.alt='';return im;}
+const icC={};function icon(k,col,bld,st,fac){fac=fac||curFac();const key=k+'|'+col+'|'+(bld?1:0)+(st&&st.name?'|'+st.name:'')+'|'+(fac||'');let u=icC[key];if(!u){const cv=document.createElement('canvas');cv.width=208;cv.height=160;const x=cv.getContext('2d');try{if(bld)drawBld(x,k,208,160,st,fac,false,col);else drawUnit(x,k,208,160,col||'#7a8a6a',st,fac,false);}catch(e){}u=icC[key]=cv.toDataURL();}const im=document.createElement('img');im.src=u;im.alt='';return im;}
 let tipEl=null,tipFor=null;
 function tipShow(el,x,y){let raw=el.dataset.tt;if(raw==null)return;let o;if(raw[0]==='{'){try{o=JSON.parse(raw);}catch(e){o={d:raw};}}else{const L=raw.split(/\n| — | - (?=[A-Z])/);o=L.length>1&&L[0].length<40?{t:L[0],d:L.slice(1).join(' ')}:{d:raw};}
   if(!o.t&&!o.d)return;if(!tipEl){tipEl=E('div');tipEl.id='ukTip';document.body.appendChild(tipEl);}
