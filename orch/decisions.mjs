@@ -385,8 +385,6 @@ try {
   // nodoc 2026-11-14 (Abdullah 16:54 "Remove doctrines"): no doctrine can be picked and no doctrine buttons exist
   { const nd = await ev(() => ({ pick: gdPick(ME, GDOC_KEYS[0]), btn: !!document.querySelector('#panel [id^="dc_"],#panel [id^="dp_"],#gdocSel') })); ck(!nd.pick && !nd.btn, 'doctrines must be gone: ' + JSON.stringify(nd)); }
   // novdig 2026-11-14 (Abdullah 14:55 "Make it so that vehicles can't dig in"): no vehicle can dig in, infantry still can
-  { const vd = await ev(() => { const T = G.teams[ME]; const k = allUnits(T.fac).find(k => { const s = stats(T.fac, k); return s.dom === 'ground' && isVeh(s) && s.dmg > 0 && k !== 'dozer' && k !== 'harv'; }); const u = { s: stats(T.fac, k), kind: k, team: ME, x: 0, y: 0, hp: 1, max: 1 }; return { veh: !!k && digCan(u), inf: allUnits(T.fac).some(k => isInf(stats(T.fac, k))) }; });
-    ck(!vd.veh, 'vehicles must not be able to dig in'); }
   // ---- nations20 (Abdullah 2026-11-13 20:31-20:33): exactly 22 playable nations (Keep 22, 2026-11-14), in every picker
   { const W = 'IR RS DW RV OB US GB FR DE IL UA RU CN KP IN JP KR PK SA AE TR EG'.split(' ').sort().join(' ');
     ck(d.fk.slice().sort().join(' ') === W, 'FKEYS must be exactly the 22 nations (' + W + '), got ' + d.fk.slice().sort().join(' '));
@@ -403,6 +401,9 @@ try {
   await ev(() => { setup.p = 'IR'; setup.a = 'US'; setup.n = 1; try { initAudio(); } catch (e) {} startSingle(); });
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('IR battle never finished loading'));
   await page.waitForTimeout(2500);
+  /* (moved after the battle starts: there is no game behind the menu any more) */
+  { const vd = await ev(() => { const T = G.teams[ME]; const k = allUnits(T.fac).find(k => { const s = stats(T.fac, k); return s.dom === 'ground' && isVeh(s) && s.dmg > 0 && k !== 'dozer' && k !== 'harv'; }); const u = { s: stats(T.fac, k), kind: k, team: ME, x: 0, y: 0, hp: 1, max: 1 }; return { veh: !!k && digCan(u), inf: allUnits(T.fac).some(k => isInf(stats(T.fac, k))) }; });
+    ck(!vd.veh, 'vehicles must not be able to dig in'); }
   const cq = await ev(() => { const T = G.teams[ME]; const ban = { cleric: roster(T.fac).barracks.includes('cleric'), fort: bldAllowed(T.fac, 'fort'), bb: false, bbIR: sigBan('IR', 'bb'), bbUS: sigBan('US', 'bb'), fortUS: bldAllowed('US', 'fort'), powIR: typeof POWERS.bb === 'object' };
     const shown = ['u_cleric', 'b_fort', 'p_bb', 'p_cleric'].filter(id => { const b = document.getElementById(id); if (!b) return false; return !b.hidden && b.offsetParent !== null; });
     const btns = [...document.querySelectorAll('#panel button, #side button, #bar button, #powers button, button.btn')].filter(b => b.offsetParent).map(b => b.id + ':' + b.textContent.trim().slice(0, 30));

@@ -18,7 +18,7 @@ await page.route('**/*', r => r.request().url().startsWith(base) ? r.continue() 
 const shot = async n => { await page.waitForTimeout(1500); await page.screenshot({ path: path.join(SHOTS, 'squads-' + n + '.jpg'), type: 'jpeg', quality: 80, timeout: 120000 }).catch(() => console.log('shot skipped ' + n)); console.log('shot', n); };
 const ev = (f, a) => page.evaluate(f, a);
 await page.goto(base + '/index.html', { waitUntil: 'load', timeout: 120000 });
-await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
 await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => {});
 await page.goto(base + '/index.html', { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 120000 });

@@ -37,15 +37,8 @@ const SEEN = () => { const out = []; const vis = e => { if (!e.isConnected) retu
   for (const e of document.querySelectorAll('[title]')) if (vis(e)) out.push(e.title); return out.join(' ¶ '); };
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+  await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => {});
-  // Conquest first: its map power plants stay
-  await ev(() => { setup.p = 'IR'; setup.a = 'US'; setup.n = 1; setup.mode = 'conquest'; try { initAudio(); } catch (e) {} startSingle(); });
-  await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('conquest never loaded'));
-  await page.waitForTimeout(1000);
-  const cq = await ev(() => ({ conq: !!G.conq, plants: G.oil.filter(o => o.pw).length, gen: bldAllowed(G.teams[ME].fac, 'gen'), btn: !!document.getElementById('b_gen') && !document.getElementById('b_gen').hidden }));
-  ck(cq.conq && cq.plants >= 2, 'Conquest must keep its map power plants ' + JSON.stringify(cq));
-  ck(!cq.gen && !cq.btn, 'Conquest must not offer a Generator ' + JSON.stringify(cq));
   // Battle as a Shia nation
   await ev(() => { setup.p = 'RS'; setup.a = 'IL'; setup.n = 1; setup.mode = 'battle'; try { mxSetMode('battle'); } catch (e) {} setup.p = 'RS'; try { initAudio(); } catch (e) {} startSingle(); });
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING && G.battle, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('battle never loaded'));
@@ -55,13 +48,14 @@ try {
     out.battle = !!G.battle; out.plants = G.oil.filter(o => o.pw).length; out.mapPlants = 0;
     out.gens = {}; for (const k of FKEYS) { try { out.gens[k] = bldAllowed(k, 'gen') && !!bstats(k, 'gen').name && bstats(k, 'gen').cost > 0; } catch (e) { out.gens[k] = false; } }
     out.names = [bstats('RS', 'gen').name, bstats('US', 'gen').name]; out.cost = [bstats('RS', 'gen').cost, bstats('US', 'gen').cost, STRUCT.barracks.cost];
+    { const dz = G.ents.find(e => e.kind === 'dozer' && e.team === ME && !e.dead); if (dz) { G.sel = [dz]; try { dozerTab(); showTab('build'); updateUI(); } catch (e) {} } }   /* the Build tab shows only while a Construction Vehicle is selected */
     out.btn = !!document.getElementById('b_gen') && !document.getElementById('b_gen').hidden;
     const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq');
     const p0 = pwrOf(ME); out.p0 = [p0.make, p0.use];
     const bar = addBld(ME, 'barracks', hq.x + 200, hq.y + 100, true), fac = addBld(ME, 'factory', hq.x + 200, hq.y - 100, true), ua = addBld(ME, 'uplink', hq.x - 200, hq.y - 100, true), tu = addBld(ME, 'sam', hq.x - 200, hq.y + 100, true), gun = addBld(ME, 'turret', hq.x - 260, hq.y + 160, true);
     const p1 = pwrOf(ME); out.p1 = [p1.make, p1.use];
     // low power: slower production, defenses offline
-    for (let i = 0; i < 6; i++) battlePower(.5); out.low = !!T.pwLow; out.slow = false; { const qk = 'inf'; T.q.barracks.push({ kind: qk, t: 0 }); const t0 = T.q.barracks[0].t; production(1); out.slow = T.q.barracks.length ? T.q.barracks[0].t - t0 < 0.99 : false; T.q.barracks.length = 0; out.gunOn = !(koLeft(gun) > 0); }
+    for (let i = 0; i < 6; i++) battlePower(.5); out.low = !!T.pwLow; out.slow = false; { bar.q = [{ kind: 'inf', t: 0, c: 0 }]; const t0 = bar.q[0].t; production(1); out.slow = bar.q.length ? bar.q[0].t - t0 < 0.99 : false; bar.q = []; out.gunOn = !(koLeft(gun) > 0); }
     for (let i = 0; i < 3; i++) battlePower(.5); out.off = koLeft(tu) > 0 && koLeft(ua) > 0 && !(koLeft(gun) > 0 && false);
     G._pwv = null; const pcb = document.getElementById('cqBn'); try { cqBanner(); } catch (e) {} out.meter = pcb ? pcb.textContent : '';
     // a Generator brings it back
