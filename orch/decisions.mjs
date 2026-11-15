@@ -81,7 +81,8 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
 // rclaunch 2026-11-15 (Abdullah 00:26 "Make road jobs and launch right click", 00:28 powers too): generals' powers and the Strike LAUNCH fire on right-click (left cancels); road jobs run on right-click (left cancels)
 { const u = SRC['08-ui.js'] || '', l = SRC['08c-logi.js'] || '';
   ck(/function rightPress\(e\)[^]*?if\(G\.aim\)\{placeOrAim\(w,false\)/.test(u), 'rclaunch: right-click must fire the armed power / Strike (rightPress)');
-  ck(/if\(G\.aim&&LASTPT!=='touch'\)\{G\.aim=null;updateUI\(\);return;\}[^\n]*\n\s*if\(G\.place\|\|G\.aim\)\{placeOrAim/.test(u), 'rclaunch: left-click must cancel the armed power / Strike, not fire it');
+  ck(/function orderClick\(sh\)[^]*?if\(G\.aim\)\{placeOrAim\(w,/.test(u), 'rclaunch: a right-click on the map (orderClick) must fire the armed power / Strike, not cancel it');
+  ck(/if\(G\.aim&&LASTPT!=='touch'(&&!leftOrders\(\))?\)\{G\.aim=null;updateUI\(\);return;\}[^\n]*\n\s*if\(G\.place\|\|G\.aim\)\{placeOrAim/.test(u), 'rclaunch: left-click must cancel the armed power / Strike, not fire it');
   ck(/function lgPointer\(e\)\{[^\n]*if\(e\.button===0\)\{[^}]*G\.lgM=null/.test(l), 'rclaunch: left-click must cancel a road job (right-click does it)'); }
 // battlerules2 (Abdullah 2026-11-13 21:28): realistic superweapons only, splash-only friendly fire, Brutal AI never cheats.
 { const game = Object.entries(SRC).filter(([f]) => !f.startsWith('13')).map(([, t]) => t).join('\n');

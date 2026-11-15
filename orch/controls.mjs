@@ -471,8 +471,11 @@ try {
   { const a = await acts(page); check('power: hotkey + ONE right-click fires the barrage', a.some(x => x.t === 'pow' && x.k === 'barrage') && await page.evaluate(() => !G.aim), JSON.stringify(a)); }
   await page.keyboard.press('b'); await wait(100); await page.mouse.click(640, 360); await wait(150);
   check('power: left-click cancels aiming', await page.evaluate(() => !G.aim));
-  await page.keyboard.press('u'); await wait(150);
-  { const a = await acts(page); check('power: no-target power fires on ONE key press', a.some(x => x.t === 'pow' && x.k === 'sanc'), JSON.stringify(a)); }
+  // U is the auto-build list (key table row 'abuild'); Sanctions is not offered in Battle (src/01-data.js POWERS note), so it has no hotkey
+  //   (no dead power keys, UI audit 2026-11-14) - a no-target power still fires on one click of its button (powerChecks above)
+  { const o0 = await page.evaluate(() => !!AB.open); await page.keyboard.press('u'); await wait(150); const a = await acts(page); const o1 = await page.evaluate(() => !!AB.open);
+    check('U opens / closes the auto-build list and fires no power', o1 !== o0 && !a.some(x => x.t === 'pow'), JSON.stringify({ o0, o1, a }));
+    if (o1 !== o0) { await page.keyboard.press('u'); await wait(100); } }
   await page.context().close();
 
   /* ================= phone (touch) ================= */
