@@ -82,7 +82,7 @@
    b.classList.add('hasico');}finally{queueMicrotask(()=>busy.delete(b));}}
  const mo=new MutationObserver(ms=>{for(const m of ms){const b=m.target.nodeType===1?m.target:m.target.parentElement;if(!b)continue;const x=b.closest&&b.closest('button');if(x&&HUD[x.id])icoOne(x,x.id);}});
  window.icoWatch=function(){icoHud();for(const id in HUD){const b=document.getElementById(id);if(b&&!b.dataset.icw){b.dataset.icw=1;mo.observe(b,{childList:true,characterData:true,subtree:true});}}};
- const st=document.createElement('style');st.textContent=`i.ic{display:inline-flex;align-items:center;justify-content:center;font-style:normal;pointer-events:none}i.ic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1px #000)}
+ const st=document.createElement('style');st.textContent=`i.ic{display:inline-flex;align-items:center;justify-content:center;font-style:normal;pointer-events:none;width:1.2em;height:1.2em;max-width:2.4em;max-height:2.4em;flex:none}i.ic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1px #000)}
 button.hasico>i.ic,.menuitem>i.ic{width:1.15em;height:1.15em;vertical-align:-.22em;margin-right:.2em}
 button.hasico.ico1>i.ic,#aMenu>i.ic,#barGrip>i.ic,#mmBtn>i.ic,#zhStar>i.ic{width:1.25em;height:1.25em;margin:0}
 #sbx button>i.ic{width:20px!important;height:20px!important;margin:0 6px 0 0!important;flex:none}#sbCond button>i.ic{display:block;margin:0 auto 2px!important}
