@@ -447,7 +447,7 @@ try {
   await enterExitChecks(page, { mode: 'mouse', ck: check });
   await cancelChecks(page, { mode: 'mouse', ck: check });
   await powerChecks(page, { mode: 'mouse', ck: check });
-  await stanceChecks(page, { mode: 'mouse', ck: check });
+  // army stance was removed on purpose (Abdullah 2026-11-14 18:31 "Remove army stance option"): no stance checks
   // one-click powers: hotkey + 1 click, no-target = 1 press, Esc / right-click cancels
   await page.evaluate(() => { const T = G.teams[ME]; T.pw.barrage = { lv: 1, cd: 0 }; T.pw.sanc = { lv: 1, cd: 0 }; updateUI(); });
   await clear(page); await page.keyboard.press('b'); await wait(100);
