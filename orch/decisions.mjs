@@ -463,7 +463,7 @@ try {
   // ---- BATTLE (Generals rules + supply lines): Command Center + dozer + supply truck, no towns/tax, supply trucks pay
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
-  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.map = 'bm_sixroads'; try { initAudio(); } catch (e) {} startSingle(); });   /* a Battle map with roads out of the base (supply lines follow roads) */
+  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.map = 'lebanon'; try { initAudio(); } catch (e) {} startSingle(); });   /* a Battle map whose roads run out of the bases (supply lines follow roads) */
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('battle-mode game never finished loading'));
   await page.waitForTimeout(1500);
   const bt = await ev(() => { const T = G.teams[ME], mine = G.ents.filter(e => e.team === ME && !e.dead); const c0 = T.credits;

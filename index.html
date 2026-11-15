@@ -6439,7 +6439,7 @@ function mkMap(seed,mk,ssn){
   // geometry on the ground grid (no random numbers), so host and clients lay identical roads; units move faster on them.
   // BATTLE has no towns (Abdullah 2026-11-13 19:55 "I thought we removed towns in battle", 19:57 "...buildings where units could garrison in
   // around the map like generals but not named towns"): the Battle game (Generals rules) gets no cities, hamlets or town roads on ANY map; newGame sets NO_TOWNS for a Battle build only. Conquest is unchanged.
-  if(NO_TOWNS){M.cities=[];M.hamlets=[];M.roadNet=[];}else   /* the houses stay (neutral garrisonable buildings, Generals style): only the named-town layer goes */
+  if(NO_TOWNS){M.cities=[];M.hamlets=[];}   /* the houses stay (neutral garrisonable buildings, Generals style): only the named-town layer goes; the roads between the bases stay (they carry the supply lines) */
   if(!D.manual)try{buildRoadNet(M,grid);}catch(e){M.roadNet=[];}
   // Season (look only; the layout above is identical in every season, so fairness doesn't change): winter = the snow theme,
   // autumn = mud (ground tint, puddles, orange leaves; the sim slows off-road wheels, G.ssn), summer = green/desert as the map says.
@@ -15438,8 +15438,8 @@ const TUTB=[
   hl:()=>tutBPlace('barracks',120,90),cam:()=>tutHQ(),ok:()=>!!tutBld('barracks')},
  {k:'fac',t:'The War Factory builds tanks and other vehicles. It needs a Barracks first.',a:'With your Dozer selected, open Build and place a War Factory next to your base. Right-click a half-built building with another Dozer to help.',
   hl:()=>tutBPlace('factory',150,-60),cam:()=>tutHQ(),ok:()=>!!tutBld('factory')},
- {k:'sup',t:'SUPPLY LINES: your troops carry limited ammo. They refill near your buildings and along your supply lines - the roads running out from your Command Center and Supply Depots (green). Outside them they fight until they are empty, then come back or need a supply truck. Craters and blown bridges cut a line (dashed).',a:'Press L to show your supply lines.',
-  hl:()=>({d:'#lgBtn'}),cam:()=>tutHQ(),ok:()=>!!(typeof LGU!=='undefined'&&LGU.on)},
+ {k:'sup',t:'SUPPLY LINES: troops refill ammo near your buildings and along your supply roads (green). Outside them they fight until empty, then must come back or get a supply truck. Craters and blown bridges cut a line.',a:'Press L to show your supply lines (the minimap shows them too).',
+  hl:()=>({d:'#mm'}),cam:()=>tutHQ(),ok:()=>!!(typeof LGU!=='undefined'&&LGU.on)},
  {k:'veh',t:'Now put the factory to work. A selected production building shows what it can make and its own queue. Vehicles are built only in the War Factory.',a:'Click your War Factory, then click a vehicle to train it.',
   hl:()=>{const b=tutBld('factory');if(!b)return{w:tutHQ()};return G.sel.includes(b)?{d:'#u_tank'}:{w:b};},cam:()=>tutBld('factory'),
   enter:()=>{TUTS.k0=tutMob().length;},ok:()=>tutMob().length>TUTS.k0},
@@ -15497,7 +15497,7 @@ function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&
   if(ok&&performance.now()-(TUTS.e0||0)>=1500)tutAdvance(false);}   /* every tip stays up at least 1.5 s before it is ticked off: a step your men finish on their own (they shoot by themselves) used to flash by unread */
 setInterval(()=>{try{tutCheck();}catch(e){}},400);setInterval(()=>{try{tutHLTick();}catch(e){}},120);
 function startBattleTutorial(){TUT=TUTB;MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
-  const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
+  const mk=MAPS[setup.map]&&!MAPS[setup.map].manual&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';   /* the tutorial teaches supply lines: it needs a map with roads between the bases (the hand-drawn Battle maps have none yet) */
   TERR_DEFER=true;try{newGame({w:setup.w|0,seed:(window.__tutSeed||Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
   const T=G.teams[0];G.tut=true;G.docDis=1;T.credits+=1500;if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
   try{const eh=G.ents.find(e=>e.team===1&&e.kind==='hq');if(eh){eh.max=eh.hp=Math.min(eh.max,1500);}}catch(e){}
