@@ -9,3 +9,9 @@ XTTS-v2 cloning references for vo/RS*.mp3: about 13-18 s each, short clips of on
 - lb_narr.flac: MASC video c2grGSyfpmo (Lebanese narrator, deep voice, ~104 Hz) - RS commander + third soldier voice
 - lb_vlog.flac: MASC video SZC2HW-31Yc (Lebanese vlogger, ~145 Hz) - first soldier voice
 - lb_tech.flac: MASC video nl0DZ3eBKPQ (Lebanese presenter, ~118 Hz) - second soldier voice
+
+# Palestinian / Levantine voice references (OB unit voices, 2026-11-15)
+Same source and licence as above (MASC, CC BY 4.0, dev/test splits); speakers picked by southern-Levantine (Palestinian/Jordanian) transcript markers (عشان، بحكيلهم، رح، هيك), male pitch and DNSMOS.
+- pal_host.flac: MASC video eLR5XvLcNWk (~107 Hz) - OB commander + third soldier voice
+- pal_talk.flac: MASC video 8-rto97tYC0 (~125 Hz) - first soldier voice
+- pal_story.flac: MASC video XshQZopat4A (~116 Hz) - second soldier voice

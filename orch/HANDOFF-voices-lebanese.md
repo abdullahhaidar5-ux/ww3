@@ -18,6 +18,9 @@ Mozilla Common Voice (CC0) was checked first: only one self-labelled Levantine m
 pip: torch/torchaudio (CPU wheel), coqui-tts, torchcodec, faster-whisper, speechmos, pyworld, librosa; XTTS-v2 files in /home/claude/xtts/m.
 `python3 orch/vo/render.py RS` (needs ~5 GB RAM - run alone, it was OOM-killed next to node), `python3 orch/vo/roles.py RS`, `VO_LINES=radio_lines VO_SUF=_h python3 orch/vo/roles.py RS`, `VO_LINES=shout_lines VO_SUF=_s python3 orch/vo/roles.py RS`, then `python3 tools/voices/patch_map.py` and build.
 
-## Not done yet
-OB (Palestinian) and RV (south Iraq) re-recording - see the end of this file for status.
-Candidate Levantine/Palestinian male MASC speakers for OB: eLR5XvLcNWk (~108 Hz, "عشان/راح نحكي"), XshQZopat4A (~111 Hz, cleanest), ZFzh-9_NKnU (~131 Hz).
+## OB (Palestine) - landed in a second push
+Lines unchanged (already Palestinian Arabic, written earlier tonight). Re-recorded vo/OB.mp3, OB_r, OB_h, OB_s with XTTS-v2 clones (orch/vo/cast.json OB: soldiers clone:pal_talk, clone:pal_story, clone:pal_host; commander clone:pal_host) from southern-Levantine MASC speakers (refs/CREDITS.md). ?v= bumped again (main 15, _r/_h/_s 3).
+QC: main sheet 40 clips mean P.808 3.36, CER 0.12; role 54 + radio 13 clips <= 0.33; shouts: three one-word shouts read back badly by Whisper (عم بعبّي 0.67, قنبلة 0.40, دبابة 0.40) - short barks, kept.
+
+## Not done
+RV (south Iraq): no Iraqi-labelled free male speakers found in MASC dev/test or Common Voice (one Iraqi male teen in Common Voice - skipped: minor). RV keeps its current XTTS studio-voice sheets. Next step: scan MASC train transcripts (137 MB csv) for Iraqi markers (شكو، هواية، اكو، ماكو، شلون) and stream only the matching clips out of the train tar.xz shards (10 GB each).

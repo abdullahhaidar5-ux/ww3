@@ -169,11 +169,11 @@
   "eng": "xtts",
   "lang": "ar",
   "sold": [
-   "Viktor Eka",
-   "Damien Black",
-   "Luis Moray"
+   "clone:pal_talk",
+   "clone:pal_story",
+   "clone:pal_host"
   ],
-  "cmd": "Dionisio Schuyler"
+  "cmd": "clone:pal_host"
  },
  "JO": {
   "eng": "xtts",
