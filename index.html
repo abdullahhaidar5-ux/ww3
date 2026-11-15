@@ -17834,6 +17834,7 @@ html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 #cmdP{bottom:auto!important;top:64px!important;left:10px!important;right:auto!important}
 html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
 #hudLyB{display:none!important}
+#pq{display:none!important}   /* the grey queue strip above the bar is gone (Abdullah 18:33); queue counts stay on the buttons */
 #news,#mwPip{display:none!important}
 .stanceBtn,[data-k="sn"]{display:none!important}   /* army stance removed */
 #pwMeter{display:none!important}   /* power lives in the bar's top console now */
@@ -17917,6 +17918,8 @@ function zhCtx(){if(!G||G.grand)return;const sd=$('side');if(!sd)return;
   const sig=(G.sel||[]).map(e=>e.id).join(',');if(sig!==ZH.sig)ZH.sig=sig;try{zhPowWin();}catch(e){}
   star.classList.toggle('on',ZH.star);{const pd=document.querySelector('.tabs button[data-tab="pow"] .dot');const d=star.querySelector('.dot');if(d)d.hidden=!(pd&&!pd.hidden&&getComputedStyle(pd).display!=='none');}
   const w=zhWant();if(w&&TAB!==w)showTab(w);
+  /* a production building shows ONLY the units it makes (War Factory = vehicles, Barracks = infantry, ...) */
+  {const pnF=$('panel'),sb=(G.sel||[]).find(e=>e&&!e.dead&&e.isB&&e.team===ME);if(pnF&&w==='units'&&sb){const T=G.teams[ME];for(const u of pnF.querySelectorAll(':scope>[data-tab="units"]')){if(u.classList.contains('sub')){u.hidden=true;continue;}const k=u.id.slice(2);let ok=false;try{ok=stats(T.fac,k).from===sb.kind;}catch(e){}if(u.hidden===ok)u.hidden=!ok;}}}
   /* the strike building gets its own LAUNCH button (Abdullah 18:26 "Missile city ... there is no way to use it") */
   {const pnL=$('panel');if(pnL){let lb=$('zhLaunch');if(!lb||lb.parentNode!==pnL){lb=document.createElement('button');lb.id='zhLaunch';lb.type='button';lb.className='btn zhL';lb.dataset.tab='upg';lb.dataset.from='uplink';lb.innerHTML='<span class="n"></span>';lb.onclick=()=>{const sb=$('supbtn');if(sb&&!sb.disabled)sb.click();};pnL.prepend(lb);}
     const sb=$('supbtn'),nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),dis=!sb||sb.disabled,lbl='LAUNCH '+nm+(st?' · '+st:'');if(lb.dataset.k!==lbl+dis){lb.dataset.k=lbl+dis;lb.querySelector('.n').textContent=dis?nm+(st?' · '+st:''):'LAUNCH '+nm;lb.dataset.nm=lb.querySelector('.n').textContent;lb.dataset.desc='Fire your strike: click LAUNCH, then click the target on the map.';lb.disabled=dis;lb.classList.toggle('rdy',!dis);}}}
