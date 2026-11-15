@@ -86,7 +86,7 @@ function phEls(){if(PHX.ov)return;const o=document.createElement('div');o.id='ph
   addEventListener('resize',()=>{if(PHX.on)phRect();});try{new ResizeObserver(()=>{if(PHX.on)phRect();}).observe(cv);}catch(e){}}
 function phPan(dx,dy){const s=cam.dist/700,ry=cam.ryaw||0,c=Math.cos(ry),n=Math.sin(ry);cam.x+=(dx*c+dy*n)*s;cam.y+=(-dx*n+dy*c)*s;}
 function phEnter(){if(!G||G.over||PHX.on||window.GLLOST||!R3||window.LOADING)return false;if(KC.on)return false;if($('menu')&&!$('menu').hidden)return false;
-  phEls();const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/370)),p0=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d))),p=Math.max(.22,Math.min(1.42,p0+(cam.tilt||0)));
+  phEls();const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/370)),p0=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d))),p=Math.max(.2,Math.min(1.55,p0+(cam.tilt||0)));
   PHX.st={c:{x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td,_xl:cam._xl,_yl:cam._yl,_dl:cam._dl},paused:G.paused,G,mp:MODE!=='single'};
   if(!PHX.st.mp){G.paused=true;xsTry(syncPause);}   // single player stops the battle; online only your own camera is freed
   xsTry(mlockOff);cam.free=true;cam.pitch=p;cam.ryaw=cam.yaw||0;cam.tilt=0;PHX.on=true;PHX.k={};PHX.ptr.clear();PHX.blob=null;
@@ -172,7 +172,7 @@ function vcStart(){if(!VC.SR||VC.on||!G||G.over||PHX.on)return;VC.on=true;VC.han
     r.onend=()=>{VC.on=false;VC.rec=null;const b2=$('vcBtn');if(b2)b2.classList.remove('live');vcFinish(VC.alts);};
     r.start();}catch(e){VC.on=false;VC.rec=null;if(b)b.classList.remove('live');vcSay('🎤 Voice commands are not available here','',true);}}
 function vcStop(){if(VC.rec)xsTry(()=>VC.rec.stop());}
-(function vcInit(){if(!VC.SR)return;const ref=$('aPause');if(!ref)return;const b=document.createElement('button');b.id='vcBtn';b.type='button';b.className=ref.className;b.textContent='🎤';b.title='Hold and speak a command (or hold V)';b.setAttribute('aria-label','Voice command: hold and speak');ref.before(b);
+(function vcInit(){return;/* voice commands removed (Abdullah 2026-11-14 16:57 "remove voice controls") */if(!VC.SR)return;const ref=$('aPause');if(!ref)return;const b=document.createElement('button');b.id='vcBtn';b.type='button';b.className=ref.className;b.textContent='🎤';b.title='Hold and speak a command (or hold V)';b.setAttribute('aria-label','Voice command: hold and speak');ref.before(b);
   const lg=document.createElement('button');lg.id='aVoiceLang';lg.type='button';lg.setAttribute('role','menuitem');const pm=$('aPhoto')||$('aPauseM');if(pm)pm.after(lg);
   const sl=()=>{const e=VC_LANGS.find(l=>l[0]===VC.lang)||VC_LANGS[0];lg.textContent='🎤 Voice language: '+e[1];};sl();
   lg.onclick=e=>{e.stopPropagation();const i=VC_LANGS.findIndex(l=>l[0]===VC.lang);VC.lang=VC_LANGS[(i+1)%VC_LANGS.length][0];xsTry(()=>localStorage.setItem('ww3_voiceLang',VC.lang));sl();};

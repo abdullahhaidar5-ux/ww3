@@ -142,10 +142,15 @@ export class BattleHost {
     else if (t === 'bset') { if (this.phase === 'lobby' && id === this.owner) this.configure(d || {}); }
   }
   // a friend in the lobby: nation, wanted team and Ready (the page's 'pick'); the leader's Start waits for everyone's Ready
+  // is player colour v (0-11) already held by another seat (a human other than `id`, or a computer player)?
+  pcTaken(id, v) { return this.order.some(o => o !== id && this.players.get(o).c === v) || this.ais.some(a => a.c === v); }
+  // the leader sent the whole setup: later seats lose a colour an earlier seat already holds
+  pcDedupe() { const seen = new Set(), seats = [...this.order.map(id => this.players.get(id)), ...this.ais]; for (const x of seats) { if (x.c >= 0 && seen.has(x.c)) x.c = -1; if (x.c >= 0) seen.add(x.c); } }
   pick(id, d) {
     const P = this.players.get(id), i = this.order.indexOf(id); if (!P || i < 0) return;
     if (typeof d.f === 'string' && this.sim.facs.includes(d.f)) P.f = d.f;
     P.r = d.r ? 1 : 0;
+    if (d.c !== undefined) { const v = int(d.c, -1, 11, -1); if (v < 0 || !this.pcTaken(id, v)) P.c = v; }   // player colour (PCOLS index, -1 = nation colour); one colour per seat
     if (typeof d.t === 'number' && d.t >= 0 && d.t < 8 && i > 0) this.tm[i] = d.t | 0;
     this.sendLobby();
   }
@@ -188,12 +193,13 @@ export class BattleHost {
   mx() { return Math.min(MAX_PLAYERS, this.sim.mapMax(this.map)); }
   seats() {
     // st: the seat's picked start spot, only when one is picked (lobbies without picks look as before)
-    const sp = v => (v >= 0 ? { st: v } : {});
-    return [...this.order.map((id, i) => ({ h: 1, f: this.players.get(id).f, tm: this.tm[i] | 0, r: this.players.get(id).r | 0, ...sp(this.players.get(id).st) })), ...this.ais.map(a => ({ ai: 1, f: a.f, d: a.d, tm: a.tm, ...sp(a.st) }))];
+    const sp = v => (v >= 0 ? { st: v } : {}), cc = v => (v >= 0 ? { c: v } : {});   // c: the seat's picked player colour
+    return [...this.order.map((id, i) => ({ h: 1, f: this.players.get(id).f, tm: this.tm[i] | 0, r: this.players.get(id).r | 0, ...sp(this.players.get(id).st), ...cc(this.players.get(id).c) })), ...this.ais.map(a => ({ ai: 1, f: a.f, d: a.d, tm: a.tm, ...sp(a.st), ...cc(a.c) }))];
   }
   check() {
     const s = this.seats();
-    if (this.order.length < 2) return 'Waiting for at least one more player to join.';
+    // one person may start alone against computer players (Abdullah 2026-11-14 17:18 "a single player can get the multiplayer lobby started")
+    if (this.order.length < 1 || this.order.length + this.ais.length < 2) return 'Add a computer player or wait for someone to join.';
     if (this.order.length > this.mx()) return 'Too many players for this battlefield: pick a bigger one.';   // review R4
     if (new Set(s.map(x => x.tm)).size < 2) return 'Everyone is on one team: put someone on another team to start.';
     return '';
@@ -209,11 +215,13 @@ export class BattleHost {
       else this.note = `That battlefield holds only ${n} players: pick a bigger one.`;
     }
     if (typeof d.w === 'number') this.w = int(d.w, -1, 31, 0);
-    if (d.bm !== undefined) this.bm = d.bm ? 1 : 0;   // game mode: 0 = Conquest, 1 = Battle (Generals rules)
-    if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, MAX_PLAYERS).map(a => ({ f: this.sim.facs.includes(a && a.f) ? a.f : this.sim.facs[0], d: int(a && a.d, 0, 2, 1), p: int(a && a.p, 0, 9, 0), tm: int(a && a.tm, 0, 7, 1), st: int(a && a.st, -1, 7, -1) }));
+    if (d.bm !== undefined) this.bm = d.bm ? 1 : 0;   // old lobby field (0 = Conquest): ignored since 2026-11-14 - every game is Battle
+    if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, MAX_PLAYERS).map(a => ({ f: this.sim.facs.includes(a && a.f) ? a.f : this.sim.facs[0], d: int(a && a.d, 0, 2, 1), p: int(a && a.p, 0, 9, 0), tm: int(a && a.tm, 0, 7, 1), st: int(a && a.st, -1, 7, -1), c: int(a && a.c, -1, 11, -1) }));
     if (Array.isArray(d.tm)) this.tm = this.order.map((_, i) => int(d.tm[i], 0, 7, this.tm[i] | 0));
     // start spots picked for the players (the owner always sends the whole setup: no 'st' = everyone on Random)
     this.order.forEach((id, i) => { const P = this.players.get(id); if (P) P.st = Array.isArray(d.st) ? int(d.st[i], -1, 7, -1) : -1; });
+    // the leader's own colour (pc0) and the computer players' (ais[].c); the guests' colours come from their own picks
+    { const P0 = this.order.length && this.players.get(this.order[0]); if (P0) P0.c = int(d.pc0, -1, 11, -1); this.pcDedupe(); }
     const mx = this.mx();
     if (this.order.length + this.ais.length > mx) this.ais.splice(Math.max(0, mx - this.order.length));
     if (d.start) { const why = this.check(); if (!why) { if (!this.claim) { this.startBattle(); return; } this.askStart(); return; } }
@@ -268,6 +276,8 @@ export class BattleHost {
     const seed = this.seed != null ? this.seed : (Math.random() * 1e9) | 0;
     // picked start spots (null when everyone is on Random): sent with every start, kept for restarts
     const st = this.sim.stClean([...this.order.map(id => this.players.get(id).st), ...ais.map(a => a.st)], facs.length), sp = st ? { st } : {};
+    // picked player colours (null when nobody picked): visual only, sent with every start and kept for restarts
+    const pc = this.sim.pcClean ? this.sim.pcClean([...this.order.map(id => this.players.get(id).c), ...ais.map(a => a.c)], facs.length) : null; if (pc) sp.pc = pc;
     const ids = [...this.order.map(id => this.players.get(id).idc || 0), ...ais.map(() => 0)];
     const cmS = this.cmCode && /^cm_/.test(this.map) ? { cm: this.cmCode } : {};
     this.facs = facs; this.si = { seed, facs, map: this.map, tm, w: this.w | 0, bm: this.bm, code: this.code, ...sp, ...cmS };

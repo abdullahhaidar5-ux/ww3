@@ -33,5 +33,5 @@ console.log(bad.length ? 'ICONS FAIL\n  ' + bad.join('\n  ') : 'ICONS PASS');
 const pg = await (await browser.newContext({ viewport: { width: 1500, height: 900 } })).newPage();
 let html = '<body style="background:#16201b;color:#e9e4d4;font:11px sans-serif;margin:6px">';
 for (const f of FACS) { html += '<div style="margin:4px 0 2px;font:700 13px sans-serif;color:#e3b341">' + f + '</div><div style="display:flex;flex-wrap:wrap;gap:4px">'; for (const d of data[f]) html += '<div style="width:88px;text-align:center;background:#24332b;border-radius:3px;padding:2px"><img src="' + d.img + '" style="width:72px;height:56px"><div style="height:26px;overflow:hidden;line-height:13px">' + d.name + '</div></div>'; html += '</div>'; }
-await pg.setContent(html); await pg.screenshot({ path: path.join(OUT, 'icons-' + (process.env.TAG || 'before') + '.png'), fullPage: true });
+await pg.setContent(html); await pg.screenshot({ path: path.join(OUT, 'icons-' + (process.env.TAG || 'before') + '.png'), fullPage: true, timeout: 120000 });
 await browser.close(); server.close(); process.exit(bad.length ? 1 : 0);

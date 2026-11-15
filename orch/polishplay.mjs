@@ -1,7 +1,7 @@
 // polishE sweep: for each faction start Battle, check the first-steps card, spawn every unit + building, fire every power, run the sim, report errors/slow calls. node orch/polishplay.mjs [IR,US]
 // Pass = launch works, no console/page errors, and no single simulation/FX function call (everything except the GPU draw, which is
 // software-rendered and seconds per frame in headless boxes, so the raw frame gaps are printed for information only) takes > LIMIT ms.
-// For each faction (default IR,RU,US) starts Conquest, builds an uplink, fires the strike, records requestAnimationFrame gaps
+// For each faction (default IR,RU,US) starts a Battle, builds an uplink, fires the strike, records requestAnimationFrame gaps
 // for 15 s and console errors. Prints per faction max gap; "SUPERFREEZE PASS" (see above).
 //   node orch/superfreeze.mjs [IR,RU,KP,US]   LIMIT=100 SHOT=1 (screenshots to orch/shots)
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import { createRequire } from 'node:module';import { fileURLToPath } from 'node:url';

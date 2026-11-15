@@ -150,14 +150,7 @@ try {
     for (const u of soldiers) { u.vis = true; u.hid = false; }
     act(ME, { t: 'dig', ids: soldiers.map(u => u.id) }); const t0 = G.t;
     for (let i = 0; i < 70; i++) simUpdate(.1);
-    out.fox = (G.dug || []).filter(d => d.k === 'fox').length; out.foxCov = dugCov(soldiers[0].x, soldiers[0].y); out.cover = coverAt(soldiers[0].x, soldiers[0].y);
-    out.drop = holeDrop(soldiers[0]);
-    // damage taken: in the hole vs out in the open (rifle fire from an enemy)
-    const e1 = addUnit(en.id, roster(en.fac).barracks[0], C.x - 60, C.y + 110); e1.max = e1.hp = 1e9; e1.vis = true;
-    const open = addUnit(ME, inf, C.x - 120, C.y + 140); open.max = open.hp = 1e5;
-    const hole = soldiers[0]; hole.max = hole.hp = 1e5;
-    const m1 = tactic(hole, 'gun', e1, 0).m, m2 = tactic(open, 'gun', e1, 0).m; out.mHole = +m1.toFixed(2); out.mOpen = +m2.toFixed(2);
-    e1.dead = true; G.byId.delete(e1.id); open.dead = true;
+    out.fox = (G.dug || []).filter(d => d.k === 'hole').length; out.inside = G.civ.filter(c => c.dug && !c.dead).reduce((n, c) => n + c.occ.length, 0);   // Dig in = a dugout with the squad inside (orch/dugouttest.mjs has the full check)
     // 2. a Construction Vehicle lays a sandbag line and a trench
     const dz = addUnit(ME, 'dozer', C.x + 60, C.y + 60); dz.vis = true; const cr0 = T.credits;
     act(ME, { t: 'wall', ids: [dz.id], k: 'sand', x: C.x + 20, y: C.y - 40, x2: C.x + 120, y2: C.y - 40 });
@@ -190,8 +183,7 @@ try {
     return out;
   });
   console.log(JSON.stringify(R));
-  ck('six soldiers dig six foxholes', R.fox >= 5, R.fox); ck('a foxhole gives cover', R.foxCov === 2 && R.cover === 1, R.foxCov + '/' + R.cover);
-  ck('soldiers sit low in the hole', R.drop > 0, R.drop); ck('dug-in soldier takes far less damage than one in the open', R.mHole < .62, R.mHole + ' vs ' + R.mOpen);
+  ck('six soldiers dig in as one dugout and go inside', R.fox === 1 && R.inside === 6, R.fox + ' dugout, ' + R.inside + ' inside');
   ck('Construction Vehicle lays sandbags and pays for them', R.sand >= 3, R.sand + ' ' + R.paid); ck('trench segments appear', R.trench >= 2, R.trench);
   ck('vehicles slow down over sandbags', R.slow === .5, R.slow); ck('a shell destroys sandbags', R.blast > 0, R.blast);
   ck('fortification list packs and unpacks for clients', R.pk > 0 && R.rt, R.pk);
@@ -199,7 +191,7 @@ try {
   ck('a knocked-out track immobilises the vehicle', R.stuck < 3, R.stuck); ck('engine fire burns it', R.burn >= 2 && R.burn < 40, R.burn); ck('crit bits reach clients', R.enc === 5, R.enc);
   ck('jammed turret slows the rate of fire', R.jamRof); ck('crew bails out below 20% health', R.bailed && R.crewN >= 1, R.bailed + ' ' + R.crewN);
   ck('infantry re-crew the hulk', R.recrew && R.hpBack >= 25, R.hpBack); ck('a Construction Vehicle repairs the criticals', R.fixed);
-  // pictures: foxholes with soldiers, a trench + sandbag line, a crippled burning tank with the track behind it
+  // pictures: a dugout, a trench + sandbag line, a crippled burning tank with the track behind it
   await page.evaluate(([cx, cy]) => { const s = G.ents.filter(e => !e.isB && e.team === ME && !e.dead && isInf(e.s) && !e.crew); const hs = (G.dug || []).filter(d => d.k === 'fox'); s.slice(0, hs.length).forEach((u, i) => { u.x = hs[i].x; u.y = hs[i].y; u.mv = -9; u.order = null; u.target = null; u.hid = false; u.hp = u.max; }); }, [R.sx, R.sy]);
   const shotAt = async (name, dx, dy, dist) => { await page.evaluate(([x, y, d]) => { camTarget(); cam.td = cam.dist = d; centerOn(x, y, true); for (let i = 0; i < 3; i++) renderFrame(.016); }, [R.sx + dx, R.sy + dy, dist]);
     await page.waitForTimeout(600); await page.evaluate(() => { renderFrame(.016); tactFxTick(.5); renderFrame(.016); }); await shot(page, 'tactics-' + name + '.png'); };

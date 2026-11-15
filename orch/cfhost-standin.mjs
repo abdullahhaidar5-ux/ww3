@@ -31,18 +31,18 @@ const BROWSER_NAMES = ['window', 'self', 'document', 'localStorage', 'matchMedia
 let compiled = null;
 function SERVER_DRIVER() {
   const D = {};
-  D.pv = NET_PV; D.FKEYS = FKEYS; D.maxOf = m => (MAPS[m] || MAPS.strait).max; D.hasMap = m => !!MAPS[m];
+  D.pv = NET_PV; D.pcClean = (pc, n) => pcClean(pc, n); D.FKEYS = FKEYS; D.maxOf = m => (MAPS[m] || MAPS.strait).max; D.hasMap = m => !!MAPS[m];
   // start the battle as the host with no side of its own; humans: [{id, tok}], ais: [{f, d}] after them
   D.start = (room, o) => {
     MODE = 'host'; ME = -1; NET.p2p = true; NET.game = room; NET.room = null;
     Object.assign(NET, { snapT: 0, evT: 0, teamT: 0, bT: 0, sc: {}, kf: {}, kt: {}, cseq: {}, cseqSlot: [], ver: null, sk: null, gq: [], civQ: [], snapTo: [],
       tgC: null, tgS: null, ckAk: null, ckOut: null, ckBusy: false, ckT: null, sbSlot: null, seen: {}, edOf: {}, gen: 0, lastSnapT: 0, iaDev: 0 });
     TERR_DEFER = true;
-    try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map((_, i) => o.aiD[i] != null), map: o.map, tm: o.tm, slot: -1 }); } finally { TERR_DEFER = false; }
+    try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map((_, i) => o.aiD[i] != null), map: o.map, tm: o.tm, slot: -1, pc: pcClean(o.pc, o.facs.length) || undefined }); } finally { TERR_DEFER = false; }
     G.headless = true;
     G.teams.forEach((T, i) => { if (o.aiD[i] != null) T.ai = mkAI(o.aiD[i]); });
     NET.peers = o.facs.map((_, i) => o.peers[i] || null); NET.toks = o.facs.map((_, i) => o.toks[i] || null);
-    NET.startInfo = { seed: o.seed, facs: o.facs, map: G.mapKey, tm: o.tm, w: o.w | 0, sv: 1 };
+    NET.startInfo = { seed: o.seed, facs: o.facs, map: G.mapKey, tm: o.tm, w: o.w | 0, sv: 1, ...(pcClean(o.pc, o.facs.length) ? { pc: pcClean(o.pc, o.facs.length) } : {}) };
     return { map: G.mapKey };
   };
   D.step = dt => { simUpdate(dt); };
@@ -83,6 +83,7 @@ function newSim() {
   return compiled(...BROWSER_NAMES.map(k => env[k]));
 }
 
+const pcInt = v => (typeof v === 'number' && isFinite(v) ? Math.max(-1, Math.min(11, Math.round(v))) : -1);
 // ---- one battle room ----
 class Battle {
   constructor(code, ownKey, sv) {
@@ -107,10 +108,10 @@ class Battle {
     const S = this.simOrProbe(), mx = S.maxOf(this.map);
     const hs = this.humans.slice(0, mx), as = this.ais.slice(0, Math.max(0, mx - hs.length));
     const teams = new Set([...hs.map(h => h.tm | 0), ...as.map(a => a.tm | 0)]);
-    const ok = hs.length >= 2 && teams.size > 1;
-    const why = hs.length < 2 ? 'Waiting for at least one more player to join. You can also add computer players below.' : teams.size < 2 ? 'Everyone is on one team: put someone on another team to start.' : '';
+    const ok = hs.length >= 1 && hs.length + as.length >= 2 && teams.size > 1;   // one person may start alone vs computer players (2026-11-14)
+    const why = hs.length + as.length < 2 ? 'Add a computer player or wait for someone to join.' : teams.size < 2 ? 'Everyone is on one team: put someone on another team to start.' : '';
     return { c: this.code, pv: S.pv, map: this.map, mx, w: this.w, q: this.q, ok: ok ? 1 : 0, why,
-      seats: [...hs.map(h => ({ h: 1, f: h.f, tm: h.tm | 0 })), ...as.map(a => ({ ai: 1, f: a.f, d: a.d | 0, tm: a.tm | 0 }))] };
+      seats: [...hs.map(h => ({ h: 1, f: h.f, tm: h.tm | 0, ...(h.c >= 0 ? { c: h.c } : {}) })), ...as.map(a => ({ ai: 1, f: a.f, d: a.d | 0, tm: a.tm | 0, ...(a.c >= 0 ? { c: a.c } : {}) }))] };
   }
   sendBlobs() { if (this.started) return; const b = this.blob(); for (const [i, h] of this.humans.entries()) this.emit('blob', Object.assign({}, b, { to: h.id, own: h.id === this.ownerId ? 1 : 0, you: i })); }
   hello(id, hi) {
@@ -124,13 +125,22 @@ class Battle {
     this.emit('lobby', { n: this.humans.length, to: id });
     this.sendBlobs();
   }
+  // player colours (PCOLS index 0-11, -1 = nation colour): the same rules as server/src/battle.js
+  pcTaken(id, v) { return this.humans.some(h => h.id !== id && h.c === v) || this.ais.some(a => a.c === v); }
+  pcDedupe() { const seen = new Set(); for (const x of [...this.humans, ...this.ais]) { if (x.c >= 0 && seen.has(x.c)) x.c = -1; if (x.c >= 0) seen.add(x.c); } }
+  pick(id, d) { const h = this.humans.find(x => x.id === id), S = this.simOrProbe(); if (!h || this.started || !d || typeof d !== 'object') return;
+    if (typeof d.f === 'string' && S.FKEYS.includes(d.f)) h.f = d.f;
+    if (typeof d.t === 'number' && d.t >= 0 && d.t < 8 && h.id !== this.ownerId) h.tm = d.t | 0;
+    if (d.c !== undefined) { const v = pcInt(d.c); if (v < 0 || !this.pcTaken(id, v)) h.c = v; }
+    this.sendBlobs(); }
   bset(id, d) {
     if (id !== this.ownerId || this.started || !d || typeof d !== 'object') return;
     const S = this.simOrProbe();
     if (typeof d.map === 'string' && S.hasMap(d.map)) this.map = d.map;
     if (typeof d.w === 'number') this.w = Math.max(-1, Math.min(9, d.w | 0));
     if (Array.isArray(d.tm)) d.tm.forEach((t, i) => { if (this.humans[i]) this.humans[i].tm = Math.max(0, Math.min(7, t | 0)); });
-    if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, 7).map(a => ({ f: S.FKEYS.includes(a && a.f) ? a.f : S.FKEYS[0], d: Math.max(0, Math.min(2, (a && a.d) | 0)), tm: Math.max(0, Math.min(7, (a && a.tm) | 0)) }));
+    if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, 7).map(a => ({ f: S.FKEYS.includes(a && a.f) ? a.f : S.FKEYS[0], d: Math.max(0, Math.min(2, (a && a.d) | 0)), tm: Math.max(0, Math.min(7, (a && a.tm) | 0)), c: pcInt(a && a.c) }));
+    if (this.humans[0]) this.humans[0].c = pcInt(d.pc0); this.pcDedupe();
     const mx = S.maxOf(this.map); if (this.humans.length + this.ais.length > mx) this.ais.length = Math.max(0, mx - this.humans.length);
     this.q++;
     const b = this.blob();
@@ -143,8 +153,9 @@ class Battle {
     const facs = [...hs.map(h => h.f), ...as.map(a => a.f)], tm = [...hs.map(h => h.tm | 0), ...as.map(a => a.tm | 0)];
     const aiD = [...hs.map(() => null), ...as.map(a => a.d | 0)];
     this.started = true; this.slots = hs.map(h => h.id); this.t0 = performance.now(); this.go = false; this.rd = this.rd || {};
-    const r = S.start(this.room(), { seed, facs, tm, aiD, map: this.map, w: this.w, peers: hs.map(h => h.id), toks: hs.map(h => h.tok) });
-    for (const [i, h] of hs.entries()) this.emit('start', { pv: S.pv, seed, facs, slot: i, to: h.id, map: r.map, tm, w: this.w, sv: 1 }, h.id);
+    const pc = [...hs.map(h => h.c), ...as.map(a => a.c)];
+    const r = S.start(this.room(), { seed, facs, tm, aiD, pc, map: this.map, w: this.w, peers: hs.map(h => h.id), toks: hs.map(h => h.tok) });
+    for (const [i, h] of hs.entries()) this.emit('start', { pv: S.pv, seed, facs, slot: i, to: h.id, map: r.map, tm, w: this.w, sv: 1, ...(S.pcClean(pc, facs.length) ? { pc: S.pcClean(pc, facs.length) } : {}) }, h.id);
     this.log.push(`started: ${facs.join(' vs ')} on ${r.map}, seed ${seed}`);
     // 60 Hz from a timer inside the room (no per-tick alarms); network tick after each batch of steps
     let last = performance.now(), acc = 0;
@@ -182,6 +193,7 @@ class Battle {
       this.sim.pres(id, p);
     } else if (m.k === 'e') {
       if (m.t === 'bset') this.bset(id, m.d);
+      else if (m.t === 'pick') this.pick(id, m.d);
       else if (m.t === 'hello' && !this.started) { /* the presence 'hi' carries the greeting */ }
       else if (m.t === 'cmd' && this.started) this.sim.cmd(id, m.d);
     }

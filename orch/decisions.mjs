@@ -1,6 +1,6 @@
 // DECISIONS guard (audit): Abdullah's standing decisions that can be checked automatically, so a leftover of something he
 // already decided cannot come back (he found "End turn" and the Ayatollah button by hand on 2026-11-06). Static checks read
-// src/ (no browser); runtime checks look at the real game as a player: menu, a Conquest battle as IR, the grand map, a Fight-it battle.
+// src/ (no browser); runtime checks look at the real game as a player: menu, a Battle as IR, a Battle as US with its supply lines.
 //   node orch/decisions.mjs          prints DECISIONS PASS / DECISIONS FAIL; screenshots in orch/shots/audit/
 import http from 'node:http';
 import fs from 'node:fs';
@@ -16,16 +16,31 @@ const ck = (c, m) => { if (!c) fails.push(m); };
 // speedS 2026-11-11: the frame-time governor steps down under load, back up after, never flickers (orch/qualgov.mjs)
 { const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./qualgov.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "frame-time governor guard failed: " + (r.stdout || "").trim().split("\n").slice(-3).join(" | ")); }
 
+// battlepower 2026-11-14 (Abdullah 2026-11-13 20:11): Battle power comes from Generators, Conquest keeps its map plants (runtime proof: orch/powertest.mjs)
+{ const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./powertest.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "battlepower: orch/powertest.mjs failed - " + String(r.stdout || '').split('\n').filter(l => /FAIL/.test(l)).slice(0, 3).join(' | ')); }
+// pcolor 2026-11-15 (Abdullah 2026-11-14 18:57 "Make it so players can choose their color"): a picked colour reaches T.color, two seats cannot share one, every lobby/setup row has a picker (runtime proof: orch/pcolor.mjs) + the colour travels in the seat data of the server, the stand-in and the start message
+{ const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./pcolor.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "pcolor: orch/pcolor.mjs failed - " + String(r.stdout || '').split('\n').filter(l => /FAIL/.test(l)).slice(0, 3).join(' | '));
+  const rd = f => fs.readFileSync(path.join(ROOT, f), "utf8"); const sv = rd("server/src/battle.js"), sd = rd("server/src/battle-driver.js"), so = rd("orch/cfhost-standin.mjs"), nt = rd("src/07-net.js");
+  ck(/pcTaken\(id, v\)/.test(sv) && /\.\.\.cc\(this\.players\.get\(id\)\.c\)/.test(sv) && /sp\.pc = pc/.test(sv) && /pcClean/.test(sd), "pcolor: server/src/battle.js must keep the seat colour (pick, seats(), start pc) and one colour per seat");
+  ck(/pcTaken\(id, v\)/.test(so) && /pc0/.test(so) && /pcClean/.test(so), "pcolor: orch/cfhost-standin.mjs must mirror the server colour rules");
+  ck(/o\.pc0=NET\.pc0/.test(nt) && /pcClean\(d\.pc,d\.facs\.length\)/.test(nt), "pcolor: the lobby must send the colour to the server (pc0 / ais[].c) and the client must read start.pc"); }
+// upgsimple 2026-11-14 (Abdullah 14:31 "simplify the list of upgrades and powers"): upgrades belong to a building (data-from), at most 4 per building, at most 6 active powers per nation, power buildings marked (orch/upgsimple.mjs)
+{ const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./upgsimple.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "upgsimple guard: " + (r.stdout || "").trim().split("\n").slice(0, 4).join(" | ")); }
+// techbldgs 2026-11-14 (Abdullah 2026-11-13 20:21 / 20:24): the capturable Battle buildings (quarry, mine, power plant, field hospital) are ONE system on the derrick code: capturable, effect only for the owner, destroyable and repairable, state in the checkpoint; every Battle map has them (symmetry: orch/battlemapfair.mjs --static)
+{ const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./techbldgs.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "capturable Battle buildings rules failed: " + String(r.stdout).slice(0, 400));
+// zhfeel 2026-11-15 (Abdullah 2026-11-14 19:52 "Huccum!" make it feel like Generals Zero Hour): build clock wipe + queue number on the bar buttons, Sell refunds 50% and removes the building after 3 s, Repair restores hp and costs money, Generals-style cursors (runtime proof: orch/zhfeel.mjs)
+{ const { spawnSync } = await import("node:child_process"); const r = spawnSync(process.execPath, [fileURLToPath(new URL("./zhfeel.mjs", import.meta.url))], { encoding: "utf8" }); ck(r.status === 0, "zhfeel guard: orch/zhfeel.mjs failed: " + (r.stdout || "").split("\n").filter(l => /FAIL/.test(l)).slice(0, 3).join(" | ")); }
+  const bm = fs.readFileSync(path.join(ROOT, "src/02d-battlemaps.js"), "utf8"); const ids = [...bm.matchAll(/^  (\w+):\{nm:/gm)].map(x => x[1]); ck(ids.length > 0 && ids.every(id => { const i = bm.indexOf("  " + id + ":{nm:"); return /\n    tb:\[\[/.test(bm.slice(i, i + 1400)); }), "every Battle map must list its capturable buildings (tb:[[x,y,type]])"); }
+
 // Rules files (orch/loadF): CLAUDE.md = short current rules, orch/DECISIONS.md = the full dated record. Every standing decision's
 // key words must still be in one of the two files, and CLAUDE.md must stay short.
 { const rules = ['CLAUDE.md', 'orch/DECISIONS.md'].map(f => { try { return fs.readFileSync(path.join(ROOT, f), 'utf8'); } catch { return ''; } });
   const all = rules.join('\n').toLowerCase();
-  const KEYS = ['world simulator', 'what would really happen', 'no decorative or ambient aircraft', 'left-click selects', 'right-click moves', 'attack-move', 'w a s d', 'ctrl+a',
+  const KEYS = ['one game', 'abandon conquest and campaign', 'bring supply lines into battle', 'super super polished', 'no decorative or ambient aircraft', 'left-click selects', 'right-click moves', 'attack-move', 'w a s d', 'ctrl+a',
     'rotates the battle camera', 'pointer lock', 'no big ugly buttons', 'radwan training', 'lebanese shia', 'zaidi shia movement', 'iraqi shia brigades', 'palestine islamic brigade',
     'desert islamic faction', 'zealous', 'professional', 'home defenders', 'firepower-reliant', 'mountain fortress', 'bunker buster', 'dear leader', 'ayatollah', 'shared soundtrack',
-    'free art only', 'cloudflare', 'servers-live', 'autodeploy', 'play online', 'pc only', 'conquest', 'zero hour', 'supply lines', 'real time with pause', 'fight-it', 'army only',
-    'no production', 'realistic start', 'balanced', 'ai hard', 'smooth first', 'one system per idea', 'leftovers', 'grand campaign', 'missions', 'artifact', 'orch/brief.md',
-    'orch/decisions.md', 'never read', 'cigate.sh', 'no new runtime dependencies', 'multiplayer', '300 units', 'phone', 'end turn', 'eu4'];
+    'free art only', 'cloudflare', 'servers-live', 'autodeploy', 'play online', 'pc only', 'zero hour', 'supply lines', 'ammo rule', 'test range', 'ai hard', 'smooth first', 'one system per idea',
+    'leftovers', 'missions', 'artifact', 'orch/brief.md', 'orch/decisions.md', 'never read', 'cigate.sh', 'no new runtime dependencies', 'multiplayer', '300 units', 'phone'];
   const miss = KEYS.filter(k => !all.includes(k));
   if (miss.length) fails.push('decisions missing from CLAUDE.md + orch/DECISIONS.md: ' + miss.join(', '));
   const sz = fs.existsSync(path.join(ROOT, 'CLAUDE.md')) ? fs.statSync(path.join(ROOT, 'CLAUDE.md')).size : 0;
@@ -38,6 +53,30 @@ const ck = (c, m) => { if (!c) fails.push(m); };
   else if (!/'src\/02\*\.js'/.test(m[0])) fails.push('gate.yml: mapsweep skip condition must watch \'src/02*.js\' (every map file: ' + mapFiles.join(', ') + ')'); }
 const srcFiles = fs.readdirSync(path.join(ROOT, 'src')).filter(f => f.endsWith('.js')).sort();
 const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')]));
+// weathergfx 2026-11-14 (Abdullah: weather "Pick in setup + Random", graphics "Low/Med/High/Ultra"): ONE Conditions table (CONDS in 01-data) drives the setup/lobby picker and the Test range picker; Random and unfitting picks resolve through condFit (deterministic from the seed); ONE graphics row (GFX_PRESETS: Low/Medium/High/Ultra), no second quality setting.
+{ const d = SRC['01-data.js'] || '', u = SRC['08-ui.js'] || '', s = SRC['03-sim.js'] || '';
+  ck(/const CONDS=\[/.test(d) && /function condFit\(/.test(d) && /function condTheme\(/.test(d), 'weathergfx: the Conditions table (CONDS / condFit / condTheme) is gone from 01-data.js');
+  ck(/condFit\(wxBase\(o\.w\)/.test(s) && /G\.wxB=wB/.test(s), 'weathergfx: newGame no longer resolves Conditions through condFit (Random and unfitting picks must follow the map and the seed)');
+  ck(/function condUI\(/.test(u) && /function sbCond\(/.test(u), 'weathergfx: the setup or Test range Conditions picker is gone from 08-ui.js');
+  ck(/const GFX_PRESETS=\[\['low','Low'.*\['auto','Medium'.*\['high','High'.*\['ultra','Ultra'/.test(u), 'weathergfx: Settings graphics row is not Low / Medium / High / Ultra any more');
+  ck(!/wxRandIdx\(G\.seed\)===4/.test(s), 'weathergfx: the old "Random = day or night only" rule is back in newGame'); }
+// battlerules2 (Abdullah 2026-11-13 21:28): realistic superweapons only, splash-only friendly fire, Brutal AI never cheats.
+{ const game = Object.entries(SRC).filter(([f]) => !f.startsWith('13')).map(([, t]) => t).join('\n');
+  // 1. no nuclear / chemical / biological weapon anywhere in the game code or data (names, text, effects)
+  const bad = game.match(/\b(nuke|nukes|nuclear|atomic|warhead yield|chemical weapon|bioweapon|biological weapon|sarin|anthrax|nerve agent|mustard gas|dirty bomb|radiological)\b/gi);
+  ck(!bad, 'no nuclear/chemical/biological weapons (Abdullah 2026-11-13): found ' + (bad && [...new Set(bad)].join(', ')));
+  ck(/SW_NAME=\{/.test(SRC['01-data.js']) && !/nuc|chem|bio/i.test((SRC['01-data.js'].match(/SW_NAME=\{[^}]*\}/) || [''])[0]), 'Strike Center names (SW_NAME) must exist and be conventional');
+  // 2. splash-only friendly fire: explode() may hurt allied UNITS at reduced strength; direct fire never reaches friendlies
+  const ex = (SRC['03-sim.js'].match(/function explode\([^]*?\n  if\(G\.civAt\)/) || [''])[0];
+  ck(/FF_SPLASH=\.5/.test(SRC['03-sim.js']) && /const fr=ally\(e\.team,team\)/.test(ex) && /!e\.isB/.test(ex) && /if\(fr\)m\*=FF_SPLASH/.test(ex), 'splash-only friendly fire: explode() hurts allied units at FF_SPLASH (50%), never buildings');
+  const dir = (SRC['03-sim.js'].match(/function updProj[^]*?\n(?=function )/) || [''])[0];
+  ck(!/ally\([^)]*\)\s*\)?\s*\{?\s*applyDmg/.test(dir), 'bullets must never hit friendlies');
+  // 3. Brutal AI = sharper tactics only: same income as Hard, no money/vision/cost bonus anywhere on the difficulty rows
+  const row = (SRC['03-sim.js'].match(/DIFF\.push\(Object\.assign\(\{\},DIFF\[2\],\{[^}]*\}\)\);/) || [''])[0];
+  ck(row && !/\b(inc|cash|money|credits|bonus|vis|sight|reveal|cost|income)\s*:/.test(row), 'Brutal AI (DIFF[3]) must not touch income, money, vision or cost: ' + row);
+  ck(/Brutal/.test(SRC['07-net.js']) && /Brutal/.test(SRC['08-ui.js']), 'Brutal must appear in the lobby (07-net) and Battle setup / Test range (08-ui)');
+  ck(!/T\.ai\.d\s*(===|>=)\s*3[^]{0,80}(credits\s*\+=|\.reveals\.push)/.test(SRC['03-sim.js']), 'Brutal AI must not get extra money or vision');
+}
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];
@@ -49,6 +88,16 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(!/solRifle|addKitVariant/.test((m.match(/function spyKit\([\s\S]*?\n\/\/ Civilian colours/) || ['solRifle'])[0]), 'spy look: spyKit gives the spy a rifle or combat kit');
   ck(!/SPYLOOK|SPYC\[/.test(m) && /const SPYC=\{/.test(m), 'spy look: the outfit choice (SPYLOOK / three SPYC outfits) is back - Abdullah chose B, only one look exists');
   ck(/P\.eye\.visible=on/.test(SRC['06-view.js'] || '') && /e\.team===ME/.test(((SRC['06-view.js'] || '').match(/if\(P\.eye\)\{[^\n]*/) || [''])[0]), 'spy look: the hidden-spy eye mark must show for its owner only'); }
+// ---- Leader look (Abdullah 2026-11-13 "Make the ayatollah and dear leader more realistic and human looking"): both leader
+// units (kind 'cleric': Ayatollah IR/RS/DW, Dear Leader KP) are dressed human figures on the soldier body and skeleton
+// (leaderKit), not the old code-built box figure; that one is only a stand-in until the soldier model lands. Fictional
+// people only: no spectacles or other features of a real person.
+{ const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', kit = SRC['08j-uikit.js'] || '', lk = (m.match(/function leaderKit\([\s\S]*?\n\/\/ Civilian colours/) || [''])[0];
+  ck(/if\(e\.kind==='cleric'\)return leaderObj\(e\);/.test(g) && !/return clericModel\(e\)/.test(g), 'leader look: makeObj must draw the leader with leaderObj (the human figure), not the old clericModel box figure');
+  ck(/\bcleric:\{m:'soldier'/.test(m) && /function leaderObj\(e\)\{[^\n]*modelFor\(e\)/.test(m) && lk.length > 0, 'leader look: MCFG.cleric / leaderObj / leaderKit missing in 11-models');
+  ck(/if\(kind==='ldr'\)\{leaderKit\(/.test(m) && m.includes("else if(/\\|ldr\\|v\\d$/.test(key))try{") && /spyPaint\(geo,skel,tex,L\.c,L\.skin[,)]/.test(m), 'leader look: newSoldierKit / mergeSoldier no longer dress and paint the leader');
+  ck(/const DL=fac==='KP'/.test(lk) && !/spectacle|glasses|solRifle|addKitVariant/i.test(lk), 'leader look: leaderKit lost the Dear Leader branch, or gives a leader spectacles / a rifle / combat kit');
+  ck(/case'ayatollah':case'dearleader':/.test(kit) && /k==='cleric'\)return nm==='Dear Leader'\?'dearleader':'ayatollah'/.test(kit), 'leader look: the leaders lost their own painted command-bar pictures'); }
 // ---- One language, idea 3 (2026-11-10 "All"): every button says what it beats. BEATS / WEAK TO come from ONE helper that
 // reads the real balance table (matchUp in 01-data); the old hand-written lists (COUNTER, "Beats ... · Loses to ...") must not come back.
 { const d = SRC['01-data.js'] || '', ui = SRC['08-ui.js'] || '', kit = SRC['08j-uikit.js'] || '', enc = SRC['08f-encyclopedia.js'] || '', idn = SRC['08b-identity.js'] || '';
@@ -60,14 +109,24 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/function ctrTick\(/.test(ui) && /matchBeaters\(/.test(ui) && /ctrTick\(\)/.test(ui.replace(/function ctrTick\(/, '')), 'one language 3: pointing at an enemy no longer lights up the buttons that beat it (ctrTick)');
   ck(/UK\.match\(en\.f,en\.k/.test(enc) && /matchUp\(f,s\.kind,f\)/.test(idn), 'one language 3: Encyclopedia / Unit guide no longer use the computed BEATS / WEAK TO'); }
 { const fh = SRC['08l-firsthint.js'] || '', so = SRC['08b-social.js'] || '', mn = SRC['14-menu.js'] || '';
-  ck(/FH_TEXT/.test(fh) && ['Conquest', 'Battle', 'Mission', 'Test range', 'Grand campaign'].every(m => fh.includes("'" + m + "':")), 'polishE: a mode lost its first-steps hint card');
-  ck(/const TUTB=\[/.test(so) && /function startBattleTutorial/.test(so) && /startBattleTutorial/.test(mn), 'polishE: the Battle tutorial is gone from the menu'); }
+  ck(/FH_TEXT/.test(fh) && ['Battle', 'Mission', 'Test range'].every(m => fh.includes("'" + m + "':")) && !fh.includes("'Conquest':"), 'polishE: a mode lost its first-steps hint card');
+  ck(/const TUTB=\[/.test(so) && /function startBattleTutorial/.test(so) && /startBattleTutorial\(\)/.test(so.slice(so.indexOf('function socialMenu'))), 'polishE: the Battle tutorial is gone from the menu');
+  ck(!/const TUTC=|function startTutorial\(|tutTown\(/.test(so) && /let TUT=TUTB;/.test(so) && /\{k:'sup',/.test(so) && /LGU\.on/.test(so), 'one game: the ONE tutorial is the Battle tutorial and it teaches the supply lines (step sup: press L)'); }
 // ---- fortline (Abdullah 2026-11-11 19:02 "only the construction vehicle can build a fortification line, other units just dig in"): the old infantry-builds-lines way must not come back
 { const t = SRC['03b-tactics.js'] || '', u = SRC['08c-tactui.js'] || '';
   ck(/function wallOrder\([^)]*\)\{us=us\.filter\(u=>u&&!u\.dead&&u\.kind==='dozer'\)/.test(t), 'fortline: wallOrder must accept Construction Vehicles only');
   ck(/function tactBuilders\(\)\{return tactOwn\(\)\.filter\(u=>u\.kind==='dozer'\);\}/.test(u), 'fortline: tactBuilders must be Construction Vehicles only');
   ck(!/\.65\)/.test(t.slice(t.indexOf('function dozeWall'), t.indexOf('function trenchSnap'))), 'fortline: the slower infantry build factor is back in dozeWall');
   ck(/pts:\[/.test(t) && /t:'wall',ids:dzs/.test(t) && !/digCan\(e\)&&G\.t-\(e\.mv\|\|-9\)>3/.test(t), 'fortline: the AI builds lines with Construction Vehicles only'); }
+// ---- dugout (Abdullah 2026-11-13 20:00 "Make it digging in like garrisoning units in that you have to remove them from the dugout"): Dig in is a garrison, not a stance on the units
+{ const t = SRC['03b-tactics.js'] || '', sim = SRC['03-sim.js'] || '', ui = SRC['08c-tactui.js'] || '';
+  ck(!/function startDig\(|function digTick\(/.test(t) && !/\bu\.dig\b|\.dig=null|m\.dig\b/.test(t + sim + (SRC['03f-battlefield.js'] || '')), 'dugout: the old Dig-in stance (u.dig / startDig / digTick) is back');
+  ck(/case 'dig':digIn\(team,own\(a\.ids\)\)/.test(sim) && /function dugoutMake\(/.test(t) && /type:'garrison',ci:c\.i/.test(t), 'dugout: Dig in must send the squad into a dugout through the garrison order');
+  ck(/c\.dug&&c\.dg>G\.t/.test(t) && /enterGarrison\(u,c\)/.test(sim) && !/function enterDugout|function leaveDugout/.test(t + sim), 'dugout: one garrison system - the dugout must reuse enterGarrison / leaveGarrison');
+  { const d1 = SRC['01-data.js'] || ''; ck(!/\.digT\b|fx==='dig'|fx:'dig'|troops arrive dug in/.test(t + sim + d1) && !/mods\.dugIn&&isInf/.test(sim), 'dugout (Abdullah 2026-11-13 21:38 "Replace with dugouts only"): the automatic dig-in (30% less damage holding position / paratroops arriving dug in) is back - dugouts are the only way to dig in');
+    ck(!/dig in \(30%|troops dig in and fight|name:'Dug In'/.test(d1), 'dugout: a stale "dig in" text / name is back in src/01-data.js'); }
+  ck(/dugEnsure\(ck\.civ/.test(SRC['07b-ckpt.js'] || ''), 'dugout: checkpoints / saves must keep dugout slots (dugEnsure in ckRestore)');
+  ck(!/foxhole|dig a foxhole/i.test(ui.replace(/\/\*[\s\S]*?\*\//, '')), 'dugout: the Dig in button text still talks about foxholes'); }
 // ---- Words (queue item, 2026-11-10): no old faction name, no real group's name and no stale building name in any text a
 // player can read. Comments are skipped (history lives there); string literals and templates are checked.
 { const strip = t => t.replace(/'(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"|`(?:\\.|[^`\\])*`|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, m => m[0] === '/' ? m.replace(/[^\n]/g, ' ') : m);
@@ -95,26 +154,40 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
         if (++bad <= 8) ck(false, `american: British spelling "${x[0]}" in src/${f} line ${t.slice(0, m.index).split('\n').length}: "${s.slice(Math.max(0, x.index - 20), x.index + 30).replace(/\n/g, ' ')}" (python3 orch/american.py fixes it)`); } } }
   if (bad > 8) ck(false, `american: ${bad} British spellings in player-facing text in all (python3 orch/american.py)`); }
 
+// ---- orderfeel (Abdullah 2026-11-13 17:31 "selection rings + order preview, clearer goals on screen"): ONE selection-ring system
+// (SELR, instanced, 06d-orderfeel), ONE order-marker system (ORDM, instanced, capped), ONE goal line (cqBanner) - no old per-unit RINGS,
+// no order pings through PINGS, no separate mission objectives box.
+{ const all = srcFiles.filter(f => !/^13/.test(f)).map(f => SRC[f]).join('\n');
+  ck(!/\bRINGS\b/.test(all.replace(/MAP_RINGS/g, '')), 'orderfeel: the old per-unit selection RINGS are back (one ring system: SELR in 06d-orderfeel)');
+  { const sf = SRC['06d-orderfeel.js'] || ''; ck(/function selShape[\s\S]{0,700}\b7\b/.test(sf) && !/sh<\.5\)\{[^\n]*fill=/.test(sf) && !/sh<1\.5\)\{[^\n]*fill=/.test(sf), 'ringfix (Abdullah 2026-11-14 "Remove these red rings"): selected units get thin corner brackets only - no filled disc/ellipse under units or buildings'); }
+  ck((all.match(/function selRings\(/g) || []).length === 1 && (all.match(/function ordMark\(/g) || []).length === 1, 'orderfeel: selRings / ordMark must exist exactly once');
+  for (const f of srcFiles.filter(f => !/^13/.test(f) && f !== '06d-orderfeel.js')) ck(!(/G\.sel/.test(SRC[f]) && /RingGeometry[^\n]{0,200}G\.sel|G\.sel[^\n]{0,200}RingGeometry/.test(SRC[f])), `orderfeel: ${f} draws its own selection ring (use SELR)`);
+  const mk = /function mark\(o\)\{[^\n]*\n?[^\n]*/.exec(SRC['08-ui.js'] || '') || [''];
+  ck(/ordMark\(/.test(mk[0]) && !/PINGS\.push/.test(mk[0]), 'orderfeel: order markers (mark/markT) must go to ordMark, not PINGS');
+  const cap = /ORDM=\{m:null,cap:(\d+)/.exec(SRC['06d-orderfeel.js'] || ''); ck(cap && +cap[1] <= 16, 'orderfeel: order markers need a small cap (ORDM.cap <= 16)');
+  ck(!/campHud/.test(all), 'orderfeel: the old mission objectives box (campHud) is back - missions use the goal line'); }
+// ---- American voices (Abdullah 2026-11-13 20:08 "Americans sound British"): the US unit voices are cloned from public-domain American recordings
+// (tools/voices/refs, credits in CREDITS.md), never the old studio speakers; the credits text names the source. Render recipe: orch/reports/usvoice.md.
+{ const cast = JSON.parse(fs.readFileSync(path.join(ROOT, 'orch', 'vo', 'cast.json'), 'utf8')).US || {};
+  const ids = [].concat(cast.sold || [], cast.cmd || []);
+  ck(ids.length >= 3 && ids.every(v => /^clone:us_[a-z]+$/.test(v)), 'usvoice: the US cast must use the cloned American voices (clone:us_*): ' + JSON.stringify(ids));
+  for (const v of new Set(ids)) ck(fs.existsSync(path.join(ROOT, 'tools', 'voices', 'refs', v.slice(6) + '.flac')), 'usvoice: missing reference clip for ' + v);
+  ck(/US unit voices[^<]{0,200}public.domain/i.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'usvoice: menu credits do not name the American voice source'); }
+
 // ---------- static checks ----------
-// polishP2 "Never lose progress": one save system. Battles autosave into 3 rolling slots (08d-save.js), the grand campaign saves on a timer and before every
-// Fight-it battle into 3 rolling copies (13-grand.js grSnap), and the menu's Continue (first item) covers both. Runtime proof: orch/polishtest.mjs (gate/save).
-{ const sv = SRC['08d-save.js'] || '', g = SRC['13-grand.js'] || '', m = SRC['14-menu.js'] || '';
+// polishP2 "Never lose progress": one save system. Battles autosave into 3 rolling slots (08d-save.js) and the menu's Continue (first item) resumes the newest. Runtime proof: orch/polishtest.mjs (gate/save).
+{ const sv = SRC['08d-save.js'] || '', m = SRC['14-menu.js'] || '';
   ck(/\['auto','auto2','auto3'\]/.test(sv) && /setInterval\(\(\)=>\{try\{svAutoTick\(\)/.test(sv), 'progress: battle autosave (3 rolling slots on a timer) is gone from 08d-save.js');
-  ck(/function grSnap\(/.test(g) && /grSnap\(\);return grBattlePrompt\(b\)/.test(g) && /function grAutoTick\(/.test(g), 'progress: grand campaign timer autosave / safety copy before Fight-it is gone from 13-grand.js');
-  ck(/function svGrandInfo\(/.test(sv) && /MX\.cont=item\(/.test(m) && m.indexOf('MX.cont=item(') < m.indexOf("item('Grand campaign'") + (m.indexOf("item('Grand campaign'") < 0 ? 1e9 : 0) && m.indexOf('MX.cont=item(') < m.indexOf("item('Single player'") + (m.indexOf("item('Single player'") < 0 ? 1e9 : 0), 'progress: Continue must be the first item of the menu list and cover Conquest/Battle saves, and the campaign save only when it is the only one');
+  ck(/MX\.cont=item\(/.test(m) && !/svGrandInfo|svContinueGrand/.test(sv), 'progress: Continue must be the first menu item and cover battle saves only (the grand campaign was removed 2026-11-14)');
 }
 // Living main menu (idea 9, Abdullah 2026-11-10 "Let's go all of them"; finished by helper finish-menu): the menu background shows YOUR war - whatever Continue would resume.
 //   campaign save -> the map around your nation + your last battle (grWarTable / grLastB -> the save's '.i' note); battle save -> that battlefield with the front line (svFront in the
 //   save's list entry); no save -> the calm world-map picture. The menu never loads the campaign code for it. ONLY idea 9: named veterans (8) and battle scars (11) are NOT in the game,
 //   and none of this is campaign state or checkpoint data (display notes only). Runtime proof: orch/smoke.mjs (lazy page: with a campaign save, with a battle save, with no save).
-{ const g = SRC['13-grand.js'] || '', m = SRC['14-menu.js'] || '', sv = SRC['08d-save.js'] || '', ck7 = SRC['07b-ckpt.js'] || '', all = Object.values(SRC).join('\n');
-  ck(/function grWarTable\(lb\)/.test(g) && /wt=grWarTable\(lb\)/.test(g) && /function grLastB\(/.test(g) && /function grSettle\(b,win,how\)\{[^\n]*grLastB\(b,win\)/.test(g), 'living menu: the save note no longer carries the war-table sketch or your last battle (grWarTable / grLastB in 13-grand.js)');
+{ const m = SRC['14-menu.js'] || '', sv = SRC['08d-save.js'] || '', ck7 = SRC['07b-ckpt.js'] || '', all = Object.values(SRC).join('\n');
   ck(!/GC\.scars|grScar\(|GC\.lastB|GC\.vets|grVeteran/.test(all), 'living menu: battle scars / named veterans (ideas 11 and 8) must stay out - no GC.scars, grScar, GC.vets in src/');
   ck(!/GR_LASTB|svFront|grWarTable|\bwt\b/.test(ck7), 'living menu: the last-battle note and the front sketch are display notes - they must not enter the checkpoint (src/07b-ckpt.js)');
   ck(/function svFront\(\)/.test(sv) && /thumb:svThumb\(\),wt:svFront\(\)/.test(sv) && !/ckEncode\(\)[^\n]*svFront/.test(sv), 'living menu: a battle save must carry the front sketch in its list entry only (svMeta wt:svFront() in 08d-save.js)');
-  const f = (m.match(/function mxWarSrc\(\)[\s\S]*?\nfunction mxShown/) || [''])[0];
-  ck(f && /svGrandInfo/.test(f) && /svLatest/.test(f) && !/loadGrand|grLoad|grMap|GCM|GM_P|grNew|\bGC\b/.test(f), 'living menu: mxWarSrc / mxWarTable must draw from the save notes only (no campaign code)');
-  ck(/async function svMenuSync\(\)[\s\S]{0,900}mxWarTable\(\)/.test(sv) && /function mxShown\(first\)\{[^\n]*svMenuSync\(\)/.test(m), 'living menu: the background must be redrawn whenever the menu is shown (mxShown -> svMenuSync -> mxWarTable)');
 }
 // polishP2 "Settings": the one key table (src/06z-keys.js KEYTAB) lists every key the battle handlers listen to; the Keyboard keys window (08m-controls.js) shows that table.
 //     A hotkey added to a handler without a row fails here. W A S D are camera-only and never rebindable. Runtime proof: orch/polishtest.mjs (gate/save).
@@ -126,18 +199,11 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   for (const m of all.matchAll(/e\.key==='([a-z])'\|\|e\.key==='[A-Z]'/g)) used.add(m[1]);
   const miss = [...used].filter(k => !defs.has(k) && k !== 'a'); ck(used.size >= 20 && !miss.length, 'keys: hotkey(s) without a row in the one key table (src/06z-keys.js): ' + miss.join(' '));
   ck(/function kbuOpen\(/.test(SRC['08m-controls.js'] || '') && /for\(const r of KEYTAB\)/.test(SRC['08m-controls.js'] || ''), 'keys: the Keyboard keys window must list KEYTAB'); }
-// polishP2 "Campaign panels": one frame + one Esc handler for every grand-map panel (src/13zzz-gpanels.js GPAN, list in orch/reports/panels.md).
-//     A grand module must not bring its own Escape handler or its own "✕" close button back; every GPAN row is ticked in panels.md.
-{ const gp = SRC['13zzz-gpanels.js'] || '', rep = (() => { try { return fs.readFileSync(path.join(ROOT, 'orch/reports/panels.md'), 'utf8'); } catch { return ''; } })();
-  const ids = [...gp.matchAll(/\{id:'(\w+)',name:/g)].map(m => m[1]); ck(ids.length >= 11 && /function gpxEsc\(/.test(gp) && /function gpxDress\(/.test(gp), 'panels: the grand panel registry (GPAN) is gone');
-  const noRow = ids.filter(i => !new RegExp('\\[x\\][^\\n]*#' + i + '\\b').test(rep)); ck(!noRow.length, 'panels: GPAN rows not ticked in orch/reports/panels.md: ' + noRow.join(', '));
-  const own = Object.entries(SRC).filter(([f, t]) => /^13/.test(f) && f !== '13zzz-gpanels.js' && (/key===?'Escape'/.test(t) || /['">]✕<\/button>|,'(Close )?✕'\)/.test(t))).map(x => x[0]);
-  ck(!own.length, 'panels: grand module(s) with their own Esc handler or close button (use GPAN in 13zzz-gpanels.js): ' + own.join(', ')); }
 // polishP2 "Readability": one text-size switch (SET.ts 100/115/130 %, src/08n-readable.js TS_ROOTS) that every panel root is listed in, and colour-blind mode
 //     carries team identity by shape too (minimap, selection rings, town name plates, allies list). Runtime proof: orch/polishtest.mjs section 4 (1366x768 + 1920x1080).
-{ const rd = SRC['08n-readable.js'] || '', idn = SRC['08b-identity.js'] || '', tw = SRC['08c-towns.js'] || '';
-  ck(/const TS_STEPS=\[1,1\.15,1\.3\]/.test(rd) && ['#side', '.overlay>.card', '#mx', '.gpx', '#gTop', '#gSide', '#kbWin .kbcard'].every(r => rd.includes("'" + r + "'")), 'readability: the text-size setting or one of its panel roots is gone (src/08n-readable.js TS_ROOTS)');
-  ck(/const ID_CB=\[/.test(idn) && /function idMiniMark\(/.test(idn) && (tw.match(/if\(SET\.cb\)\{try\{idMiniMark\(/g) || []).length >= 2 && /function cbGlyph\(/.test(rd), 'readability: colour-blind mode must mark teams by shape on the minimap, town name plates and allies list'); }
+{ const rd = SRC['08n-readable.js'] || '', idn = SRC['08b-identity.js'] || '';
+  ck(/const TS_STEPS=\[1,1\.15,1\.3\]/.test(rd) && ['#side', '.overlay>.card', '#mx', '#kbWin .kbcard'].every(r => rd.includes("'" + r + "'")), 'readability: the text-size setting or one of its panel roots is gone (src/08n-readable.js TS_ROOTS)');
+  ck(/const ID_CB=\[/.test(idn) && /function idMiniMark\(/.test(idn) && /function cbGlyph\(/.test(rd), 'readability: colour-blind mode must mark teams by shape on the minimap, town name plates and allies list'); }
 // extras-battle idea 10 "Commander's radio" (Abdullah 2026-11-10 19:28 "Let's go all of them"): ONE text feed for every report. pushLog (08-ui.js) hands every
 //     line to radFeed (09b-radio.js): at most 3 lines, ~6 s, a kind icon, click / Space = camera to the place. The separate subtitle box (#radsub) must not return,
 //     pushLog must not build feed lines itself, and Space must be a row of the one key table. Runtime proof: orch/radioshots.mjs.
@@ -157,19 +223,15 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/SET\.edgeAl===0/.test(et) && /'sEdgeAl','edgeAl'/.test(hud) && /'sRadio','radio'/.test(hud) && /SET\.radio===0/.test(SRC['09b-radio.js'] || '') && /body\.inMenu #log,/.test(hud) && /body\.inMenu #edgeAl/.test(hud), 'radio + edge alerts: each needs its own Settings switch (sRadio / sEdgeAl) and both must be hidden in menus');
   ck(!/'[^'\n]*[Aa]rmour[^'\n]*','r:/.test(Object.values(SRC).join('\n')), 'radio: report lines use American spelling (armor, never armour)');
   ck((hud.match(/function edgeAlert\(/g) || []).length === 1 && !Object.entries(SRC).some(([f, t]) => f !== '08i-hud.js' && /EDGE\.a\.(push|unshift)\(/.test(t)), 'edge alerts: one alert list only (08i-hud.js)'); }
-// 0. grand-map figures (2026-11-07 16:37 "No blocky figures even on the grand map"): armies/navies are baked from the real sol_*/ship models only; the box/cylinder figure must not return.
-{ const g = SRC['13e-grand3d.js']; ck(!/function g3FigGeo|function g3Soldier|function g3ShipGeo/.test(g), 'grandfigs: blocky box/cylinder army figure code is back in 13e-grand3d.js'); }
+// Menu background (Abdullah 2026-11-14 17:07 "Have an epic static main menu background"): ONE static picture, no live shell battle, no war table.
+{ const m = SRC['14-menu.js'] || '', all = Object.values(SRC).join('\n');
+  ck(!/mxShell|mxshell|G\.shell\b|SH\.on/.test(all) && !/mxWarTable|mxWarSrc|#mxwt/.test(all), 'menu background: the live shell battle / war table are back (one static picture only)');
+  ck(/#mxbg\{[^}]*url\(menu-world\.webp\)/.test(m) && !/mxpan/.test(m) && fs.existsSync(path.join(ROOT, 'menu-world.webp')) && fs.statSync(path.join(ROOT, 'menu-world.webp')).size < 450000 && !fs.existsSync(path.join(ROOT, 'menu-bg3.webp')), 'menu background: #mxbg must be a CSS background of menu-world.webp, the epic world map (Abdullah 2026-11-14 21:02; static, under 450 KB)'); }
 // 0a. Game feel (2026-11-09 22:44): shell impacts match the surface (water spray / road chips / the map's soil) and tanks rock when they fire.
 { const f = SRC['05-fx3d.js'], v = SRC['06-view.js'];
   ck(/function impactSurf\(/.test(f) && /function splashFX\(/.test(f) && /if\(wet\)splashFX\(x,y,s,big\)/.test(f), 'game feel: explosions no longer check the surface they hit (water spray is gone)');
   ck(/if\(!wet\)scorch\(x,y,s\)/.test(f), 'game feel: explosions scorch the water surface again');
   ck(/ud\.rock=fz/.test(v) && /o\.rotation\.z=tp\+ud\.sp\+fz/.test(v), 'game feel: the hull no longer rocks when the gun fires'); }
-// 0b. gclarity (2026-11-07 19:52 "Way too busy … I don't know what the big areas mean"): clean EU4-style map — town pads/fields only at close zoom,
-//     one shield per stack, a map key, building chips only on hover; the old per-army count plates and always-on chips must not return.
-{ const g = SRC['13e-grand3d.js']; ck(/function g3TownLOD/.test(g) && /g3TownLOD\(cc\.d\)/.test(g), 'gclarity: town LOD (no ground pads at region zoom) is gone');
-  ck(/function g3Legend/.test(g) && /WHAT AM I LOOKING AT/.test(g), 'gclarity: the "What am I looking at?" map key is gone');
-  ck(/const k=a\.at\+'\|'\+\(st==='march'/.test(SRC['13e3-gtokens.js'] || '') && /g3Tokens\(tier\)/.test(g), 'gclarity: armies in one province no longer merge into one marker (the army token stack, src/13e3-gtokens.js)');
-  ck(!/'<\/b><small>'\+\(N\.name\|\|st\.o\)\+' '\+geIcons\(b\.pi\)/.test(g), 'gclarity: building chips are back on every province nameplate'); }
 // 0c. One look for everything (2026-11-09 22:44): every battle model material goes through the ONE shared material library (src/11c-look.js);
 //     a second place that hands out its own roughness/metalness for borrowed models must not come back.
 { const m = SRC['11-models.js'], l = SRC['11c-look.js'] || '';
@@ -178,24 +240,10 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   for (const c of ['metal', 'canvas', 'concrete', 'mudbrick', 'sand', 'rubber', 'glass']) ck(new RegExp('\\b' + c + ':\\{r:').test(l), 'one-look: surface class "' + c + '" is missing from LOOK.cls');
   for (const f of ['IR', 'RS', 'DW', 'RV', 'IL', 'SA', 'US']) ck(new RegExp('\\b' + f + ":\\['#").test(l), 'one-look: Middle East slice nation ' + f + ' has no wall palette in LOOK.wall');
   ck(/ambientCG\.com \(CC0\)/.test(l) && /Poly Haven \(CC0\)/.test(l), 'one-look: the CC0 texture credits line is gone'); }
-// 1. EU4 real time (2026-11-06 22:30): no "turn" wording in any player-visible string of the grand map files.
-{ const lit = /'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g;
-  for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach((l, i) => {
-    if (/^\s*(\/\/|\/\*|\*)/.test(l)) return;
-    const bare = l.replace(/\/\*.*?\*\//g, '');
-    for (const m of bare.match(lit) || []) { if (m === "'turn'" || m === '"turn"') continue;
-      if (/\bturns?\b/i.test(m.replace(/\bturn (back|out|around|into|up|down|over|away|on|off|to)\b/gi, ''))) fails.push(`turn wording (EU4 real time, no turns): ${f}:${i + 1} ${m.slice(0, 80)}`); } }); }
-// RANGES (orch/RANGES.md): grand-map strike reach is real km / 14 km per unit, ordered missile = drone > air raid; battle ratios rifle <= tank < ATGM
-{ const g = SRC['13i-grandmil.js'] || ''; const km = (k) => +((g.match(new RegExp('GMIL_KM=\\{[^}]*\\b' + k + ':(\\d+)')) || [])[1] || 0);
-  ck(km('m') >= 1500 && km('m') <= 2500, 'ranges: missile reach should be ~2,000 km (RANGES.md)'); ck(km('a') >= 700 && km('a') <= 1500, 'ranges: air raid reach should be ~1,000 km'); ck(km('d') >= 1500 && km('d') <= 2500, 'ranges: Shahed-type drone reach should be ~2,000 km'); ck(/GMIL_KMU=14\b/.test(g), 'ranges: grand-map km scale 14 km/unit');
+// RANGES (orch/RANGES.md): battle ratios rifle <= tank < ATGM
+{
   const d = SRC['01-data.js'] || ''; const r = (k) => +((d.match(new RegExp('\\n\\s*' + k + ':\\{[^\\n]*?\\brng:(\\d+)')) || [])[1] || 0);
   ck(r('tank') && r('atgm') && r('tank') < r('atgm'), 'ranges: tank gun must be shorter than ATGM'); }
-for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach((l, i) => { if (/>T'\s*\+|'T'\s*\+\s*r\[0\]/.test(l)) fails.push(`"T<number>" turn shorthand shown to players: ${f}:${i + 1}`); });
-// Army Standards (Abdullah 2026-11-10 19:17 "Go"): armies on the grand map are ONE round token each (src/13e3-gtokens.js); the far/middle-zoom figure blobs, shield badges and per-army waving flags must not come back (the small on-land figures stay in the close view only; a flag only on the selected army — behaviour guard in orch/grandtest.mjs)
-{ const all = srcFiles.filter(f => /^13/.test(f)).map(f => SRC[f]).join('\n'); for (const n of ['g3FarGeo', 'g3FarCol', 'g3FarHide', 'gtkMinis', 'gtkFigures']) ck(!new RegExp('\\b' + n + '\\b').test(all), 'Army Standards: old army drawing code is back in src/13*: ' + n);
-  ck(!/#g3ui \.p[ .{:]/.test(all), 'Army Standards: the old shield-badge CSS (#g3ui .p) is back'); ck(/function g3Tokens\(/.test(SRC['13e3-gtokens.js'] || ''), 'Army Standards: src/13e3-gtokens.js (g3Tokens) is missing');
-  ck(/G3\.tier===2\|\|sel\)\)continue/.test(SRC['13e-grand3d.js']) && /if\(fl&&fl\.visible&&sel\)/.test(SRC['13e-grand3d.js']), 'Army Standards: g3Batch must draw figures only in the close view (or for the selected army) and a flag only on the selected army');
-  ck(/gtkEst\(/.test(all) && /grSideVal\(grSideUnits\(b,'att'\),0\)\*grIdeaMul\(b\.an,'attack'\)/.test(all), 'Army Standards: odds pills must use the auto-resolve strength terms (gtkEst)'); }
 // 2. Controls (2026-10-28): W A S D only scroll the camera; A is not attack-move; F is; X is stop.
 { const hits = []; for (const f of srcFiles) SRC[f].split('\n').forEach((l, i) => { for (const m of l.matchAll(/\bkeys\.[wasd]\b/g)) hits.push([f, i + 1, l]); });
   for (const [f, n, l] of hits) ck(/cam\.t[xy]\s*[-+]=/.test(l) || /keys\.[wasd]\s*=/.test(l), `WASD used for something other than the camera: ${f}:${n}`);
@@ -208,13 +256,37 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(/k==='a'&&\(e\.ctrlKey\|\|e\.metaKey\)[^\n]*selectArmy\(\)/.test(u), 'Ctrl+A no longer selects the whole army in battle');
   ck(/k==='q'[^\n]*CROT\.hold=true/.test(u) && /function camRotSnap/.test(u), 'Q no longer rotates the battle camera');
   ck(!/\(Q\)|Q: army/.test(u), 'a tooltip/hint still says Q selects the army'); }
+// 2c. Test range (2026-11-13 19:59): both nations are chosen in its window; the old auto-pick of the target is gone; the battle panel can reopen the window.
+{ const u = SRC['08-ui.js'], mn = SRC['14-menu.js'];
+  ck(!/function startSandbox\(\)/.test(u) && !/FKEYS\.find\(k=>k!==setup\.p&&k!=='RS'/.test(u), 'Test range still auto-picks the target nation');
+  ck(/scr\('t-range'/.test(mn) && /item\('Test range',\(\)=>mxTrOpen\(false\)/.test(mn), 'Test range menu item does not open the nation window');
+  ck(/id='sbNations'/.test(u) && /Change nations/.test(u), 'Test range battle panel lost the "Change nations..." item'); }
+// 2d. Test range = Battle rules (Abdullah 2026-11-14 13:51 "Make test range mirror battle"): no sandbox-only supply/ammo/tech/build-speed shortcuts left in the sim.
+{ const S3 = SRC['03-sim.js'];
+  ck(!/G\.sandbox&&u\.team===0\)u\.am=u\.amx/.test(S3) && !/let ins=!!\(G\.sandbox/.test(S3), 'Test range still refills ammo / forces supply (must behave like Battle)');
+  /* 2026-11-14 18:03 Abdullah "in test range all buildings and units are available": the tech-tree skip for the range is allowed again */ ck(/G&&G\.sandbox&&t===0/.test(S3), 'Test range must open every building (reqMet skip for the player)'); ck(!/G&&G\.sandbox&&T\.id===0\)t\/=6/.test(S3) && !/m===2&&G\.sandbox/.test(S3), 'Test range still builds 6x faster or ignores build-spot rules');
+  ck(/G\.battle=!o\.camp;/.test(S3), 'newGame must make a sandbox a Battle game (G.battle true)');
+  ck(/oos=!e\.sup&&e\.am<=0;/.test(SRC['06-view.js']), 'out-of-supply badge rule changed'); }
 // 3. Main menu order + naming (2026-11-07 21:41): Single player · Multiplayer · Test range, then small extras; no Classic.
+// 3. Main menu order + naming (2026-11-07 21:41; one game 2026-11-13 20:18): Play · Multiplayer · Test range, then small extras; no Classic.
 { const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).filter(Boolean).slice(0, 3);
-  ck(m.join('|') === 'Single player|Multiplayer|Test range', 'main menu order is ' + m.join(' · '));
+  ck(m.join('|') === 'Play|Multiplayer|Test range', 'main menu order is ' + m.join(' · '));
   for (const f of ['14-menu.js', '08d-lobby.js']) ck(!/['">]Classic[<'"]/.test(SRC[f]), 'Classic mode still named in ' + f); }
-// 4. Grand-map-only assets are banned from Conquest in the one place that decides it.
-// (leadersC 2026-11-07 22:38: flipped - they are back in Conquest/Battle for their nations, banned only in grand Fight-it battles: G.grand)
-ck(/function conqBan\(k\)\{return\(k==='cleric'\|\|k==='bb'\)[^}]*!!G\.grand;\}/.test(SRC['01-data.js']) && !/function conqBan[^\n]*G\.conq/.test(SRC['01-data.js']), 'conqBan must ban cleric and bb ONLY when G.grand (the pre-built grand Mountain Fortress stays)');
+// 4. ONE GAME (Abdullah 2026-11-13 20:18 "Abandon conquest and campaign entirely remove them from the game"): the grand campaign is gone -
+//    no src/13* modules, no lazy bundle / loader, no grand code path or typeof-guarded call into it anywhere in src/.
+{ const all = Object.values(SRC).join('\n');
+  ck(!srcFiles.some(f => /^13/.test(f)) && !srcFiles.includes('12zz-grandload.js'), 'one game: grand campaign modules (src/13*, src/12zz-grandload.js) are back');
+  ck(!fs.readdirSync(ROOT).some(f => /^grand\.[0-9a-f]{10}\.js$/.test(f)) && !/GRAND_FILE/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'one game: the grand bundle / GRAND_FILE line is back');
+  ck(!/\bG\.grand\b|\bconqBan\b|loadGrand|grandMenu|grandBattleSetup|GRAND_NOPROD|svGrandInfo|gnLobby|\bGC\.|GR_REAL/.test(all), 'one game: a grand-campaign code path is back in src/ (G.grand, conqBan, loadGrand, grandMenu, gnLobby, GC. ...)');
+  // ... and Conquest is gone too: no G.conq, no towns layer (town capture, tax, opinion, revolts, militias, setup timer), no Conquest/Battle switch, no Realistic toggle
+  ck(!/\bG\.conq\b|\bG\.towns\b|\binitTowns\(|\bupdTowns\(|\btownIncome\(|\bCQ_[A-Z]|\bsetupEnd\b|\bopOf\(|\bpolMul\(|\bREAL_TIER\b|\brealRow\(|\bsetup\.real\b|\bsetup\.bmAll\b|Conquest battlefields too/.test(all), 'one game: a Conquest code path is back in src/ (G.conq, G.towns, town tax/capture, setup timer, opinion, Realistic, Conquest map link)');
+  ck(!['03h-economy.js', '08c-towns.js', '08c-economy.js'].some(f => srcFiles.includes(f)), 'one game: a Conquest-only module (03h-economy, 08c-towns, 08c-economy) is back');
+  // Battle has supply lines (Abdullah 2026-11-13 20:19 "Bring supply lines into battle") and the ammo rule (20:06): refill inside your area, no timers, Test range unlimited
+  const sim = SRC['03-sim.js'] || '', lg = SRC['03c-logistics.js'] || '', lgu = SRC['08c-logi.js'] || '';
+  ck(/G\.battle=!o\.camp;/.test(sim), 'one game: every skirmish / online game must start as Battle (newGame G.battle)');
+  ck(/function lgCover\(/.test(lg) && /lgCover\(\);G\.lgv=/.test(lg) && /G\.lg&&G\.lg\.bead/.test(sim) && /if\(G\.lg\)lgTick\(st\)/.test(sim), 'supply lines: lgCover (roads out of HQ + depots) must feed the supply area (supplyPoints beads) and run every supply tick');
+  ck(/function ammoOn\(\)\{return !!G&&!G\.sandbox;\}/.test(sim) && /function hasAmmo\(u\)\{const s=u\.s;return ammoOn\(\)&&/.test(sim) && !/\b[ue]\.supT\b|G\.t-\([ue]\.supT/.test(Object.values(SRC).join('\n')), 'ammo rule: Battle tracks ammo (refill inside your area, no time-based out-of-supply penalty), Test range unlimited');
+  ck(!/G\.battle\)\{LGU\.on=false|if\(G&&G\.battle\)return false|!G\.battle&&!G\.lg|G\.battle\|\|!G\.lg/.test(lgu), 'supply lines: the overlay / minimap lines must not be switched off in Battle'); }
 // 5. Names / identity that must not drift.
 ck(/Radwan Training/.test(SRC['01-data.js'] + Object.values(SRC).join('')), 'upgrade name "Radwan Training" is gone');
 // Shia sub-leader titles are lane AY's open work (PLAN-SAT): reported, not failed, until AY ships; then change warn -> ck.
@@ -223,13 +295,28 @@ for (const [w, why] of [['Secretary-General', 'RS leader'], ['Leader of the Revo
 // 6. No hosting wording in the multiplayer menu (2026-10-27): one "Play online" button.
 { const mm = SRC['14-menu.js']; ck(!/Host (a )?(game|battle|match)|Hosting\b/i.test(mm.replace(/\/\/.*$/gm, '')), 'hosting wording in the menu'); ck(/Play online/.test(mm), 'no "Play online" in the menu'); }
 
-// BATTLE MAPS (Abdullah 2026-11-11 19:40 / 20:14: Battle gets its own maps; every map fun and fair): every listed Battle map
+// BATTLE MAPS (Abdullah 2026-11-11 19:40 / 20:14: Battle gets its own maps; every map fun and fair; 2026-11-14 one game: the old Conquest maps are Battle maps too): every listed Battle map
 // passes the structural fairness checks (symmetric supply, derricks, routes; 2+ attack routes; all starts reachable), and the
-// Conquest list is the same list as before (Battle maps are never mixed into it).
+// map list is Battle maps first, then every other battlefield.
 { const { spawnSync } = await import('node:child_process'); const r = spawnSync(process.execPath, [path.join(ROOT, 'orch/battlemapfair.mjs'), '--static'], { encoding: 'utf8' });
   ck(r.status === 0 && /BATTLEMAPFAIR STATIC PASS/.test(r.stdout || ''), 'a listed Battle map fails the structural fairness checks: ' + (r.stdout || r.stderr || '').trim().split('\n').filter(l => /FAIL|differ|fewer|only|cannot|not equally/.test(l)).slice(0, 6).join(' | '));
   const bm = SRC['02d-battlemaps.js'] || ''; ck(/for\(const id in BMAPS\)bmRegister\(id,BMAPS\[id\]\)/.test(bm) && !/MAP_KEYS\.push/.test(bm), 'Battle maps must register through bmRegister and never join the Conquest list (MAP_KEYS)');
   ck(/cmBuild\(c,key\)/.test(bm) && /cmCanon\(/.test(bm), 'Battle maps must load through the map editor loader (cmCanon / cmBuild): one map system'); }
+// ONLINE LOBBY LAYOUT (Abdullah 2026-11-14 16:51 "Do this layout for multiplayer", Zero Hour skirmish screen): host and guest share ONE framed screen
+// (src/08d-mplobby.js): players table Player / Colour / Nation / Team, a map preview with SELECT MAP, options row, log + chat line, PLAY GAME / READY and BACK.
+{ const ml = SRC['08d-mplobby.js'] || '', nt = SRC['07-net.js'] || '', lb = SRC['08d-lobby.js'] || '', kit = SRC['08d-lobkit.js'] || '';
+  ck(/<th>Player<\/th><th>Colour<\/th><th>Nation<\/th><th>Team<\/th>/.test(ml) && /SELECT MAP/.test(ml) && /mapPreview\(D\.mk,cv\)/.test(ml) && /PLAY GAME/.test(ml) && /BACK/.test(ml), 'online lobby: must be the framed screen with a Player/Colour/Nation/Team table, map preview, SELECT MAP, PLAY GAME and BACK');
+  ck(/mplShow\(/.test(nt) && /mplShow\(/.test(lb), 'online lobby: leader (07-net) and guest (08d-lobby) must both draw through mplShow');
+  ck(!/E\('div','lobhd'\)|E\('div','seats'\)|'grow'/.test(nt + lb) && !/^\.seat|^\.lob\{/m.test(kit), 'online lobby: the old seat-list lobby layout must be gone'); }
+// GROUND LOOK (Abdullah 2026-11-13 20:05 "This ground texture is too cartoony"): battle ground uses the real CC0 photo ground
+// set (TERR_DET2: sand, cracked earth, rocky soil, packed dirt) in the terrain shader; every terrain detail texture is
+// mipmapped (no shimmer); the road mask is drawn smooth from the road curves (no 16-unit staircase); no hairline crack strokes.
+{ const gx = SRC['04-gfx.js'] || '', mp = SRC['02-map.js'] || '';
+  ck(/^const TERR_DET2=\{a:'data:image\/webp;base64,/m.test(gx) && /b:mk\(TERR_DET2\.a,2176\),m:mk\(TERR_DET2\.n,2176\)/.test(gx) && /sh\.uniforms\.tdB=\{value:TD\.b\}/.test(gx) && /tdM2\(tdB,/.test(gx), 'terrain must use the real ground texture set TERR_DET2 (groundreal)');
+  const mk = (/function terrDetTex\(\)\{[^\n]*/.exec(gx) || [''])[0]; ck(/minFilter=THREE\.LinearMipmapLinearFilter/.test(mk) && !/generateMipmaps=false/.test(mk), 'terrain detail textures must be mipmapped');
+  const rt = (/function roadTex\(\)\{[\s\S]*?return ROADT=t;\}/.exec(gx) || [''])[0]; ck(/G\.roadDraw/.test(rt) && /LinearMipmapLinearFilter/.test(rt) && /RD_C=4;/.test(gx), 'road mask must be drawn from the road curves at 4 units per texel, mipmapped');
+  ck(/const TERR_CRACKS=false/.test(mp), 'hairline crack strokes on the painted ground must stay off (stair-stepped dark lines)');
+  ck(!/x\.fillRect\(1,i,14,2\.2\)/.test(SRC['05-fx3d.js'] || ''), 'hard-edged track print texture is back (stair-stepped tracks)'); }
 
 // ---------- runtime checks ----------
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
@@ -257,55 +344,90 @@ const ev = (fn, a) => page.evaluate(fn, a);
 const SEEN = () => { const out = []; const vis = e => { if (!e.isConnected) return false; for (let n = e; n && n.nodeType === 1; n = n.parentElement) { const s = getComputedStyle(n); if (n.hidden || s.display === 'none' || s.visibility === 'hidden' || +s.opacity === 0) return false; } const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); for (let t; (t = w.nextNode());) { const s = t.nodeValue.trim(); if (s && t.parentElement && vis(t.parentElement)) out.push(s); }
   for (const e of document.querySelectorAll('[title]')) if (vis(e)) out.push(e.title); return out.join(' ¶ '); };
+// zhfeel2 (2026-11-15): Zero Hour feel guards - radar pings on the minimap, rank chevrons + Promoted text, squad numbers, placement footprint, score screen rows.
+{ const has = (f, re, m) => ck(re.test(SRC[f] || ''), 'zhfeel2: ' + m);
+  has('06-view.js', /function mmPing/, 'minimap radar ping (mmPing) is gone'); has('09b-radio.js', /mmPing\(x,y/, 'radio events no longer ping the minimap');
+  has('06-view.js', /rank chevrons/, 'rank chevrons are gone'); has('09b-radio.js', /PROMOTED/, 'Promoted floating text is gone');
+  has('08-ui.js', /sqLast/, 'double-tap squad number centering is gone'); has('06-view.js', /function plFoot/, 'placement footprint grid (plFoot) is gone');
+  has('08-ui.js', /Supplies collected/, 'score screen lost its Supplies collected row'); has('08-ui.js', /\['Score'/, 'score screen lost its Score row');
+  has('03-sim.js', /sco:Math\.round/, 'endStats lost the score'); }
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+  await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => {});
   // ---- menus as a player
   const menu = await ev(() => [...document.querySelectorAll('#menu button, #menu .mx-item, .mx-item')].filter(b => b.offsetParent).map(b => b.textContent.trim()).filter(Boolean).slice(0, 12));
   console.log('menu items', JSON.stringify(menu)); await shot('menu');
   // BATTLE MAP LIST (Abdullah 2026-11-11 19:40): Battle setup offers the Battle map list; Conquest keeps its own list untouched (116 battlefields on 2026-11-13)
-  { const L = await ev(() => { const opts = () => [...document.getElementById('mapSel').options].map(o => o.value).filter(k => !/^cm_/.test(k)); mxSetMode('conquest'); const c = opts(), cm = setup.map; mxSetMode('battle'); const b = opts(), bmap = setup.map, facts = BM_KEYS.map(k => bmInfo(k)); mxSetMode('conquest');
-      return { c, cm, b, bmap, back: setup.map, keys: MAP_KEYS.slice(), bk: BM_KEYS.slice(), facts }; });
-    ck(L.bk.length >= 1 && L.b.join() === L.bk.join() && /^bm_/.test(L.bmap), 'Battle setup must offer the Battle map list, got ' + L.b.slice(0, 8).join(',') + ' (chosen ' + L.bmap + ')');
-    ck(L.c.join() === L.keys.join() && L.keys.length >= 116 && !L.keys.some(k => /^bm_/.test(k)) && !/^bm_/.test(L.cm) && !/^bm_/.test(L.back), 'Conquest map list changed: ' + L.c.length + ' options, ' + L.keys.length + ' maps, chosen ' + L.cm + ' / ' + L.back);
+  { const L = await ev(() => { const opts = () => [...document.getElementById('mapSel').options].map(o => o.value).filter(k => !/^cm_/.test(k)); const b = opts(), bmap = setup.map, facts = BM_KEYS.filter(k => BM[k]).map(k => bmInfo(k));
+      return { b, bmap, back: setup.map, bk: BM_KEYS.slice(), facts, allow: BATTLE_MAPS.map(a => a.slice()), fix: [battleMapFix('strait', 2), battleMapFix('strait', 6), battleMapFix('nosuchmap', 4), battleMapFix('lebanon', 8)].map(k => [k, MAPS[k] && MAPS[k].min, MAPS[k] && MAPS[k].max]), more: !!document.getElementById('mpMore') }; });
+    ck(L.bk.length >= 1 && L.b.join() === L.bk.join() && L.bk.includes(L.bmap), 'Battle setup must offer the Battle map list, got ' + L.b.slice(0, 8).join(',') + ' (chosen ' + L.bmap + ')');
+    // BATTLE MAP ALLOW-LIST (maptrim, Abdullah 2026-11-13 21:17 "cut the Battle list down to great, tested maps"): ONE list (BATTLE_MAPS) is the Battle map list;
+    // every entry has a PASS row (every start 40-60% in AI-vs-AI Battle games) in orch/reports/maptrim.md; a removed map falls back to a listed map with enough slots
+    ck(L.allow.map(a => a[0]).join() === L.bk.join(), 'the Battle map list (BM_KEYS) must equal the allow-list BATTLE_MAPS');
+    { const md = fs.existsSync('orch/reports/maptrim.md') ? fs.readFileSync('orch/reports/maptrim.md', 'utf8') : '';
+      const miss = L.allow.filter(([k]) => !new RegExp('\\| `' + k + '` \\|[^\\n]*PASS').test(md)).map(a => a[0]);
+      ck(!miss.length, 'every Battle map needs a PASS fairness row in orch/reports/maptrim.md, missing: ' + miss.join(','));
+      const cov = n => L.allow.filter(([k, lo, hi]) => lo <= n && hi >= n).length;
+      ck(L.allow.length >= 20 && L.allow.length <= 40, 'the Battle list should hold about 20-40 great maps, has ' + L.allow.length);
+      ck(L.allow.filter(a => a[1] <= 2 && a[2] >= 2).length >= 6 && L.allow.filter(a => a[2] >= 4).length >= 5 && L.allow.filter(a => a[2] >= 6).length >= 4 && L.allow.filter(a => a[2] >= 8).length >= 4, 'Battle list needs maps for 2, up to 4, up to 6 and up to 8 players'); }
+    ck(L.fix.every(f => L.bk.includes(f[0])) && L.fix[1][2] >= 6 && L.fix[2][2] >= 4 && L.fix[3][2] >= 8, 'a removed map must fall back to a listed map with enough slots, got ' + JSON.stringify(L.fix));
+    ck(!L.more, 'the Battle map picker must not offer other (removed) battlefields');
     ck(L.facts.every(f => f && f.name && f.players >= 2 && f.size && f.theme && f.desc && f.supply >= 2 * f.players && f.oil >= 2), 'every Battle map needs a name, player count, size, theme, one line, supply sources and oil derricks'); }
-  // MENU STRUCTURE (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range", "These are distinct"; 21:38 three games): the top level is exactly Single player, Multiplayer, Test range (+ small extras)
-  { const big = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => b.offsetParent && !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => ((b.firstChild||{}).textContent||'').trim()).filter(Boolean));
-    ck(big.join('|') === 'Single player|Multiplayer|Test range', 'main menu top level should be exactly Single player|Multiplayer|Test range, got ' + big.join('|'));
+  // MENU STRUCTURE (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range"; one game 2026-11-13 20:18): the top level is exactly Play, Multiplayer, Test range (+ small extras)
+  { const big = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => b.offsetParent && !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => ((b.firstChild||{}).textContent||'').trim()));
+    ck(big.join('|') === 'Play|Multiplayer|Test range', 'main menu top level should be exactly Play|Multiplayer|Test range, got ' + big.join('|'));
     const sm = await ev(() => [...document.querySelectorAll('#mxmenu .mxi.dim')].map(b => b.textContent.trim()));
     ck(sm.every(t => /^(Settings|Extras|Credits)/.test(t)), 'only Settings/Extras/Credits may be small top-level extras, got ' + sm.join('|'));
     const all = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
-    for (const bad of ['Grand campaign', 'Conquest', 'Battle', 'Missions', 'Tutorial', 'Play online']) ck(!all.includes(bad), 'game mode "' + bad + '" must not be on the top level');
+    for (const bad of ['Grand campaign', 'Conquest', 'Battle', 'Missions', 'Tutorial', 'Play online', 'Single player']) ck(!all.includes(bad), '"' + bad + '" must not be on the top level');
     await ev(() => menuGo('single'));
-    const sp = await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).map(b => ((b.firstChild||{}).textContent||'').trim()));
-    ck(sp.filter(t => /^(Grand campaign|Conquest|Battle)$/.test(t)).join('|') === 'Conquest|Battle' && sp.includes('Missions') && sp.includes('Tutorial') && sp.includes('Load game') && !sp.some(t => /^Grand campaign/.test(t)), 'Single player should list Conquest|Battle then Missions, Tutorial, Load game and NO Grand campaign (paused 2026-11-13), got ' + sp.join('|'));
-    ck(await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).every(b => b.querySelector('small'))), 'every Single player item needs a one-line description');
+    const sp = await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden && b.id !== 'mxContSP').map(b => ((b.firstChild||{}).textContent||'').trim()));
+    ck(sp.join('|') === 'Battle|Missions|Tutorial|Load game', 'Play should list exactly Battle, Missions, Tutorial, Load game, got ' + sp.join('|'));
+    ck(await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).every(b => b.querySelector('small'))), 'every Play item needs a one-line description');
+    ck(await ev(() => !/Conquest|campaign/i.test(document.getElementById('ms-single').textContent) && !/Conquest/i.test((document.getElementById('ms-c-map') || {}).textContent || '')), 'Play window / map screen still mention Conquest or the campaign');
     await ev(() => menuGo('online'));
-    const mpg = await ev(() => [...document.querySelectorAll('#ms-online #mxolg .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
-    ck(mpg.join('|') === 'Conquest|Battle', 'Multiplayer should offer Conquest|Battle only (campaign paused 2026-11-13), got ' + mpg.join('|'));
-    ck(await ev(() => typeof mxOnline === 'function' && typeof gnLobbyStart === 'function' && !!document.getElementById('jcode')), 'Multiplayer needs the campaign lobby + join box');
-    await ev(() => mxOnline('campaign')); ck(await ev(() => !!document.getElementById('mxCampNew')), 'a campaign invite link must still open the campaign lobby (gnLobby)');
-    await ev(() => { menuGo('title'); }); await ev(() => menuGo('online')); ck(await ev(() => MX.olG !== 'campaign' && !document.getElementById('mxCampNew')), 'Multiplayer must open on Conquest/Battle, not the paused campaign');
+    ck(await ev(() => !document.querySelector('#ms-online #mxolg') && !/Conquest|campaign/i.test(document.getElementById('ms-online').textContent)), 'Multiplayer must be Battle only (no game choice, no Conquest/campaign)');
+    ck(await ev(() => typeof mxOnline === 'function' && !!document.getElementById('jcode') && typeof gnLobbyStart === 'undefined'), 'Multiplayer needs the join box, and no campaign lobby');
     await ev(() => menuGo('extras')); const ext = await ev(() => [...document.querySelectorAll('#ms-extras .mxi')].map(b => b.textContent.trim()));
-    ck(ext.some(t => /^Grand campaign \(preview, paused\)/.test(t)), 'Extras must list Grand campaign (preview, paused), got ' + ext.join('|'));
-    await ev(() => { grandMenu(); }); await page.waitForTimeout(300);
-    const gm = await ev(() => [...document.querySelectorAll('#campScreen button')].map(b => b.textContent.trim()));
-    ck(!gm.some(t => /Play with friends|Join friends/i.test(t)), 'the grand campaign menu must not have its own online lobby, got ' + gm.join('|'));
+    ck(!ext.some(t => /campaign/i.test(t)), 'Extras must not list the grand campaign (removed 2026-11-14), got ' + ext.join('|'));
+    ck(await ev(() => typeof grandMenu === 'undefined' && !document.getElementById('grandBtn')), 'the grand campaign menu / button is back');
     await ev(() => { try { campClose(); } catch (e) {} menuHome(); }); }
   { const seen = await ev(SEEN); ck(!/classic/i.test(seen), 'menu shows "Classic"'); ck(!/\bhost(ing)?\b/i.test(seen.replace(/ghost/gi, '')), 'menu shows hosting wording: ' + (/.{20}\bhost.{20}/i.exec(seen) || [''])[0]); }
   // ---- data decisions
   const d = await ev(() => { const o = {}; o.fk = FKEYS.slice(); o.ms = MORALE_STYLE; o.rout0 = Object.entries(MORALE_STYLE).filter(([k, s]) => MSTYLES[s].rout === 0).map(([k]) => k).sort().join(' ');
     o.dw = (FACTIONS.DW || {}).name; o.rosterIR = roster('IR').barracks.concat(roster('IR').factory); return o; });
   ck(!d.fk.includes('EU'), 'EU still in FKEYS (retired from menus)');
+  // nodoc 2026-11-14 (Abdullah 16:54 "Remove doctrines"): no doctrine can be picked and no doctrine buttons exist
+  { const nd = await ev(() => ({ pick: gdPick(ME, GDOC_KEYS[0]), btn: !!document.querySelector('#panel [id^="dc_"],#panel [id^="dp_"],#gdocSel') })); ck(!nd.pick && !nd.btn, 'doctrines must be gone: ' + JSON.stringify(nd)); }
+  // noform 2026-11-14 (Abdullah 19:18 "Remove formations and remove army stance and resupply and type button")
+  { const nf = await ev(() => { try { fmBar(); renderSquads(); } catch (e) {} const t = [...document.querySelectorAll('#info button')].map(b => b.textContent).join('|'); return { fmb: !!document.getElementById('fmb'), key: typeof KEYTAB !== 'undefined' && KEYTAB.some(k => k.id === 'form'), t }; });
+    ck(!nf.fmb && !nf.key && !/Type \(T\)|Resupply|Stance|Assault|Guerrilla/.test(nf.t), 'formations / Type / Resupply / stance buttons must be gone: ' + JSON.stringify(nf)); }
+  // mpmap 2026-11-14 (Abdullah 21:22 "Multiplayer map selection is stuck"): the lobby map list is the Battle map list, not one map
+  { const mm = await ev(() => { const D = { onMap: 1, nn: 2, mk: BM_KEYS[0] }; const ks = (BM_KEYS).filter(k => MAPS[k] && (MAPS[k].max || 8) >= 2); return ks.length; }); ck(mm >= 10, 'lobby map list too short: ' + mm); }
+  // trmap 2026-11-14 (Abdullah 21:07 "In test range map selection doesn't work"): every map in the Test range list is kept when picked
+  { const tb = await ev(() => BM_KEYS.filter(k => MAPS[k] && MAPS[k].min <= 2 && MAPS[k].max >= 2 && trBmap(k) !== k)); ck(!tb.length, 'Test range map picks must stick: ' + JSON.stringify(tb)); }
+  // novdig 2026-11-14 (Abdullah 14:55 "Make it so that vehicles can't dig in"): no vehicle can dig in, infantry still can
+  // ---- nations20 (Abdullah 2026-11-13 20:31-20:33): exactly 22 playable nations (Keep 22, 2026-11-14), in every picker
+  { const W = 'IR RS DW RV OB US GB FR DE IL UA RU CN KP IN JP KR PK SA AE TR EG'.split(' ').sort().join(' ');
+    ck(d.fk.slice().sort().join(' ') === W, 'FKEYS must be exactly the 22 nations (' + W + '), got ' + d.fk.slice().sort().join(' '));
+    const pk = await ev(() => { try { facCards(); } catch (e) {} const names = k => k.map(x => x.trim()); const cards = [...document.querySelectorAll('#pickP .fac')].map(b => (b.querySelector('.nm') || b).textContent.trim());
+      const opt = [...document.querySelectorAll('#aiFac option')].map(o => o.value).sort().join(' '); const nm = FKEYS.map(k => FACTIONS[k].name).sort();
+      return { cards: cards.slice().sort(), nm, opt, fix: ['IQ', 'SY', 'IN', 'KR', 'CU', 'BI', 'EU', 'DE', 'PL', 'AU', 'CA', 'JP', 'AF', 'KD', 'ZZ'].map(f => FKEYS.includes(natFix(f))) }; });
+    ck(pk.cards.join('|') === pk.nm.join('|'), 'Battle setup nation picker must show exactly the 22 nations, shows: ' + pk.cards.join(', '));
+    ck(pk.opt === W, 'AI nation select must list exactly the 22, lists: ' + pk.opt);
+    ck(pk.fix.every(Boolean), 'natFix must map every removed nation (old saves/slots) to a kept nation'); }
   ck(d.rout0 === 'BI DW IR KP OB RS RV', 'Zealous (never rout) should be exactly IR RS DW KP RV OB BI, got ' + d.rout0);
   for (const [s, l] of Object.entries({ zeal: 'IR RS DW KP RV', home: 'IN UA CU EG VN BR NG ID JO OM ZA TH', fire: 'AE SA IL', prof: 'RU CN PK US' })) for (const k of l.split(' ')) ck(d.ms[k] === s, `morale style of ${k} should be ${s}, is ${d.ms[k]}`);
   console.log('DW name', d.dw);
-  // ---- Conquest battle as IR (the Ayatollah / Mountain Fortress / Bunker Buster live on the grand map only)
+  // ---- Battle as IR (the Ayatollah / Mountain Fortress are IR's; the Bunker Buster is not)
   await ev(() => { setup.p = 'IR'; setup.a = 'US'; setup.n = 1; try { initAudio(); } catch (e) {} startSingle(); });
-  await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('conquest battle never finished loading'));
+  await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('IR battle never finished loading'));
   await page.waitForTimeout(2500);
-  const cq = await ev(() => { const T = G.teams[ME]; const ban = { cleric: roster(T.fac).barracks.includes('cleric'), fort: bldAllowed(T.fac, 'fort'), bb: conqBan('bb'), bbIR: sigBan('IR', 'bb'), bbUS: sigBan('US', 'bb'), fortUS: bldAllowed('US', 'fort'), powIR: typeof POWERS.bb === 'object' };
+  /* (moved after the battle starts: there is no game behind the menu any more) */
+  { const vd = await ev(() => { const T = G.teams[ME]; const k = allUnits(T.fac).find(k => { const s = stats(T.fac, k); return s.dom === 'ground' && isVeh(s) && s.dmg > 0 && k !== 'dozer' && k !== 'harv'; }); const u = { s: stats(T.fac, k), kind: k, team: ME, x: 0, y: 0, hp: 1, max: 1 }; return { veh: !!k && digCan(u), inf: allUnits(T.fac).some(k => isInf(stats(T.fac, k))) }; });
+    ck(!vd.veh, 'vehicles must not be able to dig in'); }
+  const cq = await ev(() => { const T = G.teams[ME]; const ban = { cleric: roster(T.fac).barracks.includes('cleric'), fort: bldAllowed(T.fac, 'fort'), bb: false, bbIR: sigBan('IR', 'bb'), bbUS: sigBan('US', 'bb'), fortUS: bldAllowed('US', 'fort'), powIR: typeof POWERS.bb === 'object' };
     const shown = ['u_cleric', 'b_fort', 'p_bb', 'p_cleric'].filter(id => { const b = document.getElementById(id); if (!b) return false; return !b.hidden && b.offsetParent !== null; });
     const btns = [...document.querySelectorAll('#panel button, #side button, #bar button, #powers button, button.btn')].filter(b => b.offsetParent).map(b => b.id + ':' + b.textContent.trim().slice(0, 30));
     // WASD must not select, order or toggle anything
@@ -317,28 +439,23 @@ try {
     const yh0 = cam.yaw || 0; kd('q'); for (let i = 0; i < 2; i++) window.dispatchEvent(new PointerEvent('pointermove', { pointerType: 'mouse', movementX: 50, bubbles: true })); ku('q'); const drag = (cam.yaw || 0) - yh0; cam.yaw = cam.tyaw = 0;
     kd('a', { ctrlKey: true }); ku('a'); const caSel = G.sel.length; G.sel = [];
     const rot = { q45: Math.abs((y0 - y1) - Math.PI / 4) < 1e-6, qSel, home: Math.abs(y2 % (2 * Math.PI)) < 1e-6, caSel, drag };
-    return { ban, shown, conq: !!G.conq, wasd: before === after, rot, btns: btns.slice(0, 40), bodyHas: /Ayatollah|Dear Leader|Mountain Fortress|Bunker Buster/.exec(document.body.innerText || '') }; });
-  console.log('conquest', JSON.stringify({ ...cq, btns: cq.btns.length }));
+    return { ban, shown, battle: !!G.battle, towns: G.towns === undefined, wasd: before === after, rot, btns: btns.slice(0, 40), bodyHas: /Ayatollah|Dear Leader|Mountain Fortress|Bunker Buster/.exec(document.body.innerText || '') }; });
+  console.log('battle IR', JSON.stringify({ ...cq, btns: cq.btns.length }));
   // leadersC (Abdullah 2026-11-07 22:5x "these factions never rout in any form of the game"): Zealous never rout, retreat, bail out or fall back - in any mode
   { const z = await ev(() => { const out = {}; for (const k of ['IR', 'RS', 'DW', 'RV', 'KP', 'OB', 'BI']) out[k] = fearlessT({ fac: k, mart: 0, fervor: 0 }, { s: { cls: 'inf', dom: 'ground' } }); out.US = fearlessT({ fac: 'US', mart: 0, fervor: 0 }, { s: { cls: 'inf', dom: 'ground' } }); return out; });
     for (const k of ['IR', 'RS', 'DW', 'RV', 'KP', 'OB', 'BI']) ck(z[k], 'Zealous ' + k + ' can rout in battle (fearlessT false)'); ck(!z.US, 'a non-Zealous nation became unbreakable');
-    for (const f of ['03-sim.js', '03b-tactics.js', '13-grand.js']) ck(/msOf\([^)]*\)\.rout[!=]==0|grZealArmy/.test(SRC[f]), 'no Zealous rout guard in ' + f); }
-  ck(cq.conq, 'standalone Conquest battle did not start in Conquest mode');
-  { const cl = await ev(() => { let n = 0; const c = new Proxy({}, { get: (t, k) => k === 'canvas' ? document.createElement('canvas') : k === 'measureText' ? () => ({ width: 10 }) : (typeof k === 'string' && /^(stroke|fill|moveTo|lineTo|arc|drawImage|fillRect|fillText)$/.test(k)) ? () => { n++; } : () => {}, set: () => true }); try { drawLogiMini(c, .1, .1); } catch (e) {} return n; });
-    ck(cl > 0, 'Conquest lost its supply lines on the minimap (battleclean: only Battle drops them)'); }
-  // battleclean 2026-11-12 (Abdullah 2026-11-11 19:46 "I started conquest without a full base and 10k"): Conquest starts with a full base and $10,000 for every team
-  { const cb = await ev(() => G.teams.filter(t => !t.reb).map(t => ({ f: t.fac, c: Math.round(t.credits - (G.t * 2.5)), k: G.ents.filter(e => e.isB && e.team === t.id && e.built >= 1 && e.kind !== 'garrison').map(e => e.kind).sort().join('+'), air: bldAllowed(t.fac, 'airfield'), ai: !!t.ai })));   // AI teams start buying at once, so only a human's money is checked at second 0
-    for (const t of cb) { if (!t.ai) ck(Math.abs(t.c - 10000) <= 60, 'Conquest start money for ' + t.f + ' is not $10,000: ' + t.c); for (const k of ['hq', 'barracks', 'factory', 'depot']) ck(t.k.split('+').includes(k), 'Conquest start base of ' + t.f + ' misses ' + k + ': ' + t.k); if (t.air) ck(t.k.includes('airfield'), 'Conquest start base of ' + t.f + ' misses the airfield'); }
-    ck(cb.length >= 2 && cb.every(t => t.k.split('+').filter(x => x === 'hq').length === 1), 'Conquest teams must each start with one HQ'); }
-  ck(cq.ban.cleric, 'Ayatollah (cleric) is missing from the Conquest roster for IR'); ck(cq.ban.fort, 'Mountain Fortress is not buildable in Conquest for IR'); ck(!cq.ban.bb, 'Bunker Buster is banned in Conquest');
+    for (const f of ['03-sim.js', '03b-tactics.js']) ck(/msOf\([^)]*\)\.rout[!=]==0/.test(SRC[f]), 'no Zealous rout guard in ' + f); }
+  ck(cq.battle && cq.towns, 'a single-player skirmish did not start as Battle (or still has towns)');
+  ck(cq.ban.cleric, 'Ayatollah (cleric) is missing from the Battle roster for IR'); ck(cq.ban.fort, 'Mountain Fortress is not buildable in Battle for IR');
   ck(cq.ban.bbIR && !cq.ban.bbUS && !cq.ban.fortUS, 'Bunker Buster only for US/IL/RU/CN, Mountain Fortress only for IR/RS/AF/KD/DW/KP: ' + JSON.stringify(cq.ban));
   ck(cq.wasd, 'W A S D changed selection/orders in a battle (camera only)');
   ck(cq.rot && cq.rot.q45 && !cq.rot.qSel && cq.rot.home && cq.rot.drag < -0.3, 'Q tap must turn the camera 45° clockwise (and not select), hold Q + mouse right turns it, Home back to north: ' + JSON.stringify(cq.rot));
   ck(cq.rot && cq.rot.caSel > 0, 'Ctrl+A did not select the army in battle: ' + JSON.stringify(cq.rot));
-  await shot('conquest-ir');
+  await shot('battle-ir');
   // fixes1 (2026-11-11): the hover card of a build button must really show what the unit beats and what it is weak to: at least one
   // picture + name in each row (a stale screenshot showed the two row labels with nothing in them). Real mouse hover on a button.
-  { await ev(() => { window.__tab0 = TAB; showTab('units'); }); await page.waitForTimeout(300);
+  { await ev(() => { window.__tab0 = TAB; const T = G.teams[ME]; let b = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks' && e.built >= 1 && !e.dead); if (!b) { const h = G.ents.find(e => e.team === ME && e.kind === 'hq'); b = addBld(ME, 'barracks', h.x + 150, h.y + 150, true); } G.sel = [b]; updateUI(); showTab('units'); });   /* the unit buttons show only while a production building is selected */
+    await page.waitForTimeout(300);
     const bx = await ev(() => { const b = document.getElementById('u_at') || document.getElementById('u_inf'); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
     await page.mouse.move(bx.x - 20, bx.y); await page.mouse.move(bx.x, bx.y, { steps: 3 }); await page.waitForTimeout(500);
     const hc = await ev(() => { const d = document.getElementById('ctip'), out = { hover: !!d && !d.hidden, bad: [] }; const rows = () => [...d.querySelectorAll('.uk-mu .mr')].map(r => { const q = d.getBoundingClientRect();
@@ -350,7 +467,7 @@ try {
     ck(!hc.bad.length, 'hover card of a combat unit has an empty BEATS or WEAK TO row: ' + hc.bad.join(' | ')); await page.mouse.move(640, 300); await ev(() => showTab(window.__tab0)); }
   // fixes1 (2026-11-11): a friendly soldier standing in front of a house must not swallow the order: with infantry selected, a real
   // right-click on him over a house sends the squad INTO the house (it used to become a plain move; the tutorial's "retake the town" step hung on it).
-  { const hs = await ev(() => { const cells = G.towns.flatMap(t => t.cells).filter(c => !c.dead && !c.g).sort((a, b) => { const h = G.ents.find(e => e.team === ME && e.kind === 'hq'); return Math.hypot(a.x - h.x, a.y - h.y) - Math.hypot(b.x - h.x, b.y - h.y); });
+  { const hs = await ev(() => { const cells = G.civ.filter(c => !c.dead && !c.g && !c.ruin).sort((a, b) => { const h = G.ents.find(e => e.team === ME && e.kind === 'hq'); return Math.hypot(a.x - h.x, a.y - h.y) - Math.hypot(b.x - h.x, b.y - h.y); });
       for (const c of cells.slice(0, 6)) for (const [dx, dy] of [[0, 24], [24, 0], [0, -24], [-24, 0], [0, 34], [34, 0]]) { const p = nearestPassXY('ground', c.x + dx, c.y + dy); if (!p || Math.hypot(p[0] - c.x, p[1] - c.y) > 60) continue;
         const q = nearestPassXY('ground', c.x + dx * 3, c.y + dy * 3); if (!q) continue; const blk = addUnit(ME, 'inf', p[0], p[1]), u = addUnit(ME, 'inf', q[0], q[1]); if (!blk || !u) continue; return { c: c.i, cx: c.x, cy: c.y, blk: blk.id, u: u.id }; } return null; });
     if (!hs) fails.push('house-click guard: no free house with walkable ground next to it'); else {
@@ -361,128 +478,99 @@ try {
         const r = await ev((h) => { const u = G.ents.find(e => e.id === h.u), c = G.civ[h.c]; return { order: u && u.order ? u.order.type : '', inside: !!(c.occ && c.occ.some(o => o.id === h.u)) }; }, hs);
         ck(r.order === 'garrison' || r.inside, 'right-click on a house with a friendly soldier standing in front of it does not send the selected infantry into the house: ' + JSON.stringify(r)); }
       await ev((h) => { for (const id of [h.blk, h.u]) { const e = G.ents.find(x => x.id === id); if (e) { e.dead = true; G.byId.delete(id); } } const c = G.civ[h.c]; if (c.g && c.occ.some(o => o.id === h.u)) { try { leaveGarrison(c); } catch (e) {} } G.sel = []; }, hs); } }
-  // Balance toggle (Abdullah 2026-11-06 21:31): Balanced must stay equal for everyone; Realistic must tier fire support
-  // (superpower strikes come faster/harder and its vehicles are cheaper; a small power's strikes are weaker but its
-  // infantry cheaper). Read as data on both settings, with the battle's own setting put back afterwards.
-  { const rb = await ev(() => { const rd = () => ({ cd: powInfo('barrage', 'US').cd, cdS: powInfo('barrage', 'OB').cd,
-        inf: stats('US', 'inf').cost, infS: stats('OB', 'inf').cost, tank: stats('US', 'tank').cost, tankS: stats('OB', 'tank').cost,
-        ch: realSup('US').charge, chS: realSup('OB').charge, dmg: realSup('US').dmg, dmgS: realSup('OB').dmg,
-        cash: realMul('US'), cashS: realMul('OB'), tier: [realTierName('US'), realTierName('OB')] });
-      const was = G.real; G.real = 0; const bal = rd(); G.real = 1; const real = rd(); G.real = was; return { bal, real }; });
-    const B = rb.bal, R = rb.real;
-    ck(B.cash === 1 && B.cashS === 1, 'Balanced mode no longer starts every nation on the same money: ' + JSON.stringify(B));
-    ck(R.tier[0] === 'Superpower' && R.tier[1] === 'Small power', 'Realistic tiers wrong: ' + R.tier.join('/'));
-    ck(R.cd < B.cd && R.ch < B.ch && R.dmg > B.dmg && R.cash > 1 && R.tank >= B.tank,   /* leadersC: big powers now pay more for production (fair start) */
-      'Realistic mode does not strengthen the superpower: ' + JSON.stringify([B, R]));
-    ck(R.cdS > B.cdS && R.chS > B.chS && R.dmgS < B.dmgS && R.cashS < 1,
-      'Realistic mode does not weaken the small power\'s fire support: ' + JSON.stringify([B, R]));
-    ck(R.infS < B.infS, 'Realistic mode does not give the small power cheaper infantry: ' + JSON.stringify([B, R])); }
   // Both AIs play 3 game-minutes: nobody may ever build/train a banned kind.
   await ev(() => { for (const T of G.teams) if (!T.ai && typeof mkAI === 'function') T.ai = mkAI(1); window.__bad = []; });
   for (let c = 0; c < 4; c++) await ev(() => { for (let i = 0; i < 1800 && !G.over; i++) simUpdate(1 / 60); for (const e of G.ents) if (e.kind === 'fort' && !FORT_NAT[G.teams[e.team].fac]) window.__bad.push(e.kind); });
   const sim = await ev(() => [...new Set(window.__bad)]);
   ck(!sim.length, 'AI built a signature asset for a nation that does not have it: ' + sim.join(','));
-  // ---- BATTLE mode (Generals rules): Command Center + dozer + supply truck, no towns/tax, supply trucks pay
+  // ---- BATTLE (Generals rules + supply lines): Command Center + dozer + supply truck, no towns/tax, supply trucks pay
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
-  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.mode = 'battle'; try { initAudio(); } catch (e) {} startSingle(); });
+  await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.map = 'lebanon'; try { initAudio(); } catch (e) {} startSingle(); });   /* a Battle map whose roads run out of the bases (supply lines follow roads) */
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('battle-mode game never finished loading'));
   await page.waitForTimeout(1500);
   const bt = await ev(() => { const T = G.teams[ME], mine = G.ents.filter(e => e.team === ME && !e.dead); const c0 = T.credits;
     const blds = mine.filter(e => e.isB).map(e => e.kind), kinds = mine.filter(e => !e.isB).map(e => e.kind);
     for (let i = 0; i < 3600 && !G.over; i++) simUpdate(1 / 60);
-    return { battle: !!G.battle, conq: !!G.conq, setupEnd: G.setupEnd, blds, kinds, c0, c1: T.credits, tax: (G.towns || []).some(t => t.tax > 0 && t.ow >= 0), name: typeof modeName === 'function' ? modeName() : '' }; });
+    return { battle: !!G.battle, towns: G.towns !== undefined, blds, kinds, c0, c1: T.credits, name: typeof modeName === 'function' ? modeName() : '' }; });
   console.log('battle mode', JSON.stringify(bt));
-  // battleclean 2026-11-12 (Abdullah 2026-11-11 19:41 "for battle take out the concept the supply lines and the dotted roads"): Battle has no supply lines - nothing drawn on minimap or ground, no overlay, no Supply chip, no out-of-supply status; Conquest keeps them
+  // SUPPLY LINES IN BATTLE (Abdullah 2026-11-13 20:19 "Bring supply lines into battle"; replaces battleclean 2026-11-11 19:41): the roads out of your HQ and depots
+  // are drawn green on the minimap and (L) on the ground, the Supply chip shows, and the ammo row says whether a unit is in your supply area. Ammo rule (20:06):
+  // outside the area a unit keeps fighting with what it has (no timer), at 0 it needs to come back; back inside it refills. Test range: unlimited, no badge.
   { const sl = await ev(() => { const rec = () => { let n = 0; const c = new Proxy({}, { get: (t, k) => k === 'canvas' ? document.createElement('canvas') : k === 'measureText' ? () => ({ width: 10 }) : (typeof k === 'string' && /^(stroke|fill|moveTo|lineTo|arc|drawImage|fillRect|fillText|strokeRect)$/.test(k)) ? () => { n++; } : () => {}, set: () => true }); return { c, n: () => n }; };
-      const m = rec(), w = rec(); try { drawLogiMini(m.c, .1, .1); } catch (e) {} try { drawLogiWorld(w.c); } catch (e) {} try { drawTownsMini(m.c, .1, .1, 0); } catch (e) {}
-      try { lgToggle(); } catch (e) {} const on = !!LGU.on, wanted = lgWanted(), chip = document.getElementById('hudS'); try { hudTick(true); } catch (e) {}
+      const m = rec(); try { drawLogiMini(m.c, .1, .1); } catch (e) {}
+      const was = LGU.on; LGU.on = false; try { lgToggle(); } catch (e) {} const on = !!LGU.on, wanted = lgWanted(); const w = rec(); try { drawLogiWorld(w.c); } catch (e) {} LGU.on = was;
+      const chip = document.getElementById('hudS'); try { hudTick(true); } catch (e) {}
+      const C = G.lg && G.lg.cov && G.lg.cov[ME], R = lgRoadSets(), green = R ? R.S[0].length + R.S[1].length : 0;
       const ui = (() => { try { return ammoRowHTML(G.ents.filter(u => u.team === ME && u.am !== undefined && u.amx).slice(0, 1)) || ''; } catch (e) { return ''; } })();
-      return { mini: m.n(), world: w.n(), on, wanted, chip: !chip || chip.hidden, ui: /supply/i.test(ui), hasLg: !!G.lgd }; });
+      return { mini: m.n(), world: w.n(), on, wanted, chip: !!chip && !chip.hidden, ui: /supply area/i.test(ui), cov: C ? Object.keys(C).length : 0, green, beads: (G.lg.bead[ME] || []).length }; });
     console.log('battle supply lines', JSON.stringify(sl));
+    ck(sl.mini > 0 && sl.world > 0 && sl.green > 0 && sl.cov > 0 && sl.beads > 0, 'Battle must draw your supply lines (green roads) on the minimap and, with L, on the ground: ' + JSON.stringify(sl));
+    ck(sl.on && sl.wanted, 'L / the Supply lines button must switch the supply overlay on in Battle'); ck(sl.chip, 'Battle must show the Supply chip'); ck(sl.ui, 'the ammo row must say whether the unit is in your supply area');
+    // CAPTURABLE ROADS (Abdullah 2026-11-14 18:40 "Make it so that units can capture roads"): a ground unit standing on a neutral road section captures it in ~10 s, an air unit does not, an owned section is supply area
+    { const rc = await ev(() => { const L = G.lg, D = G.lgd; lgFix(D); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && e.s && e.s.dom === 'ground'); if (!u) return { err: 'no unit' };
+        let ei = -1; for (let i = 0; i < L.E.length && ei < 0; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 300 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) ei = i; } if (ei < 0) return { err: 'no neutral section' };
+        const e = L.E[ei], m = lgPoint(e, e.len / 2), ox = u.x, oy = u.y, os = u.s; const run = n => { for (let k = 0; k < n; k++) lgRoadCap(1); };
+        const hold = () => D.rc[ei] && D.rc[ei].o;
+        u.s = Object.assign({}, os, { dom: 'air' }); u.x = m[0]; u.y = m[1]; run(14); const air = hold();
+        u.s = os; run(4); const early = hold(); run(10); const got = hold();
+        lgCover(); const beads = (L.bead[ME] || []).some(b => Math.hypot(b.x - m[0], b.y - m[1]) < 150); const sup = supplyPoints()[ME].some(p => p.rd && Math.hypot(p.x - m[0], p.y - m[1]) < 150);
+        u.x = ox; u.y = oy; return { ei, air, early, got, beads, sup, ME }; });
+      console.log('road capture', JSON.stringify(rc));
+      ck(!rc.err, 'road capture test setup: ' + JSON.stringify(rc)); if (!rc.err) { ck(!(rc.air >= 0), 'an air unit must not capture a road section: ' + JSON.stringify(rc)); ck(!(rc.early >= 0), 'road capture takes ~10 s, not 4: ' + JSON.stringify(rc));
+        ck(rc.got === rc.ME, 'a ground unit standing on a neutral road section must capture it in ~10 s: ' + JSON.stringify(rc)); ck(rc.beads && rc.sup, 'a captured road section must count as the owner\'s supply area: ' + JSON.stringify(rc)); } }
+    const am = await ev(() => { const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq'); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && hasAmmo(e)); if (!u || !hq) return { err: 'no unit/hq' };
+      const step = () => { G.supT = 1; updSupply(0.01); }; const P = supplyPoints()[ME]; let far = null;
+      for (let k = 0; k < 400 && !far; k++) { const x = (k * 977) % MAPW, y = (k * 613) % MAPH; if (P.every(p => Math.hypot(p.x - x, p.y - y) > p.r + 60)) far = { x, y }; }
+      const ox = u.x, oy = u.y; if (u.am === undefined) ammoInit(u); u.x = far.x; u.y = far.y; u.am = 5; step(); const o1 = { sup: u.sup, am: u.am }; G.t += 90; step(); const o2 = { sup: u.sup, am: u.am };
+      u.am = 0; step(); const empty = { am: u.am, sup: u.sup }; const bead = (G.lg.bead[ME] || [])[0]; let road = null; if (bead) { u.x = bead.x; u.y = bead.y; step(); road = { sup: u.sup, am: u.am }; }
+      u.am = 0; u.x = hq.x + 40; u.y = hq.y + 40; step(); const back = { am: u.am, sup: u.sup }; u.x = ox; u.y = oy;
+      const sv = G.sandbox; G.sandbox = true; const sb = hasAmmo(u); G.sandbox = sv; return { o1, o2, empty, road, back, sb }; });
+    console.log('ammo rule', JSON.stringify(am));
+    ck(!am.err && am.o1.sup === 0 && am.o1.am === 5 && am.o2.am === 5, 'ammo rule: a unit outside your area keeps its ammo (no refill, no timer penalty): ' + JSON.stringify(am));
+    ck(am.empty && am.empty.am === 0 && am.empty.sup === 0, 'ammo rule: an empty unit outside your area stays empty: ' + JSON.stringify(am));
+    ck(am.road && am.road.sup === 1 && am.road.am > 0, 'ammo rule: a unit standing on your supply line (road) refills: ' + JSON.stringify(am));
+    ck(am.back && am.back.sup === 1 && am.back.am > 0, 'ammo rule: a unit back at your base refills: ' + JSON.stringify(am)); ck(am.sb === false, 'ammo rule: Test range must have unlimited ammo');
+  // AMMO TRUCK (Abdullah 2026-11-13 21:46 "Separate ammo truck"): the money truck (harv) never refills ammo; every nation builds an Ammo Truck (kind 'ammot') at the War Factory that refills units next to it from a limited stock.
+  { const at = await ev(() => { const hq = G.ents.find(e => e.isB && e.team === ME && e.kind === 'hq'); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && hasAmmo(e)); if (!u || !hq || typeof addUnit !== 'function') return { err: 'no unit/hq' };
+      const allN = Object.keys(FACTIONS).every(f => roster(f).factory.includes('ammot') && stats(f, 'ammot').noAttack && stats(f, 'ammot').from === 'factory');
+      const step = () => { G.supT = 1; updSupply(0.01); }; const P = supplyPoints()[ME]; let far = null; for (let k = 0; k < 400 && !far; k++) { const x = (k * 977) % MAPW, y = (k * 613) % MAPH; if (P.every(p => Math.hypot(p.x - x, p.y - y) > p.r + 120)) far = { x, y }; }
+      if (u.am === undefined) ammoInit(u); u.x = far.x; u.y = far.y; u.am = 3;
+      const hv = addUnit(ME, 'harv', far.x + 20, far.y); step(); step(); const harvAm = u.am; const harvSup = u.sup;
+      const tr = addUnit(ME, 'ammot', far.x - 30, far.y); step(); const stock0 = tr.am, cap = tr.amx, sup = u.sup;
+      for (let i = 0; i < 12; i++) step(); const filled = u.am, stock1 = tr.am;
+      const noHarvPt = !supplyPoints()[ME].some(p => Math.abs(p.x - hv.x) < 1 && Math.abs(p.y - hv.y) < 1);
+      return { allN, harvAm, harvSup, stock0, cap, filled, amx: u.amx, sup, stock1, noHarvPt }; });
+    console.log('ammotruck', JSON.stringify(at));
+    ck(!at.err && at.allN, 'every nation must have an Ammo Truck (noAttack, from the War Factory): ' + JSON.stringify(at));
+    ck(!at.err && at.harvAm === 3 && at.harvSup === 0 && at.noHarvPt, 'the money truck (harv) must never refill ammo or count as a supply point: ' + JSON.stringify(at));
+    ck(!at.err && at.filled > 3 && at.stock1 < at.stock0 && at.stock0 < at.cap && at.sup === 1, 'an Ammo Truck must refill a nearby unit from its limited stock: ' + JSON.stringify(at));
+    ck(!/supply truck[^'"]{0,40}(refill|resupplies)|(refill|resupplies)[^'"]{0,40}supply truck/i.test(Object.entries(SRC).filter(([k]) => !k.startsWith('13')).map(([, v]) => v).join('\n')), 'text still says the supply truck refills ammo'); }
     // battleclean 2026-11-12 (Abdullah 2026-11-11 19:45 "Once I click this should disappear"): the rally flag shows only while a production building is selected (or a 1.5 s flash after setting it)
     const rf = await ev(() => { const T = G.teams[ME], hq = G.ents.find(e => e.team === ME && e.kind === 'hq' && !e.dead), vis = () => { try { syncScene(.016); } catch (e) {} return !!(RALLY && RALLY.visible); };
       T.rally = { x: hq.x + 90, y: hq.y + 90 }; G.sel = []; vis(); RV.fl = 0; const away = vis(); G.sel = [hq]; const sel = vis(); G.sel = []; const gone = vis(); G.sel = []; return { away, sel, gone }; });
     console.log('rally flag', JSON.stringify(rf)); ck(!rf.away && rf.sel && !rf.gone, 'rally flag must show only while a production building is selected: ' + JSON.stringify(rf));
-    ck(sl.mini === 0 && sl.world === 0, 'Battle draws supply lines (minimap ' + sl.mini + ', ground ' + sl.world + ' draw calls)'); ck(!sl.on && !sl.wanted, 'Battle supply overlay can be switched on'); ck(sl.chip, 'Battle shows the "Supply OK" chip'); ck(!sl.ui, 'Battle ammo row mentions in/out of supply'); }
-  ck(bt.battle && !bt.conq, 'Battle game did not start in Battle mode');
+  }
+  ck(bt.battle && !bt.towns, 'Battle game did not start in Battle mode (or has towns)');
   ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
-  ck(!bt.setupEnd, 'Battle has a no-fire setup phase'); ck(!bt.tax, 'Battle has town taxes'); ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');
+  ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');
   await shot('battle-us');
-  // ---- fixes1 (2026-11-11, "white streaks in Arabia", "oversized palms"): what a PLAYER gets on the first campaign map of a session.
-  // The map must wait for the real land data (it used to be drawn on the hand-shaped stand-in and stay on it: chalk-white cliffs along the Red Sea);
-  // snow only where snow can lie (never in Arabia; still on the Alps, the Himalaya and Greenland); palms no taller than the towns (one instanced draw).
-  await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
-  { const { proj } = await import('./grandproj.mjs');
-    const P = { hejaz: [41, 21], asir: [42.5, 18.5], rub: [50, 20], alps: [7.9, 46.0], himalaya: [86.9, 28.0], greenland: [-40, 72] }, pts = Object.entries(P).map(([n, [lo, la]]) => [n, ...proj(lo, la)]);
-    const box = [proj(36, 26), proj(56, 26), proj(36, 14), proj(56, 14)], bx = [Math.min(...box.map(q => q[0])), Math.min(...box.map(q => q[1])), Math.max(...box.map(q => q[0])), Math.max(...box.map(q => q[1]))];
-    const w0 = await ev(() => { window.__grandWait = 1; grNew({ me: 'IR', seed: 99, len: 'quick' }); grandOpen(); return { card: !!document.getElementById('gRealWait'), scr: !!document.getElementById('grandScreen') }; });
-    const opened = await page.waitForFunction(() => document.getElementById('grandScreen') && !document.getElementById('gRealWait'), null, { timeout: 240000, polling: 200 }).then(() => true).catch(() => false);
-    ck(w0.card && !w0.scr, 'grand map: the first map of a session no longer waits for the real land data: ' + JSON.stringify(w0)); ck(opened, 'grand map: the map never opened after waiting for the real land data');
-    if (opened) { const r = await ev(([pts, bx]) => { const F = G3.F, W = F.W, o = { real: !!G3.real, hm: !!F.hm, v: {} };
-        for (const [n, X, Z] of pts) { const x = Math.round(X / 2), y = Math.round(Z / 2); let sn = 0, hh = 0; for (let dy = -7; dy <= 7; dy++) for (let dx = -7; dx <= 7; dx++) { const k = (y + dy) * W + x + dx; if (Math.abs(dx) < 4 && Math.abs(dy) < 4 || n === 'alps') sn = Math.max(sn, F.bw[k * 4 + 1]); hh = Math.max(hh, F.Hh[k]); } o.v[n] = [sn, +hh.toFixed(1)]; }
-        let am = 0; for (let y = Math.floor(bx[1] / 2); y <= bx[3] / 2; y++) for (let x = Math.floor(bx[0] / 2); x <= bx[2] / 2; x++) am = Math.max(am, F.bw[(y * W + x) * 4 + 1]); o.arabia = am;
-        const fm = G3.static.children.filter(c => c.material && c.material.uniforms && c.material.uniforms.uTS), vs = fm[0] ? fm[0].material.vertexShader : '', sz = k => { const m = new RegExp('k==' + k + '\\?vec2\\(([\\d.]+),([\\d.]+)\\)').exec(vs); return m ? [+m[1], +m[2]] : null; };
-        o.trees = { meshes: fm.length, inst: !!(fm[0] && fm[0].geometry.isInstancedBufferGeometry), conifer: sz(0), palm: sz(2) }; return o; }, [pts, bx]);
-      console.log('real map', JSON.stringify(r));
-      ck(r.real && r.hm, 'grand map: the first map of a session is drawn on the stand-in terrain although the real land data loaded');
-      ck(r.v.hejaz[0] <= 10 && r.v.asir[0] <= 10 && r.v.rub[0] <= 10 && r.arabia <= 10, 'grand map: snow paint in Arabia (Hejaz/Asir/Rub al Khali/whole peninsula south of 26N): ' + JSON.stringify([r.v.hejaz, r.v.asir, r.v.rub, r.arabia]));
-      ck(r.v.alps[0] >= 80 && r.v.himalaya[0] >= 200 && r.v.greenland[0] >= 200, 'grand map: snow is gone from the Alps, the Himalaya or Greenland: ' + JSON.stringify([r.v.alps, r.v.himalaya, r.v.greenland]));
-      ck(r.trees.meshes === 1 && r.trees.inst, 'grand map: forests/palms are no longer ONE instanced draw: ' + JSON.stringify(r.trees));
-      ck(r.trees.palm && r.trees.conifer && r.trees.palm[1] <= r.trees.conifer[1] * .7 && r.trees.palm[0] <= r.trees.conifer[0] * .7, 'grand map: palms are drawn at forest-clump size again (each palm taller than a town): ' + JSON.stringify(r.trees)); }
-    await ev(() => { window.__grandWait = 0; }); }
-  // ---- grand map: no turn buttons / turn wording; real-time clock controls exist
-  await ev(() => { try { endBattle && 0; } catch (e) {} });
-  await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
-  await ev(() => { grNew({ me: 'IR', seed: 99, len: 'quick' }); grandOpen(); guFit(null); guRedraw(); });
-  // MAPCOAST (Abdullah 2026-11-11 "Italy isn't a boot. Turkey and Greece are just meshed together"): the drawn coast follows the real world at the full
-  // 2400x1200 map detail (one shore texture, land or sea decided per pixel), small nations keep ground under their towns. Map = Equal Earth (orch/grandproj.mjs).
-  { const { proj } = await import('./grandproj.mjs');
-    const P = { 'Aegean': [25.0, 38.5, 0], 'Adriatic': [15.0, 43.0, 0], 'Tyrrhenian': [12.0, 40.0, 0], 'Ionian': [18.5, 38.5, 0], 'Persian Gulf': [51.5, 27.0, 0], 'northern Red Sea': [35.5, 26.5, 0],
-      'Italy heel': [18.0, 40.4, 1], 'Italy toe': [16.2, 38.6, 1], 'Sicily': [14.2, 37.6, 1], 'Sardinia': [9.0, 40.0, 1], 'Peloponnese': [22.3, 37.5, 1], 'Crete': [24.9, 35.2, 1], 'western Turkey': [28.0, 38.5, 1], 'Qatar': [51.2, 25.3, 1] };
-    const pts = Object.entries(P).map(([n, [lon, lat, land]]) => [n, ...proj(lon, lat), land]);
-    const r = await ev(pts => { const F = g3Fields(), im = G3.U && G3.U.uSea.value.image; const near = (x, z) => { for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (g3FineLand(x + dx, z + dy)) return true; return false; };
-      return { fw: F.FW, fh: F.FH, tex: im ? im.width + 'x' + im.height : '', wrong: pts.filter(([n, x, z, land]) => g3FineLand(x, z) !== !!land || (g3HeightAt(x, z) > 0) !== !!land).map(q => q[0]),
-        noGround: GCM.P.filter(q => q.land && !near(q.x, q.y)).map(q => q.n).slice(0, 8), small: ['Lebanon', 'Gaza', 'Bahrain', 'Qatar', 'Kuwait'].filter(n => !GCM.P.some(q => q.land && new RegExp(n, 'i').test(q.n + ' ' + (grNat(q.o).name || '')) && near(q.x, q.y))) }; }, pts);
-    ck(r.fw === 2400 && r.fh === 1200 && r.tex === '2400x1200', `mapcoast: the shore is not drawn at the full map detail (mask ${r.fw}x${r.fh}, texture ${r.tex})`);
-    ck(!r.wrong.length, 'mapcoast: land/sea is wrong at ' + r.wrong.join(', '));
-    ck(!r.noGround.length && !r.small.length, 'mapcoast: land provinces without ground under their town: ' + r.noGround.concat(r.small).join(', ')); }
-  // A-DATE (orchestrator 2026-11-07, WORLD SIMULATOR): the campaign starts in the world GR_REAL describes (as of Nov 2026), not Jan 2026
-  { const d = await ev(() => ({ s: grDateStr(GC.turn, 0), a: GR_REAL.asof }));
-    ck(d.s === '1 ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.a[1] - 1] + ' ' + d.a[0], `grand campaign start date ${d.s} does not match GR_REAL as-of ${d.a}`); }
-  // POLISH (Abdullah 2026-11-09 "polish freeze"): no visible nation-panel tab renders empty or errors (hide unfinished tabs with show(), never ship a stub)
-  { const tb = await ev(() => { const o = []; for (const t of NP.tabs.filter(t => !t.show || t.show(GC.me))) { NP.code = GC.me; NP.cur = t.id; try { npDraw(); } catch (e) { o.push(t.id + ': threw ' + e.message); continue; } const w = document.getElementById('npWin'), b = w && w.children[2], x = b ? b.innerText.trim() : ''; if (x.length < 30 || /Tab error/.test(x)) o.push(t.id + ': ' + (x.slice(0, 60) || 'empty')); npClose(); } return o; });
-    ck(!tb.length, 'empty or broken nation-panel tab(s): ' + tb.join('; ')); }
-  await page.waitForTimeout(2500); await shot('grand-map');
-  const gv = [];
-  gv.push(['map', await ev(SEEN)]);
-  await ev(() => { GV.sel = GC.nat.IR.cap; guSide(); }); await page.waitForTimeout(600); gv.push(['province', await ev(SEEN)]);
-  await ev(() => { const s = GCM.P.findIndex(p => p.sea); GV.sel = s; guSide(); }); await page.waitForTimeout(400); gv.push(['sea zone', await ev(SEEN)]);
-  for (const [k, t] of gv) { ck(!/\bturns?\b|End turn|\/turn/i.test(t), `grand map (${k}) shows turn wording: ` + ((/.{25}(\bturns?\b|\/turn).{25}/i.exec(t) || [''])[0])); ck(!/Ayatollah button|Classic/i.test(t), `grand map (${k}) shows a leftover button`); }
-  { const btns = await ev(() => [...document.querySelectorAll('button')].filter(b => b.offsetParent).map(b => (b.textContent + ' ' + (b.title || '')).trim())); ck(!btns.some(b => /end( the)? turn|next turn|\bturn\b/i.test(b)), 'a visible button still talks about turns: ' + btns.find(b => /\bturn\b/i.test(b)));
-    ck(await ev(() => !!document.getElementById('gDate')), 'grand map has no clock/date'); }
   // ---- drones fly from the Airfield (Abdullah 2026-11-08); nations without an airfield keep them at the War Factory
   { const d = await ev(() => ['TR', 'UA', 'IR', 'RS'].map(f => [f, stats(f, 'drone').from, roster(f).airfield.includes('drone'), roster(f).factory.includes('drone'), !!FACTIONS[f].noAir]));
     for (const [f, from, inAir, inFac, noAir] of d) { const want = noAir ? 'factory' : 'airfield'; ck(from === want && inAir === (want === 'airfield') && inFac === (want === 'factory'), `drone for ${f} built from ${from} (want ${want})`); } }
-  // ---- Fight-it battle: the army you have, nothing to buy/build/tax
-  await ev(() => { const pi = GCM.P.findIndex(p => p.land && !p.map && GC.prov[p.i].o === 'IR'); const P = GCM.P[pi], st = GC.prov[pi], an = 'IQ'; const from = P.adj.find(j => GCM.P[j].land);
-    const A = grAddArmy(an, from, grGenUnits(grNat(an).fac, 3000, true)); const D = grAddArmy('IR', pi, grGenUnits('IR', 3000, true)); A.at = pi;
-    grandBattleStart({ p: pi, an, dn: 'IR', att: [A.id], def: [D.id], garr: true, river: false, mtn: P.t === 'm', done: 0 }); });
-  await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !!G.grand, null, { timeout: 60000 });
-  await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('fight-it battle never finished loading'));
-  await page.waitForTimeout(2500);
-  const fb = await ev(() => { const shown = [...document.querySelectorAll('button.btn')].filter(b => !b.hidden && b.offsetParent && !b.disabled && /^(b_|u_|g_)/.test(b.id)).map(b => b.id);
-    const txt = (document.body.innerText || ''); return { shown, tax: /\bTax\b.*(rate|High|Low)|Invest/i.test(txt) ? (/.{20}(Invest|Tax rate).{20}/i.exec(txt) || [''])[0] : '', money: /\$\s?\d{1,3}(,\d{3})+/.test(txt) ? (/.{15}\$\s?\d{1,3}(,\d{3})+.{10}/.exec(txt) || [''])[0] : '', cr: G.teams[ME].credits, txtA: /Ayatollah|Dear Leader|Bunker Buster/.exec(txt) }; });
-  { const g = await ev(() => ({ ban: ['cleric', 'bb'].every(k => conqBan(k)), fort: false, cl: roster('IR').barracks.includes('cleric'), made: G.ents.some(e => e.kind === 'cleric') }));
-    ck(g.ban && !g.fort && !g.made, 'signature assets must be OUT of grand Fight-it battles: ' + JSON.stringify(g)); }
-  console.log('fight-it', JSON.stringify(fb)); await shot('fightit-hud');
-  { const gg = await ev(() => { const tabs = document.querySelector('.tabs'); const T0 = G.teams[ME]; const c0 = T0.credits; return { tabs: !!tabs && tabs.offsetParent !== null, panel: !!document.getElementById('panel') && document.getElementById('panel').offsetParent !== null, enq: enqueue(ME, 'rifle'), enq2: enqueue(ME, 'infantry'), pb: typeof placeBld === 'function' ? placeBld(ME, 'barracks', 10, 10) : false, banner: /your army only/.test(document.body.innerText), cr: c0 === T0.credits }; });
-    ck(!gg.tabs && !gg.panel, 'campaign battle still shows the Build/Units tabs or panel'); ck(!gg.enq && !gg.enq2 && !gg.pb, 'campaign battle allows enqueue/placeBld'); ck(gg.banner, 'campaign battle lacks the "army only" banner'); }
-  ck(!fb.shown.length, 'Fight-it battle shows ENABLED build/train/upgrade buttons (army only): ' + fb.shown.slice(0, 8).join(','));
-  ck(!fb.tax, 'Fight-it battle shows tax/invest UI: ' + fb.tax);
-  ck(!fb.txtA, 'Fight-it battle text mentions a grand-map-only asset');
+  // ---- announcer (Abdullah 2026-11-14 "Huccum!"): every status line exists in every announcer language, repeats are throttled, never two at once, volume slider in Settings
+  { const A = await ev(() => { const keys = ['building','complete','unit','upgrade','funds','lowPower','powerBack','baseAtk','unitsAtk','unitLost','bldLost','cantBuild','strikeReady','enemyStrike','lineCut','roadTaken','reinf'];
+      const miss = []; for (const L of ['en','fa','ar','ru','zh','he']) for (const k of keys) if (!ANN_TXT[L] || !ANN_TXT[L][k]) miss.push(L + '.' + k);
+      const st = { last: {}, busy: 0 }; const g1 = annGate('unit', 1000, false, st), g2 = annGate('unit', 3000, false, st), g3 = annGate('unit', 8000, false, st);
+      const b1 = annGate('baseAtk', 20000, false, st), b2 = annGate('baseAtk', 30000, false, st), b3 = annGate('baseAtk', 41000, false, st);
+      const st2 = { last: {}, busy: 5000 }; const ov = annGate('funds', 1000, false, st2);
+      const st3 = { last: {}, busy: 0 }; const t1 = annGate('unit', 1000, true, st3), t2 = annGate('unit', 10000, true, st3);
+      return { miss, rep: [g1, g2, g3], atk: [b1, b2, b3], ov, test: [t1, t2], slider: !!document.getElementById('sAnn'), hooked: String(pushLog).includes('annFromLog') }; });
+    ck(!A.miss.length, 'announcer table is missing lines: ' + A.miss.join(','));
+    ck(A.rep.join() === 'true,false,true', 'announcer must not repeat the same line within 6 s: ' + A.rep);
+    ck(A.atk.join() === 'true,false,true', 'announcer under-attack lines must be once per 20 s: ' + A.atk);
+    ck(A.ov === false, 'announcer must not start a line while another is playing'); ck(A.test.join() === 'true,false', 'announcer must be throttled more in the Test range');
+    ck(A.slider && A.hooked, 'announcer needs its Settings > Audio slider (sAnn) and the pushLog hook'); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
 await browser.close(); server.close();

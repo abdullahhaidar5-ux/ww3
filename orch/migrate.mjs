@@ -299,7 +299,7 @@ const playSide = (pg, target) => pg.evaluate((target) => {
   const T = G.teams[ME];
   // keep the barracks and war factory busy (infantry, anti-tank, tanks), like a player would
   try { const want = { barracks: ['inf', 'inf', 'at'], factory: ['tank', 'tank'] };
-    for (const c in want) if (T.q[c].length < 2) for (const k of want[c]) doAct({ t: 'q', k }); } catch (e) {}
+    for (const c in want) if (G.ents.filter(e => e.isB && e.team === T.id && e.kind === c && !e.dead).reduce((s, e) => s + (e.q || []).length, 0) < 2) for (const k of want[c]) doAct({ t: 'q', k }); } catch (e) {}
   const us = G.ents.filter(e => e.team === ME && !e.isB && !e.dead && e.kind !== 'dozer' && e.kind !== 'harv');
   if (us.length && target) doAct({ t: 'go', ids: us.map(e => e.id), x: target[0], y: target[1], mode: 'amove' });
   return us.length;
@@ -307,7 +307,8 @@ const playSide = (pg, target) => pg.evaluate((target) => {
 const baseOf = (hp, k) => hp.evaluate((k) => { const b = G.ents.filter(e => e.team === k && e.isB && !e.dead); if (!b.length) return null;
   return [b.reduce((s, e) => s + e.x, 0) / b.length, b.reduce((s, e) => s + e.y, 0) / b.length]; }, k);
 const armies = (hp) => hp.evaluate(() => ({ t: G.t, teams: G.teams.filter(Q => !Q.reb).map(T => ({ ids: G.ents.filter(e => e.team === T.id && !e.dead).map(e => e.id), credits: Math.floor(T.credits),
-  ai: !!T.ai, aiTook: !!T.aiTook, disc: T.discT || 0, out: !!T.out, q: CATS.reduce((s, c) => s + T.q[c].length, 0), bi: T.ai ? T.ai.bi : null })) }));
+  ai: !!T.ai, aiTook: !!T.aiTook, disc: T.discT || 0, out: !!T.out, q: G.ents.filter(e => e.isB && e.team === T.id && !e.dead).reduce((s, e) => s + (e.q || []).length, 0),   /* every production building has its own queue */
+   bi: T.ai ? T.ai.bi : null })) }));
 async function screenshot(pg, name) {
   await pg.evaluate(() => { try { updateUI(); renderFrame(0.016); } catch (e) { console.warn(e); } });
   await shot(pg, name);
@@ -351,7 +352,7 @@ async function main() {
 
   // ---- lobby: host opens a game, both clients join by its code, host starts a 3-way free-for-all ----
   await waitFor(host, () => !!NET.room, null, 30000, 'the host page to set up its network room');
-  const code = await host.evaluate(async () => { try { initAudio(); } catch (e) {} setup.p = 'US';
+  const code = await host.evaluate(async () => { try { initAudio(); } catch (e) {} setup.p = 'US'; setup.map = 'bm_sixroads';   /* a 3-way free-for-all needs a map with 3+ seats (the default Battle map seats 2) */
     // a battle hosted in this browser (with the servers, "Play online" goes to Cloudflare)
     await Promise.race([typeof hostBrowser === 'function' ? hostBrowser() : hostGame(), new Promise(r => setTimeout(r, 20000))]); return NET.game ? NET.code : null; });
   if (!code) throw new Error('host could not open a game (NET.code empty; fake transport not picked up?)');

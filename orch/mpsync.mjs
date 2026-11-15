@@ -292,7 +292,7 @@ async function main() {
     await spec.evaluate((c) => { try { initAudio(); } catch (e) {} NET.wantSpec = 1; joinByCode(c); }, code);
     await waitFor(host, () => NET.lobbySpec && NET.lobbySpec.length === 1, null, 60000, 'the spectator to appear in the host lobby');
     await waitFor(spec, () => /Watching/.test(document.getElementById('mpstatus').textContent), null, 30000, 'the spectator to see "Watching"');
-    const l = await host.evaluate(() => ({ lobby: NET.lobby.length, spec: NET.lobbySpec.slice(), txt: document.getElementById('mpstatus').textContent }));
+    const l = await host.evaluate(() => ({ lobby: NET.lobby.length, spec: NET.lobbySpec.slice(), txt: document.getElementById('mpstatus').textContent + ' ' + ((document.getElementById('mpl') || {}).textContent || '') }));   /* the lobby is one framed screen now: the "N watching" note sits in it */
     specPeer = l.spec[0];
     console.log(`[${secs()}] spectator waiting in the lobby (players in lobby: ${l.lobby}; lobby shows "watching": ${/watching/.test(l.txt)})`);
     if (l.lobby !== 1) fail(`the spectator took a seat in the lobby (${l.lobby} players besides the host)`);
@@ -562,7 +562,7 @@ async function main() {
     if (ticks % 100 === 0) await liveCheck();
     if (checks.has(ticks)) { await settleCheck(`check @${(ticks / 600).toFixed(1)} min`); if (ticks === 1500 || ticks === total) await screenshots(); }
     if (ticks % 300 === 0) await client.evaluate(() => { // keep the client's production busy, like a player would
-      try { const R = roster(G.teams[ME].fac); for (const c of CATS) if (R[c] && R[c][0] && !G.teams[ME].q[c].length) doAct({ t: 'q', k: R[c][0] }); } catch (e) {} });
+      try { const R = roster(G.teams[ME].fac); for (const c of CATS) if (R[c] && R[c][0] && !G.ents.some(e => e.isB && e.team === ME && e.kind === c && !e.dead && (e.q || []).length)) doAct({ t: 'q', k: R[c][0] }); } catch (e) {} });
   }
   if (!order.n) warns.push('client had no units at the start, so the order round-trip was not tested');
   const stK = SRV ? '__ww3WsStats' : '__fpStats';

@@ -1,5 +1,8 @@
 # ART BAR — the WHOLE game must look and feel like a $75 studio game (Abdullah 2026-11-06 18:02, raised from $60 grand-map-only at 16:59)
 
+> **2026-11-14 (onegame): the grand campaign and Conquest were removed** (Abdullah 2026-11-13 20:18 "Abandon conquest and campaign entirely remove them from the game"). Every grand-map / campaign / Conquest item below is closed and kept only as history; the game is Battle (+ Test range, Missions, Tutorial). See CLAUDE.md and orch/BRIEF.md.
+
+
 ## GRAND-MAP TARGET LOOK (Abdullah 2026-11-07 19:29–19:30, sent a Total War campaign-map screenshot: "This level of graphics", "Look at that beautiful grand army")
 Match this in our own original art (never copy that game's assets):
 - **Army = one big hero soldier standing on the ground** (as tall as a town cluster at region zoom; detailed, lit, nation uniform), **a large clean national flag on a tall pole right beside him**; no dark slab — at most a soft round shadow.

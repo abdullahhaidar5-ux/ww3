@@ -22,4 +22,4 @@ const url=await pg.evaluate(()=>{const N=['IR','RS','DW','RV','OB','US','GB','FR
   for(const [kind,dx,sc2] of [['inf',-60,5],['tank',50,2.2]]){let o=null;try{o=modelFor({kind,team:0,id:7,s:{name:''}});}catch(e){window.__err=(e.stack||'').split('\n').slice(0,4).join('|');}if(!o){window.__miss=(window.__miss||[]).concat(f+kind);continue;}o.scale.multiplyScalar(sc2);o.position.set(x+dx,y-40,0);o.rotation.set(.9,.5,0);sc.add(o);}
  });
  const fix=o=>{o.children=o.children.filter(c=>c&&!(c.isMesh&&!c.material));o.children.forEach(fix);};fix(sc);window.__nulls=0;R.render(sc,cam);window.__n=sc.children.length;return cv.toDataURL('image/jpeg',.88);});
-console.log(await pg.evaluate(()=>[window.__n,window.__err]));fs.writeFileSync(path.join(OUT,'L5-nations.jpg'),Buffer.from(url.split(',')[1],'base64'));await b.close();srv.close();console.log('ok');
+console.log(await pg.evaluate(()=>[window.__n,window.__err]));fs.writeFileSync(path.join(OUT,'L5-final.jpg'),Buffer.from(url.split(',')[1],'base64'));await b.close();srv.close();console.log('ok');
