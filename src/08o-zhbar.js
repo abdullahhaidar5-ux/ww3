@@ -54,7 +54,7 @@ html body #side #panel .btn .p{position:absolute!important;left:0;bottom:0;heigh
 html body #side #panel .zhEmpty{display:none!important}
 /* unit orders as pictures at the right end of the panel */
 .orddock.zhin{right:auto!important;bottom:auto!important;min-width:0!important;padding:6px!important;background:none!important;box-shadow:none!important;border:0!important;display:flex!important;flex-wrap:wrap;justify-content:center;align-content:center;gap:4px;pointer-events:none}
-.orddock.zhin.zhb{justify-content:center;align-content:center;flex-wrap:wrap}   /* centred, no flipped rows (Abdullah 21:24 "not centered") */
+.orddock.zhin.zhb{justify-content:center;align-content:center;flex-wrap:wrap}   /* centered, no flipped rows (Abdullah 21:24 "not centered") */
 #fmb.zhfm{position:fixed!important;z-index:8;display:flex!important;justify-content:center;gap:6px!important;margin:0!important}
 #fmb.zhfm button{min-width:86px;height:32px;font:700 13px system-ui,sans-serif!important;border:1px solid #9fc0e0!important;border-radius:3px!important;background:radial-gradient(circle at 50% 40%,#3b5566,#101a20 80%)!important;color:#eef3f6!important;padding:0 10px!important;cursor:pointer}
 .orddock.zhin .cmdrow{display:contents!important}
@@ -62,7 +62,7 @@ html body #side #panel .zhEmpty{display:none!important}
  background:radial-gradient(circle at 50% 40%,#3b5566,#101a20 80%)!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important}
 .orddock.zhin button>i{position:static!important;margin:0!important;transform:none!important;display:block!important;width:100%!important;flex:1 1 100%!important;text-align:center!important;line-height:1!important;padding:0!important;font-size:30px!important;font-style:normal;filter:drop-shadow(0 1px 1px #000)}
 .orddock.zhin button:hover{box-shadow:inset 0 0 0 2px #fff,0 0 8px #6fb0ff!important}
-/* order buttons, Zero Hour look (Abdullah 2026-11-14 21:04 "Make these buttons sexier"): steel plate, coloured line icon, name under it, hotkey in the corner */
+/* order buttons, Zero Hour look (Abdullah 2026-11-14 21:04 "Make these buttons sexier"): steel plate, colored line icon, name under it, hotkey in the corner */
 .orddock.zhin button{flex-direction:column!important;gap:2px!important;position:relative!important;font:700 11px/1 system-ui,sans-serif!important;letter-spacing:.06em;text-transform:uppercase;color:#d9e4ea!important;border:1px solid #6f8ea4!important;border-radius:3px!important;background:linear-gradient(180deg,#34444e 0%,#1b252c 45%,#0d1418 100%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -2px 6px rgba(0,0,0,.6),0 2px 4px rgba(0,0,0,.5)!important;transition:transform .08s,box-shadow .12s,border-color .12s}
 .orddock.zhin button>i svg{display:block;width:100%;height:100%}
 .orddock.zhin button>i{flex:0 0 auto!important;width:56%!important;height:52%!important;font-size:0!important;background:center/contain no-repeat;filter:drop-shadow(0 0 4px rgba(0,0,0,.8))}
@@ -107,7 +107,7 @@ html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 #cmdP{bottom:auto!important;top:64px!important;left:10px!important;right:auto!important}
 html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
 #hudLyB{display:none!important}
-#pq{display:none!important}   /* the grey queue strip above the bar is gone (Abdullah 18:33); queue counts stay on the buttons */
+#pq{display:none!important}   /* the gray queue strip above the bar is gone (Abdullah 18:33); queue counts stay on the buttons */
 #news,#mwPip{display:none!important}
 .stanceBtn,[data-k="sn"]{display:none!important}   /* army stance removed */
 #pwMeter{display:none!important}   /* power lives in the bar's top console now */
