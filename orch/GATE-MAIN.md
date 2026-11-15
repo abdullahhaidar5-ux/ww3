@@ -38,3 +38,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-14 20:28Z daebfc24 **RED** (29 gates) failing: audio,superfreeze,tutorial — Land (push-fast): merge orch/usvoice
 - 2026-11-15 03:35Z b44c8209 **RED** (27 gates) failing: cfclient,controls,controlscheck,decisions,migrate-dual,save,smoke4,smooth-mp,smooth-pc,superfreeze — Merge origin/main into menubg3
 - 2026-11-15 05:30Z 174b8b9b **RED** (28 gates) failing: cfclient,controls,controlscheck,decisions,mapsweep,migrate-abrupt,migrate-down,save,smooth-pc,superfreeze — Fix the red checks on main: no 'nuke' word left in the radio, American
+- 2026-11-15 06:20Z c73e5b53 **RED** (27 gates) failing: cfclient,controls,decisions,migrate,migrate-down,save,smooth-pc,superfreeze,tutorial — Merge origin/main into orch/icons
