@@ -12,7 +12,7 @@ function goalText(){if(GOAL.g!==G){GOAL.g=G;GOAL.pk={};GOAL.key='';}const me=G.t
   if(G.battle){let n=0;for(const e of G.ents)if(e.isB&&!e.dead&&e.built>=1&&e.kind!=='garrison'&&e.team>=0&&G.teams[e.team]&&enemy(G.teams[e.team]))n++;
     return{k:'b'+n,h:`<b>Battle</b><i>·</i>Destroy every enemy building <span class="gn">(${n} left)</span>`};}
   return null;}
-function cqBanner(){if(!G||!(G.battle||G.camp)||G.grand||window.LOADING){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}
+function cqBanner(){if(!G||!(G.battle||G.camp)||window.LOADING){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}
   if(G.over){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}let b=$('cqBn');
   if(!b){if(!$('goalCss')){const st=document.createElement('style');st.id='goalCss';st.textContent=`#cqBn{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;max-width:calc(100vw - 420px);color:#e6e1cc;font:500 13px/1.5 system-ui,sans-serif;letter-spacing:.01em;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.6)}
 #cqBn .gl{display:inline-block;padding:2px 20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;border-radius:3px;background:linear-gradient(90deg,rgba(10,13,10,0),rgba(10,13,10,.62) 18%,rgba(10,13,10,.62) 82%,rgba(10,13,10,0))}
@@ -28,5 +28,5 @@ function cqBanner(){if(!G||!(G.battle||G.camp)||G.grand||window.LOADING){const o
    for(const T of G.teams){if(T.reb||T.out||!T.sup)continue;const sec=strikeSecs(T);if(sec<0)continue;const mine=ally(T.id,ME);
      h+=`<div class="sl" style="color:${mine?'#bfe8c4':'#ffb4a8'}">${T.F.name} ${UPLINK[T.fac]?UPLINK[T.fac][0]:'missile strike'}: ${sec<=0.5?'READY':'ready in '+tm(sec)}</div>`;}}
   if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
-function strikeSecs(T){let f;if(MODE==='client'&&G.sfd)f=G.sfd[T.id];else f=T._upl?100*T.charge/T.sup.charge:-1;if(f==null||f<0)return -1;return Math.max((1-f/100)*T.sup.charge/.5,G.t<CQ_STRIKE_MIN?CQ_STRIKE_MIN-G.t:0);}
+function strikeSecs(T){let f;if(MODE==='client'&&G.sfd)f=G.sfd[T.id];else f=T._upl?100*T.charge/T.sup.charge:-1;if(f==null||f<0)return -1;return (1-f/100)*T.sup.charge/.5;}
 setInterval(()=>{try{if(G&&!G.camp)cqBanner();}catch(e){}},400);

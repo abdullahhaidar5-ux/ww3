@@ -149,6 +149,7 @@ try {
   s = await until(s => s.pool === 'combat' && s.playing && s.decks.every(d => d.id === s.id || !d.on), 10000);
   await sleep(3600);
   s = await state();
+  for (let n = 0; n < 12 && s.decks.some(d => d.id !== s.id && !d.on && !d.paused); n++) { await sleep(500); s = await state(); }   // slow runners: wait for the faded deck's pause timer (fade + 0.3 s) instead of judging at a fixed moment
   const old = s.decks.find(d => d.id !== s.id);
   L.combat = await level();
   ok('b) crossfade done: combat deck up, calm deck faded and paused', s.playing && (!old || (!old.on && old.paused && old.g < 0.01)), JSON.stringify(s.decks));

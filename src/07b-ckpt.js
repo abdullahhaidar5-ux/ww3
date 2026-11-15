@@ -3,12 +3,13 @@
    drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
-const CK_G=['truce','tOff','aidQ','milOk','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
+const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
-  'todM','humA','rebT','radT','stT','gprT','supT','prT','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','conq','battle','setupEnd','reb','N','seed','mapKey','roadV'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
+  'todM','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
 // (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
 // end of the sim step)
+const ckSafe=(k,v)=>k==='oil'?undefined:v;   /* an order aimed at an oil derrick points at the derrick row, which points back at its target (circular): leave the row out when comparing */
 function ckEncode(){const ids=new Map();for(const e of G.ents)if(!e.inTun)ids.set(e,e.id);const fi=new Map(G.fields.map((f,i)=>[f,i])),oi=new Map(G.oil.map((o,i)=>[o,i])),ci=new Map((G.civ||[]).map((c,i)=>[c,i]));
   const S=[],SI=new Map();const sref=s=>{let i=SI.get(s);if(i==null){i=S.length;SI.set(s,i);S.push(s);}return i;};
   const seen=new WeakSet();
@@ -41,12 +42,12 @@ function ckRestore(ck){const N=G.teams.length;dugEnsure(ck.civ?ck.civ.length:0);
   for(const k of ['mines','smokes','shields'])if(Array.isArray(G[k]))G[k]=reb(G[k]);
   ck.fields.forEach((f,i)=>{if(G.fields[i])Object.assign(G.fields[i],f);});
   ck.oil.forEach((o,i)=>{if(G.oil[i])Object.assign(G.oil[i],reb(o));});
-  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});dugAtRebuild();(ck.tw||[]).forEach((o,i)=>{const t=G.towns&&G.towns[i];if(t){const q={};for(const k in o)if(k[0]!=='$')q[k]=reb(o[k]);Object.assign(t,q);t.rebU=(o.$rebU||[]).map(id=>byId.get(id)).filter(Boolean);t.mil=(o.$mil||[]).map(id=>byId.get(id)).filter(Boolean);}});
+  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});dugAtRebuild();
   if(Array.isArray(ck.proj))G.proj=ck.proj.map(p=>{const o={};for(const k in p)o[k]=reb(p[k]);return o;}).filter(p=>p.src&&p.tgt);
   if(ck.camp&&G.camp)for(const k in ck.camp){const v=reb(ck.camp[k]);if(typeof G.camp[k]!=='function')G.camp[k]=v;}try{rubSync();bfSync();}catch(e){}
   ck.teams.forEach((t,i)=>{const T=G.teams[i];if(!T)return;for(const k in t){if(k==='$ai'||k==='$aiD'||k==='$aiS'||k==='aiTook')continue;T[k]=reb(t[k]);}T.ai=(t.$ai||t.aiTook)?mkAI(t.$aiD!=null?t.$aiD:1):null;if(T.ai&&t.$aiS){const S=reb(t.$aiS);for(const k in S)T.ai[k]=S[k];}T.aiTook=!!t.aiTook;});
   for(const T of G.teams){if(T.q){for(const c of CATS){const L=(T.q[c]||[]);if(!L.length)continue;const b=G.ents.filter(e=>e.isB&&e.team===T.id&&e.kind===c&&e.built>=1&&!e.dead).sort((x,y)=>x.id-y.id)[0];if(b)b.q=(b.q||[]).concat(L.map(i=>({kind:i.kind,t:i.t||0,c:Math.round((BASE[i.kind]&&BASE[i.kind].cost)||0)})));else for(const i of L)T.credits+=BASE[i.kind]?BASE[i.kind].cost:0;}delete T.q;}}  // old saves: the shared queue of a building type moves onto its first building (no building left: refunded)
-  for(const e of ents){if(e.so&&e.order&&e.so!==e.order&&JSON.stringify(e.so)===JSON.stringify(e.order))e.so=e.order;}  // stall watch compares the order by identity
+  for(const e of ents){if(e.so&&e.order&&e.so!==e.order&&JSON.stringify(e.so,ckSafe)===JSON.stringify(e.order,ckSafe))e.so=e.order;}  // stall watch compares the order by identity
   for(const e of ents){const p=e.path,w=e.npW;if(w&&p&&p[0]&&w[0]===p[0][0]&&w[1]===p[0][1])e.npW=p[0];}  // path-progress watch compares the waypoint by identity
   try{lgSync();}catch(e){}try{damSync();}catch(e){}G.civDirty=true;G.bdirty=true;G.hash=null;try{buildHash();}catch(e){}try{updateVis();}catch(e){}
   for(const e of ents){if(e.$vs!=null){const m=e.$vs;for(let i=0;i<e.vs.length&&i<31;i++)e.vs[i]=!!(m>>i&1);delete e.$vs;e.vis=e.vs[ME]||(e.isB&&!!((e.sn|0)&(1<<ME)));}}G.sel=G.sel.filter(e=>byId.has(e.id)).map(e=>byId.get(e.id));}

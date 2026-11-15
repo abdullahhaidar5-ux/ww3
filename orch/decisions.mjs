@@ -263,8 +263,8 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
 { const S3 = SRC['03-sim.js'];
   ck(!/G\.sandbox&&u\.team===0\)u\.am=u\.amx/.test(S3) && !/let ins=!!\(G\.sandbox/.test(S3), 'Test range still refills ammo / forces supply (must behave like Battle)');
   /* 2026-11-14 18:03 Abdullah "in test range all buildings and units are available": the tech-tree skip for the range is allowed again */ ck(/G&&G\.sandbox&&t===0/.test(S3), 'Test range must open every building (reqMet skip for the player)'); ck(!/G&&G\.sandbox&&T\.id===0\)t\/=6/.test(S3) && !/m===2&&G\.sandbox/.test(S3), 'Test range still builds 6x faster or ignores build-spot rules');
-  ck(/G\.battle=!!o\.battle&&!o\.camp&&!o\.grand;/.test(S3) && /if\(o\.sandbox\)o\.battle=1;/.test(S3), 'newGame must make a sandbox a Battle game (G.battle true)');
-  ck(/oos=[^;]*!G\.battle&&/.test(SRC['06-view.js']), 'out-of-supply badge rule changed'); }
+  ck(/G\.battle=!o\.camp;/.test(S3), 'newGame must make a sandbox a Battle game (G.battle true)');
+  ck(/oos=!e\.sup&&e\.am<=0;/.test(SRC['06-view.js']), 'out-of-supply badge rule changed'); }
 // 3. Main menu order + naming (2026-11-07 21:41): Single player · Multiplayer · Test range, then small extras; no Classic.
 // 3. Main menu order + naming (2026-11-07 21:41; one game 2026-11-13 20:18): Play · Multiplayer · Test range, then small extras; no Classic.
 { const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).filter(Boolean).slice(0, 3);
@@ -281,7 +281,7 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(!['03h-economy.js', '08c-towns.js', '08c-economy.js'].some(f => srcFiles.includes(f)), 'one game: a Conquest-only module (03h-economy, 08c-towns, 08c-economy) is back');
   // Battle has supply lines (Abdullah 2026-11-13 20:19 "Bring supply lines into battle") and the ammo rule (20:06): refill inside your area, no timers, Test range unlimited
   const sim = SRC['03-sim.js'] || '', lg = SRC['03c-logistics.js'] || '', lgu = SRC['08c-logi.js'] || '';
-  ck(/G\.battle=!o\.camp&&!o\.sandbox/.test(sim), 'one game: every skirmish / online game must start as Battle (newGame G.battle)');
+  ck(/G\.battle=!o\.camp;/.test(sim), 'one game: every skirmish / online game must start as Battle (newGame G.battle)');
   ck(/function lgCover\(/.test(lg) && /lgCover\(\);G\.lgv=/.test(lg) && /G\.lg&&G\.lg\.bead/.test(sim) && /if\(G\.lg\)lgTick\(st\)/.test(sim), 'supply lines: lgCover (roads out of HQ + depots) must feed the supply area (supplyPoints beads) and run every supply tick');
   ck(/function ammoOn\(\)\{return !!G&&!G\.sandbox;\}/.test(sim) && /function hasAmmo\(u\)\{const s=u\.s;return ammoOn\(\)&&/.test(sim) && !/\b[ue]\.supT\b|G\.t-\([ue]\.supT/.test(Object.values(SRC).join('\n')), 'ammo rule: Battle tracks ammo (refill inside your area, no time-based out-of-supply penalty), Test range unlimited');
   ck(!/G\.battle\)\{LGU\.on=false|if\(G&&G\.battle\)return false|!G\.battle&&!G\.lg|G\.battle\|\|!G\.lg/.test(lgu), 'supply lines: the overlay / minimap lines must not be switched off in Battle'); }
@@ -395,8 +395,6 @@ try {
   { const nf = await ev(() => { try { fmBar(); renderSquads(); } catch (e) {} const t = [...document.querySelectorAll('#info button')].map(b => b.textContent).join('|'); return { fmb: !!document.getElementById('fmb'), key: typeof KEYTAB !== 'undefined' && KEYTAB.some(k => k.id === 'form'), t }; });
     ck(!nf.fmb && !nf.key && !/Type \(T\)|Resupply|Stance|Assault|Guerrilla/.test(nf.t), 'formations / Type / Resupply / stance buttons must be gone: ' + JSON.stringify(nf)); }
   // novdig 2026-11-14 (Abdullah 14:55 "Make it so that vehicles can't dig in"): no vehicle can dig in, infantry still can
-  { const vd = await ev(() => { const T = G.teams[ME]; const k = allUnits(T.fac).find(k => { const s = stats(T.fac, k); return s.dom === 'ground' && isVeh(s) && s.dmg > 0 && k !== 'dozer' && k !== 'harv'; }); const u = { s: stats(T.fac, k), kind: k, team: ME, x: 0, y: 0, hp: 1, max: 1 }; return { veh: !!k && digCan(u), inf: allUnits(T.fac).some(k => isInf(stats(T.fac, k))) }; });
-    ck(!vd.veh, 'vehicles must not be able to dig in'); }
   // ---- nations20 (Abdullah 2026-11-13 20:31-20:33): exactly 22 playable nations (Keep 22, 2026-11-14), in every picker
   { const W = 'IR RS DW RV OB US GB FR DE IL UA RU CN KP IN JP KR PK SA AE TR EG'.split(' ').sort().join(' ');
     ck(d.fk.slice().sort().join(' ') === W, 'FKEYS must be exactly the 22 nations (' + W + '), got ' + d.fk.slice().sort().join(' '));
@@ -413,6 +411,9 @@ try {
   await ev(() => { setup.p = 'IR'; setup.a = 'US'; setup.n = 1; try { initAudio(); } catch (e) {} startSingle(); });
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('IR battle never finished loading'));
   await page.waitForTimeout(2500);
+  /* (moved after the battle starts: there is no game behind the menu any more) */
+  { const vd = await ev(() => { const T = G.teams[ME]; const k = allUnits(T.fac).find(k => { const s = stats(T.fac, k); return s.dom === 'ground' && isVeh(s) && s.dmg > 0 && k !== 'dozer' && k !== 'harv'; }); const u = { s: stats(T.fac, k), kind: k, team: ME, x: 0, y: 0, hp: 1, max: 1 }; return { veh: !!k && digCan(u), inf: allUnits(T.fac).some(k => isInf(stats(T.fac, k))) }; });
+    ck(!vd.veh, 'vehicles must not be able to dig in'); }
   const cq = await ev(() => { const T = G.teams[ME]; const ban = { cleric: roster(T.fac).barracks.includes('cleric'), fort: bldAllowed(T.fac, 'fort'), bb: false, bbIR: sigBan('IR', 'bb'), bbUS: sigBan('US', 'bb'), fortUS: bldAllowed('US', 'fort'), powIR: typeof POWERS.bb === 'object' };
     const shown = ['u_cleric', 'b_fort', 'p_bb', 'p_cleric'].filter(id => { const b = document.getElementById(id); if (!b) return false; return !b.hidden && b.offsetParent !== null; });
     const btns = [...document.querySelectorAll('#panel button, #side button, #bar button, #powers button, button.btn')].filter(b => b.offsetParent).map(b => b.id + ':' + b.textContent.trim().slice(0, 30));
@@ -440,7 +441,8 @@ try {
   await shot('battle-ir');
   // fixes1 (2026-11-11): the hover card of a build button must really show what the unit beats and what it is weak to: at least one
   // picture + name in each row (a stale screenshot showed the two row labels with nothing in them). Real mouse hover on a button.
-  { await ev(() => { window.__tab0 = TAB; showTab('units'); }); await page.waitForTimeout(300);
+  { await ev(() => { window.__tab0 = TAB; const T = G.teams[ME]; let b = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks' && e.built >= 1 && !e.dead); if (!b) { const h = G.ents.find(e => e.team === ME && e.kind === 'hq'); b = addBld(ME, 'barracks', h.x + 150, h.y + 150, true); } G.sel = [b]; updateUI(); showTab('units'); });   /* the unit buttons show only while a production building is selected */
+    await page.waitForTimeout(300);
     const bx = await ev(() => { const b = document.getElementById('u_at') || document.getElementById('u_inf'); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
     await page.mouse.move(bx.x - 20, bx.y); await page.mouse.move(bx.x, bx.y, { steps: 3 }); await page.waitForTimeout(500);
     const hc = await ev(() => { const d = document.getElementById('ctip'), out = { hover: !!d && !d.hidden, bad: [] }; const rows = () => [...d.querySelectorAll('.uk-mu .mr')].map(r => { const q = d.getBoundingClientRect();
@@ -471,7 +473,7 @@ try {
   // ---- BATTLE (Generals rules + supply lines): Command Center + dozer + supply truck, no towns/tax, supply trucks pay
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
-  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; try { initAudio(); } catch (e) {} startSingle(); });
+  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.map = 'bm_sixroads'; try { initAudio(); } catch (e) {} startSingle(); });   /* a Battle map with roads out of the base (supply lines follow roads) */
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('battle-mode game never finished loading'));
   await page.waitForTimeout(1500);
   const bt = await ev(() => { const T = G.teams[ME], mine = G.ents.filter(e => e.team === ME && !e.dead); const c0 = T.credits;

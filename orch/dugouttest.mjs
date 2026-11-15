@@ -16,8 +16,8 @@ page.on('pageerror', e => errs.push((e.stack || e.message).split('\n').slice(0, 
 const ev = (fn, a) => page.evaluate(fn, a); const shot = async n => { if (!process.env.SHOTS) return; await page.waitForTimeout(500); await page.screenshot({ path: path.join(OUT, n + '.png'), timeout: 120000 }); };
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
-  await ev(() => { setup.p = 'IR'; setup.a = 'US'; setup.n = 1; setup.mode = 'conquest'; try { initAudio(); } catch (e) {} startSingle(); });
+  await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+  await ev(() => { setup.p = 'IR'; setup.a = 'US'; setup.n = 1; setup.mode = 'battle'; try { initAudio(); } catch (e) {} startSingle(); });
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('game never loaded'));
   await page.waitForTimeout(1500);
   const R = await ev(() => {

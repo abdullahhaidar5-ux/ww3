@@ -3,7 +3,7 @@
 // shader, uploading a texture, building a mesh). So this gate does not only time JavaScript: it counts what the page
 // asks the graphics card to do in every frame of the strike (WebGL calls are wrapped before the page loads).
 // (Draw commands are swallowed after the battle has loaded - software GL needs seconds per drawn frame.)
-// For each faction (default IR,RU,US): start Conquest, build an uplink, put a mixed enemy force on the target, let the
+// For each faction (default IR,RU,US): start a Battle, build an uplink, put a mixed enemy force on the target, let the
 // scene settle, fire the strike in real time (launch, flight, all impacts, aftermath) and FAIL when the strike
 //   (a) compiles any shader / links any program after the battle has loaded,
 //   (b) creates more than TEXMAX textures or GEOMAX meshes (uploads count too), or reads pixels back
@@ -55,7 +55,7 @@ for (const fac of FACS) {
   await page.evaluate(v => { window.__vaoDiag = !!v; }, E.VAO);
   const info = await page.evaluate(town => { const hq = G.ents.find(e => e.team === ME && e.kind === 'hq') || G.ents.find(e => e.team === ME && e.isB);
     let up = G.ents.find(e => e.team === ME && e.kind === 'uplink'); if (!up) up = addBld(ME, 'uplink', hq.x + 120, hq.y + 60, 1); up.built = 1; up.hp = up.max;
-    QUAL.lock = 1; /* the frame-rate governor follows the test machine's speed (a detail step rebuilds the picture buffers): held still, the gate measures the strike */ const T = G.teams[ME]; T.credits = 50000; T.charge = T.sup.charge; G.t = Math.max(G.t, CQ_STRIKE_MIN + 5);
+    QUAL.lock = 1; /* the frame-rate governor follows the test machine's speed (a detail step rebuilds the picture buffers): held still, the gate measures the strike */ const T = G.teams[ME]; T.credits = 50000; T.charge = T.sup.charge; G.t = Math.max(G.t, 5);
     let en = G.ents.find(e => e.isB && e.team !== ME && !e.dead) || hq; if (town && G.towns && G.towns.length) { en = G.towns.slice().sort((a, b) => Math.hypot(a.x - en.x, a.y - en.y) - Math.hypot(b.x - en.x, b.y - en.y))[0]; }
     // a mixed enemy force stands on the target, so the strike also kills many soldiers and vehicles in the same frames (wrecks, bodies, debris)
     const ET = G.teams.find(t => t.id !== ME && !t.reb && !ally(t.id, ME)); let crowd = 0;

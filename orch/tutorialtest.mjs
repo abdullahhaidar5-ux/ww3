@@ -71,7 +71,8 @@ async function startTut() {
 }
 async function reloadMenu() { await page.reload({ waitUntil: 'load', timeout: 120000 }); await page.waitForFunction(() => typeof startBattleTutorial === 'function', null, { timeout: 60000 }); }
 // place building kind k with a real click next to the HQ (Build tab button, then the ground); true when it stands (or is being built)
-async function placeNear(k, spots) { await page.click('.tabs button[data-tab="build"]').catch(() => {}); await wait(300); await page.click('#b_' + k); await wait(300);
+async function placeNear(k, spots) { await ev(() => { const d = G.ents.find(e => e.kind === 'dozer' && e.team === ME && !e.dead); if (d) { G.sel = [d]; updateUI(); } }); await wait(200);   /* the Build tab shows only while a Construction Vehicle is selected (a player clicks the Dozer first) */
+  await page.click('.tabs button[data-tab="build"]').catch(() => {}); await wait(300); await page.click('#b_' + k); await wait(300);
   const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; });
   for (const [dx, dy] of spots) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); await wait(500); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y, { button: 'right' }); await wait(500);
     if (await ev((k) => G.ents.some(e => e.isB && e.team === ME && e.kind === k && !e.dead), k)) return true; if (!(await ev((k) => G.place === k, k))) { await page.click('#b_' + k); await wait(300); } }
@@ -82,7 +83,7 @@ try {
   // ---- part A: Skip step, Exit tutorial, restart
   console.log('-- skip / exit / restart'); SHOTS = false;
   await startTut(); await waitStep(0);
-  ok(await ev(() => TUT === TUTB && TUT.length === 6 && TUT.map(s => s.k).join() === 'dep,bar,fac,sup,veh,atk'), 'the one tutorial is the Battle tutorial with a supply-lines step');
+  ok(await ev(() => TUT === TUTB && TUT.length === 7 && TUT.map(s => s.k).join() === 'gen,dep,bar,fac,sup,veh,atk'), 'the one tutorial is the Battle tutorial with a supply-lines step');
   for (let k = 0; k < 3; k++) { await page.click('#tutSkip'); await wait(250); }
   ok(await ev(() => TUTS.i === 3), 'Skip step moves to the next step (3 clicks -> step 4)');
   await page.click('#tutExit'); await wait(500);
@@ -94,25 +95,27 @@ try {
   await startTut();
   await shot('01a-battle-start');
   ok(await ev(() => G.battle && !G.towns), 'the tutorial is a Battle (no towns)');
+  // 0 Generator (power for the electronic buildings)
+  await waitStep(0); ok(await placeNear('gen', SPOTS), 'Generator placed with a click next to the base'); await done(0); await shotAfter(1, 'gen');
   // 1 Supply Depot
-  await waitStep(0); ok(await placeNear('depot', SPOTS), 'Supply Depot placed with a click next to the base'); await done(0); await shotAfter(1, 'dep');
+  await waitStep(1); ok(await placeNear('depot', SPOTS), 'Supply Depot placed with a click next to the base'); await done(1); await shotAfter(2, 'dep');
   // 2 Barracks
-  await waitStep(1); ok(await placeNear('barracks', SPOTS), 'Barracks placed'); await done(1); await shotAfter(2, 'bar');
+  await waitStep(2); ok(await placeNear('barracks', SPOTS), 'Barracks placed'); await done(2); await shotAfter(3, 'bar');
   ok(await builtUp('barracks'), 'the Dozer finishes the Barracks');
   // 3 War Factory
-  await waitStep(2); ok(await placeNear('factory', SPOTS), 'War Factory placed'); await done(2); await shotAfter(3, 'fac');
+  await waitStep(3); ok(await placeNear('factory', SPOTS), 'War Factory placed'); await done(3); await shotAfter(4, 'fac');
   // 4 supply lines: L shows them (green roads out of the Command Center)
-  await waitStep(3); { await page.keyboard.press('l'); await wait(800); ok(await ev(() => LGU.on), 'L key shows supply lines');
+  await waitStep(4); { await page.keyboard.press('l'); await wait(800); ok(await ev(() => LGU.on), 'L key shows supply lines');
     const cov = await ev(() => { const C = G.lg && G.lg.cov && G.lg.cov[ME]; return C ? Object.keys(C).length : 0; }); ok(cov > 0, 'your supply lines cover at least one road (' + cov + ')'); await shot('04b-supply-lines'); }
-  await done(3); await shotAfter(4, 'sup');
+  await done(4); await shotAfter(5, 'sup');
   // 5 train a vehicle
-  await waitStep(4); { ok(await builtUp('factory'), 'the Dozer finishes the War Factory'); const b = await ev(() => { const e = tutBld('factory'); return { x: e.x, y: e.y }; }); await ev(([x, y]) => centerOn(x, y, true), [b.x, b.y]); await wait(600); const p = await scr(b.x, b.y, 10); await click(p.x, p.y); await wait(500);
+  await waitStep(5); { ok(await builtUp('factory'), 'the Dozer finishes the War Factory'); const b = await ev(() => { const e = tutBld('factory'); return { x: e.x, y: e.y }; }); await ev(([x, y]) => centerOn(x, y, true), [b.x, b.y]); await wait(600); const p = await scr(b.x, b.y, 10); await click(p.x, p.y); await wait(500);
     ok(await ev(() => G.sel.some(e => e.kind === 'factory')), 'left-click selects the War Factory');
     const id = await ev(() => '#u_' + roster(G.teams[ME].fac).factory.find(k => document.getElementById('u_' + k) && !document.getElementById('u_' + k).disabled)); await page.click(id); await wait(300);
-    for (let n = 0; n < 60 && !(await ev(() => TUTS.i > 4 || TUTS.wait)); n++) await ff(3); }
-  await done(4); await shotAfter(5, 'veh');
+    for (let n = 0; n < 60 && !(await ev(() => TUTS.i > 5 || TUTS.wait)); n++) await ff(3); }
+  await done(5); await shotAfter(6, 'veh');
   // 6 win: a real player trains an army; to keep the test short a strike force is added, then ordered with a right-click
-  await waitStep(5); { await ev(() => { const e = tutFoeHQ(), h = tutHQ(), a = Math.atan2(h.y - e.y, h.x - e.x); for (let i = 0; i < 20; i++) { const p = nearestPassXY('ground', e.x + Math.cos(a) * 500 + (i % 5) * 24, e.y + Math.sin(a) * 500 + Math.floor(i / 5) * 24); if (p) addUnit(ME, i % 3 ? 'inf' : 'tank', p[0], p[1]); } });
+  await waitStep(6); { await ev(() => { const e = tutFoeHQ(), h = tutHQ(), a = Math.atan2(h.y - e.y, h.x - e.x); for (let i = 0; i < 20; i++) { const p = nearestPassXY('ground', e.x + Math.cos(a) * 500 + (i % 5) * 24, e.y + Math.sin(a) * 500 + Math.floor(i / 5) * 24); if (p) addUnit(ME, i % 3 ? 'inf' : 'tank', p[0], p[1]); } });
     const en = await ev(() => { const q = tutFoeHQ(); return { x: q.x, y: q.y }; }); await shot('06b-enemy-base');
     if (await ev(() => LGU.on)) await page.keyboard.press('l');
     const tEnd = Date.now() + 10 * 60 * 1000;

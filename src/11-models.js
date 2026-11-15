@@ -1164,7 +1164,7 @@ function mergeKit(P){P.updateMatrixWorld(true);const inv=new THREE.Matrix4().cop
       return g;});
     const out=new THREE.BufferGeometry();for(const nm of L.names){let len=0,sz=parts[0].attributes[nm].itemSize;for(const g of parts)len+=g.attributes[nm].array.length;const arr=new Float32Array(len);let off=0;for(const g of parts){arr.set(g.attributes[nm].array,off);off+=g.attributes[nm].array.length;}out.setAttribute(nm,new THREE.BufferAttribute(arr,sz));}
     out.computeBoundingBox();out.computeBoundingSphere();for(const g of parts)g.dispose();
-    const f=L.items[0],m=new THREE.Mesh(out,L.mat);m.name='kitmerged';m.castShadow=f.castShadow;m.receiveShadow=f.receiveShadow;m.renderOrder=f.renderOrder;m.layers.mask=f.layers.mask;
+    const f=L.items[0],m=new THREE.Mesh(out,L.mat);m.name='kitmerged';m.userData.noDepth=true;/* small decor props stay out of the ambient-occlusion depth pre-pass: it draws the whole scene a second time, and a pallet or barrel adds nothing to the corner shading */m.castShadow=f.castShadow;m.receiveShadow=f.receiveShadow;m.renderOrder=f.renderOrder;m.layers.mask=f.layers.mask;
     for(const o of L.items)if(o.parent)o.parent.remove(o);P.add(m);}}
 function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new THREE.Group();o.add(P);
   if(['hq','barracks','factory','depot'].includes(e.kind)){try{roofKit(e,o,P);}catch(err){console.warn('roofKit',err);}try{groundKit(e,o,P);}catch(err){console.warn('groundKit',err);}try{facadeKit(e,o,P);}catch(err){console.warn('facadeKit',err);}}
