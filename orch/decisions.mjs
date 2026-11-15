@@ -53,12 +53,15 @@ const ck = (c, m) => { if (!c) fails.push(m); };
   else if (!/'src\/02\*\.js'/.test(m[0])) fails.push('gate.yml: mapsweep skip condition must watch \'src/02*.js\' (every map file: ' + mapFiles.join(', ') + ')'); }
 const srcFiles = fs.readdirSync(path.join(ROOT, 'src')).filter(f => f.endsWith('.js')).sort();
 const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')]));
+<<<<<<< HEAD
 // ---- Base looks (L4, Abdullah 2026-11-14): three base families on ONE switch baseStyle(fac) = me | soviet | west (src/11c-bases.js); the yard
 // wall of every non-ME base is drawn by baseYard (one merged mesh), never a second wall system next to it.
 { const b = SRC['11c-bases.js'] || '', m = SRC['11-models.js'] || '';
   ck(/function baseStyle\(/.test(b) && /function baseYard\(/.test(b) && /function baseSlabKit\(/.test(b) && /'soviet'/.test(b) && /'west'/.test(b), 'base looks: 11c-bases.js lost baseStyle / baseYard / baseSlabKit or a family');
   ck(/baseYard\(e,o,P,RR,gate,BP\)/.test(m) && /baseSlabKit\(B,e,T,s\)/.test(m) && /baseTint\(T\.fac,RT\)/.test(m), 'base looks: 11-models no longer calls baseYard / baseSlabKit / baseTint');
   ck(/OBX=\['OB','BI'\]/.test(b), 'base looks: OB/BI no longer use the Middle-Eastern compound family'); }
+=======
+>>>>>>> origin/main
 // weathergfx 2026-11-14 (Abdullah: weather "Pick in setup + Random", graphics "Low/Med/High/Ultra"): ONE Conditions table (CONDS in 01-data) drives the setup/lobby picker and the Test range picker; Random and unfitting picks resolve through condFit (deterministic from the seed); ONE graphics row (GFX_PRESETS: Low/Medium/High/Ultra), no second quality setting.
 { const d = SRC['01-data.js'] || '', u = SRC['08-ui.js'] || '', s = SRC['03-sim.js'] || '';
   ck(/const CONDS=\[/.test(d) && /function condFit\(/.test(d) && /function condTheme\(/.test(d), 'weathergfx: the Conditions table (CONDS / condFit / condTheme) is gone from 01-data.js');
@@ -83,6 +86,15 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/Brutal/.test(SRC['07-net.js']) && /Brutal/.test(SRC['08-ui.js']), 'Brutal must appear in the lobby (07-net) and Battle setup / Test range (08-ui)');
   ck(!/T\.ai\.d\s*(===|>=)\s*3[^]{0,80}(credits\s*\+=|\.reveals\.push)/.test(SRC['03-sim.js']), 'Brutal AI must not get extra money or vision');
 }
+<<<<<<< HEAD
+=======
+// ---- Base looks (L4, Abdullah 2026-11-14): three base families on ONE switch baseStyle(fac) = me | soviet | west (src/11c-bases.js); the yard
+// wall of every non-ME base is drawn by baseYard (one merged mesh), never a second wall system next to it.
+{ const b = SRC['11c-bases.js'] || '', m = SRC['11-models.js'] || '';
+  ck(/function baseStyle\(/.test(b) && /function baseYard\(/.test(b) && /function baseSlabKit\(/.test(b) && /'soviet'/.test(b) && /'west'/.test(b), 'base looks: 11c-bases.js lost baseStyle / baseYard / baseSlabKit or a family');
+  ck(/baseYard\(e,o,P,RR,gate,BP\)/.test(m) && /baseSlabKit\(B,e,T,s\)/.test(m) && /baseTint\(T\.fac,RT\)/.test(m), 'base looks: 11-models no longer calls baseYard / baseSlabKit / baseTint');
+  ck(/OBX=\['OB','BI'\]/.test(b), 'base looks: OB/BI no longer use the Middle-Eastern compound family'); }
+>>>>>>> origin/main
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];
@@ -518,7 +530,7 @@ try {
     ck(sl.on && sl.wanted, 'L / the Supply lines button must switch the supply overlay on in Battle'); ck(sl.chip, 'Battle must show the Supply chip'); ck(sl.ui, 'the ammo row must say whether the unit is in your supply area');
     // CAPTURABLE ROADS (Abdullah 2026-11-14 18:40 "Make it so that units can capture roads"): a ground unit standing on a neutral road section captures it in ~10 s, an air unit does not, an owned section is supply area
     { const rc = await ev(() => { const L = G.lg, D = G.lgd; lgFix(D); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && e.s && e.s.dom === 'ground'); if (!u) return { err: 'no unit' };
-        let ei = -1; for (let i = 0; i < L.E.length && ei < 0; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 300 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) ei = i; } if (ei < 0) return { err: 'no neutral section' };
+        let ei = -1, nn = 0; for (let i = 0; i < L.E.length; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 120 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) { nn++; if (ei < 0 || e.len > L.E[ei].len) ei = i; } } if (ei < 0) return { err: 'no neutral section', edges: L.E.length, owned: L.E.filter((e, i) => lgRcOwner(i) >= 0).length };   /* the longest neutral, open section (map-independent) */
         const e = L.E[ei], m = lgPoint(e, e.len / 2), ox = u.x, oy = u.y, os = u.s; const run = n => { for (let k = 0; k < n; k++) lgRoadCap(1); };
         const hold = () => D.rc[ei] && D.rc[ei].o;
         u.s = Object.assign({}, os, { dom: 'air' }); u.x = m[0]; u.y = m[1]; run(14); const air = hold();
@@ -580,6 +592,9 @@ try {
     ck(A.atk.join() === 'true,false,true', 'announcer under-attack lines must be once per 20 s: ' + A.atk);
     ck(A.ov === false, 'announcer must not start a line while another is playing'); ck(A.test.join() === 'true,false', 'announcer must be throttled more in the Test range');
     ck(A.slider && A.hooked, 'announcer needs its Settings > Audio slider (sAnn) and the pushLog hook'); }
+  // L3 light economy (2026-11-14; income cut removed 22:32): in Battle rich nations train 10% slower, poorer fast nations 25% faster; income the same for all
+  { const g = await ev(() => { const sv = G; try { G = { battle: 1 }; return { usB: econBT('US'), usU: econUp('US'), irB: econBT('IR'), ruB: econBT('RU') }; } finally { G = sv; } });
+    ck(g.usB > 1 && g.usU === 1 && g.irB < 1 && g.ruB === 1, 'L3 light economy profile wrong in Battle: ' + JSON.stringify(g)); }
 } catch (e) { fails.push('decisions run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);
 await browser.close(); server.close();
