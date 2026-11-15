@@ -185,6 +185,19 @@ body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen) button:is(.
 #mxlogo{text-shadow:0 4px 0 #05080a,0 0 40px rgba(95,184,201,.35)!important}
 #mxlogo span{color:var(--gold)!important;text-shadow:0 4px 0 #05080a,0 0 30px rgba(242,203,92,.45)!important}
 #mxcrumb b{color:var(--hi)!important}
+/* layout fixes (Abdullah 2026-11-14 21:11 "Disgusting layout"): player rows = name on top, controls below; computer buttons on one line; Settings never wider than the column */
+#menu.m3 #teamList .trow{flex-wrap:wrap!important;gap:8px!important;padding:10px 12px!important;font-size:17px!important;clip-path:var(--cut);border:0!important;background:linear-gradient(180deg,rgba(30,44,52,.9),rgba(12,19,23,.92))!important;box-shadow:inset 0 0 0 1px rgba(95,184,201,.3),inset 3px 0 0 var(--hi)}
+#menu.m3 #teamList .trow>span{flex:1 0 100%!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#eef4f6}
+#menu.m3 #teamList .trow>:not(span){flex:1 1 0;min-width:0}
+#menu.m3 #teamList .trow select{width:100%!important}
+#menu.m3 #teamList .presets{display:flex;gap:8px;flex-wrap:wrap}
+.mxrow .mxlab{min-width:120px;flex:0 0 auto}
+.mxrow .mxplus{display:inline-block!important;width:auto!important;margin:0!important;font-size:14px!important;padding:8px 14px!important}
+body:has(#menu:not([hidden])) #settings:not([hidden]){overflow-x:hidden!important;overflow-y:auto!important}
+body:has(#menu:not([hidden])) #settings *{max-width:100%;min-width:0!important;box-sizing:border-box}body:has(#menu:not([hidden])) #settings .card{width:100%!important}
+body:has(#menu:not([hidden])) #settings input,body:has(#menu:not([hidden])) #settings select{min-width:0!important;flex:1 1 120px}
+#mxcrumb{background:linear-gradient(180deg,rgba(6,11,14,.98) 62%,rgba(6,11,14,0));padding-bottom:14px!important}
+#menu.m3 #teamList .trow>:not(span):not(select){flex:0 0 auto}
 `;document.head.appendChild(s);}
 /* One game (Abdullah 2026-11-13 20:18): every setup screen is a Battle. Rebuild the map list when the menu opens on it (the Battle map list). */
 function mxModeName(){return 'Battle';}
@@ -226,7 +239,7 @@ function mxBuild(){
   const P=scr('c-players','<h2 class="mxh">Players</h2><p class="mxsub">You against the computer. Change teams to play co-op or free-for-all; click a numbered spot on the map to choose where a side starts.</p>');
   const pw=mxEl('div','mxpl'),pl=mxEl('div'),pr=mxEl('div');
   const r1=mxEl('div','mxrow');r1.append(mxEl('div','mxlab','Main opponent'),g('aiFac'));
-  const r2=mxEl('div','mxrow');MX.cnt=mxEl('div','mxlab','Computers');const add=mxEl('button','mxplus','＋ Add computer player'),rem=mxEl('button','mxplus','－ Remove');add.type=rem.type='button';
+  const r2=mxEl('div','mxrow');MX.cnt=mxEl('div','mxlab','Computers');const add=mxEl('button','mxplus','＋ Add computer'),rem=mxEl('button','mxplus','－ Remove');add.type=rem.type='button';
   const aiStep=d=>{const bs=[...g('aiN').querySelectorAll('button')],i=bs.findIndex(b=>b.classList.contains('on')),n=bs[i+d];if(n&&!n.disabled){n.click();mxTick(760);}mxPlayersSync();};add.onclick=()=>aiStep(1);rem.onclick=()=>aiStep(-1);MX.add=add;MX.rem=rem;r2.append(MX.cnt,add,rem);
   const r3=mxEl('div','mxrow');r3.append(mxEl('div','mxlab','Difficulty'),g('diff'));
   pl.append(r1,r2,r3,g('teamList'));const th=mxEl('p','mxsub','Players on the same team are allies: they share vision, never fight each other and win together.');th.style.marginTop='14px';pl.appendChild(th);

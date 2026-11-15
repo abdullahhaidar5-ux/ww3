@@ -182,7 +182,7 @@ async function powerChecks(page, { mode, ck, tap }) {
   await page.waitForTimeout(600); await page.evaluate(() => updateUI());
   const bb2 = await btn('barrage'); await click(bb2.x, bb2.y); ck(mode + ' targeted power arms on button click', await page.evaluate(() => G.aim === 'barrage'), await page.evaluate(() => JSON.stringify({ aim: G.aim, pw: G.teams[ME].pw.barrage, paused: G.paused, el: document.elementFromPoint(innerWidth/2, 60)?.outerHTML.slice(0, 80) })));
   const vp = await page.evaluate(() => { for (let y = innerHeight * .5; y < innerHeight * .9; y += 20) for (let x = innerWidth * .3; x < innerWidth * .7; x += 20) { if (document.elementFromPoint(x, y) === cv && screenToWorld(x, y)) return { width: x * 2, height: y / 0.6 }; } return { width: innerWidth, height: innerHeight }; });
-  await click(vp.width / 2, vp.height * 0.6, { button: 'right' });
+  await click(vp.width / 2, vp.height * 0.6);
   { const ac = await acts(page); ck(mode + ' targeted power fires after one map click', pw(ac).includes('barrage') && await page.evaluate(() => !G.aim), JSON.stringify([ac, vp, await page.evaluate(() => [JSON.stringify(window.__pd), MLOCK.on, LASTPT, G.aim, G.place, G.over, mouse.x, mouse.y, !!screenToWorld(mouse.x, mouse.y)])])); }
   if (!tap) {
     await page.evaluate(() => { G.teams[ME].pw.barrage.cd = 0; updateUI(); window.__acts = []; });
