@@ -19,7 +19,8 @@ function idStart(){const ids=IDS_PEND;IDS_PEND=null;if(!G||!G.teams)return;const
   const want=G.teams.map((T,i)=>{const d=idClean(ids?ids[i]:(i===ME&&MODE==='single'?idSelf():null));T.emb=d&&d.e||'';return d&&d.c||'';});
   const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'],out=[];
   if(SET.cb){G.teams.forEach((T,i)=>{T.color=ID_CB[i%ID_CB.length];T.dark=shade(T.color,.45);});return;}
-  for(let i=0;i<N;i++)if(want[i]&&!out.some(c=>c&&cd(c,want[i])<.45))out[i]=want[i];
+  const PK=G.pcP||[];for(let i=0;i<N;i++)if(PK[i]>=0)out[i]=G.teams[i].color;   // a colour picked in the lobby wins over the profile colour and is never moved
+  for(let i=0;i<N;i++)if(!out[i]&&want[i]&&!out.some(c=>c&&cd(c,want[i])<.45))out[i]=want[i];
   for(let i=0;i<N;i++){if(out[i])continue;let c=G.teams[i].color;if(out.some(q=>q&&cd(q,c)<.45))c=ALT.find(a=>out.every(q=>!q||cd(q,a)>=.45))||ALT[i%ALT.length];out[i]=c;}
   G.teams.forEach((T,i)=>{if(T.color!==out[i]){T.color=out[i];T.dark=shade(out[i],.45);}});}
 /* ---------- emblems ---------- */

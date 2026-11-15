@@ -622,6 +622,10 @@ for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctr
 // The data rows of removed nations stay (old saves, hidden base rows such as EU) but are in no list a player or the AI can reach.
 const PLAYABLE=['IR','RS','DW','RV','OB','US','GB','FR','DE','IL','UA','RU','CN','KP','IN','JP','KR','PK','SA','AE','TR','EG'];   /* Abdullah 2026-11-14 "Keep 22": the 18 + IN JP DE KR */
 const FKEYS=PLAYABLE.filter(k=>FACTIONS[k]||k==='JP');   /* JP's row is added by 01c-jp.js right after */
+/* Player colours (Abdullah 2026-11-14 18:57 "players can choose their color"): 12 clearly different colours + "Nation colour" (= no pick, the faction default).
+   A seat's pick is an index into PCOLS (-1 = nation colour). The lobby, the servers and newGame all carry the array `pc`; pcClean makes it safe (unique, in range). */
+const PCOLS=[{k:'red',n:'Red',c:'#e03a3a'},{k:'blue',n:'Blue',c:'#3a78e0'},{k:'green',n:'Green',c:'#2fae4e'},{k:'yellow',n:'Yellow',c:'#f0d23a'},{k:'orange',n:'Orange',c:'#f08a2a'},{k:'purple',n:'Purple',c:'#9a52d6'},{k:'cyan',n:'Cyan',c:'#2fd0d6'},{k:'pink',n:'Pink',c:'#f27fb8'},{k:'white',n:'White',c:'#f0f0f0'},{k:'grey',n:'Black / Grey',c:'#4a4f57'},{k:'brown',n:'Brown',c:'#8a5a34'},{k:'lime',n:'Lime',c:'#a6e22e'}];
+function pcClean(a,n){if(!Array.isArray(a))return null;const o=[];for(let i=0;i<n;i++){const v=a[i];o.push(Number.isInteger(v)&&v>=0&&v<PCOLS.length&&!o.includes(v)?v:-1);}return o.some(v=>v>=0)?o:null;}
 // An old save / replay / online slot naming a removed nation falls back to a kept nation of the same morale style.
 const NATFALL={EU:'FR',PL:'FR',IQ:'RV',SY:'RS',BI:'OB',AF:'DW',KD:'RS',CU:'UA',AU:'GB',CA:'GB'};
 function natFix(f){if(FKEYS.includes(f))return f;if(NATFALL[f])return NATFALL[f];const st=MORALE_STYLE[f];return {zeal:'IR',prof:'RU',home:'UA',fire:'SA'}[st]||'US';}
