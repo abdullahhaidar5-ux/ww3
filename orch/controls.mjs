@@ -344,9 +344,9 @@ try {
   await page.mouse.click(V.HQ.x, V.HQ.y);
   check('left-click own building selects it', sameIds(await sel(page), [await page.evaluate(() => window.__HQ)]), JSON.stringify(await sel(page)));
   check('rally-point ground is clickable', V.hqGround.ok, JSON.stringify(V.hqGround));
-  await page.mouse.click(V.hqGround.x, V.hqGround.y, { button: 'right' });
+  await page.mouse.click(V.hqGround.x, V.hqGround.y);
   a = await acts(page);
-  check('right-click ground with a production building selected sets its rally point', a.some(x => x.t === 'rally'), JSON.stringify(a));
+  check('left-click ground with a production building selected sets its rally point', a.some(x => x.t === 'rally'), JSON.stringify(a));
   check('…and the building is let go', (await sel(page)).length === 0);
 
   /* ---- mouse kept inside the game window (Pointer Lock) ---- */
