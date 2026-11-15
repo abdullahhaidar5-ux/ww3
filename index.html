@@ -14930,7 +14930,7 @@ syncSettings();setTimeout(applyGfx,0);
 // everyone else, so the menu opens without stopping time and says so.
 function togglePause(on){if(!G||G.over||window.LOADING)return;const mp=MODE!=='single';if(on==null)on=!(G.paused||!$('pauseOv').hidden);
   if(on){if(!mp){G.paused=true;try{if(AU.ctx&&AU.ctx.state==='running')AU.ctx.suspend();}catch(e){}try{if(window.speechSynthesis)speechSynthesis.pause();}catch(e){}}
-    $('pauseSub').textContent=mp?'Multiplayer battles cannot be paused - the battle continues while this menu is open.':'The battle is on hold. Nothing moves until you resume. (P or Esc to resume)';$('resumeBtn').textContent=mp?'Back to battle':'Resume';$('pauseOv').hidden=false;}
+    $('pauseSub').textContent=mp?'Multiplayer battles cannot be paused - the battle continues while this menu is open.':'The battle is on hold. Nothing moves until you resume. (P or Esc to resume)';$('resumeBtn').textContent=mp?'Back to battle':'Resume';{const sv=$('svSave');if(sv)sv.hidden=mp;}$('pauseOv').hidden=false;}   /* no Save game in multiplayer (Abdullah 2026-11-14 23:13) */
   else{G.paused=false;$('pauseOv').hidden=true;try{if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();}catch(e){}try{if(window.speechSynthesis)speechSynthesis.resume();}catch(e){}last=performance.now();}
   syncPause();}
 function askRestart(){if(!G)return;if(MODE!=='single'){pushLog('Multiplayer battles cannot be restarted - quit and start a new one.','w');return;}askQuit();G.restartAsk=true;$('quitOv').querySelector('h1').textContent='Restart this battle?';$('quitSub').textContent='The battle starts over with the same nations, map and settings.';$('quitYes').textContent='Restart';}
@@ -16476,7 +16476,7 @@ function svListUI(c,list,opts){const box=document.createElement('div');box.style
   c.appendChild(box);return box;}
 async function svSaveDialog(){if(!G)return;
   svOv('svOv',async(c,close)=>{c.innerHTML='<h1>Save game</h1>';
-    if(!svCanSave()){c.insertAdjacentHTML('beforeend','<p>'+(MODE!=='single'?'Online battles can only be saved by the host (coming soon).':'This battle can\'t be saved.')+'</p>');c.appendChild(svBtn('Close',close,true));return;}
+    if(!svCanSave()){c.insertAdjacentHTML('beforeend','<p>'+(MODE!=='single'?'Online battles can\'t be saved.':'This battle can\'t be saved.')+'</p>');c.appendChild(svBtn('Close',close,true));return;}
     const inp=document.createElement('input');inp.id='svName';inp.maxLength=40;inp.style.cssText='width:100%;box-sizing:border-box;font:inherit;font-size:17px;padding:8px;background:var(--panel2);color:var(--fg);border:1px solid var(--line);margin:6px 0';
     const mp=MAPS[G.mapKey],T=G.teams[ME];inp.value=((mp&&mp.name||G.mapKey)+' · '+(T.F&&T.F.name||T.fac)+' · '+svClock(G.t)).slice(0,40);c.appendChild(inp);
     const row=document.createElement('div');let list=[];

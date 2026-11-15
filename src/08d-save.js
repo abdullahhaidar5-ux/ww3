@@ -119,7 +119,7 @@ function svListUI(c,list,opts){const box=document.createElement('div');box.style
   c.appendChild(box);return box;}
 async function svSaveDialog(){if(!G)return;
   svOv('svOv',async(c,close)=>{c.innerHTML='<h1>Save game</h1>';
-    if(!svCanSave()){c.insertAdjacentHTML('beforeend','<p>'+(MODE!=='single'?'Online battles can only be saved by the host (coming soon).':'This battle can\'t be saved.')+'</p>');c.appendChild(svBtn('Close',close,true));return;}
+    if(!svCanSave()){c.insertAdjacentHTML('beforeend','<p>'+(MODE!=='single'?'Online battles can\'t be saved.':'This battle can\'t be saved.')+'</p>');c.appendChild(svBtn('Close',close,true));return;}
     const inp=document.createElement('input');inp.id='svName';inp.maxLength=40;inp.style.cssText='width:100%;box-sizing:border-box;font:inherit;font-size:17px;padding:8px;background:var(--panel2);color:var(--fg);border:1px solid var(--line);margin:6px 0';
     const mp=MAPS[G.mapKey],T=G.teams[ME];inp.value=((mp&&mp.name||G.mapKey)+' · '+(T.F&&T.F.name||T.fac)+' · '+svClock(G.t)).slice(0,40);c.appendChild(inp);
     const row=document.createElement('div');let list=[];

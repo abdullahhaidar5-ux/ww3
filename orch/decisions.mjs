@@ -291,6 +291,8 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(!/\bG\.grand\b|\bconqBan\b|loadGrand|grandMenu|grandBattleSetup|GRAND_NOPROD|svGrandInfo|gnLobby|\bGC\.|GR_REAL/.test(all), 'one game: a grand-campaign code path is back in src/ (G.grand, conqBan, loadGrand, grandMenu, gnLobby, GC. ...)');
   // ... and Conquest is gone too: no G.conq, no towns layer (town capture, tax, opinion, revolts, militias, setup timer), no Conquest/Battle switch, no Realistic toggle
   ck(!/\bG\.conq\b|\bG\.towns\b|\binitTowns\(|\bupdTowns\(|\btownIncome\(|\bCQ_[A-Z]|\bsetupEnd\b|\bopOf\(|\bpolMul\(|\bREAL_TIER\b|\brealRow\(|\bsetup\.real\b|\bsetup\.bmAll\b|Conquest battlefields too/.test(all), 'one game: a Conquest code path is back in src/ (G.conq, G.towns, town tax/capture, setup timer, opinion, Realistic, Conquest map link)');
+  // no saving in multiplayer (Abdullah 2026-11-14 23:13 "Remove the save option for multiply player"): saves are single-player only and the pause menu hides Save game online
+  ck(/function svCanSave\(\)\{return[^}]*MODE==='single'/.test(all) && /sv\.hidden=mp/.test(all), 'multiplayer must not offer Save game (svCanSave single-player only, pause menu hides the button online)');
   ck(!['03h-economy.js', '08c-towns.js', '08c-economy.js'].some(f => srcFiles.includes(f)), 'one game: a Conquest-only module (03h-economy, 08c-towns, 08c-economy) is back');
   // Battle has supply lines (Abdullah 2026-11-13 20:19 "Bring supply lines into battle") and the ammo rule (20:06): refill inside your area, no timers, Test range unlimited
   const sim = SRC['03-sim.js'] || '', lg = SRC['03c-logistics.js'] || '', lgu = SRC['08c-logi.js'] || '';
@@ -539,13 +541,13 @@ try {
     ck(sl.on && sl.wanted, 'L / the Supply lines button must switch the supply overlay on in Battle'); ck(sl.chip, 'Battle must show the Supply chip'); ck(sl.ui, 'the ammo row must say whether the unit is in your supply area');
     // CAPTURABLE ROADS (Abdullah 2026-11-14 18:40 "Make it so that units can capture roads"): a ground unit standing on a neutral road section captures it in ~10 s, an air unit does not, an owned section is supply area
     { const rc = await ev(() => { const L = G.lg, D = G.lgd; lgFix(D); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && e.s && e.s.dom === 'ground'); if (!u) return { err: 'no unit' };
-        let ei = -1, nn = 0; for (let i = 0; i < L.E.length; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 120 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) { nn++; if (ei < 0 || e.len > L.E[ei].len) ei = i; } } if (ei < 0) return { err: 'no neutral section', edges: L.E.length, owned: L.E.filter((e, i) => lgRcOwner(i) >= 0).length };   /* the longest neutral, open section (map-independent) */
+        let ei = -1, nn = 0; for (let i = 0; i < L.E.length; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 120 && lgRcOwner(i) < 0 && !lgBlk(i, ME)) { nn++; if (ei < 0 || e.len > L.E[ei].len) ei = i; } } let covK = null; if (ei < 0) { for (let i = 0; i < L.E.length; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 120 && !lgBlk(i, ME) && (ei < 0 || e.len > L.E[ei].len)) ei = i; } if (ei < 0) return { err: 'no road section at all', edges: L.E.length }; covK = L.cov; L.cov = null; if (D.rc) delete D.rc[ei]; }   /* small maps: every road is already supply area, so test on the longest one with the supply cover lifted for the test */   /* the longest neutral, open section (map-independent) */
         const e = L.E[ei], m = lgPoint(e, e.len / 2), ox = u.x, oy = u.y, os = u.s; const run = n => { for (let k = 0; k < n; k++) lgRoadCap(1); };
         const hold = () => D.rc[ei] && D.rc[ei].o;
         u.s = Object.assign({}, os, { dom: 'air' }); u.x = m[0]; u.y = m[1]; run(14); const air = hold();
         u.s = os; run(4); const early = hold(); run(10); const got = hold();
         lgCover(); const beads = (L.bead[ME] || []).some(b => Math.hypot(b.x - m[0], b.y - m[1]) < 150); const sup = supplyPoints()[ME].some(p => p.rd && Math.hypot(p.x - m[0], p.y - m[1]) < 150);
-        u.x = ox; u.y = oy; return { ei, air, early, got, beads, sup, ME }; });
+        u.x = ox; u.y = oy; if (covK) { L.cov = covK; lgCover(); } return { ei, air, early, got, beads, sup, ME, covLifted: !!covK }; });
       console.log('road capture', JSON.stringify(rc));
       ck(!rc.err, 'road capture test setup: ' + JSON.stringify(rc)); if (!rc.err) { ck(!(rc.air >= 0), 'an air unit must not capture a road section: ' + JSON.stringify(rc)); ck(!(rc.early >= 0), 'road capture takes ~10 s, not 4: ' + JSON.stringify(rc));
         ck(rc.got === rc.ME, 'a ground unit standing on a neutral road section must capture it in ~10 s: ' + JSON.stringify(rc)); ck(rc.beads && rc.sup, 'a captured road section must count as the owner\'s supply area: ' + JSON.stringify(rc)); } }
