@@ -443,7 +443,7 @@ function issueCmd(w,t,rally){
 let lastR={t:0,id:0},rDown=0;
 const MDEF={mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f',mRS:100,mCur:1,mPing:1,mLock:1,mKeep:1};
 const MPRE={std:{mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none'},gen:{mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll'}};
-if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;if(SET.keep3!==1){SET.mKeep=1;SET.keep3=1;try{saveSet();}catch(_){}}   /* Abdullah 2026-11-14 18:07 "Right click should not unselect the units selected" */
+if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;if(SET.keep3!==1){SET.mKeep=1;SET.keep3=1;try{saveSet();}catch(_){}}SET.tk=0;   /* Breaking-news ticker and its corner clip removed (Abdullah 2026-11-14 18:32 "Remove breaking news clip") */   /* Abdullah 2026-11-14 18:07 "Right click should not unselect the units selected" */
 function mPreset(){for(const p in MPRE)if(Object.keys(MPRE[p]).every(k=>SET[k]===MPRE[p][k]))return p;return 'custom';}
 function stdMouse(){return mPreset()==='std';}
 function leftOrders(){return SET.mLG==='move';}
@@ -1748,7 +1748,7 @@ function tkPoll(){try{if(!G||!TK.on||TK.G!==G){if(!G||TK.G!==G)clearInterval(TK.
 }catch(e){}}
 if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
-{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
+/* (War news settings toggle removed with the ticker, 2026-11-14) */ if(0){const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
   const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}
 /* ---------- laneD D2 (first-time-player audit): with 54 nations the real start buttons were ~3700px down the menu.
    A quick-start row sits at the top (it just presses the real buttons below), and the nation list is a compact,

@@ -13823,7 +13823,7 @@ function issueCmd(w,t,rally){
 let lastR={t:0,id:0},rDown=0;
 const MDEF={mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f',mRS:100,mCur:1,mPing:1,mLock:1,mKeep:1};
 const MPRE={std:{mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none'},gen:{mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll'}};
-if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;if(SET.keep3!==1){SET.mKeep=1;SET.keep3=1;try{saveSet();}catch(_){}}   /* Abdullah 2026-11-14 18:07 "Right click should not unselect the units selected" */
+if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;if(SET.keep3!==1){SET.mKeep=1;SET.keep3=1;try{saveSet();}catch(_){}}SET.tk=0;   /* Breaking-news ticker and its corner clip removed (Abdullah 2026-11-14 18:32 "Remove breaking news clip") */   /* Abdullah 2026-11-14 18:07 "Right click should not unselect the units selected" */
 function mPreset(){for(const p in MPRE)if(Object.keys(MPRE[p]).every(k=>SET[k]===MPRE[p][k]))return p;return 'custom';}
 function stdMouse(){return mPreset()==='std';}
 function leftOrders(){return SET.mLG==='move';}
@@ -15128,7 +15128,7 @@ function tkPoll(){try{if(!G||!TK.on||TK.G!==G){if(!G||TK.G!==G)clearInterval(TK.
 }catch(e){}}
 if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
-{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
+/* (War news settings toggle removed with the ticker, 2026-11-14) */ if(0){const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
   const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}
 /* ---------- laneD D2 (first-time-player audit): with 54 nations the real start buttons were ~3700px down the menu.
    A quick-start row sits at the top (it just presses the real buttons below), and the nation list is a compact,
@@ -16827,7 +16827,7 @@ POW_KEY.hack='[';POW_KEY.emp=']';
 (()=>{const st=document.createElement('style');st.textContent='#mwPip{position:fixed;left:14px;top:62px;width:240px;height:135px;z-index:40;border:2px solid #e23b33;box-shadow:0 4px 16px #000a;pointer-events:none;display:none}#mwPip .t{position:absolute;left:-2px;top:-20px;background:#e23b33;color:#fff;font:800 12px system-ui,sans-serif;letter-spacing:.08em;padding:2px 8px}#mwPip .x{position:absolute;left:0;right:0;bottom:0;background:rgba(8,10,12,.82);color:#fff;font:600 12px system-ui,sans-serif;padding:3px 7px}#mwFlash{position:fixed;inset:0;z-index:39;pointer-events:none;background:#7fd0ff;opacity:0;transition:opacity .5s}#mwScore{position:fixed;left:50%;top:58px;transform:translateX(-50%);z-index:59;background:rgba(10,14,12,.82);border:1px solid #4a5a48;border-radius:8px;padding:5px 10px;color:#e8eadf;font:600 13px system-ui,sans-serif;display:none}#mwScore div{display:flex;gap:10px;align-items:center;white-space:nowrap}#mwScore i{width:10px;height:10px;border-radius:50%;display:inline-block}#mwScore span{min-width:46px;text-align:right}';document.head.appendChild(st);})();
 function mwPipEl(show,label){let el=document.getElementById('mwPip');if(!el){el=document.createElement('div');el.id='mwPip';el.innerHTML='<div class="t">BREAKING NEWS</div><div class="x"></div>';document.body.appendChild(el);}
   if(show){el.lastChild.textContent=label||'';}el.style.display=show?'block':'none';}
-function mwPipShow(x,y,label,delay){if(typeof SET!=='undefined'&&SET.tk===0)return;if(typeof MODE!=='undefined'&&MODE==='replay')return;
+function mwPipShow(x,y,label,delay){return;if(typeof SET!=='undefined'&&SET.tk===0)return;if(typeof MODE!=='undefined'&&MODE==='replay')return;
   const g0=G,go=()=>{if(!G||G!==g0||G.over||(window.LOADING))return;const now=performance.now();if((MWV.pip&&MWV.pip.until>now)||now-MWV.pipAt<6000)return;MWV.pipAt=now;MWV.pip={x,y,until:now+3000,G};mwPipEl(true,label);};
   if(delay>0)setTimeout(go,delay*1000);else go();}
 // The corner picture is drawn into its own small off-screen picture with the same settings as the main view and then
@@ -17834,6 +17834,7 @@ html body #side.zhpow #info,html body #side.zhpow #zhEmb{display:none!important}
 #cmdP{bottom:auto!important;top:64px!important;left:10px!important;right:auto!important}
 html body #side#side{background:radial-gradient(circle at 8px 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),radial-gradient(circle at calc(100% - 8px) 8px,#e7ecf0 0 2px,#3a4148 3px 4px,transparent 5px),linear-gradient(180deg,var(--tc) 0 3px,transparent 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),linear-gradient(180deg,#eef2f5 0,#c9d2da 12%,#a6b1bb 40%,#88949f 72%,#6b7681 100%)!important}
 #hudLyB{display:none!important}
+#news,#mwPip{display:none!important}
 .stanceBtn,[data-k="sn"]{display:none!important}   /* army stance removed */
 #pwMeter{display:none!important}   /* power lives in the bar's top console now */
 /* ▼ folds the whole bar down off the screen; only the ▼/★ tabs stay (Abdullah 16:33 "Make this down arrow minimize the entire bar") */
