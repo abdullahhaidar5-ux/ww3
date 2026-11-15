@@ -25,5 +25,12 @@ Job: make gate/decisions, gate/controls, gate/controlscheck, gate/save green aga
 - zhfeel.mjs: queue badge must equal what is still queued (a fast unit can finish within the 3 s).
 - decisions.mjs: key-table parse sanity >= 18 rows (table shrank after the UI audit).
 
-## Not mine / still red elsewhere (from 90ec5bf decisions log)
-missions marsh map 'marshes' missing; hover card BEATS row for the AT team; road-section capture (air/10 s) — maps/data lanes.
+## Also fixed in decisions.mjs
+- missions guard: a mission map may live in any src/02* file as `{k:'name'` (marshes is in 02c-memaps.js and in BATTLE_MAPS).
+- one-game guard tripped on a comment in 03k (fixed); icons guard hudAl (fixed in 08i-hud.js).
+
+## Still red, not done here
+- gate/decisions: hover card of IR's AT team shows only WEAK TO (data via matchUp in node says it beats aa/heli/tank/sam,
+  so it is the browser card, not the data) - next owner: 08j-uikit.js match() / ctipFill.
+- gate/decisions: road-section capture checks (ei:0, flaky: different sub-checks fail per run) - logistics lane.
+- gate/migrate-abrupt, migrate-dual, superfreeze: other helpers' areas (redfix B / C).
