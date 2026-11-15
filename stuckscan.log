@@ -1,0 +1,14 @@
+conquest strait       stuck episodes   0  mover-seconds 5291
+conquest golan        stuck episodes   1  mover-seconds 3998
+conquest taiwan       stuck episodes   1  mover-seconds 3863
+conquest honshu       stuck episodes   0  mover-seconds 4612
+conquest volga        stuck episodes   0  mover-seconds 5708
+conquest rivers       stuck episodes   0  mover-seconds 5183
+skip battle strait (map not used)
+skip battle golan (map not used)
+battle   taiwan       stuck episodes   0  mover-seconds 4025
+skip battle honshu (map not used)
+skip battle volga (map not used)
+skip battle rivers (map not used)
+total stuck episodes 2 {"against building turret":1,"open ground":1}
+STUCKSCAN PASS (2 <= 8)
