@@ -21365,6 +21365,27 @@ body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv) .card,body:has(#menu:no
 body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen) :is(h1,h2):first-child{font:700 clamp(30px,4.2vh,42px)/1.05 var(--display)!important;letter-spacing:.06em;color:var(--gold)!important;border-bottom:1px solid rgba(125,138,108,.4);padding-bottom:10px;margin:0 0 12px!important;text-transform:uppercase}
 body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen) button:is(.big,.ghost){border-radius:0!important;background:linear-gradient(180deg,var(--st1),var(--st2) 55%,var(--st3))!important;border:1px solid #11140f!important;border-top-color:var(--hi)!important;color:#e6e8dc!important;font-family:var(--display)!important;letter-spacing:.1em;text-transform:uppercase}
 body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen) button:is(.big,.ghost):hover{border-color:var(--gold)!important;color:var(--gold)!important}
+/* ---- war-room look (Abdullah 2026-11-14 21:08 "Need sexier menu"): steel-teal glass column over the world map, cut-corner plates with a glowing edge, gold for the chosen thing ---- */
+#menu.m3,body:has(#menu:not([hidden])) :is(#settings,#svLd,#svOv,#campScreen){--st1:#2b3c46;--st2:#1a262d;--st3:#0d151a;--hi:#5fb8c9;--gold:#f2cb5c;--cut:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px))}
+#mxbody{background:linear-gradient(180deg,rgba(10,18,23,.80),rgba(5,10,13,.88))!important;backdrop-filter:blur(10px) saturate(1.25);-webkit-backdrop-filter:blur(10px) saturate(1.25);border-left:1px solid rgba(95,184,201,.55)!important;box-shadow:-1px 0 0 rgba(95,184,201,.18),-8px 0 24px rgba(95,184,201,.10),-40px 0 90px rgba(0,0,0,.65)!important}
+#mxbody::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,transparent,rgba(95,184,201,.9) 30%,rgba(242,203,92,.8) 70%,transparent);pointer-events:none;z-index:2}
+.mxh{color:var(--gold)!important;letter-spacing:.09em!important;border-bottom:0!important;padding-bottom:12px!important;background:linear-gradient(90deg,var(--hi),rgba(95,184,201,.15) 60%,transparent) left bottom/100% 1px no-repeat;text-shadow:0 0 18px rgba(242,203,92,.25),0 2px 0 #05080a!important}
+.mxsub,#mxtag{color:#9fb7c1!important}
+.mxi,.mxlink,.mxplus,#menu.m3 #pickP .fac,.mxmap,#mxtop .mxback,#menu.m3 .seg button,#menu.m3 .chip{border:0!important;border-radius:0!important;clip-path:var(--cut);background:linear-gradient(180deg,rgba(43,60,70,.94),rgba(22,32,38,.94) 55%,rgba(12,19,23,.96))!important;box-shadow:inset 0 0 0 1px rgba(95,184,201,.32),inset 3px 0 0 var(--hi),inset 0 1px 0 rgba(255,255,255,.12)!important;color:#e4edf0!important;text-shadow:0 1px 0 #05080a;transition:box-shadow .15s,background .15s,color .15s,transform .15s}
+.mxi:hover,.mxi:focus-visible,.mxlink:hover:not(:disabled),.mxplus:hover,#menu.m3 #pickP .fac:hover,.mxmap:hover,#mxtop .mxback:hover,#menu.m3 .seg button:hover{filter:none!important;color:var(--gold)!important;transform:translateX(3px)!important;background:linear-gradient(180deg,rgba(58,80,92,.96),rgba(28,40,47,.96) 55%,rgba(14,22,27,.98))!important;box-shadow:inset 0 0 0 1px rgba(242,203,92,.7),inset 4px 0 0 var(--gold),0 0 18px rgba(95,184,201,.25)!important}
+.mxi.on,#menu.m3 #pickP .fac.on,.mxmap.on,#menu.m3 .seg button.on{color:var(--gold)!important;background:linear-gradient(180deg,rgba(92,76,26,.95),rgba(48,40,14,.95) 55%,rgba(24,20,8,.97))!important;box-shadow:inset 0 0 0 1px var(--gold),inset 4px 0 0 var(--gold),inset 0 0 22px rgba(242,203,92,.25)!important}
+#menu.m3 #pickP .fac .nm{letter-spacing:.06em}
+.mxi small{color:#8fc3cf!important}
+.mxgo{clip-path:var(--cut);border:0!important;color:#1a1406!important;background:linear-gradient(180deg,#ffe28a,#f2cb5c 45%,#b98a26)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -2px 0 rgba(0,0,0,.25)!important;text-shadow:0 1px 0 rgba(255,255,255,.4)!important;animation:mxGlow 2.4s ease-in-out infinite}
+.mxgo:hover:not(:disabled){background:linear-gradient(180deg,#fff0b8,#ffd56a 45%,#d29e2c)!important;color:#000!important}
+.mxgo:disabled{animation:none;filter:grayscale(.8) brightness(.6)}
+@keyframes mxGlow{0%,100%{filter:drop-shadow(0 0 4px rgba(242,203,92,.35))}50%{filter:drop-shadow(0 0 14px rgba(242,203,92,.75))}}
+#mxnatin,#menu.m3 input[type=text],#menu.m3 select{background:rgba(4,9,12,.8)!important;border:1px solid rgba(95,184,201,.45)!important;border-radius:0!important;color:#e4edf0!important;padding:8px 10px!important;font:500 14px var(--display)!important;letter-spacing:.04em}
+#mxnatin:focus,#menu.m3 select:focus{outline:0;border-color:var(--gold)!important;box-shadow:0 0 10px rgba(242,203,92,.35)}
+.mxfoot{background:linear-gradient(0deg,rgba(5,10,13,.98) 62%,rgba(5,10,13,0))!important}
+#mxlogo{text-shadow:0 4px 0 #05080a,0 0 40px rgba(95,184,201,.35)!important}
+#mxlogo span{color:var(--gold)!important;text-shadow:0 4px 0 #05080a,0 0 30px rgba(242,203,92,.45)!important}
+#mxcrumb b{color:var(--hi)!important}
 `;document.head.appendChild(s);}
 /* One game (Abdullah 2026-11-13 20:18): every setup screen is a Battle. Rebuild the map list when the menu opens on it (the Battle map list). */
 function mxModeName(){return 'Battle';}
@@ -21419,13 +21440,13 @@ function mxBuild(){
   opt('Season','Mud slows wheels, snow slows infantry. Roads matter more.',g('ssnRow'));
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
   /* --- test range: one small window (Abdullah 2026-11-13 19:59 "Why can't I choose nations in test range") --- */
-  {const R=scr('t-range','<h2 class="mxh">Test range</h2><p class="mxsub">Pick your nation and the target nation (they can be the same), and a Battle map. It plays exactly like Battle (Command Center, dozer, supply, tech tree) with unlimited money and a passive target to try things on.</p>');
+  {const R=scr('t-range','<h2 class="mxh">Test range</h2><p class="mxsub">Pick a map, a target and your nation. Same rules as Battle, with unlimited money and a passive target.</p>');
    const w=mxEl('div','mxpl'),l=mxEl('div'),r=mxEl('div');MX.trNat=mxEl('div');MX.trNat.id='mxtrnat';MX.trTgt=mxEl('div','mxrow');MX.trMap=mxEl('div','mxrow');
    const in2=mxEl('input');in2.id='mxtrin';in2.placeholder='Find a nation…';in2.autocomplete='off';in2.spellcheck=false;in2.oninput=()=>mxNatFilter(in2.value);
    l.append(mxEl('div','mxlab','Your nation'),in2,MX.trNat);
    const ms=mxEl('select');ms.id='mxtrmap';ms.onchange=()=>{setup.map=ms.value;};MX.trMapSel=ms;
    MX.trTgt.append(mxEl('div','mxlab','Target nation'),g('aiFac'));MX.trMap.append(mxEl('div','mxlab','Map'),ms);
-   r.append(MX.trTgt,MX.trMap);w.append(l,r);R.appendChild(w);
+   r.append(MX.trMap,MX.trTgt);r.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px';w.append(r,l);R.appendChild(w);   /* map + target first, so the map pick is in sight (Abdullah 2026-11-14 21:09 "Map selection is not working") */
    MX.trGo=go('Start',()=>mxTrStart());foot(R,MX.trGo);}
   /* --- Play (one game, Abdullah 2026-11-13 20:18; was "Single player", 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range") --- */
   const SP=scr('single','<h2 class="mxh">Play</h2><p class="mxsub">Battle against the computer, the story missions, or learn the game.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
