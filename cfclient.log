@@ -1,0 +1,73 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:36845
+[2s] pages loaded; this machine's host benchmark: 835
+  ✗ timed out waiting for the creator's lobby on the server
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFOVER FAIL: timed out waiting for the creator's lobby on the server (34s)
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:35941
+[1s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[5s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+  ✗ timed out waiting for the creator's battle to start in its own browser
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E FAIL: timed out waiting for the creator's battle to start in its own browser (46s)
+local game server http://127.0.0.1:39125
+[1s] both pages loaded
+  ✗ timed out waiting for the creator's Cloudflare lobby
+--- server log (tail) ---
+
+creator status: 
+friend status: 
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFPASSWORD FAIL: timed out waiting for the creator's Cloudflare lobby (43s)
+local game server http://127.0.0.1:38319
+[1s] page loaded
+[38s] 1. skirmish (mouse): picks [0,3,-1,1], AI 2 Random -> spot 3; bases [[1000,860],[1000,3540],[5400,860],[5400,3540]]; HQs on their bases: true (preview 24326 bytes)
+[60s] 2. phone (touch only): picks [0,3,-1,1] made by tapping; picker fits in landscape too ({"cv":384,"over":0,"rows":true})
+  ✗ timed out waiting for the leader's Cloudflare lobby
+--- server log (tail) ---
+
+  warn: player console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: screenshot startpick-desktop.png: page.screenshot: Expected options.clip.height to be greater than 0.
+  warn: phone console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: screenshot startpick-phone.png: page.screenshot: Expected options.clip.height to be greater than 0.
+  warn: screenshot startpick-phone-landscape.png: page.screenshot: Expected options.clip.height to be greater than 0.
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFSTARTPICK FAIL: timed out waiting for the leader's Cloudflare lobby (109s)
+local game server http://127.0.0.1:45621 (pages reach it through http://127.0.0.1:36185); over-budget server http://127.0.0.1:34889
+[3s] 0. menu: "▶ Play online" and "+ New battle"
+  ✗ timed out waiting for the creator's battle to start in its own browser
+--- server log (tail) ---
+
+ ⛅️ wrangler 4.153.0 (update available 4.162.0)
+───────────────────────────────────────────────
+[custom build] Running: node build-sim.mjs
+[custom build] battle sim up to date: gen/battle-sim.js (785 KB)
+[custom build] 
+Your Worker has access to the following bindings:
+Binding                             Resource                  Mode
+env.ROOMS (GameRoom)                Durable Object            local
+env.LOBBY (Lobby)                   Durable Object            local
+env.BUDGET (Budget)                 Durable Object            local
+env.BATTLES (BattleRoom)            Durable Object            local
+env.OVERRUN_GUARD ("(hidden)")      Environment Variable      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:45621
+[wrangler:info] GET /health 200 OK (276ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (17ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (4ms)
+[wrangler:info] GET /turn 200 OK (4ms)
+[wrangler:info] GET /room/c2zg3l 101 Switching Protocols (16ms)
+
+creator log: []
+friend log: []
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT FAIL: timed out waiting for the creator's battle to start in its own browser (44s)
