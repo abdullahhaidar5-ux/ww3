@@ -24,7 +24,6 @@ const KEYTAB=[
   {id:'guard',ctx:'battle',grp:'Orders',name:'Guard (then click)',def:'g'},
   {id:'stop',ctx:'battle',grp:'Orders',name:'Stop',def:'x'},
   {id:'ret',ctx:'battle',grp:'Orders',name:'Return to base',def:'r'},
-  {id:'form',ctx:'battle',grp:'Orders',name:'Next formation',def:'o'},
   {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (dozers: trench)',def:'i'},
   {id:'resup',ctx:'battle',grp:'Orders',name:'Resupply ammunition',def:'z'},
   {id:'abil',ctx:'battle',grp:'Orders',name:'Unit or leader ability, sonar ping, Recon power (with Shift: leader\'s ultimate)',def:'e'},
