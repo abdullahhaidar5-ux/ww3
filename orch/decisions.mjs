@@ -431,7 +431,7 @@ try {
       const wide = [...document.querySelectorAll('#panel .btn.wide')].filter(noIc).map(b => b.id);
       const f = G.ents.filter(u => u.team === ME && !u.dead && !u.isB).slice(0, 3); G.sel = f; try { updateUI(); } catch (e) {}
       const dock = [...document.querySelectorAll('.orddock button, .cmdrow button')].filter(b => vis(b) && noIc(b)).map(b => b.textContent.trim().slice(0, 20));
-      const hud = ['aPause', 'aMenu', 'barGrip', 'mmBtn', 'sbFold', 'aSet', 'aRestart', 'aQuit'].filter(id => { const b = document.getElementById(id); return b && noIc(b); });
+      const hud = ['hudAl', 'hudHelp', 'sbFight', 'aPause', 'aMenu', 'barGrip', 'mmBtn', 'sbFold', 'aSet', 'aRestart', 'aQuit'].filter(id => { const b = document.getElementById(id); return b && noIc(b); });
       const n = document.querySelectorAll('#panel .btn.wide').length; return { wide, dock, hud, n, tbl: typeof ICON_SVG === 'object' && Object.keys(ICON_SVG).length, up: typeof icoUpg === 'function' && Object.keys(UPG).slice(0, 40).map(k => ICON_SVG[icoUpg(k)] ? '' : k).filter(Boolean) }; });
     ck(I.tbl >= 60, 'icons: the shared ICON_SVG table has only ' + I.tbl + ' icons'); ck(I.n > 0 && !I.wide.length, 'icons: upgrade / power buttons without an svg icon: ' + I.wide.slice(0, 6).join(','));
     ck(!I.dock.length, 'icons: order dock buttons without an svg icon: ' + I.dock.join(' | ')); ck(!I.hud.length, 'icons: HUD buttons without an svg icon: ' + I.hud.join(','));

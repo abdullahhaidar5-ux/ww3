@@ -80,21 +80,21 @@
  window.icoFill=function(root){/* every upgrade / power button in the grid */const T=G&&G.teams&&G.teams[ME];const fac=T?T.fac:'US';for(const b of (root||document).querySelectorAll('#panel .btn.wide')){const id=b.id||'';let k=null;if(id.startsWith('g_'))k=icoUpg(id.slice(2));else if(id.startsWith('p_')||id.startsWith('pu_'))k=icoPow(id.slice(id.indexOf('_')+1),fac);if(k)icoPut(b,k);}};
  /* HUD / menu / Test range buttons: id -> icon key (a function when it depends on the label) */
  const HUD={aPause:t=>/Resume/.test(t)?'play':'pause',aPauseM:t=>/Resume/.test(t)?'play':'pause',aMenu:()=>'menu',barGrip:t=>/▴/.test(t)?'up':'down',mmBtn:()=>'map',aMus:()=>'music',aSfx:()=>'sound',aVoc:()=>'voice',aSet:()=>'gear',aRestart:()=>'restart',aQuit:()=>'quit',aPhoto:()=>'camera',
-  sbFold:()=>'target',sbNations:()=>'flag',hudAl:()=>'alert',hudHelp:()=>'help',sqMake:()=>'squad',sqAll:()=>'army',sbTargets:()=>'target',sbClear:()=>'trash',sbFight:()=>'swords',resumeBtn:()=>'play',pRestart:()=>'restart',pQuit:()=>'quit',supbtn:()=>'rocket',zhStar:()=>'star'};
- const ICON_ONLY={hudHelp:1,aMenu:1,barGrip:1,mmBtn:1,zhStar:1};
+  sbFold:()=>'target',sbNations:()=>'flag',hudAl:()=>'alert',hudHelp:()=>'help',sqMake:()=>'squad',sqAll:()=>'army',sbTargets:()=>'target',sbClear:()=>'trash',sbFight:()=>'swords',resumeBtn:()=>'play',pRestart:()=>'restart',pQuit:()=>'quit'};
+ const ICON_ONLY={hudHelp:1,aMenu:1,barGrip:1,mmBtn:1};
  const busy=new WeakSet();
  window.icoHud=function(){for(const id in HUD){const b=document.getElementById(id);if(!b)continue;icoOne(b,id);}};
  function icoOne(b,id){if(busy.has(b))return;busy.add(b);try{const t=b.textContent||'';const k=HUD[id](t);const keep=b.querySelector(':scope>i.dot');
    if(!ICON_ONLY[id]){let txt=''; for(const n of b.childNodes)if(n.nodeType===3)txt+=n.nodeValue;txt=txt.replace(/^[^A-Za-z0-9$]+/,'');
      const had=b.querySelector(':scope>i.ic');if(!had||b.dataset.itx!==txt){b.textContent='';icoPut(b,k);b.append(document.createTextNode(' '+txt));b.dataset.itx=txt;}else icoPut(b,k);}
    else{const had=b.querySelector(':scope>i.ic');if(!had||had.dataset.k!==k){b.textContent='';icoPut(b,k);if(keep)b.append(keep);}}
-   b.classList.add('hasico');}finally{setTimeout(()=>busy.delete(b),0);}}
+   b.classList.add('hasico');}finally{queueMicrotask(()=>busy.delete(b));}}
  const mo=new MutationObserver(ms=>{for(const m of ms){const b=m.target.nodeType===1?m.target:m.target.parentElement;if(!b)continue;const x=b.closest&&b.closest('button');if(x&&HUD[x.id])icoOne(x,x.id);}});
  window.icoWatch=function(){icoHud();for(const id in HUD){const b=document.getElementById(id);if(b&&!b.dataset.icw){b.dataset.icw=1;mo.observe(b,{childList:true,characterData:true,subtree:true});}}};
  const st=document.createElement('style');st.textContent=`i.ic{display:inline-flex;align-items:center;justify-content:center;font-style:normal;pointer-events:none}i.ic svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1px #000)}
 button.hasico>i.ic,.menuitem>i.ic{width:1.15em;height:1.15em;vertical-align:-.22em;margin-right:.2em}
 button.hasico.ico1>i.ic,#aMenu>i.ic,#barGrip>i.ic,#mmBtn>i.ic,#zhStar>i.ic{width:1.25em;height:1.25em;margin:0}
-html body #side #panel .btn.wide::before{content:none!important}
+#sbx button>i.ic{width:20px!important;height:20px!important;margin:0 6px 0 0!important;flex:none}#sbCond button>i.ic{display:block;margin:0 auto 2px!important}html body #side #panel .btn.wide::before{content:none!important}
 html body #side #panel .btn.wide>i.ic{position:absolute;left:0;right:0;top:9%;margin:0 auto;width:calc(var(--zb,64px)*.42);height:calc(var(--zb,64px)*.42);display:flex}
 html body #side #panel .btn.wide>i.ic svg{filter:drop-shadow(0 2px 2px #000)}
 .zp>i.ic{position:static;width:22px;height:22px;float:left;margin:0 8px 0 0}#zhSell>i.ic,#zhRep>i.ic,#zhLaunch>i.ic{width:1.3em;height:1.3em;margin-right:6px}.zsw button>i.ic{width:1.2em;height:1.2em;margin-right:5px;vertical-align:-.25em}`;document.head.append(st);}
