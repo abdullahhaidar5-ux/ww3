@@ -1,4 +1,6 @@
-# STATE — conductor run 2026-11-15 ~05:00 UTC
+# STATE — conductor run 2026-11-15 ~05:55 UTC (re-check: main moved only d3f3969/icons merges since 05:00; no new pushes on any candidate; no train landed; table below unchanged)
+
+# (earlier) run ~05:00 UTC
 
 **No train landed this run.** Every queued Battle branch was last based on a main that is now 135–153 commits behind; other lanes
 (L1–L6 "Land:" commits, UI audit, gatefix) pushed ~10 commits to main in the last hour, and 6 of 6 trial merges conflicted in src.
