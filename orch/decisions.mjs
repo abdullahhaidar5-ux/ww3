@@ -255,7 +255,7 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
 // 2d. Test range = Battle rules (Abdullah 2026-11-14 13:51 "Make test range mirror battle"): no sandbox-only supply/ammo/tech/build-speed shortcuts left in the sim.
 { const S3 = SRC['03-sim.js'];
   ck(!/G\.sandbox&&u\.team===0\)u\.am=u\.amx/.test(S3) && !/let ins=!!\(G\.sandbox/.test(S3), 'Test range still refills ammo / forces supply (must behave like Battle)');
-  ck(!/G&&G\.sandbox&&t===0/.test(S3) && !/G&&G\.sandbox&&T\.id===0\)t\/=6/.test(S3) && !/m===2&&G\.sandbox/.test(S3), 'Test range still skips the tech tree, builds 6x faster or ignores build-spot rules');
+  /* 2026-11-14 18:03 Abdullah "in test range all buildings and units are available": the tech-tree skip for the range is allowed again */ ck(/G&&G\.sandbox&&t===0/.test(S3), 'Test range must open every building (reqMet skip for the player)'); ck(!/G&&G\.sandbox&&T\.id===0\)t\/=6/.test(S3) && !/m===2&&G\.sandbox/.test(S3), 'Test range still builds 6x faster or ignores build-spot rules');
   ck(/G\.battle=!!o\.battle&&!o\.camp&&!o\.grand;/.test(S3) && /if\(o\.sandbox\)o\.battle=1;/.test(S3), 'newGame must make a sandbox a Battle game (G.battle true)');
   ck(/oos=[^;]*!G\.battle&&/.test(SRC['06-view.js']), 'out-of-supply badge rule changed'); }
 // 3. Main menu order + naming (2026-11-07 21:41): Single player · Multiplayer · Test range, then small extras; no Classic.
