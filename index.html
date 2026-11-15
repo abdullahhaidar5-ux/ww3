@@ -5899,7 +5899,7 @@ const MW_NAME={hack:{US:'Cyber Command Strike',TR:'Siber Harekat',IL:'Network In
    KP  KN-25 240 mm Rocket Battery: 12-rocket ripple from the War Factory, long reload, max 3, General rank gate (like the EW truck). */
 const SIGU={krb:1,tb2:1};   /* rank-gated signature vehicles (specLock / tip in 08-ui) */
 const SIG={apsCd:8,massR:120,massN:2,massK:.9,tunAmbT:5,tunAmbK:2/1.5,krbRank:SPEC_RANK};
-BASE.krb=Object.assign({},BASE.arty,{name:'KN-25 240 mm Rocket Battery',rocket:true,ripple:12,rng:400,minr:110,dmg:9,splash:40,rof:9,hp:240,cost:900,time:14,limit:3,desc:'Massed 240 mm rockets: a long ripple of 12 that blankets an area, then a slow reload. Fragile, so hide it behind your lines.'});
+BASE.krb=Object.assign({},BASE.arty,{name:'KN-25 240 mm Rocket Battery',rocket:true,ripple:12,rng:400,minr:110,dmg:9,splash:40,rof:9,hp:240,cost:800,time:14,limit:3,desc:'Massed 240 mm rockets: a long ripple of 12 that blankets an area, then a slow reload. Fragile, so hide it behind your lines.'});
 {const f=(k,fn)=>{const F=FACTIONS[k];if(F){F.units=F.units||{};fn(F.units);}};
   f('RS',U=>{U.at=Object.assign({},U.at||{},{name:'Kornet Ambush Team',tunAmb:1});});
   for(const k of ['IL','DE'])f(k,U=>{const b=Object.assign({},BASE.tank,U.tank||{});U.tank=Object.assign({},U.tank||{},{aps:SIG.apsCd,name:k==='IL'?'Merkava Mk4M (APS)':'Leopard 2A8 (APS)',cost:Math.round(b.cost*1.08/25)*25});});
@@ -5907,7 +5907,7 @@ BASE.krb=Object.assign({},BASE.arty,{name:'KN-25 240 mm Rocket Battery',rocket:t
   f('KP',U=>{U.krb={};});
   if(FACTIONS.KP)FACTIONS.KP.extra=[...(FACTIONS.KP.extra||[]),'krb'];}
 SPECIAL_TIP.krb=u=>'Massed 240 mm rockets: a ripple of '+(u.ripple||12)+' that blankets an area, then a slow reload. Fragile; keep it behind your lines. Needs General rank.';
-BASE.fpvt={name:'FPV Drone Team',cls:'at',hp:90,spd:46,rng:290,dmg:85,rof:4.2,wpn:'at',aa:0,vehOnly:1,amCap:8,cost:350,time:7,from:'barracks',armor:'light',r:7,dom:'ground',limit:4,desc:'A drone crew: short-range one-way FPV drones that only go for vehicles. 8 drones, then resupply. Fragile and slow to reload.'};
+BASE.fpvt={name:'FPV Drone Team',cls:'at',hp:90,spd:46,rng:290,dmg:85,rof:4.2,wpn:'at',aa:0,vehOnly:1,amCap:8,cost:300,time:7,from:'barracks',armor:'light',r:7,dom:'ground',limit:4,desc:'A drone crew: short-range one-way FPV drones that only go for vehicles. 8 drones, then resupply. Fragile and slow to reload.'};
 BASE.tb2={name:'Bayraktar TB2',cls:'heli',hp:150,spd:70,rng:300,dmg:36,rof:1.8,wpn:'at',aa:0,cost:950,time:16,from:'airfield',armor:'air',r:12,dom:'air',alt:'low',vis:420,limit:2,desc:'A medium-altitude drone that loiters for a long time and drops light guided munitions on vehicles from afar. Weak armor, so low-flying air defense shoots it down. Needs General rank.'};
 {const f=(k,fn)=>{const F=FACTIONS[k];if(F){F.units=F.units||{};fn(F.units);}};
   f('UA',U=>{U.fpvt={};});f('TR',U=>{U.tb2={};});
@@ -9995,7 +9995,7 @@ function ldAI(id,T,mine,en){const k=LDKT[id];if(!k||T.ai.t%3)return;const u=LDU[
    2) US / IL "fewer but stronger" (stats only, Q6a): cost +8%, hp +8%, unit build time +10% on top of their own mods; off in Realistic (REAL_TIER already does it).
    3) Gulf (SA AE) integrated air defence: SAM sites / AA vehicles with another one of the team within 300 m get +10% range (rngOf reads e.iadsT).
    (Europe perks and RU/CN platoon bonus belong to lane L1 / data already in place.) The iads flag is re-derived every second, so it is not saved in checkpoints. */
-const FMECH={US:{cost:1.08,hp:1.08,time:1.1},IL:{cost:1.08,hp:1.08,time:1.1}};
+const FMECH={US:{cost:1.04,hp:1.08,time:1.05},IL:{cost:1.08,hp:1.08,time:1.1}};
 const IADS_NAT={SA:1,AE:1},IADS_KIND={sam:1,aa:1,dsam:1},IADS_R=300;
 function fmTick(dt){const q=Math.floor(G.t);if(G._fmQ===q)return;G._fmQ=q;   /* derived from G.t (no module accumulator) so host and clients stay in sync */
   const L=[];for(const e of G.ents){if(e.dead||!IADS_KIND[e.kind]||(e.isB&&e.built<1))continue;const T=G.teams[e.team];if(T&&IADS_NAT[T.fac])L.push(e);}

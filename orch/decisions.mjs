@@ -515,7 +515,7 @@ try {
     /* L2 faction mechanics guard (2026-11-14): Hidden Firing Post for RV/OB, cheap Shia forts in Battle, US/IL stronger-fewer, Gulf IADS range */
     { const m = await ev(() => { const o = {}; o.rv = bldAllowed('RV', 'tunnel') && bstats('RV', 'tunnel').name === 'Hidden Firing Post' && bstats('RV', 'tunnel').cost <= 400; o.ob = bldAllowed('OB', 'tunnel') && !FACTIONS.OB.tunnels && !FACTIONS.RV.tunnels; o.irNet = !!FACTIONS.IR.tunnels && bstats('IR', 'tunnel').name !== 'Hidden Firing Post'; o.usNot = !bldAllowed('US', 'tunnel');
         const had = G.battle; G.battle = 1; const a = bstats('RS', 'turret').cost; G.battle = 0; const b = bstats('RS', 'turret').cost; G.battle = had; o.fort = a < b && a <= Math.round(b * .6 / 25) * 25 + 25;
-        o.us = FMECH.US.cost === 1.08 && FMECH.IL.hp === 1.08 && typeof fmTick === 'function'; o.iads = !!IADS_NAT.SA && !!IADS_NAT.AE && typeof isPost === 'function'; return o; });
+        o.us = FMECH.US.cost === 1.04 && FMECH.IL.hp === 1.08 && typeof fmTick === 'function'; o.iads = !!IADS_NAT.SA && !!IADS_NAT.AE && typeof isPost === 'function'; return o; });
       for (const k in m) ck(m[k], 'L2 faction mechanic broken: ' + k + ' ' + JSON.stringify(m)); }
     /* polishD guard (2026-11-15): UA FPV team, TR Bayraktar, IR Shahed truck are in their rosters + AI list; FPV hits vehicles only; Hidden Firing Post holds 4 infantry (own list, in the checkpoint) */
     { const m = await ev(() => { const o = {}; o.fpv = roster('UA').barracks.includes('fpvt') && stats('UA', 'fpvt').vehOnly === 1 && roster('IR').barracks.indexOf('fpvt') < 0;

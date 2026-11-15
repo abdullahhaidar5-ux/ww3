@@ -4,3 +4,4 @@ AI: `aiSigWant` (end of 03g-modern.js) deliberately buys krb / shl / tb2 / fpvt 
 Hidden Firing Post (RV/OB): holds 4 infantry in `b.gar` (like the Mountain Fortress list, so the checkpoint saves it), enter = right-click with infantry (`tun` action), leave = select post + right-click ground (`unl`), each soldier inside speeds its fire +30%, garrison walks out when it falls. Client display of the count is not shown (exit works regardless).
 Guards: orch/decisions.mjs "polishD signature/post broken". Smoke PASS locally.
 See orch/reports/balance-1115.md for the balance run.
+Balance: see orch/reports/balance-1115.md (US softened, KP krb and UA FPV cheaper).

@@ -3,7 +3,7 @@
    2) US / IL "fewer but stronger" (stats only, Q6a): cost +8%, hp +8%, unit build time +10% on top of their own mods; off in Realistic (REAL_TIER already does it).
    3) Gulf (SA AE) integrated air defence: SAM sites / AA vehicles with another one of the team within 300 m get +10% range (rngOf reads e.iadsT).
    (Europe perks and RU/CN platoon bonus belong to lane L1 / data already in place.) The iads flag is re-derived every second, so it is not saved in checkpoints. */
-const FMECH={US:{cost:1.08,hp:1.08,time:1.1},IL:{cost:1.08,hp:1.08,time:1.1}};
+const FMECH={US:{cost:1.04,hp:1.08,time:1.05},IL:{cost:1.08,hp:1.08,time:1.1}};
 const IADS_NAT={SA:1,AE:1},IADS_KIND={sam:1,aa:1,dsam:1},IADS_R=300;
 function fmTick(dt){const q=Math.floor(G.t);if(G._fmQ===q)return;G._fmQ=q;   /* derived from G.t (no module accumulator) so host and clients stay in sync */
   const L=[];for(const e of G.ents){if(e.dead||!IADS_KIND[e.kind]||(e.isB&&e.built<1))continue;const T=G.teams[e.team];if(T&&IADS_NAT[T.fac])L.push(e);}
