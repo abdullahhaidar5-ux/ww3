@@ -813,8 +813,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const { W } = makeSim(); const f = [];
     const day = W.sightProbe(0, 0), dusk = W.sightProbe(3, 0), night = W.sightProbe(4, 0), ch = [0, 400, 700, 1000].map(t => W.sightProbe(5, t));
     const near = (a, b) => Math.abs(a - b) < 1e-6;
-    if (!(night.inf < day.inf * .61 && near(night.inf, day.inf * .6))) f.push('night: infantry sight is not x0.6');
-    if (!near(night.tank, day.tank * .9) || !near(night.heli, day.heli * .9)) f.push('night: tank/heli (thermal) sight is not x0.9');
+    /* 2026-11-14 (todVis in 03-sim): "a little less sight, not a lot" - night x0.75, thermal x0.95 */
+    if (!(night.inf < day.inf * .76 && near(night.inf, day.inf * .75))) f.push('night: infantry sight is not x0.75');
+    if (!near(night.tank, day.tank * .95) || !near(night.heli, day.heli * .95)) f.push('night: tank/heli (thermal) sight is not x0.95');
     if (!(night.tank > night.inf)) f.push('night: thermal not above infantry');
     if (!(dusk.inf < day.inf && dusk.inf > night.inf)) f.push('dusk sight not between day and night');
     if (!near(ch[0].inf, day.inf) || !near(ch[1].inf, dusk.inf) || !near(ch[2].inf, night.inf) || !near(ch[3].inf, dusk.inf)) f.push('changing: day>dusk>night>dawn sight steps wrong');

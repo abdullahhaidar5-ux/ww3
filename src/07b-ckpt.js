@@ -5,7 +5,7 @@
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
 const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','upN','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
-  'todM','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
+  'todM','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
 // (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
 // end of the sim step)
@@ -20,7 +20,7 @@ function ckEncode(){const ids=new Map();for(const e of G.ents)if(!e.inTun)ids.se
     if(v instanceof Map||v instanceof Set||v instanceof WeakSet||ArrayBuffer.isView(v))return undefined;if(depth>7||seen.has(v))return undefined;seen.add(v);
     // a unit kept off the map (inside a tunnel or the Mountain Fortress) shares its stat block through the table too
     const unit=!Array.isArray(v)&&typeof v.id==='number'&&typeof v.kind==='string'&&v.s&&typeof v.s==='object'&&!ids.has(v);
-    let out;if(Array.isArray(v)){out=v.map(x=>{const y=enc(x,depth+1);return y===undefined?null:y;});}else{out={};for(const k in v){if(unit&&(k==='s'||k==='vs'||k==='_vr'||k[0]==='_')){if(k==='s')out.$s=sref(v.s);continue;}const y=enc(v[k],depth+1);if(y!==undefined)out[k]=y;}}seen.delete(v);return out;};
+    let out;if(Array.isArray(v)){out=v.map(x=>{const y=enc(x,depth+1);return y===undefined?null:y;});}else{out={};for(const k in v){if(unit&&(k==='s'||k==='vs'||k==='_vr'||(k[0]==='_'&&!CK_UKEEP.has(k)))){if(k==='s')out.$s=sref(v.s);continue;}const y=enc(v[k],depth+1);if(y!==undefined)out[k]=y;}}seen.delete(v);return out;};
   const ents=G.ents.filter(e=>!e.dead&&!e.inTun).map(e=>{const o={};for(const k in e){if(k==='s'){o.$s=sref(e.s);continue;}if(k==='vs'||k==='_vr'||(k[0]==='_'&&!CK_UKEEP.has(k)))continue;const y=enc(e[k],1);if(y!==undefined)o[k]=y;}if(e.vs){let m=0;for(let i=0;i<e.vs.length&&i<31;i++)if(e.vs[i])m|=1<<i;o.$vs=m;}return o;});  // who sees it: the AI decides from this, and it is only refreshed every few ticks
   const teams=G.teams.map(T=>{const o={};for(const k in T){if(CK_TEAM_SKIP.has(k))continue;const y=enc(T[k],1);if(y!==undefined)o[k]=y;}o.$ai=!!T.ai;o.$aiD=T.ai?T.ai.d+10*(T.ai.p|0):null;o.$aiS=T.ai?enc(T.ai,1):null;o.aiTook=!!T.aiTook;return o;});
   const g={};for(const k of CK_G)if(G[k]!==undefined){const y=enc(G[k],1);if(y!==undefined)g[k]=y;}
@@ -29,7 +29,8 @@ function ckEncode(){const ids=new Map();for(const e of G.ents)if(!e.inTun)ids.se
   const civ=(G.civ||[]).map(c=>{const r={};for(const k in c){if(k==='obj'||k==='mesh')continue;const y=enc(c[k],2);if(y!==undefined)r[k]=y;}return r;});
   const okRef=v=>v&&(ids.has(v)||fi.has(v)||oi.has(v)||ci.has(v));const proj=(G.proj||[]).filter(p=>p&&ids.has(p.src)&&okRef(p.tgt)).map(p=>{const o={};for(const k in p){const y=enc(p[k],1);if(y!==undefined)o[k]=y;}return o;});
   const camp=G.camp?(()=>{const o={};for(const k in G.camp){if(k==='m'||k==='R')continue;const y=enc(G.camp[k],1);if(y!==undefined)o[k]=y;}return o;})():null;
-  return {v:2,proj,camp,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,toks:tokSafe(),start:NET.startInfo||null,me:ME,cs:NET.peers?NET.peers.map((p,i)=>Math.max(p&&NET.cseq?(NET.cseq[p]||0):0,((NET.cseqSlot||[])[i]||0))):null};}
+  const L=G.lg,lgc=L?{sig:L.sig,cvT:L.cvT,cvs:L.cvs,rcA:L.rcA,lgv:G.lgv,reach:L.reach?L.reach.map(a=>a?Array.from(a):null):null,trade:L.trade?L.trade.map(a=>a?Array.from(a):null):null,cov:L.cov?enc(L.cov,1):null,bead:L.bead?enc(L.bead,1):null}:null;   /* redfixE: the supply network as last worked out (it is refreshed once a second, so a fresh rebuild on load differs) */
+  return {v:2,lgc,proj,camp,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,toks:tokSafe(),start:NET.startInfo||null,me:ME,cs:NET.peers?NET.peers.map((p,i)=>Math.max(p&&NET.cseq?(NET.cseq[p]||0):0,((NET.cseqSlot||[])[i]||0))):null};}
 function ckDecode(ck){const byId=new Map();const S=ck.S;const ents=ck.ents.map(o=>Object.assign({},o));for(const e of ents)byId.set(e.id,e);
   let sTab=[];const dec=v=>{if(v==null||typeof v!=='object')return v;if(Array.isArray(v))return v.map(dec);if(v.$e!=null)return byId.get(v.$e)||null;if(v.$f!=null)return G.fields[v.$f]||null;if(v.$o!=null)return G.oil[v.$o]||null;if(v.$c!=null)return (G.civ||[])[v.$c]||null;
     const o={};for(const k in v){if(k==='$s')continue;o[k]=dec(v[k]);}if(v.$s!=null&&sTab[v.$s]){o.s=sTab[v.$s];o.vs=new Array(G.teams.length).fill(false);}return o;};  // $s: a unit off the map (tunnel / fortress)
@@ -41,7 +42,7 @@ function ckRestore(ck){const N=G.teams.length;dugEnsure(ck.civ?ck.civ.length:0);
   G.ents=ents;G.byId=byId;G.proj=[];G.strikes=[];G.timers=[];G.planes=[];G.out=[];G.spoofs=[];G.mban=[];G.mbanN=0;G._ewv=null;  // defaults for checkpoints from before these were saved
   for(const k in ck.g){const d=ck.g[k];G[k]=(d&&typeof d==='object')?JSON.parse(JSON.stringify(d)):d;}
   const reb=dec;
-  for(const k of ['mines','smokes','shields'])if(Array.isArray(G[k]))G[k]=reb(G[k]);
+  for(const k of ['mines','smokes','shields','ruins'])if(Array.isArray(G[k]))G[k]=reb(G[k]);   // ruins: map buildings stored by index (redfixE: were left as {$c} stubs)
   ck.fields.forEach((f,i)=>{if(G.fields[i])Object.assign(G.fields[i],f);});
   ck.oil.forEach((o,i)=>{if(G.oil[i])Object.assign(G.oil[i],reb(o));});
   (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});dugAtRebuild();
@@ -51,7 +52,7 @@ function ckRestore(ck){const N=G.teams.length;dugEnsure(ck.civ?ck.civ.length:0);
   for(const T of G.teams){if(T.q){for(const c of CATS){const L=(T.q[c]||[]);if(!L.length)continue;const b=G.ents.filter(e=>e.isB&&e.team===T.id&&e.kind===c&&e.built>=1&&!e.dead).sort((x,y)=>x.id-y.id)[0];if(b)b.q=(b.q||[]).concat(L.map(i=>({kind:i.kind,t:i.t||0,c:Math.round((BASE[i.kind]&&BASE[i.kind].cost)||0)})));else for(const i of L)T.credits+=BASE[i.kind]?BASE[i.kind].cost:0;}delete T.q;}}  // old saves: the shared queue of a building type moves onto its first building (no building left: refunded)
   for(const e of ents){if(e.so&&e.order&&e.so!==e.order&&JSON.stringify(e.so,ckSafe)===JSON.stringify(e.order,ckSafe))e.so=e.order;}  // stall watch compares the order by identity
   for(const e of ents){const p=e.path,w=e.npW;if(w&&p&&p[0]&&w[0]===p[0][0]&&w[1]===p[0][1])e.npW=p[0];}  // path-progress watch compares the waypoint by identity
-  try{lgSync();}catch(e){}try{damSync();}catch(e){}G.civDirty=true;G.bdirty=true;G.hash=null;try{buildHash();}catch(e){}try{updateVis();}catch(e){}
+  try{lgSync();}catch(e){}try{const c=ck.lgc,L=G.lg;if(c&&L){const U8=a=>a?Uint8Array.from(a):null;L.sig=c.sig;L.cvT=c.cvT;L.cvs=c.cvs;L.rcA=c.rcA;if(c.lgv!=null)G.lgv=c.lgv;if(c.reach)L.reach=c.reach.map(U8);if(c.trade)L.trade=c.trade.map(U8);if(c.cov)L.cov=JSON.parse(JSON.stringify(c.cov));if(c.bead)L.bead=JSON.parse(JSON.stringify(c.bead));}}catch(e){}try{damSync();}catch(e){}G.civDirty=true;G.bdirty=true;G.hash=null;try{buildHash();}catch(e){}try{updateVis();}catch(e){}
   for(const e of ents){if(e.$vs!=null){const m=e.$vs;for(let i=0;i<e.vs.length&&i<31;i++)e.vs[i]=!!(m>>i&1);delete e.$vs;e.vis=e.vs[ME]||(e.isB&&!!((e.sn|0)&(1<<ME)));}}G.sel=G.sel.filter(e=>byId.has(e.id)).map(e=>byId.get(e.id));}
 /* ---------- Host migration ----------
    Every 8 s the host packs a checkpoint (gzip, ~25 KB for a busy 8-player battle) and sends it to one standby player
