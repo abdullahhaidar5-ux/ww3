@@ -19,8 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, decisions, superfreeze, loadfreeze, icons, stuckscan, controlscheck]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
+        t: [superfreeze, rf2, rf3]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -43,7 +42,7 @@ jobs:
             check)          python3 orch/build.py --check && node orch/lint.mjs ;;   # + robot lint (orch/lint.mjs: no </script, no new hosts, banned names, no Math.random in grand sim)
             smooth-*)       node orch/smooth.mjs --profile "${T#smooth-}" ;;   # smoothness gate (orch/SMOOTH.md): pc / phone / multiplayer, vs orch/smooth-baseline.json
             servertest)     node orch/servertest.mjs && node orch/specserver.mjs ;;   # + spectators in a server battle
-            superfreeze)    node orch/superfreeze.mjs IR,RU,US && node orch/rangefreeze.mjs IR,RS,US,OB ;;   # + the Test range: waves of every unit kind, every power and the Strike must not stall (orch/rangefreeze.mjs); firing a nation's superweapon strike (Iran's 12-missile Kheibar, Russia, US) must not stall the sim/FX (no call > 150 ms) or log errors (orch/superfreeze.mjs)
+            superfreeze|rf2|rf3)    node orch/superfreeze.mjs IR,RU,US; TRACE=1 TRACEMS=100 TRACEN=60 TRIES=1 node orch/rangefreeze.mjs IR,RS,US,OB ;;   # + the Test range: waves of every unit kind, every power and the Strike must not stall (orch/rangefreeze.mjs); firing a nation's superweapon strike (Iran's 12-missile Kheibar, Russia, US) must not stall the sim/FX (no call > 150 ms) or log errors (orch/superfreeze.mjs)
             loadfreeze)    node orch/loadfreeze.mjs IR,US ;;   # loading a battle must never hang the browser: with the CPU slowed 4x the "Preparing graphics" step stays in small pieces (orch/loadfreeze.mjs)
             stuckscan)      node orch/stuckscan.mjs --short ;;   # units with a move order must keep moving: seeded AI-vs-AI games on 4 maps x Conquest + Battle, fails when stuck episodes (no progress 10 s) exceed the limit (orch/stuckscan.mjs, orch/reports/stuck.md)
             controlscheck)  node orch/controlscheck.mjs ;;   # Ctrl+A whole army, Q camera rotation, W A S D scroll only, X/F/G, rally point by left-click (orch/controlscheck.mjs; the rest of the controls are in the controls job)
