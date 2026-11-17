@@ -1,6 +1,0 @@
-{
- "FR": {"sold": ["clone:fr_zeckou", "clone:fr_lambert", "clone:fr_bernard"], "cmd": "clone:fr_bernard"},
- "DE": {"sold": ["clone:de_thorsten", "clone:de_ungerer", "clone:de_karlsson"], "cmd": "clone:de_karlsson"},
- "GB": {"sold": ["clone:gb_clarke", "clone:gb_minter", "clone:gb_yearsley"], "cmd": "clone:gb_yearsley"},
- "JP": {"sold": ["clone:ja_cv1", "clone:ja_cv2", "clone:ja_cv3"], "cmd": "clone:ja_cv1"}
-}

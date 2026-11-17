@@ -22,7 +22,7 @@ REFS = os.path.join(ROOT, 'tools', 'voices', 'refs')
 KBPS = '48k'
 MAXCER = 0.15
 # cast: soldiers (variant i -> SOLD[i % n]) and the commander (unit ready / base attacked / building ready, pilots, leaders, radio)
-CAST = json.load(open(os.path.join(HERE, 'cast3.json'), encoding='utf-8'))
+CAST = json.load(open(os.path.join(HERE, 'cast.json'), encoding='utf-8'))   # FR DE GB JP: clone:fr_/de_/gb_/ja_* (guard v3voice in orch/decisions.mjs)
 LANG = {'FR': 'fr', 'DE': 'de', 'GB': 'en', 'JP': 'ja'}
 SAYFIX = {   # spoken form for XTTS only (the line text itself is unchanged)
     'GB': [(r"\bSunray\b", 'Sun ray')],
