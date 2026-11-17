@@ -55,3 +55,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-17 20:08Z 0a6ed304 **RED** (28 gates) failing: superfreeze — HISTORY: smoothaudit landing 1 (off-screen units skip matrix updates)
 - 2026-11-17 20:34Z 18470c39 **RED** (28 gates) failing: audio — Smoother HUD: the supply-lines button and the off-screen alert arrows 
 - 2026-11-17 21:18Z b6b5a5c7 **RED** (28 gates) failing: superfreeze — HISTORY + report + handoff: smoothaudit (top-10 smoothness causes, 3 l
+- 2026-11-17 23:58Z 7cc0afd8 **RED** (28 gates) failing: migrate-down — Smoother Test range: worn paint amounts no longer make a new shader mi
