@@ -6588,7 +6588,10 @@ function buildRoadNet(M,grid){const nodes=[];BASES.forEach(([x,y],i)=>nodes.push
 let P_B=false;
 // P_H: route/move checks for a heavy vehicle (tank, artillery, big truck): rubble from a fallen city block blocks it
 let P_H=false;
-function bocc(){if(!G.bocc||G.bdirty){G.bdirty=false;G.boccV=(G.boccV|0)+1;const o=G.bocc||(G.bocc=new Uint8Array(GW*GH));o.fill(0);for(const b of G.ents){if(!b.isB||b.dead)continue;const h=b.size/2-CELL*.25;
+function boccSig(){let h=0;for(const b of G.ents)if(b.isB&&!b.dead)h=(Math.imul(h,31)+b.id)|0;return h;}
+/* redfixE: once per sim step the set of standing buildings is compared too - a building that left the battle without kill() (e.g. an emptied house) used
+   to leave its cells blocked until the next build/kill, so a loaded save (fresh map) routed differently from the original */
+function bocc(){if(G.boccU!==G.upN){G.boccU=G.upN;const s=boccSig();if(s!==G.boccS){G.boccS=s;G.bdirty=true;}}if(!G.bocc||G.bdirty){G.bdirty=false;G.boccV=(G.boccV|0)+1;const o=G.bocc||(G.bocc=new Uint8Array(GW*GH));o.fill(0);for(const b of G.ents){if(!b.isB||b.dead)continue;const h=b.size/2-CELL*.25;
   const x0=Math.ceil((b.x-h)/CELL-.5),x1=Math.floor((b.x+h)/CELL-.5),y0=Math.ceil((b.y-h)/CELL-.5),y1=Math.floor((b.y+h)/CELL-.5);for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)if(cx>=0&&cy>=0&&cx<GW&&cy<GH)o[cy*GW+cx]=1;}}return G.bocc;}
 function passC(dom,cx,cy){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;const i=cy*GW+cx,v=G.grid[i];if(dom==='naval')return v===1||v===2||v===4;if(v!==0&&v!==2)return false;if(P_H&&G.rub&&G.rub[i])return false;return !(P_B&&G.bocc&&G.bocc[i]);}
 function passXY(dom,x,y){return dom==='air'||passC(dom,Math.floor(x/CELL),Math.floor(y/CELL));}
@@ -7412,7 +7415,7 @@ function newGame(o){const N=o.facs.length;if((o.battle||o.sandbox)&&!o.camp&&!o.
 }
 // Fields the battle adds to G as it runs. Declaring them all up front keeps G one fixed shape, so the engine's compiled
 // code for the hot loops (which reads G everywhere) is not thrown away and rebuilt each time a new field appears.
-const G_LATE=['battle','camp','pfTok','pfMs','pfN','wx','hash','bmaxH','rmax','mines','aur','mban','mbanN','cbrTeams','mT','prT','bg','bgSig','sg','ecT','aiTT','vsT','vsN','vsB','vsD','hqC','bocc','boccV','dug','dugN','dugV','dugId','dugBd','lg','lgd','lgv'];
+const G_LATE=['battle','camp','pfTok','pfMs','pfN','wx','hash','bmaxH','rmax','mines','aur','mban','mbanN','cbrTeams','mT','prT','bg','bgSig','sg','ecT','aiTT','vsT','vsN','vsB','vsD','hqC','bocc','boccV','boccU','boccS','dug','dugN','dugV','dugId','dugBd','lg','lgd','lgv'];
 // Conquest start base (Abdullah 2026-11-04 "same full base + money for all"; 2026-11-11 19:46 "I started conquest without a full base"):
 // at second 0 every team already has HQ + Barracks + War Factory + Supply Depot + Airfield (+ Shipyard when water is near), built, free,
 // identical for all nations. Spots come from a fixed search (no random numbers), so every machine and every seed places them the same way.
@@ -13448,7 +13451,7 @@ function specEvts(evs,SP){let e=evs.filter(v=>Array.isArray(v)),len=JSON.stringi
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
 const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','upN','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
-  'todM','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
+  'todM','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ','boccS'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
 // (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
 // end of the sim step)
@@ -13481,7 +13484,7 @@ const ckB64F=a=>{const u=new Uint8Array(a.buffer,a.byteOffset,a.byteLength);let 
 const ckF64B=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new Float32Array(u.buffer);};
 function ckFfcSave(){if(typeof FFC==='undefined')return null;const out=[];for(const [k,F] of FFC){const ok=F.gv===(G.gridV|0)&&F.bv===(G.boccV|0)&&F.pn===PN;
     out.push({k,t:F.t,ok:ok?1:0,no:F.f===false?1:0,g:F.f?F.f.goal:null,d:!ok&&F.f&&F.pn===PN?ckB64F(F.f.d):null});}return {L:out,bd:G.bdirty?1:0};}
-function ckFfcLoad(c){if(typeof FFC==='undefined')return;FFC.clear();if(!c||!Array.isArray(c.L))return;const pn=G.pfN;try{bocc();}catch(e){}
+function ckFfcLoad(c){if(typeof FFC==='undefined')return;FFC.clear();if(!c||!Array.isArray(c.L))return;const pn=G.pfN;G.boccU=G.upN;try{bocc();}catch(e){}
   for(const q of c.L){let f;if(q.no)f=false;else if(q.ok){P_B=true;try{f=ffBuild((q.k%GW)*CELL+CELL/2,((q.k/GW)|0)*CELL+CELL/2);}finally{P_B=false;}}else if(q.d){const d=ckF64B(q.d);if(d.length!==PN)continue;f={d,goal:q.g};}else continue;
     FFC.set(q.k,{f,gv:q.ok?G.gridV|0:-1,bv:q.ok?G.boccV|0:-1,t:q.t,pn:PN});}
   G.pfN=pn;if(c.bd)G.bdirty=true;}

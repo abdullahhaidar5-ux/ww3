@@ -90,7 +90,7 @@ function newGame(o){const N=o.facs.length;if((o.battle||o.sandbox)&&!o.camp&&!o.
 }
 // Fields the battle adds to G as it runs. Declaring them all up front keeps G one fixed shape, so the engine's compiled
 // code for the hot loops (which reads G everywhere) is not thrown away and rebuilt each time a new field appears.
-const G_LATE=['battle','camp','pfTok','pfMs','pfN','wx','hash','bmaxH','rmax','mines','aur','mban','mbanN','cbrTeams','mT','prT','bg','bgSig','sg','ecT','aiTT','vsT','vsN','vsB','vsD','hqC','bocc','boccV','dug','dugN','dugV','dugId','dugBd','lg','lgd','lgv'];
+const G_LATE=['battle','camp','pfTok','pfMs','pfN','wx','hash','bmaxH','rmax','mines','aur','mban','mbanN','cbrTeams','mT','prT','bg','bgSig','sg','ecT','aiTT','vsT','vsN','vsB','vsD','hqC','bocc','boccV','boccU','boccS','dug','dugN','dugV','dugId','dugBd','lg','lgd','lgv'];
 // Conquest start base (Abdullah 2026-11-04 "same full base + money for all"; 2026-11-11 19:46 "I started conquest without a full base"):
 // at second 0 every team already has HQ + Barracks + War Factory + Supply Depot + Airfield (+ Shipyard when water is near), built, free,
 // identical for all nations. Spots come from a fixed search (no random numbers), so every machine and every seed places them the same way.

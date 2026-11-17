@@ -5,7 +5,7 @@
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
 const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','upN','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
-  'todM','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
+  'todM','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ','boccS'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
 // (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
 // end of the sim step)
@@ -38,7 +38,7 @@ const ckB64F=a=>{const u=new Uint8Array(a.buffer,a.byteOffset,a.byteLength);let 
 const ckF64B=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new Float32Array(u.buffer);};
 function ckFfcSave(){if(typeof FFC==='undefined')return null;const out=[];for(const [k,F] of FFC){const ok=F.gv===(G.gridV|0)&&F.bv===(G.boccV|0)&&F.pn===PN;
     out.push({k,t:F.t,ok:ok?1:0,no:F.f===false?1:0,g:F.f?F.f.goal:null,d:!ok&&F.f&&F.pn===PN?ckB64F(F.f.d):null});}return {L:out,bd:G.bdirty?1:0};}
-function ckFfcLoad(c){if(typeof FFC==='undefined')return;FFC.clear();if(!c||!Array.isArray(c.L))return;const pn=G.pfN;try{bocc();}catch(e){}
+function ckFfcLoad(c){if(typeof FFC==='undefined')return;FFC.clear();if(!c||!Array.isArray(c.L))return;const pn=G.pfN;G.boccU=G.upN;try{bocc();}catch(e){}
   for(const q of c.L){let f;if(q.no)f=false;else if(q.ok){P_B=true;try{f=ffBuild((q.k%GW)*CELL+CELL/2,((q.k/GW)|0)*CELL+CELL/2);}finally{P_B=false;}}else if(q.d){const d=ckF64B(q.d);if(d.length!==PN)continue;f={d,goal:q.g};}else continue;
     FFC.set(q.k,{f,gv:q.ok?G.gridV|0:-1,bv:q.ok?G.boccV|0:-1,t:q.t,pn:PN});}
   G.pfN=pn;if(c.bd)G.bdirty=true;}
