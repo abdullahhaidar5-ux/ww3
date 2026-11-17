@@ -9,7 +9,7 @@ orch/vo/render.py and orch/vo/roles.py, but tuned for clarity instead of 'tough2
   * no WORLD pitch-down (it made the clones sound robotic) and a light radio chain (wide band, one gentle compressor,
     almost no drive), checked again with Whisper after processing
 Phased, because XTTS (~3 GB) and Whisper medium (~3 GB) do not fit in one process here:
-  python3 orch/vo/lb2.py gen      # XTTS: the missing takes of every line (4 per line, +4 for lines that failed QC)
+  python3 orch/vo/lb2.py gen      # XTTS: the missing takes of every line (3 per line, +4 for lines that failed QC)
   python3 orch/vo/lb2.py score    # Whisper: read back every take, mark lines whose best take is above 15 % CER
   (repeat gen/score up to 3 rounds), then
   python3 orch/vo/lb2.py build    # Whisper: pick takes, radio chain + re-check, write the four sheets and their maps"""
@@ -193,7 +193,7 @@ def jid(j): return j['sheet'] + ':' + j['lab'] + ':' + j['say'] + ':' + j['voice
 def gen(J):
     S = state(); t0 = time.time(); n = 0
     for j in J:
-        for take in range(S['n'].get(jid(j), 4)):
+        for take in range(S['n'].get(jid(j), 3)):
             raw(j['voice'], j['say'], take, j['mood']); n += 1
     log(f'gen: {n} takes ready, {int(time.time() - t0)} s')
 
@@ -202,7 +202,8 @@ def score(J):
     for j in J:
         id_ = jid(j); sc = S['sc'].setdefault(id_, {})
         exp = 0.4 + 0.08 * len(re.sub(r'\s', '', j['say']))
-        for take in range(S['n'].get(id_, 4)):
+        for take in range(S['n'].get(id_, 3)):
+            if any(x['cer'] <= 0.08 and not x['long'] for x in sc.values()): break   # a clear take is in hand: skip the rest (Whisper ~10 s a call here)
             if str(take) in sc: continue
             w = trim(raw(j['voice'], j['say'], take, j['mood'])); d = len(w) / SR
             c, hyp = readback(w, j['say'])
@@ -211,7 +212,7 @@ def score(J):
         b = min(x['cer'] + (1 if x['long'] else 0) for x in sc.values())
         if b > MAXCER:
             bad += 1
-            if S['n'].get(id_, 4) < 12: S['n'][id_] = S['n'].get(id_, 4) + 4
+            if S['n'].get(id_, 3) < 12: S['n'][id_] = S['n'].get(id_, 3) + 4
             log(f'  QC fail {j["sheet"]} {j["lab"]} best {b:.2f} ({S["n"][id_]} takes next) | {j["say"]}')
     save(S); log(f'score: {bad} lines above {MAXCER:.0%} CER')
     return bad

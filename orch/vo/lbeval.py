@@ -9,7 +9,9 @@ import numpy as np, librosa
 def anorm(t):
     t = unicodedata.normalize('NFKC', t)
     t = re.sub('[ً-ْٰـ]', '', t)
+    t = re.sub(r'(^|\s)(على\s+(ال)?|ع\s+ال)', r'\1عال', t)   # Lebanese 'عالـ' = 'على الـ' (Whisper writes it out, sometimes without the article)
     t = re.sub('[أإآٱ]', 'ا', t).replace('ة', 'ه').replace('ى', 'ي').replace('ؤ', 'و').replace('ئ', 'ي').replace('ء', '')
+    t = re.sub(r'[اه](?=\s|$|[^\w])', 'ه', t)   # word-final ta marbuta is said -a/-e: Whisper spells it ه or ا
     return ''.join(ch for ch in t.lower() if not unicodedata.category(ch).startswith(('P', 'Z', 'S', 'M')))
 
 def cer(a, b):
