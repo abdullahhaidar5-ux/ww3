@@ -1,0 +1,476 @@
+  page: shader warm-up 5927 ms, 62 models, 120 objects in 677 steps (longest 1585 ms), 99 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 18 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=328 normal=18ms (quiet max 87) longest=99ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":3,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 99ms@5.3s {} ; 94ms@11.4s {} ; 93ms@4.8s {} ; 92ms@4.0s {} ; 90ms@3.7s {}
+  frames that made the GPU work (1):
+    3.39s 35ms {"aud":1} three geo/tex 616/552
+IR worst JS call (not drawing): simUpdate 38ms; ok
+  page: shader warm-up 2692 ms, 65 models, 125 objects in 693 steps (longest 98 ms), 99 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 17 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=290 normal=17ms (quiet max 93) longest=93ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":3,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 93ms@2.1s {} ; 91ms@6.9s {} ; 91ms@6.4s {} ; 91ms@6.7s {} ; 90ms@3.0s {}
+  frames that made the GPU work (1):
+    3.11s 36ms {"aud":1} three geo/tex 717/621
+RU worst JS call (not drawing): simUpdate 54ms; ok
+  page: shader warm-up 2422 ms, 59 models, 114 objects in 657 steps (longest 103 ms), 94 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 17 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=304 normal=17ms (quiet max 78) longest=96ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 96ms@2.8s {} ; 96ms@4.4s {} ; 91ms@6.6s {} ; 84ms@6.0s {} ; 84ms@1.6s {}
+  frames that made the GPU work (1):
+    3.20s 61ms {"aud":1} three geo/tex 602/520
+US worst JS call (not drawing): simUpdate 61ms; ok
+SUPERFREEZE PASS
+  [IR +15s] range loaded (bm_splitridge; warm-up {"ms":6210,"models":62,"steps":723,"maxStep":1398,"progs":109,"late":0,"phone":0})
+  [IR +30s] normal frame 17 ms (quiet max 28)
+  [IR +30s] waves: harv dozer inf at officer medic champ cleric spy aa tank arty ammot ew bmt dtank dsam darty heli jet airlift drone boat fast sub ship minel sweep lander
+  [IR +73s] powers: recon para barrage repair nat
+  [IR +86s] strike: Heavy Rocket Barrage launched
+IR {"longest":346,"quietMax":28,"normal":17,"over50":708,"frames":2821,"programs":1,"shaders":2,"textures":101,"texKB":1182,"bufKB":4148,"canvases":2,"audioDecodes":7,"cpu":2}
+  by phase:
+    quiet: worst 20ms, 0/3 frames >50ms
+    wave harv: worst 44ms, 0/88 frames >50ms
+    wave dozer: worst 32ms, 0/89 frames >50ms
+    wave inf: worst 81ms, 1/70 frames >50ms
+    wave at: worst 86ms, 1/70 frames >50ms
+    wave officer: worst 54ms, 1/68 frames >50ms
+    wave medic: worst 58ms, 1/68 frames >50ms
+    wave champ: worst 75ms, 2/57 frames >50ms
+    wave cleric: worst 73ms, 2/60 frames >50ms
+    wave spy: worst 44ms, 0/69 frames >50ms
+    wave aa: worst 34ms, 0/69 frames >50ms
+    wave tank: worst 45ms, 0/66 frames >50ms
+    wave arty: worst 51ms, 1/71 frames >50ms
+    wave ammot: worst 30ms, 0/75 frames >50ms
+    wave ew: worst 96ms, 18/27 frames >50ms
+    wave bmt: worst 86ms, 11/35 frames >50ms
+    wave dtank: worst 131ms, 6/43 frames >50ms
+    wave dsam: worst 170ms, 2/61 frames >50ms
+    wave darty: worst 37ms, 0/70 frames >50ms
+    wave heli: worst 47ms, 0/59 frames >50ms
+    wave jet: worst 51ms, 1/50 frames >50ms
+    wave airlift: worst 46ms, 0/54 frames >50ms
+    wave drone: worst 52ms, 1/50 frames >50ms
+    wave boat: worst 52ms, 1/55 frames >50ms
+    wave fast: worst 51ms, 1/55 frames >50ms
+    wave sub: worst 63ms, 2/55 frames >50ms
+    wave ship: worst 62ms, 3/53 frames >50ms
+    wave minel: worst 48ms, 0/59 frames >50ms
+    wave sweep: worst 51ms, 1/63 frames >50ms
+    wave lander: worst 64ms, 2/63 frames >50ms
+    power recon: worst 74ms, 5/88 frames >50ms
+    power para: worst 105ms, 2/95 frames >50ms
+    power barrage: worst 77ms, 25/53 frames >50ms
+    power repair: worst 107ms, 21/50 frames >50ms
+    power nat: worst 67ms, 23/54 frames >50ms
+    strike: worst 346ms, 574/706 frames >50ms
+  slowest calls:
+    renderFrame max 160ms (strike) tot 83268ms n3618
+    syncScene max 84ms (strike) tot 4946ms n3618
+    simUpdate max 31ms (wave ship) tot 6772ms n3835
+    updateUI max 29ms (strike) tot 3117ms n456
+    launch max 14ms (strike) tot 14ms n1
+    sfxBoom max 9ms (strike) tot 185ms n726
+    rpRecTick max 6ms (strike) tot 179ms n3618
+    usePower max 5ms (power para) tot 11ms n5
+    addUnit max 5ms (wave champ) tot 13ms n202
+    qualTick max 4ms (strike) tot 195ms n3617
+    renderSquads max 4ms (wave dozer) tot 128ms n456
+    qpUpdate max 2ms (power recon) tot 32ms n456
+  frames >50 ms (708, slowest first):
+    346ms @117955 [strike] ents=147 {"sfxBoom":10,"simUpdate":15,"syncScene":3,"renderFrame":121} {"tex":1,"texUp":376,"texKB":1.6,"c2d":172}
+    231ms @122880 [strike] ents=140 {"updateUI":26,"syncScene":4,"renderFrame":83} {"texUp":368,"c2d":163}
+    213ms @116436 [strike] ents=146 {"simUpdate":13,"syncScene":2,"renderFrame":57} {"tex":1,"texUp":191,"texKB":1.6,"c2d":166}
+    208ms @116143 [strike] ents=146 {"simUpdate":3,"updateUI":18,"syncScene":5,"renderFrame":126} {"texUp":187,"c2d":167}
+    207ms @133511 [strike] ents=141 {"simUpdate":12,"renderFrame":146} {"tex":1,"texUp":475,"texKB":1.6,"c2d":201}
+    192ms @136056 [strike] ents=140 {"simUpdate":4,"syncScene":9,"renderFrame":112} {"texUp":466,"c2d":189}
+    185ms @117335 [strike] ents=146 {"simUpdate":20,"renderFrame":82} {"texUp":371,"c2d":172}
+    183ms @115624 [strike] ents=147 {"renderFrame":92} {"texUp":188,"c2d":168}
+    176ms @134101 [strike] ents=140 {"simUpdate":3,"syncScene":8,"renderFrame":152} {"texUp":466,"c2d":198}
+    174ms @116773 [strike] ents=146 {"simUpdate":7,"renderFrame":84} {"texUp":188,"c2d":160}
+    172ms @129176 [strike] ents=146 {"renderFrame":117} {"texUp":457,"c2d":187}
+    170ms @54573 [wave dsam] ents=135 {"renderFrame":14} {"texUp":16,"c2d":102}
+    170ms @114901 [strike] ents=151 {"sfxBoom":5,"simUpdate":13,"updateUI":29,"syncScene":6,"renderFrame":86} {"texUp":185,"c2d":166}
+    169ms @133680 [strike] ents=140 {"simUpdate":5,"syncScene":6,"renderFrame":160} {"texUp":237,"c2d":196}
+    167ms @118263 [strike] ents=140 {"simUpdate":9,"updateUI":10,"rpRecTick":3,"syncScene":7,"renderFrame":126} {"texUp":368,"c2d":176}
+    166ms @112539 [strike] ents=162 {"simUpdate":9,"syncScene":76,"renderFrame":129} {"tex":19,"texUp":196,"texKB":29.7,"c2d":176}
+    166ms @124498 [strike] ents=154 {"simUpdate":13,"syncScene":84,"renderFrame":146} {"tex":21,"texUp":252,"texKB":32.8,"c2d":177}
+    166ms @135630 [strike] ents=140 {"syncScene":5,"renderFrame":116} {"texUp":237,"c2d":194}
+    164ms @129911 [strike] ents=146 {"simUpdate":5,"syncScene":3,"renderFrame":118} {"tex":1,"texUp":239,"texKB":1.6,"c2d":200}
+    163ms @116599 [strike] ents=146 {"syncScene":3,"renderFrame":67} {"texUp":362,"c2d":162}
+    161ms @115140 [strike] ents=150 {"simUpdate":4,"syncScene":3,"renderFrame":73} {"texUp":184,"c2d":167}
+    159ms @127367 [strike] ents=148 {"simUpdate":12,"updateUI":17,"syncScene":3,"renderFrame":105} {"texUp":235,"c2d":191}
+    158ms @127596 [strike] ents=148 {"simUpdate":10,"syncScene":5,"renderFrame":84} {"tex":1,"texUp":237,"texKB":1.6,"c2d":190}
+    158ms @130731 [strike] ents=144 {"simUpdate":12,"rpRecTick":3,"syncScene":7,"renderFrame":95} {"texUp":464,"c2d":179}
+    154ms @134609 [strike] ents=140 {"sfxBoom":4,"renderSquads":3,"updateUI":21,"syncScene":4,"renderFrame":99} {"texUp":467,"c2d":201}
+  slow 3D objects built (makeObj > 15 ms):
+    16ms medic
+    18ms inf
+    26ms inf
+    16ms building uplink
+    16ms inf
+    15ms inf
+    17ms inf
+    21ms inf
+  new programs vs the nearest loaded one:
+    depth differs from a loaded one in 5:false->uv
+  programs linked:
+    power nat DRAWING MeshDepthMaterial 5191v Box001/Object_4/Box001_mesh_Material_u1_v1_0/mesh_0/ top= ent=null mat= side=1 alphaTest=0 det=0.00 wS (index.html:4872:267) < Object.x [as acquireProgram] (index.html:4879:12191) < Ul (index.html:4930:39715) < d_ (index.html:4930:43996) < _f.renderBufferDirect (index.html:4930:29712) < r.renderBufferDirect (index.html:10040:120)
+  audio decoded:
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave aa P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave heli P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave jet P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave ship P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power barrage P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+  trace: tasks over 100 ms (any process/thread, longest first):
+    272ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1385679 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    266ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1391747 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    243ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1409909 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    233ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1411705 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    203ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1366891 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    155ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1373571 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    155ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1373571 {}
+    112ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1372295 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    112ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1372295 {}
+    110ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @1409975 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    107ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @1409975 {"data":{"frame":"564B9303E04EFD41123E53FBDA805DE2","id":12843}}
+    107ms Renderer/CrRendererMain devtools.timeline:FunctionCall @1409975 {"data":{"columnNumber":14,"frame":"564B9303E04EFD41123E53FBDA805DE2","functionName":"loop","isolate":"12534110571766031610","lineNumber":15266,"sampleTraceId":
+    100ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1396142 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    inside 155ms GPU Process/CrGpuMain @1373571: 155ms Scheduler::RunTask
+    -- phase marks (trace ms) --
+    wave cleric@1359925 wave spy@1361417 wave aa@1362926 wave tank@1364449 wave arty@1365973 wave ammot@1367488 wave ew@1368995 wave bmt@1370521 wave dtank@1372026 wave dsam@1373507 wave darty@1375033 wave heli@1376540 wave jet@1378054 wave airlift@1379575 wave drone@1381081 wave boat@1382605 wave fast@1384113 wave sub@1385612 wave ship@1387150 wave minel@1388641 wave sweep@1390144 wave lander@1391652 power recon@1393228 power para@1395712 power barrage@1398246 power repair@1400764 power nat@1403278 strike@1405847
+IR FAIL: 21 new textures in one frame (max 2); longest frame 346 ms is 319 ms over the longest quiet frame 28 ms (max 300)
+  [RS +10s] range loaded (bm_splitridge; warm-up {"ms":2959,"models":59,"steps":689,"maxStep":93,"progs":107,"late":0,"phone":0})
+  [RS +24s] normal frame 17 ms (quiet max 26)
+  [RS +24s] waves: harv dozer inf at mortar medic champ cleric spy aa tank arty ammot drone ew dtank dsam darty boat fast lander
+  [RS +56s] powers: recon para barrage repair nat
+  [RS +68s] strike: Heavy Rocket Barrage launched
+RS {"longest":237,"quietMax":26,"normal":17,"over50":515,"frames":2554,"programs":0,"shaders":0,"textures":0,"texKB":1024,"bufKB":4726,"canvases":2,"audioDecodes":6,"cpu":2}
+  by phase:
+    quiet: worst 21ms, 0/2 frames >50ms
+    wave harv: worst 31ms, 0/91 frames >50ms
+    wave dozer: worst 28ms, 0/91 frames >50ms
+    wave inf: worst 82ms, 1/73 frames >50ms
+    wave at: worst 71ms, 1/73 frames >50ms
+    wave mortar: worst 65ms, 1/72 frames >50ms
+    wave medic: worst 51ms, 2/68 frames >50ms
+    wave champ: worst 69ms, 2/64 frames >50ms
+    wave cleric: worst 60ms, 1/68 frames >50ms
+    wave spy: worst 31ms, 0/74 frames >50ms
+    wave aa: worst 90ms, 1/48 frames >50ms
+    wave tank: worst 88ms, 5/34 frames >50ms
+    wave arty: worst 46ms, 0/40 frames >50ms
+    wave ammot: worst 43ms, 0/53 frames >50ms
+    wave drone: worst 37ms, 0/68 frames >50ms
+    wave ew: worst 174ms, 13/24 frames >50ms
+    wave dtank: worst 198ms, 12/27 frames >50ms
+    wave dsam: worst 139ms, 12/30 frames >50ms
+    wave darty: worst 51ms, 1/37 frames >50ms
+    wave boat: worst 56ms, 3/36 frames >50ms
+    wave fast: worst 55ms, 3/37 frames >50ms
+    wave lander: worst 57ms, 2/39 frames >50ms
+    power recon: worst 57ms, 1/109 frames >50ms
+    power para: worst 88ms, 1/109 frames >50ms
+    power barrage: worst 82ms, 17/61 frames >50ms
+    power repair: worst 61ms, 5/77 frames >50ms
+    power nat: worst 75ms, 5/85 frames >50ms
+    strike: worst 237ms, 426/964 frames >50ms
+  slowest calls:
+    renderFrame max 196ms (strike) tot 80785ms n3385
+    syncScene max 59ms (wave dtank) tot 4012ms n3385
+    simUpdate max 37ms (power barrage) tot 5264ms n3609
+    updateUI max 26ms (strike) tot 2406ms n435
+    launch max 10ms (strike) tot 10ms n1
+    addUnit max 6ms (wave champ) tot 11ms n117
+    rpRecTick max 6ms (strike) tot 134ms n3385
+    qualTick max 5ms (strike) tot 202ms n3385
+    renderSquads max 4ms (power barrage) tot 104ms n435
+    sfxBoom max 4ms (strike) tot 52ms n146
+    annSay max 3ms (wave champ) tot 4ms n9
+    usePower max 3ms (power barrage) tot 9ms n5
+  frames >50 ms (515, slowest first):
+    237ms @104146 [strike] ents=126 {"syncScene":4,"renderFrame":196} {"texUp":218,"c2d":116}
+    203ms @102450 [strike] ents=126 {"simUpdate":8,"syncScene":3,"renderFrame":120} {"texUp":215,"c2d":119}
+    198ms @48435 [wave dtank] ents=128 {"updateUI":6,"renderFrame":33} {"texUp":16,"c2d":118}
+    193ms @113027 [strike] ents=125 {"simUpdate":10,"syncScene":11,"renderFrame":127} {"texUp":256,"c2d":118}
+    174ms @46887 [wave ew] ents=122 {"renderFrame":16} {"texUp":16,"c2d":120}
+    169ms @114117 [strike] ents=125 {"simUpdate":4,"syncScene":3,"renderFrame":157} {"texUp":144,"c2d":118}
+    167ms @104727 [strike] ents=126 {"simUpdate":9,"updateUI":23,"syncScene":4,"renderFrame":93} {"texUp":218,"c2d":116}
+    161ms @106539 [strike] ents=126 {"simUpdate":6,"updateUI":7,"syncScene":7,"renderFrame":95} {"texUp":220,"c2d":116}
+    157ms @114702 [strike] ents=125 {"simUpdate":5,"syncScene":11,"renderFrame":121} {"texUp":147,"c2d":118}
+    151ms @102601 [strike] ents=126 {"simUpdate":12,"syncScene":3,"renderFrame":87} {"texUp":123,"c2d":119}
+    150ms @110331 [strike] ents=125 {"simUpdate":3,"renderFrame":106} {"texUp":254,"c2d":118}
+    149ms @82780 [strike] ents=132 {"simUpdate":3,"renderFrame":100} {"texUp":96,"c2d":114}
+    145ms @113531 [strike] ents=125 {"simUpdate":10,"syncScene":4,"renderFrame":129} {"texUp":258,"c2d":118}
+    139ms @104928 [strike] ents=126 {"syncScene":3,"renderFrame":75} {"texUp":218,"c2d":116}
+    139ms @107942 [strike] ents=125 {"simUpdate":2,"renderFrame":101} {"texUp":240,"c2d":119}
+    139ms @48660 [wave dsam] ents=134 {"syncScene":57,"renderFrame":107} {"texUp":8,"buf":18,"bufKB":129.1,"vao":12,"c2d":116}
+    139ms @99480 [strike] ents=127 {"simUpdate":10,"updateUI":16,"syncScene":5,"renderFrame":58} {"texUp":208,"c2d":110}
+    139ms @116469 [strike] ents=124 {"simUpdate":8,"updateUI":6,"syncScene":4,"renderFrame":104} {"texUp":147,"c2d":118}
+    136ms @47139 [wave dtank] ents=128 {"syncScene":59,"renderFrame":92} {"texUp":16,"buf":18,"bufKB":55.7,"vao":12,"c2d":120}
+    135ms @113385 [strike] ents=125 {"simUpdate":6,"updateUI":10,"syncScene":17,"renderFrame":115} {"texUp":144,"vao":3,"c2d":117}
+    135ms @112017 [strike] ents=125 {"syncScene":4,"renderFrame":74} {"texUp":256,"c2d":118}
+    134ms @109211 [strike] ents=125 {"simUpdate":2,"updateUI":8,"syncScene":3,"renderFrame":80} {"texUp":250,"c2d":118}
+    131ms @108510 [strike] ents=125 {"syncScene":3,"renderFrame":96} {"texUp":248,"c2d":118}
+    124ms @113948 [strike] ents=125 {"simUpdate":3,"updateUI":8,"syncScene":7,"renderFrame":112} {"texUp":258,"c2d":118}
+    124ms @115769 [strike] ents=125 {"syncScene":7,"renderFrame":113} {"texUp":258,"c2d":117}
+  slow 3D objects built (makeObj > 15 ms):
+    20ms inf
+    20ms inf
+    17ms aa
+  audio decoded:
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave aa P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power recon P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power para P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power barrage P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+  trace: tasks over 100 ms (any process/thread, longest first):
+    290ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1493709 {"src_file":"third_party/blink/renderer/modules/webaudio/base_audio_context.cc","src_func":"decodeAudioData","src_line":417}
+    212ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1516220 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    166ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1508409 {"chrome_task_annotator":{"delay_policy":"PRECISE","task_delay_us":0},"src_file":"gpu/ipc/service/command_buffer_stub.cc","src_func":"ScheduleDelayedWork","src_
+    166ms GPU Process/CrGpuMain gpu:CommandBufferStub::PerformWork @1508409 {}
+    166ms GPU Process/CrGpuMain gpu:GPUTracer::ProcessTraces @1508409 {}
+    161ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1506891 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    161ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1506891 {}
+    116ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1506767 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    116ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1506767 {}
+    109ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @1508735 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    108ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @1508736 {"data":{"frame":"380BA20A395E399F1C22139A93925FC8","id":7897}}
+    108ms Renderer/CrRendererMain devtools.timeline:FunctionCall @1508736 {"data":{"columnNumber":14,"frame":"380BA20A395E399F1C22139A93925FC8","functionName":"loop","isolate":"3049782397658892741","lineNumber":15266,"sampleTraceId":5
+    106ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1506653 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    106ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1506653 {}
+    inside 166ms GPU Process/CrGpuMain @1508409: 166ms CommandBufferStub::PerformWork | 166ms GPUTracer::ProcessTraces
+    inside 166ms GPU Process/CrGpuMain @1508409: 166ms GPUTracer::ProcessTraces
+    inside 161ms GPU Process/CrGpuMain @1506891: 161ms Scheduler::RunTask
+    -- phase marks (trace ms) --
+    wave harv@1484550 wave dozer@1486059 wave inf@1487638 wave at@1489126 wave mortar@1490626 wave medic@1492123 wave champ@1493644 wave cleric@1495167 wave spy@1496652 wave aa@1498228 wave tank@1499721 wave arty@1501198 wave ammot@1502731 wave drone@1504240 wave ew@1505775 wave dtank@1507323 wave dsam@1508844 wave darty@1510324 wave boat@1511865 wave fast@1513379 wave lander@1514919 power recon@1516446 power para@1518944 power barrage@1521477 power repair@1523998 power nat@1526515 strike@1529039
+RS ok
+  [US +10s] range loaded (bm_splitridge; warm-up {"ms":3106,"models":62,"steps":717,"maxStep":95,"progs":102,"late":0,"phone":0})
+  [US +24s] normal frame 16 ms (quiet max 28)
+  [US +24s] waves: harv dozer inf at hero medic champ spy aa tank arty ammot ew dtank dsam darty heli jet airlift boat fast sub ship minel sweep lander
+  [US +64s] powers: recon para barrage repair bb nat
+  [US +79s] strike: Tomahawk Cruise-Missile Salvo launched
+US {"longest":1128,"quietMax":28,"normal":16,"over50":632,"frames":2947,"programs":0,"shaders":0,"textures":34,"texKB":53,"bufKB":3390,"canvases":2,"audioDecodes":7,"cpu":2}
+  by phase:
+    quiet: worst 23ms, 0/3 frames >50ms
+    wave harv: worst 30ms, 0/91 frames >50ms
+    wave dozer: worst 27ms, 0/91 frames >50ms
+    wave inf: worst 88ms, 1/74 frames >50ms
+    wave at: worst 73ms, 1/72 frames >50ms
+    wave hero: worst 65ms, 1/73 frames >50ms
+    wave medic: worst 64ms, 1/72 frames >50ms
+    wave champ: worst 73ms, 2/65 frames >50ms
+    wave spy: worst 31ms, 0/70 frames >50ms
+    wave aa: worst 35ms, 0/73 frames >50ms
+    wave tank: worst 42ms, 0/72 frames >50ms
+    wave arty: worst 48ms, 0/66 frames >50ms
+    wave ammot: worst 40ms, 0/74 frames >50ms
+    wave ew: worst 113ms, 14/29 frames >50ms
+    wave dtank: worst 150ms, 12/31 frames >50ms
+    wave dsam: worst 1128ms, 2/18 frames >50ms
+    wave darty: worst 32ms, 0/71 frames >50ms
+    wave heli: worst 43ms, 0/63 frames >50ms
+    wave jet: worst 56ms, 1/57 frames >50ms
+    wave airlift: worst 40ms, 0/60 frames >50ms
+    wave boat: worst 41ms, 0/61 frames >50ms
+    wave fast: worst 38ms, 0/63 frames >50ms
+    wave sub: worst 47ms, 0/60 frames >50ms
+    wave ship: worst 55ms, 1/63 frames >50ms
+    wave minel: worst 58ms, 2/58 frames >50ms
+    wave sweep: worst 45ms, 0/67 frames >50ms
+    wave lander: worst 40ms, 0/67 frames >50ms
+    power recon: worst 61ms, 3/100 frames >50ms
+    power para: worst 84ms, 3/97 frames >50ms
+    power barrage: worst 82ms, 10/67 frames >50ms
+    power repair: worst 69ms, 10/70 frames >50ms
+    power bb: worst 62ms, 8/62 frames >50ms
+    power nat: worst 81ms, 27/49 frames >50ms
+    strike: worst 323ms, 533/838 frames >50ms
+  slowest calls:
+    renderFrame max 160ms (strike) tot 84227ms n3782
+    syncScene max 105ms (strike) tot 4169ms n3782
+    updateUI max 33ms (power recon) tot 2625ms n468
+    simUpdate max 30ms (wave minel) tot 6501ms n4018
+    sfxBoom max 12ms (strike) tot 151ms n607
+    rpRecTick max 10ms (strike) tot 177ms n3782
+    renderSquads max 8ms (strike) tot 128ms n468
+    launch max 5ms (strike) tot 5ms n1
+    addUnit max 4ms (wave champ) tot 11ms n175
+    scroll max 3ms (strike) tot 14ms n3782
+    qpUpdate max 2ms (strike) tot 41ms n468
+    qualTick max 2ms (wave boat) tot 192ms n3781
+  frames >50 ms (632, slowest first):
+    1128ms @46988 [wave dsam] ents=123 {"renderFrame":91} {"texUp":8,"c2d":96}
+    323ms @129363 [strike] ents=130 {"simUpdate":3,"rpRecTick":6,"syncScene":4,"renderFrame":134} {"texUp":376,"c2d":167}
+    208ms @111650 [strike] ents=132 {"simUpdate":20,"rpRecTick":10,"syncScene":6,"renderFrame":158} {"texUp":164,"c2d":158}
+    208ms @119146 [strike] ents=144 {"simUpdate":4,"syncScene":105,"renderFrame":160} {"texUp":192,"buf":40,"bufKB":10.5,"vao":11,"c2d":156}
+    203ms @128684 [strike] ents=130 {"simUpdate":3,"renderFrame":100} {"tex":1,"texUp":379,"texKB":1.6,"c2d":167}
+    197ms @109112 [strike] ents=135 {"simUpdate":4,"syncScene":2,"renderFrame":50} {"texUp":165,"c2d":162}
+    196ms @110671 [strike] ents=132 {"simUpdate":10,"updateUI":17,"syncScene":6,"renderFrame":73} {"texUp":328,"c2d":156}
+    186ms @109705 [strike] ents=134 {"syncScene":3,"renderFrame":85} {"texUp":328,"c2d":163}
+    182ms @129040 [strike] ents=130 {"updateUI":10,"syncScene":2,"renderFrame":115} {"texUp":192,"c2d":167}
+    177ms @110425 [strike] ents=132 {"sfxBoom":7,"simUpdate":14,"syncScene":4,"renderFrame":98} {"texUp":329,"c2d":162}
+    176ms @119392 [strike] ents=144 {"simUpdate":10,"rpRecTick":7,"renderFrame":131} {"texUp":192,"c2d":156}
+    168ms @122148 [strike] ents=138 {"renderFrame":89} {"texUp":192,"c2d":175}
+    166ms @124258 [strike] ents=132 {"simUpdate":2,"renderFrame":81} {"texUp":193,"c2d":182}
+    160ms @128147 [strike] ents=130 {"simUpdate":7,"syncScene":4,"renderFrame":94} {"texUp":192,"c2d":167}
+    159ms @108732 [strike] ents=135 {"simUpdate":12,"syncScene":2,"renderFrame":80} {"texUp":329,"c2d":162}
+    157ms @127420 [strike] ents=130 {"updateUI":7,"syncScene":4,"renderFrame":83} {"texUp":376,"c2d":167}
+    157ms @119886 [strike] ents=143 {"simUpdate":11,"syncScene":4,"renderFrame":70} {"tex":1,"texUp":380,"texKB":1.6,"c2d":178}
+    157ms @108129 [strike] ents=136 {"simUpdate":5,"syncScene":3,"renderFrame":114} {"texUp":328,"c2d":156}
+    154ms @110879 [strike] ents=132 {"simUpdate":6,"renderFrame":55} {"texUp":329,"c2d":156}
+    153ms @130228 [strike] ents=130 {"updateUI":15,"syncScene":3,"renderFrame":98} {"texUp":192,"c2d":167}
+    150ms @109441 [strike] ents=134 {"simUpdate":2,"renderSquads":3,"updateUI":13,"syncScene":2,"renderFrame":70} {"texUp":328,"c2d":157}
+    150ms @45189 [wave dtank] ents=117 {"updateUI":7,"renderFrame":17} {"texUp":8,"c2d":100}
+    146ms @124026 [strike] ents=133 {"simUpdate":3,"updateUI":17,"syncScene":2,"renderFrame":86} {"texUp":192,"c2d":185}
+    145ms @119675 [strike] ents=143 {"simUpdate":3,"renderFrame":78} {"texUp":378,"c2d":172}
+    143ms @121391 [strike] ents=138 {"simUpdate":5,"updateUI":7,"syncScene":7,"renderFrame":109} {"texUp":378,"c2d":176}
+  slow 3D objects built (makeObj > 15 ms):
+    16ms at
+    16ms medic
+    19ms inf
+    17ms inf
+    18ms inf
+    16ms inf
+  audio decoded:
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave aa P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave heli P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave jet P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave minel P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power para P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+  trace: tasks over 100 ms (any process/thread, longest first):
+    1031ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1626944 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    1031ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1626944 {}
+    279ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1646925 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    235ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1639171 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    227ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1661955 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    220ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1622005 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    156ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1614928 {"src_file":"third_party/blink/renderer/modules/webaudio/base_audio_context.cc","src_func":"decodeAudioData","src_line":417}
+    134ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1626109 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    134ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1626109 {}
+    108ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1624949 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    108ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1624949 {}
+    inside 1031ms GPU Process/CrGpuMain @1626944: 1031ms Scheduler::RunTask
+    -- phase marks (trace ms) --
+    wave spy@1616354 wave aa@1617866 wave tank@1619379 wave arty@1620912 wave ammot@1622409 wave ew@1623926 wave dtank@1625437 wave dsam@1626940 wave darty@1628431 wave heli@1629951 wave jet@1631497 wave airlift@1632994 wave boat@1634498 wave fast@1636016 wave sub@1637526 wave ship@1639037 wave minel@1640552 wave sweep@1642049 wave lander@1643548 power recon@1645074 power para@1647579 power barrage@1650119 power repair@1652668 power bb@1655192 power nat@1657694 strike@1660213
+US FAIL: 12 new textures in one frame (max 2); longest frame 1128 ms is 1100 ms over the longest quiet frame 28 ms (max 300)
+  [OB +10s] range loaded (bm_splitridge; warm-up {"ms":2911,"models":61,"steps":711,"maxStep":92,"progs":100,"late":0,"phone":0})
+  [OB +24s] normal frame 17 ms (quiet max 30)
+  [OB +24s] waves: harv dozer inf at recon medic champ atk mortar hero spy aa tank arty ammot ew drone dtank dsam darty boat fast lander
+  [OB +59s] powers: recon para barrage repair nat
+  [OB +71s] strike: Heavy Rocket Barrage launched
+OB {"longest":218,"quietMax":30,"normal":17,"over50":499,"frames":2667,"programs":0,"shaders":0,"textures":0,"texKB":1024,"bufKB":6211,"canvases":2,"audioDecodes":6,"cpu":2}
+  by phase:
+    quiet: worst 23ms, 0/2 frames >50ms
+    wave harv: worst 29ms, 0/91 frames >50ms
+    wave dozer: worst 29ms, 0/90 frames >50ms
+    wave inf: worst 64ms, 1/78 frames >50ms
+    wave at: worst 61ms, 1/76 frames >50ms
+    wave recon: worst 54ms, 1/72 frames >50ms
+    wave medic: worst 55ms, 1/74 frames >50ms
+    wave champ: worst 71ms, 1/67 frames >50ms
+    wave atk: worst 63ms, 1/71 frames >50ms
+    wave mortar: worst 60ms, 1/75 frames >50ms
+    wave hero: worst 51ms, 1/75 frames >50ms
+    wave spy: worst 35ms, 0/74 frames >50ms
+    wave aa: worst 98ms, 1/51 frames >50ms
+    wave tank: worst 87ms, 2/37 frames >50ms
+    wave arty: worst 55ms, 1/41 frames >50ms
+    wave ammot: worst 47ms, 0/53 frames >50ms
+    wave ew: worst 181ms, 15/26 frames >50ms
+    wave drone: worst 157ms, 16/26 frames >50ms
+    wave dtank: worst 164ms, 1/40 frames >50ms
+    wave dsam: worst 87ms, 6/33 frames >50ms
+    wave darty: worst 58ms, 3/34 frames >50ms
+    wave boat: worst 85ms, 3/33 frames >50ms
+    wave fast: worst 52ms, 3/35 frames >50ms
+    wave lander: worst 54ms, 2/36 frames >50ms
+    power recon: worst 44ms, 0/108 frames >50ms
+    power para: worst 61ms, 1/116 frames >50ms
+    power barrage: worst 73ms, 7/76 frames >50ms
+    power repair: worst 68ms, 6/80 frames >50ms
+    power nat: worst 56ms, 2/76 frames >50ms
+    strike: worst 218ms, 422/921 frames >50ms
+  slowest calls:
+    renderFrame max 180ms (strike) tot 87558ms n3504
+    syncScene max 121ms (strike) tot 4372ms n3504
+    updateUI max 25ms (strike) tot 2432ms n443
+    simUpdate max 23ms (power repair) tot 5571ms n3749
+    rpRecTick max 6ms (strike) tot 146ms n3504
+    sfxBoom max 6ms (strike) tot 42ms n97
+    addUnit max 4ms (wave champ) tot 14ms n166
+    renderSquads max 3ms (strike) tot 94ms n443
+    launch max 3ms (strike) tot 3ms n1
+    usePower max 3ms (power barrage) tot 8ms n5
+    annSay max 2ms (wave champ) tot 2ms n9
+    qpUpdate max 2ms (power recon) tot 23ms n443
+  frames >50 ms (499, slowest first):
+    218ms @107335 [strike] ents=134 {"simUpdate":5,"updateUI":9,"syncScene":2,"renderFrame":175} {"texUp":188,"c2d":133}
+    197ms @117183 [strike] ents=131 {"updateUI":12,"syncScene":6,"renderFrame":139} {"texUp":376,"c2d":131}
+    191ms @100365 [strike] ents=145 {"simUpdate":8,"syncScene":121,"renderFrame":180} {"texUp":176,"buf":14,"bufKB":593.1,"vao":2,"c2d":111}
+    188ms @108692 [strike] ents=133 {"syncScene":4,"renderFrame":106} {"texUp":364,"c2d":136}
+    186ms @99316 [strike] ents=131 {"simUpdate":7,"renderFrame":157} {"texUp":266,"c2d":111}
+    181ms @48113 [wave ew] ents=128 {"renderFrame":19} {"texUp":8,"c2d":122}
+    168ms @100174 [strike] ents=131 {"simUpdate":4,"syncScene":5,"renderFrame":116} {"texUp":268,"c2d":111}
+    165ms @104158 [strike] ents=137 {"simUpdate":9,"syncScene":10,"renderFrame":125} {"texUp":340,"c2d":132}
+    164ms @104767 [strike] ents=137 {"updateUI":10,"syncScene":3,"renderFrame":110} {"texUp":344,"c2d":132}
+    164ms @50085 [wave dtank] ents=140 {"updateUI":6,"syncScene":61,"renderFrame":112} {"texUp":16,"buf":18,"bufKB":55.7,"vao":12,"c2d":126}
+    163ms @112444 [strike] ents=134 {"simUpdate":11,"updateUI":25,"syncScene":9,"renderFrame":71} {"texUp":198,"c2d":142}
+    158ms @109551 [strike] ents=133 {"syncScene":3,"renderFrame":89} {"texUp":194,"c2d":136}
+    157ms @115328 [strike] ents=131 {"simUpdate":4,"syncScene":4,"renderFrame":120} {"texUp":377,"c2d":131}
+    157ms @49708 [wave drone] ents=134 {"updateUI":4,"renderFrame":20} {"texUp":8,"c2d":130}
+    157ms @106170 [strike] ents=135 {"simUpdate":6,"syncScene":2,"renderFrame":103} {"texUp":354,"c2d":134}
+    155ms @116917 [strike] ents=131 {"simUpdate":4,"syncScene":8,"renderFrame":126} {"texUp":377,"c2d":131}
+    155ms @117469 [strike] ents=131 {"sfxBoom":6,"simUpdate":23,"syncScene":15,"renderFrame":100} {"texUp":376,"c2d":131}
+    153ms @119560 [strike] ents=131 {"simUpdate":7,"syncScene":4,"renderFrame":142} {"texUp":374,"c2d":131}
+    145ms @114021 [strike] ents=133 {"updateUI":18,"syncScene":7,"renderFrame":100} {"texUp":380,"c2d":142}
+    144ms @114250 [strike] ents=133 {"simUpdate":3,"syncScene":3,"renderFrame":92} {"texUp":376,"c2d":141}
+    143ms @105949 [strike] ents=135 {"syncScene":3,"renderFrame":101} {"texUp":354,"c2d":134}
+    140ms @109873 [strike] ents=133 {"simUpdate":5,"updateUI":18,"syncScene":5,"renderFrame":113} {"texUp":364,"c2d":132}
+    139ms @113807 [strike] ents=133 {"simUpdate":7,"syncScene":17,"renderFrame":129} {"texUp":380,"c2d":142}
+    136ms @113454 [strike] ents=132 {"simUpdate":7,"updateUI":7,"syncScene":2,"renderFrame":90} {"texUp":198,"c2d":139}
+    136ms @120019 [strike] ents=130 {"simUpdate":3,"syncScene":8,"renderFrame":128} {"texUp":374,"c2d":139}
+  slow 3D objects built (makeObj > 15 ms):
+    17ms recon
+    24ms inf
+    18ms inf
+    19ms inf
+    18ms inf
+    16ms inf
+    19ms inf
+    19ms inf
+  audio decoded:
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave aa P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power recon P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power barrage P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power barrage P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+  trace: tasks over 100 ms (any process/thread, longest first):
+    216ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1776108 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    212ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1773827 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    187ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @1748502 {"src_file":"third_party/blink/renderer/modules/webaudio/base_audio_context.cc","src_func":"decodeAudioData","src_line":417}
+    176ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1763083 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    176ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1763083 {}
+    146ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1764704 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    146ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1764704 {}
+    121ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @1765132 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    119ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @1765132 {"data":{"frame":"BE27902A34377167AA3280F6720596C9","id":8348}}
+    119ms Renderer/CrRendererMain devtools.timeline:FunctionCall @1765132 {"data":{"columnNumber":14,"frame":"BE27902A34377167AA3280F6720596C9","functionName":"loop","isolate":"216441361747661961","lineNumber":15266,"sampleTraceId":33
+    110ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1765140 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    110ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1765140 {}
+    100ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @1763683 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    100ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @1763683 {}
+    inside 176ms GPU Process/CrGpuMain @1763083: 176ms Scheduler::RunTask
+    inside 146ms GPU Process/CrGpuMain @1764704: 146ms Scheduler::RunTask
+    -- phase marks (trace ms) --
+    wave at@1743903 wave recon@1745410 wave medic@1746915 wave champ@1748452 wave atk@1749967 wave mortar@1751497 wave hero@1753007 wave spy@1754502 wave aa@1756063 wave tank@1757578 wave arty@1759068 wave ammot@1760591 wave ew@1762105 wave drone@1763627 wave dtank@1765251 wave dsam@1766704 wave darty@1768218 wave boat@1769760 wave fast@1771288 wave lander@1772802 power recon@1774301 power para@1776810 power barrage@1779333 power repair@1781867 power nat@1784385 strike@1786933
+OB ok
+RANGEFREEZE FAIL
