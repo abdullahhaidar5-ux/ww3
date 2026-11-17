@@ -25,6 +25,7 @@ os.makedirs(CACHE, exist_ok=True)
 SOLD = os.environ.get('LB2_SOLD', 'clone:lb_story,clone:lb_techc,clone:lb_talk').split(',')
 CMD = os.environ.get('LB2_CMD', 'clone:lb_story')
 MAXCER = 0.15
+KBPS = '48k'   # sheets: 48 kbps (36-40 kbps mp3 blurred consonants in read-back)
 # spoken form for XTTS where plain spelling keeps coming out wrong (vowel marks; the line text itself is unchanged)
 SAY = {'هيهات منّا الذلّة!': 'هَيهات مِنّا الذِّلّة!'}
 # lines that read back fine greedily but not in the final sheet check: scored with beam 5 + a dialect prompt (stricter, steadier)
@@ -149,10 +150,16 @@ def gunbed(n, rng):
     bed = sosfilt(butter(2, [250, 1800], 'bandpass', fs=SR, output='sos'), bed)
     return bed / (np.sqrt(np.mean(bed ** 2)) + 1e-9) * 10 ** (-16.5 / 20) * 10 ** (-24 / 20)
 
+def codec(y):
+    """mp3 round trip at the sheet bitrate: strict lines are checked as the game will play them"""
+    a = '/tmp/lb2c.wav'; b = '/tmp/lb2c.mp3'; sf.write(a, y, SR)
+    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', a, '-ac', '1', '-c:a', 'libmp3lame', '-b:a', KBPS, b], check=True)
+    z, _ = librosa.load(b, sr=SR); return z[:len(y)]
+
 def process(w, text, rng, mood, base_cer, gun=False, strict=False):
     modes = ['cry', 'std', 'mild'] if mood == 'cry' else ['std', 'mild']
     for md in modes:
-        y = chain(w, md); c, hyp = readback(y, text, strict)
+        y = chain(w, md); c, hyp = readback(codec(y) if strict else y, text, strict)
         if c <= max(base_cer + 0.05, 0.10) or md == modes[-1]:
             break
     nb = lambda n: sosfilt(butter(2, [450, 3500], 'bandpass', fs=SR, output='sos'), rng.standard_normal(n))
@@ -285,7 +292,7 @@ def build(J):
         for c in clips: parts += [c, gap]
         tmp = os.path.join(CACHE, sh + '.sheet.wav'); sf.write(tmp, np.concatenate(parts), SR)
         dst = os.path.join(ROOT, 'vo', sh + '.mp3')
-        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', tmp, '-ac', '1', '-ar', str(SR), '-c:a', 'libmp3lame', '-b:a', '40k' if sh == 'RS' else '36k', dst], check=True)
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', tmp, '-ac', '1', '-ar', str(SR), '-c:a', 'libmp3lame', '-b:a', KBPS, dst], check=True)
         json.dump(maps[sh], open(os.path.join(ROOT, 'tools', 'voices', 'map', sh + '.json'), 'w'), separators=(',', ':'))
         log(f'{sh}: {len(clips)} clips, {t:.1f} s, {os.path.getsize(dst) // 1024} KB')
 
