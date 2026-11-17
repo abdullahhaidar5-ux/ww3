@@ -70,6 +70,10 @@ const ck = (c, m) => { if (!c) fails.push(m); };
 const srcFiles = fs.readdirSync(path.join(ROOT, 'src')).filter(f => f.endsWith('.js')).sort();
 const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')]));
 // weathergfx 2026-11-14 (Abdullah: weather "Pick in setup + Random", graphics "Low/Med/High/Ultra"): ONE Conditions table (CONDS in 01-data) drives the setup/lobby picker and the Test range picker; Random and unfitting picks resolve through condFit (deterministic from the seed); ONE graphics row (GFX_PRESETS: Low/Medium/High/Ultra), no second quality setting.
+// redfixE (2026-11-17): the battle servers (server/build-sim.mjs) and the headless test run the simulation from SIM_FILES in orch/headless.mjs - every
+// src/01..03 file the page loads must be in it (4 were missing: faction mechanics, signature units, OB, the Iranian missile ran in browsers only)
+{ const hl = fs.readFileSync(path.join(ROOT, 'orch/headless.mjs'), 'utf8'), m = /export const SIM_FILES = \[([^\]]*)\]/.exec(hl), L = m ? m[1].match(/'[^']+'/g).map(x => x.slice(1, -1)) : [];
+  const want = srcFiles.filter(f => /^0[123]/.test(f)); const miss = want.filter(f => !L.includes(f)); ck(!miss.length, 'battle servers / headless: SIM_FILES in orch/headless.mjs misses ' + miss.join(', ')); }
 { const d = SRC['01-data.js'] || '', u = SRC['08-ui.js'] || '', s = SRC['03-sim.js'] || '';
   ck(/const CONDS=\[/.test(d) && /function condFit\(/.test(d) && /function condTheme\(/.test(d), 'weathergfx: the Conditions table (CONDS / condFit / condTheme) is gone from 01-data.js');
   ck(/condFit\(wxBase\(o\.w\)/.test(s) && /G\.wxB=wB/.test(s), 'weathergfx: newGame no longer resolves Conditions through condFit (Random and unfitting picks must follow the map and the seed)');
