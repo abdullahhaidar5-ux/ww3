@@ -329,7 +329,7 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
 // Shia missions (Abdullah 2026-11-14 "begin polishing"): the story Missions hold at least one mission for each of IR, RS, DW and RV, each on a real map with a briefing, goals, win and lose text.
 { const M = SRC['12-campaign.js'] || '';
   for (const f of ['IR', 'RS', 'DW', 'RV']) ck(new RegExp("\\{id:'[a-z]+',n:\\d+,title:'[^']+',sub:'[^']+',fac:'" + f + "'").test(M), 'missions: no story mission for ' + f);
-  for (const m of M.matchAll(/\{id:'([a-z]+)',n:\d+,[^\n]*?map:'([a-z0-9_]+)'/g)) ck(new RegExp('^\\s+' + m[2] + ':\\{', 'm').test(SRC['02-map.js']) || Object.entries(SRC).some(([f, t]) => /^02/.test(f) && t.includes("{k:'" + m[2] + "'")), 'missions: ' + m[1] + ' uses map ' + m[2] + ' which does not exist');
+  for (const m of M.matchAll(/\{id:'([a-z]+)',n:\d+,[^\n]*?map:'([a-z0-9_]+)'/g)) ck(Object.entries(SRC).some(([f, t]) => /^02/.test(f) && new RegExp('^\\s+' + m[2] + ':\\{', 'm').test(t)) || Object.entries(SRC).some(([f, t]) => /^02/.test(f) && t.includes("{k:'" + m[2] + "'")), 'missions: ' + m[1] + ' uses map ' + m[2] + ' which does not exist');
   ck((M.match(/\bbrief:\[/g) || []).length >= 6 && (M.match(/\bwin:'/g) || []).length >= 6 && (M.match(/\blose:'/g) || []).length >= 6, 'missions: every mission needs brief, win and lose text (6 expected)'); }
 // 4. ONE GAME (Abdullah 2026-11-13 20:18 "Abandon conquest and campaign entirely remove them from the game"): the grand campaign is gone -
 //    no src/13* modules, no lazy bundle / loader, no grand code path or typeof-guarded call into it anywhere in src/.

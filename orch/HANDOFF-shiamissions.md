@@ -23,3 +23,11 @@ See the bottom of this file for the build, smoke, decisions and `orch/cigate.sh`
 - Nobody has played these by hand. The scripted player proves they can be won and lost and do not crash, not that they are fun or well balanced; ask Abdullah to play "Retake the Village" and "Bridgehead on the Euphrates" for 2 minutes on Medium.
 - Maps (beqaa, tihama, golan, caspian, euphrates) were chosen for the real geography; pathing was only checked by the scripted run.
 - Dugouts were not added to the missions (dugout orders belong to the player); capturable tech buildings are not placed by the missions, the depots use the derrick system.
+
+## Gate result (orch/cigate.sh, run twice: before and after one fix)
+Second run on 840d76b: 25 of 27 gates green, including `campaign`-related smoke, build, smooth-pc, smooth-mp, mpsync, tutorial. Two red, **both already red on main (eb5d5b8: "RED: decisions, icons, save")** and not touched by this branch:
+- `decisions`: 3 failures, none about missions: the unit-button hover card (WEAK TO), and the two neutral-road-section capture checks. My own two decisions failures (British spelling "defences", mission map `beqaa` lives in 02b-realmaps) were fixed in this branch.
+- `save`: "replay differs after +2 min" in the Battle save/replay test.
+Local `node orch/smoke.mjs` and `decisions.mjs` time out in this sandbox (per CLAUDE.md), so GitHub is the proof.
+
+**Ready to land** as far as the missions go; the conductor should know main's decisions/save/icons are red independently.

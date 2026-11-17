@@ -21438,7 +21438,7 @@ const CAMPAIGN=[
   else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and assault force lost.');}},
 
 {id:'finale',n:5,title:'Combined Arms',sub:'Iran · Final assault on the Caspian coast',fac:'IR',enemy:'RU',enemyName:'Northern Group',map:'caspian',min:'14-20 min',
- brief:['This is the strike that ends the offensive. The enemy has dug a fortified base on the coast: air-defence sites on the approaches, armor in depth, a War Factory and a command post at the back.','You command a combined force: loitering drones, missile artillery, tanks, infantry and anti-air. The drones cannot fly while the enemy air-defence sites stand - take those out first with artillery and the ground force, then bring the drones in.','Break the air defences, destroy the vehicle factory so the armor cannot be replaced, then destroy the headquarters. You have a field depot and a small base behind you for reinforcements.'],
+ brief:['This is the strike that ends the offensive. The enemy has dug a fortified base on the coast: air-defence sites on the approaches, armor in depth, a War Factory and a command post at the back.','You command a combined force: loitering drones, missile artillery, tanks, infantry and anti-air. The drones cannot fly while the enemy air-defence sites stand - take those out first with artillery and the ground force, then bring the drones in.','Break the air defenses, destroy the vehicle factory so the armor cannot be replaced, then destroy the headquarters. You have a field depot and a small base behind you for reinforcements.'],
  obj:[['sam','Destroy the enemy air-defence sites'],['fac','Destroy the vehicle factory'],['hq','Destroy the enemy headquarters']],
  win:'The enemy command post is rubble. The offensive is over.',lose:'The assault force is destroyed.',
  setup(c){const d=c.mul,B=BASES[0];G.teams[0].credits=3500;const s=CH.pt(.14,0);c.focus=s;CH.base(0,B[0],B[1]);
@@ -21450,7 +21450,7 @@ const CAMPAIGN=[
   for(const o of [-260,-90,90,260]){const p=CH.pt(.8,o);CH.bld(1,'turret',p[0],p[1]);}
   for(const o of [-200,0,200]){const p=CH.pt(.9,o);CH.bld(1,'sam',p[0],p[1]);}
   const q=CH.pt(.85,0);CH.units(1,'tank',Math.round(5*d),q[0],q[1],140);CH.units(1,'inf',Math.round(10*d),q[0],q[1],140);CH.units(1,'at',Math.round(4*d),q[0],q[1],100);CH.units(1,'aa',2,q[0],q[1],100);
-  T.ai=mkAI(c.diff);CH.say('Briefing: air defences first, then the factory, then the headquarters.','g');},
+  T.ai=mkAI(c.diff);CH.say('Briefing: air defenses first, then the factory, then the headquarters.','g');},
  tick(c,dt){const sam=CH.count(1,'sam'),fac=CH.count(1,'factory'),hq=CH.count(1,'hq');
   if(!c.o.sam&&sam===0){c.o.sam=true;CH.flash('Air defenses down - the drones have a free sky.','g');CH.radio('Drone team','Al-sama\' maftuha','The sky is open','g');}
   if(!c.o.fac&&fac===0){c.o.fac=true;CH.flash('The vehicle factory is rubble - no more armor for them.','g');}
