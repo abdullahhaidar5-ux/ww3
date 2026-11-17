@@ -1,0 +1,36 @@
+  page: shader warm-up 8146 ms, 62 models, 120 objects in 673 steps (longest 466 ms), 118 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 66 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=18540 normal=66ms (quiet max 133) longest=1902ms three(progs/geo/tex)=+0/+-40/+-3 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":1,"bufKB":2,"vao":5,"fbo":0,"read":0,"img":2,"url":1,"aud":1,"cnv":5}
+  worst frames: 1902ms@6.4s {"img":1} ; 711ms@6.4s {"img":1} ; 349ms@6.4s {"vao":1,"url":1,"cnv":5} ; 221ms@6.4s {} ; 206ms@3.1s {}
+  frames that made the GPU work (5):
+    0.60s 53ms {"buf":1,"bufKB":1.7,"vao":1} three geo/tex 609/550
+    3.24s 114ms {"aud":1} three geo/tex 609/550
+    6.36s 349ms {"vao":1,"url":1,"cnv":5} three geo/tex 609/550
+    6.36s 711ms {"img":1} three geo/tex 609/550
+    6.36s 1902ms {"img":1} three geo/tex 609/550
+  canvases created during the strike:
+    at P.<computed> [as createElement] (<anonymous>:3:101) < at esFlagEl (index.html:13628:43) < at esPage (index.html:13638:70) < at showEnd (index.html:13570:78) < at showEnd (index.html:15668:92)
+    at P.<computed> [as createElement] (<anonymous>:3:101) < at esFlagEl (index.html:13628:43) < at esPage (index.html:13638:70) < at showEnd (index.html:13570:78) < at showEnd (index.html:15668:92)
+    at P.<computed> [as createElement] (<anonymous>:3:101) < at esPage (index.html:13643:95) < at showEnd (index.html:13570:78) < at showEnd (index.html:15668:92) < at showEnd (index.html:15697:81)
+    at P.<computed> [as createElement] (<anonymous>:3:101) < at esImage (index.html:13665:102) < at esPage (index.html:13647:16) < at showEnd (index.html:13570:78) < at showEnd (index.html:15668:92)
+    at P.<computed> [as createElement] (<anonymous>:3:101) < at aarDraw (index.html:15385:31) < at show (index.html:15405:28) < at aarPage (index.html:15409:3) < at showEnd (index.html:13570:146)
+IR worst JS call (not drawing): simUpdate 275ms; FAIL: 3 pixel read-backs; longest frame 1902 ms is 1769 ms over the longest quiet frame 133 ms (max 150); 1 errors: strike did not finish in time
+  page: shader warm-up 3868 ms, 65 models, 125 objects in 693 steps (longest 154 ms), 124 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 61 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=150 normal=61ms (quiet max 146) longest=327ms three(progs/geo/tex)=+0/+1/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":1,"bufKB":2,"vao":2,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 327ms@3.1s {} ; 245ms@3.4s {} ; 197ms@3.6s {} ; 163ms@3.0s {} ; 159ms@4.2s {}
+  frames that made the GPU work (2):
+    0.24s 57ms {"buf":1,"bufKB":1.7,"vao":1} three geo/tex 710/619
+    3.28s 63ms {"aud":1} three geo/tex 710/619
+RU worst JS call (not drawing): simUpdate 108ms; FAIL: longest frame 327 ms is 181 ms over the longest quiet frame 146 ms (max 150)
+  page: shader warm-up 3308 ms, 59 models, 114 objects in 677 steps (longest 135 ms), 109 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 69 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=170 normal=69ms (quiet max 147) longest=247ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 247ms@0.2s {} ; 213ms@4.5s {} ; 204ms@3.0s {} ; 195ms@5.0s {} ; 185ms@4.8s {}
+  frames that made the GPU work (1):
+    3.16s 140ms {"aud":1} three geo/tex 594/518
+US worst JS call (not drawing): simUpdate 67ms; ok
+SUPERFREEZE FAIL
