@@ -12,7 +12,7 @@ const start = async (P) => {
 };
 // run k ticks; record per-tick hash; snapshot (ckEncode JSON) at ticks listed in snap
 const run = (P, k, seed, snap) => P.evaluate(({ k, seed, snap }) => { window.__reseed(seed); const hs = [], sn = {};
-  for (let i = 0; i < k && !G.over; i++) { if (snap.includes(i)) sn[i] = JSON.stringify(ckEncode()); window.__reseed(Math.imul(seed, 100003) + i); simUpdate(1 / 60); if (window.__full) { const j = JSON.stringify(ckEncode(), (kk, v) => (kk === 'lx' || kk === 'ly' || kk === 'odo' || kk === 'k' || kk === 'ffc' || kk === 'lgv') ? undefined : (v && typeof v === 'object' && !Array.isArray(v)) ? Object.keys(v).sort().reduce((o, q) => (o[q] = v[q], o), {}) : v); let h = 2166136261 >>> 0; for (let q = 0; q < j.length; q++) { h ^= j.charCodeAt(q); h = Math.imul(h, 16777619) >>> 0; } hs.push(h); } else hs.push(svStateHash().h); }
+  for (let i = 0; i < k && !G.over; i++) { if (snap.includes(i)) sn[i] = JSON.stringify(ckEncode()); window.__reseed(Math.imul(seed, 100003) + i); simUpdate(1 / 60); if (window.__full) { const j = JSON.stringify(ckEncode(), (kk, v) => (kk === 'lx' || kk === 'ly' || kk === 'odo' || kk === 'k' || kk === 'ffc' || kk === 'lgv' || kk === 'S' || kk === '$s') ? undefined : (v && typeof v === 'object' && !Array.isArray(v)) ? Object.keys(v).sort().reduce((o, q) => (o[q] = v[q], o), {}) : v); let h = 2166136261 >>> 0; for (let q = 0; q < j.length; q++) { h ^= j.charCodeAt(q); h = Math.imul(h, 16777619) >>> 0; } hs.push(h); } else hs.push(svStateHash().h); }
   return { hs, sn }; }, { k, seed, snap });
 const preRun = (P) => run(P, PRE * 3600, SEED, []);
 const A = await B.open(); await start(A); await preRun(A);

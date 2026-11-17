@@ -13489,6 +13489,7 @@ function ckDecode(ck){const byId=new Map();const S=ck.S;const ents=ck.ents.map(o
   let sTab=[];const dec=v=>{if(v==null||typeof v!=='object')return v;if(Array.isArray(v))return v.map(dec);if(v.$e!=null)return byId.get(v.$e)||null;if(v.$f!=null)return G.fields[v.$f]||null;if(v.$o!=null)return G.oil[v.$o]||null;if(v.$c!=null)return (G.civ||[])[v.$c]||null;
     const o={};for(const k in v){if(k==='$s')continue;o[k]=dec(v[k]);}if(v.$s!=null&&sTab[v.$s]){o.s=sTab[v.$s];o.vs=new Array(G.teams.length).fill(false);}return o;};  // $s: a unit off the map (tunnel / fortress)
   sTab=S.map(s=>dec(s));
+  {const cn=new Array(sTab.length);for(const e of ents){const i=e.$s;if(i==null||cn[i]!==undefined||!sTab[i])continue;cn[i]=null;try{const T=G.teams[e.team],c=T&&T.fac&&stats(T.fac,e.kind);if(c&&JSON.stringify(c)===JSON.stringify(sTab[i])){sTab[i]=c;cn[i]=c;}}catch(_){}}}   // redfixE: a unit whose stats are the nation's shared table gets that same table back (new units of that kind share it, as before the save)
   for(const e of ents){for(const k in e){if(k==='$s')continue;e[k]=dec(e[k]);}e.s=sTab[e.$s];delete e.$s;e.vs=new Array(G.teams.length).fill(false);}
   return {ents,byId,dec};}
 // Turn this page (currently a client in the battle) into the host, from a checkpoint.
