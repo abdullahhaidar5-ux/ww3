@@ -1,0 +1,14 @@
+conquest strait       stuck episodes   0  mover-seconds 4552
+conquest golan        stuck episodes   0  mover-seconds 4658
+conquest taiwan       stuck episodes   0  mover-seconds 3148
+conquest honshu       stuck episodes   1  mover-seconds 4770
+conquest volga        stuck episodes   0  mover-seconds 4996
+conquest rivers       stuck episodes   3  mover-seconds 4232
+skip battle strait (map not used)
+skip battle golan (map not used)
+battle   taiwan       stuck episodes   2  mover-seconds 4291
+skip battle honshu (map not used)
+skip battle volga (map not used)
+skip battle rivers (map not used)
+total stuck episodes 6 {"open ground":2,"against building garrison":1,"bridge":1,"embedded in blocked tile/footprint":2}
+STUCKSCAN PASS (6 <= 8)
