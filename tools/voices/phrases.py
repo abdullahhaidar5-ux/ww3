@@ -204,16 +204,16 @@ P['CU'] = [
  ['Construcción terminada.', 'El edificio está listo.', 'Obra completada, comandante.', 'Instalación lista.']]
 C['CU'] = [['¡Patria o muerte!'], ['¡Adelante!'], ['¡Venceremos!', '¡Hasta la victoria siempre!'], ['¡Patria o muerte!']]
 
-P['JP'] = [
- ['準備完了。', '命令を待つ。', '了解、指示を。', '待機中。'],
- ['移動する。', '了解、前進。', '移動開始。', '前へ。'],
- ['撃て！', '敵発見、交戦！', '攻撃開始！', '接敵、撃て！'],
- ['部隊、準備よし。', '全員、配置完了。', '報告する、準備完了。', '任務遂行の用意よし。'],
- ['基地が攻撃を受けている！', '敵が基地を攻撃中！', '基地に敵襲！'],
- ['敵の射撃を受けている！', '交戦中、支援を請う！', '撃たれている、支援を！', '敵の火力が強い！'],
- ['戦友がやられた！', '兵力損失！', '一人倒れた！', '隊員が戦死！'],
- ['建設完了。', '施設の準備ができた。', '設備、稼働準備よし。', '建設が終わった。']]
-C['JP'] = [['日本のために！'], ['必勝！'], ['日本万歳！', '必勝！'], ['国のために！準備よし！']]
+P['JP'] = [   # voices3 2026-11-17: JGSDF-style radio Japanese (了解、準備よし、前へ、撃て、援護を求む、衛生), no imperial-era cries
+ ['はい、隊長。', '指示をどうぞ。', '準備よし。', '了解、待機中。'],
+ ['了解、前進する。', '了解、移動します。', '移動開始。', '前へ。'],
+ ['撃て！', '敵発見、射撃開始！', '交戦する！', '接敵、撃て！'],
+ ['小隊、準備よし。', '全員そろいました。', '配置よし、いつでも行けます。', '出動準備完了。'],
+ ['基地が攻撃されている！', '敵が基地に侵入！', '基地に敵襲、応援を！'],
+ ['撃たれている！', '交戦中、援護を求む！', '敵の火力が強い、支援を！', '伏せろ！'],
+ ['一名やられた！', '負傷者一名！', '小隊がやられました。', '隊員が倒れた、衛生を！'],
+ ['建設完了。', '施設の準備ができました。', '施設、使用可能です。', '工事完了しました。']]
+C['JP'] = [['この国を守る！', '任せてください！'], ['前へ！', '行くぞ！'], ['突撃！', '撃て、撃て！', '踏ん張れ！', '一歩も引くな！'], ['準備よし、行けます！']]
 
 # IQ: Iraqi Arabic (Baghdadi army speech: هسه, شكو, أكو/ماكو, وكع), own cast (voicesV 2026-11-10)
 P['IQ'] = [
@@ -352,16 +352,39 @@ P['MA'], C['MA'] = _ar(
  [['عاش المغرب!', 'الله أكبر!'], ['يلا يلا!', 'عاش المغرب!'], ['الله أكبر! عليهم!', 'فدا المغرب!', 'يا الله!', 'عاش المغرب!'], ['واجدين، عاش المغرب!']])
 
 # voicesV 2026-11-10: English-speaking nations, own wording and casts (XTTS 'en' has one accent, so identity comes from speakers + idiom)
+# voices3 2026-11-17: British Army speech (boss, lads, wilco, send, stand to, watch and shoot, rapid fire, crack on), British, not American
 P['GB'] = [
- ['Ready, sir.', 'Standing by.', 'Right you are, sir.', 'Sir.'],
- ['Moving up.', 'Wilco.', 'On the move.', 'Understood, advancing.'],
- ['Engaging!', 'Contact, open fire!', 'Fire!', 'Target, go firm and fire!'],
- ['Section ready.', 'Troop ready, sir.', 'All present and correct.', 'Ready to go, sir.'],
- ['Base under attack!', 'Enemy at the wire!', 'We are being hit at base, need support!'],
- ['Contact! We are pinned down!', 'Taking fire, need support!', 'Incoming, get down!', 'Contact front!'],
- ['Man down!', 'Casualty!', 'We have lost the section.', 'One down, medic!'],
- ['Construction complete.', 'Building is up, sir.', 'Structure is ready.', 'Works finished.']]
-C['GB'] = [['For King and country!', 'Who dares wins!'], ['Up and at them!', 'Advance!'], ['Who dares wins! Fire!', 'For the Crown!', 'Stand firm!', 'Give them hell!'], ['Ready, sir. Let us go!']]
+ ['Sir.', 'Go ahead, boss.', 'Ready, sir.', 'Send, over.'],
+ ['Roger, moving now.', 'Wilco.', 'On the move, sir.', 'Right lads, move!'],
+ ['Contact! Rapid fire!', 'Watch and shoot!', 'Open fire!', 'Engaging, engaging!'],
+ ['Section ready, sir.', 'All present and correct.', 'Troop ready, boss.', 'Good to go, sir.'],
+ ['Base under attack!', 'Stand to! Enemy at the wire!', 'We are being hit at the base, need support!'],
+ ['Contact! Taking fire!', 'Pinned down, need support!', 'Incoming! Get down!', 'Contact, wait out!'],
+ ['Man down!', 'Casualty!', 'We have lost the section.', 'Man down, medic!'],
+ ['Construction complete.', 'The building is up, sir.', 'Structure is ready.', 'Works finished, sir.']]
+C['GB'] = [['For King and country!', 'Who dares wins!'], ['Up and at them!', 'Crack on, lads!'], ['Who dares wins! Fire!', 'Fix bayonets!', 'Stand firm!', 'Give them hell, lads!'], ['Ready, sir. Let us crack on!']]
+# voices3 2026-11-17: French Army speech (mon lieutenant, paré, reçu, on bouge, on se fait allumer, à couvert) - own FR sheet (was tools/voices/frde_phrases.py)
+P['FR'] = [
+ ['Mon lieutenant ?', 'J’écoute.', 'Paré, mon lieutenant.', 'À vos ordres.'],
+ ['Reçu, on bouge.', 'Bien reçu, j’y vais.', 'On avance.', 'Ça marche, en route.'],
+ ['Feu !', 'Contact, on engage !', 'Ouvrez le feu !', 'Cible en vue, feu !'],
+ ['Groupe prêt.', 'Section en place, mon lieutenant.', 'Paré au combat.', 'Prêts à y aller.'],
+ ['La base est attaquée !', 'Ils sont dans la base !', 'On se fait allumer à la base, renforts !'],
+ ['On se fait tirer dessus !', 'Contact ! On est fixés !', 'Ça tire de partout, appui !', 'À couvert !'],
+ ['Un gars à terre !', 'On a perdu un gars.', 'On a perdu le groupe.', 'Blessé ! Infirmier !'],
+ ['Construction terminée.', 'Le bâtiment est prêt.', 'C’est opérationnel, mon lieutenant.', 'Travaux terminés.']]
+C['FR'] = [['Pour la France !', 'Toujours prêts !'], ['En avant !', 'On y va, les gars !'], ['À l’assaut !', 'Feu ! Pour la France !', 'Tenez bon !', 'Allez, allez, allez !'], ['Prêts, mon lieutenant. On y va !']]
+# voices3 2026-11-17: Bundeswehr speech (Herr Hauptmann, verstanden, Feuer frei, Feindkontakt, Sanitäter, wir dienen Deutschland) - own DE sheet
+P['DE'] = [
+ ['Hier.', 'Jawohl, Herr Hauptmann.', 'Bereit, kommen.', 'Ich höre.'],
+ ['Verstanden, wir rücken vor.', 'Auftrag verstanden.', 'Abmarsch.', 'Wir sind unterwegs.'],
+ ['Feuer frei!', 'Feindkontakt, Feuer!', 'Ziel erkannt, Feuer!', 'Feuer!'],
+ ['Gruppe einsatzbereit.', 'Zug vollzählig, Herr Hauptmann.', 'Einsatzbereit.', 'Bereit zum Gefecht.'],
+ ['Die Basis wird angegriffen!', 'Feind im Lager!', 'Angriff auf die Basis, brauchen Unterstützung!'],
+ ['Wir werden beschossen!', 'Feindkontakt, wir sind festgenagelt!', 'Brauchen Feuerunterstützung!', 'Deckung!'],
+ ['Mann getroffen!', 'Wir haben einen verloren.', 'Gruppe ausgefallen.', 'Verwundeter! Sanitäter!'],
+ ['Bau abgeschlossen.', 'Gebäude steht.', 'Einsatzbereit, Herr Hauptmann.', 'Arbeiten abgeschlossen.']]
+C['DE'] = [['Für Deutschland!', 'Wir dienen Deutschland!'], ['Vorwärts!', 'Los, los!'], ['Angriff!', 'Feuer! Haltet die Stellung!', 'Standhalten!', 'Los, los, los!'], ['Bereit, Herr Hauptmann. Los geht es!']]
 P['AU'] = [
  ['Ready, mate.', 'Standing by, boss.', 'Yep, go ahead.', 'Righto, sir.'],
  ['Moving out.', 'No worries, on the move.', 'Righto, going.', 'Copy that, moving.'],
