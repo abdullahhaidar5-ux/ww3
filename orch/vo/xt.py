@@ -23,7 +23,8 @@ REFS=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','tools','
 _cl={}
 def clone_latents(key):
     if key not in _cl:
-        m=model();g,e=m.get_conditioning_latents(audio_path=[os.path.join(REFS,key+'.flac')],gpt_cond_len=12,gpt_cond_chunk_len=12,max_ref_length=15)
+        m=model();L=(24,6,30) if key in ('lb_story','lb_talk','lb_techc') else (12,12,15)   # lb2 refs (voices-lb2): longer clean references, conditioned in 6 s chunks
+        g,e=m.get_conditioning_latents(audio_path=[os.path.join(REFS,key+'.flac')],gpt_cond_len=L[0],gpt_cond_chunk_len=L[1],max_ref_length=L[2])
         _cl[key]={'gpt_cond_latent':g,'speaker_embedding':e}
     return _cl[key]
 def synth(text,lang,spk,temp=0.75,speed=1.08,seed=None):

@@ -34,7 +34,7 @@ X = 'xtts'
 CAST = {
     # RS (2026-11-15 "Lebanese dialogue doesn't sound Lebanese enough"): XTTS clones of three real Lebanese male speakers
     # (MASC corpus, CC BY 4.0; refs + credits in tools/voices/refs/CREDITS.md) so the accent is Lebanese, not studio MSA
-    'RS': dict(eng=X, lang='ar', sold=['clone:lb_vlog', 'clone:lb_tech', 'clone:lb_narr'], cmd='clone:lb_narr'),
+    'RS': dict(eng=X, lang='ar', sold=['clone:lb_story', 'clone:lb_techc', 'clone:lb_talk'], cmd='clone:lb_story'),   # voices-lb2 (2026-11-17): clean refs, rendered by orch/vo/lb2.py
     'DW': dict(eng=X, lang='ar', sold=['Dionisio Schuyler', 'Viktor Eka', 'Damjan Chapman'], cmd='Baldur Sanjin'),
     'SA': dict(eng=X, lang='ar', sold=['Baldur Sanjin', 'Damjan Chapman'], cmd='Damien Black'),
     'AE': dict(eng=X, lang='ar', sold=['Viktor Eka', 'Luis Moray'], cmd='Dionisio Schuyler'),

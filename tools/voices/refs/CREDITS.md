@@ -10,6 +10,12 @@ XTTS-v2 cloning references for vo/RS*.mp3: about 13-18 s each, short clips of on
 - lb_vlog.flac: MASC video SZC2HW-31Yc (Lebanese vlogger, ~145 Hz) - first soldier voice
 - lb_tech.flac: MASC video nl0DZ3eBKPQ (Lebanese presenter, ~118 Hz) - second soldier voice
 
+# Lebanese voice references, second pass (voices-lb2, 2026-11-17 - pending Abdullah's approval, branch orch/voices-lb2)
+Same source and licence: MASC - Massive Arabic Speech Corpus, Mohammad Al-Fetyani, Muhammad Al-Barham, Gheith Abandah, Adham Alsharkawi, Maha Dawas (2021), IEEE DataPort, doi:10.21227/e1qb-jv46, licence CC BY 4.0 (huggingface.co/datasets/pain/MASC; train shards 03/05 and the test split streamed, only the chosen clips kept). Picked for clean recordings (DNSMOS background score >= 2.8, P.808 >= 3.0), male voice (XTTS speaker embedding closer to the male studio voices, median pitch 110-130 Hz) and, for lb_story, Lebanese transcripts (هيك، هيدا، انو، رح، -هن). Short clips of one speaker joined with 0.25 s gaps, loudness-matched, 16 kHz mono. Per the dataset terms no attempt was made to identify the speakers.
+- lb_story.flac (30.6 s): one Lebanese narrator of a story series in MASC (videos c2grGSyfpmo, JJbWyNwTcpw, 0OUv-LIOe5Q, ZTeb9bGPSdc, dI8RHP8irao - the same voice, XTTS speaker similarity 0.8-0.9), ~111 Hz - RS commander + first soldier voice
+- lb_talk.flac (22.6 s): MASC video MKzgPzpsivM (male presenter, Levantine, ~126 Hz) - third soldier voice
+- lb_techc.flac (18.9 s): lb_tech.flac (MASC nl0DZ3eBKPQ, Lebanese presenter, ~118 Hz) with its background noise reduced (noisereduce, stationary, 85 %) - second soldier voice
+
 # Palestinian / Levantine voice references (OB unit voices, 2026-11-15)
 Same source and licence as above (MASC, CC BY 4.0, dev/test splits); speakers picked by southern-Levantine (Palestinian/Jordanian) transcript markers (عشان، بحكيلهم، رح، هيك), male pitch and DNSMOS.
 - pal_host.flac: MASC video eLR5XvLcNWk (~107 Hz) - OB commander + third soldier voice
