@@ -16,12 +16,24 @@ Sources (all free; credited in the menu credits):
     so free since 2004), South Korea's "Aegukga" (Ahn Eak-tai, d. 1965; his family gave all rights to the Korean state in 2005,
     which leaves it free for anyone to use), Russia's anthem (Alexander Alexandrov, d. 1946; Russia: life + 70 + 4 war years, so
     free since 2021, and Russian law also exempts state symbols from copyright).
-    Skipped (composition not clearly public domain): Turkey's Istiklal Marsi (Osman Zeki Ungor, d. 1958: in copyright in Turkey
+    Added 2026-11-17 (orch/anthems), US Navy Band recordings from the same Internet Archive item (Public Domain Mark;
+    file pages checked: the Commons copies of the same recordings carry PD-USGov-Navy plus the composition tag named here):
+    GB "God Save the King" (traditional, PD-old-100), RS the National Anthem of Lebanon (Wadih Sabra, d. 1952; PD-old-70;
+    the Lebanese state anthem stands in for the fictional Lebanese Shia faction, never a real group's song), DW the National
+    Anthem of Yemen (Ayoob Tarish; Commons PD-Yemen: Yemen's law leaves state anthems unprotected), RV "Mawtini" (Mohammed
+    Flayfel; the anthem of Iraq, Commons PD-Iraq), OB "Mawtini" again, a later verse of the same recording (Ibrahim Tuqan's
+    Palestinian poem; no real armed group's song), SA "Aash Al Maleek" (Commons: PD in the US, published without notice),
+    AE "Ishy Bilady" (Commons PD-United Arab Emirates: UAE law excludes national symbols), TR "Istiklal Marsi" (Commons
+    PD-old-60 / PD-old-80-expired), IR the anthem of the Islamic Republic of Iran (Hassan Riahi; the Navy Band's 2000
+    recording, archive item folder Removed/; Iran has no copyright treaty with the US).
+    KP: "Arirang" (traditional Korean folk song, public domain), performed by the United States Army Chorus on "Songs of the
+    Soldier" (2005; US Army work: public domain), via Wikimedia Commons (File:Arirang.ogg, PD-USGov-Military-Army).
+    Earlier note, now superseded for TR/SA/AE/IR - Skipped (composition not clearly public domain): Turkey's Istiklal Marsi (Osman Zeki Ungor, d. 1958: in copyright in Turkey
     until 2029), Saudi Arabia (Abd al-Rahman al-Khatib, 1947, death date unknown; brass version by Siraj Umar), the UAE's "Ishy
     Bilady" (Saad Abdel Wahab, d. 2004), Iran's 1990 anthem (Hassan Riahi), North Korea (Kim Won-gyun, d. 2002; and no Navy Band
     recording).
 
-usage: python3 mus/an_pack.py <download-dir>
+usage: python3 mus/an_pack.py <download-dir> [CODE ...]
   <download-dir>/an/<CODE>.(ogg|mp3) must exist (see ANTHEMS). Writes mus/an_<CODE>.mp3 for each one found.
 """
 import os, subprocess, sys
@@ -32,7 +44,11 @@ DL = sys.argv[1] if len(sys.argv) > 1 else '.'
 ANTHEMS = {'US': ('an/US.ogg', 0, 26), 'IL': ('an/IL.mp3', 0, 26), 'UA': ('an/UA.mp3', 0, 26), 'EU': ('an/EU.ogg', 0, 26), 'CU': ('an/CU.mp3', 0, 26),
            'IN': ('an/IN.mp3', 0, 26), 'CN': ('an/CN.mp3', 0, 26), 'EG': ('an/EG.mp3', 0, 26),
            'PK': ('an/PK.mp3', 0, 26), 'KR': ('an/KR.mp3', 0, 26), 'RU': ('an/RU.mp3', 0, 26),
-           'FR': ('an/FR.mp3', 0, 26), 'DE': ('an/DE.mp3', 0, 26), 'JP': ('an/JP.mp3', 0, 26)}
+           'FR': ('an/FR.mp3', 0, 26), 'DE': ('an/DE.mp3', 0, 26), 'JP': ('an/JP.mp3', 0, 26),
+           # 2026-11-17: the rest of the 22 playable nations (orch/HANDOFF-anthems.md)
+           'GB': ('an/GB.mp3', 0, 26), 'RS': ('an/RS.mp3', 0, 26), 'DW': ('an/DW.mp3', 0, 26), 'RV': ('an/RV.mp3', 0, 26),
+           'OB': ('an/RV.mp3', 52.5, 26), 'SA': ('an/SA.mp3', 0.8, 26), 'AE': ('an/AE.mp3', 0, 26), 'TR': ('an/TR.mp3', 0.5, 26),
+           'IR': ('an/IR.mp3', 0, 26), 'KP': ('an/KP.ogg', 0, 26)}
 
 
 def anthems():
@@ -43,6 +59,8 @@ def anthems():
             continue
         out = os.path.join(ROOT, 'mus', f'an_{code}.mp3')
         # loudness-matched, a short fade in and a long fade out
+        if len(sys.argv) > 2 and code not in sys.argv[2:]:
+            continue
         subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', str(st), '-t', str(n), '-i', src, '-ac', '1', '-ar', '32000',
                         '-af', f'loudnorm=I=-18:TP=-2:LRA=11,afade=t=in:d=0.05,afade=t=out:st={n - 4}:d=4',
                         '-c:a', 'libmp3lame', '-b:a', '56k', out], check=True)

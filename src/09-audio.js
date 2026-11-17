@@ -330,7 +330,14 @@ function speak(kind){if(!AU.voiceOn||!G)return;const now=performance.now();if(no
 
 /* ---------- anthems ---------- */
 // the national anthem excerpts (one small file per nation, fetched only for that nation)
-const AN_FAC=/*ANFAC*/{US:1,EU:1,FR:1,DE:1,IL:1,UA:1,CU:1,IN:1,CN:1,EG:1,PK:1,KR:1,RU:1,JP:1};
+const AN_FAC=/*ANFAC*/{US:1,EU:1,FR:1,DE:1,IL:1,UA:1,CU:1,IN:1,CN:1,EG:1,PK:1,KR:1,RU:1,JP:1,GB:1,RS:1,DW:1,RV:1,OB:1,SA:1,AE:1,TR:1,IR:1,KP:1};
+// what each excerpt is (menu credits + the orch/decisions.mjs guard: every playable nation has an anthem file with a credit).
+// Sources and licences: mus/an_pack.py, orch/HANDOFF-anthems.md. Fictional factions never get a real armed group's song.
+const AN_CRED={US:'The Star-Spangled Banner',EU:'Anthem of Europe (Beethoven)',FR:'La Marseillaise (Rouget de Lisle)',DE:'Deutschlandlied (Haydn)',
+  IL:'Hatikvah',UA:'Shche ne vmerla Ukrainy',CU:'La Bayamesa',IN:'Jana Gana Mana (Tagore)',CN:'March of the Volunteers (Nie Er)',EG:'Bilady, Bilady, Bilady (Sayed Darwish)',
+  PK:'Qaumi Taranah (Ahmed G. Chagla)',KR:'Aegukga (Ahn Eak-tai)',RU:'State Anthem of Russia (Alexander Alexandrov)',JP:'Kimigayo',GB:'God Save the King',
+  RS:'National Anthem of Lebanon (Wadih Sabra)',DW:'National Anthem of Yemen',RV:'Mawtini (Mohammed Flayfel)',OB:'Mawtini, a later verse (poem by Ibrahim Tuqan)',
+  SA:'Aash Al Maleek',AE:'Ishy Bilady',TR:'Istiklal Marsi',IR:'National Anthem of the Islamic Republic of Iran',KP:'Arirang (traditional; United States Army Chorus)'};
 const ANB={};
 function anLoad(fac){if(!AU.ctx||!AN_FAC[fac])return;const s=ANB[fac];if(s&&(s.st==='ok'||s.st==='loading'||(s.tries||0)>=2))return;const e=ANB[fac]={st:'loading',tries:((s&&s.tries)||0)+1};
   fetch('mus/an_'+fac+'.mp3').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{e.buf=buf;e.st='ok';}).catch(err=>{e.st='fail';audioErr('anthem',err);});}
@@ -517,6 +524,10 @@ function stopMusic(){myStop();stHalt();}
   const p=document.createElement('p');p.className='credits';p.id='stCred';
   p.textContent='Soundtrack: The Fall of Arcana, Dream Raid and Tactical Pursuit by Matthew Pablo (www.matthewpablo.com, CC BY 3.0); Epic Orchestral Fantasy Theme by Markus Lindner (CC BY 4.0); Conflict (CC BY 4.0), Enemy Spotted and Act of War (CC BY 3.0) by Alexandr Zhelanov; Howitzer by joeBaxterWebb (CC BY 4.0); all via OpenGameArt.org. Tabuk, Impending Boom, Black Vortex, Curse of the Scarab, Egmont Overture Finale and Death of Kings by Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/';
   ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
+(function anCredits(){try{if(document.getElementById('anCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
+  const p=document.createElement('p');p.className='credits';p.id='anCred';
+  p.textContent='Battle-start and victory anthems, United States Navy Band recordings (public domain, US government works, via Wikimedia Commons and the Internet Archive) unless noted: '+Object.keys(AN_CRED).map(k=>k+' '+AN_CRED[k]).join('; ')+'. Arirang: United States Army Chorus, Songs of the Soldier (public domain).';
+  ps[ps.length-1].insertAdjacentElement('afterend',p);}catch(e){}})();
 (function treeCredits(){try{if(document.getElementById('treeCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='treeCred';
   p.textContent='Tree textures: Fir Tree 01, Island Tree 01 and Tree Small 02 leaf and needle photo scans by Rob Tuytel and Rico Cilliers, via Poly Haven (polyhaven.com, CC0).';
