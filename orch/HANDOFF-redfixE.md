@@ -21,8 +21,8 @@ Local: SAVETEST PASS (5 + 2 min). Old saves load (all new fields optional). Guar
 programs (it only checked 30 ms of work). Passed on ab83d2d already (flaky by nature).
 
 ## gate/decisions
-- Road capture: the test raced with other units standing on the chosen road (own units captured it during the "air" phase, an enemy
-  contested it = nothing). The test now picks a section nobody else stands on. Game rule unchanged.
+- Road capture: lebanon has ONE 6.8 km road section with the own dozer and enemy infantry on it (captured during the "air" phase /
+  contested = nothing / cut). The test parks those units (inTun) for the check and works the network out if it is not yet (lgCompute). Game rule unchanged.
 - AT-team hover card "WEAK TO only": the panel can re-lay out between reading the button rect and the hover; the mouse sat on the unarmed
   medic. Test now hovers until the card belongs to the target button (data via matchUp is correct for IR vs every nation).
 
@@ -30,7 +30,20 @@ programs (it only checked 30 ms of work). Passed on ab83d2d already (flaky by na
 Not reproduced: passed on eb5d5b8 and ab83d2d; e01646a failed on "client B never appeared in the host lobby" (p2p fallback flake with
 servers down). No change.
 
+## Battle servers / headless (FOUND ON THE WAY)
+`SIM_FILES` in orch/headless.mjs (the list server/build-sim.mjs builds the Cloudflare battle sim from) missed 01d-signatures, 01e-ob,
+01f-irbm and 03k-factionmech: online battles on the servers ran without faction mechanics / signature units / OB / the Zolfaghar.
+Added; `headless --compare` (node vs browser) is identical again (it was hidden behind the night failure). Guard in decisions.mjs.
+
 ## Also
 - headless `--night`: test expected the old x0.6 / x0.9 night sight; the game rule since 2026-11-14 is x0.75 / x0.95 ("a little less
   sight, not a lot", todVis). Test updated (the gate shows SKIP because of `|| echo SKIP`).
 - gate/audio "second battle: battle music again" and gate/superfreeze failed on ab83d2d only (voices commit / runner) - not looked at.
+
+## Gate results
+- f4410f4 (all game changes): every gate green except decisions (test fixes came next).
+- 0783445 (+ test fixes only): every gate green including save, decisions, loadfreeze, migrate-down, headless, audio - except
+  superfreeze: the new Test-range part (rangefreeze, landed today) had one 617-879 ms frame on IR in "wave dsam" with almost all of it
+  outside the game's measured work (renderFrame 127 ms); the same game code passed superfreeze on f4410f4, and RS failed it once on
+  f9b4ec6. Looks like a runner stall/flaky new check - next owner of rangefreeze: watch it on main.
+- Landed on main; servers-live moved (simulation + checkpoint + server file list changed).
