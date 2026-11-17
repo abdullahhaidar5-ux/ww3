@@ -66,7 +66,7 @@ for (const id of IDS) {
       if (id === 'pass') { c.t = c.T; for (const e of G.ents.filter(e => e.team === 1 && e.isB)) K(e); }
       else if (id === 'supply') { for (const u of c.trucks) { u.x = c.town[0]; u.y = c.town[1]; } }
       else if (id === 'fortress') { addBld(0, 'fort', BASES[0][0] + 200, BASES[0][1] + 200, true); c.t = c.T + 1; c.bbDone = c.bb.length; c.bb[1][1] = -1; }
-      else if (id === 'town') { c.done = [true, true, true, true, true]; }
+      else if (id === 'town') { c.done = [true, true, true, true, true]; c.raid.forEach(r => { r.fired = true; }); c.rd = []; }
       else if (id === 'marsh') { c.o.cross = c.o.dump = true; c.hs = c.t; c.hold = c.HOLD; }
       else if (id === 'finale') { for (const e of G.ents.filter(e => e.team === 1 && e.isB)) K(e); }
       for (let i = 0; i < 1200 && !c.fin; i++) simUpdate(1 / 60);
