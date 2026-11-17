@@ -1,6 +1,6 @@
-# Conductor state — 2026-11-15 12:55 UTC
-Main head eb5d5b88: all gates green (combined status success), live site up to date (pages build 12:48 UTC success).
-No train: every candidate branch (freezefix ... onegame, nations20) last pushed 11-13/11-14 and 171+ commits behind main; their features are already in main (no src/13*, one-game Battle, supply lines present). No `train/*` newer than 11-15 03:00.
-Not landed: no helper branch newer than main's work found by this run.
+# Conductor state — 2026-11-17 05:10 UTC
+Main head eb5d5b88 (11-15 12:47): NOT green. Its own gate shows red: decisions (2 FAIL: a ground unit on a neutral road must capture it in ~10 s; a captured road section must count as the owner's supply area), save (replay differs after +2 min, A vs loaded C), icons (screenshot timeout, known flaky). Pages build of that commit succeeded 11-15 12:48.
+No train: no orch/* branch pushed since 11-15 12:55 (helpers idle ~40 h); candidates (unstuck, sweepfixA, ghostslot, usvoice, groundreal, looktest, battlepower, orderfeel ...) are 165-191 commits behind main, 2-5 commits each, no HANDOFF ready; onegame/nations20 no longer exist (already in main). Landing nothing.
 Parked (removed from the game): camphud nofightit warpeace mapshapes eu4audit civhumans.
-Note: local clone of the 6 GB repo is slow (582 branches); state taken from fetching named branches + REST API. Per-branch gate statuses not re-pulled (no landing planned).
+Locks: taken/* newest 11-15 09:58 (rv-voice -> voices-lebanese exists); older taken/* (drawcalls, redgates, savesync, 11-14 22:33) have no orch/ branch = saved nothing.
+Note: 6 GB clone is slow; state from fetching named refs + REST.
