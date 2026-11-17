@@ -25,6 +25,10 @@ os.makedirs(CACHE, exist_ok=True)
 SOLD = os.environ.get('LB2_SOLD', 'clone:lb_story,clone:lb_techc,clone:lb_talk').split(',')
 CMD = os.environ.get('LB2_CMD', 'clone:lb_story')
 MAXCER = 0.15
+# spoken form for XTTS where plain spelling keeps coming out wrong (vowel marks; the line text itself is unchanged)
+SAY = {'هيهات منّا الذلّة!': 'هَيهات مِنّا الذِّلّة!'}
+# lines that read back fine greedily but not in the final sheet check: scored with beam 5 + a dialect prompt (stricter, steadier)
+STRICT = set(json.load(open(os.path.join(os.environ.get('LB2_CACHE', '/home/claude/vowork/lb2'), 'strict.json')))) if os.path.exists(os.path.join(os.environ.get('LB2_CACHE', '/home/claude/vowork/lb2'), 'strict.json')) else set()
 LOG = open(os.path.join(CACHE, 'render.log'), 'a', encoding='utf-8')
 REPORT = os.path.join(CACHE, 'report.json')
 REP = json.load(open(REPORT)) if os.path.exists(REPORT) else {}
@@ -74,12 +78,16 @@ def whisper():
     return _W
 
 _RB = None
-def readback(w, text):
+def readback(w, text, strict=False):
     global _RB
     rbf = os.path.join(CACHE, 'readback.json')
     if _RB is None: _RB = json.load(open(rbf, encoding='utf-8')) if os.path.exists(rbf) else {}
     a = np.clip(librosa.resample(np.asarray(w, np.float32), orig_sr=SR, target_sr=16000), -1, 1)
-    k = hashlib.md5(a.astype(np.float16).tobytes()).hexdigest()
+    k = hashlib.md5(a.astype(np.float16).tobytes()).hexdigest() + ('s' if strict else '')
+    if k not in _RB and strict:
+        segs, _ = whisper().transcribe(a, language='ar', beam_size=5, temperature=0, condition_on_previous_text=False,
+                                       initial_prompt='يلّا يا شباب، هلّق، شو بدّك، عالطريق.')
+        _RB[k] = ''.join(s.text for s in segs).strip(); json.dump(_RB, open(rbf, 'w', encoding='utf-8'), ensure_ascii=False)
     if k not in _RB:
         segs, _ = whisper().transcribe(a, language='ar', beam_size=1, vad_filter=False, condition_on_previous_text=False)
         _RB[k] = ''.join(s.text for s in segs).strip(); json.dump(_RB, open(rbf, 'w', encoding='utf-8'), ensure_ascii=False)
@@ -141,10 +149,10 @@ def gunbed(n, rng):
     bed = sosfilt(butter(2, [250, 1800], 'bandpass', fs=SR, output='sos'), bed)
     return bed / (np.sqrt(np.mean(bed ** 2)) + 1e-9) * 10 ** (-16.5 / 20) * 10 ** (-24 / 20)
 
-def process(w, text, rng, mood, base_cer, gun=False):
+def process(w, text, rng, mood, base_cer, gun=False, strict=False):
     modes = ['cry', 'std', 'mild'] if mood == 'cry' else ['std', 'mild']
     for md in modes:
-        y = chain(w, md); c, hyp = readback(y, text)
+        y = chain(w, md); c, hyp = readback(y, text, strict)
         if c <= max(base_cer + 0.05, 0.10) or md == modes[-1]:
             break
     nb = lambda n: sosfilt(butter(2, [450, 3500], 'bandpass', fs=SR, output='sos'), rng.standard_normal(n))
@@ -173,7 +181,7 @@ def jobs():
     import importlib, phrases as ph
     J = []
     def add(sheet, lab, grp, k, v, text, mood, gun=False):
-        say = text.strip()
+        say = SAY.get(text.strip(), text.strip())
         if mood == 'cry': say = re.sub(r'[.]\s*$', '!', say)
         J.append(dict(sheet=sheet, lab=lab, grp=grp, k=k, voice=v, text=text, say=say, mood=mood, gun=gun))
     for name, kinds in (('l', ph.P['RS']), ('c', ph.C['RS'])):
@@ -200,6 +208,7 @@ def state():
     return json.load(open(STATE)) if os.path.exists(STATE) else {'n': {}, 'sc': {}}
 def save(S):
     json.dump(S, open(STATE, 'w'), ensure_ascii=False)
+def jl(j): return j['sheet'] + ':' + j['lab']
 def jid(j): return j['sheet'] + ':' + j['lab'] + ':' + j['say'] + ':' + j['voice']
 
 def gen(J):
@@ -218,7 +227,7 @@ def score(J):
             if any(x['cer'] <= 0.08 and not x['long'] for x in sc.values()): break   # a clear take is in hand: skip the rest (Whisper ~10 s a call here)
             if str(take) in sc: continue
             w = trim(raw(j['voice'], j['say'], take, j['mood'])); d = len(w) / SR
-            c, hyp = readback(w, j['say'])
+            c, hyp = readback(w, j['say'], jl(j) in STRICT)
             sc[str(take)] = dict(cer=round(c, 3), hyp=hyp, dur=round(d, 2), long=d > 2.0 * exp + 0.6 or d < 0.3, p808=round(p808(w), 2))
         save(S)
         b = min(x['cer'] + (1 if x['long'] else 0) for x in sc.values())
@@ -243,7 +252,7 @@ def build(J):
             yield first
             for t in range(S['n'].get(id_, 3)):   # takes skipped by score()'s early stop are read back now, when needed
                 if str(t) not in sc and has(j['voice'], j['say'], t, j['mood']):
-                    w = trim(raw(j['voice'], j['say'], t, j['mood'])); c, hyp = readback(w, j['say']); d = len(w) / SR
+                    w = trim(raw(j['voice'], j['say'], t, j['mood'])); c, hyp = readback(w, j['say'], jl(j) in STRICT); d = len(w) / SR
                     exp = 0.4 + 0.08 * len(re.sub(r'\s', '', j['say']))
                     sc[str(t)] = dict(cer=round(c, 3), hyp=hyp, dur=round(d, 2), long=d > 2.0 * exp + 0.6 or d < 0.3, p808=round(p808(w), 2)); save(S)
             yield from sorted((int(t) for t in sc if int(t) != first), key=lambda t: sc[str(t)]['cer'] + (1 if sc[str(t)]['long'] else 0))
@@ -251,7 +260,7 @@ def build(J):
             rng = np.random.default_rng(int(hashlib.md5(id_.encode()).hexdigest()[:8], 16))   # per-line noise: reruns hit the read-back cache
             w = trim(raw(j['voice'], j['say'], take, j['mood'])); c0 = sc[str(take)]['cer']
             if sc[str(take)]['long'] and take != first: continue
-            r = process(w, j['say'], rng, j['mood'], c0, j['gun'])
+            r = process(w, j['say'], rng, j['mood'], c0, j['gun'], jl(j) in STRICT)
             if 'bestr' not in locals() or r[2] < bestr[0][2]: bestr = (r, take, c0)
             if r[2] <= MAXCER: break
         (out, md, c1, h1), take, c0 = bestr; del bestr
