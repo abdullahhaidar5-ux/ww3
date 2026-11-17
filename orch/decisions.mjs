@@ -171,7 +171,9 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   // the supply network as last worked out (refreshed once a second), the ruins list (map-building refs), the per-second faction tick and off-map units' kept caches
   { const c7 = SRC['07b-ckpt.js'] || ''; ck(/lgc=L\?\{sig:L\.sig,cvT:L\.cvT/.test(c7) && /L\.cov=JSON\.parse/.test(c7), 'save/migration: the checkpoint must keep the supply network state (lgc in ckEncode/ckRestore)');
     ck(/\['mines','smokes','shields','ruins'\]/.test(c7), 'save/migration: G.ruins holds map-building refs and must be decoded in ckRestore'); ck(/'_fmQ'\]/.test(c7), 'save/migration: the per-second faction tick (_fmQ) must be in CK_G');
-    ck(/k\[0\]==='_'&&!CK_UKEEP\.has\(k\)\)\)\)\{/.test(c7), 'save/migration: units inside buildings/tunnels keep the CK_UKEEP fields too'); }
+    ck(/k\[0\]==='_'&&!CK_UKEEP\.has\(k\)\)\)\)\{/.test(c7), 'save/migration: units inside buildings/tunnels keep the CK_UKEEP fields too');
+    ck(/Math\.random=FX_RND;try\{fxPlay\(type,args\);\}finally\{Math\.random=r;\}/.test(SRC['03-sim.js'] || ''), 'save/migration: effects/sounds played from the simulation (FXE) must not take the battle\'s random numbers');
+    ck(/function boccSig\(/.test(SRC['02-map.js'] || '') && /'boccS'\]/.test(c7) && /ckFfcLoad\(ck\.ffc\)/.test(c7), 'save/migration: building footprints (boccS) and route fields (ffc) must be in the checkpoint'); }
   ck(!/foxhole|dig a foxhole/i.test(ui.replace(/\/\*[\s\S]*?\*\//, '')), 'dugout: the Dig in button text still talks about foxholes'); }
 // ---- Words (queue item, 2026-11-10): no old faction name, no real group's name and no stale building name in any text a
 // player can read. Comments are skipped (history lives there); string literals and templates are checked.
