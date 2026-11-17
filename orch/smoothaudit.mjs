@@ -15,7 +15,7 @@ let pw; try { pw = await import('playwright'); } catch {} if (!pw || !pw.chromiu
 const base = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers'; let exe;
 try { for (const d of fs.readdirSync(base).filter(d => d.startsWith('chromium-')).sort().reverse()) { const e = path.join(base, d, 'chrome-linux64', 'chrome'); if (fs.existsSync(e)) { exe = e; break; } } } catch {}
 const E = process.env, FRAMES = +(E.FRAMES || 90), SIMT = +(E.SIMT || 300), MIN = +(E.MIN || 2), EXTRA = +(E.EXTRA || 40), TOP = +(E.TOP || 25);
-const SCENES = (process.argv[2] || 'big,duel,menu').split(',');
+const SCENES = (process.argv[2] || 'big,duel,range,menu').split(',');   // also m:<mission id> (pass, supply, fortress, town, finale, marsh)
 try { const { acquireBrowserLock } = await import(path.join(ROOT, 'orch/browserlock.mjs')); await acquireBrowserLock('smoothaudit'); } catch {}
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.mp3': 'audio/mpeg', '.gz': 'application/gzip', '.webp': 'image/webp', '.ogg': 'audio/ogg' };
 const server = http.createServer((rq, res) => { let p = decodeURIComponent(new URL(rq.url, 'http://x').pathname); if (p.endsWith('/')) p += 'index.html'; const f = path.join(ROOT, p); if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); } res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(res); });
@@ -51,15 +51,25 @@ function summarize(prof, ms) {
   return { totalMs: r1(all), self: top(selfBy), inclusive: top(incBy) };
 }
 async function battle(page, cdp, scene) {
-  const two = scene === 'duel';
-  await page.evaluate(([two]) => { setup.n = two ? 1 : 7; if (!two) setup.map = 'fulda'; else { const k = (typeof BM_KEYS !== 'undefined' ? BM_KEYS : Object.keys(MAPS)).find(k => MAPS[k] && MAPS[k].max === 2) || setup.map; setup.map = k; } setup.seed = 3;
+  const two = scene === 'duel', range = scene === 'range', mis = scene.startsWith('m:') ? scene.slice(2) : null;
+  if (range) await page.evaluate(() => { try { initAudio(); } catch (e) {} const mp = typeof BM_KEYS !== 'undefined' ? BM_KEYS.find(k => MAPS[k] && MAPS[k].min <= 2 && MAPS[k].max >= 2) : setup.map; startSandbox({ p: 'IR', a: 'US', map: mp }); });
+  else if (mis) await page.evaluate((id) => { startCampaign(id, 1); }, mis);
+  else await page.evaluate(([two]) => { setup.n = two ? 1 : 7; if (!two) setup.map = 'fulda'; else { const k = (typeof BM_KEYS !== 'undefined' ? BM_KEYS : Object.keys(MAPS)).find(k => MAPS[k] && MAPS[k].max === 2) || setup.map; setup.map = k; } setup.seed = 3;
     const MR = Math.random; let z = 3 * 2654435761 >>> 0; Math.random = () => ((z = (z * 1664525 + 1013904223) >>> 0) / 4294967296);
     try { startSingle(); } finally { Math.random = MR; } if (G.teams[0] && !G.teams[0].ai) G.teams[0].ai = mkAI(1); }, [two]);
   const tl = Date.now(); await page.waitForFunction(() => !window.LOADING, null, { timeout: 900000, polling: 250 }); const loadS = (Date.now() - tl) / 1000;
   const map = await page.evaluate(() => G.mapKey + ' ' + MAPW + 'x' + MAPH); LOG(scene + ': loaded ' + map + ' in ' + loadS.toFixed(0) + ' s');
   await page.evaluate(() => { window.__stopLoop = true; }); await page.waitForTimeout(300);
-  for (let t = 0; t < MIN * 60; t += 30) await page.evaluate(() => { for (let i = 0; i < 1800 && !G.over; i++) simUpdate(1 / 60); });
-  await page.evaluate(([extra]) => { const kinds = ['inf', 'inf', 'inf', 'at', 'tank', 'tank', 'aa', 'arty'], cx = MAPW / 2, cy = MAPH / 2;
+  if (!range) for (let t = 0; t < (mis ? 40 : MIN * 60); t += 30) await page.evaluate(() => { for (let i = 0; i < 1800 && !G.over; i++) simUpdate(1 / 60); });
+  if (range) await page.evaluate(() => { // Test range mass spawn: 150 per side in two blocks that meet (+ a few jets/helicopters/drones), then one general's power
+    const cx = MAPW / 2, cy = MAPH / 2, kinds = ['inf', 'inf', 'at', 'tank', 'tank', 'aa', 'arty', 'inf'];
+    for (const T of [G.teams[0], G.teams[1]]) { const side = T.id ? 1 : -1;
+      for (let i = 0; i < 150; i++) { const k = kinds[i % kinds.length]; const p = nearestPassXY('ground', cx + side * (300 + (i % 10) * 24), cy - 150 + Math.floor(i / 10) * 22) || [cx, cy];
+        try { const u = addUnit(T.id, k, p[0], p[1]); if (u) setMove(u, cx - side * 400, cy, 'amove'); } catch (e) {} }
+      for (const k of ['jet', 'heli', 'drone']) for (let i = 0; i < 3; i++) try { const u = addUnit(T.id, k, cx + side * 600, cy + i * 40); if (u) setMove(u, cx - side * 400, cy, 'amove'); } catch (e) {} }
+    for (let i = 0; i < 240; i++) simUpdate(1 / 60); centerOn(cx, cy, true); });
+  if (mis) await page.evaluate(() => { for (const e of G.ents) if (!e.isB && !e.dead && e.team === ME) { centerOn(e.x, e.y, true); break; } });
+  if (!range && !mis) await page.evaluate(([extra]) => { const kinds = ['inf', 'inf', 'inf', 'at', 'tank', 'tank', 'aa', 'arty'], cx = MAPW / 2, cy = MAPH / 2;
     for (const T of G.teams) { if (T.dead || T.reb) continue; const side = T.id % 2 ? 1 : -1, lane = (Math.floor(T.id / 2) - 1.5) * 90;
       for (let i = 0; i < extra; i++) { const k = kinds[i % kinds.length]; const p = nearestPassXY('ground', cx + side * (260 + (i % 8) * 26), cy + lane + Math.floor(i / 8) * 24 - 50) || [cx, cy];
         try { const u = addUnit(T.id, k, p[0], p[1]); if (u) setMove(u, cx - side * 500, cy + lane, 'amove'); } catch (e) {} } }
