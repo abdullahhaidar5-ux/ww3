@@ -1,0 +1,10 @@
+A: 5 min in, t=300.0 units=41 money=680,1025,0 (5353 ms)
+save: ok=true  encode 3 ms, packed 17 KB
+A after +2 min: t=420.0 hash=2051964898 units=33 money=23,1175,0
+C loaded: ok=true  paused=true "Game loaded. Press P to continue." t=300.0
+C after +2 min: t=420.0 hash=2165328338 units=33 money=431,525,0
+Continue button: ▶ Continue — Split Ridge · Iran · 5:00
+after Continue: {"t":300.0000000000558,"p":true}
+file round trip: {"file":true,"old":"This save is from an older version and can't be loaded.","junk":"That is not a World War 3 save file.","bad":"This save file is damaged and can't be loaded.","stale":"This save is from an older version and can't be loaded.","g":true}
+SAVETEST FAIL
+ - replay differs after +2 min: A 2051964898 (units 33, money 23,1175,0) vs C 2165328338 (units 33, money 431,525,0)
