@@ -11748,6 +11748,8 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac)){grp.add(o);/* bone textures for the soldiers who appear later in the battle */if(typeof bonePoolWarm==='function'){const nbs=new Set();o.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});for(const k of keys){const pr=MODELS.proto[k];if(pr&&pr.scene)pr.scene.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});}for(const nb of nbs)bonePoolWarm(nb,PH?48:160);}}}}catch(e){}
     try{grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);gg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*3).fill(.5),3));grp.add(new THREE.Mesh(gg,gm));grp.add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
     for(const op of [.8,.12])grp.add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
+    /* the sun-shadow shape of a two-sided part (helicopter canopy glass): one plain caster of each side, so the first helicopter shadow never links a shader (rangefreeze 2026-11-17) */
+    for(const sd of [THREE.DoubleSide,THREE.BackSide]){const m=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshStandardMaterial({color:0x808080,side:sd}));m.castShadow=true;grp.add(m);}
     // an aircraft's exhaust plume is added when the unit is made (modelFor), not to the model itself: its shader and canvas texture are prepared here
     try{if(typeof jetPlumeMat==='function'){const pl=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());pl.renderOrder=3;grp.add(pl);}}catch(e){}
     grp.traverse(c=>{c.frustumCulled=false;});await step('shared',grp);await frame();}
@@ -11759,6 +11761,10 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     if(!dead()){const grp=mk();try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));
         for(const q of G.teams)if(q&&q.fac&&FACTIONS[q.fac])grp.add(mesh(geoFor('garrison',q.fac,q,'main')));const gs=bstats(T.fac,'garrison');if(gs&&BH.garrison)grp.add(new THREE.LineSegments(scafGeo(gs.size+6,BH.garrison/BSC+6),scafMat()));}
       if(typeof harvCargoGeo==='function')grp.add(mesh(harvCargoGeo()));
+      /* the wounded-soldier markers (05c-battlefield): built with the battle, not in the frame of the first casualty (a new canvas, texture and two shaders - rangefreeze 2026-11-17) */
+      if(typeof bfWoundInit==='function'){bfWoundInit();const im=new THREE.InstancedMesh(BFX.wb.geometry,BFX.wb.material,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));im.setColorAt(0,new THREE.Color(1,1,1));grp.add(im);grp.add(new THREE.Points(BFX.wp.geometry,BFX.wp.material));}
+      /* the instanced unit markers (spy eye, ground blob): their shader is made here, not when the first spy walks into view */
+      if(typeof decalSet==='function')for(const k of ['eye','blob']){const S=decalSet(k),im=new THREE.InstancedMesh(S.geo,S.mat,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));im.renderOrder=S.ro;grp.add(im);}
       grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
     // every side's riflemen and anti-tank teams in all their kit variants, one side per step: a fresh squad from the barracks mid-battle used to merge its soldier shapes (and link their shaders) on the spot
     for(const q of G.teams){if(dead()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;const grp=mk();
@@ -11772,7 +11778,8 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       const kinds=(q.id===ME?allUnits(q.fac):['tank','aa','arty','heli','boat']).filter((k,i,a)=>a.indexOf(k)===i&&k!=='inf'&&k!=='at'&&BASE[k]);
       for(let i=0;i<kinds.length&&!dead()&&!isLate();i+=3){const grp=mk();
         for(const kd of kinds.slice(i,i+3)){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;try{const o=makeObj({id:900100+i,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}
-        grp.traverse(c=>{c.frustumCulled=false;});await step('range '+q.fac+' '+kinds.slice(i,i+3).join('+'),grp,0,1);await frame();}}
+        {const nbs=new Set();grp.traverse(c=>{c.frustumCulled=false;if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});if(typeof bonePoolWarm==='function')for(const nb of nbs)bonePoolWarm(nb,PH?12:48);}   /* heroes and other own rigs: their bone textures ready too */
+        await step('range '+q.fac+' '+kinds.slice(i,i+3).join('+'),grp,0,1);await frame();}}
     if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
@@ -12191,7 +12198,7 @@ function syncScene(dt){const live=new Set();
      buildings deep in the haze (75% fogged and beyond) are not drawn - nor shadowed or depth-passed. View only. */
   const FGo=SCN&&SCN.fog,FDc=FGo&&FGo.far>FGo.near?FGo.near+(FGo.far-FGo.near)*.75:1e9,FD2=FDc*FDc,CPx=CAM.position.x,CPz=CAM.position.z;
   // one object that fails to update must never freeze the whole picture: skip it (logged once) and draw the rest
-  for(const e of G.ents){try{if(e.dead)continue;live.add(e.id);let o=OBJ.get(e.id);if(o&&o.userData.tm!==undefined&&o.userData.tm!==e.team){SCN.remove(o);o=null;}if(!o&&PARK.size){const pk=PARK.get(e.id);if(pk){PARK.delete(e.id);if(pk.o.userData.tm===e.team){o=pk.o;o.visible=true;OBJ.set(e.id,o);}else SCN.remove(pk.o);}}if(!o){o=makeObj(e);o.userData.tm=e.team;if(!e.isB&&!o.userData.model)o.userData.bg=MODELS.gen|0;OBJ.set(e.id,o);}
+  for(const e of G.ents){try{if(e.dead)continue;live.add(e.id);let o=OBJ.get(e.id);if(o&&o.userData.tm!==undefined&&o.userData.tm!==e.team){SCN.remove(o);o=null;}if(!o&&PARK.size){const pk=PARK.get(e.id);if(pk){PARK.delete(e.id);if(pk.o.userData.tm===e.team){o=pk.o;o.visible=true;OBJ.set(e.id,o);}else SCN.remove(pk.o);}}if(!o){o=makeObj(e);o.userData.tm=e.team;if(!e.isB)boneTake(o);if(!e.isB&&!o.userData.model)o.userData.bg=MODELS.gen|0;OBJ.set(e.id,o);}
     // a unit that had to start as a simple box figure (its 3D model was still loading - slow PC or connection) gets the real model as soon as it lands
     else if(o.userData.bg!==undefined&&o.userData.bg!==(MODELS.gen|0)){o.userData.bg=MODELS.gen|0;const m2=makeObj(e);if(m2&&m2.userData.model){SCN.remove(o);o=m2;o.userData.tm=e.team;OBJ.set(e.id,o);}else if(m2)SCN.remove(m2);}
     const v=vis(e);
@@ -12311,6 +12318,8 @@ function swBanner(){if(!G||!G.battle||G.over){if(SWB.el&&SWB.el.style.display!==
   if(h!==SWB.h){SWB.h=h;SWB.el.innerHTML=h;}SWB.el.style.display=h?'block':'none';}
 function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,sx=W/MAPW,sy=H/MAPH;c.globalCompositeOperation='source-over';
   // a replay or a spectator showing everything: no fog at all
+  /* the whole map revealed (Test range, a full-map reveal): the fog picture is plain clear - drawn and sent to the graphics card once, not 8 times a second */
+  {const D=Math.hypot(MAPW,MAPH),all=(G.teams[ME].reveals||[]).some(r=>r.r>=D&&r.t>0);if(all&&FOGC.allG===G)return;FOGC.allG=all?G:null;if(all){c.fillStyle='#000';c.fillRect(0,0,W,H);const f=FOGC.getContext('2d');f.globalCompositeOperation='source-over';f.filter='none';f.drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}}
   if((RP.on&&!RP.fog)||(NET.spec&&NET.specAll)){c.fillStyle='#000';c.fillRect(0,0,W,H);FOGC.getContext('2d').drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}
   let X=FOGC.x;if(!X){X=FOGC.x=document.createElement('canvas');X.width=W;X.height=H;FOGC.xN=0;}
   const hs=[];{const sk=(G.teams[ME].F.mods.sight||1)*1.08;for(const e of G.ents)if(e.team===ME&&!e.dead)hs.push(e.x,e.y,(!e.isB&&e.s.vis?e.s.vis:e.isB?340:e.s.dom==='air'?340:e.s.dom==='naval'?380:280)*sk);}
@@ -20056,6 +20065,8 @@ function bonePoolWarm(n,want){if(typeof R3==='undefined'||!R3)return;const sz=bo
   for(let i=L.length;i<want;i++){const arr=new Float32Array(sz*sz*4),tex=new THREE.DataTexture(arr,sz,sz,THREE.RGBAFormat,THREE.FloatType);tex.needsUpdate=true;tex.userData.bp=sz;try{R3.initTexture(tex);}catch(e){}L.push({arr,tex});}}
 /* a long battle with many squads empties the pool: when one runs low (<32), one texture is added every half second */
 let BONET=0;function boneTrickle(dt){if((BONET-=dt)>0||!BONEP.size)return;BONET=.5;for(const [sz,L] of BONEP)if(L.length<32){const arr=new Float32Array(sz*sz*4),tex=new THREE.DataTexture(arr,sz,sz,THREE.RGBAFormat,THREE.FloatType);tex.needsUpdate=true;tex.userData.bp=sz;try{R3.initTexture(tex);}catch(e){}L.push({arr,tex});return;}}
+/* any other skinned figure (heroes, leaders, unmerged models): bone texture from the same pool when it is built */
+function boneTake(o){if(!o||!BONEP.size)return;o.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)bonePool(c.skeleton);});}
 function boneRelease(skel){const t=skel&&skel.boneTexture;if(!t||!t.userData||!t.userData.bp)return;skel.boneTexture=null;skel.boneMatrices=new Float32Array(skel.bones.length*16);let L=BONEP.get(t.userData.bp);if(!L)BONEP.set(t.userData.bp,L=[]);if(L.length<256)L.push({arr:t.image.data,tex:t});}
 /* three.js sizes a skinned figure for view culling by moving every vertex through its bones the first time it is checked (~30 ms per new
    squad on a slow PC, every fresh soldier in the Test range): soldiers get a ready sphere from their shared shape instead - the shape's

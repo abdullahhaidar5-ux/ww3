@@ -693,6 +693,8 @@ function bonePoolWarm(n,want){if(typeof R3==='undefined'||!R3)return;const sz=bo
   for(let i=L.length;i<want;i++){const arr=new Float32Array(sz*sz*4),tex=new THREE.DataTexture(arr,sz,sz,THREE.RGBAFormat,THREE.FloatType);tex.needsUpdate=true;tex.userData.bp=sz;try{R3.initTexture(tex);}catch(e){}L.push({arr,tex});}}
 /* a long battle with many squads empties the pool: when one runs low (<32), one texture is added every half second */
 let BONET=0;function boneTrickle(dt){if((BONET-=dt)>0||!BONEP.size)return;BONET=.5;for(const [sz,L] of BONEP)if(L.length<32){const arr=new Float32Array(sz*sz*4),tex=new THREE.DataTexture(arr,sz,sz,THREE.RGBAFormat,THREE.FloatType);tex.needsUpdate=true;tex.userData.bp=sz;try{R3.initTexture(tex);}catch(e){}L.push({arr,tex});return;}}
+/* any other skinned figure (heroes, leaders, unmerged models): bone texture from the same pool when it is built */
+function boneTake(o){if(!o||!BONEP.size)return;o.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)bonePool(c.skeleton);});}
 function boneRelease(skel){const t=skel&&skel.boneTexture;if(!t||!t.userData||!t.userData.bp)return;skel.boneTexture=null;skel.boneMatrices=new Float32Array(skel.bones.length*16);let L=BONEP.get(t.userData.bp);if(!L)BONEP.set(t.userData.bp,L=[]);if(L.length<256)L.push({arr:t.image.data,tex:t});}
 /* three.js sizes a skinned figure for view culling by moving every vertex through its bones the first time it is checked (~30 ms per new
    squad on a slow PC, every fresh soldier in the Test range): soldiers get a ready sphere from their shared shape instead - the shape's

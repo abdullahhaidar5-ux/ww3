@@ -564,6 +564,8 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac)){grp.add(o);/* bone textures for the soldiers who appear later in the battle */if(typeof bonePoolWarm==='function'){const nbs=new Set();o.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});for(const k of keys){const pr=MODELS.proto[k];if(pr&&pr.scene)pr.scene.traverse(c=>{if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});}for(const nb of nbs)bonePoolWarm(nb,PH?48:160);}}}}catch(e){}
     try{grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);gg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*3).fill(.5),3));grp.add(new THREE.Mesh(gg,gm));grp.add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
     for(const op of [.8,.12])grp.add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
+    /* the sun-shadow shape of a two-sided part (helicopter canopy glass): one plain caster of each side, so the first helicopter shadow never links a shader (rangefreeze 2026-11-17) */
+    for(const sd of [THREE.DoubleSide,THREE.BackSide]){const m=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshStandardMaterial({color:0x808080,side:sd}));m.castShadow=true;grp.add(m);}
     // an aircraft's exhaust plume is added when the unit is made (modelFor), not to the model itself: its shader and canvas texture are prepared here
     try{if(typeof jetPlumeMat==='function'){const pl=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());pl.renderOrder=3;grp.add(pl);}}catch(e){}
     grp.traverse(c=>{c.frustumCulled=false;});await step('shared',grp);await frame();}
@@ -575,6 +577,10 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     if(!dead()){const grp=mk();try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));
         for(const q of G.teams)if(q&&q.fac&&FACTIONS[q.fac])grp.add(mesh(geoFor('garrison',q.fac,q,'main')));const gs=bstats(T.fac,'garrison');if(gs&&BH.garrison)grp.add(new THREE.LineSegments(scafGeo(gs.size+6,BH.garrison/BSC+6),scafMat()));}
       if(typeof harvCargoGeo==='function')grp.add(mesh(harvCargoGeo()));
+      /* the wounded-soldier markers (05c-battlefield): built with the battle, not in the frame of the first casualty (a new canvas, texture and two shaders - rangefreeze 2026-11-17) */
+      if(typeof bfWoundInit==='function'){bfWoundInit();const im=new THREE.InstancedMesh(BFX.wb.geometry,BFX.wb.material,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));im.setColorAt(0,new THREE.Color(1,1,1));grp.add(im);grp.add(new THREE.Points(BFX.wp.geometry,BFX.wp.material));}
+      /* the instanced unit markers (spy eye, ground blob): their shader is made here, not when the first spy walks into view */
+      if(typeof decalSet==='function')for(const k of ['eye','blob']){const S=decalSet(k),im=new THREE.InstancedMesh(S.geo,S.mat,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));im.renderOrder=S.ro;grp.add(im);}
       grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
     // every side's riflemen and anti-tank teams in all their kit variants, one side per step: a fresh squad from the barracks mid-battle used to merge its soldier shapes (and link their shaders) on the spot
     for(const q of G.teams){if(dead()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;const grp=mk();
@@ -588,7 +594,8 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       const kinds=(q.id===ME?allUnits(q.fac):['tank','aa','arty','heli','boat']).filter((k,i,a)=>a.indexOf(k)===i&&k!=='inf'&&k!=='at'&&BASE[k]);
       for(let i=0;i<kinds.length&&!dead()&&!isLate();i+=3){const grp=mk();
         for(const kd of kinds.slice(i,i+3)){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;try{const o=makeObj({id:900100+i,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}
-        grp.traverse(c=>{c.frustumCulled=false;});await step('range '+q.fac+' '+kinds.slice(i,i+3).join('+'),grp,0,1);await frame();}}
+        {const nbs=new Set();grp.traverse(c=>{c.frustumCulled=false;if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});if(typeof bonePoolWarm==='function')for(const nb of nbs)bonePoolWarm(nb,PH?12:48);}   /* heroes and other own rigs: their bone textures ready too */
+        await step('range '+q.fac+' '+kinds.slice(i,i+3).join('+'),grp,0,1);await frame();}}
     if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
