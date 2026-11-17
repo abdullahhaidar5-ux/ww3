@@ -188,21 +188,21 @@ tank دبابة!|مدرّعة، مدرّعة!
 medic إسعاف!|بدنا مسعف!
 ''')
 _s('FR', '''
-rpg RPG !|Roquette !
-manDown Homme à terre !|Un blessé !
+rpg Roquette !|Roquette, à couvert !
+manDown Un gars à terre !|Un blessé !
 reload Je recharge !|Couvrez-moi, je recharge !
 grenade Grenade !|À terre, grenade !
 contact Contact devant !|Contact, contact !
-tank Char !|Blindé, blindé !
-medic Infirmier !|Il faut un infirmier !
+tank Char !|Blindé en face !
+medic Infirmier !|Il me faut un infirmier !
 ''')
 _s('DE', '''
-rpg Panzerfaust!|Rakete!
-manDown Mann am Boden!|Verwundeter!
+rpg Panzerfaust!|Rakete, Deckung!
+manDown Mann getroffen!|Verwundeter!
 reload Lade nach!|Deckung, lade nach!
 grenade Granate!|Runter, Granate!
 contact Feindkontakt vorne!|Kontakt, Kontakt!
-tank Panzer!|Panzer, Panzer!
+tank Panzer!|Feindpanzer!
 medic Sanitäter!|Brauche einen Sanitäter!
 ''')
 _s('GB', '''
@@ -213,6 +213,15 @@ grenade Grenade!|Get down, grenade!
 contact Contact front!|Contact, contact!
 tank Tank!|Armour, armour!
 medic Medic!|Need a medic!
+''')
+_s('JP', '''
+rpg ロケット弾！|ロケット弾、伏せろ！
+manDown やられた！|負傷者だ！
+reload 弾倉交換！|援護してくれ、弾倉交換！
+grenade 手榴弾！|伏せろ、手榴弾！
+contact 正面に敵！|接敵、接敵！
+tank 戦車！|敵戦車だ！
+medic 衛生！|衛生、こっちだ！
 ''')
 _s('RV', '''
 rpg آر بي جي!|صاروخ!
