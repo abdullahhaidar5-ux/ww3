@@ -1,0 +1,698 @@
+  page: shader warm-up 9131 ms, 62 models, 120 objects in 663 steps (longest 2374 ms), 99 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 39 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=198 normal=39ms (quiet max 136) longest=224ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":3,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 224ms@3.0s {} ; 207ms@8.1s {} ; 192ms@8.5s {} ; 186ms@6.3s {} ; 176ms@2.6s {}
+  frames that made the GPU work (1):
+    3.16s 89ms {"aud":1} three geo/tex 616/552
+IR worst JS call (not drawing): simUpdate 67ms; ok
+  page: shader warm-up 3291 ms, 65 models, 125 objects in 683 steps (longest 139 ms), 99 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 39 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=174 normal=39ms (quiet max 233) longest=160ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":1,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 160ms@3.4s {} ; 154ms@6.2s {} ; 153ms@5.1s {} ; 151ms@3.0s {} ; 148ms@9.0s {}
+  frames that made the GPU work (1):
+    3.15s 102ms {"aud":1} three geo/tex 717/621
+RU worst JS call (not drawing): simUpdate 94ms; ok
+  page: shader warm-up 2941 ms, 59 models, 114 objects in 657 steps (longest 132 ms), 94 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 34 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=189 normal=34ms (quiet max 145) longest=168ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 168ms@0.7s {} ; 160ms@4.7s {} ; 159ms@2.9s {} ; 158ms@0.2s {} ; 156ms@7.3s {}
+  frames that made the GPU work (1):
+    3.62s 141ms {"aud":1} three geo/tex 602/520
+US worst JS call (not drawing): simUpdate 57ms; ok
+SUPERFREEZE PASS
+  [IR +22s] range loaded (bm_splitridge; warm-up {"ms":8810,"models":62,"steps":706,"maxStep":1902,"progs":109,"late":0,"phone":0})
+  [IR +36s] normal frame 23 ms (quiet max 57)
+  [IR +36s] waves: harv dozer inf at officer medic champ cleric spy aa tank arty ammot ew bmt dtank dsam darty heli jet airlift drone boat fast sub ship minel sweep lander
+  [IR +80s] powers: recon para barrage repair nat
+  [IR +93s] strike: Heavy Rocket Barrage launched
+IR {"longest":430,"quietMax":57,"normal":23,"over50":1091,"frames":1485,"programs":1,"shaders":2,"textures":7,"texKB":1035,"bufKB":3811,"canvases":1,"audioDecodes":7,"cpu":2}
+  by phase:
+    quiet: worst 44ms, 0/3 frames >50ms
+    wave harv: worst 74ms, 6/43 frames >50ms
+    wave dozer: worst 64ms, 9/43 frames >50ms
+    wave inf: worst 126ms, 10/33 frames >50ms
+    wave at: worst 157ms, 10/31 frames >50ms
+    wave officer: worst 103ms, 15/29 frames >50ms
+    wave medic: worst 93ms, 13/30 frames >50ms
+    wave champ: worst 128ms, 15/25 frames >50ms
+    wave cleric: worst 114ms, 19/26 frames >50ms
+    wave spy: worst 71ms, 16/29 frames >50ms
+    wave aa: worst 77ms, 13/31 frames >50ms
+    wave tank: worst 108ms, 13/30 frames >50ms
+    wave arty: worst 79ms, 10/37 frames >50ms
+    wave ammot: worst 76ms, 13/35 frames >50ms
+    wave ew: worst 124ms, 17/20 frames >50ms
+    wave bmt: worst 85ms, 21/23 frames >50ms
+    wave dtank: worst 158ms, 16/17 frames >50ms
+    wave dsam: worst 181ms, 17/28 frames >50ms
+    wave darty: worst 77ms, 14/29 frames >50ms
+    wave heli: worst 79ms, 16/27 frames >50ms
+    wave jet: worst 85ms, 21/25 frames >50ms
+    wave airlift: worst 93ms, 20/25 frames >50ms
+    wave drone: worst 103ms, 21/23 frames >50ms
+    wave boat: worst 86ms, 19/24 frames >50ms
+    wave fast: worst 99ms, 17/24 frames >50ms
+    wave sub: worst 76ms, 20/27 frames >50ms
+    wave ship: worst 85ms, 20/27 frames >50ms
+    wave minel: worst 156ms, 17/23 frames >50ms
+    wave sweep: worst 92ms, 19/28 frames >50ms
+    wave lander: worst 84ms, 12/29 frames >50ms
+    power recon: worst 151ms, 33/40 frames >50ms
+    power para: worst 95ms, 32/41 frames >50ms
+    power barrage: worst 153ms, 32/32 frames >50ms
+    power repair: worst 162ms, 28/29 frames >50ms
+    power nat: worst 125ms, 31/33 frames >50ms
+    strike: worst 430ms, 486/486 frames >50ms
+  slowest calls:
+    renderFrame max 264ms (strike) tot 90504ms n1962
+    syncScene max 150ms (strike) tot 5332ms n1962
+    updateUI max 48ms (power recon) tot 3385ms n349
+    simUpdate max 47ms (wave minel) tot 7709ms n1963
+    sfxBoom max 22ms (strike) tot 329ms n550
+    rpRecTick max 11ms (strike) tot 238ms n1962
+    launch max 9ms (strike) tot 9ms n1
+    usePower max 5ms (power barrage) tot 14ms n5
+    addUnit max 5ms (wave champ) tot 14ms n162
+    renderSquads max 4ms (strike) tot 139ms n349
+    qpUpdate max 3ms (power recon) tot 38ms n349
+    qualTick max 3ms (strike) tot 166ms n1961
+  frames >50 ms (1091, slowest first):
+    430ms @148482 [strike] ents=147 {"simUpdate":26,"syncScene":6,"renderFrame":220} {"texUp":282,"c2d":143}
+    348ms @141557 [strike] ents=152 {"simUpdate":20,"syncScene":5,"renderFrame":145} {"tex":1,"texUp":267,"texKB":1.6,"c2d":155}
+    341ms @149063 [strike] ents=147 {"simUpdate":5,"syncScene":20,"renderFrame":218} {"texUp":282,"c2d":141}
+    330ms @150011 [strike] ents=147 {"simUpdate":6,"syncScene":14,"sfxBoom":2,"renderFrame":181} {"texUp":142,"c2d":145}
+    322ms @149680 [strike] ents=147 {"simUpdate":24,"rpRecTick":9,"syncScene":16,"renderFrame":239} {"tex":1,"texUp":284,"texKB":1.6,"c2d":141}
+    306ms @137907 [strike] ents=159 {"simUpdate":29,"syncScene":150,"renderFrame":264} {"texUp":234,"c2d":135}
+    295ms @149359 [strike] ents=147 {"simUpdate":22,"updateUI":20,"syncScene":12,"renderFrame":183} {"texUp":142,"c2d":141}
+    273ms @136330 [strike] ents=147 {"simUpdate":14,"rpRecTick":2,"renderFrame":180} {"texUp":177,"c2d":135}
+    272ms @147364 [strike] ents=148 {"simUpdate":5,"syncScene":11,"renderFrame":203} {"texUp":142,"c2d":141}
+    249ms @139430 [strike] ents=156 {"simUpdate":24,"rpRecTick":6,"syncScene":43,"renderFrame":205} {"texUp":255,"c2d":153}
+    248ms @144440 [strike] ents=152 {"simUpdate":6,"updateUI":18,"syncScene":69,"renderFrame":213} {"texUp":282,"c2d":151}
+    246ms @146778 [strike] ents=148 {"simUpdate":13,"syncScene":12,"renderFrame":182} {"texUp":282,"c2d":139}
+    244ms @144809 [strike] ents=151 {"simUpdate":11,"syncScene":8,"renderFrame":157} {"texUp":278,"c2d":154}
+    242ms @130163 [strike] ents=147 {"simUpdate":22,"updateUI":9,"syncScene":6,"renderFrame":204} {"texUp":146,"cnv":1,"c2d":141}
+    241ms @148723 [strike] ents=147 {"simUpdate":4,"syncScene":11,"renderFrame":152} {"texUp":142,"c2d":143}
+    239ms @124732 [strike] ents=150 {"simUpdate":6,"updateUI":13,"syncScene":3,"renderFrame":113} {"texUp":134,"c2d":130}
+    235ms @139843 [strike] ents=156 {"simUpdate":22,"syncScene":7,"renderFrame":173} {"texUp":251,"c2d":155}
+    233ms @122970 [strike] ents=150 {"simUpdate":14,"syncScene":3,"renderFrame":131} {"texUp":78,"c2d":130}
+    231ms @121804 [strike] ents=150 {"simUpdate":25,"syncScene":9,"sfxBoom":9,"renderFrame":172} {"texUp":77,"c2d":130}
+    226ms @147886 [strike] ents=148 {"simUpdate":8,"qpUpdate":3,"updateUI":28,"syncScene":7,"renderFrame":177} {"texUp":282,"c2d":147}
+    225ms @145547 [strike] ents=150 {"simUpdate":9,"syncScene":22,"renderFrame":200} {"texUp":281,"c2d":148}
+    221ms @139181 [strike] ents=158 {"simUpdate":9,"syncScene":4,"renderFrame":157} {"tex":1,"texUp":140,"texKB":1.6,"c2d":149}
+    218ms @140451 [strike] ents=156 {"simUpdate":14,"syncScene":6,"renderFrame":173} {"texUp":140,"c2d":149}
+    217ms @145167 [strike] ents=151 {"simUpdate":18,"syncScene":7,"renderFrame":156} {"tex":1,"texUp":283,"texKB":1.6,"c2d":156}
+    216ms @130489 [strike] ents=147 {"simUpdate":5,"renderFrame":98} {"texUp":145,"c2d":141}
+  slow 3D objects built (makeObj > 15 ms):
+    16ms inf
+    24ms at
+    20ms at
+    24ms medic
+    27ms inf
+    18ms inf
+    15ms inf
+    19ms building uplink
+    15ms inf
+    40ms inf
+    42ms inf
+    31ms inf
+    43ms inf
+  new programs vs the nearest loaded one:
+    depth differs from a loaded one in 5:false->uv
+  programs linked:
+    power recon DRAWING MeshDepthMaterial 2948v Sketchfab_Scene/mesh_0/ top= ent=null mat= side=1 alphaTest=0 det=0.00 wS (index.html:4872:267) < Object.x [as acquireProgram] (index.html:4879:12191) < Ul (index.html:4930:39715) < d_ (index.html:4930:43996) < _f.renderBufferDirect (index.html:4930:29712) < r.renderBufferDirect (index.html:10040:120)
+  audio decoded:
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave aa P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave heli P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave jet P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave minel P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power barrage P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+  trace: tasks over 100 ms (any process/thread, longest first):
+    427ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @373064 {"src_file":"third_party/blink/renderer/modules/webaudio/base_audio_context.cc","src_func":"decodeAudioData","src_line":417}
+    152ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @387939 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    152ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @387939 {}
+    151ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @420800 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    151ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @420800 {}
+    140ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @368326 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    137ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @368326 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":3408}}
+    137ms Renderer/CrRendererMain devtools.timeline:FunctionCall @368326 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    135ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @425759 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    133ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @415365 {"chrome_task_annotator":{"delay_policy":"PRECISE","task_delay_us":1998},"src_file":"gpu/ipc/service/command_buffer_stub.cc","src_func":"ScheduleDelayedWork","s
+    133ms GPU Process/CrGpuMain gpu:CommandBufferStub::PerformWork @415365 {}
+    133ms GPU Process/CrGpuMain gpu:GPUTracer::ProcessTraces @415365 {}
+    130ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @425759 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":7136}}
+    130ms Renderer/CrRendererMain devtools.timeline:FunctionCall @425759 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    128ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @387110 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    128ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @387110 {}
+    128ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @408123 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    127ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @408123 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":6220}}
+    126ms Renderer/CrRendererMain devtools.timeline:FunctionCall @408123 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    125ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @387600 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    125ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @387600 {}
+    122ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @420311 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    121ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @421590 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    120ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @426803 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    118ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @421590 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":6952}}
+    118ms Renderer/CrRendererMain devtools.timeline:FunctionCall @421590 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    118ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @372872 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    118ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @415238 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    117ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @420312 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":6904}}
+    117ms Renderer/CrRendererMain devtools.timeline:FunctionCall @420312 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    117ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @426803 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":7180}}
+    117ms Renderer/CrRendererMain devtools.timeline:FunctionCall @426803 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    115ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @427859 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    114ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @417174 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    114ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @429511 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    114ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @366806 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    113ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @415238 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":6656}}
+    113ms Renderer/CrRendererMain devtools.timeline:FunctionCall @415238 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    113ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @372872 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":3768}}
+    113ms Renderer/CrRendererMain devtools.timeline:FunctionCall @372872 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    112ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @427859 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":7224}}
+    112ms Renderer/CrRendererMain devtools.timeline:FunctionCall @427859 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    111ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @366806 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":3276}}
+    111ms Renderer/CrRendererMain devtools.timeline:FunctionCall @366806 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    111ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @413202 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    109ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @429513 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":7296}}
+    109ms Renderer/CrRendererMain devtools.timeline:FunctionCall @429513 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    109ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @428959 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    109ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @417174 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":6736}}
+    109ms Renderer/CrRendererMain devtools.timeline:FunctionCall @417174 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    109ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @374392 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    108ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @413202 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":6548}}
+    108ms Renderer/CrRendererMain devtools.timeline:FunctionCall @413202 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    107ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @415806 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    107ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @428959 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":7272}}
+    107ms Renderer/CrRendererMain devtools.timeline:FunctionCall @428959 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    107ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @426693 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    107ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @374392 {"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":3868}}
+    107ms Renderer/CrRendererMain devtools.timeline:FunctionCall @374392 {"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionName":"loop","isolate":"13010328725179678190","lineNumber":15266,"sampleTraceId":
+    106ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @429070 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    inside 152ms GPU Process/CrGpuMain @387939: 152ms Scheduler::RunTask
+    inside 151ms GPU Process/CrGpuMain @420800: 151ms Scheduler::RunTask
+    inside 140ms Renderer/CrRendererMain @368326: 137ms FireAnimationFrame{"data":{"frame":"D78C17CAED39889AC02D6AF060AA45C3","id":3408}} | 137ms FunctionCall{"data":{"columnNumber":14,"frame":"D78C17CAED39889AC02D6AF060AA45C3","functionN
+    -- phase marks (trace ms) --
+    wave harv@363833 wave dozer@365344 wave inf@366917 wave at@368463 wave officer@369933 wave medic@371437 wave champ@372985 wave cleric@374499 wave spy@375990 wave aa@377493 wave tank@379010 wave arty@380499 wave ammot@382034 wave ew@383576 wave bmt@385064 wave dtank@386603 wave dsam@388139 wave darty@389606 wave heli@391111 wave jet@392659 wave airlift@394214 wave drone@395753 wave boat@397289 wave fast@398819 wave sub@400351 wave ship@401903 wave minel@403436 wave sweep@404989 wave lander@406515 power recon@408099 power para@410597 power barrage@413125 power repair@415678 power nat@418184 strike@420742
+IR FAIL: longest frame 430 ms is 373 ms over the longest quiet frame 57 ms (max 300)
+  [RS +13s] range loaded (bm_splitridge; warm-up {"ms":3635,"models":59,"steps":706,"maxStep":132,"progs":106,"late":0,"phone":0})
+  [RS +27s] normal frame 21 ms (quiet max 52)
+  [RS +27s] waves: harv dozer inf at mortar medic champ cleric spy aa tank arty ammot drone ew dtank dsam darty boat fast lander
+  [RS +60s] powers: recon para barrage repair nat
+  [RS +72s] strike: Heavy Rocket Barrage launched
+RS {"longest":364,"quietMax":52,"normal":21,"over50":887,"frames":1121,"programs":0,"shaders":0,"textures":0,"texKB":1024,"bufKB":3808,"canvases":2,"audioDecodes":6,"cpu":2}
+  by phase:
+    quiet: worst 30ms, 0/2 frames >50ms
+    wave harv: worst 69ms, 6/44 frames >50ms
+    wave dozer: worst 72ms, 4/43 frames >50ms
+    wave inf: worst 131ms, 10/34 frames >50ms
+    wave at: worst 99ms, 8/34 frames >50ms
+    wave mortar: worst 114ms, 12/30 frames >50ms
+    wave medic: worst 108ms, 14/30 frames >50ms
+    wave champ: worst 118ms, 15/24 frames >50ms
+    wave cleric: worst 139ms, 17/26 frames >50ms
+    wave spy: worst 83ms, 13/29 frames >50ms
+    wave aa: worst 146ms, 20/20 frames >50ms
+    wave tank: worst 151ms, 16/16 frames >50ms
+    wave arty: worst 116ms, 17/17 frames >50ms
+    wave ammot: worst 106ms, 17/17 frames >50ms
+    wave drone: worst 113ms, 17/17 frames >50ms
+    wave ew: worst 128ms, 16/16 frames >50ms
+    wave dtank: worst 227ms, 14/14 frames >50ms
+    wave dsam: worst 181ms, 13/13 frames >50ms
+    wave darty: worst 184ms, 13/13 frames >50ms
+    wave boat: worst 121ms, 14/14 frames >50ms
+    wave fast: worst 97ms, 17/17 frames >50ms
+    wave lander: worst 114ms, 18/18 frames >50ms
+    power recon: worst 103ms, 31/43 frames >50ms
+    power para: worst 127ms, 27/47 frames >50ms
+    power barrage: worst 98ms, 34/35 frames >50ms
+    power repair: worst 119ms, 31/31 frames >50ms
+    power nat: worst 102ms, 32/36 frames >50ms
+    strike: worst 364ms, 441/441 frames >50ms
+  slowest calls:
+    renderFrame max 179ms (strike) tot 80928ms n1676
+    syncScene max 85ms (wave cleric) tot 4222ms n1676
+    updateUI max 49ms (power recon) tot 2742ms n282
+    simUpdate max 39ms (power repair) tot 5137ms n1682
+    launch max 17ms (strike) tot 17ms n1
+    pqRender max 8ms (strike) tot 22ms n810
+    addUnit max 5ms (wave champ) tot 16ms n118
+    rpRecTick max 5ms (strike) tot 137ms n1676
+    qualTick max 5ms (strike) tot 160ms n1676
+    usePower max 5ms (power para) tot 16ms n5
+    renderSquads max 4ms (strike) tot 105ms n282
+    sfxBoom max 4ms (strike) tot 43ms n86
+  frames >50 ms (887, slowest first):
+    364ms @109275 [strike] ents=126 {"simUpdate":6,"syncScene":3,"renderFrame":148} {"texUp":126,"c2d":110}
+    313ms @116605 [strike] ents=126 {"simUpdate":13,"syncScene":4,"renderFrame":163} {"texUp":63,"c2d":110}
+    227ms @50916 [wave dtank] ents=128 {"simUpdate":7,"syncScene":83,"renderFrame":152} {"texUp":8,"buf":18,"bufKB":55.7,"vao":12,"c2d":120}
+    227ms @112078 [strike] ents=126 {"simUpdate":8,"syncScene":3,"renderFrame":70} {"texUp":63,"c2d":110}
+    222ms @100422 [strike] ents=126 {"simUpdate":15,"syncScene":5,"renderFrame":179} {"texUp":122,"c2d":110}
+    221ms @110963 [strike] ents=126 {"simUpdate":5,"syncScene":3,"renderFrame":96} {"texUp":63,"c2d":110}
+    217ms @115295 [strike] ents=126 {"simUpdate":4,"syncScene":3,"renderFrame":74} {"texUp":127,"c2d":110}
+    215ms @113997 [strike] ents=126 {"simUpdate":21,"syncScene":8,"renderFrame":125} {"texUp":126,"c2d":110}
+    215ms @110080 [strike] ents=126 {"simUpdate":25,"updateUI":31,"syncScene":8,"renderFrame":108} {"texUp":126,"c2d":110}
+    214ms @116213 [strike] ents=126 {"simUpdate":5,"syncScene":7,"renderFrame":142} {"texUp":63,"c2d":110}
+    209ms @96728 [strike] ents=127 {"simUpdate":10,"syncScene":3,"renderFrame":126} {"texUp":62,"c2d":113}
+    197ms @116802 [strike] ents=126 {"simUpdate":2,"updateUI":25,"syncScene":7,"renderFrame":147} {"texUp":126,"c2d":110}
+    196ms @115852 [strike] ents=126 {"simUpdate":15,"updateUI":27,"syncScene":7,"renderFrame":146} {"texUp":63,"c2d":110}
+    187ms @105812 [strike] ents=126 {"simUpdate":4,"syncScene":7,"renderFrame":165} {"texUp":126,"c2d":112}
+    184ms @54608 [wave darty] ents=140 {"simUpdate":6,"syncScene":3,"renderFrame":130} {"texUp":16,"c2d":116}
+    183ms @115656 [strike] ents=126 {"simUpdate":4,"syncScene":3,"renderFrame":131} {"texUp":126,"c2d":110}
+    182ms @82482 [strike] ents=129 {"simUpdate":14,"syncScene":4,"renderFrame":114} {"texUp":116,"c2d":127}
+    181ms @52485 [wave dsam] ents=134 {"simUpdate":4,"syncScene":80,"renderFrame":173} {"texUp":8,"buf":18,"bufKB":129.1,"vao":12,"c2d":120}
+    181ms @113063 [strike] ents=126 {"simUpdate":21,"updateUI":47,"renderFrame":56} {"texUp":63,"c2d":110}
+    181ms @114882 [strike] ents=126 {"syncScene":10,"renderFrame":111} {"texUp":63,"c2d":110}
+    179ms @115473 [strike] ents=126 {"simUpdate":4,"syncScene":7,"renderFrame":96} {"texUp":63,"c2d":110}
+    178ms @104068 [strike] ents=127 {"simUpdate":13,"syncScene":8,"renderFrame":130} {"texUp":127,"c2d":118}
+    177ms @107097 [strike] ents=126 {"simUpdate":6,"syncScene":7,"renderFrame":117} {"texUp":63,"c2d":112}
+    175ms @113698 [strike] ents=126 {"simUpdate":10,"updateUI":20,"syncScene":5,"renderFrame":115} {"texUp":126,"c2d":110}
+    174ms @102893 [strike] ents=127 {"simUpdate":2,"syncScene":3,"renderFrame":121} {"texUp":127,"c2d":116}
+  slow 3D objects built (makeObj > 15 ms):
+    19ms at
+    22ms at
+    22ms medic
+    23ms cleric
+    15ms cleric
+    16ms tank
+    17ms tank
+    17ms dtank
+    16ms tank
+    16ms dtank
+    17ms aa
+    18ms dsam
+    16ms aa
+    16ms dsam
+    15ms dsam
+    15ms inf
+    19ms building uplink
+    21ms inf
+    18ms inf
+  audio decoded:
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave aa P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power recon P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power barrage P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power barrage P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+  trace: tasks over 100 ms (any process/thread, longest first):
+    462ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @516843 {"src_file":"third_party/blink/renderer/modules/webaudio/base_audio_context.cc","src_func":"decodeAudioData","src_line":417}
+    360ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @542226 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    178ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @532059 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    177ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @532059 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4659}}
+    177ms Renderer/CrRendererMain devtools.timeline:FunctionCall @532059 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    175ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @534047 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    175ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @534047 {}
+    163ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @530506 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    160ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @530507 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4603}}
+    160ms Renderer/CrRendererMain devtools.timeline:FunctionCall @530507 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    152ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @522755 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    149ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @522755 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4271}}
+    149ms Renderer/CrRendererMain devtools.timeline:FunctionCall @522755 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    144ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @531913 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    142ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @531913 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4655}}
+    142ms Renderer/CrRendererMain devtools.timeline:FunctionCall @531913 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    141ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @532477 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    139ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @532477 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4671}}
+    139ms Renderer/CrRendererMain devtools.timeline:FunctionCall @532477 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    139ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @535136 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    138ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @534223 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    136ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @534223 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4727}}
+    136ms Renderer/CrRendererMain devtools.timeline:FunctionCall @534223 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    136ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @535136 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4759}}
+    136ms Renderer/CrRendererMain devtools.timeline:FunctionCall @535136 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    136ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @534042 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    133ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @534042 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4723}}
+    133ms Renderer/CrRendererMain devtools.timeline:FunctionCall @534042 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    133ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @516809 {"src_file":"third_party/blink/renderer/modules/webaudio/base_audio_context.cc","src_func":"decodeAudioData","src_line":417}
+    131ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @521203 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    130ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @533664 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    130ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @518156 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    129ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @521203 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4191}}
+    129ms Renderer/CrRendererMain devtools.timeline:FunctionCall @521203 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    129ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @532968 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    127ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @531782 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    127ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @533664 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4711}}
+    127ms Renderer/CrRendererMain devtools.timeline:FunctionCall @533664 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    127ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @532237 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    127ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @518156 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":3971}}
+    126ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @532968 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4687}}
+    126ms Renderer/CrRendererMain devtools.timeline:FunctionCall @532968 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    126ms Renderer/CrRendererMain devtools.timeline:FunctionCall @518156 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    126ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @532237 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4663}}
+    126ms Renderer/CrRendererMain devtools.timeline:FunctionCall @532237 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    125ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @533434 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    125ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @532742 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    124ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @530381 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    124ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @530381 {}
+    124ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @533795 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    124ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @533434 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4703}}
+    124ms Renderer/CrRendererMain devtools.timeline:FunctionCall @533434 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    123ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @532742 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4679}}
+    123ms Renderer/CrRendererMain devtools.timeline:FunctionCall @532742 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    123ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @533795 {"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4715}}
+    123ms Renderer/CrRendererMain devtools.timeline:FunctionCall @533795 {"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionName":"loop","isolate":"1360478760304627341","lineNumber":15266,"sampleTraceId":2
+    123ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @535011 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    123ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @535011 {}
+    122ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @535001 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    122ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @532619 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    inside 178ms Renderer/CrRendererMain @532059: 177ms FireAnimationFrame{"data":{"frame":"3CB82A3E99122FC926E37DB74C849116","id":4659}} | 177ms FunctionCall{"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionN
+    inside 177ms Renderer/CrRendererMain @532059: 177ms FunctionCall{"data":{"columnNumber":14,"frame":"3CB82A3E99122FC926E37DB74C849116","functionN
+    inside 175ms GPU Process/CrGpuMain @534047: 175ms Scheduler::RunTask
+    -- phase marks (trace ms) --
+    wave harv@507559 wave dozer@509065 wave inf@510692 wave at@512171 wave mortar@513714 wave medic@515212 wave champ@516742 wave cleric@518282 wave spy@519759 wave aa@521332 wave tank@522904 wave arty@524437 wave ammot@525954 wave drone@527499 wave ew@529025 wave dtank@530667 wave dsam@532236 wave darty@533791 wave boat@535388 wave fast@536879 wave lander@538406 power recon@540071 power para@542625 power barrage@545209 power repair@547781 power nat@550318 strike@552849
+RS FAIL: longest frame 364 ms is 313 ms over the longest quiet frame 52 ms (max 300)
+  [US +14s] range loaded (bm_splitridge; warm-up {"ms":4162,"models":62,"steps":717,"maxStep":141,"progs":101,"late":0,"phone":0})
+  [US +28s] normal frame 22 ms (quiet max 51)
+  [US +28s] waves: harv dozer inf at hero medic champ spy aa tank arty ammot ew dtank dsam darty heli jet airlift boat fast sub ship minel sweep lander
+  [US +67s] powers: recon para barrage repair bb nat
+  [US +83s] strike: Tomahawk Cruise-Missile Salvo launched
+US {"longest":936,"quietMax":51,"normal":22,"over50":1073,"frames":1421,"programs":0,"shaders":0,"textures":0,"texKB":0,"bufKB":3300,"canvases":1,"audioDecodes":7,"cpu":2}
+  by phase:
+    quiet: worst 47ms, 0/3 frames >50ms
+    wave harv: worst 60ms, 7/42 frames >50ms
+    wave dozer: worst 78ms, 7/41 frames >50ms
+    wave inf: worst 142ms, 7/34 frames >50ms
+    wave at: worst 143ms, 12/30 frames >50ms
+    wave hero: worst 115ms, 13/31 frames >50ms
+    wave medic: worst 140ms, 13/29 frames >50ms
+    wave champ: worst 116ms, 16/25 frames >50ms
+    wave spy: worst 89ms, 16/28 frames >50ms
+    wave aa: worst 95ms, 16/30 frames >50ms
+    wave tank: worst 81ms, 12/34 frames >50ms
+    wave arty: worst 84ms, 16/30 frames >50ms
+    wave ammot: worst 75ms, 12/30 frames >50ms
+    wave ew: worst 123ms, 18/19 frames >50ms
+    wave dtank: worst 232ms, 18/19 frames >50ms
+    wave dsam: worst 565ms, 14/17 frames >50ms
+    wave darty: worst 86ms, 19/26 frames >50ms
+    wave heli: worst 77ms, 18/26 frames >50ms
+    wave jet: worst 111ms, 24/24 frames >50ms
+    wave airlift: worst 106ms, 22/22 frames >50ms
+    wave boat: worst 113ms, 19/21 frames >50ms
+    wave fast: worst 84ms, 20/25 frames >50ms
+    wave sub: worst 89ms, 19/26 frames >50ms
+    wave ship: worst 83ms, 17/27 frames >50ms
+    wave minel: worst 75ms, 13/29 frames >50ms
+    wave sweep: worst 81ms, 19/25 frames >50ms
+    wave lander: worst 77ms, 18/29 frames >50ms
+    power recon: worst 114ms, 28/42 frames >50ms
+    power para: worst 936ms, 23/36 frames >50ms
+    power barrage: worst 126ms, 31/34 frames >50ms
+    power repair: worst 133ms, 33/34 frames >50ms
+    power bb: worst 98ms, 36/36 frames >50ms
+    power nat: worst 117ms, 29/29 frames >50ms
+    strike: worst 417ms, 488/488 frames >50ms
+  slowest calls:
+    renderFrame max 274ms (strike) tot 89533ms n1950
+    syncScene max 181ms (strike) tot 4764ms n1950
+    simUpdate max 59ms (strike) tot 7013ms n1951
+    updateUI max 43ms (power recon) tot 3416ms n342
+    sfxBoom max 32ms (power barrage) tot 376ms n477
+    launch max 20ms (strike) tot 20ms n1
+    renderSquads max 13ms (strike) tot 155ms n342
+    qualTick max 8ms (strike) tot 195ms n1949
+    rpRecTick max 8ms (strike) tot 186ms n1950
+    addUnit max 6ms (wave champ) tot 15ms n133
+    usePower max 4ms (power nat) tot 10ms n6
+    qpUpdate max 3ms (strike) tot 41ms n342
+  frames >50 ms (1073, slowest first):
+    936ms @73534 [power para] ents=145 {"simUpdate":5,"renderFrame":21} {"texUp":28,"c2d":128}
+    565ms @50691 [wave dsam] ents=123 {"simUpdate":3,"updateUI":7,"syncScene":3,"renderFrame":121} {"texUp":16,"c2d":98}
+    417ms @118365 [strike] ents=131 {"simUpdate":8,"syncScene":3,"renderFrame":131} {"texUp":80,"c2d":123}
+    387ms @113648 [strike] ents=132 {"qualTick":8,"sfxBoom":3,"simUpdate":43,"syncScene":7,"renderFrame":274} {"texUp":72,"c2d":120}
+    310ms @117269 [strike] ents=131 {"simUpdate":12,"renderFrame":194} {"texUp":111,"c2d":123}
+    297ms @128906 [strike] ents=143 {"simUpdate":9,"updateUI":16,"syncScene":181,"renderFrame":269} {"texUp":138,"buf":47,"bufKB":313.7,"vao":18,"c2d":141}
+    286ms @136971 [strike] ents=133 {"simUpdate":9,"syncScene":10,"sfxBoom":7,"renderFrame":271} {"texUp":138,"c2d":127}
+    271ms @125540 [strike] ents=129 {"simUpdate":5,"syncScene":3,"renderFrame":218} {"texUp":161,"c2d":123}
+    267ms @138165 [strike] ents=133 {"simUpdate":7,"updateUI":31,"syncScene":11,"renderFrame":181} {"texUp":270,"c2d":126}
+    264ms @135596 [strike] ents=134 {"simUpdate":2,"syncScene":19,"renderFrame":206} {"texUp":257,"c2d":130}
+    255ms @112800 [strike] ents=132 {"simUpdate":17,"syncScene":5,"sfxBoom":8,"renderFrame":184} {"texUp":69,"c2d":121}
+    255ms @129299 [strike] ents=143 {"simUpdate":21,"syncScene":21,"renderFrame":187} {"texUp":138,"c2d":141}
+    250ms @136685 [strike] ents=133 {"simUpdate":23,"rpRecTick":3,"syncScene":16,"renderFrame":182} {"texUp":267,"c2d":127}
+    245ms @124863 [strike] ents=129 {"simUpdate":15,"syncScene":8,"renderFrame":204} {"texUp":100,"c2d":123}
+    244ms @118688 [strike] ents=131 {"simUpdate":15,"syncScene":6,"renderFrame":119} {"texUp":80,"c2d":123}
+    240ms @130113 [strike] ents=141 {"simUpdate":15,"syncScene":4,"renderFrame":142} {"texUp":216,"c2d":139}
+    239ms @134873 [strike] ents=134 {"simUpdate":16,"syncScene":11,"renderFrame":160} {"texUp":255,"c2d":130}
+    232ms @49783 [wave dtank] ents=117 {"simUpdate":4,"syncScene":3,"renderFrame":52} {"texUp":16,"c2d":100}
+    227ms @134155 [strike] ents=134 {"simUpdate":37,"syncScene":22,"renderFrame":180} {"texUp":247,"c2d":126}
+    220ms @127686 [strike] ents=129 {"simUpdate":3,"syncScene":4,"renderFrame":127} {"texUp":108,"c2d":123}
+    216ms @117485 [strike] ents=131 {"simUpdate":16,"syncScene":4,"renderFrame":169} {"texUp":80,"c2d":123}
+    215ms @116524 [strike] ents=131 {"simUpdate":16,"syncScene":7,"renderFrame":99} {"texUp":80,"c2d":124}
+    208ms @133049 [strike] ents=134 {"simUpdate":21,"syncScene":7,"renderFrame":185} {"texUp":235,"c2d":127}
+    208ms @117801 [strike] ents=131 {"simUpdate":7,"updateUI":15,"syncScene":5,"renderFrame":147} {"texUp":80,"c2d":123}
+    203ms @136139 [strike] ents=134 {"simUpdate":9,"syncScene":9,"renderFrame":158} {"texUp":139,"c2d":126}
+  slow 3D objects built (makeObj > 15 ms):
+    21ms inf
+    25ms inf
+    25ms at
+    19ms at
+    40ms medic
+    17ms medic
+    40ms inf
+    22ms inf
+    27ms inf
+    16ms inf
+    22ms inf
+    23ms at
+  audio decoded:
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave aa P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave heli P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave jet P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave sweep P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power barrage P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+  trace: tasks over 100 ms (any process/thread, longest first):
+    906ms Renderer/CrRendererMain toplevel:BlinkScheduler_PerformMicrotaskCheckpoint @670823 {}
+    449ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @648331 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    449ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @648331 {}
+    423ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @674800 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    270ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @636097 {"src_file":"third_party/blink/renderer/modules/webaudio/base_audio_context.cc","src_func":"decodeAudioData","src_line":417}
+    199ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @647749 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    199ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @647749 {}
+    139ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @629798 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    138ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @634348 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    138ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @629798 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":3292}}
+    138ms Renderer/CrRendererMain devtools.timeline:FunctionCall @629798 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    136ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @634348 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":3672}}
+    136ms Renderer/CrRendererMain devtools.timeline:FunctionCall @634348 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    135ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @648782 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    135ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @673633 {"src_file":"v8/src/maglev/maglev-concurrent-dispatcher.cc","src_func":"v8::internal::maglev::MaglevConcurrentDispatcher::MaglevConcurrentDispatcher(Isolate *)"
+    132ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @648782 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":4668}}
+    132ms Renderer/CrRendererMain devtools.timeline:FunctionCall @648782 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    125ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @673595 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    118ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @682339 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    118ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @673595 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":6252}}
+    118ms Renderer/CrRendererMain devtools.timeline:FunctionCall @673595 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    118ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @631339 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    116ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @631339 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":3428}}
+    116ms Renderer/CrRendererMain devtools.timeline:FunctionCall @631339 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    115ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @682340 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":6696}}
+    115ms Renderer/CrRendererMain devtools.timeline:FunctionCall @682340 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    113ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @681224 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    113ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @680151 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    112ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @682119 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    111ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @680152 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":6604}}
+    111ms Renderer/CrRendererMain devtools.timeline:FunctionCall @680152 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    109ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @680682 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    109ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @681224 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":6652}}
+    109ms Renderer/CrRendererMain devtools.timeline:FunctionCall @681224 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    108ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @681112 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    108ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @675171 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    106ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @682119 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":6688}}
+    106ms Renderer/CrRendererMain devtools.timeline:FunctionCall @682119 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    105ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @680682 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":6628}}
+    105ms Renderer/CrRendererMain devtools.timeline:FunctionCall @680682 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    105ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @683336 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    104ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @675171 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":6324}}
+    104ms Renderer/CrRendererMain devtools.timeline:FunctionCall @675171 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    103ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @681112 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":6648}}
+    103ms Renderer/CrRendererMain devtools.timeline:FunctionCall @681112 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    103ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @683337 {"data":{"frame":"2022B34094DC5305E2A617A259029151","id":6740}}
+    103ms Renderer/CrRendererMain devtools.timeline:FunctionCall @683337 {"data":{"columnNumber":14,"frame":"2022B34094DC5305E2A617A259029151","functionName":"loop","isolate":"12901904507772067445","lineNumber":15266,"sampleTraceId":
+    102ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @674389 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    101ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @672296 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    101ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @688605 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    100ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @686898 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    inside 449ms GPU Process/CrGpuMain @648331: 449ms Scheduler::RunTask
+    inside 199ms GPU Process/CrGpuMain @647749: 199ms Scheduler::RunTask
+    -- phase marks (trace ms) --
+    wave harv@626816 wave dozer@628305 wave inf@629936 wave at@631456 wave hero@632945 wave medic@634484 wave champ@635957 wave spy@637431 wave aa@638923 wave tank@640432 wave arty@641995 wave ammot@643500 wave ew@645032 wave dtank@646550 wave dsam@648102 wave darty@649641 wave heli@651158 wave jet@652700 wave airlift@654222 wave boat@655753 wave fast@657245 wave sub@658778 wave ship@660293 wave minel@661802 wave sweep@663345 wave lander@664810 power recon@666378 power para@668927 power barrage@671823 power repair@674385 power bb@676892 power nat@679447 strike@682015
+US FAIL: longest frame 936 ms is 885 ms over the longest quiet frame 51 ms (max 300)
+  [OB +13s] range loaded (bm_splitridge; warm-up {"ms":3652,"models":61,"steps":705,"maxStep":151,"progs":100,"late":0,"phone":0})
+  [OB +27s] normal frame 22 ms (quiet max 48)
+  [OB +28s] waves: harv dozer inf at recon medic champ atk mortar hero spy aa tank arty ammot ew drone dtank dsam darty boat fast lander
+  [OB +63s] powers: recon para barrage repair nat
+  [OB +76s] strike: Heavy Rocket Barrage launched
+OB {"longest":331,"quietMax":48,"normal":22,"over50":1011,"frames":1280,"programs":0,"shaders":0,"textures":0,"texKB":1024,"bufKB":5709,"canvases":0,"audioDecodes":6,"cpu":2}
+  by phase:
+    quiet: worst 31ms, 0/3 frames >50ms
+    wave harv: worst 61ms, 8/46 frames >50ms
+    wave dozer: worst 70ms, 6/43 frames >50ms
+    wave inf: worst 126ms, 7/36 frames >50ms
+    wave at: worst 115ms, 14/31 frames >50ms
+    wave recon: worst 91ms, 12/29 frames >50ms
+    wave medic: worst 104ms, 15/28 frames >50ms
+    wave champ: worst 175ms, 15/19 frames >50ms
+    wave atk: worst 113ms, 13/30 frames >50ms
+    wave mortar: worst 120ms, 14/29 frames >50ms
+    wave hero: worst 109ms, 12/29 frames >50ms
+    wave spy: worst 84ms, 16/29 frames >50ms
+    wave aa: worst 137ms, 22/22 frames >50ms
+    wave tank: worst 156ms, 17/17 frames >50ms
+    wave arty: worst 103ms, 17/17 frames >50ms
+    wave ammot: worst 98ms, 19/19 frames >50ms
+    wave ew: worst 192ms, 16/16 frames >50ms
+    wave drone: worst 118ms, 17/17 frames >50ms
+    wave dtank: worst 258ms, 14/14 frames >50ms
+    wave dsam: worst 170ms, 13/13 frames >50ms
+    wave darty: worst 117ms, 15/15 frames >50ms
+    wave boat: worst 115ms, 16/16 frames >50ms
+    wave fast: worst 119ms, 17/17 frames >50ms
+    wave lander: worst 106ms, 18/18 frames >50ms
+    power recon: worst 107ms, 26/44 frames >50ms
+    power para: worst 101ms, 24/48 frames >50ms
+    power barrage: worst 102ms, 34/36 frames >50ms
+    power repair: worst 148ms, 30/30 frames >50ms
+    power nat: worst 84ms, 37/37 frames >50ms
+    strike: worst 331ms, 527/532 frames >50ms
+  slowest calls:
+    renderFrame max 216ms (wave dtank) tot 83733ms n1821
+    syncScene max 106ms (wave dtank) tot 4808ms n1821
+    simUpdate max 45ms (power repair) tot 5703ms n1823
+    updateUI max 45ms (strike) tot 3198ms n315
+    launch max 9ms (strike) tot 9ms n1
+    renderSquads max 7ms (power para) tot 139ms n315
+    qualTick max 7ms (strike) tot 168ms n1821
+    rpRecTick max 7ms (strike) tot 174ms n1821
+    addUnit max 6ms (wave champ) tot 17ms n127
+    usePower max 5ms (power barrage) tot 13ms n5
+    qpUpdate max 4ms (strike) tot 34ms n315
+    hudTick max 4ms (power barrage) tot 107ms n1821
+  frames >50 ms (1011, slowest first):
+    331ms @116068 [strike] ents=140 {"simUpdate":31,"qpUpdate":4,"updateUI":30,"rpRecTick":7,"syncScene":11,"renderFrame":194} {"texUp":58,"c2d":106}
+    258ms @54439 [wave dtank] ents=140 {"syncScene":106,"renderFrame":216} {"texUp":16,"buf":18,"bufKB":55.7,"vao":12,"c2d":128}
+    222ms @118878 [strike] ents=140 {"simUpdate":7,"updateUI":14,"syncScene":3,"renderFrame":115} {"texUp":112,"c2d":106}
+    210ms @116387 [strike] ents=140 {"simUpdate":8,"syncScene":4,"renderFrame":76} {"texUp":62,"c2d":106}
+    200ms @113994 [strike] ents=140 {"simUpdate":10,"syncScene":3,"renderFrame":93} {"texUp":56,"c2d":106}
+    200ms @121454 [strike] ents=140 {"simUpdate":9,"syncScene":9,"renderFrame":113} {"texUp":124,"c2d":106}
+    194ms @117616 [strike] ents=140 {"simUpdate":16,"updateUI":31,"syncScene":11,"renderFrame":102} {"texUp":112,"c2d":106}
+    192ms @52583 [wave ew] ents=128 {"simUpdate":4,"syncScene":2,"renderFrame":97} {"texUp":8,"c2d":124}
+    189ms @106324 [strike] ents=140 {"simUpdate":9,"syncScene":7,"renderFrame":98} {"texUp":54,"c2d":106}
+    184ms @119155 [strike] ents=140 {"simUpdate":2,"rpRecTick":2,"syncScene":3,"renderFrame":124} {"texUp":112,"c2d":106}
+    177ms @122754 [strike] ents=139 {"simUpdate":9,"syncScene":4,"renderFrame":79} {"texUp":146,"c2d":104}
+    175ms @37362 [wave champ] ents=74 {"addUnit":11,"simUpdate":3,"syncScene":50,"renderFrame":104} {"texUp":108,"buf":21,"bufKB":936.9,"vao":6,"c2d":102}
+    170ms @55915 [wave dsam] ents=146 {"simUpdate":4,"updateUI":9,"syncScene":64,"renderFrame":152} {"texUp":16,"buf":18,"bufKB":129.1,"vao":12,"c2d":126}
+    165ms @106743 [strike] ents=140 {"simUpdate":5,"syncScene":3,"renderFrame":68} {"texUp":108,"c2d":106}
+    164ms @102936 [strike] ents=140 {"simUpdate":8,"syncScene":3,"renderFrame":71} {"texUp":108,"c2d":106}
+    164ms @117869 [strike] ents=140 {"simUpdate":9,"syncScene":3,"renderFrame":98} {"texUp":112,"c2d":106}
+    162ms @113268 [strike] ents=140 {"syncScene":6,"renderFrame":75} {"texUp":108,"c2d":106}
+    162ms @87085 [strike] ents=148 {"simUpdate":6,"syncScene":4,"renderFrame":90} {"texUp":108,"c2d":122}
+    162ms @120749 [strike] ents=140 {"simUpdate":5,"syncScene":4,"renderFrame":108} {"texUp":118,"c2d":108}
+    162ms @122484 [strike] ents=139 {"simUpdate":9,"updateUI":32,"syncScene":4,"renderFrame":111} {"texUp":146,"c2d":104}
+    161ms @113683 [strike] ents=140 {"simUpdate":8,"updateUI":25,"syncScene":10,"renderFrame":102} {"texUp":56,"c2d":106}
+    160ms @117147 [strike] ents=140 {"simUpdate":9,"renderFrame":147} {"texUp":110,"c2d":108}
+    157ms @114151 [strike] ents=140 {"simUpdate":4,"syncScene":3,"renderFrame":113} {"texUp":108,"c2d":106}
+    157ms @98485 [strike] ents=140 {"simUpdate":42,"syncScene":15,"renderFrame":109} {"texUp":54,"c2d":106}
+    156ms @46588 [wave tank] ents=110 {"simUpdate":7,"updateUI":9,"syncScene":65,"renderFrame":136} {"texUp":46,"buf":18,"bufKB":55.7,"vao":12,"c2d":108}
+  slow 3D objects built (makeObj > 15 ms):
+    22ms at
+    20ms at
+    22ms recon
+    24ms medic
+    16ms atk
+    19ms mortar
+    16ms mortar
+    23ms aa
+    17ms aa
+    17ms tank
+    18ms tank
+    18ms dtank
+    36ms tank
+    36ms dtank
+    16ms aa
+    16ms dsam
+    26ms inf
+    18ms building uplink
+    17ms inf
+  audio decoded:
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave champ P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    wave aa P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power recon P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power barrage P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+    power repair P.<computed> [as decodeAudioData] (<anonymous>:3:101) < (index.html:18603:17 < new Promise (<anonymous>) < decodeAB (index.html:18602:32)
+  trace: tasks over 100 ms (any process/thread, longest first):
+    362ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @775364 {"src_file":"third_party/blink/renderer/modules/webaudio/base_audio_context.cc","src_func":"decodeAudioData","src_line":417}
+    220ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @792167 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    218ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @792167 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4799}}
+    218ms Renderer/CrRendererMain devtools.timeline:FunctionCall @792167 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    169ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @793695 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    165ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @793695 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4855}}
+    165ms Renderer/CrRendererMain devtools.timeline:FunctionCall @793695 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    163ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @775364 {"src_file":"third_party/blink/renderer/modules/webaudio/base_audio_context.cc","src_func":"decodeAudioData","src_line":417}
+    155ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @784382 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    153ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @784382 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4455}}
+    153ms Renderer/CrRendererMain devtools.timeline:FunctionCall @784382 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    148ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @809246 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    144ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @809246 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":5683}}
+    144ms Renderer/CrRendererMain devtools.timeline:FunctionCall @809246 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    135ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @782820 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    134ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @782821 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4367}}
+    134ms Renderer/CrRendererMain devtools.timeline:FunctionCall @782821 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    129ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @794205 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    129ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @809697 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    129ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @794205 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4871}}
+    129ms Renderer/CrRendererMain devtools.timeline:FunctionCall @794205 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    125ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @809698 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":5699}}
+    125ms Renderer/CrRendererMain devtools.timeline:FunctionCall @809698 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    125ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @792911 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    123ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @792911 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4823}}
+    123ms Renderer/CrRendererMain devtools.timeline:FunctionCall @792911 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    122ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @794335 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    122ms Renderer/ThreadPoolForegroundWorker toplevel:ThreadPool_RunTask @809317 {"src_file":"v8/src/compiler-dispatcher/optimizing-compile-dispatcher.cc","src_func":"void v8::internal::OptimizingCompileTaskExecutor::EnsureStarted()","src_li
+    122ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @794867 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    121ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @790305 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    121ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @790305 {}
+    120ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @775431 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    120ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @775431 {}
+    120ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @794335 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4875}}
+    120ms Renderer/CrRendererMain devtools.timeline:FunctionCall @794335 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    118ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @794867 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4895}}
+    118ms Renderer/CrRendererMain devtools.timeline:FunctionCall @794867 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    118ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @799623 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    118ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @790719 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    118ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @794989 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    117ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @799623 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":5087}}
+    117ms Renderer/CrRendererMain devtools.timeline:FunctionCall @799623 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    116ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @794989 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4899}}
+    116ms Renderer/CrRendererMain devtools.timeline:FunctionCall @794989 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    116ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @795307 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    116ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @809575 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    116ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @778275 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    115ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @796946 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    115ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @799839 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    115ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @778275 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4019}}
+    115ms Renderer/CrRendererMain devtools.timeline:FunctionCall @778275 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    115ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @794089 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    114ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @795307 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4911}}
+    114ms Renderer/CrRendererMain devtools.timeline:FunctionCall @795307 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    114ms GPU Process/CrGpuMain toplevel:ThreadControllerImpl::RunTask @792053 {"src_file":"gpu/command_buffer/service/scheduler.cc","src_func":"RunNextTask","src_line":654}
+    114ms GPU Process/CrGpuMain gpu,toplevel.flow:Scheduler::RunTask @792053 {}
+    114ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @795532 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    113ms Renderer/CrRendererMain devtools.timeline:FireAnimationFrame @809575 {"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":5695}}
+    113ms Renderer/CrRendererMain devtools.timeline:FunctionCall @809575 {"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionName":"loop","isolate":"1451850770300320919","lineNumber":15266,"sampleTraceId":3
+    113ms Renderer/CrRendererMain toplevel:ThreadControllerImpl::RunTask @795934 {"src_file":"cc/trees/proxy_impl.cc","src_func":"ScheduledActionSendBeginMainFrame","src_line":844}
+    inside 220ms Renderer/CrRendererMain @792167: 218ms FireAnimationFrame{"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4799}} | 218ms FunctionCall{"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionN
+    inside 218ms Renderer/CrRendererMain @792167: 218ms FunctionCall{"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionN
+    inside 169ms Renderer/CrRendererMain @793695: 165ms FireAnimationFrame{"data":{"frame":"3720B607A03565CD9E632822F50A1873","id":4855}} | 165ms FunctionCall{"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionN
+    inside 165ms Renderer/CrRendererMain @793695: 165ms FunctionCall{"data":{"columnNumber":14,"frame":"3720B607A03565CD9E632822F50A1873","functionN
+    -- phase marks (trace ms) --
+    wave harv@766085 wave dozer@767626 wave inf@769239 wave at@770741 wave recon@772247 wave medic@773787 wave champ@775308 wave atk@776843 wave mortar@778390 wave hero@779890 wave spy@781370 wave aa@782954 wave tank@784534 wave arty@786006 wave ammot@787514 wave ew@789106 wave drone@790714 wave dtank@792385 wave dsam@793861 wave darty@795304 wave boat@796856 wave fast@798428 wave lander@800044 power recon@801686 power para@804201 power barrage@806795 power repair@809390 power nat@811883 strike@814434
+OB ok
+RANGEFREEZE FAIL
