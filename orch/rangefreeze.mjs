@@ -78,7 +78,7 @@ for (const fac of FACS) for (let att = 0; att < +(E.TRIES || 2); att++) {
   // TRACE=1: a Chrome trace (every process/thread) over the waves, powers and Strike; every task over TRACEMS (150) ms is listed with
   // its process/thread, so a long frame whose time is outside the game's own code (sim/render/UI) can be pinned on what ran instead.
   let bcdp = null, trEv = [], trDone = null; if (E.TRACE) { bcdp = await browser.newBrowserCDPSession(); bcdp.on('Tracing.dataCollected', d => { for (const ev of d.value) trEv.push(ev); }); trDone = new Promise(r => bcdp.once('Tracing.tracingComplete', r));
-    await bcdp.send('Tracing.start', { traceConfig: { includedCategories: ['toplevel', 'gpu', 'v8.gc', 'devtools.timeline', 'disabled-by-default-gpu.service', 'blink.user_timing', '__metadata'], recordMode: 'recordContinuously' }, transferMode: 'ReportEvents' });
+    await bcdp.send('Tracing.start', { traceConfig: { includedCategories: ['toplevel', 'gpu', 'v8.gc', 'devtools.timeline', 'disabled-by-default-gpu.service', 'disabled-by-default-gpu.decoder', 'gpu.angle', 'disabled-by-default-gpu.device', 'blink.user_timing', '__metadata'], recordMode: 'recordContinuously' }, transferMode: 'ReportEvents' });
     await page.evaluate(() => { window.__tr0 = performance.timeOrigin; }); }
   const kinds = await page.evaluate(() => allUnits(G.teams[ME].fac).filter((k, i, a) => a.indexOf(k) === i && BASE[k]));
   say('waves: ' + kinds.join(' '));
@@ -100,6 +100,9 @@ for (const fac of FACS) for (let att = 0; att < +(E.TRIES || 2); att++) {
     for (const ev of trEv) if (ev.ph === 'M') { if (ev.name === 'process_name') pn[ev.pid] = ev.args.name; if (ev.name === 'thread_name') tn[ev.pid + ':' + ev.tid] = ev.args.name; }
     const long = trEv.filter(ev => ev.ph === 'X' && ev.dur > TM * 1000).sort((a, b) => b.dur - a.dur).slice(0, +(E.TRACEN || 40));
     trace = long.map(ev => Math.round(ev.dur / 1000) + 'ms ' + (pn[ev.pid] || ev.pid) + '/' + (tn[ev.pid + ':' + ev.tid] || ev.tid) + ' ' + ev.cat + ':' + ev.name + ' @' + Math.round(ev.ts / 1000) + ' ' + JSON.stringify(ev.args || {}).slice(0, 160));
+    // inside the 6 longest tasks: what ran in them (slices on the same thread, over a fifth of the threshold), so a GPU-process task names its GL work
+    for (const L of long.filter((ev, i, A) => A.findIndex(q => q.pid === ev.pid && q.tid === ev.tid && q.ts === ev.ts) === i).slice(0, 6)) { const kids = trEv.filter(ev => ev.ph === 'X' && ev.pid === L.pid && ev.tid === L.tid && ev.ts >= L.ts && ev.ts + ev.dur <= L.ts + L.dur && ev !== L && ev.dur > TM * 200).sort((a, b) => b.dur - a.dur).slice(0, 8);
+      if (kids.length) trace.push('inside ' + Math.round(L.dur / 1000) + 'ms ' + (pn[L.pid] || L.pid) + '/' + (tn[L.pid + ':' + L.tid] || L.tid) + ' @' + Math.round(L.ts / 1000) + ': ' + kids.map(k => Math.round(k.dur / 1000) + 'ms ' + k.name + (k.args && Object.keys(k.args).length ? JSON.stringify(k.args).slice(0, 80) : '')).join(' | ')); }
     trace.push('-- phase marks (trace ms) --', trEv.filter(ev => /^PH /.test(ev.name || '') && ev.ph !== 'e').map(ev => ev.name.slice(3) + '@' + Math.round(ev.ts / 1000)).filter((v, i, a) => a.indexOf(v) === i).join(' ')); trEv = []; }
   let prof = null; if (E.PROF) { const { profile } = await cdp.send('Profiler.stop'); const self = new Map(), byId = new Map(profile.nodes.map(n => [n.id, n])); const dt = {}; for (let i = 0; i < profile.samples.length; i++) dt[profile.samples[i]] = (dt[profile.samples[i]] || 0) + (profile.timeDeltas[i] || 0);
     for (const n of profile.nodes) { const k = (n.callFrame.functionName || '(anon)') + ':' + n.callFrame.lineNumber + (n.callFrame.url ? '@' + n.callFrame.url.split('/').pop().slice(0, 20) : ''); self.set(k, (self.get(k) || 0) + (dt[n.id] || 0) / 1000); }
