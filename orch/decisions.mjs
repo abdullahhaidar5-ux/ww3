@@ -174,7 +174,7 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   // redfixE (2026-11-17, gate/save "replay differs after +2 min"): a loaded save / migrated host must play on exactly like the original - the checkpoint keeps
   // the supply network as last worked out (refreshed once a second), the ruins list (map-building refs), the per-second faction tick and off-map units' kept caches
   { const c7 = SRC['07b-ckpt.js'] || ''; ck(/lgc=L\?\{sig:L\.sig,cvT:L\.cvT/.test(c7) && /L\.cov=JSON\.parse/.test(c7), 'save/migration: the checkpoint must keep the supply network state (lgc in ckEncode/ckRestore)');
-    ck(/\['mines','smokes','shields','ruins'\]/.test(c7), 'save/migration: G.ruins holds map-building refs and must be decoded in ckRestore'); ck(/'_fmQ'\]/.test(c7), 'save/migration: the per-second faction tick (_fmQ) must be in CK_G');
+    ck(/\['mines','smokes','shields','ruins'\]/.test(c7), 'save/migration: G.ruins holds map-building refs and must be decoded in ckRestore'); ck(/'_fmQ'[,\]]/.test(c7), 'save/migration: the per-second faction tick (_fmQ) must be in CK_G');
     ck(/k\[0\]==='_'&&!CK_UKEEP\.has\(k\)\)\)\)\{/.test(c7), 'save/migration: units inside buildings/tunnels keep the CK_UKEEP fields too');
     ck(/Math\.random=FX_RND;try\{fxPlay\(type,args\);\}finally\{Math\.random=r;\}/.test(SRC['03-sim.js'] || ''), 'save/migration: effects/sounds played from the simulation (FXE) must not take the battle\'s random numbers');
     ck(/function boccSig\(/.test(SRC['02-map.js'] || '') && /'boccS'\]/.test(c7) && /ckFfcLoad\(ck\.ffc\)/.test(c7), 'save/migration: building footprints (boccS) and route fields (ffc) must be in the checkpoint'); }
@@ -618,12 +618,15 @@ try {
     { const rc = await ev(() => { const L = G.lg, D = G.lgd; lgFix(D); const u = G.ents.find(e => !e.dead && !e.isB && e.team === ME && e.s && e.s.dom === 'ground'); if (!u) return { err: 'no unit' };
         const occ = i => G.ents.some(v => v !== u && !v.dead && !v.isB && !v.inTun && v.s && v.s.dom === 'ground' && lgProj(L.E[i], v.x, v.y).d < LG_CUTR + 30);   /* redfixE: another unit (own or enemy) already on the section captures or contests it - the test raced with them */
         let ei = -1, nn = 0; for (let i = 0; i < L.E.length; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 120 && lgRcOwner(i) < 0 && !lgBlk(i, ME) && !occ(i)) { nn++; if (ei < 0 || e.len > L.E[ei].len) ei = i; } } let covK = null; if (ei < 0) { for (const free of [1, 0]) { if (ei >= 0) break; for (let i = 0; i < L.E.length; i++) { const e = L.E[i]; if (e.a !== e.b && e.len > 120 && !lgBlk(i, ME) && (!free || !occ(i)) && (ei < 0 || e.len > L.E[ei].len)) ei = i; } } if (ei < 0) return { err: 'no road section at all', edges: L.E.length }; covK = L.cov; L.cov = null; if (D.rc) delete D.rc[ei]; }   /* small maps: every road is already supply area, so test on the longest one with the supply cover lifted for the test */   /* the longest neutral, open section (map-independent) */
+        /* redfixE: a small map can have ONE long road (lebanon: a single 6.8 km section) with the own dozer and enemy infantry on it - they capture /
+           contest / cut it. Those units are set aside (as if inside a tunnel) for this check and put back after */
+        const park = G.ents.filter(v => v !== u && !v.dead && !v.isB && !v.inTun && v.s && v.s.dom === 'ground' && lgProj(L.E[ei], v.x, v.y).d < LG_CUTR + 30); for (const v of park) v.inTun = 1;
         const e = L.E[ei], m = lgPoint(e, e.len / 2), ox = u.x, oy = u.y, os = u.s; const run = n => { for (let k = 0; k < n; k++) lgRoadCap(1); };
         const hold = () => D.rc[ei] && D.rc[ei].o;
         u.s = Object.assign({}, os, { dom: 'air' }); u.x = m[0]; u.y = m[1]; run(14); const air = hold();
         u.s = os; run(4); const early = hold(); run(10); const got = hold();
-        lgCover(); const beads = (L.bead[ME] || []).some(b => Math.hypot(b.x - m[0], b.y - m[1]) < 150); const sup = supplyPoints()[ME].some(p => p.rd && Math.hypot(p.x - m[0], p.y - m[1]) < 150);
-        u.x = ox; u.y = oy; if (covK) { L.cov = covK; lgCover(); } return { ei, air, early, got, beads, sup, ME, covLifted: !!covK }; });
+        if (!L.reach) lgCompute(); lgCover(); const beads = (L.bead[ME] || []).some(b => Math.hypot(b.x - m[0], b.y - m[1]) < 150); const sup = supplyPoints()[ME].some(p => p.rd && Math.hypot(p.x - m[0], p.y - m[1]) < 150);
+        u.x = ox; u.y = oy; for (const v of park) delete v.inTun; if (covK) { L.cov = covK; lgCover(); } return { ei, air, early, got, beads, sup, ME, covLifted: !!covK, parked: park.length }; });
       console.log('road capture', JSON.stringify(rc));
       ck(!rc.err, 'road capture test setup: ' + JSON.stringify(rc)); if (!rc.err) { ck(!(rc.air >= 0), 'an air unit must not capture a road section: ' + JSON.stringify(rc)); ck(!(rc.early >= 0), 'road capture takes ~10 s, not 4: ' + JSON.stringify(rc));
         ck(rc.got === rc.ME, 'a ground unit standing on a neutral road section must capture it in ~10 s: ' + JSON.stringify(rc)); ck(rc.beads && rc.sup, 'a captured road section must count as the owner\'s supply area: ' + JSON.stringify(rc)); } }
