@@ -52,9 +52,12 @@ function edgeTick(){const A=EDGE.a;if(!A.length&&!EDGE.el)return;const now=perfo
   if(!A.length){if(EDGE.el)EDGE.el.style.display='none';return;}
   let el=EDGE.el;if(!el){const st=document.createElement('style');st.textContent='#edgeAl{position:fixed;z-index:7;pointer-events:none;overflow:hidden}#edgeAl button{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;padding:0;border-radius:50%;border:2px solid var(--c);background:rgba(8,12,10,.82);color:var(--c);font:700 17px/30px system-ui,sans-serif;text-align:center;cursor:pointer;pointer-events:auto;box-shadow:0 1px 6px rgba(0,0,0,.6)}#edgeAl button.vhov,#edgeAl button:hover{background:rgba(40,50,44,.95)}#edgeAl button i{position:absolute;left:50%;top:50%;width:0;height:0;margin:-7px 0 0 -7px;border:7px solid transparent;border-left:11px solid var(--c);border-right:0;transform:rotate(var(--r)) translateX(22px);transform-origin:7px 7px;pointer-events:none}body.inMenu #edgeAl,body.phOn #edgeAl{display:none!important}';document.head.appendChild(st);
     el=EDGE.el=document.createElement('div');el.id='edgeAl';document.body.appendChild(el);}
-  const r=cv.getBoundingClientRect();el.style.display='block';el.style.left=r.left+'px';el.style.top=r.top+'px';el.style.width=r.width+'px';el.style.height=r.height+'px';
+  /* smoothaudit: the screen and radio-feed rectangles are read 4x a second, not every frame (each read forced a page layout) */
+  if(!EDGE.rr||now-EDGE.rt>250||EDGE.iw!==innerWidth||EDGE.ih!==innerHeight){EDGE.rt=now;EDGE.iw=innerWidth;EDGE.ih=innerHeight;EDGE.rr=cv.getBoundingClientRect();const lg0=document.getElementById('log');EDGE.lr=lg0&&lg0.children.length?lg0.getBoundingClientRect():null;
+    el.style.display='block';el.style.left=EDGE.rr.left+'px';el.style.top=EDGE.rr.top+'px';el.style.width=EDGE.rr.width+'px';el.style.height=EDGE.rr.height+'px';}else if(el.style.display!=='block')el.style.display='block';
+  const r=EDGE.rr;
   const L=44,T=96,R=r.width-44,B=r.height-128,cx=(L+R)/2,cy=(T+B)/2,hw=(R-L)/2,hh=(B-T)/2;
-  const lg=document.getElementById('log'),lr=lg&&lg.children.length?lg.getBoundingClientRect():null,put=[];   // keep clear of the radio feed and of each other
+  const lr=EDGE.lr,put=[];   // keep clear of the radio feed and of each other
   for(const q of A){const p=toScreen(q.x,groundH(q.x,q.y),q.y);let vx=p.x-cx,vy=p.y-cy;if(p.z>1){vx=-vx;vy=-vy;}
     const on=p.z<=1&&p.x>=0&&p.x<=r.width&&p.y>=0&&p.y<=r.height;
     if(!q.b){const K=EDGE_K[q.kind],b=q.b=document.createElement('button');b.type='button';b.dataset.k=q.kind;b.style.setProperty('--c',K[1]);b.textContent=K[0];b.appendChild(document.createElement('i'));b.onclick=e=>{e.stopPropagation();edgeGo(q);};el.appendChild(b);}

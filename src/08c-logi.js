@@ -71,8 +71,9 @@ function lgUiInit(){if(LGU.btn||typeof document==='undefined')return;const b=doc
   b.onclick=()=>lgToggle();document.body.appendChild(b);LGU.btn=b;}
 function lgUiTick(){lgUiInit();if(G&&G.lgM&&!(G.sel||[]).some(u=>!u.dead&&u.team===ME&&(u.kind==='dozer'||u.kind==='airlift'))){G.lgM=null;lgHint();}
   if(G&&MODE==='client'&&G.lg&&G.lg.nS!=null&&performance.now()-(LGU.dt||0)>1000){LGU.dt=performance.now();const s0=G.lg.dsig;lgDyn();if(G.lg.dsig!==s0)try{lgCompute();}catch(e){}else if(G.lg.reach)try{const cs=lgCoverSig();if(cs!==G.lg.cvs){G.lg.cvs=cs;lgCover();}}catch(e){}}
-  if(!LGU.btn)return;const show=!!(G&&G.lgd&&!G.sandbox&&!G.over);const d=show?'block':'none';if(LGU.btn.style.display!==d)LGU.btn.style.display=d;
-  if(show){const mmEl=document.getElementById('mm');if(mmEl){const r=mmEl.getBoundingClientRect();if(r.width){const y=Math.max(8,innerHeight-r.top+6);LGU.btn.style.bottom=y+'px';LGU.btn.style.right=Math.max(8,innerWidth-r.right)+'px';}}}}
+  if(!LGU.btn)return;const show=!!(G&&G.lgd&&!G.sandbox&&!G.over);const d=show?'block':'none';if(LGU.btn.style.display!==d){LGU.btn.style.display=d;LGU.rt=0;}
+  /* smoothaudit: the minimap's place is read twice a second, not every frame (each read forced the browser to lay out the page again after the HUD's DOM changes) */
+  if(show){const nw=performance.now();if(nw-(LGU.rt||0)<500&&innerWidth===LGU.iw&&innerHeight===LGU.ih)return;LGU.rt=nw;LGU.iw=innerWidth;LGU.ih=innerHeight;const mmEl=document.getElementById('mm');if(mmEl){const r=mmEl.getBoundingClientRect();if(r.width){const y=Math.max(8,innerHeight-r.top+6);LGU.btn.style.bottom=y+'px';LGU.btn.style.right=Math.max(8,innerWidth-r.right)+'px';}}}}
 /* ---------- LOGISTICS stage 5b-9 interface (orch/logistics3): engineer jobs, airlift, depot panel, bridges, ports ---------- */
 const BRGRP=new WeakMap(),LGG={g:null,bv:-1,n:-1};
 function lgDepCut(e){return MODE==='client'?!!(G.lgDc&&G.lgDc.has(e.id)):!!e.lcut;}
