@@ -589,6 +589,11 @@ try {
         const q = nearestPassXY('ground', c.x + dx * 3, c.y + dy * 3); if (!q) continue; const blk = addUnit(ME, 'inf', p[0], p[1]), u = addUnit(ME, 'inf', q[0], q[1]); if (!blk || !u) continue; return { c: c.i, cx: c.x, cy: c.y, blk: blk.id, u: u.id }; } return null; });
     if (!hs) fails.push('house-click guard: no free house with walkable ground next to it'); else {
       await ev((h) => { centerOn(h.cx, h.cy, true); G.sel = [G.ents.find(e => e.id === h.u)]; }, hs); await ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+      /* smoothaudit: a drawn soldier figure re-composes only its walking bones (legs table); the ~40 others are computed once (boneFreeze, 06-view) */
+      { const bz = await ev((h) => { const o = OBJ.get(h.u), P = o && o.userData.parts; if (!P || !P.body) return { none: 1 }; let fro = 0, live = 0, legs = 0, wl = 0;
+          for (const m of P.body.children) { const W = m.userData.legs; if (!W) continue; wl++; const keep = new Set(Object.values(W).filter(j => j && j.b).map(j => j.b)); legs += keep.size;
+            m.traverse(q => { if (!q.isBone) return; if (keep.has(q)) { if (!q.matrixAutoUpdate) live = -999; } else if (q.matrixAutoUpdate) live++; else fro++; }); } return { wl, fro, live, legs }; }, hs);
+        ck(bz.none || !bz.wl || (bz.fro > 0 && bz.live === 0), 'smoothaudit: a drawn soldier still re-composes its non-walking bones every frame (or a walking bone is frozen): ' + JSON.stringify(bz)); }
       const pt = await ev((h) => { const b = G.ents.find(e => e.id === h.blk); for (const k of [.6, .3, .9, 0]) { const p = toScreen(b.x, unitH(b) + entHeightMid(b) * k, b.y), t = pickAt(p.x, p.y, false), c = civUnder(p.x, p.y, screenToWorld(p.x, p.y)); if (t === b && c && c.i === h.c) return { x: p.x, y: p.y }; } return null; }, hs);
       if (!pt) console.log('  (house-click guard skipped: the soldier at the door is not in front of the house from this camera)'); else {
         await page.mouse.move(pt.x, pt.y); await page.mouse.click(pt.x, pt.y, { button: 'right' }); await page.waitForTimeout(400);
