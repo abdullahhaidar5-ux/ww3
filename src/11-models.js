@@ -738,10 +738,54 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
     E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
   if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}if(typeof gcKeep==='function'){gcKeep(E.geo);gcKeep(E.lo);}/* shared by every soldier of this look: never freed by the GPU clean-up (re-sending it mid-battle was a hitch) */
-  if(E.lo){const lm=new THREE.SkinnedMesh(E.lo,E.mat);skinBS(lm);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
+  let lm0=null;if(E.lo){const lm=lm0=new THREE.SkinnedMesh(E.lo,E.mat);skinBS(lm);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);skinBS(mm);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
-  sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());bonePool(skel);for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
+  sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());bonePool(skel);if(lm0)solbReg(lm0,E.mat);solbReg(mm,E.mat);for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
 /* a supply truck's crate load: one shared shape for every truck (it was built new per truck) */
+/* Instanced soldiers (smoothaudit2, Abdullah 2026-11-17 "Ensure the game runs smoothly"). Every merged soldier figure was a draw
+   call of its own - plus its own shadow draw, its own draw in the soft-shadow (AO) depth pass and its own bone-texture upload:
+   ~190 + ~50 draws and ~200 uploads per frame in a big battle. Now all figures of one look (shape + material, near or far
+   version) are drawn together by ONE instanced draw; their bone matrices are packed into one shared texture sent once a frame
+   (only the rows in use). The figure meshes stay where they were (squad, LOD switch, losses, bone posing, hiding all unchanged)
+   but sit on layer 7, which the cameras do not draw, while the batch draws them. Same shape, material and shader code: only
+   where the bones are read from changes. Figures in other scenes (command-bar portrait, encyclopedia) are drawn as before. */
+const SOLB={reg:new Set(),list:[],by:new Map(),U:{value:null},tex:null,arr:null,W:4096,H:0,rows:0,root:null,on:true,dm:null,stamp:0,done:-1};
+const SOLB_PARS='attribute vec4 skinIndex;attribute vec4 skinWeight;attribute vec3 sI;uniform highp sampler2D sBoneTex;mat4 sBX,sBY,sBZ,sBW;bool sOk=false;\n'+
+  'mat4 sBone(float i){int j=int(sI.x)+int(i)*4;int w=textureSize(sBoneTex,0).x;int x=j%w;int y=j/w;return mat4(texelFetch(sBoneTex,ivec2(x,y),0),texelFetch(sBoneTex,ivec2(x+1,y),0),texelFetch(sBoneTex,ivec2(x+2,y),0),texelFetch(sBoneTex,ivec2(x+3,y),0));}\n'+
+  'void sLoad(){if(sOk)return;sOk=true;sBX=sBone(skinIndex.x);sBY=sBone(skinIndex.y);sBZ=sBone(skinIndex.z);sBW=sBone(skinIndex.w);}\nmat4 sSkin(){return sBX*skinWeight.x+sBY*skinWeight.y+sBZ*skinWeight.z+sBW*skinWeight.w;}\n';
+// the figure's own skinning chunks, reading its bones from the shared texture (sI.x = its first texel); the weathering/look code keeps
+// the figure's own base height (sI.y) and scale (sI.z) it used to read from the mesh's model matrix (the batch mesh sits at the origin)
+function solbPatch(sh){sh.uniforms.sBoneTex=SOLB.U;sh.vertexShader=sh.vertexShader.replace('#include <skinning_pars_vertex>',SOLB_PARS).replace('#include <skinbase_vertex>','sLoad();')
+  .replace('#include <skinnormal_vertex>','sLoad();objectNormal=(sSkin()*vec4(objectNormal,0.)).xyz;').replace('#include <skinning_vertex>','sLoad();transformed=(sSkin()*vec4(transformed,1.)).xyz;')
+  .replace('vOY=(modelMatrix*vec4(0.,0.,0.,1.)).y;','vOY=sI.y;').replace('float lkS=length(vec3(modelMatrix[0]));','float lkS=sI.z;');}
+function solbReg(m,mat){if(!m||!SOLB.on)return;m.userData.solMat=mat;SOLB.reg.add(m);if(typeof SCN!=='undefined'&&SCN&&typeof decalUpdate==='function'&&SCN.onBeforeRender!==decalUpdate)SCN.onBeforeRender=decalUpdate;}
+function solbTex(texels){const need=Math.ceil(texels/SOLB.W);if(SOLB.tex&&need<=SOLB.H)return;let h=Math.max(16,SOLB.H);while(h<need)h*=2;if(SOLB.tex)SOLB.tex.dispose();
+  SOLB.arr=new Float32Array(SOLB.W*h*4);const t=SOLB.tex=new THREE.DataTexture(SOLB.arr,SOLB.W,h,THREE.RGBAFormat,THREE.FloatType);t.needsUpdate=true;SOLB.H=h;SOLB.U.value=t;}
+function solbBatch(m){const geo=m.geometry,mat=m.userData.solMat;let M=SOLB.by.get(geo);if(!M)SOLB.by.set(geo,M=new Map());let b=M.get(mat);if(b)return b;
+  const g=new THREE.InstancedBufferGeometry();g.index=geo.index;for(const k in geo.attributes)g.setAttribute(k,geo.attributes[k]);g.instanceCount=0;
+  const mt=mat.clone(),ob=mat.onBeforeCompile,ck=mat.customProgramCacheKey;mt.onBeforeCompile=(sh,r)=>{if(ob)ob.call(mat,sh,r);solbPatch(sh);};mt.customProgramCacheKey=()=>(ck?ck.call(mat):'')+'|solI';
+  if(!SOLB.dm){SOLB.dm=new THREE.MeshDepthMaterial();SOLB.dm.onBeforeCompile=solbPatch;SOLB.dm.customProgramCacheKey=()=>'solI';SOLB.am=new THREE.MeshBasicMaterial({colorWrite:false});SOLB.am.onBeforeCompile=solbPatch;SOLB.am.customProgramCacheKey=()=>'solIA';}
+  const ms=new THREE.Mesh(g,mt);ms.name='solBatch';ms.frustumCulled=false;ms.matrixAutoUpdate=false;ms.castShadow=true;ms.receiveShadow=m.receiveShadow;ms.customDepthMaterial=SOLB.dm;ms.visible=false;
+  b={g,mt,ms,cap:0,n:0,a:null};M.set(mat,b);SOLB.list.push(b);if(SOLB.root)SOLB.root.add(ms);if(typeof gcKeep==='function')gcKeep(g);return b;}
+const SOLM4=new THREE.Matrix4();
+/* refill every batch from the figures drawn this frame (called just before the battle scene is drawn) */
+function solbFill(force){if(!SOLB.reg.size||typeof SCN==='undefined'||!SCN)return;if(!force&&SOLB.done===SOLB.stamp)return;SOLB.done=SOLB.stamp;
+  if(!SOLB.root||SOLB.root.parent!==SCN){if(!SOLB.root){SOLB.root=new THREE.Group();SOLB.root.name='solBatches';SOLB.root.matrixAutoUpdate=false;}SCN.add(SOLB.root);for(const b of SOLB.list)if(b.ms.parent!==SOLB.root)SOLB.root.add(b.ms);}
+  for(const b of SOLB.list)b.n=0;const draw=[];let tx=0;const fr=!window.LOADING&&typeof CAM!=='undefined'&&CAM?SOLB.fr||(SOLB.fr=new THREE.Frustum()):null;if(fr){CAM.updateMatrixWorld();SOLM4.multiplyMatrices(CAM.projectionMatrix,CAM.matrixWorldInverse);fr.setFromProjectionMatrix(SOLM4);}const sp=SOLB.sp||(SOLB.sp=new THREE.Sphere());
+  for(const m of SOLB.reg){let q=m,v=true;while(q.parent){if(!q.visible)v=false;q=q.parent;}
+    if(q!==SCN||!SOLB.on||m.material!==m.userData.solMat||!m.skeleton){if(m.layers.mask!==1)m.layers.set(0);if(!q.isScene){if((m.userData.solOff=(m.userData.solOff||0)+1)>600)SOLB.reg.delete(m);}continue;}
+    m.userData.solOff=0;if(m.layers.mask!==128)m.layers.set(7);if(!v)continue;if(fr&&m.frustumCulled&&m.boundingSphere){sp.copy(m.boundingSphere).applyMatrix4(m.matrixWorld);if(!fr.intersectsSphere(sp))continue;}/* per figure, like three.js did */const b=solbBatch(m);b.n++;draw.push(m,b,tx);tx+=m.skeleton.bones.length*4;}
+  if(!draw.length){for(const b of SOLB.list)b.ms.visible=false;return;}
+  solbTex(tx);const A=SOLB.arr;for(const b of SOLB.list){if(b.n>b.cap){b.cap=Math.max(32,Math.ceil(b.n*1.5));b.a=new THREE.InstancedBufferAttribute(new Float32Array(b.cap*3),3);b.a.setUsage(THREE.DynamicDrawUsage);b.g.setAttribute('sI',b.a);}b.k=0;}
+  for(let i=0;i<draw.length;i+=3){const m=draw[i],b=draw[i+1],t0=draw[i+2],sk=m.skeleton,B=sk.bones,I=sk.boneInverses;for(let j=0;j<B.length;j++){SOLM4.multiplyMatrices(B[j].matrixWorld,I[j]);SOLM4.toArray(A,(t0+j*4)*4);}
+    const e=m.matrixWorld.elements,o=b.k*3;b.a.array[o]=t0;b.a.array[o+1]=e[13];b.a.array[o+2]=Math.hypot(e[0],e[1],e[2]);b.k++;}
+  const ovr=!!SCN.overrideMaterial;for(const b of SOLB.list){b.g.instanceCount=b.n;b.ms.visible=b.n>0&&!ovr;if(b.n&&b.a){b.a.clearUpdateRanges();b.a.addUpdateRange(0,b.n*3);b.a.needsUpdate=true;}}
+  const t=SOLB.tex,rows=Math.ceil(tx/SOLB.W);t.clearUpdateRanges();for(let r=0;r<rows;r++)t.addUpdateRange(r*SOLB.W*4,SOLB.W*4);t.needsUpdate=true;SOLB.rows=rows;}
+/* the soft-shadow (AO) depth pass draws everything with one plain material, which cannot read the shared bones: the batches are hidden
+   there (the fill runs inside that pass and leaves them hidden) and drawn into the same depth target right after with their own depth-only material */
+function solbAO(){if(!SOLB.reg.size)return;solbFill(!!window.LOADING);if(!SOLB.root||SOLB.root.parent!==SCN)return;let any=false;for(const b of SOLB.list)if(b.n){any=true;break;}if(!any)return;
+  const ac=R3.autoClear;R3.autoClear=false;for(const b of SOLB.list){b.ms.material=SOLB.am;b.ms.visible=b.n>0;}
+  try{R3.render(SOLB.root,CAM);}catch(e){console.warn('solbAO',e);}finally{R3.autoClear=ac;for(const b of SOLB.list){b.ms.material=b.mt;b.ms.visible=b.n>0;}}}
 let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
@@ -969,7 +1013,8 @@ function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
       if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));S.im=im;SCN.add(im);}
     if(!S.im)continue;const im=S.im;let i=0;
     for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible){v=false;break;}q=q.parent;}if(!v||q!==SCN)continue;im.setMatrixAt(i,m.matrixWorld);if(S.col&&m.userData.dc)im.setColorAt(i,m.userData.dc);i++;}
-    im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}}
+    im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}
+  try{solbFill(!!window.LOADING);}catch(e){console.warn('solbFill',e);}}
 const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',FR:'#3f4636',DE:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',IQ:'#5f5f3e',GB:'#5a5a3e',AU:'#6a6246',CA:'#434d33',SY:'#5a5a3c',CU:'#2e3a2c'};   // hero squad uniform colours
 function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.kind==='tb2')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='champ')c=Object.assign({},c,{tint:CHAMP_TINT[T.fac]||c.tint});if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
   if(e.kind==='aa'&&!/Technical/.test(e.s.name||'')&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
