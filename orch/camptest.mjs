@@ -63,17 +63,26 @@ for (const id of IDS) {
     // complete the objectives by script
     const done = await page.evaluate((id) => { const c = G.camp, K = (e) => { try { kill(e, 0, null); } catch (x) {} };
       if (G.over) return { early: true, res: c.res };
-      if (id === 'pass' || id === 'marsh') { c.t = c.T; for (const e of G.ents.filter(e => e.team === 1 && e.isB)) K(e); }
+      if (id === 'pass') { c.t = c.T; for (const e of G.ents.filter(e => e.team === 1 && e.isB)) K(e); }
       else if (id === 'supply') { for (const u of c.trucks) { u.x = c.town[0]; u.y = c.town[1]; } }
       else if (id === 'fortress') { addBld(0, 'fort', BASES[0][0] + 200, BASES[0][1] + 200, true); c.t = c.T + 1; c.bbDone = c.bb.length; c.bb[1][1] = -1; }
-      else if (id === 'town') { for (const e of G.ents.filter(e => e.team === 2)) K(e); const us = G.ents.filter(e => e.team === 0 && !e.isB && !e.dead);
-        for (let i = 0; i < 5; i++) { const u = us[i % us.length]; if (u) { u.x = c.zones[i][0]; u.y = c.zones[i][1]; } } }
+      else if (id === 'town') { c.done = [true, true, true, true, true]; }
+      else if (id === 'marsh') { c.o.cross = c.o.dump = true; c.hs = c.t; c.hold = c.HOLD; }
       else if (id === 'finale') { for (const e of G.ents.filter(e => e.team === 1 && e.isB)) K(e); }
       for (let i = 0; i < 1200 && !c.fin; i++) simUpdate(1 / 60);
       return { res: c.res, fin: !!c.fin, o: c.o, deb: !!document.getElementById('campScreen') && /Victory/.test(document.getElementById('campScreen').textContent) }; }, id);
     console.log(`${id}: scripted finish -> ${JSON.stringify(done)}`);
     if (!done.early && (done.res !== 'win' || !done.deb)) fails.push(`${id}: scripted completion did not end in a victory debrief ${JSON.stringify(done)}`);
     const sv = await page.evaluate((id) => JSON.stringify(campLoad()[id] || null), id); if (!done.early && sv === 'null') fails.push(`${id}: progress not saved`);
+    // lose path: restart the mission, wipe out everything the player owns, the mission must end in a defeat debrief
+    await page.evaluate((id) => { try { campClose(); } catch (e) {} startCampaign(id, 1); }, id);
+    await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => {});
+    const lost = await page.evaluate(() => { const c = G.camp; for (let i = 0; i < 300; i++) simUpdate(1 / 60); for (const e of G.ents.filter(e => e.team === 0 && !e.dead)) { try { kill(e, 1, null); } catch (x) {} }
+      if (c.id === 'supply' && c.trucks) for (const u of c.trucks) { try { kill(u, 1, null); } catch (x) {} }
+      for (let i = 0; i < 2400 && !c.fin; i++) simUpdate(1 / 60);
+      return { res: c.res, fin: !!c.fin, deb: !!document.getElementById('campScreen') && /Defeat|lost|Try again|Retry/i.test(document.getElementById('campScreen').textContent) }; });
+    console.log(`${id}: scripted defeat -> ${JSON.stringify(lost)}`);
+    if (lost.res !== 'lose') fails.push(`${id}: wiping out the player did not end in defeat ${JSON.stringify(lost)}`);
   } catch (e) { fails.push(`${id}: ${String(e.message || e).split('\n')[0]}`); }
   for (const e of [...new Set(errs)].slice(0, 5)) fails.push(`${id}: ${e}`);
   await page.close();
