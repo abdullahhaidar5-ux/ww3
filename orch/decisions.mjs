@@ -167,6 +167,11 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   { const d1 = SRC['01-data.js'] || ''; ck(!/\.digT\b|fx==='dig'|fx:'dig'|troops arrive dug in/.test(t + sim + d1) && !/mods\.dugIn&&isInf/.test(sim), 'dugout (Abdullah 2026-11-13 21:38 "Replace with dugouts only"): the automatic dig-in (30% less damage holding position / paratroops arriving dug in) is back - dugouts are the only way to dig in');
     ck(!/dig in \(30%|troops dig in and fight|name:'Dug In'/.test(d1), 'dugout: a stale "dig in" text / name is back in src/01-data.js'); }
   ck(/dugEnsure\(ck\.civ/.test(SRC['07b-ckpt.js'] || ''), 'dugout: checkpoints / saves must keep dugout slots (dugEnsure in ckRestore)');
+  // redfixE (2026-11-17, gate/save "replay differs after +2 min"): a loaded save / migrated host must play on exactly like the original - the checkpoint keeps
+  // the supply network as last worked out (refreshed once a second), the ruins list (map-building refs), the per-second faction tick and off-map units' kept caches
+  { const c7 = SRC['07b-ckpt.js'] || ''; ck(/lgc=L\?\{sig:L\.sig,cvT:L\.cvT/.test(c7) && /L\.cov=JSON\.parse/.test(c7), 'save/migration: the checkpoint must keep the supply network state (lgc in ckEncode/ckRestore)');
+    ck(/\['mines','smokes','shields','ruins'\]/.test(c7), 'save/migration: G.ruins holds map-building refs and must be decoded in ckRestore'); ck(/'_fmQ'\]/.test(c7), 'save/migration: the per-second faction tick (_fmQ) must be in CK_G');
+    ck(/k\[0\]==='_'&&!CK_UKEEP\.has\(k\)\)\)\)\{/.test(c7), 'save/migration: units inside buildings/tunnels keep the CK_UKEEP fields too'); }
   ck(!/foxhole|dig a foxhole/i.test(ui.replace(/\/\*[\s\S]*?\*\//, '')), 'dugout: the Dig in button text still talks about foxholes'); }
 // ---- Words (queue item, 2026-11-10): no old faction name, no real group's name and no stale building name in any text a
 // player can read. Comments are skipped (history lives there); string literals and templates are checked.
@@ -550,8 +555,10 @@ try {
   // picture + name in each row (a stale screenshot showed the two row labels with nothing in them). Real mouse hover on a button.
   { await ev(() => { window.__tab0 = TAB; const T = G.teams[ME]; let b = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks' && e.built >= 1 && !e.dead); if (!b) { const h = G.ents.find(e => e.team === ME && e.kind === 'hq'); b = addBld(ME, 'barracks', h.x + 150, h.y + 150, true); } G.sel = [b]; updateUI(); showTab('units'); });   /* the unit buttons show only while a production building is selected */
     await page.waitForTimeout(300);
-    const bx = await ev(() => { const b = document.getElementById('u_at') || document.getElementById('u_inf'); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
-    await page.mouse.move(bx.x - 20, bx.y); await page.mouse.move(bx.x, bx.y, { steps: 3 }); await page.waitForTimeout(500);
+    /* redfixE: the command panel can re-lay out between reading the button's place and the hover (the mouse then sat on the unarmed medic: "WEAK TO" only) - hover until the card belongs to that button */
+    for (let tr = 0; tr < 4; tr++) { const bx = await ev(() => { const b = document.getElementById('u_at') || document.getElementById('u_inf'); const r = b.getBoundingClientRect(); return { id: b.id, x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+      await page.mouse.move(bx.x - 20, bx.y); await page.mouse.move(bx.x, bx.y, { steps: 3 }); await page.waitForTimeout(500);
+      if (await ev((id) => !!(CTIP.b && CTIP.b.id === id && CTIP.el && !CTIP.el.hidden), bx.id)) break; await page.mouse.move(5, 5); await page.waitForTimeout(300); }
     const hc = await ev(() => { const d = document.getElementById('ctip'), out = { hover: !!d && !d.hidden, bad: [] }; const rows = () => [...d.querySelectorAll('.uk-mu .mr')].map(r => { const q = d.getBoundingClientRect();
         return r.querySelector('b').textContent + ':' + [...r.querySelectorAll('.mi')].filter(m => { const im = m.querySelector('img'), i = m.querySelector('i'), a = im && im.getBoundingClientRect(), t = i && i.getBoundingClientRect();
           return a && t && a.width > 8 && a.height > 8 && i.textContent.trim().length > 1 && t.width > 8 && t.height > 4 && t.right <= q.right + 1 && t.bottom <= q.bottom + 1 && getComputedStyle(m).visibility !== 'hidden' && +getComputedStyle(m).opacity > .5; }).length; });
