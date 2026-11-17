@@ -11798,11 +11798,11 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     // units: each child of the scene, or the children of a big group, compiled one by one (sync compile = just requests the
     // programs; their linking goes on in the browser/GPU process); a frame is given back after every ~30 ms of work
     const units=[];for(const c of SCN.children){if(c.isLight)continue;if(c.children&&c.children.length>24&&!c.isMesh)for(const g of c.children)units.push(g);else units.push(c);}
-    const mats=new Set();let tl=performance.now();
+    const mats=new Set();let tl=performance.now();const npr=()=>R3.info.programs?R3.info.programs.length:0;let pl=npr();
     for(const u of units){if(dead()||isLate())break;const s0=performance.now();MK('unit '+(u.name||u.type)+' '+(u.children?u.children.length:0));
       try{if(post()){sizePost();R3.setRenderTarget(POST.rt);}const ms=R3.compile(u,CAM,SCN);R3.setRenderTarget(null);for(const m of ms)mats.add(m);}catch(e){console.warn('warm-up',e);R3.setRenderTarget(null);}
       const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push(['unit '+(u.name||u.type)+' '+(u.children?u.children.length:0),Math.round(d)]);
-      if(performance.now()-tl>30){await frame();tl=performance.now();}}
+      if(performance.now()-tl>30||npr()-pl>=8){await frame();tl=performance.now();pl=npr();}}   // also a break after every 8 new shader programs (they link while the page waits)
     // wait (at most 6 s) until the browser reports every requested program as linked
     {const w0=performance.now(),rdy=()=>{for(const m of mats){const pr=R3.properties.get(m).currentProgram;if(pr!==undefined&&!pr.isReady())return false;}return true;};
       while(!dead()&&!isLate()&&!rdy()&&performance.now()-w0<6000)await new Promise(r=>setTimeout(r,25));}
