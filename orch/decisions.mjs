@@ -41,7 +41,9 @@ const ck = (c, m) => { if (!c) fails.push(m); };
   const fm = au.match(/const AN_FAC=\/\*ANFAC\*\/\{([^}]*)\}/), fac = fm ? new Set([...fm[1].matchAll(/(\w+):1/g)].map(m => m[1])) : new Set();
   const cm = au.match(/const AN_CRED=\{([\s\S]*?)\};/), cred = {}; if (cm) for (const m of cm[1].matchAll(/(\w+):'([^']+)'/g)) cred[m[1]] = m[2];
   ck(pl.length === 22 && fm && cm && /id='anCred'/.test(au), 'anthems: PLAYABLE, AN_FAC, AN_CRED and the anCred menu-credits paragraph must all exist');
-  for (const f of pl) { const fp = path.join(ROOT, 'mus', 'an_' + f + '.mp3');
+  const AN_PENDING = ['KP'];   // KP Arirang (US Army Chorus, Commons File:Arirang.ogg) chosen; download was rate-limited 2026-11-17 - see orch/HANDOFF-anthems.md. Remove once mus/an_KP.mp3 lands.
+  for (const f of AN_PENDING) ck(!fs.existsSync(path.join(ROOT, 'mus', 'an_' + f + '.mp3')), 'anthems: ' + f + ' now has its file - take it off AN_PENDING in orch/decisions.mjs');
+  for (const f of pl.filter(f => !AN_PENDING.includes(f))) { const fp = path.join(ROOT, 'mus', 'an_' + f + '.mp3');
     ck(fs.existsSync(fp) && fs.statSync(fp).size > 50000, 'anthems: ' + f + ' has no mus/an_' + f + '.mp3 (every playable nation gets its anthem at battle start and victory)');
     ck(fac.has(f), 'anthems: ' + f + ' is missing from AN_FAC in src/09-audio.js'); ck(!!cred[f], 'anthems: ' + f + ' has no credit in AN_CRED (src/09-audio.js)');
     ck(new RegExp("'" + f + "': \\('an/").test(rd('mus/an_pack.py')), 'anthems: ' + f + ' has no source row in mus/an_pack.py (source + licence)'); } }
