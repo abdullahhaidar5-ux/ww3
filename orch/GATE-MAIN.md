@@ -50,3 +50,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-17 07:30Z 935c9255 **RED** (28 gates) failing: audio,cfclient,decisions,save — HISTORY: shiamissions landed
 - 2026-11-17 10:43Z e01646a1 **RED** (28 gates) failing: decisions,loadfreeze,migrate-down,save — HISTORY: shiamissions leftovers landed
 - 2026-11-17 12:39Z ab83d2de **RED** (28 gates) failing: audio,decisions,save,superfreeze — Voices: Lebanese Shia units get their previous voices back (Sunday's r
+- 2026-11-17 14:43Z 431191f4 **RED** (28 gates) failing: audio,decisions,save — HISTORY: rangefreeze gate result
