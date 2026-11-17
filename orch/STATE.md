@@ -1,6 +1,6 @@
-# Conductor state — 2026-11-17 05:10 UTC
-Main head eb5d5b88 (11-15 12:47): NOT green. Its own gate shows red: decisions (2 FAIL: a ground unit on a neutral road must capture it in ~10 s; a captured road section must count as the owner's supply area), save (replay differs after +2 min, A vs loaded C), icons (screenshot timeout, known flaky). Pages build of that commit succeeded 11-15 12:48.
-No train: no orch/* branch pushed since 11-15 12:55 (helpers idle ~40 h); candidates (unstuck, sweepfixA, ghostslot, usvoice, groundreal, looktest, battlepower, orderfeel ...) are 165-191 commits behind main, 2-5 commits each, no HANDOFF ready; onegame/nations20 no longer exist (already in main). Landing nothing.
+# Conductor state — 2026-11-17 (later run)
+Main head eb5d5b88 (11-15 12:47), unchanged. Still not green on its own gate (decisions 2 FAIL on road capture / supply area, save replay diff, icons flaky). Pages build succeeded 11-15.
+New since last run: orch/shiamissions pushed 05:04-05:11 UTC (6 commits ahead, rebased onto main, src/12-campaign.js + camptest only). Its HANDOFF still says "parked until after Monday; NOT ready", the STOP note from ORCH (Abdullah "Drop missions") is still in it, and no gate/<sha> run exists for it. Not landed; waiting for a go-ahead / own gate.
+No train: no other orch/* branch pushed since 11-15; the old candidates are 165-191 commits behind main with no ready HANDOFF. onegame/nations20 already in main. Landing nothing.
 Parked (removed from the game): camphud nofightit warpeace mapshapes eu4audit civhumans.
-Locks: taken/* newest 11-15 09:58 (rv-voice -> voices-lebanese exists); older taken/* (drawcalls, redgates, savesync, 11-14 22:33) have no orch/ branch = saved nothing.
-Note: 6 GB clone is slow; state from fetching named refs + REST.
+Locks: taken/drawcalls, redgates, savesync (11-14 22:33) have no orch/ branch = saved nothing.
