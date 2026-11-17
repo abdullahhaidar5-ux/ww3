@@ -1,0 +1,78 @@
+[0s] pc: launching browser
+[0s] ctx
+[0s] guarded
+[1s] page
+[1s] pc: loading page
+[2s] pc: page loaded
+[2s] pc: menu ready
+[24s] pc: LOADING {"tok":1,"tipI":7,"tipT":102,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",9860],["Loading 3D models…",972],
+[53s] pc: battle loaded in 51s
+[53s] pc: done {"tok":1,"tipI":10,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",9860],["Loading 3D models…",972
+[60s] pc: army in place
+[60s] pc: measuring 150 frames
+[73s] pc: warm-up done, 146 shaders
+[76s] pc: frame 10
+[77s] pc: frame 20
+[79s] pc: frame 30
+[80s] pc: frame 40
+[81s] pc: frame 50
+[83s] pc: frame 60
+[84s] pc: frame 70
+[85s] pc: frame 80
+[86s] pc: frame 90
+[87s] pc: frame 100
+[89s] pc: frame 110
+[90s] pc: frame 120
+[91s] pc: frame 130
+[92s] pc: frame 140
+[93s] pc: frame 150
+[96s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) worst-1% FPS fell to 1.59 (baseline 3.4, allowed down to 1.7)
+[96s] pc: launching browser
+[96s] ctx
+[96s] guarded
+[97s] page
+[97s] pc: loading page
+[97s] pc: page loaded
+[97s] pc: menu ready
+[119s] pc: LOADING {"tok":1,"tipI":7,"tipT":102,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",9670],["Loading 3D models…",787],
+[149s] pc: battle loaded in 52s
+[149s] pc: done {"tok":1,"tipI":10,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",9670],["Loading 3D models…",787
+[158s] pc: army in place
+[158s] pc: measuring 150 frames
+[169s] pc: warm-up done, 148 shaders
+[173s] pc: frame 10
+[174s] pc: frame 20
+[175s] pc: frame 30
+[177s] pc: frame 40
+[178s] pc: frame 50
+[180s] pc: frame 60
+[181s] pc: frame 70
+[182s] pc: frame 80
+[183s] pc: frame 90
+[185s] pc: frame 100
+[186s] pc: frame 110
+[187s] pc: frame 120
+[189s] pc: frame 130
+[190s] pc: frame 140
+[191s] pc: frame 150
+[195s] pc attempt 2: ok
+
+                       pc        
+units on screen        349       
+load time s            52.05     
+median frame ms        115.8     
+p95 frame ms           184       
+p99 frame ms           293.5     
+worst 1% FPS           2.83      
+frames >50 ms          150       
+first boom x median    1.67      
+2nd boom x median      1.21      
+weather/night x median 2.15      
+sim step p95 ms        12.5      
+draw calls             2017      
+k triangles            8576      
+heap MB/min            11.71     
+runtime 3.2 min
+
+SMOOTH PASS
