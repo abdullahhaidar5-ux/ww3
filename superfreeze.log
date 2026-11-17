@@ -1,0 +1,23 @@
+  page: shader warm-up 6632 ms, 62 models, 120 objects in 677 steps (longest 420 ms), 118 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 61 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=196 normal=61ms (quiet max 191) longest=201ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":2,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 201ms@4.1s {"aud":1} ; 169ms@3.1s {} ; 152ms@0.1s {} ; 139ms@4.6s {} ; 131ms@5.2s {}
+  frames that made the GPU work (1):
+    4.08s 201ms {"aud":1} three geo/tex 609/550
+IR worst JS call (not drawing): simUpdate 46ms; ok
+  page: shader warm-up 3480 ms, 65 models, 125 objects in 673 steps (longest 117 ms), 125 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 50 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=152 normal=50ms (quiet max 111) longest=163ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":1,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 163ms@3.1s {} ; 137ms@3.4s {} ; 131ms@2.3s {} ; 126ms@1.4s {} ; 125ms@3.0s {}
+  frames that made the GPU work (1):
+    3.28s 52ms {"aud":1} three geo/tex 709/619
+RU worst JS call (not drawing): simUpdate 57ms; ok
+  page: shader warm-up 2951 ms, 59 models, 114 objects in 670 steps (longest 122 ms), 110 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 56 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=170 normal=56ms (quiet max 111) longest=176ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":2,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 176ms@3.0s {} ; 164ms@2.0s {} ; 160ms@5.5s {} ; 153ms@4.5s {} ; 142ms@8.4s {}
+US worst JS call (not drawing): simUpdate 117ms; ok
+SUPERFREEZE PASS
