@@ -53,6 +53,11 @@ def raw(voice, text, take, mood):
     sf.write(f, w, SR)
     return w
 
+def has(voice, text, take, mood):
+    temp = TEMPS[take % len(TEMPS)]; sp = SPEED[mood]
+    k = hashlib.sha1(json.dumps(['lb2v1', voice, text, take, temp, sp], ensure_ascii=False).encode()).hexdigest()[:16]
+    return os.path.exists(os.path.join(CACHE, k + '.wav'))
+
 def trim(w):
     _, (a, b) = librosa.effects.trim(w, top_db=34, frame_length=512, hop_length=128)
     a = max(0, a - int(.03 * SR)); b = min(len(w), b + int(.07 * SR))
@@ -68,10 +73,17 @@ def whisper():
         _W = WhisperModel(os.environ.get('LB2_WHISPER', 'large-v3'), device='cpu', compute_type='int8', cpu_threads=2)
     return _W
 
+_RB = None
 def readback(w, text):
+    global _RB
+    rbf = os.path.join(CACHE, 'readback.json')
+    if _RB is None: _RB = json.load(open(rbf, encoding='utf-8')) if os.path.exists(rbf) else {}
     a = np.clip(librosa.resample(np.asarray(w, np.float32), orig_sr=SR, target_sr=16000), -1, 1)
-    segs, _ = whisper().transcribe(a, language='ar', beam_size=1, vad_filter=False, condition_on_previous_text=False)
-    hyp = ''.join(s.text for s in segs).strip()
+    k = hashlib.md5(a.astype(np.float16).tobytes()).hexdigest()
+    if k not in _RB:
+        segs, _ = whisper().transcribe(a, language='ar', beam_size=1, vad_filter=False, condition_on_previous_text=False)
+        _RB[k] = ''.join(s.text for s in segs).strip(); json.dump(_RB, open(rbf, 'w', encoding='utf-8'), ensure_ascii=False)
+    hyp = _RB[k]
     return cer(text, hyp), hyp
 
 def p808(w):
@@ -223,13 +235,26 @@ def pick(sc):
     return min((b, a, t) for a, b, t in v if a <= m + 0.05)[2]   # among the clearest takes (+5 %), the most natural
 
 def build(J):
-    S = state(); maps = {}; sheets = {}; rngs = {}
+    S = state(); maps = {}; sheets = {}
     for j in J:
         sh = j['sheet']; id_ = jid(j)
-        rng = rngs.setdefault(sh, np.random.default_rng(1083 + len(sh)))
-        take = pick(S['sc'][id_]); w = trim(raw(j['voice'], j['say'], take, j['mood']))
-        c0 = S['sc'][id_][str(take)]['cer']
-        out, md, c1, h1 = process(w, j['say'], rng, j['mood'], c0, j['gun'])
+        sc = S['sc'][id_]; first = pick(sc)
+        def order():
+            yield first
+            for t in range(S['n'].get(id_, 3)):   # takes skipped by score()'s early stop are read back now, when needed
+                if str(t) not in sc and has(j['voice'], j['say'], t, j['mood']):
+                    w = trim(raw(j['voice'], j['say'], t, j['mood'])); c, hyp = readback(w, j['say']); d = len(w) / SR
+                    exp = 0.4 + 0.08 * len(re.sub(r'\s', '', j['say']))
+                    sc[str(t)] = dict(cer=round(c, 3), hyp=hyp, dur=round(d, 2), long=d > 2.0 * exp + 0.6 or d < 0.3, p808=round(p808(w), 2)); save(S)
+            yield from sorted((int(t) for t in sc if int(t) != first), key=lambda t: sc[str(t)]['cer'] + (1 if sc[str(t)]['long'] else 0))
+        for take in order():   # the radio chain can blur a word: then the next-clearest take gets the chain
+            rng = np.random.default_rng(int(hashlib.md5(id_.encode()).hexdigest()[:8], 16))   # per-line noise: reruns hit the read-back cache
+            w = trim(raw(j['voice'], j['say'], take, j['mood'])); c0 = sc[str(take)]['cer']
+            if sc[str(take)]['long'] and take != first: continue
+            r = process(w, j['say'], rng, j['mood'], c0, j['gun'])
+            if 'bestr' not in locals() or r[2] < bestr[0][2]: bestr = (r, take, c0)
+            if r[2] <= MAXCER: break
+        (out, md, c1, h1), take, c0 = bestr; del bestr
         st = sheets.setdefault(sh, [0.0, []])
         e = [round(st[0], 3), round(len(out) / SR, 3)]; st[1].append(out); st[0] += (len(out) + int(.12 * SR)) / SR
         mp = maps.setdefault(sh, {})
