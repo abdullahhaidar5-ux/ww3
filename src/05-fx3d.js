@@ -539,8 +539,8 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
   // draw only these groups once for real (everything else in the scene hidden for a moment, lights stay): a shape needs its own
   // vertex array per shader program, made on its first draw, so compiling alone would leave those for the first sight of a unit/wreck
   const hidAll=[];
-  const drawOnly=(grps,aoAlways)=>{hidAll.length=0;for(const c of SCN.children)if(!c.isLight&&c.visible&&!grps.includes(c)){c.visible=false;hidAll.push(c);}
-    try{CAM.updateMatrixWorld();if(post()){sizePost();if(POST.ovr&&POST.dRT&&(aoAlways||(POST.mAO&&POST.aoOn!==false))){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}R3.setRenderTarget(POST.rt);}R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
+  const drawOnly=(grps,aoAlways)=>{hidAll.length=0;for(const c of SCN.children)if(!c.isLight&&c.visible&&!grps.includes(c)&&!(typeof SOLB!=='undefined'&&c===SOLB.root)){c.visible=false;hidAll.push(c);}
+    try{CAM.updateMatrixWorld();if(post()){sizePost();if(POST.ovr&&POST.dRT&&(aoAlways||(POST.mAO&&POST.aoOn!==false))){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;if(typeof solbAO==='function')solbAO();}R3.setRenderTarget(POST.rt);}R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
     R3.setRenderTarget(null);for(const c of hidAll)c.visible=true;};
   const ex=[],step=async(name,grp,wait,keep)=>{MK('step '+name);const s0=performance.now(),lt=isLate();let tcomp=0,ttex=0;
     if(!lt)SCN.add(grp);
@@ -632,7 +632,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       // everything is drawn once even if it is outside the opening view (rocks, wrecks, depots across the map), so its shape is on the card before it is first seen
       const unc=[];for(const u of vis)u.traverse(c=>{if((c.isMesh||c.isLine||c.isPoints)&&c.frustumCulled){c.frustumCulled=false;unc.push(c);}});
       for(let i=0;i<vis.length&&!dead()&&!isLate();i+=SL){MK('slice '+i);const mine=new Set(vis.slice(i,i+SL));for(const u of vis)u.visible=mine.has(u);const s0=performance.now();
-        try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}
+        try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;if(typeof solbAO==='function')solbAO();}
           R3.setRenderTarget(POST.rt);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
         R3.setRenderTarget(null);for(const u of vis)u.visible=true;const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push(['slice '+i,Math.round(d)]);
         if(performance.now()-tl2>30){await frame();tl2=performance.now();}}
