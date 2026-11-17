@@ -508,6 +508,13 @@ try {
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('IR battle never finished loading'));
   await page.waitForTimeout(2500);
   /* (moved after the battle starts: there is no game behind the menu any more) */
+  /* smoothaudit (2026-11-17): a unit or building that is off screen / hidden must not have its parts and bones recomputed every frame
+     (three.js r186 walks children of objects with matrixWorldAutoUpdate off; ~65 000 wasted matrix updates per frame in an 8-player battle) */
+  { const M = await ev(() => { let root = null; for (const [, o] of OBJ) if (!o.visible && o.children.length && o.updateMatrixWorld === umwVis) { root = o; break; }
+      if (!root) return { none: 1 }; const P = THREE.Object3D.prototype, um = P.updateMatrix; let n = 0; const kids = new Set(); root.traverse(q => { if (q !== root) kids.add(q); });
+      P.updateMatrix = function () { if (kids.has(this)) n++; return um.apply(this, arguments); }; try { SCN.updateMatrixWorld(); } finally { P.updateMatrix = um; } return { n, kids: kids.size }; });
+    ck(!M.none, 'smoothaudit: no hidden unit/building object uses umwVis (off-screen objects would recompute every part each frame)');
+    ck(!M.n, 'smoothaudit: a hidden unit/building still recomputed ' + M.n + ' of its ' + M.kids + ' parts in one frame'); }
   /* icons (Abdullah 2026-11-14 21:39 "every button has an icon that makes sense"): one table ICON_SVG (src/08-ui.js + 08p-icons.js), inline svg line icons.
      Every upgrade / power button in the bar, every order-dock button and the HUD buttons carry an svg icon (units / buildings keep their drawn canvas picture). */
   { const I = await ev(() => { const noIc = b => !b.querySelector('svg') && !b.querySelector('canvas'); const vis = b => { for (let n = b; n && n.nodeType === 1; n = n.parentElement) { if (n.hidden || getComputedStyle(n).display === 'none') return false; } return true; };
