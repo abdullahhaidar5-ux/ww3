@@ -694,6 +694,10 @@ function bonePoolWarm(n,want){if(typeof R3==='undefined'||!R3)return;const sz=bo
 /* a long battle with many squads empties the pool: when one runs low (<32), one texture is added every half second */
 let BONET=0;function boneTrickle(dt){if((BONET-=dt)>0||!BONEP.size)return;BONET=.5;for(const [sz,L] of BONEP)if(L.length<32){const arr=new Float32Array(sz*sz*4),tex=new THREE.DataTexture(arr,sz,sz,THREE.RGBAFormat,THREE.FloatType);tex.needsUpdate=true;tex.userData.bp=sz;try{R3.initTexture(tex);}catch(e){}L.push({arr,tex});return;}}
 function boneRelease(skel){const t=skel&&skel.boneTexture;if(!t||!t.userData||!t.userData.bp)return;skel.boneTexture=null;skel.boneMatrices=new Float32Array(skel.bones.length*16);let L=BONEP.get(t.userData.bp);if(!L)BONEP.set(t.userData.bp,L=[]);if(L.length<256)L.push({arr:t.image.data,tex:t});}
+/* three.js sizes a skinned figure for view culling by moving every vertex through its bones the first time it is checked (~30 ms per new
+   squad on a slow PC, every fresh soldier in the Test range): soldiers get a ready sphere from their shared shape instead - the shape's
+   rest-pose sphere, half again as large so a prone or kneeling pose stays inside (rangefreeze 2026-11-17) */
+function skinBS(m){const g=m&&m.geometry;if(!g)return;let s=g.userData.skBS;if(!s){if(!g.boundingSphere)g.computeBoundingSphere();s=g.userData.skBS=g.boundingSphere.clone();s.radius*=1.5;}m.boundingSphere=s;}
 function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false;const sk=[];inner.traverse(o=>{if(o.isSkinnedMesh)sk.push(o);});if(!sk.length)return false;
   const skel=sk[0].skeleton;if(!skel||sk.some(o=>!o.skeleton||o.skeleton.bones.length!==skel.bones.length||o.skeleton.bones.some((b,i)=>b!==skel.bones[i])||Array.isArray(o.material)||!o.geometry.attributes.skinIndex))return false;
   const gear=[];skel.bones.forEach((b,bi)=>{for(const c of b.children)if(c.isMesh&&c.userData.gear&&!c.isSkinnedMesh)gear.push([c,bi]);});
@@ -730,8 +734,8 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
     E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
   if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}if(typeof gcKeep==='function'){gcKeep(E.geo);gcKeep(E.lo);}/* shared by every soldier of this look: never freed by the GPU clean-up (re-sending it mid-battle was a hitch) */
-  if(E.lo){const lm=new THREE.SkinnedMesh(E.lo,E.mat);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
-  const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
+  if(E.lo){const lm=new THREE.SkinnedMesh(E.lo,E.mat);skinBS(lm);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
+  const mm=new THREE.SkinnedMesh(E.geo,E.mat);skinBS(mm);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());bonePool(skel);for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
 /* a supply truck's crate load: one shared shape for every truck (it was built new per truck) */
 let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
@@ -997,7 +1001,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
     // engine exhaust at each real nozzle (found by ray probes from behind; twin-engine jets get two). A soft additive
     // plume - hot white-yellow core fading to orange and nothing - plus a red-hot nozzle ring. In cruise only a short faint
     // heat glow shows; the full afterburner plume with shock diamonds only on take-off / hard climbs (06-view scales it).
-    let nz=null;try{if(ok)nz=jetNozzles(o,yaw,bb);}catch(err){}if(!nz||!nz.length)nz=[{x:tx,y:ty,z:0,r:1.5}];
+    let nz=null;{const nk=c.m+'|'+(c.size||0)+'|'+T.fac;nz=JETNZ.get(nk);if(nz===undefined){nz=null;try{if(ok)nz=jetNozzles(o,yaw,bb);}catch(err){}JETNZ.set(nk,nz);}}   /* the nozzle probe (275 ray casts, ~140 ms) runs once per jet model and nation, not for every jet (rangefreeze 2026-11-17) */if(!nz||!nz.length)nz=[{x:tx,y:ty,z:0,r:1.5}];
     const ex=new THREE.Group();ex.name='exhaust';for(const n of nz){const g=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());g.position.set(n.x,n.y,n.z);g.scale.setScalar(n.r);g.userData.r=n.r;g.renderOrder=3;g.frustumCulled=false;ex.add(g);}
     o.add(ex);o.userData.parts.glow=ex;}
   if(c.extra==='zu23'){const B=Bld(),D='#2a2c28',S='#4f5446';B.box(7,1.6,6,-5,9.6,0,S);B.cyl(1.4,1.6,1.6,10,-5,11,0,D);B.box(4,3.2,4.6,-5,13,0,S);B.box(.4,3,5.4,-3,13.6,0,S);for(const z of [-1.1,1.1]){B.cyl(.32,.32,13,8,1.2,16.2,z,D,0,0,Math.PI/2-.42);B.cyl(.5,.5,1.6,8,-3.2,13.6,z,D,0,0,Math.PI/2-.42);}const g=mesh(B.geo());g.castShadow=true;o.add(g);o.userData.parts.turret=g;}
@@ -1376,6 +1380,7 @@ loadModels();
 // ---- jet engine exhaust (Abdullah 2026-11-05: the flat yellow wedge behind the jets) ----
 // nozzle finder: rays from behind the model (+x direction) over a y/z grid; nozzles = the rearmost THICK parts (hit on
 // neighbouring rows and columns, so thin tail fins and stabilisers don't count), clustered left/right of the centreline
+const JETNZ=new Map();
 function jetNozzles(o,yaw,bb){const L=bb.max.x-bb.min.x,W=bb.max.z-bb.min.z,H=bb.max.y-bb.min.y,RC=new THREE.Raycaster(),dir=new THREE.Vector3(1,0,0),NZ=25,NY=11,cells=[];
   for(let j=0;j<NY;j++){const y=bb.min.y+H*(.12+.5*j/(NY-1));for(let i=0;i<NZ;i++){const z=(bb.min.z+bb.max.z)/2+W*(-.22+.44*i/(NZ-1));RC.set(new THREE.Vector3(bb.min.x-30,y,z),dir);RC.far=L+60;
     let hx=null;for(const q of RC.intersectObject(yaw,true)){if(q.object.material&&q.object.material.visible===false)continue;if(!q.object.isMesh)continue;hx=q.point.x;break;}cells.push({i,j,y,z,x:hx});}}

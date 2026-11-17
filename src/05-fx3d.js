@@ -581,6 +581,14 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       for(const kd of ['inf','at']){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;
         for(const id of [1,2,5]){try{const o=makeObj({id:900000+id,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}}
       grp.traverse(c=>{c.frustumCulled=false;});await step('soldiers '+q.fac,grp,0,1);await frame();}
+    /* Test range: the player spawns every unit kind of the nation within seconds, so each kind's own 3D figure (nation kit, team paint, its shaders
+       and shapes) is built here, a few kinds per step, instead of in the frame its first unit appears (rangefreeze 2026-11-17: first jets, clerics,
+       spies, airlifters and drones stalled 150-900 ms). Battles keep the lighter list above (the AI trains a handful of kinds). */
+    if(G.sandbox&&typeof allUnits==='function')for(const q of G.teams){if(dead()||isLate()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;
+      const kinds=(q.id===ME?allUnits(q.fac):['tank','aa','arty','heli','boat']).filter((k,i,a)=>a.indexOf(k)===i&&k!=='inf'&&k!=='at'&&BASE[k]);
+      for(let i=0;i<kinds.length&&!dead()&&!isLate();i+=3){const grp=mk();
+        for(const kd of kinds.slice(i,i+3)){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;try{const o=makeObj({id:900100+i,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}
+        grp.traverse(c=>{c.frustumCulled=false;});await step('range '+q.fac+' '+kinds.slice(i,i+3).join('+'),grp,0,1);await frame();}}
     if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
