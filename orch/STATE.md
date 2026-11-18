@@ -27,3 +27,9 @@ Saved nothing: none seen (taken/endscreen has orch/endscreen).
 - main = ef814ce6. No train started.
 - orch/pack-battlefield2 (camera pan on real frame time, 1 commit): gate/3a63c82711 finished: 27 green, 1 red = gate/superfreeze (see below if main shows it too). Not landed yet; next run decides.
 - Unchanged: voices3 (12 ahead, no gate), pack-economy, pack-looks2, smoothaudit2, orch2-notes waiting; parked list as above.
+
+## 11:50-12:10 UTC check (fourth conductor run)
+- main = e15752b9 (thunderstorm look, pack-looks3). Its own gate is RED: controls, loadfreeze, migrate-abrupt, tutorial. loadfreeze and tutorial were green on the first run of the same commit, red on the second, so mostly flaky; migrate-abrupt ("AI took over the old host's side but did nothing in 105 game-s") seen red once.
+- Train train/20261118-1200 = main + orch/pack-battlefield2 (camera pan on real frame time). Its own gate/3a63c82711 had only gate/superfreeze red (ef814ce6 had the same red then went green). Train gate gate/0e921fab40 running; lands only if no red that main lacks.
+- Not landed: orch/voices3 (waits for Abdullah to listen), voices-lb2 (same), pack-economy / pack-looks3 / orch2-notes (handoff or notes only), smoothaudit2 (docs only).
+- Old Nov-13 candidate list (freezefix ... nations20) obsolete: one game, supply lines, 22 nations are on main.
