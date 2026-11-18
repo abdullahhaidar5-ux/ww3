@@ -74,3 +74,31 @@ variants), texture uploads of the fog (only on its 8 Hz tick, 0 in the Test rang
 - Online (2 browsers + local server): covered by `gate/smooth-mp` on every landing; not profiled separately here.
 - Every Shia mission (only "pass" profiled: light, ~11 ms frames); battle loading time is 55-75 s in the sandbox (warm-up costs are
   in orch/reports/load.md).
+
+## smoothaudit2 (2026-11-17/18, branch orch/smoothaudit2)
+
+**Main was red (gate/superfreeze, Test-range part).** Traced on GitHub's runners (`TRACE=1 node orch/rangefreeze.mjs`, lists every task
+over TRACEMS in any Chrome process/thread and what ran inside the longest ones):
+- one real game cause: **a shader program linked mid-game** - `weather()` put uniform *values* (wear amount, vehicle kind, camo
+  pattern, wall style) into the program key, so a Palestine barracks with wear 1.35 linked 3 programs. Fixed (7cc0afd, on main).
+- the long frames (300 ms - 9.5 s, in the ew / drone / drone-tank waves of every nation) contain **20-130 ms of game code**; the
+  rest is the **GPU process** (SwiftShader `Scheduler::RunTask` of 150-650 ms, no draws - the test swallows them) and V8 compile
+  threads on the shared runner. They also fail on unchanged main (~40% of main's superfreeze runs since 2026-11-16). The check
+  compares the whole rAF gap; changing it to judge only the page's own busy time was NOT done (needs Abdullah/ORCH approval).
+
+**Soldier draw calls (cause 2 + 3 of the top-10).** Merged soldier figures are drawn by one instanced draw per look (shape +
+material, near/far version), bone matrices of every visible figure packed into one shared float texture (4096 wide, rows in use
+uploaded once per frame), figure meshes kept in the graph on layer 7 (`SOLB`, `solbFill`, `solbAO` in 11-models; AO depth pass
+draws the batches with a depth-only copy; warm-up draws all three variants).
+
+| sandbox, same build pair, same session | before (7cc0afd) | after (e43e0d1) |
+|---|---|---|
+| 8 players (big): frame avg / draw calls | 32.4 ms / 869 | 27.4-35.4 ms / 627-646 |
+| Test range 332 units: frame avg / draw calls | 44.2 ms / 1020 | 38.1-44.3 ms / 932-993 |
+| soldier draws per frame (big, census) | ~193 + ~47 AO | ~20 batches |
+| soldier triangles (range, 2 frames) | 2135 k | 1760 k |
+| bone-texture uploads per frame | one per visible soldier (~200) | 1 texture, used rows only |
+
+(Frame times in software GL move 10-15% between runs of the same build; draw calls are the stable number. On a real GPU the
+saving is per-draw driver work, which software GL swallows here.) What now dominates draw calls: instanced props/groups
+(~170/frame) and vehicles (~130/frame, many parts each) - next: merge static vehicle/building parts per material.
