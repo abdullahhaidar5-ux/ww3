@@ -10,3 +10,6 @@ Main 932a668: gate/main red on superfreeze + migrate-down (superfreeze passed on
 | Nov 13-14 branches (freezefix ... onegame, nations20) | 4-5 days | - | stale; one-game + 22 nations already on main | not landed |
 taken/ locks (last 12 h): none. Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
 Local smoke/decisions time out in this sandbox (known); train gate decides.
+
+## Result of train/20261118-2100 (pack-looks6, 4f6a252be2)
+All gates green except superfreeze (red twice, incl. one re-run); smooth-pc / smooth-mp green. Superfreeze is also red on main's head 932a668 with the same 100-150 ms renderFrame stalls in waves (dtank, dsam, aa, tank). Not landed: main's own superfreeze is red, so new look work waits for that fix (Smooth first rule). Nothing landed this run.
