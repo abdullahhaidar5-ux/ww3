@@ -759,7 +759,7 @@ function solbPatch(sh){sh.uniforms.sBoneTex=SOLB.U;sh.vertexShader=sh.vertexShad
   .replace('#include <skinnormal_vertex>','sLoad();objectNormal=(sSkin()*vec4(objectNormal,0.)).xyz;').replace('#include <skinning_vertex>','sLoad();transformed=(sSkin()*vec4(transformed,1.)).xyz;')
   .replace('vOY=(modelMatrix*vec4(0.,0.,0.,1.)).y;','vOY=sI.y;').replace('float lkS=length(vec3(modelMatrix[0]));','float lkS=sI.z;');}
 function solbReg(m,mat){if(!m||!SOLB.on)return;m.userData.solMat=mat;SOLB.reg.add(m);if(typeof SCN!=='undefined'&&SCN&&typeof decalUpdate==='function'&&SCN.onBeforeRender!==decalUpdate)SCN.onBeforeRender=decalUpdate;}
-function solbTex(texels){const need=Math.ceil(texels/SOLB.W);if(SOLB.tex&&need<=SOLB.H)return;let h=Math.max(16,SOLB.H);while(h<need)h*=2;if(SOLB.tex)SOLB.tex.dispose();
+function solbTex(texels){const need=Math.ceil(texels/SOLB.W);if(SOLB.tex&&need<=SOLB.H)return;let h=Math.max(256,SOLB.H);/* one big texture made while loading (16 MB, only the used rows are sent each frame): growing it mid-battle meant a new texture and a full upload, a 1-2 s freeze in the Test range (superfreeze 2026-11-18) */while(h<need)h*=2;if(SOLB.tex)SOLB.tex.dispose();
   SOLB.arr=new Float32Array(SOLB.W*h*4);const t=SOLB.tex=new THREE.DataTexture(SOLB.arr,SOLB.W,h,THREE.RGBAFormat,THREE.FloatType);t.needsUpdate=true;SOLB.H=h;SOLB.U.value=t;}
 function solbBatch(m){const geo=m.geometry,mat=m.userData.solMat;let M=SOLB.by.get(geo);if(!M)SOLB.by.set(geo,M=new Map());let b=M.get(mat);if(b)return b;
   const g=new THREE.InstancedBufferGeometry();g.index=geo.index;for(const k in geo.attributes)g.setAttribute(k,geo.attributes[k]);g.instanceCount=0;
@@ -776,7 +776,7 @@ function solbFill(force){if(!SOLB.reg.size||typeof SCN==='undefined'||!SCN)retur
     if(q!==SCN||!SOLB.on||m.material!==m.userData.solMat||!m.skeleton){if(m.layers.mask!==1)m.layers.set(0);if(!q.isScene){if((m.userData.solOff=(m.userData.solOff||0)+1)>600)SOLB.reg.delete(m);}continue;}
     m.userData.solOff=0;if(m.layers.mask!==128)m.layers.set(7);if(!v)continue;if(fr&&m.frustumCulled&&m.boundingSphere){sp.copy(m.boundingSphere).applyMatrix4(m.matrixWorld);if(!fr.intersectsSphere(sp))continue;}/* per figure, like three.js did */const b=solbBatch(m);b.n++;draw.push(m,b,tx);tx+=m.skeleton.bones.length*4;}
   if(!draw.length){for(const b of SOLB.list)b.ms.visible=false;return;}
-  solbTex(tx);const A=SOLB.arr;for(const b of SOLB.list){if(b.n>b.cap){b.cap=Math.max(32,Math.ceil(b.n*1.5));b.a=new THREE.InstancedBufferAttribute(new Float32Array(b.cap*3),3);b.a.setUsage(THREE.DynamicDrawUsage);b.g.setAttribute('sI',b.a);}b.k=0;}
+  solbTex(tx);const A=SOLB.arr;for(const b of SOLB.list){if(b.n>b.cap){b.cap=Math.max(256,Math.ceil(b.n*1.5));b.a=new THREE.InstancedBufferAttribute(new Float32Array(b.cap*3),3);b.a.setUsage(THREE.DynamicDrawUsage);b.g.setAttribute('sI',b.a);}b.k=0;}
   for(let i=0;i<draw.length;i+=3){const m=draw[i],b=draw[i+1],t0=draw[i+2],sk=m.skeleton,B=sk.bones,I=sk.boneInverses;for(let j=0;j<B.length;j++){SOLM4.multiplyMatrices(B[j].matrixWorld,I[j]);SOLM4.toArray(A,(t0+j*4)*4);}
     const e=m.matrixWorld.elements,o=b.k*3;b.a.array[o]=t0;b.a.array[o+1]=e[13];b.a.array[o+2]=Math.hypot(e[0],e[1],e[2]);b.k++;}
   const ovr=!!SCN.overrideMaterial;for(const b of SOLB.list){b.g.instanceCount=b.n;b.ms.visible=b.n>0&&!ovr;if(b.n&&b.a){b.a.clearUpdateRanges();b.a.addUpdateRange(0,b.n*3);b.a.needsUpdate=true;}}

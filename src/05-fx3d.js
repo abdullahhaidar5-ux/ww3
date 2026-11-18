@@ -584,10 +584,11 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       if(typeof decalSet==='function')for(const k of ['eye','blob']){const S=decalSet(k),im=new THREE.InstancedMesh(S.geo,S.mat,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));im.renderOrder=S.ro;grp.add(im);}
       grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
     // every side's riflemen and anti-tank teams in all their kit variants, one side per step: a fresh squad from the barracks mid-battle used to merge its soldier shapes (and link their shaders) on the spot
-    for(const q of G.teams){if(dead()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;const grp=mk();
+    for(const q of G.teams){if(dead()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;
+      /* one kit variant of one kind per step (instanced soldier batches add a main, a depth and an AO shader per look: all of them in one step linked 13 programs at once, loadfreeze 2026-11-18) */
       for(const kd of ['inf','at']){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;
-        for(const id of [1,2,5]){try{const o=makeObj({id:900000+id,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}}
-      grp.traverse(c=>{c.frustumCulled=false;});await step('soldiers '+q.fac,grp,0,1);await frame();}
+        for(const id of [1,2,5]){if(dead())break;const grp=mk();try{const o=makeObj({id:900000+id,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}
+          grp.traverse(c=>{c.frustumCulled=false;});await step('soldiers '+q.fac+' '+kd+id,grp,0,1);await frame();}}}
     /* Test range: the player spawns every unit kind of the nation within seconds, so each kind's own 3D figure (nation kit, team paint, its shaders
        and shapes) is built here, a few kinds per step, instead of in the frame its first unit appears (rangefreeze 2026-11-17: first jets, clerics,
        spies, airlifters and drones stalled 150-900 ms). Battles keep the lighter list above (the AI trains a handful of kinds). */
