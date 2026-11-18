@@ -145,7 +145,8 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(/MIL_TANK\.OB=\{m:'technical'/.test(m) && !/RV:'t62',OB:'t55'/.test(m) && !/OB:'t55'/.test(m) && !/RMAP\.tank\.OB/.test(m), 'national vehicles: OB got a tank model slot again (Palestine must never show an MBT)');
   ck(/\['RS','DW','RV','OB'\]\.includes\(f\)/.test(m), 'national vehicles: RS/DW/RV/OB artillery is no longer kept off the Msta self-propelled gun');
   ck(/cn72/.test(m) && /in90/.test(m) && /pk72/.test(m), 'national vehicles: CN/IN/PK lost their own tank paint');
-  ck(/gb35/.test(m) && /de35/.test(m) && /il35/.test(m) && /RMAP\.atgm,\{US:'humvee'/.test(m), 'national vehicles: the West family (US/GB/FR/DE/IL/UA trucks and ATGM carriers) lost its own looks'); }
+  ck(/gb35/.test(m) && /de35/.test(m) && /il35/.test(m) && /RMAP\.atgm,\{US:'humvee'/.test(m), 'national vehicles: the West family (US/GB/FR/DE/IL/UA trucks and ATGM carriers) lost its own looks');
+  ck(/ru_ural/.test(m) && /cn_ural/.test(m) && /kp_ural/.test(m) && /RMAP\.atgm,\{CN:'cnhum'/.test(m), 'national vehicles: the East family (RU/CN/KP trucks and ATGM carriers) lost its own looks'); }
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];

@@ -43,6 +43,12 @@ Object.assign(RMOD,{gb35:{m:'m_m35',fit:'z',size:36,tint:'#5c5a44',tk:.4},fr35:{
   gbhum:{m:'m_humvee',fit:'z',size:27,tint:'#5c5a44',tk:.4},ilhum:{m:'m_humvee',fit:'z',size:27,tint:'#a89a74',tk:.4}});
 for(const k of ['harv','ammot','idome','ew','cbr']){Object.assign(RMAP[k],{GB:'gb35',FR:'fr35',DE:'de35',IL:'il35',UA:'ua_ural'});}
 Object.assign(RMAP.atgm,{US:'humvee',GB:'gbhum',IL:'ilhum',UA:'humvee',FR:'ozelot',DE:'ozelot'});
+// National vehicle families, East (visual only, existing models + paint): Russia a deep-green Ural, China a PLA olive-green Ural and its anti-tank teams on a green Humvee-type
+// carrier, North Korea a drab khaki-brown Ural with a brown light carrier. Iran, Russia's and the others keep what they had.
+Object.assign(RMOD,{ru_ural:{m:'m_ural',fit:'z',size:36,tint:'#4e5c3e',tk:.4},cn_ural:{m:'m_ural',fit:'z',size:36,tint:'#5f7040',tk:.4},kp_ural:{m:'m_ural',fit:'z',size:36,tint:'#6c6444',tk:.4},
+  cnhum:{m:'m_humvee',fit:'z',size:27,tint:'#5f7040',tk:.4},kphum:{m:'m_humvee',fit:'z',size:27,tint:'#6c6444',tk:.4}});
+for(const k of ['harv','ammot','idome','ew','cbr']){Object.assign(RMAP[k],{RU:'ru_ural',CN:'cn_ural',KP:'kp_ural'});}
+Object.assign(RMAP.atgm,{CN:'cnhum',KP:'kphum'});
 // Faction-unique helicopters and warships (Objaverse / Sketchfab, CC BY, authors in the menu credits): Russia flies the Mi-28,
 // Egypt the Ka-52, Turkey, Pakistan and Iran an AH-1 Cobra-type gunship; Western navies a Type 45 destroyer (Germany an F123
 // frigate), Russia/China/North Korea/Ukraine/India/Pakistan/Cuba/Iran a Russian-style destroyer; the Shia nations'
