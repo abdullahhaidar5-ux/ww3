@@ -8,12 +8,12 @@ const { makeSim } = await import('./headless.mjs');
 const A = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 && process.argv[i + 1] != null && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : d; };
 const short = process.argv.includes('--short');
 const minutes = +A('minutes', short ? 9 : 6), players = +A('players', 2), seed = +A('seed', 1), STUCK = +A('stuck', 10), MAX = +A('max', 8);
-const mode = A('mode', 'both');
+const mode = A('mode', 'battle'); // the one game is Battle (Conquest removed 2026-11-13)
 const FACS = ['US', 'RU', 'IR', 'CN', 'KP', 'RS', 'IL', 'FR'];
 const SRCDIR = A('src', undefined);
 const { W } = makeSim(SRCDIR);
-const allMaps = JSON.parse(JSON.stringify(W.ev('Object.keys(MAPS)')));
-let maps = A('maps', short ? 'strait,golan,taiwan,honshu,volga,rivers' : 'all'); maps = maps === 'all' ? allMaps : maps.split(',');
+const allMaps = JSON.parse(JSON.stringify(W.ev('BM_KEYS'))); // every map the Battle picker lists
+let maps = A('maps', short ? 'bm_splitridge,bm_ferryquarter,bm_breakwater,taiwan,lebanon,khyber' : 'all'); maps = maps === 'all' ? allMaps : maps.split(',');
 const modes = mode === 'both' ? ['conquest', 'battle'] : [mode];
 const SAMPLE = `(()=>{const o=[];for(const e of G.ents){if(e.dead||e.isB||e.aband||(e.crit&1)||e.stun>G.t||!e.s||e.s.dom==='air'||!e.order||(e.order.type!=='move'&&e.order.type!=='amove'&&e.order.type!=='attackmove'))continue;o.push([e.id,e.kind,e.team,e.x,e.y,e.order.x,e.order.y,e.s.dom,e.s.cls,e.inside?1:0,e.state||'',(e.cargoOf||0)||(e.target&&!e.target.dead?1:0),e.r||0]);}return o;})()`;
 const WHY = (x, y, dom, id) => `(()=>{const x=${x},y=${y},cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);const v=G.grid[cy*GW+cx];let blk=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if((dx||dy)&&!passC('${dom}',cx+dx,cy+dy))blk++;
@@ -23,7 +23,7 @@ const WHY = (x, y, dom, id) => `(()=>{const x=${x},y=${y},cx=Math.floor(x/CELL),
 const EMB = `(()=>{const o=[];bocc();for(const e of G.ents){if(e.dead||e.isB||e.aband||(e.crit&1)||e.stun>G.t||!e.s||e.s.dom==='air'||e.inside||e.cargoOf||e.inTun||e.s.cls==='boat'&&0)continue;if(!passXY(e.s.dom,e.x,e.y))o.push([e.id,e.kind,e.team,e.x,e.y,e.s.dom,e.s.cls]);}return o;})()`;
 const rows = [], per = [], embSeen = new Set();
 for (const md of modes) for (const mp of maps) {
-  const n = Math.max(2, Math.min(players, +W.ev(`(MAPS['${mp}']||{max:2}).max`) || 2));
+  const n = Math.max(+W.ev(`(MAPS['${mp}']||{min:2}).min`) || 2, Math.min(players, +W.ev(`(MAPS['${mp}']||{max:2}).max`) || 2));
   const facs = FACS.slice(0, n); let st;
   try { st = W.start({ seed, facs, map: mp, battle: md === 'battle', diff: 1, mode: 'single' }); } catch (e) { console.log('skip', md, mp, e.message.slice(0, 80)); continue; }
   if (st.map !== mp) { console.log('skip', md, mp, '(map not used)'); continue; }
