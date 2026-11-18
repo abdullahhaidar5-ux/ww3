@@ -68,3 +68,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-18 17:03Z 6c3c99b7 **RED** (28 gates) failing: superfreeze — train: pack-looks4 (RV and OB own tank models)
 - 2026-11-18 18:06Z 78e25dc5 **GREEN** (28 gates) — battlefield test: reset the weather draw counter between its two weath
 - 2026-11-18 19:42Z daae494f **GREEN** (28 gates) — Tutorial test: order the strike force with a right-click (a left click
+- 2026-11-18 20:18Z 932a6680 **RED** (28 gates) failing: migrate-down,superfreeze — Pre-warm textured shadow-caster depth variants (strike/building models
