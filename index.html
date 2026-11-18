@@ -19601,6 +19601,14 @@ Object.assign(RMOD,{ru_ural:{m:'m_ural',fit:'z',size:36,tint:'#4e5c3e',tk:.4},cn
   cnhum:{m:'m_humvee',fit:'z',size:27,tint:'#5f7040',tk:.4},kphum:{m:'m_humvee',fit:'z',size:27,tint:'#6c6444',tk:.4}});
 for(const k of ['harv','ammot','idome','ew','cbr']){Object.assign(RMAP[k],{RU:'ru_ural',CN:'cn_ural',KP:'kp_ural'});}
 Object.assign(RMAP.atgm,{CN:'cnhum',KP:'kphum'});
+// National vehicle families, Regional (visual only, existing models + paint): India a khaki-olive Ural and Humvee-type carrier, Pakistan a sand-olive one, Japan and Korea
+// dark-green M35 trucks with Humvee carriers, Saudi Arabia, the Emirates and Egypt desert-sand trucks (the Emirates and Turkey carry their anti-tank teams on the light Ozelot), Turkey an olive-brown truck.
+{const P=(k,m,sz,t)=>{RMOD[k]={m,fit:'z',size:sz,tint:t,tk:.4};};
+ P('in_ural','m_ural',36,'#7d7650');P('pk_ural','m_ural',36,'#85805a');P('inhum','m_humvee',27,'#7d7650');P('pkhum','m_humvee',27,'#85805a');
+ P('jp35','m_m35',36,'#5b6a52');P('kr35','m_m35',36,'#4f5b3f');P('sa35','m_m35',36,'#b5a276');P('ae35','m_m35',36,'#c0ae84');P('tr35','m_m35',36,'#6a6a4c');P('eg35','m_m35',36,'#b09c70');
+ P('jphum','m_humvee',27,'#5b6a52');P('krhum','m_humvee',27,'#4f5b3f');P('sahum','m_humvee',27,'#b5a276');P('eghum','m_humvee',27,'#b09c70');P('aeoz','m_ozelot',34,'#c0ae84');P('troz','m_ozelot',34,'#6a6a4c');
+ for(const k of ['harv','ammot','idome','ew','cbr'])Object.assign(RMAP[k],{IN:'in_ural',PK:'pk_ural',JP:'jp35',KR:'kr35',SA:'sa35',AE:'ae35',TR:'tr35',EG:'eg35'});
+ Object.assign(RMAP.atgm,{IN:'inhum',PK:'pkhum',JP:'jphum',KR:'krhum',SA:'sahum',EG:'eghum',AE:'aeoz',TR:'troz'});}
 // Faction-unique helicopters and warships (Objaverse / Sketchfab, CC BY, authors in the menu credits): Russia flies the Mi-28,
 // Egypt the Ka-52, Turkey, Pakistan and Iran an AH-1 Cobra-type gunship; Western navies a Type 45 destroyer (Germany an F123
 // frigate), Russia/China/North Korea/Ukraine/India/Pakistan/Cuba/Iran a Russian-style destroyer; the Shia nations'
