@@ -8207,7 +8207,7 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'wall':{const k='trench';let P=a.pts;if(P===undefined)P=[a.x,a.y,a.x2,a.y2];
       if(!Array.isArray(P)||P.length<4||P.length>48||P.length%2||!P.every(v=>Number.isFinite(v)&&v>=0&&v<=Math.max(MAPW,MAPH)))break;
       P=P.map((v,i)=>Math.max(0,Math.min(i%2?MAPH:MAPW,v)));wallOrder(team,own(a.ids),k,P);break;}
-    case 'clr':for(const u of own(a.ids)){if(u.kind!=='dozer')continue;const k=rubFind(u,900);if(k>=0){u.order={type:'clr',k};u.path=null;}}break;
+    case 'clr':for(const u of own(a.ids)){if(u.kind!=='dozer')continue;let k=-1;if(a.k!=null&&G.rub&&G.rub[a.k|0])k=a.k|0;else k=rubFind(u,900);if(k>=0){u.order={type:'clr',k};u.path=null;}}break;
     case 'atkDam':{const d=G.dams&&G.dams[a.fi];if(!d||d.dead)break;for(const u of own(a.ids)){if(u.kind==='harv'||u.kind==='dozer'||u.kind==='hacker'||!canTarget(u.s,d.tg))continue;u.order={type:'attack',target:d.tg};u.guard=null;u.path=null;}break;}
     case 'fix':for(const u of own(a.ids)){if(u.kind!=='dozer')continue;const v=critNear(u,900);if(v){u.order={type:'fix',target:v};u.path=null;}}break;
     // right-drag line formation: units spread evenly along the dragged line (extra units form ranks behind it),
@@ -9194,11 +9194,13 @@ function lgCover(){const L=G.lg,D=G.lgd,n=L.N.length,Nt=G.teams.length,adj=L.N.m
     L.cov.push(C);L.bead.push(bead);}
   let sg='';for(let k=0;k<Nt;k++){const C=L.cov[k];if(C)for(const ei in C){const c=C[ei];sg+=k+':'+ei+':'+c.v.map(q=>(q[0]|0)+'-'+(q[1]|0)).join(',')+'/'+c.d.length+';';}}if(sg!==L.csig){L.csig=sg;G.lgv=(G.lgv|0)+1;}}
 // cheap test: has anything that moves the supply lines changed since the last lgCover? (enemy units on roads, buildings, captures)
-function lgCoverSig(){const L=G.lg;let s='';for(const e of G.ents){if(e.dead)continue;if(e.isB){if(e.built>=1&&e.team!=null)s+='b'+e.id+',';continue;}if(!e.s||e.s.dom!=='ground'||e.inTun||e.s.noAttack)continue;
+function lgCoverSig(){const L=G.lg;let s='r'+(G.rubN|0)+',';for(const e of G.ents){if(e.dead)continue;if(e.isB){if(e.built>=1&&e.team!=null)s+='b'+e.id+',';continue;}if(!e.s||e.s.dom!=='ground'||e.inTun||e.s.noAttack)continue;
     for(let i=0;i<L.E.length;i++){const b=L.E[i].bb;if(e.x<b[0]-LG_CUTR||e.x>b[2]+LG_CUTR||e.y<b[1]-LG_CUTR||e.y>b[3]+LG_CUTR)continue;const q=lgProj(L.E[i],e.x,e.y);if(q.d<LG_CUTR){s+='u'+e.team+':'+i+':'+((q.s/60)|0)+',';}}}
   for(const o of G.oil||[])s+=o.dead?'x':(o.owner+1);if(G.lgd&&G.lgd.rc)for(const i in G.lgd.rc)s+='r'+i+':'+G.lgd.rc[i].o;return s;}
 // is road edge i closed for team k: cratered, over a blown bridge, or held by an enemy checkpoint
-function lgBlk(i,k){const D=G.lgd,c=D.cr[i];if(c&&c.t>G.t)return true;const e=G.lg.E[i],B=G.map.bridges;if(e&&e.br)for(const b of e.br)if(B[b]&&B[b].dead)return true;
+// fallen buildings on a road close it for supply until a Construction Vehicle clears the rubble (cached per rubble change)
+function lgRubK(i){if(!G.rubN)return-1;const D=G.lgd,e=G.lg.E[i];if(!e)return-1;const ck=(G.gridV|0)+':'+G.rubN;if(!D.rk||D.rkS!==ck){D.rk={};D.rkS=ck;}if(D.rk[i]!==undefined)return D.rk[i];let r=-1;const P=e.pts;for(let j=1;j<P.length&&r<0;j++){const L=Math.hypot(P[j][0]-P[j-1][0],P[j][1]-P[j-1][1]),n=Math.max(1,Math.ceil(L/20));for(let q=0;q<=n;q++){const x=P[j-1][0]+(P[j][0]-P[j-1][0])*q/n,y=P[j-1][1]+(P[j][1]-P[j-1][1])*q/n;if(rubAt(x,y)){r=Math.floor(y/CELL)*GW+Math.floor(x/CELL);break;}}}D.rk[i]=r;return r;}
+function lgBlk(i,k){const D=G.lgd,c=D.cr[i];if(c&&c.t>G.t)return true;if(G.rubN&&lgRubK(i)>=0)return true;const e=G.lg.E[i],B=G.map.bridges;if(e&&e.br)for(const b of e.br)if(B[b]&&B[b].dead)return true;
   if(D.ck)for(const q of D.ck)if(q.ei===i&&!ally(q.team,k))return true;return false;}
 function lgPortBlk(nd){if(MODE==='client')return !!(G.lgPb&&G.lgPb.has(nd.e));const e=G.byId.get(nd.e);return !!(e&&e.blk);}
 function lgTick(st){if(!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;lgFix(D);if(L.ref!==D||L.E.length!==L.n0+D.rb.length)lgSync();lgDyn();lgBridges(st);lgPorts();lgCkTick();lgAirTick();
@@ -9260,6 +9262,8 @@ function lgAI2(T){if(!G.lgd||!G.lg.reach||T.ai.d<1||G.t<200)return;const D=G.lgd
   const idleDoz=()=>G.ents.filter(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&!u.order);
   // a crater on its own supply lines: send an idle Construction Vehicle to fill it (6x faster than waiting)
   if(t%6===1){const C=L.cov&&L.cov[id];if(C)for(const k of Object.keys(D.cr)){const c=D.cr[k];if(!(c.t>G.t)||!C[k]||!(C[k].v.length||C[k].d.length))continue;if(G.ents.some(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&Math.hypot(u.x-c.x,u.y-c.y)<200))continue;const dz=idleDoz();if(dz.length){setMove(dz[0],c.x,c.y,'move');break;}}}
+  // rubble on its own supply roads: an idle Construction Vehicle goes and clears it
+  if(t%6===4&&G.rubN){const hq=hqOf(id);if(hq)for(let i=0;i<L.E.length;i++){const k=lgRubK(i);if(k<0)continue;const x=(k%GW)*CELL+CELL/2,y=((k/GW)|0)*CELL+CELL/2;if(Math.hypot(x-hq.x,y-hq.y)>1500)continue;if(G.ents.some(u=>u.team===id&&u.kind==='dozer'&&!u.dead&&u.order&&u.order.type==='clr'&&u.order.k===k))break;const dz=idleDoz();if(dz.length){dz[0].order={type:'clr',k};dz[0].path=null;}break;}}
   // guard its own supply lines: enemy troops standing on one of its roads -> a few idle soldiers attack-move there (Abdullah 2026-11-13 20:43)
   // cut the enemy's: now and then a small idle squad goes to stand on an enemy supply road away from the enemy base
   if(t%5===2&&L.cov&&L.cov[id]){const idle=G.ents.filter(u=>u.team===id&&!u.dead&&!u.isB&&!u.inTun&&u.s&&u.s.dom==='ground'&&!u.s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer'&&!u.order&&!u.target&&!u.amb&&!(u.rout>G.t));
@@ -14084,6 +14088,7 @@ function issueCmd(w,t,rally){
     if(rally&&!units.length&&G.sel.some(b=>b.isB&&b.team===ME)){doAct({t:'rally',x:w.x,y:w.y,ids:G.sel.filter(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)).map(b=>b.id)});pushLog('Rally point set for the selected building.');try{RV.fl=performance.now()+1500;}catch(e){}if(!G.qShift){G.sel=[];try{updateUI();}catch(e){}}return true;}   /* setting a rally point always lets the building go (Abdullah 2026-11-14 19:06; "keep units selected" is for unit orders only) */
     if(!units.length)return false;const ids=units.map(u=>u.id);
     if(spyIssue(w,t,units))return true;
+    if(!t&&G.rubN&&rubAt(w.x,w.y)&&units.some(u=>u.kind==='dozer')){const dz=units.filter(u=>u.kind==='dozer');doAct({t:'clr',ids:dz.map(u=>u.id),k:Math.floor(w.y/CELL)*GW+Math.floor(w.x/CELL)});const rest=units.filter(u=>u.kind!=='dozer');if(rest.length)doAct({t:'go',ids:rest.map(u=>u.id),x:w.x,y:w.y,mode:'move'});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});pushLog('Clearing the rubble.');return true;}
     if(!t){const di=damAt(w);if(di>=0){doAct({t:'atkDam',ids,fi:di});speak(2);markT(G.dams[di].x,G.dams[di].y,40,null,'atk');pushLog('Attacking the dam - if it breaks, the valley floods.');return true;}}
     if(!t){const oi=G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&o.owner>=0&&Math.hypot(o.x-w.x,o.y-w.y)<38);if(oi>=0){doAct({t:'atkOil',ids,fi:oi});speak(2);markT(G.oil[oi].x,G.oil[oi].y,30,null,'atk');return true;}}
     // units that can't go in (too big, aircraft, the transport itself) just move up next to it

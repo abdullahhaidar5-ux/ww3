@@ -467,6 +467,7 @@ function issueCmd(w,t,rally){
     if(rally&&!units.length&&G.sel.some(b=>b.isB&&b.team===ME)){doAct({t:'rally',x:w.x,y:w.y,ids:G.sel.filter(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)).map(b=>b.id)});pushLog('Rally point set for the selected building.');try{RV.fl=performance.now()+1500;}catch(e){}if(!G.qShift){G.sel=[];try{updateUI();}catch(e){}}return true;}   /* setting a rally point always lets the building go (Abdullah 2026-11-14 19:06; "keep units selected" is for unit orders only) */
     if(!units.length)return false;const ids=units.map(u=>u.id);
     if(spyIssue(w,t,units))return true;
+    if(!t&&G.rubN&&rubAt(w.x,w.y)&&units.some(u=>u.kind==='dozer')){const dz=units.filter(u=>u.kind==='dozer');doAct({t:'clr',ids:dz.map(u=>u.id),k:Math.floor(w.y/CELL)*GW+Math.floor(w.x/CELL)});const rest=units.filter(u=>u.kind!=='dozer');if(rest.length)doAct({t:'go',ids:rest.map(u=>u.id),x:w.x,y:w.y,mode:'move'});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});pushLog('Clearing the rubble.');return true;}
     if(!t){const di=damAt(w);if(di>=0){doAct({t:'atkDam',ids,fi:di});speak(2);markT(G.dams[di].x,G.dams[di].y,40,null,'atk');pushLog('Attacking the dam - if it breaks, the valley floods.');return true;}}
     if(!t){const oi=G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&o.owner>=0&&Math.hypot(o.x-w.x,o.y-w.y)<38);if(oi>=0){doAct({t:'atkOil',ids,fi:oi});speak(2);markT(G.oil[oi].x,G.oil[oi].y,30,null,'atk');return true;}}
     // units that can't go in (too big, aircraft, the transport itself) just move up next to it
