@@ -10,6 +10,8 @@ licences (LibriVox public domain, Thorsten-Voice CC0, Mozilla Common Voice CC0 -
   * light radio chain (wide band, one 3:1 compressor, little drive), read back again after processing (+ the mp3 codec)
 Same sheet/map format as orch/vo/render.py (main sheet CODE.mp3, kinds l/c) and orch/vo/roles.py (CODE_r / _h / _s).
 usage: python3 orch/vo/v3.py FR [DE GB JP]          (XTTS + Whisper in one process: ~4.5 GB RSS - run alone)
+       V3_MED=1 python3 orch/vo/v3.py GB             (recheck: lines Whisper small could not read are read again with medium,
+                                                      no new takes; then the sheets are written again)
        python3 orch/vo/v3.py list FR                 (print the jobs)"""
 import sys, os, json, re, subprocess, hashlib, time, unicodedata, importlib
 import numpy as np, librosa, soundfile as sf
@@ -105,6 +107,7 @@ def trim(w):
 
 _W = {}
 FORCE = None   # 'medium' while a line that small could not read is checked again (small mishears rare words: Wilco -> We'll go)
+MEDOK = os.environ.get('V3_MED') == '1'   # recheck pass (no XTTS in memory): XTTS + two Whisper models do not fit the sandbox's 6.2 GB cap
 def wname(lang):   # medium for Japanese and Hebrew; small reads clear French/German/English reliably and ~3x faster here
     return FORCE or os.environ.get('V3_WHISPER') or ('medium' if lang in ('ja', 'he') else 'small')
 def whisper(lang):
@@ -257,12 +260,13 @@ def nation(fac):
     for n, j in enumerate(J):
         id_ = j['sheet'] + ':' + j['lab'] + ':' + j['say'] + ':' + j['voice']
         sc = S.setdefault(id_, {})
-        take = 0; FORCE = S.get('_med', {}).get(id_)
+        take = 0; FORCE = S.get('_med', {}).get(id_) if MEDOK else None
         while True:
             if str(take) not in sc:
+                if MEDOK and not os.path.exists(os.path.join(CACHE, rkey(j['voice'], j['say'], take, j['mood'], lang)[0] + '.wav')): break   # recheck: no new takes
                 sc[str(take)] = score_take(j, take, lang)
             best = min(eff(x) for x in sc.values()); take += 1
-            if take >= 4 and best > MAXCER and wname(lang) != 'medium':   # small may be mishearing a rare word: medium scores this line
+            if MEDOK and take >= 4 and best > MAXCER and wname(lang) != 'medium':   # small may be mishearing a rare word: medium scores this line
                 FORCE = 'medium'; S.setdefault('_med', {})[id_] = 'medium'
                 for t in list(sc): sc[t] = score_take(j, int(t), lang)
                 best = min(eff(x) for x in sc.values())
@@ -276,7 +280,7 @@ def nation(fac):
         m = eff(sc[order[0]]); first = max((t for t in order if eff(sc[t]) <= m + 0.03), key=lambda t: sc[t]['p808'])
         order = [first] + [t for t in order if t != first]
         rng0 = int(hashlib.md5(id_.encode()).hexdigest()[:8], 16)
-        for FORCE in ([FORCE, 'medium'] if wname(lang) != 'medium' else [FORCE]):
+        for FORCE in ([FORCE, 'medium'] if MEDOK and wname(lang) != 'medium' else [FORCE]):
             bestr = None
             for t in order[:4]:
                 if sc[t]['long'] and t != first: continue
@@ -319,5 +323,6 @@ if __name__ == '__main__':
     if sys.argv[1] == 'list':
         for j in jobs(sys.argv[2]): print(j['sheet'], j['lab'], j['voice'], j['mood'], j['say'])
     else:
+        model(); import gc, ctypes; gc.collect(); ctypes.CDLL('libc.so.6').malloc_trim(0)   # XTTS first and give back the checkpoint-load heap: the sandbox's 6.2 GB memory cap OOM-killed XTTS + Whisper otherwise
         for fac in sys.argv[1:]:
             nation(fac)
