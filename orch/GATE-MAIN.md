@@ -62,3 +62,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-18 03:43Z 10cf4bd3 **RED** (28 gates) failing: audio,controls,superfreeze — Stuck units: report, handoff, history (163 -> 52 stuck episodes on all
 - 2026-11-18 05:06Z 8900437e **RED** (28 gates) failing: controls — restore test screenshots touched by local runs
 - 2026-11-18 05:59Z 4451d6b2 **RED** (28 gates) failing: controls — Merge origin/main into pack-battlefield
+- 2026-11-18 07:37Z 22747d50 **RED** (28 gates) failing: controls,superfreeze — pack-economy: upgsimple guard allows the two economy powers; American 
