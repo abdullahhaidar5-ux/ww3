@@ -1,7 +1,20 @@
-# Conductor state 2026-11-17 16:55 UTC
-- main head f44fc895 (redfixE landed itself: save replays exactly, server sim-file list, gate test races). Main gate + Gate bisect still running on it; autodeploy servers green.
-- orch/redfixE: 0 ahead of main, merged. orch/shiamissions: 0 ahead (already in main). Nothing to train, nothing landed this run.
-- Old Battle branches (freezefix, sweepfixA/B, orderfeel, ghostslot, testrange, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, techbldgs, groundreal, leaderlook, usvoice, ammozone, looktest, onegame, nations20): last pushed 2026-11-13/14, long behind main, dealt with by earlier trains; not re-landed.
-- Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
-- taken/* locks with no orch branch: none newer than 2026-11-15. Last train/* branch: 20261117-0950 (in main).
-- Note: clone is 4.8 GB and fetch of all branches times out; state read through the GitHub API (events + compare).
+# STATE — 2026-11-18 ~03:00 UTC (conductor run)
+
+No train this run: nothing waiting to land.
+
+main = 10cf4bd (Stuck units report), Pages build for it = success (live). No `train/*` branch exists.
+
+Train candidates (all stale, nothing to merge):
+- freezefix, sweepfixA/B, orderfeel, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, looktest, onegame, nations20: 0 commits ahead of main (already landed).
+- ghostslot (1), testrange (1): handoff-only commits from 2026-11-14, nothing to land.
+- techbldgs (1): ORCH note only (2026-11-14), not landed.
+- ammozone (7): 2026-11-14 Conquest-era ammo zone; its rule is already in Battle on main, branch superseded.
+- battlemaps2: no branch, no taken lock.
+
+Never-land branches: parked (removed from the game).
+
+In flight (helpers land through their own gate/* runs): Proxy Militia power (gate/6542a3a968, queued), chunk depth material guard (gate/5250b982ca, queued), Destructible cities (gate/dc307f86f4, running).
+Recently red own-gates: Instanced soldiers chunk material (gate/41a0e5e888), controlsfeel WASD guard (gate/737598d243), Controls feel glide (gate/1020fe142e).
+Main head gates: smooth-pc success; audio failure (known flaky).
+
+Note: a full `git fetch` of this repo times out here (600+ branches), so state was read through the GitHub API.
