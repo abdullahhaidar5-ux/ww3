@@ -1390,7 +1390,7 @@ const SEP_E=[];
 function bridgeLanes(U){const B=G.map.bridges;if(!B||!B.length)return;
   for(const a of U){if(a.landed||a.inTun)continue;    for(let i=0;i<B.length;i++){const b=B[i];if(b.dead)continue;const dx=a.x-b.x,dy=a.y-b.y,u=dx*b.n[0]+dy*b.n[1],w=dx*b.t[0]+dy*b.t[1];if(Math.abs(u)>b.h+8||Math.abs(w)>44)continue;
       if(Math.abs(w)>30&&Math.abs(u)<b.h-4)continue;   /* beside the deck: the lane pull must not drag a unit that is just walking past onto the bridge */
-      if(Math.abs(u)>b.h-40)continue;   /* the last 40 px at each end are ramps: a unit leaving the bridge sideways there used to be pulled back into its lane every tick (an artillery piece and a soldier held each other at one ramp for a minute) */
+      if(Math.abs(u)>b.h-40||G.grid[Math.floor(a.y/CELL)*GW+Math.floor(a.x/CELL)]!==2)continue;   /* off the deck itself (a bridge box reaching over the bank) no lane: two guns stood a whole battle on a river bank in Aegean, held in a lane they could not see. The last 40 px at each end are ramps: a unit leaving the bridge sideways there used to be pulled back into its lane every tick (an artillery piece and a soldier held each other at one ramp for a minute) */
       const foot=a.s.cls&&MOVE[a.s.cls]&&MOVE[a.s.cls][0]>=8,lim=Math.max(6,30-a.r);let nw=w;
       if(foot&&Math.abs(w)<=lim&&Math.abs(u)<b.h-4){const lane=((a.id%4)-1.5)*Math.min(15,(lim*2)/4);nw=w+Math.max(-.35,Math.min(.35,(lane-w)*.03));}
       if(nw>lim)nw=lim;else if(nw<-lim)nw=-lim;
