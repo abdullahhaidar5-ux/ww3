@@ -758,6 +758,29 @@ for (const e of errs) fails.push(e);
   ck(/n:\[10,14,20\]/.test(d) && /dmg:\[1500,1900,2400\]/.test(d) && /PCD=\[1,\.8,\.6\]/.test(d), 'powers: barrage shells, bunker buster blast and cooldown improve with level');
   ck(!/Unlock · 1 point`/.test(ui) && !/about 40% stronger/.test(ui) && /powLvCost\(k,0\)/.test(ui), 'powers: no leftover "1 point" / "40% stronger" text, the row shows the real cost');
 }
+// economy pack 2026-11-18 (Abdullah 2026-11-17 18:45 "General's powers"): Proxy Militia (mil) + Smuggling Route (smug) exist for every playable nation, cost/levels grow, the AI uses them, deterministic
+{ const r = await ev(() => {
+    const out = { bad: [], det: null };
+    for (const f of PLAYABLE) for (const k of ['mil', 'smug']) { const P = powInfo(k, f); if (!P || sigBan(f, k) || P.passive) out.bad.push(f + ':' + k); }
+    out.cost = [powLvCost('mil', 0), powLvCost('mil', 1), powLvCost('mil', 2), powLvCost('smug', 0), powLvCost('smug', 2)];
+    out.lv = [powLvVal('mil', 'n', 1, 0), powLvVal('mil', 'n', 3, 0), powLvVal('smug', 'inc', 1, 0), powLvVal('smug', 'inc', 3, 0), powLvVal('smug', 'dur', 1, 0), powLvVal('smug', 'dur', 3, 0)];
+    const run = () => { const sv = G; try {
+      newGame({ seed: 77, facs: ['IR', 'US'], ai: [false, false], map: 'strait', tm: [0, 1], bs: 1, slot: -1, real: 0, battle: 1 }); G.headless = true;
+      const T = G.teams[0]; T.rank = 9; T.spent = 0; G.t = 400; buyPower(0, 'mil'); buyPower(0, 'smug'); buyPower(0, 'mil'); T.pw.mil.cd = 0; T.pw.smug.cd = 0;
+      const h = hqOf(0), n0 = G.ents.length, c0 = T.credits; const a = usePower(0, 'mil', h.x + 150, h.y + 150), b = usePower(0, 'smug', h.x + 60, h.y + 60);
+      for (let i = 0; i < 60 * 12; i++) simUpdate(1 / 60);
+      const tr = G.ents.find(e => e.smug && !e.dead); const res = { a, b, lv: T.pw.mil.lv, made: G.ents.length - n0, gain: T.credits - c0, smugs: (G.smugs || []).length, truck: !!tr };
+      if (tr) kill(tr, 1, null); simUpdate(1 / 60); simUpdate(2); res.cut = !(G.smugs || []).length; return res; } finally { /* leave game as is */ } };
+    out.r1 = run(); out.r2 = run(); out.det = JSON.stringify(out.r1) === JSON.stringify(out.r2); return out; });
+  ck(r.bad.length === 0, 'economy: Proxy Militia and Smuggling Route exist for every playable nation (' + r.bad.join(',') + ')');
+  ck(r.cost[0] === 2 && r.cost[1] === 3 && r.cost[2] === 4 && r.cost[3] === 2 && r.cost[4] === 4, 'economy: both powers are medium cost and levels cost more');
+  ck(r.lv[0] < r.lv[1] && r.lv[2] < r.lv[3] && r.lv[4] < r.lv[5], 'economy: militia size, smuggling income and duration grow with level');
+  ck(r.r1.a && r.r1.b && r.r1.made >= 8 && r.r1.truck && r.r1.gain > 0, 'economy: militia arrives, smuggler truck brings cash: ' + JSON.stringify(r.r1));
+  ck(r.r1.cut, 'economy: destroying the smuggler truck cuts the route');
+  ck(r.det, 'economy: both powers are deterministic (same seed, same result)');
+  ck(/smugOn\(id\)/.test(SRC['03-sim.js'] || '') && /buyPower\(id,k\)/.test(SRC['03-sim.js'] || '') && /usePower\(id,'mil'/.test(SRC['03-sim.js'] || ''), 'economy: the AI buys and uses both powers');
+  ck(/'smugs'/.test(SRC['07b-ckpt.js'] || ''), 'economy: smuggling routes are in the checkpoint');
+}
 await browser.close(); server.close();
 }
 for (const f of fails) console.log('FAIL: ' + f);
