@@ -1,0 +1,24 @@
+artifact page written: orch/out/artifact/index.html (5362614 bytes, game 4517758 chars), 156 audio files + 82 model files (14.7 MB); publish arguments in orch/out/artifact/publish.json
+[6s] both pages loaded (menu model downloads done after 5s / 5s)
+[7s] host lobby open, code aqlb1y
+[7s] client joining
+[24s] battle: US vs RU on bm_splitridge; client is slot 1
+[68s] both pages finished loading
+[68s] conditions: host picked Overcast; host shows Overcast, client shows Overcast
+[69s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[71s] client order: 2/2 of the client's units moved on the host
+[81s] check @1.0 min t=60s: host 18 entities, client side sees 9 (own 9); client has 9 (own 9); missing 0, extra 0, off-position 0, mismatched 0; credits host 2075 client 2075
+[86s] check @2.5 min t=150s: host 32 entities, client side sees 14 (own 13); client has 16 (own 13); missing 0, extra 0, off-position 0, mismatched 0; credits host 3090 client 3090
+[112s] check @4.0 min t=240s: host 39 entities, client side sees 16 (own 16); client has 18 (own 16); missing 0, extra 0, off-position 0, mismatched 0; credits host 5545 client 5545
+[133s] traffic host->client 1351 KB in 3581 messages, client->host 0 KB in 1; client lag max 0.10 game-s; 35 ms per 0.5 s step
+[133s] 24 live checks, 0 out of tolerance; up to 3 enemy entities were in the client's view at once
+[133s] host room sends: 3583 messages, peak 47 in one game-second
+[133s] client room sends: 1 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 3636 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: client console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: host: peak 47 room messages in one game-second (t=150s: {"n":47,"snap":12,"ck":5,"team":5,"pong":24,"evt":1}); the room drops sends past ~40/s (burst 80)
+
+MPSYNC PASS (artifact edition) (133s) — screenshots orch/out/art-mp-host.png, orch/out/art-mp-client.png (this run: orch/out/runs/20261118-011925-mpsync-art/)
