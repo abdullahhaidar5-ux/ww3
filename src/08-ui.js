@@ -453,7 +453,7 @@ function issueCmd(w,t,rally){
 // Saved settings from before 2026-10-29 are moved to Standard once (ctl2). mAK is always 'f' now (F attack-move, X stop).
 // Touch and pen have no right button, so a tap selects or orders as before. The cursor shows what a click will do.
 let lastR={t:0,id:0},rDown=0;
-const MDEF={mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f',mRS:100,mCur:1,mPing:1,mLock:1,mKeep:1};
+const MDEF={mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f',mRS:100,mCur:1,mPing:1,mLock:1,mKeep:1,mCam:1};
 const MPRE={std:{mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none'},gen:{mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll'}};
 if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;if(SET.keep3!==1){SET.mKeep=1;SET.keep3=1;try{saveSet();}catch(_){}}SET.tk=0;   /* Breaking-news ticker and its corner clip removed (Abdullah 2026-11-14 18:32 "Remove breaking news clip") */   /* Abdullah 2026-11-14 18:07 "Right click should not unselect the units selected" */
 function mPreset(){for(const p in MPRE)if(Object.keys(MPRE[p]).every(k=>SET[k]===MPRE[p][k]))return p;return 'custom';}
@@ -967,12 +967,18 @@ body.tstripOn #info .orddock{display:none!important}
 body:not(.touchui) #aGuide{display:none}
 @media (max-height:520px){#tguide .tgi{font-size:26px}#tguide .tgc{padding:10px 14px 8px}#tguide p{margin-bottom:8px}}`;document.body.append(st);}
 setTimeout(setHint,0);
-function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();let rx=0,dn=0;/* screen-space pan (right / down), turned by the view rotation (camVec) */if(keys.ArrowLeft||(keys.a&&!gk))rx-=sp;if(keys.ArrowRight||keys.d)rx+=sp;if(keys.ArrowUp||keys.w)dn-=sp;if(keys.ArrowDown||(keys.s&&!gk))dn+=sp;if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;rx=dn=0;}
+function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();let rx=0,dn=0;/* screen-space pan (right / down), turned by the view rotation (camVec) */if(keys.ArrowLeft||(keys.a&&!gk))rx-=sp;if(keys.ArrowRight||keys.d)rx+=sp;if(keys.ArrowUp||keys.w)dn-=sp;if(keys.ArrowDown||(keys.s&&!gk))dn+=sp;
   // Generals rapid scroll: right-drag with nothing selected pans toward the drag, faster the further you drag
   if(RDRAG&&RDRAG.gen&&RDRAG.mode==='scroll'&&RDRAG.moved){const dx=mouse.x-RDRAG.x0,dy=mouse.y-RDRAG.y0,d=Math.hypot(dx,dy);if(d>4){const v=sp*Math.min(6,.6+d/70)*(SET.mRS||100)/100;rx+=dx/d*v;dn+=dy/d*v;}}
   if(MLOCK.on&&!mouse.in&&!drag&&SET.edge&&!CROT.hold){const W=innerWidth-1,H=innerHeight-1;if(MLOCK.x<=0)rx-=sp;if(MLOCK.x>=W)rx+=sp;if(MLOCK.y<=0)dn-=sp;if(MLOCK.y>=H)dn+=sp;}
   if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'&&!CROT.hold){if(mouse.x<14)rx-=sp;if(mouse.x>VW-14)rx+=sp;if(mouse.y<14)dn-=sp;if(mouse.y>VH-14)dn+=sp;}
+  if(dt>0)[rx,dn]=camGlide(rx/dt,dn/dt,dt);
   if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
+/* Camera smoothing (controlsfeel, Abdullah 2026-11-17 "polish queue"): WASD / arrows / edge-scroll / rapid scroll speed up and slow down gently
+   instead of starting and stopping dead. CAMS holds the pan velocity in screen space (world units per second); it eases toward what the keys and
+   edges ask for with exp(-dt*rate), so it is the same at any frame rate. Settings > Mouse "Camera smoothing" Off = the old instant pan. View only. */
+function camGlide(wx,wy,dt){if(SET.mCam===0){CAMS.vx=CAMS.vy=0;return[wx*dt,wy*dt];}const on=wx||wy,r=1-Math.exp(-dt*(on?CAMS.acc:CAMS.dec));CAMS.vx+=(wx-CAMS.vx)*r;CAMS.vy+=(wy-CAMS.vy)*r;
+  if(!on&&Math.hypot(CAMS.vx,CAMS.vy)<cam.td*.03)CAMS.vx=CAMS.vy=0;return[CAMS.vx*dt,CAMS.vy*dt];}
 
 /* ---------- game start / reset ---------- */
 function resetScene(){if(typeof PARK!=='undefined'){for(const p of PARK.values())SCN.remove(p.o);PARK.clear();}if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
@@ -1442,6 +1448,7 @@ const MOPT=[['sMpre','Mouse scheme',null,[['std','Standard (default)'],['gen','C
   ['sMRDN','Right-drag with nothing selected','mRDN',[['scroll','Rapid scroll'],['box','Box select'],['none','Nothing']]],
   ['sMCur','Cursor shows what a click will do','mCur',[['1','On'],['0','Off']]],
   ['sMPing','Order markers on the ground','mPing',[['1','On'],['0','Off']]],
+  ['sMCam','Camera smoothing (scrolling and zoom speed up and slow down gently)','mCam',[['1','On'],['0','Off']]],
   ['sMKeep','Keep units selected after giving an order','mKeep',[['1','On'],['0','Off']]]];
 {const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sMpre')){const els=[];
   for(const [id,txt,,opts] of MOPT){const lb=document.createElement('div');lb.className='label';lb.textContent=txt;const sg=document.createElement('div');sg.className='seg';sg.id=id;for(const [v,t] of opts){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}els.push(lb,sg);
@@ -1452,7 +1459,7 @@ const MOPT=[['sMpre','Mouse scheme',null,[['std','Standard (default)'],['gen','C
   const rs=document.createElement('button');rs.className='btn2';rs.id='sMreset';rs.type='button';rs.textContent='Reset mouse settings to defaults';rs.style.margin='10px 0 4px';const sb=$('setBody');if(sb)sb.append(rs);else{const last=$('settings').querySelector('.card>.row:last-child');if(last)last.before(rs);}}}
 function syncMouseUI(){const pre=mPreset();
   for(const [id,,k] of MOPT){const el=$(id);if(!el)continue;for(const b of el.querySelectorAll('button')){const v=b.dataset.v;b.classList.toggle('on',k?String(SET[k])===v:v===pre);if(id==='sMpre'&&v==='custom')b.disabled=pre!=='custom';
-      b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing'||k==='mLock'||k==='mKeep')?+v:v;if(k==='mLock'&&!SET.mLock)try{mlockOff();}catch(_){}else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
+      b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing'||k==='mLock'||k==='mKeep'||k==='mCam')?+v:v;if(k==='mLock'&&!SET.mLock)try{mlockOff();}catch(_){}else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
   const n=$('sMpreN');if(n)n.textContent=pre==='std'?'Standard: left-click selects, right-click moves and attacks, right-drag draws a line. F then right-click: attack-move.':pre==='gen'?'Classic left-click: left-click selects and gives orders, right-click deselects, right-drag scrolls.':'Custom: your own mix of the choices below.';
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();

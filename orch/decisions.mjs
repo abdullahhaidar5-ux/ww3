@@ -236,6 +236,17 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(/ordMark\(/.test(mk[0]) && !/PINGS\.push/.test(mk[0]), 'orderfeel: order markers (mark/markT) must go to ordMark, not PINGS');
   const cap = /ORDM=\{m:null,cap:(\d+)/.exec(SRC['06d-orderfeel.js'] || ''); ck(cap && +cap[1] <= 16, 'orderfeel: order markers need a small cap (ORDM.cap <= 16)');
   ck(!/campHud/.test(all), 'orderfeel: the old mission objectives box (campHud) is back - missions use the goal line'); }
+// ---- controlsfeel (Abdullah 2026-11-17 polish queue "Controls feel"): camera pan glides (CAMS velocity eased with exp(-dt), so the same at any
+// frame rate), the wheel zooms by moving the zoom TARGET (cam.td) that camTick eases toward (never a jump of cam.dist), one Settings > Mouse
+// "Camera smoothing" switch (mCam), a short pick-up pulse in the ONE ring system (SELR.ts), the clean box-select and the Shift/Alt path preview.
+{ const ui = SRC['08-ui.js'] || '', vw = SRC['06-view.js'] || '', of = SRC['06d-orderfeel.js'] || '', all = srcFiles.filter(f => !/^13/.test(f)).map(f => SRC[f]).join('\n');
+  ck(/function camGlide\([\s\S]{0,300}Math\.exp\(-dt\*/.test(ui) && /\[rx,dn\]=camGlide\(/.test(ui), 'controlsfeel: camera pan must glide through camGlide (exp(-dt) easing, frame-rate independent)');
+  ck(/const CAMS=\{/.test(vw) && (all.match(/const CAMS=/g) || []).length === 1, 'controlsfeel: one camera glide state (CAMS in 06-view)');
+  { const wh = /cv\.addEventListener\('wheel',[^\n]*/.exec(ui); ck(wh && /cam\.td=nd/.test(wh[0]) && !/cam\.dist=/.test(wh[0]), 'controlsfeel: wheel zoom must move the zoom target (cam.td) so camTick eases it, never set cam.dist directly'); }
+  ck(/kz=1-Math\.exp\(-dt\*/.test(vw), 'controlsfeel: camTick must ease zoom with exp(-dt)');
+  ck(/\['sMCam','Camera smoothing/.test(ui) && /mCam:1\}/.test(ui), 'controlsfeel: Settings > Mouse needs the one "Camera smoothing" switch (mCam, default On)');
+  ck(/SELR=\{[^\n]*ts:new Map\(\)/.test(of) && /pick-up pulse/.test(of), 'controlsfeel: newly selected units pulse in the one ring system (SELR.ts)');
+  ck(/function selBox\(c\)/.test(vw) && /function wayPreview\(c\)/.test(vw) && !/createElement/.test((/function selBox[\s\S]*?function wayPreview[\s\S]*?\n\/\*/.exec(vw) || [''])[0]), 'controlsfeel: box select + Shift/Alt path preview are canvas-drawn (no DOM per frame)'); }
 // ---- American voices (Abdullah 2026-11-13 20:08 "Americans sound British"): the US unit voices are cloned from public-domain American recordings
 // (tools/voices/refs, credits in CREDITS.md), never the old studio speakers; the credits text names the source. Render recipe: orch/reports/usvoice.md.
 { const cast = JSON.parse(fs.readFileSync(path.join(ROOT, 'orch', 'vo', 'cast.json'), 'utf8')).US || {};

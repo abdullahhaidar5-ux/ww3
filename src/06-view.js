@@ -37,9 +37,10 @@ function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-110)/(700-110))
 function camYaw(){return cam.free?cam.ryaw||0:cam.yaw||0;}
 // a screen-space offset (r = to the right, u = up the screen) as a world offset for the current view rotation
 function camVec(r,u){const a=camYaw(),c=Math.cos(a),n=Math.sin(a);return{x:r*c-u*n,y:-r*n-u*c};}
-function centerOn(x,y,instant){camTarget();{const o=camVec(0,cam.td*.08);cam.tx=x+o.x;cam.ty=y+o.y;}if(instant||!G||G.t<.6){cam.x=cam.tx;cam.y=cam.ty;cam._xl=cam.x;cam._yl=cam.y;}}
+const CAMS={vx:0,vy:0,acc:7,dec:8};   // camera pan glide velocity (camGlide in 08-ui; controlsfeel)
+function centerOn(x,y,instant){camTarget();CAMS.vx=CAMS.vy=0;/* a jump stops any glide */{const o=camVec(0,cam.td*.08);cam.tx=x+o.x;cam.ty=y+o.y;}if(instant||!G||G.t<.6){cam.x=cam.tx;cam.y=cam.ty;cam._xl=cam.x;cam._yl=cam.y;}}
 function camTarget(){if(cam.tx==null||cam.x!==cam._xl||cam.y!==cam._yl){cam.tx=cam.x;cam.ty=cam.y;}if(cam.td==null||cam.dist!==cam._dl)cam.td=cam.dist;}
-function camTick(dt){camTarget();const k=1-Math.exp(-dt*9),kz=1-Math.exp(-dt*11);if(cam.tyaw!=null&&cam.tyaw!==cam.yaw){cam.yaw=(cam.yaw||0)+(cam.tyaw-(cam.yaw||0))*(1-Math.exp(-dt*10));if(Math.abs(cam.tyaw-cam.yaw)<.002)cam.yaw=cam.tyaw;}cam.x+=(cam.tx-cam.x)*k;cam.y+=(cam.ty-cam.y)*k;cam.dist+=(cam.td-cam.dist)*kz;
+function camTick(dt){camTarget();const k=1-Math.exp(-dt*9),kz=1-Math.exp(-dt*(SET.mCam===0?11:8));/* wheel zoom eases toward the cursor (controlsfeel: a touch softer with Camera smoothing on) */if(cam.tyaw!=null&&cam.tyaw!==cam.yaw){cam.yaw=(cam.yaw||0)+(cam.tyaw-(cam.yaw||0))*(1-Math.exp(-dt*10));if(Math.abs(cam.tyaw-cam.yaw)<.002)cam.yaw=cam.tyaw;}cam.x+=(cam.tx-cam.x)*k;cam.y+=(cam.ty-cam.y)*k;cam.dist+=(cam.td-cam.dist)*kz;
   if(Math.abs(cam.tx-cam.x)<.05)cam.x=cam.tx;if(Math.abs(cam.ty-cam.y)<.05)cam.y=cam.ty;if(Math.abs(cam.td-cam.dist)<.05)cam.dist=cam.td;cam._xl=cam.x;cam._yl=cam.y;cam._dl=cam.dist;}
 // which city building is under the cursor (rooftops included)
 function civUnder(sx,sy,w){if(!G.civ||!G.civ.length)return null;if(CITYM){const v=new THREE.Vector2(sx/VW*2-1,-(sy/VH)*2+1);RAY.setFromCamera(v,CAM);const h=RAY.intersectObject(CITYM,true)[0];if(h){const c=civAtXY(h.point.x-h.face.normal.x*2,h.point.z-h.face.normal.z*2);if(c)return c;}}return w?civAtXY(w.x,w.y):null;}
@@ -296,11 +297,23 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
    for(const P of paths.values()){P.pts=[{x:P.ox/P.n,y:P.oy/P.n},...P.wq];const sc=q=>toScreen(q.x,groundH(q.x,q.y)+2,q.y);let a=sc({x:P.x/P.n,y:P.y/P.n});c.lineWidth=1.4;c.strokeStyle='rgba(227,179,65,.75)';c.setLineDash([5,4]);c.beginPath();c.moveTo(a.x,a.y);
      for(const q of P.pts){const b=sc(q);c.lineTo(b.x,b.y);}c.stroke();c.setLineDash([]);c.fillStyle='#e3b341';P.pts.forEach((q,i)=>{const b=sc(q);c.beginPath();c.moveTo(b.x,b.y-7);c.lineTo(b.x+7,b.y);c.lineTo(b.x,b.y+7);c.lineTo(b.x-7,b.y);c.closePath();c.fill();if(P.pts.length>1){c.font='600 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='#1a1408';c.fillText(String(i+1),b.x,b.y+3.5);c.fillStyle='#e3b341';}});}}
   if(typeof wallPreview==='function')wallPreview(c);
-  if(drag&&drag.box){c.strokeStyle='#8af0a6';c.lineWidth=1;c.fillStyle='rgba(116,208,143,.1)';const x=Math.min(drag.x0,mouse.x),y=Math.min(drag.y0,mouse.y);c.fillRect(x,y,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));c.strokeRect(x+.5,y+.5,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));}
+  if(drag&&drag.box)selBox(c);
+  if(!drag&&!(RDRAG&&RDRAG.moved)&&(MODK.shift||MODK.alt)&&mouse.in&&!G.place&&!G.aim)wayPreview(c);
   if(G.place&&mouse.in&&STRUCT[G.place]){const w=screenToWorld(mouse.x,mouse.y);if(w)plFoot(c,w,!G.placeWhy||G.placeWhy==='dz');}   // placement footprint (Zero Hour grid)
   if(G.aim){const w=screenToWorld(mouse.x,mouse.y);if(w){const r=G.aim==='sup'?G.teams[ME].sup.r+G.teams[ME].sup.spread:G.aim==='ldrA'?60:(powInfo(G.aim,G.teams[ME].fac).r||60);c.strokeStyle='#ea5a40';c.lineWidth=1.5;c.setLineDash([6,4]);c.beginPath();
     for(let i=0;i<=40;i++){const a=i/40*6.28,p=toScreen(w.x+Math.cos(a)*r,groundH(w.x,w.y),w.y+Math.sin(a)*r);i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y);}c.stroke();c.setLineDash([]);}}
   if(flash>0){c.fillStyle=`rgba(255,236,210,${flash*.45})`;c.fillRect(0,0,VW,VH);}}
+/* Box select (controlsfeel): a dark outline under a bright line plus corner brackets, so the rectangle reads on sand, snow and grass alike. */
+function selBox(c){const w=Math.abs(mouse.x-drag.x0),h=Math.abs(mouse.y-drag.y0),x=Math.min(drag.x0,mouse.x)+.5,y=Math.min(drag.y0,mouse.y)+.5;
+  c.fillStyle='rgba(138,240,166,.12)';c.fillRect(x,y,w,h);c.lineWidth=3;c.strokeStyle='rgba(0,0,0,.5)';c.strokeRect(x,y,w,h);c.lineWidth=1.25;c.strokeStyle='#b8ffcb';c.strokeRect(x,y,w,h);
+  const k=Math.min(14,w/3,h/3);if(k<3)return;c.lineWidth=2.5;c.strokeStyle='#eafff0';c.beginPath();
+  for(const [px,py,dx,dy] of [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]]){c.moveTo(px+dx*k,py);c.lineTo(px,py);c.lineTo(px,py+dy*k);}c.stroke();}
+/* Shift (queue) / Alt (waypoint) held with own units selected: a dashed amber line from where the group's path ends now to the cursor,
+   so you see the next leg before you click. Averages at most 60 units; canvas only, view only. */
+function wayPreview(c){if(!(leftOrders()||rightOrders()))return;let x=0,y=0,n=0;for(const u of G.sel){if(n>=60)break;if(u.team!==ME||u.dead||u.isB)continue;const q=u.wq&&u.wq.length?u.wq[u.wq.length-1]:u.order&&isFinite(u.order.x)?u.order:u;x+=q.x;y+=q.y;n++;}
+  if(!n)return;const w=screenToWorld(mouse.x,mouse.y);if(!w)return;x/=n;y/=n;const a=toScreen(x,groundH(x,y)+2,y);if(a.z>1)return;
+  c.save();c.lineWidth=1.6;c.strokeStyle=MODK.alt?'rgba(255,214,120,.8)':'rgba(227,179,65,.7)';c.setLineDash([4,5]);c.lineDashOffset=-(performance.now()/60%9);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(mouse.x,mouse.y);c.stroke();c.setLineDash([]);
+  c.fillStyle='rgba(227,179,65,.85)';c.beginPath();c.moveTo(mouse.x,mouse.y-6);c.lineTo(mouse.x+6,mouse.y);c.lineTo(mouse.x,mouse.y+6);c.lineTo(mouse.x-6,mouse.y);c.closePath();c.fill();c.restore();}
 /* Placement footprint (Zero Hour): a grid of CELL/2 squares under the ghost, green where the building can stand, red where the ground (water, bridge, cliff) or the spot is wrong. Only while placing; <=64 cells. View only. */
 function plFoot(c,w,ok){const s=bstats(G.teams[ME].fac,G.place),n=Math.max(2,Math.min(8,Math.round(s.size/(CELL/2)))),st=s.size/n,x0=w.x-s.size/2,y0=w.y-s.size/2;c.save();c.lineWidth=1;
   for(let j=0;j<n;j++)for(let i=0;i<n;i++){const wx=x0+i*st,wy=y0+j*st,cx=Math.floor((wx+st/2)/CELL),cy=Math.floor((wy+st/2)/CELL),bad=!ok||cx<0||cy<0||cx>=GW||cy>=GH||G.grid[cy*GW+cx]!==0;
