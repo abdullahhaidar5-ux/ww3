@@ -243,11 +243,31 @@ def expected(say, lang):
     n = len(re.sub(r'[\s\W]', '', say))
     return 0.35 + (0.13 if lang == 'ja' else 0.062) * n
 
+def cuts(w, e):
+    """XTTS often babbles after a short line (word, pause, nonsense): the end points of the speech before each pause >= 0.18 s
+    that comes after at least 60 % of the expected length are cut candidates"""
+    iv = librosa.effects.split(w, top_db=34, frame_length=512, hop_length=128); out = []
+    for (a, b), (c, _) in zip(iv[:-1], iv[1:]):
+        if (c - b) / SR >= 0.18 and b / SR >= 0.6 * e: out.append(int(b))
+    return out[:3]
+
+def clip(j, take, lang, cut=None):
+    w = trim(raw(j['voice'], j['say'], take, j['mood'], lang))
+    if cut:
+        w = w[:cut + int(.07 * SR)].copy(); f = int(.01 * SR); w[-f:] *= np.linspace(1, 0, f)
+    return w
+
 def score_take(j, take, lang):
-    w = trim(raw(j['voice'], j['say'], take, j['mood'], lang)); d = len(w) / SR; e = expected(j['say'], lang)
-    c, hyp = readback(w, j['say'], lang)
+    w = clip(j, take, lang); d = len(w) / SR; e = expected(j['say'], lang)
+    c, hyp = readback(w, j['say'], lang); best = (c, hyp, d, 0)
+    if d > 1.4 * e + 0.3:   # long take: try cutting the tail babble off
+        for k in cuts(w, e):
+            wk = clip(j, take, lang, k); ck, hk = readback(wk, j['say'], lang)
+            if ck < best[0] - 1e-6 or (ck <= best[0] + 1e-6 and len(wk) / SR < best[2]): best = (ck, hk, len(wk) / SR, k)
+    c, hyp, d, k = best
+    w = clip(j, take, lang, k)
     bad_len = d > 2.2 * e + 0.6 or d < 0.4 * e
-    return dict(cer=round(c, 3), hyp=hyp, dur=round(d, 2), long=bad_len, p808=round(p808(w), 2))
+    return dict(cer=round(c, 3), hyp=hyp, dur=round(d, 2), long=bad_len, p808=round(p808(w), 2), cut=k)
 
 def eff(x): return x['cer'] + (1 if x['long'] else 0)
 
@@ -262,6 +282,8 @@ def nation(fac):
         sc = S.setdefault(id_, {})
         take = 0; FORCE = S.get('_med', {}).get(id_) if MEDOK else None
         while True:
+            if str(take) in sc and sc[str(take)]['long'] and 'cut' not in sc[str(take)]:
+                sc[str(take)] = score_take(j, take, lang)   # scored before tail cutting existed
             if str(take) not in sc:
                 if MEDOK and not os.path.exists(os.path.join(CACHE, rkey(j['voice'], j['say'], take, j['mood'], lang)[0] + '.wav')): break   # recheck: no new takes
                 sc[str(take)] = score_take(j, take, lang)
@@ -284,7 +306,7 @@ def nation(fac):
             bestr = None
             for t in order[:4]:
                 if sc[t]['long'] and t != first: continue
-                w = trim(raw(j['voice'], j['say'], int(t), j['mood'], lang))
+                w = clip(j, int(t), lang, sc[t].get('cut'))
                 r = process(w, j['say'], lang, np.random.default_rng(rng0), j['mood'], readback(w, j['say'], lang)[0] if FORCE else sc[t]['cer'], j['gun'])
                 if bestr is None or r[2] < bestr[0][2]: bestr = (r, t)
                 if r[2] <= MAXCER: break
