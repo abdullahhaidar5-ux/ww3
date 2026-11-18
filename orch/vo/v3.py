@@ -29,6 +29,10 @@ LANG = {'FR': 'fr', 'DE': 'de', 'GB': 'en', 'JP': 'ja'}
 SAYFIX = {   # spoken form for XTTS only (the line text itself is unchanged)
     'GB': [(r"\bSunray\b", 'Sun ray')],
 }
+# lines a clone kept saying wrong (Whisper medium, every seed above 15 % CER) go to another voice of the same cast
+VOICE_OVR = {'FR:l2.0': 'clone:fr_bernard', 'FR_r:inf2.0': 'clone:fr_bernard', 'FR_s:tank2.0': 'clone:fr_lambert',
+             'FR_r:navy1.1': 'clone:fr_bernard', 'GB_s:reload2.0': 'clone:gb_clarke',
+             'DE_r:tank1.1': 'clone:de_ungerer', 'DE_r:pilot0.1': 'clone:de_ungerer'}
 LOG = open(os.path.join(CACHE, 'render.log'), 'a', encoding='utf-8')
 def log(*a):
     s = ' '.join(str(x) for x in a); print(s, flush=True); LOG.write(s + '\n'); LOG.flush()
@@ -219,6 +223,7 @@ def jobs(fac):
         say = text.strip().replace('’', "'")
         for a, b in SAYFIX.get(fac, []): say = re.sub(a, b, say)
         if mood == 'cry': say = re.sub(r'[.。]\s*$', '!' if fac != 'JP' else '！', say)
+        v = VOICE_OVR.get(sheet + ':' + lab, v)
         J.append(dict(sheet=sheet, lab=lab, grp=grp, k=k, voice=v, text=text, say=say, mood=mood, gun=gun))
     for name, kinds in (('l', ph.P[fac]), ('c', ph.C[fac])):
         for k, texts in enumerate(kinds):
@@ -345,6 +350,7 @@ if __name__ == '__main__':
     if sys.argv[1] == 'list':
         for j in jobs(sys.argv[2]): print(j['sheet'], j['lab'], j['voice'], j['mood'], j['say'])
     else:
-        model(); import gc, ctypes; gc.collect(); ctypes.CDLL('libc.so.6').malloc_trim(0)   # XTTS first and give back the checkpoint-load heap: the sandbox's 6.2 GB memory cap OOM-killed XTTS + Whisper otherwise
+        if not MEDOK: model()
+        import gc, ctypes; gc.collect(); ctypes.CDLL('libc.so.6').malloc_trim(0)   # XTTS first and give back the checkpoint-load heap: the sandbox's 6.2 GB memory cap OOM-killed XTTS + Whisper otherwise
         for fac in sys.argv[1:]:
             nation(fac)
