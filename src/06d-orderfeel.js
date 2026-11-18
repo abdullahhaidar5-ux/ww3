@@ -11,7 +11,7 @@
      waypoint = amber diamond, line order = a thin bar along the line. The same mesh draws the right-drag ghost: one small
      ring per soldier where the line formation will put him, before the button is released.
    Both share one decal shader (ofMat). Settings > Mouse > Order markers Off hides the order markers (not the rings). */
-const SELR={m:null,max:400,n:0};
+const SELR={m:null,max:400,n:0,ts:new Map(),fr:0,pulse:.32};   // ts: id -> {t: when it was selected, f: last frame seen} for the short pick-up pulse (controlsfeel)
 const ORDM={m:null,cap:12,list:[],gmax:96,n:0,age:null};   // age: screenshot tools only (holds every marker at that age in seconds)
 const OFK={mv:[0x5fe08a,2,3,.9],am:[0xff8a2a,2,3,.9],atk:[0xff4a3a,3,3,.95],gd:[0x5fb0ff,4,2.2,1.1],wp:[0xffc23a,5,2.2,1],ln:[0x5fe08a,6,2,.8],lna:[0xff8a2a,6,2,.8],use:[0x9fe0b0,0,2,.7]};   // color, shape, line px, life s
 function ofMat(top){   // top: drawn over everything (order markers must never hide behind a building or a hill)
@@ -61,9 +61,12 @@ function selShape(e){   // [shape, half-size x (along the facing), half-size z, 
   return[SET.cb?0:7,e.r*1.2+5,e.r*.78+4.5,1.6,s.dom!=='naval'];}
 function selRingCol(e){const T=G.teams[e.team];_OF.c.set(T&&T.color||'#8af0a6');return _OF.c.lerp(_OFW,.3).getHex();}const _OFW=new THREE.Color(1,1,1);
 function selRings(){if(!SCN||!G)return;if(!SELR.m)SELR.m=ofMesh(SELR.max);const M=SELR.m;let n=0;
-  const put=(e,a)=>{if(n>=SELR.max||!e||e.dead||!vis(e))return;const[sh,sx,sz,wpx,tilt]=selShape(e),o=OBJ.get(e.id),yaw=e.isB?(o?o.rotation.y:0):(o?o.rotation.y:-(e.va||0));
+  const put=(e,a,q)=>{if(n>=SELR.max||!e||e.dead||!vis(e))return;let[sh,sx,sz,wpx,tilt]=selShape(e),o=OBJ.get(e.id),yaw=e.isB?(o?o.rotation.y:0):(o?o.rotation.y:-(e.va||0));
+    if(q>0){const g=1+.45*q*q;sx*=g;sz*=g;a+=(1-a)*q;}   // pick-up pulse: the ring starts a little wider and brighter and settles in ~0.3 s
     const h=e.isB||tilt?groundH(e.x,e.y)+1.4:unitH(e)+1.2;ofPut(M,n++,e.x,e.y,h,yaw,Math.max(sx,sz),tilt,selRingCol(e),a,sh,SET.cb&&!e.isB?idRingSeg(e.team):0,wpx,sx,sz,0);};
-  for(const e of G.sel)put(e,e.team===ME?.8:.65);
+  const now=performance.now()/1000,TS=SELR.ts,fr=++SELR.fr;
+  for(const e of G.sel){let r=TS.get(e.id);if(!r){r={t:now,f:fr};TS.set(e.id,r);}else r.f=fr;const q=Math.max(0,1-(now-r.t)/SELR.pulse);put(e,e.team===ME?.8:.65,q);}
+  if(TS.size>G.sel.length)for(const [id,r] of TS)if(r.f!==fr)TS.delete(id);   // let go = forget, so selecting it again pulses again
   const hv=mouse.in&&!drag&&HOVE&&!HOVE.dead&&!G.sel.includes(HOVE)?HOVE:null;if(hv)put(hv,.42);
   SELR.n=n;ofDone(M,n);}
 /* ---- order markers ---- */

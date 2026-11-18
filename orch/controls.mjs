@@ -414,6 +414,24 @@ try {
   check('lock: Settings toggle off = the mouse is never locked', !L.on && L.req === r0, JSON.stringify(L));
   await page.evaluate(() => { SET.mLock = 1; });
 
+  /* ---- camera feel (controlsfeel): the wheel eases the zoom, the pan glides the same at any frame rate, selection pulses ---- */
+  console.log(' camera feel');
+  { const r = await page.evaluate(() => { const o = {}; SET.mCam = 1; camTarget(); const d0 = cam.dist;
+      cv.dispatchEvent(new WheelEvent('wheel', { deltaY: 240, clientX: innerWidth / 2, clientY: innerHeight / 2, bubbles: true, cancelable: true }));
+      o.jump = cam.dist !== d0; o.moved = Math.abs(cam.td - d0) > 5; for (let i = 0; i < 90; i++) camTick(1 / 60); o.settled = Math.abs(cam.dist - cam.td) < 1;
+      const run = (fps, secs, held) => { const x0 = cam.tx; CAMS.vx = CAMS.vy = 0; keys.d = held; for (let i = 0; i < fps * secs; i++) scroll(1 / fps); keys.d = false; const dx = cam.tx - x0; return dx; };
+      const sx = cam.tx, sy = cam.ty; centerOn(MAPW / 2, MAPH / 2, true); const x0 = cam.tx;
+      CAMS.vx = CAMS.vy = 0; keys.d = true; scroll(1 / 60); keys.d = false; o.first = cam.tx - x0; o.full = cam.td * 1.1 / 60 * (SET.scr || 100) / 100;
+      centerOn(MAPW / 2, MAPH / 2, true); const a = run(30, .5, true); centerOn(MAPW / 2, MAPH / 2, true); const b = run(144, .5, true); o.fps = [a, b];
+      centerOn(MAPW / 2, MAPH / 2, true); run(60, .5, true); const xr = cam.tx; for (let i = 0; i < 60; i++) scroll(1 / 60); o.coast = cam.tx - xr; o.stopped = CAMS.vx === 0 && CAMS.vy === 0;
+      centerOn(sx, sy, true); return o; });
+    check('camera: the wheel moves the zoom target and the camera eases there (no jump)', !r.jump && r.moved && r.settled, JSON.stringify(r));
+    check('camera: WASD pan starts gently (first frame well under full speed)', r.first > 0 && r.first < r.full * .5, JSON.stringify(r));
+    check('camera: pan glide is frame-rate independent (30 vs 144 fps within 6%)', r.fps[0] > 0 && Math.abs(r.fps[0] - r.fps[1]) / r.fps[1] < .06, JSON.stringify(r));
+    check('camera: letting go coasts a little, then stops', r.coast > 0 && r.stopped, JSON.stringify(r)); }
+  { await setSel([A, B]); const p = await page.evaluate(() => { selRings(); return { ts: SELR.ts.size, n: SELR.n }; });
+    check('selection: newly selected units get the pick-up pulse (tracked in SELR.ts)', p.ts >= 2 && p.n >= 2, JSON.stringify(p)); await clear(page); }
+
   /* ---- Settings > Mouse > Generals ---- */
   console.log(' Generals scheme (chosen in Settings > Mouse)');
   await page.evaluate(() => openSettings());
