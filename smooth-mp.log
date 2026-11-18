@@ -1,0 +1,25 @@
+[0s] mp: opening 3 pages
+[5s] mp: pages open
+[5s] mp: lobby xspegp
+[65s] mp attempt 1: REGRESSED
+  (re-running once to rule out noise) could not run: timed out waiting for client 1 in the lobby
+[66s] mp: opening 3 pages
+[71s] mp: pages open
+[71s] mp: lobby d5gs78
+[73s] mp: clients joined
+[168s] mp: battle loaded on all pages
+[168s] mp: playing 40s
+[208s] mp: checking sync
+[216s] mp attempt 2: ok
+
+                       mp        
+snap interval p95      160       
+snap jitter sd         62.06     
+order latency p95      123       
+client frame p95       23.2      
+client snaps           0         
+biggest snap (units)   0         
+desyncs                0         
+runtime 3.6 min
+
+SMOOTH PASS
