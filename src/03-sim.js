@@ -1389,7 +1389,7 @@ function unloadTunnel(b){const f=b.kind==='fort',p=isPost(b);const T=G.teams[b.t
 function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
 function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,t:0,next:1e9};return;}
   // seeded (same for every player and the server): the next change is picked ahead of time and announced ~25 s before it arrives
-  if(!G.wxR)G.wxR=mulberry(((G.seed||1)*7919+13)|0);const R=G.wxR;
+  const R=()=>{const n=G.wxN=(G.wxN|0)+1;return mulberry(((G.seed||1)*7919+13+n*104729)|0)();};/* every draw is a pure function of (seed, draw number): the draw number is in the checkpoint, so a loaded save / migrated host keeps the same weather (a closure RNG could not be saved) */
   if(!G.wx)G.wx={k:'clear',t:0,next:150+R()*90,nk:null,fc:0};const W=G.wx;W.t+=dt;const ks=weatherKinds(G.map.mud?'green':G.map.theme,G.live);
   if(!W.nk)W.nk=W.k==='clear'?ks[1+Math.floor(R()*(ks.length-1))]:'clear';
   if(!W.fc&&W.t>=W.next-25){W.fc=1;const w=WEATHER[W.nk];for(const T of G.teams)log(T.id,W.nk==='clear'?'Forecast: the weather is about to clear.':`Forecast: ${w.name.toLowerCase()} rolling in within 25 seconds.`,'w');}

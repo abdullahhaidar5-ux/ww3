@@ -95,6 +95,8 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/function condUI\(/.test(u) && /function sbCond\(/.test(u), 'weathergfx: the setup or Test range Conditions picker is gone from 08-ui.js');
   ck(/const GFX_PRESETS=\[\['low','Low'.*\['auto','Medium'.*\['high','High'.*\['ultra','Ultra'/.test(u), 'weathergfx: Settings graphics row is not Low / Medium / High / Ultra any more');
   ck(!/wxRandIdx\(G\.seed\)===4/.test(s), 'weathergfx: the old "Random = day or night only" rule is back in newGame'); }
+// redfixF 2026-11-18: the weather's random draws are a pure function of (seed, draw number) and the draw number is in the checkpoint (a closure RNG could not be saved: a migrated host or a loaded save got a different weather)
+{ const sim = SRC['03-sim.js'] || '', c7 = SRC['07b-ckpt.js'] || ''; ck(/function weatherTick[\s\S]{0,400}G\.wxN=\(G\.wxN\|0\)\+1/.test(sim) && !/G\.wxR\b/.test(sim) && /'wx','wxN'/.test(c7), 'redfixF: weather draws must be counted (G.wxN, kept in the checkpoint), not a hidden RNG closure'); }
 // smoothaudit 2026-11-17: the supply-lines button reads the minimap's place twice a second, not every frame (a forced page layout per frame)
 ck(/function lgUiTick\(\)\{[^\n]*\n[^\n]*\n[^\n]*\n[^\n]*\n\s*if\(show\)\{const nw=performance\.now\(\);if\(nw-\(LGU\.rt\|\|0\)<500/.test(SRC['08c-logi.js'] || ''), 'smoothaudit: lgUiTick reads the minimap rect (getBoundingClientRect) every frame again');
 // smoothaudit2 2026-11-17: merged soldier figures are drawn by one instanced draw per look (SOLB), bones from one shared texture; the AO depth pass draws the batches with their own depth material
