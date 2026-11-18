@@ -150,6 +150,8 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(/in_ural/.test(m) && /pk_ural/.test(m) && /jp35/.test(m) && /sa35/.test(m) && /RMAP\.atgm,\{IN:'inhum'/.test(m), 'national vehicles: the Regional family (IN/JP/KR/PK/SA/AE/TR/EG trucks and ATGM carriers) lost its own looks');
   // only the US wears the white star: the M35 truck texture's star spots are painted over for every other nation
   ck(/function noStarMap/.test(m) && /key==='m_m35'&&!\(team&&team\.fac==='US'\)&&c\.map\)c\.map=noStarMap/.test(m), 'no US star on non-US trucks: the M35 texture patch (noStarMap) is gone or no longer skips only the US'); }
+  // PACK looks7: AA, rocket rack, EW and ATGM carriers each get a family-specific code-built add-on on the nation's truck (West / East / Shia / Regional), shared per paint
+  ck(/function aaGeo\(/.test(m) && /function rackGeo\(/.test(m) && /function ewGeo\(/.test(m) && /function atgmGeo\(/.test(m) && /extra==='aatruck'/.test(m) && /extra==='atgm'/.test(m) && !/atgm:\{m:'truck',fit:'z',size:27,extra:'samtruck'/.test(m) && /addonWarm\(facs\)/.test(m), 'national vehicles: the family add-ons (AA turret, rocket rack, EW mast, ATGM launcher) are gone or AA/ATGM went back to the one shared SAM box');
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];
