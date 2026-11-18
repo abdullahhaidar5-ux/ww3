@@ -19484,7 +19484,10 @@ function shadowSnap(){if(typeof SUN==='undefined'||!SUN||!SUN.castShadow)return;
 // Shadow map refresh: the shadow pass redraws every shadow caster (~2000 in a big battle) and is the biggest single cost of a frame.
 // On phones, and whenever the frame-rate governor has already lowered the picture or frames run under ~45 FPS, it is redrawn every
 // other frame (a 1/60 s old shadow is not visible; the light, map and matrix stay consistent with each other). PCs at full speed redraw every frame.
-let _shN=0;function shadowDue(){_shN++;let lite=false;try{lite=(typeof GFX_PHONE!=='undefined'&&GFX_PHONE)||fxLv()>=2||QUAL.fps<45;}catch(e){}return !lite||(_shN&1)===0||_shN<4;}
+/* Medium (effect level 1) with a camera that has not moved for two frames also redraws the shadow every other frame (smoothaudit big, PACK looks 2026-11-18): the light and map stay put, only moving units' shadows are a frame old */
+const _shCam={m:new Float32Array(16),still:0};
+function camStill(){try{const e=CAM.matrixWorld.elements,m=_shCam.m;let same=true;for(let i=0;i<16;i++){if(Math.abs(e[i]-m[i])>1e-4){same=false;}m[i]=e[i];}_shCam.still=same?_shCam.still+1:0;}catch(e){_shCam.still=0;}return _shCam.still>=2;}
+let _shN=0;function shadowDue(){_shN++;let lite=false;try{const still=camStill();lite=(typeof GFX_PHONE!=='undefined'&&GFX_PHONE)||fxLv()>=2||QUAL.fps<45||(fxLv()>=1&&still);}catch(e){}return !lite||(_shN&1)===0||_shN<4;}
 function softP(on){for(const P of [PN_,PA_]){if(!P)continue;const u=P.m.uniforms;u.soft.value=on?1:0;P.m.depthTest=!on;if(on){u.dep.value=POST.dRT.depthTexture;u.sres.value.set(POST.w,POST.h);u.nf.value.set(CAM.near,CAM.far);}}}
 // Ambient occlusion needs a second full pass over the scene (depth). A fast machine at full detail does it every frame; as soon as the
 // machine is struggling (under 50 FPS, or the frame-rate governor has lowered effects) it is redrawn every other frame and the
