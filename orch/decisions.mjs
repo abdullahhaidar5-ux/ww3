@@ -248,6 +248,7 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
 // "Camera smoothing" switch (mCam), a short pick-up pulse in the ONE ring system (SELR.ts), the clean box-select and the Shift/Alt path preview.
 { const ui = SRC['08-ui.js'] || '', vw = SRC['06-view.js'] || '', of = SRC['06d-orderfeel.js'] || '', all = srcFiles.filter(f => !/^13/.test(f)).map(f => SRC[f]).join('\n');
   ck(/function camGlide\([\s\S]{0,300}Math\.exp\(-dt\*/.test(ui) && /\[rx,dn\]=camGlide\(/.test(ui), 'controlsfeel: camera pan must glide through camGlide (exp(-dt) easing, frame-rate independent)');
+  ck(/scroll\(Math\.min\(\.25,rawDt\)\)/.test(ui), 'camera pan must run on real frame time (rawDt, cap .25 s), not the .05 s sim-capped dt: slow CI/PC frames made edge scroll crawl (gate/controls lock edge test)');
   ck(/const CAMS=\{/.test(vw) && (all.match(/const CAMS=/g) || []).length === 1, 'controlsfeel: one camera glide state (CAMS in 06-view)');
   { const wh = /cv\.addEventListener\('wheel',[^\n]*/.exec(ui); ck(wh && /cam\.td=nd/.test(wh[0]) && !/cam\.dist=/.test(wh[0]), 'controlsfeel: wheel zoom must move the zoom target (cam.td) so camTick eases it, never set cam.dist directly'); }
   ck(/kz=1-Math\.exp\(-dt\*/.test(vw), 'controlsfeel: camTick must ease zoom with exp(-dt)');
