@@ -147,9 +147,9 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(/cn72/.test(m) && /in90/.test(m) && /pk72/.test(m), 'national vehicles: CN/IN/PK lost their own tank paint');
   ck(/gb35/.test(m) && /de35/.test(m) && /il35/.test(m) && /RMAP\.atgm,\{US:'humvee'/.test(m), 'national vehicles: the West family (US/GB/FR/DE/IL/UA trucks and ATGM carriers) lost its own looks');
   ck(/ru_ural/.test(m) && /cn_ural/.test(m) && /kp_ural/.test(m) && /RMAP\.atgm,\{CN:'cnhum'/.test(m), 'national vehicles: the East family (RU/CN/KP trucks and ATGM carriers) lost its own looks');
-  ck(/in_ural/.test(m) && /pk_ural/.test(m) && /jp35/.test(m) && /sa35/.test(m) && /RMAP\.atgm,\{IN:'inhum'/.test(m), 'national vehicles: the Regional family (IN/JP/KR/PK/SA/AE/TR/EG trucks and ATGM carriers) lost its own looks'); }
+  ck(/in_ural/.test(m) && /pk_ural/.test(m) && /jp35/.test(m) && /sa35/.test(m) && /RMAP\.atgm,\{IN:'inhum'/.test(m), 'national vehicles: the Regional family (IN/JP/KR/PK/SA/AE/TR/EG trucks and ATGM carriers) lost its own looks');
   // only the US wears the white star: the M35 truck texture's star spots are painted over for every other nation
-  ck(/function noStarMap/.test(m) && /key==='m_m35'&&!\(team&&team\.fac==='US'\)&&c\.map\)c\.map=noStarMap/.test(m), 'no US star on non-US trucks: the M35 texture patch (noStarMap) is gone or no longer skips only the US');
+  ck(/function noStarMap/.test(m) && /key==='m_m35'&&!\(team&&team\.fac==='US'\)&&c\.map\)c\.map=noStarMap/.test(m), 'no US star on non-US trucks: the M35 texture patch (noStarMap) is gone or no longer skips only the US'); }
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];
