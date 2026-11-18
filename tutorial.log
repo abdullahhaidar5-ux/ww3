@@ -1,0 +1,520 @@
+menu {"btn":"▶ Tutorial: learn Battle (10 min)","vis":false}
+-- skip / exit / restart
+step 1 gen | highlight: edge | words: 39
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   the one tutorial is the Battle tutorial with a supply-lines step
+  ok   Skip step moves to the next step (3 clicks -> step 4)
+  ok   Exit tutorial hides the tips and arrow and leaves the battle running
+  ok   menu still offers the tutorial (not marked done after exiting)
+-- full playthrough
+  ok   the tutorial is a Battle (no towns)
+step 1 gen | highlight: edge | words: 39
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   Generator placed with a click next to the base
+step 2 dep | highlight: box | words: 36
+  ok   step 2 tip visible
+  ok   step 2 tip short (<=50 words)
+  ok   step 2 has an arrow/ring on its target
+  ok   step 2 tip box does not cover its own highlight 
+  ok   Supply Depot placed with a click next to the base
+step 3 bar | highlight: box | words: 32
+  ok   step 3 tip visible
+  ok   step 3 tip short (<=50 words)
+  ok   step 3 has an arrow/ring on its target
+  ok   step 3 tip box does not cover its own highlight 
+  ok   Barracks placed
+  ok   the Dozer finishes the Barracks
+step 4 fac | highlight: box | words: 37
+  ok   step 4 tip visible
+  ok   step 4 tip short (<=50 words)
+  ok   step 4 has an arrow/ring on its target
+  ok   step 4 tip box does not cover its own highlight 
+  ok   War Factory placed
+step 5 sup | highlight: box | words: 50
+  ok   step 5 tip visible
+  ok   step 5 tip short (<=50 words)
+  ok   step 5 has an arrow/ring on its target
+  ok   step 5 tip box does not cover its own highlight 
+  ok   L key shows supply lines
+  ok   your supply lines cover at least one road (4)
+step 6 veh | highlight: ring | words: 38
+  ok   step 6 tip visible
+  ok   step 6 tip short (<=50 words)
+  ok   step 6 has an arrow/ring on its target
+  ok   step 6 tip box does not cover its own highlight 
+  ok   the Dozer finishes the War Factory
+  ok   left-click selects the War Factory
+step 7 atk | highlight: ring | words: 44
+  ok   step 7 tip visible
+  ok   step 7 tip short (<=50 words)
+  ok   step 7 has an arrow/ring on its target
+  ok   step 7 tip box does not cover its own highlight 
+    attack round 0 {"t":115,"mine":23,"foe":5}
+    attack round 2 {"t":139,"mine":23,"foe":2}
+    attack round 4 {"t":164,"mine":23,"foe":2}
+    attack round 6 {"t":188,"mine":23,"foe":2}
+    attack round 8 {"t":213,"mine":23,"foe":2}
+    attack round 10 {"t":238,"mine":23,"foe":2}
+    attack round 12 {"t":262,"mine":23,"foe":2}
+    attack round 14 {"t":287,"mine":23,"foe":2}
+    attack round 16 {"t":312,"mine":23,"foe":2}
+    attack round 18 {"t":336,"mine":23,"foe":2}
+    attack round 20 {"t":361,"mine":23,"foe":2}
+    attack round 22 {"t":385,"mine":23,"foe":2}
+    attack round 24 {"t":410,"mine":23,"foe":2}
+    attack round 26 {"t":435,"mine":23,"foe":2}
+    attack round 28 {"t":459,"mine":23,"foe":2}
+    attack round 30 {"t":484,"mine":23,"foe":2}
+    attack round 32 {"t":509,"mine":23,"foe":2}
+    attack round 34 {"t":533,"mine":23,"foe":2}
+    attack round 36 {"t":558,"mine":23,"foe":2}
+    attack round 38 {"t":583,"mine":23,"foe":2}
+    attack round 40 {"t":607,"mine":23,"foe":2}
+    attack round 42 {"t":632,"mine":23,"foe":2}
+    attack round 44 {"t":657,"mine":23,"foe":2}
+    attack round 46 {"t":681,"mine":23,"foe":2}
+    attack round 48 {"t":706,"mine":23,"foe":2}
+    attack round 50 {"t":731,"mine":23,"foe":2}
+    attack round 52 {"t":755,"mine":23,"foe":2}
+    attack round 54 {"t":780,"mine":23,"foe":2}
+    attack round 56 {"t":805,"mine":23,"foe":2}
+    attack round 58 {"t":830,"mine":23,"foe":2}
+    attack round 60 {"t":854,"mine":23,"foe":2}
+    attack round 62 {"t":879,"mine":23,"foe":2}
+    attack round 64 {"t":903,"mine":23,"foe":2}
+    attack round 66 {"t":928,"mine":23,"foe":2}
+    attack round 68 {"t":953,"mine":23,"foe":2}
+    attack round 70 {"t":977,"mine":23,"foe":2}
+    attack round 72 {"t":1002,"mine":23,"foe":2}
+    attack round 74 {"t":1027,"mine":23,"foe":2}
+    attack round 76 {"t":1051,"mine":23,"foe":2}
+    attack round 78 {"t":1076,"mine":23,"foe":2}
+    attack round 80 {"t":1101,"mine":23,"foe":2}
+    attack round 82 {"t":1125,"mine":23,"foe":2}
+    attack round 84 {"t":1150,"mine":23,"foe":2}
+    attack round 86 {"t":1174,"mine":23,"foe":2}
+    attack round 88 {"t":1199,"mine":23,"foe":2}
+    attack round 90 {"t":1224,"mine":23,"foe":2}
+    attack round 92 {"t":1249,"mine":23,"foe":2}
+    attack round 94 {"t":1273,"mine":23,"foe":2}
+    attack round 96 {"t":1298,"mine":23,"foe":2}
+    attack round 98 {"t":1322,"mine":23,"foe":2}
+    attack round 100 {"t":1347,"mine":23,"foe":2}
+    attack round 102 {"t":1372,"mine":23,"foe":2}
+    attack round 104 {"t":1396,"mine":23,"foe":2}
+    attack round 106 {"t":1421,"mine":23,"foe":2}
+    attack round 108 {"t":1446,"mine":23,"foe":2}
+    attack round 110 {"t":1470,"mine":23,"foe":2}
+    attack round 112 {"t":1495,"mine":23,"foe":2}
+    attack round 114 {"t":1520,"mine":23,"foe":2}
+    attack round 116 {"t":1544,"mine":23,"foe":2}
+    attack round 118 {"t":1569,"mine":23,"foe":2}
+    attack round 120 {"t":1594,"mine":23,"foe":2}
+    attack round 122 {"t":1618,"mine":23,"foe":2}
+    attack round 124 {"t":1643,"mine":23,"foe":2}
+    attack round 126 {"t":1667,"mine":23,"foe":2}
+    attack round 128 {"t":1692,"mine":23,"foe":2}
+    attack round 130 {"t":1717,"mine":23,"foe":2}
+    attack round 132 {"t":1742,"mine":23,"foe":2}
+    attack round 134 {"t":1766,"mine":23,"foe":2}
+    attack round 136 {"t":1791,"mine":23,"foe":2}
+    attack round 138 {"t":1816,"mine":23,"foe":2}
+    attack round 140 {"t":1840,"mine":23,"foe":2}
+    attack round 142 {"t":1865,"mine":23,"foe":2}
+    attack round 144 {"t":1889,"mine":23,"foe":2}
+    attack round 146 {"t":1914,"mine":23,"foe":2}
+    attack round 148 {"t":1939,"mine":23,"foe":2}
+    attack round 150 {"t":1963,"mine":23,"foe":2}
+    attack round 152 {"t":1988,"mine":23,"foe":2}
+    attack round 154 {"t":2013,"mine":23,"foe":2}
+    attack round 156 {"t":2037,"mine":23,"foe":2}
+    attack round 158 {"t":2062,"mine":23,"foe":2}
+    attack round 160 {"t":2087,"mine":23,"foe":2}
+    attack round 162 {"t":2111,"mine":23,"foe":2}
+    attack round 164 {"t":2136,"mine":23,"foe":2}
+    attack round 166 {"t":2161,"mine":23,"foe":2}
+    attack round 168 {"t":2185,"mine":23,"foe":2}
+    attack round 170 {"t":2210,"mine":23,"foe":2}
+    attack round 172 {"t":2235,"mine":23,"foe":2}
+    attack round 174 {"t":2259,"mine":23,"foe":2}
+    attack round 176 {"t":2284,"mine":23,"foe":2}
+    attack round 178 {"t":2308,"mine":23,"foe":2}
+    attack round 180 {"t":2333,"mine":23,"foe":2}
+    attack round 182 {"t":2358,"mine":23,"foe":2}
+    attack round 184 {"t":2382,"mine":23,"foe":2}
+    attack round 186 {"t":2407,"mine":23,"foe":2}
+    attack round 188 {"t":2432,"mine":23,"foe":2}
+    attack round 190 {"t":2456,"mine":23,"foe":2}
+    attack round 192 {"t":2481,"mine":23,"foe":2}
+    attack round 194 {"t":2506,"mine":23,"foe":2}
+    attack round 196 {"t":2531,"mine":23,"foe":2}
+    attack round 198 {"t":2555,"mine":23,"foe":2}
+    attack round 200 {"t":2580,"mine":23,"foe":2}
+    attack round 202 {"t":2604,"mine":23,"foe":2}
+    attack round 204 {"t":2629,"mine":23,"foe":2}
+    attack round 206 {"t":2654,"mine":23,"foe":2}
+    attack round 208 {"t":2678,"mine":23,"foe":2}
+    attack round 210 {"t":2703,"mine":23,"foe":2}
+    attack round 212 {"t":2728,"mine":23,"foe":2}
+    attack round 214 {"t":2753,"mine":23,"foe":2}
+    attack round 216 {"t":2777,"mine":23,"foe":2}
+    attack round 218 {"t":2802,"mine":23,"foe":2}
+    attack round 220 {"t":2827,"mine":23,"foe":2}
+    attack round 222 {"t":2851,"mine":23,"foe":2}
+    attack round 224 {"t":2876,"mine":23,"foe":2}
+    attack round 226 {"t":2900,"mine":23,"foe":2}
+    attack round 228 {"t":2925,"mine":23,"foe":2}
+    attack round 230 {"t":2950,"mine":23,"foe":2}
+    attack round 232 {"t":2974,"mine":23,"foe":2}
+    attack round 234 {"t":2999,"mine":23,"foe":2}
+    attack round 236 {"t":3024,"mine":23,"foe":2}
+    attack round 238 {"t":3048,"mine":23,"foe":2}
+    attack round 240 {"t":3073,"mine":23,"foe":2}
+    attack round 242 {"t":3098,"mine":23,"foe":2}
+    attack round 244 {"t":3122,"mine":23,"foe":2}
+    attack round 246 {"t":3147,"mine":23,"foe":2}
+    attack round 248 {"t":3171,"mine":23,"foe":2}
+    attack round 250 {"t":3196,"mine":23,"foe":2}
+    attack round 252 {"t":3221,"mine":23,"foe":2}
+    attack round 254 {"t":3245,"mine":23,"foe":2}
+    attack round 256 {"t":3270,"mine":23,"foe":2}
+    attack round 258 {"t":3295,"mine":23,"foe":2}
+    attack round 260 {"t":3319,"mine":23,"foe":2}
+    attack round 262 {"t":3344,"mine":23,"foe":2}
+    attack round 264 {"t":3369,"mine":23,"foe":2}
+    attack round 266 {"t":3393,"mine":23,"foe":2}
+    attack round 268 {"t":3418,"mine":23,"foe":2}
+    attack round 270 {"t":3443,"mine":23,"foe":2}
+    attack round 272 {"t":3467,"mine":23,"foe":2}
+    attack round 274 {"t":3492,"mine":23,"foe":2}
+    attack round 276 {"t":3516,"mine":23,"foe":2}
+    attack round 278 {"t":3541,"mine":23,"foe":2}
+    attack round 280 {"t":3566,"mine":23,"foe":2}
+    attack round 282 {"t":3590,"mine":23,"foe":2}
+    attack round 284 {"t":3615,"mine":23,"foe":2}
+    attack round 286 {"t":3640,"mine":23,"foe":2}
+    attack round 288 {"t":3664,"mine":23,"foe":2}
+    attack round 290 {"t":3689,"mine":23,"foe":2}
+    attack round 292 {"t":3714,"mine":23,"foe":2}
+    attack round 294 {"t":3738,"mine":23,"foe":2}
+    attack round 296 {"t":3763,"mine":23,"foe":2}
+    attack round 298 {"t":3787,"mine":23,"foe":2}
+    attack round 300 {"t":3812,"mine":23,"foe":2}
+    attack round 302 {"t":3837,"mine":23,"foe":2}
+    attack round 304 {"t":3861,"mine":23,"foe":2}
+    attack round 306 {"t":3886,"mine":23,"foe":2}
+    attack round 308 {"t":3911,"mine":23,"foe":2}
+    attack round 310 {"t":3935,"mine":23,"foe":2}
+    attack round 312 {"t":3960,"mine":23,"foe":2}
+    attack round 314 {"t":3985,"mine":23,"foe":2}
+    attack round 316 {"t":4009,"mine":23,"foe":2}
+    attack round 318 {"t":4034,"mine":23,"foe":2}
+    attack round 320 {"t":4058,"mine":23,"foe":2}
+    attack round 322 {"t":4083,"mine":23,"foe":2}
+    attack round 324 {"t":4108,"mine":23,"foe":2}
+    attack round 326 {"t":4133,"mine":23,"foe":2}
+    attack round 328 {"t":4157,"mine":23,"foe":2}
+    attack round 330 {"t":4182,"mine":23,"foe":2}
+    attack round 332 {"t":4206,"mine":23,"foe":2}
+    attack round 334 {"t":4231,"mine":23,"foe":2}
+    attack round 336 {"t":4256,"mine":23,"foe":2}
+    attack round 338 {"t":4280,"mine":23,"foe":2}
+    attack round 340 {"t":4305,"mine":23,"foe":2}
+    attack round 342 {"t":4330,"mine":23,"foe":2}
+    attack round 344 {"t":4354,"mine":23,"foe":2}
+    attack round 346 {"t":4379,"mine":23,"foe":2}
+    attack round 348 {"t":4404,"mine":23,"foe":2}
+    attack round 350 {"t":4428,"mine":23,"foe":2}
+    attack round 352 {"t":4453,"mine":23,"foe":2}
+    attack round 354 {"t":4477,"mine":23,"foe":2}
+    attack round 356 {"t":4502,"mine":23,"foe":2}
+    attack round 358 {"t":4527,"mine":23,"foe":2}
+    attack round 360 {"t":4551,"mine":23,"foe":2}
+    attack round 362 {"t":4576,"mine":23,"foe":2}
+    attack round 364 {"t":4601,"mine":23,"foe":2}
+    attack round 366 {"t":4625,"mine":23,"foe":2}
+    attack round 368 {"t":4650,"mine":23,"foe":2}
+    attack round 370 {"t":4675,"mine":23,"foe":2}
+    attack round 372 {"t":4699,"mine":23,"foe":2}
+    attack round 374 {"t":4724,"mine":23,"foe":2}
+    attack round 376 {"t":4749,"mine":23,"foe":2}
+    attack round 378 {"t":4773,"mine":23,"foe":2}
+    attack round 380 {"t":4798,"mine":23,"foe":2}
+    attack round 382 {"t":4823,"mine":23,"foe":2}
+    attack round 384 {"t":4848,"mine":23,"foe":2}
+    attack round 386 {"t":4872,"mine":23,"foe":2}
+    attack round 388 {"t":4897,"mine":23,"foe":2}
+    attack round 390 {"t":4921,"mine":23,"foe":2}
+    attack round 392 {"t":4946,"mine":23,"foe":2}
+    attack round 394 {"t":4971,"mine":23,"foe":2}
+    attack round 396 {"t":4995,"mine":23,"foe":2}
+    attack round 398 {"t":5020,"mine":23,"foe":2}
+    attack round 400 {"t":5045,"mine":23,"foe":2}
+    attack round 402 {"t":5069,"mine":23,"foe":2}
+    attack round 404 {"t":5094,"mine":23,"foe":2}
+    attack round 406 {"t":5119,"mine":23,"foe":2}
+    attack round 408 {"t":5143,"mine":23,"foe":2}
+    attack round 410 {"t":5168,"mine":23,"foe":2}
+    attack round 412 {"t":5193,"mine":23,"foe":2}
+    attack round 414 {"t":5217,"mine":23,"foe":2}
+    attack round 416 {"t":5242,"mine":23,"foe":2}
+    attack round 418 {"t":5266,"mine":23,"foe":2}
+    attack round 420 {"t":5291,"mine":23,"foe":2}
+    attack round 422 {"t":5316,"mine":23,"foe":2}
+    attack round 424 {"t":5340,"mine":23,"foe":2}
+    attack round 426 {"t":5365,"mine":23,"foe":2}
+    attack round 428 {"t":5390,"mine":23,"foe":2}
+    attack round 430 {"t":5414,"mine":23,"foe":2}
+    attack round 432 {"t":5439,"mine":23,"foe":2}
+    attack round 434 {"t":5463,"mine":23,"foe":2}
+    attack round 436 {"t":5488,"mine":23,"foe":2}
+    attack round 438 {"t":5513,"mine":23,"foe":2}
+    attack round 440 {"t":5537,"mine":23,"foe":2}
+    attack round 442 {"t":5562,"mine":23,"foe":2}
+    attack round 444 {"t":5587,"mine":23,"foe":2}
+    attack round 446 {"t":5611,"mine":23,"foe":2}
+    attack round 448 {"t":5636,"mine":23,"foe":2}
+    attack round 450 {"t":5661,"mine":23,"foe":2}
+    attack round 452 {"t":5685,"mine":23,"foe":2}
+    attack round 454 {"t":5710,"mine":23,"foe":2}
+    attack round 456 {"t":5734,"mine":23,"foe":2}
+    attack round 458 {"t":5759,"mine":23,"foe":2}
+    attack round 460 {"t":5784,"mine":23,"foe":2}
+    attack round 462 {"t":5808,"mine":23,"foe":2}
+    attack round 464 {"t":5833,"mine":23,"foe":2}
+    attack round 466 {"t":5858,"mine":23,"foe":2}
+    attack round 468 {"t":5882,"mine":23,"foe":2}
+    attack round 470 {"t":5907,"mine":23,"foe":2}
+    attack round 472 {"t":5931,"mine":23,"foe":2}
+    attack round 474 {"t":5956,"mine":23,"foe":2}
+    attack round 476 {"t":5981,"mine":23,"foe":2}
+    attack round 478 {"t":6005,"mine":23,"foe":2}
+    attack round 480 {"t":6030,"mine":23,"foe":2}
+    attack round 482 {"t":6055,"mine":23,"foe":2}
+    attack round 484 {"t":6079,"mine":23,"foe":2}
+    attack round 486 {"t":6104,"mine":23,"foe":2}
+    attack round 488 {"t":6129,"mine":23,"foe":2}
+    attack round 490 {"t":6153,"mine":23,"foe":2}
+    attack round 492 {"t":6178,"mine":23,"foe":2}
+    attack round 494 {"t":6203,"mine":23,"foe":2}
+    attack round 496 {"t":6227,"mine":23,"foe":2}
+    attack round 498 {"t":6252,"mine":23,"foe":2}
+    attack round 500 {"t":6276,"mine":23,"foe":2}
+    attack round 502 {"t":6301,"mine":23,"foe":2}
+    attack round 504 {"t":6326,"mine":23,"foe":2}
+    attack round 506 {"t":6350,"mine":23,"foe":2}
+    attack round 508 {"t":6375,"mine":23,"foe":2}
+    attack round 510 {"t":6399,"mine":23,"foe":2}
+    attack round 512 {"t":6424,"mine":23,"foe":2}
+    attack round 514 {"t":6449,"mine":23,"foe":2}
+    attack round 516 {"t":6473,"mine":23,"foe":2}
+    attack round 518 {"t":6498,"mine":23,"foe":2}
+    attack round 520 {"t":6522,"mine":23,"foe":2}
+    attack round 522 {"t":6547,"mine":23,"foe":2}
+    attack round 524 {"t":6571,"mine":23,"foe":2}
+    attack round 526 {"t":6596,"mine":23,"foe":2}
+    attack round 528 {"t":6621,"mine":23,"foe":2}
+    attack round 530 {"t":6645,"mine":23,"foe":2}
+    attack round 532 {"t":6670,"mine":23,"foe":2}
+    attack round 534 {"t":6695,"mine":23,"foe":2}
+    attack round 536 {"t":6719,"mine":23,"foe":2}
+    attack round 538 {"t":6744,"mine":23,"foe":2}
+    attack round 540 {"t":6769,"mine":23,"foe":2}
+    attack round 542 {"t":6793,"mine":23,"foe":2}
+    attack round 544 {"t":6818,"mine":23,"foe":2}
+    attack round 546 {"t":6842,"mine":23,"foe":2}
+    attack round 548 {"t":6867,"mine":23,"foe":2}
+    attack round 550 {"t":6892,"mine":23,"foe":2}
+    attack round 552 {"t":6916,"mine":23,"foe":2}
+    attack round 554 {"t":6941,"mine":23,"foe":2}
+    attack round 556 {"t":6966,"mine":23,"foe":2}
+    attack round 558 {"t":6990,"mine":23,"foe":2}
+    attack round 560 {"t":7015,"mine":23,"foe":2}
+    attack round 562 {"t":7039,"mine":23,"foe":2}
+    attack round 564 {"t":7064,"mine":23,"foe":2}
+    attack round 566 {"t":7088,"mine":23,"foe":2}
+    attack round 568 {"t":7113,"mine":23,"foe":2}
+    attack round 570 {"t":7138,"mine":23,"foe":2}
+    attack round 572 {"t":7162,"mine":23,"foe":2}
+    attack round 574 {"t":7187,"mine":23,"foe":2}
+    attack round 576 {"t":7212,"mine":23,"foe":2}
+    attack round 578 {"t":7236,"mine":23,"foe":2}
+    attack round 580 {"t":7261,"mine":23,"foe":2}
+    attack round 582 {"t":7286,"mine":23,"foe":2}
+    attack round 584 {"t":7310,"mine":23,"foe":2}
+    attack round 586 {"t":7335,"mine":23,"foe":2}
+    attack round 588 {"t":7360,"mine":23,"foe":2}
+    attack round 590 {"t":7384,"mine":23,"foe":2}
+    attack round 592 {"t":7409,"mine":23,"foe":2}
+    attack round 594 {"t":7433,"mine":23,"foe":2}
+    attack round 596 {"t":7458,"mine":23,"foe":2}
+    attack round 598 {"t":7483,"mine":23,"foe":2}
+    attack round 600 {"t":7507,"mine":23,"foe":2}
+    attack round 602 {"t":7532,"mine":23,"foe":2}
+    attack round 604 {"t":7557,"mine":23,"foe":2}
+    attack round 606 {"t":7581,"mine":23,"foe":2}
+    attack round 608 {"t":7606,"mine":23,"foe":2}
+    attack round 610 {"t":7631,"mine":23,"foe":2}
+    attack round 612 {"t":7655,"mine":23,"foe":2}
+    attack round 614 {"t":7680,"mine":23,"foe":2}
+    attack round 616 {"t":7704,"mine":23,"foe":2}
+    attack round 618 {"t":7729,"mine":23,"foe":2}
+    attack round 620 {"t":7753,"mine":23,"foe":2}
+    attack round 622 {"t":7778,"mine":23,"foe":2}
+    attack round 624 {"t":7803,"mine":23,"foe":2}
+    attack round 626 {"t":7827,"mine":23,"foe":2}
+    attack round 628 {"t":7852,"mine":23,"foe":2}
+    attack round 630 {"t":7876,"mine":23,"foe":2}
+    attack round 632 {"t":7901,"mine":23,"foe":2}
+    attack round 634 {"t":7926,"mine":23,"foe":2}
+    attack round 636 {"t":7950,"mine":23,"foe":2}
+    attack round 638 {"t":7975,"mine":23,"foe":2}
+    attack round 640 {"t":7999,"mine":23,"foe":2}
+    attack round 642 {"t":8024,"mine":23,"foe":2}
+    attack round 644 {"t":8048,"mine":23,"foe":2}
+    attack round 646 {"t":8073,"mine":23,"foe":2}
+    attack round 648 {"t":8098,"mine":23,"foe":2}
+    attack round 650 {"t":8122,"mine":23,"foe":2}
+    attack round 652 {"t":8147,"mine":23,"foe":2}
+    attack round 654 {"t":8172,"mine":23,"foe":2}
+    attack round 656 {"t":8196,"mine":23,"foe":2}
+    attack round 658 {"t":8221,"mine":23,"foe":2}
+    attack round 660 {"t":8246,"mine":23,"foe":2}
+    attack round 662 {"t":8270,"mine":23,"foe":2}
+    attack round 664 {"t":8295,"mine":23,"foe":2}
+    attack round 666 {"t":8319,"mine":23,"foe":2}
+    attack round 668 {"t":8344,"mine":23,"foe":2}
+    attack round 670 {"t":8369,"mine":23,"foe":2}
+    attack round 672 {"t":8393,"mine":23,"foe":2}
+    attack round 674 {"t":8418,"mine":23,"foe":2}
+    attack round 676 {"t":8442,"mine":23,"foe":2}
+    attack round 678 {"t":8467,"mine":23,"foe":2}
+    attack round 680 {"t":8492,"mine":23,"foe":2}
+    attack round 682 {"t":8516,"mine":23,"foe":2}
+    attack round 684 {"t":8541,"mine":23,"foe":2}
+    attack round 686 {"t":8565,"mine":23,"foe":2}
+    attack round 688 {"t":8590,"mine":23,"foe":2}
+    attack round 690 {"t":8615,"mine":23,"foe":2}
+    attack round 692 {"t":8639,"mine":23,"foe":2}
+    attack round 694 {"t":8664,"mine":23,"foe":2}
+    attack round 696 {"t":8689,"mine":23,"foe":2}
+    attack round 698 {"t":8713,"mine":23,"foe":2}
+    attack round 700 {"t":8738,"mine":23,"foe":2}
+    attack round 702 {"t":8762,"mine":23,"foe":2}
+    attack round 704 {"t":8787,"mine":23,"foe":2}
+    attack round 706 {"t":8812,"mine":23,"foe":2}
+    attack round 708 {"t":8836,"mine":23,"foe":2}
+    attack round 710 {"t":8861,"mine":23,"foe":2}
+    attack round 712 {"t":8885,"mine":23,"foe":2}
+    attack round 714 {"t":8910,"mine":23,"foe":2}
+    attack round 716 {"t":8935,"mine":23,"foe":2}
+    attack round 718 {"t":8960,"mine":23,"foe":2}
+    attack round 720 {"t":8984,"mine":23,"foe":2}
+    attack round 722 {"t":9009,"mine":23,"foe":2}
+    attack round 724 {"t":9034,"mine":23,"foe":2}
+    attack round 726 {"t":9058,"mine":23,"foe":2}
+    attack round 728 {"t":9083,"mine":23,"foe":2}
+    attack round 730 {"t":9107,"mine":23,"foe":2}
+    attack round 732 {"t":9132,"mine":23,"foe":2}
+    attack round 734 {"t":9157,"mine":23,"foe":2}
+    attack round 736 {"t":9181,"mine":23,"foe":2}
+    attack round 738 {"t":9206,"mine":23,"foe":2}
+    attack round 740 {"t":9231,"mine":23,"foe":2}
+    attack round 742 {"t":9255,"mine":23,"foe":2}
+    attack round 744 {"t":9280,"mine":23,"foe":2}
+    attack round 746 {"t":9305,"mine":23,"foe":2}
+    attack round 748 {"t":9329,"mine":23,"foe":2}
+    attack round 750 {"t":9354,"mine":23,"foe":2}
+    attack round 752 {"t":9379,"mine":23,"foe":2}
+    attack round 754 {"t":9403,"mine":23,"foe":2}
+    attack round 756 {"t":9428,"mine":23,"foe":2}
+    attack round 758 {"t":9452,"mine":23,"foe":2}
+    attack round 760 {"t":9477,"mine":23,"foe":2}
+    attack round 762 {"t":9502,"mine":23,"foe":2}
+    attack round 764 {"t":9526,"mine":23,"foe":2}
+    attack round 766 {"t":9551,"mine":23,"foe":2}
+    attack round 768 {"t":9575,"mine":23,"foe":2}
+    attack round 770 {"t":9600,"mine":23,"foe":2}
+    attack round 772 {"t":9625,"mine":23,"foe":2}
+    attack round 774 {"t":9649,"mine":23,"foe":2}
+    attack round 776 {"t":9674,"mine":23,"foe":2}
+    attack round 778 {"t":9699,"mine":23,"foe":2}
+    attack round 780 {"t":9723,"mine":23,"foe":2}
+    attack round 782 {"t":9748,"mine":23,"foe":2}
+    attack round 784 {"t":9772,"mine":23,"foe":2}
+    attack round 786 {"t":9797,"mine":23,"foe":2}
+    attack round 788 {"t":9822,"mine":23,"foe":2}
+    attack round 790 {"t":9846,"mine":23,"foe":2}
+    attack round 792 {"t":9871,"mine":23,"foe":2}
+    attack round 794 {"t":9895,"mine":23,"foe":2}
+    attack round 796 {"t":9920,"mine":23,"foe":2}
+    attack round 798 {"t":9945,"mine":23,"foe":2}
+    attack round 800 {"t":9969,"mine":23,"foe":2}
+    attack round 802 {"t":9994,"mine":23,"foe":2}
+    attack round 804 {"t":10018,"mine":23,"foe":2}
+    attack round 806 {"t":10043,"mine":23,"foe":2}
+    attack round 808 {"t":10068,"mine":23,"foe":2}
+    attack round 810 {"t":10092,"mine":23,"foe":2}
+    attack round 812 {"t":10117,"mine":23,"foe":2}
+    attack round 814 {"t":10142,"mine":23,"foe":2}
+    attack round 816 {"t":10166,"mine":23,"foe":2}
+    attack round 818 {"t":10191,"mine":23,"foe":2}
+    attack round 820 {"t":10216,"mine":23,"foe":2}
+    attack round 822 {"t":10240,"mine":23,"foe":2}
+    attack round 824 {"t":10265,"mine":23,"foe":2}
+    attack round 826 {"t":10289,"mine":23,"foe":2}
+    attack round 828 {"t":10314,"mine":23,"foe":2}
+    attack round 830 {"t":10339,"mine":23,"foe":2}
+    attack round 832 {"t":10363,"mine":23,"foe":2}
+    attack round 834 {"t":10388,"mine":23,"foe":2}
+    attack round 836 {"t":10413,"mine":23,"foe":2}
+    attack round 838 {"t":10437,"mine":23,"foe":2}
+    attack round 840 {"t":10462,"mine":23,"foe":2}
+    attack round 842 {"t":10487,"mine":23,"foe":2}
+    attack round 844 {"t":10511,"mine":23,"foe":2}
+    attack round 846 {"t":10536,"mine":23,"foe":2}
+    attack round 848 {"t":10561,"mine":23,"foe":2}
+    attack round 850 {"t":10585,"mine":23,"foe":2}
+    attack round 852 {"t":10610,"mine":23,"foe":2}
+    attack round 854 {"t":10634,"mine":23,"foe":2}
+    attack round 856 {"t":10659,"mine":23,"foe":2}
+    attack round 858 {"t":10684,"mine":23,"foe":2}
+    attack round 860 {"t":10708,"mine":23,"foe":2}
+    attack round 862 {"t":10733,"mine":23,"foe":2}
+    attack round 864 {"t":10758,"mine":23,"foe":2}
+    attack round 866 {"t":10782,"mine":23,"foe":2}
+    attack round 868 {"t":10807,"mine":23,"foe":2}
+    attack round 870 {"t":10831,"mine":23,"foe":2}
+    attack round 872 {"t":10856,"mine":23,"foe":2}
+    attack round 874 {"t":10881,"mine":23,"foe":2}
+    attack round 876 {"t":10905,"mine":23,"foe":2}
+    attack round 878 {"t":10930,"mine":23,"foe":2}
+    attack round 880 {"t":10954,"mine":23,"foe":2}
+    attack round 882 {"t":10979,"mine":23,"foe":2}
+    attack round 884 {"t":11003,"mine":23,"foe":2}
+    attack round 886 {"t":11028,"mine":23,"foe":2}
+    attack round 888 {"t":11053,"mine":23,"foe":2}
+    attack round 890 {"t":11077,"mine":23,"foe":2}
+    attack round 892 {"t":11102,"mine":23,"foe":2}
+    attack round 894 {"t":11126,"mine":23,"foe":2}
+    attack round 896 {"t":11151,"mine":23,"foe":2}
+    attack round 898 {"t":11176,"mine":23,"foe":2}
+    attack round 900 {"t":11200,"mine":23,"foe":2}
+    attack round 902 {"t":11225,"mine":23,"foe":2}
+    attack round 904 {"t":11250,"mine":23,"foe":2}
+    attack round 906 {"t":11274,"mine":23,"foe":2}
+  FAIL no "You are ready" screen after the win
+  FAIL ready screen shows 3 tips (supply lines among them)
+  FAIL completion remembered
+  FAIL exception: page.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#tutGo')
+
+step seconds: [0,0,0,0,0,0] total 1199 s
+TUTORIAL FAIL (4)
