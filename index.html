@@ -5595,7 +5595,7 @@ const SHIA5={IR:1,RS:1,DW:1,RV:1,OB:1};   /* L2: cheap fortifications (x0.6 in B
 const BB_NAT={US:1,IL:1,RU:1,CN:1},FORT_NAT={IR:1,RS:1,AF:1,KD:1,DW:1,KP:1};
 /* upgsimple (Abdullah 2026-11-14 "simplify the list of upgrades and powers it's too much"): a nation's general powers are Recon, Paradrop, Barrage, Repair + its own national power
    (+ Bunker Buster for US/IL/RU/CN) = 5-6, plus the passive Cash Bounty. Everything else in POWERS (flares, militia, reinforcements, sanctions, cyber, EMP) is not offered in Conquest/Battle (the grand map keeps them). */
-const POW_KEEP=['bounty','recon','para','barrage','repair','bb','nat'];   /* + the nation's own power on J (Abdullah 2026-11-14 22:11 "J bring back") */
+const POW_KEEP=['bounty','recon','para','barrage','repair','bb','nat','mil','smug'];   /* economy pack 2026-11-18: Proxy Militia + Smuggling Route for every nation */   /* + the nation's own power on J (Abdullah 2026-11-14 22:11 "J bring back") */
 function powBan(k){return !!POWERS[k]&&POW_KEEP.indexOf(k)<0;}
 function sigBan(fac,k){return powBan(k)||(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
 /* power use of a building for the Build button: + needs power, - gives power (Generator); 0 = no power use (one POWER table) */
@@ -5667,7 +5667,7 @@ function gdReq(T,p){return !p.req||gdHas(T,p.req);}
 const GDOC_LATE=120;   // doctrine can be picked / changed until this many seconds into the battle
 function gdHas(T,k){return !!(T&&T.gperk&&T.gperk[k]);}
 function gdCostK(T,s,b,kind){if(!T||!T.gdoc)return 1;let m=1;const D=GDOC[T.gdoc];if(!D)return 1;for(const p of D.perks){if(!p.cost||!gdHas(T,p.k))continue;const g=p.cost[0];if(b?g===kind:(g==='air'?s.dom==='air':upgMatch(g,s,false)))m*=p.cost[1];}return m;}
-const MILNAME={IR:'Popular Mobilization volunteers',RS:'Popular Mobilization volunteers',DW:'Popular Mobilization volunteers',US:'Contractors',RU:'PMC'};
+const MILNAME={IR:'Local Defence Volunteers',RS:'Mountain Village Volunteers',DW:'Highland Tribal Volunteers',RV:'Marsh Brigade Volunteers',OB:'Neighbourhood Volunteers',US:'Contract Security Team',RU:'PMC Detachment'};   /* fictional local fighters, never a real group's name */
 const FL_MAX=4;   // flare / chaff charges per aircraft; refilled while landed (at an airfield)
 const POWERS={
   bounty:{name:'Cash Bounty',desc:'Earn 15% of the cost of every enemy you destroy',passive:true},
@@ -5676,9 +5676,10 @@ const POWERS={
   barrage:{name:'Artillery Barrage',desc:'10 shells over a wide area',cd:170,r:180},
   repair:{name:'Emergency Repair',desc:'Restore 60% health to your forces in an area',cd:120,r:230},
   flare:{name:'Illumination Flares',desc:'Light up an area for about 30 seconds so everybody can see in it, friend and foe. Made for night battles',cd:60,r:300},
-  mil:{name:'Fund Militia',desc:'Pay a local militia: 5 riflemen, an RPG team and an armed technical appear at the neutral spot nearest the front, under your command',cd:480,self:true},
+  mil:{name:'Proxy Militia',desc:'Call in local fighters at a spot you pick, near your supply area: riflemen and an RPG team (plus an armed technical at higher levels) arrive under your command',cd:240,r:110},
   bb:{name:'Bunker Buster',desc:'Two guided heavy bombs on one spot. Costs $2200 each time and is not available in the first 5 minutes. Heavy damage to buildings in a small radius, and the ONLY thing that can destroy a Mountain Fortress (both bombs must hit)',cd:420,r:70,cash:2200},
   reinf:{name:'Call-In Reinforcements',desc:'Pay $1200: a platoon (2 tanks, an AA vehicle, 4 riflemen and an AT team) is called in from your nearest map edge and drives to your base. Arrives after 12 seconds, can be ambushed on the way. Not during the setup phase',cd:300,self:true,cash:1200},
+  smug:{name:'Smuggling Route',desc:'Open a back-channel route at a spot in your supply area: a smuggler truck brings in a steady stream of cash for a while, more when you are sanctioned. The enemy cuts it by destroying the truck',cd:260,r:90},
   sanc:{name:'Sanctions',desc:'Sanction the richest enemy: their income drops 20% for 60 seconds (their Smuggling Routes upgrade cuts that to 8%)',cd:420,self:true},
 };
 // Every nation's own signature general power (unlocked like the others). Effects differ; cooldowns balance them.
@@ -5740,20 +5741,22 @@ function gpowDesc(k,P,g){const f=(v,a,b)=>v&&Math.abs(v-1)>.01?(v>1?a:b)+' '+(v>
   const L=[f(g.m,'bounty','bounty'),f(g.rm,'radius','radius'),f(g.tm,'duration','duration'),f(g.nm,k==='barrage'?'shells':'troops',k==='barrage'?'shells':'troops'),f(g.dm,'shell damage','shell damage'),f(g.pm,'repair','repair'),f(g.cdm,'cooldown','cooldown'),g.mix===PARA_AT?'mostly anti-tank teams':g.mix===PARA_INF?'mostly riflemen':null].filter(Boolean);
   return P.desc+(L.length?' ('+L.join(', ')+')':'')+(g.fx?'. Special: '+GFX_TXT[g.fx]+(k!=='bounty'?' (cooldown +10%)':' (bounty −10%)'):'');}
 const GFX_TXT={vet:'troops arrive as veterans',stealth:'troops land hidden and stay unseen until they move or fire',mark:'enemies in the area are marked - your forces do 25% more damage to them',detect:'also exposes hidden and stealthed enemy units in the area',fire:'leaves the ground burning for 8 seconds',emp:'disables enemy vehicles in the area for 4 seconds',smoke:'lays a smoke screen that hides your units inside it',rearm:'units in the area also fire 25% faster for 12 seconds',rally:'units in the area rally instantly and are fearless for 15 seconds',shield:'units in the area take 25% less damage for 12 seconds',salvage:'also refunds 15% of the cost of each unit you lose'};
-function powInfo(k,fac){const P0=POWERS[k];if(!P0)return null;const P=P0;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N=natPow(fac);return Object.assign({},P,N);}
+function powInfo(k,fac){const P0=POWERS[k];if(!P0)return null;const P=P0;if(k==='mil'){return Object.assign({},P,{name:MILNAME[fac]||P.name});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N=natPow(fac);return Object.assign({},P,N);}
 // General ranks get steadily harder to earn; each promotion gives a point. Powers unlock for 1-3 points (by strength, POWCOST) and can be
 // raised to level 2 (unlock+1 points) and level 3 (unlock+2): bigger effect, shorter cooldown (POWLV).
 const RANKS=[0,2500,7000,14000,24000,38000,56000,80000,110000];   /* 9 points in a full game: about 3-4 powers unlocked and one or two raised */
 const PLV=[1,1.4,1.8],PCD=[1,.8,.6];
 /* General powers by strength (Abdullah 2026-11-15 00:22 "Make the general powers require more points and progressively get better"):
    unlock = POWCOST (light 1, medium 2, heavy 3); level 2 costs unlock+1, level 3 unlock+2. Per level: rm = area x, dur = seconds, n = shells/troops, heal, dmg, cdm = cooldown x. */
-const POWCOST={bounty:1,recon:1,repair:1,para:2,barrage:2,bb:3,nat:3};
+const POWCOST={bounty:1,recon:1,repair:1,para:2,barrage:2,mil:2,smug:2,bb:3,nat:3};
 const POWLV={
   recon:{rm:[1,1.3,1.6],dur:[25,40,55],nx:['Reveals for 40 s over a wider area','Reveals for 55 s over the widest area']},
   repair:{rm:[1,1.25,1.5],heal:[.6,.8,1],nx:['Heals 80% in a wider area','Heals 100% in the widest area']},
   bounty:{nx:['22% of every kill (was 15%)','30% of every kill']},
   para:{n:[5,8,11],at:[0,0,2],nx:['8 troopers instead of 5','11 troopers plus 2 extra anti-tank teams']},
   barrage:{rm:[1,1.25,1.5],n:[10,14,20],nx:['14 shells over a wider area','20 shells over the widest area']},
+  mil:{n:[4,6,8],at:[1,2,3],jeep:[0,1,2],nx:['6 riflemen, 2 RPG teams and an armed technical','8 riflemen, 3 RPG teams and 2 armed technicals']},
+  smug:{inc:[16,24,34],dur:[60,80,100],nx:['More cash for 80 s','Most cash for 100 s']},
   bb:{rm:[1,1.4,1.8],dmg:[1500,1900,2400],nx:['Bigger blast (+40% radius, heavier bombs)','Huge blast (+80% radius, heaviest bombs)']},
   nat:{rm:[1,1.25,1.5],nx:['Stronger and wider, faster to recharge','Strongest and widest, fastest to recharge']}};
 function powCostBase(k){return POWCOST[k]||2;}
@@ -8119,6 +8122,15 @@ function gpowFx(team,P,x,y,dur){const fx=P.fx,inR=e=>Math.hypot(e.x-x,e.y-y)<P.r
 function militiaSpot(team){const hq=hqOf(team);if(!hq)return null;let eh=null,ed=1e9;for(const O of G.teams){if(O.id===team||ally(O.id,team)||O.out)continue;const h=hqOf(O.id);if(!h)continue;const d=Math.hypot(h.x-hq.x,h.y-hq.y);if(d<ed){ed=d;eh=h;}}if(!eh)return null;
   let best=null,bd=1e9;for(const o of G.oil||[]){if(o.dead||(o.owner>=0&&(o.owner===team||ally(o.owner,team))))continue;const d=Math.hypot(o.x-eh.x,o.y-eh.y);if(d<bd){bd=d;best=o;}}
   const x=best?best.x:(hq.x+eh.x)/2,y=best?best.y:(hq.y+eh.y)/2;return nearestPassXY('ground',x,y)||null;}
+// economy pack: a chosen spot must lie in (or just outside) your own supply area; otherwise it slides to the nearest edge of it. x=y=0 (AI) uses fallback fx,fy.
+function supSnap(team,x,y){const P=(supplyPoints()[team]||[]);if(!P.length)return null;let b=null,bd=1e18;for(const p of P){const d=Math.hypot(p.x-x,p.y-y)-p.r;if(d<bd){bd=d;b=p;}}if(!b)return null;
+  if(bd>0){const d=Math.hypot(b.x-x,b.y-y)||1,k=b.r*.85/d;x=b.x+(x-b.x)*k;y=b.y+(y-b.y)*k;}
+  return nearestPassXY('ground',x,y)||null;}
+// Smuggling Route: a smuggler truck pays cash every 2 s until it expires or the enemy destroys it (G.smugs = [{team,id,t,lv}], in the checkpoint)
+function smugOn(team){return (G.smugs||[]).some(m=>m.team===team&&m.t>G.t&&G.byId.get(m.id)&&!G.byId.get(m.id).dead);}
+function smugTick(){if(!G.smugs||!G.smugs.length)return;for(let i=G.smugs.length-1;i>=0;i--){const m=G.smugs[i],e=G.byId.get(m.id),T=G.teams[m.team];
+  if(!e||e.dead||m.t<=G.t||!T||T.out){if(e&&!e.dead){e.dead=true;e.hp=0;}G.smugs.splice(i,1);continue;}
+  T.credits+=Math.round(powLvVal('smug','inc',m.lv,16)*(T.sanc>G.t?1.5:1)*(G.bs||1));}}
 // Ground-Penetrating Radar: teams with the upgrade reveal enemy tunnel entrances near their HQ / Strike Centers (uses detT, host-side only)
 function gprTick(dt){G.gprT=(G.gprT||0)-dt;if(G.gprT>0)return;G.gprT=.5;let any=false;for(const T of G.teams)if(T.upg&&T.upg.gpr){any=true;break;}if(!any)return;
   for(const e of G.ents){if(e.dead||!e.isB||!(isTun(e)||isPost(e))||e.built<1)continue;for(const T of G.teams){if(!T.upg.gpr||T.id===e.team||ally(T.id,e.team))continue;
@@ -8131,8 +8143,12 @@ function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T
   else if(key==='flare'){const d=Math.round(30*(1+.15*(L-1)));for(const O of G.teams)O.reveals.push({x,y,r:P.r,t:d});(G.flares=G.flares||[]).push({x,y,r:P.r,t:G.t+d});FXE('flare',[x|0,y|0,P.r|0,d]);log(team,'Illumination flares lit the field.','g');}
   else if(key==='barrage'){const nS=Math.max(3,Math.round(powLvVal('barrage','n',L,10)*(P.nm||1)));for(let i=0;i<nS;i++){const a=rnd(0,6.28),r=rnd(0,P.r);addStrike(x+Math.cos(a)*r,y+Math.sin(a)*r,1.5+i*.3*Math.min(1,10/nS*1.2),60,Math.round(230*(P.dm||1)),team,'bar');}for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+300))log(O.id,'Warning: incoming artillery barrage!','w');}
   else if(key==='bb'){T.credits-=P.cash;addStrike(x,y,3,P.r,powLvVal('bb','dmg',L,1500),team,'bb');addStrike(x,y,4.2,P.r,powLvVal('bb','dmg',L,1500),team,'bb');for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+200))log(O.id,'Warning: incoming Bunker Buster!','w');}
-  else if(key==='mil'){const sp=militiaSpot(team);if(!sp)return false;const mk=(k,n)=>{for(let i=0;i<n;i++){const q=nearestPassXY('ground',sp[0]+rnd(-55,55),sp[1]+rnd(-55,55))||sp;localSpawn(null,'fund',k,q[0],q[1],{team});}};mk('inf',5);mk('at',1);mk('jeep',1);
-    const nm=powInfo('mil',T.fac).name.slice(5);log(team,`${nm} have arrived at the front.`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} funded a militia.`,'w');}
+  else if(key==='mil'){let sp=(x||y)?[x,y]:militiaSpot(team);if(!sp)return false;sp=supSnap(team,sp[0],sp[1]);if(!sp)return false;
+    const mk=(k,n)=>{for(let i=0;i<n;i++){const q=nearestPassXY('ground',sp[0]+rnd(-55,55),sp[1]+rnd(-55,55))||sp;addUnit(team,k,q[0],q[1]);}};mk('inf',powLvVal('mil','n',L,4));mk('at',powLvVal('mil','at',L,1));mk('jeep',powLvVal('mil','jeep',L,0));
+    FXE('ping',[sp[0]|0,sp[1]|0,90],team);log(team,`${P0.name} have arrived.`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} called in a militia.`,'w');}
+  else if(key==='smug'){let sp=(x||y)?[x,y]:(()=>{const h=hqOf(team);return h?[h.x,h.y]:null;})();if(!sp)return false;sp=supSnap(team,sp[0],sp[1]);if(!sp)return false;
+    const u=addUnit(team,'ammot',sp[0],sp[1]);if(!u)return false;u.smug=1;(G.smugs=G.smugs||[]).push({team,id:u.id,t:G.t+powLvVal('smug','dur',L,60),lv:L});
+    FXE('ping',[sp[0]|0,sp[1]|0,90],team);log(team,'Smuggling route open: the smuggler truck is bringing in cash. Protect it.','g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} opened a smuggling route. Destroy its smuggler truck.`,'w');}
   else if(key==='reinf'){if(T.credits<P0.cash){log(team,'Reinforcements cost $'+P0.cash+'.','w');return false;}const bb=BASES[team]||BASES[0],hq=hqOf(team);if(!hq)return false;
     const dl=bb[0],dr=MAPW-bb[0],dt2=bb[1],db=MAPH-bb[1],m=Math.min(dl,dr,dt2,db);let ex=m===dl?70:m===dr?MAPW-70:Math.max(70,Math.min(MAPW-70,bb[0])),ey=m===dt2?70:m===db?MAPH-70:Math.max(70,Math.min(MAPH-70,bb[1]));
     const ep=nearestPassXY('ground',ex,ey)||[ex,ey];T.credits-=P0.cash;log(team,'Reinforcements inbound from the map edge: about 12 seconds.','g');FXE('ping',[ep[0]|0,ep[1]|0,90],team);
@@ -8538,9 +8554,9 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   if(T.pw.bb&&T.pw.bb.cd<=0&&T.ai.d>=1&&T.ai.t%5===4&&G.t>=300&&T.credits>=2700){const f=G.ents.find(e=>e.kind==='fort'&&!e.dead&&e.built>=1&&!ally(e.team,id)&&seenBy(id,e));if(f)usePower(id,'bb',f.x,f.y);}
   if(T.pw.reinf&&T.pw.reinf.cd<=0&&T.ai.d>=1&&T.ai.t%5===3&&G.t>240&&T.credits>2600&&mine.filter(e=>!e.isB&&e.s.dom==='ground'&&!e.s.noAttack).length<14)usePower(id,'reinf',0,0);   // AI calls in reinforcements when its army is thin
   if(T.pw.mil&&T.pw.mil.cd<=0&&T.ai.d>=1&&T.ai.t%5===1&&G.t>360)usePower(id,'mil',0,0);  // AI funds a militia after 6 minutes
-  if(T.pw.sanc&&T.pw.sanc.cd<=0&&T.ai.d>=1&&T.ai.t%5===3&&G.t>240)usePower(id,'sanc',0,0);
+  if(T.pw.smug&&T.pw.smug.cd<=0&&T.ai.d>=1&&T.ai.t%5===3&&G.t>240&&!smugOn(id))usePower(id,'smug',0,0);  // AI opens a smuggling route (more eagerly when sanctioned)
   aiModern(id,T,mine,en);
-  if(T.rank-T.spent>0){{let did=false;if(T.pw.nat&&aiPerk(id))did=true;if(!T.pw.bb&&T.ai.d>=1&&G.ents.some(e=>e.kind==='fort'&&!e.dead&&!ally(e.team,id)))did=buyPower(id,'bb');if(!did)for(const k of DC.barrage?['nat','barrage','bounty','repair','para','recon']:['nat','bounty','barrage','repair','para','recon'])if(!T.pw[k]){did=buyPower(id,k);break;}if(!did&&T.ai.d>=1&&!T.pw.sanc&&['nat','bounty','barrage','repair','para','recon'].every(k=>T.pw[k]))did=buyPower(id,'sanc');if(!did&&T.ai.d>=1&&T.pw.sanc&&!T.pw.mil)did=buyPower(id,'mil');if(!did&&T.ai.d>=1&&T.pw.mil&&!T.pw.reinf)did=buyPower(id,'reinf');if(!did)for(const k of DC.barrage?['barrage','nat','repair']:['nat','barrage','repair'])if(T.pw[k]&&buyPower(id,k))break;}}
+  if(T.rank-T.spent>0){{let did=false;if(T.pw.nat&&aiPerk(id))did=true;if(!T.pw.bb&&T.ai.d>=1&&G.ents.some(e=>e.kind==='fort'&&!e.dead&&!ally(e.team,id)))did=buyPower(id,'bb');if(!did)for(const k of DC.barrage?['nat','barrage','bounty','repair','para','recon']:['nat','bounty','barrage','repair','para','recon'])if(!T.pw[k]){did=buyPower(id,k);break;}if(!did&&T.ai.d>=1&&!T.pw.sanc&&['nat','bounty','barrage','repair','para','recon'].every(k=>T.pw[k]))did=buyPower(id,'sanc');if(!did&&T.ai.d>=1&&['nat','bounty','barrage','repair','para','recon'].every(k=>T.pw[k])){for(const k of ['mil','smug'])if(!T.pw[k]){did=buyPower(id,k);break;}}if(!did&&T.ai.d>=1&&T.pw.mil&&T.pw.smug)for(const k of ['mil','smug'])if(T.pw[k].lv<2&&buyPower(id,k))break;if(!did)for(const k of DC.barrage?['barrage','nat','repair']:['nat','barrage','repair'])if(T.pw[k]&&buyPower(id,k))break;}}
   if(T.pw.nat&&T.pw.nat.cd<=0&&T.ai.t%5===2){const N=natPow(T.fac);const c=aiCluster(en);const army=mine.filter(e=>!e.isB);
     if(N.self){if(N.type==='cash'||N.type==='mercs'||army.some(u=>u.target))usePower(id,'nat',0,0);}
     else if(N.type==='shield'||N.type==='smoke'||N.type==='supply'){const g=army.filter(u=>u.target);if(g.length>=4)usePower(id,'nat',g[0].x,g[0].y);}
@@ -8863,7 +8879,7 @@ function updOil(dt){const N=G.teams.length;const here=OIL_HERE.length===N?OIL_HE
 // income buildings pay every 2 seconds; a team's extra ones earn less each
 // Sanctions: income multiplier for a team (1 normally; 0.8 while sanctioned, 0.92 with Smuggling Routes). T.sanc = sim time it ends.
 function incMul(T){return (T.sanc>G.t?(T.upg.smug?.92:.8):1)*econUp(T.fac);}
-function econTick(dt){G.ecT=(G.ecT||0)+dt;if(G.ecT<2)return;G.ecT-=2;for(const T of G.teams)if(T.sanc>G.t&&T.upg.smug&&!T.dummy)T.credits+=6;  // smuggling trickle: 3 cash/s while sanctioned
+function econTick(dt){G.ecT=(G.ecT||0)+dt;if(G.ecT<2)return;G.ecT-=2;smugTick();for(const T of G.teams)if(T.sanc>G.t&&T.upg.smug&&!T.dummy)T.credits+=6;  // smuggling trickle: 3 cash/s while sanctioned
 const per={};for(const b of G.ents){if(b.dead||!b.isB||b.kind!=='econ'||b.built<1)continue;const k=per[b.team]=(per[b.team]||0)+1;const T=G.teams[b.team];if(T.dummy)continue;
   const v=b.s.inc*2*(ECON_RATE[k-1]||0)*((b.dis||0)>G.t?0:1)*incMul(T);b.acc=(b.acc||0)+v;const w=Math.floor(b.acc);if(w>0){b.acc-=w;T.credits+=w;}}}
 
@@ -13488,7 +13504,7 @@ function specEvts(evs,SP){let e=evs.filter(v=>Array.isArray(v)),len=JSON.stringi
    drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
-const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','upN','sqOf',
+const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','smugs','craters','ruins','aiTT','upN','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
   'todM','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ','boccS'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
