@@ -66,3 +66,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-18 09:05Z ef814ce6 **RED** (28 gates) failing: superfreeze — Instanced soldiers off by default (kill switch): they stall the Test r
 - 2026-11-18 11:30Z e15752b9 **RED** (28 gates) failing: controls,loadfreeze,migrate-abrupt,tutorial — Thunderstorm look: dimmer field, lightning flashes, lighter rain on Lo
 - 2026-11-18 17:03Z 6c3c99b7 **RED** (28 gates) failing: superfreeze — train: pack-looks4 (RV and OB own tank models)
+- 2026-11-18 18:06Z 78e25dc5 **GREEN** (28 gates) — battlefield test: reset the weather draw counter between its two weath
