@@ -62,7 +62,7 @@ casts: orch/vo/cast.json FR DE GB JP · refs: tools/voices/refs/{fr,de,gb,ja}_*.
 vo/ann_he.mp3, tools/voices/map/*.json · wiring: src/09-audio.js (VO_MAP/VOR/VOH/RADT via patch_map.py, fallback lines, ?v= main 18,
 _r 6), 09b-radio.js (_h ?v=6), 09c-shouts.js (_s ?v=6), 09d-announcer.js (ANN_OFF.he, ann ?v=3) · guard `v3voice:` in orch/decisions.mjs ·
 index.html rebuilt (`build.py --check` passes) · tools: orch/vo/v3.py, v3wire.py, ann_he.py, v3sample.py.
-Gate: pushed `gate/7854f68e51` (Ship gate run 44265175988) - check it before landing; local smoke/decisions were not run (sandbox too slow).
+Gate: pushed `gate/7854f68e51` (Ship gate run 44265175988, https://github.com/abdullahhaidar5-ux/ww3/actions/runs/44265175988): at 08:33 UTC the 13 finished jobs were green (audio, smooth-pc, mpsync, mpsync-server, migrate x3, servertest, headless, icons, ew, mapsweep, ...); decisions, smoke4, smooth-mp and the rest were still running - check it before landing. Local smoke/decisions were not run (sandbox too slow).
 
 ## To land after Abdullah says yes
 Rebase on origin/main. Conflicts: index.html -> `python3 orch/build.py`; src/09-audio.js VO_MAP/VOR lines -> `python3 tools/voices/patch_map.py`;
