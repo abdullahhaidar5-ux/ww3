@@ -15,3 +15,10 @@ Old candidate list (freezefix, onegame, nations20 ...) is obsolete: one-game and
 | orch/smoothaudit2 | 4 | instanced soldiers already on main via pack-looks; docs only |
 | orch/orch2-notes | 3 | DECISIONS lines only |
 Saved nothing: none seen (taken/endscreen has orch/endscreen).
+
+## 08:55 UTC check (second conductor run; did step 1 only, a train was <110 min old)
+- main = ef814ce6. train/20261118-0800 is 50 min old and not on main (its change is already on main) so no new train started.
+- Waiting for a gate: orch/pack-battlefield2 (1 commit: camera pan on real frame time) gate/3a63c82711 is running, 2 of ~25 statuses so far.
+- No gate run yet: orch/voices3 (12 ahead, 29 behind), orch/pack-economy (1 ahead), orch/smoothaudit2 (4), orch/orch2-notes (3, notes only), orch/pack-looks2 (2).
+- Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans, src/13* only.
+- taken/ locks with no orch/ branch: endscreen has a branch (fine); rv-voice, drawcalls, redgates, savesync, uiaudit, icons, zhfeel(2), announcer, pcolor, roadcap, menubg, mplobby are 4+ days old and saved nothing on orch/ under that name.
