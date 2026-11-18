@@ -38,3 +38,8 @@ Saved nothing: none seen (taken/endscreen has orch/endscreen).
 ## 13:55 UTC check (fifth conductor run)
 - main = e15752b9 (unchanged). train/20261118-1200 (main + camera pan on real frame time) is 2 h old, gate/0e921fab40: 27 green, only gate/superfreeze red, again after the re-run (13:01 UTC: "OB longest frame 962 ms ... max 300"). Same red seen on ef814ce6 (no camera change) and 3a63c82711; green on e15752b9 twice. Looks like a flaky Test-range OB wave stall, not the camera change. NOT landed (rule: re-run once, still red). No new train.
 - Others unchanged: voices3 / voices-lb2 wait for Abdullah to listen; pack-economy, pack-looks3, orch2-notes, smoothaudit2 handoff/docs only. Old Nov-13 list obsolete.
+
+## 14:55 UTC check (sixth conductor run; state only)
+- main = e15752b9 (unchanged since 10:32). No train started: train/20261118-1200 (main + camera pan on real frame time) still holds the only open question.
+- Its gate gate/0e921fab40: all green except gate/superfreeze (Test-range OB wave stall, 962 ms frame), red after the re-run too. Main's own head shows superfreeze green; main's reds are tutorial, controls, migrate-abrupt, loadfreeze (flaky). NOT landed.
+- No new orch/* work with a ready handoff found. voices3 / voices-lb2 still wait for Abdullah to listen; pack-economy, pack-looks3, orch2-notes, smoothaudit2 are handoff or docs only. Parked: camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
