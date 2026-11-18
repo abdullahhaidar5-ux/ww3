@@ -7,10 +7,21 @@ Branch `orch/smoothaudit2`. View/graphics code only (05-fx3d, 10-post, 11-models
 1. `7cc0afd` (on main) **no shader linked mid-game for worn paint**: `weather()` program key held uniform values (amount/kind/
    pattern/wall); a Palestine barracks (wear 1.35) linked 3 programs in the Test range. Guard: decisions.mjs.
    Also on main with it: DECISIONS line "Keep Saturday" (RS keeps the 2026-11-14 voices; orch/voices-lb2 NOT to be merged).
-2. `e43e0d1` **instanced soldiers** (`SOLB` in 11-models): one instanced draw per soldier look, bones in one shared texture
+2. NOT LANDED (on this branch only) - `e43e0d1` **instanced soldiers** (`SOLB` in 11-models): one instanced draw per soldier look, bones in one shared texture
    (covers audit items (a) and most of (b)). See the report's smoothaudit2 section for numbers. Guard: decisions.mjs.
    Look: same shader output (weathering base height and look-detail scale passed per instance); soldiers just outside the
    screen no longer cast shadows into it. Kill switch for testing: `SOLB.on=false` before a battle starts.
+
+## Why e43e0d1 is not on main (blocker, start here)
+Its cigate run is green except `gate/superfreeze` (superfreeze.mjs part, 2 of 2 runs): IR 11 / 8 and US 8 / 7 "new meshes"
+(max 6) vs 4 / 1 on 7cc0afd. Local A/B with `VAO=1 node orch/superfreeze.mjs IR`: with SOLB on, the strike creates 5 new
+vertex arrays for the shared rock-chunk shapes (`CHUNKG`, 05-fx3d chunks()) in the SHADOW pass (`MeshDepthMaterial`
+program P5 instead of the one warmed in Battle); with `SOLB.on=false` (same build) and with `solbAO` disabled it is
+5 / 5 vs 0: it is the batching itself, not the AO pass. three.js r186 shares one `_depthMaterial` for every shadow caster
+and mutates it per object (side, map, alphaTest...), so the chunk depth program depends on what was drawn before it;
+next step: log the full program key (P99 vs P5) of the chunk depth draw in the warm-up 'missiles' step vs the strike
+(orch/superfreeze.mjs VAO=1 with the program cacheKey added to `__cur`), or simply also warm the chunks with the depth
+variant the strike uses. smooth-mp and migrate-down were green on re-run.
 
 ## Gate notes (important for whoever lands next)
 - **gate/superfreeze is flaky on unchanged main** (~40% red since 2026-11-16). Traced on runners (`TRACE=1 TRACEMS=100
