@@ -1,0 +1,23 @@
+artifact page written: orch/out/artifact/index.html (5362180 bytes, game 4516801 chars), 151 audio files + 82 model files (14.7 MB); publish arguments in orch/out/artifact/publish.json
+[3s] both pages loaded (menu model downloads done after 2s / 2s)
+[3s] host lobby open, code 7tlfhx
+[3s] client joining
+[17s] battle: US vs RU on bm_splitridge; client is slot 1
+[56s] both pages finished loading
+[56s] conditions: host picked Overcast; host shows Overcast, client shows Overcast
+[56s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[63s] client order: 2/2 of the client's units moved on the host
+[64s] check @1.0 min t=60s: host 17 entities, client side sees 9 (own 9); client has 9 (own 9); missing 0, extra 0, off-position 0, mismatched 0; credits host 2075 client 2075
+[67s] check @2.5 min t=150s: host 30 entities, client side sees 13 (own 13); client has 14 (own 13); missing 0, extra 0, off-position 0, mismatched 0; credits host 3090 client 3090
+[86s] check @4.0 min t=240s: host 37 entities, client side sees 16 (own 16); client has 17 (own 16); missing 0, extra 0, off-position 0, mismatched 0; credits host 5545 client 5545
+[100s] traffic host->client 1331 KB in 3548 messages, client->host 0 KB in 2; client lag max 0.10 game-s; 18 ms per 0.5 s step
+[100s] 24 live checks, 0 out of tolerance; up to 6 enemy entities were in the client's view at once
+[100s] host room sends: 3550 messages, peak 34 in one game-second
+[100s] client room sends: 2 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 3827 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: client console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+
+MPSYNC PASS (artifact edition) (100s) — screenshots orch/out/art-mp-host.png, orch/out/art-mp-client.png (this run: orch/out/runs/20261118-083409-mpsync-art/)
