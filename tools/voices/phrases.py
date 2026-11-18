@@ -367,7 +367,7 @@ C['GB'] = [['For King and country!', 'Who dares wins!'], ['Up and at them!', 'Cr
 P['FR'] = [
  ['Mon lieutenant ?', 'J’écoute.', 'Paré, mon lieutenant.', 'À vos ordres.'],
  ['Reçu, on bouge.', 'Bien reçu, j’y vais.', 'On avance.', 'Ça marche, en route.'],
- ['Feu !', 'Contact, on engage !', 'Ouvrez le feu !', 'Cible en vue, feu !'],
+ ['Feu à volonté !', 'Contact, on engage !', 'Ouvrez le feu !', 'Cible en vue, feu !'],
  ['Groupe prêt.', 'Section en place, mon lieutenant.', 'Paré au combat.', 'Prêts à y aller.'],
  ['La base est attaquée !', 'Ils sont dans la base !', 'On se fait allumer à la base, renforts !'],
  ['On se fait tirer dessus !', 'Contact ! On est fixés !', 'Ça tire de partout, appui !', 'À couvert !'],

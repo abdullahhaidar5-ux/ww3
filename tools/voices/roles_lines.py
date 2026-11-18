@@ -211,7 +211,7 @@ leader القائد عالخط.|أوامرك يا شباب. / اتبعوني.|ع
 ''')
 # FR / DE / GB / RV: own lines (Abdullah 2026-11-15 00:21 "All factions should have appropriate quotes dialogue"; FR/DE used EU's mixed fr/de sheet, GB had none, RV borrowed Yemen's)
 R['FR'] = _p('FR', '''
-inf Paré, mon lieutenant.|Reçu, j'écoute. / Bien reçu, on avance.|On bouge, les gars ! / Feu !|Contact, on engage !
+inf Paré, mon lieutenant.|Reçu, j'écoute. / Bien reçu, on avance.|On bouge, les gars ! / Feu à volonté !|Contact, on engage !
 elite Commandos parés.|On reste discrets. / On progresse en silence.|On les contourne. / Cible en vue, je tire.|Une balle, un ennemi.
 at Équipe antichar parée.|Missile prêt. / On change de position.|On se met en position. / Char en vue, tir !|Missile parti !
 tank Équipage paré.|Le canon est chargé. / Pilote, en avant !|Le char avance. / Tireur, feu !|Obus parti !
