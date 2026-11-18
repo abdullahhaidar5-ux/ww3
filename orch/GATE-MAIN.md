@@ -58,3 +58,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-17 23:58Z 7cc0afd8 **RED** (28 gates) failing: migrate-down — Smoother Test range: worn paint amounts no longer make a new shader mi
 - 2026-11-18 00:55Z a9ed6ea6 **RED** (28 gates) failing: loadfreeze,superfreeze — Anthems: KP (Arirang) pending its download; credits, guard, HISTORY an
 - 2026-11-18 02:06Z aff40b5e **RED** (28 gates) failing: superfreeze — endscreen: screenshots (orch/shots/endscreen*.jpg)
+- 2026-11-18 02:41Z f01f3567 **RED** (28 gates) failing: migrate-down,superfreeze — controlsfeel: WASD guard knows scroll() feeds camGlide; edge-scroll te
