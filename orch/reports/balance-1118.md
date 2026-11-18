@@ -1,0 +1,7 @@
+# Balance 1118 (redfixF)
+Run: GitHub `Balance (parallel)` on branch balance/1118b (main 78e25dc + 22-nation roster fix in orch/aitourney.mjs, which had a stale hard-coded 19 incl. hidden EU/CU and without GB FR DE RV OB). 2 rounds, Normal and Hard round robins, 462 games each, 0 errors, 42 games per nation per difficulty (84 pooled). Hard beat Normal 55% (fine: smarter tactics only).
+Pooled win% (Normal / Hard): AE 69 (68/70), EG 64 (68/61), DE 64 (67/62), RV 62 (58/67), PK 60 (64/56), JP 57, FR 55, KR 54, SA 54, IL 53, IR 48, OB 48, US 46, RS 46, IN 46, KP 46, TR 44, UA 43, DW 39 (44/33), GB 37 (38/37), CN 33 (25/42), RU 30 (26/35).
+Out of 40-60 after pooling: AE, EG, DE, RV (strong); DW, GB, CN, RU (weak). PK at 60.1 left alone.
+Nudges (modest, 3% of the all-units cost factor BAL[nation]._, applied after Egypt's/EU's rows are copied to their derived nations so RV/GB/OB/JP/DE/FR are not moved with their base): AE, EG, DE, RV x1.03 (dearer); RU, CN, GB, DW x0.97 (cheaper). No extra money for anyone; Zealous nations still never rout.
+Not clearly settled: CN and RU are far below 40 on Normal (25/26) but fine on Hard (42/35): their gap may be the AI personality rather than the numbers. Re-run `gh workflow run balance.yml` (push a balance/<tag> branch) after this lands and nudge again only if still outside 40-60.
+The old pack-economy run (balance/economy-1118, on 22747d5) used the stale 19-nation roster, so it is not comparable.
