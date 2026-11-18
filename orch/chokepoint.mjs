@@ -16,6 +16,8 @@ const SC = [
   { k: 'longbridge', map: 'bm_breakwater', units: [['tank', 30]], at: [1790, 1500], goal: [1790, 2950], lim: 90, what: '30 tanks down the long sea bridge (12 tiles long)' },
   { k: 'riverbank', map: 'bm_ferryquarter', units: [['tank', 24], ['inf', 16]], at: [1500, 1200], goal: [2330, 1250], lim: 45, what: 'group ordered onto the river bank (slots fall in the water)' },
   { k: 'dragline', map: 'bm_ferryquarter', units: [['tank', 16], ['inf', 24]], at: [1500, 1620], line: [[3000, 1350], [3000, 1900]], lim: 80, what: 'right-drag line on the far bank (column must cross the bridge)' },
+  { k: 'corner', map: 'bm_ferryquarter', units: [['tank', 20], ['inf', 20]], at: [600, 500], goal: [60, 60], lim: 45, what: 'group ordered into the map corner (slots fall off the map)' },
+  { k: 'boats', map: 'bm_breakwater', dom: 'naval', units: [['boat', 12]], at: [900, 2200], goal: [5400, 2200], lim: 90, what: '12 boats down the sea lane under both bridges' },
   { k: 'base', map: 'bm_ferryquarter', units: [['tank', 20], ['inf', 20]], at: [1150, 1650], goal: [450, 1650], lim: 60, what: 'group ordered through its own base to the far side' },
 ];
 const STUCK = 10, rows = [];
@@ -24,7 +26,7 @@ for (const c of SC) {
   W.start({ seed: 7, facs: ['US', 'RU'], map: c.map, battle: true, diff: 1, mode: 'single' });
   const ids = W.ev(`(()=>{for(const T of G.teams)T.ai=null;for(const e of G.ents)if(!e.isB&&!e.dead){e.dead=true;e.hp=0;}G.ents=G.ents.filter(e=>!e.dead);
     const out=[],L=${JSON.stringify(c.units)};let n=0;for(const [k,m] of L)n+=m;const cols=Math.ceil(Math.sqrt(n*1.4));let i=0;
-    for(const [k,m] of L)for(let j=0;j<m;j++,i++){const r=Math.floor(i/cols),q=i%cols;let x=${c.at[0]}-r*34,y=${c.at[1]}+(q-(cols-1)/2)*34;const p=nearestPassXY('ground',x,y);if(p){x=p[0];y=p[1];}const u=addUnit(0,k,x,y);out.push(u.id);}
+    for(const [k,m] of L)for(let j=0;j<m;j++,i++){const r=Math.floor(i/cols),q=i%cols;let x=${c.at[0]}-r*34,y=${c.at[1]}+(q-(cols-1)/2)*34;const p=nearestPassXY('${c.dom||'ground'}',x,y);if(p){x=p[0];y=p[1];}const u=addUnit(0,k,x,y);out.push(u.id);}
     return JSON.stringify(out);})()`);
   W.step(0.5);
   const a = c.line ? `{t:'line',ids:${ids},x:${c.line[0][0]},y:${c.line[0][1]},x2:${c.line[1][0]},y2:${c.line[1][1]}}` : `{t:'go',ids:${ids},x:${c.goal[0]},y:${c.goal[1]},mode:'move'}`;
