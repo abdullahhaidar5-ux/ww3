@@ -59,3 +59,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-18 00:55Z a9ed6ea6 **RED** (28 gates) failing: loadfreeze,superfreeze — Anthems: KP (Arirang) pending its download; credits, guard, HISTORY an
 - 2026-11-18 02:06Z aff40b5e **RED** (28 gates) failing: superfreeze — endscreen: screenshots (orch/shots/endscreen*.jpg)
 - 2026-11-18 02:41Z f01f3567 **RED** (28 gates) failing: migrate-down,superfreeze — controlsfeel: WASD guard knows scroll() feeds camGlide; edge-scroll te
+- 2026-11-18 03:43Z 10cf4bd3 **RED** (28 gates) failing: audio,controls,superfreeze — Stuck units: report, handoff, history (163 -> 52 stuck episodes on all
