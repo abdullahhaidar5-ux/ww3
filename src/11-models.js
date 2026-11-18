@@ -23,16 +23,19 @@ for(const f of ['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN'
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['JP','MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF','OB','BI'];
+const WESTVEH=['JP','MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF','OB','BI','RV'];
 Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',FR:'kf51',DE:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
 // China keeps the T-90, South Korea the Abrams-like K1 stand-in)
-Object.assign(RMAP.tank,{UA:'oplot',IR:'t72',KP:'t62',CU:'t55',TR:'leo2',RV:'t62',OB:'t55'});
+Object.assign(RMAP.tank,{UA:'oplot',IR:'t72',KP:'t62',CU:'t55',TR:'leo2',RV:'t62'});   /* OB has no tank slot at all: MIL_TANK.OB is the Armed Technical (Palestine never shows an MBT) */
+// National paint on the shared hulls (visual only): China olive-green T-72 family hull, India a desert-sand T-90, Pakistan a sand/olive T-72
+Object.assign(RMOD,{cn72:{m:'m_t72',fit:'z',size:40,tint:'#5d6a4a',tk:.45},in90:{m:'m_t90',fit:'z',size:40,tint:'#a39266',tk:.5},pk72:{m:'m_t72',fit:'z',size:40,tint:'#8a8a62',tk:.45}});
+Object.assign(RMAP.tank,{CN:'cn72',IN:'in90',PK:'pk72'});
 RMAP.arty={};RMAP.airlift={};RMAP.jeep={SA:'humvee'};RMAP.raidlead={DW:'hilux'};
 for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k]={};
 for(const f of WESTVEH){RMAP.arty[f]='g6';RMAP.airlift[f]='uh60';for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]='m35';}
-for(const f of EASTVEH){if(f!=='RS'&&f!=='DW')RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
+for(const f of EASTVEH){if(!['RS','DW','RV','OB'].includes(f))RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
 // Faction-unique helicopters and warships (Objaverse / Sketchfab, CC BY, authors in the menu credits): Russia flies the Mi-28,
 // Egypt the Ka-52, Turkey, Pakistan and Iran an AH-1 Cobra-type gunship; Western navies a Type 45 destroyer (Germany an F123
 // frigate), Russia/China/North Korea/Ukraine/India/Pakistan/Cuba/Iran a Russian-style destroyer; the Shia nations'

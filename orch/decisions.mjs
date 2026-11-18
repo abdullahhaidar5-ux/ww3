@@ -138,6 +138,11 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(/function baseStyle\(/.test(b) && /function baseYard\(/.test(b) && /function baseSlabKit\(/.test(b) && /'soviet'/.test(b) && /'west'/.test(b), 'base looks: 11c-bases.js lost baseStyle / baseYard / baseSlabKit or a family');
   ck(/baseYard\(e,o,P,RR,gate,BP\)/.test(m) && /baseSlabKit\(B,e,T,s\)/.test(m) && /baseTint\(T\.fac,RT\)/.test(m), 'base looks: 11-models no longer calls baseYard / baseSlabKit / baseTint');
   ck(/OBX=\['OB','BI'\]/.test(b), 'base looks: OB/BI no longer use the Middle-Eastern compound family'); }
+// ---- National vehicles (Abdullah 2026-11-17): Palestine never shows an MBT; RS/DW/RV/OB artillery is a rocket truck, never the regular-army Msta
+{ const m = SRC['11-models.js'] || '';
+  ck(/MIL_TANK\.OB=\{m:'technical'/.test(m) && !/RV:'t62',OB:'t55'/.test(m) && !/OB:'t55'/.test(m) && !/RMAP\.tank\.OB/.test(m), 'national vehicles: OB got a tank model slot again (Palestine must never show an MBT)');
+  ck(/\['RS','DW','RV','OB'\]\.includes\(f\)/.test(m), 'national vehicles: RS/DW/RV/OB artillery is no longer kept off the Msta self-propelled gun');
+  ck(/cn72/.test(m) && /in90/.test(m) && /pk72/.test(m), 'national vehicles: CN/IN/PK lost their own tank paint'); }
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];
