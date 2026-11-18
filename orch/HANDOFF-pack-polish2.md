@@ -1,0 +1,9 @@
+# HANDOFF pack-polish2 (2026-11-18)
+Done
+- Item 1: SOLB (instanced soldiers) ON again. Could not reproduce the stall locally (rangefreeze IR+OB pass with it on, 0 programs); real causes found in code: bone texture grew 16->32->... rows by re-creating a GL texture mid-wave, and each batch's `sI` attribute was re-created at 32 then x1.5 (new buffers/VAOs: 18 buffers in the Zolfaghar wave). Now texture starts at 64 rows, batches at 256 figures (x2 after). Full cigate green once on 2b (superfreeze, loadfreeze, smooth-pc, smooth-mp all PASS); second run needed per brief.
+- smoothaudit big (software GL, relative only): SOLB on 30.8 ms avg / 83 ms 1%-low, 658 calls; off 28.5 / 70 ms, 570 calls. No sandbox win - software GL cost is vertex/fill, not draw calls; value is for real GPUs. Calls went UP with it on (batch draws in shadow + AO passes): look at whether batches are drawn in extra passes for figures the camera culls.
+- Item 2: `orch/aiprobe.mjs CN,IR [map seed diff]` (what each side owns over time). Local Normal AI-vs-all, 21 games each after the 0.97 nudge: CN 40%, RU 38% (+-10 noise). Tried (a) capping medics/commissars + 4x rifle share in the CN/RU barracks pick, (b) no early artillery bias for CN/RU: 36%/36% and 31%/33% - no gain, REVERTED. CN/RU barracks lists are short (inf, at, medic, commissar) so Normal's blind pick buys many anti-tank/medics; Hard's counter-pick fixes it (35-42%). Next: re-run balance.yml on main now; if CN/RU still <40 on Normal, give Normal the Hard counter-pick only for barracks.
+Left
+- Item 3 (stuck units on 6-8 player maps, dugout exits, ships at coasts) not started.
+- SOLB second green gate; servers-live move not needed (no src/01-03/07 change).
+Try (2 min, PC): Play > Battle on the biggest map with 7 AIs, Medium, scroll over a big infantry fight with FPS shown: soldiers should look the same, FPS slightly higher; then Test range, spawn waves of every unit: no freeze.
