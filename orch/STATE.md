@@ -22,3 +22,8 @@ Saved nothing: none seen (taken/endscreen has orch/endscreen).
 - No gate run yet: orch/voices3 (12 ahead, 29 behind), orch/pack-economy (1 ahead), orch/smoothaudit2 (4), orch/orch2-notes (3, notes only), orch/pack-looks2 (2).
 - Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans, src/13* only.
 - taken/ locks with no orch/ branch: endscreen has a branch (fine); rv-voice, drawcalls, redgates, savesync, uiaudit, icons, zhfeel(2), announcer, pcolor, roadcap, menubg, mplobby are 4+ days old and saved nothing on orch/ under that name.
+
+## 09:50 UTC check (third conductor run; step 1 only, train/20261118-0800 is 104 min old and not on main)
+- main = ef814ce6. No train started.
+- orch/pack-battlefield2 (camera pan on real frame time, 1 commit): gate/3a63c82711 finished: 27 green, 1 red = gate/superfreeze (see below if main shows it too). Not landed yet; next run decides.
+- Unchanged: voices3 (12 ahead, no gate), pack-economy, pack-looks2, smoothaudit2, orch2-notes waiting; parked list as above.
