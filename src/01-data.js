@@ -663,7 +663,7 @@ const SHIA5={IR:1,RS:1,DW:1,RV:1,OB:1};   /* L2: cheap fortifications (x0.6 in B
 const BB_NAT={US:1,IL:1,RU:1,CN:1},FORT_NAT={IR:1,RS:1,AF:1,KD:1,DW:1,KP:1};
 /* upgsimple (Abdullah 2026-11-14 "simplify the list of upgrades and powers it's too much"): a nation's general powers are Recon, Paradrop, Barrage, Repair + its own national power
    (+ Bunker Buster for US/IL/RU/CN) = 5-6, plus the passive Cash Bounty. Everything else in POWERS (flares, militia, reinforcements, sanctions, cyber, EMP) is not offered in Conquest/Battle (the grand map keeps them). */
-const POW_KEEP=['bounty','recon','para','barrage','repair','bb','nat'];   /* + the nation's own power on J (Abdullah 2026-11-14 22:11 "J bring back") */
+const POW_KEEP=['bounty','recon','para','barrage','repair','bb','nat','mil','smug'];   /* economy pack 2026-11-18: Proxy Militia + Smuggling Route for every nation */   /* + the nation's own power on J (Abdullah 2026-11-14 22:11 "J bring back") */
 function powBan(k){return !!POWERS[k]&&POW_KEEP.indexOf(k)<0;}
 function sigBan(fac,k){return powBan(k)||(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
 /* power use of a building for the Build button: + needs power, - gives power (Generator); 0 = no power use (one POWER table) */
@@ -735,7 +735,7 @@ function gdReq(T,p){return !p.req||gdHas(T,p.req);}
 const GDOC_LATE=120;   // doctrine can be picked / changed until this many seconds into the battle
 function gdHas(T,k){return !!(T&&T.gperk&&T.gperk[k]);}
 function gdCostK(T,s,b,kind){if(!T||!T.gdoc)return 1;let m=1;const D=GDOC[T.gdoc];if(!D)return 1;for(const p of D.perks){if(!p.cost||!gdHas(T,p.k))continue;const g=p.cost[0];if(b?g===kind:(g==='air'?s.dom==='air':upgMatch(g,s,false)))m*=p.cost[1];}return m;}
-const MILNAME={IR:'Popular Mobilization volunteers',RS:'Popular Mobilization volunteers',DW:'Popular Mobilization volunteers',US:'Contractors',RU:'PMC'};
+const MILNAME={IR:'Local Defence Volunteers',RS:'Mountain Village Volunteers',DW:'Highland Tribal Volunteers',RV:'Marsh Brigade Volunteers',OB:'Neighbourhood Volunteers',US:'Contract Security Team',RU:'PMC Detachment'};   /* fictional local fighters, never a real group's name */
 const FL_MAX=4;   // flare / chaff charges per aircraft; refilled while landed (at an airfield)
 const POWERS={
   bounty:{name:'Cash Bounty',desc:'Earn 15% of the cost of every enemy you destroy',passive:true},
@@ -744,9 +744,10 @@ const POWERS={
   barrage:{name:'Artillery Barrage',desc:'10 shells over a wide area',cd:170,r:180},
   repair:{name:'Emergency Repair',desc:'Restore 60% health to your forces in an area',cd:120,r:230},
   flare:{name:'Illumination Flares',desc:'Light up an area for about 30 seconds so everybody can see in it, friend and foe. Made for night battles',cd:60,r:300},
-  mil:{name:'Fund Militia',desc:'Pay a local militia: 5 riflemen, an RPG team and an armed technical appear at the neutral spot nearest the front, under your command',cd:480,self:true},
+  mil:{name:'Proxy Militia',desc:'Call in local fighters at a spot you pick, near your supply area: riflemen and an RPG team (plus an armed technical at higher levels) arrive under your command',cd:240,r:110},
   bb:{name:'Bunker Buster',desc:'Two guided heavy bombs on one spot. Costs $2200 each time and is not available in the first 5 minutes. Heavy damage to buildings in a small radius, and the ONLY thing that can destroy a Mountain Fortress (both bombs must hit)',cd:420,r:70,cash:2200},
   reinf:{name:'Call-In Reinforcements',desc:'Pay $1200: a platoon (2 tanks, an AA vehicle, 4 riflemen and an AT team) is called in from your nearest map edge and drives to your base. Arrives after 12 seconds, can be ambushed on the way. Not during the setup phase',cd:300,self:true,cash:1200},
+  smug:{name:'Smuggling Route',desc:'Open a back-channel route at a spot in your supply area: a smuggler truck brings in a steady stream of cash for a while, more when you are sanctioned. The enemy cuts it by destroying the truck',cd:260,r:90},
   sanc:{name:'Sanctions',desc:'Sanction the richest enemy: their income drops 20% for 60 seconds (their Smuggling Routes upgrade cuts that to 8%)',cd:420,self:true},
 };
 // Every nation's own signature general power (unlocked like the others). Effects differ; cooldowns balance them.
@@ -808,20 +809,22 @@ function gpowDesc(k,P,g){const f=(v,a,b)=>v&&Math.abs(v-1)>.01?(v>1?a:b)+' '+(v>
   const L=[f(g.m,'bounty','bounty'),f(g.rm,'radius','radius'),f(g.tm,'duration','duration'),f(g.nm,k==='barrage'?'shells':'troops',k==='barrage'?'shells':'troops'),f(g.dm,'shell damage','shell damage'),f(g.pm,'repair','repair'),f(g.cdm,'cooldown','cooldown'),g.mix===PARA_AT?'mostly anti-tank teams':g.mix===PARA_INF?'mostly riflemen':null].filter(Boolean);
   return P.desc+(L.length?' ('+L.join(', ')+')':'')+(g.fx?'. Special: '+GFX_TXT[g.fx]+(k!=='bounty'?' (cooldown +10%)':' (bounty −10%)'):'');}
 const GFX_TXT={vet:'troops arrive as veterans',stealth:'troops land hidden and stay unseen until they move or fire',mark:'enemies in the area are marked - your forces do 25% more damage to them',detect:'also exposes hidden and stealthed enemy units in the area',fire:'leaves the ground burning for 8 seconds',emp:'disables enemy vehicles in the area for 4 seconds',smoke:'lays a smoke screen that hides your units inside it',rearm:'units in the area also fire 25% faster for 12 seconds',rally:'units in the area rally instantly and are fearless for 15 seconds',shield:'units in the area take 25% less damage for 12 seconds',salvage:'also refunds 15% of the cost of each unit you lose'};
-function powInfo(k,fac){const P0=POWERS[k];if(!P0)return null;const P=P0;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N=natPow(fac);return Object.assign({},P,N);}
+function powInfo(k,fac){const P0=POWERS[k];if(!P0)return null;const P=P0;if(k==='mil'){return Object.assign({},P,{name:MILNAME[fac]||P.name});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N=natPow(fac);return Object.assign({},P,N);}
 // General ranks get steadily harder to earn; each promotion gives a point. Powers unlock for 1-3 points (by strength, POWCOST) and can be
 // raised to level 2 (unlock+1 points) and level 3 (unlock+2): bigger effect, shorter cooldown (POWLV).
 const RANKS=[0,2500,7000,14000,24000,38000,56000,80000,110000];   /* 9 points in a full game: about 3-4 powers unlocked and one or two raised */
 const PLV=[1,1.4,1.8],PCD=[1,.8,.6];
 /* General powers by strength (Abdullah 2026-11-15 00:22 "Make the general powers require more points and progressively get better"):
    unlock = POWCOST (light 1, medium 2, heavy 3); level 2 costs unlock+1, level 3 unlock+2. Per level: rm = area x, dur = seconds, n = shells/troops, heal, dmg, cdm = cooldown x. */
-const POWCOST={bounty:1,recon:1,repair:1,para:2,barrage:2,bb:3,nat:3};
+const POWCOST={bounty:1,recon:1,repair:1,para:2,barrage:2,mil:2,smug:2,bb:3,nat:3};
 const POWLV={
   recon:{rm:[1,1.3,1.6],dur:[25,40,55],nx:['Reveals for 40 s over a wider area','Reveals for 55 s over the widest area']},
   repair:{rm:[1,1.25,1.5],heal:[.6,.8,1],nx:['Heals 80% in a wider area','Heals 100% in the widest area']},
   bounty:{nx:['22% of every kill (was 15%)','30% of every kill']},
   para:{n:[5,8,11],at:[0,0,2],nx:['8 troopers instead of 5','11 troopers plus 2 extra anti-tank teams']},
   barrage:{rm:[1,1.25,1.5],n:[10,14,20],nx:['14 shells over a wider area','20 shells over the widest area']},
+  mil:{n:[4,6,8],at:[1,2,3],jeep:[0,1,2],nx:['6 riflemen, 2 RPG teams and an armed technical','8 riflemen, 3 RPG teams and 2 armed technicals']},
+  smug:{inc:[16,24,34],dur:[60,80,100],nx:['More cash for 80 s','Most cash for 100 s']},
   bb:{rm:[1,1.4,1.8],dmg:[1500,1900,2400],nx:['Bigger blast (+40% radius, heavier bombs)','Huge blast (+80% radius, heaviest bombs)']},
   nat:{rm:[1,1.25,1.5],nx:['Stronger and wider, faster to recharge','Strongest and widest, fastest to recharge']}};
 function powCostBase(k){return POWCOST[k]||2;}
