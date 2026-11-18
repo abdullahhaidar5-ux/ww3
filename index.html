@@ -4941,6 +4941,7 @@ const WEATHER={clear:{name:'Clear',vis:1,acc:1,spd:1,air:1},
   fog:{name:'Fog',vis:.55,acc:.92,spd:.95,air:.85,tip:'Heavy fog: units see barely half as far. Ambush weather.'},
   sandstorm:{name:'Sandstorm',vis:.75,acc:.88,spd:.92,air:.5,tip:'Sandstorm: units see a little less far and shoot a little worse; aircraft fly slower.'},
   snow:{name:'Snow',vis:.8,acc:.92,spd:.9,air:.8,tip:'Deep snow slows ground units; vision and aircraft are a little worse.'},
+  storm:{name:'Thunderstorm',vis:.65,acc:.85,spd:.9,air:0,tip:'Thunderstorm: aircraft and drones are grounded and return to base; sight and accuracy drop and ground units slow a little.'},
   blizzard:{name:'Blizzard',vis:.6,acc:.85,spd:.8,air:0,tip:'Blizzard: snow slows everything, jets grounded, vision cut.'}};
 // Seasons (2026-11-06): the lobby 'Conditions' value w carries the weather/time-of-day in its ones digit (0-9, or -1 random) and the
 // season in its tens digit: 0 = the map's own default, 1 = Summer, 2 = Autumn mud, 3 = Winter snow. Same value on host, clients and server.
@@ -4951,11 +4952,11 @@ const SEASONS=['Map default','Summer','Autumn mud','Winter snow'];
 // Conditions picker (2026-11-14, weathergfx): Random / Day / Dusk / Night / Rain / Sandstorm / Snow. Values are the same base digits as above
 // (0 day, 3 dusk, 4 night, 6 sandstorm, 7 rain, 8 snow, -1 random); th = the map themes the option fits (none listed = fits every map).
 // 1, 2 and 5 (golden hour, overcast, changing) only remain so old saves and links still load. Random picks, from the seed, only what fits.
-const CONDS=[{w:-1,n:'Random',t:'The seed picks day, dusk, night or the weather that suits this map'},{w:0,n:'Day',t:'Clear daylight'},{w:3,n:'Dusk',t:'Low red sun, long shadows; units see a little less far. Gunfire lights the field'},{w:4,n:'Night',t:'Dark battlefield: units see a little less far (tanks, aircraft, commandos and recon keep thermal sight); fire and flashes light the field'},{w:7,n:'Rain',th:['green'],t:'Rain: vision and accuracy a little down, mud slows ground units. Temperate maps only'},{w:6,n:'Sandstorm',th:['desert'],t:'Brown haze: units see a little less far and shoot a little worse. Desert and Gulf maps only'},{w:8,n:'Snow',th:['snow'],t:'Snowfall: white haze, deep snow slows ground units. Snow maps only'}];
+const CONDS=[{w:-1,n:'Random',t:'The seed picks day, dusk, night or the weather that suits this map'},{w:0,n:'Day',t:'Clear daylight'},{w:3,n:'Dusk',t:'Low red sun, long shadows; units see a little less far. Gunfire lights the field'},{w:4,n:'Night',t:'Dark battlefield: units see a little less far (tanks, aircraft, commandos and recon keep thermal sight); fire and flashes light the field'},{w:9,n:'Live day',t:'The sun moves: a full day passes in 48 game minutes, starting at an hour the battle picks. Night cuts sight, and fog, sandstorms and thunderstorms (aircraft grounded) roll in'},{w:7,n:'Rain',th:['green'],t:'Rain: vision and accuracy a little down, mud slows ground units. Temperate maps only'},{w:6,n:'Sandstorm',th:['desert'],t:'Brown haze: units see a little less far and shoot a little worse. Desert and Gulf maps only'},{w:8,n:'Snow',th:['snow'],t:'Snowfall: white haze, deep snow slows ground units. Snow maps only'}];
 function condTheme(mk,w){const D=typeof MAPS!=='undefined'&&MAPS[mk],ss=wxSsn(w)||(typeof seasonOf==='function'?seasonOf(mk):1);const th=(D&&D.theme)||'green';return ss===3?'snow':th==='desert'?'desert':'green';}   // any other theme ('green', 'temperate', custom) counts as temperate
 function condFits(b,theme){const c=CONDS.find(x=>x.w===b);return !c?(b===1||b===2||b===5):!c.th||c.th.includes(theme);}
 function condFit(b,theme,seed){if(b<0){const L=[0,0,3,4].concat(CONDS.filter(c=>c.th&&c.th.includes(theme)).map(c=>c.w));return L[wxRandIdx(seed)%L.length];}return condFits(b,theme)?b:0;}
-function weatherKinds(theme){return theme==='snow'?['clear','blizzard','fog']:theme==='green'?['clear','rain','fog']:['clear','sandstorm','fog'];}
+function weatherKinds(theme,live){return theme==='snow'?['clear','blizzard','fog']:theme==='green'?(live?['clear','rain','fog','storm']:['clear','rain','fog']):(live?['clear','sandstorm','fog','storm']:['clear','sandstorm','fog']);}
 // A duel is fought on a field 1.3x the 3200x2200 design (about 300 infantry-lengths across, like a classic RTS 1v1
 // map); each extra player adds room (8 players: 2.26x).
 function worldScaleFor(n,mk){n=Math.max(2,Math.min(8,n|0||2));const D=mk&&typeof MAPS!=='undefined'&&MAPS[mk];if(D&&D.cscale)return D.cscale;const K=n<=4?1.27:1;return Math.round(K*(n===2&&!(D&&D.oldScale&&D.oldScale.includes(2))?2.25:n===3&&!(D&&D.oldScale&&D.oldScale.includes(3))?2.4:Math.round((D&&D.oldScale&&D.oldScale.includes(n)?1.56:1.95)*Math.pow(n/2,.4)*100)/100)*100)/100;}   // Conquest maps (Abdullah 2026-11-04 20:01): 2-4 players another +27% (base-to-base walk ~4-5 min), 5-8 unchanged; // 2 and 3 players another +15%/+12% (Abdullah 2026-11-03 "epic size"); +25% again (Abdullah 2026-10-30: "maps need to be bigger and more complex"; 2026-10-29 was 1.56; a map can keep 1.56 for player counts listed in oldScale, where the bigger ground gave a start position the edge)
@@ -5617,7 +5618,7 @@ function upgName(fac,k){return (UPG[k]&&UPG[k].name)||k;}
 // Smuggling Routes: the same hq upgrade for every nation (counter to the Sanctions power; no stat effects, read by incMul/econTick)
 UPG.smug={name:'Smuggling Routes',at:'hq',cost:1500,time:30,desc:'Back-channel trade: while you are under Sanctions your income loss drops from 20% to 8%, and a small trickle of cash keeps coming in.'};
 // Ground-Penetrating Radar: HQ upgrade for nations WITHOUT tunnels - your HQ and Strike Centers reveal enemy tunnel entrances within 650 range
-UPG.gpr={name:'Ground-Penetrating Radar',at:'hq',cost:1200,time:25,desc:'Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot). Only for nations without tunnels.'};
+UPG.gpr={name:'Ground-Penetrating Radar',at:'hq',cost:1200,time:25,desc:'Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.'};
 const GPR_R=650;
 function upgList(fac){return (UPGL[fac]||[]).concat(FACTIONS[fac]&&FACTIONS[fac].tunnels?[]:['gpr']);}   /* upgsimple: Smuggling Routes only counters Sanctions, which Conquest/Battle no longer offer */
 // Effect groups an upgrade can target (unit stats s; buildings only match 'bld')
@@ -7409,7 +7410,7 @@ function newGame(o){const N=o.facs.length;if((o.battle||o.sandbox)&&!o.camp&&!o.
   G.cover=new Uint8Array(GW*GH);for(const [x,y] of (G.treePos||[])){const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);if(cx>=0&&cy>=0&&cx<GW&&cy<GH)G.cover[cy*GW+cx]=Math.min(255,G.cover[cy*GW+cx]+1);}
   G.wood=G.cover.slice(); // trees per cell (before city cover is added): woods slow vehicles
   for(const b of (M.cityBlds||[])){const cx=Math.floor(b.x/CELL),cy=Math.floor(b.y/CELL);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const X=cx+i,Y=cy+j;if(X>=0&&Y>=0&&X<GW&&Y<GH&&G.grid[Y*GW+X]!==3)G.cover[Y*GW+X]=Math.min(255,G.cover[Y*GW+X]+2);}}
-  G.wxB=wB;G.todM=todMode(wB);G.flares=[];{const fx=[0,3,4].includes(wB)?'clear':{6:'sandstorm',7:'rain',8:'snow'}[wB];if(fx){G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};}}   // a picked Day/Dusk/Night/weather stays as picked (no random weather on top)
+  G.wxB=wB;todSetup(wB);G.flares=[];{const fx=[0,3,4].includes(wB)?'clear':{6:'sandstorm',7:'rain',8:'snow'}[wB];if(fx){G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};}}   // a picked Day/Dusk/Night/weather stays as picked (no random weather on top)
   if(o.sandbox)G.sandbox=true;
   if(MODE!=='client'){
     if(o.camp)campSetup(o.camp);else for(let t=0;t<N;t++){const [bx,by]=BASES[t];const a=baseFacing(t),cx=Math.cos(a),cy=Math.sin(a);addBld(t,'hq',bx,by,true);addUnit(t,'harv',bx+cx*150-cy*60,by+cy*150+cx*60);addUnit(t,'dozer',bx+cx*120-cy*110,by+cy*120+cx*110);addUnit(t,'inf',bx+cx*130+cy*90,by+cy*130-cx*90);addUnit(t,'inf',bx+cx*150+cy*70,by+cy*150-cx*70);}
@@ -7476,11 +7477,25 @@ function seenBy(team,e){return e.team===team||(e.vs&&e.vs[team]);}
 // sight; thermal optics (tanks, aircraft, drones, commandos/snipers, recon) keep most of it. Pure function of G.t: deterministic.
 // "Random" Conditions: the battle's seed picks one of Clear/Golden/Overcast/Dusk/Night. Only Night changes the simulation (sight); the rest stay visual, as before.
 function wxRandIdx(sd){sd=(sd|0)>>>0;return (Math.imul(sd^0x9e3779b9,2654435761)>>>16)%5;}
-function todMode(w){return w===3?1:w===4?2:w===5?3:0;}
+function todMode(w){return w===3?1:w===4?2:(w===5||w===9)?3:0;}
+// LIVE DAY (Conditions "Live day", w=9; pack-battlefield 2026-11-18): the hour runs on from a start picked by the seed, one full day = TOD_DAY game seconds (48 min).
+// G.tod() -> 0..24 hour; G.wxv() -> {kind,k} with k 0..1 how strongly the weather is in (eases in/out over 20 s). Pure functions of seed + G.t + the seeded weather: every copy agrees.
+const TOD_DAY=2880,TOD_HA=[0,10,11.5,12,13,21.5,22.5,23,24],TOD_TA=[1120,1460,1600,1660,1780,2000,2130,2200,2320];
+function todStart(sd){sd=(sd|0)>>>0;return 7+((Math.imul(sd^0x85ebca6b,2246822519)>>>8)%900)/100;}
+function todSetup(b){G.todM=todMode(b);G.live=b===9?1:0;G.todH0=todStart(G.seed);G.tod=todHour;G.wxv=wxView;}
+function todHour(){if(G.live)return(((G.todH0||7)+(G.t||0)/TOD_DAY*24)%24+24)%24;const m=G.todM|0;return m===1?18.3:m===2?0:m===3?(7+((G.t%1200)/1200)*24)%24:12;}
+function todLive(t){const h=((((G.todH0||7)+t/TOD_DAY*24)%24)+24)%24,q=(h-7+24)%24;let i=0;while(i<TOD_HA.length-2&&q>=TOD_HA[i+1])i++;return(TOD_TA[i]+(TOD_TA[i+1]-TOD_TA[i])*(q-TOD_HA[i])/(TOD_HA[i+1]-TOD_HA[i]))%1200;}
+function todClockSec(){return G.live?todLive(G.t):((G.t%1200)+1200)%1200;}
+function wxView(){const W=G.wx,k=(W&&W.k)||'clear';if(k==='clear'||!W)return{kind:'clear',k:0};const f=Math.min(1,W.t/20,Math.max(0,(W.next-W.t))/20);return{kind:k,k:+Math.max(0,Math.min(1,f)).toFixed(3)};}
+function todClockText(){const h=todHour(),H=Math.floor(h),M=Math.floor((h-H)*60);return(H<10?'0':'')+H+':'+(M<10?'0':'')+M;}
+// a storm (air factor 0) sends helicopters and drones home and holds them there; jets already park (updJet)
+function stormAir(u){const s=u.s;if(!s||s.dom!=='air'||s.cls==='jet'||u.landed||wxNow().air!==0)return false;const hq=hqOf(u.team);if(!hq)return false;
+  if(!u.wxw){u.wxw=1;log(u.team,'Aircraft are grounded until the storm passes - they are heading home.','w');}
+  u.target=null;const d=Math.hypot(hq.x-u.x,hq.y-u.y);if(d>90){if(!u.order||u.order.type!=='move'||u.order.wx!==1){setMove(u,hq.x+((u.id%5)-2)*24,hq.y+((u.id%3)-1)*24,'move');if(u.order)u.order.wx=1;}return false;}u.order=null;return true;}
 // Day/night cycle (lobby 'Day-night cycle'): one smooth 1200 s day. Keyframes [second, look-preset, darkness]: day -> dusk -> night -> dawn -> day.
 // Pure function of G.t, so every player (and the Cloudflare host) sees the same hour. todDark() 0..1 drives vision; the look blends between presets.
 const TOD_KF=[[0,0,0],[260,0,0],[400,3,.6],[460,3,.6],[580,4,1],[800,4,1],[930,1,.25],[1000,1,.25],[1120,0,0],[1200,0,0]];
-function todSeg(t){t=((t%1200)+1200)%1200;let i=0;while(i<TOD_KF.length-2&&t>=TOD_KF[i+1][0])i++;const a=TOD_KF[i],b=TOD_KF[i+1];return{a:a[1],b:b[1],f:Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0]))),d:a[2]+(b[2]-a[2])*Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0])))};}
+function todSeg(t){if(typeof G!=='undefined'&&G&&G.live)t=todLive(t);t=((t%1200)+1200)%1200;let i=0;while(i<TOD_KF.length-2&&t>=TOD_KF[i+1][0])i++;const a=TOD_KF[i],b=TOD_KF[i+1];return{a:a[1],b:b[1],f:Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0]))),d:a[2]+(b[2]-a[2])*Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0])))};}
 function todDark(){const m=G.todM|0;if(m<3)return m===2?1:m===1?.6:0;return todSeg(G.t).d;}
 function todLvl(){const m=G.todM|0;if(m<3)return m;const d=todSeg(G.t).d;return d<.2?0:d<.8?1:2;}
 function todThermal(m){if(m.isB)return false;const c=m.s.cls;return c==='tank'||c==='heli'||c==='jet'||c==='drone'||c==='hero'||!!m.s.camo;}
@@ -7913,7 +7928,7 @@ function physImpulse(e,nx,ny,J){if(e.isB||e.dead||!e.s||e.s.dom!=='ground')retur
   if(m<2&&kv>70){koSet(e,.8+Math.min(.8,kv/300),'crit');FXE('toss',[e.id,Math.min(110,kv*.55)|0]);}}
 function physTick(u,dt){if(!u.kx&&!u.ky)return;const d=u.s.dom==='ground'?(massOf(u)<2?5.5:7.5):6,k=Math.exp(-d*dt);const nx=u.x+u.kx*dt,ny=u.y+u.ky*dt;
   if(passXY(u.s.dom,nx,ny)){u.x=nx;u.y=ny;}else{u.kx*=-.3;u.ky*=-.3;}u.kx*=k;u.ky*=k;if(Math.abs(u.kx)+Math.abs(u.ky)<2){u.kx=u.ky=0;}}
-function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.crT&&G.t>u.crT&&!u.inTun){u.dead=true;G.byId.delete(u.id);FXE('gone',[u.id,u.x|0,u.y|0,-1,1]);return;}if(u.crit)critTick(u,dt);if(u.aband)return updAband(u,dt);if(G.dugN&&u.s.armor==='heavy'&&u.s.dom==='ground'&&G.t>(u.dgT||0)){u.dgT=G.t+.25;dugVeh(u);}if(u.order&&u.order.type==='wall'&&u.kind!=='dozer'&&dozeWall(u,dt))return;if(u.dgDig)vposTick(u);if(G.teams[u.team].ai&&u.s.dom==='ground'&&!u.dgDig)aiDig(u,dt);if(u.hp<u.max*.2&&u.s.armor==='heavy'&&bailCheck(u))return;const s=u.s,T=G.teams[u.team],m=T.F.mods;if(u.stun>G.t){u.cd=Math.max(u.cd,.5);return;}u.cd-=dt;if(T.dummy&&!T.fight){const o=u.order;u.target=null;if(o&&(o.type==='move'||o.type==='amove')&&u.kind!=='jet'){if(Math.hypot(o.x-u.x,o.y-u.y)<14)u.order=null;else navTo(u,o.x,o.y,dt,true);}return;}if(u.supp)u.supp=Math.max(0,u.supp-dt*(u.mz?.36:.22)*ldSupp(u));
+function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.s.dom==='air'&&G.wx&&(G.wx.k==='storm'||G.wx.k==='blizzard')&&!u.aband&&stormAir(u))return;if(u.crT&&G.t>u.crT&&!u.inTun){u.dead=true;G.byId.delete(u.id);FXE('gone',[u.id,u.x|0,u.y|0,-1,1]);return;}if(u.crit)critTick(u,dt);if(u.aband)return updAband(u,dt);if(G.dugN&&u.s.armor==='heavy'&&u.s.dom==='ground'&&G.t>(u.dgT||0)){u.dgT=G.t+.25;dugVeh(u);}if(u.order&&u.order.type==='wall'&&u.kind!=='dozer'&&dozeWall(u,dt))return;if(u.dgDig)vposTick(u);if(G.teams[u.team].ai&&u.s.dom==='ground'&&!u.dgDig)aiDig(u,dt);if(u.hp<u.max*.2&&u.s.armor==='heavy'&&bailCheck(u))return;const s=u.s,T=G.teams[u.team],m=T.F.mods;if(u.stun>G.t){u.cd=Math.max(u.cd,.5);return;}u.cd-=dt;if(T.dummy&&!T.fight){const o=u.order;u.target=null;if(o&&(o.type==='move'||o.type==='amove')&&u.kind!=='jet'){if(Math.hypot(o.x-u.x,o.y-u.y)<14)u.order=null;else navTo(u,o.x,o.y,dt,true);}return;}if(u.supp)u.supp=Math.max(0,u.supp-dt*(u.mz?.36:.22)*ldSupp(u));
   if(G.t-u.lastHit>5&&u.hp<u.max){let rg=(m.regen||0)+(u.rank>=3?5:0)+upgK(T,u.kind,'regen');if(rg)u.hp=Math.min(u.max,u.hp+rg*dt);}
   if(u.kind==='harv')return u.cv?updConvoy(u,dt):updHarv(u,dt);if(u.kind==='dozer')return updDozer(u,dt);if(u.kind==='jet')return updJet(u,dt);if(u.kind==='hacker')return updHacker(u,dt);
   if(canRout(u)&&moraleTick(u,dt))return;
@@ -8123,6 +8138,10 @@ function militiaSpot(team){const hq=hqOf(team);if(!hq)return null;let eh=null,ed
 function gprTick(dt){G.gprT=(G.gprT||0)-dt;if(G.gprT>0)return;G.gprT=.5;let any=false;for(const T of G.teams)if(T.upg&&T.upg.gpr){any=true;break;}if(!any)return;
   for(const e of G.ents){if(e.dead||!e.isB||!(isTun(e)||isPost(e))||e.built<1)continue;for(const T of G.teams){if(!T.upg.gpr||T.id===e.team||ally(T.id,e.team))continue;
     for(const r of G.ents){if(r.dead||!r.isB||r.team!==T.id||r.built<1||(r.kind!=='hq'&&r.kind!=='uplink')||r.dis>G.t)continue;if(Math.hypot(r.x-e.x,r.y-e.y)<=GPR_R){e.detT=Math.max(e.detT||0,G.t+1);break;}}}}}
+// Ground-Penetrating Radar also hears movement under the ground: when enemy units go into or come out of a tunnel (or fort/post) within radar range of
+// your HQ / Strike Center, you get a warning ping and the units that come out stay revealed for 8 s. Pure function of game state; host-side only like gprTick.
+function gprHears(b,units,out){if(!b||!units||!units.length)return;for(const T of G.teams){if(!T.upg||!T.upg.gpr||T.id===b.team||ally(T.id,b.team))continue;let ok=false;for(const r of G.ents){if(r.dead||!r.isB||r.team!==T.id||r.built<1||(r.kind!=='hq'&&r.kind!=='uplink')||r.dis>G.t)continue;if(Math.hypot(r.x-b.x,r.y-b.y)<=GPR_R){ok=true;break;}}if(!ok)continue;
+  if(out)for(const u of units)u.detT=Math.max(u.detT||0,G.t+8);b.detT=Math.max(b.detT||0,G.t+8);log(T.id,out?'Ground radar: enemy troops coming out of a tunnel!':'Ground radar: enemy troops moving underground.','w');try{FXE('tping',[T.id,b.x|0,b.y|0,2]);}catch(_){}}}
 function usePower(team,key,x,y){const ok=usePower0(team,key,x,y);if(ok&&G.teams[team]){const s=stOf(G.teams[team]);s.pw[key]=(s.pw[key]||0)+1;}return ok;}
 function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T.pw[key];if(sigBan(T.fac,key))return false;if(!P0||P0.passive||!w||w.cd>0)return false;if(key==='bb'&&(G.t<300||T.credits<P0.cash)){log(team,G.t<300?'Bunker Buster is not available in the first 5 minutes.':'Bunker Buster costs $'+P0.cash+'.','w');return false;}const L=Math.max(1,Math.min(3,w.lv||1)),M=PLV[L-1],P=Object.assign({},P0,{lv:L,M,cd:Math.round(P0.cd*PCD[L-1]),r:P0.r?Math.round(P0.r*powLvVal(key,'rm',L,1+.2*(L-1))):P0.r});
   if(key==='nat'){if(!natPower(team,P,x,y))return false;w.cd=P.cd;log(team,`${P.name}!`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} used ${P.name}.`,'w');pubNews('pow',team,-1,P.name);return true;}
@@ -8677,14 +8696,14 @@ function unloadTransport(tr){const C=tr.cargo||[];if(!C.length)return;const dom=
   tr.cargo=C.filter(Boolean);if(placed)log(tr.team,`${placed} unit${placed>1?'s':''} unloaded.`,'g');if(tr.cargo.length)log(tr.team,'Move closer to land to unload the rest.','w');}
 function fortUnits(b){return b.gar||(b.gar=[]);}
 // The Mountain Fortress is standalone: it keeps its own garrison (FORT_CAP), apart from the shared tunnel network
-function enterTunnel(u,b){const f=b&&b.kind==='fort',p=!!b&&isPost(b);if(p&&!isInf(u.s)){u.order=null;log(u.team,'Only infantry fit inside a firing post.','w');return;}const T=G.teams[u.team],L=(f||p)?fortUnits(b):T.tun,cap=f?FORT_CAP:p?POST_CAP:tunCap(u.team);if(L.length>=cap){u.order=null;log(u.team,f?`The Mountain Fortress is full (${cap} units).`:p?`The firing post is full (${cap} soldiers).`:`The tunnel network is full (${cap} units).`,'w');return;}u.order=null;u.target=null;u.inTun=true;G.byId.delete(u.id);L.push(u);}
+function enterTunnel(u,b){const f=b&&b.kind==='fort',p=!!b&&isPost(b);if(p&&!isInf(u.s)){u.order=null;log(u.team,'Only infantry fit inside a firing post.','w');return;}const T=G.teams[u.team],L=(f||p)?fortUnits(b):T.tun,cap=f?FORT_CAP:p?POST_CAP:tunCap(u.team);if(L.length>=cap){u.order=null;log(u.team,f?`The Mountain Fortress is full (${cap} units).`:p?`The firing post is full (${cap} soldiers).`:`The tunnel network is full (${cap} units).`,'w');return;}u.order=null;u.target=null;u.inTun=true;G.byId.delete(u.id);L.push(u);if(!(b.gprE>G.t)){b.gprE=G.t+4;gprHears(b,[u],false);}}
 function unloadTunnel(b){const f=b.kind==='fort',p=isPost(b);const T=G.teams[b.team];const L=(f||p)?fortUnits(b):T.tun;const n=L.length;if(!n)return;L.forEach((u,i)=>{const a=i/n*6.283+(f?(i*.37)%.3:Math.random()*.3),r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;u.ambT=G.t+(u.s.tunAmb?SIG.tunAmbT:3);G.ents.push(u);G.byId.set(u.id,u);});
-  const out=L.slice();if(f||p)b.gar=[];else T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the ${f?'Mountain Fortress':p?'firing post':'tunnel'}.`,'g');return out;}
+  const out=L.slice();gprHears(b,out,true);if(f||p)b.gar=[];else T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the ${f?'Mountain Fortress':p?'firing post':'tunnel'}.`,'g');return out;}
 function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
 function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,t:0,next:1e9};return;}
   // seeded (same for every player and the server): the next change is picked ahead of time and announced ~25 s before it arrives
   if(!G.wxR)G.wxR=mulberry(((G.seed||1)*7919+13)|0);const R=G.wxR;
-  if(!G.wx)G.wx={k:'clear',t:0,next:150+R()*90,nk:null,fc:0};const W=G.wx;W.t+=dt;const ks=weatherKinds(G.map.mud?'green':G.map.theme);
+  if(!G.wx)G.wx={k:'clear',t:0,next:150+R()*90,nk:null,fc:0};const W=G.wx;W.t+=dt;const ks=weatherKinds(G.map.mud?'green':G.map.theme,G.live);
   if(!W.nk)W.nk=W.k==='clear'?ks[1+Math.floor(R()*(ks.length-1))]:'clear';
   if(!W.fc&&W.t>=W.next-25){W.fc=1;const w=WEATHER[W.nk];for(const T of G.teams)log(T.id,W.nk==='clear'?'Forecast: the weather is about to clear.':`Forecast: ${w.name.toLowerCase()} rolling in within 25 seconds.`,'w');}
   if(W.t<W.next)return;W.t=0;W.fc=0;W.k=W.nk;W.nk=null;W.next=W.k==='clear'?170+R()*120:55+R()*45;
@@ -9787,7 +9806,7 @@ const BF_SC=80,BF_HULK_MAX=96,BF_FIRE_MAX=420;
 const BF_SHOUT=['rpg','manDown','reload','grenade','contact','tank','medic'];
 // stateless seeded random in [0,1): a pure function of (seed, game clock, a, b), so a loaded save or a migrated host replays exactly
 function bfRnd(a,b){let h=((((G.seed||1)|0)^Math.imul(a|0,0x9E3779B1)^Math.imul(b|0,0x85EBCA6B)^Math.imul((G.t*20)|0,0xC2B2AE35))>>>0);h^=h>>>15;h=Math.imul(h,0x2C1B3C6D);h^=h>>>12;h=Math.imul(h,0x297A2D39);h^=h>>>15;return (h>>>0)/4294967296;}
-function bfWind(){const wk=(G.wx&&G.wx.k)||'clear',base=({clear:8,rain:12,fog:3,sandstorm:34,snow:10,blizzard:38})[wk]||8;const s0=(((G.seed||1)*2654435761)>>>0);
+function bfWind(){const wk=(G.wx&&G.wx.k)||'clear',base=({clear:8,rain:12,fog:3,sandstorm:34,snow:10,blizzard:38,storm:30})[wk]||8;const s0=(((G.seed||1)*2654435761)>>>0);
   const a=(s0%6283)/1000+.8*Math.sin(G.t/210)+.35*Math.sin(G.t/57+1.3),sp=base*(1+.35*Math.sin(G.t/91+(s0%7)));return{x:Math.cos(a)*sp,y:Math.sin(a)*sp,s:sp};}
 function bfInit(){if(G.bfD&&G.bfD.g===G)return;G.bfW=Math.ceil(MAPW/BF_SC);G.bfH=Math.ceil(MAPH/BF_SC);G.bfD=new Float32Array(G.bfW*G.bfH);G.bfD.g=G;G.bfD2=new Float32Array(G.bfW*G.bfH);G.bfN=0;
   G.bfFire=G.bfFire||[];G.bfScorch=G.bfScorch||[];G.bfHulk=G.bfHulk||[];G.bfT=G.bfT||0;G.bfFN=G.bfFire.length;}
@@ -9804,7 +9823,7 @@ function bfSmkStep(dt,w){const W=G.bfW,H=G.bfH,A=G.bfD,B=G.bfD2,ax=w.x*dt/BF_SC,
   B.g=G;G.bfD=B;G.bfD2=A;G.bfN=n;G.bfSmS=S;}
 function bfSmkAdd(x,y,v){const i=Math.floor(x/BF_SC),j=Math.floor(y/BF_SC);if(i<0||j<0||i>=G.bfW||j>=G.bfH)return;const k=j*G.bfW+i;G.bfD[k]=Math.min(1.5,G.bfD[k]+v);}
 // ---------- wildfire ----------
-function bfDry(){const s=G.ssn===3?0:G.ssn===2?.35:1,wk=(G.wx&&G.wx.k)||'clear',w=({clear:1,rain:.08,fog:.6,sandstorm:1.3,snow:0,blizzard:0})[wk];return s*(w==null?1:w);}
+function bfDry(){const s=G.ssn===3?0:G.ssn===2?.35:1,wk=(G.wx&&G.wx.k)||'clear',w=({clear:1,rain:.08,fog:.6,sandstorm:1.3,snow:0,blizzard:0,storm:.05})[wk];return s*(w==null?1:w);}
 function bfFuel(){if(G.bfFuel&&G.bfFuel.g===G)return G.bfFuel;const F=new Uint8Array(GW*GH);F.g=G;const th=(MAPS[G.mapKey]||{}).theme,rm=G.roadMask,M=G.map;
   for(let k=0;k<GW*GH;k++){if(G.grid[k]!==0)continue;const h=((k*2654435761)>>>0)%100;F[k]=th==='snow'?0:th==='green'?(h<70?1:h<85?2:0):(h<38?1:h<48?2:0);}
   for(const w of (M&&M.woods)||[]){const r=w.r*WK*1.05,x0=Math.max(0,Math.floor((w.x*WK-r)/CELL)),x1=Math.min(GW-1,Math.floor((w.x*WK+r)/CELL)),y0=Math.max(0,Math.floor((w.y*WK-r)/CELL)),y1=Math.min(GH-1,Math.floor((w.y*WK+r)/CELL));
@@ -11565,7 +11584,7 @@ function fxUpdate(dt){
 // distance ease in and out as the weather changes.
 let RAIN=null,WXV={k:'clear',m:0};
 function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&Math.round(todSeg(G.t).d*20)!==WXT)try{applyWeather(0);}catch(e){}const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far};}const B=WXV.base;if(!B)return;
-  if(WXV.k!==k){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=k;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;
+  const kk=k==='storm'?'rain':k;/* a thunderstorm looks like heavy rain until PACK LOOKS paints lightning (G.wxv()) */if(WXV.k!==kk){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=kk;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;
   const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:30,f:720},blizzard:{c:'#dfe6ee',n:150,f:1700},snow:{c:'#e3e9f0',n:220,f:2300}}[K];
   if(T){const tc=lin(T.c);SCN.fog.color.copy(B.c).lerp(tc,m*.85);SCN.fog.near=B.n+(T.n-B.n)*m;SCN.fog.far=B.f+(T.f-B.f)*m;}else{SCN.fog.color.lerp(B.c,Math.min(1,dt*2));SCN.fog.near+=(B.n-SCN.fog.near)*Math.min(1,dt*2);SCN.fog.far+=(B.f-SCN.fog.far)*Math.min(1,dt*2);}
   const R=Math.max(420,cam.dist*1.1);
@@ -11575,7 +11594,7 @@ function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&Math.round(todS
     RAIN.visible=m>.02;RAIN.material.opacity=.35*m;const p=RAIN.geometry.attributes.position.array,D=RAIN.userData.d,H=320;
     for(let i=0;i<D.length;i++){const d=D[i];d[2]-=dt*1.6;if(d[2]<0){d[2]+=1;d[0]=rnd(-1,1);d[1]=rnd(-1,1);}const x=cam.x+d[0]*R,y=cam.y+d[1]*R*.7,gh=groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y))),h=gh+d[2]*H;p.set([x,h,y,x+3,h+14,y],i*6);}
     RAIN.geometry.attributes.position.needsUpdate=true;}else if(RAIN)RAIN.visible=false;
-  const el=document.getElementById('wxchip');if(el){const W=WEATHER[k];const tl=G.todM?todLvl():0,tn=tl===2?'NIGHT':tl===1?(G.todM===3&&(G.t%1200)>=800?'DAWN':'DUSK'):'';const on=k!=='clear'||!!tn;el.hidden=!on;if(on){const txt=(tn?tn+(k!=='clear'?' · ':' · sight '+(tl===2?'-40%':'-20%')+', thermal optics see further'):'')+(k!=='clear'?`${W.name.toUpperCase()} · vision ${Math.round((W.vis-1)*100)}% · accuracy ${Math.round((W.acc-1)*100)}%${W.air===0?' · jets grounded':''}`:'');if(el.textContent!==txt)el.textContent=txt;}}}
+  const el=document.getElementById('wxchip');if(el){const W=WEATHER[k];const tl=G.todM?todLvl():0,tn=tl===2?'NIGHT':tl===1?(G.todM===3&&todClockSec()>=800?'DAWN':'DUSK'):'';const lv=G.live?todClockText():'',on=k!=='clear'||!!tn||!!lv;el.hidden=!on;if(on){const txt=(lv?lv+' · ':'')+(tn?tn+(k!=='clear'?' · ':' · sight '+(tl===2?'-40%':'-20%')+', thermal optics see further'):'')+(k!=='clear'?`${W.name.toUpperCase()} · vision ${Math.round((W.vis-1)*100)}% · accuracy ${Math.round((W.acc-1)*100)}%${W.air===0?' · jets grounded':''}`:'');if(el.textContent!==txt)el.textContent=txt;}}}
 /* ---------- Helicopter rotor wash ----------
    A helicopter's downwash blasts whatever is under it: a ring of dust rolls outward on land (powder snow on snow maps),
    white spray and a flattened, swirling ring on water. Strongest when the helicopter hovers low and slow; a fast pass
@@ -13494,7 +13513,7 @@ function specEvts(evs,SP){let e=evs.filter(v=>Array.isArray(v)),len=JSON.stringi
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
 const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','upN','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
-  'todM','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ','boccS'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
+  'todM','live','todH0','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ','boccS'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
 // (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
 // end of the sim step)
@@ -15403,7 +15422,7 @@ new ResizeObserver(()=>resize()).observe(cv);
 requestAnimationFrame(loop);netInit();
 
 // Test range: the same Conditions picker, applied live (the range is never synced, so changing the sky mid-battle is safe).
-function condLive(b){if(!G||!G.sandbox)return;b=condFit(b,condTheme(G.mapKey||setup.map,setup.w),G.seed);G.wxB=b;G.todM=todMode(b);const fx=[0,3,4].includes(b)?'clear':{6:'sandstorm',7:'rain',8:'snow'}[b];G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};setup.w=wxJoin(b,wxSsn(setup.w));try{WXG=null;applyWeather(b);}catch(e){}sbCond();}
+function condLive(b){if(!G||!G.sandbox)return;b=condFit(b,condTheme(G.mapKey||setup.map,setup.w),G.seed);G.wxB=b;todSetup(b);const fx=[0,3,4].includes(b)?'clear':{6:'sandstorm',7:'rain',8:'snow'}[b];G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};setup.w=wxJoin(b,wxSsn(setup.w));try{WXG=null;applyWeather(b);}catch(e){}sbCond();}
 function sbCond(){const sb=$('sbx');if(!sb||!G)return;let r=$('sbCond');if(!r){r=document.createElement('div');r.id='sbCond';r.className='seg';r.style.cssText='flex-wrap:wrap;margin-top:6px';for(const c of CONDS){if(c.w<0)continue;const b=document.createElement('button');b.type='button';b.dataset.w=c.w;b.textContent=c.n;try{icoPut(b,{0:'sun',1:'sun',2:'cloud',3:'dusk',4:'moon',5:'dusk',6:'storm',7:'rain',8:'snow'}[c.w]||'sun');}catch(e){}b.onclick=()=>condLive(c.w);r.append(b);}sb.insertBefore(r,$('sbFight'));}
   const th=condTheme(setup.map,setup.w);r.querySelectorAll('button').forEach(b=>{const w=+b.dataset.w,fit=condFits(w,th);b.disabled=!fit;b.classList.toggle('on',w===G.wxB);b.title=fit?(CONDS.find(c=>c.w===w)||{}).t:'Does not fit this map';});}
 function sbPanel(){const el=$('sbx');if(!el)return;el.hidden=!(G&&G.sandbox);if(el.hidden)return;if(!$('sbCond'))sbCond();const D=G.teams[1];const b=$('sbFight');if(b){{const tx=D.fight?'Enemy fights back: ON':'Enemy fights back: OFF';if(b.dataset.tx!==tx){b.dataset.tx=tx;b.textContent=tx;try{icoHud();}catch(e){}}}b.classList.toggle('on',!!D.fight);}
@@ -16808,7 +16827,7 @@ const ENC_NOTE={
   aa:'Mobile air-defence vehicles carry radar-guided guns or short-range missiles to protect columns and bases from helicopters, jets and drones.',
   ammot:'Ammo trucks follow the army: they top up the ammunition of friendly units close to them, carry a limited stock and reload inside your own area. Light armor, no weapon: keep them behind the front.',
   harv:'Supply trucks are the logistics backbone: fuel, ammunition and food move by road. Armies lose more equipment to broken supply than to enemy fire.',
-  dozer:'Combat engineers build bridges, fortifications and camps and clear obstacles, often under fire. The heavy construction vehicle is how an army digs in and builds forward.',
+  dozer:'Combat engineers build bridges, fortifications and camps and clear obstacles, often under fire. The heavy construction vehicle is how an army digs in and builds forward. Right-click fallen-building rubble with one to clear the way for tanks and supply trucks.',
   heli:'Attack helicopters hunt armor from behind hills and tree lines with guided missiles and cannon. Fast and flexible, they are vulnerable to air defense and massed small-arms fire.',
   jet:'Strike fighters and fighter-bombers drop precision-guided bombs and fire missiles at targets far behind the line, then leave before air defenses can react.',
   drone:'Armed strike drones and loitering munitions turned small, cheap aircraft into precision weapons: they find a target, circle, and dive onto it.',
@@ -21711,7 +21730,7 @@ function startCampaign(id,diff){
   const m=CAMPAIGN.find(x=>x.id===id);if(!m)return;try{initAudio();}catch(e){}
   MODE='single';ME=0;const ally=!!m.ally,facs=ally?[m.fac,m.ally,m.enemy]:[m.fac,m.enemy];
   setup.p=m.fac;setup.d=diff;
-  TERR_DEFER=true;try{newGame({seed:(m.n*7919+diff*104729+12345)|0,facs,ai:facs.map(()=>false),map:m.map,tm:ally?[0,0,1]:[0,1],bs:1,slot:0,st:[0,1],w:0,camp:{id,diff}});}finally{TERR_DEFER=false;}
+  TERR_DEFER=true;try{newGame({seed:(m.n*7919+diff*104729+12345)|0,facs,ai:facs.map(()=>false),map:m.map,tm:ally?[0,0,1]:[0,1],bs:1,slot:0,st:[0,1],w:m.w|0,camp:{id,diff}});}finally{TERR_DEFER=false;}
   afterStart();
 }
 function campDebrief(c,won){
