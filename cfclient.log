@@ -1,0 +1,121 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:38135
+[2s] pages loaded; this machine's host benchmark: 734
+[56s] 1. battle ZMBLH1 running on the server: true; slots creator 0, friend 1
+[60s] 2. server's standby: slot 1 (benchmarks the server holds: 40, 900)
+[60s] 3. the server is made to fall behind real time (it gets only a third of the real time)
+[88s]    after 27.9 s: server battle closed (last window 0.521x real time); creator client (room gen 1), friend host
+[94s] 4. after the takeover, t=17 s: new host 10 entities, creator's side sees 5; creator's page: missing 0, off-position 0, mismatched 0; credits host 3000 page 3000
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFOVER PASS (95s) — the server picked the strong PC as standby, handed the battle to it when it fell behind real time, and the other player stayed in sync
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:41659
+[2s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[6s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+[6s]    server busy (busy) -> battle in this browser: " MULTIPLAYER BATTLE6JGPR8OnlinePlayerColourNationTeamYouyouNationRandomIranLebanese ShiaZaidi Shia MovementIraqi Shia BrigadesPalestine Isla"
+[7s]    the 3 lobbies closed; battle slots in use: 0
+[8s] 2. lobby open on the server, code FM07F8; creator status: " MULTIPLAYER BATTLEFM07F8OnlinePlayerColourNationTeamYouyouNationRandomIranLebanese ShiaZaidi Shia MovementIraqi Shia Br"
+[9s]    friend joined: "Joined. 2 players in the lobby. Waiting for the leader to start the battle… MULTIPLAYER BATTLEFM07F8OnlinePlayerColourNa"
+[10s]    server lobby: humans US/team 1, RU/team 2; computer CN/team 2
+[28s] 3. battle started on the server (battle, held for loading screens: true); creator is slot 0, friend slot 1
+[64s]    both pages past the loading screen (rd: true, true); battle running: true
+[74s]    slot 0's order: 2/2 of its units moved on the server
+[74s]    slot 1's order: 2/2 of its units moved on the server
+[74s]    in-battle readout (creator): "60 FPS · ping 88 ms"
+[156s]    check @1.5 min slot 0 t=91s: server 21 entities, this side sees 6; page has 6; missing 0, extra 0, off-position 0, mismatched 0; credits server 3495 page 3495
+[157s]    check @1.5 min slot 1 t=91s: server 21 entities, this side sees 15; page has 15; missing 0, extra 0, off-position 0, mismatched 0; credits server 3570 page 3570
+[157s] 4. the friend's connection to the server is cut
+[158s]    after 0.6 s the friend is reconnected via wsb
+[163s]    after reconnect slot 1 t=95s: server 21 entities, this side sees 15; page has 15; missing 0, extra 0, off-position 0, mismatched 0; credits server 3570 page 3570
+[172s] 5. the battle's object is evicted at t=105 s (as on a redeploy)
+[174s]    after 1.8 s: server battle at t=99 s; creator client via wsb (room gen 0), friend client via wsb (room gen 0)
+[179s]    after restart slot 0 t=102s: server 22 entities, this side sees 6; page has 6; missing 0, extra 0, off-position 0, mismatched 0; credits server 3815 page 3815
+[180s]    after restart slot 1 t=102s: server 22 entities, this side sees 16; page has 16; missing 0, extra 0, off-position 0, mismatched 0; credits server 3730 page 3730
+[189s] 6. today's use is pushed past 75%; standby (checkpoint holder) is slot 1; pages holding a checkpoint: false,true
+[191s]    after 1.8 s: server battle closed, today at 76.2%, battles allowed: false; creator client (room gen 1, last update 0.1 s ago), friend host
+[194s]    new browser host at t=113 s with 23 entities; the other player's side is still theirs; its last update 0.1 s ago
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E PASS (194s) — battle hosted by the real BattleRoom (wrangler dev): busy fallback, lobby, start, sync, orders, reconnect, server restart, budget hand-over all OK
+local game server http://127.0.0.1:41853
+[1s] both pages loaded
+[4s] 1. protected battle open on Cloudflare, code QJ5KME; invite link http://127.0.0.1:34105/join.html#join=qj5kme&pw=Yalla%202026%20%C3%B1
+[4s]    server keeps: {"mem":{"s":"JU+TgDMoUax2BfoajsnvRA==","h":"DcvvY4oSaTp4T0mPX1jf0+MqhIBC8DSkQjbCkMCCxR0=","i":4000},"kept":null}
+[7s] 2. friend's game list: "🔒 Battle · United States · game QJ5KME · Split Ridge · 1/2 playersJoin"
+[7s]    "Play online" with no password: started its own battle (did not join the protected one)
+[8s]    wrong password -> "Wrong password. Try again.JoinCancel "
+[9s]    right password -> "Joined. 2 players in the lobby. Waiting for the leader to start the battle… "; creator's lobby has 2 players
+[11s] 3. invite link joined in one go; address bar now /index.html#join=qj5kme
+[12s] 4. browser-hosted MW5KT0: join by code asks "🔒 Game MW5KT0 is password protected. Enter its password to join.JoinC"
+[34s]    right password -> friend: "Joined. 2 players in the lobby. Waiting for the leader to start the battle… "
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFPASSWORD PASS (36s) — password-protected games: lock in the list, wrong password refused, right password and invite link join, server keeps only a hash, browser-hosted fallback checks it too
+local game server http://127.0.0.1:46399
+[1s] page loaded
+[45s] 1. skirmish (mouse): picks [0,3,-1,1], AI 2 Random -> spot 3; bases [[1000,860],[1000,3540],[5400,860],[5400,3540]]; HQs on their bases: true (preview 24326 bytes)
+[78s] 2. phone (touch only): picks [0,3,-1,1] made by tapping; picker fits in landscape too ({"cv":384,"over":0,"rows":true})
+[89s] 3. leader's Cloudflare lobby cz9dve
+[89s]    friend joined
+[89s]    computer player added
+[91s]    lobby picks [2,0,3]
+[115s] 3. Cloudflare battle CZ9DVE: picks [2,0,3]; both see bases [[5400,860],[1000,860],[1000,3540]]; the friend's HQ in the server's snapshots stands on its spot
+[118s]    computer player added
+[133s] 4. browser-hosted Z4DXL5: picks [2,0,3]; host and friend both see bases [[5400,860],[1000,860],[1000,3540]]; the host's HQs stand on them
+  warn: player console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: screenshot startpick-desktop.png: page.screenshot: Expected options.clip.height to be greater than 0.
+  warn: phone console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: screenshot startpick-phone.png: page.screenshot: Expected options.clip.height to be greater than 0.
+  warn: screenshot startpick-phone-landscape.png: page.screenshot: Expected options.clip.height to be greater than 0.
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFSTARTPICK PASS (134s) — start spots picked by click, tap and Start menu; skirmish, Cloudflare and browser-hosted battles put every base on its spot, and host and players agree
+local game server http://127.0.0.1:33619 (pages reach it through http://127.0.0.1:38263); over-budget server http://127.0.0.1:43739
+[3s] 0. menu: "▶ Play online" and "+ New battle"
+[4s] 1. server busy (busy) -> battle in this browser; lobby: " MULTIPLAYER BATTLEQMU8YCOnlinePlayerColourNationTeamYouyouNationRandomIranLebanese ShiaZaidi Shia MovementIraqi Shia BrigadesPalestine Isla"
+[4s] 2. lobby open on the server, code SFPKTZ; creator status: " MULTIPLAYER BATTLESFPKTZOnlinePlayerColourNationTeamYouyouNationRandomIranLebanese ShiaZaidi Shia MovementIraqi Shia Br"
+[4s] friend's game list: "1 open game · 0 in progressBattle · United States · game SFPKTZ · Split Ridge · 1/2 playersJoin👁 Watch"
+[4s] friend joined with "Play online": "Joined. 2 players in the lobby. Waiting for the leader to start the battle… "
+  ✗ page.evaluate: TypeError: Cannot set properties of null (setting 'value')
+    at eval (eval at evaluate (:311:30), <anonymous>:1:83)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:106)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+--- server log (tail) ---
+
+ ⛅️ wrangler 4.153.0 (update available 4.164.0)
+───────────────────────────────────────────────
+[custom build] Running: node build-sim.mjs
+[custom build] battle sim up to date: gen/battle-sim.js (812 KB)
+[custom build] 
+Your Worker has access to the following bindings:
+Binding                             Resource                  Mode
+env.ROOMS (GameRoom)                Durable Object            local
+env.LOBBY (Lobby)                   Durable Object            local
+env.BUDGET (Budget)                 Durable Object            local
+env.BATTLES (BattleRoom)            Durable Object            local
+env.OVERRUN_GUARD ("(hidden)")      Environment Variable      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:33619
+[wrangler:info] GET /health 200 OK (331ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (37ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (7ms)
+[wrangler:info] GET /turn 200 OK (9ms)
+[wrangler:info] GET /room/qmu8yc 101 Switching Protocols (32ms)
+[wrangler:info] GET /battle/sfpktz 101 Switching Protocols (50ms)
+[wrangler:info] GET /games 200 OK (6ms)
+[wrangler:info] GET /battle/sfpktz 101 Switching Protocols (5ms)
+
+creator log: []
+friend log: []
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT FAIL: page.evaluate: TypeError: Cannot set properties of null (setting 'value')
+    at eval (eval at evaluate (:311:30), <anonymous>:1:83)
+    at eval (eval at evaluate (:311:30), <anonymous>:1:106)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44) (9s)
