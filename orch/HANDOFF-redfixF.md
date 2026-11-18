@@ -4,6 +4,7 @@ Done:
 2. Balance (item 3): tournament roster in orch/aitourney.mjs was a stale hard-coded 19 nations; now reads PLAYABLE (22). 462 games per difficulty; 3% nudges to AE, EG, DE, RV (dearer) and RU, CN, GB, DW (cheaper). Report orch/reports/balance-1118.md.
 Left:
 - Item 2 (stuck-units leftovers: AI attack groups on 6-8 player maps, dugout exits, ships at coasts) NOT started: `stalled()` (src/03-sim.js ~334) still gives up after 16 s; the idea in HANDOFF-pack-battlefield.md is to sidestep along the building edge instead.
+- tutorial test: its strike force was ordered with a LEFT click (only selects since 2026-11-14), so it won only when auto-targeting reached the HQ (flaky by map seed); now a right-click. cfclient failed once on a missing lobby-list row (flake, passed before and after).
 - migrate-abrupt: watch for a repeat of "AI took over but did nothing in 105 game-s" (`orch/migrate.mjs`); if it returns, check that the AI's unfinished foundations (`nd`, `built<1`) have their dozer orders after a takeover.
 - superfreeze OB fails first try often on CI (frame stalls in the ew/dtank/drone waves, nothing in the page's own counters) and passed on retry; also late MeshDepthMaterial program when OB's barrage first draws (depth variant 5:false->uv): add it to the warm-up if it ever fails twice.
 - Re-run the balance workflow after this lands; CN/RU are low on Normal AI only.
