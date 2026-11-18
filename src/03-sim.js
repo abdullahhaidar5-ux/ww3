@@ -15,7 +15,7 @@ function pubNews(k,a,b,tx){if(MODE==='host')FXE('hl',[k,a,b==null?-1:b,tx||'']);
    T.st per side: ku/kb enemy units/structures destroyed, lb own structures lost, vd/vl value destroyed/lost, sp money
    spent (net of cancels), got money received from allies, c0 starting money, fk time of first kill, bk/bn the unit type
    with the most kills by a single unit, pw general powers used by key, pk biggest army (units), ar army value every 10 s. */
-function stNew(){return{ku:0,kb:0,lb:0,vd:0,vl:0,sp:0,got:0,c0:null,fk:-1,bk:'',bn:0,pw:{},pk:0,ar:[],out:null};}
+function stNew(){return{ku:0,kb:0,lb:0,vd:0,vl:0,sp:0,got:0,c0:null,fk:-1,bk:'',bn:0,pw:{},pk:0,ar:[],mr:[],out:null};}
 function stOf(T){return T&&(T.st||(T.st=stNew()));}
 function stSp(T,n){const s=stOf(T);s.sp+=n||0;}
 function stKill(T,e,val,src){const s=stOf(T);if(e.isB)s.kb++;else s.ku++;s.vd+=val||0;if(s.fk<0)s.fk=G.t;if(src&&!src.isB&&src.s){src.kc=(src.kc||0)+1;if(src.kc>s.bn){s.bn=src.kc;s.bk=src.kind;}}}
@@ -23,13 +23,14 @@ function stLost(e){const T=e&&e.team!=null&&G.teams[e.team];if(!T)return;const s
 function stDt(){const T=G.teams[0],s=T&&T.st;return s&&s.dt||10;}
 function stSample(f){if(!G||!G.teams)return;if(!f&&G.stT!=null&&G.t<G.stT+stDt()-.01)return;G.stT=G.t;const n=G.teams.map(()=>0),v=G.teams.map(()=>0);
   for(const e of G.ents){if(e.dead||e.isB||e.team==null||e.team<0||!e.s||e.civ||e.inTun)continue;if(n[e.team]==null)continue;n[e.team]++;v[e.team]+=e.s.cost||0;}
-  G.teams.forEach((T,i)=>{const s=stOf(T);if(n[i]>s.pk)s.pk=n[i];if(s.ar.length>=720){const h=[];for(let k=0;k+1<s.ar.length;k+=2)h.push(Math.round((s.ar[k]+s.ar[k+1])/2));s.ar=h;s.dt=(s.dt||10)*2;}else s.ar.push(Math.round(v[i]/100));});}
+  G.teams.forEach((T,i)=>{const s=stOf(T);if(n[i]>s.pk)s.pk=n[i];const m=s.mr||(s.mr=s.ar.map(()=>0));if(s.ar.length>=720){const h=[],hm=[];for(let k=0;k+1<s.ar.length;k+=2){h.push(Math.round((s.ar[k]+s.ar[k+1])/2));hm.push(m[k+1]|0);}s.ar=h;s.mr=hm;s.dt=(s.dt||10)*2;}else{s.ar.push(Math.round(v[i]/100));m.push(Math.max(0,Math.round(((T.credits||0)-(s.c0!=null?s.c0:3000)+s.sp+(T.gave||0)-s.got)/100)));}});}
+/* endscreen 2026-11-18: mr = money earned so far (/100) at each army sample, for the score screen's Money timeline; counters only, rides in T.st (checkpointed with the team) */
 // ghostslot 2026-11-14: only real participants are listed - the hidden local-militia team (T.reb, always last) is never a scoreboard column
 function endStats(w){const N=G.teams.length,TS=G.teams.filter(T=>!T.reb);return{v:1,t:Math.round(G.t),w,bt:G.battle?1:0,dt:stDt(),p:TS.map(T=>{const s=stOf(T),c0=s.c0!=null?s.c0:3000;
   let pk='',pn=0,pt=0;for(const k in s.pw){pt+=s.pw[k];if(s.pw[k]>pn){pn=s.pw[k];pk=k;}}
   return{f:T.fac,gd:T.gdoc||'',n:(typeof NET!=='undefined'&&NET.pnames&&NET.pnames[T.id]?String(NET.pnames[T.id]).slice(0,24):undefined),c:T.color,tm:T.tm,ai:T.ai?1:0,b:T.built|0,lu:Math.max(0,(T.lost|0)-s.lb),lb:s.lb,ku:s.ku,kb:s.kb,
     me:Math.max(0,Math.round((T.credits||0)-c0+s.sp+(T.gave||0)-s.got)),ms:Math.round(s.sp),r:T.rank|0,ta:Math.round(T.out&&s.out!=null?s.out:G.t),
-    vd:Math.round(s.vd),vl:Math.round(s.vl),fk:s.fk<0?-1:Math.round(s.fk),bk:s.bk,bn:s.bn,pk,pn,pt,ap:s.pk,out:T.out?1:0,bb:s.bb|0,sc:s.sc|0,sco:Math.round(s.vd/10+(s.sc|0)/20+s.kb*40+s.ku*5+(s.bb|0)*10)};}),a:TS.map(T=>stOf(T).ar.slice())};}
+    vd:Math.round(s.vd),vl:Math.round(s.vl),fk:s.fk<0?-1:Math.round(s.fk),bk:s.bk,bn:s.bn,pk,pn,pt,ap:s.pk,out:T.out?1:0,bb:s.bb|0,sc:s.sc|0,sco:Math.round(s.vd/10+(s.sc|0)/20+s.kb*40+s.ku*5+(s.bb|0)*10)};}),a:TS.map(T=>stOf(T).ar.slice()),m:TS.map(T=>(stOf(T).mr||[]).slice())};}
 // Battle over: the host tells the clients right away; showEnd (08-ui) shows the result screen in a browser.
 // The end-of-match stats (summary page) are sent just before it, in one 'est' event, so every player sees the host's numbers.
 function endGame(winner,reason){if(!G||G.over)return;try{stSample(1);G.endStats=endStats(winner);}catch(e){G.endStats=null;}if(MODE==='host'&&G.out){if(G.endStats)G.out.push(['est',G.endStats]);G.out.push(['end',winner]);if(typeof NET!=='undefined')NET.evT=0;}G.over=true;if(typeof showEnd==='function')showEnd(winner,reason);}

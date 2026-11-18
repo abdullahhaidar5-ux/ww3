@@ -34,6 +34,19 @@ const ck = (c, m) => { if (!c) fails.push(m); };
 
 // Rules files (orch/loadF): CLAUDE.md = short current rules, orch/DECISIONS.md = the full dated record. Every standing decision's
 // key words must still be in one of the two files, and CLAUDE.md must stay short.
+// anthems 2026-11-17 (Abdullah 16:49 "Work on these now", CLAUDE.md Audio: nation identity = anthem at battle start and victory): every PLAYABLE
+// nation has mus/an_<CODE>.mp3, is in AN_FAC (09-audio.js) and has a credit line in AN_CRED (shown in the menu credits); sources: mus/an_pack.py
+{ const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8'); const dt = rd('src/01-data.js'), au = rd('src/09-audio.js');
+  const pm = dt.match(/const PLAYABLE=\[([^\]]*)\]/), pl = pm ? [...pm[1].matchAll(/'(\w+)'/g)].map(m => m[1]) : [];
+  const fm = au.match(/const AN_FAC=\/\*ANFAC\*\/\{([^}]*)\}/), fac = fm ? new Set([...fm[1].matchAll(/(\w+):1/g)].map(m => m[1])) : new Set();
+  const cm = au.match(/const AN_CRED=\{([\s\S]*?)\};/), cred = {}; if (cm) for (const m of cm[1].matchAll(/(\w+):'([^']+)'/g)) cred[m[1]] = m[2];
+  ck(pl.length === 22 && fm && cm && /id='anCred'/.test(au), 'anthems: PLAYABLE, AN_FAC, AN_CRED and the anCred menu-credits paragraph must all exist');
+  const AN_PENDING = ['KP'];   // KP Arirang (US Army Chorus, Commons File:Arirang.ogg) chosen; download was rate-limited 2026-11-17 - see orch/HANDOFF-anthems.md. Remove once mus/an_KP.mp3 lands.
+  for (const f of AN_PENDING) ck(!fs.existsSync(path.join(ROOT, 'mus', 'an_' + f + '.mp3')), 'anthems: ' + f + ' now has its file - take it off AN_PENDING in orch/decisions.mjs');
+  for (const f of pl.filter(f => !AN_PENDING.includes(f))) { const fp = path.join(ROOT, 'mus', 'an_' + f + '.mp3');
+    ck(fs.existsSync(fp) && fs.statSync(fp).size > 50000, 'anthems: ' + f + ' has no mus/an_' + f + '.mp3 (every playable nation gets its anthem at battle start and victory)');
+    ck(fac.has(f), 'anthems: ' + f + ' is missing from AN_FAC in src/09-audio.js'); ck(!!cred[f], 'anthems: ' + f + ' has no credit in AN_CRED (src/09-audio.js)');
+    ck(new RegExp("'" + f + "': \\('an/").test(rd('mus/an_pack.py')), 'anthems: ' + f + ' has no source row in mus/an_pack.py (source + licence)'); } }
 // ---- UI audit guards (Abdullah 2026-11-14 21:55 "find duplicates and remove them"): ONE key table, no key twice, every handled letter has a row, no stale hints
 { const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8'); const kt = rd('src/06z-keys.js');
   const defs = [...kt.matchAll(/\{id:'(\w+)'[^}]*?def:'([^']+)'/g)].map(m => [m[1], m[2]]); const seen = {};
@@ -80,6 +93,11 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/function condUI\(/.test(u) && /function sbCond\(/.test(u), 'weathergfx: the setup or Test range Conditions picker is gone from 08-ui.js');
   ck(/const GFX_PRESETS=\[\['low','Low'.*\['auto','Medium'.*\['high','High'.*\['ultra','Ultra'/.test(u), 'weathergfx: Settings graphics row is not Low / Medium / High / Ultra any more');
   ck(!/wxRandIdx\(G\.seed\)===4/.test(s), 'weathergfx: the old "Random = day or night only" rule is back in newGame'); }
+// smoothaudit 2026-11-17: the supply-lines button reads the minimap's place twice a second, not every frame (a forced page layout per frame)
+ck(/function lgUiTick\(\)\{[^\n]*\n[^\n]*\n[^\n]*\n[^\n]*\n\s*if\(show\)\{const nw=performance\.now\(\);if\(nw-\(LGU\.rt\|\|0\)<500/.test(SRC['08c-logi.js'] || ''), 'smoothaudit: lgUiTick reads the minimap rect (getBoundingClientRect) every frame again');
+// smoothaudit2 2026-11-17: weathering values (amount, kind, camo pattern, wall) are uniforms - kept out of the shader program key, else a new value links a program mid-game
+ck(/m\.customProgramCacheKey=\(\)=>'wxb'\+\(camo\?1:0\)\+\(typeof LOOK/.test(SRC['11-models.js'] || ''), 'smoothaudit2: weather() puts a uniform value (amount/kind/pattern/wall) into the shader program key again (a new program per value)');
+ck(/now-EDGE\.rt>250/.test(SRC['08i-hud.js'] || '') && !/function edgeTick\(\)[^]*?const r=cv\.getBoundingClientRect\(\)/.test(SRC['08i-hud.js'] || ''), 'smoothaudit: edgeTick (off-screen alert arrows) reads the screen rect every frame again');
 // upgicons 2026-11-15 (Abdullah 00:23 "Buttons were still missing icons"): the bar's hide-everything rule must spare the upgrade / power icon (.zhIc)
 ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{display:none/.test(SRC['08o-zhbar.js'] || ''), 'upgicons: the command-bar rule that hides button children also hides the upgrade/power icons (.zhIc)');
 // rclaunch 2026-11-15 (Abdullah 00:26 "Make road jobs and launch right click", 00:28 powers too): generals' powers and the Strike LAUNCH fire on right-click (left cancels); road jobs run on right-click (left cancels)
@@ -508,6 +526,13 @@ try {
   await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('IR battle never finished loading'));
   await page.waitForTimeout(2500);
   /* (moved after the battle starts: there is no game behind the menu any more) */
+  /* smoothaudit (2026-11-17): a unit or building that is off screen / hidden must not have its parts and bones recomputed every frame
+     (three.js r186 walks children of objects with matrixWorldAutoUpdate off; ~65 000 wasted matrix updates per frame in an 8-player battle) */
+  { const M = await ev(() => { let root = null; for (const [, o] of OBJ) if (!o.visible && o.children.length && o.updateMatrixWorld === umwVis) { root = o; break; }
+      if (!root) return { none: 1 }; const P = THREE.Object3D.prototype, um = P.updateMatrix; let n = 0; const kids = new Set(); root.traverse(q => { if (q !== root) kids.add(q); });
+      P.updateMatrix = function () { if (kids.has(this)) n++; return um.apply(this, arguments); }; try { SCN.updateMatrixWorld(); } finally { P.updateMatrix = um; } return { n, kids: kids.size }; });
+    ck(!M.none, 'smoothaudit: no hidden unit/building object uses umwVis (off-screen objects would recompute every part each frame)');
+    ck(!M.n, 'smoothaudit: a hidden unit/building still recomputed ' + M.n + ' of its ' + M.kids + ' parts in one frame'); }
   /* icons (Abdullah 2026-11-14 21:39 "every button has an icon that makes sense"): one table ICON_SVG (src/08-ui.js + 08p-icons.js), inline svg line icons.
      Every upgrade / power button in the bar, every order-dock button and the HUD buttons carry an svg icon (units / buildings keep their drawn canvas picture). */
   { const I = await ev(() => { const noIc = b => !b.querySelector('svg') && !b.querySelector('canvas'); const vis = b => { for (let n = b; n && n.nodeType === 1; n = n.parentElement) { if (n.hidden || getComputedStyle(n).display === 'none') return false; } return true; };
@@ -579,6 +604,11 @@ try {
         const q = nearestPassXY('ground', c.x + dx * 3, c.y + dy * 3); if (!q) continue; const blk = addUnit(ME, 'inf', p[0], p[1]), u = addUnit(ME, 'inf', q[0], q[1]); if (!blk || !u) continue; return { c: c.i, cx: c.x, cy: c.y, blk: blk.id, u: u.id }; } return null; });
     if (!hs) fails.push('house-click guard: no free house with walkable ground next to it'); else {
       await ev((h) => { centerOn(h.cx, h.cy, true); G.sel = [G.ents.find(e => e.id === h.u)]; }, hs); await ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+      /* smoothaudit: a drawn soldier figure re-composes only its walking bones (legs table); the ~40 others are computed once (boneFreeze, 06-view) */
+      { const bz = await ev((h) => { const o = OBJ.get(h.u), P = o && o.userData.parts; if (!P || !P.body) return { none: 1 }; let fro = 0, live = 0, legs = 0, wl = 0;
+          for (const m of P.body.children) { const W = m.userData.legs; if (!W) continue; wl++; const keep = new Set(Object.values(W).filter(j => j && j.b).map(j => j.b)); legs += keep.size;
+            m.traverse(q => { if (!q.isBone) return; if (keep.has(q)) { if (q.updateMatrix === boneKeep || !q.matrixAutoUpdate) live = -999; } else if (q.updateMatrix !== boneKeep) live++; else fro++; }); } return { wl, fro, live, legs }; }, hs);
+        ck(bz.none || !bz.wl || (bz.fro > 0 && bz.live === 0), 'smoothaudit: a drawn soldier still re-composes its non-walking bones every frame (or a walking bone is frozen): ' + JSON.stringify(bz)); }
       const pt = await ev((h) => { const b = G.ents.find(e => e.id === h.blk); for (const k of [.6, .3, .9, 0]) { const p = toScreen(b.x, unitH(b) + entHeightMid(b) * k, b.y), t = pickAt(p.x, p.y, false), c = civUnder(p.x, p.y, screenToWorld(p.x, p.y)); if (t === b && c && c.i === h.c) return { x: p.x, y: p.y }; } return null; }, hs);
       if (!pt) console.log('  (house-click guard skipped: the soldier at the door is not in front of the house from this camera)'); else {
         await page.mouse.move(pt.x, pt.y); await page.mouse.click(pt.x, pt.y, { button: 'right' }); await page.waitForTimeout(400);

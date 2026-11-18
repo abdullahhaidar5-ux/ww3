@@ -208,6 +208,14 @@ try {
   await page.evaluate(() => { try { renderFrame(0.016); } catch (e) {} });
   await page.waitForTimeout(1500);
   await shot(page, 'battle-later.png');
+  // endscreen (Abdullah 2026-11-17): after a battle the score screen appears with real numbers for every side (units, buildings, money, timeline)
+  { const r = await page.evaluate(() => { try { if (!G.over) endGame(ME, 'smoke'); if (typeof kcSkip === 'function') kcSkip(); for (let i = 0; i < 3000 && typeof KC !== 'undefined' && KC.on; i++) kcFrame(1 / 15); } catch (e) { return { err: String(e && e.message || e) }; }
+      const S = G.endStats; return { vis: !$('end').hidden, rows: document.querySelectorAll('#endStats .esRow').length, n: S ? S.p.length : 0,
+        sum: S ? S.p.reduce((a, p) => a + (p.b | 0) + (p.ms | 0) + (p.me | 0) + (p.bb | 0), 0) : 0, ar: S ? Math.max(...S.a.map(a => a.length)) : 0, mr: S && S.m ? Math.max(...S.m.map(a => a.length)) : 0,
+        btn: !!$('change') && $('change').textContent === 'Continue' }; });
+    if (r.err) fails.push('endscreen: ' + r.err);
+    else if (!r.vis || !r.n || r.rows !== r.n || !(r.sum > 0) || r.ar < 2 || r.mr < 2 || !r.btn) fails.push('endscreen: score screen missing or empty ' + JSON.stringify(r));
+    else console.log(`end screen: ${r.rows} sides, timeline ${r.ar} samples`); }
 } catch (e) {
   fails.push(String(e && e.message || e));
   try { await RUN.save(page, PFX + 'failure.png'); } catch {}

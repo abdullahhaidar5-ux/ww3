@@ -7340,7 +7340,7 @@ function pubNews(k,a,b,tx){if(MODE==='host')FXE('hl',[k,a,b==null?-1:b,tx||'']);
    T.st per side: ku/kb enemy units/structures destroyed, lb own structures lost, vd/vl value destroyed/lost, sp money
    spent (net of cancels), got money received from allies, c0 starting money, fk time of first kill, bk/bn the unit type
    with the most kills by a single unit, pw general powers used by key, pk biggest army (units), ar army value every 10 s. */
-function stNew(){return{ku:0,kb:0,lb:0,vd:0,vl:0,sp:0,got:0,c0:null,fk:-1,bk:'',bn:0,pw:{},pk:0,ar:[],out:null};}
+function stNew(){return{ku:0,kb:0,lb:0,vd:0,vl:0,sp:0,got:0,c0:null,fk:-1,bk:'',bn:0,pw:{},pk:0,ar:[],mr:[],out:null};}
 function stOf(T){return T&&(T.st||(T.st=stNew()));}
 function stSp(T,n){const s=stOf(T);s.sp+=n||0;}
 function stKill(T,e,val,src){const s=stOf(T);if(e.isB)s.kb++;else s.ku++;s.vd+=val||0;if(s.fk<0)s.fk=G.t;if(src&&!src.isB&&src.s){src.kc=(src.kc||0)+1;if(src.kc>s.bn){s.bn=src.kc;s.bk=src.kind;}}}
@@ -7348,13 +7348,14 @@ function stLost(e){const T=e&&e.team!=null&&G.teams[e.team];if(!T)return;const s
 function stDt(){const T=G.teams[0],s=T&&T.st;return s&&s.dt||10;}
 function stSample(f){if(!G||!G.teams)return;if(!f&&G.stT!=null&&G.t<G.stT+stDt()-.01)return;G.stT=G.t;const n=G.teams.map(()=>0),v=G.teams.map(()=>0);
   for(const e of G.ents){if(e.dead||e.isB||e.team==null||e.team<0||!e.s||e.civ||e.inTun)continue;if(n[e.team]==null)continue;n[e.team]++;v[e.team]+=e.s.cost||0;}
-  G.teams.forEach((T,i)=>{const s=stOf(T);if(n[i]>s.pk)s.pk=n[i];if(s.ar.length>=720){const h=[];for(let k=0;k+1<s.ar.length;k+=2)h.push(Math.round((s.ar[k]+s.ar[k+1])/2));s.ar=h;s.dt=(s.dt||10)*2;}else s.ar.push(Math.round(v[i]/100));});}
+  G.teams.forEach((T,i)=>{const s=stOf(T);if(n[i]>s.pk)s.pk=n[i];const m=s.mr||(s.mr=s.ar.map(()=>0));if(s.ar.length>=720){const h=[],hm=[];for(let k=0;k+1<s.ar.length;k+=2){h.push(Math.round((s.ar[k]+s.ar[k+1])/2));hm.push(m[k+1]|0);}s.ar=h;s.mr=hm;s.dt=(s.dt||10)*2;}else{s.ar.push(Math.round(v[i]/100));m.push(Math.max(0,Math.round(((T.credits||0)-(s.c0!=null?s.c0:3000)+s.sp+(T.gave||0)-s.got)/100)));}});}
+/* endscreen 2026-11-18: mr = money earned so far (/100) at each army sample, for the score screen's Money timeline; counters only, rides in T.st (checkpointed with the team) */
 // ghostslot 2026-11-14: only real participants are listed - the hidden local-militia team (T.reb, always last) is never a scoreboard column
 function endStats(w){const N=G.teams.length,TS=G.teams.filter(T=>!T.reb);return{v:1,t:Math.round(G.t),w,bt:G.battle?1:0,dt:stDt(),p:TS.map(T=>{const s=stOf(T),c0=s.c0!=null?s.c0:3000;
   let pk='',pn=0,pt=0;for(const k in s.pw){pt+=s.pw[k];if(s.pw[k]>pn){pn=s.pw[k];pk=k;}}
   return{f:T.fac,gd:T.gdoc||'',n:(typeof NET!=='undefined'&&NET.pnames&&NET.pnames[T.id]?String(NET.pnames[T.id]).slice(0,24):undefined),c:T.color,tm:T.tm,ai:T.ai?1:0,b:T.built|0,lu:Math.max(0,(T.lost|0)-s.lb),lb:s.lb,ku:s.ku,kb:s.kb,
     me:Math.max(0,Math.round((T.credits||0)-c0+s.sp+(T.gave||0)-s.got)),ms:Math.round(s.sp),r:T.rank|0,ta:Math.round(T.out&&s.out!=null?s.out:G.t),
-    vd:Math.round(s.vd),vl:Math.round(s.vl),fk:s.fk<0?-1:Math.round(s.fk),bk:s.bk,bn:s.bn,pk,pn,pt,ap:s.pk,out:T.out?1:0,bb:s.bb|0,sc:s.sc|0,sco:Math.round(s.vd/10+(s.sc|0)/20+s.kb*40+s.ku*5+(s.bb|0)*10)};}),a:TS.map(T=>stOf(T).ar.slice())};}
+    vd:Math.round(s.vd),vl:Math.round(s.vl),fk:s.fk<0?-1:Math.round(s.fk),bk:s.bk,bn:s.bn,pk,pn,pt,ap:s.pk,out:T.out?1:0,bb:s.bb|0,sc:s.sc|0,sco:Math.round(s.vd/10+(s.sc|0)/20+s.kb*40+s.ku*5+(s.bb|0)*10)};}),a:TS.map(T=>stOf(T).ar.slice()),m:TS.map(T=>(stOf(T).mr||[]).slice())};}
 // Battle over: the host tells the clients right away; showEnd (08-ui) shows the result screen in a browser.
 // The end-of-match stats (summary page) are sent just before it, in one 'est' event, so every player sees the host's numbers.
 function endGame(winner,reason){if(!G||G.over)return;try{stSample(1);G.endStats=endStats(winner);}catch(e){G.endStats=null;}if(MODE==='host'&&G.out){if(G.endStats)G.out.push(['est',G.endStats]);G.out.push(['end',winner]);if(typeof NET!=='undefined')NET.evT=0;}G.over=true;if(typeof showEnd==='function')showEnd(winner,reason);}
@@ -12199,6 +12200,16 @@ function squadPost(e,o){if((e.supp||0)>.5)return 1;if(G.t-(e.lastFire||-9)>3)ret
    it when they come out made a new skeleton texture and re-sent the soldier shape to the card - a squad leaving a shelled
    house in the middle of a strike was several new GPU objects in one frame (view only, nothing here touches the battle) */
 const PARK=new Map();
+/* smoothaudit (2026-11-17): three.js r186 still walks every child of an object whose matrixWorldAutoUpdate is off (it only skips that
+   object's own world matrix), so the ~340 units off screen still had all their parts and bones recomputed every frame (~65 000 of
+   ~73 000 matrix updates in an 8-player battle, the biggest single cost of a frame). A hidden unit/building now skips its whole
+   subtree; it is marked so the first frame it shows again recomputes everything. View only. */
+/* smoothaudit: a soldier figure has ~49 bones but the walk/posture code only ever turns the 9 in its legs table (legs, hips, spine,
+   chest); the other ~40 (arms, hands, fingers, head) keep the pose they were built with, yet three.js re-composed their matrices
+   every frame for every visible soldier. They are now computed once (the first frame the figure is drawn) and then left alone. */
+function boneKeep(){this.matrixWorldNeedsUpdate=true;}   // the local matrix stays as composed; the world matrix still follows the parent (render and updateWorldMatrix paths)
+function boneFreeze(m,W){const keep=new Set();for(const k in W){const j=W[k];if(j&&j.b)keep.add(j.b);}m.traverse(q=>{if(q.isBone&&!keep.has(q)&&q.matrixAutoUpdate){q.updateMatrix();q.updateMatrix=boneKeep;}});m.userData.bfz=1;}
+function umwVis(f){if(!this.visible){this.matrixWorldNeedsUpdate=true;return;}Object.getPrototypeOf(this).updateMatrixWorld.call(this,f);}
 function syncScene(dt){const live=new Set();
   /* haze limit (Abdullah 2026-11-15 00:40 "Keep camera, add haze limit"): with the low cinematic camera the view reaches the horizon, so units and
      buildings deep in the haze (75% fogged and beyond) are not drawn - nor shadowed or depth-passed. View only. */
@@ -12210,7 +12221,7 @@ function syncScene(dt){const live=new Set();
     const v=vis(e);
     // off-screen units and buildings are neither drawn nor have their 3D parts (49 bones per soldier) recomputed; the
     // margin keeps shadows cast from just outside the view
-    const on=v&&((e.x-CPx)*(e.x-CPx)+(e.y-CPz)*(e.y-CPz)<FD2||G.sel.includes(e))&&onScr(e.x,e.isB?0:(e.s&&e.s.dom==='air'?unitH(e):0),e.y,e.isB?.6:.35);o.visible=on;o.matrixWorldAutoUpdate=on;if(!v)continue;const P=o.userData.parts,gh=unitH(e);{let ex=e.x,ey=e.y;if(MODE!=='client'&&!e.isB&&e.ox!=null){const dx=e.x-e.ox,dy=e.y-e.oy;if(dx*dx+dy*dy<900){const a=G.alpha??1;ex=e.ox+dx*a;ey=e.oy+dy*a;}}o.position.set(ex,gh-(G.dugN&&!e.isB?holeDrop(e):0),ey);if(o.userData.walker&&!o.userData.toss){/* drawing only: foot soldiers glide through small position/height jitter (crowd pushes, bridge ends, snapshot steps) - never touches the simulation */const ud=o.userData;if(ud.sx===undefined||Math.abs(ud.sx-ex)>24||Math.abs(ud.sz-ey)>24){ud.sx=ex;ud.sz=ey;ud.sh=gh;}else{const k=1-Math.exp(-dt*26);ud.sx+=(ex-ud.sx)*k;ud.sz+=(ey-ud.sz)*k;const dh=gh-ud.sh;ud.sh=Math.abs(dh)>9?gh:ud.sh+dh*(1-Math.exp(-dt*16));}o.position.set(ud.sx,ud.sh,ud.sz);}}{const ts=o.userData.toss;if(ts){ts.vh-=260*dt;ts.h+=ts.vh*dt;ts.r+=ts.sp*dt;if(ts.h<=0){o.userData.toss=null;if(P.body)P.body.rotation.z=0;}else{o.position.y+=ts.h;if(P.body)P.body.rotation.z=ts.r;}}}
+    const on=v&&((e.x-CPx)*(e.x-CPx)+(e.y-CPz)*(e.y-CPz)<FD2||G.sel.includes(e))&&onScr(e.x,e.isB?0:(e.s&&e.s.dom==='air'?unitH(e):0),e.y,e.isB?.6:.35);o.visible=on;o.matrixWorldAutoUpdate=on;if(o.updateMatrixWorld!==umwVis)o.updateMatrixWorld=umwVis;if(!v)continue;const P=o.userData.parts,gh=unitH(e);{let ex=e.x,ey=e.y;if(MODE!=='client'&&!e.isB&&e.ox!=null){const dx=e.x-e.ox,dy=e.y-e.oy;if(dx*dx+dy*dy<900){const a=G.alpha??1;ex=e.ox+dx*a;ey=e.oy+dy*a;}}o.position.set(ex,gh-(G.dugN&&!e.isB?holeDrop(e):0),ey);if(o.userData.walker&&!o.userData.toss){/* drawing only: foot soldiers glide through small position/height jitter (crowd pushes, bridge ends, snapshot steps) - never touches the simulation */const ud=o.userData;if(ud.sx===undefined||Math.abs(ud.sx-ex)>24||Math.abs(ud.sz-ey)>24){ud.sx=ex;ud.sz=ey;ud.sh=gh;}else{const k=1-Math.exp(-dt*26);ud.sx+=(ex-ud.sx)*k;ud.sz+=(ey-ud.sz)*k;const dh=gh-ud.sh;ud.sh=Math.abs(dh)>9?gh:ud.sh+dh*(1-Math.exp(-dt*16));}o.position.set(ud.sx,ud.sh,ud.sz);}}{const ts=o.userData.toss;if(ts){ts.vh-=260*dt;ts.h+=ts.vh*dt;ts.r+=ts.sp*dt;if(ts.h<=0){o.userData.toss=null;if(P.body)P.body.rotation.z=0;}else{o.position.y+=ts.h;if(P.body)P.body.rotation.z=ts.r;}}}
     if(!e.isB&&P.pennant&&inView(e.x,e.y,.05)){const g=P.pennant.geometry.attributes.position,b=P.pennant.userData.base,t=G.t*(7+(e.v||0)*.08)+e.id;for(let i=0;i<g.count;i++){const x=b[i*3];g.array[i*3+2]=Math.sin(x*.9-t)*x*.12;}g.needsUpdate=true;}
     if(e.isB&&P.flag&&inView(e.x,e.y,.1)){const g=P.flag.geometry.attributes.position,b=P.flag.userData.base||(P.flag.userData.base=Float32Array.from(g.array)),t=G.t*4+e.id;for(let i=0;i<g.count;i++){const x=b[i*3];g.array[i*3+2]=Math.sin(x*.55-t)*x*.09;}g.needsUpdate=true;P.flag.rotation.y=.5+Math.sin(G.t*.3+e.id)*.25;}
     if(e.isB&&e.built>=1){const f=e.hp/e.max,lv=f<.3?2:f<.6?1:0,ud=o.userData;if((ud.dmg||0)<lv){mats();for(let q=ud.dmg||0;q<lv;q++){const h=e.size/2;for(let j=0;j<3;j++){const a=Math.random()*6.28,r=h*(1+Math.random()*.35),x=e.x+Math.cos(a)*r,y=e.y+Math.sin(a)*r;scorch(x,y,rnd(12,18));const B=Bld();for(let c=0;c<6;c++){const sz=rnd(3,7);B.box(sz,sz*.6,sz*rnd(.6,1.4),rnd(-6,6),sz*.3,rnd(-6,6),Math.random()<.5?'#4a4640':'#1f1d1a',rnd(-.4,.4),rnd(0,6),rnd(-.4,.4));}const m=mesh(B.geo());m.position.set(Math.cos(a)*r,0,Math.sin(a)*r);m.castShadow=true;o.add(m);(ud.debris=ud.debris||[]).push(m);}}ud.dmg=lv;}
@@ -12261,7 +12272,7 @@ function syncScene(dt){const live=new Set();
       const moving=G.t-(e.mv||-9)<.15||(e.mvC>0);
       if(e.hp<e.max*.75&&!['inf','at','hacker','hero'].includes(c))unitDamageFX(e,o,s,gh,dt);
       if(o.userData.mixers)playAnim(o,c==='hero'?(moving?'run':(G.t-(e.lastFire||-9)<1?'shoot':'aim')):'stand',dt);
-      if(P.body&&(o.userData.walker||['inf','at','hero','hacker'].includes(c))){if(o.userData.walker){const near=inView(e.x,e.y,.05);o.userData.wa=Math.max(0,Math.min(1,(o.userData.wa||0)+(moving?dt*5:-dt*5)));const wa=o.userData.wa;{const far=cam.dist>480;if(o.userData.farS!==far){o.userData.farS=far;o.traverse(q=>{if(q.userData&&q.userData.gear===2)q.visible=!far;if(q.name==='soldier')q.visible=!far;else if(q.name==='soldierLo')q.visible=far;});}}{const ud=o.userData,px=o.position.x,pz=o.position.z;if(ud.gpx!==undefined&&dt>0)ud.gv+=(Math.min(150,Math.hypot(px-ud.gpx,pz-ud.gpz)/dt)-ud.gv)*Math.min(1,dt*8);else ud.gv=0;ud.gpx=px;ud.gpz=pz;}const gv=Math.max(o.userData.gv,moving?8:0),run=o.userData.cleric?0:Math.max(0,Math.min(1,(gv-12)/30)),/* the leader walks at a calm pace, never jogs */ga=.38+.1*run,gs=.5-.29*run,pose=near&&cam.dist<760,br=!moving&&pose&&cam.dist<480;const pt=pose&&!moving?squadPost(e,o):0,pf=G.t-(e.lastFire||-9)<2.5;const sqn=P.body.children.length,sqal=sqn>1?Math.max(1,Math.min(sqn,Math.ceil(sqn*e.hp/Math.max(1,e.max)))):9;let k=0;for(const m of P.body.children){const W=m.userData.legs,ud=m.userData;
+      if(P.body&&(o.userData.walker||['inf','at','hero','hacker'].includes(c))){if(o.userData.walker){const near=inView(e.x,e.y,.05);o.userData.wa=Math.max(0,Math.min(1,(o.userData.wa||0)+(moving?dt*5:-dt*5)));const wa=o.userData.wa;{const far=cam.dist>480;if(o.userData.farS!==far){o.userData.farS=far;o.traverse(q=>{if(q.userData&&q.userData.gear===2)q.visible=!far;if(q.name==='soldier')q.visible=!far;else if(q.name==='soldierLo')q.visible=far;});}}{const ud=o.userData,px=o.position.x,pz=o.position.z;if(ud.gpx!==undefined&&dt>0)ud.gv+=(Math.min(150,Math.hypot(px-ud.gpx,pz-ud.gpz)/dt)-ud.gv)*Math.min(1,dt*8);else ud.gv=0;ud.gpx=px;ud.gpz=pz;}const gv=Math.max(o.userData.gv,moving?8:0),run=o.userData.cleric?0:Math.max(0,Math.min(1,(gv-12)/30)),/* the leader walks at a calm pace, never jogs */ga=.38+.1*run,gs=.5-.29*run,pose=near&&cam.dist<760,br=!moving&&pose&&cam.dist<480;const pt=pose&&!moving?squadPost(e,o):0,pf=G.t-(e.lastFire||-9)<2.5;const sqn=P.body.children.length,sqal=sqn>1?Math.max(1,Math.min(sqn,Math.ceil(sqn*e.hp/Math.max(1,e.max)))):9;let k=0;for(const m of P.body.children){const W=m.userData.legs,ud=m.userData;if(W&&!ud.bfz&&!o.userData.mixers)boneFreeze(m,W);
         if(sqn>1&&k>=sqal){/* squad: a fallen soldier tips over, lies a few seconds, then is gone (view only; hp decides) */if(ud.sdd===undefined)ud.sdd=ud.sseen?G.t:G.t-99;const dt2=G.t-ud.sdd;m.visible=dt2<6;m.rotation.x=-Math.min(1.5,dt2*5);m.position.y=-Math.min(1.2,dt2*3)*.5;k++;continue;}
         if(sqn>1){ud.sseen=1;ud.sdd=undefined;m.visible=true;}if(ud.wph===undefined)ud.wph=(e.id*.618+k*.31)%1;if(wa>0&&W)ud.wph=(ud.wph+dt*gs*gv/Math.max(1,gSweep(W,ga,run)))%1;m.position.y=0;m.rotation.x=0;m.rotation.z=0;if(ud.bz!==undefined)m.position.z=ud.bz;const b=br?.018*Math.sin(G.t*1.7+e.id+k*2.1):0;if(pose&&W&&(wa>0||ud.wl||b))m.position.y=walkPose(m,ud.wph,wa,ga,gs,run,b);ud.wl=wa>0||b!==0;if(pose&&W&&SET_POSTURE()&&postApply(m,ud,e,k,dt,pt,moving,pf))ud.wl=true;k++;}}else if(o.userData.cleric){P.body.position.y=moving?Math.abs(Math.sin(G.t*5+e.id))*.22:0;P.body.rotation.x=moving?Math.sin(G.t*5+e.id)*.03:0;}else P.body.position.y=moving&&!o.userData.mixers?Math.abs(Math.sin(G.t*12+e.id))*1.2:0;}
       if(P.eye){const on=!!e.hid&&e.team===ME&&!e.dead;P.eye.visible=on;if(on)P.eye.quaternion.copy(o.quaternion).invert().multiply(CAM.quaternion);}// hidden Infiltrator: its owner (only) sees a small eye above it, always facing the screen
@@ -13636,57 +13647,110 @@ function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb,cnt=P.map(()=>0),cap=P.leng
   i=best(p=>p.me);if(i>=0&&P[i].me>0)A.push(['War Economy',i,esM(P[i].me)+' earned']);
   i=best(p=>p.pt);if(i>=0&&P[i].pt>0)A.push(['Power Player',i,P[i].pt+' general power'+(P[i].pt===1?'':'s')+' used'+(P[i].pk?' (most: '+esPow(P[i].f,P[i].pk)+')':'')]);
   return A;}
-const ES_OP=['World opinion',p=>p.op==null?'-':p.op+' / 100 (low '+(p.ol==null?p.op:p.ol)+')'];
+/* endscreen (Abdullah 2026-11-17 17:27): the Zero Hour-style score screen in the war-room steel-teal look. One job per tab:
+   Score (one row per side: units / buildings / money / powers / best unit / score), Timeline (army or money every ~10 s),
+   Awards, Map (after-action map). Esc goes back to the Score tab. Small buttons: Continue, Rematch (skirmish), replay, Share.
+   ES_ROWS is the full list each row shows on hover (Supplies collected, General rank, Time alive ...). */
 const ES_ROWS=[['Units built',p=>p.b],['Units lost',p=>p.lu],['Enemy units destroyed',p=>p.ku],['Buildings built',p=>p.bb==null?'-':p.bb],['Structures destroyed',p=>p.kb],['Structures lost',p=>p.lb],['Supplies collected',p=>p.sc==null?'-':esM(p.sc)],["General's powers used",p=>p.pt|0],['Score',p=>p.sco==null?'-':p.sco],
   ['Enemy value destroyed',p=>esM(p.vd)],['Money earned',p=>esM(p.me)],['Money spent',p=>esM(p.ms)],['General rank',p=>p.r],['Time alive',p=>esT(p.ta)]];
-// ghostslot 2026-11-14: stats from an older server/save may still carry the hidden militia team (tm 900, always last) - drop it; Battle has no world opinion
-function esClean(S){if(!S||!Array.isArray(S.p))return S;const keep=S.p.map(p=>!(p&&(p.tm===900||p.rb)));if(keep.every(Boolean))return S;const C=Object.assign({},S);C.p=S.p.filter((_,i)=>keep[i]);if(Array.isArray(S.a))C.a=S.a.filter((_,i)=>keep[i]);return C;}
-function esRows(S){const bt=S&&S.bt!=null?!!S.bt:!!(G&&G.battle);return bt?ES_ROWS:[ES_OP,...ES_ROWS];}
-// players in table order: winners first, then by value destroyed
-function esOrder(S){return S.p.map((p,i)=>i).sort((a,b)=>(esWin(S,b)-esWin(S,a))||(S.p[b].vd-S.p[a].vd)||a-b);}
+const ES_COLS=[['Units','Built',p=>p.b|0],['Units','Lost',p=>p.lu|0],['Units','Killed',p=>p.ku|0],['Buildings','Built',p=>p.bb|0],['Buildings','Lost',p=>p.lb|0],['Buildings','Destroyed',p=>p.kb|0],
+  ['Money','Earned',p=>esM(p.me)],['Money','Spent',p=>esM(p.ms)],['Powers','Used',p=>p.pt|0],['Best unit','',p=>p.bn>0?esUnit(p.f,p.bk)+' · '+p.bn:'-'],['Score','',p=>p.sco==null?'-':p.sco]];
+// ghostslot 2026-11-14: stats from an older server/save may still carry the hidden militia team (tm 900, always last) - drop it
+function esClean(S){if(!S||!Array.isArray(S.p))return S;const keep=S.p.map(p=>!(p&&(p.tm===900||p.rb)));if(keep.every(Boolean))return S;const C=Object.assign({},S);C.p=S.p.filter((_,i)=>keep[i]);if(Array.isArray(S.a))C.a=S.a.filter((_,i)=>keep[i]);if(Array.isArray(S.m))C.m=S.m.filter((_,i)=>keep[i]);return C;}
+// players in table order: winners first, then by score
+function esOrder(S){return S.p.map((p,i)=>i).sort((a,b)=>(esWin(S,b)-esWin(S,a))||((S.p[b].sco|0)-(S.p[a].sco|0))||(S.p[b].vd-S.p[a].vd)||a-b);}
 function esCss(){if($('esCss'))return;const st=document.createElement('style');st.id='esCss';st.textContent=`
-#end{place-items:start center}#end>.card{margin-block:auto}
-#endStats{display:flex;flex-direction:column;gap:20px;font-size:16px;line-height:1.35;text-align:left}#endStats[hidden]{display:none}
-#endStats h2{font-size:14px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin:0 0 10px;font-weight:700}
-.esP{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
-.esC{border:1px solid rgba(255,255,255,.14);border-left:6px solid var(--c);border-radius:8px;padding:10px 12px;background:rgba(255,255,255,.035)}
-.esC.win{border-color:rgba(227,179,65,.75);border-left-color:var(--c);background:rgba(227,179,65,.07)}.esC.me{box-shadow:0 0 0 2px rgba(255,255,255,.35) inset}
-.esH{display:flex;align-items:center;gap:10px;margin-bottom:8px}.esH canvas{width:42px;height:25px;border-radius:2px;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.6)}
-.esN{font-weight:700;font-size:18px;line-height:1.2}.esTag{font-size:13px;opacity:.75}.esWinT{color:#e3b341;font-weight:800;font-size:13px;letter-spacing:.1em}
-.esC dl{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin:0;font-size:14px}.esC dt{opacity:.78;white-space:nowrap}.esC dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-.esA{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
-.esAw{border-radius:8px;padding:10px 12px;background:rgba(227,179,65,.08);border:1px solid rgba(227,179,65,.35);border-left:5px solid var(--c)}
-.esAw b{display:block;color:#e3b341;font-size:13px;letter-spacing:.12em;text-transform:uppercase}.esAw .who{font-weight:700;font-size:17px;margin:2px 0}.esAw .what{font-size:15px;opacity:.88}
-#esGraph{width:100%;height:230px;display:block;background:rgba(255,255,255,.03);border-radius:8px}
-.esLeg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:15px;margin-top:8px}.esLeg i{display:inline-block;width:16px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle;background:var(--c)}
-#esPrev{max-width:100%;border-radius:8px;margin-top:6px}#esPrevBox p{font-size:14px;opacity:.8;margin:4px 0}
-@media (max-width:560px){.esP{grid-template-columns:1fr}.esA{grid-template-columns:1fr 1fr}#esGraph{height:190px}.esAw .who{font-size:16px}}`;document.head.append(st);}
-function esFlagEl(f,w,h){const c=document.createElement('canvas');c.width=w*2;c.height=h*2;const im=esFlag(f);const x=c.getContext('2d');if(im)try{x.drawImage(im,0,0,c.width,c.height);}catch(e){}else{x.fillStyle=(FACTIONS[f]||{}).color||'#888';x.fillRect(0,0,c.width,c.height);}return c;}
+#end.esWR{place-items:start center;z-index:60;background:radial-gradient(ellipse at 50% -10%,rgba(40,74,88,.55),transparent 62%),rgba(3,7,9,.97)}
+.esCard,.esTbl{--st1:#2b3c46;--st2:#1a262d;--st3:#0d151a;--hi:#5fb8c9;--gold:#f2cb5c;--red:#e0705f}
+#end .card.esCard{width:min(1180px,100%);max-width:none;margin-block:auto;padding:20px 26px 16px;box-sizing:border-box;text-align:left;border:0;border-radius:0;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));background:linear-gradient(180deg,rgba(17,29,36,.98),rgba(6,12,15,.99));box-shadow:inset 0 0 0 1px rgba(95,184,201,.35),inset 0 2px 0 rgba(95,184,201,.65)}
+.esBan{display:flex;align-items:center;gap:18px;padding-bottom:14px;background:linear-gradient(90deg,var(--hi),rgba(95,184,201,.15) 60%,transparent) left bottom/100% 1px no-repeat}
+#esEmb{display:flex;align-items:center;gap:8px;flex:none}#esEmb canvas{display:block;box-shadow:0 0 0 1px rgba(0,0,0,.7),0 0 18px rgba(95,184,201,.25)}#esEmb canvas:first-child{width:64px;height:38px}
+.esBanT{min-width:0;flex:1}
+#end .esCard #endt{font:700 clamp(40px,6.4vh,66px)/1 var(--display);letter-spacing:.14em;text-transform:uppercase;margin:0;color:var(--gold);text-shadow:0 0 26px rgba(242,203,92,.35),0 3px 0 #05080a}
+#end .esCard.lose #endt{color:var(--red);text-shadow:0 0 26px rgba(224,112,95,.3),0 3px 0 #05080a}
+#end .esCard #ends{margin:6px 0 0;color:#9fb7c1;font:500 15px/1.4 var(--display);letter-spacing:.04em;max-width:none}
+.esClock{margin-left:auto;text-align:right;flex:none;font:700 32px/1 var(--display);color:#e4edf0;font-variant-numeric:tabular-nums}.esClock small{display:block;font:600 11px var(--display);letter-spacing:.18em;color:#8fc3cf;text-transform:uppercase;margin-bottom:4px}
+#endStats{display:block;text-align:left;font:500 15px/1.35 var(--display);color:#e4edf0}#endStats[hidden]{display:none}
+.esTabs{display:flex;flex-wrap:wrap;gap:2px;margin:12px 0 14px;border-bottom:1px solid rgba(95,184,201,.22)}
+.esTabs button{background:none!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0;color:#9fb7c1;font:600 14px var(--display);letter-spacing:.16em;text-transform:uppercase;padding:8px 16px;min-height:0;cursor:pointer;box-shadow:none!important}
+.esTabs button:hover{color:#e4edf0}.esTabs button.on{color:var(--gold);border-bottom-color:var(--gold)!important}
+.esPane[hidden]{display:none}.esPane{min-height:min(440px,50vh)}
+body:has(#end.esWR:not([hidden])) #app{visibility:hidden}
+.esTw{overflow-x:auto}
+.esTbl{width:100%;border-collapse:separate;border-spacing:0 4px;font:500 15px var(--display);font-variant-numeric:tabular-nums;color:#e4edf0;text-align:left}
+.esTbl th{font:600 11px var(--display);letter-spacing:.16em;text-transform:uppercase;color:#8fc3cf;padding:2px 10px;white-space:nowrap;text-align:right}
+.esTbl thead tr:first-child th{color:var(--gold);opacity:.85;text-align:center}.esTbl thead tr:first-child th.r2{text-align:right;vertical-align:bottom}.esTbl th.g{border-left:1px solid rgba(95,184,201,.25)}.esTbl th:first-child{text-align:left}
+.esTbl td{padding:8px 9px;text-align:right;white-space:nowrap;background:linear-gradient(180deg,rgba(43,60,70,.55),rgba(14,22,27,.7))}
+.esTbl td.g{border-left:1px solid rgba(95,184,201,.18)}.esTbl td.bu{font-size:13px;color:#cfe3ea;white-space:normal;max-width:150px;line-height:1.2}.esTbl td.sc{font-weight:700;color:var(--gold);font-size:17px}
+.esTbl td:first-child{text-align:left;border-left:5px solid var(--c);min-width:170px;white-space:normal}
+.esTbl tr.win td{background:linear-gradient(180deg,rgba(92,76,26,.55),rgba(30,25,9,.7))}
+.esTbl tr.me td{box-shadow:inset 0 1px 0 rgba(242,203,92,.55),inset 0 -1px 0 rgba(242,203,92,.55)}
+.esPl{display:flex;align-items:center;gap:10px}.esPl canvas{flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.6)}
+.esN{font-weight:700;font-size:17px;line-height:1.15;letter-spacing:.03em}.esTag{font-size:12px;color:#9fb7c1;letter-spacing:.06em}.esTag b{color:var(--gold);font-weight:700;letter-spacing:.12em}
+.esA{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.esAw{clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);padding:10px 14px;background:linear-gradient(180deg,rgba(43,60,70,.6),rgba(14,22,27,.75));box-shadow:inset 0 0 0 1px rgba(242,203,92,.3),inset 4px 0 0 var(--c)}
+.esAw b{display:block;color:var(--gold);font-size:12px;letter-spacing:.16em;text-transform:uppercase}.esAw .who{font-weight:700;font-size:17px;margin:2px 0}.esAw .what{font-size:14px;color:#cfe3ea}
+.esSeg{display:flex;gap:4px;margin-bottom:8px}.esSeg button{background:rgba(22,32,38,.9)!important;border:0!important;border-radius:0;box-shadow:inset 0 0 0 1px rgba(95,184,201,.3)!important;color:#9fb7c1;font:600 12px var(--display);letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;min-height:0;cursor:pointer}
+.esSeg button.on{color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)!important}
+#esGraph{width:100%;height:270px;display:block;background:rgba(4,9,12,.6);box-shadow:inset 0 0 0 1px rgba(95,184,201,.18)}
+.esLeg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;margin-top:8px}.esLeg i{display:inline-block;width:16px;height:4px;margin-right:6px;vertical-align:middle;background:var(--c)}
+.esNote{font-size:12px;color:#8fc3cf;margin-top:4px;letter-spacing:.04em}
+#esPrev{max-width:100%;margin-top:6px}#esPrevBox p{font-size:13px;color:#9fb7c1;margin:4px 0}
+#esPane-map #aarBox{margin:0 auto!important}
+#end .esCard>.row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin:14px 0 0;padding-top:12px;border-top:1px solid rgba(95,184,201,.22)}
+#end .esCard>.row>:is(button,a){flex:0 0 auto!important;width:auto!important;min-width:0!important;min-height:0!important;font:600 14px/1 var(--display)!important;letter-spacing:.12em;text-transform:uppercase;padding:10px 18px!important;border:0!important;border-radius:0!important;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));background:linear-gradient(180deg,rgba(43,60,70,.95),rgba(22,32,38,.95) 55%,rgba(12,19,23,.97))!important;box-shadow:inset 0 0 0 1px rgba(95,184,201,.35)!important;color:#e4edf0!important;text-decoration:none;cursor:pointer}
+#end .esCard>.row>:is(button,a):hover{color:var(--gold)!important;box-shadow:inset 0 0 0 1px var(--gold),0 0 14px rgba(95,184,201,.25)!important}
+#end .esCard>.row>#change{order:99;color:#1a1406!important;background:linear-gradient(180deg,#ffe28a,#f2cb5c 45%,#b98a26)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)!important}
+#end .esCard>.row>#change:hover{background:linear-gradient(180deg,#fff0b8,#ffd56a 45%,#d29e2c)!important;color:#000!important}
+#campScreen .esTw{margin:6px 0 14px}`;document.head.append(st);}
+function esFlagEl(f,w,h){const c=document.createElement('canvas');c.width=w*2;c.height=h*2;c.style.width=w+'px';c.style.height=h+'px';const im=esFlag(f);const x=c.getContext('2d');if(im)try{x.drawImage(im,0,0,c.width,c.height);}catch(e){}else{x.fillStyle=(FACTIONS[f]||{}).color||'#888';x.fillRect(0,0,c.width,c.height);}return c;}
 function esShareBtn(){let b=$('endShare');if(b)return b;const row=$('again')&&$('again').parentNode;if(!row)return null;b=document.createElement('button');b.id='endShare';b.className='big ghost';b.type='button';b.textContent='Share';b.hidden=true;b.onclick=esShare;row.insertBefore(b,$('change'));return b;}
-// fills (or with S=null hides) the summary under the result line
-function esPage(S){S=esClean(S);esCss();let box=$('endStats');if(!box){box=document.createElement('div');box.id='endStats';$('ends').after(box);}
-  const sb=esShareBtn();ES.S=S;ES.blob=null;box.innerHTML='';if(!S||!Array.isArray(S.p)||!S.p.length){box.hidden=true;if(sb)sb.hidden=true;return;}box.hidden=false;if(sb)sb.hidden=false;
-  const ord=esOrder(S),sec=t=>{const s=document.createElement('section'),h=document.createElement('h2');h.textContent=t;s.append(h);box.append(s);return s;};
-  // awards
-  const A=esAwards(S);if(A.length){const s=sec('Awards'),g=document.createElement('div');g.className='esA';for(const [t,i,w] of A){const d=document.createElement('div');d.className='esAw';d.style.setProperty('--c',S.p[i].c);d.innerHTML='<b></b><div class="who"></div><div class="what"></div>';d.querySelector('b').textContent=t;d.querySelector('.who').textContent=esWho(S,i);d.querySelector('.what').textContent=w;g.append(d);}s.append(g);}
-  // scoreboard
-  {const s=sec('Scoreboard'),g=document.createElement('div');g.className='esP';for(const i of ord){const p=S.p[i],d=document.createElement('div');d.className='esC'+(esWin(S,i)?' win':'')+(i===ME?' me':'');d.style.setProperty('--c',p.c);
-    const h=document.createElement('div');h.className='esH';h.append(esFlagEl(p.f,42,25));try{const GT=G&&G.teams&&G.teams[i];if(GT&&GT.emb&&GT.emb!=='flag')h.append(idEmbEl(GT,24));}catch(e){}const nm=document.createElement('div');nm.innerHTML='<div class="esN"></div><div class="esTag"></div>';nm.querySelector('.esN').textContent=esName(p);
-    nm.querySelector('.esTag').textContent=[i===ME?'You':p.ai?'AI':'Player',GDOC[p.gd]?GDOC[p.gd].name+' doctrine':'',S.p.some((q,j)=>j!==i&&q.tm===p.tm)?'Team '+(p.tm<100?p.tm+1:i+1):'',esWin(S,i)?'':p.out?'Defeated':''].filter(Boolean).join(' · ');h.append(nm);
-    if(esWin(S,i)){const w=document.createElement('div');w.className='esWinT';w.style.marginLeft='auto';w.textContent='WINNER';h.append(w);}d.append(h);
-    const dl=document.createElement('dl');for(const [k,f] of esRows(S)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=f(p);dl.append(dt,dd);}d.append(dl);g.append(d);}s.append(g);}
-  // army strength over time
-  if(S.a&&S.a.some(a=>a&&a.length>1)){const s=sec('Army strength over time');const c=document.createElement('canvas');c.id='esGraph';s.append(c);const lg=document.createElement('div');lg.className='esLeg';
-    for(const i of ord){const sp=document.createElement('span'),k=document.createElement('i');k.style.setProperty('--c',S.p[i].c);sp.append(k,document.createTextNode(esWho(S,i)));lg.append(sp);}s.append(lg);
-    const n=document.createElement('div');n.className='esTag';n.style.marginTop='4px';n.textContent='Value of each side\'s units in the field, every 10 seconds.';s.append(n);}
+// the score table (also used by the Missions debrief): one row per side, Zero Hour columns
+function esTable(S){esCss();const w=document.createElement('div');w.className='esTw';const t=document.createElement('table');t.className='esTbl';w.append(t);
+  const h=t.createTHead(),r1=h.insertRow(),r2=h.insertRow();const g1=document.createElement('th');g1.rowSpan=2;g1.className='r2';g1.style.textAlign='left';g1.textContent='Side';r1.append(g1);
+  let last='';ES_COLS.forEach(([g,k])=>{if(!k){const c1=document.createElement('th');c1.className='g r2';c1.rowSpan=2;c1.textContent=g;r1.append(c1);last=g;return;}const c2=document.createElement('th');c2.textContent=k;if(g!==last){c2.className='g';const c1=document.createElement('th');c1.className='g';c1.textContent=g;c1.colSpan=ES_COLS.filter(c=>c[0]===g).length;r1.append(c1);last=g;}r2.append(c2);});
+  const b=t.createTBody(),team=i=>S.p.some((q,j)=>j!==i&&q.tm===S.p[i].tm);
+  for(const i of esOrder(S)){const p=S.p[i],tr=b.insertRow();tr.className='esRow'+(esWin(S,i)?' win':'')+(i===ME?' me':'');tr.style.setProperty('--c',p.c||'#888');tr.title=ES_ROWS.map(([k,f])=>k+': '+f(p)).join('\n');
+    const td=tr.insertCell(),pl=document.createElement('div');pl.className='esPl';pl.append(esFlagEl(p.f,36,22));try{const GT=G&&G.teams&&G.teams[i];if(GT&&GT.emb&&GT.emb!=='flag')pl.append(idEmbEl(GT,22));}catch(e){}
+    const nm=document.createElement('div');nm.innerHTML='<div class="esN"></div><div class="esTag"></div>';nm.querySelector('.esN').textContent=esName(p);
+    const tg=nm.querySelector('.esTag');if(esWin(S,i)){const wb=document.createElement('b');wb.textContent='WINNER';tg.append(wb,document.createTextNode(' · '));}
+    tg.append(document.createTextNode([i===ME?'You':p.ai?'AI':'Player',GDOC[p.gd]?GDOC[p.gd].name:'',team(i)?'Team '+(p.tm<100?p.tm+1:i+1):'',esWin(S,i)?'':p.out?'Defeated':''].filter(Boolean).join(' · ')));pl.append(nm);td.append(pl);
+    last='';for(const [g,k,f] of ES_COLS){const c=tr.insertCell();c.textContent=f(p);if(g!==last){c.className='g';last=g;}if(g==='Best unit')c.className+=' bu';if(g==='Score')c.className+=' sc';}}
+  return w;}
+// banner + tabs wrapped around the shell's #endt / #ends once (the shell markup stays as it is)
+function esShell(){esCss();const card=$('endt').parentNode;card.classList.add('esCard');$('end').classList.add('esWR');let ban=$('esBan');
+  if(!ban){ban=document.createElement('div');ban.id='esBan';ban.className='esBan';const em=document.createElement('div');em.id='esEmb';const tx=document.createElement('div');tx.className='esBanT';card.insertBefore(ban,$('endt'));tx.append($('endt'),$('ends'));const ck=document.createElement('div');ck.id='esClock';ck.className='esClock';ban.append(em,tx,ck);}
+  const won=/^Victory$/i.test($('endt').textContent.trim());card.classList.toggle('lose',/^Defeat$/i.test($('endt').textContent.trim()));
+  const em=$('esEmb');em.innerHTML='';try{const T=G&&G.teams&&G.teams[ME];if(T){em.append(esFlagEl(T.fac,64,38));if(T.emb&&T.emb!=='flag')em.append(idEmbEl(T,38));}}catch(e){}
+  const mp=G&&MAPS[G.mapKey];$('esClock').innerHTML='<small></small><span></span>';$('esClock').querySelector('small').textContent=(mp&&mp.name?mp.name+' · ':'')+'Battle time';$('esClock').querySelector('span').textContent=esT(G?G.t:0);
+  $('change').textContent='Continue';$('again').textContent='Rematch';$('again').title='The same battle again: same map, nations and AI';return won;}
+function esTab(k){ES.tab=k;const box=$('endStats');if(!box)return;for(const b of box.querySelectorAll('.esTabs button')){const p=$('esPane-'+b.dataset.k);b.hidden=!p||!p.childElementCount;b.classList.toggle('on',b.dataset.k===k);}
+  for(const p of box.querySelectorAll('.esPane'))p.hidden=p.id!=='esPane-'+k;if(k==='time')esDraw();}
+// fills (or with S=null hides) the score screen under the banner
+function esPage(S){S=esClean(S);esShell();let box=$('endStats');if(!box){box=document.createElement('div');box.id='endStats';$('esBan').after(box);}
+  const sb=esShareBtn();ES.S=S;ES.blob=null;ES.tab='score';ES.gm=ES.gm||'a';box.innerHTML='';if(!S||!Array.isArray(S.p)||!S.p.length){box.hidden=true;if(sb)sb.hidden=true;return;}box.hidden=false;if(sb)sb.hidden=false;
+  const ord=esOrder(S),tabs=document.createElement('div');tabs.className='esTabs';box.append(tabs);
+  const pane=(k,t)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.dataset.k=k;b.onclick=()=>esTab(k);tabs.append(b);const s=document.createElement('section');s.className='esPane';s.id='esPane-'+k;box.append(s);return s;};
+  pane('score','Score').append(esTable(S));
+  // timeline: army value or money earned, one line per side, sampled every ~10 s by the sim (stSample)
+  {const s=pane('time','Timeline');if(S.a&&S.a.some(a=>a&&a.length>1)){const sg=document.createElement('div');sg.className='esSeg';const nt=document.createElement('div');nt.className='esNote';
+    const say=()=>{nt.textContent=ES.gm==='m'?'Money each side has earned so far.':'Value of each side\'s units in the field.';for(const b of sg.children)b.classList.toggle('on',b.dataset.m===ES.gm);};
+    for(const [m,t] of [['a','Army strength'],['m','Money']]){if(m==='m'&&!(S.m&&S.m.some(a=>a&&a.length>1)))continue;const b=document.createElement('button');b.type='button';b.dataset.m=m;b.textContent=t;b.onclick=()=>{ES.gm=m;say();esDraw();};sg.append(b);}
+    const c=document.createElement('canvas');c.id='esGraph';const lg=document.createElement('div');lg.className='esLeg';
+    for(const i of ord){const sp=document.createElement('span'),k=document.createElement('i');k.style.setProperty('--c',S.p[i].c);sp.append(k,document.createTextNode(esWho(S,i)));lg.append(sp);}s.append(sg,c,lg,nt);if(!(S.m&&S.m.length))ES.gm='a';say();}}
+  {const A=esAwards(S),s=pane('awards','Awards');if(A.length){const g=document.createElement('div');g.className='esA';for(const [t,i,w] of A){const d=document.createElement('div');d.className='esAw';d.style.setProperty('--c',S.p[i].c);d.innerHTML='<b></b><div class="who"></div><div class="what"></div>';d.querySelector('b').textContent=t;d.querySelector('.who').textContent=esWho(S,i);d.querySelector('.what').textContent=w;g.append(d);}s.append(g);}}
+  pane('map','Map');   // aarPage (08b-aar) puts the after-action map here
+  esTab('score');
   // the Share picture is drawn now, so tapping Share can open the share sheet straight away (iPhone needs that)
   try{const cv=esImage(S);if(cv.toBlob)cv.toBlob(b=>{if(ES.S===S)ES.blob=b;},'image/png');}catch(e){console.warn('share image',e);}}
+// Esc on the score screen = one step back: to the Score tab (never straight out of the screen)
+addEventListener('keydown',e=>{if(e.key!=='Escape')return;const o=$('end');if(!o||o.hidden||!ES.tab||ES.tab==='score'||(typeof KC!=='undefined'&&KC.on))return;e.preventDefault();e.stopImmediatePropagation();esTab('score');},true);
 function esDraw(){const c=$('esGraph'),S=ES.S;if(!c||!S||$('end').hidden)return;const r=c.getBoundingClientRect();if(!r.width||!r.height)return;const d=Math.min(2,window.devicePixelRatio||1);
-  c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);esGraph(x,S,0,0,c.width,c.height,d);}
+  c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);esGraph(x,S,0,0,c.width,c.height,d,ES.gm==='m'&&S.m?S.m:S.a);}
 addEventListener('resize',()=>{try{esDraw();}catch(e){}});
 function esNice(v){const p=Math.pow(10,Math.floor(Math.log10(Math.max(1,v))));for(const m of [1,2,2.5,5,10])if(m*p>=v)return m*p;return 10*p;}
 // army-value lines, one per side (yours drawn last and thicker); sc = pixels per CSS pixel
-function esGraph(x,S,x0,y0,w,h,sc){const A=S.a||[],dt=S.dt||10,T=Math.max(1,S.t||1);let mx=1;for(const a of A)for(const v of (a||[]))if(v>mx)mx=v;
+function esGraph(x,S,x0,y0,w,h,sc,A){A=A||S.a||[];const dt=S.dt||10,T=Math.max(1,S.t||1);let mx=1;for(const a of A)for(const v of (a||[]))if(v>mx)mx=v;
   const top=esNice(mx*100/4)*4,pl=58*sc,pb=24*sc,pt=10*sc,pr=10*sc,gx=x0+pl,gy=y0+pt,gw=w-pl-pr,gh=h-pt-pb;
   x.save();x.font=`${12*sc}px system-ui,-apple-system,sans-serif`;x.textBaseline='middle';x.lineWidth=sc;
   for(let k=0;k<=4;k++){const yy=gy+gh-gh*k/4;x.strokeStyle='rgba(255,255,255,.12)';x.beginPath();x.moveTo(gx,yy);x.lineTo(gx+gw,yy);x.stroke();x.fillStyle='rgba(255,255,255,.65)';x.textAlign='right';x.fillText(esM(top*k/4),gx-6*sc,yy);}
@@ -15436,7 +15500,7 @@ function aarPage(){try{aarSample();}catch(e){}if(!AAR.s.length||AAR.g!==G)return
   box.innerHTML='<div style="font:700 12px IBM Plex Mono,monospace;letter-spacing:.1em;color:#e3b341;margin-bottom:6px">AFTER-ACTION MAP</div><canvas width="'+W+'" height="'+H+'" style="width:100%;border:1px solid #3a463f;border-radius:3px;background:#0b0f0d;display:block"></canvas>'+
    '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><button type="button" id="aarPlay" style="background:#1f2a23;color:#cfe8d6;border:1px solid #4a5a50;border-radius:3px;padding:3px 10px;cursor:pointer">▶ Replay</button><input id="aarSl" type="range" min="0" max="'+(AAR.s.length-1)+'" value="'+(AAR.s.length-1)+'" style="flex:1"><span id="aarT" style="font:12px IBM Plex Mono,monospace;min-width:44px;text-align:right"></span></div>'+
    '<div style="font-size:11.5px;opacity:.8;margin-top:4px">White line = front line · orange burst = big fight · yellow cross = missile strike</div>';
-  ($('endStats')||$('ends')).after(box);
+  {const host=$('esPane-map');if(host){host.append(box);try{esTab(ES.tab||'score');}catch(e){}}else ($('endStats')||$('ends')).after(box);}   // endscreen: the score screen's Map tab
   const cv=box.querySelector('canvas'),sl=$('aarSl'),tt=$('aarT'),pb=$('aarPlay');
   const show=k=>{AAR.cur=k;aarDraw(cv,k);const t=AAR.s[Math.max(0,Math.min(AAR.s.length-1,k|0))].t;tt.textContent=Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');};
   sl.oninput=()=>{AAR.play=0;show(+sl.value);};
@@ -16090,8 +16154,9 @@ function lgUiInit(){if(LGU.btn||typeof document==='undefined')return;const b=doc
   b.onclick=()=>lgToggle();document.body.appendChild(b);LGU.btn=b;}
 function lgUiTick(){lgUiInit();if(G&&G.lgM&&!(G.sel||[]).some(u=>!u.dead&&u.team===ME&&(u.kind==='dozer'||u.kind==='airlift'))){G.lgM=null;lgHint();}
   if(G&&MODE==='client'&&G.lg&&G.lg.nS!=null&&performance.now()-(LGU.dt||0)>1000){LGU.dt=performance.now();const s0=G.lg.dsig;lgDyn();if(G.lg.dsig!==s0)try{lgCompute();}catch(e){}else if(G.lg.reach)try{const cs=lgCoverSig();if(cs!==G.lg.cvs){G.lg.cvs=cs;lgCover();}}catch(e){}}
-  if(!LGU.btn)return;const show=!!(G&&G.lgd&&!G.sandbox&&!G.over);const d=show?'block':'none';if(LGU.btn.style.display!==d)LGU.btn.style.display=d;
-  if(show){const mmEl=document.getElementById('mm');if(mmEl){const r=mmEl.getBoundingClientRect();if(r.width){const y=Math.max(8,innerHeight-r.top+6);LGU.btn.style.bottom=y+'px';LGU.btn.style.right=Math.max(8,innerWidth-r.right)+'px';}}}}
+  if(!LGU.btn)return;const show=!!(G&&G.lgd&&!G.sandbox&&!G.over);const d=show?'block':'none';if(LGU.btn.style.display!==d){LGU.btn.style.display=d;LGU.rt=0;}
+  /* smoothaudit: the minimap's place is read twice a second, not every frame (each read forced the browser to lay out the page again after the HUD's DOM changes) */
+  if(show){const nw=performance.now();if(nw-(LGU.rt||0)<500&&innerWidth===LGU.iw&&innerHeight===LGU.ih)return;LGU.rt=nw;LGU.iw=innerWidth;LGU.ih=innerHeight;const mmEl=document.getElementById('mm');if(mmEl){const r=mmEl.getBoundingClientRect();if(r.width){const y=Math.max(8,innerHeight-r.top+6);LGU.btn.style.bottom=y+'px';LGU.btn.style.right=Math.max(8,innerWidth-r.right)+'px';}}}}
 /* ---------- LOGISTICS stage 5b-9 interface (orch/logistics3): engineer jobs, airlift, depot panel, bridges, ports ---------- */
 const BRGRP=new WeakMap(),LGG={g:null,bv:-1,n:-1};
 function lgDepCut(e){return MODE==='client'?!!(G.lgDc&&G.lgDc.has(e.id)):!!e.lcut;}
@@ -17157,9 +17222,12 @@ function edgeTick(){const A=EDGE.a;if(!A.length&&!EDGE.el)return;const now=perfo
   if(!A.length){if(EDGE.el)EDGE.el.style.display='none';return;}
   let el=EDGE.el;if(!el){const st=document.createElement('style');st.textContent='#edgeAl{position:fixed;z-index:7;pointer-events:none;overflow:hidden}#edgeAl button{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;padding:0;border-radius:50%;border:2px solid var(--c);background:rgba(8,12,10,.82);color:var(--c);font:700 17px/30px system-ui,sans-serif;text-align:center;cursor:pointer;pointer-events:auto;box-shadow:0 1px 6px rgba(0,0,0,.6)}#edgeAl button.vhov,#edgeAl button:hover{background:rgba(40,50,44,.95)}#edgeAl button i{position:absolute;left:50%;top:50%;width:0;height:0;margin:-7px 0 0 -7px;border:7px solid transparent;border-left:11px solid var(--c);border-right:0;transform:rotate(var(--r)) translateX(22px);transform-origin:7px 7px;pointer-events:none}body.inMenu #edgeAl,body.phOn #edgeAl{display:none!important}';document.head.appendChild(st);
     el=EDGE.el=document.createElement('div');el.id='edgeAl';document.body.appendChild(el);}
-  const r=cv.getBoundingClientRect();el.style.display='block';el.style.left=r.left+'px';el.style.top=r.top+'px';el.style.width=r.width+'px';el.style.height=r.height+'px';
+  /* smoothaudit: the screen and radio-feed rectangles are read 4x a second, not every frame (each read forced a page layout) */
+  if(!EDGE.rr||now-EDGE.rt>250||EDGE.iw!==innerWidth||EDGE.ih!==innerHeight){EDGE.rt=now;EDGE.iw=innerWidth;EDGE.ih=innerHeight;EDGE.rr=cv.getBoundingClientRect();const lg0=document.getElementById('log');EDGE.lr=lg0&&lg0.children.length?lg0.getBoundingClientRect():null;
+    el.style.display='block';el.style.left=EDGE.rr.left+'px';el.style.top=EDGE.rr.top+'px';el.style.width=EDGE.rr.width+'px';el.style.height=EDGE.rr.height+'px';}else if(el.style.display!=='block')el.style.display='block';
+  const r=EDGE.rr;
   const L=44,T=96,R=r.width-44,B=r.height-128,cx=(L+R)/2,cy=(T+B)/2,hw=(R-L)/2,hh=(B-T)/2;
-  const lg=document.getElementById('log'),lr=lg&&lg.children.length?lg.getBoundingClientRect():null,put=[];   // keep clear of the radio feed and of each other
+  const lr=EDGE.lr,put=[];   // keep clear of the radio feed and of each other
   for(const q of A){const p=toScreen(q.x,groundH(q.x,q.y),q.y);let vx=p.x-cx,vy=p.y-cy;if(p.z>1){vx=-vx;vy=-vy;}
     const on=p.z<=1&&p.x>=0&&p.x<=r.width&&p.y>=0&&p.y<=r.height;
     if(!q.b){const K=EDGE_K[q.kind],b=q.b=document.createElement('button');b.type='button';b.dataset.k=q.kind;b.style.setProperty('--c',K[1]);b.textContent=K[0];b.appendChild(document.createElement('i'));b.onclick=e=>{e.stopPropagation();edgeGo(q);};el.appendChild(b);}
@@ -18897,7 +18965,14 @@ function speak(kind){if(!AU.voiceOn||!G)return;const now=performance.now();if(no
 
 /* ---------- anthems ---------- */
 // the national anthem excerpts (one small file per nation, fetched only for that nation)
-const AN_FAC=/*ANFAC*/{US:1,EU:1,FR:1,DE:1,IL:1,UA:1,CU:1,IN:1,CN:1,EG:1,PK:1,KR:1,RU:1,JP:1};
+const AN_FAC=/*ANFAC*/{US:1,EU:1,FR:1,DE:1,IL:1,UA:1,CU:1,IN:1,CN:1,EG:1,PK:1,KR:1,RU:1,JP:1,GB:1,RS:1,DW:1,RV:1,OB:1,SA:1,AE:1,TR:1,IR:1};
+// what each excerpt is (menu credits + the orch/decisions.mjs guard: every playable nation has an anthem file with a credit).
+// Sources and licences: mus/an_pack.py, orch/HANDOFF-anthems.md. Fictional factions never get a real armed group's song.
+const AN_CRED={US:'The Star-Spangled Banner',EU:'Anthem of Europe (Beethoven)',FR:'La Marseillaise (Rouget de Lisle)',DE:'Deutschlandlied (Haydn)',
+  IL:'Hatikvah',UA:'Shche ne vmerla Ukrainy',CU:'La Bayamesa',IN:'Jana Gana Mana (Tagore)',CN:'March of the Volunteers (Nie Er)',EG:'Bilady, Bilady, Bilady (Sayed Darwish)',
+  PK:'Qaumi Taranah (Ahmed G. Chagla)',KR:'Aegukga (Ahn Eak-tai)',RU:'State Anthem of Russia (Alexander Alexandrov)',JP:'Kimigayo',GB:'God Save the King',
+  RS:'National Anthem of Lebanon (Wadih Sabra)',DW:'National Anthem of Yemen',RV:'Mawtini (Mohammed Flayfel)',OB:'Mawtini, a later verse (poem by Ibrahim Tuqan)',
+  SA:'Aash Al Maleek',AE:'Ishy Bilady',TR:'Istiklal Marsi',IR:'National Anthem of the Islamic Republic of Iran'};
 const ANB={};
 function anLoad(fac){if(!AU.ctx||!AN_FAC[fac])return;const s=ANB[fac];if(s&&(s.st==='ok'||s.st==='loading'||(s.tries||0)>=2))return;const e=ANB[fac]={st:'loading',tries:((s&&s.tries)||0)+1};
   fetch('mus/an_'+fac+'.mp3').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{e.buf=buf;e.st='ok';}).catch(err=>{e.st='fail';audioErr('anthem',err);});}
@@ -19084,6 +19159,10 @@ function stopMusic(){myStop();stHalt();}
   const p=document.createElement('p');p.className='credits';p.id='stCred';
   p.textContent='Soundtrack: The Fall of Arcana, Dream Raid and Tactical Pursuit by Matthew Pablo (www.matthewpablo.com, CC BY 3.0); Epic Orchestral Fantasy Theme by Markus Lindner (CC BY 4.0); Conflict (CC BY 4.0), Enemy Spotted and Act of War (CC BY 3.0) by Alexandr Zhelanov; Howitzer by joeBaxterWebb (CC BY 4.0); all via OpenGameArt.org. Tabuk, Impending Boom, Black Vortex, Curse of the Scarab, Egmont Overture Finale and Death of Kings by Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/';
   ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
+(function anCredits(){try{if(document.getElementById('anCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
+  const p=document.createElement('p');p.className='credits';p.id='anCred';
+  p.textContent='Battle-start and victory anthems, United States Navy Band recordings (public domain, US government works, via Wikimedia Commons and the Internet Archive) unless noted: '+Object.keys(AN_CRED).map(k=>k+' '+AN_CRED[k]).join('; ')+'.';
+  ps[ps.length-1].insertAdjacentElement('afterend',p);}catch(e){}})();
 (function treeCredits(){try{if(document.getElementById('treeCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='treeCred';
   p.textContent='Tree textures: Fir Tree 01, Island Tree 01 and Tree Small 02 leaf and needle photo scans by Rob Tuytel and Rico Cilliers, via Poly Haven (polyhaven.com, CC0).';
@@ -19595,7 +19674,9 @@ function weather(m,amt,camo){if(!m||m.userData.wx)return;m.userData.wx=1;amt=amt
     // DE-BLOCK 4b: vehicle hulls get a fine hammered-steel / dent bump (screen-derivative normal perturbation of a noise height) so they stop reading as smooth plastic
     sh.fragmentShader=sh.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
       if(wCamo>0.&&wKind<1.5){float bh=wn(vOP*2.3)*.55+wn(vOP*7.1)*.3+wn(vOP*19.)*.15;vec3 bx=dFdx(-vViewPosition),by=dFdy(-vViewPosition);float bdx=dFdx(bh),bdy=dFdy(bh);vec3 r1=cross(by,normal),r2=cross(normal,bx);float dt=dot(bx,r1);if(abs(dt)>1e-12){vec3 gr=sign(dt)*(bdx*r1+bdy*r2);normal=normalize(abs(dt)*normal-.15*gr);}}`);if(typeof lookShader==='function')lookShader(m,sh);};
-  m.customProgramCacheKey=()=>'wxb'+(m.userData.wk||0)+amt+'_'+camo+'_'+(m.userData.camoP||0)+'_'+(m.userData.wall||0)+(typeof LOOK!=='undefined'&&LOOK.on&&m.userData.look?'L':'');}
+  /* amount, kind, camo pattern and wall style are uniforms only - the shader text is the same, so they stay out of the program key
+     (wear amount 1.35 vs 1 on a Palestine barracks was a new shader program linked mid-game in the Test range, smoothaudit2) */
+  m.customProgramCacheKey=()=>'wxb'+(camo?1:0)+(typeof LOOK!=='undefined'&&LOOK.on&&m.userData.look?'L':'');}
 function normScale(obj,fit,size){obj.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(obj),sz=bb.getSize(new THREE.Vector3());const dim=fit==='y'?sz.y:fit==='x'?sz.x:(fit==='xz'||fit==='long')?Math.max(sz.x,sz.z):sz.z;const s=size/Math.max(.001,dim);const c=bb.getCenter(new THREE.Vector3());return{s,cx:c.x,cz:c.z,my:bb.min.y,xl:sz.x>sz.z};}
 const CAMOK={};function camoFreq(key){if(CAMOK[key]!==undefined)return;if(!['tank','tankE','tankW','truck','technical','toontank'].includes(key)){CAMOK[key]=0;return;}const P=MODELS.proto[key];P.scene.updateMatrixWorld(true);let mx=0;P.scene.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const b=o.geometry.boundingBox,sz=b.getSize(new THREE.Vector3());mx=Math.max(mx,sz.x,sz.y,sz.z);}});CAMOK[key]=mx>0?4/mx:0;}
 /* ---------- per-country looks: vehicle paint, camo blotches, uniform colour and national flag ---------- */
@@ -21602,6 +21683,7 @@ function campDebrief(c,won){
   root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),(won?'Victory - ':'Defeat - ')+m.title));
   root.appendChild(campEl('div','font-size:17px;line-height:1.5;margin-bottom:10px',won?m.win:(m.lose+(c.why?' '+c.why:''))));
   root.appendChild(campEl('div','font-size:16px;line-height:1.7;margin-bottom:10px',m.obj.map(o=>(c.o[o[0]]?'☑ ':'☐ ')+o[1]).join('<br>')+'<br><br>Time '+campClock(c.t)+' · Enemy destroyed '+(T.kills|0)+' · Our losses '+(T.lost|0)));
+  try{stSample(1);const n=G.teams.filter(T=>!T.reb).length;root.appendChild(esTable(endStats(won?0:n-1)));}catch(e){console.warn('mission score',e);}   // endscreen: the same score table as Battle
   root.appendChild(campBtn(won?'Play again':'Try again',()=>{campClose();startCampaign(m.id,c.diff);},won));
   const nx=CAMPAIGN[m.n];if(won&&nx)root.appendChild(campBtn('Next mission',()=>{campBrief(nx);campLeave();}));
   root.appendChild(campBtn('Missions',()=>{campLeave();campMenu();},true));

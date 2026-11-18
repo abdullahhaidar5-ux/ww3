@@ -277,6 +277,7 @@ function campDebrief(c,won){
   root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),(won?'Victory - ':'Defeat - ')+m.title));
   root.appendChild(campEl('div','font-size:17px;line-height:1.5;margin-bottom:10px',won?m.win:(m.lose+(c.why?' '+c.why:''))));
   root.appendChild(campEl('div','font-size:16px;line-height:1.7;margin-bottom:10px',m.obj.map(o=>(c.o[o[0]]?'☑ ':'☐ ')+o[1]).join('<br>')+'<br><br>Time '+campClock(c.t)+' · Enemy destroyed '+(T.kills|0)+' · Our losses '+(T.lost|0)));
+  try{stSample(1);const n=G.teams.filter(T=>!T.reb).length;root.appendChild(esTable(endStats(won?0:n-1)));}catch(e){console.warn('mission score',e);}   // endscreen: the same score table as Battle
   root.appendChild(campBtn(won?'Play again':'Try again',()=>{campClose();startCampaign(m.id,c.diff);},won));
   const nx=CAMPAIGN[m.n];if(won&&nx)root.appendChild(campBtn('Next mission',()=>{campBrief(nx);campLeave();}));
   root.appendChild(campBtn('Missions',()=>{campLeave();campMenu();},true));

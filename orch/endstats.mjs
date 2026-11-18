@@ -26,21 +26,25 @@ try {
   await page.evaluate(() => { G.teams[ME].ai = null; const foe = G.ents.filter(e => !ally(e.team, ME) && !e.dead); for (const e of foe) { e.hp = 0; try { kill(e, ME, null); } catch (x) { e.dead = true; } } for (let i = 0; i < 1800 && !G.over; i++) simUpdate(1 / 60); });
   await page.evaluate(() => { for (let i = 0; i < 2000 && KC.on; i++) kcFrame(1 / 15); });
   await page.keyboard.press('Escape'); await page.evaluate(() => { if (KC.on) kcFrame(1 / 30); }); await sleep(800);
-  const r = await page.evaluate(() => ({ over: G.over, endHidden: $('end').hidden, kc: KC.on, stats: !!G.endStats, cards: document.querySelectorAll('#endStats .esC').length,
+  await page.waitForFunction(() => ES.blob, null, { timeout: 30000 }).catch(() => {});
+  const r = await page.evaluate(() => ({ over: G.over, endHidden: $('end').hidden, kc: KC.on, stats: !!G.endStats, cards: document.querySelectorAll('#endStats .esRow').length, tabs: [...document.querySelectorAll('#endStats .esTabs button')].filter(b => !b.hidden).map(b => b.textContent), btns: [...document.querySelectorAll('#end .row > *')].filter(b => !b.hidden && b.offsetParent).map(b => b.textContent.trim()),
     awards: [...document.querySelectorAll('#endStats .esAw')].map(d => d.querySelector('b').textContent + ': ' + d.querySelector('.who').textContent + ' - ' + d.querySelector('.what').textContent),
-    graph: !!$('esGraph') && $('esGraph').width > 0, share: $('endShare') && !$('endShare').hidden, blob: ES.blob && ES.blob.size,
-    me: G.endStats && G.endStats.p[ME], samples: G.endStats && G.endStats.a.map(a => a.length), hscroll: document.documentElement.scrollWidth > innerWidth + 1 }));
+    graph: (esTab('time'), !!$('esGraph') && $('esGraph').width > 0), money: !!(G.endStats && G.endStats.m && G.endStats.m.some(a => a.length > 1 && a[a.length - 1] > 0)), tab0: (esTab('score'), ES.tab), share: $('endShare') && !$('endShare').hidden, blob: ES.blob && ES.blob.size,
+    me: G.endStats && G.endStats.p[ME], samples: G.endStats && G.endStats.a.map(a => a.length), under: (() => { const e = document.elementFromPoint(40, innerHeight - 40); return e ? (e.id || e.tagName) + '<' + (e.parentElement && (e.parentElement.id || e.parentElement.tagName)) : null; })(), hscroll: document.documentElement.scrollWidth > innerWidth + 1 }));
   note('end: ' + JSON.stringify(r));
   if (!r.over || r.endHidden || r.kc) bug('end page not shown');
   if (!r.stats || r.cards !== 3) bug('scoreboard missing (cards ' + r.cards + ')');
   if (!r.awards.length) bug('no awards');
   if (!r.graph) bug('army graph not drawn');
+  if (!r.money) bug('money timeline empty');
+  if (r.tabs.join() !== 'Score,Timeline,Awards,Map') bug('tabs: ' + r.tabs.join());
   if (!r.share || !r.blob) bug('Share picture not ready');
   if (r.me && !(r.me.b > 0 && r.me.ku > 0 && r.me.ms > 0)) bug('player numbers look empty');
   if (r.hscroll) bug('page scrolls sideways');
   await page.screenshot({ path: path.join(OUT, `endstats-${VP}-top.png`) });
-  await page.evaluate(() => { const o = $('end'); o.scrollTop = o.scrollHeight; }); await sleep(200);
-  await page.screenshot({ path: path.join(OUT, `endstats-${VP}-bottom.png`) });
+  for (const k of ['time', 'awards', 'map']) { await page.evaluate(k => esTab(k), k); await sleep(250); await page.screenshot({ path: path.join(OUT, `endstats-${VP}-${k}.png`) }); }
+  await page.keyboard.press('Escape'); await sleep(150); if ((await page.evaluate(() => ES.tab)) !== 'score' || (await page.evaluate(() => $('end').hidden))) bug('Esc did not step back to the Score tab');
+  await page.evaluate(() => { esTab('time'); ES.gm = 'm'; esDraw(); }); await sleep(200); await page.screenshot({ path: path.join(OUT, `endstats-${VP}-bottom.png`) }); await page.evaluate(() => { ES.gm = 'a'; esTab('score'); });
   const png = await page.evaluate(async () => { const b = new Uint8Array(await ES.blob.arrayBuffer()); let s = ''; for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(s); });
   fs.writeFileSync(path.join(OUT, `endstats-${VP}-share.png`), Buffer.from(png, 'base64'));
   // Share without a share sheet (headless): falls back to download + a picture on the page
