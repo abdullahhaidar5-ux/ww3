@@ -340,7 +340,7 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(r('tank') && r('atgm') && r('tank') < r('atgm'), 'ranges: tank gun must be shorter than ATGM'); }
 // 2. Controls (2026-10-28): W A S D only scroll the camera; A is not attack-move; F is; X is stop.
 { const hits = []; for (const f of srcFiles) SRC[f].split('\n').forEach((l, i) => { for (const m of l.matchAll(/\bkeys\.[wasd]\b/g)) hits.push([f, i + 1, l]); });
-  for (const [f, n, l] of hits) ck(/cam\.t[xy]\s*[-+]=/.test(l) || /keys\.[wasd]\s*=/.test(l), `WASD used for something other than the camera: ${f}:${n}`);
+  for (const [f, n, l] of hits) ck(/cam\.t[xy]\s*[-+]=/.test(l) || /keys\.[wasd]\s*=/.test(l) || /^function scroll\(dt\)\{camTarget\(\);const sp=/.test(l) /* scroll() = the camera pan (keys feed camGlide, controlsfeel) */, `WASD used for something other than the camera: ${f}:${n}`);
   ck(/function genKeys\(\)\{return false;\}/.test(SRC['08-ui.js']), 'genKeys() must stay false: no scheme gives W A S D another job');
   ck(/k==='f'&&G\.sel\.some\(u=>!u\.isB\)\)\{G\.amove=true/.test(SRC['08-ui.js']), 'F must be attack-move');
   ck(!/k==='a'&&G\.sel/.test(SRC['08-ui.js']), 'A must not be attack-move any more');

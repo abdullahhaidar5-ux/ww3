@@ -385,6 +385,8 @@ try {
   // (the test mouse can't leave the page, so the game cursor is first put 5 px from the edge, then the mouse moves 60 px left)
   await page.mouse.move(400, 450, { steps: 2 }); await page.evaluate(() => { MLOCK.x = 5; MLOCK.y = 450; });
   await page.mouse.move(340, 450, { steps: 3 }); await wait(700);
+  // the camera now speeds up gently (controlsfeel camGlide), and slow CI renders few frames (dt is capped at 0.05 s): give it up to 3 s more
+  for (let i = 0; i < 15 && (await page.evaluate(() => cam.tx)) > cx0 - 20; i++) await wait(200);
   L = await lk(); const cx1 = await page.evaluate(() => cam.tx);
   check('lock: the cursor stays inside the window at the edge', L.x === 0 && L.on, JSON.stringify(L));
   check('lock: edge scrolling works at the window edge', cx1 < cx0 - 20, JSON.stringify({ cx0, cx1 }));
