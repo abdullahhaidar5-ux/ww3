@@ -362,7 +362,7 @@ function fxUpdate(dt){
 // distance ease in and out as the weather changes.
 let RAIN=null,WXV={k:'clear',m:0};const LTN={a:0,f:0,cd:6,ws:null,wh:null,bs:0,bh:0};
 function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&Math.round(todSeg(G.t).d*20)!==WXT)try{applyWeather(0);}catch(e){}const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far,si:SUN?SUN.intensity:0,hi:HEMI?HEMI.intensity:0};}const B=WXV.base;if(!B)return;
-  const kk=k==='storm'?'rain':k;/* a thunderstorm looks like heavy rain until PACK LOOKS paints lightning (G.wxv()) */if(WXV.k!==kk){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=kk;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;
+  const kk=k==='storm'?'rain':k;/* a thunderstorm looks like heavy rain until PACK LOOKS paints lightning (G.wxv()) */if(WXV.k!==kk){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=kk;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;WETG.value+=((WXV.k==='rain'?m:0)-WETG.value)*Math.min(1,dt*.25);/* the ground dries slowly after the rain */
   const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:30,f:720},blizzard:{c:'#dfe6ee',n:150,f:1700},snow:{c:'#e3e9f0',n:220,f:2300}}[K];
   if(T){const tc=lin(T.c);SCN.fog.color.copy(B.c).lerp(tc,m*.85);SCN.fog.near=B.n+(T.n-B.n)*m;SCN.fog.far=B.f+(T.f-B.f)*m;}else{SCN.fog.color.lerp(B.c,Math.min(1,dt*2));SCN.fog.near+=(B.n-SCN.fog.near)*Math.min(1,dt*2);SCN.fog.far+=(B.f-SCN.fog.far)*Math.min(1,dt*2);}
   const R=Math.max(420,cam.dist*1.1);
@@ -585,7 +585,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       /* the wounded-soldier markers (05c-battlefield): built with the battle, not in the frame of the first casualty (a new canvas, texture and two shaders - rangefreeze 2026-11-17) */
       if(typeof bfWoundInit==='function'){bfWoundInit();const im=new THREE.InstancedMesh(BFX.wb.geometry,BFX.wb.material,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));im.setColorAt(0,new THREE.Color(1,1,1));grp.add(im);grp.add(new THREE.Points(BFX.wp.geometry,BFX.wp.material));}
       /* the instanced unit markers (spy eye, ground blob): their shader is made here, not when the first spy walks into view */
-      if(typeof decalSet==='function')for(const k of ['eye','blob']){const S=decalSet(k),im=new THREE.InstancedMesh(S.geo,S.mat,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));im.renderOrder=S.ro;grp.add(im);}
+      if(typeof decalSet==='function')for(const k of ['eye','blob','lamp']){const S=decalSet(k),im=new THREE.InstancedMesh(S.geo,S.mat,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));im.renderOrder=S.ro;grp.add(im);}
       grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
     // every side's riflemen and anti-tank teams in all their kit variants, one side per step: a fresh squad from the barracks mid-battle used to merge its soldier shapes (and link their shaders) on the spot
     for(const q of G.teams){if(dead()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;const grp=mk();
