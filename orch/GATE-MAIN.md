@@ -61,3 +61,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-18 02:41Z f01f3567 **RED** (28 gates) failing: migrate-down,superfreeze — controlsfeel: WASD guard knows scroll() feeds camGlide; edge-scroll te
 - 2026-11-18 03:43Z 10cf4bd3 **RED** (28 gates) failing: audio,controls,superfreeze — Stuck units: report, handoff, history (163 -> 52 stuck episodes on all
 - 2026-11-18 05:06Z 8900437e **RED** (28 gates) failing: controls — restore test screenshots touched by local runs
+- 2026-11-18 05:59Z 4451d6b2 **RED** (28 gates) failing: controls — Merge origin/main into pack-battlefield
