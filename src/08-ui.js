@@ -55,57 +55,110 @@ function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb,cnt=P.map(()=>0),cap=P.leng
   i=best(p=>p.me);if(i>=0&&P[i].me>0)A.push(['War Economy',i,esM(P[i].me)+' earned']);
   i=best(p=>p.pt);if(i>=0&&P[i].pt>0)A.push(['Power Player',i,P[i].pt+' general power'+(P[i].pt===1?'':'s')+' used'+(P[i].pk?' (most: '+esPow(P[i].f,P[i].pk)+')':'')]);
   return A;}
-const ES_OP=['World opinion',p=>p.op==null?'-':p.op+' / 100 (low '+(p.ol==null?p.op:p.ol)+')'];
+/* endscreen (Abdullah 2026-11-17 17:27): the Zero Hour-style score screen in the war-room steel-teal look. One job per tab:
+   Score (one row per side: units / buildings / money / powers / best unit / score), Timeline (army or money every ~10 s),
+   Awards, Map (after-action map). Esc goes back to the Score tab. Small buttons: Continue, Rematch (skirmish), replay, Share.
+   ES_ROWS is the full list each row shows on hover (Supplies collected, General rank, Time alive ...). */
 const ES_ROWS=[['Units built',p=>p.b],['Units lost',p=>p.lu],['Enemy units destroyed',p=>p.ku],['Buildings built',p=>p.bb==null?'-':p.bb],['Structures destroyed',p=>p.kb],['Structures lost',p=>p.lb],['Supplies collected',p=>p.sc==null?'-':esM(p.sc)],["General's powers used",p=>p.pt|0],['Score',p=>p.sco==null?'-':p.sco],
   ['Enemy value destroyed',p=>esM(p.vd)],['Money earned',p=>esM(p.me)],['Money spent',p=>esM(p.ms)],['General rank',p=>p.r],['Time alive',p=>esT(p.ta)]];
-// ghostslot 2026-11-14: stats from an older server/save may still carry the hidden militia team (tm 900, always last) - drop it; Battle has no world opinion
-function esClean(S){if(!S||!Array.isArray(S.p))return S;const keep=S.p.map(p=>!(p&&(p.tm===900||p.rb)));if(keep.every(Boolean))return S;const C=Object.assign({},S);C.p=S.p.filter((_,i)=>keep[i]);if(Array.isArray(S.a))C.a=S.a.filter((_,i)=>keep[i]);return C;}
-function esRows(S){const bt=S&&S.bt!=null?!!S.bt:!!(G&&G.battle);return bt?ES_ROWS:[ES_OP,...ES_ROWS];}
-// players in table order: winners first, then by value destroyed
-function esOrder(S){return S.p.map((p,i)=>i).sort((a,b)=>(esWin(S,b)-esWin(S,a))||(S.p[b].vd-S.p[a].vd)||a-b);}
+const ES_COLS=[['Units','Built',p=>p.b|0],['Units','Lost',p=>p.lu|0],['Units','Killed',p=>p.ku|0],['Buildings','Built',p=>p.bb|0],['Buildings','Lost',p=>p.lb|0],['Buildings','Destroyed',p=>p.kb|0],
+  ['Money','Earned',p=>esM(p.me)],['Money','Spent',p=>esM(p.ms)],['Powers','Used',p=>p.pt|0],['Best unit','',p=>p.bn>0?esUnit(p.f,p.bk)+' · '+p.bn:'-'],['Score','',p=>p.sco==null?'-':p.sco]];
+// ghostslot 2026-11-14: stats from an older server/save may still carry the hidden militia team (tm 900, always last) - drop it
+function esClean(S){if(!S||!Array.isArray(S.p))return S;const keep=S.p.map(p=>!(p&&(p.tm===900||p.rb)));if(keep.every(Boolean))return S;const C=Object.assign({},S);C.p=S.p.filter((_,i)=>keep[i]);if(Array.isArray(S.a))C.a=S.a.filter((_,i)=>keep[i]);if(Array.isArray(S.m))C.m=S.m.filter((_,i)=>keep[i]);return C;}
+// players in table order: winners first, then by score
+function esOrder(S){return S.p.map((p,i)=>i).sort((a,b)=>(esWin(S,b)-esWin(S,a))||((S.p[b].sco|0)-(S.p[a].sco|0))||(S.p[b].vd-S.p[a].vd)||a-b);}
 function esCss(){if($('esCss'))return;const st=document.createElement('style');st.id='esCss';st.textContent=`
-#end{place-items:start center}#end>.card{margin-block:auto}
-#endStats{display:flex;flex-direction:column;gap:20px;font-size:16px;line-height:1.35;text-align:left}#endStats[hidden]{display:none}
-#endStats h2{font-size:14px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin:0 0 10px;font-weight:700}
-.esP{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
-.esC{border:1px solid rgba(255,255,255,.14);border-left:6px solid var(--c);border-radius:8px;padding:10px 12px;background:rgba(255,255,255,.035)}
-.esC.win{border-color:rgba(227,179,65,.75);border-left-color:var(--c);background:rgba(227,179,65,.07)}.esC.me{box-shadow:0 0 0 2px rgba(255,255,255,.35) inset}
-.esH{display:flex;align-items:center;gap:10px;margin-bottom:8px}.esH canvas{width:42px;height:25px;border-radius:2px;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.6)}
-.esN{font-weight:700;font-size:18px;line-height:1.2}.esTag{font-size:13px;opacity:.75}.esWinT{color:#e3b341;font-weight:800;font-size:13px;letter-spacing:.1em}
-.esC dl{display:grid;grid-template-columns:1fr auto;gap:2px 12px;margin:0;font-size:14px}.esC dt{opacity:.78;white-space:nowrap}.esC dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-.esA{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
-.esAw{border-radius:8px;padding:10px 12px;background:rgba(227,179,65,.08);border:1px solid rgba(227,179,65,.35);border-left:5px solid var(--c)}
-.esAw b{display:block;color:#e3b341;font-size:13px;letter-spacing:.12em;text-transform:uppercase}.esAw .who{font-weight:700;font-size:17px;margin:2px 0}.esAw .what{font-size:15px;opacity:.88}
-#esGraph{width:100%;height:230px;display:block;background:rgba(255,255,255,.03);border-radius:8px}
-.esLeg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:15px;margin-top:8px}.esLeg i{display:inline-block;width:16px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle;background:var(--c)}
-#esPrev{max-width:100%;border-radius:8px;margin-top:6px}#esPrevBox p{font-size:14px;opacity:.8;margin:4px 0}
-@media (max-width:560px){.esP{grid-template-columns:1fr}.esA{grid-template-columns:1fr 1fr}#esGraph{height:190px}.esAw .who{font-size:16px}}`;document.head.append(st);}
-function esFlagEl(f,w,h){const c=document.createElement('canvas');c.width=w*2;c.height=h*2;const im=esFlag(f);const x=c.getContext('2d');if(im)try{x.drawImage(im,0,0,c.width,c.height);}catch(e){}else{x.fillStyle=(FACTIONS[f]||{}).color||'#888';x.fillRect(0,0,c.width,c.height);}return c;}
+#end.esWR{place-items:start center;z-index:60;background:radial-gradient(ellipse at 50% -10%,rgba(40,74,88,.55),transparent 62%),rgba(3,7,9,.97)}
+.esCard,.esTbl{--st1:#2b3c46;--st2:#1a262d;--st3:#0d151a;--hi:#5fb8c9;--gold:#f2cb5c;--red:#e0705f}
+#end .card.esCard{width:min(1180px,100%);max-width:none;margin-block:auto;padding:20px 26px 16px;box-sizing:border-box;text-align:left;border:0;border-radius:0;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,18px 100%,0 calc(100% - 18px));background:linear-gradient(180deg,rgba(17,29,36,.98),rgba(6,12,15,.99));box-shadow:inset 0 0 0 1px rgba(95,184,201,.35),inset 0 2px 0 rgba(95,184,201,.65)}
+.esBan{display:flex;align-items:center;gap:18px;padding-bottom:14px;background:linear-gradient(90deg,var(--hi),rgba(95,184,201,.15) 60%,transparent) left bottom/100% 1px no-repeat}
+#esEmb{display:flex;align-items:center;gap:8px;flex:none}#esEmb canvas{display:block;box-shadow:0 0 0 1px rgba(0,0,0,.7),0 0 18px rgba(95,184,201,.25)}#esEmb canvas:first-child{width:64px;height:38px}
+.esBanT{min-width:0;flex:1}
+#end .esCard #endt{font:700 clamp(40px,6.4vh,66px)/1 var(--display);letter-spacing:.14em;text-transform:uppercase;margin:0;color:var(--gold);text-shadow:0 0 26px rgba(242,203,92,.35),0 3px 0 #05080a}
+#end .esCard.lose #endt{color:var(--red);text-shadow:0 0 26px rgba(224,112,95,.3),0 3px 0 #05080a}
+#end .esCard #ends{margin:6px 0 0;color:#9fb7c1;font:500 15px/1.4 var(--display);letter-spacing:.04em;max-width:none}
+.esClock{margin-left:auto;text-align:right;flex:none;font:700 32px/1 var(--display);color:#e4edf0;font-variant-numeric:tabular-nums}.esClock small{display:block;font:600 11px var(--display);letter-spacing:.18em;color:#8fc3cf;text-transform:uppercase;margin-bottom:4px}
+#endStats{display:block;text-align:left;font:500 15px/1.35 var(--display);color:#e4edf0}#endStats[hidden]{display:none}
+.esTabs{display:flex;flex-wrap:wrap;gap:2px;margin:12px 0 14px;border-bottom:1px solid rgba(95,184,201,.22)}
+.esTabs button{background:none!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0;color:#9fb7c1;font:600 14px var(--display);letter-spacing:.16em;text-transform:uppercase;padding:8px 16px;min-height:0;cursor:pointer;box-shadow:none!important}
+.esTabs button:hover{color:#e4edf0}.esTabs button.on{color:var(--gold);border-bottom-color:var(--gold)!important}
+.esPane[hidden]{display:none}.esPane{min-height:min(440px,50vh)}
+body:has(#end.esWR:not([hidden])) #app{visibility:hidden}
+.esTw{overflow-x:auto}
+.esTbl{width:100%;border-collapse:separate;border-spacing:0 4px;font:500 15px var(--display);font-variant-numeric:tabular-nums;color:#e4edf0;text-align:left}
+.esTbl th{font:600 11px var(--display);letter-spacing:.16em;text-transform:uppercase;color:#8fc3cf;padding:2px 10px;white-space:nowrap;text-align:right}
+.esTbl thead tr:first-child th{color:var(--gold);opacity:.85;text-align:center}.esTbl thead tr:first-child th.r2{text-align:right;vertical-align:bottom}.esTbl th.g{border-left:1px solid rgba(95,184,201,.25)}.esTbl th:first-child{text-align:left}
+.esTbl td{padding:8px 9px;text-align:right;white-space:nowrap;background:linear-gradient(180deg,rgba(43,60,70,.55),rgba(14,22,27,.7))}
+.esTbl td.g{border-left:1px solid rgba(95,184,201,.18)}.esTbl td.bu{font-size:13px;color:#cfe3ea;white-space:normal;max-width:150px;line-height:1.2}.esTbl td.sc{font-weight:700;color:var(--gold);font-size:17px}
+.esTbl td:first-child{text-align:left;border-left:5px solid var(--c);min-width:170px;white-space:normal}
+.esTbl tr.win td{background:linear-gradient(180deg,rgba(92,76,26,.55),rgba(30,25,9,.7))}
+.esTbl tr.me td{box-shadow:inset 0 1px 0 rgba(242,203,92,.55),inset 0 -1px 0 rgba(242,203,92,.55)}
+.esPl{display:flex;align-items:center;gap:10px}.esPl canvas{flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.6)}
+.esN{font-weight:700;font-size:17px;line-height:1.15;letter-spacing:.03em}.esTag{font-size:12px;color:#9fb7c1;letter-spacing:.06em}.esTag b{color:var(--gold);font-weight:700;letter-spacing:.12em}
+.esA{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.esAw{clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);padding:10px 14px;background:linear-gradient(180deg,rgba(43,60,70,.6),rgba(14,22,27,.75));box-shadow:inset 0 0 0 1px rgba(242,203,92,.3),inset 4px 0 0 var(--c)}
+.esAw b{display:block;color:var(--gold);font-size:12px;letter-spacing:.16em;text-transform:uppercase}.esAw .who{font-weight:700;font-size:17px;margin:2px 0}.esAw .what{font-size:14px;color:#cfe3ea}
+.esSeg{display:flex;gap:4px;margin-bottom:8px}.esSeg button{background:rgba(22,32,38,.9)!important;border:0!important;border-radius:0;box-shadow:inset 0 0 0 1px rgba(95,184,201,.3)!important;color:#9fb7c1;font:600 12px var(--display);letter-spacing:.14em;text-transform:uppercase;padding:5px 12px;min-height:0;cursor:pointer}
+.esSeg button.on{color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)!important}
+#esGraph{width:100%;height:270px;display:block;background:rgba(4,9,12,.6);box-shadow:inset 0 0 0 1px rgba(95,184,201,.18)}
+.esLeg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;margin-top:8px}.esLeg i{display:inline-block;width:16px;height:4px;margin-right:6px;vertical-align:middle;background:var(--c)}
+.esNote{font-size:12px;color:#8fc3cf;margin-top:4px;letter-spacing:.04em}
+#esPrev{max-width:100%;margin-top:6px}#esPrevBox p{font-size:13px;color:#9fb7c1;margin:4px 0}
+#esPane-map #aarBox{margin:0 auto!important}
+#end .esCard>.row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin:14px 0 0;padding-top:12px;border-top:1px solid rgba(95,184,201,.22)}
+#end .esCard>.row>:is(button,a){flex:0 0 auto!important;width:auto!important;min-width:0!important;min-height:0!important;font:600 14px/1 var(--display)!important;letter-spacing:.12em;text-transform:uppercase;padding:10px 18px!important;border:0!important;border-radius:0!important;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));background:linear-gradient(180deg,rgba(43,60,70,.95),rgba(22,32,38,.95) 55%,rgba(12,19,23,.97))!important;box-shadow:inset 0 0 0 1px rgba(95,184,201,.35)!important;color:#e4edf0!important;text-decoration:none;cursor:pointer}
+#end .esCard>.row>:is(button,a):hover{color:var(--gold)!important;box-shadow:inset 0 0 0 1px var(--gold),0 0 14px rgba(95,184,201,.25)!important}
+#end .esCard>.row>#change{order:99;color:#1a1406!important;background:linear-gradient(180deg,#ffe28a,#f2cb5c 45%,#b98a26)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)!important}
+#end .esCard>.row>#change:hover{background:linear-gradient(180deg,#fff0b8,#ffd56a 45%,#d29e2c)!important;color:#000!important}
+#campScreen .esTw{margin:6px 0 14px}`;document.head.append(st);}
+function esFlagEl(f,w,h){const c=document.createElement('canvas');c.width=w*2;c.height=h*2;c.style.width=w+'px';c.style.height=h+'px';const im=esFlag(f);const x=c.getContext('2d');if(im)try{x.drawImage(im,0,0,c.width,c.height);}catch(e){}else{x.fillStyle=(FACTIONS[f]||{}).color||'#888';x.fillRect(0,0,c.width,c.height);}return c;}
 function esShareBtn(){let b=$('endShare');if(b)return b;const row=$('again')&&$('again').parentNode;if(!row)return null;b=document.createElement('button');b.id='endShare';b.className='big ghost';b.type='button';b.textContent='Share';b.hidden=true;b.onclick=esShare;row.insertBefore(b,$('change'));return b;}
-// fills (or with S=null hides) the summary under the result line
-function esPage(S){S=esClean(S);esCss();let box=$('endStats');if(!box){box=document.createElement('div');box.id='endStats';$('ends').after(box);}
-  const sb=esShareBtn();ES.S=S;ES.blob=null;box.innerHTML='';if(!S||!Array.isArray(S.p)||!S.p.length){box.hidden=true;if(sb)sb.hidden=true;return;}box.hidden=false;if(sb)sb.hidden=false;
-  const ord=esOrder(S),sec=t=>{const s=document.createElement('section'),h=document.createElement('h2');h.textContent=t;s.append(h);box.append(s);return s;};
-  // awards
-  const A=esAwards(S);if(A.length){const s=sec('Awards'),g=document.createElement('div');g.className='esA';for(const [t,i,w] of A){const d=document.createElement('div');d.className='esAw';d.style.setProperty('--c',S.p[i].c);d.innerHTML='<b></b><div class="who"></div><div class="what"></div>';d.querySelector('b').textContent=t;d.querySelector('.who').textContent=esWho(S,i);d.querySelector('.what').textContent=w;g.append(d);}s.append(g);}
-  // scoreboard
-  {const s=sec('Scoreboard'),g=document.createElement('div');g.className='esP';for(const i of ord){const p=S.p[i],d=document.createElement('div');d.className='esC'+(esWin(S,i)?' win':'')+(i===ME?' me':'');d.style.setProperty('--c',p.c);
-    const h=document.createElement('div');h.className='esH';h.append(esFlagEl(p.f,42,25));try{const GT=G&&G.teams&&G.teams[i];if(GT&&GT.emb&&GT.emb!=='flag')h.append(idEmbEl(GT,24));}catch(e){}const nm=document.createElement('div');nm.innerHTML='<div class="esN"></div><div class="esTag"></div>';nm.querySelector('.esN').textContent=esName(p);
-    nm.querySelector('.esTag').textContent=[i===ME?'You':p.ai?'AI':'Player',GDOC[p.gd]?GDOC[p.gd].name+' doctrine':'',S.p.some((q,j)=>j!==i&&q.tm===p.tm)?'Team '+(p.tm<100?p.tm+1:i+1):'',esWin(S,i)?'':p.out?'Defeated':''].filter(Boolean).join(' · ');h.append(nm);
-    if(esWin(S,i)){const w=document.createElement('div');w.className='esWinT';w.style.marginLeft='auto';w.textContent='WINNER';h.append(w);}d.append(h);
-    const dl=document.createElement('dl');for(const [k,f] of esRows(S)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=f(p);dl.append(dt,dd);}d.append(dl);g.append(d);}s.append(g);}
-  // army strength over time
-  if(S.a&&S.a.some(a=>a&&a.length>1)){const s=sec('Army strength over time');const c=document.createElement('canvas');c.id='esGraph';s.append(c);const lg=document.createElement('div');lg.className='esLeg';
-    for(const i of ord){const sp=document.createElement('span'),k=document.createElement('i');k.style.setProperty('--c',S.p[i].c);sp.append(k,document.createTextNode(esWho(S,i)));lg.append(sp);}s.append(lg);
-    const n=document.createElement('div');n.className='esTag';n.style.marginTop='4px';n.textContent='Value of each side\'s units in the field, every 10 seconds.';s.append(n);}
+// the score table (also used by the Missions debrief): one row per side, Zero Hour columns
+function esTable(S){esCss();const w=document.createElement('div');w.className='esTw';const t=document.createElement('table');t.className='esTbl';w.append(t);
+  const h=t.createTHead(),r1=h.insertRow(),r2=h.insertRow();const g1=document.createElement('th');g1.rowSpan=2;g1.className='r2';g1.style.textAlign='left';g1.textContent='Side';r1.append(g1);
+  let last='';ES_COLS.forEach(([g,k])=>{if(!k){const c1=document.createElement('th');c1.className='g r2';c1.rowSpan=2;c1.textContent=g;r1.append(c1);last=g;return;}const c2=document.createElement('th');c2.textContent=k;if(g!==last){c2.className='g';const c1=document.createElement('th');c1.className='g';c1.textContent=g;c1.colSpan=ES_COLS.filter(c=>c[0]===g).length;r1.append(c1);last=g;}r2.append(c2);});
+  const b=t.createTBody(),team=i=>S.p.some((q,j)=>j!==i&&q.tm===S.p[i].tm);
+  for(const i of esOrder(S)){const p=S.p[i],tr=b.insertRow();tr.className='esRow'+(esWin(S,i)?' win':'')+(i===ME?' me':'');tr.style.setProperty('--c',p.c||'#888');tr.title=ES_ROWS.map(([k,f])=>k+': '+f(p)).join('\n');
+    const td=tr.insertCell(),pl=document.createElement('div');pl.className='esPl';pl.append(esFlagEl(p.f,36,22));try{const GT=G&&G.teams&&G.teams[i];if(GT&&GT.emb&&GT.emb!=='flag')pl.append(idEmbEl(GT,22));}catch(e){}
+    const nm=document.createElement('div');nm.innerHTML='<div class="esN"></div><div class="esTag"></div>';nm.querySelector('.esN').textContent=esName(p);
+    const tg=nm.querySelector('.esTag');if(esWin(S,i)){const wb=document.createElement('b');wb.textContent='WINNER';tg.append(wb,document.createTextNode(' · '));}
+    tg.append(document.createTextNode([i===ME?'You':p.ai?'AI':'Player',GDOC[p.gd]?GDOC[p.gd].name:'',team(i)?'Team '+(p.tm<100?p.tm+1:i+1):'',esWin(S,i)?'':p.out?'Defeated':''].filter(Boolean).join(' · ')));pl.append(nm);td.append(pl);
+    last='';for(const [g,k,f] of ES_COLS){const c=tr.insertCell();c.textContent=f(p);if(g!==last){c.className='g';last=g;}if(g==='Best unit')c.className+=' bu';if(g==='Score')c.className+=' sc';}}
+  return w;}
+// banner + tabs wrapped around the shell's #endt / #ends once (the shell markup stays as it is)
+function esShell(){esCss();const card=$('endt').parentNode;card.classList.add('esCard');$('end').classList.add('esWR');let ban=$('esBan');
+  if(!ban){ban=document.createElement('div');ban.id='esBan';ban.className='esBan';const em=document.createElement('div');em.id='esEmb';const tx=document.createElement('div');tx.className='esBanT';card.insertBefore(ban,$('endt'));tx.append($('endt'),$('ends'));const ck=document.createElement('div');ck.id='esClock';ck.className='esClock';ban.append(em,tx,ck);}
+  const won=/^Victory$/i.test($('endt').textContent.trim());card.classList.toggle('lose',/^Defeat$/i.test($('endt').textContent.trim()));
+  const em=$('esEmb');em.innerHTML='';try{const T=G&&G.teams&&G.teams[ME];if(T){em.append(esFlagEl(T.fac,64,38));if(T.emb&&T.emb!=='flag')em.append(idEmbEl(T,38));}}catch(e){}
+  const mp=G&&MAPS[G.mapKey];$('esClock').innerHTML='<small></small><span></span>';$('esClock').querySelector('small').textContent=(mp&&mp.name?mp.name+' · ':'')+'Battle time';$('esClock').querySelector('span').textContent=esT(G?G.t:0);
+  $('change').textContent='Continue';$('again').textContent='Rematch';$('again').title='The same battle again: same map, nations and AI';return won;}
+function esTab(k){ES.tab=k;const box=$('endStats');if(!box)return;for(const b of box.querySelectorAll('.esTabs button')){const p=$('esPane-'+b.dataset.k);b.hidden=!p||!p.childElementCount;b.classList.toggle('on',b.dataset.k===k);}
+  for(const p of box.querySelectorAll('.esPane'))p.hidden=p.id!=='esPane-'+k;if(k==='time')esDraw();}
+// fills (or with S=null hides) the score screen under the banner
+function esPage(S){S=esClean(S);esShell();let box=$('endStats');if(!box){box=document.createElement('div');box.id='endStats';$('esBan').after(box);}
+  const sb=esShareBtn();ES.S=S;ES.blob=null;ES.tab='score';ES.gm=ES.gm||'a';box.innerHTML='';if(!S||!Array.isArray(S.p)||!S.p.length){box.hidden=true;if(sb)sb.hidden=true;return;}box.hidden=false;if(sb)sb.hidden=false;
+  const ord=esOrder(S),tabs=document.createElement('div');tabs.className='esTabs';box.append(tabs);
+  const pane=(k,t)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.dataset.k=k;b.onclick=()=>esTab(k);tabs.append(b);const s=document.createElement('section');s.className='esPane';s.id='esPane-'+k;box.append(s);return s;};
+  pane('score','Score').append(esTable(S));
+  // timeline: army value or money earned, one line per side, sampled every ~10 s by the sim (stSample)
+  {const s=pane('time','Timeline');if(S.a&&S.a.some(a=>a&&a.length>1)){const sg=document.createElement('div');sg.className='esSeg';const nt=document.createElement('div');nt.className='esNote';
+    const say=()=>{nt.textContent=ES.gm==='m'?'Money each side has earned so far.':'Value of each side\'s units in the field.';for(const b of sg.children)b.classList.toggle('on',b.dataset.m===ES.gm);};
+    for(const [m,t] of [['a','Army strength'],['m','Money']]){if(m==='m'&&!(S.m&&S.m.some(a=>a&&a.length>1)))continue;const b=document.createElement('button');b.type='button';b.dataset.m=m;b.textContent=t;b.onclick=()=>{ES.gm=m;say();esDraw();};sg.append(b);}
+    const c=document.createElement('canvas');c.id='esGraph';const lg=document.createElement('div');lg.className='esLeg';
+    for(const i of ord){const sp=document.createElement('span'),k=document.createElement('i');k.style.setProperty('--c',S.p[i].c);sp.append(k,document.createTextNode(esWho(S,i)));lg.append(sp);}s.append(sg,c,lg,nt);if(!(S.m&&S.m.length))ES.gm='a';say();}}
+  {const A=esAwards(S),s=pane('awards','Awards');if(A.length){const g=document.createElement('div');g.className='esA';for(const [t,i,w] of A){const d=document.createElement('div');d.className='esAw';d.style.setProperty('--c',S.p[i].c);d.innerHTML='<b></b><div class="who"></div><div class="what"></div>';d.querySelector('b').textContent=t;d.querySelector('.who').textContent=esWho(S,i);d.querySelector('.what').textContent=w;g.append(d);}s.append(g);}}
+  pane('map','Map');   // aarPage (08b-aar) puts the after-action map here
+  esTab('score');
   // the Share picture is drawn now, so tapping Share can open the share sheet straight away (iPhone needs that)
   try{const cv=esImage(S);if(cv.toBlob)cv.toBlob(b=>{if(ES.S===S)ES.blob=b;},'image/png');}catch(e){console.warn('share image',e);}}
+// Esc on the score screen = one step back: to the Score tab (never straight out of the screen)
+addEventListener('keydown',e=>{if(e.key!=='Escape')return;const o=$('end');if(!o||o.hidden||!ES.tab||ES.tab==='score'||(typeof KC!=='undefined'&&KC.on))return;e.preventDefault();e.stopImmediatePropagation();esTab('score');},true);
 function esDraw(){const c=$('esGraph'),S=ES.S;if(!c||!S||$('end').hidden)return;const r=c.getBoundingClientRect();if(!r.width||!r.height)return;const d=Math.min(2,window.devicePixelRatio||1);
-  c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);esGraph(x,S,0,0,c.width,c.height,d);}
+  c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);esGraph(x,S,0,0,c.width,c.height,d,ES.gm==='m'&&S.m?S.m:S.a);}
 addEventListener('resize',()=>{try{esDraw();}catch(e){}});
 function esNice(v){const p=Math.pow(10,Math.floor(Math.log10(Math.max(1,v))));for(const m of [1,2,2.5,5,10])if(m*p>=v)return m*p;return 10*p;}
 // army-value lines, one per side (yours drawn last and thicker); sc = pixels per CSS pixel
-function esGraph(x,S,x0,y0,w,h,sc){const A=S.a||[],dt=S.dt||10,T=Math.max(1,S.t||1);let mx=1;for(const a of A)for(const v of (a||[]))if(v>mx)mx=v;
+function esGraph(x,S,x0,y0,w,h,sc,A){A=A||S.a||[];const dt=S.dt||10,T=Math.max(1,S.t||1);let mx=1;for(const a of A)for(const v of (a||[]))if(v>mx)mx=v;
   const top=esNice(mx*100/4)*4,pl=58*sc,pb=24*sc,pt=10*sc,pr=10*sc,gx=x0+pl,gy=y0+pt,gw=w-pl-pr,gh=h-pt-pb;
   x.save();x.font=`${12*sc}px system-ui,-apple-system,sans-serif`;x.textBaseline='middle';x.lineWidth=sc;
   for(let k=0;k<=4;k++){const yy=gy+gh-gh*k/4;x.strokeStyle='rgba(255,255,255,.12)';x.beginPath();x.moveTo(gx,yy);x.lineTo(gx+gw,yy);x.stroke();x.fillStyle='rgba(255,255,255,.65)';x.textAlign='right';x.fillText(esM(top*k/4),gx-6*sc,yy);}
