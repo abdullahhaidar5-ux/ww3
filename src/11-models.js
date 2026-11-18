@@ -1020,9 +1020,11 @@ const DECAL={sets:{}};
 function decalSet(k){let S=DECAL.sets[k];if(S)return S;let geo,mat,ro;
   if(k==='blob'){if(!window.BLOBTEX){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,4,32,32,31);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(.6,'rgba(0,0,0,.25)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);window.BLOBTEX=new THREE.CanvasTexture(c);}
     geo=new THREE.PlaneGeometry(1.5,1).rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({map:BLOBTEX,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});ro=1;}
+  else if(k==='lamp'){if(!window.LAMPTEX){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,2,32,32,31);g.addColorStop(0,'rgba(255,238,196,.85)');g.addColorStop(.5,'rgba(255,224,168,.3)');g.addColorStop(1,'rgba(255,220,160,0)');x.fillStyle=g;x.fillRect(0,0,64,64);window.LAMPTEX=new THREE.CanvasTexture(c);}
+    geo=new THREE.PlaneGeometry(1.8,1).rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({map:LAMPTEX,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});ro=1;}
   else if(k==='eye'){geo=spyEyeGeo();mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.92,depthTest:false,depthWrite:false,side:THREE.DoubleSide});ro=6;}
   else{geo=k==='ringS'?new THREE.RingGeometry(.5,.56,28):new THREE.RingGeometry(.36,.41,28);geo.rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.24,depthWrite:false});ro=2;}
-  return DECAL.sets[k]=S={geo,mat,ro,im:null,cap:0,list:new Set(),col:k!=='blob'};}
+  return DECAL.sets[k]=S={geo,mat,ro,im:null,cap:0,list:new Set(),col:k!=='blob'&&k!=='lamp',night:k==='lamp'};}
 // faction kit, ship radars and drone stencils are drawn as instances (one draw call per kit shape for the whole
 // battle, not one per unit): each unit only carries an empty marker whose world matrix feeds the instanced mesh
 function kitMarker(id,g){const k='kit:'+id;let S=DECAL.sets[k];if(!S)S=DECAL.sets[k]={geo:g,mat:kitMat(),ro:0,im:null,cap:0,list:new Set(),col:false};
@@ -1033,6 +1035,7 @@ function decal(k,color){const S=decalSet(k),m=new THREE.Object3D();m.name='decal
 function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
     if(S.im&&S.im.parent!==SCN){if(S.im.parent)S.im.parent.remove(S.im);S.im.dispose();S.im=null;S.cap=0;}
     for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible)v=false;q=q.parent;}if(q!==SCN){if((m.userData.off=(m.userData.off||0)+1)>3600)S.list.delete(m);continue;}m.userData.off=0;if(v)n++;}
+    let dk=1;if(S.night){/* vehicle headlights: only drawn in the dark (G.tod / night battles); by day the set costs nothing */dk=typeof G!=='undefined'&&G&&G.todM&&typeof todDark==='function'?todDark():0;if(dk<.3){n=0;if(S.im)S.im.count=0;continue;}S.mat.opacity=Math.min(.55,dk*.55);}
     if(n>S.cap){if(S.im){SCN.remove(S.im);S.im.dispose();}S.cap=Math.max(64,Math.ceil(n*1.5));const im=new THREE.InstancedMesh(S.geo,S.mat,S.cap);im.name='decals_'+k;im.frustumCulled=false;im.renderOrder=S.ro;im.castShadow=im.receiveShadow=false;im.matrixAutoUpdate=false;
       if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));S.im=im;SCN.add(im);}
     if(!S.im)continue;const im=S.im;let i=0;
@@ -1055,7 +1058,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
   {const ring=decal(c.squad?'ringS':'ringV',new THREE.Color(T.color));ring.scale.setScalar(c.size);ring.position.y=1.2;if(!['heli','jet'].includes(e.kind))o.add(ring);o.userData.parts.tring=ring;}
   // soft contact shadow so ground vehicles sit in the terrain instead of floating on it
-  if(T&&e.s&&e.s.dom==='ground'&&!isInf(e.s)){const bs=(c.size||30)*.62,bl=decal('blob');bl.scale.set(bs,1,bs);bl.position.y=.35;yaw.add(bl);}
+  if(T&&e.s&&e.s.dom==='ground'&&!isInf(e.s)){const bs=(c.size||30)*.62,bl=decal('blob');bl.scale.set(bs,1,bs);bl.position.y=.35;yaw.add(bl);{const lp=decal('lamp');lp.scale.set(bs*1.9,1,bs*1.05);lp.position.set(bs*1.35,.5,0);o.add(lp);}}
   const rotary=e.kind==='heli'||e.kind==='airlift'&&/^m_/.test(c.m),ownRotor=rotary?yaw.getObjectByName('main_rotor'):null;if(ownRotor){o.userData.parts.blades=ownRotor;const tr0=yaw.getObjectByName('tail_rotor');if(tr0)o.userData.parts.tailR0=tr0;}
   if(rotary&&!ownRotor){
     // main rotor on a mast just above the cabin roof and a tail rotor on the tail boom, both placed from the model's
