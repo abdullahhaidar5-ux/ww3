@@ -15404,7 +15404,7 @@ function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const
     if(G)netTick(dt);
     if(G&&!G.over&&!RP.on)kcRec();
     if(G&&!G.over)try{rpRecTick();}catch(e){}
-    if(G){if(KC.on)kcFrame(dt);else if(window.PHX&&PHX.on)PHX.frame(dt);else{scroll(dt);renderFrame(dt);}}}catch(err){console.error(err);}
+    if(G){if(KC.on)kcFrame(dt);else if(window.PHX&&PHX.on)PHX.frame(dt);else{scroll(Math.min(.25,rawDt));/* camera pan runs on real time (not the 0.05 s sim cap): slow frames no longer crawl the camera */renderFrame(dt);}}}catch(err){console.error(err);}
   QUAL.cost+=((performance.now()-_w0)/1000-QUAL.cost)*.05;fpsHud();
   requestAnimationFrame(loop);}
 // Hosting from a hidden or minimized window. Browsers stop drawing frames for a page you can't see (requestAnimationFrame
