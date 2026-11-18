@@ -6,7 +6,7 @@ licences (LibriVox public domain, Thorsten-Voice CC0, Mozilla Common Voice CC0 -
   * at least 2 seeds per line; more while the best take reads back above 5 % CER, up to 10 seeds while above 15 %;
     a line whose best take is still above 15 % CER is reported as a reject
   * Whisper read-back (faster-whisper int8: medium for ja/he, small for fr/de/en) of every take; character error rate with per-language normalisation
-    (Latin: case/punctuation/accents-insensitive; Japanese: both sides converted to hiragana with pykakasi)
+    (Latin: case/punctuation/accents-insensitive; Japanese: both sides turned into UniDic pronunciations with fugashi)
   * light radio chain (wide band, one 3:1 compressor, little drive), read back again after processing (+ the mp3 codec)
 Same sheet/map format as orch/vo/render.py (main sheet CODE.mp3, kinds l/c) and orch/vo/roles.py (CODE_r / _h / _s).
 usage: python3 orch/vo/v3.py FR [DE GB JP]          (XTTS + Whisper in one process: ~4.5 GB RSS - run alone)
@@ -32,7 +32,8 @@ SAYFIX = {   # spoken form for XTTS only (the line text itself is unchanged)
 # lines a clone kept saying wrong (Whisper medium, every seed above 15 % CER) go to another voice of the same cast
 VOICE_OVR = {'FR:l2.0': 'clone:fr_bernard', 'FR_r:inf2.0': 'clone:fr_bernard', 'FR_s:tank2.0': 'clone:fr_lambert',
              'FR_r:navy1.1': 'clone:fr_bernard', 'GB_s:reload2.0': 'clone:gb_clarke',
-             'DE_r:tank1.1': 'clone:de_ungerer', 'DE_r:pilot0.1': 'clone:de_ungerer'}
+             'DE_r:tank1.1': 'clone:de_ungerer', 'DE_r:pilot0.1': 'clone:de_ungerer',
+             'JP:l6.1': 'clone:ja_cv3', 'JP_r:tank2.0': 'clone:ja_cv1', 'JP_s:rpg2.0': 'clone:ja_cv3'}
 LOG = open(os.path.join(CACHE, 'render.log'), 'a', encoding='utf-8')
 def log(*a):
     s = ' '.join(str(x) for x in a); print(s, flush=True); LOG.write(s + '\n'); LOG.flush()
@@ -42,11 +43,10 @@ _KK = None
 def norm(t, lang):
     global _KK
     t = unicodedata.normalize('NFKC', t).replace('’', "'")
-    if lang == 'ja':
+    if lang == 'ja':   # compare pronunciations (UniDic via fugashi): kanji/kana spelling, particles (へ = e) and long vowels stop counting as errors
         if _KK is None:
-            import pykakasi; _KK = pykakasi.kakasi()
-        t = ''.join(x['hira'] for x in _KK.convert(t))
-        t = t.replace('ー', '')
+            import fugashi; _KK = fugashi.Tagger()
+        t = ''.join((w.feature.pron if getattr(w.feature, 'pron', None) not in (None, '*') else w.surface) for w in _KK(t))
         return ''.join(ch for ch in t if not unicodedata.category(ch).startswith(('P', 'Z', 'S')))
     t = t.lower()
     if lang == 'en':
@@ -347,7 +347,17 @@ def nation(fac):
         log(f'{sh}: {len(clips)} clips, {tt:.1f} s, {os.path.getsize(dst) // 1024} KB, mean CER {np.mean(cs):.3f}, >15 %: {sum(c > MAXCER for c in cs)}')
 
 if __name__ == '__main__':
-    if sys.argv[1] == 'list':
+    if sys.argv[1] == 'gen':   # XTTS only (no Whisper): 3 seeds per line, +4 for lines whose best take is above 15 % (Japanese:
+        # XTTS + Whisper medium do not fit the 6.2 GB cap together, so JP runs gen -> V3_MED=1 score/build -> gen -> ...)
+        import gc, ctypes; model(); gc.collect(); ctypes.CDLL('libc.so.6').malloc_trim(0)
+        for fac in sys.argv[2:]:
+            stf = os.path.join(CACHE, f'state_{fac}.json'); S = json.load(open(stf, encoding='utf-8')) if os.path.exists(stf) else {}
+            for j in jobs(fac):
+                id_ = j['sheet'] + ':' + j['lab'] + ':' + j['say'] + ':' + j['voice']; sc = S.get(id_, {})
+                n = 3 if not sc else (min(10, len(sc) + 4) if min(eff(x) for x in sc.values()) > MAXCER else 0)
+                for t in range(n): raw(j['voice'], j['say'], t, j['mood'], LANG[fac])
+            log(f'gen {fac} done')
+    elif sys.argv[1] == 'list':
         for j in jobs(sys.argv[2]): print(j['sheet'], j['lab'], j['voice'], j['mood'], j['say'])
     else:
         if not MEDOK: model()

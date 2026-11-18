@@ -215,13 +215,13 @@ tank Tank!|Armour, armour!
 medic Medic!|Need a medic!
 ''')
 _s('JP', '''
-rpg ロケット弾！|ロケット弾、伏せろ！
+rpg ロケットだ！|ロケット弾、伏せろ！
 manDown やられた！|負傷者だ！
 reload 弾倉交換！|援護してくれ、弾倉交換！
 grenade 手榴弾！|伏せろ、手榴弾！
-contact 正面に敵！|接敵、接敵！
-tank 戦車！|敵戦車だ！
-medic 衛生！|衛生、こっちだ！
+contact 正面に敵！|敵だ、敵だ！
+tank 戦車だ！|敵戦車だ！
+medic 衛生、来てくれ！|衛生、こっちだ！
 ''')
 _s('RV', '''
 rpg آر بي جي!|صاروخ!
