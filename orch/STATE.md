@@ -1,20 +1,17 @@
-# STATE — 2026-11-18 ~03:00 UTC (conductor run)
+# STATE — 2026-11-18 ~03:50 UTC (conductor run)
 
-No train this run: nothing waiting to land.
+No train this run: no helper branch has a finished own gate yet.
 
-main = 10cf4bd (Stuck units report), Pages build for it = success (live). No `train/*` branch exists.
+main = 8900437 (Instanced soldiers + rock-chunk depth fix). Pages build for it = success (live, 03:24 UTC). Main head gates: gate/loadfreeze FAILURE (not on the known-flaky list; worth a look by the owner of load/freeze work); the rest green.
 
-Train candidates (all stale, nothing to merge):
-- freezefix, sweepfixA/B, orderfeel, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, looktest, onegame, nations20: 0 commits ahead of main (already landed).
-- ghostslot (1), testrange (1): handoff-only commits from 2026-11-14, nothing to land.
-- techbldgs (1): ORCH note only (2026-11-14), not landed.
-- ammozone (7): 2026-11-14 Conquest-era ammo zone; its rule is already in Battle on main, branch superseded.
-- battlemaps2: no branch, no taken lock.
+In flight (helpers land through their own gate/* runs):
+- orch/pack-battlefield (2 ahead, pushed 03:38): tunnel radar + live day cycle/thunderstorms. Own gate 69934e9 only `check` reported so far (running). No HANDOFF.
+- orch/pack-economy (2 ahead, 03:04, HANDOFF ready): Proxy Militia + Smuggling Route powers. Own gate 18ace7d: 14 green, gate/migrate-down FAILURE (not known-flaky), gate still incomplete. Not trainable until it finishes and migrate-down is explained.
+- orch/pack-looks (1 ahead): handoff only; its instanced-soldiers work already landed.
+- orch/voices3 (6 ahead, branch only, no HANDOFF, no gate): FR/DE/GB/JP voice re-records. Not ready.
+- orch/orch2-notes (3 ahead): DECISIONS-only notes, docs, not landed on their own.
+- smoothaudit2, stuckunits, controlsfeel, endscreen, anthems: 0 or only superseded commits (already landed).
+
+taken/* locks with no orch branch (90+ min): taken/onegame-era L1-L6, battleclean2, battlepower, bldqueue, destruction, dozerbuild, dugout, ghostslot, groundreal, leaderlook, looktest, pacecap etc. (2026-11-14, work landed or nothing saved; stale). taken/endscreen has its branch.
 
 Never-land branches: parked (removed from the game).
-
-In flight (helpers land through their own gate/* runs): Proxy Militia power (gate/6542a3a968, queued), chunk depth material guard (gate/5250b982ca, queued), Destructible cities (gate/dc307f86f4, running).
-Recently red own-gates: Instanced soldiers chunk material (gate/41a0e5e888), controlsfeel WASD guard (gate/737598d243), Controls feel glide (gate/1020fe142e).
-Main head gates: smooth-pc success; audio failure (known flaky).
-
-Note: a full `git fetch` of this repo times out here (600+ branches), so state was read through the GitHub API.
