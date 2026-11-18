@@ -736,7 +736,7 @@ function gdReq(T,p){return !p.req||gdHas(T,p.req);}
 const GDOC_LATE=120;   // doctrine can be picked / changed until this many seconds into the battle
 function gdHas(T,k){return !!(T&&T.gperk&&T.gperk[k]);}
 function gdCostK(T,s,b,kind){if(!T||!T.gdoc)return 1;let m=1;const D=GDOC[T.gdoc];if(!D)return 1;for(const p of D.perks){if(!p.cost||!gdHas(T,p.k))continue;const g=p.cost[0];if(b?g===kind:(g==='air'?s.dom==='air':upgMatch(g,s,false)))m*=p.cost[1];}return m;}
-const MILNAME={IR:'Local Defence Volunteers',RS:'Mountain Village Volunteers',DW:'Highland Tribal Volunteers',RV:'Marsh Brigade Volunteers',OB:'Neighbourhood Volunteers',US:'Contract Security Team',RU:'PMC Detachment'};   /* fictional local fighters, never a real group's name */
+const MILNAME={IR:'Local Defense Volunteers',RS:'Mountain Village Volunteers',DW:'Highland Tribal Volunteers',RV:'Marsh Brigade Volunteers',OB:'Neighborhood Volunteers',US:'Contract Security Team',RU:'PMC Detachment'};   /* fictional local fighters, never a real group's name */
 const FL_MAX=4;   // flare / chaff charges per aircraft; refilled while landed (at an airfield)
 const POWERS={
   bounty:{name:'Cash Bounty',desc:'Earn 15% of the cost of every enemy you destroy',passive:true},
