@@ -48,6 +48,8 @@ def norm(t, lang):
             import fugashi; _KK = fugashi.Tagger()
         t = ''.join((w.feature.pron if getattr(w.feature, 'pron', None) not in (None, '*') else w.surface) for w in _KK(t))
         return ''.join(ch for ch in t if not unicodedata.category(ch).startswith(('P', 'Z', 'S')))
+    if lang == 'he':   # modern Hebrew homophones (alef/ayin, het/khaf, qof/kaf, tet/tav) and final letters are spelling, not speech
+        t = t.translate(str.maketrans('עחקטךםןףץ', 'אככתכמנפצ'))
     t = t.lower()
     if lang == 'en':
         for a, b in (('armour', 'armor'), ('take-off', 'takeoff'), ("'s", 's'), ('ok', 'okay')):

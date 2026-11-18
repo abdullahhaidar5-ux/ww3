@@ -10,15 +10,16 @@ import os, sys, re, json, subprocess, numpy as np, librosa, soundfile as sf
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE)); sys.path.insert(0, HERE)
 import v3
 D = os.environ.get('PIPER_DIR', '/home/claude/piperv') + '/'
-VOICE = os.environ.get('HE_VOICE', 'shaul')
+VOICES = os.environ.get('HE_VOICES', 'shaul,michael').split(',')   # both Phonikud SASPEECH-trained voices; per line the clearest take wins
 CFG = json.load(open(D + 'model.config.json'))
-_P = None; _S = None
-def tts(text, length, noise, noise_w, seed):
-    global _P, _S
+_P = None; _S = {}
+def tts(text, length, noise, noise_w, seed, voice='shaul'):
+    global _P
     import onnxruntime as ort
     from phonikud_onnx import Phonikud
     from phonikud import phonemize
-    if _P is None: _P = Phonikud(D + 'phonikud-1.0.int8.onnx'); _S = ort.InferenceSession(D + VOICE + '.onnx', providers=['CPUExecutionProvider'])
+    if _P is None: _P = Phonikud(D + 'phonikud-1.0.int8.onnx')
+    if voice not in _S: _S[voice] = ort.InferenceSession(D + voice + '.onnx', providers=['CPUExecutionProvider'])
     ph = phonemize(_P.add_diacritics(text)); m = CFG['phoneme_id_map']
     ids = m['^'] + m['_']
     for ch in ph:
@@ -26,28 +27,31 @@ def tts(text, length, noise, noise_w, seed):
     ids = ids + m['$']
     np.random.seed(seed)   # VITS noise comes from the onnx graph; seed only changes our pace/noise pick below
     x = np.array([ids], dtype=np.int64)
-    o = _S.run(None, {'input': x, 'input_lengths': np.array([x.shape[1]], dtype=np.int64), 'scales': np.array([noise, length, noise_w], dtype=np.float32)})[0]
+    o = _S[voice].run(None, {'input': x, 'input_lengths': np.array([x.shape[1]], dtype=np.int64), 'scales': np.array([noise, length, noise_w], dtype=np.float32)})[0]
     w = librosa.resample(o.squeeze().astype(np.float32), orig_sr=22050, target_sr=v3.SR)
     return w, ph
 def lines():
     s = open(os.path.join(ROOT, 'src', '09d-announcer.js'), encoding='utf-8').read()
-    he = re.search(r"\n he:\{(.*?)\},?\n", s).group(1)
+    he = re.search(r"\n he:\{(.*?)\}\}?;?\n", s).group(1)
     return dict(re.findall(r"(\w+):'([^']*)'", he))
-TAKES = [(1.0, .5, .6), (1.05, .4, .5), (0.95, .55, .7), (1.0, .3, .4), (1.1, .5, .6), (0.92, .4, .5), (1.0, .667, .8), (1.05, .6, .7)]
+TAKES = [(v, ln, ns, nw) for ln, ns, nw in [(1.05, .5, .6), (1.15, .4, .5), (1.0, .3, .4), (1.1, .6, .7), (1.2, .5, .6), (1.05, .667, .8)] for v in VOICES]
 if __name__ == '__main__':
     L = lines(); off = {}; parts = []; t = 0.0; rep = {}
     for key, text in L.items():
-        best = None
-        for i, (ln, ns, nw) in enumerate(TAKES):
-            w, ph = tts(text, ln, ns, nw, i); w = v3.trim(w)
+        best = None; rng = np.random.default_rng(abs(hash(key)) % 2**32)
+        EXTRA = [(v, ln, .4, .5) for ln in (1.25, 1.3, 1.2, 1.35) for v in VOICES]   # slower takes for lines still above 15 % after the radio chain
+        for i, (vc, ln, ns, nw) in enumerate(TAKES + EXTRA):
+            if i >= len(TAKES) and best[5] <= 0.15: break
+            w, ph = tts(text, ln, ns, nw, i, vc); w = v3.trim(w)
             c, hyp = v3.readback(w, text, 'he')
-            if best is None or c < best[0] - 1e-6 or (abs(c - best[0]) < 1e-6 and v3.p808(w) > best[4]):
-                best = (c, hyp, w, i, v3.p808(w))
-            if c <= 0.02 and i >= 1: break
-        c, hyp, w, i, q = best
-        rng = np.random.default_rng(abs(hash(key)) % 2**32)
-        out, md, c2, h2 = v3.process(w, text, 'he', rng, 'cmd', c)
-        rep[key] = dict(text=text, take=i, cer=round(c, 3), hyp=hyp, cer_radio=round(c2, 3), p808=round(q, 2), dur=round(len(out) / v3.SR, 2))
+            if c > 0.3: continue
+            out, md, c2, h2 = v3.process(w, text, 'he', rng, 'grim', c)   # the take is judged as the game plays it (after the radio chain + mp3)
+            q = v3.p808(w)
+            if best is None or c2 < best[5] - 1e-6 or (abs(c2 - best[5]) < 1e-6 and q > best[4]):
+                best = (c, hyp, out, i, q, c2, h2, vc)
+            if c2 <= 0.02 and i >= 3: break
+        c, hyp, out, i, q, c2, h2, vc = best
+        rep[key] = dict(text=text, take=i, voice=vc, hyp_radio=h2, cer=round(c, 3), hyp=hyp, cer_radio=round(c2, 3), p808=round(q, 2), dur=round(len(out) / v3.SR, 2))
         print(key, text, '->', hyp, f'take{i} cer {c:.2f} radio {c2:.2f}', flush=True)
         off[key] = [round(t, 3), round(len(out) / v3.SR, 3)]; parts += [out, np.zeros(int(.12 * v3.SR), np.float32)]; t += (len(out) + int(.12 * v3.SR)) / v3.SR
     tmp = os.path.join(v3.CACHE, 'ann_he.wav'); sf.write(tmp, np.concatenate(parts), v3.SR)
