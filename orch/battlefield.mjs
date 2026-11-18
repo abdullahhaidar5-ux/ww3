@@ -89,7 +89,7 @@ try {
   // ITEM 3: live day cycle + weather
   const r3 = await ev(() => {
     const o = {}, me = ME; G.paused = true;
-    const sv = { t: G.t, wx: G.wx, wxR: G.wxR, fix: G.fixWx, todM: G.todM, live: G.live };
+    const sv = { t: G.t, wx: G.wx, wxN: G.wxN, fix: G.fixWx, todM: G.todM, live: G.live };
     G.fixWx = null; todSetup(9); G.t = 0; o.api = typeof G.tod === 'function' && typeof G.wxv === 'function';
     const h0 = G.tod(); o.h0 = +h0.toFixed(2); o.h0ok = h0 >= 7 && h0 <= 16;
     G.t = 1440; o.h12 = +G.tod().toFixed(2); o.step = Math.abs(((G.tod() - h0 + 24) % 24) - 12) < .01;
@@ -101,7 +101,7 @@ try {
     for (let t = 0; t < TOD_DAY; t += 20) { G.t = t; const h = G.tod(); if (h > 9 && h < 15 && dHour < 0) { dHour = h; dayR = visR(u); } if (h > 22 && nHour < 0 && todLvl() === 2) { nHour = h; nightR = visR(u); } }
     o.dayR = Math.round(dayR); o.nightR = Math.round(nightR); o.night = nightR > 0 && nightR < dayR;
     // same seed, same weather: two runs of the seeded weather clock agree and a storm shows up
-    const run = () => { G.wx = null; G.wxR = null; const seq = []; let last = ''; for (let i = 1; i <= 3600; i++) { G.t = i; weatherTick(1); if (G.wx.k !== last) { last = G.wx.k; seq.push(i + last); } } return seq; };
+    const run = () => { G.wx = null; G.wxN = 0; const seq = []; let last = ''; for (let i = 1; i <= 3600; i++) { G.t = i; weatherTick(1); if (G.wx.k !== last) { last = G.wx.k; seq.push(i + last); } } return seq; };
     const a1 = run(), a2 = run(); o.same = a1.join() === a2.join(); o.seqN = a1.length; o.storm = a1.some(x => /storm$/.test(x) && !/sandstorm$/.test(x));
     // fog and sand cut sight, a storm slows ground units a little
     G.t = 0; G.live = 0; G.todM = 0; G.wx = { k: 'clear', t: 0, next: 1e9 }; const c0 = visR(u);
