@@ -70,3 +70,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-18 19:42Z daae494f **GREEN** (28 gates) — Tutorial test: order the strike force with a right-click (a left click
 - 2026-11-18 20:18Z 932a6680 **RED** (28 gates) failing: migrate-down,superfreeze — Pre-warm textured shadow-caster depth variants (strike/building models
 - 2026-11-18 21:46Z 9623a371 **RED** (28 gates) failing: superfreeze — National vehicles: West family (GB/FR/DE/IL/UA trucks, Humvee/Ozelot A
+- 2026-11-18 23:43Z abce7cef **GREEN** (28 gates) — East vehicle sheet
