@@ -6592,7 +6592,7 @@ function boccSig(){let h=0;for(const b of G.ents)if(b.isB&&!b.dead)h=(Math.imul(
 /* redfixE: once per sim step the set of standing buildings is compared too - a building that left the battle without kill() (e.g. an emptied house) used
    to leave its cells blocked until the next build/kill, so a loaded save (fresh map) routed differently from the original */
 function bocc(){if(G.boccU!==G.upN){G.boccU=G.upN;const s=boccSig();if(s!==G.boccS){G.boccS=s;G.bdirty=true;}}if(!G.bocc||G.bdirty){G.bdirty=false;G.boccV=(G.boccV|0)+1;const o=G.bocc||(G.bocc=new Uint8Array(GW*GH));o.fill(0);for(const b of G.ents){if(!b.isB||b.dead)continue;const h=b.size/2-CELL*.25;
-  const x0=Math.ceil((b.x-h)/CELL-.5),x1=Math.floor((b.x+h)/CELL-.5),y0=Math.ceil((b.y-h)/CELL-.5),y1=Math.floor((b.y+h)/CELL-.5);for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)if(cx>=0&&cy>=0&&cx<GW&&cy<GH)o[cy*GW+cx]=1;}}return G.bocc;}
+  let x0=Math.ceil((b.x-h)/CELL-.5),x1=Math.floor((b.x+h)/CELL-.5),y0=Math.ceil((b.y-h)/CELL-.5),y1=Math.floor((b.y+h)/CELL-.5);if(x0>x1)x0=x1=Math.floor(b.x/CELL);if(y0>y1)y0=y1=Math.floor(b.y/CELL);/* a small building (a held ruin, a dugout) still blocks its own tile: routes went straight through it and units leaned on it */for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)if(cx>=0&&cy>=0&&cx<GW&&cy<GH)o[cy*GW+cx]=1;}}return G.bocc;}
 function passC(dom,cx,cy){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;const i=cy*GW+cx,v=G.grid[i];if(dom==='naval')return v===1||v===2||v===4;if(v!==0&&v!==2)return false;if(P_H&&G.rub&&G.rub[i])return false;return !(P_B&&G.bocc&&G.bocc[i]);}
 function passXY(dom,x,y){return dom==='air'||passC(dom,Math.floor(x/CELL),Math.floor(y/CELL));}
 function los(dom,x0,y0,x1,y1){if(dom==='air')return true;const n=Math.ceil(Math.hypot(x1-x0,y1-y0)/16);for(let i=1;i<=n;i++){const t=i/n;if(!passXY(dom,x0+(x1-x0)*t,y0+(y1-y0)*t))return false;}return true;}
@@ -7637,8 +7637,13 @@ function stepTo(u,x,y,dt,fin){if(u.s.dom==='air'&&isFW(u)){const t=u.target;let 
   if(st>.01)u.mv=G.t;}
 // A move that stops making progress ends instead of pushing forever: close to the spot (crowded by other units or a
 // building) it counts as arrived; further away the unit re-plans its route, then gives up after a while.
+// the goal lies under a building (a support unit sent to an enemy factory, a truck to the HQ) and the unit stands against
+// that building: it is as close as it can get, so the move ends (it used to lean on the wall for 16 s)
+function touchGoalB(u,o){if(u.s.dom!=='ground')return false;bocc();if(o.gb===undefined||o.gbv!==G.boccV){o.gbv=G.boccV;const cx=Math.floor(o.x/CELL),cy=Math.floor(o.y/CELL);o.gb=0;
+    if(cx>=0&&cy>=0&&cx<GW&&cy<GH&&G.bocc[cy*GW+cx])for(const b of G.ents)if(b.isB&&!b.dead&&Math.abs(b.x-o.x)<=b.size/2&&Math.abs(b.y-o.y)<=b.size/2){o.gb=b.id;break;}}
+  const b=o.gb&&G.byId.get(o.gb);if(!b||b.dead)return false;return Math.max(Math.abs(u.x-b.x),Math.abs(u.y-b.y))-b.size/2<u.r+30;}
 function stalled(u,o){const d=Math.hypot(o.x-u.x,o.y-u.y);if(u.so!==o){u.so=o;u.sbD=d;u.sbT=G.t;u.srp=0;return false;}
-  if(d<u.sbD-4){u.sbD=d;u.sbT=G.t;return false;}const w=G.t-u.sbT;if(d<70&&w>2.5)return true;if(w>7&&!u.srp){u.srp=1;u.path=null;}if(w>16){u.srp=0;return true;}return false;}
+  if(d<u.sbD-4){u.sbD=d;u.sbT=G.t;return false;}const w=G.t-u.sbT;if(d<70&&w>2.5)return true;if(w>2.5&&d<400&&touchGoalB(u,o))return true;if(w>7&&!u.srp){u.srp=1;u.path=null;}if(w>16){u.srp=0;return true;}return false;}
 function smoothP(d,x0,y0,P){if(!P||P.length<3)return P;const out=[];let cx=x0,cy=y0,i=0;while(i<P.length){let j=Math.min(P.length-1,i+14);while(j>i&&!los(d,cx,cy,P[j][0],P[j][1]))j--;out.push(P[j]);cx=P[j][0];cy=P[j][1];i=j+1;}return out;}
 // group moves: one shared route for the whole group instead of one search per unit; each unit joins it and peels
 // off to its own formation slot at the end
@@ -7751,7 +7756,7 @@ function aiForm(g,x,y){const cx=g.reduce((s,u)=>s+u.x,0)/g.length,cy=g.reduce((s
 // nearest spot it CAN reach, so it arrives there instead of waiting at the end of a half route (stuck units 2026-11-18)
 function reachXY(u,x,y){const d=u.s.dom;if(d!=='ground'&&d!=='naval')return null;const s0=nearestPass(d,Math.floor(u.x/CELL),Math.floor(u.y/CELL)),g0=nearestPass(d,Math.floor(x/CELL),Math.floor(y/CELL));if(!s0||!g0)return null;
   const R=regions(d),rs=R[s0[1]*GW+s0[0]];if(!rs||R[g0[1]*GW+g0[0]]===rs)return null;const q=nearestInRegion(R,rs,g0[0],g0[1]);return q?[q[0]*CELL+CELL/2,q[1]*CELL+CELL/2]:null;}
-function setMove(u,x,y,type){if(u.dgv||u.dgDig)return;if(u.s.dom!=='air'){const p=nearestPassXY(u.s.dom,x,y);if(p){x=p[0];y=p[1];}const q=reachXY(u,x,y);if(q){x=q[0];y=q[1];}}u.order={type,x,y};u.target=null;u.guard=null;u.path=null;u.ffx=null;if(u.kind==='jet'&&u.state!=='fly'){u.state='fly';u.landed=false;}}
+function setMove(u,x,y,type){if(u.dgv||u.dgDig)return;if(u.s.dom!=='air'){const gb=u.s.dom==='ground',pb=P_B;if(gb){bocc();P_B=true;}let p;try{p=nearestPassXY(u.s.dom,x,y);}finally{P_B=pb;}/* a spot under a building (a slot that lands in the HQ) moves just outside it */if(p){x=p[0];y=p[1];}const q=reachXY(u,x,y);if(q){x=q[0];y=q[1];}}u.order={type,x,y};u.target=null;u.guard=null;u.path=null;u.ffx=null;if(u.kind==='jet'&&u.state!=='fly'){u.state='fly';u.landed=false;}}
 
 /* ---------- combat ---------- */
 // Spatial hash (rebuilt every tick) so target searches and vision only look at nearby cells, not every entity on the map.

@@ -2,7 +2,7 @@
 // no progress for STUCK_S game-seconds (where, what, what blocks it). Used by the gate in its short form (--short) and for
 // orch/reports/stuck.md.   node orch/stuckscan.mjs [--maps strait,golan|all] [--mode conquest|battle|both] [--minutes 6]
 //   [--players 2] [--seed 1] [--stuck 10] [--short] [--max N] [--md orch/reports/stuck.md] [--json out.json]
-// --short = 6 maps x conquest + battle, 9 game-minutes; "STUCKSCAN PASS" when the stuck-episode count stays under --max (default 8: the code before the fixes had 11 on this set, today's has 3).
+// --short = 6 Battle maps (2 and 4 players), 9 game-minutes, then orch/chokepoint.mjs --gate; "STUCKSCAN PASS" when the stuck-episode count stays under --max and every chokepoint passes.
 import fs from 'node:fs'; import path from 'node:path';
 const { makeSim } = await import('./headless.mjs');
 const A = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 && process.argv[i + 1] != null && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : d; };
@@ -60,4 +60,7 @@ if (A('md')) {
   for (const r of rows.slice(0, 80)) m += `| ${r.mode} | ${r.map} | ${r.t} | ${r.kind} | ${r.cls}/${r.dom} | ${r.x},${r.y} | ${r.dist} | ${r.cause} | ${r.tile} | ${r.blk} | ${r.bld || '-'} ${r.bd} | ${r.crowd} |\n`;
   fs.writeFileSync(A('md'), m);
 }
-if (short) { console.log(total <= MAX ? 'STUCKSCAN PASS' : 'STUCKSCAN FAIL', `(${total} <= ${MAX})`); process.exit(total <= MAX ? 0 : 1); }
+if (short) { // + the scripted chokepoints (orch/chokepoint.mjs: 40 tanks over one bridge, 60 infantry, a mixed column, a drag line...)
+  const { spawnSync } = await import('node:child_process'); const cp = spawnSync(process.execPath, [new URL('./chokepoint.mjs', import.meta.url).pathname, '--gate', ...(SRCDIR ? ['--src', SRCDIR] : [])], { encoding: 'utf8' });
+  process.stdout.write(cp.stdout || ''); const cpOk = cp.status === 0;
+  const ok = total <= MAX && cpOk; console.log(ok ? 'STUCKSCAN PASS' : 'STUCKSCAN FAIL', `(${total} <= ${MAX}, chokepoints ${cpOk ? 'ok' : 'FAIL'})`); process.exit(ok ? 0 : 1); }
