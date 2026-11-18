@@ -1,30 +1,17 @@
-# STATE 2026-11-18 05:50 UTC (conductor)
+# STATE 2026-11-18 ~09:15 UTC (conductor)
 
-main = 4451d6b2, last commit 22 minutes ago.
-No train made: all Battle helper branches are 3-5 days old and main has moved on (one-game, supply lines already on main per CLAUDE.md). Merging them risks bringing back removed Conquest/campaign code.
+main = ef814ce6 (pack-looks2 helper landed shadow half-rate + soldier kill-switch itself while the train gated).
+Train train/20261118-0800 (pack-looks2-shadow) gated: all green incl. smooth-pc/mp except flaky `icons`. NOT landed: main already carries the same change. Nothing else ready.
 
-| branch | ahead of main | last push |
+Old candidate list (freezefix, onegame, nations20 ...) is obsolete: one-game and supply lines are already on main.
+
+| branch | ahead | note |
 |---|---|---|
-| orch/freezefix | 2203 | 5 days ago |
-| orch/sweepfixA | 9 | 4 days ago |
-| orch/sweepfixB | 13 | 4 days ago |
-| orch/orderfeel | 11 | 4 days ago |
-| orch/ghostslot | 3 | 4 days ago |
-| orch/testrange | 7 | 4 days ago |
-| orch/battleclean2 | 8 | 4 days ago |
-| orch/pileflag | 7 | 3 days ago |
-| orch/unstuck | 8 | 4 days ago |
-| orch/dugout | 16 | 3 days ago |
-| orch/battlepower | 5 | 4 days ago |
-| orch/bldqueue | 7 | 4 days ago |
-| orch/techbldgs | 12 | 3 days ago |
-| orch/groundreal | 4 | 4 days ago |
-| orch/leaderlook | 11 | 4 days ago |
-| orch/usvoice | 3 | 4 days ago |
-| orch/ammozone | 2023 | 4 days ago |
-| orch/looktest | 3 | 4 days ago |
-| orch/onegame | 17 | 3 days ago |
-| orch/nations20 | 6 | 3 days ago |
-
-Branch counts: orch=479, taken=100, train=31 (latest train/20261117-0950). Gate statuses not checked this run.
-Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
+| orch/pack-economy | 1 (handoff only) | code landed; balance tournament run balance/economy-1118 pending |
+| orch/pack-looks | 1 (handoff only) | instanced soldiers landed earlier |
+| orch/pack-looks2 / -shadow | landed | items 2-3 (national vehicles) not started |
+| orch/voices3 | 9 | FR/GB/DE/JP voice re-records; no handoff, no own gate seen; not landed |
+| orch/voices-lb2 | 6 | RS Lebanese re-record, waits for Abdullah to listen (never merge unasked) |
+| orch/smoothaudit2 | 4 | instanced soldiers already on main via pack-looks; docs only |
+| orch/orch2-notes | 3 | DECISIONS lines only |
+Saved nothing: none seen (taken/endscreen has orch/endscreen).
