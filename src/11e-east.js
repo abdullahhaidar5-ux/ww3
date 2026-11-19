@@ -7,6 +7,7 @@ const EASTSET={RU:1,CN:1,KP:1};
 const EASTPAL={RU:{o:'#5a6148',d:'#383c2c',l:'#6e7659',w:'#85703f',m:'#a9ac9f'},CN:{o:'#646a4a',d:'#3b3f2e',l:'#767d5c',w:'#8a7442',m:'#b2b5a6'},KP:{o:'#585d45',d:'#363a2b',l:'#697054',w:'#7c6a3c',m:'#a0a396'}};
 const EASTGEO={};
 function eastPre(e,c,T){if(!T||!EASTSET[T.fac]||!c)return c;const k=e.kind;
+  if(k==='boat'||k==='lander')return Object.assign({},c,{extra:'east_'+k});
   if(k==='atgm'||k==='ew'||k==='cbr'||k==='dozer'||(k==='aa'&&!/Technical/.test(e.s&&e.s.name||'')))return Object.assign({},c,{extra:'east_'+(k==='cbr'?'ew':k)});
   return c;}
 // shared supply-truck / ammo-truck cargo (all nations): crates on pallets, sacks, a lashed tarp roll, jerrycans, side stakes
@@ -64,9 +65,35 @@ function eastGeo(fac,kind){const K=fac+'|'+kind;if(EASTGEO[K])return EASTGEO[K];
     S.box(2.2,6.2,22,20,4.5,0,Y,0,0,.06);S.box(2.6,1.2,22.4,19.4,7.8,0,'#2d2d28',0,0,.06);S.box(1.4,2.2,22.4,21.3,1.4,0,'#8d9094');for(const z of [-5,0,5])S.box(.8,2,3,18.7,3.4,z,'#35352f');
     S.box(2.5,2.4,6.4,-17.3,2.4,0,'#2c2c27');for(const z of [-1.6,1.6])S.box(1.2,3.2,.9,-19.6,2.6,z,'#2f302a');
   }
+  else if(kind==='boat'){ // Pauk/Houjian-style missile gunboat: raked bow, boot-topping, bridge, 76 mm gun forward, close-in gun aft, SSM canisters
+    const HG='#66798b',HD='#46372f',DK='#585d5f',SU='#7a8b9a',DA='#2a2d30';
+    S.box(34,3.4,8.8,-1,1.7,0,HD);S.box(34,2.2,9.2,-1,4.4,0,HG);for(let i=0;i<5;i++){const w=8.4-i*1.7;S.box(2.6,5.6,Math.max(w,1.2),16+i*1.9,3.4+i*.35,0,i<2?HG:HG);}
+    S.box(8,.7,6,19.5,6.6,0,DK,0,0,.28);S.box(33,.6,8.2,-1,5.8,0,DK);
+    for(const sg of [-1,1]){S.box(32,.5,.5,-1,7,sg*4,'#9aa0a2');for(let x=-16;x<=14;x+=5)S.box(.3,1.2,.3,x,6.4,sg*4,'#9aa0a2');S.box(30,.25,.9,-1,4.4,sg*4.62,'#2a2c2e');}
+    S.box(13,4,6.6,-2,7.9,0,SU);S.box(5.4,.8,7,-2.4,10.2,0,DA);S.box(6,3,5.2,-1,11.8,0,SU);S.box(.5,1.3,5,2.1,12,0,'#1d2a33',0,0,-.15);
+    for(const sg of [-1,1]){S.box(8,1,.4,0,8.6,sg*3.35,'#1d2a33');S.box(.5,2.8,.5,2,11.4,sg*2.4,DA);}
+    S.cyl(.3,.4,9,6,-3,17.3,0,'#9aa0a2');S.box(3.8,.3,.8,-3,19.6,0,'#c9ccca');S.box(2.4,1.2,.6,-3,15,0,'#6d7175');S.box(1.8,.9,1.8,-5.4,13.7,0,DA);
+    S.cyl(.9,1.1,1.1,10,-8.2,7.2,0,DK);S.box(2.2,1.6,3.2,-8.2,8.6,0,SU);
+    for(const sg of [-1,1])for(const j of [0,1]){S.box(6.4,1.5,1.5,-9.8,7.2+j*1.7,sg*3.0,'#7a7f80',0,0,.18);S.box(.5,1.6,1.6,-6.6,7.2+j*1.7,sg*3.0,'#2a2c2e');}
+    S.cyl(2.1,2.3,.9,12,9.6,6.4,0,DK);S.box(4.2,1.8,3.4,9.6,7.8,0,SU);S.cyl(.34,.34,6.4,8,13,7.9,0,'#2a2b2d',0,0,Math.PI/2);S.cyl(.55,.55,.8,8,16.4,7.9,0,'#1c1d1e',0,0,Math.PI/2);
+    S.cyl(1.2,1.4,.5,10,-14.4,7.2,0,DK);S.box(2.4,1.4,2.4,-14.4,8.3,0,SU);for(const z of [-.5,.5])S.cyl(.2,.2,3.2,6,-12.8,8.5,z,'#222',0,0,Math.PI/2);
+    S.cyl(.9,.9,3,10,-5.8,5.5,3.4,'#c6682a',0,0,Math.PI/2);S.cyl(.9,.9,3,10,-5.8,5.5,-3.4,'#c6682a',0,0,Math.PI/2);
+    S.box(1,1.2,8,-17.4,5.2,0,'#44484a');S.box(.5,8,.5,-16.6,9,0,'#9aa0a2');S.box(.1,2,3.1,-16.2,10.6,0,fac==='KP'?'#b4262e':fac==='CN'?'#c4262e':'#e6e8ea');
+  }else if(kind==='lander'){ // Yuyi/Ropucha-style tank landing craft: flat hull, bow ramp, side walls, stern wheelhouse, tarped cargo
+    const HG='#6b7279',DK='#4f5558',WL='#5d655f',SU='#7d8a82',DA='#2a2d30';
+    S.box(44,3.8,13.6,0,1.9,0,'#3d3f40');S.box(44.4,2,14,0,4.6,0,HG);S.box(4,3.6,12,-23,3.5,0,HG,0,0,-.5);
+    S.box(34,.5,12.2,-3,5.8,0,DK);for(const sg of [-1,1]){S.box(34,3.4,1,-3,7.4,sg*6.6,WL);S.box(34,.4,1.5,-3,9.3,sg*6.6,DK);S.box(7,3.4,.9,16,7.4,sg*5.6,WL,0,sg*.4,0);for(let x=-19;x<=13;x+=6)S.box(.7,3.4,.7,x,7.4,sg*7.1,DK);}
+    S.box(8,5.8,12.6,-17,8.7,0,SU);S.box(6,3.4,9.2,-17.4,13.2,0,SU);S.box(.5,1.3,8.2,-14.3,13.5,0,'#1d2a33',0,0,-.12);S.box(7,.6,10,-17.4,15.1,0,DK);
+    S.cyl(.3,.4,8,6,-18,19,0,'#9aa0a2');S.box(3.4,.3,.8,-18,21,0,'#c9ccca');for(const sg of [-1,1]){S.cyl(.8,.9,3.4,8,-19.4,18.4,sg*3,'#2a2c2e');S.cyl(1,1,.4,8,-19.4,20.2,sg*3,'#17181a');}
+    S.box(20,4.6,10,3,8.4,0,'#5e6650');S.box(20.6,.5,10.6,3,10.8,0,'#4a5240');for(let x=-5;x<=11;x+=4)S.box(.4,.3,10.4,x,10.9,0,'#2f3329');S.box(7,3,9,-9,7.5,0,'#4b4f42');
+    S.box(9,.8,12,21,5.6,0,DK,0,0,.12);S.box(8,.5,11.4,26.8,5.9,0,'#6a7076',0,0,.3);S.box(.9,2,12.2,22,7,0,DK);
+    for(const sg of [-1,1]){S.cyl(.5,.5,1.6,8,20,6.8,sg*6.4,'#2a2c2e');S.cyl(.9,.9,.5,8,-6,8,sg*6.6,'#c6682a',Math.PI/2,0,0);}
+    S.box(.5,8,.5,-14.6,18,4.2,'#9aa0a2');S.box(.1,2,3.1,-14.6,21,5.9,fac==='KP'?'#b4262e':fac==='CN'?'#c4262e':'#e6e8ea');
+  }
   const gs=S.geo(),gh=H._p.length?H.geo():null;if(typeof gcKeep==='function'){gcKeep(gs);if(gh)gcKeep(gh);}
   return EASTGEO[K]=[gs,gh];}
 function eastKit(e,c,o,yaw,T){if(!c||!c.extra||c.extra.slice(0,5)!=='east_'||!T||!EASTSET[T.fac])return;const kind=c.extra.slice(5),g=eastGeo(T.fac,kind);
-  if(kind==='dozer'&&yaw.children[0])yaw.children[0].visible=false;
-  o.add(mesh(g[0]));
+  if((kind==='dozer'||kind==='boat'||kind==='lander')&&yaw.children[0])yaw.children[0].visible=false;
+  let hm=mesh(g[0]);if(kind==='boat'||kind==='lander'){if(!EASTGEO.navmat){const m=MAT.std.clone();m.userData=Object.assign({},m.userData,{wx:0,wk:1});weather(m,.8);EASTGEO.navmat=m;}hm.material=EASTGEO.navmat;}   /* ships: no ground-mud tint on the waterline */
+  o.add(hm);
   if(g[1]){const h=new THREE.Group(),m=mesh(g[1]);h.add(m);const px={aa:-7,atgm:-1.2,ew:-7}[kind]||0,py={aa:20.6,atgm:24.4,ew:27}[kind]||0;h.position.set(px,py,0);o.add(h);o.userData.parts[kind==='ew'?'crane':'turret']=h;}}
