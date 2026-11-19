@@ -1074,6 +1074,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
   for(const [px,pz] of sq){const KD=e.kind==='cleric'?(px===sq[0][0]&&pz===sq[0][1]?'ldr':'inf'):e.kind;const VR=e.kind==='spy'||KD==='ldr'?0:Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=KD==='ldr'&&MODELS.proto.sol_m?'sol_m':c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const TK=KD==='ldr'?0:c.m==='soldier'&&!c.tint?[.03,.07,.11][VR%3]/* tint follows the kit variant: 4 looks per kind, not 12, so the shapes can be prepared at load */:c.tk;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,TK);if(!m)return null;m.position.set(-pz,c.dy||0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,KD,SK,VR);else if(e.kind!=='spy')soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),KD);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+(TK||0)+'|'+(T.fac||'')+'|'+KD+'|v'+(SK?VR:0));if(KD==='ldr')m.userData.ldr=1;}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
+  if(e.kind==='lander'&&c.m==='boat'){while(yaw.children.length)yaw.remove(yaw.children[0]);const LG=landerGeo(apaint(T.fac));const lm=mesh(LG);lm.castShadow=true;o.add(lm);o.userData.parts.cargo=lm;}   /* art-west: landing craft */
   if(e.kind==='dozer'&&c.m!=='truck'){while(yaw.children.length)yaw.remove(yaw.children[0]);const DG=dozerGeo(apaint(T.fac));const dm=mesh(DG);dm.castShadow=true;o.add(dm);o.userData.parts.cargo=dm;}   /* art-west: a code-built armoured bulldozer replaces the blobby scanned mesh */
   if(e.kind==='spy'){const ey=decal('eye');ey.position.y=c.size+7;ey.scale.setScalar(5.2);ey.visible=false;o.add(ey);o.userData.parts.eye=ey;}
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
@@ -1174,6 +1175,18 @@ function dozerGeo(col){return addonGeo('dozer'+col,()=>{const B=Bld(),P=col,Pd=a
   B.box(2.8,8.4,23,19.5,6.8,0,P);B.box(2.4,1.2,23.4,19.2,11.4,0,Pd);B.box(1.6,1.2,23,20.8,2.4,0,Ste);B.box(.6,6.5,1.2,21.2,7,-6,Pd);B.box(.6,6.5,1.2,21.2,7,6,Pd);
   for(const z of [-9.5,9.5]){B.box(11,1.7,1.9,13,5.6,z,Ste);B.box(2,2.6,2.2,17.5,6,z,Dk);}
   B.box(4,6,9,-14.3,8.5,0,Pd);for(const z of [-3,0,3])B.box(1.4,5,1,-17.4,5.4,z,Ste);B.box(1.6,1.2,10,-16.6,8.6,0,Ste);
+  return B.geo();});}
+// art-west: code-built landing craft (bow ramp, cargo well with lashed crates, stern wheelhouse, mast, twin outboards)
+function landerGeo(col){return addonGeo('lander'+col,()=>{const B=Bld(),P=col,Pd=ashade(col,.7),Lt=ashade(col,1.2),D='#2b2d2a',Gl='#26343a',Ste='#585c56',Rd='#a63a2a';
+  B.box(50,3,16,0,.2,0,Pd);B.box(46,4.5,1.4,-1,3.6,-7.6,P);B.box(46,4.5,1.4,-1,3.6,7.6,P);B.box(2,4.5,15,-24,3.6,0,P);
+  for(const z of [-1,1]){B.box(8,4.5,1.4,25.5,3.6,z*6.6,P,0,z*.18,0);B.box(46,.5,2,-1,6,z*7.6,Lt);}
+  B.box(44,.6,14,-1,2.1,0,D);for(let i=0;i<9;i++)B.box(.5,.2,14,-18+i*5,2.5,0,Ste);
+  B.box(9,.6,11,29.5,3.4,0,Ste,0,0,-.5);B.box(.6,2,11,26.8,4.6,0,Pd);B.box(1,1,10,34,2.2,0,D);
+  B.box(8,6.5,12,-17,6,0,P);B.box(8.4,3,12.4,-17,7.6,0,Gl);B.box(9,.8,13,-17,9.6,0,Pd);B.box(.5,6,.5,-17,13,-3,Ste);B.cyl(.3,.3,7,6,-17,13.5,0,Ste);B.box(.2,.2,3,-17,16,0,Ste);B.box(1,.5,2,-17,10.3,0,Rd);
+  for(const z of [-3,3])B.box(.6,.9,.6,-21.5,7,z,D);
+  for(const i of [0,1,2])B.box(5,3,5,-4+i*7,4,i===1?-2:2,i===1?'#5a5f4a':'#6a6048');B.box(8,.5,.5,-4,5.8,2,D);
+  for(const z of [-4,4]){B.box(2.2,2.6,2.2,-25.4,1.6,z,D);B.cyl(.35,.35,3,6,-26.6,.2,z,Ste,0,0,Math.PI/2);}
+  B.cyl(.3,.3,6,6,26,5.2,0,Ste,0,0,0);
   return B.geo();});}
 // a tube of length L from (x0,y0) at elevation a (rad) along +x, with a dark muzzle
 function atube(B,x0,y0,z,L,r,a,col,mz){const ca=Math.cos(a),sa=Math.sin(a);B.cyl(r,r,L,8,x0+L/2*ca,y0+L/2*sa,z,col,0,0,a-Math.PI/2);if(mz)B.cyl(r*.72,r*.72,.35,8,x0+(L+.05)*ca,y0+(L+.05)*sa,z,mz,0,0,a-Math.PI/2);}
