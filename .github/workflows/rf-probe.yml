@@ -1,0 +1,32 @@
+# Branch-only probe for the Test-range stall (orch/rangefreeze.mjs): push to probe/rf/** runs just that test, a few ways. Changes nothing else.
+name: rangefreeze probe
+on:
+  push:
+    branches: ['probe/rf/**']
+jobs:
+  rf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        v: [trace, prof, plain1, plain2, ob]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Tools
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps chromium >/dev/null
+      - name: Run ${{ matrix.v }}
+        env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+        run: |
+          case '${{ matrix.v }}' in
+            trace)  TRIES=1 TRACE=1 TRACEMS=120 node orch/rangefreeze.mjs IR ;;
+            prof)   TRIES=1 PROF=1 node orch/rangefreeze.mjs IR ;;
+            plain1) TRIES=1 V=1 node orch/rangefreeze.mjs IR ;;
+            plain2) TRIES=1 V=1 node orch/rangefreeze.mjs RS ;;
+            ob)     TRIES=1 TRACE=1 TRACEMS=120 node orch/rangefreeze.mjs OB ;;
+          esac
+          true
