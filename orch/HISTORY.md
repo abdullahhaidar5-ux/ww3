@@ -685,3 +685,4 @@ conductor 2026-11-14: train 13 landed — the paused Grand campaign moved into E
 - 2026-11-20 art-west: West landing craft, minelayers and minesweepers now have a proper stepped hull with ramp, bridge and gear instead of a tinted boat.
 - 2026-11-20 Regional art: India, Japan, Korea, Pakistan, Saudi, UAE, Turkey and Egypt anti-aircraft trucks, electronic-warfare trucks and bulldozers now get the detailed kits in their own paint colours.
 - 2026-11-20 AI: Normal-difficulty China and Russia now pick their Barracks troops with the smart counter-pick (fewer wasted anti-tank soldiers and medics); in the 22-nation test their win rates rose from about 25% to about 40%.
+- 2026-11-19 ART AIR bundle 1 (drones): Shahed-style, Bayraktar/MQ-9-style and Lancet drones are rebuilt with smooth fuselages, tapered rounded wings, shaped tails, sensor balls, landing gear, missiles under MQ-9 wings and real propeller blades.
