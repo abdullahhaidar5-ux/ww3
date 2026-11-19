@@ -1075,13 +1075,13 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
     // main rotor on a mast just above the cabin roof and a tail rotor on the tail boom, both placed from the model's
     // real bounding box so every nation's helicopter gets correctly sized, visibly spinning rotors
     o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(yaw),ok=isFinite(bb.max.y)&&bb.max.y>2,top=ok?bb.max.y:13,L=ok?Math.max(bb.max.x-bb.min.x,bb.max.z-bb.min.z):50,alongX=!ok||(bb.max.x-bb.min.x)>=(bb.max.z-bb.min.z);
-    const R=Math.max(16,L*.46),bm=new THREE.MeshStandardMaterial({color:0x1d1f1c,roughness:.6,metalness:.3});
-    const disc=new THREE.Mesh(new THREE.CircleGeometry(R,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.13,depthWrite:false}));disc.position.y=top+1.6;o.add(disc);o.userData.parts.rotor=disc;
-    const mast=new THREE.Mesh(new THREE.CylinderGeometry(.7,.9,2.2,8),bm);mast.position.y=top+.6;o.add(mast);
-    const bl=new THREE.Group();bl.position.y=top+1.7;for(let k=0;k<4;k++){const b=new THREE.Mesh(new THREE.BoxGeometry(R,.3,1.5),bm);b.position.x=R/2;b.rotation.x=.06;const pv=new THREE.Group();pv.rotation.y=k*Math.PI/2;pv.add(b);bl.add(pv);}
-    const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.3,1.2,8),bm);bl.add(hub);bl.traverse(c=>{if(c.isMesh)c.castShadow=true;});o.add(bl);o.userData.parts.blades=bl;
-    const tr=new THREE.Group(),tl=R*.2;for(let k=0;k<2;k++){const b=new THREE.Mesh(new THREE.BoxGeometry(.9,tl,.25),bm);b.position.y=tl/2;const pv=new THREE.Group();pv.rotation.z=k*Math.PI;pv.add(b);tr.add(pv);}
-    const tdisc=new THREE.Mesh(new THREE.CircleGeometry(tl,16),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.12,depthWrite:false,side:THREE.DoubleSide}));tr.add(tdisc);
+    const R=Math.max(16,L*.46),bm=rotM('bm',()=>new THREE.MeshStandardMaterial({color:0x1d1f1c,roughness:.6,metalness:.3}));
+    const disc=new THREE.Mesh(rotG('disc',()=>new THREE.CircleGeometry(1,32).rotateX(-Math.PI/2)),rotM('dm',()=>new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.13,depthWrite:false})));disc.scale.set(R,1,R);disc.position.y=top+1.6;o.add(disc);o.userData.parts.rotor=disc;
+    const mast=new THREE.Mesh(rotG('mast',()=>new THREE.CylinderGeometry(.7,.9,2.2,8)),bm);mast.position.y=top+.6;o.add(mast);
+    const bl=new THREE.Group();bl.position.y=top+1.7;for(let k=0;k<4;k++){const b=new THREE.Mesh(rotG('bl',()=>new THREE.BoxGeometry(1,.3,1.5)),bm);b.scale.x=R;b.position.x=R/2;b.rotation.x=.06;const pv=new THREE.Group();pv.rotation.y=k*Math.PI/2;pv.add(b);bl.add(pv);}
+    const hub=new THREE.Mesh(rotG('hub',()=>new THREE.CylinderGeometry(1.3,1.3,1.2,8)),bm);bl.add(hub);bl.traverse(c=>{if(c.isMesh)c.castShadow=true;});o.add(bl);o.userData.parts.blades=bl;
+    const tr=new THREE.Group(),tl=R*.2;for(let k=0;k<2;k++){const b=new THREE.Mesh(rotG('tb',()=>new THREE.BoxGeometry(.9,1,.25)),bm);b.scale.y=tl;b.position.y=tl/2;const pv=new THREE.Group();pv.rotation.z=k*Math.PI;pv.add(b);tr.add(pv);}
+    const tdisc=new THREE.Mesh(rotG('td',()=>new THREE.CircleGeometry(1,16)),rotM('tdm',()=>new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.12,depthWrite:false,side:THREE.DoubleSide})));tdisc.scale.setScalar(tl);tr.add(tdisc);
     if(alongX){tr.position.set(ok?bb.min.x+tl*.9:-24,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,(ok?bb.max.z:2)*.15+1.2);}else{tr.rotation.y=Math.PI/2;tr.position.set((ok?bb.max.x:2)*.15+1.2,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,ok?bb.min.z+tl*.9:-24);}
     o.add(tr);o.userData.parts.tailR=tr;}
   if(e.kind==='jet'){mats();o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(yaw),ok=isFinite(bb.min.x);const tx=ok?bb.min.x+.6:-22,ty=ok?bb.min.y+(bb.max.y-bb.min.y)*.42:1;
@@ -1191,6 +1191,9 @@ function ewGeo(fam,col,kind){return addonGeo('ew'+fam+col+kind,()=>{const B=Bld(
   // Regional: shelter and the big parabolic dish
   B.box(12,5,10,-6,9,0,Dk);B.cyl(.8,.8,9,6,-6,15,0,AK);A.cyl(9,1,2,14,0,0,0,Lt,Math.PI/2.4,0,0);A.cyl(.6,.6,6,6,0,1,3,AK,Math.PI/2.4,0,0);return [B.geo(),A.geo()];});}
 // anti-tank launcher on the carrier's roof, local origin on the roof, tubes along +x (turns as one mesh)
+// Rotor parts of a helicopter/airlifter without its own rotor node: one shared geometry and material per size, never one per unit
+// (a wave of 6 made ~240 GPU buffers in one frame: rangefreeze 2026-11-19); gcKeep so the clean-up never frees them
+const ROTC={};function rotG(k,f){return ROTC[k]||(ROTC[k]=gcKeep(f()));}function rotM(k,f){return ROTC['m'+k]||(ROTC['m'+k]=f());}
 function atgmGeo(fam,col){return addonGeo('at'+fam+col,()=>{const B=Bld(),P=col,Dk=ashade(col,.55),Lt=ashade(col,1.25);
   if(fam==='E'){// Kornet type: two tubes on a pedestal, sight box on the side
    B.cyl(.5,.6,2.2,6,0,1.1,0,AK);B.box(2,1.2,2.4,0,2.6,0,Dk);for(const z of [-.8,.8])atube(B,-1,3.6,z,7.5,.62,.12,P,AM);B.box(1.6,1.2,1.2,.6,4.6,1.7,AK);return B.geo();}

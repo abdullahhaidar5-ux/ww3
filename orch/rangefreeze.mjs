@@ -98,7 +98,7 @@ for (const fac of FACS) for (let att = 0; att < +(E.TRIES || 2); att++) {
   say('strike: ' + strike); await sleep(+(E.AFTER || 9000));
   let trace = null; if (bcdp) { await bcdp.send('Tracing.end'); await trDone; const TM = +(E.TRACEMS || 150), pn = {}, tn = {};
     for (const ev of trEv) if (ev.ph === 'M') { if (ev.name === 'process_name') pn[ev.pid] = ev.args.name; if (ev.name === 'thread_name') tn[ev.pid + ':' + ev.tid] = ev.args.name; }
-    const long = trEv.filter(ev => ev.ph === 'X' && ev.dur > TM * 1000).sort((a, b) => b.dur - a.dur).slice(0, +(E.TRACEN || 40));
+    const long = trEv.filter(ev => ev.ph === 'X' && (ev.dur > TM * 1000 || /v8\.gc/.test(ev.cat || '') && ev.dur > 25000)).sort((a, b) => b.dur - a.dur).slice(0, +(E.TRACEN || 40));
     trace = long.map(ev => Math.round(ev.dur / 1000) + 'ms ' + (pn[ev.pid] || ev.pid) + '/' + (tn[ev.pid + ':' + ev.tid] || ev.tid) + ' ' + ev.cat + ':' + ev.name + ' @' + Math.round(ev.ts / 1000) + ' ' + JSON.stringify(ev.args || {}).slice(0, 160));
     trace.push('-- phase marks (trace ms) --', trEv.filter(ev => /^PH /.test(ev.name || '') && ev.ph !== 'e').map(ev => ev.name.slice(3) + '@' + Math.round(ev.ts / 1000)).filter((v, i, a) => a.indexOf(v) === i).join(' ')); trEv = []; }
   let prof = null; if (E.PROF) { const { profile } = await cdp.send('Profiler.stop'); const self = new Map(), byId = new Map(profile.nodes.map(n => [n.id, n])); const dt = {}; for (let i = 0; i < profile.samples.length; i++) dt[profile.samples[i]] = (dt[profile.samples[i]] || 0) + (profile.timeDeltas[i] || 0);
