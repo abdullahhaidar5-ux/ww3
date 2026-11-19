@@ -9,3 +9,7 @@ Not verified in a real browser by me: how the lamp pool looks at night and its e
 Flaky gate jobs seen: smooth-mp / migrate-down "timed out waiting for client in the lobby" (passed on re-run).
 Left: land East, Regional, night+wet each on its own green cigate (rebase on origin/main first); AA/arty/EW use the truck model of the nation (truckKey) so they inherit the shape not the tint.
 Try (2 min, PC): Test range as Germany or Britain, spawn trucks and anti-tank teams (national paint, Humvee/Ozelot carrier); then a night battle (Battle > time of day night): vehicles throw a soft light pool ahead of them; in rain the ground darkens.
+
+## Gate result (end of run)
+Landed on main (via my pushes + conductor train): Shia+depth pre-warm, West, East.
+NOT landed: Regional + night headlights + wet ground (branch tip 76bb550, merged with main 2c634b5). Gate: 27/28 green; only gate/superfreeze red, 4 reruns. Regional alone (a338d49) had superfreeze green on its 3rd run and all else green. Failures are single 400-6700 ms frames in waves dtank/ew/drone/darty around t=45-58 s with only 40-130 ms of game code in them, on a different nation each time (IR/RS/US/OB) - runner stalls, no new shader program. The conductor may land 76bb550 on a green rerun, or land a338d49 (Regional) first and then the night commit be2e09c.
