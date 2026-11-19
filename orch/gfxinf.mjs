@@ -22,7 +22,7 @@ const ISBLD = !!argS('bld', '');
 const BKINDS = argS('bkinds', 'barracks:110:-90,factory:-110:90,hq:0:0').split(',').map(s => { const [k, x, y] = s.split(':'); return [k, +x, +y]; });
 const DIST = +argS('dist', '330');
 const LIVE = +argS('live', '0');
-const CLIP = ISBLD ? { x: 190, y: 60, width: 900, height: 480 } : { x: 340, y: 170, width: 600, height: 340 };
+const CLIP = argS('clip','') ? Object.fromEntries(argS('clip','').split(',').map((v,i)=>[['x','y','width','height'][i],+v])) : ISBLD ? { x: 190, y: 60, width: 900, height: 480 } : { x: 340, y: 170, width: 600, height: 340 };
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -100,12 +100,12 @@ try {
     else await page.evaluate(([ISBLD, BKINDS]) => { G.paused = true; G.ents = G.ents.filter(e => e.isB && !ISBLD);
       const [bx, by] = BASES[0]; const BLD = ISBLD; const x = BLD ? bx : Math.max(700, Math.min(MAPW - 700, bx + 260)), y = BLD ? by : Math.max(700, Math.min(MAPH - 700, by + 80));
       const kinds = t => BLD ? [] : ['inf', 'at', 'medic', 'sapper', 'officer', 'inf'];
-      for (const t of [0]) kinds(t).forEach((kd, i) => { try { const u = addUnit(t, kd, x - 90 + i * 30, y + 40); u.ox = u.x; u.oy = u.y; if (u.vs) u.vs[0] = true; u.ang = u.va = t ? Math.PI / 2 : +argS('face', -Math.PI / 2); } catch (e) {} });
+      for (const t of [0]) kinds(t).forEach((kd, i) => { try { const u = addUnit(t, kd, x - 90 + i * 30, y + 40); u.ox = u.x; u.oy = u.y; if (u.vs) u.vs[0] = true; u.ang = u.va = t ? Math.PI / 2 : -Math.PI / 2; } catch (e) {} });
       if (BLD) { for (const [kd, dx, dy] of BKINDS) { try { const b = addBld(0, kd, x + dx, y + dy, true); } catch (er) { console.log('bld', kd, er.message); } } }
       window.__at = [x, y]; }, [ISBLD, BKINDS]);
     if (process.env.DBG) console.log(await page.evaluate(() => { const o=[]; const sc=SCN; sc.traverse(q=>{ if(q.isSkinnedMesh&&o.length<4){const m=q.material;o.push([m.type,m.color.r.toFixed(2),m.color.g.toFixed(2),m.color.b.toFixed(2),!!m.map,m.envMapIntensity,m.emissive&&m.emissive.getHexString(),q.parent&&q.parent.name]);}}); return JSON.stringify(o); }));
-    for (const [nm, d, dy] of [ISBLD ? [LIVE ? 'live' : 'bld', DIST, 0] : ['inf', +argS('idist', 232), +argS('idy', 18)]]) {
-      await page.evaluate(([d, dy]) => { const [x, y] = window.__at; cam.dist = cam.td = d; cam.x = cam.tx = x; cam.y = cam.ty = y + dy; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; }, [d, dy]);
+    for (const [nm, d, dy] of (ISBLD ? [[LIVE ? 'live' : 'bld', DIST, 0]] : argS('idy','18').split(',').flatMap(dy => argS('idist','232').split(',').map(d => ['inf' + (d==='232'?'':d) + (argS('idy','18').includes(',')?'y'+dy:''), +d, +dy])))) {
+      await page.evaluate(([d, dy, ix]) => { const [x, y] = window.__at; cam.dist = cam.td = d; cam.x = cam.tx = x + ix; cam.y = cam.ty = y + dy; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; }, [d, dy, +argS('idx', '0')]);
       await frames(page, 4); await snap(page, `${nm}-${k}-${p}-${a}`);
     }
   }
