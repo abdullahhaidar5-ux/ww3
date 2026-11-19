@@ -11888,6 +11888,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       if(!dead()&&!isLate()&&typeof mwPipWarm==='function'){MK('pip');const m0=performance.now();mwPipWarm();(W.slow=W.slow||[]).push(['pip',Math.round(performance.now()-m0)]);await frame();}}}
   lap('battlefield',ts);
   W.ms=Math.round(performance.now()-t0);W.progs=(R3.info.programs?R3.info.programs.length:0)-P0;
+  try{if(typeof perfGpu==='function')perfGpu();}catch(e){}/* the graphics-card name is a synchronous round trip to the GPU process: ask once here, while it is idle, not in the first slow frame of the battle (rangefreeze 2026-11-19: that call waited 0.9 s behind a shader link) */
   console.log('shader warm-up'+(PH?' (phone)':'')+' '+W.ms+' ms, '+W.models+' models, '+nObj+' objects in '+W.steps+' steps (longest '+W.maxStep+' ms), '+W.progs+' programs, textures '+Math.round(texB/1048576)+' MB'+(isLate()?' (finished in the background after the loading watchdog)':dead()?' (stopped)':''));}
 
 /* ---------- GPU memory clean-up ----------

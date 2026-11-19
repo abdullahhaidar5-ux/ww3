@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        v: [t1, t2, t3, ob, ob2]
+        v: [a1, a2, a3, a4, b1, b2, c1, c2]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,7 +23,8 @@ jobs:
         env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
         run: |
           case '${{ matrix.v }}' in
-            t1|t2|t3) TRIES=1 TRACE=1 TRACEMS=100 TRACEN=60 UPS=1 node orch/rangefreeze.mjs IR ;;
-            ob|ob2)   TRIES=1 TRACE=1 TRACEMS=100 TRACEN=60 node orch/rangefreeze.mjs OB ;;
+            a*) TRIES=1 node orch/rangefreeze.mjs IR ;;
+            b*) TRIES=1 node orch/rangefreeze.mjs OB ;;
+            c*) TRIES=1 node orch/rangefreeze.mjs RS ;;
           esac
           true
