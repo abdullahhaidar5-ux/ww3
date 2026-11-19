@@ -1,3 +1,16 @@
+# Conductor state — 2026-11-19 ~12:00 UTC
+main = 81a08221 (unchanged since the last run). No train, nothing landed this run.
+
+| branch | verdict |
+|---|---|
+| smooth-render2 | NOT landed. Merged with main (8be87f2a): gate/superfreeze and gate/loadfreeze red; main's own gate is all green, so these are new reds (not on the flaky list). Owner: fix those two, then re-gate. |
+| train/20261119-0900 (+0900b) | old train, same commits as smooth-render2 + rangefreeze (rangefreeze already on main); superfreeze red there too. Not landing. |
+| captest, pack-looks6 | stale, rebase on main first |
+| old candidates (freezefix ... nations20) | already in main or stale (see previous entry) |
+| parked | camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans (removed from the game) |
+| taken locks | 101 remote taken/* branches, none checked for an orphan this run (sandbox fetch takes ~5 min) |
+
+---- previous entry ----
 # Conductor state — 2026-11-19 ~11:00 UTC
 main = 81a08221 (fix-rangefreeze landed by its own helper, 10:4x). No train landed by the conductor this run.
 
