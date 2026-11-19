@@ -23,6 +23,6 @@ jobs:
         env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
         run: |
           case '${{ matrix.v }}' in
-            t*) TRIES=1 TRACE=1 TRACEMS=300 TRACEN=30 TRACECATS=skia,skia.gpu,viz,gpu.angle node orch/rangefreeze.mjs IR ;;
+            t*) TRIES=1 TRACE=1 TRACEMS=300 TRACEN=30 TRACECATS=viz,v8,disabled-by-default-v8.compile node orch/rangefreeze.mjs IR ;;
           esac
           true
