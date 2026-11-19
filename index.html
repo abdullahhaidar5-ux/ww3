@@ -12269,6 +12269,31 @@ function boneFreeze(m,W){const keep=new Set();for(const k in W){const j=W[k];if(
    colour pass, soft-shadow pass: ~35 of a soldier's ~41 objects x 4 walks). Hidden bones are skipped by all of them at the first check; their
    matrices are still updated (skinning reads them) because updateMatrixWorld does not look at 'visible'. View only. */
 function boneHide(m){const f=q=>{let has=!!q.isMesh;const c=q.children;for(let i=0;i<c.length;i++)if(f(c[i]))has=true;if(q.isBone&&!has)q.visible=false;return has;};f(m);}
+/* smooth-render B (rigid figures): a soldier standing still (nothing turned his bones this frame or last) is one solid piece. His ~40 bone
+   matrices and ~40 tree visits were still recomputed every frame (about 40% of a big fight's frame). Once a figure has been still for two
+   frames its bones are measured once against the figure (K = bone x inverse-bind, kept in RGS per skinned mesh) and its drawn parts
+   (skinned body, helmet/pack meshes) once (RGC); then three.js only recomputes the figure's own matrix and the few drawn parts, and the
+   instanced soldier batch (solbFill) builds the bone texture rows as figure matrix x K. Any pose change (walk, crouch, reload...) switches
+   it back at once; a material swap, SOLB off or an animated (mixer) figure never goes rigid. View only; same pictures as before. */
+const RG={on:true},RGS=new WeakMap();let WCH=0;
+function rgUMW(force){const f=RGS.get(this);
+  if(!f||!SOLB.on){Object.getPrototypeOf(this).updateMatrixWorld.call(this,force);return;}
+  if(this.matrixAutoUpdate)this.updateMatrix();
+  if(this.matrixWorldNeedsUpdate||force){if(this.matrixWorldAutoUpdate===true){if(this.parent===null)this.matrixWorld.copy(this.matrix);else this.matrixWorld.multiplyMatrices(this.parent.matrixWorld,this.matrix);}this.matrixWorldNeedsUpdate=false;force=true;}
+  const L=f.L,mw=this.matrixWorld;
+  for(let i=0;i<L.length;i+=2){const n=L[i];if(n.isSkinnedMesh&&n.material!==n.userData.solMat){/* not drawn by the batch: needs real bones */rgOff(this,this.userData);Object.getPrototypeOf(this).updateMatrixWorld.call(this,true);return;}}
+  if(force)for(let i=0;i<L.length;i+=2){const n=L[i];n.matrixWorld.multiplyMatrices(mw,L[i+1]);if(n.isSkinnedMesh)n.bindMatrixInverse.copy(n.matrixWorld).invert();}}
+function rgOff(m,ud){if(ud.rgA){ud.rgA=0;delete m.updateMatrixWorld;}ud.rgS=0;}
+function rgBuild(m){if(!m.matrixWorld.determinant())return false;const inv=new THREE.Matrix4().copy(m.matrixWorld).invert(),R=new THREE.Matrix4(),L=[],K=[];
+  m.traverse(q=>{if(q===m||!q.isMesh)return;L.push(q,new THREE.Matrix4().multiplyMatrices(inv,q.matrixWorld));
+    if(q.isSkinnedMesh&&q.skeleton){const B=q.skeleton.bones,I=q.skeleton.boneInverses,a=new Float32Array(B.length*16);for(let j=0;j<B.length;j++){R.multiplyMatrices(inv,B[j].matrixWorld).multiply(I[j]);R.toArray(a,j*16);}K.push(q,a);}});
+  if(!K.length)return false;const f={L,K};RGS.set(m,f);for(let i=0;i<K.length;i+=2)RGS.set(K[i],{f:m,K:K[i+1]});return true;}
+function rgTick(m,ud,W,on,c0,o){
+  if(!RG.on||!W||o.userData.mixers||!SOLB.on){if(ud.rgA)rgOff(m,ud);return;}
+  if(WCH!==c0){rgOff(m,ud);return;}   // a bone turned this frame: back to the normal path
+  if(!on){if(!ud.rgA)ud.rgS=0;return;}
+  if(ud.rgA)return;if((ud.rgS=(ud.rgS||0)+1)<2)return;
+  if(rgBuild(m)){ud.rgA=1;m.updateMatrixWorld=rgUMW;}else ud.rgS=-60;}   // rebuilt every time a figure settles: the pose it settles in is the one measured
 function umwVis(f){if(!this.visible){this.matrixWorldNeedsUpdate=true;return;}Object.getPrototypeOf(this).updateMatrixWorld.call(this,f);}
 function syncScene(dt){const live=new Set();
   /* haze limit (Abdullah 2026-11-15 00:40 "Keep camera, add haze limit"): with the low cinematic camera the view reaches the horizon, so units and
@@ -12334,7 +12359,7 @@ function syncScene(dt){const live=new Set();
       if(o.userData.mixers)playAnim(o,c==='hero'?(moving?'run':(G.t-(e.lastFire||-9)<1?'shoot':'aim')):'stand',dt);
       if(P.body&&(o.userData.walker||['inf','at','hero','hacker'].includes(c))){if(o.userData.walker){const near=inView(e.x,e.y,.05);o.userData.wa=Math.max(0,Math.min(1,(o.userData.wa||0)+(moving?dt*5:-dt*5)));const wa=o.userData.wa;{const far=cam.dist>480;if(o.userData.farS!==far){o.userData.farS=far;o.traverse(q=>{if(q.userData&&q.userData.gear===2)q.visible=!far;if(q.name==='soldier')q.visible=!far;else if(q.name==='soldierLo')q.visible=far;});}}{const ud=o.userData,px=o.position.x,pz=o.position.z;if(ud.gpx!==undefined&&dt>0)ud.gv+=(Math.min(150,Math.hypot(px-ud.gpx,pz-ud.gpz)/dt)-ud.gv)*Math.min(1,dt*8);else ud.gv=0;ud.gpx=px;ud.gpz=pz;}const gv=Math.max(o.userData.gv,moving?8:0),run=o.userData.cleric?0:Math.max(0,Math.min(1,(gv-12)/30)),/* the leader walks at a calm pace, never jogs */ga=.38+.1*run,gs=.5-.29*run,pose=near&&cam.dist<760,br=!moving&&pose&&cam.dist<480;const pt=pose&&!moving?squadPost(e,o):0,pf=G.t-(e.lastFire||-9)<2.5;const sqn=P.body.children.length,sqal=sqn>1?Math.max(1,Math.min(sqn,Math.ceil(sqn*e.hp/Math.max(1,e.max)))):9;let k=0;for(const m of P.body.children){const W=m.userData.legs,ud=m.userData;if(W&&!ud.bfz&&!o.userData.mixers)boneFreeze(m,W);
         if(sqn>1&&k>=sqal){/* squad: a fallen soldier tips over, lies a few seconds, then is gone (view only; hp decides) */if(ud.sdd===undefined)ud.sdd=ud.sseen?G.t:G.t-99;const dt2=G.t-ud.sdd;m.visible=dt2<6;m.rotation.x=-Math.min(1.5,dt2*5);m.position.y=-Math.min(1.2,dt2*3)*.5;k++;continue;}
-        if(sqn>1){ud.sseen=1;ud.sdd=undefined;m.visible=true;}if(ud.wph===undefined)ud.wph=(e.id*.618+k*.31)%1;if(wa>0&&W)ud.wph=(ud.wph+dt*gs*gv/Math.max(1,gSweep(W,ga,run)))%1;m.position.y=0;m.rotation.x=0;m.rotation.z=0;if(ud.bz!==undefined)m.position.z=ud.bz;const b=br?.018*Math.sin(G.t*1.7+e.id+k*2.1):0;if(pose&&W&&(wa>0||ud.wl||b))m.position.y=walkPose(m,ud.wph,wa,ga,gs,run,b);ud.wl=wa>0||b!==0;if(pose&&W&&SET_POSTURE()&&postApply(m,ud,e,k,dt,pt,moving,pf))ud.wl=true;k++;}}else if(o.userData.cleric){P.body.position.y=moving?Math.abs(Math.sin(G.t*5+e.id))*.22:0;P.body.rotation.x=moving?Math.sin(G.t*5+e.id)*.03:0;}else P.body.position.y=moving&&!o.userData.mixers?Math.abs(Math.sin(G.t*12+e.id))*1.2:0;}
+        if(sqn>1){ud.sseen=1;ud.sdd=undefined;m.visible=true;}if(ud.wph===undefined)ud.wph=(e.id*.618+k*.31)%1;if(wa>0&&W)ud.wph=(ud.wph+dt*gs*gv/Math.max(1,gSweep(W,ga,run)))%1;m.position.y=0;m.rotation.x=0;m.rotation.z=0;if(ud.bz!==undefined)m.position.z=ud.bz;const b=br?.018*Math.sin(G.t*1.7+e.id+k*2.1):0;const c0=WCH;if(pose&&W&&(wa>0||ud.wl||b))m.position.y=walkPose(m,ud.wph,wa,ga,gs,run,b);ud.wl=wa>0||b!==0;if(pose&&W&&SET_POSTURE()&&postApply(m,ud,e,k,dt,pt,moving,pf))ud.wl=true;rgTick(m,ud,W,on,c0,o);k++;}}else if(o.userData.cleric){P.body.position.y=moving?Math.abs(Math.sin(G.t*5+e.id))*.22:0;P.body.rotation.x=moving?Math.sin(G.t*5+e.id)*.03:0;}else P.body.position.y=moving&&!o.userData.mixers?Math.abs(Math.sin(G.t*12+e.id))*1.2:0;}
       if(P.eye){const on=!!e.hid&&e.team===ME&&!e.dead;P.eye.visible=on;if(on)P.eye.quaternion.copy(o.quaternion).invert().multiply(CAM.quaternion);}// hidden Infiltrator: its owner (only) sees a small eye above it, always facing the screen
       if(c==='hero'&&P.body&&!o.userData.model){const hid=e.hid;P.body.material=hid?(MAT.stealth||(MAT.stealth=new THREE.MeshStandardMaterial({vertexColors:true,transparent:true,opacity:.35}))):MAT.std;}
       if(c==='jet'&&!e.landed){const ud=o.userData;o.rotation.order='YZX';const tr=angDiff(ud.pjy??e.va,e.va)/Math.max(dt,1e-3);ud.pjy=e.va;ud.bk=(ud.bk||0)+((Math.max(-1.05,Math.min(1.05,-tr*.55)))-(ud.bk||0))*Math.min(1,dt*3);
@@ -20368,7 +20393,7 @@ function solbFill(force){if(!SOLB.reg.size||typeof SCN==='undefined'||!SCN)retur
     m.userData.solOff=0;if(m.layers.mask!==128)m.layers.set(7);if(!v)continue;if(fr&&m.frustumCulled&&m.boundingSphere){sp.copy(m.boundingSphere).applyMatrix4(m.matrixWorld);if(!fr.intersectsSphere(sp))continue;}/* per figure, like three.js did */const b=solbBatch(m);b.n++;draw.push(m,b,tx);tx+=m.skeleton.bones.length*4;}
   if(!draw.length){for(const b of SOLB.list)b.ms.visible=false;return;}
   solbTex(tx);const A=SOLB.arr;for(const b of SOLB.list){if(b.n>b.cap){b.cap=Math.max(256,Math.ceil(b.n*2));b.a=new THREE.InstancedBufferAttribute(new Float32Array(b.cap*3),3);b.a.setUsage(THREE.DynamicDrawUsage);b.g.setAttribute('sI',b.a);}b.k=0;}
-  for(let i=0;i<draw.length;i+=3){const m=draw[i],b=draw[i+1],t0=draw[i+2],sk=m.skeleton,B=sk.bones,I=sk.boneInverses;for(let j=0;j<B.length;j++){SOLM4.multiplyMatrices(B[j].matrixWorld,I[j]);SOLM4.toArray(A,(t0+j*4)*4);}
+  for(let i=0;i<draw.length;i+=3){const m=draw[i],b=draw[i+1],t0=draw[i+2],sk=m.skeleton,B=sk.bones,I=sk.boneInverses,rg=RGS.get(m);if(rg&&rg.f.userData.rgA){const a=rg.f.matrixWorld.elements,K=rg.K;for(let j=0,o=t0*4;j<B.length;j++,o+=16){const ko=j*16;for(let c=0;c<16;c+=4){const b0=K[ko+c],b1=K[ko+c+1],b2=K[ko+c+2],b3=K[ko+c+3];A[o+c]=a[0]*b0+a[4]*b1+a[8]*b2+a[12]*b3;A[o+c+1]=a[1]*b0+a[5]*b1+a[9]*b2+a[13]*b3;A[o+c+2]=a[2]*b0+a[6]*b1+a[10]*b2+a[14]*b3;A[o+c+3]=a[3]*b0+a[7]*b1+a[11]*b2+a[15]*b3;}}}else{for(let j=0;j<B.length;j++){SOLM4.multiplyMatrices(B[j].matrixWorld,I[j]);SOLM4.toArray(A,(t0+j*4)*4);}}
     const e=m.matrixWorld.elements,o=b.k*3;b.a.array[o]=t0;b.a.array[o+1]=e[13];b.a.array[o+2]=Math.hypot(e[0],e[1],e[2]);b.k++;}
   const ovr=!!SCN.overrideMaterial;for(const b of SOLB.list){b.g.instanceCount=b.n;b.ms.visible=b.n>0&&!ovr;if(b.n&&b.a){b.a.clearUpdateRanges();b.a.addUpdateRange(0,b.n*3);b.a.needsUpdate=true;}}
   const t=SOLB.tex,rows=Math.ceil(tx/SOLB.W);t.clearUpdateRanges();for(let r=0;r<rows;r++)t.addUpdateRange(r*SOLB.W*4,SOLB.W*4);t.needsUpdate=true;SOLB.rows=rows;}
@@ -20403,7 +20428,7 @@ function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B
 // short airborne moment, forward lean and a longer stride. The rifle stays in both hands at low-ready; it only bobs
 // up/down and fore-aft with the steps (chest pitch) - nothing in the upper body sways sideways, and the body never rolls.
 const WQ=new THREE.Quaternion(),WQ2=new THREE.Quaternion();
-function wSet(j,a,y){if(!j)return;WQ.setFromAxisAngle(j.ax,a);if(y){WQ2.setFromAxisAngle(j.up,y);WQ.multiply(WQ2);}j.b.quaternion.copy(WQ).multiply(j.q0);}
+function wSet(j,a,y){if(!j)return;WQ.setFromAxisAngle(j.ax,a);if(y){WQ2.setFromAxisAngle(j.up,y);WQ.multiply(WQ2);}{const q=j.b.quaternion,x=q._x,y1=q._y,z=q._z,w=q._w;q.copy(WQ).multiply(j.q0);if(q._x!==x||q._y!==y1||q._z!==z||q._w!==w)WCH++;}}
 // Side view of one leg (z forward, y up, from the rest leg measured in setupWalk): ankle forward offset and depth below
 // the hip for a thigh angle th (forward +) and knee bend kn.
 function gFz(W,th,kn){return W.hz*Math.cos(th)-W.hy*Math.sin(th)+W.kz*Math.cos(th-kn)-W.ky*Math.sin(th-kn);}
