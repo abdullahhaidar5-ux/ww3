@@ -1,0 +1,33 @@
+  page: shader warm-up 8124 ms, 63 models, 122 objects in 682 steps (longest 247 ms), 105 programs, textures 137 MB
+parallel shader compile extension: false
+own-work stretches over 200 ms: 2 (longest 324 ms; this slow test machine hiccups by itself, so the gate fails only above 2500 ms or more than 20 stretches over 200 ms)
+quiet-stretch longest gap after loading (the test machine's own hiccups): 224
+most programs linked between two breaks: 13 at unit Mesh 0
+gaps over 190 ms:
+  324 step models b_barr
+  192 step models m_hilux
+  206 step soldiers IR
+IR warm-up {"ms":8124,"models":63,"steps":682,"maxStep":247,"progs":105,"late":0,"phone":0,"stage":[["models",5563],["extras",1580],["battlefield",980]],"slow":[["models b_barr",236,42,0],["build m_hilux",111],["models m_ah1",183,8,136],["models m_mi8",154,35,19],["models m_mig29",159,20,7],["shared",247,48,10],["garrison",179,20,11],["pass mBright",14],["pass mBlur",10],["pass mFinal",9],["pass mAO",16],["pip",13]]} own-work gaps >50 [324,72,55,62,57,55,192,57,53,57,89,54,64,59,52,117,55,52,206,129,149,62,86,59,59] raw long tasks [145,52,69,56,86,164,72,51,70,69,71,60,99,125,56,52,55,75,139,178,54,136,203,65,127,141,58,81,106,53,64] stages [["Generating terrain…",5834],["Loading 3D models…",1937],["Building the battlefield…",142],["Building the battlefield…",1500],["Preparing graphics…",8225],["Deploying forces…",969],["Deploying forces…",808],["total",20029]]
+  World War 3 performance log
+  Graphics card: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+  Screen: 480×270 @1  40 FPS now
+  Last battle load (ms per stage): Generating terrain 5834, Loading 3D models 1937, Building the battlefield 142, Building the battlefield 1500, Preparing graphics 8225, Deploying forces 969, Deploying forces 808, total 20029
+  Shader warm-up: 8124 ms, 63 models, 105 programs compiled, 682 steps (longest 247 ms) [models 5563, extras 1580, battlefield 980]
+  Long tasks while preparing graphics: 31, longest 203 ms
+IR FAIL: 13 shader programs linked in one go (at unit Mesh 0; max 12)
+  page: shader warm-up 4874 ms, 60 models, 116 objects in 676 steps (longest 156 ms), 100 programs, textures 72 MB
+parallel shader compile extension: false
+own-work stretches over 200 ms: 1 (longest 316 ms; this slow test machine hiccups by itself, so the gate fails only above 2500 ms or more than 20 stretches over 200 ms)
+quiet-stretch longest gap after loading (the test machine's own hiccups): 102
+most programs linked between two breaks: 11 at step shared
+gaps over 190 ms:
+  316 step models b_barr
+US warm-up {"ms":4874,"models":60,"steps":676,"maxStep":156,"progs":100,"late":0,"phone":0,"stage":[["models",3346],["extras",1098],["battlefield",428]],"slow":[["models b_barr",156,40,1],["pass mBright",4],["pass mBlur",2],["pass mFinal",3],["pass mAO",11],["pip",5]]} own-work gaps >50 [316,69,51,97,53,93,190,120,134,55,55,66] raw long tasks [63,52,81,54,94,70,182,116,131,52,53,539] stages [["Generating terrain…",4676],["Loading 3D models…",1500],["Building the battlefield…",111],["Building the battlefield…",1167],["Preparing graphics…",5505],["Deploying forces…",475],["Deploying forces…",589],["total",14644]]
+  World War 3 performance log
+  Graphics card: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+  Screen: 480×270 @1  35 FPS now
+  Last battle load (ms per stage): Generating terrain 4676, Loading 3D models 1500, Building the battlefield 111, Building the battlefield 1167, Preparing graphics 5505, Deploying forces 475, Deploying forces 589, total 14644
+  Shader warm-up: 4874 ms, 60 models, 100 programs compiled, 676 steps (longest 156 ms) [models 3346, extras 1098, battlefield 428]
+  Long tasks while preparing graphics: 12, longest 539 ms
+US ok (longest task 316 ms)
+LOADFREEZE FAIL
