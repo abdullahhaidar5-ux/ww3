@@ -1,3 +1,4 @@
 # HANDOFF art-regional (branch orch/art-regional)
 Done: audit tool orch/artaudit-regional.mjs (node orch/artaudit-regional.mjs regional x IN,JP tank,harv,arty 6 out.jpg); supply-truck cargo crates restyled (src/11-models.js harvCargoGeo).
 Not verified: smoke (too slow in sandbox, needs cigate). Left: bundle 1 gate + landing; audit heli/jet/drone/ship/dozer close-up (kinds heli,jet,drone,ship,boat,dozer), PK/IN tank weathering, bundle 2 aircraft.
+2026-11-19 run 2: bundle 1 (crates) already on main. Bundle 2 (aircraft): regional drones - IN/JP MQ-9B-style, SA/AE/EG pale Wing Loong-style, PK TB2 (was black quadcopters); KR keeps kargu. Sheets orch/shots/art-audit-regional-{ground,air,navy}.jpg, art-regional-after-air.jpg. Left: boats (boat/minel/sweep share a hollow box-hull glb: needs a model), KR kargu quad, dozer (art-west dozerGeo; audit shows boxy), PK/IN t90 weathering.
