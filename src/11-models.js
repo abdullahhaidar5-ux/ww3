@@ -793,7 +793,7 @@ function solbFill(force){if(!SOLB.reg.size||typeof SCN==='undefined'||!SCN)retur
     m.userData.solOff=0;if(m.layers.mask!==128)m.layers.set(7);if(!v)continue;if(fr&&m.frustumCulled&&m.boundingSphere){sp.copy(m.boundingSphere).applyMatrix4(m.matrixWorld);if(!fr.intersectsSphere(sp))continue;}/* per figure, like three.js did */const b=solbBatch(m);b.n++;draw.push(m,b,tx);tx+=m.skeleton.bones.length*4;}
   if(!draw.length){for(const b of SOLB.list)b.ms.visible=false;return;}
   solbTex(tx);const A=SOLB.arr;for(const b of SOLB.list){if(b.n>b.cap){b.cap=Math.max(256,Math.ceil(b.n*2));b.a=new THREE.InstancedBufferAttribute(new Float32Array(b.cap*3),3);b.a.setUsage(THREE.DynamicDrawUsage);b.g.setAttribute('sI',b.a);}b.k=0;}
-  for(let i=0;i<draw.length;i+=3){const m=draw[i],b=draw[i+1],t0=draw[i+2],sk=m.skeleton,B=sk.bones,I=sk.boneInverses;for(let j=0;j<B.length;j++){SOLM4.multiplyMatrices(B[j].matrixWorld,I[j]);SOLM4.toArray(A,(t0+j*4)*4);}
+  for(let i=0;i<draw.length;i+=3){const m=draw[i],b=draw[i+1],t0=draw[i+2],sk=m.skeleton,B=sk.bones,I=sk.boneInverses,rg=RGS.get(m);if(rg&&rg.f.userData.rgA){const a=rg.f.matrixWorld.elements,K=rg.K;for(let j=0,o=t0*4;j<B.length;j++,o+=16){const ko=j*16;for(let c=0;c<16;c+=4){const b0=K[ko+c],b1=K[ko+c+1],b2=K[ko+c+2],b3=K[ko+c+3];A[o+c]=a[0]*b0+a[4]*b1+a[8]*b2+a[12]*b3;A[o+c+1]=a[1]*b0+a[5]*b1+a[9]*b2+a[13]*b3;A[o+c+2]=a[2]*b0+a[6]*b1+a[10]*b2+a[14]*b3;A[o+c+3]=a[3]*b0+a[7]*b1+a[11]*b2+a[15]*b3;}}}else{for(let j=0;j<B.length;j++){SOLM4.multiplyMatrices(B[j].matrixWorld,I[j]);SOLM4.toArray(A,(t0+j*4)*4);}}
     const e=m.matrixWorld.elements,o=b.k*3;b.a.array[o]=t0;b.a.array[o+1]=e[13];b.a.array[o+2]=Math.hypot(e[0],e[1],e[2]);b.k++;}
   const ovr=!!SCN.overrideMaterial;for(const b of SOLB.list){b.g.instanceCount=b.n;b.ms.visible=b.n>0&&!ovr;if(b.n&&b.a){b.a.clearUpdateRanges();b.a.addUpdateRange(0,b.n*3);b.a.needsUpdate=true;}}
   const t=SOLB.tex,rows=Math.ceil(tx/SOLB.W);t.clearUpdateRanges();for(let r=0;r<rows;r++)t.addUpdateRange(r*SOLB.W*4,SOLB.W*4);t.needsUpdate=true;SOLB.rows=rows;}
@@ -828,7 +828,7 @@ function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B
 // short airborne moment, forward lean and a longer stride. The rifle stays in both hands at low-ready; it only bobs
 // up/down and fore-aft with the steps (chest pitch) - nothing in the upper body sways sideways, and the body never rolls.
 const WQ=new THREE.Quaternion(),WQ2=new THREE.Quaternion();
-function wSet(j,a,y){if(!j)return;WQ.setFromAxisAngle(j.ax,a);if(y){WQ2.setFromAxisAngle(j.up,y);WQ.multiply(WQ2);}j.b.quaternion.copy(WQ).multiply(j.q0);}
+function wSet(j,a,y){if(!j)return;WQ.setFromAxisAngle(j.ax,a);if(y){WQ2.setFromAxisAngle(j.up,y);WQ.multiply(WQ2);}{const q=j.b.quaternion,x=q._x,y1=q._y,z=q._z,w=q._w;q.copy(WQ).multiply(j.q0);if(q._x!==x||q._y!==y1||q._z!==z||q._w!==w)WCH++;}}
 // Side view of one leg (z forward, y up, from the rest leg measured in setupWalk): ankle forward offset and depth below
 // the hip for a thigh angle th (forward +) and knee bend kn.
 function gFz(W,th,kn){return W.hz*Math.cos(th)-W.hy*Math.sin(th)+W.kz*Math.cos(th-kn)-W.ky*Math.sin(th-kn);}
