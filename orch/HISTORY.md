@@ -672,3 +672,4 @@ conductor 2026-11-14: train 13 landed — the paused Grand campaign moved into E
 - 2026-11-19 conductor: train 20261119-1358 landed orch/art-west (real supply-truck/ammo-truck loads, code-built armoured bulldozer); gate 27/27 green on the same src; art-regional cargo already on main, art-west's version kept.
 - 2026-11-19 pack-units: unit limit is now 500 per player in battles of up to 4 players (1v1, 2v2, 1v1v1v1) and stays 300 for 5-8 players; the counter and its tooltip show it.
 - 2026-11-19 Regional art: India, Japan, Saudi, UAE and Egypt now fly proper fixed-wing drones (grey MQ-9B-style / pale Wing Loong-style) and Pakistan a TB2, instead of black quadcopters.
+2026-11-19 ART SHIA: each Shia nation's trucks, anti-air, rocket and radar carriers now have their own paint instead of one shared look.
