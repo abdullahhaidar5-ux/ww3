@@ -79,7 +79,11 @@ try {
       const P = o.userData.parts; if (P && P.body) for (const m of P.body.children) { figs++; if (m.userData.rgA) rig++; } }
     let sc = {}; for (const c of SCN.children) { let n = 0; c.traverse(() => n++); const k = c.type + ':' + (c.name || ''); sc[k] = (sc[k] || 0) + n; }
     const top = Object.entries(sc).sort((a, b) => b[1] - a[1]).slice(0, 8);
-    return { total, units, bld, figs, rig, vis, kinds, top }; });
+    const vm = (o) => { let n = 0; o.traverseVisible(q => { if (q.isMesh && !q.isInstancedMesh) n++; else if (q.isInstancedMesh) n++; }); return n; };
+    const mc = { bld: 0, bldN: 0 }; const mk = {}; for (const e of G.ents) { if (e.dead) continue; const o = OBJ.get(e.id); if (!o || !o.visible) continue; const n = vm(o); if (e.isB) { mc.bld += n; mc.bldN++; } else { const k = mk[e.kind] || (mk[e.kind] = [0, 0]); k[0]++; k[1] += n; } }
+    let other = 0; for (const c of SCN.children) { if (c.userData && c.userData.tm !== undefined) continue; other += vm(c); }
+    const calls = R3.info.render.calls;
+    return { meshes: mc, mk, other, calls, total, units, bld, figs, rig, vis, kinds, top }; });
   console.log('NODEINFO', JSON.stringify(info));
   console.log('errs', errs.slice(0, 3));
 } finally { await browser.close(); server.close(); }
