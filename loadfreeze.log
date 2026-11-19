@@ -1,0 +1,36 @@
+  page: shader warm-up 9592 ms, 63 models, 122 objects in 671 steps (longest 447 ms), 102 programs, textures 137 MB
+parallel shader compile extension: false
+own-work stretches over 200 ms: 3 (longest 470 ms; this slow test machine hiccups by itself, so the gate fails only above 2500 ms or more than 20 stretches over 200 ms)
+quiet-stretch longest gap after loading (the test machine's own hiccups): 322
+most programs linked between two breaks: 11 at step shared
+gaps over 190 ms:
+  470 step models b_barr
+  273 draw models b_barr
+  193 step models b_crane
+  196 step models m_hilux
+  220 step soldiers IR
+IR warm-up {"ms":9592,"models":63,"steps":671,"maxStep":447,"progs":102,"late":0,"phone":0,"stage":[["models",6814],["extras",1619],["battlefield",1155]],"slow":[["models b_barr",447,60,1],["build b_crane",104],["models m_f18",184,50,1],["build m_hilux",117],["models m_hilux",171,54,3],["models m_spb",164,9,0],["models m_ah1",281,10,206],["models m_mi8",156,25,23],["models m_mig29",177,24,12],["shared",254,62,9],["garrison",197,26,5],["pass mBright",14],["pass mBlur",6],["pass mFinal",10],["pass mAO",12],["pip",6]]} own-work gaps >50 [470,273,193,54,58,77,52,60,134,56,196,70,60,60,52,104,68,63,61,74,51,51,52,182,58,220,162,165,68,57,62,55] raw long tasks [309,66,119,67,60,61,77,57,133,117,170,70,60,61,137,54,80,91,78,71,106,111,57,54,82,173,171,56,154,216,159,162,65,58,81,63,55,64] stages [["Generating terrain…",7282],["Loading 3D models…",2417],["Building the battlefield…",170],["Building the battlefield…",1804],["Preparing graphics…",9771],["Deploying forces…",1278],["Deploying forces…",987],["total",24405]]
+  World War 3 performance log
+  Graphics card: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+  Screen: 480×270 @1  37 FPS now
+  Last battle load (ms per stage): Generating terrain 7282, Loading 3D models 2417, Building the battlefield 170, Building the battlefield 1804, Preparing graphics 9771, Deploying forces 1278, Deploying forces 987, total 24405
+  Shader warm-up: 9592 ms, 63 models, 102 programs compiled, 671 steps (longest 447 ms) [models 6814, extras 1619, battlefield 1155]
+  Long tasks while preparing graphics: 38, longest 309 ms
+IR ok (longest task 470 ms)
+  page: shader warm-up 5617 ms, 60 models, 116 objects in 671 steps (longest 205 ms), 98 programs, textures 72 MB
+parallel shader compile extension: false
+own-work stretches over 200 ms: 2 (longest 383 ms; this slow test machine hiccups by itself, so the gate fails only above 2500 ms or more than 20 stretches over 200 ms)
+quiet-stretch longest gap after loading (the test machine's own hiccups): 269
+most programs linked between two breaks: 13 at unit Mesh 0
+gaps over 190 ms:
+  383 step models b_barr
+  233 step soldiers US
+US warm-up {"ms":5617,"models":60,"steps":671,"maxStep":205,"progs":98,"late":0,"phone":0,"stage":[["models",3708],["extras",1250],["battlefield",659]],"slow":[["models b_barr",205,35,0],["pass mBright",6],["pass mBlur",2],["pass mFinal",3],["pass mAO",5],["pip",9]]} own-work gaps >50 [383,109,73,121,120,233,143,165,74,74,56,58] raw long tasks [103,74,101,124,230,140,162,70,76] stages [["Generating terrain…",6211],["Loading 3D models…",1864],["Building the battlefield…",112],["Building the battlefield…",1618],["Preparing graphics…",5741],["Deploying forces…",983],["Deploying forces…",789],["total",18027]]
+  World War 3 performance log
+  Graphics card: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+  Screen: 480×270 @1  25 FPS now
+  Last battle load (ms per stage): Generating terrain 6211, Loading 3D models 1864, Building the battlefield 112, Building the battlefield 1618, Preparing graphics 5741, Deploying forces 983, Deploying forces 789, total 18027
+  Shader warm-up: 5617 ms, 60 models, 98 programs compiled, 671 steps (longest 205 ms) [models 3708, extras 1250, battlefield 659]
+  Long tasks while preparing graphics: 9, longest 230 ms
+US FAIL: 13 shader programs linked in one go (at unit Mesh 0; max 12)
+LOADFREEZE FAIL
