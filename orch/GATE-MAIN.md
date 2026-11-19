@@ -87,3 +87,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-19 20:49Z 338cbae0 **GREEN** (28 gates) — HISTORY: art-east2 landed
 - 2026-11-19 21:21Z 0a0608b9 **RED** (28 gates) failing: superfreeze — Shia trucks and add-ons: own paint per nation (IR RS DW RV OB); report
 - 2026-11-19 22:02Z 1d3dd007 **GREEN** (28 gates) — East drones: China flies pale Wing Loong-style drones, North Korea Bay
+- 2026-11-19 22:39Z 2dc39a06 **GREEN** (28 gates) — HISTORY: art-regional tanks
