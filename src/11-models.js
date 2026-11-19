@@ -920,43 +920,77 @@ function droneModel(e){const T=G.teams[e.team],ty=droneType(T.fac),key=ty+'|'+T.
   if(!DPROTO[key]){const p=buildDrone(e);SCN.remove(p);const meta={props:p.userData.parts.props.map(q=>q.ax)};p.userData={};p.children[0].userData={};let i=0;p.traverse(c=>{if(c.userData&&c.userData.dprop!=null)return;});DPROTO[key]={p,meta};}
   const D=DPROTO[key],o=D.p.clone(),yaw=o.children[0],props=[];kitAdopt(o);o.traverse(c=>{if(c.name==='dprop')props.push({m:c,ax:c.userData.ax||'y'});});
   o.userData={parts:{body:yaw,props},model:true,dtype:ty};SCN.add(o);return o;}
+// ---- drone art helpers (art-air): smooth lathe fuselages, tapered airfoil wings, shaped fins; all merged into one mesh per drone ----
+// Lathe about the X axis: pts = [x,r] pairs (nose to tail or any order); c = colour; sub-profiles share end points so panels can differ in colour.
+function dLathe(B,pts,c,seg,ox,oy,oz,sy,sz){if(pts[0][0]>pts[pts.length-1][0])pts=pts.slice().reverse();const g=new THREE.LatheGeometry(pts.map(p=>new THREE.Vector2(Math.max(.001,p[1]),p[0])),seg||14);g.rotateZ(-Math.PI/2);if(sy||sz)g.scale(1,sy||1,sz||1);B._p.push({g,m:new THREE.Matrix4().makeTranslation(ox||0,oy||0,oz||0),c:lin(c)});}
+// Wing from a half planform [[x,z],...] (z>=0, leading edge first then trailing edge back to the root), mirrored; thick = root thickness,
+// tapering to thin tips; rounded edges (bevel). y = height of wing centre. Optional dihedral (rise per unit span) bends the wing up/down.
+function dWing(B,half,thick,y,c,dih,x0){const pts=[];for(const p of half)pts.push([p[0],p[1]]);for(let i=half.length-1;i>=0;i--)if(half[i][1]>0)pts.push([half[i][0],-half[i][1]]);
+  const s=new THREE.Shape();pts.forEach((p,i)=>i?s.lineTo(p[0],p[1]):s.moveTo(p[0],p[1]));s.closePath();
+  const g=new THREE.ExtrudeGeometry(s,{depth:thick*.5,bevelEnabled:true,bevelThickness:thick*.25,bevelSize:thick*.22,bevelSegments:2,curveSegments:1});g.rotateX(Math.PI/2);g.translate(0,thick*.5,0);
+  let zm=0;for(const p of half)zm=Math.max(zm,p[1]);const P=g.attributes.position;for(let i=0;i<P.count;i++){const z=Math.abs(P.getZ(i)),k=1-.62*Math.min(1,z/zm);P.setY(i,P.getY(i)*k+(dih||0)*z);}g.computeVertexNormals();
+  B._p.push({g,m:new THREE.Matrix4().makeTranslation(x0||0,y,0),c:lin(c)});}
+// Flat tapered plate (fin / tail plane / pylon) from an outline in (x,y), thickness t, put at (x,y,z) rotated about X by rx
+function dFin(B,pts,t,x,y,z,c,rx,ry){const s=new THREE.Shape();pts.forEach((p,i)=>i?s.lineTo(p[0],p[1]):s.moveTo(p[0],p[1]));s.closePath();
+  const g=new THREE.ExtrudeGeometry(s,{depth:t,bevelEnabled:true,bevelThickness:t*.3,bevelSize:t*.3,bevelSegments:1,curveSegments:1});g.translate(0,0,-t/2);const M=new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx||0,ry||0,0)),new THREE.Vector3(1,1,1));B._p.push({g,m:M,c:lin(c)});}
+// Tapered two/three-blade propeller (one merged geometry, spins as the 'dprop' child)
+function dProp(n,len,w,hub,c){const P=Bld();for(let i=0;i<n;i++){const a=i*Math.PI*2/n,s=new THREE.Shape();s.moveTo(0,-w*.5);s.lineTo(len*.5,-w*.32);s.lineTo(len*.5,w*.2);s.lineTo(0,w*.5);s.closePath();const g=new THREE.ExtrudeGeometry(s,{depth:.08,bevelEnabled:false});g.translate(0,0,-.04);g.applyMatrix4(new THREE.Matrix4().set(0,0,1,0, 1,0,0,0, 0,1,0,0, 0,0,0,1));g.rotateY(.35);g.rotateX(a);P._p.push({g,m:new THREE.Matrix4(),c:lin(c)});}P.sph(hub,0,0,0,'#2a2c2d',1.3,1,1);return mesh(P.geo());}
 function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.Group(),yaw=new THREE.Group();o.add(yaw);o.userData.parts={body:yaw,props:[]};o.userData.model=true;o.userData.dtype=ty;
   const B=Bld(),dk='#2a2c28',tc=T.color;
   if(ty==='delta'){
-    // Shahed-136 pattern: ~3.5 m long and ~2.5 m span (longer than wide), cylindrical body with a rounded warhead nose,
-    // cropped-delta wing running most of the body length, vertical fins at the wingtips reaching above and below the
-    // wing, small two-stroke engine in the tail driving a two-blade pusher propeller.
-    const sk=T.fac==='RS'?'#6a665a':T.fac==='DW'?'#a6aaa4':'#c4c2b8',sk2=T.fac==='RS'?'#5a564b':T.fac==='DW'?'#92968f':'#aeaca2';
-    B.cyl(1.25,1.25,15,12,-1.5,0,0,sk,0,0,-Math.PI/2);B.sph(1.25,6,0,0,sk,1.9,1,1);B.cyl(.55,1.25,2.6,10,-10.3,0,0,sk2,0,0,-Math.PI/2);
-    B.box(4.5,.9,1.6,-1,1.15,0,sk2);
-    const wing=new THREE.Shape();wing.moveTo(5.5,0);wing.lineTo(-4.6,8.6);wing.lineTo(-8.8,8.6);wing.lineTo(-8.4,0);wing.lineTo(-8.8,-8.6);wing.lineTo(-4.6,-8.6);wing.closePath();
-    const wg=new THREE.ExtrudeGeometry(wing,{depth:.45,bevelEnabled:true,bevelThickness:.12,bevelSize:.12,bevelSegments:1});wg.rotateX(Math.PI/2);B._p.push({g:wg,m:new THREE.Matrix4().makeTranslation(0,.25,0),c:lin(sk)});
-    for(const sd of [-1,1]){const fin=new THREE.Shape();fin.moveTo(-4.4,-2);fin.lineTo(-3.2,2.8);fin.lineTo(-6.2,3.1);fin.lineTo(-9.2,2.8);fin.lineTo(-9.2,-2.2);fin.lineTo(-6.6,-2.4);fin.closePath();
-      const fg=new THREE.ExtrudeGeometry(fin,{depth:.3,bevelEnabled:false});B._p.push({g:fg,m:new THREE.Matrix4().makeTranslation(0,0,8.6*sd-.15),c:lin(sk2)});}
-    B.box(1.4,.35,1.1,1.5,1.62,0,tc);B.box(.6,.6,.6,-11.7,0,0,dk);
-    const pr=new THREE.Group();const P=Bld();P.box(.35,6.2,.8,0,0,0,dk);P.sph(.45,0,0,0,dk);pr.add(mesh(P.geo()));pr.position.set(-12.1,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
-    const disc=new THREE.Mesh(new THREE.CircleGeometry(3.1,20),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.16,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-12.2,0,0);yaw.add(disc);}
+    // Shahed-136: ogive warhead nose with a pitot probe, panelled fuselage (darker warhead band), cropped-delta wing with rounded
+    // tapered thickness and a notched trailing edge, two-piece fins at the wing tips above and below, finned engine in the tail
+    // with a two-blade pusher propeller, fuel hatch and a small antenna on the back.
+    const sk=T.fac==='RS'?'#6a665a':T.fac==='DW'?'#a6aaa4':'#c4c2b8',sk2=T.fac==='RS'?'#5a564b':T.fac==='DW'?'#92968f':'#aeaca2',sk3=T.fac==='RS'?'#4d4a40':T.fac==='DW'?'#7d817b':'#98968c';
+    dLathe(B,[[6.9,0],[6.6,.42],[5.9,.85],[5.0,1.1],[3.6,1.22]],sk3,16);dLathe(B,[[3.6,1.22],[2.4,1.25],[.4,1.25]],sk2,16);dLathe(B,[[.4,1.25],[-4,1.25],[-6.2,1.25]],sk,16);
+    dLathe(B,[[-6.2,1.25],[-8,1.16],[-9.6,.84],[-10.7,.6]],sk2,16);dLathe(B,[[-10.7,.6],[-11.6,.62],[-12,.5]],'#3a3c3b',12);
+    for(const x of [3.6,.4,-6.2,-8.6])B.cyl(1.285,1.285,.1,16,x,0,0,'#55574f',0,0,Math.PI/2);
+    for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;B.box(2.2,.16,.5,-10.2,Math.sin(a)*.75,Math.cos(a)*.75,'#4a4c4a',a,0,0);}
+    B.cyl(.06,.06,1.7,5,7.5,0,0,'#2b2d2c',0,0,Math.PI/2);B.cyl(.05,.05,1.6,4,-3,1.9,0,'#2b2d2c');B.sph(.18,-3,2.7,0,'#2b2d2c');
+    dWing(B,[[5.2,0],[4.9,.5],[-4.2,8.7],[-8.2,8.7],[-8.9,8.3],[-8.5,3.6],[-9.1,0]],.5,.15,sk,0);
+    for(const sd of [-1,1]){dFin(B,[[-4.5,-2.3],[-3.4,2.5],[-4.3,3.1],[-7.2,3.2],[-9.2,2.9],[-9.2,-2.4],[-6.9,-2.6]],.28,0,0,8.55*sd,sk2);
+      B.box(.9,.12,.9,-9,-.1,8.55*sd,'#3a3c3b');B.box(1.9,.1,.5,-5.2,.42,sd*5.6,'#8d8f86');}
+    B.box(3.4,.5,1.4,-1.2,1.22,0,sk2);B.box(1.4,.18,1.1,1.5,1.5,0,tc);
+    const pr=dProp(2,6.2,.8,.5,dk);pr.position.set(-12.2,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(3.1,20),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.16,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-12.3,0,0);yaw.add(disc);}
   else if(ty==='tb2'||ty==='mq'){
-    // Bayraktar TB2 (light grey, inverted-V tail) / MQ-9-Hermes style (darker grey, bulbous nose, Y tail): long straight
-    // wing, slim fuselage, pusher propeller, sensor ball under the nose
-    const mq=ty==='mq',wl=mq&&(T.fac==='SA'||T.fac==='AE'||T.fac==='EG'||T.fac==='CN'),sk=wl?'#cfd0cb':mq?'#8b9196':'#b9bdbf',sk2=wl?'#bcbdb7':mq?'#7a8085':'#a7abad';
-    B.cyl(mq?1.2:.95,mq?1.2:.95,9,12,0,0,0,sk,0,0,Math.PI/2);B.sph(mq?1.2:.95,4.4,mq?.15:0,0,sk,mq?1.7:1.9,mq?1.15:1,1);B.cyl(mq?1.2:.95,.35,3.4,10,-6.2,0,0,sk2,0,0,Math.PI/2);B.sph(.62,3.3,-1.15,0,'#2a2c2d');
-    const wing=new THREE.Shape();wing.moveTo(1.2,0);wing.lineTo(.9,11);wing.lineTo(-.4,11);wing.lineTo(-.7,0);wing.lineTo(-.4,-11);wing.lineTo(.9,-11);wing.closePath();
-    const wg=new THREE.ExtrudeGeometry(wing,{depth:.28,bevelEnabled:true,bevelThickness:.08,bevelSize:.08,bevelSegments:1});wg.rotateX(Math.PI/2);B._p.push({g:wg,m:new THREE.Matrix4().makeTranslation(.3,mq?.25:.75,0),c:lin(sk)});
-    for(const sd of [-1,1]){const a=mq?.75:-.68;B.box(1.9,3.8,.14,-7,Math.sin(Math.abs(a))*1.7*(mq?1:-1),sd*1.55,sk2,sd*(mq?-.82:.82),0,0);}if(mq)B.box(1.5,2.2,.14,-7,-1.2,0,sk2);
-    B.sph(.18,.25,0,11,'#c22a1e');B.sph(.18,.25,0,-11,'#c22a1e');B.sph(.18,.6,.75,-11,'#c22a1e');B.sph(.18,.6,.75,11,'#2bc24a');B.sph(.16,-7.9,.4,0,'#f2f2ee');
-    const pr=new THREE.Group();const P=Bld();P.box(.3,5,.55,0,0,0,dk);P.sph(.4,0,0,0,dk);pr.add(mesh(P.geo()));pr.position.set(-8.1,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
-    const disc=new THREE.Mesh(new THREE.CircleGeometry(2.6,20),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-8.2,0,0);yaw.add(disc);}
+    // Bayraktar TB2 (light grey, twin tail booms with an inverted-V tail) / MQ-9-Hermes style (darker grey, bulbous nose with a
+    // satcom dome, Y tail): smooth lathe fuselage, tapered long wing with rounded tips, belly sensor ball, landing gear, pusher prop.
+    const mq=ty==='mq',wl=mq&&(T.fac==='SA'||T.fac==='AE'||T.fac==='EG'||T.fac==='CN'),sk=wl?'#cfd0cb':mq?'#8b9196':'#b9bdbf',sk2=wl?'#bcbdb7':mq?'#7a8085':'#a7abad',sk3=wl?'#a9aaa5':mq?'#6c7176':'#979b9d',R=mq?1.2:.95;
+    dLathe(B,[[7.2,0],[6.9,.4*R],[6.1,.8*R],[5,1.0*R],[3.6,R*1.04]],sk3,16,0,mq?.15:0,0,1,1);
+    dLathe(B,[[3.6,R*1.04],[2,R*1.07],[-1,R*1.07],[-3.2,R]],sk,16,0,mq?.15*.4:0);dLathe(B,[[-3.2,R],[-5,.7*R],[-6.6,.42*R],[-8,.3*R]],sk2,14);
+    for(const x of [3.6,-3.2])B.cyl(R*1.08,R*1.08,.09,16,x,mq?.05:0,0,'#555a5d',0,0,Math.PI/2);
+    B.sph(R*.55,-.4,R*.95,0,mq?'#e5e7e5':sk2,1.7,.55,1.1);if(mq)B.sph(.95,3.3,.95,0,'#e8eae8',1.2,.8,1);
+    B.cyl(.07,.07,1.4,4,1.8,R*1.5,0,'#2b2d2c');B.cyl(.05,.05,2.4,4,-5,.5,0,'#2b2d2c',0,0,.5);
+    // sensor ball under the nose: housing, ball, lens
+    B.cyl(.5,.6,.5,10,4.4,-R*.95,0,'#2e3133');B.sph(.62,4.4,-R*.95-.45,0,'#25282a');B.sph(.2,4.95,-R*.95-.45,0,'#0d1b25',1,1,1);B.sph(.13,4.82,-R*.95-.45,.3,'#355663');
+    const half=[[1.6,0],[1.45,1.0],[1.15,10.2],[.85,11.2],[.35,11.4],[-.1,10.9],[-.35,10],[-.85,0]];if(mq)half.splice(3,0,[1.15,5]);
+    dWing(B,half,.34,mq?.35:.8,sk,mq?-.01:.02,.1);
+    if(mq){for(const sd of [-1,1]){for(const zz of [3.8,6.2]){B.cyl(.11,.11,.7,6,.8,-.1,sd*zz,sk3);B.cyl(.2,.2,3,8,.8,-.7,sd*zz,'#6b6f60',0,0,Math.PI/2);B.cone(.2,.7,8,2.5,-.7,sd*zz,'#3a3d36',0,0,-Math.PI/2);B.box(.7,.5,.08,-.6,-.7,sd*zz,'#3a3d36');}}
+      dFin(B,[[-.3,0],[.5,.2],[1.5,3.3],[.4,3.3]],.14,-6.7,.15,1.3,sk2,.95);dFin(B,[[-.3,0],[.5,.2],[1.5,3.3],[.4,3.3]],.14,-6.7,.15,-1.3,sk2,-.95);
+      dFin(B,[[-.3,0],[1.6,0],[1.1,-2.4],[-.1,-2.4]],.14,-6.8,-.2,0,sk2,0,Math.PI/2);}
+    else{for(const sd of [-1,1]){dLathe(B,[[2.2,.18],[1,.26],[-4,.22],[-7.4,.2],[-7.9,.15]],sk2,8,0,.05,sd*2.5);
+        dFin(B,[[-.2,0],[1.2,0],[.9,3.4],[.1,3.4]],.14,-6.9,-.05,sd*1.4,sk2,sd*.55,0);dFin(B,[[0,0],[1.4,0],[1.1,1.1],[.3,1.1]],.14,-6.1,.05,sd*2.5,sk2,0);}
+      dFin(B,[[-.2,0],[1.2,0],[.9,1.2],[.1,1.2]],.12,-7.6,0,0,sk2,0,Math.PI/2);}
+    for(const [gx,gz] of mq?[[4.2,0],[-.8,2.1],[-.8,-2.1]]:[[4.2,0],[-.6,1.8],[-.6,-1.8]]){B.cyl(.06,.06,1.7,5,gx,-R-.55,gz,'#3a3c3d');B.cyl(.28,.28,.2,8,gx,-R-1.35,gz,'#151515',Math.PI/2,0,0);}
+    B.sph(.18,.25,.35,11.2,'#c22a1e');B.sph(.18,.25,.35,-11.2,'#2bc24a');B.sph(.16,-7.95,.35,0,'#f2f2ee');
+    const pr=dProp(mq?3:2,mq?5.2:4.8,.6,.45,dk);pr.position.set(-8.3,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(2.6,20),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-8.4,0,0);yaw.add(disc);}
   else if(ty==='lancet'){
-    // Lancet-style loitering munition: dark slim body with two sets of X wings (front and rear), small pusher prop
-    const sk='#9da197',sk2='#6c7067';for(const x of [-3.4,-.4,2.6,5.2])B.cyl(.84,.84,.28,10,x,0,0,'#5d6158',0,0,Math.PI/2);B.cyl(.86,.86,1.1,10,.9,0,0,tc,0,0,Math.PI/2);B.sph(.5,7.6,-.5,0,'#1c1e1d');B.sph(.2,7.95,-.55,0,'#26464f');B.box(1.4,.9,.8,-1.8,.8,0,'#808479');B.cyl(.8,.8,12,10,0,0,0,sk,0,0,Math.PI/2);B.cyl(0,.8,2.2,10,7.1,0,0,sk2,0,0,-Math.PI/2);B.cyl(.8,.4,1.4,10,-6.7,0,0,sk2,0,0,Math.PI/2);B.sph(.35,7.4,-.35,0,'#151515');
-    for(const [x,ch,sp] of [[3.2,2.6,3.6],[-4.4,2.8,4.4]])for(let i=0;i<4;i++){const a=Math.PI/4+i*Math.PI/2;B.box(ch,sp,.12,x,Math.cos(a)*(sp/2+.6),Math.sin(a)*(sp/2+.6),sk,a,0,0);}
-    B.sph(.16,-4.4,0,5.3,'#2bc24a');B.sph(.16,-4.4,0,-5.3,'#c22a1e');
-    const pr=new THREE.Group();const P=Bld();P.box(.25,3.2,.45,0,0,0,dk);pr.add(mesh(P.geo()));pr.position.set(-7.6,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
+    // Lancet-style loitering munition: slim lathe body with a camera nose, two sets of tapered X wings (front pair large,
+    // rear pair small), tail ring and a small pusher prop
+    const sk='#9da197',sk2='#6c7067';
+    dLathe(B,[[7.9,0],[7.6,.35],[6.8,.62],[5.6,.78]],'#2a2d2c',14);dLathe(B,[[5.6,.78],[3,.82],[-2,.82]],sk,14);dLathe(B,[[-2,.82],[-5,.78],[-6.8,.5],[-7.2,.34]],sk2,12);
+    B.sph(.28,7.7,-.12,0,'#26464f');B.sph(.12,7.9,-.14,0,'#0d1b25');
+    for(const x of [-3.4,-.4,2.6,5.2])B.cyl(.86,.86,.2,12,x,0,0,'#5d6158',0,0,Math.PI/2);B.cyl(.87,.87,1.1,12,.9,0,0,tc,0,0,Math.PI/2);B.box(1.4,.5,.8,-1.4,.85,0,'#808479');
+    for(const [x,ch,sp,tp] of [[3.2,2.6,3.8,1.3],[-4.4,2.0,2.9,1.0]])for(let i=0;i<4;i++){const a=Math.PI/4+i*Math.PI/2;
+      dFin(B,[[-ch*.5,0],[ch*.5,0],[ch*.5-ch*.18,sp],[ch*.5-tp*1.0,sp]],.12,x,Math.cos(a)*.7,Math.sin(a)*.7,sk,a-Math.PI/2);}
+    B.sph(.16,-4.4,0,3.6,'#2bc24a');B.sph(.16,-4.4,0,-3.6,'#c22a1e');
+    const pr=dProp(2,3.2,.45,.3,dk);pr.position.set(-7.6,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
     const disc=new THREE.Mesh(new THREE.CircleGeometry(1.7,16),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-7.7,0,0);yaw.add(disc);}
   else{const big=ty==='kargu',arm=big?7.5:5.5,bc=big?'#7c8076':'#3b3f37';B.cyl(big?2.4:1.6,big?2.4:1.6,big?3:1.6,10,0,0,0,bc);if(big)B.sph(1.6,2,-.6,0,'#1b1c1a');else B.box(1.4,1.2,1.2,2,.5,0,'#111');B.box(1.6,.6,1.2,0,big?1.8:1.1,0,tc);
-    for(const a of [Math.PI/4,3*Math.PI/4,5*Math.PI/4,7*Math.PI/4]){const x=Math.cos(a)*arm,z=Math.sin(a)*arm;B.box(arm*1.05,.5,.7,x/2,0,z/2,bc,0,-a,0);B.cyl(.7,.7,1.2,8,x,.4,z,dk);
-      const pr=new THREE.Group();const P=Bld();P.box(big?6:4.4,.15,.6,0,0,0,'#151515');pr.add(mesh(P.geo()));pr.position.set(x,1.1,z);pr.name='dprop';pr.userData.ax='y';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'y'});
+    for(const a of [Math.PI/4,3*Math.PI/4,5*Math.PI/4,7*Math.PI/4]){const x=Math.cos(a)*arm,z=Math.sin(a)*arm;B.box(arm*1.05,.5,.7,x/2,0,z/2,bc,0,-a,0);B.cyl(.78,.62,1.3,12,x,.4,z,'#4a4e48');B.cyl(.8,.8,.18,12,x,1.0,z,'#8a2f22');
+      const pr=new THREE.Group();{const bl=dProp(2,big?3:2.2,big?.7:.5,.3,'#1c1c1c');bl.rotation.z=-Math.PI/2;pr.add(bl);}pr.position.set(x,1.1,z);pr.name='dprop';pr.userData.ax='y';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'y'});
       const disc=new THREE.Mesh(new THREE.CircleGeometry(big?3:2.2,16),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.2,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.x=-Math.PI/2;disc.position.set(x,1.15,z);yaw.add(disc);}
     if(big)for(const s of [-1,1])B.box(.4,2.4,.4,0,-1.6,1.4*s,dk);
     if(!big){B.cyl(.55,.55,2.6,8,-.6,1.55,0,'#2d3a52',0,0,Math.PI/2);for(const t of [-.5,.4])B.cyl(.6,.6,.35,8,-.6+t,1.55,0,'#151515',0,0,Math.PI/2);for(const s of [-1,1])B.cyl(.06,.06,3.2,4,-2.6,2.4,.5*s,dk,.3*s,0,1.1);}
