@@ -19639,6 +19639,11 @@ Object.assign(RMAP.atgm,{CN:'cnhum',KP:'kphum'});
  P('jphum','m_humvee',27,'#5b6a52');P('krhum','m_humvee',27,'#4f5b3f');P('sahum','m_humvee',27,'#b5a276');P('eghum','m_humvee',27,'#b09c70');P('aeoz','m_ozelot',34,'#c0ae84');P('troz','m_ozelot',34,'#6a6a4c');
  for(const k of ['harv','ammot','idome','ew','cbr'])Object.assign(RMAP[k],{IN:'in_ural',PK:'pk_ural',JP:'jp35',KR:'kr35',SA:'sa35',AE:'ae35',TR:'tr35',EG:'eg35'});
  Object.assign(RMAP.atgm,{IN:'inhum',PK:'pkhum',JP:'jphum',KR:'krhum',SA:'sahum',EG:'eghum',AE:'aeoz',TR:'troz'});}
+// National vehicle families, Shia (visual only, same Ural hull, own paint per nation): Iran IRGC sand-olive, Lebanese mountain force cold grey-olive, Yemen dusty sand-brown,
+// Iraqi south-brigades dark olive, Palestine brigade pale khaki. The add-ons (ATGM tripod, ZU-23, rocket rack, EW mast) take the same paint, so the nations no longer look identical.
+{const P=(k,t)=>{RMOD[k]={m:'m_ural',fit:'z',size:36,tint:t,tk:.4};};
+ P('ir_ural','#8a7f58');P('rs_ural','#5e6450');P('dw_ural','#9a8760');P('rv_ural','#4c5638');P('ob_ural','#a89c74');
+ for(const f of ['IR','RS','DW','RV','OB'])for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]=f.toLowerCase()+'_ural';}
 // Faction-unique helicopters and warships (Objaverse / Sketchfab, CC BY, authors in the menu credits): Russia flies the Mi-28,
 // Egypt the Ka-52, Turkey, Pakistan and Iran an AH-1 Cobra-type gunship; Western navies a Type 45 destroyer (Germany an F123
 // frigate), Russia/China/North Korea/Ukraine/India/Pakistan/Cuba/Iran a Russian-style destroyer; the Shia nations'
