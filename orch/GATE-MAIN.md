@@ -82,3 +82,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-19 14:49Z 7be70a46 **RED** (28 gates) failing: decisions — smooth-render2: land aircraft-only merge; report, handoff, HISTORY
 - 2026-11-19 15:34Z 778b5390 **RED** (28 gates) failing: superfreeze — decisions: smooth-render2 guard matches what landed (aircraft merge on
 - 2026-11-19 17:22Z 53559259 **RED** (28 gates) failing: smooth-pc,superfreeze — HISTORY: art-west landed via train
+- 2026-11-19 18:44Z 5988a942 **RED** (28 gates) failing: loadfreeze — Regional art: IN/JP/SA/AE/EG/PK drones are fixed-wing (MQ-9B/Wing Loon
