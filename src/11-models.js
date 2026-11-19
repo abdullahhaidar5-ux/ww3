@@ -1190,8 +1190,11 @@ function aaGeo(fam,col){return addonGeo('aa'+fam+col,()=>{const B=Bld(),P=col,Dk
    for(const s of [-1,1]){atube(B,.8,3.6,s*3.9,10.5,.36,.3,AK,AM);B.box(3,2,1.6,0,3.4,s*3.9,Dk);for(const h of [0,1])atube(B,-3.4,5.5+h*1.1,s*2.2,6.2,.55,.22,Lt,AM);}
    B.cyl(.35,.35,2.4,6,-4,7.6,0,AK);B.box(.5,2.6,4.6,-4,9.4,0,Lt,0,0,.12);return B.geo();}
   if(fam==='S'){// ZU-23 type twin barrels on a pedestal behind a gun shield, ammo boxes either side
-   B.cyl(1.2,1.5,2.4,8,0,1.2,0,AK);B.box(3.4,1.2,3.4,0,2.8,0,Dk);for(const z of [-.95,.95])atube(B,.4,3.7,z,10,.42,.6,AK,AM);
-   B.box(.5,3.6,4.8,2.3,4.7,0,P,0,0,-.22);B.box(2,1.6,1.4,-1.8,3.5,2.4,Dk);B.box(2,1.6,1.4,-1.8,3.5,-2.4,Dk);B.box(1.5,.5,1.5,-2.2,2.4,0,AK);return B.geo();}
+   B.cyl(1.2,1.5,2.4,8,0,1.2,0,AK);B.cyl(2.6,2.6,.4,12,0,2.5,0,Dk);B.box(3.4,1.2,3.4,0,2.8,0,Dk);
+   for(const z of [-.95,.95]){atube(B,.4,3.7,z,10,.42,.6,AK,AM);B.cyl(.62,.62,2.2,8,3.3,5.6,z,Lt,0,0,.6-Math.PI/2);B.cyl(.7,.7,.5,8,.2,3.5,z,Dk,Math.PI/2);}
+   B.box(.5,3.6,4.8,2.3,4.7,0,P,0,0,-.22);B.box(.6,.6,5.2,2.5,6.7,0,Dk,0,0,-.22);for(const z of [-2.2,2.2])B.box(.5,.5,.5,2.1,5,z,Lt);
+   B.box(2,1.6,1.4,-1.8,3.5,2.4,Dk);B.box(2,1.6,1.4,-1.8,3.5,-2.4,Dk);B.cyl(.7,.7,.4,8,-1.8,4.5,2.4,AK);B.cyl(.7,.7,.4,8,-1.8,4.5,-2.4,AK);
+   B.box(1.5,.5,1.5,-2.2,2.4,0,AK);B.box(1.4,.35,1.4,-3.2,3.6,0,AK);B.box(.4,2.2,.4,-3.2,2.5,0,Dk);B.box(.3,.3,2,-.4,4.3,2.3,AK);return B.geo();}
   if(fam==='R'){// box-canister missile launcher: four angled square canisters and a small radar disc
    B.cyl(3.6,4,1,14,0,.5,0,Dk);B.box(5.2,3,5.6,-.6,2.6,0,P);
    for(const s of [-1,1])for(const h of [0,1]){const y=4.6+h*1.9;B.box(8,1.7,1.7,1.6,y,s*3.6,Lt,0,0,.5);B.box(.4,1.5,1.5,5.2,y+1.7,s*3.6,AM,0,0,.5);}
@@ -1208,7 +1211,7 @@ function rackGeo(fam,col){if(fam==='E')return mlrsGeo();return addonGeo('rk'+fam
    for(const r of [0,1])for(const c of [-1,0,1])B.box(.4,1.7,1.7,7.2,1.2+r*2.1,c*1.95,AM);B.box(1.4,1.4,6,-7.2,1.2,0,Dk);return [A.geo(),B.geo()];}
   if(fam==='S'){// Grad / Fajr type truck rack: two rows of six open round tubes on a plain cradle
    const NC=6,S=1.75,L=13.5,w=(NC-1)*S;for(let i=0;i<2;i++)for(let j=0;j<NC;j++){const y=1.3+i*S,z=-w/2+j*S;B.cyl(.78,.78,L,8,0,y,z,(i+j)%2?Lt:P,0,0,Math.PI/2);B.cyl(.6,.6,.35,8,L/2+.02,y,z,AM,0,0,Math.PI/2);}
-   for(const x of [-L*.36,L*.3]){B.box(.6,3.9,.3,x,2.2,-w/2-1,Dk);B.box(.6,3.9,.3,x,2.2,w/2+1,Dk);B.box(.6,.3,w+2,x,4.2,0,Dk);}B.box(L*.95,.4,w+2,0,.2,0,Dk);return [A.geo(),B.geo()];}
+   for(const x of [-L*.36,L*.3]){B.box(.6,3.9,.3,x,2.2,-w/2-1,Dk);B.box(.6,3.9,.3,x,2.2,w/2+1,Dk);B.box(.6,.3,w+2,x,4.2,0,Dk);}B.box(L*.95,.4,w+2,0,.2,0,Dk);B.box(2,1.2,w+2.4,-L*.5,1.8,0,Dk);B.box(.5,2.8,w+2.2,L*.5+.1,2,0,P,0,0,.1);for(const z of [-w/2,w/2])B.cyl(.2,.2,2.4,5,-L*.5-1,3.4,z,AK);return [A.geo(),B.geo()];}
   // Regional: two side-by-side pods of three by three round tubes in an open frame
   for(const s of [-1,1])for(let i=0;i<3;i++)for(let j=0;j<3;j++){const y=1.2+i*1.4,z=s*3+(j-1)*1.4;B.cyl(.62,.62,12.5,8,0,y,z,(i+j)%2?Lt:P,0,0,Math.PI/2);B.cyl(.46,.46,.35,8,6.3,y,z,AM,0,0,Math.PI/2);}
   for(const s of [-1,1])for(const x of [-4,3.6]){B.box(.5,4.4,.3,x,2.4,s*3-2.2,Dk);B.box(.5,4.4,.3,x,2.4,s*3+2.2,Dk);}B.box(12.6,.4,9,0,.2,0,Dk);return [A.geo(),B.geo()];});}
@@ -1235,7 +1238,8 @@ function atgmGeo(fam,col){return addonGeo('at'+fam+col,()=>{const B=Bld(),P=col,
   if(fam==='E'){// Kornet type: two tubes on a pedestal, sight box on the side
    B.cyl(.5,.6,2.2,6,0,1.1,0,AK);B.box(2,1.2,2.4,0,2.6,0,Dk);for(const z of [-.8,.8])atube(B,-1,3.6,z,7.5,.62,.12,P,AM);B.box(1.6,1.2,1.2,.6,4.6,1.7,AK);return B.geo();}
   if(fam==='S'){// Konkurs-on-a-tripod type: legs, one canister, sight
-   for(const [x,z] of [[-1.4,1.4],[-1.4,-1.4],[1.4,0]])B.cyl(.18,.18,2.6,4,x,1.2,z,AK,0,0,0);B.box(1.6,.8,1.6,0,2.6,0,Dk);atube(B,-1.2,3.4,0,6.4,.55,.1,P,AM);B.box(1.2,.9,.9,-.4,4.3,.9,AK);return B.geo();}
+   for(const [x,z] of [[-1.4,1.4],[-1.4,-1.4],[1.4,0]]){B.cyl(.2,.1,2.6,5,x,1.2,z,AK,0,0,0);B.box(.9,.25,.9,x,.1,z,Dk);}B.box(1.6,.8,1.6,0,2.6,0,Dk);B.cyl(.5,.5,1,8,0,3,0,AK);
+   atube(B,-1.2,3.4,0,6.4,.55,.1,P,AM);atube(B,-1.2,3.4,1.4,5.4,.4,.1,Lt,AM);B.box(1.2,.9,.9,-.4,4.3,.9,AK);B.box(.9,.7,.7,-1.8,4,-.8,Dk);B.box(.3,.3,1.4,-1.2,2.8,-1.4,'#6a5a3a');return B.geo();}
   if(fam==='R'){// Spike type: four-canister box launcher on a short arm
    B.cyl(.5,.6,1.6,6,0,.8,0,AK);B.box(3.6,.6,3.6,0,1.9,0,Dk);for(const z of [-.9,.9])for(const h of [0,1])B.box(6,1.5,1.5,.8,3.2+h*1.7,z,P,0,0,.14);B.box(1.4,1.1,1.1,-2.4,4.6,1,AK);return B.geo();}
   // West, TOW type: boxy two-tube launcher raised on a swing arm
