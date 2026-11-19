@@ -61,3 +61,12 @@ B7. **Smooth** — smooth-pc / smooth-mp green; draw calls never go up for a loo
 Protocol: `LOOK_OFF=1 node orch/lookshots.mjs` then `node orch/lookshots.mjs` (same battle, same camera: IR, US, IL, SA, RS, DW, RV on
 the strait map) -> `orch/shots/look/before-*.jpg` / `after-*.jpg` + numbers; score B1-B7 honestly 1-5 in `orch/reports/look.md`
 (append, dated). Never ship a lower score or more draw calls than before.
+
+## UNIT CLOSE-UP BAR (Abdullah 2026-11-19 06:06 "The close up on the soldiers looks really bad. Ensure all units look good and professional.")
+Every unit (vehicles, aircraft, ships, infantry, buildings) must look good and professional **up close** — Company of Heroes / Broken Arrow level inside the smoothness budgets (`orch/SMOOTH.md`; never raise a budget):
+- No flat untextured boxes; real shapes with believable detail (hatches, tracks/wheels, barrels, antennas, stowage).
+- No tint-only repaint passing as a different unit: each kind has its own silhouette; nations differ by paint/markings/kit, not just colour.
+- Clean proportions and one consistent scale (a tank is bigger than an APC, bigger than a truck, a soldier is human-sized next to them).
+- Real-looking materials: metal (metalness/roughness), canvas, rubber, glass; weathering/dirt/decals; normal detail where cheap.
+- Score every kind 1-5 in `orch/reports/artaudit.md` using `orch/artaudit.mjs` close-up sheets (`orch/shots/art-audit-*.jpg`); anything under 3 is fixed first, Shia factions first.
+- Cost rules: merged per material, shared textures/atlases, pre-warmed shaders (no late programs: superfreeze/loadfreeze stay green).
