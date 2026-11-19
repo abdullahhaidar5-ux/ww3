@@ -21703,6 +21703,7 @@ const EASTSET={RU:1,CN:1,KP:1};
 const EASTPAL={RU:{o:'#5a6148',d:'#383c2c',l:'#6e7659',w:'#85703f',m:'#a9ac9f'},CN:{o:'#646a4a',d:'#3b3f2e',l:'#767d5c',w:'#8a7442',m:'#b2b5a6'},KP:{o:'#585d45',d:'#363a2b',l:'#697054',w:'#7c6a3c',m:'#a0a396'}};
 const EASTGEO={};
 function eastPre(e,c,T){if(!T||!EASTSET[T.fac]||!c)return c;const k=e.kind;
+  if(k==='lander'||k==='minel'||k==='sweep')return Object.assign({},c,{extra:'east_'+k});
   if(k==='atgm'||k==='ew'||k==='cbr'||k==='dozer'||(k==='aa'&&!/Technical/.test(e.s&&e.s.name||'')))return Object.assign({},c,{extra:'east_'+(k==='cbr'?'ew':k)});
   return c;}
 // shared supply-truck / ammo-truck cargo (all nations): crates on pallets, sacks, a lashed tarp roll, jerrycans, side stakes
@@ -21759,11 +21760,38 @@ function eastGeo(fac,kind){const K=fac+'|'+kind;if(EASTGEO[K])return EASTGEO[K];
     for(const sg of [-1,1]){S.box(11.5,1.5,1.5,10.6,4.6,sg*8.2,Y);S.cyl(.7,.7,6.2,8,13.2,7.6,sg*6.5,'#7d8184',0,0,Math.PI/2+.45);S.cyl(.9,.9,1.3,8,8.6,5.9,sg*6.5,'#3a3b36',Math.PI/2,0,0);}
     S.box(2.2,6.2,22,20,4.5,0,Y,0,0,.06);S.box(2.6,1.2,22.4,19.4,7.8,0,'#2d2d28',0,0,.06);S.box(1.4,2.2,22.4,21.3,1.4,0,'#8d9094');for(const z of [-5,0,5])S.box(.8,2,3,18.7,3.4,z,'#35352f');
     S.box(2.5,2.4,6.4,-17.3,2.4,0,'#2c2c27');for(const z of [-1.6,1.6])S.box(1.2,3.2,.9,-19.6,2.6,z,'#2f302a');
+  }else if(kind==='lander'||kind==='minel'||kind==='sweep'){ // small navy craft: own hull (stepped bow, bulwarks, deck plates), role gear
+    const HU={RU:'#6c747a',CN:'#66707a',KP:'#6a7168'}[fac]||'#6c747a',HD='#3b4146',DK='#4c5256',BT='#6a2c28',WH='#9aa0a3',Ds='#2a2e31';
+    const L=kind==='lander'?52:kind==='minel'?50:46,Wd=kind==='lander'?22:18,hl=L/2;
+    // hull body, waterline stripe, stepped bow, transom
+    S.box(L*.66,5.2,Wd,-L*.17,2.6,0,HU);S.box(L*.66,1.4,Wd+.1,-L*.17,.9,0,BT);
+    const bw=[[.9,.8],[.72,.62],[.5,.5],[.28,.4]];let bx=L*.16;for(const [f,ln] of bw){const l=L*.16*ln*1.4;S.box(l,5.2,Wd*f,bx+l/2,2.6,0,HU);S.box(l,1.4,Wd*f+.1,bx+l/2,.9,0,BT);bx+=l*.82;}
+    S.box(.8,5.2,Wd*.96,-L*.5,2.6,0,HD);S.box(L*.66,.5,Wd-1,-L*.17,5.3,0,DK);
+    for(const sg of [-1,1]){S.box(L*.66,2.2,.7,-L*.17,6.4,sg*(Wd/2-.4),HU);S.box(L*.18,2.2,.7,L*.22,6.4,sg*(Wd/2*.8),HU,0,sg*.35,0);}
+    for(let i=0;i<7;i++)S.box(.5,.45,Wd-3,-L*.46+i*L*.09,5.75,0,Ds);   // deck plate seams
+    if(kind==='lander'){ // landing craft: raised bow ramp, open well deck, bridge aft, twin machine guns
+      S.box(L*.24,.8,Wd*.62,L*.4,7.2,0,HD,0,0,-.5);S.box(2,3.8,Wd*.62,L*.31,6.6,0,HU);for(const sg of [-1,1])S.box(.6,3,.6,L*.44,8.4,sg*Wd*.28,DK,0,0,-.5);
+      S.box(9,6.4,Wd*.55,-L*.33,9,0,HU);S.box(9.2,.5,Wd*.58,-L*.33,12.4,0,HD);S.box(.5,2,Wd*.5,-L*.29,10.4,0,'#1f2b31');S.box(7.8,1.8,.5,-L*.33,11,Wd*.28,'#1f2b31');S.box(7.8,1.8,.5,-L*.33,11,-Wd*.28,'#1f2b31');
+      S.cyl(.4,.4,9,6,-L*.35,17,0,Ds);S.box(2.4,1.6,.2,-L*.35,20.5,1,'#b03028');
+      for(const sg of [-1,1]){S.cyl(.7,.7,2,8,L*.1,7.6,sg*Wd*.3,Ds);S.cyl(.22,.22,3.2,6,L*.1+1.8,8.2,sg*Wd*.3,Ds,0,0,Math.PI/2);}
+      S.box(11,2.4,Wd*.3,-L*.02,7.4,0,'#4b5038');S.box(10,.5,Wd*.28,-L*.02,8.8,0,'#3b3f2e');   // tracked cargo under a tarp
+    }else if(kind==='minel'){ // minelayer: stern rails with mines, derrick crane, funnel, bow gun
+      S.box(9,7,Wd*.6,L*.05,9.2,0,HU);S.box(9.2,.5,Wd*.64,L*.05,12.8,0,HD);S.box(.5,2.2,Wd*.52,L*.1,11,0,'#1f2b31');S.box(2.8,5,2.8,-L*.04,16,0,HD);S.cyl(1.5,1.7,4.4,10,-L*.04,17,0,Ds);
+      for(const z of [-Wd*.26,Wd*.26]){S.box(L*.4,.5,.7,-L*.26,6.4,z,Ds);for(let i=0;i<7;i++){S.sph(1.35,-L*.45+i*L*.055,7.4,z,'#2f3a33');S.cyl(.2,.2,.9,5,-L*.45+i*L*.055,8.6,z,'#8c8f78');}}
+      S.cyl(.55,.55,9,6,-L*.46,10,0,HD);S.box(.5,.5,10,-L*.46,14.6,0,HD,.0,0,0);S.box(.4,.4,9,-L*.4,13.4,0,HD,0,0,.55);
+      S.cyl(1.2,1.4,1.6,10,L*.3,6.8,0,HD);S.cyl(.3,.3,5,6,L*.3+2.6,7.8,0,Ds,0,0,Math.PI/2+.15);
+    }else{ // minesweeper: bridge forward, sweep winch drum and A-frame aft, paravanes, bow gun
+      S.box(9,6.6,Wd*.62,L*.02,9,0,HU);S.box(9.2,.5,Wd*.66,L*.02,12.4,0,HD);S.box(.5,2,Wd*.56,L*.07,10.8,0,'#1f2b31');S.cyl(.25,.25,6,5,L*.02,15.5,0,Ds);S.box(3,.3,.3,L*.02,17,0,Ds);
+      S.cyl(2.2,2.2,Wd*.5,12,-L*.26,8,0,'#d0a030',Math.PI/2,0,0);for(const sg of [-1,1])S.cyl(2.8,2.8,.4,12,-L*.26,8,sg*Wd*.27,HD,Math.PI/2,0,0);
+      for(const sg of [-1,1]){S.box(.6,9,.6,-L*.42,10,sg*Wd*.34,HD,sg*.3,0,0);S.box(.5,.5,Wd*.7,-L*.42,14.4,0,HD);S.cyl(.4,.7,5,8,-L*.2,6.6,sg*(Wd/2+.8),'#d0a030',0,0,Math.PI/2);S.cone(.7,1.4,8,-L*.2+3.1,6.6,sg*(Wd/2+.8),'#d0a030',0,0,-Math.PI/2);}
+      S.box(8,1.6,1.4,-L*.32,6.6,0,'#3b3f2e');
+      S.cyl(1.1,1.3,1.5,10,L*.3,6.8,0,HD);S.cyl(.28,.28,4.5,6,L*.3+2.3,7.8,0,Ds,0,0,Math.PI/2+.1);
+    }
   }
   const gs=S.geo(),gh=H._p.length?H.geo():null;if(typeof gcKeep==='function'){gcKeep(gs);if(gh)gcKeep(gh);}
   return EASTGEO[K]=[gs,gh];}
 function eastKit(e,c,o,yaw,T){if(!c||!c.extra||c.extra.slice(0,5)!=='east_'||!T||!EASTSET[T.fac])return;const kind=c.extra.slice(5),g=eastGeo(T.fac,kind);
-  if(kind==='dozer'&&yaw.children[0])yaw.children[0].visible=false;
+  if((kind==='dozer'||kind==='lander'||kind==='minel'||kind==='sweep')&&yaw.children[0])yaw.children[0].visible=false;
   o.add(mesh(g[0]));
   if(g[1]){const h=new THREE.Group(),m=mesh(g[1]);h.add(m);const px={aa:-7,atgm:-1.2,ew:-7}[kind]||0,py={aa:20.6,atgm:24.4,ew:27}[kind]||0;h.position.set(px,py,0);o.add(h);o.userData.parts[kind==='ew'?'crane':'turret']=h;}}
 /* ===== nations-a2 (Abdullah 2026-11-06): Brazil BR, Venezuela VE, Mexico MX, Argentina AR, Colombia CO, Chile CL, Sweden SE =====
