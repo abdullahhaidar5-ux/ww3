@@ -20530,7 +20530,7 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     const disc=new THREE.Mesh(new THREE.CircleGeometry(2.6,20),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-8.2,0,0);yaw.add(disc);}
   else if(ty==='lancet'){
     // Lancet-style loitering munition: dark slim body with two sets of X wings (front and rear), small pusher prop
-    const sk='#3c403a',sk2='#2f322d';B.cyl(.8,.8,12,10,0,0,0,sk,0,0,Math.PI/2);B.cyl(0,.8,2.2,10,7.1,0,0,sk2,0,0,-Math.PI/2);B.cyl(.8,.4,1.4,10,-6.7,0,0,sk2,0,0,Math.PI/2);B.sph(.35,7.4,-.35,0,'#151515');
+    const sk='#9da197',sk2='#6c7067';for(const x of [-3.4,-.4,2.6,5.2])B.cyl(.84,.84,.28,10,x,0,0,'#5d6158',0,0,Math.PI/2);B.cyl(.86,.86,1.1,10,.9,0,0,tc,0,0,Math.PI/2);B.sph(.5,7.6,-.5,0,'#1c1e1d');B.sph(.2,7.95,-.55,0,'#26464f');B.box(1.4,.9,.8,-1.8,.8,0,'#808479');B.cyl(.8,.8,12,10,0,0,0,sk,0,0,Math.PI/2);B.cyl(0,.8,2.2,10,7.1,0,0,sk2,0,0,-Math.PI/2);B.cyl(.8,.4,1.4,10,-6.7,0,0,sk2,0,0,Math.PI/2);B.sph(.35,7.4,-.35,0,'#151515');
     for(const [x,ch,sp] of [[3.2,2.6,3.6],[-4.4,2.8,4.4]])for(let i=0;i<4;i++){const a=Math.PI/4+i*Math.PI/2;B.box(ch,sp,.12,x,Math.cos(a)*(sp/2+.6),Math.sin(a)*(sp/2+.6),sk,a,0,0);}
     B.sph(.16,-4.4,0,5.3,'#2bc24a');B.sph(.16,-4.4,0,-5.3,'#c22a1e');
     const pr=new THREE.Group();const P=Bld();P.box(.25,3.2,.45,0,0,0,dk);pr.add(mesh(P.geo()));pr.position.set(-7.6,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
