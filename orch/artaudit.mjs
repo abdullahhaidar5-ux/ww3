@@ -12,10 +12,10 @@ await pg.route('**/*',q=>q.request().url().startsWith('http://127.0.0.1')?q.cont
 await pg.goto(`http://127.0.0.1:${srv.address().port}/index.html?lazy=1`,{waitUntil:'load',timeout:120000});
 await pg.waitForFunction(()=>typeof MODELS!=='undefined'&&MODELS.ready,null,{timeout:240000});
 const FAM={shia:['IR','RS','DW','RV','OB'],west:['US','GB','FR','IL','UA'],east:['RU','CN','KP'],regional:['IN','JP','KR','PK','SA','AE','TR','EG']},FN=process.argv[2]||'shia',GR=process.argv[3]||'ground',N=FAM[FN];
-const GRP={ground:['tank','harv','dozer','atgm','aa','arty','ew','jeep','ammot'],air:['heli','airlift','jet','drone','tb2'],navy:['boat','fast','ship','lander','minel','sweep','sub']}[GR];
+const GRP=process.env.KINDS?process.env.KINDS.split(','):{ground:['tank','harv','dozer','atgm','aa','arty','ew','jeep','ammot'],air:['heli','airlift','jet','drone','tb2'],navy:['boat','fast','ship','lander','minel','sweep','sub']}[GR];
 // art-audit close-up sheet: rows = nations, columns = unit kinds, big cells.   node orch/artaudit.mjs shia|west|east|regional ground|air|navy
 await pg.evaluate(async N=>{await modelsFor(N,()=>{},600000);mats();},N);
-const CW=300,CH=230,W=CW*GRP.length+110,H=CH*N.length;
+const CW=+process.env.CW||300,CH=+process.env.CH||230,W=CW*GRP.length+110,H=CH*N.length;
 const url=await pg.evaluate(([N,GRP,CW,CH,W,H])=>{
  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const R=new THREE.WebGLRenderer({canvas:cv,antialias:true,preserveDrawingBuffer:true});R.setSize(W,H,false);R.setClearColor('#7a7a68');
  const sc=new THREE.Scene();sc.add(new THREE.HemisphereLight('#fff','#665',1.6));const dl=new THREE.DirectionalLight('#fff',2.2);dl.position.set(60,120,80);sc.add(dl);
