@@ -1,0 +1,78 @@
+[0s] pc: launching browser
+[0s] ctx
+[0s] guarded
+[1s] page
+[1s] pc: loading page
+[1s] pc: page loaded
+[1s] pc: menu ready
+[24s] pc: LOADING {"tok":1,"tipI":6,"tipT":104,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",14186],["Loading 3D models…",847]
+[44s] pc: LOADING {"tok":1,"tipI":10,"tipT":104,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",14186],["Loading 3D models…",847
+[50s] pc: battle loaded in 48s
+[61s] pc: army in place
+[61s] pc: measuring 150 frames
+[78s] pc: warm-up done, 111 shaders
+[81s] pc: frame 10
+[82s] pc: frame 20
+[83s] pc: frame 30
+[84s] pc: frame 40
+[86s] pc: frame 50
+[87s] pc: frame 60
+[89s] pc: frame 70
+[90s] pc: frame 80
+[91s] pc: frame 90
+[93s] pc: frame 100
+[94s] pc: frame 110
+[95s] pc: frame 120
+[97s] pc: frame 130
+[98s] pc: frame 140
+[99s] pc: frame 150
+[102s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) JS heap grows 79.9 MB/min (limit 60) - memory leak? | sim step p95 ms rose to 20.7 (baseline 10.9, allowed up to 19.69; +90%)
+[102s] pc: launching browser
+[103s] ctx
+[103s] guarded
+[103s] page
+[103s] pc: loading page
+[103s] pc: page loaded
+[104s] pc: menu ready
+[126s] pc: LOADING {"tok":1,"tipI":7,"tipT":104,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",12272],["Loading 3D models…",852]
+[151s] pc: done {"tok":1,"tipI":11,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",12272],["Loading 3D models…",85
+[151s] pc: battle loaded in 48s
+[162s] pc: army in place
+[162s] pc: measuring 150 frames
+[176s] pc: warm-up done, 112 shaders
+[179s] pc: frame 10
+[180s] pc: frame 20
+[181s] pc: frame 30
+[183s] pc: frame 40
+[184s] pc: frame 50
+[185s] pc: frame 60
+[186s] pc: frame 70
+[187s] pc: frame 80
+[189s] pc: frame 90
+[190s] pc: frame 100
+[191s] pc: frame 110
+[193s] pc: frame 120
+[194s] pc: frame 130
+[195s] pc: frame 140
+[196s] pc: frame 150
+[200s] pc attempt 2: ok
+
+                       pc        
+units on screen        333       
+load time s            47.75     
+median frame ms        58.6      
+p95 frame ms           226.5     
+p99 frame ms           336.7     
+worst 1% FPS           2.71      
+frames >50 ms          129       
+first boom x median    0.67      
+2nd boom x median      0.81      
+weather/night x median 1.04      
+sim step p95 ms        13.6      
+draw calls             1259      
+k triangles            6445      
+heap MB/min            -4.73     
+runtime 3.3 min
+
+SMOOTH PASS
