@@ -1,16 +1,13 @@
-# Conductor state — 2026-11-19 ~14:55 UTC
-main = 778b5390 (ORCH 2: decisions guard fix, 14:38). Another conductor train is live: `train/20261119-1358` (pushed 13:58Z, not part of main, diverged 3 ahead / 5 behind). Per rules this run did step 1 only: no train, no gate, no landing.
-State read through the GitHub API (the sandbox clone is huge; `git fetch` times out).
-
-| branch | ahead of main | note |
-|---|---|---|
-| freezefix, sweepfixA, sweepfixB, orderfeel, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, looktest, onegame, nations20 | 0 | already in main |
-| ghostslot, testrange, techbldgs, ammozone | 1 / 1 / 1 / 7 | from 2026-11-14, 620+ behind main, stale |
-| battlemaps2 | no branch, no taken lock | |
-
-Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
-Taken locks with no orch branch: not checked this run.
-
----- previous entry ----
-# Conductor state — 2026-11-19 ~12:00 UTC
-main = 81a08221. smooth-render2 NOT landed (superfreeze + loadfreeze red); train/20261119-0900(+b) old, not landing; captest, pack-looks6 stale; old candidates already in main or stale; parked: camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
+# STATE — conductor run 2026-11-19 ~16:00 UTC (2nd run today)
+Main head 53559259 (art-west landed 15:05Z; train/20261119-1358 already in main). No new train: nothing has a finished green gate.
+| branch | ahead | last push | gate | note |
+|---|---|---|---|---|
+| orch/pack-art | 4 | 18 min | gate/014d91e1a2 just started, no statuses yet | Shia truck paint + art audit; HANDOFF yes |
+| orch/art-regional | 1 | 20 min | gate/465846be11 running (4 green so far) | regional drones (bundle 2); HANDOFF yes |
+| orch/art-east | 6 | 25 min | gate/eaa5d9bc7 running: audio, migrate-down red so far (audio is known flaky; migrate-down to re-check) | East kits RU/CN/KP; HANDOFF yes |
+| orch/pack-limit | 1 | 42 min | gate/d7fbc495e4 RED: smooth-pc, superfreeze | unit limit 500 in <=4-player battles; blocked (smooth red) — pack-units' cc3b8a5 same idea |
+| orch/pack-units | 3 | 77 min | not gated | WIP soldiers close-up; handoff yes |
+Stuck: pack-limit (smooth-pc + superfreeze red — the 500 cap is probably too heavy; needs a fix or a lower number).
+taken/ locks with no orch/ branch: many old taken/L*, ammotruck, ammozone, announcer, army-standards … (2026-11-0x/1x, stale, not checked one by one).
+Parked (removed from the game): onegame, nations20 etc. are old forks already superseded.
+Repo has ~19.8k remote branches (gate-logs/*): plain fetch takes minutes. Please prune gate-logs/*.
