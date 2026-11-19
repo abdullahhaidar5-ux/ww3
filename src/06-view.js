@@ -81,7 +81,7 @@ function boneHide(m){const f=q=>{let has=!!q.isMesh;const c=q.children;for(let i
    (skinned body, helmet/pack meshes) once (RGC); then three.js only recomputes the figure's own matrix and the few drawn parts, and the
    instanced soldier batch (solbFill) builds the bone texture rows as figure matrix x K. Any pose change (walk, crouch, reload...) switches
    it back at once; a material swap, SOLB off or an animated (mixer) figure never goes rigid. View only; same pictures as before. */
-const RG={on:true},RGS=new WeakMap();let WCH=0;
+const RG={on:true},RGS=new WeakMap();let WCH=0,RGQ=0;   // RGQ: figures measured this frame (at most 12, so a whole wave settling at once never makes one slow frame)
 function rgUMW(force){const f=RGS.get(this);
   if(!f||!SOLB.on){Object.getPrototypeOf(this).updateMatrixWorld.call(this,force);return;}
   if(this.matrixAutoUpdate)this.updateMatrix();
@@ -98,10 +98,10 @@ function rgTick(m,ud,W,on,c0,o){
   if(!RG.on||!W||o.userData.mixers||!SOLB.on){if(ud.rgA)rgOff(m,ud);return;}
   if(WCH!==c0){rgOff(m,ud);return;}   // a bone turned this frame: back to the normal path
   if(!on){if(!ud.rgA)ud.rgS=0;return;}
-  if(ud.rgA)return;if((ud.rgS=(ud.rgS||0)+1)<2)return;
+  if(ud.rgA)return;if((ud.rgS=(ud.rgS||0)+1)<2||RGQ>=12)return;RGQ++;
   if(rgBuild(m)){ud.rgA=1;m.updateMatrixWorld=rgUMW;}else ud.rgS=-60;}   // rebuilt every time a figure settles: the pose it settles in is the one measured
 function umwVis(f){if(!this.visible){this.matrixWorldNeedsUpdate=true;return;}Object.getPrototypeOf(this).updateMatrixWorld.call(this,f);}
-function syncScene(dt){const live=new Set();
+function syncScene(dt){const live=new Set();RGQ=0;
   /* haze limit (Abdullah 2026-11-15 00:40 "Keep camera, add haze limit"): with the low cinematic camera the view reaches the horizon, so units and
      buildings deep in the haze (75% fogged and beyond) are not drawn - nor shadowed or depth-passed. View only. */
   const FGo=SCN&&SCN.fog,FDc=FGo&&FGo.far>FGo.near?FGo.near+(FGo.far-FGo.near)*.75:1e9,FD2=FDc*FDc,CPx=CAM.position.x,CPz=CAM.position.z;
