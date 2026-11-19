@@ -1,13 +1,12 @@
-# STATE — conductor run 2026-11-19 ~21:00 UTC
-Main head 0a0608b9f (pack-art Shia trucks + art audit landed 20:25Z). Old orch/onegame/nations20 list is done; current work is art/pack branches.
-Train train/20261119-2100 = main + art-east4 (China/NK drones). art-east4 own gate 27/27 green. Gate gate/<sha> running.
-| branch | note |
-|---|---|
-| orch/art-east4 | own gate green -> in train |
-| orch/art-regional-b3 | tank armour; own gate only gate/superfreeze red -> held |
-| orch/art-west-b3 | dozer/landing craft pre-build; only gate/superfreeze red -> held (look needed) |
-| orch/art-west, art-east3, art-east-b2 | handoffs only / overlaps landed art |
-| orch/pack-units-r3, r4 | superfreeze red twice, not landed (their own handoff) |
-Superfreeze red appears on several art branches with new geometry: real freeze suspected, needs an owner.
-Parked (removed from game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
-No stuck helpers found; old taken/ locks only. Fetch slow (~4 min, 19k+ gate-logs branches).
+# STATE — conductor run 2026-11-19 ~23:15 UTC
+Main head 2dc39a068 (art-regional tanks); all gates green there. No train this run: nothing finished with a clean gate.
+| branch | ahead | own gate | verdict |
+|---|---|---|---|
+| orch/pack-art (edd9181) | +2 (on main head) | 23 ok; red: superfreeze (4th time on this code), audio (flaky) | held - superfreeze passes on main, fails on this code repeatedly; needs an owner to find the stall |
+| orch/art-air (6c3c745) | +1 | 15 ok, red migrate-down; gate was still running | held |
+| orch/pack-units-r5 (2248be8) | +3 | 26 ok, red superfreeze | held (same superfreeze pattern) |
+| orch/pack-units2, art-east5 | +2 / +1 | no gate yet (art-east5 = docs only) | not landed |
+| orch/art-west-r | +106 | stale base | parked |
+Superfreeze red keeps appearing on branches with new model geometry: real freeze suspected, needs an owner.
+No stuck helpers; only old taken/ locks (all older than 1 day, with no work lost known). Parked (removed from game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
+Fetch of the repo takes ~4 min (729 gate branches).
