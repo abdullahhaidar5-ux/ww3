@@ -12,3 +12,6 @@ Train train/20261119-1850 = main + art-west (landing craft) + art-east2 (East na
 | orch/model-scout | report only |
 Parked (removed from game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
 No stuck helpers found (taken/ locks: 101, mostly old). Repo has ~19.8k gate-logs/* branches; fetch is slow.
+
+## Update 20:00Z
+Landed art-east2 alone (own gate 28/28) as 338cbae0a. Combined train with art-west had gate/smooth-pc FAIL (each alone passed smooth); art-west own gate has gate/superfreeze FAIL (art-regional navy commit too) -> held, needs look. pack-art, art-east-b2 gates still running.
