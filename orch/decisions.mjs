@@ -289,6 +289,15 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   for (const v of new Set(ids)) ck(fs.existsSync(path.join(ROOT, 'tools', 'voices', 'refs', v.slice(6) + '.flac')), 'rvvoice: missing reference clip for ' + v);
   ck(/south-Iraqi unit voices[^<]{0,300}MASC/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'rvvoice: menu credits do not name the Iraqi voice source (MASC)'); }
 
+// v3voice (voices3 2026-11-17, Abdullah "Work on these now": FR, DE, GB re-recorded, JP role/radio/shout lines, Hebrew announcer): the FR/DE/GB/JP casts are
+// XTTS clones of native male speakers under free licences (LibriVox public domain, Thorsten-Voice CC0, Common Voice CC0; tools/voices/refs/CREDITS.md).
+{ const all = JSON.parse(fs.readFileSync(path.join(ROOT, 'orch', 'vo', 'cast.json'), 'utf8')), html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  for (const [n, pre] of [['FR', 'fr'], ['DE', 'de'], ['GB', 'gb'], ['JP', 'ja']]) { const cast = all[n] || {}, ids = [].concat(cast.sold || [], cast.cmd || []);
+    ck(ids.length >= 3 && ids.every(v => new RegExp('^clone:' + pre + '_[a-z0-9]+$').test(v)), 'v3voice: the ' + n + ' cast must use the cloned native voices (clone:' + pre + '_*): ' + JSON.stringify(ids));
+    for (const v of new Set(ids)) ck(fs.existsSync(path.join(ROOT, 'tools', 'voices', 'refs', v.slice(6) + '.flac')), 'v3voice: missing reference clip for ' + v);
+    for (const s of ['', '_r', '_h', '_s']) ck(fs.existsSync(path.join(ROOT, 'vo', n + s + '.mp3')), 'v3voice: missing sheet vo/' + n + s + '.mp3'); }
+  ck(/French, German, British and Japanese unit voices[^<]{0,400}LibriVox[^<]{0,400}Common Voice/.test(html), 'v3voice: menu credits do not name the FR/DE/GB/JP voice sources');
+  ck(/"he":\{"building":\[/.test(SRC['09d-announcer.js'] || ''), 'v3voice: the Hebrew announcer has no recorded clips (ANN_OFF.he)'); }
 // ---------- static checks ----------
 // polishP2 "Never lose progress": one save system. Battles autosave into 3 rolling slots (08d-save.js) and the menu's Continue (first item) resumes the newest. Runtime proof: orch/polishtest.mjs (gate/save).
 { const sv = SRC['08d-save.js'] || '', m = SRC['14-menu.js'] || '';

@@ -295,7 +295,7 @@ hero Forces spéciales prêtes.
 hsel Commandos en attente.
 hmove On y va.
 hatk Contact ! Feu !
-hab Exécution ! Go !''')
+hab Allez, go !''')
 _b('DE', '''
 base Die Basis wird angegriffen!
 air Feindliche Flugzeuge im Anflug!
@@ -309,7 +309,7 @@ hero Kommandotrupp bereit.
 hsel Trupp wartet.
 hmove Abmarsch.
 hatk Kontakt! Feuer!
-hab Ausführen! Los!''')
+hab Zugriff! Los!''')
 _b('GB', '''
 base Base under attack!
 air Enemy aircraft inbound!
@@ -324,6 +324,20 @@ hsel Patrol standing by.
 hmove Moving out.
 hatk Contact! Engaging!
 hab Go, go, go!''')
+_b('JP', '''
+base 基地が攻撃を受けている！
+air 敵機、接近中！
+armL 敵戦車、左翼！
+armR 敵戦車、右翼！
+town_taken 町を確保した。
+town_lost 町を奪われた！
+msl ミサイル発射！伏せろ！
+lost 部隊を一つ失った。
+hero 特殊部隊、準備よし。
+hsel 待機中。
+hmove 移動開始。
+hatk 敵だ！撃て！
+hab 行け、行け！''')
 _b('RV', '''
 base القاعدة تنضرب!
 air طيران معادي جاي!
@@ -341,4 +355,4 @@ hab نفّذوا! يا علي مدد!''')
 ROLES = KEYS
 RV = {k: (('cmd', 'cmd', 0) if k in KEYS[:9] else (2, 'grim', 0)) for k in KEYS}
 if __name__ == '__main__':
-    assert len(R) == 23 and all(set(v) == set(KEYS) for v in R.values()); print('ok', len(R))
+    assert len(R) == 24 and all(set(v) == set(KEYS) for v in R.values()); print('ok', len(R))
