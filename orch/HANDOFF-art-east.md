@@ -11,3 +11,5 @@ Update (2026-11-19 ~15:30Z, session 3): bundle-1 run 699 was green (after rerun)
 
 Update (session 4, 2026-11-19 evening): bundle 1 is on main. Work now on branch orch/art-east-b2 (orch/art-east is old, already merged). Bundle 2 (ships): east_boat / east_lander kits in src/11e-east.js (hide hull model, own navmat without mud). Aircraft: East heli/jet already real models; CN/KP drones still a generic quad (Lancet only RU), tb2 generic - left. Next: gate this commit (git push origin <sha>:refs/heads/gate/<sha10>), land; then drones / CN-KP tank look.
 Gate branch for e85099a1b4: gate/e85099a1b4 (pushed; poll actions_list). Land = rebase on origin/main, rebuild index.html if conflict, push HEAD:main when all gate/* green.
+
+Update (18:50Z): gate run 720 (https://github.com/abdullahhaidar5-ux/ww3/actions/runs/44589572179, gate/e85099a1b4) was still queued. Tank audit: RU/CN/KP tanks already use three different models, so no tank add-on needed. Left: CN/KP quad drone look, jeep camo box truck, land bundle when gate green (rebase on origin/main, rebuild index.html on conflict, push HEAD:main).
