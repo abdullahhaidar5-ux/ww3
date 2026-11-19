@@ -20359,7 +20359,6 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);skinBS(mm);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());bonePool(skel);if(lm0)solbReg(lm0,E.mat);solbReg(mm,E.mat);for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
 /* a supply truck's crate load: one shared shape for every truck (it was built new per truck) */
-<<<<<<< HEAD
 /* Instanced soldiers (smoothaudit2, Abdullah 2026-11-17 "Ensure the game runs smoothly"). Every merged soldier figure was a draw
    call of its own - plus its own shadow draw, its own draw in the soft-shadow (AO) depth pass and its own bone-texture upload:
    ~190 + ~50 draws and ~200 uploads per frame in a big battle. Now all figures of one look (shape + material, near or far
@@ -20413,9 +20412,6 @@ let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld(),W='#7a6240',Wd
   for(const z of [-4.3,3.9]){B.box(5,4.2,5,-.8,20.4,z,W);for(const y of [18.6,22.2])B.box(5.3,.5,5.3,-.8,y,z,Wd);for(const dx of [-2.2,2.2])for(const dz of [-2.2,2.2])B.box(.6,4.4,.6,-.8+dx,20.4,z+dz,Wd);B.box(5.2,.3,1.1,-.8,22.6,z,'#c9b04a');}
   for(const [x,z] of [[-12.2,-5],[-12.2,5]]){B.cyl(1.7,1.7,4.6,12,x,20.4,z,'#4f5a3c');for(const y of [18.6,20.4,22.2])B.cyl(1.85,1.85,.35,12,x,y,z,'#2e3326');B.cyl(1.2,1.2,.3,10,x,22.8,z,'#222');}
   HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
-=======
-let HARVCG=null;function harvCargoGeo(){if(!HARVCG)HARVCG=cargoGeo('harv');return HARVCG;}
->>>>>>> 2cdeada (East family close-ups: detailed ATGM/AA/EW trucks and bulldozer for RU CN KP, real supply-truck cargo)
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
   // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
@@ -20716,7 +20712,6 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
      fl.geometry.translate(-H*.375,0,0);fl.position.set(x,y0+H*.95+H*.82,z);fl.rotation.y=ax==='x'?(fwd>0?0:Math.PI):(fwd>0?-Math.PI/2:Math.PI/2);yaw.add(fl);o.userData.parts.pennant=fl;fl.userData.base=Float32Array.from(fl.geometry.attributes.position.array);}
     
     const m=mesh(B.geo());yaw.add(m);}}
-<<<<<<< HEAD
   if(e.kind==='ammot'){const GM=addonGeo('x_ammot',()=>{const B=Bld(),G='#59603f',Gd='#464c31',Y='#c9b04a',Br='#a98b3e',Sh='#6b6f58';
     /* art-west: stacked olive ammunition crates with lids, handles and yellow stencil bands, a rack of artillery shells and a tarp roll */
     B.box(15,.8,14,-6,17.6,0,'#5a4630');
@@ -20724,9 +20719,6 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
     for(const [x,z] of [[-10,0],[-4,0]]){B.box(7.2,3.4,6.4,x,23.2,z,G);B.box(7.4,.5,6.4,x,25,z,Gd);B.box(.6,.6,3,x,25.5,z,'#2a2b25');B.box(7.3,.35,.9,x,23.6,z,Y);}
     for(let i=0;i<4;i++)for(let k=0;k<2;k++){const z=-5.2+i*3.5,y=20.4+k*1.8;B.cyl(.95,.95,7,8,3.4,y,z,Sh,0,0,Math.PI/2);B.cyl(.4,.95,1.4,8,7.6,y,z,Br,0,0,-Math.PI/2);B.cyl(.98,.98,.5,8,4.6,y,z,Y,0,0,Math.PI/2);}
     B.box(15,.7,.7,-6,22.4,-6.9,'#2a2b25');return B.geo();});const cg=mesh(GM);o.add(cg);o.userData.parts.cargo=cg;}
-=======
-  if(e.kind==='ammot'){const cg=mesh(cargoGeo('ammot'));o.add(cg);o.userData.parts.cargo=cg;}
->>>>>>> 2cdeada (East family close-ups: detailed ATGM/AA/EW trucks and bulldozer for RU CN KP, real supply-truck cargo)
   if(e.kind==='harv'){const cg=mesh(harvCargoGeo());o.add(cg);o.userData.parts.cargo=cg;}
   try{eastKit(e,c,o,yaw,T);}catch(err){console.warn('eastKit',err);}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
