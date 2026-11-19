@@ -8,7 +8,7 @@ Frame ms with one object kind hidden: 8 players / 500: all 94 -> helicopters hid
 ## Changes
 1. `staticMerge` (src/11-models.js): after an object is fully built, plain static meshes under it are baked into one mesh per material (and shadow flags). Animated parts (flag, dish, crane, rotors), skinned/instanced/vertex-animated meshes are left alone. Buildings: called at the end of `makeObj` (not garrisons). Same materials, so the picture is the same.
 2. Aircraft: static parts merged the same way; the rotor blades and tail rotor are merged inside their own spinning group (heli 19 -> 14 meshes, airlift 20-21 -> 15-16).
-3. Soldiers: a walking soldier farther than 340 from the camera is re-posed every 2nd frame (stride phase still advances every frame; period 2 keeps the rigid-mode test safe). Up close nothing changes.
+3. Soldiers (item 3) NOT shipped: re-posing far walkers every 2nd frame failed `orch/walktest.mjs` at zoom 450/700 (it samples the stride frame to frame; 160 failures, run 44476060528), and the test/budgets must not be changed. Idea left: do it only for soldiers outside the walktest zoom range, or measure stride over 2 frames.
 
 ## Numbers (CPU frame ms on a GitHub runner, Fulda, `orch/capprobe.mjs`; runner speed varies, "norm" = ms / bench)
 | row | before (run 44473747704) med / p95 / calls / norm | after (run 44475131161) |
