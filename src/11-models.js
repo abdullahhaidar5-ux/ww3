@@ -821,7 +821,15 @@ function solbFill(force){if(!SOLB.reg.size||typeof SCN==='undefined'||!SCN)retur
 function solbAO(){if(!SOLB.reg.size)return;solbFill(!!window.LOADING);if(!SOLB.root||SOLB.root.parent!==SCN)return;let any=false;for(const b of SOLB.list)if(b.n){any=true;break;}if(!any)return;
   const ac=R3.autoClear;R3.autoClear=false;for(const b of SOLB.list){b.ms.material=SOLB.am;b.ms.visible=b.n>0;}
   try{R3.render(SOLB.root,CAM);}catch(e){console.warn('solbAO',e);}finally{R3.autoClear=ac;for(const b of SOLB.list){b.ms.material=b.mt;b.ms.visible=b.n>0;}}}
-let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
+let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld(),W='#7a6240',Wd='#5a4630',T='#5b6445',T2='#666f4d',S='#2a2923';
+  /* art-west: a real supply load, not four yellow boxes - pallet, strapped tarp-covered stack, slatted wooden crates, two drums; one merged shared geometry */
+  B.box(14,1,14,-5.5,17.8,0,Wd);B.box(14.4,.5,1.4,-5.5,17.2,-4,Wd);B.box(14.4,.5,1.4,-5.5,17.2,4,Wd);
+  B.box(10.6,5.6,10.6,-6.5,21,0,T);B.box(9.2,1.8,9.2,-6.5,24.7,0,T2);B.box(7,1,7,-6.5,25.9,0,T);
+  for(const x of [-9.5,-3.5]){B.box(.8,6.2,10.9,x,21.2,0,S);B.box(.8,1.9,9.4,x,24.8,0,S);}
+  B.box(10.9,.8,.8,-6.5,22.6,-2.5,S);B.box(10.9,.8,.8,-6.5,22.6,2.5,S);
+  for(const z of [-4.3,3.9]){B.box(5,4.2,5,-.8,20.4,z,W);for(const y of [18.6,22.2])B.box(5.3,.5,5.3,-.8,y,z,Wd);for(const dx of [-2.2,2.2])for(const dz of [-2.2,2.2])B.box(.6,4.4,.6,-.8+dx,20.4,z+dz,Wd);B.box(5.2,.3,1.1,-.8,22.6,z,'#c9b04a');}
+  for(const [x,z] of [[-12.2,-5],[-12.2,5]]){B.cyl(1.7,1.7,4.6,12,x,20.4,z,'#4f5a3c');for(const y of [18.6,20.4,22.2])B.cyl(1.85,1.85,.35,12,x,y,z,'#2e3326');B.cyl(1.2,1.2,.3,10,x,22.8,z,'#222');}
+  HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
   // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
@@ -1065,6 +1073,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
   for(const [px,pz] of sq){const KD=e.kind==='cleric'?(px===sq[0][0]&&pz===sq[0][1]?'ldr':'inf'):e.kind;const VR=e.kind==='spy'||KD==='ldr'?0:Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=KD==='ldr'&&MODELS.proto.sol_m?'sol_m':c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const TK=KD==='ldr'?0:c.m==='soldier'&&!c.tint?[.03,.07,.11][VR%3]/* tint follows the kit variant: 4 looks per kind, not 12, so the shapes can be prepared at load */:c.tk;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,TK);if(!m)return null;m.position.set(-pz,c.dy||0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,KD,SK,VR);else if(e.kind!=='spy')soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),KD);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+(TK||0)+'|'+(T.fac||'')+'|'+KD+'|v'+(SK?VR:0));if(KD==='ldr')m.userData.ldr=1;}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
+  if(e.kind==='dozer'&&c.m!=='truck'){while(yaw.children.length)yaw.remove(yaw.children[0]);const DG=dozerGeo(apaint(T.fac));const dm=mesh(DG);dm.castShadow=true;o.add(dm);o.userData.parts.cargo=dm;}   /* art-west: a code-built armoured bulldozer replaces the blobby scanned mesh */
   if(e.kind==='spy'){const ey=decal('eye');ey.position.y=c.size+7;ey.scale.setScalar(5.2);ey.visible=false;o.add(ey);o.userData.parts.eye=ey;}
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
   {const ring=decal(c.squad?'ringS':'ringV',new THREE.Color(T.color));ring.scale.setScalar(c.size);ring.position.y=1.2;if(!['heli','jet'].includes(e.kind))o.add(ring);o.userData.parts.tring=ring;}
@@ -1120,7 +1129,13 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
      fl.geometry.translate(-H*.375,0,0);fl.position.set(x,y0+H*.95+H*.82,z);fl.rotation.y=ax==='x'?(fwd>0?0:Math.PI):(fwd>0?-Math.PI/2:Math.PI/2);yaw.add(fl);o.userData.parts.pennant=fl;fl.userData.base=Float32Array.from(fl.geometry.attributes.position.array);}
     
     const m=mesh(B.geo());yaw.add(m);}}
-  if(e.kind==='ammot'){const GM=addonGeo('x_ammot',()=>{const B=Bld();B.box(17,8,15,-6,22,0,'#5d6048');B.box(18,1,16,-6,26.6,0,'#4c5039');for(const z of [-5,0,5])B.box(3,3,3,-15.5,20,z,'#8a6a3a');B.box(7,4,6,5,21,0,'#8a6a3a');return B.geo();});const cg=mesh(GM);o.add(cg);o.userData.parts.cargo=cg;}
+  if(e.kind==='ammot'){const GM=addonGeo('x_ammot',()=>{const B=Bld(),G='#59603f',Gd='#464c31',Y='#c9b04a',Br='#a98b3e',Sh='#6b6f58';
+    /* art-west: stacked olive ammunition crates with lids, handles and yellow stencil bands, a rack of artillery shells and a tarp roll */
+    B.box(15,.8,14,-6,17.6,0,'#5a4630');
+    for(const [x,z] of [[-11,-3.6],[-3,-3.6],[-11,3.6],[-3,3.6]]){B.box(7.2,3.4,6.4,x,19.7,z,G);B.box(7.4,.5,6.6,x,21.5,z,Gd);B.box(.6,.6,3,x,22,z,'#2a2b25');B.box(7.3,.35,.9,x,20.1,z,Y);}
+    for(const [x,z] of [[-10,0],[-4,0]]){B.box(7.2,3.4,6.4,x,23.2,z,G);B.box(7.4,.5,6.4,x,25,z,Gd);B.box(.6,.6,3,x,25.5,z,'#2a2b25');B.box(7.3,.35,.9,x,23.6,z,Y);}
+    for(let i=0;i<4;i++)for(let k=0;k<2;k++){const z=-5.2+i*3.5,y=20.4+k*1.8;B.cyl(.95,.95,7,8,3.4,y,z,Sh,0,0,Math.PI/2);B.cyl(.4,.95,1.4,8,7.6,y,z,Br,0,0,-Math.PI/2);B.cyl(.98,.98,.5,8,4.6,y,z,Y,0,0,Math.PI/2);}
+    B.box(15,.7,.7,-6,22.4,-6.9,'#2a2b25');return B.geo();});const cg=mesh(GM);o.add(cg);o.userData.parts.cargo=cg;}
   if(e.kind==='harv'){const cg=mesh(harvCargoGeo());o.add(cg);o.userData.parts.cargo=cg;}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}
@@ -1145,6 +1160,19 @@ function apaint(f){const rk=RMAP.harv&&RMAP.harv[f],t=rk&&RMOD[rk]&&RMOD[rk].tin
 function ashade(h,f){const n=parseInt(h.slice(1),16),r=Math.min(255,Math.round((n>>16&255)*f)),g=Math.min(255,Math.round((n>>8&255)*f)),b=Math.min(255,Math.round((n&255)*f));return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);}
 const ADDG=new Map();
 function addonGeo(key,fn){let g=ADDG.get(key);if(!g){g=fn();ADDG.set(key,g);if(typeof gcKeep==='function')for(const x of (Array.isArray(g)?g:[g]))gcKeep(x);}return g;}   /* shared by every unit that carries it: never freed by the GPU clean-up */
+
+/* art-west: armoured combat dozer, built once per paint and shared by every unit: track frames with grousers and sprockets, hull, hood, glazed cab with roof, exhaust, blade on push arms, rear ripper (+x = forward) */
+function dozerGeo(col){return addonGeo('dozer'+col,()=>{const B=Bld(),P=col,Pd=ashade(col,.7),D='#2b2b27',Dk='#1c1c1a',Gl='#26343a',Ste='#4a4d46';
+  for(const z of [-7.2,7.2]){B.box(26,5,4.4,-1,4.4,z,D);B.cyl(3.6,3.6,4.4,14,-13,5,z,Dk,Math.PI/2);B.cyl(3.6,3.6,4.4,14,11.5,5,z,Dk,Math.PI/2);B.cyl(1.6,1.6,4.8,10,-13,5,z,Ste,Math.PI/2);B.cyl(1.6,1.6,4.8,10,11.5,5,z,Ste,Math.PI/2);
+    for(let i=0;i<13;i++){B.box(1.2,.7,4.9,-12+i*1.9,1.8,z,Dk);B.box(1.2,.7,4.9,-12+i*1.9,7.1,z,Dk);}
+    for(let i=0;i<5;i++)B.cyl(1.7,1.7,4.7,8,-9+i*4.6,3.2,z,Ste,Math.PI/2);B.box(24,.6,5,-1,7.5,z,Pd);}
+  B.box(20,5.5,10.5,-1,9.2,0,P);B.box(11,4,9,7.5,12.6,0,P);B.box(11.4,.8,9.4,7.5,14.8,0,Pd);for(let i=0;i<5;i++)B.box(.5,.5,7,12.7,9.6+i*.9,0,Dk);
+  B.box(8,7.4,8.6,-5,15.4,0,P);B.box(8.3,5,8.9,-5,16.2,0,Gl);B.box(9.6,.9,10,-5,19.7,0,Pd);B.box(.6,4.6,.6,-8.8,17,-4,Ste);B.box(.6,4.6,.6,-8.8,17,4,Ste);
+  B.cyl(.5,.6,6,8,8.6,17.4,-3.4,D);B.cyl(.7,.7,.5,8,8.6,20.5,-3.4,Dk);B.box(.5,.5,2,11,15.1,-4.2,'#e8e0b0');B.box(.5,.5,2,11,15.1,4.2,'#e8e0b0');
+  B.box(2.8,8.4,23,19.5,6.8,0,P);B.box(2.4,1.2,23.4,19.2,11.4,0,Pd);B.box(1.6,1.2,23,20.8,2.4,0,Ste);B.box(.6,6.5,1.2,21.2,7,-6,Pd);B.box(.6,6.5,1.2,21.2,7,6,Pd);
+  for(const z of [-9.5,9.5]){B.box(11,1.7,1.9,13,5.6,z,Ste);B.box(2,2.6,2.2,17.5,6,z,Dk);}
+  B.box(4,6,9,-14.3,8.5,0,Pd);for(const z of [-3,0,3])B.box(1.4,5,1,-17.4,5.4,z,Ste);B.box(1.6,1.2,10,-16.6,8.6,0,Ste);
+  return B.geo();});}
 // a tube of length L from (x0,y0) at elevation a (rad) along +x, with a dark muzzle
 function atube(B,x0,y0,z,L,r,a,col,mz){const ca=Math.cos(a),sa=Math.sin(a);B.cyl(r,r,L,8,x0+L/2*ca,y0+L/2*sa,z,col,0,0,a-Math.PI/2);if(mz)B.cyl(r*.72,r*.72,.35,8,x0+(L+.05)*ca,y0+(L+.05)*sa,z,mz,0,0,a-Math.PI/2);}
 const AK='#24261f',AM='#0c0c0b';
