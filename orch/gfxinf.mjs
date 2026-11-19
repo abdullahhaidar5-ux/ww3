@@ -22,7 +22,7 @@ const ISBLD = !!argS('bld', '');
 const BKINDS = argS('bkinds', 'barracks:110:-90,factory:-110:90,hq:0:0').split(',').map(s => { const [k, x, y] = s.split(':'); return [k, +x, +y]; });
 const DIST = +argS('dist', '330');
 const LIVE = +argS('live', '0');
-const CLIP = ISBLD ? { x: 190, y: 60, width: 900, height: 480 } : { x: 340, y: 170, width: 600, height: 340 };
+const CLIP = argS('clip','') ? Object.fromEntries(argS('clip','').split(',').map((v,i)=>[['x','y','width','height'][i],+v])) : ISBLD ? { x: 190, y: 60, width: 900, height: 480 } : { x: 340, y: 170, width: 600, height: 340 };
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -104,8 +104,8 @@ try {
       if (BLD) { for (const [kd, dx, dy] of BKINDS) { try { const b = addBld(0, kd, x + dx, y + dy, true); } catch (er) { console.log('bld', kd, er.message); } } }
       window.__at = [x, y]; }, [ISBLD, BKINDS]);
     if (process.env.DBG) console.log(await page.evaluate(() => { const o=[]; const sc=SCN; sc.traverse(q=>{ if(q.isSkinnedMesh&&o.length<4){const m=q.material;o.push([m.type,m.color.r.toFixed(2),m.color.g.toFixed(2),m.color.b.toFixed(2),!!m.map,m.envMapIntensity,m.emissive&&m.emissive.getHexString(),q.parent&&q.parent.name]);}}); return JSON.stringify(o); }));
-    for (const [nm, d, dy] of [ISBLD ? [LIVE ? 'live' : 'bld', DIST, 0] : ['inf', 232, 18]]) {
-      await page.evaluate(([d, dy]) => { const [x, y] = window.__at; cam.dist = cam.td = d; cam.x = cam.tx = x; cam.y = cam.ty = y + dy; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; }, [d, dy]);
+    for (const [nm, d, dy] of (ISBLD ? [[LIVE ? 'live' : 'bld', DIST, 0]] : argS('idy','18').split(',').flatMap(dy => argS('idist','232').split(',').map(d => ['inf' + (d==='232'?'':d) + (argS('idy','18').includes(',')?'y'+dy:''), +d, +dy])))) {
+      await page.evaluate(([d, dy, ix]) => { const [x, y] = window.__at; cam.dist = cam.td = d; cam.x = cam.tx = x + ix; cam.y = cam.ty = y + dy; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; }, [d, dy, +argS('idx', '0')]);
       await frames(page, 4); await snap(page, `${nm}-${k}-${p}-${a}`);
     }
   }
