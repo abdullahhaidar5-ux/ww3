@@ -70,7 +70,11 @@ const PARK=new Map();
    chest); the other ~40 (arms, hands, fingers, head) keep the pose they were built with, yet three.js re-composed their matrices
    every frame for every visible soldier. They are now computed once (the first frame the figure is drawn) and then left alone. */
 function boneKeep(){this.matrixWorldNeedsUpdate=true;}   // the local matrix stays as composed; the world matrix still follows the parent (render and updateWorldMatrix paths)
-function boneFreeze(m,W){const keep=new Set();for(const k in W){const j=W[k];if(j&&j.b)keep.add(j.b);}m.traverse(q=>{if(q.isBone&&!keep.has(q)&&q.matrixAutoUpdate){q.updateMatrix();q.updateMatrix=boneKeep;}});m.userData.bfz=1;}
+function boneFreeze(m,W){const keep=new Set();for(const k in W){const j=W[k];if(j&&j.b)keep.add(j.b);}m.traverse(q=>{if(q.isBone&&!keep.has(q)&&q.matrixAutoUpdate){q.updateMatrix();q.updateMatrix=boneKeep;}});boneHide(m);m.userData.bfz=1;}
+/* smooth-render: a bone with no mesh anywhere below it draws nothing, but three.js still walked it in every pass (depth pre-pass, shadow pass,
+   colour pass, soft-shadow pass: ~35 of a soldier's ~41 objects x 4 walks). Hidden bones are skipped by all of them at the first check; their
+   matrices are still updated (skinning reads them) because updateMatrixWorld does not look at 'visible'. View only. */
+function boneHide(m){const f=q=>{let has=!!q.isMesh;const c=q.children;for(let i=0;i<c.length;i++)if(f(c[i]))has=true;if(q.isBone&&!has)q.visible=false;return has;};f(m);}
 function umwVis(f){if(!this.visible){this.matrixWorldNeedsUpdate=true;return;}Object.getPrototypeOf(this).updateMatrixWorld.call(this,f);}
 function syncScene(dt){const live=new Set();
   /* haze limit (Abdullah 2026-11-15 00:40 "Keep camera, add haze limit"): with the low cinematic camera the view reaches the horizon, so units and
