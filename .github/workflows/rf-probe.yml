@@ -23,10 +23,10 @@ jobs:
         env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
         run: |
           case '${{ matrix.v }}' in
-            trace)  TRIES=1 TRACE=1 TRACEMS=120 node orch/rangefreeze.mjs IR ;;
-            prof)   TRIES=1 PROF=1 node orch/rangefreeze.mjs IR ;;
-            plain1) TRIES=1 V=1 node orch/rangefreeze.mjs IR ;;
-            plain2) TRIES=1 V=1 node orch/rangefreeze.mjs RS ;;
+            trace)  TRIES=1 UPS=1 node orch/rangefreeze.mjs IR ;;
+            prof)   TRIES=1 UPS=1 node orch/rangefreeze.mjs RU ;;
+            plain1) TRIES=1 UPS=1 V=1 node orch/rangefreeze.mjs IR ;;
+            plain2) TRIES=1 UPS=1 node orch/rangefreeze.mjs IR ;;
             ob)     TRIES=1 TRACE=1 TRACEMS=120 node orch/rangefreeze.mjs OB ;;
           esac
           true
