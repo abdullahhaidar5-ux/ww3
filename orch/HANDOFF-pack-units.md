@@ -18,3 +18,4 @@ Start a 1v1 Battle, build barracks, queue infantry: the counter should read unit
 ## Update (run 3)
 - Servers verified: servers-live b3f11e64 contains d7fbc495. Unit limit fully done.
 - Soldier chest rig/radio/straps re-applied onto main 074ab67 (branch orch/pack-units-r3; old orch/pack-units left untouched). Local smoke/decisions too slow in sandbox, relying on cigate. Left: IR camo atlas, headgear, face shading, RS/DW/RV.
+- Gate on 1034a5f4b6: 27/28 green; gate/superfreeze (rangefreeze, OB) failed twice incl. one rerun: longest frame 676 ms vs quiet 42 ms, renderFrame-heavy; makeObj inf 19-25 ms. NOT landed on main. Next: check whether main alone passes rangefreeze on a re-run; if so the gear adds a first-use stall (pre-warm soldier gear merge / cut pouches) before retrying.
