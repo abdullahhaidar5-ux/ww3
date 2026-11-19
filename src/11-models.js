@@ -137,7 +137,7 @@ function parseModel(k){if(MQ.parsed[k])return MQ.parsed[k];return MQ.parsed[k]=(
     const g=await new Promise((res,rej)=>{try{ld.parse(b,'',res,rej);}catch(e){rej(e);}});const P={scene:g.scene,anims:g.animations};
     P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);if(m.userData.sgGloss!=null){m.roughness=Math.min(1,Math.max(.35,1-m.userData.sgGloss*.7));m.metalness=.15;}if(m.transmission>0){m.opacity*=1-m.transmission;m.transmission=0;}}}});
     try{mergeProto(P);}catch(e){console.warn('merge',k,e);}
-    MODELS.proto[k]=P;MODELS.ready=true;MODELS.gen=(MODELS.gen|0)+1;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
+    MODELS.proto[k]=P;MODELS.ready=true;if(!MODELS._ag){MODELS._ag=1;try{for(const f of (typeof PLAYABLE!=='undefined'?PLAYABLE:[])){const c=apaint(f);dozerGeo(c);landerGeo(c);}}catch(err){}}MODELS.gen=(MODELS.gen|0)+1;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
     // the effects module keeps a list of model geometry it must never free; a model added later must join it
     try{GC_PROTO=null;}catch(e){}return true;}
   catch(e){MODELS.err=String(e&&e.message||e);if(!MODELS.failed.includes(k))MODELS.failed.push(k);delete MQ.bytes[MODEL_FILES[k]];setTimeout(()=>{delete MQ.parsed[k];},0);console.warn('3D model '+k+' failed to load:',e);return false;}})();}
