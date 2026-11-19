@@ -20403,7 +20403,13 @@ function solbFill(force){if(!SOLB.reg.size||typeof SCN==='undefined'||!SCN)retur
 function solbAO(){if(!SOLB.reg.size)return;solbFill(!!window.LOADING);if(!SOLB.root||SOLB.root.parent!==SCN)return;let any=false;for(const b of SOLB.list)if(b.n){any=true;break;}if(!any)return;
   const ac=R3.autoClear;R3.autoClear=false;for(const b of SOLB.list){b.ms.material=SOLB.am;b.ms.visible=b.n>0;}
   try{R3.render(SOLB.root,CAM);}catch(e){console.warn('solbAO',e);}finally{R3.autoClear=ac;for(const b of SOLB.list){b.ms.material=b.mt;b.ms.visible=b.n>0;}}}
-let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
+let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();const WD='#7a5c34',WL='#8d6d40',OL='#59603f',OLd='#454b30',ST='#2c2c28',CV='#6e6a4c';
+ B.box(15,1.4,12.4,-5.5,19.7,0,'#5a4326');   /* wooden pallet under the load */
+ for(const [x,z,c,l] of [[-9.5,-3.6,OL,'#6b7350'],[-2.5,-3.6,WD,WL],[-9.5,3.4,WD,WL],[-2.5,3.4,OL,'#6b7350']]){B.box(6.2,4.4,6.2,x,22.6,z,c);B.box(6.5,.7,6.5,x,25.1,z,l);B.box(.8,4.5,6.4,x-1.6,22.6,z,ST);B.box(.8,4.5,6.4,x+1.6,22.6,z,ST);B.box(1.6,.5,1.6,x,25.6,z,OLd);}
+ B.box(6.2,3.6,6.2,-6,26.5,-.1,OL);B.box(6.5,.6,6.5,-6,28.5,-.1,'#6b7350');B.box(.7,3.7,6.4,-7.5,26.5,-.1,ST);B.box(.7,3.7,6.4,-4.5,26.5,-.1,ST);
+ B.box(15.5,.5,.5,-5.5,23.5,-6.7,'#c8b890');B.box(15.5,.5,.5,-5.5,23.5,6.7,'#c8b890');   /* lashing straps */
+ for(const z of [-5.5,-3.5,-1.5])B.cyl(1.1,1.1,2.6,8,3.8,20.8+1.3,z,OLd);   /* jerrycans */
+ B.box(5,2.2,12,3.2,20.9,0,CV);HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
   // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
