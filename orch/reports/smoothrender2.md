@@ -23,3 +23,6 @@ Draw calls fell 25-40% in every crowded row; milliseconds are noisy (1v1/300 "be
 1. 1v1: 500 per player is about as smooth as 300 was before smooth render 1 (norm ~4.3 vs 5.9), but not yet clearly better than today's 300.
 2. 2v2: not measured separately; it sits between the 1v1 and 8-player rows.
 3. 8 players: 500 is still NOT smooth (p95 ~150 ms, norm 4.8); 300 is fine (norm 2.2). Do not raise POP_CAP yet; next: far-LOD for helicopters (fewer parts when zoomed out) and merging glass/vertex-colour meshes.
+
+## Update (landed part)
+Only the aircraft merge landed. The building merge made `loadfreeze` (14 programs linked at once) and `superfreeze` (new depth programs, 437-817 ms frames) fail on GitHub's runners while main was green; with it removed the gate is 27/27 green. Numbers above that depend on buildings (draw calls of 1v1 rows) are therefore slightly optimistic; helicopter savings (19 -> 14 meshes) stand.
