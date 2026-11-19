@@ -676,3 +676,4 @@ conductor 2026-11-14: train 13 landed — the paused Grand campaign moved into E
 - 2026-11-19 art-west bundle 2: Ukraine flies Bayraktar-style drones, Britain and France Reaper-style (no more toy quadcopters); mine-layers and minesweepers now use the real warship hull instead of an open box.
 - 2026-11-19 conductor: landed art-east2 — Russian, Chinese and North Korean landing craft, mine-layer and minesweeper now use proper ship hulls (own gate 28/28 green).
 2026-11-19 ART SHIA: each Shia nation's trucks, anti-air, rocket and radar carriers now have their own paint instead of one shared look.
+- 2026-11-19 art-east bundle 2b: China's drones are now pale Wing Loong-style fixed-wing aircraft and North Korea's Bayraktar-style ones (no more black toy quadcopters); Russian Lancet kept; jets and helicopters already use real models.
