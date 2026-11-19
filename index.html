@@ -20403,7 +20403,7 @@ function solbFill(force){if(!SOLB.reg.size||typeof SCN==='undefined'||!SCN)retur
 function solbAO(){if(!SOLB.reg.size)return;solbFill(!!window.LOADING);if(!SOLB.root||SOLB.root.parent!==SCN)return;let any=false;for(const b of SOLB.list)if(b.n){any=true;break;}if(!any)return;
   const ac=R3.autoClear;R3.autoClear=false;for(const b of SOLB.list){b.ms.material=SOLB.am;b.ms.visible=b.n>0;}
   try{R3.render(SOLB.root,CAM);}catch(e){console.warn('solbAO',e);}finally{R3.autoClear=ac;for(const b of SOLB.list){b.ms.material=b.mt;b.ms.visible=b.n>0;}}}
-let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
+let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();const cr=[['#5b6240','#3f442c'],['#69694a','#464631'],['#6e5d3e','#4a3f2a'],['#555c3d','#3b4128']];[[-9,-4],[-2,-4],[-9,3],[-2,3]].forEach(([x,z],i)=>{const [c,d]=cr[i],h=i===1?4.4:5.2;B.box(6,h,6,x,17.4+h/2,z,c);B.box(6.3,.5,6.3,x,17.6+h,z,d);B.box(.5,h+.1,6.2,x-1.6,17.4+h/2,z,d);B.box(.5,h+.1,6.2,x+1.6,17.4+h/2,z,d);if(i===0||i===3){B.box(6.4,1.4,6.4,x,18+h,z,'#7d7658');B.box(5.2,.8,5.2,x,19.2+h,z,'#6f6a4e');}});HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
   // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
