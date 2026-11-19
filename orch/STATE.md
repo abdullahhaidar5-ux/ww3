@@ -1,15 +1,9 @@
-# Conductor state — 2026-11-19 08:00 UTC
-main = eb208aa8 (smooth-render, 03:01). No `train/*` in flight (last train 2026-11-18 21:00). Nothing landed this run.
+# Conductor state — 2026-11-19 ~11:00 UTC
+main = 81a08221 (fix-rangefreeze landed by its own helper, 10:4x). No train landed by the conductor this run.
 
-main gate: superfreeze red (also red on main's head, known); everything else green.
-
-| branch | last push | ahead/behind main | HANDOFF | own gate | verdict |
-|---|---|---|---|---|---|
-| smooth-render2 | 06:58 | 4 / 0 | yes | all green except **controls: WALKTEST FAIL (160)** (twice, 07:32 and 07:51) + superfreeze (main also red) | NOT landed: controls is new red vs main and not on the known-flaky list; likely the "far walkers re-posed every 2nd frame" change. Owner should fix walktest. |
-| fix-rangefreeze | 07:46 | 4 / 0 | no | none yet (probe branch) | wait for handoff + gate |
-| captest | 00:45 | 2 / 28 | yes | stale | rebase first |
-| pack-looks6 | 02:13 | 5 / 28 | yes | stale | rebase first |
-| the 20 old train candidates (freezefix ... nations20) | 5-6 days | ~114 behind | - | none | stale; ideas mostly landed through other trains; freezefix/ammozone ~2000 ahead, never merge |
-
-taken/* locks with no orch branch: old locks (sweepfixA/B, unstuck, testrange, usvoice, techbldgs, weathergfx...) all point at old main commits, saved nothing.
-Note: origin has ~19,000 branches (gate/*); full `git fetch` takes ~5 min here, so named refs only.
+| branch | verdict |
+|---|---|
+| fix-rangefreeze | LANDED by its owner (same tree my train gated: all green except superfreeze (OB 589 ms stall left, main red too) and smooth-pc (red once on a noisy runner, green on re-run)). |
+| smooth-render2 | NOT landed: merged with rangefreeze, train gate showed superfreeze red + loadfreeze red (new vs main; own gate had loadfreeze red too). Owner: look at loadfreeze. |
+| captest, pack-looks6 | stale (28 behind), rebase first |
+| old candidates (freezefix ... nations20) | stale, ideas landed through other trains |
