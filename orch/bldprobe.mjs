@@ -49,18 +49,15 @@ try {
   await page.evaluate(() => { window.__stopLoop = true; }); await page.waitForTimeout(300);
 
   await page.evaluate(() => { for (let i = 0; i < 3600 && !G.over; i++) simUpdate(1 / 60); });
-  const res = await page.evaluate(() => { const cnt = o => { let n = 0, v = 0; o.traverse(q => { if (q.isMesh) { n++; v += q.geometry.attributes.position.count; } }); return [n, v]; };
-    const by = {}; const sm = window.staticMerge;
-    for (const e of G.ents) { if (!e.isB || e.dead) continue; const k = e.kind + '|' + G.teams[e.team].fac; if (by[k]) continue;
-      window.staticMerge = () => 0; const o0 = makeObj(e); window.staticMerge = sm; const o1 = makeObj(e); by[k] = { before: cnt(o0), after: cnt(o1), parts: Object.keys(o1.userData.parts).join(',') }; }
-    const e0 = G.ents.find(e => e.isB && e.kind === 'hq'); const o = makeObj(e0); const why = {}; const mu = {}; o.traverse(q => { if (!q.isMesh) return; const m = q.material, g = q.geometry; let r = 'ok'; if (Array.isArray(m)) r = 'arr'; else if (m.transparent) r = 'transp'; else if (g.attributes.tangent) r = 'tan'; else if (g.groups && g.groups.length > 1) r = 'groups'; else if (q.renderOrder) r = 'ro'; else if (q.layers.mask !== 1) r = 'layer'; else if (q.userData.base) r = 'base'; else if (q.onBeforeRender !== THREE.Object3D.prototype.onBeforeRender) r = 'obr'; else if (q.isSkinnedMesh) r = 'skin'; else if (g.morphAttributes && Object.keys(g.morphAttributes).length) r = 'morph'; why[r] = (why[r] || 0) + 1; if (!Array.isArray(m)) mu[m.uuid] = (mu[m.uuid] || 0) + 1; });
-    window.staticMerge = () => 0; const o2 = makeObj(e0); window.staticMerge = sm; delete o2.userData.smerged; const made = sm(o2, Object.values(o2.userData.parts)); const vis = []; o2.traverse(q => { if (q.isMesh) { let bl = ''; for (let p = q; p && p !== o2; p = p.parent) { if (!p.visible) bl += 'inv:' + p.type; } vis.push(bl); } });
-    const vv = []; o2.traverse(q => { if (q.isMesh && q.visible) { const m = q.material; vv.push([m.uuid.slice(0, 5), m.transparent ? 'T' : 'O', q.castShadow ? 'S' : '-', q.geometry.attributes.position.count, (m.map ? 'map' : '') + (m.vertexColors ? 'vc' : ''), q.name.slice(0, 14)].join(':')); } });
-    by.WHY3 = { before: [vv.length, 0], after: [0, 0], parts: vv.join(' ') };
-    by.WHY2 = { before: [made, 0], after: [0, 0], parts: 'made=' + made + ' blocked=' + vis.filter(x => x).length + ' ' + [...new Set(vis)].join('/') };
-    by.WHY = { before: [0, 0], after: [0, 0], parts: JSON.stringify(why) + ' mats=' + Object.keys(mu).length + ' smerged=' + o.userData.smerged + ' ' + typeof staticMerge };
+  const res = await page.evaluate(() => { const by = {}; const sm = window.staticMerge;
+    for (const kd of ['heli', 'airlift', 'jet', 'bomber']) for (const fi of [0, 1]) { let st = null; try { st = stats(G.teams[fi].fac, kd); } catch (e) {} if (!st) continue;
+      for (const merged of [0, 1]) { window.staticMerge = merged ? sm : () => 0; let o = null; try { o = makeObj({ id: 900500 + fi, kind: kd, team: fi, isB: false, s: st, x: 100, y: 100, hp: 1, max: 1 }); } catch (e) { by[kd + fi + merged] = { before: [0, 0], after: [0, 0], parts: String(e) }; continue; } window.staticMerge = sm; if (!o) continue;
+        const vv = []; o.traverse(q => { if (q.isMesh) { const m = q.material; vv.push([m.uuid.slice(0, 4), m.transparent ? 'T' : 'O', q.visible ? 'v' : 'h', q.castShadow ? 'S' : '-', q.geometry.attributes.position.count, (m.map ? 'map' : '') + (m.vertexColors ? 'vc' : ''), (q.name || '').slice(0, 10)].join(':')); } });
+        by[kd + ' ' + G.teams[fi].fac + ' merged=' + merged] = { before: [vv.length, 0], after: [0, 0], parts: vv.join(' ') }; } }
+    { const st = stats(G.teams[0].fac, 'airlift'); window.staticMerge = () => 0; const o = makeObj({ id: 900600, kind: 'airlift', team: 0, isB: false, s: st, x: 100, y: 100, hp: 1, max: 1 }); window.staticMerge = sm; const P = o.userData.parts; const bl = P.blades; let nm = 0; bl && bl.traverse(q => { if (q.isMesh) nm++; });
+      by.DBG = { before: [0, 0], parts: 'dom=' + st.dom + ' parts=' + Object.keys(P) + ' bladesGroup=' + (bl && bl.isGroup) + ' meshes=' + nm + ' made=' + (bl && sm(bl, [])) + ' mixers=' + !!o.userData.mixers }; }
     return by; });
-  for (const k in res) console.log(k, 'meshes', res[k].before[0], '->', res[k].after[0], 'verts', res[k].before[1], '->', res[k].after[1], res[k].parts);
+  for (const k in res) console.log(k, 'meshes', res[k].before[0], res[k].parts);
   fs.writeFileSync('/tmp/bld.json', JSON.stringify(res, null, 1));
 } finally { await browser.close(); server.close(); }
 process.exit(0);
