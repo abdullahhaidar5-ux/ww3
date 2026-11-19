@@ -14,4 +14,7 @@ Branch orch/fix-rangefreeze. Problem: gate/superfreeze (orch/rangefreeze.mjs) re
 
 ## Numbers (local, 1x CPU, first spawn of 6 units)
 heli 240 buffers -> 0; bmt 18 -> 0 (per-unit geometry gone: `EVAL` list empty for IR, RS); soldiers' kit variants still make 16-24 buffers the first time a new variant shows (by design, warm-up covers variants 1,2,5).
-Gate: see HISTORY / cigate result in the report.
+Gate: orch/cigate.sh on f7b9885: all green incl. superfreeze and decisions; migrate-down failed once on its known lobby timeout and passed on a failed-job re-run.
+
+## Still open (honest)
+After the fix 8 single-try probe runs of rangefreeze (no retry) still failed 4 times (300-3100 ms, programs 0, JS small). A Chrome trace of such a frame (probe/rf/b) shows the GPU process busy in `SkiaOutputSurfaceImplOnGpu::SwapBuffers` for ~500 ms: the software GL (SwiftShader) executes the frame's queued non-draw GL work (clears, post targets, uploads) at swap, and on a 2-vCPU runner with TurboFan/audio-decode worker tasks it spikes. The gate's own retry (TRIES=2) absorbs it most of the time. Probe branches: probe/rf/a (workflow + 8 runs), probe/rf/b, probe/rf/c (trace shows what runs at the same time as the long swap). Ideas if the gate is still flaky: decode the nation's voice sheets (09-audio.js voRLoad/vohLoad/vosLoad, annClip) during loading instead of at first use; find which late `depth ... uv` shadow variant links (programs=1).
