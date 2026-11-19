@@ -14,3 +14,5 @@ Update (2026-11-19 ~18:00Z): bundle 1 is ON main (ORCH landed it). Branch orch/a
 Update (~20:20Z): navy landed (art-east2) and bundle 1 landed. Bundle 2b = CN drone -> 'mq' (Wing Loong paint), KP drone -> 'tb2' (src/11-models.js droneType + wl), sheet orch/shots/art-east-after-air.jpg, branch orch/art-east4. Jets/helis (Su-27 style, MiG, Mi-24/Mi-8) already real models, left alone. Left: CN/KP distinct tanks (no free model; Type 99/Chonma still T-90/T-62 look) and a close-up score report orch/reports/art-east.md.
 
 Update (2026-11-19 night): bundle 4 = tank turret armour for RU (Kontakt+Shtora), CN (wedge ERA), KP (skirts+DShK) in 11-models kitGeo; branch orch/art-east6; sheet orch/shots/art-east-after-tanks.jpg. Left: ship bows.
+
+Update (restart note answered): CN/KP/RU tank armour landed on main (aae60d3, gate 733 green after one smooth-pc rerun). Audit of arty/jeep/trucks shows no plain boxes (MSTA-style SPG, camo box trucks fine). NOT done: separate IFV/APC slot (no apc kind in East data), BM-21 rocket-truck detail (mlrs extra), ship bows. Aircraft/drones belong to ART AIR.
