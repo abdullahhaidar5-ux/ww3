@@ -1,0 +1,4 @@
+# HANDOFF art-east (branch orch/art-east, 2026-11-19)
+Done (bundle 1, ground, not yet landed): new src/11e-east.js — detailed code-built kits for RU/CN/KP: ATGM carrier (Kornet-style launcher), AA (Pantsir-style twin gun + missile canisters), EW/counter-battery truck (shelter, twin dishes, outriggers), bulldozer (tracks, glazed cab, blade). Shared supply-truck and ammo-truck cargo (all nations) rebuilt: pallets, crates, sacks, tarp roll, stakes / shell racks. Hooks: eastPre/eastKit in modelFor (11-models.js). Audit script orch/artaudit.mjs (from pack-art; env KINDS/CW/CH added). Sheets orch/shots/art-audit-east-*.jpg.
+Left: ground gate (orch/cigate.sh), land bundle 1; ships/boats (lander/minelayer/sweeper tint-only); bundle 2 aircraft+drones; CN/KP distinct tanks (no free model: Type 99/Chonma-ho still T-90/T-62); jeep camo box truck.
+Local smoke is too slow in the sandbox; use cigate.
