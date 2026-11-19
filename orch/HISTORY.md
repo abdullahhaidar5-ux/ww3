@@ -677,3 +677,4 @@ conductor 2026-11-14: train 13 landed — the paused Grand campaign moved into E
 - 2026-11-19 conductor: landed art-east2 — Russian, Chinese and North Korean landing craft, mine-layer and minesweeper now use proper ship hulls (own gate 28/28 green).
 2026-11-19 ART SHIA: each Shia nation's trucks, anti-air, rocket and radar carriers now have their own paint instead of one shared look.
 - 2026-11-19 art-east bundle 2b: China's drones are now pale Wing Loong-style fixed-wing aircraft and North Korea's Bayraktar-style ones (no more black toy quadcopters); Russian Lancet kept; jets and helicopters already use real models.
+- 2026-11-19 ART REGIONAL bundle (tanks): India, Pakistan, Turkey, Japan and South Korea tanks now wear their own turret armour (reactive-armour blocks, Type 10 wedges, K2 weapon station, smoke launchers) instead of sharing one plain look. Try on PC: start a battle as IN or PK, build a tank and zoom close.
