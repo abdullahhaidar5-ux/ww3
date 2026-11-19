@@ -1948,6 +1948,13 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
         const bx=cx-L*.24,y=tt.y-u*.35,ww=u*1.3,dd=W*.6,col='#3c3e35';for(const yy of [y,y+u*.38]){B.bar(bx-ww/2,yy,-dd/2,bx+ww/2,yy,-dd/2,u*.03,col);B.bar(bx-ww/2,yy,dd/2,bx+ww/2,yy,dd/2,u*.03,col);B.bar(bx-ww/2,yy,-dd/2,bx-ww/2,yy,dd/2,u*.03,col);}
         for(let i=0;i<4;i++){const z=(i-1.5)*dd/3.2;B.bar(bx-ww/2,y,z,bx-ww/2,y+u*.38,z,u*.03,col);}bag(bx,y,-dd*.2,'#6b6650');bag(bx+u*.1,y,dd*.18,'#57563f');roll(bx-u*.3,y+u*.2,0,dd*.8,'#4e5040');
         const fx=cx+L*.14,fy=tt.y-u*.35,s=sideAt(fx,fy);if(s){const n=9;for(let i=0;i<n;i++){const z=(i-(n-1)/2)*(s*1.6/n);for(let j=0;j<4;j++)B.ell(u*.06,u*.06,u*.06,fx,fy-j*u*.13,z,'#2a2b28');}}}
+      if(tank&&tt&&(fac==='IN'||fac==='PK'||fac==='JP'||fac==='KR'||fac==='TR')){// art-regional: each nation's tank gets its own turret armour so the same hull reads as Arjun / Al-Khalid / Type 10 / K2 / Altay
+        const ts=sideAt(cx+L*.04,tt.y-u*.3)||W*.3,ty0=tt.y-u*.35,eraC=fac==='PK'?'#4b5036':fac==='TR'?'#5a5e46':'#444a35',eraD='#2b2e25';
+        if(fac==='IN'||fac==='PK'||fac==='TR'){for(let i=0;i<4;i++)for(const sg of [1,-1])for(let j=0;j<2;j++){B.rbox(u*.34,u*.34,u*.09,cx+L*.02+i*u*.4,ty0+j*u*.38,sg*(ts+u*.05),eraC);B.rbox(u*.3,u*.04,u*.1,cx+L*.02+i*u*.4,ty0+j*u*.38+u*.19,sg*(ts+u*.05),eraD);}}
+        if(fac==='IN'||fac==='PK'){const fx=cx+L*.1,fz=ts*.8;for(let i=0;i<5;i++)for(let j=0;j<2;j++)B.rbox(u*.1,u*.36,u*.34,fx+j*u*.02,ty0+u*.2,(i-2)*fz*.4,eraC,0,0,.05);}
+        if(fac==='JP'){for(const sg of [1,-1]){B.rbox(u*1.1,u*.62,u*.14,cx+L*.07,ty0+u*.3,sg*(ts-u*.02),'#4a5040',0,-sg*.35,0);B.rbox(u*.9,u*.5,u*.12,cx-L*.03,ty0+u*.28,sg*(ts+u*.1),'#434a37');}}
+        if(fac==='KR'){const x=cx-L*.1,y=tt.y;B.cyl(u*.16,u*.2,u*.16,8,x,y+u*.08,W*.14,'#3b3f38');B.rbox(u*.34,u*.22,u*.26,x,y+u*.28,W*.14,'#454a3f');B.bar(x+u*.15,y+u*.3,W*.14,x+u*.9,y+u*.3,W*.14,u*.04,'#1c1d1b',5);for(const sg of [1,-1])B.rbox(u*.4,u*.3,u*.07,cx+L*.1,ty0+u*.3,sg*(ts+u*.03),'#3d4235');}
+        if(fac!=='KR')smokeL(4);}
       if(fac==='TR'&&tank&&frontD)for(let i=0;i<5;i++)B.rbox(u*.16,u*.08,u*.62,frontD.x-u*.25,frontD.y+u*.05,(i-2)*u*.33,'#2c2d2a',0,0,.2);
       if((fac==='EU'||fac==='FR'||fac==='DE'||fac==='CN'||fac==='KR')&&tank)smokeL(fac==='CN'?4:fac==='KR'?3:4);
       if((fac==='SA'||fac==='AE'||fac==='IN')&&rearD){bag(minx+L*.16,rearD.y,W*.2,'#8a7d5c');bag(minx+L*.16,rearD.y,-W*.18,'#77704f');if(fac!=='IN')for(let i=0;i<2;i++)jerry(minx+L*.08,rearD.y,(i-.5)*u*.22,'#7a7155');}
