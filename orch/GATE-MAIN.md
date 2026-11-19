@@ -79,3 +79,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-19 04:16Z eb208aa8 **RED** (28 gates) failing: mpsync,superfreeze — smooth-render: report, handoff, HISTORY
 - 2026-11-19 06:55Z eb208aa8 **RED** (28 gates) failing: superfreeze — smooth-render: report, handoff, HISTORY
 - 2026-11-19 09:57Z 81a08221 **GREEN** (28 gates) — handoff: gate result and what is still open
+- 2026-11-19 14:49Z 7be70a46 **RED** (28 gates) failing: decisions — smooth-render2: land aircraft-only merge; report, handoff, HISTORY
