@@ -9,3 +9,8 @@ Item 2 (soldiers up close) - started, NOT landed
 - Findings: IR jackets are plain dark (camo only on the trousers) - the biggest visible win is a camo pattern on the jacket + chest rig/pouches and a face/skin pass. The merged soldier has one baked vertex-colour per vertex and one uniform texture, so a camo overlay needs a per-region mask (e.g. vertex colour alpha or a bone-id test in spyPaint-style code in mergeSoldier). RS/DW/RV not started.
 
 Try (2 min, PC) once a look change lands: Battle as IR, zoom all the way in on a rifleman; the camo should look crisper.
+
+## Update (restart run, 2026-11-19 evening)
+- Rebuilt on current main: WIP chest rig/radio/straps (db86ffec6) + cloth grain shader, branch orch/pack-units-r5 (orch/pack-units is diverged from others' work, not force-pushed). Gate run 44628555740 on its head: 24 green, gate/superfreeze red twice (OB: one 5.9 s frame, "wave"/decodeAudioData audio warm-up lines; the same stall pack-looks2 saw). NOT landed.
+- Not done: helmet cover/goggles, per-nation camo textures (IR/RS/DW/RV), face/skin shading.
+- Next: find whether the OB stall is from this change (rerun the gate on origin/main head to compare) before landing.
