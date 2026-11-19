@@ -20489,7 +20489,7 @@ function postApply(m,ud,e,k,dt,tg,moving,fire){const W=ud.legs;if(!W||!W.uL)retu
 // Iran and the two Shia militias fly Shahed-style deltas (stencilled Shahed / Ababil / Qasef), Turkey a Bayraktar-style
 // light-grey drone, the US and Israel an MQ-9 / Hermes-style grey drone, Russia a Lancet-style dark loitering munition,
 // China and Korea a bigger quadcopter, India/Japan/UK/France an MQ-9-style grey drone, Saudi/UAE/Egypt a pale Wing Loong-style one, Pakistan and Ukraine a TB2; everyone else taped-up FPV racers.
-function droneType(fac){return fac==='IR'||fac==='RS'||fac==='DW'?'delta':fac==='TR'||fac==='PK'||fac==='UA'?'tb2':fac==='US'||fac==='IL'||fac==='GB'||fac==='FR'||fac==='IN'||fac==='JP'||fac==='SA'||fac==='AE'||fac==='EG'?'mq':fac==='RU'?'lancet':fac==='CN'||fac==='KR'?'kargu':'fpv';}
+function droneType(fac){return fac==='IR'||fac==='RS'||fac==='DW'?'delta':fac==='TR'||fac==='PK'||fac==='UA'||fac==='KP'?'tb2':fac==='US'||fac==='IL'||fac==='GB'||fac==='FR'||fac==='IN'||fac==='JP'||fac==='SA'||fac==='AE'||fac==='EG'||fac==='CN'?'mq':fac==='RU'?'lancet':fac==='KR'?'kargu':'fpv';}
 // Drones are built once per nation and then cloned (shared geometry and materials), so a swarm of dozens appears
 // without a hitch.
 const DPROTO={};
@@ -20516,7 +20516,7 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
   else if(ty==='tb2'||ty==='mq'){
     // Bayraktar TB2 (light grey, inverted-V tail) / MQ-9-Hermes style (darker grey, bulbous nose, Y tail): long straight
     // wing, slim fuselage, pusher propeller, sensor ball under the nose
-    const mq=ty==='mq',wl=mq&&(T.fac==='SA'||T.fac==='AE'||T.fac==='EG'),sk=wl?'#cfd0cb':mq?'#8b9196':'#b9bdbf',sk2=wl?'#bcbdb7':mq?'#7a8085':'#a7abad';
+    const mq=ty==='mq',wl=mq&&(T.fac==='SA'||T.fac==='AE'||T.fac==='EG'||T.fac==='CN'),sk=wl?'#cfd0cb':mq?'#8b9196':'#b9bdbf',sk2=wl?'#bcbdb7':mq?'#7a8085':'#a7abad';
     B.cyl(mq?1.2:.95,mq?1.2:.95,9,12,0,0,0,sk,0,0,Math.PI/2);B.sph(mq?1.2:.95,4.4,mq?.15:0,0,sk,mq?1.7:1.9,mq?1.15:1,1);B.cyl(mq?1.2:.95,.35,3.4,10,-6.2,0,0,sk2,0,0,Math.PI/2);B.sph(.62,3.3,-1.15,0,'#2a2c2d');
     const wing=new THREE.Shape();wing.moveTo(1.2,0);wing.lineTo(.9,11);wing.lineTo(-.4,11);wing.lineTo(-.7,0);wing.lineTo(-.4,-11);wing.lineTo(.9,-11);wing.closePath();
     const wg=new THREE.ExtrudeGeometry(wing,{depth:.28,bevelEnabled:true,bevelThickness:.08,bevelSize:.08,bevelSegments:1});wg.rotateX(Math.PI/2);B._p.push({g:wg,m:new THREE.Matrix4().makeTranslation(.3,mq?.25:.75,0),c:lin(sk)});
