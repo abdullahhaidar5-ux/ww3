@@ -10774,7 +10774,7 @@ function makeObj(e){mats();if(e.kind==='cleric')return leaderObj(e);if(!e.isB&&e
     if(!mb&&(k==='airfield'||k==='uplink'))bldModel(eS,o,T);
     if(k==='garrison'){const c=civAtXYAny(e.x,e.y),h=c?c.h:14;const GP=garParts(T.color),fg=new THREE.Group();const pole=new THREE.Mesh(GP.pole,GP.mPole);pole.position.y=8;fg.add(pole);const fl=new THREE.Mesh(GP.cloth,GP.mCloth);fl.position.set(5,13,0);fl.userData.base=GP.base;fg.add(fl);fg.position.y=h;o.add(fg);P.flag=fl;}
     decorateBld(eS,o);
-    const sw=eS.size+6,sh=BH[k]/BSC+6,sc=new THREE.LineSegments(scafGeo(sw,sh),scafMat());sc.position.y=sh/2;o.add(sc);P.scaf=sc;if(k!=='garrison'&&typeof staticMerge==='function')staticMerge(o,Object.values(P));}
+    const sw=eS.size+6,sh=BH[k]/BSC+6,sc=new THREE.LineSegments(scafGeo(sw,sh),scafMat());sc.position.y=sh/2;o.add(sc);P.scaf=sc;}
   else{const c=e.s.cls;o.scale.setScalar(c==='ship'?1.15:['inf','at','hacker','hero'].includes(c)?1.7:1.3);
     if(['inf','at','hacker','hero'].includes(c))add('body');
     else if(c==='tank'||c==='arty'||c==='aa'){add('hull');const t=add('turret');t.position.set(c==='arty'&&!e.s.rocket?-4:0,10,0);}
