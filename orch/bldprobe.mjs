@@ -32,7 +32,7 @@ try {
   const ctx = await browser.newContext({ viewport: { width: 640, height: 360 } }); await guardContext(ctx);
   const page = await ctx.newPage();
   await page.route('**/*', r => r.request().url().startsWith(ORIGIN) || r.request().url().startsWith('data:') || r.request().url().startsWith('blob:') ? r.continue() : r.abort());
-  const errs = []; page.on('pageerror', e => errs.push(String(e.message || e).slice(0, 200))); page.on('crash', () => errs.push('PAGE CRASHED'));
+  page.on('console', m => { if (/staticMerge/.test(m.text())) console.log('PAGE', m.text().slice(0, 300)); }); const errs = []; page.on('pageerror', e => errs.push(String(e.message || e).slice(0, 200))); page.on('crash', () => errs.push('PAGE CRASHED'));
   await page.addInitScript(() => { let z = 12345; Math.random = () => { z = (z + 0x6D2B79F5) | 0; let t = Math.imul(z ^ (z >>> 15), 1 | z); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; });
   await page.addInitScript(() => { try { localStorage.setItem('ww3_tut', '1'); } catch (e) {} });
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'load', timeout: 120000 });
@@ -49,13 +49,18 @@ try {
   await page.evaluate(() => { window.__stopLoop = true; }); await page.waitForTimeout(300);
 
   await page.evaluate(() => { for (let i = 0; i < 3600 && !G.over; i++) simUpdate(1 / 60); });
-  const res = await page.evaluate(() => { centerOn(MAPW / 2, MAPH / 2, true); window.vis = () => true; for (let i = 0; i < 3; i++) { for (const e of G.ents) if (!e.isB) { e.ox = e.x; e.oy = e.y; } simUpdate(1/60); renderFrame(1/60); }
-    const by = {}; for (const e of G.ents) { if (!e.isB || e.dead) continue; const ob = OBJ.get(e.id); if (!ob) continue; const k = e.kind + '|' + G.teams[e.team].fac; if (by[k]) continue;
-      const rows = []; ob.traverse(q => { let vv = true; for (let p = q; p; p = p.parent) if (!p.visible) vv = false; if (q.isMesh && vv) { const ms = Array.isArray(q.material) ? q.material : [q.material]; rows.push([q.name || '', q.parent && q.parent.name || '', q.geometry.attributes.position.count, ms.map(m => (m.map ? 'MAP' : '') + (m.vertexColors ? 'VC' : '') + (m.transparent ? 'T' : '') + (m.userData && m.userData.wx ? 'wx' : '')).join('+'), q.castShadow ? 1 : 0, q.isInstancedMesh ? 'I' : '', q.visible ? 1 : 0, ms[0].uuid.slice(0, 4), q.userData.dmg ? 1 : 0]); } });
-      by[k] = rows; }
-    const o = {}; for (const k in by) { const r = by[k]; const mats = new Set(r.map(x => x[7])); o[k] = { meshes: r.length, mats: mats.size, verts: r.reduce((a, x) => a + x[2], 0), sample: r.slice(0, 40).map(x => x.join(',')).join(' ; ') }; }
-    return o; });
-  for (const k in res) console.log(k, res[k].meshes, 'meshes', res[k].mats, 'mats', res[k].verts, 'verts');
+  const res = await page.evaluate(() => { const cnt = o => { let n = 0, v = 0; o.traverse(q => { if (q.isMesh) { n++; v += q.geometry.attributes.position.count; } }); return [n, v]; };
+    const by = {}; const sm = window.staticMerge;
+    for (const e of G.ents) { if (!e.isB || e.dead) continue; const k = e.kind + '|' + G.teams[e.team].fac; if (by[k]) continue;
+      window.staticMerge = () => 0; const o0 = makeObj(e); window.staticMerge = sm; const o1 = makeObj(e); by[k] = { before: cnt(o0), after: cnt(o1), parts: Object.keys(o1.userData.parts).join(',') }; }
+    const e0 = G.ents.find(e => e.isB && e.kind === 'hq'); const o = makeObj(e0); const why = {}; const mu = {}; o.traverse(q => { if (!q.isMesh) return; const m = q.material, g = q.geometry; let r = 'ok'; if (Array.isArray(m)) r = 'arr'; else if (m.transparent) r = 'transp'; else if (g.attributes.tangent) r = 'tan'; else if (g.groups && g.groups.length > 1) r = 'groups'; else if (q.renderOrder) r = 'ro'; else if (q.layers.mask !== 1) r = 'layer'; else if (q.userData.base) r = 'base'; else if (q.onBeforeRender !== THREE.Object3D.prototype.onBeforeRender) r = 'obr'; else if (q.isSkinnedMesh) r = 'skin'; else if (g.morphAttributes && Object.keys(g.morphAttributes).length) r = 'morph'; why[r] = (why[r] || 0) + 1; if (!Array.isArray(m)) mu[m.uuid] = (mu[m.uuid] || 0) + 1; });
+    window.staticMerge = () => 0; const o2 = makeObj(e0); window.staticMerge = sm; delete o2.userData.smerged; const made = sm(o2, Object.values(o2.userData.parts)); const vis = []; o2.traverse(q => { if (q.isMesh) { let bl = ''; for (let p = q; p && p !== o2; p = p.parent) { if (!p.visible) bl += 'inv:' + p.type; } vis.push(bl); } });
+    const vv = []; o2.traverse(q => { if (q.isMesh && q.visible) { const m = q.material; vv.push([m.uuid.slice(0, 5), m.transparent ? 'T' : 'O', q.castShadow ? 'S' : '-', q.geometry.attributes.position.count, (m.map ? 'map' : '') + (m.vertexColors ? 'vc' : ''), q.name.slice(0, 14)].join(':')); } });
+    by.WHY3 = { before: [vv.length, 0], after: [0, 0], parts: vv.join(' ') };
+    by.WHY2 = { before: [made, 0], after: [0, 0], parts: 'made=' + made + ' blocked=' + vis.filter(x => x).length + ' ' + [...new Set(vis)].join('/') };
+    by.WHY = { before: [0, 0], after: [0, 0], parts: JSON.stringify(why) + ' mats=' + Object.keys(mu).length + ' smerged=' + o.userData.smerged + ' ' + typeof staticMerge };
+    return by; });
+  for (const k in res) console.log(k, 'meshes', res[k].before[0], '->', res[k].after[0], 'verts', res[k].before[1], '->', res[k].after[1], res[k].parts);
   fs.writeFileSync('/tmp/bld.json', JSON.stringify(res, null, 1));
 } finally { await browser.close(); server.close(); }
 process.exit(0);

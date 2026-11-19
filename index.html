@@ -10774,7 +10774,7 @@ function makeObj(e){mats();if(e.kind==='cleric')return leaderObj(e);if(!e.isB&&e
     if(!mb&&(k==='airfield'||k==='uplink'))bldModel(eS,o,T);
     if(k==='garrison'){const c=civAtXYAny(e.x,e.y),h=c?c.h:14;const GP=garParts(T.color),fg=new THREE.Group();const pole=new THREE.Mesh(GP.pole,GP.mPole);pole.position.y=8;fg.add(pole);const fl=new THREE.Mesh(GP.cloth,GP.mCloth);fl.position.set(5,13,0);fl.userData.base=GP.base;fg.add(fl);fg.position.y=h;o.add(fg);P.flag=fl;}
     decorateBld(eS,o);
-    const sw=eS.size+6,sh=BH[k]/BSC+6,sc=new THREE.LineSegments(scafGeo(sw,sh),scafMat());sc.position.y=sh/2;o.add(sc);P.scaf=sc;}
+    const sw=eS.size+6,sh=BH[k]/BSC+6,sc=new THREE.LineSegments(scafGeo(sw,sh),scafMat());sc.position.y=sh/2;o.add(sc);P.scaf=sc;if(k!=='garrison'&&typeof staticMerge==='function')staticMerge(o,Object.values(P));}
   else{const c=e.s.cls;o.scale.setScalar(c==='ship'?1.15:['inf','at','hacker','hero'].includes(c)?1.7:1.3);
     if(['inf','at','hacker','hero'].includes(c))add('body');
     else if(c==='tank'||c==='arty'||c==='aa'){add('hull');const t=add('turret');t.position.set(c==='arty'&&!e.s.rocket?-4:0,10,0);}
@@ -20672,6 +20672,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
     let nz=null;{const nk=c.m+'|'+(c.size||0)+'|'+T.fac;nz=JETNZ.get(nk);if(nz===undefined){nz=null;try{if(ok)nz=jetNozzles(o,yaw,bb);}catch(err){}JETNZ.set(nk,nz);}}   /* the nozzle probe (275 ray casts, ~140 ms) runs once per jet model and nation, not for every jet (rangefreeze 2026-11-17) */if(!nz||!nz.length)nz=[{x:tx,y:ty,z:0,r:1.5}];
     const ex=new THREE.Group();ex.name='exhaust';for(const n of nz){const g=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());g.position.set(n.x,n.y,n.z);g.scale.setScalar(n.r);g.userData.r=n.r;g.renderOrder=3;g.frustumCulled=false;ex.add(g);}
     o.add(ex);o.userData.parts.glow=ex;}
+  if(e.s&&e.s.dom==='air'&&!o.userData.mixers&&typeof staticMerge==='function'){const kp=[];for(const k of ['blades','tailR0','tailR','rotor','glow','tring'])if(o.userData.parts[k])kp.push(o.userData.parts[k]);staticMerge(yaw,kp,q=>/rotor|prop|blade/i.test(q.name||''));}
   if(c.extra==='zu23'){const B=Bld(),D='#2a2c28',S='#4f5446';B.box(7,1.6,6,-5,9.6,0,S);B.cyl(1.4,1.6,1.6,10,-5,11,0,D);B.box(4,3.2,4.6,-5,13,0,S);B.box(.4,3,5.4,-3,13.6,0,S);for(const z of [-1.1,1.1]){B.cyl(.32,.32,13,8,1.2,16.2,z,D,0,0,Math.PI/2-.42);B.cyl(.5,.5,1.6,8,-3.2,13.6,z,D,0,0,Math.PI/2-.42);}const g=mesh(B.geo());g.castShadow=true;o.add(g);o.userData.parts.turret=g;}
   if(c.extra==='dshk'){const B=Bld();B.cyl(.5,.6,6,8,-6,9,0,'#2b2d2a');B.box(3,1.6,2.2,-6,12.6,0,'#33352f');B.cyl(.35,.35,9,8,-1.5,13,0,'#1e1f1d',0,0,Math.PI/2);B.box(.4,2.2,2.6,-6.8,13.4,0,'#4a4d45');const g=mesh(B.geo());g.castShadow=true;o.add(g);}
   if(c.extra==='aatruck'){const sp=new THREE.Group();sp.add(mesh(aaGeo(afam(T.fac),apaint(T.fac))));sp.position.set(-7,10.4+(c.m==='m_ural'?4.6:0),0);o.add(sp);o.userData.parts.turret=sp;}
@@ -21002,6 +21003,34 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     for(const sd of [-1,1])for(let i=0;i<3;i++){const sb=propObj('sandbag',-h*.5+i*h*.42,sd*h*.97,0,o);if(sb)sb.position.y=2.4;}
     {const tk=truckKey(T.fac),ct=MODELS.proto[tk]?instModel(tk,{color:'#66694f'},'z',24,1,.7):null;if(ct){ct.position.set(h*.1,0,-h*1.35);ct.rotation.y=Math.PI*.5;ct.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});o.add(ct);B.cyl(.45,.45,5,6,h*.1-3,16,-h*1.35,'#33362e');B.cyl(2.8,.35,.8,14,h*.1-3,19,-h*1.35,'#7b8077',0,0,Math.PI/2*.8);const g=mesh(B.geo());g.castShadow=true;o.add(g);}}}
   return true;}
+/* ---------- Static merge (view only): one mesh per material instead of dozens ----------
+   A modelled building is ~55 meshes and a helicopter ~9, each one a draw call in every pass (depth, shadow, colour). After the object is
+   fully built, every plain mesh below `root` that never moves on its own is baked (its matrix relative to root applied to a copy of its
+   geometry) into one mesh per material + shadow flags. Parts the game animates (`keep`: flag, dish, rotors, crane ...), skinned, instanced,
+   transparent, multi-material, morphed or vertex-animated meshes stay as they are. Same materials, same picture; the merged geometry is the
+   object's own and is freed with it (gpuGc). */
+function staticMerge(root,keep,skip){try{
+  if(!root||root.userData.smerged)return 0;root.userData.smerged=1;root.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(root.matrixWorld).invert();
+  const kp=new Set();for(const k of keep||[])if(k)kp.add(k);const groups=new Map();
+  const blocked=q=>{for(let p=q;p&&p!==root;p=p.parent){if(kp.has(p)||(skip&&skip(p)))return true;if(!p.visible)return true;}return false;};
+  root.traverse(q=>{if(q===root||!q.isMesh||q.isSkinnedMesh||q.isInstancedMesh||!q.visible)return;const m=q.material,g=q.geometry;
+    if(!m||Array.isArray(m)||m.transparent||m.visible===false||!g||!g.attributes||!g.attributes.position||g.morphAttributes&&Object.keys(g.morphAttributes).length||g.attributes.tangent||(g.groups&&g.groups.length>1))return;
+    if(q.renderOrder||q.layers.mask!==1||q.userData.base||q.userData.dmg||q.customDepthMaterial||q.customDistanceMaterial||q.onBeforeRender!==THREE.Object3D.prototype.onBeforeRender)return;
+    if(blocked(q))return;const key=m.uuid+'|'+(q.castShadow?1:0)+(q.receiveShadow?1:0)+'|'+(q.frustumCulled?1:0)+'|'+Object.keys(g.attributes).sort().join(',')+'|'+(m.side);
+    let a=groups.get(key);if(!a)groups.set(key,a={m,cs:q.castShadow,rs:q.receiveShadow,fc:q.frustumCulled,list:[]});a.list.push(q);});
+  let made=0;const M=new THREE.Matrix4(),NM=new THREE.Matrix3(),v=new THREE.Vector3();
+  for(const a of groups.values()){if(a.list.length<2)continue;let nv=0,ni=0;for(const q of a.list){const g=q.geometry;nv+=g.attributes.position.count;ni+=g.index?g.index.count:g.attributes.position.count;}
+    const names=Object.keys(a.list[0].geometry.attributes),out={};for(const n of names){const s=a.list[0].geometry.attributes[n];out[n]=new Float32Array(nv*s.itemSize);}
+    const idx=nv>65535?new Uint32Array(ni):new Uint16Array(ni);let vo=0,io=0,ok=true;
+    for(const q of a.list){const g=q.geometry,P=g.attributes.position,c=P.count;q.updateMatrixWorld(true);M.multiplyMatrices(inv,q.matrixWorld);NM.getNormalMatrix(M);const flip=M.determinant()<0;
+      for(const n of names){const s=g.attributes[n];if(!s||s.itemSize!==a.list[0].geometry.attributes[n].itemSize){ok=false;break;}const o=out[n],is=s.itemSize;
+        if(n==='position'){for(let i=0;i<c;i++){v.set(s.getX(i),s.getY(i),s.getZ(i)).applyMatrix4(M);const k=(vo+i)*3;o[k]=v.x;o[k+1]=v.y;o[k+2]=v.z;}}
+        else if(n==='normal'){for(let i=0;i<c;i++){v.set(s.getX(i),s.getY(i),s.getZ(i)).applyMatrix3(NM).normalize();const k=(vo+i)*3;o[k]=v.x;o[k+1]=v.y;o[k+2]=v.z;}}
+        else{for(let i=0;i<c;i++){const k=(vo+i)*is;o[k]=s.getX(i);if(is>1)o[k+1]=s.getY(i);if(is>2)o[k+2]=s.getZ(i);if(is>3)o[k+3]=s.getW(i);}}}
+      if(!ok)break;const ix=g.index,ic=ix?ix.count:c;for(let i=0;i<ic;i+=3){const i0=ix?ix.getX(i):i,i1=ix?ix.getX(i+1):i+1,i2=ix?ix.getX(i+2):i+2;idx[io++]=vo+i0;idx[io++]=vo+(flip?i2:i1);idx[io++]=vo+(flip?i1:i2);}vo+=c;}
+    if(!ok)continue;const ng=new THREE.BufferGeometry();for(const n of names){const s=a.list[0].geometry.attributes[n];ng.setAttribute(n,new THREE.BufferAttribute(out[n],s.itemSize,false));}ng.setIndex(new THREE.BufferAttribute(idx,1));ng.computeBoundingSphere();ng.computeBoundingBox();
+    const mm=new THREE.Mesh(ng,a.m);mm.castShadow=a.cs;mm.receiveShadow=a.rs;mm.frustumCulled=a.fc;mm.name='smerge';root.add(mm);for(const q of a.list)if(q.parent)q.parent.remove(q);made++;}
+  return made;}catch(err){console.warn('staticMerge',err);return 0;}}
 // Smooth shading for merged, non-indexed foliage: average the face normals of every vertex that shares a position.
 function smoothNorm(g){const P=g.attributes.position,N=g.attributes.normal;if(!N)return;const m=new Map(),key=i=>Math.round(P.getX(i)*20)+','+Math.round(P.getY(i)*20)+','+Math.round(P.getZ(i)*20);
   for(let i=0;i<P.count;i++){const k=key(i);let a=m.get(k);if(!a){a=[0,0,0];m.set(k,a);}a[0]+=N.getX(i);a[1]+=N.getY(i);a[2]+=N.getZ(i);}
