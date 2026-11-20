@@ -8,3 +8,7 @@ Done: Shia add-on detail (ZU-23 AA: ring mount, ammo drums, sight, shield rib; K
 Left: dozer blob; Shahed/quadcopter drone detail; lander/minelayer/sweeper hulls; technical variety; Shia base buildings; before/after sheets (local render too slow).
 Gate note: superfreeze/rangefreeze OB drone-wave stall (500-750 ms frame, no new programs/geo, JS sections small) failed 3x on 04e3ebf; main's 0a0608b failed it once too, 2dc39a0 passed - treated as runner stall, fresh gate run on a new sha.
 Gate 2 (edd9181): rangefreeze/superfreeze red again but stalls hit IR, RS, US too (JS sections tiny, no progs/geo growth) = runner stalls, not Shia art. NOT landed on main. Next run: re-run only gate/superfreeze when runners are quiet, then land via fast-forward to main if green.
+
+## Update 2026-11-20
+Main already has Shahed (other helper), dozer, navy hulls (art-west) - my duplicate Shahed commit dropped. Done here: technical variety RS/DW/OB (x_dshk per nation). Left: Shia base buildings; jeep/recon carrier camo; before/after sheet (local render too slow). Gate: orch/cigate.sh on this commit.
+Try on PC (2 min): Battle as RS, then DW, then OB: zoom on an armed technical - different rear fittings per nation.
