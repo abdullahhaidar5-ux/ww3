@@ -681,3 +681,10 @@ conductor 2026-11-14: train 13 landed — the paused Grand campaign moved into E
 2026-11-19 ART SHIA: Shia anti-air guns, anti-tank launchers and rocket trucks have more detail up close (ammo drums, sights, tripod feet, rear steps).
 - 2026-11-19 art-east: Russian, Chinese and North Korean tanks now each have their own turret armour (T-90 reactive blocks, Type 99 wedge armour, Chonma side skirts and machine gun).
 - 2026-11-19 pack-units (soldiers up close, 1): infantry now carry a chest rig with magazine pouches and a grenade, a radio with antenna on the pack and shoulder/helmet straps, so riflemen look more kitted-out when you zoom in (view only, merged into the one soldier shape, no extra draws).
+- 2026-11-19 Regional art: South Korea's Kargu-style attack quadcopter now has a ribbed body, warhead nose, camera ball, skids and motor caps up close.
+- 2026-11-20 art-west: West landing craft, minelayers and minesweepers now have a proper stepped hull with ramp, bridge and gear instead of a tinted boat.
+- 2026-11-20 Regional art: India, Japan, Korea, Pakistan, Saudi, UAE, Turkey and Egypt anti-aircraft trucks, electronic-warfare trucks and bulldozers now get the detailed kits in their own paint colours.
+- 2026-11-20 AI: Normal-difficulty China and Russia now pick their Barracks troops with the smart counter-pick (fewer wasted anti-tank soldiers and medics); in the 22-nation test their win rates rose from about 25% to about 40%.
+- 2026-11-19 ART AIR bundle 1 (drones): Shahed-style, Bayraktar/MQ-9-style and Lancet drones are rebuilt with smooth fuselages, tapered rounded wings, shaped tails, sensor balls, landing gear, missiles under MQ-9 wings and real propeller blades.
+- 2026-11-20 ORCH 2: Test range waves no longer stutter on the first drone/EW wave: radio, shout and announcer sounds and engine loops are prepared when the battle starts instead of on first use (fix-superfreeze, gate 28/28).
+- 2026-11-20 ART WEST bundle 3 (tanks): US Abrams gets reactive tiles and a loader gun, Israeli Merkava gets hull skirts, British Challenger gets bar armour and smoke launchers, French Leclerc gets modular cheek armour (view only).
