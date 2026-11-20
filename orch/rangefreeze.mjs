@@ -83,7 +83,9 @@ for (const fac of FACS) for (let att = 0; att < +(E.TRIES || 2); att++) {
   let bcdp = null, trEv = [], trDone = null; if (E.TRACE) { bcdp = await browser.newBrowserCDPSession(); bcdp.on('Tracing.dataCollected', d => { for (const ev of d.value) trEv.push(ev); }); trDone = new Promise(r => bcdp.once('Tracing.tracingComplete', r));
     await bcdp.send('Tracing.start', { traceConfig: { includedCategories: ['toplevel', 'gpu', 'v8.gc', 'devtools.timeline', 'disabled-by-default-gpu.service', 'disabled-by-default-gpu.decoder', 'gpu.angle', 'disabled-by-default-gpu.angle', 'blink.user_timing', '__metadata'], recordMode: 'recordContinuously' }, transferMode: 'ReportEvents' });
     await page.evaluate(() => { window.__tr0 = performance.timeOrigin; }); }
-  const kinds = await page.evaluate(() => allUnits(G.teams[ME].fac).filter((k, i, a) => a.indexOf(k) === i && BASE[k]));
+  if (E.PRE) await page.evaluate(E.PRE); // PRE='js' runs once after the quiet stretch, before the waves (diagnosis: switch one view effect off)
+  let kinds = await page.evaluate(() => allUnits(G.teams[ME].fac).filter((k, i, a) => a.indexOf(k) === i && BASE[k]));
+  if (E.KINDS) kinds = E.KINDS.split(',').filter(k => kinds.includes(k)); if (E.SKIP) kinds = kinds.filter(k => !E.SKIP.split(',').includes(k)); // KINDS=a,b only those waves; SKIP=ew leaves them out (diagnosis)
   say('waves: ' + kinds.join(' '));
   for (const k of kinds) {
     await page.evaluate(k => { window.__ph = 'wave ' + k; const T = G.teams[ME], s = stats(T.fac, k), hq = G.ents.find(e => e.team === ME && e.kind === 'hq') || { x: BASES[0][0], y: BASES[0][1] };
