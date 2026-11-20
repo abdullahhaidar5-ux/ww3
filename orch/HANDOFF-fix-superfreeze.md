@@ -26,3 +26,4 @@ Branch orch/fix-superfreeze (diagnostic tooling only: orch/rangefreeze.mjs). Pro
 - Not fixed: late MeshDepthMaterial link for Apache glass (1 program, within PROGMAX 1) - only if probes still show stalls.
 - Probe: probe/sf/d (rangefreeze US,OB,RS x6).
 - Probe e (US,OB, ew-wave kinds only, 16 runs each): base 4 runs >300 ms (max 3371), noview (ewView=null) 3, solid (setLineDash no-op) 0. Dashed EW ring (src/08h-modern.js, animated lineDashOffset on a big polygon) is the suspect; now drawn as plain short lines (dashPoly). Guard added. Probe f = US,OB,RS x8 full waves on this commit; compare with probe d (RS 3/5 failed).
+- Probe g (OB,RS, 20 runs/variant, EW kinds): base 7 fails (>300 ms over quiet), nofill 3, nostroke 0. So it is the EW ring in src/08h-modern.js: its outline runs far off-screen when zoomed. Fix: ring clipped to the screen (clipPolyRect for the fill, dashPoly with a rectangle for the dashes). Probe h verifies; then cigate + land.
