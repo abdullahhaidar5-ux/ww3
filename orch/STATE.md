@@ -1,18 +1,20 @@
-# STATE 2026-11-20 04:00 UTC (conductor)
-main = 6e9f89844 (Regional art kits, 02:56 UTC). No train/* newer than 7 h (newest 20261119-2100, not merged). No train built, nothing landed by the conductor this run.
-Why: git fetch in this sandbox takes ~8 min and smoke cannot run here, so a train would not finish; every active helper lands its own work on its own gate. The old queue (freezefix..nations20) is stale (branches gone) = parked.
+# STATE 2026-11-20 05:00 UTC (conductor)
+main = a3540c1 (art-air drone art + handoffs, 04:46 UTC). Newest train/* is 20261119-2100 (7 h old, not merged); no other conductor running.
+No train built, nothing landed by the conductor this run. Why: the old queue (freezefix..nations20) is stale - onegame/nations20 etc. are far behind main and parked; the active branches below land themselves on their own gate, and the branch tips have no gate statuses of their own yet (a gate/<sha> run of the exact tip is needed before a train).
 
 | branch | last push | ahead | note |
 |---|---|---|---|
-| orch/art-east8 | 4 min | 1 | new, working |
-| orch/trailer | 11 min | 6 | trailer cuts, handoff present; not for main |
-| orch/art-air | 12 min | 3 | drone art; own gate a8b828d (look at statuses on gate/a8b828dde3) |
-| orch/pack-systems | 36 min | 5 | building merge + cap test; handoff present; helper lands itself |
-| orch/fix-superfreeze | 80 min | 3 | working on the freeze gate itself (GLN trace); handoff present |
-| orch/scale | 2 h | 2 | vehicles drawn bigger; gate 407367f: superfreeze red only (known runner stall) |
-| orch/art-east | 2 h | 7 | rebased, gate rerun queued per handoff |
-| orch/pack-units | 2 h | 8 | camo plan handoff, mostly docs |
-| older art-*, pack-units-r*, conductor-state-* | hours | - | handoff/state copies |
+| orch/art-air | 04:46 | 1 | drone art, already on main |
+| orch/trailer-clips | 04:43 | 5 | trailer cuts, not for main |
+| orch/trailer | 04:34 | 9 | not for main |
+| orch/scale | 04:25 | 2 | vehicles drawn bigger; no own gate on tip |
+| orch/fix-superfreeze | 04:07 | 5 | fixing the freeze gate |
+| orch/pack-systems | 04:03 | 6 | handoff present; lands itself |
+| orch/pack-units-b | 04:02 | 2 | no gate on tip |
+| orch/art-west-n | 03:54 | 1 | gate/decisions FAILED on its tip - owner to fix |
+| orch/art-east8 | 03:50 | 1 | working |
+| orch/art-east | 02:14 | 7 | rebased, gate rerun pending |
+| orch/pack-units | 02:17 | 8 | mostly docs |
 
-taken/* locks: 101 on origin, none new in the last 90 min worth flagging; old ones (days) are leftovers.
-Known-red on every run: superfreeze / rangefreeze / loadfreeze (runner stalls), fix-superfreeze is on it.
+taken/* locks: newest taken/pack-polish2 (11-18 19:08); none new in the last 90 min; older ones are leftovers. Never-land / stale branches (onegame, nations20, camphud...): parked.
+Known-red on every run: superfreeze / rangefreeze / loadfreeze (runner stalls).
