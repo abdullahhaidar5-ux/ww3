@@ -35,13 +35,16 @@ await page.evaluate(() => {
   window.__stopLoop = true;
   try { initAudio(); AU.musicOn = false; AU.sfxOn = false; AU.voiceOn = false; applyAudio(); } catch (e) {}
   const s = document.createElement('style'); s.textContent = '#tstrip,#qpow,.toast{display:none!important}'; document.head.appendChild(s);
+  try { window.supplyWanted = () => false; if (typeof LGU !== 'undefined') LGU.on = false; } catch (e) {}
   const TR = window.TR = { fc: null, shk: 0, ev: [], f: 0, A: {} };
   const orig = placeCam;
   window.placeCam = function () {
     orig();
+    try { if (typeof SELR !== 'undefined' && SELR.m) SELR.m.visible = false; if (typeof ORDM !== 'undefined' && ORDM.m) ORDM.m.visible = false; if (!TR.rg || TR.rgN !== SCN.children.length) { TR.rgN = SCN.children.length; TR.rg = []; SCN.traverse(o => { if (o.isMesh && /^decals_ring/.test(o.name || '')) TR.rg.push(o); }); } for (const o of TR.rg) o.visible = false; } catch (e) {}
     const f = TR.fc; if (!f) return;
     let sx = 0, sy = 0, sz = 0; if (TR.shk > .05) { sx = (Math.random() - .5) * TR.shk; sy = (Math.random() - .5) * TR.shk; sz = (Math.random() - .5) * TR.shk; }
     const py = Math.max(f.p[1], groundH(f.p[0], f.p[2]) + 4);
+    if (CAM.near > 3) { CAM.near = 3; CAM.updateProjectionMatrix(); }
     CAM.position.set(f.p[0] + sx, py + sy, f.p[2] + sz); CAM.lookAt(f.l[0] + sx * .6, f.l[1] + sy * .6, f.l[2] + sz * .6);
     if (f.fov && CAM.fov !== f.fov) { CAM.fov = f.fov; CAM.updateProjectionMatrix(); }
     CAM.updateMatrixWorld(); if (window.SKY) SKY.position.copy(CAM.position);
