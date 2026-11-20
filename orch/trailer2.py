@@ -28,7 +28,7 @@ SFX = json.load(open(os.path.join(ROOT, 'sfx/manifest.json')))['clips']
 def run(c):
     r = subprocess.run(c, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if r.returncode: print(' '.join(c)[:600]); print(r.stderr[-1500:]); sys.exit(1)
-ENC = ['-c:v', 'libx264', '-preset', 'medium', '-crf', '17', '-pix_fmt', 'yuv420p', '-r', '30', '-g', '30', '-an']
+ENC = ['-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-maxrate', '4000k', '-bufsize', '8000k', '-pix_fmt', 'yuv420p', '-r', '30', '-g', '30', '-an']
 def esc(t): return t.replace(':', '\\:').replace("'", '')
 def shot(i, spec):
     name, ss, beats, title, flash, zoom, _ = spec; d = beats * B; f = os.path.join(CL, name + '.mp4')
@@ -36,20 +36,21 @@ def shot(i, spec):
     n = int(round(d * 30)); out = os.path.join(WK, f's{i:02d}.mp4')
     vf = [f'scale=1920:1080,zoompan=z=\'1+{zoom-1}*on/{n}\':d=1:x=\'iw/2-(iw/zoom/2)\':y=\'ih/2-(ih/zoom/2)\':s=1920x1080:fps=30' if zoom != 1 else 'scale=1920:1080',
           'eq=contrast=1.12:saturation=1.18:gamma=0.95', 'colorbalance=rs=.05:gs=.01:bs=-.06:rm=.04:bm=-.04:rh=.05:bh=-.05',
-          'vignette=PI/5', 'noise=alls=7:allf=t', 'crop=1920:804:0:138', 'pad=1920:1080:0:138:black']
+          'vignette=PI/5', 'noise=alls=4:allf=t', 'crop=1920:804:0:138', 'pad=1920:1080:0:138:black']
     if flash: vf.append('fade=t=in:st=0:d=0.13:color=white')
     if title:
         big = title == 'WORLD WAR 3'; fs = 190 if big else 92
         y = '(h-text_h)/2' if big else 'h-330'
         vf.append(f"drawtext=fontfile={ANTON}:text='{esc(title)}':fontsize={fs}:fontcolor=white:borderw=3:bordercolor=black@0.6:shadowx=4:shadowy=4:x=(w-text_w)/2:y={y}:alpha='if(lt(t,0.15),t/0.15,if(gt(t,{d-0.2}),({d}-t)/0.2,1))'")
     vf.append('fade=t=out:st=%.2f:d=0.08:color=black' % (d - .08) if False else 'null')
+    if os.path.exists(out) and os.environ.get('KEEP'): return out
     run(['ffmpeg', '-nostdin', '-loglevel', 'error', '-y', '-ss', str(ss), '-i', f, '-t', str(d), '-vf', ','.join(vf)] + ENC + [out]); return out
 def endcard(out, d=6.0):
     cm = 'Music: "Act of War" by Alexandr Zhelanov (opengameart.org) - CC-BY 3.0'
     vf = (f"drawtext=fontfile={ANTON}:text='WORLD WAR 3':fontsize=170:fontcolor=white:x=(w-text_w)/2:y=330,"
           f"drawtext=fontfile={OSW}:text='FREE IN YOUR BROWSER':fontsize=54:fontcolor=0xd8b25a:x=(w-text_w)/2:y=560,"
           f"drawtext=fontfile={OSW}:text='abdullahhaidar5-ux.github.io/ww3':fontsize=60:fontcolor=white:x=(w-text_w)/2:y=650,"
-          f"drawtext=fontfile={OSW}:text='{esc(cm)}':fontsize=28:fontcolor=0xaaaaaa:x=(w-text_w)/2:y=960,fade=t=in:st=0:d=0.4,fade=t=out:st={d-.5}:d=.5,noise=alls=5:allf=t")
+          f"drawtext=fontfile={OSW}:text='{esc(cm)}':fontsize=28:fontcolor=0xaaaaaa:x=(w-text_w)/2:y=960,fade=t=in:st=0:d=0.4,fade=t=out:st={d-0.5}:d=0.5,noise=alls=5:allf=t")
     run(['ffmpeg', '-nostdin', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', f'color=c=0x0b0d0c:s=1920x1080:r=30:d={d}', '-vf', vf] + ENC + [out])
 parts, sfx, t = [], [], 0.0
 for i, s in enumerate(SHOTS + [FIN]):
