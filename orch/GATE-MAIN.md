@@ -97,3 +97,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-20 06:04Z a3540c1d **RED** (28 gates) failing: cfclient — HANDOFF art-air: run 2 status
 - 2026-11-20 07:41Z db5bb4ab **GREEN** (28 gates) — Land superfreeze audio fix (decode radio/shout/announcer sheets at bat
 - 2026-11-20 08:37Z 59b57988 **RED** (28 gates) failing: superfreeze — Shia art: armed technicals differ per nation (RS, DW, OB) up close
+- 2026-11-20 09:20Z b86a73e3 **GREEN** (28 gates) — West art bundle 4: Humvee/Ozelot scout jeeps, per-nation howitzer pain
