@@ -1280,11 +1280,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
   g.paused=!!g.ldHold;last=performance.now();g.acc=0;qualReset();try{applyQual();}catch(e){}loadHide();
   if(!g.ldHold)pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
-  setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}try{vohLoad(g.teams[ME].fac);}catch(_){}
-    /* the radio-reply and shout sheets decode now, not at the first order/wave (decodeAudioData bursts on a worker stalled the first big wave in the Test range) */
-    try{voRLoad(g.teams[ME].fac);}catch(_){}try{if(typeof vosLoad==='function')vosLoad(g.teams[ME].fac);}catch(_){}
-    /* the engine loops (tank, truck, heli, jet) are fetched and decoded now at zero volume, not when the first tank or aircraft shows up */
-    let wt=0;const warm=()=>{if(G!==g||++wt>40)return;try{if(!sfxEnsure()||SFX.st!=='ok'){setTimeout(warm,500);return;}for(const k of ['tank','truck','heli','jet','rumble','wind'])envLoop(k,.01);if(typeof annWarm==='function')annWarm();}catch(_){}};setTimeout(warm,1500);},0);}
+  setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}try{vohLoad(g.teams[ME].fac);}catch(_){}},0);}
 function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({battle:1,w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length),pc:pcClean(skPc(facs.length),facs.length)});G.teams.forEach((T,i)=>{if(T.ai)T.ai=mkAI(Math.max(0,Math.min(3,setup.d|0))+10*persCode((setup.pers||[])[i]));});}finally{TERR_DEFER=false;}afterStart();}
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 /* Test range (Abdullah 2026-11-13 19:59 "Why can't I choose nations in test range"): the nations come from the Test range window (src/14-menu.js, screen t-range); the old auto-pick is gone. */

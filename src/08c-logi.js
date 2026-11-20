@@ -65,9 +65,7 @@ function battleBanner(){if(!G||!G.battle)return;let b=$('cqBn');if(!b){b=documen
   const tm=x=>Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0');
   for(const T of G.teams){if(T.reb||T.out||!T.sup)continue;const sec=strikeSecs(T);if(sec<0)continue;const mine=ally(T.id,ME);
     h+=`<div style="font-size:12px;margin-top:2px;color:${mine?'#bfe8c4':'#ffb4a8'}">${T.F.name} ${UPLINK[T.fac]?UPLINK[T.fac][0]:'missile strike'}: ${sec<=0.5?'READY':'ready in '+tm(sec)}</div>`;}
-  if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;
-    /* the weather/time chip (DUSK, NIGHT, rain...) sits under this banner instead of on top of it (2026-11-19: 'DUSK' was drawn over 'BATTLE'); measured only when the banner text changes */
-    const wx=$('wxchip');if(wx){wx.style.top=(innerWidth>760&&innerHeight>520)?(42+b.offsetHeight+4)+'px':'';}}}
+  if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
 function lgUiInit(){if(LGU.btn||typeof document==='undefined')return;const b=document.createElement('button');b.id='lgBtn';b.textContent='Supply lines (L)';b.title='Show or hide the supply lines on the ground: green = yours (units on them refill ammo), red = the enemy\'s, gray = nobody\'s, dashed = cut off by a crater, a blown bridge or a checkpoint. L key.';
   b.style.cssText='position:fixed;right:8px;bottom:222px;z-index:55;padding:5px 9px;font:600 12px system-ui,sans-serif;color:#e8f2e8;background:rgba(10,16,12,.86);border:1px solid #4a6a52;border-radius:6px;cursor:pointer;display:none';
   b.onclick=()=>lgToggle();document.body.appendChild(b);LGU.btn=b;}

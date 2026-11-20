@@ -52,7 +52,7 @@ function screenToWorld(sx,sy){const v=new THREE.Vector2(sx/VW*2-1,-(sy/VH)*2+1);
   return{x,y};}
 function toScreen(x,h,y){TMP.set(x,h,y).project(CAM);return{x:(TMP.x+1)/2*VW,y:(1-TMP.y)/2*VH,z:TMP.z};}
 function vis(e){return e.team===ME||e.vis;}
-function entHeightMid(e){return e.isB?BH[e.kind]*.6:(e.s.dom==='air'?unitH(e)-groundH(e.x,e.y):6+(e.s.dom==='ground'&&!['inf','at','hacker','hero'].includes(e.s.cls)&&typeof VEH_SCALE!=='undefined'?10*((VEH_SCALE[e.kind]||VEH_SCALE._ground)-1):0));}   /* bars ride on top of the bigger vehicles */
+function entHeightMid(e){return e.isB?BH[e.kind]*.6:(e.s.dom==='air'?unitH(e)-groundH(e.x,e.y):6);}
 const _OS=new THREE.Vector3();function onScr(x,h,y,m){if(!CAM)return true;_OS.set(x,h,y).project(CAM);return _OS.z<1&&Math.abs(_OS.x)<1+m&&Math.abs(_OS.y)<1+m;}
 // Posture target for a standing squad (render only): pinned down = prone, firing from cover = crouched. The cover lookup is
 // cached for a second per squad.

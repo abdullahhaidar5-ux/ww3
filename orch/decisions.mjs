@@ -442,8 +442,6 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(!/G\.battle\)\{LGU\.on=false|if\(G&&G\.battle\)return false|!G\.battle&&!G\.lg|G\.battle\|\|!G\.lg/.test(lgu), 'supply lines: the overlay / minimap lines must not be switched off in Battle'); }
 // 5. Names / identity that must not drift.
 ck(/Radwan Training/.test(SRC['01-data.js'] + Object.values(SRC).join('')), 'upgrade name "Radwan Training" is gone');
-// 2026-11-19 ORCH 2: the weather/time chip (DUSK/NIGHT/rain) is placed under the Battle banner, not over it
-ck(/const wx=\$\('wxchip'\);if\(wx\)\{wx\.style\.top=/.test(SRC['08c-logi.js'] || ''), 'battle banner: weather chip no longer moved below the banner (DUSK drawn over BATTLE)');
 // Shia sub-leader titles are lane AY's open work (PLAN-SAT): reported, not failed, until AY ships; then change warn -> ck.
 for (const [w, why] of [['Secretary-General', 'RS leader'], ['Leader of the Revolution', 'DW leader']])
   if (!Object.values(SRC).some(s => s.includes(w))) console.log(`pending (lane AY): "${w}" (${why}) not in the game yet`);
@@ -830,15 +828,8 @@ for (const e of errs) fails.push(e);
   ck(/smugOn\(id\)/.test(SRC['03-sim.js'] || '') && /buyPower\(id,k\)/.test(SRC['03-sim.js'] || '') && /usePower\(id,'mil'/.test(SRC['03-sim.js'] || ''), 'economy: the AI buys and uses both powers');
   ck(/'smugs'/.test(SRC['07b-ckpt.js'] || ''), 'economy: smuggling routes are in the checkpoint');
 }
-  // Test-range stalls (superfreeze): audio sheets and engine loops are decoded at battle start, not at the first wave/order
-  ck(/voRLoad\(g\.teams\[ME\]\.fac\)/.test(SRC['08-ui.js'] || '') && /vosLoad\(g\.teams\[ME\]\.fac\)/.test(SRC['08-ui.js'] || '') && /envLoop\(k,\.01\)/.test(SRC['08-ui.js'] || '') && /if\(g<\.01\|\|SFX\.loops/.test(SRC['09-audio.js'] || '') && /annWarm\(\)/.test(SRC['08-ui.js'] || ''), 'audio (the warm-up volume must be at least the .01 load threshold of envLoop, or nothing loads): radio, shout, announcer sheets and engine loops are decoded at battle start (no decodeAudioData burst in the first wave)');
-  ck(/function dashPoly\(/.test(SRC['08h-modern.js'] || '') && /clipPolyRect\(pts,-20,-20,VW\+20,VH\+20\)/.test(SRC['08h-modern.js'] || '') && !/setLineDash\(\[8,6\]\);c\.lineDashOffset/.test(SRC['08h-modern.js'] || ''), 'view: the EW jam ring is drawn only where it is on screen (clipped fill, plain short dashes), never its whole off-screen length (the card drawing it stalled Test range frames 300 ms to seconds)');
 await browser.close(); server.close();
 }
-{ const m = SRC['11-models.js'] || '';   // scale (Abdullah 2026-11-19 18:52 "Increase the size of the vehicles don't shrink the infantry")
-  ck(/const VEH_SCALE=\{/.test(m) && /vehScale\(e,c\)/.test(m) && /o\.scale\.setScalar\(vs\)/.test(m), 'scale: vehicles are drawn bigger through the one VEH_SCALE multiplier');
-  ck(/tank:\{m:'tank',fit:'z',size:38\}/.test(m) && /inf:\{m:'soldier',fit:'y',size:14(\.0)?[,}]/.test(m) && /c\.size\*=1\.15/.test(m), 'scale: infantry size is unchanged (soldier 14 x 1.15, never shrunk)');
-  const vs = (m.match(/const VEH_SCALE=\{([^}]*)\}/) || [,''])[1]; ck(vs && [...vs.matchAll(/:([\d.]+)/g)].every(x => +x[1] >= 1), 'scale: no vehicle class is scaled below 1'); }
 for (const f of fails) console.log('FAIL: ' + f);
 console.log(fails.length ? 'DECISIONS FAIL (' + fails.length + ')' : 'DECISIONS PASS');
 process.exit(fails.length ? 1 : 0);
