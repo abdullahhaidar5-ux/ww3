@@ -16,3 +16,6 @@ Try on PC (2 min): Battle as RS, then DW, then OB: zoom on an armed technical - 
 ## Update 2026-11-20 (later)
 Technicals landed (59b5798). Shia compound kit v2 (gate arch, banners, sandbags, dust band) committed, in gate. Not visually verified locally (render too slow) - check the gate screenshots. Left: wall-top flags beyond the one HQ flag, jeep camo, before/after sheets.
 Try on PC (2 min): Battle as IR then RS - look at your HQ compound gate from the ground camera.
+
+## Gate result 2026-11-20 (compound kit 29853d3)
+NOT landed. gate/superfreeze red twice (rangefreeze: ~115-125 ms render-frame stalls in every wave kind, all entity types, not building-specific; several other recent main gate runs have superfreeze green). Treated as possibly real: next helper should rebase on current main, re-gate once; if still red, trim the kit (the 9 arch boxes + banners are added to the already-large meRoofKit mesh - try fewer boxes or move to an instanced prop) and re-gate. Branch: orch/pack-art.
