@@ -7,7 +7,7 @@ const MCFG={
   commissar:{m:'soldier',fit:'y',size:15.7,tint:'#5b4a3a',tk:.5},sapper:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#6a5a3c',tk:.4},guer:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#4c5a3a',tk:.55},atk:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],tint:'#3c4434',tk:.5},
   idome:{m:'truck',fit:'z',size:36,extra:'samtruck'},ew:{m:'truck',fit:'z',size:35,extra:'dish'},cbr:{m:'truck',fit:'z',size:35,extra:'dish'},jeep:{m:'truck',fit:'z',size:26},atgm:{m:'truck',fit:'z',size:27,extra:'atgm',tint:'#55603f',tk:.4},saka:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#a08a5c',tk:.5},raidlead:{m:'truck',fit:'z',size:28,extra:'mg'},
   inf:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7],[-11,0]]},spy:{m:'soldier',fit:'y',size:14.0},cleric:{m:'soldier',fit:'y',size:14.0,squad:[[4,0],[-5,-6],[-5,6]]},at:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]]},hacker:{m:'soldier',fit:'y',size:13.1,squad:[[3,-4],[-3,4]]},
-  hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},champ:{m:'soldier',fit:'y',size:19.5,tint:'#262a26',tk:.62},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},fast:{m:'boat',fit:'z',size:30,tint:'#7a8590',tk:.9},minel:{m:'boat',fit:'z',size:50,tint:'#6d7570',tk:.9},sweep:{m:'boat',fit:'z',size:46,tint:'#7d8a82',tk:.9},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
+  hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},champ:{m:'soldier',fit:'y',size:19.5,tint:'#262a26',tk:.62},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},fast:{m:'boat',fit:'z',size:30,tint:'#7a8590',tk:.9},minel:{m:'ship',fit:'z',size:76,tint:'#6d7570',tk:.88},sweep:{m:'ship',fit:'z',size:68,tint:'#7d8a82',tk:.88},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
 };
 // Realistic models (Objaverse / Sketchfab, CC-BY - authors credited in the menu): each nation fields the hardware it
 // actually flies and drives where a licensed model exists.
@@ -57,6 +57,11 @@ Object.assign(RMAP.atgm,{CN:'cnhum',KP:'kphum'});
  P('jphum','m_humvee',27,'#5b6a52');P('krhum','m_humvee',27,'#4f5b3f');P('sahum','m_humvee',27,'#b5a276');P('eghum','m_humvee',27,'#b09c70');P('aeoz','m_ozelot',34,'#c0ae84');P('troz','m_ozelot',34,'#6a6a4c');
  for(const k of ['harv','ammot','idome','ew','cbr'])Object.assign(RMAP[k],{IN:'in_ural',PK:'pk_ural',JP:'jp35',KR:'kr35',SA:'sa35',AE:'ae35',TR:'tr35',EG:'eg35'});
  Object.assign(RMAP.atgm,{IN:'inhum',PK:'pkhum',JP:'jphum',KR:'krhum',SA:'sahum',EG:'eghum',AE:'aeoz',TR:'troz'});}
+// National vehicle families, Shia (visual only, same Ural hull, own paint per nation): Iran IRGC sand-olive, Lebanese mountain force cold grey-olive, Yemen dusty sand-brown,
+// Iraqi south-brigades dark olive, Palestine brigade pale khaki. The add-ons (ATGM tripod, ZU-23, rocket rack, EW mast) take the same paint, so the nations no longer look identical.
+{const P=(k,t)=>{RMOD[k]={m:'m_ural',fit:'z',size:36,tint:t,tk:.4};};
+ P('ir_ural','#8a7f58');P('rs_ural','#5e6450');P('dw_ural','#9a8760');P('rv_ural','#4c5638');P('ob_ural','#a89c74');
+ for(const f of ['IR','RS','DW','RV','OB'])for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]=f.toLowerCase()+'_ural';}
 // Faction-unique helicopters and warships (Objaverse / Sketchfab, CC BY, authors in the menu credits): Russia flies the Mi-28,
 // Egypt the Ka-52, Turkey, Pakistan and Iran an AH-1 Cobra-type gunship; Western navies a Type 45 destroyer (Germany an F123
 // frigate), Russia/China/North Korea/Ukraine/India/Pakistan/Cuba/Iran a Russian-style destroyer; the Shia nations'
@@ -515,7 +520,16 @@ function soldierGear(m,fac,kind){const inner=m.userData.inner;if(!inner)return;i
   if(kind!=='hero'){const g=new THREE.Group();const pack=new THREE.Mesh(new THREE.BoxGeometry(1.7*k,1.9*k,.9*k),gearMat(pk));g.add(pack);const roll=new THREE.Mesh(new THREE.CylinderGeometry(.34*k,.34*k,1.9*k,8),gearMat('#5d5a4a'));roll.rotation.z=Math.PI/2;roll.position.set(0,1.15*k,0);g.add(roll);
     attach(B.chest,g,0,-.3*k,-1.05*k);
     const f=new THREE.Group();for(const sx of [-.5,0,.5]){const p=new THREE.Mesh(new THREE.BoxGeometry(.42*k,.5*k,.3*k),gearMat(pk));p.position.set(sx*k,0,0);f.add(p);}attach(B.chest,f,0,-1.2*k,.62*k);
-    if(B.hips){const cn=new THREE.Mesh(new THREE.CylinderGeometry(.24*k,.24*k,.6*k,8),gearMat('#4a4d3c'));attach(B.hips,cn,.75*k,-.2*k,-.35*k);}}
+    if(B.hips){const cn=new THREE.Mesh(new THREE.CylinderGeometry(.24*k,.24*k,.6*k,8),gearMat('#4a4d3c'));attach(B.hips,cn,.75*k,-.2*k,-.35*k);}
+    /* close-up detail (pack-units 2026-11-19, view only; merged into the same one soldier shape, no extra draws): a chest rig panel with magazine pouches and a grenade, a radio with antenna on the pack, a helmet strap and shoulder straps */
+    {const rg='#'+uni.clone().lerp(new THREE.Color('#3d3a2e'),.62).multiplyScalar(.8).getHexString(),dk='#25272a';
+     const v=new THREE.Group();const panel=new THREE.Mesh(new THREE.BoxGeometry(1.5*k,1.05*k,.18*k),gearMat(rg));v.add(panel);
+     for(const sx of[-.46,-.15,.16,.47]){const mg=new THREE.Mesh(new THREE.BoxGeometry(.26*k,.46*k,.2*k),gearMat('#2f3226'));mg.position.set(sx*k,-.1*k,.15*k);v.add(mg);}
+     const gr=new THREE.Mesh(new THREE.SphereGeometry(.14*k,6,5),gearMat('#3b4130'));gr.position.set(.72*k,.3*k,.14*k);v.add(gr);
+     attach(B.chest,v,0,-.55*k,.5*k);
+     const rd=new THREE.Group();const rb=new THREE.Mesh(new THREE.BoxGeometry(.5*k,.8*k,.32*k),gearMat(dk));rd.add(rb);const an=new THREE.Mesh(new THREE.CylinderGeometry(.03*k,.03*k,1.7*k,4),gearMat('#111214'));an.position.set(.18*k,1.2*k,0);rd.add(an);
+     attach(B.chest,rd,.55*k,.45*k,-1.5*k);
+     for(const sx of[-.55,.55]){const st=new THREE.Mesh(new THREE.BoxGeometry(.2*k,1.2*k,.12*k),gearMat(rg));attach(B.chest,st,sx*k,.15*k,.52*k);}}}
   mergeGear(B,fac+'|'+kind+'|'+k.toFixed(3));}
 
 // Kit for the realistic soldiers: they already wear their own helmet, vest and boots, so only the rifle is added (merged into
@@ -906,8 +920,8 @@ function postApply(m,ud,e,k,dt,tg,moving,fire){const W=ud.legs;if(!W||!W.uL)retu
 // (Iran, Lebanese Shia), a Kargu-style quadcopter (Turkey) and a small X-frame FPV racer (Ukraine and others).
 // Iran and the two Shia militias fly Shahed-style deltas (stencilled Shahed / Ababil / Qasef), Turkey a Bayraktar-style
 // light-grey drone, the US and Israel an MQ-9 / Hermes-style grey drone, Russia a Lancet-style dark loitering munition,
-// China and Korea a bigger quadcopter, everyone else taped-up FPV racers.
-function droneType(fac){return fac==='IR'||fac==='RS'||fac==='DW'?'delta':fac==='TR'?'tb2':fac==='US'||fac==='IL'?'mq':fac==='RU'?'lancet':fac==='CN'||fac==='KR'?'kargu':'fpv';}
+// China and Korea a bigger quadcopter, India/Japan/UK/France an MQ-9-style grey drone, Saudi/UAE/Egypt a pale Wing Loong-style one, Pakistan and Ukraine a TB2; everyone else taped-up FPV racers.
+function droneType(fac){return fac==='IR'||fac==='RS'||fac==='DW'?'delta':fac==='TR'||fac==='PK'||fac==='UA'||fac==='KP'?'tb2':fac==='US'||fac==='IL'||fac==='GB'||fac==='FR'||fac==='IN'||fac==='JP'||fac==='SA'||fac==='AE'||fac==='EG'||fac==='CN'?'mq':fac==='RU'?'lancet':fac==='KR'?'kargu':'fpv';}
 // Drones are built once per nation and then cloned (shared geometry and materials), so a swarm of dozens appears
 // without a hitch.
 const DPROTO={};
@@ -934,7 +948,7 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
   else if(ty==='tb2'||ty==='mq'){
     // Bayraktar TB2 (light grey, inverted-V tail) / MQ-9-Hermes style (darker grey, bulbous nose, Y tail): long straight
     // wing, slim fuselage, pusher propeller, sensor ball under the nose
-    const mq=ty==='mq',sk=mq?'#8b9196':'#b9bdbf',sk2=mq?'#7a8085':'#a7abad';
+    const mq=ty==='mq',wl=mq&&(T.fac==='SA'||T.fac==='AE'||T.fac==='EG'||T.fac==='CN'),sk=wl?'#cfd0cb':mq?'#8b9196':'#b9bdbf',sk2=wl?'#bcbdb7':mq?'#7a8085':'#a7abad';
     B.cyl(mq?1.2:.95,mq?1.2:.95,9,12,0,0,0,sk,0,0,Math.PI/2);B.sph(mq?1.2:.95,4.4,mq?.15:0,0,sk,mq?1.7:1.9,mq?1.15:1,1);B.cyl(mq?1.2:.95,.35,3.4,10,-6.2,0,0,sk2,0,0,Math.PI/2);B.sph(.62,3.3,-1.15,0,'#2a2c2d');
     const wing=new THREE.Shape();wing.moveTo(1.2,0);wing.lineTo(.9,11);wing.lineTo(-.4,11);wing.lineTo(-.7,0);wing.lineTo(-.4,-11);wing.lineTo(.9,-11);wing.closePath();
     const wg=new THREE.ExtrudeGeometry(wing,{depth:.28,bevelEnabled:true,bevelThickness:.08,bevelSize:.08,bevelSegments:1});wg.rotateX(Math.PI/2);B._p.push({g:wg,m:new THREE.Matrix4().makeTranslation(.3,mq?.25:.75,0),c:lin(sk)});
@@ -944,7 +958,7 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     const disc=new THREE.Mesh(new THREE.CircleGeometry(2.6,20),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-8.2,0,0);yaw.add(disc);}
   else if(ty==='lancet'){
     // Lancet-style loitering munition: dark slim body with two sets of X wings (front and rear), small pusher prop
-    const sk='#3c403a',sk2='#2f322d';B.cyl(.8,.8,12,10,0,0,0,sk,0,0,Math.PI/2);B.cyl(0,.8,2.2,10,7.1,0,0,sk2,0,0,-Math.PI/2);B.cyl(.8,.4,1.4,10,-6.7,0,0,sk2,0,0,Math.PI/2);B.sph(.35,7.4,-.35,0,'#151515');
+    const sk='#9da197',sk2='#6c7067';for(const x of [-3.4,-.4,2.6,5.2])B.cyl(.84,.84,.28,10,x,0,0,'#5d6158',0,0,Math.PI/2);B.cyl(.86,.86,1.1,10,.9,0,0,tc,0,0,Math.PI/2);B.sph(.5,7.6,-.5,0,'#1c1e1d');B.sph(.2,7.95,-.55,0,'#26464f');B.box(1.4,.9,.8,-1.8,.8,0,'#808479');B.cyl(.8,.8,12,10,0,0,0,sk,0,0,Math.PI/2);B.cyl(0,.8,2.2,10,7.1,0,0,sk2,0,0,-Math.PI/2);B.cyl(.8,.4,1.4,10,-6.7,0,0,sk2,0,0,Math.PI/2);B.sph(.35,7.4,-.35,0,'#151515');
     for(const [x,ch,sp] of [[3.2,2.6,3.6],[-4.4,2.8,4.4]])for(let i=0;i<4;i++){const a=Math.PI/4+i*Math.PI/2;B.box(ch,sp,.12,x,Math.cos(a)*(sp/2+.6),Math.sin(a)*(sp/2+.6),sk,a,0,0);}
     B.sph(.16,-4.4,0,5.3,'#2bc24a');B.sph(.16,-4.4,0,-5.3,'#c22a1e');
     const pr=new THREE.Group();const P=Bld();P.box(.25,3.2,.45,0,0,0,dk);pr.add(mesh(P.geo()));pr.position.set(-7.6,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
@@ -953,7 +967,11 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     for(const a of [Math.PI/4,3*Math.PI/4,5*Math.PI/4,7*Math.PI/4]){const x=Math.cos(a)*arm,z=Math.sin(a)*arm;B.box(arm*1.05,.5,.7,x/2,0,z/2,bc,0,-a,0);B.cyl(.7,.7,1.2,8,x,.4,z,dk);
       const pr=new THREE.Group();const P=Bld();P.box(big?6:4.4,.15,.6,0,0,0,'#151515');pr.add(mesh(P.geo()));pr.position.set(x,1.1,z);pr.name='dprop';pr.userData.ax='y';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'y'});
       const disc=new THREE.Mesh(new THREE.CircleGeometry(big?3:2.2,16),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.2,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.x=-Math.PI/2;disc.position.set(x,1.15,z);yaw.add(disc);}
-    if(big)for(const s of [-1,1])B.box(.4,2.4,.4,0,-1.6,1.4*s,dk);
+    if(big){for(const s of [-1,1])B.box(.4,2.4,.4,0,-1.6,1.4*s,dk);
+      /* art-regional: Kargu-style detail - fuselage ribs, battery hatch, warhead nose, camera gimbal, skid feet, motor caps */
+      for(const x of [-1.1,0,1.1])B.cyl(2.5,2.5,.22,10,x*.8,0,0,'#5f645a');B.box(2.2,.3,1.6,-.4,2.2,0,'#4a4e45');B.cyl(.9,.9,1.8,8,2.3,-.2,0,'#a39b86',0,0,Math.PI/2);B.sph(.55,3.3,-.2,0,'#4d4a3f');
+      B.cyl(.55,.55,.6,8,1.9,-1.1,0,'#222');B.sph(.3,1.95,-1.4,0,'#26464f');for(const s of [-1,1])B.box(1.2,.25,.5,0,-2.8,1.4*s,'#2a2b28');
+      for(const a of [Math.PI/4,3*Math.PI/4,5*Math.PI/4,7*Math.PI/4])B.cyl(.95,.95,.35,8,Math.cos(a)*arm,.95,Math.sin(a)*arm,'#35382f');}
     if(!big){B.cyl(.55,.55,2.6,8,-.6,1.55,0,'#2d3a52',0,0,Math.PI/2);for(const t of [-.5,.4])B.cyl(.6,.6,.35,8,-.6+t,1.55,0,'#151515',0,0,Math.PI/2);for(const s of [-1,1])B.cyl(.06,.06,3.2,4,-2.6,2.4,.5*s,dk,.3*s,0,1.1);}
     B.sph(.2,arm*.72,.6,arm*.72,'#2bc24a');B.sph(.2,arm*.72,.6,-arm*.72,'#c22a1e');B.sph(.2,-arm*.72,.6,arm*.72,'#e8e8e2');B.sph(.2,-arm*.72,.6,-arm*.72,'#e8e8e2');}
   // drones get their own plain painted-metal material: the shared one adds ground dust to everything near the model's
@@ -1070,6 +1088,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
   if(e.kind==='bmt')c={m:truckKey(T.fac),fit:'z',size:36,extra:'bm'};   /* Zolfaghar missile truck: a truck with one big tilted missile */
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
+  if(typeof eastPre==='function')c=eastPre(e,c,T);   /* art-east: RU/CN/KP support-vehicle kits (11e-east.js) */
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
   for(const [px,pz] of sq){const KD=e.kind==='cleric'?(px===sq[0][0]&&pz===sq[0][1]?'ldr':'inf'):e.kind;const VR=e.kind==='spy'||KD==='ldr'?0:Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=KD==='ldr'&&MODELS.proto.sol_m?'sol_m':c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const TK=KD==='ldr'?0:c.m==='soldier'&&!c.tint?[.03,.07,.11][VR%3]/* tint follows the kit variant: 4 looks per kind, not 12, so the shapes can be prepared at load */:c.tk;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,TK);if(!m)return null;m.position.set(-pz,c.dy||0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,KD,SK,VR);else if(e.kind!=='spy')soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),KD);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+(TK||0)+'|'+(T.fac||'')+'|'+KD+'|v'+(SK?VR:0));if(KD==='ldr')m.userData.ldr=1;}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
@@ -1137,6 +1156,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
     for(let i=0;i<4;i++)for(let k=0;k<2;k++){const z=-5.2+i*3.5,y=20.4+k*1.8;B.cyl(.95,.95,7,8,3.4,y,z,Sh,0,0,Math.PI/2);B.cyl(.4,.95,1.4,8,7.6,y,z,Br,0,0,-Math.PI/2);B.cyl(.98,.98,.5,8,4.6,y,z,Y,0,0,Math.PI/2);}
     B.box(15,.7,.7,-6,22.4,-6.9,'#2a2b25');return B.geo();});const cg=mesh(GM);o.add(cg);o.userData.parts.cargo=cg;}
   if(e.kind==='harv'){const cg=mesh(harvCargoGeo());o.add(cg);o.userData.parts.cargo=cg;}
+  try{eastKit(e,c,o,yaw,T);}catch(err){console.warn('eastKit',err);}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}
 // polishlooks: rocket truck launcher = an open BM-21/Fajr-style tube pack (4 x 10 tubes with dark muzzles, side plates,
@@ -1183,8 +1203,11 @@ function aaGeo(fam,col){return addonGeo('aa'+fam+col,()=>{const B=Bld(),P=col,Dk
    for(const s of [-1,1]){atube(B,.8,3.6,s*3.9,10.5,.36,.3,AK,AM);B.box(3,2,1.6,0,3.4,s*3.9,Dk);for(const h of [0,1])atube(B,-3.4,5.5+h*1.1,s*2.2,6.2,.55,.22,Lt,AM);}
    B.cyl(.35,.35,2.4,6,-4,7.6,0,AK);B.box(.5,2.6,4.6,-4,9.4,0,Lt,0,0,.12);return B.geo();}
   if(fam==='S'){// ZU-23 type twin barrels on a pedestal behind a gun shield, ammo boxes either side
-   B.cyl(1.2,1.5,2.4,8,0,1.2,0,AK);B.box(3.4,1.2,3.4,0,2.8,0,Dk);for(const z of [-.95,.95])atube(B,.4,3.7,z,10,.42,.6,AK,AM);
-   B.box(.5,3.6,4.8,2.3,4.7,0,P,0,0,-.22);B.box(2,1.6,1.4,-1.8,3.5,2.4,Dk);B.box(2,1.6,1.4,-1.8,3.5,-2.4,Dk);B.box(1.5,.5,1.5,-2.2,2.4,0,AK);return B.geo();}
+   B.cyl(1.2,1.5,2.4,8,0,1.2,0,AK);B.cyl(2.6,2.6,.4,12,0,2.5,0,Dk);B.box(3.4,1.2,3.4,0,2.8,0,Dk);
+   for(const z of [-.95,.95]){atube(B,.4,3.7,z,10,.42,.6,AK,AM);B.cyl(.62,.62,2.2,8,3.3,5.6,z,Lt,0,0,.6-Math.PI/2);B.cyl(.7,.7,.5,8,.2,3.5,z,Dk,Math.PI/2);}
+   B.box(.5,3.6,4.8,2.3,4.7,0,P,0,0,-.22);B.box(.6,.6,5.2,2.5,6.7,0,Dk,0,0,-.22);for(const z of [-2.2,2.2])B.box(.5,.5,.5,2.1,5,z,Lt);
+   B.box(2,1.6,1.4,-1.8,3.5,2.4,Dk);B.box(2,1.6,1.4,-1.8,3.5,-2.4,Dk);B.cyl(.7,.7,.4,8,-1.8,4.5,2.4,AK);B.cyl(.7,.7,.4,8,-1.8,4.5,-2.4,AK);
+   B.box(1.5,.5,1.5,-2.2,2.4,0,AK);B.box(1.4,.35,1.4,-3.2,3.6,0,AK);B.box(.4,2.2,.4,-3.2,2.5,0,Dk);B.box(.3,.3,2,-.4,4.3,2.3,AK);return B.geo();}
   if(fam==='R'){// box-canister missile launcher: four angled square canisters and a small radar disc
    B.cyl(3.6,4,1,14,0,.5,0,Dk);B.box(5.2,3,5.6,-.6,2.6,0,P);
    for(const s of [-1,1])for(const h of [0,1]){const y=4.6+h*1.9;B.box(8,1.7,1.7,1.6,y,s*3.6,Lt,0,0,.5);B.box(.4,1.5,1.5,5.2,y+1.7,s*3.6,AM,0,0,.5);}
@@ -1201,7 +1224,7 @@ function rackGeo(fam,col){if(fam==='E')return mlrsGeo();return addonGeo('rk'+fam
    for(const r of [0,1])for(const c of [-1,0,1])B.box(.4,1.7,1.7,7.2,1.2+r*2.1,c*1.95,AM);B.box(1.4,1.4,6,-7.2,1.2,0,Dk);return [A.geo(),B.geo()];}
   if(fam==='S'){// Grad / Fajr type truck rack: two rows of six open round tubes on a plain cradle
    const NC=6,S=1.75,L=13.5,w=(NC-1)*S;for(let i=0;i<2;i++)for(let j=0;j<NC;j++){const y=1.3+i*S,z=-w/2+j*S;B.cyl(.78,.78,L,8,0,y,z,(i+j)%2?Lt:P,0,0,Math.PI/2);B.cyl(.6,.6,.35,8,L/2+.02,y,z,AM,0,0,Math.PI/2);}
-   for(const x of [-L*.36,L*.3]){B.box(.6,3.9,.3,x,2.2,-w/2-1,Dk);B.box(.6,3.9,.3,x,2.2,w/2+1,Dk);B.box(.6,.3,w+2,x,4.2,0,Dk);}B.box(L*.95,.4,w+2,0,.2,0,Dk);return [A.geo(),B.geo()];}
+   for(const x of [-L*.36,L*.3]){B.box(.6,3.9,.3,x,2.2,-w/2-1,Dk);B.box(.6,3.9,.3,x,2.2,w/2+1,Dk);B.box(.6,.3,w+2,x,4.2,0,Dk);}B.box(L*.95,.4,w+2,0,.2,0,Dk);B.box(2,1.2,w+2.4,-L*.5,1.8,0,Dk);B.box(.5,2.8,w+2.2,L*.5+.1,2,0,P,0,0,.1);for(const z of [-w/2,w/2])B.cyl(.2,.2,2.4,5,-L*.5-1,3.4,z,AK);return [A.geo(),B.geo()];}
   // Regional: two side-by-side pods of three by three round tubes in an open frame
   for(const s of [-1,1])for(let i=0;i<3;i++)for(let j=0;j<3;j++){const y=1.2+i*1.4,z=s*3+(j-1)*1.4;B.cyl(.62,.62,12.5,8,0,y,z,(i+j)%2?Lt:P,0,0,Math.PI/2);B.cyl(.46,.46,.35,8,6.3,y,z,AM,0,0,Math.PI/2);}
   for(const s of [-1,1])for(const x of [-4,3.6]){B.box(.5,4.4,.3,x,2.4,s*3-2.2,Dk);B.box(.5,4.4,.3,x,2.4,s*3+2.2,Dk);}B.box(12.6,.4,9,0,.2,0,Dk);return [A.geo(),B.geo()];});}
@@ -1228,7 +1251,8 @@ function atgmGeo(fam,col){return addonGeo('at'+fam+col,()=>{const B=Bld(),P=col,
   if(fam==='E'){// Kornet type: two tubes on a pedestal, sight box on the side
    B.cyl(.5,.6,2.2,6,0,1.1,0,AK);B.box(2,1.2,2.4,0,2.6,0,Dk);for(const z of [-.8,.8])atube(B,-1,3.6,z,7.5,.62,.12,P,AM);B.box(1.6,1.2,1.2,.6,4.6,1.7,AK);return B.geo();}
   if(fam==='S'){// Konkurs-on-a-tripod type: legs, one canister, sight
-   for(const [x,z] of [[-1.4,1.4],[-1.4,-1.4],[1.4,0]])B.cyl(.18,.18,2.6,4,x,1.2,z,AK,0,0,0);B.box(1.6,.8,1.6,0,2.6,0,Dk);atube(B,-1.2,3.4,0,6.4,.55,.1,P,AM);B.box(1.2,.9,.9,-.4,4.3,.9,AK);return B.geo();}
+   for(const [x,z] of [[-1.4,1.4],[-1.4,-1.4],[1.4,0]]){B.cyl(.2,.1,2.6,5,x,1.2,z,AK,0,0,0);B.box(.9,.25,.9,x,.1,z,Dk);}B.box(1.6,.8,1.6,0,2.6,0,Dk);B.cyl(.5,.5,1,8,0,3,0,AK);
+   atube(B,-1.2,3.4,0,6.4,.55,.1,P,AM);atube(B,-1.2,3.4,1.4,5.4,.4,.1,Lt,AM);B.box(1.2,.9,.9,-.4,4.3,.9,AK);B.box(.9,.7,.7,-1.8,4,-.8,Dk);B.box(.3,.3,1.4,-1.2,2.8,-1.4,'#6a5a3a');return B.geo();}
   if(fam==='R'){// Spike type: four-canister box launcher on a short arm
    B.cyl(.5,.6,1.6,6,0,.8,0,AK);B.box(3.6,.6,3.6,0,1.9,0,Dk);for(const z of [-.9,.9])for(const h of [0,1])B.box(6,1.5,1.5,.8,3.2+h*1.7,z,P,0,0,.14);B.box(1.4,1.1,1.1,-2.4,4.6,1,AK);return B.geo();}
   // West, TOW type: boxy two-tube launcher raised on a swing arm
@@ -1941,6 +1965,18 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
         const bx=cx-L*.24,y=tt.y-u*.35,ww=u*1.3,dd=W*.6,col='#3c3e35';for(const yy of [y,y+u*.38]){B.bar(bx-ww/2,yy,-dd/2,bx+ww/2,yy,-dd/2,u*.03,col);B.bar(bx-ww/2,yy,dd/2,bx+ww/2,yy,dd/2,u*.03,col);B.bar(bx-ww/2,yy,-dd/2,bx-ww/2,yy,dd/2,u*.03,col);}
         for(let i=0;i<4;i++){const z=(i-1.5)*dd/3.2;B.bar(bx-ww/2,y,z,bx-ww/2,y+u*.38,z,u*.03,col);}bag(bx,y,-dd*.2,'#6b6650');bag(bx+u*.1,y,dd*.18,'#57563f');roll(bx-u*.3,y+u*.2,0,dd*.8,'#4e5040');
         const fx=cx+L*.14,fy=tt.y-u*.35,s=sideAt(fx,fy);if(s){const n=9;for(let i=0;i<n;i++){const z=(i-(n-1)/2)*(s*1.6/n);for(let j=0;j<4;j++)B.ell(u*.06,u*.06,u*.06,fx,fy-j*u*.13,z,'#2a2b28');}}}
+      if(tank&&tt&&(fac==='IN'||fac==='PK'||fac==='JP'||fac==='KR'||fac==='TR')){// art-regional: each nation's tank gets its own turret armour so the same hull reads as Arjun / Al-Khalid / Type 10 / K2 / Altay
+        const ts=sideAt(cx+L*.04,tt.y-u*.3)||W*.3,ty0=tt.y-u*.35,eraC=fac==='PK'?'#4b5036':fac==='TR'?'#5a5e46':'#444a35',eraD='#2b2e25';
+        if(fac==='IN'||fac==='PK'||fac==='TR'){for(let i=0;i<4;i++)for(const sg of [1,-1])for(let j=0;j<2;j++){B.rbox(u*.34,u*.34,u*.09,cx+L*.02+i*u*.4,ty0+j*u*.38,sg*(ts+u*.05),eraC);B.rbox(u*.3,u*.04,u*.1,cx+L*.02+i*u*.4,ty0+j*u*.38+u*.19,sg*(ts+u*.05),eraD);}}
+        if(fac==='IN'||fac==='PK'){const fx=cx+L*.1,fz=ts*.8;for(let i=0;i<5;i++)for(let j=0;j<2;j++)B.rbox(u*.1,u*.36,u*.34,fx+j*u*.02,ty0+u*.2,(i-2)*fz*.4,eraC,0,0,.05);}
+        if(fac==='JP'){for(const sg of [1,-1]){B.rbox(u*1.1,u*.62,u*.14,cx+L*.07,ty0+u*.3,sg*(ts-u*.02),'#4a5040',0,-sg*.35,0);B.rbox(u*.9,u*.5,u*.12,cx-L*.03,ty0+u*.28,sg*(ts+u*.1),'#434a37');}}
+        if(fac==='KR'){const x=cx-L*.1,y=tt.y;B.cyl(u*.16,u*.2,u*.16,8,x,y+u*.08,W*.14,'#3b3f38');B.rbox(u*.34,u*.22,u*.26,x,y+u*.28,W*.14,'#454a3f');B.bar(x+u*.15,y+u*.3,W*.14,x+u*.9,y+u*.3,W*.14,u*.04,'#1c1d1b',5);for(const sg of [1,-1])B.rbox(u*.4,u*.3,u*.07,cx+L*.1,ty0+u*.3,sg*(ts+u*.03),'#3d4235');}
+        if(fac!=='KR')smokeL(4);}
+      if(tank&&tt&&(fac==='RU'||fac==='CN'||fac==='KP')){// art-east: Type 99 wedge-and-ERA turret, T-90 Kontakt + Shtora, Chonma-ho side skirts + DShK
+        const ts=sideAt(cx+L*.04,tt.y-u*.3)||W*.3,ty0=tt.y-u*.35,eraC=fac==='CN'?'#4f5638':'#4a5039',eraD='#2b2e25';
+        if(fac==='CN'){for(const sg of [1,-1]){for(let i=0;i<4;i++)B.rbox(u*.3,u*.36,u*.1,cx+L*.1+i*u*.34-u*.4,ty0+u*.3,sg*(ts+u*.06),eraC,0,-sg*.3,0);B.rbox(u*.9,u*.5,u*.14,cx-L*.04,ty0+u*.28,sg*(ts+u*.1),'#434a37');}}
+        if(fac==='RU'){for(let i=0;i<5;i++)for(const sg of [1,-1])B.rbox(u*.3,u*.3,u*.08,cx+L*.02+i*u*.36,ty0+u*.3,sg*(ts+u*.04),eraC);for(const sg of [1,-1]){B.rbox(u*.22,u*.22,u*.22,cx+L*.16,ty0+u*.5,sg*(W*.14),'#7a3a30');}}
+        if(fac==='KP'){for(const sg of [1,-1])for(let i=0;i<6;i++)B.rbox(u*.34,u*.16,u*.06,cx-L*.2+i*u*.4,ty0-u*.55,sg*(W*.5),'#3a3d32');const x=cx-L*.1,y=tt.y;B.cyl(u*.12,u*.16,u*.12,8,x,y+u*.08,-W*.14,'#3b3f38');B.bar(x,y+u*.25,-W*.14,x+u*.8,y+u*.28,-W*.14,u*.04,'#1c1d1b',5);}}
       if(fac==='TR'&&tank&&frontD)for(let i=0;i<5;i++)B.rbox(u*.16,u*.08,u*.62,frontD.x-u*.25,frontD.y+u*.05,(i-2)*u*.33,'#2c2d2a',0,0,.2);
       if((fac==='EU'||fac==='FR'||fac==='DE'||fac==='CN'||fac==='KR')&&tank)smokeL(fac==='CN'?4:fac==='KR'?3:4);
       if((fac==='SA'||fac==='AE'||fac==='IN')&&rearD){bag(minx+L*.16,rearD.y,W*.2,'#8a7d5c');bag(minx+L*.16,rearD.y,-W*.18,'#77704f');if(fac!=='IN')for(let i=0;i<2;i++)jerry(minx+L*.08,rearD.y,(i-.5)*u*.22,'#7a7155');}

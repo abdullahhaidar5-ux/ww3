@@ -15,3 +15,7 @@ Sheets: `orch/shots/art-audit-<family>-<ground|air|navy>.jpg` (`node orch/artaud
 | 10 | Western Humvee/M35/Abrams family | 4 | real models, nation paint |
 
 Before-scores are the numbers above. Shia factions are the weakest family (items 2, 4, 6 hit them hardest). See HANDOFF-pack-art.md for what landed.
+
+## Update 2026-11-19 (Shia bundle 1)
+Item 2 (Shia ATGM/AA/rocket/EW/ammo carriers): 1.5 -> 2.5. Each of IR/RS/DW/RV/OB now has its own truck paint and add-on paint (sand-olive, cold grey-olive, dusty sand, dark olive, pale khaki). Still one hull; new hull/add-on detail is next. Cargo (item 1) landed via ART WEST.
+Sheet: orch/shots/art-shia-ground-after.jpg
