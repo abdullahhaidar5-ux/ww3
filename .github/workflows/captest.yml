@@ -2,7 +2,7 @@
 name: Cap test
 on:
   push:
-    branches: ['orch/smooth-render', 'orch/smooth-render2']
+    branches: ['orch/smooth-render', 'orch/smooth-render2', 'orch/pack-systems']
 permissions: { contents: read }
 jobs:
   m:

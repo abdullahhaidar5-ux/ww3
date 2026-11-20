@@ -21081,6 +21081,15 @@ function meRoofKit(o,m,e,T){const B=Bld(),R=mulberry(e.kind.length*131+(e.size|0
     else if(t<.9){B.box(5+R()*3,.3,.8,x,.2,z,'#6f5a3d',0,R()*3,.05);B.box(4,.3,.8,x+1,.5,z+.6,'#7a6446',0,R()*3,-.04);}
     else{B.box(2.6,1.6,2.2,x,.8,z,'#6b6343',0,R()*3,0);B.box(2.4,.3,2,x+1.2,1.9,z,'#6b6343',0,R()*3,.5);}}
   const g=mesh(B.geo());g.castShadow=true;o.add(g);}
+/* Building models merged ONCE per model + tint (view only): the first copy is built by instModel and baked by staticMerge into one mesh per
+   material; every further copy is a cheap clone that shares those merged shapes and the same materials (no new shader programs, no
+   per-copy merge work). Skinned/animated models are never cached. */
+const BMERGE=new Map();
+function bInstMerged(q,rc,kk){const key=q.m+'|'+(rc&&rc.color||'')+'|'+q.fit+'|'+q.size+'|'+q.ys+'|'+kk;let t=BMERGE.get(key);
+  if(t)return t.clone(true);if(t===null)return instModel(q.m,rc,q.fit,q.size,q.ys,kk);
+  const m=instModel(q.m,rc,q.fit,q.size,q.ys,kk);if(!m)return null;
+  if(m.getObjectByProperty('type','SkinnedMesh')||(m.userData.anims&&m.userData.anims.length)){BMERGE.set(key,null);return m;}
+  m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});staticMerge(m,[]);BMERGE.set(key,m);return m.clone(true);}
 function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.fac)&&BME[e.kind]&&MODELS.proto[BME[e.kind].m])cfg=Object.assign({},cfg,{list:cfg.list.map((q,i)=>i?q:Object.assign({},q,{m:BME[e.kind].m,size:BME[e.kind].size,ys:1}))});if(cfg&&e.kind==='shipyard'&&MEFAC.has(T.fac))cfg={list:cfg.list.filter(q=>q.part).map(q=>Object.assign({},q,{y:4}))};// ME naval base: code-built quay (04-gfx meGeo), keep the crane model
   if(!cfg||!cfg.list.every(q=>MODELS.proto[q.m]))return false;const P=o.userData.parts;
   if(!['turret','sam'].includes(e.kind)){const fg=new THREE.Group(),h2=e.size/2;fg.position.set(-h2+4,0,h2-4);const pole=new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,30,6),new THREE.MeshStandardMaterial({color:0x8a8d90,metalness:.6,roughness:.4}));pole.position.y=15;pole.castShadow=true;fg.add(pole);
@@ -21093,7 +21102,7 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     else baseSlabKit(B,e,T,s);
     const m=mesh(B.geo());o.add(m);P.main=m;}
   let RT={...NATX_RT,US:'#bdb49c',EU:'#b5b2a6',FR:'#b5b2a6',DE:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',GB:'#b3ae98',AU:'#c3b48c',CA:'#a9ad96',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];RT=baseTint(T.fac,RT);
-  for(const q of cfg.list){const rc=q.col?{color:q.col}:(RT?{color:RT}:null);let m;if(q.proc){const pg=PROCB[q.proc](),bm=mesh(pg[0]);bm.position.y=cfg.slab?2.4:0;o.add(bm);m=mesh(pg[1]);if(q.ps){m.scale.setScalar(q.ps);bm.scale.setScalar(q.ps);}}else m=instModel(q.m,rc,q.fit,q.size,q.ys,q.col?q.k:(RT?.42:undefined));if(!m)continue;m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
+  for(const q of cfg.list){const rc=q.col?{color:q.col}:(RT?{color:RT}:null);let m;if(q.proc){const pg=PROCB[q.proc](),bm=mesh(pg[0]);bm.position.y=cfg.slab?2.4:0;o.add(bm);m=mesh(pg[1]);if(q.ps){m.scale.setScalar(q.ps);bm.scale.setScalar(q.ps);}}else m=(MEFAC.has(T.fac)&&BME[e.kind]&&q===cfg.list[0])?instModel(q.m,rc,q.fit,q.size,q.ys,q.col?q.k:(RT?.42:undefined)):bInstMerged(q,rc,q.col?q.k:(RT?.42:undefined));if(!m)continue;m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
     if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);if(MEFAC.has(T.fac)&&BME[e.kind]&&q===cfg.list[0])try{o.userData.meWall=1;o.userData.rings=1;meRoofKit(o,m,e,T);}catch(er){o.userData.meWall=0;o.userData.rings=0;}o.add(m);}}
   if(e.kind==='coast'){// emplacement: sandbag walls round the launcher and a small radar / command truck beside the pad (visual only)
     const h=e.size/2,B=Bld();for(let i=-2;i<=2;i++){const sb=propObj('sandbag',-h*.92,i*h*.36,Math.PI/2,o);if(sb)sb.position.y=2.4;}
