@@ -92,3 +92,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-20 01:03Z aae60d36 **GREEN** (28 gates) — East tanks: RU/CN/KP get their own turret armour
 - 2026-11-20 02:05Z 07674c0f **RED** (28 gates) failing: superfreeze — Regional art: KR Kargu quadcopter close-up detail
 - 2026-11-20 02:48Z 73e8a868 **RED** (28 gates) failing: loadfreeze — West navy: landing craft, minelayer and minesweeper use the code-built
+- 2026-11-20 04:11Z 6e9f8984 **GREEN** (28 gates) — Regional art: detailed AA, EW and dozer kits for the eight regional na
