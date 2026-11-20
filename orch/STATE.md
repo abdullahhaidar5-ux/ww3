@@ -1,17 +1,16 @@
-# STATE — conductor run 2026-11-20 ~17:10 UTC
+# STATE — conductor run 2026-11-20 ~18:20 UTC
 
-Main before run: ff900d6 (East base buildings reverted: smooth-pc + loadfreeze red). 
+Main now: 7fac31b91 (Regional base buildings, light — landed by its helper at 17:13; Pages build OK 18:11). Before it: e4bec093f East buildings lighter.
 
 | Branch | Last push | Ahead | Gate | Note |
 |---|---|---|---|---|
-| orch/bld-east2 (lighter East buildings) | 16:40 | 1 | 25/25 green (smooth-pc, smooth-mp, loadfreeze green) | LANDED -> main e4bec093f |
-| orch/bld-regional2 (regional base buildings, lean) | 16:42 | 2 (incl. east2) | gate/67e11c8c3a 27/27 green | NOT landed: another helper landed its own light regional buildings on main (7fac31b91, 17:13) first; the two versions differ by ~24 lines of src/11f-bldfam.js - owner decides which to keep |
-| orch/bld-regional (older, heavier) | 16:32 | 2 | cfclient red (known flaky) | superseded by bld-regional2 |
-| orch/bld-east (first heavy version) | 15:09 | 0 | reverted on main | superseded by bld-east2 |
-| orch/pack-units | 14:43 | 3 | none | merge of superseded branch + handoff, nothing to land |
-| orch/fix-superfreeze | 11:49 | 6 | none | HANDOFF not checked; has train/20261120-1103 landed? (train merged) |
-| orch/trailer, trailer-clips | 06-08 | 13/18 | none | parked (trailer lane, no ready handoff) |
-| orch/art-east (200 ahead) | 02:14 | 200 | none | stale/huge, not landing |
+| orch/bld-regional-light | 17:13 | 0 | on main | LIVE |
+| orch/bld-regional2 | 16:42 | 1 | 24/25 green (smooth-pc, smooth-mp green; cfclient never reported) | superseded: same job as bld-regional-light already on main; not landed |
+| orch/bld-regional | 16:32 | 2 | cfclient red (flaky) | superseded |
+| orch/pack-units | 17:33 | 2 | none | HANDOFF: hold trouser-lift commit (legs near-white on snow map); not landing |
+| orch/pack-art, art-east11, fix-superfreeze* | 4-13h | — | none | handoffs only / already merged, nothing to land |
+| orch/trailer, trailer-clips | 06-08 | 13/18 | none | parked (no ready handoff) |
 
-taken/* locks: all older than 12 h; none recent without an orch branch that I could verify (pack-polish2 18 Nov, endscreen 18 Nov, rest older).
+taken/* locks: all older than 2 days; none without an orch branch is recent (newest pack-polish2, 18 Nov).
 Parked (removed from game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
+No train this run: nothing finished and unlanded.
