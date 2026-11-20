@@ -7,3 +7,5 @@ Run 44667103025 (6 matrix jobs: dunesA dunesB base night storm fort) was queued 
 Known to fix after first look: storm scene enemy is SA (change to IL), dunesB could be RS vs IL; sfx hit times for fort-bb; check no UI in frames.
 Next: when orch/trailer-clips exists: git fetch it, python3 orch/trailer2.py <clips> <work> orch/trailer/ww3-trailer-v2.mp4, extract 8 frames and look,
 make 720p copy, commit both here.
+
+## ORCH 2 (04:55 UTC): DELIVERED to Abdullah: orch/trailer/ww3-trailer-v2.mp4 (cut by ORCH from orch/trailer-clips with orch/trailer/mk2.py; night clips too dark - dropped; dunesA-clash weak - replaced by dunesB-air). Helper: stop here, nothing more to do unless ORCH asks.
