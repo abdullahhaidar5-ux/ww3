@@ -1,0 +1,26 @@
+# Branch-only probe for the OB drone-wave stall (orch/rangefreeze.mjs). Push to probe/sf/** runs just that test, repeatedly.
+name: superfreeze probe
+on:
+  push:
+    branches: ['probe/sf/**']
+jobs:
+  rf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        v: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Tools
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps chromium >/dev/null
+      - name: Run OB ${{ matrix.v }}
+        env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+        run: |
+          TRIES=1 TRACE=1 UPS=1 TRACEMS=120 node orch/rangefreeze.mjs OB 2>&1 | cut -c1-400 | tee /tmp/rf.log | tail -150
+          true
