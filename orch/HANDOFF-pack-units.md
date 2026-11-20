@@ -10,3 +10,7 @@
 
 ## Try on PC (2 min)
 Start a 1v1 Battle as Iran, build a Barracks, train riflemen, zoom right into one: the uniform should show olive/brown/tan camouflage blotches. Counter should read units x/500.
+
+## 2026-11-20 PACK run (camo contrast)
+Done: step 1 of the plan: SOLCAMO 1.5x brighter, rel clamp .6-1.6, mix .95; IR jacket now reads olive (orch/shots/infantry-closeup-{before,after}-IR.jpg). Sandbox render ~5-8 min per scene (`--scenes fulda:IR:US`), so steps 2-6 (dark boots, rig band, helmet strap, weapon grip, face/skin) are left; legs still look dark.
+Try on PC (2 min): Iran Battle, train riflemen, zoom close: camouflage blotches on jackets should be clearly visible.
