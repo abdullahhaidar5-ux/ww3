@@ -1397,6 +1397,10 @@ function roofKit(e,o,P){const h=e.size/2,k=e.kind,BP=basePal(e),rf=bkMat('concre
   {const x=w*.45,z=-w*.35;if(ok(x,z,2.5)){pid++;for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])bx(.4,2.2,.4,x+a*1.3,top+1.1,z+b*1.3,dk);cy(2.1,2.1,3.4,x,top+3.9,z,tin,14);cy(.2,1.8,.9,x,top+6.1,z,tin,14);}}
   {const x=-w*.55,z=w*.5;if(ok(x,z,3)){pid++;const dsh=cy(2.4,.3,.7,x,top+3.4,z,tin,14);dsh.rotation.set(.9,.5,0);cy(.15,.15,3,x,top+1.5,z,dk,6);}}
   for(let i=0;i<2;i++){const x=w*.2+i*3,z=w*.45;if(!ok(x,z,1.5))continue;pid++;cy(.12,.12,9+i*4,x,top+4.5+i*2,z,dk,5);bx(2.6,.15,.15,x,top+7+i*3,z,dk);}
+  /* art-shia: every Shia building (not only the HQ compound) gets roof pennants in the nation's plain colours on short masts + a dusty sand band on the parapet (no emblems, two small meshes per pole) */
+  if(['IR','RS','DW','RV','OB'].includes(T.fac)&&top!=null&&!['turret','sam'].includes(k)){const AC={IR:'#3a8a45',RS:'#d6c42a',DW:'#2f7a4a',RV:'#2a2a2a',OB:'#3a7d4a'}[T.fac]||'#3a7d4a';if(!window.BKSHP)window.BKSHP={};const sm=c=>window.BKSHP[c]||(window.BKSHP[c]=new THREE.MeshStandardMaterial({color:c,roughness:.9,side:THREE.DoubleSide}));
+    for(const [sx,sz] of [[-1,1],[1,1],[-1,-1]]){const x=sx*w*.9,z=sz*w*.9;if(!ok(x,z,1.5))continue;pid++;cy(.18,.18,7,x,top+3.5,z,dk,5);const fl=bx(3.4,1.8,.12,x+1.8*sx*-1,top+6.1,z,sm(AC));fl.rotation.z=.08*sx;}
+    if(top!=null&&ok(-w,w,1)&&ok(w,w,1)){pid++;bx(w*2,.5,.2,0,top+1.4,w+.7,sm('#a99468'));}}
   if((k==='hq'||k==='factory')&&ok(w*.1,-w*.1,4)){pid++;bx(5,3,5,w*.1,top+1.5,-w*.1,pl);bx(5.4,.5,5.4,w*.1,top+3.2,-w*.1,rf);}
   pid=-1;// ground yard wall meshes: no prop id (each one checked on its own)
   const RR=h+(k==='hq'?30:22),gate=7,seg=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(-(z1-z0),x1-x0);bx(L,.5,1.7,(x0+x1)/2,5.2,(z0+z1)/2,rf,a);return bx(L,5,1.1,(x0+x1)/2,2.5,(z0+z1)/2,pl,a);};

@@ -19,3 +19,7 @@ Try on PC (2 min): Battle as IR then RS - look at your HQ compound gate from the
 
 ## Gate result 2026-11-20 (compound kit 29853d3)
 NOT landed. gate/superfreeze red twice (rangefreeze: ~115-125 ms render-frame stalls in every wave kind, all entity types, not building-specific; several other recent main gate runs have superfreeze green). Treated as possibly real: next helper should rebase on current main, re-gate once; if still red, trim the kit (the 9 arch boxes + banners are added to the already-large meRoofKit mesh - try fewer boxes or move to an instanced prop) and re-gate. Branch: orch/pack-art.
+
+## Update 2026-11-20 (ORCH 2 restart)
+Branch orch/pack-art2 from main 8db6bc5: roofKit pennants + parapet band on every Shia building (src/11-models.js). In cigate. Left: jeep/technical camo, mudbrick texture variation, before/after sheets.
+Try on PC (2 min): Battle as IR vs RS - zoom on a power plant / barracks roof: coloured pennants + sand band.
