@@ -27,7 +27,7 @@ jobs:
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
           npx playwright install --with-deps chromium >/dev/null
-          node orch/trailer.mjs --scene ${{ matrix.scene }} --fps 15 --rs 0.667 2>&1 | tail -80
+          node orch/trailer.mjs --scene ${{ matrix.scene }} --fps 30 --rs 0.667 2>&1 | tail -80
       - name: Install ffmpeg
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
       - name: Keep raw frames
@@ -39,8 +39,8 @@ jobs:
           mkdir -p /tmp/clips
           for d in /tmp/tr/${{ matrix.scene }}-*/; do
             n=$(basename "$d"); ls "$d" | wc -l
-            ffmpeg -nostdin -loglevel error -y -framerate 15 -i "$d/%05d.jpg" \
-              -vf "scale=1920:1080:flags=lanczos,minterpolate=fps=30:mi_mode=mci:mc_mode=aobmc:vsbmc=1" \
+            ffmpeg -nostdin -loglevel error -y -framerate 30 -i "$d/%05d.jpg" \
+              -vf "scale=1920:1080:flags=lanczos" \
               -c:v libx264 -crf 14 -preset slow -pix_fmt yuv420p -an "/tmp/clips/$n.mp4"
           done
           ls -la /tmp/clips

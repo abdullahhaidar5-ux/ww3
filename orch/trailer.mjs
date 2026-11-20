@@ -105,7 +105,7 @@ for (const [name, sc] of (want.length ? want.map(k => [k, SCENES[k]]) : Object.e
     const PRE = process.argv.includes('--preview'), preSet = new Set([0, Math.floor(N / 3), Math.floor(2 * N / 3), N - 1]);
     for (let i = 0; i < N; i++) {
       if (PRE && !preSet.has(i)) { await page.evaluate(([n]) => { TR.f = 0; if (n) TR.step(n); if (TR.events) TR.events(0, 0); }, [stepPer]); continue; }
-      const jpg = await page.evaluate(([i, N, stepPer, CAPF]) => { TR.f = i; window.CAPF = CAPF; const u = i / (N - 1);
+      const jpg = await page.evaluate(([i, N, stepPer, CAPF]) => { TR.f = i; window.CAPF = CAPF; try { G.sel.length = 0; HOVE = null; } catch (e) {} const u = i / (N - 1);
         if (stepPer) TR.step(stepPer); if (TR.events) TR.events(i, u);
         TR.fc = TR.camFn(u, TR.A); renderFrame(1 / CAPF); TR.shk *= Math.pow(.86, 30 / CAPF); return TR.grab(); }, [i, N, stepPer, CAPFPS]);
       fs.writeFileSync(path.join(dir, String(i).padStart(5, '0') + '.jpg'), Buffer.from(jpg.split(',')[1], 'base64'));
