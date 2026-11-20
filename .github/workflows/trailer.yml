@@ -28,6 +28,12 @@ jobs:
           npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
           npx playwright install --with-deps chromium >/dev/null
           node orch/trailer.mjs --scene ${{ matrix.scene }} --fps 15 --rs 0.667 2>&1 | tail -80
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+      - name: Keep raw frames
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: 'frames-${{ matrix.scene }}', path: /tmp/tr, if-no-files-found: ignore, compression-level: 0 }
       - name: Encode clips
         run: |
           mkdir -p /tmp/clips

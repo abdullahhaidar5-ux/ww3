@@ -46,7 +46,7 @@ export const SCENES = {
       { n: 'wide', dur: 3, cam: `(u,A)=>{const m=(()=>TR.fight()||TR.A.m)();return TR.orb(m[0],m[1],lerp(230,160,u),lerp(80,50,u),lerp(-1.2,-.7,u),4,42)}` },
     ] },
   // ---- E: sandstorm column ----
-  storm: { map: 'rubalkhali', p: 'IR', a: 'SA', w: 6, warm: 60,
+  storm: { map: 'rubalkhali', p: 'IR', a: 'IL', w: 6, warm: 60,
     prep: `()=>{const A=TR.A;${BASE}A.g0=TR.col(0,'tank',.30,10,5,30,.6).concat(TR.col(0,'inf',.26,60,10,14,.6));A.g1=TR.col(1,'tank',.26,10,5,30,.4).concat(TR.col(1,'inf',.22,60,10,14,.4));TR.step(60*4)}`,
     shots: [{ n: 'low', dur: 3.5, cam: `(u,A)=>{const F=TR.avgL(A.g0),d=A.d;return TR.cam(F[0]-d[1]*80+d[0]*lerp(-100,30,u),lerp(10,14,u),F[1]+d[0]*80+d[1]*lerp(-100,30,u),F[0]+d[0]*30,6,F[1]+d[1]*30,40)}` }] },
   // ---- F: Bunker Buster strike on a fortress: explosion + collapse ----
