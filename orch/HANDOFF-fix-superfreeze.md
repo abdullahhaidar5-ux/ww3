@@ -25,3 +25,4 @@ Branch orch/fix-superfreeze (diagnostic tooling only: orch/rangefreeze.mjs). Pro
 - ROOT CAUSE FOUND (audio): `envLoop(k,.001)` in the battle-start warm returned at once (`if(g<.01||...)return`), so the engine loops never loaded early; the 4 first-use decodes (aa->tank, minel->truck, heli, jet) are exactly those. Fixed: warm passes .01 (src/08-ui.js); guard in orch/decisions.mjs checks both ends.
 - Not fixed: late MeshDepthMaterial link for Apache glass (1 program, within PROGMAX 1) - only if probes still show stalls.
 - Probe: probe/sf/d (rangefreeze US,OB,RS x6).
+- Probe e (US,OB, ew-wave kinds only, 16 runs each): base 4 runs >300 ms (max 3371), noview (ewView=null) 3, solid (setLineDash no-op) 0. Dashed EW ring (src/08h-modern.js, animated lineDashOffset on a big polygon) is the suspect; now drawn as plain short lines (dashPoly). Guard added. Probe f = US,OB,RS x8 full waves on this commit; compare with probe d (RS 3/5 failed).
