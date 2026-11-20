@@ -19,3 +19,6 @@ Before-scores are the numbers above. Shia factions are the weakest family (items
 ## Update 2026-11-19 (Shia bundle 1)
 Item 2 (Shia ATGM/AA/rocket/EW/ammo carriers): 1.5 -> 2.5. Each of IR/RS/DW/RV/OB now has its own truck paint and add-on paint (sand-olive, cold grey-olive, dusty sand, dark olive, pale khaki). Still one hull; new hull/add-on detail is next. Cargo (item 1) landed via ART WEST.
 Sheet: orch/shots/art-shia-ground-after.jpg
+
+## Update 2026-11-20 (Shia bundle 2 start)
+Item 4 (Shahed-type drone IR/RS/DW): 2 -> 3.5. Seam rings, red warhead band, fuze probe, engine cylinders, wing rib lines, fin-tip tabs. Per-nation skin colours already differ (IR pale, RS dark, DW grey). RV/OB quadcopter unchanged (3). Sheet: orch/shots/art-shia-air-after.jpg
