@@ -19,3 +19,7 @@ Try on PC (2 min): Battle as IR then RS - look at your HQ compound gate from the
 
 ## Gate result 2026-11-20 (compound kit 29853d3)
 NOT landed. gate/superfreeze red twice (rangefreeze: ~115-125 ms render-frame stalls in every wave kind, all entity types, not building-specific; several other recent main gate runs have superfreeze green). Treated as possibly real: next helper should rebase on current main, re-gate once; if still red, trim the kit (the 9 arch boxes + banners are added to the already-large meRoofKit mesh - try fewer boxes or move to an instanced prop) and re-gate. Branch: orch/pack-art.
+
+## Update 2026-11-20 (evening check)
+Compound kit (29853d3) and the technicals are already ON main (verified: main contains 29853d3 and 46c2f7c), so the "NOT landed" note above is stale. Left: jeep/recon camo, wall-top flags, before/after sheets (local render too slow - use gate screenshots), aircraft/drone detail pass.
+Try on PC (2 min): Battle as IR then RS - look at your HQ compound gate from the ground camera.
