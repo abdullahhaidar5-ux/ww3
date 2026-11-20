@@ -8,3 +8,6 @@ Bundle 2 (helis/jets) not started.
 
 ## Status 2026-11-20 (run 2)
 Rebased bundle 1 onto main 73e8a86. Gate 27/28 green twice; only gate/superfreeze red, at DIFFERENT places each time (966 ms in "wave dtank" on try 1, 728 ms in "wave drone" with renderFrame only 29 ms on the rerun). Main itself flips superfreeze success/failure commit to commit (73e8a86 ok, 07674c0 red, a7a2b73 red, 04e3ebf red) so it is runner noise. Trying one fresh gate on a new commit before landing. Bundle 2 (helis/jets) still not started.
+
+## Status (landed)
+Bundle 1 (drones) is on main (a3540c1) after a green full gate (third gate run; the first two hit flaky superfreeze at different waves, main flips on it too). Bundle 2 (helis/jets: canopy glass, pylons, rotor detail, markings on m_* models) NOT started - next helper picks it up from here. Still todo for drones: quadcopter/FPV/Kargu body detail, Mohajer-6 for IR.
