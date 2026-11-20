@@ -4,7 +4,7 @@ Browser RTS in the style of C&C Generals Zero Hour — one game, **Battle**, wit
 serves `main`). The owner, Abdullah, shares it with friends on Discord, so **whatever lands on `main` is what his friends
 play next**. All development is directed by **ORCH** — read `orch/ORCH.md` first, then `orch/BRIEF.md` (one-page state).
 **Full history of every decision (dates, his quotes, superseded wording): [`orch/DECISIONS.md`](orch/DECISIONS.md)** — append-only; read it
-only when you need the why. Everything below is the current rule; don't reverse it unless Abdullah asks.
+only when you need the why. **Abdullah's taste (look, sound, UI, pace, trailers): [`orch/TASTE.md`](orch/TASTE.md) — read it before any art, UI, audio or video work.** Everything below is the current rule; don't reverse it unless Abdullah asks.
 
 ## Where things live
 
