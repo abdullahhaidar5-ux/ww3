@@ -1,8 +1,8 @@
-# STATE — conductor run 2026-11-20 09:00 UTC
-Main head b86a73e (status success, West art bundle 4). No train/* newer than 20261119-2100 (12 h) — no other conductor running. No train built this run.
-Blocker: gate/superfreeze red (rangefreeze stalls 115-750 ms on runners). Both pending finished branches fail ONLY that gate:
-- orch/pack-art (Shia compound kit 29853d3; handoff says superfreeze red twice, other 28 green)
-- orch/bld-west (West base buildings 0f63d63; 26 statuses, only gate/superfreeze red)
-Waiting: orch/fix-superfreeze2 (EW ring + Test-range loop fixes, 2 commits, no gate yet) — land it first, then re-gate the two above.
-Other: orch/pack-systems (10 ahead, smoothrender3 numbers; cap stays 300), orch/trailer-clips 18 ahead, orch/trailer 13 ahead, art-east10 handoff only. Old stale: ghostslot, testrange, techbldgs, ammozone (~680 behind). Conductor-prompt candidate list is stale (onegame, nations20 etc. landed long ago).
-Tooling: ~22k remote refs; fetch takes ~6 min here (use background fetch).
+# STATE — conductor run 2026-11-20 11:00 UTC
+Main head b86a73e (30/30 gates green). No other conductor running (last train 20261119-2100, 14 h ago).
+Train train/20261120-1103 = main + fix-superfreeze2 + pack-art (Shia compound kit) + bld-west (West base buildings); gate running.
+- orch/fix-superfreeze2 (3 ahead, pushed 10:42): own gate so far 21/30 reported; superfreeze, smooth-pc, smooth-mp green; migrate-down red (main green) — re-run once.
+- orch/pack-art, orch/bld-west: earlier red ONLY on gate/superfreeze; re-gated inside the train.
+- orch/pack-systems (10 ahead): smoothrender3 numbers only, cap stays 300 — not landed. orch/trailer-clips (18), orch/trailer (13): not Battle-ready, not landed. art-east10: handoff only.
+- Stale locks (taken/*, no orch/ branch or 5+ days old): ~100 old taken/* branches, all from Nov 13-18; none are fresh.
+Tooling: ~22k remote refs; fetch ~6 min (background it). Local smoke/decisions time out here; the gate decides.
