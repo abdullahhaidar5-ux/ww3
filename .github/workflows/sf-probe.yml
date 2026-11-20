@@ -1,0 +1,28 @@
+# Branch-only probe: does the big stall after the EW wave go away without the EW wave? (orch/rangefreeze.mjs SKIP=ew)
+name: superfreeze probe
+on:
+  push:
+    branches: ['probe/sf/**']
+jobs:
+  rf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        v: [1, 2, 3, 4, 5]
+        skip: ['none']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Tools
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps chromium >/dev/null
+      - name: US skip=${{ matrix.skip }} #${{ matrix.v }}
+        env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+        run: |
+          S=${{ matrix.skip }}; [ "$S" = none ] && S=zzz
+          SKIP=$S TRIES=1 SHOW=6 node orch/rangefreeze.mjs US,OB,RS 2>&1 | cut -c1-300 | grep -E "worst [0-9]{3,}ms|FAIL|ok$|longest" | tee /tmp/rf.log | tail -60
+          true
