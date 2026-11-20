@@ -1,15 +1,32 @@
-# STATE — conductor run 2026-11-20 ~08:00 UTC
-Main was db5bb4a; landed orch/pack-systems-merge (5c72285, own gate 26/26 green, level with main, fast-forward).
-The CURRENT FOCUS candidate list in the conductor prompt is stale (Nov 14 branches, 8+ days old; onegame/nations20 already landed) — not touched.
+# STATE — conductor 2026-11-20 11:50 UTC (state only; another conductor's train is still open)
 
-| branch | last push | ahead/behind main | own gate | note |
-|---|---|---|---|---|
-| pack-systems-merge | 06:28 | 2/0 | 26 green | LANDED |
-| art-west-n2 | 05:24 | 2/0 (now 2/1) | 23 green, 0 red (may be incomplete) | next candidate |
-| pack-units | 06:18 | 3/0 | 8 green, running | camo soldiers; wait for gate |
-| pack-art | 05:26 | 1/0 | 18 green, loadfreeze red | rerun loadfreeze |
-| scale-r | 05:24 | 2/0 | superfreeze red | superfreeze not fixed on main either |
-| fix-wxchip | 05:22 | 2/0 | smooth-mp + superfreeze red | not ready |
-| trailer | 06:22 | 13/11 | none | trailer footage, not a landing |
-| old Nov-14 branches (onegame etc.) | stale | far behind | - | parked, already in main |
-taken/* with no orch/* branch: not checked this run (101 locks, newest 2026-11-18 pack-polish2).
+main = b86a73e3 (07:59 UTC). Open train: train/20261120-1103 (last push 10:55 UTC, 12 commits ahead of main, not landed yet) -> this run did step 1 only.
+
+All candidate branches named in the conductor prompt were last pushed 2026-11-13/14 (6+ days old), none has moved since; ahead counts are vs. today's main, so they are stale and would need a rebuild/rebase:
+
+| branch | last push | ahead | HANDOFF |
+|---|---|---|---|
+| freezefix | 11-13 03:04 | 2203 | yes |
+| sweepfixA | 11-14 00:39 | 9 | yes |
+| sweepfixB | 11-14 03:38 | 13 | yes |
+| orderfeel | 11-14 04:37 | 11 | yes |
+| ghostslot | 11-14 03:28 | 26 | yes |
+| testrange | 11-14 03:06 | 30 | yes |
+| battleclean2 | 11-14 04:00 | 31 | yes |
+| pileflag | 11-14 12:46 | 30 | yes |
+| battlemaps2 | - | - | branch missing |
+| unstuck | 11-14 01:59 | 8 | no |
+| dugout | 11-14 12:46 | 39 | yes |
+| battlepower | 11-14 03:03 | 28 | yes |
+| bldqueue | 11-14 03:14 | 30 | yes |
+| techbldgs | 11-14 12:46 | 35 | yes |
+| groundreal | 11-14 05:04 | 27 | yes |
+| leaderlook | 11-14 05:29 | 34 | yes |
+| usvoice | 11-14 04:25 | 26 | yes |
+| ammozone | 11-14 03:55 | 2046 | yes |
+| looktest | 11-14 09:07 | 26 | yes |
+| onegame | 11-14 12:46 | 40 | yes |
+| nations20 | 11-14 12:46 | 29 | yes |
+
+Repo has 22098 remote heads (565 orch/*, 101 taken/*, 43 train/*): a plain `git fetch --prune` times out (>2 min); fetch named refs only.
+Gate statuses and taken/* lock audit not done this run (stopped early).
