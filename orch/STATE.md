@@ -1,16 +1,10 @@
-# STATE — conductor run 2026-11-20 ~18:20 UTC
-
-Main now: 7fac31b91 (Regional base buildings, light — landed by its helper at 17:13; Pages build OK 18:11). Before it: e4bec093f East buildings lighter.
-
-| Branch | Last push | Ahead | Gate | Note |
-|---|---|---|---|---|
-| orch/bld-regional-light | 17:13 | 0 | on main | LIVE |
-| orch/bld-regional2 | 16:42 | 1 | 24/25 green (smooth-pc, smooth-mp green; cfclient never reported) | superseded: same job as bld-regional-light already on main; not landed |
-| orch/bld-regional | 16:32 | 2 | cfclient red (flaky) | superseded |
-| orch/pack-units | 17:33 | 2 | none | HANDOFF: hold trouser-lift commit (legs near-white on snow map); not landing |
-| orch/pack-art, art-east11, fix-superfreeze* | 4-13h | — | none | handoffs only / already merged, nothing to land |
-| orch/trailer, trailer-clips | 06-08 | 13/18 | none | parked (no ready handoff) |
-
-taken/* locks: all older than 2 days; none without an orch branch is recent (newest pack-polish2, 18 Nov).
-Parked (removed from game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
-No train this run: nothing finished and unlanded.
+# STATE — conductor 2026-11-20 19:50 UTC
+Main head 7fac31b9 (regional base buildings). Old candidate list is stale: onegame/nations20/techbldgs etc. landed long ago. No train/* in last 110 min (last train/20261120-1103, fully in main).
+| branch | ahead | note |
+|---|---|---|
+| orch/pack-art3 | 1 (0 behind) | Shia roof AC + mudbrick, view only. Own gate: 24/26 green, smooth-pc/mp green; red superfreeze (233 ms frames, no new programs) + cfclient (known flaky). Re-run blocked: run still going (decals job slow). NOT landed this run. |
+| orch/pack-art | 2 | handoffs only — nothing to land |
+| orch/bld-regional2 | 1 (1 behind) | superseded by the lean version already on main |
+| orch/fix-superfreeze, -2-r | 6 / 2 (23-44 behind) | diverged, HANDOFF says findings/next steps; not ready |
+| orch/art-east11 | 2 | handoffs only |
+Parked: none found. taken/* locks not audited (101 exist; fetch of the 22k-ref repo times out).
