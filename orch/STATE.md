@@ -1,5 +1,5 @@
-# STATE 2026-11-20 05:00 UTC (conductor)
-main = a3540c1 (art-air drone art + handoffs, 04:46 UTC). Newest train/* is 20261119-2100 (7 h old, not merged); no other conductor running.
+# STATE 2026-11-20 06:00 UTC (conductor)
+main = db5bb4a (fix-superfreeze audio fix, landed itself 05:19 UTC). Newest train/* is 20261119-2100 (9 h old, not merged); no other conductor running.
 No train built, nothing landed by the conductor this run. Why: the old queue (freezefix..nations20) is stale - onegame/nations20 etc. are far behind main and parked; the active branches below land themselves on their own gate, and the branch tips have no gate statuses of their own yet (a gate/<sha> run of the exact tip is needed before a train).
 
 | branch | last push | ahead | note |
