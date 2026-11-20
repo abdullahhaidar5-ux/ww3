@@ -14,3 +14,7 @@ Update (2026-11-19 ~18:00Z): bundle 1 is ON main (ORCH landed it). Branch orch/a
 Update (~20:20Z): navy landed (art-east2) and bundle 1 landed. Bundle 2b = CN drone -> 'mq' (Wing Loong paint), KP drone -> 'tb2' (src/11-models.js droneType + wl), sheet orch/shots/art-east-after-air.jpg, branch orch/art-east4. Jets/helis (Su-27 style, MiG, Mi-24/Mi-8) already real models, left alone. Left: CN/KP distinct tanks (no free model; Type 99/Chonma still T-90/T-62 look) and a close-up score report orch/reports/art-east.md.
 
 Update (2026-11-19 night): bundle 4 = tank turret armour for RU (Kontakt+Shtora), CN (wedge ERA), KP (skirts+DShK) in 11-models kitGeo; branch orch/art-east6; sheet orch/shots/art-east-after-tanks.jpg. Left: ship bows.
+
+Update (2026-11-20 run): verified on main: bundle 1 ground, navy, drones, tank armour all landed. Only the close-up report (orch/reports/art-east.md, branch orch/art-east8) is not on main - it goes in with the next code landing (docs-only pushes to main are not allowed). Left: ship bows, BM-21 tube pack/cab, real Type 99/Chonma-ho models if a free one appears.
+
+Update (2026-11-20 scheduled run, branch orch/art-east10 on main b86a73e): re-verified - ground kits, navy, drones, tank armour are all on main. BM-21 (mlrsGeo family E) already has a 40-tube Grad pack, so it is no longer "plain". Nothing new landed this run (no free CC0 Type 99/Chonma-ho model found; ship bows still base boat model). Left: ship bows, real Type 99 / Chonma-ho models, close-up report goes to main with the next code landing.
