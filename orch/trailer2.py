@@ -1,29 +1,30 @@
 #!/usr/bin/env python3
 """Trailer v2 edit. usage: python3 orch/trailer2.py <clips-dir> <work-dir> [out.mp4]
-Clips: <scene>-<shot>.mp4 from the capture workflow (1920x1080, 30 fps). Cuts land on the beat of mus/st/combat-06.mp3
+Clips: <scene>-<shot>.mp4 from the capture workflow (1920x1080, 30 fps). Cuts land on the beat of mus/st/combat-11.mp3
 ("Act of War", 80 BPM -> beat 0.75 s). One encoded file per scene (same size/fps/encoder), concat -c copy, audio muxed with -c:v copy."""
 import os, subprocess, sys, json
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CL, WK = sys.argv[1], sys.argv[2]; OUT = sys.argv[3] if len(sys.argv) > 3 else os.path.join(WK, 'ww3-trailer-v2.mp4')
 os.makedirs(WK, exist_ok=True)
 ANTON = os.path.join(ROOT, 'orch/trailer/fonts/Anton_400Regular.ttf'); OSW = os.path.join(ROOT, 'orch/trailer/fonts/Oswald_500Medium.ttf')
-B = 0.75  # one beat
+B = 60 / 71.25  # one beat of combat-11 "Curse of the Scarab" (~71 BPM, first beat at 0.16 s)
+MUSIC = 'mus/st/combat-11.mp3'; MOFF = 0.16
+DROP = 8 * B   # quiet first 8 beats, then the explosion and the full track
 # (clip, start in clip [s], beats, title or None, flash-in?, zoom end scale, sfx [(time-in-shot, clip name)])
 SHOTS = [
  ('base-flags',    0.0, 4, '22 NATIONS',            0, 1.05, []),
- ('dunesA-track',  0.0, 4, '500 UNITS PER SIDE',    1, 1.04, []),
- ('dunesA-crane',  0.3, 4, None,                    1, 1.00, [(0.0, 'boomS')]),
- ('dunesB-push',   0.3, 3, None,                    1, 1.06, [(1.0, 'cannon')]),
- ('dunesB-arty',   0.0, 4, 'SUPPLY LINES WIN WARS', 1, 1.04, [(0.4, 'boomS'), (1.5, 'boomS')]),
- ('dunesA-clash',  0.0, 3, None,                    1, 1.05, []),
- ('dunesB-air',    0.0, 4, 'LAND. AIR. FIRE.',      1, 1.04, []),
- ('night-low',     0.0, 4, 'DAY. NIGHT. STORMS.',   1, 1.04, []),
- ('night-wide',    0.0, 3, None,                    1, 1.04, []),
- ('storm-low',     0.0, 4, None,                    1, 1.04, []),
- ('fort-bb',       1.0, 6, None,                    1, 1.03, [(1.2, 'boomL')]),
- ('base-parade',   0.0, 2, None,                    1, 1.05, []),
+ ('dunesA-track',  0.0, 4, '500 UNITS PER SIDE',    0, 1.04, []),
+ ('fort-bb',       1.0, 3, None,                    1, 1.03, [(0.0, 'boomL')]),
+ ('dunesA-crane',  0.3, 2, None,                    1, 1.00, [(0.0, 'boomS')]),
+ ('dunesB-push',   0.3, 2, None,                    1, 1.06, [(0.5, 'cannon')]),
+ ('dunesB-arty',   0.0, 2, 'SUPPLY LINES WIN WARS', 1, 1.04, [(0.2, 'boomS')]),
+ ('dunesA-clash',  0.0, 2, None,                    1, 1.05, []),
+ ('dunesB-air',    0.0, 2, None,                    1, 1.04, []),
+ ('night-low',     0.0, 2, 'DAY. NIGHT. STORMS.',   1, 1.04, []),
+ ('night-wide',    0.0, 2, None,                    1, 1.04, [(0.3, 'boomS')]),
+ ('storm-low',     0.0, 2, None,                    1, 1.04, []),
 ]
-FIN = ('dunesA-clash', 1.0, 4, 'WORLD WAR 3', 1, 1.08, [(0.0, 'boomL')])   # title shot
+FIN = ('dunesA-clash', 1.0, 3, 'WORLD WAR 3', 1, 1.08, [(0.0, 'boomL')])   # title shot
 SFX = json.load(open(os.path.join(ROOT, 'sfx/manifest.json')))['clips']
 def run(c):
     r = subprocess.run(c, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -45,8 +46,8 @@ def shot(i, spec):
     vf.append('fade=t=out:st=%.2f:d=0.08:color=black' % (d - .08) if False else 'null')
     if os.path.exists(out) and os.environ.get('KEEP'): return out
     run(['ffmpeg', '-nostdin', '-loglevel', 'error', '-y', '-ss', str(ss), '-i', f, '-t', str(d), '-vf', ','.join(vf)] + ENC + [out]); return out
-def endcard(out, d=6.0):
-    cm = 'Music: "Act of War" by Alexandr Zhelanov (opengameart.org) - CC-BY 3.0'
+def endcard(out, d=3.5):
+    cm = 'Music: "Curse of the Scarab" by Kevin MacLeod (incompetech.com) - CC BY 4.0'
     vf = (f"drawtext=fontfile={ANTON}:text='WORLD WAR 3':fontsize=170:fontcolor=white:x=(w-text_w)/2:y=330,"
           f"drawtext=fontfile={OSW}:text='FREE IN YOUR BROWSER':fontsize=54:fontcolor=0xd8b25a:x=(w-text_w)/2:y=560,"
           f"drawtext=fontfile={OSW}:text='abdullahhaidar5-ux.github.io/ww3':fontsize=60:fontcolor=white:x=(w-text_w)/2:y=650,"
@@ -59,12 +60,15 @@ for i, s in enumerate(SHOTS + [FIN]):
     parts.append(o)
     for (dt, nm) in s[6]: sfx.append((t + dt, nm))
     t += s[2] * B
-e = os.path.join(WK, 'end.mp4'); endcard(e); parts.append(e); total = t + 6.0
+e = os.path.join(WK, 'end.mp4'); endcard(e); parts.append(e); total = t + 3.5
 open(os.path.join(WK, 'list.txt'), 'w').write(''.join(f"file '{p}'\n" for p in parts))
 vid = os.path.join(WK, 'video.mp4')
 run(['ffmpeg', '-nostdin', '-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', os.path.join(WK, 'list.txt'), '-c', 'copy', vid])
 # audio: music + sfx hits from sfx/sfx.mp3
-ins = ['-i', os.path.join(ROOT, 'mus/st/combat-06.mp3')]; fc = [f'[0:a]atrim=start=0.02:duration={total},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=0.5,afade=t=out:st={total-2.5}:d=2.5,volume=1.0[m]']
+ins = ['-i', os.path.join(ROOT, MUSIC)]
+fc = [f'[0:a]atrim=start={MOFF}:duration={DROP+0.3},asetpts=PTS-STARTPTS,lowpass=f=900,volume=0.30,afade=t=in:st=0:d=2,afade=t=out:st={DROP-0.1}:d=0.4[mq]',
+      f'[0:a]atrim=start={MOFF+DROP}:duration={total-DROP},asetpts=PTS-STARTPTS,afade=t=out:st={total-DROP-2.0}:d=2.0,adelay={int(DROP*1000)}|{int(DROP*1000)}[mf]',
+      '[mq][mf]amix=inputs=2:duration=longest:normalize=0[m]']
 mix = ['[m]']
 for k, (at, nm) in enumerate(sfx):
     c = SFX[nm][0]; ins += ['-i', os.path.join(ROOT, 'sfx/sfx.mp3')]
