@@ -5,3 +5,11 @@
 - Look: warm desert cinematic - golden light, dust, heat haze, deep shadows.
 - Trailers: ~30 seconds; open quiet, then explode.
 - Factions: few. Focus Iran, Lebanese Shia (RS), Yemen (DW) / Iraqi Shia (RV) vs their enemy US / Israel. Avoid showing many factions.
+
+## General taste (Abdullah 2026-11-19 ~03:50 UTC, binding for all helpers)
+- Units and buildings: GRITTY REALISM like Company of Heroes 3 - worn, dirty, dusty, real gear (not clean/toy-like).
+- Menus and battle HUD: CLASSIC C&C GENERALS panels and buttons.
+- Battles: FAST ARCADE C&C pace, constant action.
+- Sound: MUSIC-LED - epic Middle Eastern score on top of the battle.
+- Choices: GO BIG (big visible changes even if risky); SPEED FIRST over polish when they clash (smoothness gates still must stay green).
+- Show Abdullah EARLY DRAFTS with pictures so he can steer; replies short + pictures.
