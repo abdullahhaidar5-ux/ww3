@@ -2,8 +2,8 @@
    standard material (vertex colours, no new shader program): T-wall blast barriers with an entrance gap, sandbag corner posts, generator + AC
    condensers, an antenna mast with guy wires, a floodlight pole, fuel drums, dust drifts at the wall feet. Built once per family/kind/size and shared.
    Family paint: West concrete + olive/tan, East grey-green concrete + red-star-free plain steel, Regional sand concrete. Shia compounds are art-shia's (meRoofKit). */
-const BFAM={US:'W',GB:'W',FR:'W',DE:'W',IL:'W',UA:'W',RU:'R',CN:'R',KP:'R'},BFON={W:1,R:1},   // Regional (G) gets switched on in its own landing
-  BFP={R:{c:'#7a8172',c2:'#8c9284',b:'#1c1d1b',m:'#4b5046',d:'#252725',u:'#a79877',g:'#54603f',n:'#4d5a3a',n2:'#6b6446',r:'#a3262a',w:'#d9d6c8'},W:{c:'#8d8c85',c2:'#a3a29a',b:'#a89b77',m:'#5b615e',d:'#2a2c2b',u:'#b3a584',g:'#52584a'}};
+const BFAM={US:'W',GB:'W',FR:'W',DE:'W',IL:'W',UA:'W',RU:'R',CN:'R',KP:'R',SA:'G',AE:'G',TR:'G',EG:'G',PK:'G'},BFON={W:1,R:1,G:1},
+  BFP={G:{c:'#b8a47c',c2:'#c9b78e',b:'#c2b08a',m:'#5a5a52',d:'#2a2b29',u:'#c4b284',g:'#6d6a52',h:'#a89a6a',a:'#34382f',w:'#dedacb'},R:{c:'#7a8172',c2:'#8c9284',b:'#1c1d1b',m:'#4b5046',d:'#252725',u:'#a79877',g:'#54603f',n:'#4d5a3a',n2:'#6b6446',r:'#a3262a',w:'#d9d6c8'},W:{c:'#8d8c85',c2:'#a3a29a',b:'#a89b77',m:'#5b615e',d:'#2a2c2b',u:'#b3a584',g:'#52584a'}};
 const BFGEO={};
 // national flags as flat coloured blocks (vertex colours, no texture): rects [x,y,w,h,col] and discs ['o',cx,cy,r,col] in 0..1 cloth space (y up)
 const BFFLG={RU:[[0,.667,1,.333,'#e6e6e2'],[0,.333,1,.334,'#2a4fa0'],[0,0,1,.333,'#c0332b']],
@@ -48,7 +48,23 @@ function bfamEast(B,P,R,h,size,kind,fac){
   for(let i=0;i<3;i++){B.cyl(1.05,1.05,3.2,7,h+17+(i>1?1.2:i*2.3),1.6,-h*.5+(i>1?2:0),i===1?'#5d3a2a':P.g);B.cyl(1.08,1.08,.3,7,h+17+(i>1?1.2:i*2.3),2.9,-h*.5+(i>1?2:0),P.d);}
   for(let i=0;i<8;i++){const x=-h+R()*h*2,z=zf+(R()<.5?-1.6:1.8);B.rock(4+R()*6,.9,2.2,x,.15,z,P.u,0,R()*3,0,i);}
   return B.geo();}
-function bfamGeo(fam,kind,size,fac){const K=fam+kind+size+(kind==='hq'?fac:'');if(BFGEO[K])return BFGEO[K];const P=BFP[fam],B=Bld(),h=size/2,R=mulberry(size*7+kind.length*13+fam.charCodeAt(0));if(fam==='R')return BFGEO[K]=bfamEast(B,P,R,h,size,kind,fac);
+// Regional (light: shared shape, few parts, no shadow casting): sand concrete wall with crenellated top and blind arches, HESCO bastion line, AC units, satellite dish, HQ flag
+function bfamReg(B,P,R,h,size,kind,fac){
+  const wall=(x,z,ry)=>{const c=Math.cos(ry),s=Math.sin(ry);B.box(7,5.2,1.2,x,2.7,z,R()<.5?P.c:P.c2,0,ry);B.box(7.2,.5,1.5,x,5.5,z,P.c2,0,ry);
+    for(const q of [-2.4,0,2.4])B.box(1.6,1.1,1.2,x+c*q,6.3,z-s*q,P.c,0,ry);   // crenellations
+    B.box(1.3,2.2,.3,x+s*.7,2.6,z+c*.7,P.a,0,ry);B.half(.65,.3,x+s*.7,3.7,z+c*.7,P.a,ry+Math.PI/2);};
+  const zf=h+11,nf=Math.max(3,Math.round(h/7));for(let i=0;i<nf;i++){const x=6.8+i*7.2;if(x>h+9)break;wall(x,zf,0);wall(-x,zf,0);}
+  const hesco=(x,z,ry,n)=>{const c=Math.cos(ry),s=Math.sin(ry);for(let i=0;i<n;i++){const o=i*3.3;B.box(3.2,6.4,3.2,x+c*o,3.2,z-s*o,i%2?P.h:P.u,0,ry,R()*.04);B.box(3.3,.25,3.3,x+c*o,6.5,z-s*o,P.d,0,ry);}};
+  hesco(h+11,-h*.8,Math.PI/2,Math.max(3,Math.round(h/3)));if(kind!=='depot')hesco(-h-11,-h*.5,Math.PI/2,Math.round(h/4));
+  for(const sx of [-1,1]){B.box(2.4,8,2.4,sx*5.6,4,zf,P.c2);B.box(3.2,.7,3.2,sx*5.6,8.2,zf,P.c);}B.box(14,1.2,2,0,8.6,zf,P.c2);B.half(5.2,1.6,0,8,zf,P.a,0);
+  for(const z of [h*.1,h*.1+4.2]){B.box(3.4,2.8,2.8,h+7,1.4,z,P.c2);B.cyl(1.05,1.05,.3,8,h+7,2.95,z,P.d);}
+  B.cyl(.3,.4,10,5,h+16,5,h*.6,P.m);B.cyl(3.2,.2,.6,10,h+16.8,10.4,h*.6,P.w,0,0,.9);
+  if(kind==='hq')bfFlag(B,-16,zf+3,fac,26,0.2);
+  B.box(4,1,4,h+8,.5,-h*.6,P.c2);B.cyl(1.5,1.5,3.6,8,h+8,2.8,-h*.6,'#46504a');
+  const mx=-h-9,mz=-h-9;B.cyl(.35,.5,30,5,mx,15,mz,P.m);for(let y=6;y<30;y+=8)B.box(4,.2,.2,mx,y,mz,P.m);B.sph(.45,mx,30.4,mz,'#c0392b');
+  for(let i=0;i<8;i++){const x=-h+R()*h*2,z=zf+(R()<.5?-1.8:2);B.rock(4+R()*5,1.1,2.4,x,.15,z,P.u,0,R()*3,0,i);}
+  return B.geo();}
+function bfamGeo(fam,kind,size,fac){const K=fam+kind+size+(kind==='hq'?fac:'');if(BFGEO[K])return BFGEO[K];const P=BFP[fam],B=Bld(),h=size/2,R=mulberry(size*7+kind.length*13+fam.charCodeAt(0));if(fam==='G')return BFGEO[K]=bfamReg(B,P,R,h,size,kind,fac);if(fam==='R')return BFGEO[K]=bfamEast(B,P,R,h,size,kind,fac);
   const tw=(x,z,ry)=>{ // T-wall: tall slab on a wider foot, cap strip, lifting lugs
     B.box(6.4,1.1,3.2,x,.55,z,P.c2,0,ry);B.box(6,6.2,1.6,x,4,z,R()<.5?P.c:P.c2,0,ry);B.box(6.2,.5,1.9,x,7.3,z,P.c2,0,ry);
     const c=Math.cos(ry),s=Math.sin(ry);for(const q of [-2.2,2.2])B.box(.5,.5,.4,x+c*q,6.8,z-s*q-0,P.m,0,ry);B.box(5.6,.18,1.7,x,3.6,z,P.d,0,ry);};
