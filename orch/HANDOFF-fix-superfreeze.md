@@ -20,3 +20,10 @@ Branch orch/fix-superfreeze (diagnostic tooling only: orch/rangefreeze.mjs). Pro
 - Still open: the 3 remaining first-use decodes (enemy-team sheets?), bone-texture uploads for idle skinned units, draw-call volume. Needs GitHub gate runs (sandbox too slow: decisions/smoke time out here).
 - Tried (a) skip bone-texture upload when matrices unchanged (Skeleton.update wrapper, version rollback): Float32 texSubImage2D counts did not drop (OB local: wave 827, power 1388 vs 975/912 before) - those uploads are real moving poses (waves attack-move) or not bone textures; reverted, not shipped. Next: identify the owner of the Float32Array textures by texture name/userData in the upload hook, or cut draw-call volume (merge per-unit meshes).
 - Gate run 44671863012 on gate/68f25ca2d1 was still queued at 04:05 UTC.
+
+## Session 4 (2026-11-20, ORCH 2 restart 06:58)
+- ROOT CAUSE FOUND (audio): `envLoop(k,.001)` in the battle-start warm returned at once (`if(g<.01||...)return`), so the engine loops never loaded early; the 4 first-use decodes (aa->tank, minel->truck, heli, jet) are exactly those. Fixed: warm passes .01 (src/08-ui.js); guard in orch/decisions.mjs checks both ends.
+- Not fixed: late MeshDepthMaterial link for Apache glass (1 program, within PROGMAX 1) - only if probes still show stalls.
+- Probe: probe/sf/d (rangefreeze US,OB,RS x6).
+- Probe e (US,OB, ew-wave kinds only, 16 runs each): base 4 runs >300 ms (max 3371), noview (ewView=null) 3, solid (setLineDash no-op) 0. Dashed EW ring (src/08h-modern.js, animated lineDashOffset on a big polygon) is the suspect; now drawn as plain short lines (dashPoly). Guard added. Probe f = US,OB,RS x8 full waves on this commit; compare with probe d (RS 3/5 failed).
+- Probe g (OB,RS, 20 runs/variant, EW kinds): base 7 fails (>300 ms over quiet), nofill 3, nostroke 0. So it is the EW ring in src/08h-modern.js: its outline runs far off-screen when zoomed. Fix: ring clipped to the screen (clipPolyRect for the fill, dashPoly with a rectangle for the dashes). Probe h verifies; then cigate + land.
