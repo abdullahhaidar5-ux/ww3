@@ -106,3 +106,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-20 16:47Z 9b596789 **RED** (28 gates) failing: loadfreeze,smooth-pc — East base buildings: sheet, HISTORY, handoff
 - 2026-11-20 17:41Z ff900d62 **GREEN** (28 gates) — HISTORY: revert East base buildings (smooth-pc + loadfreeze red on mai
 - 2026-11-20 18:36Z e4bec093 **GREEN** (28 gates) — East base buildings, lighter: shared shape, fewer parts, no shadow cas
+- 2026-11-20 19:17Z 7fac31b9 **GREEN** (28 gates) — Regional base buildings (light): sand walls, HESCO, dish, flag on HQ (
