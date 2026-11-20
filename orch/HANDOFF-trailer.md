@@ -9,3 +9,10 @@ Next: when orch/trailer-clips exists: git fetch it, python3 orch/trailer2.py <cl
 make 720p copy, commit both here.
 
 ## ORCH 2 (04:55 UTC): DELIVERED to Abdullah: orch/trailer/ww3-trailer-v2.mp4 (cut by ORCH from orch/trailer-clips with orch/trailer/mk2.py; night clips too dark - dropped; dunesA-clash weak - replaced by dunesB-air). Helper: stop here, nothing more to do unless ORCH asks.
+
+## Helper Sonnet (05:50 UTC): footage fixes pushed (7f338e8), NOT re-cut. Run 4 of trailer.yml will re-capture with them; ORCH decides whether to re-cut.
+Found + fixed in orch/trailer.mjs: camera near plane was 40 (clipped the ground in front of low cameras = dark wedge at the bottom of low shots; now 3),
+ground ring decals (`decals_ring*` instanced meshes = the green rings under units) hidden, supply overlay off, selection cleared. Capture is 30 fps now (no minterpolate smear).
+Scenes (orch/trailer2-scenes.mjs): desert map is `euphrates` (rubalkhali has a sea and most other desert maps load as snow); cameras follow the infantry/tank columns
+(A.gm), not the "fight centre", which sits on the river and fills the frame with explosion blobs. Local preview (~1 min per shot): TR_SCENES=./trailer2-scenes.mjs TR_OUT=/tmp/x node orch/trailer.mjs --scene dunesA --fps 30 --rs 0.4 --preview
+Edit script orch/trailer2.py (beat-grid cut, titles, end card, sfx, -14 LUFS) is tested; ORCH's cut used orch/trailer/mk2.py instead.
