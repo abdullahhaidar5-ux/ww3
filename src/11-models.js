@@ -534,11 +534,11 @@ function soldierGear(m,fac,kind){const inner=m.userData.inner;if(!inner)return;i
     const f=new THREE.Group();for(const sx of [-.5,0,.5]){const p=new THREE.Mesh(new THREE.BoxGeometry(.42*k,.5*k,.3*k),gearMat(pk));p.position.set(sx*k,0,0);f.add(p);}attach(B.chest,f,0,-1.2*k,.62*k);
     if(B.hips){const cn=new THREE.Mesh(new THREE.CylinderGeometry(.24*k,.24*k,.6*k,8),gearMat('#4a4d3c'));attach(B.hips,cn,.75*k,-.2*k,-.35*k);}
     /* close-up detail (pack-units 2026-11-19, view only; merged into the same one soldier shape, no extra draws): a chest rig panel with magazine pouches and a grenade, a radio with antenna on the pack, a helmet strap and shoulder straps */
-    {const rg='#'+uni.clone().lerp(new THREE.Color('#3d3a2e'),.62).multiplyScalar(.8).getHexString(),dk='#25272a';
+    {const rg='#'+uni.clone().lerp(new THREE.Color('#3d3a2e'),.7).multiplyScalar(.62).getHexString(),dk='#25272a';
      const v=new THREE.Group();const panel=new THREE.Mesh(new THREE.BoxGeometry(1.5*k,1.05*k,.18*k),gearMat(rg));v.add(panel);
-     for(const sx of[-.46,-.15,.16,.47]){const mg=new THREE.Mesh(new THREE.BoxGeometry(.26*k,.46*k,.2*k),gearMat('#2f3226'));mg.position.set(sx*k,-.1*k,.15*k);v.add(mg);}
+     for(const sx of[-.46,-.15,.16,.47]){const mg=new THREE.Mesh(new THREE.BoxGeometry(.26*k,.46*k,.2*k),gearMat('#23261c'));mg.position.set(sx*k,-.1*k,.15*k);v.add(mg);}
      const gr=new THREE.Mesh(new THREE.SphereGeometry(.14*k,6,5),gearMat('#3b4130'));gr.position.set(.72*k,.3*k,.14*k);v.add(gr);
-     attach(B.chest,v,0,-.55*k,.5*k);
+     attach(B.chest,v,0,-.55*k,.5*k);if(B.hips){const bt=new THREE.Mesh(new THREE.BoxGeometry(1.45*k,.26*k,.9*k),gearMat(rg));attach(B.hips,bt,0,.2*k,0);}
      const rd=new THREE.Group();const rb=new THREE.Mesh(new THREE.BoxGeometry(.5*k,.8*k,.32*k),gearMat(dk));rd.add(rb);const an=new THREE.Mesh(new THREE.CylinderGeometry(.03*k,.03*k,1.7*k,4),gearMat('#111214'));an.position.set(.18*k,1.2*k,0);rd.add(an);
      attach(B.chest,rd,.55*k,.45*k,-1.5*k);
      for(const sx of[-.55,.55]){const st=new THREE.Mesh(new THREE.BoxGeometry(.2*k,1.2*k,.12*k),gearMat(rg));attach(B.chest,st,sx*k,.15*k,.52*k);}}}
