@@ -699,3 +699,4 @@ conductor 2026-11-14: train 13 landed — the paused Grand campaign moved into E
 - 2026-11-19 scale: vehicles (tanks, artillery, trucks, jeeps, helicopters, jets) are drawn bigger so soldiers look the right size next to them; infantry unchanged, gameplay unchanged (view only).
 - 2026-11-19 The DUSK / NIGHT / weather label at the top of the screen no longer covers the BATTLE line; it sits just under it.
 - 2026-11-20 Shia buildings: every Iranian/Lebanese/Yemeni/Iraqi/Palestinian-brigade building now flies small roof pennants in its nation's colours and has a dusty sand band on the roof edge (view only).
+- 2026-11-20 PACK units: Iranian/Lebanese/Yemeni/Iraqi soldiers' camouflage is brighter and bolder, so the olive/brown blotches now read on the uniform (view only, same soldier path; before/after in orch/shots/infantry-closeup-*-IR.jpg).
