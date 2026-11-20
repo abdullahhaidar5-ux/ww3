@@ -89,3 +89,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-19 22:02Z 1d3dd007 **GREEN** (28 gates) — East drones: China flies pale Wing Loong-style drones, North Korea Bay
 - 2026-11-19 22:39Z 2dc39a06 **GREEN** (28 gates) — HISTORY: art-regional tanks
 - 2026-11-20 00:10Z a7a2b739 **RED** (28 gates) failing: superfreeze — handoff pack-art: gate status
+- 2026-11-20 01:03Z aae60d36 **GREEN** (28 gates) — East tanks: RU/CN/KP get their own turret armour
