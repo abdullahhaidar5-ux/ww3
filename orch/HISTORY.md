@@ -687,3 +687,4 @@ conductor 2026-11-14: train 13 landed — the paused Grand campaign moved into E
 - 2026-11-20 AI: Normal-difficulty China and Russia now pick their Barracks troops with the smart counter-pick (fewer wasted anti-tank soldiers and medics); in the 22-nation test their win rates rose from about 25% to about 40%.
 - 2026-11-19 ART AIR bundle 1 (drones): Shahed-style, Bayraktar/MQ-9-style and Lancet drones are rebuilt with smooth fuselages, tapered rounded wings, shaped tails, sensor balls, landing gear, missiles under MQ-9 wings and real propeller blades.
 - 2026-11-20 ORCH 2: Test range waves no longer stutter on the first drone/EW wave: radio, shout and announcer sounds and engine loops are prepared when the battle starts instead of on first use (fix-superfreeze, gate 28/28).
+- 2026-11-19 The DUSK / NIGHT / weather label at the top of the screen no longer covers the BATTLE line; it sits just under it.
