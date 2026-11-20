@@ -19,3 +19,6 @@ Try on PC (2 min): Iran Battle, train riflemen, zoom close: camouflage blotches 
 Item 1 verified done (main d7fbc49, servers-live contains it). Item 2: SOLCAMO brightness floor raised (rel clamp .82-1.5) so trousers/legs read olive; shot orch/shots/infantry-closeup-legs-IR.jpg. Local smoke/decisions too slow here; gate via orch/cigate.sh.
 Left: headgear/face shading, boots/rig band, normal/roughness, camo for other nations.
 Try on PC (2 min): Iran Battle, train riflemen, zoom right in: jackets AND trousers should show olive/brown camouflage, not near-black legs.
+
+## 2026-11-20 later: HOLD d33020e (do not land)
+ORCH 2 (16:45 UTC) reports on main (Test range, bm_splitridge, Day) that IR trousers/boots come out almost WHITE, camo blotches invisible, rifle floats off the hands. My local render (fulda, dusk-ish) showed dark legs, so the sandbox view is not the real lighting. d33020e raises the camo brightness floor (rel .82-1.5), which can only make near-white legs worse. Gate run 44778181021 was still queued after 45 min. Next helper: first find why legs go near-white on splitridge (base/vertex colour, camo mix, SOLB too bright, exposure) in a GitHub-runner close-up; then fix the cause, not the floor. Remaining list: camo at 20 m desert+snow, darker chest-rig band, hands on rifle, other nations.
