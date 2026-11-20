@@ -45,6 +45,8 @@ for(const k of ['harv','ammot','idome','ew','cbr']){Object.assign(RMAP[k],{GB:'g
 Object.assign(RMAP.atgm,{US:'humvee',GB:'gbhum',IL:'ilhum',UA:'humvee',FR:'ozelot',DE:'ozelot'});
 // art-west: the West's scout jeep is a real Humvee/Ozelot in national paint (was the shared box truck); each nation's howitzer gets its own paint on the G6 hull
 Object.assign(RMAP.jeep,{US:'humvee',GB:'gbhum',IL:'ilhum',UA:'humvee',FR:'ozelot',DE:'ozelot'});
+// art-shia: the Shia nations' scout is an unarmed Toyota-style pickup (real model already loaded for the Armed Technical), not the shared camo box truck
+RMOD.hiluxs={m:'m_hilux',fit:'z',size:28};Object.assign(RMAP.jeep,{IR:'hiluxs',RS:'hiluxs',DW:'hiluxs',RV:'hiluxs',OB:'hiluxs'});
 Object.assign(RMOD,{usg6:{m:'m_g6',fit:'z',size:40,tint:'#6d7054',tk:.4},gbg6:{m:'m_g6',fit:'z',size:40,tint:'#5c5a44',tk:.42},frg6:{m:'m_g6',fit:'z',size:40,tint:'#6b7058',tk:.4},ilg6:{m:'m_g6',fit:'z',size:40,tint:'#a89a74',tk:.42},uag6:{m:'m_g6',fit:'z',size:40,tint:'#66704d',tk:.4},deg6:{m:'m_g6',fit:'z',size:40,tint:'#4a5540',tk:.4}});
 Object.assign(RMAP.arty,{US:'usg6',GB:'gbg6',FR:'frg6',IL:'ilg6',UA:'uag6',DE:'deg6'});
 // National vehicle families, East (visual only, existing models + paint): Russia a deep-green Ural, China a PLA olive-green Ural and its anti-tank teams on a green Humvee-type

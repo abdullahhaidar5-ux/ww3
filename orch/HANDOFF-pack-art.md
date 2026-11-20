@@ -23,3 +23,7 @@ NOT landed. gate/superfreeze red twice (rangefreeze: ~115-125 ms render-frame st
 ## Update 2026-11-20 (ORCH 2 restart)
 Branch orch/pack-art2 from main 8db6bc5: roofKit pennants + parapet band on every Shia building (src/11-models.js). In cigate. Left: jeep/technical camo, mudbrick texture variation, before/after sheets.
 Try on PC (2 min): Battle as IR vs RS - zoom on a power plant / barracks roof: coloured pennants + sand band.
+
+## Update 2026-11-20 (pack-art4)
+Main already has pennants, AC units, mudbrick, technicals, add-ons. Done here: Shia jeep slot = unarmed hilux pickup (RMOD.hiluxs). Left: before/after sheets (local render too slow). Gate via orch/cigate.sh.
+Try on PC (2 min): Battle as RS, build a scout (recon vehicle): a Toyota-style pickup, not a box truck.

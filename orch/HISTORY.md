@@ -706,3 +706,4 @@ conductor 2026-11-14: train 13 landed — the paused Grand campaign moved into E
 - 2026-11-20 Regional base buildings (light): Saudi, Emirati, Turkish, Egyptian and Pakistani Command Centres, Barracks, War Factories and Depots get a sand-coloured wall with crenellated top and arched blind windows, a HESCO cell line, AC units, a satellite dish and a water tank; the HQ flies its own flag (view only; shared shape, few parts, no shadow casting; sheet orch/shots/art-bld-regional-after.jpg).
 - 2026-11-20: Shia buildings: small rooftop AC units and per-building mudbrick tone on the parapet band (view only, light)
 - 2026-11-20 Soldiers up close: darker chest rig and magazine pouches plus a webbing belt, so the kit reads against the camouflage jacket (view only, same single soldier shape)
+- 2026-11-20 Shia scouts: Iranian, Lebanese, Zaidi, Iraqi and Palestinian scout cars are now an unarmed Toyota-style pickup instead of the shared camo box truck (view only)
