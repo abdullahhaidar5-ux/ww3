@@ -684,3 +684,4 @@ conductor 2026-11-14: train 13 landed — the paused Grand campaign moved into E
 - 2026-11-19 Regional art: South Korea's Kargu-style attack quadcopter now has a ribbed body, warhead nose, camera ball, skids and motor caps up close.
 - 2026-11-20 art-west: West landing craft, minelayers and minesweepers now have a proper stepped hull with ramp, bridge and gear instead of a tinted boat.
 - 2026-11-20 Regional art: India, Japan, Korea, Pakistan, Saudi, UAE, Turkey and Egypt anti-aircraft trucks, electronic-warfare trucks and bulldozers now get the detailed kits in their own paint colours.
+- 2026-11-19 scale: vehicles (tanks, artillery, trucks, jeeps, helicopters, jets) are drawn bigger so soldiers look the right size next to them; infantry unchanged, gameplay unchanged (view only).

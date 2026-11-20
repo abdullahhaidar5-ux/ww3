@@ -1,0 +1,4 @@
+# HANDOFF scale (branch orch/scale)
+Done: `VEH_SCALE` + `vehScale()` in src/11-models.js (view-only per-class multiplier on the whole model group), health-bar height follows (src/06-view.js entHeightMid), probes `orch/scalemeasure.mjs`, `orch/scaleshots.mjs`, report `orch/reports/scale.md`, shots `orch/shots/scale-{before,after}-{IR,US,RU,IN}.jpg`, guard in orch/decisions.mjs, DECISIONS/CLAUDE.md/HISTORY lines.
+Factors: tank 1.45, arty 1.4, jeep 1.4, atgm 1.35, aa 1.25, dozer 1.3, trucks 1.15, heli 1.5, airlift 1.4, jet 1.4, other ground 1.3, infantry/ships 1.0.
+Left: local smoke/decisions are too slow in the sandbox (timed out) - run `orch/cigate.sh`; no wide in-battle screenshot yet; muzzle flash/exhaust offsets in 05-fx3d not retuned (they use sim radii); look at it in a real battle (wrecks, tracks, flames) and tune factors if vehicles overlap.
