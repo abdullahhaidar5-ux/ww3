@@ -1,0 +1,3 @@
+# HANDOFF bld-fam (branch orch/bld-west) 2026-11-20
+Done: src/11f-bldfam.js = non-Shia base-building family kit (T-wall blast walls with entrance gap, sandbag guard posts, generator + AC, antenna mast, floodlight, fuel drums, dust drifts), one merged mesh per building on MAT.std, geometry cached per fam/kind/size + gcKeep; hook bfamKit() at end of decorateBld. Only West on (BFON={W:1}). Sheet orch/shots/art-bld-west-after.jpg via new orch/bldsheet.mjs (`node orch/bldsheet.mjs west bld -x`).
+Left: gate + land West; then East (add 'R' to BFAM for RU CN KP + palette in BFP, BFON.R=1), Regional (SA AE TR EG PK ... SA/AE/EG are MEFAC: meWall path differs - check meRoofKit first). Never touch Shia (IR RS DW RV OB).
