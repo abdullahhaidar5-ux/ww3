@@ -11,3 +11,6 @@ Rebased bundle 1 onto main 73e8a86. Gate 27/28 green twice; only gate/superfreez
 
 ## Status (landed)
 Bundle 1 (drones) is on main (a3540c1) after a green full gate (third gate run; the first two hit flaky superfreeze at different waves, main flips on it too). Bundle 2 (helis/jets: canopy glass, pylons, rotor detail, markings on m_* models) NOT started - next helper picks it up from here. Still todo for drones: quadcopter/FPV/Kargu body detail, Mohajer-6 for IR.
+
+## Restart check 2026-11-20 (ORCH 2 note)
+Checked own part: drone geometry is built once per nation+type (DPROTO cache in src/11-models.js droneModel), cloned afterwards, one shared MeshStandardMaterial (DPROTO._mat) - no new shader program variants; the Test-range warm-up in src/05-fx3d.js already builds every unit kind of each team (drones included) before play. Bundle 1 is already on main and green. Superfreeze spikes moved between waves (dtank, drone, ew) so they are not drone-specific. Next: quadcopter/FPV/Kargu body detail, Mohajer-6 (IR), then bundle 2 (helis/jets). Not started this run.
