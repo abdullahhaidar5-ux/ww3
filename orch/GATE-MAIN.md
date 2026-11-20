@@ -101,3 +101,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-20 12:37Z ea924648 **GREEN** (28 gates) — EW ring drawn only where it is on screen (fill clipped, dashes only in
 - 2026-11-20 13:13Z 3951f005 **RED** (28 gates) failing: loadfreeze,migrate-down — HISTORY: conductor train 20261120-1103
 - 2026-11-20 13:42Z 8db6bc57 **GREEN** (28 gates) — TASTE.md: Abdullah's taste, linked from CLAUDE.md
+- 2026-11-20 14:35Z 9f5bb563 **RED** (28 gates) failing: audio,superfreeze — Shia art: roof pennants and parapet band on every Shia building (view 
