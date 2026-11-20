@@ -17263,6 +17263,10 @@ FXH.emp=(x,y,r)=>{PINGS.push({x,y,r,t:0,d:1,c:0x66ccff});setTimeout(()=>{try{PIN
 FXH.mmst=(vt,dur)=>{if(vt===ME)MWV.mm=performance.now()+dur*1000;};
 {const _s=FXH.strike;FXH.strike=function(x,y,t,r,sup,arc){_s.apply(this,arguments);if(sup)mwPipShow(x,y,'MISSILE STRIKE',Math.max(0,(+t||2)-1.2));};}
 {const _t=FXH.tping;FXH.tping=function(team,x,y,k){_t.apply(this,arguments);if(team===ME&&(k===1||k===2))mwPipShow(x,y,k===2?'TOWN CAPTURED':'TOWN LOST',0);};}
+// a dashed outline made of plain short lines: the card's own dashing of this big, always-moving ring (setLineDash + animated offset) stalled the
+// frame for 300+ ms in the Test range once an EW truck was out. Same look: dash d, gap g, pattern shifted along the outline by ph.
+function dashPoly(c,pts,d,g,ph){const P=d+g;let pos=((ph%P)+P)%P,n=pts.length;for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%n],dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy);if(!(L>.01))continue;const ux=dx/L,uy=dy/L;let t=0;
+  while(t<L){const inD=pos<d,run=Math.min(L-t,(inD?d:P)-pos);if(inD){c.moveTo(a.x+ux*t,a.y+uy*t);c.lineTo(a.x+ux*(t+run),a.y+uy*(t+run));}t+=run;pos+=run;if(pos>=P-1e-9)pos=0;}}}
 // HUD: hacked buildings glitch, our own GPS-jam bubbles
 {const _dh=drawHUD;drawHUD=function(){_dh();try{const c=hx,now=performance.now();c.setTransform(dpr,0,0,dpr,0,0);
   MWV.hk=MWV.hk.filter(h=>h.until>now);
@@ -17272,7 +17276,7 @@ FXH.mmst=(vt,dur)=>{if(vt===ME)MWV.mm=performance.now()+dur*1000;};
     c.font='bold 11px monospace';c.textAlign='center';c.fillText(Math.random()<.2?'0xDEAD':'OFFLINE',p.x,p.y-s-4);c.restore();}
   const T=G&&G.teams[ME];if(T)for(const e of G.ents){if(e.dead||!e.s||!e.s.jam||e.team!==ME)continue;const pts=[];let ok=true;
     for(let i=0;i<=40;i++){const a=i/40*6.2832,q=toScreen(e.x+Math.cos(a)*e.s.jam,2,e.y+Math.sin(a)*e.s.jam);if(q.z>1){ok=false;break;}pts.push(q);}
-    if(!ok)continue;c.save();c.strokeStyle='rgba(120,220,255,.55)';c.fillStyle='rgba(120,220,255,.05)';c.lineWidth=1.5;c.setLineDash([8,6]);c.lineDashOffset=-now/60;c.beginPath();pts.forEach((q,i)=>i?c.lineTo(q.x,q.y):c.moveTo(q.x,q.y));c.closePath();c.fill();c.stroke();c.restore();}
+    if(!ok)continue;c.save();c.strokeStyle='rgba(120,220,255,.55)';c.fillStyle='rgba(120,220,255,.05)';c.lineWidth=1.5;c.beginPath();pts.forEach((q,i)=>i?c.lineTo(q.x,q.y):c.moveTo(q.x,q.y));c.closePath();c.fill();c.beginPath();dashPoly(c,pts,8,6,-now/60);c.stroke();c.restore();}
   }catch(e){}};}
 // minimap static while our radio tower / Strike Center is hacked
 {const _dm=drawMini;drawMini=function(){_dm();const now=performance.now();if(MWV.mm>now){try{mx.save();mx.setTransform(1,0,0,1,0,0);const W=mm.width,H=mm.height;for(let i=0;i<220;i++){const g=(Math.random()*200)|0;mx.fillStyle='rgba('+g+','+g+','+g+',.55)';mx.fillRect(Math.random()*W,Math.random()*H,2+Math.random()*10,1+Math.random()*2);}
