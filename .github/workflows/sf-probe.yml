@@ -1,0 +1,32 @@
+# Branch-only probe: is the EW HUD ring (fill / dashed stroke) behind the stalls after the EW wave?
+name: superfreeze probe
+on:
+  push:
+    branches: ['probe/sf/**']
+jobs:
+  rf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        v: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+        pre: ['base']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Tools
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps chromium >/dev/null
+      - name: OB,RS ${{ matrix.pre }} #${{ matrix.v }}
+        env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+        run: |
+          case "${{ matrix.pre }}" in
+            nostroke) P='window.dashPoly=function(){}' ;;
+            nofill) P='(()=>{const f=CanvasRenderingContext2D.prototype.fill;CanvasRenderingContext2D.prototype.fill=function(){};})()' ;;
+            *) P='0' ;;
+          esac
+          PRE="$P" KINDS=ew,dtank,dsam,darty,drone TRIES=1 SHOW=6 node orch/rangefreeze.mjs OB,RS 2>&1 | cut -c1-300 | grep -E "worst [0-9]{3,}ms|FAIL|ok$|longest" | tee /tmp/rf.log | tail -60
+          true
