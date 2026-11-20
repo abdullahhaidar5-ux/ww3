@@ -442,6 +442,8 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(!/G\.battle\)\{LGU\.on=false|if\(G&&G\.battle\)return false|!G\.battle&&!G\.lg|G\.battle\|\|!G\.lg/.test(lgu), 'supply lines: the overlay / minimap lines must not be switched off in Battle'); }
 // 5. Names / identity that must not drift.
 ck(/Radwan Training/.test(SRC['01-data.js'] + Object.values(SRC).join('')), 'upgrade name "Radwan Training" is gone');
+// 2026-11-19 ORCH 2: the weather/time chip (DUSK/NIGHT/rain) is placed under the Battle banner, not over it
+ck(/const wx=\$\('wxchip'\);if\(wx\)\{wx\.style\.top=/.test(SRC['08c-logi.js'] || ''), 'battle banner: weather chip no longer moved below the banner (DUSK drawn over BATTLE)');
 // Shia sub-leader titles are lane AY's open work (PLAN-SAT): reported, not failed, until AY ships; then change warn -> ck.
 for (const [w, why] of [['Secretary-General', 'RS leader'], ['Leader of the Revolution', 'DW leader']])
   if (!Object.values(SRC).some(s => s.includes(w))) console.log(`pending (lane AY): "${w}" (${why}) not in the game yet`);
