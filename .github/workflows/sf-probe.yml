@@ -22,5 +22,5 @@ jobs:
       - name: Run OB ${{ matrix.v }}
         env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
         run: |
-          TRIES=1 TRACE=1 UPS=1 TRACEMS=120 node orch/rangefreeze.mjs OB 2>&1 | cut -c1-400 | tee /tmp/rf.log | tail -150
+          TRIES=1 TRACE=1 GLN=1 UPS=1 TRACEMS=120 SHOW=12 node orch/rangefreeze.mjs OB 2>&1 | cut -c1-400 | tee /tmp/rf.log | tail -150
           true
