@@ -110,3 +110,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-20 20:57Z 357ba0a5 **GREEN** (28 gates) — Shia buildings: roof AC units and mudbrick tone variation (light, view
 - 2026-11-20 21:24Z 170efdcd **RED** (28 gates) failing: loadfreeze — Soldiers up close: stronger camouflage contrast for IR and RS, darker 
 - 2026-11-20 22:24Z 6f1298f0 **GREEN** (28 gates) — Soldiers up close: darker chest rig, darker magazine pouches, webbing 
+- 2026-11-20 22:50Z dfc70c48 **GREEN** (28 gates) — HISTORY: soldier rig and belt
