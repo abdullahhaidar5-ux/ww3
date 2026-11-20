@@ -3,8 +3,8 @@
    mesh, the same single material as every other model, so no draw call or shader is added per unit beyond one mesh).
    Hooks in 11-models.js modelFor: eastPre() marks the kind, eastKit() adds the parts; harvCargoGeo/ammot use cargoGeo().
    Forward is +x, z is across, y up; the truck bed top is about y=18. */
-const EASTSET={RU:1,CN:1,KP:1};
-const EASTPAL={RU:{o:'#5a6148',d:'#383c2c',l:'#6e7659',w:'#85703f',m:'#a9ac9f'},CN:{o:'#646a4a',d:'#3b3f2e',l:'#767d5c',w:'#8a7442',m:'#b2b5a6'},KP:{o:'#585d45',d:'#363a2b',l:'#697054',w:'#7c6a3c',m:'#a0a396'}};
+const EASTSET={RU:1,CN:1,KP:1,IN:1,JP:1,KR:1,PK:1,SA:1,AE:1,TR:1,EG:1};
+const EASTPAL={IN:{o:'#59623f',d:'#363c28',l:'#6c7650',w:'#8a7442',m:'#a8ab9b'},JP:{o:'#4f5e45',d:'#2f3a2b',l:'#627556',w:'#7d7a4e',m:'#b0b4a8'},KR:{o:'#4d5a40',d:'#2e3828',l:'#607050',w:'#7a7448',m:'#aaaea0'},PK:{o:'#6b6a48',d:'#403f2b',l:'#807d58',w:'#938048',m:'#b3b09c'},SA:{o:'#9a8a62',d:'#5e5338',l:'#b09e73',w:'#8a7442',m:'#c3bfa9'},AE:{o:'#a08d65',d:'#615439',l:'#b5a276',w:'#8a7442',m:'#c6c1ab'},TR:{o:'#5a6040',d:'#363b28',l:'#6e7752',w:'#85703f',m:'#aeb09e'},EG:{o:'#a3926a',d:'#625539',l:'#b8a679',w:'#8a7442',m:'#c8c3ad'},RU:{o:'#5a6148',d:'#383c2c',l:'#6e7659',w:'#85703f',m:'#a9ac9f'},CN:{o:'#646a4a',d:'#3b3f2e',l:'#767d5c',w:'#8a7442',m:'#b2b5a6'},KP:{o:'#585d45',d:'#363a2b',l:'#697054',w:'#7c6a3c',m:'#a0a396'}};
 const EASTGEO={};
 function eastPre(e,c,T){if(!T||!EASTSET[T.fac]||!c)return c;const k=e.kind;
   if(k==='lander'||k==='minel'||k==='sweep')return Object.assign({},c,{extra:'east_'+k});
