@@ -1,20 +1,15 @@
-# STATE 2026-11-20 06:00 UTC (conductor)
-main = db5bb4a (fix-superfreeze audio fix, landed itself 05:19 UTC). Newest train/* is 20261119-2100 (9 h old, not merged); no other conductor running.
-No train built, nothing landed by the conductor this run. Why: the old queue (freezefix..nations20) is stale - onegame/nations20 etc. are far behind main and parked; the active branches below land themselves on their own gate, and the branch tips have no gate statuses of their own yet (a gate/<sha> run of the exact tip is needed before a train).
+# STATE — conductor run 2026-11-20 ~08:00 UTC
+Main was db5bb4a; landed orch/pack-systems-merge (5c72285, own gate 26/26 green, level with main, fast-forward).
+The CURRENT FOCUS candidate list in the conductor prompt is stale (Nov 14 branches, 8+ days old; onegame/nations20 already landed) — not touched.
 
-| branch | last push | ahead | note |
-|---|---|---|---|
-| orch/art-air | 04:46 | 1 | drone art, already on main |
-| orch/trailer-clips | 04:43 | 5 | trailer cuts, not for main |
-| orch/trailer | 04:34 | 9 | not for main |
-| orch/scale | 04:25 | 2 | vehicles drawn bigger; no own gate on tip |
-| orch/fix-superfreeze | 04:07 | 5 | fixing the freeze gate |
-| orch/pack-systems | 04:03 | 6 | handoff present; lands itself |
-| orch/pack-units-b | 04:02 | 2 | no gate on tip |
-| orch/art-west-n | 03:54 | 1 | gate/decisions FAILED on its tip - owner to fix |
-| orch/art-east8 | 03:50 | 1 | working |
-| orch/art-east | 02:14 | 7 | rebased, gate rerun pending |
-| orch/pack-units | 02:17 | 8 | mostly docs |
-
-taken/* locks: newest taken/pack-polish2 (11-18 19:08); none new in the last 90 min; older ones are leftovers. Never-land / stale branches (onegame, nations20, camphud...): parked.
-Known-red on every run: superfreeze / rangefreeze / loadfreeze (runner stalls).
+| branch | last push | ahead/behind main | own gate | note |
+|---|---|---|---|---|
+| pack-systems-merge | 06:28 | 2/0 | 26 green | LANDED |
+| art-west-n2 | 05:24 | 2/0 (now 2/1) | 23 green, 0 red (may be incomplete) | next candidate |
+| pack-units | 06:18 | 3/0 | 8 green, running | camo soldiers; wait for gate |
+| pack-art | 05:26 | 1/0 | 18 green, loadfreeze red | rerun loadfreeze |
+| scale-r | 05:24 | 2/0 | superfreeze red | superfreeze not fixed on main either |
+| fix-wxchip | 05:22 | 2/0 | smooth-mp + superfreeze red | not ready |
+| trailer | 06:22 | 13/11 | none | trailer footage, not a landing |
+| old Nov-14 branches (onegame etc.) | stale | far behind | - | parked, already in main |
+taken/* with no orch/* branch: not checked this run (101 locks, newest 2026-11-18 pack-polish2).
