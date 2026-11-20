@@ -12,3 +12,7 @@ Gate 2 (edd9181): rangefreeze/superfreeze red again but stalls hit IR, RS, US to
 ## Update 2026-11-20
 Main already has Shahed (other helper), dozer, navy hulls (art-west) - my duplicate Shahed commit dropped. Done here: technical variety RS/DW/OB (x_dshk per nation). Left: Shia base buildings; jeep/recon carrier camo; before/after sheet (local render too slow). Gate: orch/cigate.sh on this commit.
 Try on PC (2 min): Battle as RS, then DW, then OB: zoom on an armed technical - different rear fittings per nation.
+
+## Update 2026-11-20 (later)
+Technicals landed (59b5798). Shia compound kit v2 (gate arch, banners, sandbags, dust band) committed, in gate. Not visually verified locally (render too slow) - check the gate screenshots. Left: wall-top flags beyond the one HQ flag, jeep camo, before/after sheets.
+Try on PC (2 min): Battle as IR then RS - look at your HQ compound gate from the ground camera.
