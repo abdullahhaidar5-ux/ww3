@@ -95,3 +95,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-20 04:11Z 6e9f8984 **GREEN** (28 gates) — Regional art: detailed AA, EW and dozer kits for the eight regional na
 - 2026-11-20 05:12Z 3bcbc855 **RED** (28 gates) failing: superfreeze — HISTORY + balance-1120 report for the CN/RU counter-pick
 - 2026-11-20 06:04Z a3540c1d **RED** (28 gates) failing: cfclient — HANDOFF art-air: run 2 status
+- 2026-11-20 07:41Z db5bb4ab **GREEN** (28 gates) — Land superfreeze audio fix (decode radio/shout/announcer sheets at bat
