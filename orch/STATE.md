@@ -1,15 +1,17 @@
-# STATE — conductor run 2026-11-20 ~16:00 UTC
+# STATE — conductor run 2026-11-20 ~17:10 UTC
 
-main = 9b59678 (East base buildings, landed this run). Pages build for it: success.
+Main before run: ff900d6 (East base buildings reverted: smooth-pc + loadfreeze red). 
 
-## Landed this run
-- orch/bld-east: RU/CN/KP bases get concrete walls, barbed wire, tyres, camo net, radio mast, flags (view only). Own gate (9b5967892) green except gate/audio (known flaky). Based on main head, fast-forwarded. Local smoke timed out in the sandbox (too slow); GitHub gate smoke4/art-smoke/decisions/smooth-pc/smooth-mp were green.
+| Branch | Last push | Ahead | Gate | Note |
+|---|---|---|---|---|
+| orch/bld-east2 (lighter East buildings) | 16:40 | 1 | 25/25 green (smooth-pc, smooth-mp, loadfreeze green) | LANDED -> main e4bec093f |
+| orch/bld-regional2 (regional base buildings, lean) | 16:42 | 2 (incl. east2) | gate/67e11c8c3a running | next landing if green |
+| orch/bld-regional (older, heavier) | 16:32 | 2 | cfclient red (known flaky) | superseded by bld-regional2 |
+| orch/bld-east (first heavy version) | 15:09 | 0 | reverted on main | superseded by bld-east2 |
+| orch/pack-units | 14:43 | 3 | none | merge of superseded branch + handoff, nothing to land |
+| orch/fix-superfreeze | 11:49 | 6 | none | HANDOFF not checked; has train/20261120-1103 landed? (train merged) |
+| orch/trailer, trailer-clips | 06-08 | 13/18 | none | parked (trailer lane, no ready handoff) |
+| orch/art-east (200 ahead) | 02:14 | 200 | none | stale/huge, not landing |
 
-## Waiting
-- orch/bld-regional (SA AE TR EG PK buildings): last commit "(WIP)" 15:20, no handoff, no gate yet. Helper still working; next run.
-
-## Nothing to land
-pack-units, pack-art, art-east*, fix-superfreeze, pack-systems, trailer, trailer-clips, conductor-20261120: only HANDOFF/doc/shot commits (or already landed).
-Stale Conquest-era (parked): ghostslot, testrange, techbldgs, ammozone. Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans, src/13*.
-Saved-nothing locks (taken/ with no orch/ branch, all >5 days): rv-voice, savesync, redgates, drawcalls, spylook2, freezefix2, finish-tokens, c-real-supply, seamless-hud, realwar, army-standards.
-Note: origin has ~22k gate/* heads; plain `git fetch` times out — use fetch --no-tags with refs/heads/* in the background.
+taken/* locks: all older than 12 h; none recent without an orch branch that I could verify (pack-polish2 18 Nov, endscreen 18 Nov, rest older).
+Parked (removed from game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
