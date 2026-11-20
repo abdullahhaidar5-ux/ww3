@@ -1,7 +1,20 @@
-# STATE — conductor 2026-11-20 ~14:10 UTC
+# STATE — conductor run 2026-11-20 ~15:00 UTC
 
-Landed on main: 9f5bb563d (pack-art2: Shia roof pennants + parapet band, view only; its own gate was 27/27 green, fast-forward).
-Last train train/20261120-1103 was already on main. Open code branches: none ready. The named candidate list in the conductor prompt (freezefix ... nations20) is stale: all last pushed 11-13/14, 8-2200 commits behind-diverged from main, onegame/nations20 effects already on main; NOT merged.
-Docs-only handoff branches (no code): pack-art, art-east11, pack-units, fix-superfreeze (says landed).
-Not landed, no handoff/finished gate: trailer, trailer-clips, pack-systems, scale, art-air (check their HANDOFFs).
-Repo has ~22200 remote heads; plain `git fetch --prune` takes ~4 min.
+main = 45ffdf7 (14:41 UTC, "Soldiers up close: brighter national camouflage"). Last train train/20261120-1103 is already in main.
+
+## Train candidates (all from the CURRENT FOCUS list)
+freezefix, sweepfixA/B, orderfeel, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, looktest, onegame, nations20: 0 commits ahead of main = already landed.
+battlemaps2: no branch.
+ghostslot, testrange, techbldgs, ammozone: last pushed 2026-11-14, Conquest-era, ~700 commits behind main, 1-7 commits ahead (handoffs/merges). Not landed: superseded by onegame/main; stale. Parked.
+
+## Branches pushed since the last train (10:55 UTC)
+pack-units, art-east11, pack-art, art-east10, fix-superfreeze, pack-systems, trailer, trailer-clips: only HANDOFF/doc commits not on main, no src/ or index.html differences (pack-units handoff says "camo is landed on main"). Nothing to land.
+
+## Taken locks with no orch/ branch (saved nothing, all old)
+rv-voice (11-15), savesync, redgates, drawcalls (11-15), spylook2, freezefix2 (11-12), finish-tokens, c-real-supply, seamless-hud, realwar, army-standards (11-11).
+
+## Parked (removed from the game)
+camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans, anything only in src/13*.
+
+## Result
+Train skipped: nothing unlanded and ready. No push to main. Note: origin has ~22k heads (gate/*), so plain `git fetch` times out; use targeted fetches.
