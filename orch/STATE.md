@@ -1,20 +1,15 @@
-# STATE — conductor run 2026-11-20 ~15:00 UTC
+# STATE — conductor run 2026-11-20 ~16:00 UTC
 
-main = 45ffdf7 (14:41 UTC, "Soldiers up close: brighter national camouflage"). Last train train/20261120-1103 is already in main.
+main = 9b59678 (East base buildings, landed this run). Pages build for it: success.
 
-## Train candidates (all from the CURRENT FOCUS list)
-freezefix, sweepfixA/B, orderfeel, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, looktest, onegame, nations20: 0 commits ahead of main = already landed.
-battlemaps2: no branch.
-ghostslot, testrange, techbldgs, ammozone: last pushed 2026-11-14, Conquest-era, ~700 commits behind main, 1-7 commits ahead (handoffs/merges). Not landed: superseded by onegame/main; stale. Parked.
+## Landed this run
+- orch/bld-east: RU/CN/KP bases get concrete walls, barbed wire, tyres, camo net, radio mast, flags (view only). Own gate (9b5967892) green except gate/audio (known flaky). Based on main head, fast-forwarded. Local smoke timed out in the sandbox (too slow); GitHub gate smoke4/art-smoke/decisions/smooth-pc/smooth-mp were green.
 
-## Branches pushed since the last train (10:55 UTC)
-pack-units, art-east11, pack-art, art-east10, fix-superfreeze, pack-systems, trailer, trailer-clips: only HANDOFF/doc commits not on main, no src/ or index.html differences (pack-units handoff says "camo is landed on main"). Nothing to land.
+## Waiting
+- orch/bld-regional (SA AE TR EG PK buildings): last commit "(WIP)" 15:20, no handoff, no gate yet. Helper still working; next run.
 
-## Taken locks with no orch/ branch (saved nothing, all old)
-rv-voice (11-15), savesync, redgates, drawcalls (11-15), spylook2, freezefix2 (11-12), finish-tokens, c-real-supply, seamless-hud, realwar, army-standards (11-11).
-
-## Parked (removed from the game)
-camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans, anything only in src/13*.
-
-## Result
-Train skipped: nothing unlanded and ready. No push to main. Note: origin has ~22k heads (gate/*), so plain `git fetch` times out; use targeted fetches.
+## Nothing to land
+pack-units, pack-art, art-east*, fix-superfreeze, pack-systems, trailer, trailer-clips, conductor-20261120: only HANDOFF/doc/shot commits (or already landed).
+Stale Conquest-era (parked): ghostslot, testrange, techbldgs, ammozone. Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans, src/13*.
+Saved-nothing locks (taken/ with no orch/ branch, all >5 days): rv-voice, savesync, redgates, drawcalls, spylook2, freezefix2, finish-tokens, c-real-supply, seamless-hud, realwar, army-standards.
+Note: origin has ~22k gate/* heads; plain `git fetch` times out — use fetch --no-tags with refs/heads/* in the background.
