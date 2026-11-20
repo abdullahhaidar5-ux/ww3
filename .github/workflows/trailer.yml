@@ -1,0 +1,54 @@
+# Trailer v2 capture (branch-only: runs on pushes to orch/trailer that change the scenes/capture script). Renders real
+# gameplay frames per scene with the same deterministic capture as orch/trailer.mjs, encodes each shot to a 30 fps 1080p clip
+# and pushes the clips to branch orch/trailer-clips (clips/<scene>-<shot>.mp4). Never touches main.
+name: Trailer capture
+on:
+  push:
+    branches: ['orch/trailer']
+    paths: ['orch/trailer2-scenes.mjs', 'orch/trailer.mjs', '.github/workflows/trailer.yml']
+  workflow_dispatch:
+permissions: { contents: write }
+concurrency: { group: trailer-capture, cancel-in-progress: false }
+jobs:
+  cap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        scene: [dunesA, dunesB, base, night, storm, fort]
+    env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers, TR_SCENES: ./trailer2-scenes.mjs, TR_OUT: /tmp/tr }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Capture frames
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          node orch/trailer.mjs --scene ${{ matrix.scene }} --fps 15 --rs 0.667 2>&1 | tail -80
+      - name: Encode clips
+        run: |
+          mkdir -p /tmp/clips
+          for d in /tmp/tr/${{ matrix.scene }}-*/; do
+            n=$(basename "$d"); ls "$d" | wc -l
+            ffmpeg -nostdin -loglevel error -y -framerate 15 -i "$d/%05d.jpg" \
+              -vf "scale=1920:1080:flags=lanczos,minterpolate=fps=30:mi_mode=mci:mc_mode=aobmc:vsbmc=1" \
+              -c:v libx264 -crf 14 -preset slow -pix_fmt yuv420p -an "/tmp/clips/$n.mp4"
+          done
+          ls -la /tmp/clips
+      - name: Push clips to orch/trailer-clips
+        run: |
+          git config user.name "trailer-bot"; git config user.email "trailer-bot@users.noreply.github.com"
+          for try in 1 2 3 4 5 6; do
+            rm -rf /tmp/cb; mkdir /tmp/cb; cd /tmp/cb; git init -q
+            git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+            if git fetch -q --depth 1 origin orch/trailer-clips 2>/dev/null; then git checkout -q -B orch/trailer-clips FETCH_HEAD; else git checkout -q --orphan orch/trailer-clips; fi
+            mkdir -p clips; cp /tmp/clips/*.mp4 clips/; git add clips
+            git -c user.name=trailer-bot -c user.email=trailer-bot@users.noreply.github.com commit -q -m "trailer clips: ${{ matrix.scene }} (${{ github.sha }})"
+            git push -q origin HEAD:refs/heads/orch/trailer-clips && break
+            sleep $((RANDOM % 20 + 5)); cd /; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'clips-${{ matrix.scene }}', path: /tmp/clips, if-no-files-found: ignore }

@@ -6,11 +6,11 @@
 // screenshots). Viewport is 1920x1270 so the game canvas (minus the 190 px command bar) is exactly 1920x1080.
 // Scenes are defined in orch/trailer-scenes.mjs. Then orch/trailer.sh edits with ffmpeg.
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
-import { SCENES } from './trailer-scenes.mjs';
+const { SCENES } = await import(process.env.TR_SCENES || './trailer-scenes.mjs');
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 if (process.argv.includes('--list')) { for (const [k, s] of Object.entries(SCENES)) console.log(k, s.map, s.shots.map(h => h.n + ':' + h.dur).join(' ')); process.exit(0); }
-const OUT = path.join(ROOT, 'orch', 'shots', 'tr');
+const OUT = process.env.TR_OUT || path.join(ROOT, 'orch', 'shots', 'tr');
 const want = arg('scene', '').split(',').filter(Boolean), skip = arg('skip', '').split(',').filter(Boolean); // --skip scene-shot,... leaves already captured shots alone
 const CAPFPS = Number(arg('fps', 15)), RS = Number(arg('rs', .667)); // capture fps (ffmpeg interpolates to 30) and render scale: 1280x720 upscaled to 1080p
 const { chromium } = await import('playwright').catch(() => import('/opt/npm-tools/node_modules/playwright/index.mjs'));
