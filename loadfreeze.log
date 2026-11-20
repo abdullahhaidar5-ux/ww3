@@ -1,0 +1,37 @@
+  page: shader warm-up 9990 ms, 63 models, 122 objects in 675 steps (longest 348 ms), 109 programs, textures 137 MB
+parallel shader compile extension: false
+own-work stretches over 200 ms: 5 (longest 445 ms; this slow test machine hiccups by itself, so the gate fails only above 2500 ms or more than 20 stretches over 200 ms)
+quiet-stretch longest gap after loading (the test machine's own hiccups): 346
+most programs linked between two breaks: 11 at step shared
+gaps over 190 ms:
+  445 step models b_barr
+  264 step models m_hilux
+  232 step soldiers IR
+  204 step soldiers US
+  222 step soldiers DW
+IR warm-up {"ms":9990,"models":63,"steps":675,"maxStep":348,"progs":109,"late":0,"phone":0,"stage":[["models",6615],["extras",2209],["battlefield",1165]],"slow":[["models b_barr",348,48,0],["models m_f18",182,41,0],["build m_hilux",172],["models m_hilux",219,75,3],["models m_ah1",219,10,176],["models m_apache",160,32,14],["models m_mi8",172,34,30],["models m_mig29",186,25,17],["shared",336,70,11],["garrison",288,22,4],["pass mBright",19],["pass mBlur",6],["pass mFinal",17],["pass mAO",11],["pip",5]]} own-work gaps >50 [445,165,70,62,67,90,69,89,59,264,106,76,92,61,99,78,70,146,51,232,54,204,222,59,122,94,56,61] raw long tasks [221,51,86,66,90,130,247,94,57,61,75,67,104,84,101,130,94,51,71,81,105,174,245,251,228,79,204,82,224,56,113,93,57,75,57,451] stages [["Generating terrain…",8881],["Loading 3D models…",2375],["Building the battlefield…",179],["Building the battlefield…",1670],["Preparing graphics…",10600],["Deploying forces…",1111],["Deploying forces…",1149],["total",26797]]
+  World War 3 performance log
+  Graphics card: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+  Screen: 480×270 @1  21 FPS now
+  Last battle load (ms per stage): Generating terrain 8881, Loading 3D models 2375, Building the battlefield 179, Building the battlefield 1670, Preparing graphics 10600, Deploying forces 1111, Deploying forces 1149, total 26797
+  Shader warm-up: 9990 ms, 63 models, 109 programs compiled, 675 steps (longest 348 ms) [models 6615, extras 2209, battlefield 1165]
+  Long tasks while preparing graphics: 36, longest 451 ms
+IR ok (longest task 445 ms)
+  page: shader warm-up 6153 ms, 60 models, 116 objects in 689 steps (longest 215 ms), 101 programs, textures 72 MB
+parallel shader compile extension: false
+own-work stretches over 200 ms: 3 (longest 411 ms; this slow test machine hiccups by itself, so the gate fails only above 2500 ms or more than 20 stretches over 200 ms)
+quiet-stretch longest gap after loading (the test machine's own hiccups): 149
+most programs linked between two breaks: 11 at step shared
+gaps over 190 ms:
+  411 step models b_barr
+  237 step soldiers US
+  206 step soldiers DW
+US warm-up {"ms":6153,"models":60,"steps":689,"maxStep":215,"progs":101,"late":0,"phone":0,"stage":[["models",4079],["extras",1490],["battlefield",583]],"slow":[["models b_barr",210,65,0],["shared",215,80,16],["pass mBright",4],["pass mBlur",3],["pass mFinal",4],["pass mAO",11],["pip",4]]} own-work gaps >50 [411,80,56,64,116,54,61,58,161,237,166,206,69,52,52] raw long tasks [70,68,111,58,50,163,108,235,53,162,204,66,51,688] stages [["Generating terrain…",6020],["Loading 3D models…",2023],["Building the battlefield…",118],["Building the battlefield…",1676],["Preparing graphics…",6961],["Deploying forces…",667],["Deploying forces…",835],["total",19012]]
+  World War 3 performance log
+  Graphics card: ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)
+  Screen: 480×270 @1  25 FPS now
+  Last battle load (ms per stage): Generating terrain 6020, Loading 3D models 2023, Building the battlefield 118, Building the battlefield 1676, Preparing graphics 6961, Deploying forces 667, Deploying forces 835, total 19012
+  Shader warm-up: 6153 ms, 60 models, 101 programs compiled, 689 steps (longest 215 ms) [models 4079, extras 1490, battlefield 583]
+  Long tasks while preparing graphics: 14, longest 688 ms
+US ok (longest task 411 ms)
+LOADFREEZE PASS
