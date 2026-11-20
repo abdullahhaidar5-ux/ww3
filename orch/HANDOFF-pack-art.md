@@ -23,3 +23,7 @@ NOT landed. gate/superfreeze red twice (rangefreeze: ~115-125 ms render-frame st
 ## Update 2026-11-20 (evening check)
 Compound kit (29853d3) and the technicals are already ON main (verified: main contains 29853d3 and 46c2f7c), so the "NOT landed" note above is stale. Left: jeep/recon camo, wall-top flags, before/after sheets (local render too slow - use gate screenshots), aircraft/drone detail pass.
 Try on PC (2 min): Battle as IR then RS - look at your HQ compound gate from the ground camera.
+
+## Update 2026-11-20 (check-in run)
+Verified: compound kit (29853d3) and roof pennants (9f5bb56) are both on main, so Shia vehicles, technicals, add-ons and buildings bundles have landed. Nothing in flight. Left (small, optional): jeep/recon carrier camo stretch, mudbrick texture variation, before/after sheets (local render too slow - take them from gate screenshots). Main untouched by this run.
+Try on PC (2 min): Battle as IR vs RS - zoom on your HQ gate and a barracks roof; zoom on an armed technical.
