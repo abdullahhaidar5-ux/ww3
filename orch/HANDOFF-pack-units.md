@@ -12,3 +12,7 @@
 
 ## ONE 2-minute thing for Abdullah (once landed)
 On PC, zoom the camera right down on an Iranian rifle squad in a Battle and tell me whether the uniform cloth now looks woven/less flat.
+
+## Update (2026-11-20 04:05 UTC, restart run)
+- Jacket camo NOT built. Reason: nation tint is baked per look in `mergeSoldier` (vertex colours, one material per soldier shape in SOLB batches), so a per-nation camo pattern needs a per-look uniform/attribute through `solbPatch`, and every check is a ~3 min swiftshader render with no close-up camera (gfxinf `--idist` <100 clips into the ground). Judged too risky to land unproven on main. Nothing gated or landed. Branch: orch/pack-units-b (orch/pack-units has the other runs' notes and diverged; not force-pushed).
+- Suggested next step: add a close-up hook (camera at ~20 m, fixed pitch) to orch/gfxinf.mjs first, then a per-look camo seed in the vertex colour alpha/uv2 consumed in the `solgear` fragment hook.
