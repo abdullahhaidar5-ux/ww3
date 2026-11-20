@@ -829,7 +829,7 @@ for (const e of errs) fails.push(e);
   ck(/'smugs'/.test(SRC['07b-ckpt.js'] || ''), 'economy: smuggling routes are in the checkpoint');
 }
   // Test-range stalls (superfreeze): audio sheets and engine loops are decoded at battle start, not at the first wave/order
-  ck(/voRLoad\(g\.teams\[ME\]\.fac\)/.test(SRC['08-ui.js'] || '') && /vosLoad\(g\.teams\[ME\]\.fac\)/.test(SRC['08-ui.js'] || '') && /envLoop\(k,\.001\)/.test(SRC['08-ui.js'] || '') && /annWarm\(\)/.test(SRC['08-ui.js'] || ''), 'audio: radio, shout, announcer sheets and engine loops are decoded at battle start (no decodeAudioData burst in the first wave)');
+  ck(/voRLoad\(g\.teams\[ME\]\.fac\)/.test(SRC['08-ui.js'] || '') && /vosLoad\(g\.teams\[ME\]\.fac\)/.test(SRC['08-ui.js'] || '') && /envLoop\(k,\.01\)/.test(SRC['08-ui.js'] || '') && /if\(g<\.01\|\|SFX\.loops/.test(SRC['09-audio.js'] || '') && /annWarm\(\)/.test(SRC['08-ui.js'] || ''), 'audio (the warm-up volume must be at least the .01 load threshold of envLoop, or nothing loads): radio, shout, announcer sheets and engine loops are decoded at battle start (no decodeAudioData burst in the first wave)');
 await browser.close(); server.close();
 }
 for (const f of fails) console.log('FAIL: ' + f);
