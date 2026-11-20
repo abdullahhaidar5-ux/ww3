@@ -428,7 +428,7 @@ function noStarMap(tex,name){const sp=NOSTAR[name],im=tex&&tex.image;if(!sp||!im
    const t=tex.clone();t.source=new THREE.Source(cv);t.needsUpdate=true;out=t;}catch(e){console.warn('noStarMap',e);}
   NOSTAR_C.set(ck,out);return out;}
 // Soldiers up close (view only): national field-camouflage blotches painted over the one soldier material in the shader (3 colours from 2 noise octaves in rest-pose body space, keeps the texture's own folds/shading, skips skin). No new material, texture or draw call.
-const SOLCAMO={IR:['#5f6a3a','#3a3326','#8c7d54'],RS:['#4a5a30','#2c3822','#74704a'],DW:['#b9a67c','#8c7752','#d2c49c'],RV:['#3f4732','#252a1f','#5d5d3d'],OB:['#4f5040','#2e2f25','#6c6c52']};
+const SOLCAMO={IR:['#5f6a3a','#262a14','#a08e5c'],RS:['#4a5a30','#1f2c14','#86804f'],DW:['#b9a67c','#8c7752','#d2c49c'],RV:['#3f4732','#252a1f','#5d5d3d'],OB:['#4f5040','#2e2f25','#6c6c52']};
 function solCamo(c,fac,hgt){const P=SOLCAMO[fac];if(!P||!c||!c.isMeshStandardMaterial)return;const lin=h=>{const q=new THREE.Color(h);q.convertSRGBToLinear();return new THREE.Vector3(q.r,q.g,q.b);},A=lin(P[0]),B=lin(P[1]),C=lin(P[2]),fq=6/Math.max(hgt||1,.01),ob=c.onBeforeCompile,ck=c.customProgramCacheKey;
   c.onBeforeCompile=(sh,r)=>{if(ob)ob.call(c,sh,r);sh.uniforms.scA={value:A};sh.uniforms.scB={value:B};sh.uniforms.scC={value:C};sh.uniforms.scF={value:fq};
     sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vSP;').replace('#include <begin_vertex>','#include <begin_vertex>\nvSP=position;');
