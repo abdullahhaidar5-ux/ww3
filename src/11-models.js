@@ -43,6 +43,10 @@ Object.assign(RMOD,{gb35:{m:'m_m35',fit:'z',size:36,tint:'#5c5a44',tk:.4},fr35:{
   gbhum:{m:'m_humvee',fit:'z',size:27,tint:'#5c5a44',tk:.4},ilhum:{m:'m_humvee',fit:'z',size:27,tint:'#a89a74',tk:.4}});
 for(const k of ['harv','ammot','idome','ew','cbr']){Object.assign(RMAP[k],{GB:'gb35',FR:'fr35',DE:'de35',IL:'il35',UA:'ua_ural'});}
 Object.assign(RMAP.atgm,{US:'humvee',GB:'gbhum',IL:'ilhum',UA:'humvee',FR:'ozelot',DE:'ozelot'});
+// art-west: the West's scout jeep is a real Humvee/Ozelot in national paint (was the shared box truck); each nation's howitzer gets its own paint on the G6 hull
+Object.assign(RMAP.jeep,{US:'humvee',GB:'gbhum',IL:'ilhum',UA:'humvee',FR:'ozelot',DE:'ozelot'});
+Object.assign(RMOD,{usg6:{m:'m_g6',fit:'z',size:40,tint:'#6d7054',tk:.4},gbg6:{m:'m_g6',fit:'z',size:40,tint:'#5c5a44',tk:.42},frg6:{m:'m_g6',fit:'z',size:40,tint:'#6b7058',tk:.4},ilg6:{m:'m_g6',fit:'z',size:40,tint:'#a89a74',tk:.42},uag6:{m:'m_g6',fit:'z',size:40,tint:'#66704d',tk:.4},deg6:{m:'m_g6',fit:'z',size:40,tint:'#4a5540',tk:.4}});
+Object.assign(RMAP.arty,{US:'usg6',GB:'gbg6',FR:'frg6',IL:'ilg6',UA:'uag6',DE:'deg6'});
 // National vehicle families, East (visual only, existing models + paint): Russia a deep-green Ural, China a PLA olive-green Ural and its anti-tank teams on a green Humvee-type
 // carrier, North Korea a drab khaki-brown Ural with a brown light carrier. Iran, Russia's and the others keep what they had.
 Object.assign(RMOD,{ru_ural:{m:'m_ural',fit:'z',size:36,tint:'#4e5c3e',tk:.4},cn_ural:{m:'m_ural',fit:'z',size:36,tint:'#5f7040',tk:.4},kp_ural:{m:'m_ural',fit:'z',size:36,tint:'#6c6444',tk:.4},
@@ -1959,6 +1963,12 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
         if(fac==='JP'){for(const sg of [1,-1]){B.rbox(u*1.1,u*.62,u*.14,cx+L*.07,ty0+u*.3,sg*(ts-u*.02),'#4a5040',0,-sg*.35,0);B.rbox(u*.9,u*.5,u*.12,cx-L*.03,ty0+u*.28,sg*(ts+u*.1),'#434a37');}}
         if(fac==='KR'){const x=cx-L*.1,y=tt.y;B.cyl(u*.16,u*.2,u*.16,8,x,y+u*.08,W*.14,'#3b3f38');B.rbox(u*.34,u*.22,u*.26,x,y+u*.28,W*.14,'#454a3f');B.bar(x+u*.15,y+u*.3,W*.14,x+u*.9,y+u*.3,W*.14,u*.04,'#1c1d1b',5);for(const sg of [1,-1])B.rbox(u*.4,u*.3,u*.07,cx+L*.1,ty0+u*.3,sg*(ts+u*.03),'#3d4235');}
         if(fac!=='KR')smokeL(4);}
+      if(tank&&tt&&(fac==='US'||fac==='IL'||fac==='GB'||fac==='FR')){// art-west: M1 TUSK reactive tiles + loader gun, Merkava hull skirts, Challenger bar/Chobham cheeks + smoke launchers, Leclerc modular cheeks
+        const ts=sideAt(cx+L*.04,tt.y-u*.3)||W*.3,ty0=tt.y-u*.35,ac=fac==='GB'?'#5a5c44':fac==='FR'?'#6a6a52':'#4d5244',dk='#2b2d26';
+        if(fac==='US'){for(const sg of [1,-1])for(let i=0;i<4;i++)B.rbox(u*.3,u*.34,u*.09,cx+L*.0+i*u*.34-u*.3,ty0+u*.3,sg*(ts+u*.05),ac);const x=cx-L*.02,y=tt.y,z=W*.12;B.cyl(u*.14,u*.16,u*.1,8,x,y+u*.05,z,'#3b3f38');B.bar(x,y+u*.2,z,x+u*.6,y+u*.24,z,u*.035,'#1c1d1b',5);}
+        if(fac==='IL'){for(const sg of [1,-1])for(let i=0;i<6;i++)B.rbox(u*.3,u*.2,u*.06,cx-L*.22+i*u*.42,ty0-u*.55,sg*(W*.5),dk);}
+        if(fac==='GB'){for(const sg of [1,-1]){B.rbox(u*.9,u*.44,u*.13,cx+L*.08,ty0+u*.3,sg*(ts+u*.08),ac,0,-sg*.25,0);for(let i=0;i<4;i++)B.rbox(u*.2,u*.2,u*.2,cx+L*.12+i*u*.14,ty0+u*.62,sg*(ts*.8),dk);}}
+        if(fac==='FR'){for(const sg of [1,-1])for(let i=0;i<3;i++)B.rbox(u*.36,u*.4,u*.1,cx+L*.04+i*u*.4-u*.4,ty0+u*.3,sg*(ts+u*.06),ac,0,-sg*.2,0);}}
       if(tank&&tt&&(fac==='RU'||fac==='CN'||fac==='KP')){// art-east: Type 99 wedge-and-ERA turret, T-90 Kontakt + Shtora, Chonma-ho side skirts + DShK
         const ts=sideAt(cx+L*.04,tt.y-u*.3)||W*.3,ty0=tt.y-u*.35,eraC=fac==='CN'?'#4f5638':'#4a5039',eraD='#2b2e25';
         if(fac==='CN'){for(const sg of [1,-1]){for(let i=0;i<4;i++)B.rbox(u*.3,u*.36,u*.1,cx+L*.1+i*u*.34-u*.4,ty0+u*.3,sg*(ts+u*.06),eraC,0,-sg*.3,0);B.rbox(u*.9,u*.5,u*.14,cx-L*.04,ty0+u*.28,sg*(ts+u*.1),'#434a37');}}
