@@ -1,30 +1,12 @@
-# STATE (conductor, 2026-11-21 01:52 UTC)
+# Conductor state — 2026-11-21 02:55 UTC
 
-**FREEZE:** train/20261121-0012-hold (Nov 20 18:09 CST, ~1h40 ago): Abdullah approved ORCH 2 plan, nothing lands on main except ORCH's reviewed pieces. Conductor did step 1 only; no train, no landing.
-main head: 261e9af (main was force-updated since last conductor view 10cf4bd).
+**FREEZE: no train this run.** `train/20261121-0012-hold` (pushed 00:09Z by ORCH): "Abdullah 2026-11-20 18:09 approved plan: nothing lands on main except ORCH's reviewed pieces. Conductor: do step 1 only."
 
-Newest helper branches (last push UTC; ahead/gate not measured: fetch depth 1, 23k branches in repo):
+main head 261e9af9 (2026-11-21 01:26Z, "Loading waits up to 60 s for graphics prep"). Recent main: rollbacks to aae60d36 (Nov 19 night), soldiers drawn one by one again.
 
-- origin/orch/laneC-shots 2026-11-21 01:44:28 +0000
-- origin/orch/laneA-1 2026-11-21 01:33:40 +0000
-- origin/orch/laneD-drones 2026-11-21 01:24:49 +0000
-- origin/orch/laneD-regional 2026-11-21 01:24:45 +0000
-- origin/orch/laneD-west 2026-11-21 01:24:40 +0000
-- origin/orch/laneD-shia 2026-11-21 01:24:34 +0000
-- origin/orch/laneC-measure 2026-11-21 01:04:13 +0000
-- origin/orch/laneB-scale 2026-11-21 01:02:04 +0000
-- origin/orch/laneB-ai 2026-11-21 01:00:49 +0000
-- origin/orch/laneB-freeze 2026-11-21 01:00:40 +0000
-- origin/orch/laneC-shia 2026-11-21 00:59:56 +0000
-- origin/orch/laneC-regional 2026-11-21 00:59:39 +0000
-- origin/orch/laneC-west 2026-11-21 00:59:31 +0000
-- origin/orch/laneC-east 2026-11-21 00:59:26 +0000
-- origin/orch/conductor 2026-11-20 18:50:49 -0600
-- origin/orch/snowfix2 2026-11-20 18:40:02 -0600
-- origin/orch/redo-1 2026-11-20 18:10:23 -0600
-- origin/orch/pack-art4 2026-11-20 22:46:19 +0000
-- origin/orch/pack-units-rig 2026-11-20 22:04:18 +0000
-- origin/orch/pack-units-contrast 2026-11-20 19:40:46 +0000
+Candidate branches vs main (ahead count / last push):
+- Already in main (ahead 0): freezefix, sweepfixA, sweepfixB, orderfeel, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, looktest, onegame, nations20
+- ghostslot ahead 1 (Nov 14 03:28), testrange ahead 1 (Nov 14 03:06), techbldgs ahead 1 (Nov 14 18:46), ammozone ahead 7 (Nov 14 03:55): stale, not landed (frozen)
+- battlemaps2: no such branch
 
-Never-land (parked, removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans, src/13* only.
-taken/* locks: 101 total (not audited this run; frozen).
+Note: local git fetch of this 5.4 GB repo times out in the cloud sandbox; state read via GitHub API. gate/* statuses and taken/* lock ages not checked this run (freeze).
