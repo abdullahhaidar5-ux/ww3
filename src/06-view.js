@@ -70,9 +70,38 @@ const PARK=new Map();
    chest); the other ~40 (arms, hands, fingers, head) keep the pose they were built with, yet three.js re-composed their matrices
    every frame for every visible soldier. They are now computed once (the first frame the figure is drawn) and then left alone. */
 function boneKeep(){this.matrixWorldNeedsUpdate=true;}   // the local matrix stays as composed; the world matrix still follows the parent (render and updateWorldMatrix paths)
-function boneFreeze(m,W){const keep=new Set();for(const k in W){const j=W[k];if(j&&j.b)keep.add(j.b);}m.traverse(q=>{if(q.isBone&&!keep.has(q)&&q.matrixAutoUpdate){q.updateMatrix();q.updateMatrix=boneKeep;}});m.userData.bfz=1;}
+function boneFreeze(m,W){const keep=new Set();for(const k in W){const j=W[k];if(j&&j.b)keep.add(j.b);}m.traverse(q=>{if(q.isBone&&!keep.has(q)&&q.matrixAutoUpdate){q.updateMatrix();q.updateMatrix=boneKeep;}});boneHide(m);m.userData.bfz=1;}
+/* smooth-render: a bone with no mesh anywhere below it draws nothing, but three.js still walked it in every pass (depth pre-pass, shadow pass,
+   colour pass, soft-shadow pass: ~35 of a soldier's ~41 objects x 4 walks). Hidden bones are skipped by all of them at the first check; their
+   matrices are still updated (skinning reads them) because updateMatrixWorld does not look at 'visible'. View only. */
+function boneHide(m){const f=q=>{let has=!!q.isMesh;const c=q.children;for(let i=0;i<c.length;i++)if(f(c[i]))has=true;if(q.isBone&&!has)q.visible=false;return has;};f(m);}
+/* smooth-render B (rigid figures): a soldier standing still (nothing turned his bones this frame or last) is one solid piece. His ~40 bone
+   matrices and ~40 tree visits were still recomputed every frame (about 40% of a big fight's frame). Once a figure has been still for two
+   frames its bones are measured once against the figure (K = bone x inverse-bind, kept in RGS per skinned mesh) and its drawn parts
+   (skinned body, helmet/pack meshes) once (RGC); then three.js only recomputes the figure's own matrix and the few drawn parts, and the
+   instanced soldier batch (solbFill) builds the bone texture rows as figure matrix x K. Any pose change (walk, crouch, reload...) switches
+   it back at once; a material swap, SOLB off or an animated (mixer) figure never goes rigid. View only; same pictures as before. */
+const RG={on:true},RGS=new WeakMap();let WCH=0,RGQ=0;   // RGQ: figures measured this frame (at most 12, so a whole wave settling at once never makes one slow frame)
+function rgUMW(force){const f=RGS.get(this);
+  if(!f||!SOLB.on){Object.getPrototypeOf(this).updateMatrixWorld.call(this,force);return;}
+  if(this.matrixAutoUpdate)this.updateMatrix();
+  if(this.matrixWorldNeedsUpdate||force){if(this.matrixWorldAutoUpdate===true){if(this.parent===null)this.matrixWorld.copy(this.matrix);else this.matrixWorld.multiplyMatrices(this.parent.matrixWorld,this.matrix);}this.matrixWorldNeedsUpdate=false;force=true;}
+  const L=f.L,mw=this.matrixWorld;
+  for(let i=0;i<L.length;i+=2){const n=L[i];if(n.isSkinnedMesh&&n.material!==n.userData.solMat){/* not drawn by the batch: needs real bones */rgOff(this,this.userData);Object.getPrototypeOf(this).updateMatrixWorld.call(this,true);return;}}
+  if(force)for(let i=0;i<L.length;i+=2){const n=L[i];n.matrixWorld.multiplyMatrices(mw,L[i+1]);if(n.isSkinnedMesh)n.bindMatrixInverse.copy(n.matrixWorld).invert();}}
+function rgOff(m,ud){if(ud.rgA){ud.rgA=0;delete m.updateMatrixWorld;}ud.rgS=0;}
+function rgBuild(m){if(!m.matrixWorld.determinant())return false;const inv=new THREE.Matrix4().copy(m.matrixWorld).invert(),R=new THREE.Matrix4(),L=[],K=[];
+  m.traverse(q=>{if(q===m||!q.isMesh)return;L.push(q,new THREE.Matrix4().multiplyMatrices(inv,q.matrixWorld));
+    if(q.isSkinnedMesh&&q.skeleton){const B=q.skeleton.bones,I=q.skeleton.boneInverses,a=new Float32Array(B.length*16);for(let j=0;j<B.length;j++){R.multiplyMatrices(inv,B[j].matrixWorld).multiply(I[j]);R.toArray(a,j*16);}K.push(q,a);}});
+  if(!K.length)return false;const f={L,K};RGS.set(m,f);for(let i=0;i<K.length;i+=2)RGS.set(K[i],{f:m,K:K[i+1]});return true;}
+function rgTick(m,ud,W,on,c0,o){
+  if(!RG.on||!W||o.userData.mixers||!SOLB.on){if(ud.rgA)rgOff(m,ud);return;}
+  if(WCH!==c0){rgOff(m,ud);return;}   // a bone turned this frame: back to the normal path
+  if(!on){if(!ud.rgA)ud.rgS=0;return;}
+  if(ud.rgA)return;if((ud.rgS=(ud.rgS||0)+1)<2||RGQ>=12)return;RGQ++;
+  if(rgBuild(m)){ud.rgA=1;m.updateMatrixWorld=rgUMW;}else ud.rgS=-60;}   // rebuilt every time a figure settles: the pose it settles in is the one measured
 function umwVis(f){if(!this.visible){this.matrixWorldNeedsUpdate=true;return;}Object.getPrototypeOf(this).updateMatrixWorld.call(this,f);}
-function syncScene(dt){const live=new Set();
+function syncScene(dt){const live=new Set();RGQ=0;
   /* haze limit (Abdullah 2026-11-15 00:40 "Keep camera, add haze limit"): with the low cinematic camera the view reaches the horizon, so units and
      buildings deep in the haze (75% fogged and beyond) are not drawn - nor shadowed or depth-passed. View only. */
   const FGo=SCN&&SCN.fog,FDc=FGo&&FGo.far>FGo.near?FGo.near+(FGo.far-FGo.near)*.75:1e9,FD2=FDc*FDc,CPx=CAM.position.x,CPz=CAM.position.z;
@@ -136,7 +165,7 @@ function syncScene(dt){const live=new Set();
       if(o.userData.mixers)playAnim(o,c==='hero'?(moving?'run':(G.t-(e.lastFire||-9)<1?'shoot':'aim')):'stand',dt);
       if(P.body&&(o.userData.walker||['inf','at','hero','hacker'].includes(c))){if(o.userData.walker){const near=inView(e.x,e.y,.05);o.userData.wa=Math.max(0,Math.min(1,(o.userData.wa||0)+(moving?dt*5:-dt*5)));const wa=o.userData.wa;{const far=cam.dist>480;if(o.userData.farS!==far){o.userData.farS=far;o.traverse(q=>{if(q.userData&&q.userData.gear===2)q.visible=!far;if(q.name==='soldier')q.visible=!far;else if(q.name==='soldierLo')q.visible=far;});}}{const ud=o.userData,px=o.position.x,pz=o.position.z;if(ud.gpx!==undefined&&dt>0)ud.gv+=(Math.min(150,Math.hypot(px-ud.gpx,pz-ud.gpz)/dt)-ud.gv)*Math.min(1,dt*8);else ud.gv=0;ud.gpx=px;ud.gpz=pz;}const gv=Math.max(o.userData.gv,moving?8:0),run=o.userData.cleric?0:Math.max(0,Math.min(1,(gv-12)/30)),/* the leader walks at a calm pace, never jogs */ga=.38+.1*run,gs=.5-.29*run,pose=near&&cam.dist<760,br=!moving&&pose&&cam.dist<480;const pt=pose&&!moving?squadPost(e,o):0,pf=G.t-(e.lastFire||-9)<2.5;const sqn=P.body.children.length,sqal=sqn>1?Math.max(1,Math.min(sqn,Math.ceil(sqn*e.hp/Math.max(1,e.max)))):9;let k=0;for(const m of P.body.children){const W=m.userData.legs,ud=m.userData;if(W&&!ud.bfz&&!o.userData.mixers)boneFreeze(m,W);
         if(sqn>1&&k>=sqal){/* squad: a fallen soldier tips over, lies a few seconds, then is gone (view only; hp decides) */if(ud.sdd===undefined)ud.sdd=ud.sseen?G.t:G.t-99;const dt2=G.t-ud.sdd;m.visible=dt2<6;m.rotation.x=-Math.min(1.5,dt2*5);m.position.y=-Math.min(1.2,dt2*3)*.5;k++;continue;}
-        if(sqn>1){ud.sseen=1;ud.sdd=undefined;m.visible=true;}if(ud.wph===undefined)ud.wph=(e.id*.618+k*.31)%1;if(wa>0&&W)ud.wph=(ud.wph+dt*gs*gv/Math.max(1,gSweep(W,ga,run)))%1;m.position.y=0;m.rotation.x=0;m.rotation.z=0;if(ud.bz!==undefined)m.position.z=ud.bz;const b=br?.018*Math.sin(G.t*1.7+e.id+k*2.1):0;if(pose&&W&&(wa>0||ud.wl||b))m.position.y=walkPose(m,ud.wph,wa,ga,gs,run,b);ud.wl=wa>0||b!==0;if(pose&&W&&SET_POSTURE()&&postApply(m,ud,e,k,dt,pt,moving,pf))ud.wl=true;k++;}}else if(o.userData.cleric){P.body.position.y=moving?Math.abs(Math.sin(G.t*5+e.id))*.22:0;P.body.rotation.x=moving?Math.sin(G.t*5+e.id)*.03:0;}else P.body.position.y=moving&&!o.userData.mixers?Math.abs(Math.sin(G.t*12+e.id))*1.2:0;}
+        if(sqn>1){ud.sseen=1;ud.sdd=undefined;m.visible=true;}if(ud.wph===undefined)ud.wph=(e.id*.618+k*.31)%1;if(wa>0&&W)ud.wph=(ud.wph+dt*gs*gv/Math.max(1,gSweep(W,ga,run)))%1;m.position.y=0;m.rotation.x=0;m.rotation.z=0;if(ud.bz!==undefined)m.position.z=ud.bz;const b=br?.003*Math.round(.018*Math.sin(G.t*1.7+e.id+k*2.1)/.003):0;/* breath in 0.003 rad steps (a quarter of a degree: not visible) so a standing soldier is only re-posed every ~0.2 s and can stay rigid in between */const c0=WCH;if(pose&&W&&(wa>0||ud.wl||b!==(ud.pb||0)))m.position.y=ud.py=walkPose(m,ud.wph,wa,ga,gs,run,b);else if(b)m.position.y=ud.py||0;ud.pb=b;ud.wl=wa>0||b!==0;if(pose&&W&&SET_POSTURE()&&postApply(m,ud,e,k,dt,pt,moving,pf))ud.wl=true;rgTick(m,ud,W,on,c0,o);k++;}}else if(o.userData.cleric){P.body.position.y=moving?Math.abs(Math.sin(G.t*5+e.id))*.22:0;P.body.rotation.x=moving?Math.sin(G.t*5+e.id)*.03:0;}else P.body.position.y=moving&&!o.userData.mixers?Math.abs(Math.sin(G.t*12+e.id))*1.2:0;}
       if(P.eye){const on=!!e.hid&&e.team===ME&&!e.dead;P.eye.visible=on;if(on)P.eye.quaternion.copy(o.quaternion).invert().multiply(CAM.quaternion);}// hidden Infiltrator: its owner (only) sees a small eye above it, always facing the screen
       if(c==='hero'&&P.body&&!o.userData.model){const hid=e.hid;P.body.material=hid?(MAT.stealth||(MAT.stealth=new THREE.MeshStandardMaterial({vertexColors:true,transparent:true,opacity:.35}))):MAT.std;}
       if(c==='jet'&&!e.landed){const ud=o.userData;o.rotation.order='YZX';const tr=angDiff(ud.pjy??e.va,e.va)/Math.max(dt,1e-3);ud.pjy=e.va;ud.bk=(ud.bk||0)+((Math.max(-1.05,Math.min(1.05,-tr*.55)))-(ud.bk||0))*Math.min(1,dt*3);

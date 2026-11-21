@@ -17,7 +17,7 @@ const ENC_NOTE={
   aa:'Mobile air-defence vehicles carry radar-guided guns or short-range missiles to protect columns and bases from helicopters, jets and drones.',
   ammot:'Ammo trucks follow the army: they top up the ammunition of friendly units close to them, carry a limited stock and reload inside your own area. Light armor, no weapon: keep them behind the front.',
   harv:'Supply trucks are the logistics backbone: fuel, ammunition and food move by road. Armies lose more equipment to broken supply than to enemy fire.',
-  dozer:'Combat engineers build bridges, fortifications and camps and clear obstacles, often under fire. The heavy construction vehicle is how an army digs in and builds forward.',
+  dozer:'Combat engineers build bridges, fortifications and camps and clear obstacles, often under fire. The heavy construction vehicle is how an army digs in and builds forward. Right-click fallen-building rubble with one to clear the way for tanks and supply trucks.',
   heli:'Attack helicopters hunt armor from behind hills and tree lines with guided missiles and cannon. Fast and flexible, they are vulnerable to air defense and massed small-arms fire.',
   jet:'Strike fighters and fighter-bombers drop precision-guided bombs and fire missiles at targets far behind the line, then leave before air defenses can react.',
   drone:'Armed strike drones and loitering munitions turned small, cheap aircraft into precision weapons: they find a target, circle, and dive onto it.',

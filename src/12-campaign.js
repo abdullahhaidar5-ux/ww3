@@ -268,7 +268,7 @@ function startCampaign(id,diff){
   const m=CAMPAIGN.find(x=>x.id===id);if(!m)return;try{initAudio();}catch(e){}
   MODE='single';ME=0;const ally=!!m.ally,facs=ally?[m.fac,m.ally,m.enemy]:[m.fac,m.enemy];
   setup.p=m.fac;setup.d=diff;
-  TERR_DEFER=true;try{newGame({seed:(m.n*7919+diff*104729+12345)|0,facs,ai:facs.map(()=>false),map:m.map,tm:ally?[0,0,1]:[0,1],bs:1,slot:0,st:[0,1],w:0,camp:{id,diff}});}finally{TERR_DEFER=false;}
+  TERR_DEFER=true;try{newGame({seed:(m.n*7919+diff*104729+12345)|0,facs,ai:facs.map(()=>false),map:m.map,tm:ally?[0,0,1]:[0,1],bs:1,slot:0,st:[0,1],w:m.w|0,camp:{id,diff}});}finally{TERR_DEFER=false;}
   afterStart();
 }
 function campDebrief(c,won){

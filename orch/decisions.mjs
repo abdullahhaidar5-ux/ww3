@@ -84,6 +84,11 @@ const ck = (c, m) => { if (!c) fails.push(m); };
   else if (!/'src\/02\*\.js'/.test(m[0])) fails.push('gate.yml: mapsweep skip condition must watch \'src/02*.js\' (every map file: ' + mapFiles.join(', ') + ')'); }
 const srcFiles = fs.readdirSync(path.join(ROOT, 'src')).filter(f => f.endsWith('.js')).sort();
 const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')]));
+{ /* unit limit (Abdullah 2026-11-19 05:58): 500 per player up to 4 players, 300 for 5-8 */
+  const sm = SRC['03-sim.js'], m = sm.match(/const POP_CAP=[^;]*;/), f = sm.match(/function popCap\(\)\{[^\n]*\}/);
+  ck(m && f, 'unitlimit: POP_CAP/popCap not found');
+  if (m && f) { const pc = n => new Function('G', m[0] + f[0] + ';return popCap();')({ battle: true, teams: Array.from({ length: n }, () => ({})).concat([{ reb: true }]) }); ck(pc(2) === 500 && pc(4) === 500 && pc(5) === 300 && pc(8) === 300, 'unitlimit: battles of up to 4 players must allow 500 units each, 5-8 players 300'); }
+}
 // weathergfx 2026-11-14 (Abdullah: weather "Pick in setup + Random", graphics "Low/Med/High/Ultra"): ONE Conditions table (CONDS in 01-data) drives the setup/lobby picker and the Test range picker; Random and unfitting picks resolve through condFit (deterministic from the seed); ONE graphics row (GFX_PRESETS: Low/Medium/High/Ultra), no second quality setting.
 // redfixE (2026-11-17): the battle servers (server/build-sim.mjs) and the headless test run the simulation from SIM_FILES in orch/headless.mjs - every
 // src/01..03 file the page loads must be in it (4 were missing: faction mechanics, signature units, OB, the Iranian missile ran in browsers only)
@@ -95,8 +100,28 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/function condUI\(/.test(u) && /function sbCond\(/.test(u), 'weathergfx: the setup or Test range Conditions picker is gone from 08-ui.js');
   ck(/const GFX_PRESETS=\[\['low','Low'.*\['auto','Medium'.*\['high','High'.*\['ultra','Ultra'/.test(u), 'weathergfx: Settings graphics row is not Low / Medium / High / Ultra any more');
   ck(!/wxRandIdx\(G\.seed\)===4/.test(s), 'weathergfx: the old "Random = day or night only" rule is back in newGame'); }
+// redfixF 2026-11-18: the weather's random draws are a pure function of (seed, draw number) and the draw number is in the checkpoint (a closure RNG could not be saved: a migrated host or a loaded save got a different weather)
+{ const sim = SRC['03-sim.js'] || '', c7 = SRC['07b-ckpt.js'] || ''; ck(/function weatherTick[\s\S]{0,400}G\.wxN=\(G\.wxN\|0\)\+1/.test(sim) && !/G\.wxR\b/.test(sim) && /'wx','wxN'/.test(c7), 'redfixF: weather draws must be counted (G.wxN, kept in the checkpoint), not a hidden RNG closure'); }
+// redfixF 2026-11-18: balance nudge line (applied after the NEWNAT rows are copied) and the tournament roster is the PLAYABLE list
+{ const d = SRC['01-data.js'] || '', t = fs.readFileSync(new URL('./aitourney.mjs', import.meta.url), 'utf8'); ck(/const BN=\{AE:1\.03,EG:1\.03,DE:1\.03,RV:1\.03,RU:\.97,CN:\.97,GB:\.97,DW:\.97\}/.test(d) && /const ALL = .*PLAYABLE/.test(t), 'redfixF: balance nudges (BN line in 01-data.js) and orch/aitourney.mjs must read the PLAYABLE nations'); }
 // smoothaudit 2026-11-17: the supply-lines button reads the minimap's place twice a second, not every frame (a forced page layout per frame)
 ck(/function lgUiTick\(\)\{[^\n]*\n[^\n]*\n[^\n]*\n[^\n]*\n\s*if\(show\)\{const nw=performance\.now\(\);if\(nw-\(LGU\.rt\|\|0\)<500/.test(SRC['08c-logi.js'] || ''), 'smoothaudit: lgUiTick reads the minimap rect (getBoundingClientRect) every frame again');
+// pack-polish2 2026-11-18: instanced soldiers (SOLB) stay ON; bone texture pre-sized to 64 rows and batch buffers start at 256 so nothing is re-created mid-wave
+ck(/const SOLB=\{[^\n]*\bon:true,/.test(SRC['11-models.js'] || '') && /Math\.max\(64,SOLB\.H\)/.test(SRC['11-models.js'] || '') && /b\.cap=Math\.max\(256,/.test(SRC['11-models.js'] || ''), 'instanced soldiers: ON, texture pre-sized (64 rows), batch buffers start at 256');
+// smooth-render 2026-11-19: a soldier's meshless bones are hidden so three.js skips them in every pass (matrices still update; skinning reads them)
+ck(/function boneHide\(m\)/.test(SRC['06-view.js'] || '') && /boneHide\(m\);m\.userData\.bfz=1/.test(SRC['06-view.js'] || ''), 'soldier bones with no mesh below them must be hidden (boneHide) so the render passes skip them');
+// smooth-render B 2026-11-19: a soldier standing still is one rigid piece (cached bone/part matrices vs the figure); any bone change (wSet counts them) switches back; solbFill builds rows from figure x K
+ck(/function addonGeo\(key,fn\)\{[^\n]*gcKeep/.test(SRC['11-models.js'] || '') && ['zu23', 'dshk', 'bm', 'mg', 'mortar', 'gun', 'crane'].every(n => new RegExp("addonGeo\\('x_" + n + "'").test(SRC['11-models.js'] || '')) && /if\(e\.kind==='ammot'\)\{const GM=addonGeo\('x_ammot'/.test(SRC['11-models.js'] || '') && !/if\(c\.extra==='(zu23|dshk|bm|mg|mortar|gun|crane)'\)\{const B=Bld\(\)/.test(SRC['11-models.js'] || ''), 'rangefreeze: the gun, launcher, mortar, crane and cargo add-ons of a unit are shared shapes (addonGeo x_*), never rebuilt for every unit (a wave of 6 made 18 GPU buffers in one frame and the GPU stalled behind them)');
+ck(/perfGpu\(\);\}catch\(e\)\{\}\/\* the graphics-card name/.test(SRC['05-fx3d.js'] || ''), 'rangefreeze: the graphics-card name (a synchronous GPU round trip) is read at load, not in the first slow frame');
+ck(/function rotG\(k,f\)\{return ROTC\[k\]/.test(SRC['11-models.js'] || '') && !/new THREE\.Mesh\(new THREE\.(CircleGeometry\(R,32\)|CircleGeometry\(tl,16\)|BoxGeometry\(R,\.3|CylinderGeometry\(\.7,\.9)/.test(SRC['11-models.js'] || ''), 'rangefreeze: a helicopter\'s rotor disc, blades and tail rotor are shared shapes (rotG/rotM), never new geometry per unit (a wave of 6 made ~240 GPU buffers in one frame)');
+ck(/function rgUMW\(/.test(SRC['06-view.js'] || '') && /function rgTick\(/.test(SRC['06-view.js'] || '') && /rgTick\(m,ud,W,on,c0,o\)/.test(SRC['06-view.js'] || '') && /WCH\+\+/.test(SRC['11-models.js'] || '') && /RGS\.get\(m\)/.test(SRC['11-models.js'] || '') && /rgBuild\(m\)\)\{ud\.rgA=1/.test(SRC['06-view.js'] || ''), 'rigid soldier figures (rgUMW/rgTick/rgBuild, wSet counts bone changes, solbFill uses RGS) must stay wired');
+// smooth-render2 2026-11-19: aircraft merge their static meshes per material at build time (staticMerge, view only); the building merge was dropped (late shader programs). The unit limit is guarded by PACK UNITS, not here.
+ck(/function staticMerge\(/.test(SRC['11-models.js'] || '') && /staticMerge\(yaw,kp,/.test(SRC['11-models.js'] || ''), 'smooth-render2: aircraft no longer merge their static meshes (staticMerge)');
+// smoothaudit2 2026-11-17: merged soldier figures are drawn by one instanced draw per look (SOLB), bones from one shared texture; the AO depth pass draws the batches with their own depth material
+ck(/solbReg\(mm,E\.mat\)/.test(SRC['11-models.js'] || '') && /function solbFill\(/.test(SRC['11-models.js'] || '') && /solbFill\(!!window\.LOADING\)/.test(SRC['11-models.js'] || '') && /solbAO\(\)/.test(SRC['10-post.js'] || '') && /SOLB\.stamp\+\+/.test(SRC['10-post.js'] || ''), 'smoothaudit2: soldiers are no longer drawn in shared instanced batches (one draw per soldier figure again)');
+ck(/customDepthMaterial=chunkDM\(\)/.test(SRC['05-fx3d.js'] || '') && (SRC['05-fx3d.js'].match(/chunkDM\(\)/g) || []).length >= 3, 'smoothaudit2: rock chunks (strike debris) lack their own shadow depth material (a new vertex array would appear mid-strike)');
+ck(/function camStill\(/.test(SRC['10-post.js'] || '') && /fxLv\(\)>=1&&still/.test(SRC['10-post.js'] || ''), 'PACK looks 2026-11-18: on Medium with a still camera the shadow pass is redrawn every other frame');
+ck(/const LTN=\{/.test(SRC['05-fx3d.js'] || '') && /LTN\.cd/.test(SRC['05-fx3d.js'] || '') && !/new THREE\.\w+Light/.test((SRC['05-fx3d.js'] || '').split('function weatherFX')[1] || ''), 'PACK looks3 2026-11-18: a thunderstorm darkens the field and flashes lightning by moving the existing sun and sky light (no new lights, no new shader programs mid-battle)');
 // smoothaudit2 2026-11-17: weathering values (amount, kind, camo pattern, wall) are uniforms - kept out of the shader program key, else a new value links a program mid-game
 ck(/m\.customProgramCacheKey=\(\)=>'wxb'\+\(camo\?1:0\)\+\(typeof LOOK/.test(SRC['11-models.js'] || ''), 'smoothaudit2: weather() puts a uniform value (amount/kind/pattern/wall) into the shader program key again (a new program per value)');
 ck(/now-EDGE\.rt>250/.test(SRC['08i-hud.js'] || '') && !/function edgeTick\(\)[^]*?const r=cv\.getBoundingClientRect\(\)/.test(SRC['08i-hud.js'] || ''), 'smoothaudit: edgeTick (off-screen alert arrows) reads the screen rect every frame again');
@@ -131,6 +156,21 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   ck(/function baseStyle\(/.test(b) && /function baseYard\(/.test(b) && /function baseSlabKit\(/.test(b) && /'soviet'/.test(b) && /'west'/.test(b), 'base looks: 11c-bases.js lost baseStyle / baseYard / baseSlabKit or a family');
   ck(/baseYard\(e,o,P,RR,gate,BP\)/.test(m) && /baseSlabKit\(B,e,T,s\)/.test(m) && /baseTint\(T\.fac,RT\)/.test(m), 'base looks: 11-models no longer calls baseYard / baseSlabKit / baseTint');
   ck(/OBX=\['OB','BI'\]/.test(b), 'base looks: OB/BI no longer use the Middle-Eastern compound family'); }
+// ---- National vehicles (Abdullah 2026-11-17): Palestine never shows an MBT; RS/DW/RV/OB artillery is a rocket truck, never the regular-army Msta
+{ const m = SRC['11-models.js'] || '';
+  ck(/MIL_TANK\.OB=\{m:'technical'/.test(m) && !/RV:'t62',OB:'t55'/.test(m) && !/OB:'t55'/.test(m) && !/RMAP\.tank\.OB/.test(m), 'national vehicles: OB got a tank model slot again (Palestine must never show an MBT)');
+  ck(/\['RS','DW','RV','OB'\]\.includes\(f\)/.test(m), 'national vehicles: RS/DW/RV/OB artillery is no longer kept off the Msta self-propelled gun');
+  ck(/cn72/.test(m) && /in90/.test(m) && /pk72/.test(m), 'national vehicles: CN/IN/PK lost their own tank paint');
+  ck(/gb35/.test(m) && /de35/.test(m) && /il35/.test(m) && /RMAP\.atgm,\{US:'humvee'/.test(m), 'national vehicles: the West family (US/GB/FR/DE/IL/UA trucks and ATGM carriers) lost its own looks');
+  ck(/ru_ural/.test(m) && /cn_ural/.test(m) && /kp_ural/.test(m) && /RMAP\.atgm,\{CN:'cnhum'/.test(m), 'national vehicles: the East family (RU/CN/KP trucks and ATGM carriers) lost its own looks');
+  ck(/in_ural/.test(m) && /pk_ural/.test(m) && /jp35/.test(m) && /sa35/.test(m) && /RMAP\.atgm,\{IN:'inhum'/.test(m), 'national vehicles: the Regional family (IN/JP/KR/PK/SA/AE/TR/EG trucks and ATGM carriers) lost its own looks');
+  // only the US wears the white star: the M35 truck texture's star spots are painted over for every other nation
+  ck(/function noStarMap/.test(m) && /key==='m_m35'&&!\(team&&team\.fac==='US'\)&&c\.map\)c\.map=noStarMap/.test(m), 'no US star on non-US trucks: the M35 texture patch (noStarMap) is gone or no longer skips only the US');
+  // PACK looks7: AA, rocket rack, EW and ATGM carriers each get a family-specific code-built add-on on the nation's truck (West / East / Shia / Regional), shared per paint
+  ck(/function aaGeo\(/.test(m) && /function rackGeo\(/.test(m) && /function ewGeo\(/.test(m) && /function atgmGeo\(/.test(m) && /extra==='aatruck'/.test(m) && /extra==='atgm'/.test(m) && !/atgm:\{m:'truck',fit:'z',size:27,extra:'samtruck'/.test(m) && /addonWarm\(facs\)/.test(m), 'national vehicles: the family add-ons (AA turret, rocket rack, EW mast, ATGM launcher) are gone or AA/ATGM went back to the one shared SAM box');
+  const g = SRC['04-gfx.js'] || '', fx = SRC['05-fx3d.js'] || '';
+  ck(/decalSet\('lamp'\)|decal\('lamp'\)/.test(m) && /k==='lamp'/.test(m) && /todDark\(\)/.test(m) && /'eye','blob','lamp'/.test(fx), 'night: vehicle headlights must be one instanced lamp set, drawn only in the dark, and warmed up at battle load');
+  ck(/const WETG=/.test(g) && /gWetK/.test(g) && /WETG\.value/.test(fx), 'rain: the wet-ground darkening (WETG uniform in the ground shader, eased by weatherFX) is gone'); }
 // ---- Infiltrator look (Abdullah 2026-11-11 "Make them look like actual spies"): the spy is a plain-clothes figure of its own,
 // never drawn as a rifleman - not through the box-figure alias, and with no rifle on the real model.
 { const g = SRC['04-gfx.js'] || '', m = SRC['11-models.js'] || '', alias = (g.match(/const GEO_ALIAS=\{[^}]*\}/) || [''])[0];
@@ -243,6 +283,7 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
 // "Camera smoothing" switch (mCam), a short pick-up pulse in the ONE ring system (SELR.ts), the clean box-select and the Shift/Alt path preview.
 { const ui = SRC['08-ui.js'] || '', vw = SRC['06-view.js'] || '', of = SRC['06d-orderfeel.js'] || '', all = srcFiles.filter(f => !/^13/.test(f)).map(f => SRC[f]).join('\n');
   ck(/function camGlide\([\s\S]{0,300}Math\.exp\(-dt\*/.test(ui) && /\[rx,dn\]=camGlide\(/.test(ui), 'controlsfeel: camera pan must glide through camGlide (exp(-dt) easing, frame-rate independent)');
+  ck(/scroll\(Math\.min\(\.25,rawDt\)\)/.test(ui), 'camera pan must run on real frame time (rawDt, cap .25 s), not the .05 s sim-capped dt: slow CI/PC frames made edge scroll crawl (gate/controls lock edge test)');
   ck(/const CAMS=\{/.test(vw) && (all.match(/const CAMS=/g) || []).length === 1, 'controlsfeel: one camera glide state (CAMS in 06-view)');
   { const wh = /cv\.addEventListener\('wheel',[^\n]*/.exec(ui); ck(wh && /cam\.td=nd/.test(wh[0]) && !/cam\.dist=/.test(wh[0]), 'controlsfeel: wheel zoom must move the zoom target (cam.td) so camTick eases it, never set cam.dist directly'); }
   ck(/kz=1-Math\.exp\(-dt\*/.test(vw), 'controlsfeel: camTick must ease zoom with exp(-dt)');
@@ -270,6 +311,15 @@ ck(/#panel \.btn>\*:not\(\.q\):not\(\.p\):not\(\.n\):not\(\.ic\):not\(\.zhIc\)\{
   for (const v of new Set(ids)) ck(fs.existsSync(path.join(ROOT, 'tools', 'voices', 'refs', v.slice(6) + '.flac')), 'rvvoice: missing reference clip for ' + v);
   ck(/south-Iraqi unit voices[^<]{0,300}MASC/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'rvvoice: menu credits do not name the Iraqi voice source (MASC)'); }
 
+// v3voice (voices3 2026-11-17, Abdullah "Work on these now": FR, DE, GB re-recorded, JP role/radio/shout lines, Hebrew announcer): the FR/DE/GB/JP casts are
+// XTTS clones of native male speakers under free licences (LibriVox public domain, Thorsten-Voice CC0, Common Voice CC0; tools/voices/refs/CREDITS.md).
+{ const all = JSON.parse(fs.readFileSync(path.join(ROOT, 'orch', 'vo', 'cast.json'), 'utf8')), html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  for (const [n, pre] of [['FR', 'fr'], ['DE', 'de'], ['GB', 'gb'], ['JP', 'ja']]) { const cast = all[n] || {}, ids = [].concat(cast.sold || [], cast.cmd || []);
+    ck(ids.length >= 3 && ids.every(v => new RegExp('^clone:' + pre + '_[a-z0-9]+$').test(v)), 'v3voice: the ' + n + ' cast must use the cloned native voices (clone:' + pre + '_*): ' + JSON.stringify(ids));
+    for (const v of new Set(ids)) ck(fs.existsSync(path.join(ROOT, 'tools', 'voices', 'refs', v.slice(6) + '.flac')), 'v3voice: missing reference clip for ' + v);
+    for (const s of ['', '_r', '_h', '_s']) ck(fs.existsSync(path.join(ROOT, 'vo', n + s + '.mp3')), 'v3voice: missing sheet vo/' + n + s + '.mp3'); }
+  ck(/French, German, British and Japanese unit voices[^<]{0,400}LibriVox[^<]{0,400}Common Voice/.test(html), 'v3voice: menu credits do not name the FR/DE/GB/JP voice sources');
+  ck(/"he":\{"building":\[/.test(SRC['09d-announcer.js'] || ''), 'v3voice: the Hebrew announcer has no recorded clips (ANN_OFF.he)'); }
 // ---------- static checks ----------
 // polishP2 "Never lose progress": one save system. Battles autosave into 3 rolling slots (08d-save.js) and the menu's Continue (first item) resumes the newest. Runtime proof: orch/polishtest.mjs (gate/save).
 { const sv = SRC['08d-save.js'] || '', m = SRC['14-menu.js'] || '';
@@ -754,6 +804,29 @@ for (const e of errs) fails.push(e);
   { const m = d.match(/para:\{n:\[([\d,]+)\],at:\[([\d,]+)\]/); const n = m && m[1].split(',').map(Number), at = m && m[2].split(',').map(Number); ck(n && n[0] < n[1] && n[1] < n[2] && at[2] > at[1], 'powers: paratroopers grow per level and level 3 adds anti-tank teams'); }
   ck(/n:\[10,14,20\]/.test(d) && /dmg:\[1500,1900,2400\]/.test(d) && /PCD=\[1,\.8,\.6\]/.test(d), 'powers: barrage shells, bunker buster blast and cooldown improve with level');
   ck(!/Unlock · 1 point`/.test(ui) && !/about 40% stronger/.test(ui) && /powLvCost\(k,0\)/.test(ui), 'powers: no leftover "1 point" / "40% stronger" text, the row shows the real cost');
+}
+// economy pack 2026-11-18 (Abdullah 2026-11-17 18:45 "General's powers"): Proxy Militia (mil) + Smuggling Route (smug) exist for every playable nation, cost/levels grow, the AI uses them, deterministic
+{ const r = await ev(() => {
+    const out = { bad: [], det: null };
+    for (const f of PLAYABLE) for (const k of ['mil', 'smug']) { const P = powInfo(k, f); if (!P || sigBan(f, k) || P.passive) out.bad.push(f + ':' + k); }
+    out.cost = [powLvCost('mil', 0), powLvCost('mil', 1), powLvCost('mil', 2), powLvCost('smug', 0), powLvCost('smug', 2)];
+    out.lv = [powLvVal('mil', 'n', 1, 0), powLvVal('mil', 'n', 3, 0), powLvVal('smug', 'inc', 1, 0), powLvVal('smug', 'inc', 3, 0), powLvVal('smug', 'dur', 1, 0), powLvVal('smug', 'dur', 3, 0)];
+    const run = () => { const sv = G; try {
+      newGame({ seed: 77, facs: ['IR', 'US'], ai: [false, false], map: 'strait', tm: [0, 1], bs: 1, slot: -1, real: 0, battle: 1 }); G.headless = true;
+      const T = G.teams[0]; T.rank = 9; T.spent = 0; G.t = 400; buyPower(0, 'mil'); buyPower(0, 'smug'); buyPower(0, 'mil'); T.pw.mil.cd = 0; T.pw.smug.cd = 0;
+      const h = hqOf(0), n0 = G.ents.length, c0 = T.credits; const a = usePower(0, 'mil', h.x + 150, h.y + 150), b = usePower(0, 'smug', h.x + 60, h.y + 60);
+      for (let i = 0; i < 60 * 12; i++) simUpdate(1 / 60);
+      const tr = G.ents.find(e => e.smug && !e.dead); const res = { a, b, lv: T.pw.mil.lv, made: G.ents.length - n0, gain: T.credits - c0, smugs: (G.smugs || []).length, truck: !!tr };
+      if (tr) kill(tr, 1, null); simUpdate(1 / 60); simUpdate(2); res.cut = !(G.smugs || []).length; return res; } finally { /* leave game as is */ } };
+    out.r1 = run(); out.r2 = run(); out.det = JSON.stringify(out.r1) === JSON.stringify(out.r2); return out; });
+  ck(r.bad.length === 0, 'economy: Proxy Militia and Smuggling Route exist for every playable nation (' + r.bad.join(',') + ')');
+  ck(r.cost[0] === 2 && r.cost[1] === 3 && r.cost[2] === 4 && r.cost[3] === 2 && r.cost[4] === 4, 'economy: both powers are medium cost and levels cost more');
+  ck(r.lv[0] < r.lv[1] && r.lv[2] < r.lv[3] && r.lv[4] < r.lv[5], 'economy: militia size, smuggling income and duration grow with level');
+  ck(r.r1.a && r.r1.b && r.r1.made >= 8 && r.r1.truck && r.r1.gain > 0, 'economy: militia arrives, smuggler truck brings cash: ' + JSON.stringify(r.r1));
+  ck(r.r1.cut, 'economy: destroying the smuggler truck cuts the route');
+  ck(r.det, 'economy: both powers are deterministic (same seed, same result)');
+  ck(/smugOn\(id\)/.test(SRC['03-sim.js'] || '') && /buyPower\(id,k\)/.test(SRC['03-sim.js'] || '') && /usePower\(id,'mil'/.test(SRC['03-sim.js'] || ''), 'economy: the AI buys and uses both powers');
+  ck(/'smugs'/.test(SRC['07b-ckpt.js'] || ''), 'economy: smuggling routes are in the checkpoint');
 }
 await browser.close(); server.close();
 }

@@ -121,8 +121,8 @@ try {
     const tEnd = Date.now() + 10 * 60 * 1000;
     for (let k = 0; Date.now() < tEnd; k++) { if (await ev(() => G.over)) break;
       const tg = await ev(() => { const b = G.ents.find(e => e.isB && e.team === 1 && !e.dead); return b ? { x: b.x, y: b.y } : null; }); if (!tg) { await ff(5); continue; }
-      await ev(([x, y]) => centerOn(x, y, true), [tg.x, tg.y]); await ev(() => { G.sel = tutUnits(); }); const p = await scr(tg.x, tg.y, 0); await click(p.x, p.y);
-      if (k % 2 === 0) console.log('    attack round', k, JSON.stringify(await ev(() => ({ t: G.t | 0, mine: tutUnits().length, foe: G.ents.filter(e => e.team === 1 && !e.dead).length }))));
+      await ev(([x, y]) => centerOn(x, y, true), [tg.x, tg.y]); await ev(() => { G.sel = tutUnits(); }); const p = await scr(tg.x, tg.y, 0); await click(p.x, p.y, { button: 'right' });   // unit orders are RIGHT-click (2026-11-14); a left click only selected the building, so the strike force relied on auto-targeting and sometimes sat out of range for ever
+      if (k % 2 === 0) console.log('    attack round', k, JSON.stringify(await ev(() => ({ t: G.t | 0, mine: tutUnits().length, foe: G.ents.filter(e => e.team === 1 && !e.dead).length, wx: G.wx && G.wx.k, left: G.ents.filter(e => e.team === 1 && !e.dead).map(e => e.kind + ':' + (e.hp | 0) + '@' + (e.x | 0) + ',' + (e.y | 0)).join(' '), ord: tutUnits().slice(0, 3).map(u => (u.order ? u.order.type : '-') + '@' + (u.x | 0) + ',' + (u.y | 0)).join(' ') }))));
       await ff(12); await wait(200); if (k === 1) await shot('06c-attack'); } }
   await page.waitForFunction(() => document.getElementById('tutReady'), null, { timeout: 300000 }).catch(() => bad('no "You are ready" screen after the win'));
   await wait(800); await shot('07-ready-screen');

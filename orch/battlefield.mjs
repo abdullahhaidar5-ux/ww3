@@ -69,6 +69,62 @@ try {
   ck(r1.city && r1.rub, 'rubble: a fallen block leaves rubble', JSON.stringify(r1));
   ck(r1.ord && r1.cleared && r1.secs < 25, 'rubble: a Construction Vehicle told to clear one cell removes it in seconds', JSON.stringify(r1));
   ck(!r1.edge || (r1.blocked && r1.rk && r1.freed), 'rubble: rubble on a supply road closes it until it is cleared', JSON.stringify(r1));
+  // ITEM 2: tunnel-finding ground radar
+  const r2 = await ev(() => {
+    const o = {}, me = ME, en = G.teams.find(T => T.id !== me), eid = en.id; G.paused = true;
+    const hq = G.ents.find(e => e.isB && e.team === me && e.kind === 'hq');
+    const mk = (d) => { const b = addBld(eid, 'tunnel', hq.x + d, hq.y + 40, true); b.built = 1; return b; };
+    const near = mk(400), far = mk(GPR_R + 700);
+    const ik = roster(en.fac).barracks[0];
+    const test = (b, upg) => { G.teams[me].upg.gpr = upg ? 1 : 0; const u = addUnit(eid, ik, b.x, b.y + 60); u.detT = 0; b.gprE = 0; b.detT = 0; enterTunnel(u, b); const heard = b.detT > G.t; const out = unloadTunnel(b); return { heard, shown: out.every(x => x.detT > G.t) }; };
+    o.facTun = !!FACTIONS[en.fac].tunnels; o.canBuy = !FACTIONS[G.teams[me].fac].tunnels && upgList(G.teams[me].fac).includes('gpr');
+    o.near = test(near, true); o.far = test(far, true); o.noUpg = test(near, false);
+    return o;
+  });
+  console.log('item2', JSON.stringify(r2));
+  ck(r2.facTun && r2.canBuy, 'radar: the enemy has tunnels and a non-tunnel nation can buy the radar', JSON.stringify(r2));
+  ck(r2.near.heard && r2.near.shown, 'radar: units going into / coming out of a tunnel in range are heard and revealed', JSON.stringify(r2));
+  ck(!r2.far.heard && !r2.far.shown, 'radar: tunnels out of radar range stay hidden', JSON.stringify(r2));
+  ck(!r2.noUpg.heard && !r2.noUpg.shown, 'radar: nothing without the upgrade', JSON.stringify(r2));
+  // ITEM 3: live day cycle + weather
+  const r3 = await ev(() => {
+    const o = {}, me = ME; G.paused = true;
+    const sv = { t: G.t, wx: G.wx, wxN: G.wxN, fix: G.fixWx, todM: G.todM, live: G.live };
+    G.fixWx = null; todSetup(9); G.t = 0; o.api = typeof G.tod === 'function' && typeof G.wxv === 'function';
+    const h0 = G.tod(); o.h0 = +h0.toFixed(2); o.h0ok = h0 >= 7 && h0 <= 16;
+    G.t = 1440; o.h12 = +G.tod().toFixed(2); o.step = Math.abs(((G.tod() - h0 + 24) % 24) - 12) < .01;
+    // a full day brings the same hour back
+    G.t = TOD_DAY; o.day = Math.abs(G.tod() - h0) < .01;
+    // sight: day vs night, same unit
+    const u = addUnit(me, roster(G.teams[me].fac).barracks[0], 500, 500);
+    let dayR = 0, nightR = 0, nHour = -1, dHour = -1;
+    for (let t = 0; t < TOD_DAY; t += 20) { G.t = t; const h = G.tod(); if (h > 9 && h < 15 && dHour < 0) { dHour = h; dayR = visR(u); } if (h > 22 && nHour < 0 && todLvl() === 2) { nHour = h; nightR = visR(u); } }
+    o.dayR = Math.round(dayR); o.nightR = Math.round(nightR); o.night = nightR > 0 && nightR < dayR;
+    // same seed, same weather: two runs of the seeded weather clock agree and a storm shows up
+    const run = () => { G.wx = null; G.wxN = 0; const seq = []; let last = ''; for (let i = 1; i <= 3600; i++) { G.t = i; weatherTick(1); if (G.wx.k !== last) { last = G.wx.k; seq.push(i + last); } } return seq; };
+    const a1 = run(), a2 = run(); o.same = a1.join() === a2.join(); o.seqN = a1.length; o.storm = a1.some(x => /storm$/.test(x) && !/sandstorm$/.test(x));
+    // fog and sand cut sight, a storm slows ground units a little
+    G.t = 0; G.live = 0; G.todM = 0; G.wx = { k: 'clear', t: 0, next: 1e9 }; const c0 = visR(u);
+    G.wx = { k: 'fog', t: 30, next: 1e9 }; const f0 = visR(u); G.wx = { k: 'sandstorm', t: 30, next: 1e9 }; const s0 = visR(u);
+    o.fog = f0 < c0 && s0 < c0; G.wx = { k: 'storm', t: 30, next: 1e9 }; o.stormSpd = WEATHER.storm.spd < 1; o.wxv = JSON.stringify(G.wxv());
+    // a storm grounds drones and helicopters: they head home and stop there
+    const hq = G.ents.find(e => e.isB && e.team === me && e.kind === 'hq');
+    const dk = 'drone';
+    const dr = addUnit(me, dk, hq.x + 900, hq.y + 700); dr.max = dr.hp = 1e7; setMove(dr, hq.x + 1500, hq.y + 1500, 'move');
+    const d0 = Math.hypot(dr.x - hq.x, dr.y - hq.y); for (let i = 0; i < 600; i++) simUpdate(0.1); o.drone = [Math.round(d0), Math.round(Math.hypot(dr.x - hq.x, dr.y - hq.y))]; o.droneHome = o.drone[1] < 150;
+    // checkpoint keeps the clock
+    G.live = 1; G.todM = 3; const pk = JSON.parse(JSON.stringify(ckEncode())); G.live = 0; ckRestore(pk); o.ck = G.live === 1;
+    o.chip = (todClockText() || '').length === 5;
+    return o;
+  });
+  console.log('item3', JSON.stringify(r3));
+  ck(r3.api && r3.h0ok, 'live day: G.tod() / G.wxv() exist and the start hour (from the seed) is a daytime hour', JSON.stringify(r3));
+  ck(r3.step && r3.day, 'live day: the hour runs on (12 h in 24 game minutes, a full day in 48)', JSON.stringify(r3));
+  ck(r3.night, 'live day: night sight is shorter than day sight', JSON.stringify(r3));
+  ck(r3.same && r3.seqN > 2 && r3.storm, 'weather: the same seed gives the same weather twice, and a thunderstorm comes', JSON.stringify(r3));
+  ck(r3.fog && r3.stormSpd, 'weather: fog and sandstorm cut sight, a storm slows ground units', JSON.stringify(r3));
+  ck(r3.droneHome, 'weather: a storm sends drones home and holds them there', JSON.stringify(r3));
+  ck(r3.ck && r3.chip, 'live day: survives a checkpoint, HUD clock text is HH:MM', JSON.stringify(r3));
   // ITEMS
 } catch (e) { fails.push('battlefield run crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
 for (const e of errs) fails.push(e);

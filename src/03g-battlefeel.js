@@ -18,7 +18,7 @@ const BF_SC=80,BF_HULK_MAX=96,BF_FIRE_MAX=420;
 const BF_SHOUT=['rpg','manDown','reload','grenade','contact','tank','medic'];
 // stateless seeded random in [0,1): a pure function of (seed, game clock, a, b), so a loaded save or a migrated host replays exactly
 function bfRnd(a,b){let h=((((G.seed||1)|0)^Math.imul(a|0,0x9E3779B1)^Math.imul(b|0,0x85EBCA6B)^Math.imul((G.t*20)|0,0xC2B2AE35))>>>0);h^=h>>>15;h=Math.imul(h,0x2C1B3C6D);h^=h>>>12;h=Math.imul(h,0x297A2D39);h^=h>>>15;return (h>>>0)/4294967296;}
-function bfWind(){const wk=(G.wx&&G.wx.k)||'clear',base=({clear:8,rain:12,fog:3,sandstorm:34,snow:10,blizzard:38})[wk]||8;const s0=(((G.seed||1)*2654435761)>>>0);
+function bfWind(){const wk=(G.wx&&G.wx.k)||'clear',base=({clear:8,rain:12,fog:3,sandstorm:34,snow:10,blizzard:38,storm:30})[wk]||8;const s0=(((G.seed||1)*2654435761)>>>0);
   const a=(s0%6283)/1000+.8*Math.sin(G.t/210)+.35*Math.sin(G.t/57+1.3),sp=base*(1+.35*Math.sin(G.t/91+(s0%7)));return{x:Math.cos(a)*sp,y:Math.sin(a)*sp,s:sp};}
 function bfInit(){if(G.bfD&&G.bfD.g===G)return;G.bfW=Math.ceil(MAPW/BF_SC);G.bfH=Math.ceil(MAPH/BF_SC);G.bfD=new Float32Array(G.bfW*G.bfH);G.bfD.g=G;G.bfD2=new Float32Array(G.bfW*G.bfH);G.bfN=0;
   G.bfFire=G.bfFire||[];G.bfScorch=G.bfScorch||[];G.bfHulk=G.bfHulk||[];G.bfT=G.bfT||0;G.bfFN=G.bfFire.length;}
@@ -35,7 +35,7 @@ function bfSmkStep(dt,w){const W=G.bfW,H=G.bfH,A=G.bfD,B=G.bfD2,ax=w.x*dt/BF_SC,
   B.g=G;G.bfD=B;G.bfD2=A;G.bfN=n;G.bfSmS=S;}
 function bfSmkAdd(x,y,v){const i=Math.floor(x/BF_SC),j=Math.floor(y/BF_SC);if(i<0||j<0||i>=G.bfW||j>=G.bfH)return;const k=j*G.bfW+i;G.bfD[k]=Math.min(1.5,G.bfD[k]+v);}
 // ---------- wildfire ----------
-function bfDry(){const s=G.ssn===3?0:G.ssn===2?.35:1,wk=(G.wx&&G.wx.k)||'clear',w=({clear:1,rain:.08,fog:.6,sandstorm:1.3,snow:0,blizzard:0})[wk];return s*(w==null?1:w);}
+function bfDry(){const s=G.ssn===3?0:G.ssn===2?.35:1,wk=(G.wx&&G.wx.k)||'clear',w=({clear:1,rain:.08,fog:.6,sandstorm:1.3,snow:0,blizzard:0,storm:.05})[wk];return s*(w==null?1:w);}
 function bfFuel(){if(G.bfFuel&&G.bfFuel.g===G)return G.bfFuel;const F=new Uint8Array(GW*GH);F.g=G;const th=(MAPS[G.mapKey]||{}).theme,rm=G.roadMask,M=G.map;
   for(let k=0;k<GW*GH;k++){if(G.grid[k]!==0)continue;const h=((k*2654435761)>>>0)%100;F[k]=th==='snow'?0:th==='green'?(h<70?1:h<85?2:0):(h<38?1:h<48?2:0);}
   for(const w of (M&&M.woods)||[]){const r=w.r*WK*1.05,x0=Math.max(0,Math.floor((w.x*WK-r)/CELL)),x1=Math.min(GW-1,Math.floor((w.x*WK+r)/CELL)),y0=Math.max(0,Math.floor((w.y*WK-r)/CELL)),y1=Math.min(GH-1,Math.floor((w.y*WK+r)/CELL));
