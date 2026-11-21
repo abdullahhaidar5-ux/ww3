@@ -18,18 +18,20 @@ const ST := {
 	"inf":   {"hp": 120.0, "spd": 48.0, "rng": 150.0, "dmg": 11.0, "rof": 0.8, "wpn": "gun", "armor": "light", "n": 4, "r": 9.0, "sight": 260.0},
 	"at":    {"hp": 110.0, "spd": 44.0, "rng": 190.0, "dmg": 45.0, "rof": 2.0, "wpn": "at", "armor": "light", "n": 2, "r": 8.0, "sight": 280.0},
 	"tank":  {"hp": 600.0, "spd": 58.0, "rng": 200.0, "dmg": 55.0, "rof": 1.6, "wpn": "cannon", "armor": "heavy", "n": 1, "r": 16.0, "sight": 300.0},
+	"drone": {"hp": 60.0, "spd": 150.0, "rng": 0.0, "dmg": 420.0, "rof": 1.0, "wpn": "", "armor": "air", "n": 1, "r": 10.0, "sight": 0.0, "blast": 75.0},
 	"harv":  {"hp": 450.0, "spd": 62.0, "rng": 0.0, "dmg": 0.0, "rof": 1.0, "wpn": "", "armor": "heavy", "n": 1, "r": 13.0, "sight": 200.0},
 	"hq":      {"hp": 3000.0, "size": 110.0, "armor": "bld"},
 	"barracks":{"hp": 1400.0, "size": 80.0, "armor": "bld"},
 	"factory": {"hp": 1800.0, "size": 100.0, "armor": "bld"},
 }
-const MULT := {"gun": {"light": 1.0, "heavy": 0.2, "bld": 0.25}, "at": {"light": 0.45, "heavy": 1.6, "bld": 1.0}, "cannon": {"light": 0.8, "heavy": 1.0, "bld": 1.3}}
+const MULT := {"gun": {"light": 1.0, "heavy": 0.2, "bld": 0.25, "air": 0.7}, "at": {"light": 0.45, "heavy": 1.6, "bld": 1.0, "air": 0.0}, "cannon": {"light": 0.8, "heavy": 1.0, "bld": 1.3, "air": 0.0}}
 
 # model per (kind, team): key, fit axis, size (game units, same scale as the browser game: soldier ~16 tall, tank ~38 long x VEH_SCALE)
 const MODELS := {
 	"inf0": ["sol_m", "y", 16.0], "inf1": ["sol_w", "y", 16.0],
 	"at0": ["sol_m", "y", 16.0], "at1": ["sol_w", "y", 16.0],
 	"tank0": ["m_t72", "xz", 46.0], "tank1": ["m_abrams", "xz", 46.0],
+	"drone0": ["@shahed", "xz", 30.0], "drone1": ["@shahed", "xz", 30.0],
 	"harv0": ["m_ural", "xz", 40.0], "harv1": ["m_m35", "xz", 40.0],
 	"hq0": ["b_hq_me", "xz", 120.0], "hq1": ["b_hq", "xz", 120.0],
 	"barracks0": ["b_barr", "xz", 90.0], "barracks1": ["b_barr", "xz", 90.0],
@@ -41,6 +43,7 @@ const TINT := {
 	"m_t72": Color(0.50, 0.49, 0.33), "m_abrams": Color(0.78, 0.69, 0.50),
 	"m_ural": Color(0.46, 0.47, 0.33), "m_m35": Color(0.74, 0.66, 0.48),
 	"sol_m": Color(0.55, 0.56, 0.40), "sol_w": Color(0.80, 0.72, 0.55),
+	"tree1": Color(0.55, 0.58, 0.40), "tree2": Color(0.55, 0.58, 0.40), "tree3": Color(0.55, 0.58, 0.40),
 	"b_barr": Color(0.80, 0.77, 0.70), "b_hq": Color(0.82, 0.78, 0.70), "b_barr_me": Color(0.86, 0.76, 0.60), "b_fact": Color(0.82, 0.80, 0.74),
 }   # per model key: extra turn so the model faces +X (filled after looking at it)
 
@@ -78,6 +81,8 @@ var bar_mmi: MultiMeshInstance3D
 var fx_mmi: MultiMeshInstance3D
 var tracer: MeshInstance3D
 var fx: Array = []     # [pos3, t0, life, size, color]
+var smoke: Array = []  # [pos3, t0, life, size, drift]
+var smoke_mmi: MultiMeshInstance3D
 var tracers: Array = []  # [a3, b3, t0]
 
 var cam: Camera3D
@@ -126,8 +131,17 @@ func _ready() -> void:
 			var v := a.substr(6).split(",")
 			cam_target = Vector2(float(v[0]), float(v[1]))
 			cam_dist = float(v[2])
+	if "--drones" in args:
+		for i in 5:
+			var dr := spawn("drone", ME, Vector2(1300, 900 + i * 40))
+			dr.ang = 0.0
 	if "--bench" in args:
+		var keep_t := cam_target
+		var keep_d := cam_dist
 		_bench_start()
+		if Array(args).any(func(a): return String(a).begins_with("--cam=")):
+			cam_target = keep_t
+			cam_dist = keep_d
 
 # ---------------------------------------------------------------- world
 func _env() -> void:
@@ -322,7 +336,7 @@ func _load_models() -> void:
 		var d: Array = MODELS[dk]
 		var mk := "%s|%s|%s" % [d[0], d[1], d[2]]
 		if not meshes.has(mk):
-			meshes[mk] = _build_mesh(d[0], d[1], d[2])
+			meshes[mk] = {"mesh": _shahed_mesh(d[2]), "h": 4.0} if d[0] == "@shahed" else _build_mesh(d[0], d[1], d[2])
 		var info: Dictionary = meshes[mk]
 		if info.is_empty():
 			continue
@@ -350,6 +364,38 @@ func _load_models() -> void:
 	qm.render_priority = 10
 	q.material = qm
 	bar_mmi = _inst_mmi(q, true, false)
+
+# Shahed-136 style loitering munition (code-built like the browser game's 'delta' drone): delta wing, slim body,
+# wingtip fins, pusher prop hub. Faces +X. Grey-sand paint.
+func _shahed_mesh(span: float) -> Mesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var L := span * 1.05
+	var h := span * 0.5
+	var tri := func(a: Vector3, b: Vector3, c: Vector3):
+		var n := (b - a).cross(c - a).normalized()
+		st.set_normal(n); st.add_vertex(a); st.set_normal(n); st.add_vertex(b); st.set_normal(n); st.add_vertex(c)
+		st.set_normal(-n); st.add_vertex(a); st.set_normal(-n); st.add_vertex(c); st.set_normal(-n); st.add_vertex(b)
+	var nose := Vector3(L * 0.55, 0, 0)
+	var tl := Vector3(-L * 0.45, 0, -h)
+	var tr := Vector3(-L * 0.45, 0, h)
+	var tc := Vector3(-L * 0.3, 0, 0)
+	tri.call(nose, tr, tc)
+	tri.call(nose, tc, tl)
+	# body ridge
+	var top := Vector3(L * 0.1, span * 0.09, 0)
+	tri.call(nose, top, Vector3(-L * 0.4, span * 0.06, 0))
+	tri.call(Vector3(-L * 0.4, 0, -span * 0.05), top, Vector3(-L * 0.4, 0, span * 0.05))
+	# wingtip fins
+	for z in [-h, h]:
+		tri.call(Vector3(-L * 0.45, 0, z), Vector3(-L * 0.3, 0, z * 0.93), Vector3(-L * 0.47, span * 0.16, z))
+	var m := st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.62, 0.6, 0.54)
+	mat.roughness = 0.7
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.surface_set_material(0, mat)
+	return m
 
 func _ring_mesh() -> Mesh:
 	var st := SurfaceTool.new()
@@ -397,6 +443,17 @@ func _fx_setup() -> void:
 	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	s.material = m
 	fx_mmi = _inst_mmi(s, true, false)
+	var s2 := SphereMesh.new()
+	s2.radius = 1.0
+	s2.height = 2.0
+	s2.radial_segments = 10
+	s2.rings = 6
+	var m2 := StandardMaterial3D.new()
+	m2.vertex_color_use_as_albedo = true
+	m2.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m2.roughness = 1.0
+	s2.material = m2
+	smoke_mmi = _inst_mmi(s2, true, false)
 	tracer = MeshInstance3D.new()
 	tracer.mesh = ImmediateMesh.new()
 	var tm := StandardMaterial3D.new()
@@ -505,6 +562,9 @@ func _physics_process(dt: float) -> void:
 			grid[c] = []
 		grid[c].append(e)
 	for e: Ent in ents:
+		if e.kind == "drone" and not e.dead:
+			_drone(e, dt)
+			continue
 		if e.dead or e.is_b or e.kind == "harv":
 			if e.kind == "harv" and not e.dead:
 				_harv(e, dt)
@@ -669,6 +729,40 @@ func _fire(e: Ent, o: Ent, dt: float) -> void:
 		tracers.append([muzzle, b3, t, Color(1.0, 0.7, 0.4)])
 		_boom(b3, 18.0, Color(1.0, 0.5, 0.2))
 
+func _drone(e: Ent, dt: float) -> void:
+	var s: Dictionary = ST["drone"]
+	if e.target == null or e.target.dead:
+		e.target = null
+		var best: Ent = null
+		var bd := 1e18
+		for o: Ent in ents:
+			if o.dead or o.team == e.team or o.kind == "drone":
+				continue
+			var d2 := e.pos.distance_squared_to(o.pos) * (0.6 if o.is_b else 1.0)
+			if d2 < bd:
+				bd = d2
+				best = o
+		e.target = best
+	var goal := e.target.pos if e.target != null else (e.tpos if e.order != "" else e.pos + Vector2(cos(e.ang), sin(e.ang)) * 200.0)
+	var d := goal - e.pos
+	var l := d.length()
+	if l > 0.1:
+		e.ang = lerp_angle(e.ang, atan2(d.y, d.x), minf(1.0, dt * 2.5))
+	e.pos += Vector2(cos(e.ang), sin(e.ang)) * float(s["spd"]) * dt
+	e.cd = l   # distance to target, used to draw the dive
+	if e.target != null and l < 26.0:
+		# impact: blast hurts everything of the other side nearby
+		var bl: float = s["blast"]
+		for o: Ent in ents:
+			if o.dead or o.team == e.team:
+				continue
+			var dd := _dist_to(e, o) if o.is_b else e.pos.distance_to(o.pos)
+			if dd < bl:
+				var mul := 1.0 if o.is_b or ST[o.kind]["armor"] == "heavy" else 0.7
+				o.hp -= float(s["dmg"]) * mul * (1.0 - dd / bl * 0.6)
+		_boom(Vector3(e.pos.x, 8, e.pos.y), 42.0, Color(1.0, 0.55, 0.2), 0.7)
+		e.hp = 0.0
+
 func _harv(e: Ent, dt: float) -> void:
 	# Test range: supply truck just idles near the base unless ordered
 	if e.order == "move":
@@ -677,6 +771,11 @@ func _harv(e: Ent, dt: float) -> void:
 
 func _boom(p: Vector3, size: float, col: Color, life := 0.45) -> void:
 	fx.append([p, t, life, size, col])
+	if size >= 14.0:
+		for i in int(2 + size / 12.0):
+			smoke.append([p + Vector3(randf_range(-size, size) * 0.4, 0, randf_range(-size, size) * 0.4), t + randf() * 0.2, randf_range(1.8, 3.2), size * randf_range(0.5, 0.9), Vector3(randf_range(-6, 6), randf_range(10, 18), randf_range(-6, 6))])
+		# a little burning debris flash low on the ground
+		fx.append([p + Vector3(0, -2, 0), t, 0.25, size * 1.6, Color(1.0, 0.8, 0.5)])
 
 # ---------------------------------------------------------------- drawing
 func _process(dt: float) -> void:
@@ -715,13 +814,18 @@ func _process(dt: float) -> void:
 						bob = absf(sin(ph)) * 1.4
 						lean = sin(ph) * 0.06
 					per[dk].append(Transform3D(basis * Basis(Vector3.FORWARD, lean), Vector3(p.x + off.x, bob, p.y + off.y)))
+			elif e.kind == "drone":
+				var alt := clampf(e.cd * 0.45, 6.0, 80.0)
+				var pitch := 0.0 if e.cd > 160.0 else -0.6
+				per[dk].append(Transform3D(basis * Basis(Vector3.RIGHT, 0.0) * Basis(Vector3(0, 0, 1), pitch), Vector3(p.x, alt, p.y)))
 			else:
 				var y := 0.0
 				if e.kind == "tank" and t - e.fire_t < 0.15:
 					p -= Vector2(cos(e.ang), sin(e.ang)) * 2.0
 				per[dk].append(Transform3D(basis, Vector3(p.x, y, p.y)))
 			var r: float = s["r"] * (1.6 if n > 1 else 1.3)
-			rings.append([Vector3(p.x, 0.8, p.y), r, TEAM_COL[e.team] if not issel else Color(1, 1, 1)])
+			if e.kind != "drone":
+				rings.append([Vector3(p.x, 0.8, p.y), r, TEAM_COL[e.team] if not issel else Color(1, 1, 1)])
 		if issel or e.hp < e.max_hp:
 			var f := e.hp / e.max_hp
 			var top := 26.0 if not e.is_b else 90.0
@@ -794,6 +898,27 @@ func _draw_fx() -> void:
 		var c: Color = f[4]
 		mm.set_instance_color(i, Color(c.r, c.g, c.b, (1.0 - k) * 0.9))
 	mm.visible_instance_count = fx.size()
+	var sk: Array = []
+	for f in smoke:
+		if t - f[1] < f[2]:
+			sk.append(f)
+	smoke = sk
+	_grow(smoke_mmi, smoke.size())
+	var sm := smoke_mmi.multimesh
+	var vis := 0
+	for f in smoke:
+		var age: float = t - f[1]
+		if age < 0.0:
+			continue
+		var k: float = age / f[2]
+		var sz: float = f[3] * (0.6 + k * 1.6)
+		var pos: Vector3 = f[0] + f[4] * age
+		pos.y += sz * 0.5
+		sm.set_instance_transform(vis, Transform3D(Basis().scaled(Vector3(sz, sz * 0.8, sz)), pos))
+		var g := lerpf(0.22, 0.55, k)
+		sm.set_instance_color(vis, Color(g, g * 0.95, g * 0.88, (1.0 - k) * 0.55))
+		vis += 1
+	sm.visible_instance_count = vis
 	var im: ImmediateMesh = tracer.mesh
 	im.clear_surfaces()
 	var tk: Array = []
@@ -998,6 +1123,17 @@ func _ui() -> void:
 		var kind: String = it[1]
 		b.pressed.connect(func(): train(kind))
 		vb.add_child(b)
+	var bd := Button.new()
+	bd.text = "+5 Shahed drones"
+	bd.pressed.connect(func():
+		var hq := _bld("hq", ME)
+		if hq == null:
+			return
+		for i in 5:
+			var dr := spawn("drone", ME, hq.pos + Vector2(40, -60 + i * 30))
+			dr.ang = 0.0
+		_msg("Shaheds launched"))
+	vb.add_child(bd)
 	var b5 := Button.new()
 	b5.text = "+5 tanks"
 	b5.pressed.connect(func():
