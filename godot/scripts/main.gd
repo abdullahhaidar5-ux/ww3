@@ -96,6 +96,7 @@ var dragging := false
 var msg_lbl: Label
 var msg_t := 0.0
 var fight_btn: Button
+var mouse_in := false   # edge scrolling only after the mouse has moved over the game
 var bench_on := false
 var bench := {}
 var shot_path := ""
@@ -823,7 +824,7 @@ func _cam_input(dt: float) -> void:
 		v.x += 1
 	var mp := get_viewport().get_mouse_position()
 	var vs := get_viewport().get_visible_rect().size
-	if DisplayServer.window_is_focused() and mp.x >= 0 and mp.y >= 0:
+	if mouse_in and DisplayServer.window_is_focused() and mp.x >= 0 and mp.y >= 0:
 		if mp.x < 4: v.x -= 1
 		if mp.x > vs.x - 4: v.x += 1
 		if mp.y < 4: v.y -= 1
@@ -856,6 +857,8 @@ func _pick(sp: Vector2) -> Ent:
 	return best
 
 func _unhandled_input(ev: InputEvent) -> void:
+	if ev is InputEventMouseMotion:
+		mouse_in = true
 	if ev is InputEventMouseButton:
 		var mb := ev as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
@@ -1105,3 +1108,7 @@ func _bench_tick(_dt: float) -> void:
 		print(txt)
 		_msg(txt)
 		msg_t = 20.0
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_MOUSE_EXIT or what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		mouse_in = false
