@@ -958,7 +958,11 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     for(const a of [Math.PI/4,3*Math.PI/4,5*Math.PI/4,7*Math.PI/4]){const x=Math.cos(a)*arm,z=Math.sin(a)*arm;B.box(arm*1.05,.5,.7,x/2,0,z/2,bc,0,-a,0);B.cyl(.7,.7,1.2,8,x,.4,z,dk);
       const pr=new THREE.Group();const P=Bld();P.box(big?6:4.4,.15,.6,0,0,0,'#151515');pr.add(mesh(P.geo()));pr.position.set(x,1.1,z);pr.name='dprop';pr.userData.ax='y';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'y'});
       const disc=new THREE.Mesh(new THREE.CircleGeometry(big?3:2.2,16),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.2,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.x=-Math.PI/2;disc.position.set(x,1.15,z);yaw.add(disc);}
-    if(big)for(const s of [-1,1])B.box(.4,2.4,.4,0,-1.6,1.4*s,dk);
+    if(big){for(const s of [-1,1])B.box(.4,2.4,.4,0,-1.6,1.4*s,dk);
+      /* art-regional: Kargu-style detail - fuselage ribs, battery hatch, warhead nose, camera gimbal, skid feet, motor caps */
+      for(const x of [-1.1,0,1.1])B.cyl(2.5,2.5,.22,10,x*.8,0,0,'#5f645a');B.box(2.2,.3,1.6,-.4,2.2,0,'#4a4e45');B.cyl(.9,.9,1.8,8,2.3,-.2,0,'#a39b86',0,0,Math.PI/2);B.sph(.55,3.3,-.2,0,'#4d4a3f');
+      B.cyl(.55,.55,.6,8,1.9,-1.1,0,'#222');B.sph(.3,1.95,-1.4,0,'#26464f');for(const s of [-1,1])B.box(1.2,.25,.5,0,-2.8,1.4*s,'#2a2b28');
+      for(const a of [Math.PI/4,3*Math.PI/4,5*Math.PI/4,7*Math.PI/4])B.cyl(.95,.95,.35,8,Math.cos(a)*arm,.95,Math.sin(a)*arm,'#35382f');}
     if(!big){B.cyl(.55,.55,2.6,8,-.6,1.55,0,'#2d3a52',0,0,Math.PI/2);for(const t of [-.5,.4])B.cyl(.6,.6,.35,8,-.6+t,1.55,0,'#151515',0,0,Math.PI/2);for(const s of [-1,1])B.cyl(.06,.06,3.2,4,-2.6,2.4,.5*s,dk,.3*s,0,1.1);}
     B.sph(.2,arm*.72,.6,arm*.72,'#2bc24a');B.sph(.2,arm*.72,.6,-arm*.72,'#c22a1e');B.sph(.2,-arm*.72,.6,arm*.72,'#e8e8e2');B.sph(.2,-arm*.72,.6,-arm*.72,'#e8e8e2');}
   // drones get their own plain painted-metal material: the shared one adds ground dust to everything near the model's

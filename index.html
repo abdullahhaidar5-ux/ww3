@@ -20540,7 +20540,11 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     for(const a of [Math.PI/4,3*Math.PI/4,5*Math.PI/4,7*Math.PI/4]){const x=Math.cos(a)*arm,z=Math.sin(a)*arm;B.box(arm*1.05,.5,.7,x/2,0,z/2,bc,0,-a,0);B.cyl(.7,.7,1.2,8,x,.4,z,dk);
       const pr=new THREE.Group();const P=Bld();P.box(big?6:4.4,.15,.6,0,0,0,'#151515');pr.add(mesh(P.geo()));pr.position.set(x,1.1,z);pr.name='dprop';pr.userData.ax='y';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'y'});
       const disc=new THREE.Mesh(new THREE.CircleGeometry(big?3:2.2,16),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.2,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.x=-Math.PI/2;disc.position.set(x,1.15,z);yaw.add(disc);}
-    if(big)for(const s of [-1,1])B.box(.4,2.4,.4,0,-1.6,1.4*s,dk);
+    if(big){for(const s of [-1,1])B.box(.4,2.4,.4,0,-1.6,1.4*s,dk);
+      /* art-regional: Kargu-style detail - fuselage ribs, battery hatch, warhead nose, camera gimbal, skid feet, motor caps */
+      for(const x of [-1.1,0,1.1])B.cyl(2.5,2.5,.22,10,x*.8,0,0,'#5f645a');B.box(2.2,.3,1.6,-.4,2.2,0,'#4a4e45');B.cyl(.9,.9,1.8,8,2.3,-.2,0,'#a39b86',0,0,Math.PI/2);B.sph(.55,3.3,-.2,0,'#4d4a3f');
+      B.cyl(.55,.55,.6,8,1.9,-1.1,0,'#222');B.sph(.3,1.95,-1.4,0,'#26464f');for(const s of [-1,1])B.box(1.2,.25,.5,0,-2.8,1.4*s,'#2a2b28');
+      for(const a of [Math.PI/4,3*Math.PI/4,5*Math.PI/4,7*Math.PI/4])B.cyl(.95,.95,.35,8,Math.cos(a)*arm,.95,Math.sin(a)*arm,'#35382f');}
     if(!big){B.cyl(.55,.55,2.6,8,-.6,1.55,0,'#2d3a52',0,0,Math.PI/2);for(const t of [-.5,.4])B.cyl(.6,.6,.35,8,-.6+t,1.55,0,'#151515',0,0,Math.PI/2);for(const s of [-1,1])B.cyl(.06,.06,3.2,4,-2.6,2.4,.5*s,dk,.3*s,0,1.1);}
     B.sph(.2,arm*.72,.6,arm*.72,'#2bc24a');B.sph(.2,arm*.72,.6,-arm*.72,'#c22a1e');B.sph(.2,-arm*.72,.6,arm*.72,'#e8e8e2');B.sph(.2,-arm*.72,.6,-arm*.72,'#e8e8e2');}
   // drones get their own plain painted-metal material: the shared one adds ground dust to everything near the model's
@@ -21707,8 +21711,8 @@ function lookShader(m,sh){const C=LOOK.on&&LOOK.cls[m.userData.look];if(!C)retur
    mesh, the same single material as every other model, so no draw call or shader is added per unit beyond one mesh).
    Hooks in 11-models.js modelFor: eastPre() marks the kind, eastKit() adds the parts; harvCargoGeo/ammot use cargoGeo().
    Forward is +x, z is across, y up; the truck bed top is about y=18. */
-const EASTSET={RU:1,CN:1,KP:1};
-const EASTPAL={RU:{o:'#5a6148',d:'#383c2c',l:'#6e7659',w:'#85703f',m:'#a9ac9f'},CN:{o:'#646a4a',d:'#3b3f2e',l:'#767d5c',w:'#8a7442',m:'#b2b5a6'},KP:{o:'#585d45',d:'#363a2b',l:'#697054',w:'#7c6a3c',m:'#a0a396'}};
+const EASTSET={RU:1,CN:1,KP:1,IN:1,JP:1,KR:1,PK:1,SA:1,AE:1,TR:1,EG:1};
+const EASTPAL={IN:{o:'#59623f',d:'#363c28',l:'#6c7650',w:'#8a7442',m:'#a8ab9b'},JP:{o:'#4f5e45',d:'#2f3a2b',l:'#627556',w:'#7d7a4e',m:'#b0b4a8'},KR:{o:'#4d5a40',d:'#2e3828',l:'#607050',w:'#7a7448',m:'#aaaea0'},PK:{o:'#6b6a48',d:'#403f2b',l:'#807d58',w:'#938048',m:'#b3b09c'},SA:{o:'#9a8a62',d:'#5e5338',l:'#b09e73',w:'#8a7442',m:'#c3bfa9'},AE:{o:'#a08d65',d:'#615439',l:'#b5a276',w:'#8a7442',m:'#c6c1ab'},TR:{o:'#5a6040',d:'#363b28',l:'#6e7752',w:'#85703f',m:'#aeb09e'},EG:{o:'#a3926a',d:'#625539',l:'#b8a679',w:'#8a7442',m:'#c8c3ad'},RU:{o:'#5a6148',d:'#383c2c',l:'#6e7659',w:'#85703f',m:'#a9ac9f'},CN:{o:'#646a4a',d:'#3b3f2e',l:'#767d5c',w:'#8a7442',m:'#b2b5a6'},KP:{o:'#585d45',d:'#363a2b',l:'#697054',w:'#7c6a3c',m:'#a0a396'}};
 const EASTGEO={};
 function eastPre(e,c,T){if(!T||!EASTSET[T.fac]||!c)return c;const k=e.kind;
   if(k==='lander'||k==='minel'||k==='sweep')return Object.assign({},c,{extra:'east_'+k});
