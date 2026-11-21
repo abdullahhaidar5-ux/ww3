@@ -1,0 +1,49 @@
+[0s] pc: launching browser
+[0s] ctx
+[0s] guarded
+[0s] page
+[0s] pc: loading page
+[1s] pc: page loaded
+[1s] pc: menu ready
+[23s] pc: LOADING {"tok":1,"tipI":7,"tipT":102,"cv":{},"el":{},"qf":"US","times":[["Generating terrain…",8205],["Loading 3D models…",578],
+[39s] pc: battle loaded in 38s
+[46s] pc: army in place
+[52s] pc scene: {"rpT":9.4,"log":[["clear",320,0],["clear",320,0],["render",320,1.4],["clear",320,0],["render",320,0],["clear",320,0],["render",320,0.1],["clear",320,0],["render",320,0],["clear",640,0],["clear",640,0],["render",640,7],["clear",160,0],["render",160,0.1],["clear",160,0],["render",160,0],["clear",160,0],["render",160,0],["clear",80,0],["render",80,0],["clear",80,0],["render",80,0],["clear",80,0],["render",80,0],["clear",0,0],["render",0,0.1]],"total":7539,"auto":7116,"mUpd":0.7,"rNo":924.4,"rSh":4.7,"rNoMat":3.1,"vcount":1298,"travMs":4.9,"callsNoShadow":342,"callsWithShadow":449,"top":[["I:MeshStandardMaterial",156],["M:MeshStandardMaterial cs",152],["I:MeshBasicMaterial cs nd",129],["I:MeshStandardMaterial cs",107],["I:MeshStandardMaterial cs nd",96],["I:MeshStandardMaterial nd",29]],"byKind":["B:hq 58 meshes / 8 objects","B:factory 44 meshes / 8 objects","B:barracks 38 meshes / 8 objects","U:inf 37 meshes / 139 objects","U:harv 20 meshes / 24 objects","U:aa 16 meshes / 36 objects","B:garrison 12 meshes / 23 objects","B:turret 8 meshes / 7 objects","U:medic 4 meshes / 5 objects","U:at 3 meshes / 49 objects","U:dozer 0 meshes / 8 objects","B:depot 0 meshes / 1 objects","U:tank 0 meshes / 61 objects","U:arty 0 meshes / 38 objects","factory parts: -/MeshStandardMaterial/40/cs ; -/MeshStandardMaterial/24 ; -/MeshStandardMaterial/18/cs ; -/MeshStandardMaterial/288/cs ; factory/None/1072/cs ; -/MeshStandardMaterial/8952/cs ; -/MeshBasicMaterial/4 ; -/MeshStandardMaterial/24 ; -/MeshStandardMaterial/24 ; -/MeshBasicMaterial/24 ; vmerged/Grey/4008/cs ; Pallet/Wood/312/cs ; merged/military_crate_m_01/62856/cs ; kitmerged/MeshBasicMaterial/96 ; kitmerged/MeshStandardMaterial/1032/cs ; kitmerged/MeshStandardMaterial/1068/cs ; kitmerged/MeshStandardMaterial/1032/cs ; kitmerged/MeshBasicMaterial/30 ; kitmerged/MeshBasicMaterial/18 ; kitmerged/MeshBasicMaterial/18 ; kitmerged/MeshBasicMaterial/18 ; kitmerged/barrel_03/13257/cs"]}
+[53s] pc: measuring 150 frames
+[53s] pc: warm-up done, 140 shaders
+[55s] pc: frame 10
+[56s] pc: frame 20
+[57s] pc: frame 30
+[57s] pc: frame 40
+[58s] pc: frame 50
+[59s] pc: frame 60
+[60s] pc: frame 70
+[61s] pc: frame 80
+[62s] pc: frame 90
+[63s] pc: frame 100
+[64s] pc: frame 110
+[65s] pc: frame 120
+[66s] pc: frame 130
+[66s] pc: frame 140
+[67s] pc: frame 150
+[70s] pc attempt 1: ok
+
+                       pc        
+units on screen        362       
+load time s            37.82     
+median frame ms        58.1      
+p95 frame ms           184.2     
+p99 frame ms           277.1     
+worst 1% FPS           3.48      
+frames >50 ms          125       
+first boom x median    1         
+2nd boom x median      1.28      
+weather/night x median 1.31      
+sim step p95 ms        9.9       
+draw calls             1470      
+k triangles            6484      
+heap MB/min            -16.33    
+baseline written: orch/smooth-baseline.json
+runtime 1.2 min
+
+SMOOTH PASS
