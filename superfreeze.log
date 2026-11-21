@@ -1,0 +1,23 @@
+  page: shader warm-up 8421 ms, 63 models, 122 objects in 679 steps (longest 1388 ms), 97 programs, textures 137 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 43 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=204 normal=43ms (quiet max 133) longest=347ms three(progs/geo/tex)=+0/+-21/+-2 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":3,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 347ms@5.0s {} ; 215ms@0.5s {} ; 197ms@4.3s {} ; 187ms@6.8s {} ; 168ms@3.4s {"aud":1}
+  frames that made the GPU work (1):
+    3.44s 168ms {"aud":1} three geo/tex 604/486
+IR worst JS call (not drawing): simUpdate 48ms; FAIL: longest frame 347 ms is 214 ms over the longest quiet frame 133 ms (max 150)
+  page: shader warm-up 3615 ms, 66 models, 127 objects in 672 steps (longest 143 ms), 97 programs, textures 145 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 49 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=161 normal=49ms (quiet max 182) longest=203ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":1,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 203ms@3.0s {"vao":1} ; 193ms@4.5s {} ; 166ms@3.3s {} ; 161ms@7.9s {} ; 151ms@3.2s {"aud":1}
+  frames that made the GPU work (1):
+    3.20s 151ms {"aud":1} three geo/tex 699/555
+RU worst JS call (not drawing): simUpdate 142ms; ok
+  page: shader warm-up 3094 ms, 60 models, 116 objects in 659 steps (longest 132 ms), 93 programs, textures 72 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 41 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=176 normal=41ms (quiet max 145) longest=174ms three(progs/geo/tex)=+0/+0/+0 gl={"sh":0,"prog":0,"tex":0,"texUp":0,"texKB":0,"buf":0,"bufKB":0,"vao":0,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 174ms@2.8s {} ; 166ms@5.0s {} ; 162ms@7.4s {} ; 160ms@5.2s {} ; 155ms@3.0s {}
+US worst JS call (not drawing): simUpdate 64ms; ok
+SUPERFREEZE FAIL
