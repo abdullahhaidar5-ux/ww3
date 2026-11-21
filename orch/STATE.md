@@ -1,12 +1,14 @@
-# Conductor state — 2026-11-21 02:55 UTC
+# Conductor state — 2026-11-21 ~04:00 UTC
 
-**FREEZE: no train this run.** `train/20261121-0012-hold` (pushed 00:09Z by ORCH): "Abdullah 2026-11-20 18:09 approved plan: nothing lands on main except ORCH's reviewed pieces. Conductor: do step 1 only."
+**FREEZE still on: no train this run.** `train/20261121-0012-hold` (ORCH, 00:09Z): nothing lands on main except ORCH's reviewed pieces; conductor does step 1 only.
 
-main head 261e9af9 (2026-11-21 01:26Z, "Loading waits up to 60 s for graphics prep"). Recent main: rollbacks to aae60d36 (Nov 19 night), soldiers drawn one by one again.
+main head 261e9af9 (2026-11-21 01:26Z, "Loading waits up to 60 s for graphics prep"), unchanged since last run.
 
-Candidate branches vs main (ahead count / last push):
-- Already in main (ahead 0): freezefix, sweepfixA, sweepfixB, orderfeel, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, looktest, onegame, nations20
-- ghostslot ahead 1 (Nov 14 03:28), testrange ahead 1 (Nov 14 03:06), techbldgs ahead 1 (Nov 14 18:46), ammozone ahead 7 (Nov 14 03:55): stale, not landed (frozen)
-- battlemaps2: no such branch
+Candidates vs main: freezefix, sweepfixA/B, orderfeel, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, looktest, onegame, nations20 are already in main (ahead 0). Stale and not landed: ghostslot (+1, Nov 14), testrange (+1, Nov 14), techbldgs (+1, Nov 14), ammozone (+7, Nov 14). battlemaps2: no branch.
 
-Note: local git fetch of this 5.4 GB repo times out in the cloud sandbox; state read via GitHub API. gate/* statuses and taken/* lock ages not checked this run (freeze).
+Active lane branches (pushed within the last hour, not candidates under the freeze): laneD-west-jeeps, laneD-west-tanks, laneD-drones, laneD-regional, laneD-west, laneD-shia, laneB-scale, laneB-shots, laneC-shots, laneC-bench, laneC-measure, laneC-shia-v2 / east-v2 / west-v2 / regional-v2, laneE, laneB-freeze, laneA-1. Several are based on an older main (behind by 61).
+
+Parked (removed from the game): camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans.
+
+Not checked this run (freeze): gate/* statuses, age of the 101 taken/* locks.
+Note: a full fetch of this 5.4 GB repo takes about 6 minutes in the cloud sandbox.
