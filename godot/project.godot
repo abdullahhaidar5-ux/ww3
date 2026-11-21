@@ -1,0 +1,24 @@
+; World War 3 - Godot edition (first playable slice, 2026-11-21)
+config_version=5
+
+[application]
+config/name="World War 3"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.4", "GL Compatibility")
+
+[display]
+window/size/viewport_width=1536
+window/size/viewport_height=790
+window/stretch/aspect="expand"
+
+[physics]
+common/physics_ticks_per_second=30
+common/physics_interpolation=false
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+anti_aliasing/quality/msaa_3d=2
+lights_and_shadows/directional_shadow/size=4096
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=2
+textures/vram_compression/import_etc2_astc=true
