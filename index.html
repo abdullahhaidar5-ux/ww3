@@ -20690,7 +20690,13 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
     o.add(ex);o.userData.parts.glow=ex;}
   if(e.s&&e.s.dom==='air'&&!o.userData.mixers&&typeof staticMerge==='function'){const kp=[];for(const k of ['blades','tailR0','tailR','rotor','glow','tring'])if(o.userData.parts[k])kp.push(o.userData.parts[k]);staticMerge(yaw,kp,q=>/rotor|prop|blade/i.test(q.name||''));for(const k of ['blades','tailR','tailR0']){const g=o.userData.parts[k];if(g&&g.isGroup)staticMerge(g,[]);}}
   if(c.extra==='zu23'){const GM=addonGeo('x_zu23',()=>{const B=Bld(),D='#2a2c28',S='#4f5446';B.box(7,1.6,6,-5,9.6,0,S);B.cyl(1.4,1.6,1.6,10,-5,11,0,D);B.box(4,3.2,4.6,-5,13,0,S);B.box(.4,3,5.4,-3,13.6,0,S);for(const z of [-1.1,1.1]){B.cyl(.32,.32,13,8,1.2,16.2,z,D,0,0,Math.PI/2-.42);B.cyl(.5,.5,1.6,8,-3.2,13.6,z,D,0,0,Math.PI/2-.42);}return B.geo();});const g=mesh(GM);g.castShadow=true;o.add(g);o.userData.parts.turret=g;}
-  if(c.extra==='dshk'){const GM=addonGeo('x_dshk',()=>{const B=Bld();B.cyl(.5,.6,6,8,-6,9,0,'#2b2d2a');B.box(3,1.6,2.2,-6,12.6,0,'#33352f');B.cyl(.35,.35,9,8,-1.5,13,0,'#1e1f1d',0,0,Math.PI/2);B.box(.4,2.2,2.6,-6.8,13.4,0,'#4a4d45');return B.geo();});const g=mesh(GM);g.castShadow=true;o.add(g);}
+  if(c.extra==='dshk'){const fk=T.fac==='DW'||T.fac==='OB'?T.fac:'RS';const GM=addonGeo('x_dshk'+fk,()=>{const B=Bld();B.cyl(.5,.6,6,8,-6,9,0,'#2b2d2a');B.box(3,1.6,2.2,-6,12.6,0,'#33352f');B.cyl(.35,.35,9,8,-1.5,13,0,'#1e1f1d',0,0,Math.PI/2);B.box(.4,2.2,2.6,-6.8,13.4,0,'#4a4d45');
+    /* art-shia: each technical reads differently up close - RS ammo can + shield lip, DW spare wheel + whip aerial, OB bed-side armour plates + ammo can */
+    B.box(1.6,1.1,.9,-9,8,1.6,'#4b4f3f');B.box(1.7,.2,1,-9,8.7,1.6,'#2b2d2a');
+    if(fk==='RS'){B.box(.3,2.6,3.6,-4.4,13.4,0,'#4a4d45');B.box(.8,.3,3.8,-4.4,14.8,0,'#33352f');}
+    else if(fk==='DW'){B.cyl(1.7,1.7,.8,12,-11.5,8.6,0,'#202220',Math.PI/2,0,0);B.cyl(.07,.07,9,4,-12,13,-2.2,'#1e1f1d');B.box(1.6,.5,.2,-12,17.4,-2.2,'#2f6b3a');}
+    else{B.box(7,3.2,.3,-7,6.6,3.3,'#5a5e4c');B.box(7,3.2,.3,-7,6.6,-3.3,'#5a5e4c');B.box(.5,1.6,2.4,-10.4,8.8,0,'#3b3d34');}
+    return B.geo();});const g=mesh(GM);g.castShadow=true;o.add(g);}
   if(c.extra==='aatruck'){const sp=new THREE.Group();sp.add(mesh(aaGeo(afam(T.fac),apaint(T.fac))));sp.position.set(-7,10.4+(c.m==='m_ural'?4.6:0),0);o.add(sp);o.userData.parts.turret=sp;}
   if(c.extra==='atgm'){const fm=afam(T.fac),rf=roofOf(o,yaw,c.m+'|'+(c.size||0)),sp=new THREE.Group();sp.add(mesh(atgmGeo(fm,apaint(T.fac))));sp.position.set(rf.x,rf.y-.4,0);o.add(sp);o.userData.parts.turret=sp;}
   if(c.extra==='samtruck'){const pg=PROCB.samSite(),sp=new THREE.Group(),hm=mesh(pg[1]);hm.scale.setScalar(.9);sp.add(hm);sp.position.set(-7,10.4,0);o.add(sp);o.userData.parts.turret=sp;}
