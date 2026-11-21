@@ -1,0 +1,5 @@
+run                 frameMed frameP95 drawCalls kTris newShaders simP95
+east-1-A  51  141.6  1665  7967  0  7.4
+east-2-B  53.2  156.8  1398  6416  0  7.9
+east-3-B  47.7  138.2  1349  6397  0  7.4
+east-4-A  50.1  126.7  1326  6226  0  7.7
