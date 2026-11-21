@@ -78,7 +78,7 @@ func _demo_ui() -> void:
 ## screenshots: put the camera on the biggest fight (units that fired in the last 2 s)
 func _cam_on_fight() -> void:
 	var sum := Vector2.ZERO; var n := 0
-	var firing: Array = sim.ents.filter(func(e): return not e.dead and not e.is_b and sim.t - e.last_fire < 2.0)
+	var firing: Array = sim.ents.filter(func(e): return not e.dead and not e.is_b and sim.t - e.last_fire < 2.0 and (ai_only or sim.seen_by(me, e)))
 	var best = null; var bn := 0
 	for e in firing:
 		var c := 0
@@ -520,7 +520,7 @@ func _process(dt: float) -> void:
 		per.get_or_add(bk[0], []).append(Transform3D(Basis.IDENTITY, Vector3(o.x, oy, o.y)))
 		var oc := Color(0.75, 0.75, 0.75, 0.7)
 		if int(o.owner) == me: oc = COL_ME
-		elif int(o.owner) >= 0: oc = COL_EN
+		elif int(o.owner) >= 0: oc = COL_ALLY if sim.ally(me, int(o.owner)) else COL_EN
 		rings.append([Vector3(o.x, oy + 1.0, o.y), 34.0, oc])
 	# supply piles: crates shrink as the trucks haul them away
 	var ck := ["crate", ["crate", "xz", 16.0]]
@@ -942,12 +942,12 @@ func _mini_draw() -> void:
 		if f.amt > 0: mini.draw_rect(Rect2(Vector2(f.x, f.y) * k - Vector2(2, 2), Vector2(4, 4)), Color(0.95, 0.85, 0.4))
 	for o in sim.oil:
 		if o.dead: continue
-		var oc := Color(0.75, 0.75, 0.75) if int(o.owner) < 0 else (COL_ME if int(o.owner) == me else COL_EN)
+		var oc := Color(0.75, 0.75, 0.75) if int(o.owner) < 0 else (COL_ME if int(o.owner) == me else (COL_ALLY if sim.ally(me, int(o.owner)) else COL_EN))
 		mini.draw_circle(Vector2(o.x, o.y) * k, 3.0, oc)
 	for e in sim.ents:
 		if e.dead: continue
 		if e.team != me and not sim.seen_by(me, e) and not (e.is_b and seen_b.has(e.id)): continue
-		var c := COL_ME if e.team == me else COL_EN
+		var c := COL_ME if e.team == me else (COL_ALLY if sim.ally(me, e.team) else COL_EN)
 		if bsel.has(e.id): c = Color(1, 1, 1)
 		var p := Vector2(e.x, e.y) * k
 		if e.is_b: mini.draw_rect(Rect2(p - Vector2(3.5, 3.5), Vector2(7, 7)), c)
