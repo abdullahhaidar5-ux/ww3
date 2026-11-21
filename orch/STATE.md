@@ -1,12 +1,6 @@
-# STATE — conductor 2026-11-20 22:10 UTC
-Main head 6f1298f0 (landed this run). Old candidate list (onegame, nations20, techbldgs ...) is stale: all landed long ago. No train/* in last 110 min.
-| branch | ahead | note |
-|---|---|---|
-| orch/pack-units-rig | landed | darker chest rig/pouches/belt (view only). Own gate green except loadfreeze, which main's head also shows red. Fast-forwarded to main. |
-| orch/pack-art3, pack-units-contrast | landed earlier | already on main |
-| orch/pack-art, pack-units | 2 | handoffs / superseded, nothing to land |
-| orch/bld-regional, -regional2 | 2 / 1 | superseded by lean version on main |
-| orch/fix-superfreeze, -2-r | 6 / 2 (25-46 behind) | diverged, not ready |
-| orch/art-east11, art-east10 | 2 / 1 | handoffs only |
-Red on main head: gate/loadfreeze (and gate/main). Needs an owner.
-taken/* locks not audited (fetch of the 774-ref repo is very slow).
+# STATE — conductor 2026-11-21 (UTC, scheduled run)
+FREEZE ON: train/20261121-0012-hold (pushed 2026-11-21 00:09 UTC) says ORCH 2 freeze, Abdullah approved 2026-11-20 18:09: nothing lands on main except ORCH's reviewed pieces. Conductor did step 1 only. No train, no landing, no gate run.
+Main head 55f2340 (2026-11-20 18:33 -0600) = "Back to Nov 19 night version aae60d36" after two rollbacks (Abdullah: Monday version super laggy). Main was force-updated by ORCH.
+The prompt's candidate list (freezefix ... nations20) is stale: those branches are old, the game is already Battle-only on main.
+Repo has ~724 heads (579 orch/*); a full fetch times out, so per-branch ahead counts and taken/* locks were not audited this run.
+Parked: orch/camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans (removed from the game).
