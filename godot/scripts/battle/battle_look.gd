@@ -28,7 +28,7 @@ const UNIT_FAC := {
 	"IL": {"tank": ["m_merkava", "xz", 48.0], "dtank": ["m_merkava", "xz", 48.0]},
 }
 # building kind -> [model, scale on the building's footprint (sim size)]
-const BLD_ME := {"hq": ["b_hq_me", 1.25], "barracks": ["b_barr_me", 1.3], "factory": ["b_fact_me", 1.25]}
+const BLD_ME := {"hq": ["b_hq_me", 1.25], "barracks": ["b_barr", 1.3], "factory": ["b_fact_me", 1.25]}   # b_barr_me comes with a white yard slab (as in the Test range)
 const BLD_WEST := {"hq": ["b_hq", 1.25], "barracks": ["b_barr", 1.3], "factory": ["b_fact", 1.25]}
 const BLD_ANY := {
 	"gen": ["b_radar", 1.2], "depot": ["tent", 1.1], "airfield": ["b_pad", 1.15], "turret": ["b_turret", 1.3], "sam": ["sam", 1.3],

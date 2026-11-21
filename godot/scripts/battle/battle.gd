@@ -51,6 +51,23 @@ var bmesh := {}           # draw key -> {mesh, h}
 var crate_key := ""
 var amove_armed := false
 var auto_cam := false
+var demo_ui := ""
+
+## screenshots of the HUD: select the dozer with a placement ghost, or a production building with its queue
+func _demo_ui() -> void:
+	for e in sim.ents:
+		if e.dead or e.team != me: continue
+		if demo_ui == "build" and e.kind == "dozer":
+			bsel = [e.id]; place_kind = "factory" if not sim.done(me, "factory") else "airfield"
+			cam_target = Vector2(e.x, e.y); cam_dist = 620.0; cam_y = sim.ground_h(e.x, e.y)
+			break
+		if demo_ui == e.kind and e.is_b:
+			bsel = [e.id]; cam_target = Vector2(e.x + 120, e.y); cam_dist = 560.0; cam_y = sim.ground_h(e.x, e.y)
+			for i in 3: cmd({t = "train", kind = "inf", bid = e.id})
+			break
+	_place_cam()
+	var vs := get_viewport().get_visible_rect().size
+	Input.warp_mouse(Vector2(vs.x * 0.62, vs.y * 0.45))
 
 ## screenshots: put the camera on the biggest fight (units that fired in the last 2 s)
 func _cam_on_fight() -> void:
@@ -91,7 +108,9 @@ func _ready() -> void:
 		elif a.begins_with("--minutes="): minutes_cap = float(a.substr(10))
 		elif a.begins_with("--shot="): shot_path = a.substr(7)
 		elif a.begins_with("--shot-t="): shot_t = float(a.substr(9))
+		elif a.begins_with("--shotf="): shot_at = int(a.substr(8))
 		elif a == "--cam=auto": auto_cam = true
+		elif a.begins_with("--demo-ui="): demo_ui = a.substr(10)
 		elif a.begins_with("--cam="):
 			var v := a.substr(6).split(",")
 			cam_target = Vector2(float(v[0]), float(v[1])); cam_dist = float(v[2])
@@ -320,8 +339,15 @@ func _ai_report(final: bool) -> void:
 func _process(dt: float) -> void:
 	_cam_input(dt)
 	_place_cam()
+	top_lbl.get_parent().visible = started
+	cmd_box.get_parent().get_parent().visible = started
+	mini.visible = started
 	if not started:
 		_ui_battle_tick()
+		if shot_path != "":
+			shot_frames += 1
+			if shot_frames == shot_at:
+				get_viewport().get_texture().get_image().save_png(shot_path); get_tree().quit()
 		return
 	if headless_mode: return
 	var a := Engine.get_physics_interpolation_fraction()
@@ -445,6 +471,7 @@ func _process(dt: float) -> void:
 	_ui_battle_tick()
 	if shot_path != "" and (shot_t < 0 or sim.t >= shot_t):
 		if shot_frames == 0 and auto_cam: _cam_on_fight()
+		if shot_frames == 0 and demo_ui != "": _demo_ui()
 		shot_frames += 1
 		if shot_frames == (shot_at if shot_t < 0 else 8):
 			get_viewport().get_texture().get_image().save_png(shot_path)
@@ -765,7 +792,77 @@ func _battle_ui() -> void:
 	box.visible = false
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(box)
+	mini = Control.new()
+	mini.anchor_top = 1.0; mini.anchor_bottom = 1.0
+	mini.offset_left = 8; mini.offset_right = 8 + MINI_W; mini.offset_top = -8 - MINI_W / 1.446; mini.offset_bottom = -8
+	mini.draw.connect(_mini_draw)
+	mini.gui_input.connect(_mini_input)
+	ui.add_child(mini)
 	_style(ui)
+
+# ---------------------------------------------------------------- minimap (green yours, red enemy, gray neutral)
+const MINI_W := 230.0
+var mini: Control
+var mini_tex: ImageTexture
+var mini_t := 0.0
+
+func _mini_scale() -> float:
+	return MINI_W / float(map.MAPW)
+
+func _mini_bake() -> void:
+	var H: Dictionary = map.hgrid
+	var w := int(MINI_W); var h := int(MINI_W / 1.446)
+	var img := Image.create(w, h, false, Image.FORMAT_RGB8)
+	var hmax := 1.0
+	for v in H.a: hmax = maxf(hmax, float(v))
+	for y in h:
+		for x in w:
+			var wx := x / _mini_scale(); var wy := y / _mini_scale()
+			var g: float = sim.ground_h(wx, wy) / hmax
+			var c := Color(0.62, 0.53, 0.40).lerp(Color(0.82, 0.74, 0.58), g)
+			var gi := int(wy / float(map.CELL)) * int(map.GW) + int(wx / float(map.CELL))
+			if gi < map.grid.size() and int(map.grid[gi]) == 3: c = Color(0.4, 0.37, 0.33)
+			if gi < map.wood.size() and int(map.wood[gi]) > 0: c = c.lerp(Color(0.35, 0.45, 0.25), 0.5)
+			img.set_pixel(x, y, c)
+	mini_tex = ImageTexture.create_from_image(img)
+
+func _mini_draw() -> void:
+	if sim == null: return
+	if mini_tex == null: _mini_bake()
+	var k := _mini_scale()
+	mini.draw_texture(mini_tex, Vector2.ZERO)
+	mini.draw_rect(Rect2(Vector2.ZERO, mini_tex.get_size()), Color(0.78, 0.64, 0.32), false, 2.0)
+	for f in sim.fields:
+		if f.amt > 0: mini.draw_rect(Rect2(Vector2(f.x, f.y) * k - Vector2(2, 2), Vector2(4, 4)), Color(0.95, 0.85, 0.4))
+	for o in sim.oil:
+		if o.dead: continue
+		var oc := Color(0.75, 0.75, 0.75) if int(o.owner) < 0 else (COL_ME if int(o.owner) == me else COL_EN)
+		mini.draw_circle(Vector2(o.x, o.y) * k, 3.0, oc)
+	for e in sim.ents:
+		if e.dead: continue
+		if e.team != me and not sim.seen_by(me, e) and not (e.is_b and seen_b.has(e.id)): continue
+		var c := COL_ME if e.team == me else COL_EN
+		if bsel.has(e.id): c = Color(1, 1, 1)
+		var p := Vector2(e.x, e.y) * k
+		if e.is_b: mini.draw_rect(Rect2(p - Vector2(3.5, 3.5), Vector2(7, 7)), c)
+		else: mini.draw_rect(Rect2(p - Vector2(1.2, 1.2), Vector2(2.4, 2.4)), c)
+	# camera view
+	var vs := get_viewport().get_visible_rect().size
+	var pts: Array = []
+	for sp in [Vector2(0, 0), Vector2(vs.x, 0), Vector2(vs.x, vs.y), Vector2(0, vs.y)]:
+		var g := _ground_at(sp)
+		if g == Vector2.INF: return
+		pts.append(g * k)
+	for i in 4: mini.draw_line(pts[i], pts[(i + 1) % 4], Color(1, 1, 1, 0.8), 1.0)
+
+func _mini_input(ev: InputEvent) -> void:
+	if not (ev is InputEventMouseButton or ev is InputEventMouseMotion) or sim == null: return
+	var w: Vector2 = ev.position / _mini_scale()
+	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_RIGHT:
+		var units := _sel_units()
+		if not units.is_empty(): cmd({t = "move", ids = units.map(func(e): return e.id), x = w.x, y = w.y})
+	elif (ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT) or (ev is InputEventMouseMotion and ev.button_mask & MOUSE_BUTTON_MASK_LEFT):
+		cam_target = w
 
 func _ui_battle_tick() -> void:
 	lbl_fps.text = "%d FPS" % Engine.get_frames_per_second()
@@ -780,6 +877,8 @@ func _ui_battle_tick() -> void:
 		if not e.is_b and not e.dead and e.team == me: units += 1
 	top_lbl.text = "%s   $%d   Power %d/%d%s   Army %d/%d   %d:%02d" % [NAT_NAME[my_fac], int(T.credits), int(pw.x), int(pw.y), "  LOW" if pw.y > pw.x else "", sim.pop_used(me, false), sim.pop_cap(), int(sim.t / 60.0), int(sim.t) % 60]
 	top_lbl.add_theme_color_override("font_color", Color(1, 0.5, 0.4) if pw.y > pw.x else Color(1, 1, 1))
+	mini_t -= get_process_delta_time()
+	if mini_t <= 0: mini_t = 0.25; mini.queue_redraw()
 	_cmd_bar()
 
 ## bottom bar: what the selection can do (dozer -> buildings, production building -> its units + queue)
