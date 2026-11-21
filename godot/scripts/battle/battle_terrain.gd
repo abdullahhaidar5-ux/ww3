@@ -73,14 +73,55 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	pm.size = Vector2(float(map.MAPW) + 6000, float(map.MAPH) + 6000)
 	var sk := MeshInstance3D.new()
 	sk.mesh = pm
-	sk.position = Vector3(float(map.MAPW) * 0.5, -2.0, float(map.MAPH) * 0.5)
+	var hmin := 0.0
+	for v in ha: hmin = minf(hmin, float(v))
+	sk.position = Vector3(float(map.MAPW) * 0.5, hmin - 40.0, float(map.MAPH) * 0.5)
 	var sm := StandardMaterial3D.new()
 	sm.albedo_color = Color(0.84, 0.74, 0.58)
 	sm.roughness = 1.0
 	sk.material_override = sm
 	sk.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	host.add_child(sk)
+	_water(host, sim, map)
 	_trees(host, sim, map, tree_mesh)
+
+## water cells (grid 1 = water, 2 = ford / shallows): one quad per cell just above the ground, one mesh
+static func _water(host: Node3D, sim, map: Dictionary) -> void:
+	var grid: Array = map.grid
+	var GW := int(map.GW); var CELL := float(map.CELL)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n := 0
+	# one water level: a little under the banks (land cells next to water)
+	var bank := 0.0; var nb := 0
+	for i in grid.size():
+		if int(grid[i]) != 1: continue
+		for o in [-1, 1, -GW, GW]:
+			var j: int = i + o
+			if j >= 0 and j < grid.size() and int(grid[j]) == 0:
+				bank += sim.ground_h((j % GW) * CELL + CELL * 0.5, (j / GW) * CELL + CELL * 0.5); nb += 1
+	var level := bank / maxf(1, nb) - 4.0
+	for i in grid.size():
+		var g := int(grid[i])
+		if g != 1 and g != 2: continue
+		var x := (i % GW) * CELL; var z := (i / GW) * CELL
+		var y: float = maxf(level, sim.ground_h(x + CELL * 0.5, z + CELL * 0.5) + 1.0) if g == 1 else sim.ground_h(x + CELL * 0.5, z + CELL * 0.5) + 1.0
+		var wc := Color(0.10, 0.27, 0.32, 0.88) if g == 1 else Color(0.25, 0.4, 0.42, 0.6)
+		var e := 2.0
+		for v in [Vector3(x - e, y, z - e), Vector3(x + CELL + e, y, z - e), Vector3(x - e, y, z + CELL + e), Vector3(x + CELL + e, y, z - e), Vector3(x + CELL + e, y, z + CELL + e), Vector3(x - e, y, z + CELL + e)]:
+			st.set_color(wc); st.set_normal(Vector3.UP); st.add_vertex(v)
+		n += 1
+	if n == 0: return
+	var w := MeshInstance3D.new()
+	w.mesh = st.commit()
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.05, 0.14, 0.17)
+	m.roughness = 0.6
+	m.metallic_specular = 0.3
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	w.material_override = m
+	w.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	host.add_child(w)
 
 ## woods: the map's wood density per 40-unit cell -> that many trees (capped), three tree models, one MultiMesh each
 static func _trees(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> void:

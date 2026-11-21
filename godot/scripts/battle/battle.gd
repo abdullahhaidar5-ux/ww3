@@ -23,6 +23,11 @@ const BUILD_MENU := ["gen", "barracks", "depot", "factory", "airfield", "turret"
 # units the sim can field today (aircraft except drones/helis, navy, spies, transports not ported yet)
 const NO_TRAIN := ["jet", "airlift", "spy", "boat", "fast", "sub", "ship", "minel", "sweep", "lander", "dtank", "dsam", "darty", "cleric"]
 const HOTKEYS := "QWERTYUIOP"
+# Battle maps exported from the browser game (tools-godot/battle_maps.mjs): key, name, most players
+const MAPS := [["bm_splitridge", "Split Ridge", 2], ["bm_ferryquarter", "Ferry Quarter", 2], ["bm_fourmills", "Four Mills", 4]]
+const PAIR := {"IR": "RS", "RS": "IR", "US": "IL", "IL": "US"}
+var map_key := "bm_splitridge"
+var mode := "1v1"         # 1v1 | 2v2 | ffa (4-player maps)
 
 var sim
 var map: Dictionary = {}
@@ -106,6 +111,8 @@ func _ready() -> void:
 		elif a.begins_with("--diff="): diff = int(a.substr(7))
 		elif a.begins_with("--seed="): seed_v = int(a.substr(7))
 		elif a.begins_with("--minutes="): minutes_cap = float(a.substr(10))
+		elif a.begins_with("--map="): map_key = a.substr(6)
+		elif a.begins_with("--mode="): mode = a.substr(7)
 		elif a.begins_with("--shot="): shot_path = a.substr(7)
 		elif a.begins_with("--shot-t="): shot_t = float(a.substr(9))
 		elif a.begins_with("--shotf="): shot_at = int(a.substr(8))
@@ -114,7 +121,6 @@ func _ready() -> void:
 		elif a.begins_with("--cam="):
 			var v := a.substr(6).split(",")
 			cam_target = Vector2(float(v[0]), float(v[1])); cam_dist = float(v[2])
-	map = Sim.load_json("res://data/map_bm_splitridge.json")
 	_env()
 	_camera()
 	_fx_setup()
@@ -139,8 +145,10 @@ func _ready() -> void:
 # ---------------------------------------------------------------- setup
 func start_battle() -> void:
 	if setup: setup.visible = false
+	map = Sim.load_json("res://data/map_%s.json" % map_key)
+	if map.is_empty(): map_key = "bm_splitridge"; map = Sim.load_json("res://data/map_bm_splitridge.json")
 	sim = Sim.new()
-	sim.init(map, [{fac = my_fac, ai = ai_only}, {fac = en_fac, ai = true}], seed_v, diff)
+	sim.init(map, _players(), seed_v, diff)
 	if not headless_mode:
 		Terrain.build(self, sim, map, func(k: String): return _build_mesh(k, "y", randf_range(36, 52)))
 	var b: Array = sim.bases[me]
@@ -150,6 +158,17 @@ func start_battle() -> void:
 	_make_ghost()
 	started = true
 	print("BATTLE start: %s (%s) vs %s (AI, difficulty %d), seed %d%s" % [NAT_NAME[my_fac], "AI" if ai_only else "you", NAT_NAME[en_fac], diff, seed_v, "" if not headless_mode else " [headless]"])
+
+## seats: you (0), then the AIs. 2v2: your side's partner nation is your ally (Iran + Lebanese Shia, US + Israel).
+func _players() -> Array:
+	var nb: int = map.bases.size()
+	if nb < 4 or mode == "1v1": return [{fac = my_fac, ai = ai_only, tm = 1}, {fac = en_fac, ai = true, tm = 2}]
+	if mode == "2v2":
+		var ally_f: String = PAIR[my_fac] if PAIR[my_fac] != en_fac else my_fac
+		var en2: String = PAIR[en_fac] if PAIR[en_fac] != my_fac else en_fac
+		return [{fac = my_fac, ai = ai_only, tm = 1}, {fac = en_fac, ai = true, tm = 2}, {fac = ally_f, ai = true, tm = 1}, {fac = en2, ai = true, tm = 2}]
+	var rest: Array = NATIONS.filter(func(f): return f != my_fac and f != en_fac)
+	return [{fac = my_fac, ai = ai_only, tm = 1}, {fac = en_fac, ai = true, tm = 2}, {fac = rest[0], ai = true, tm = 3}, {fac = rest[1], ai = true, tm = 4}]
 
 func args_has_cam() -> bool:
 	return Array(OS.get_cmdline_user_args()).any(func(a): return String(a).begins_with("--cam="))
@@ -197,8 +216,27 @@ func _show_setup() -> void:
 		var dv: int = it[1]
 		bt.pressed.connect(func(): diff = dv)
 		hd.add_child(bt)
+	var lm := Label.new(); lm.text = "Map"; vb.add_child(lm)
+	var hm := HBoxContainer.new(); vb.add_child(hm)
+	var gm := ButtonGroup.new()
+	var mode_row := HBoxContainer.new()
+	for mm in MAPS:
+		var bt := Button.new()
+		bt.text = "%s (%d)" % [mm[1], mm[2]]; bt.toggle_mode = true; bt.button_group = gm; bt.button_pressed = map_key == mm[0]
+		var key: String = mm[0]; var np: int = mm[2]
+		bt.pressed.connect(func(): map_key = key; mode_row.visible = np >= 4)
+		hm.add_child(bt)
+	vb.add_child(mode_row)
+	mode_row.visible = false
+	var g3 := ButtonGroup.new()
+	for it in [["1 vs 1", "1v1"], ["2 vs 2 (AI ally)", "2v2"], ["Free for all", "ffa"]]:
+		var bt := Button.new()
+		bt.text = it[0]; bt.toggle_mode = true; bt.button_group = g3; bt.button_pressed = mode == it[1]
+		var mv: String = it[1]
+		bt.pressed.connect(func(): mode = mv)
+		mode_row.add_child(bt)
 	var go := Button.new()
-	go.text = "Start battle  -  Split Ridge"
+	go.text = "Start battle"
 	go.pressed.connect(start_battle)
 	vb.add_child(go)
 	var back := Button.new()
@@ -333,7 +371,10 @@ func _ai_report(final: bool) -> void:
 	print("min %2d  %s" % [roundi(sim.t / 60.0), "  |  ".join(txt)])
 	if final and sim.over:
 		var w: int = sim.winner
-		print("BATTLE-AI RESULT: %s wins after %.1f min" % [sim.teams[w].fac if w >= 0 else "nobody", sim.t / 60.0])
+		var side: Array = []
+		for T in sim.teams:
+			if w >= 0 and T.tm == sim.teams[w].tm: side.append("%s(seat %d)" % [T.fac, T.id])
+		print("BATTLE-AI RESULT: %s wins after %.1f min on %s" % [" + ".join(side) if side.size() else "nobody", sim.t / 60.0, map_key])
 
 # ---------------------------------------------------------------- drawing
 func _process(dt: float) -> void:
@@ -822,6 +863,8 @@ func _mini_bake() -> void:
 			var c := Color(0.62, 0.53, 0.40).lerp(Color(0.82, 0.74, 0.58), g)
 			var gi := int(wy / float(map.CELL)) * int(map.GW) + int(wx / float(map.CELL))
 			if gi < map.grid.size() and int(map.grid[gi]) == 3: c = Color(0.4, 0.37, 0.33)
+			if gi < map.grid.size() and int(map.grid[gi]) == 1: c = Color(0.12, 0.3, 0.38)
+			if gi < map.grid.size() and int(map.grid[gi]) == 2: c = Color(0.3, 0.45, 0.48)
 			if gi < map.wood.size() and int(map.wood[gi]) > 0: c = c.lerp(Color(0.35, 0.45, 0.25), 0.5)
 			img.set_pixel(x, y, c)
 	mini_tex = ImageTexture.create_from_image(img)
@@ -975,7 +1018,7 @@ func _show_end() -> void:
 	var vb := VBoxContainer.new()
 	end_panel.add_child(vb)
 	var l := Label.new()
-	var won: bool = sim.winner == me
+	var won: bool = sim.winner >= 0 and sim.ally(me, sim.winner)
 	l.text = ("VICTORY" if won else "DEFEAT") + "\n%s after %d:%02d" % ["Every enemy building destroyed" if won else "Your last building fell", int(sim.t / 60.0), int(sim.t) % 60]
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_font_size_override("font_size", 26)
