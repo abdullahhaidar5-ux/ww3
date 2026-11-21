@@ -1,0 +1,43 @@
+# Lane C side finding: smooth-pc battles of Shia nations showed ~6500-8000 draw calls vs ~1400 for West/East/Regional on main.
+# Push to orch/laneC-census -> smooth.mjs --scene census on MAIN for a Shia battle and a West battle (what makes the draw calls).
+name: Lane C census
+on:
+  push:
+    branches: ['orch/laneC-census']
+permissions: { contents: write }
+jobs:
+  census:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { fam: shia, nat: "p:'IR',a:'RV',others:['RS','DW','OB','RS','DW','OB']" }
+          - { fam: west, nat: "p:'US',a:'GB',others:['FR','IL','UA','FR','IL','UA']" }
+    env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Census
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          git fetch -q --depth 1 origin main && git show origin/main:index.html > index.html
+          sed -i "s/setup.n = 7; setup.map = 'fulda';/setup.n = 7; setup.map = 'fulda'; Object.assign(setup, { ${{ matrix.nat }} });/" orch/smooth.mjs
+          mkdir -p /tmp/res
+          node orch/smooth.mjs --profile pc --scene --update-baseline > /tmp/res/census-${{ matrix.fam }}.log 2>&1 || true
+          grep -E "scene:|drawCalls|frameMed" /tmp/res/census-${{ matrix.fam }}.log | cut -c1-6000
+      - name: Push to orch/laneC-shots
+        if: always()
+        run: |
+          for try in 1 2 3 4 5 6; do
+            rm -rf /tmp/cb; mkdir /tmp/cb; cd /tmp/cb; git init -q
+            git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+            if git fetch -q --depth 1 origin orch/laneC-shots 2>/dev/null; then git checkout -q -B orch/laneC-shots FETCH_HEAD; else git checkout -q --orphan orch/laneC-shots; fi
+            mkdir -p orch/shots/laneC; cp /tmp/res/* orch/shots/laneC/ 2>/dev/null; git add orch
+            git -c user.name=laneC-bot -c user.email=laneC-bot@users.noreply.github.com commit -q -m "lane C census: ${{ matrix.fam }}" || exit 0
+            git push -q origin HEAD:refs/heads/orch/laneC-shots && break
+            sleep $((RANDOM % 20 + 5)); cd /; done
