@@ -87,10 +87,7 @@ function shadowSnap(){if(typeof SUN==='undefined'||!SUN||!SUN.castShadow)return;
 // Shadow map refresh: the shadow pass redraws every shadow caster (~2000 in a big battle) and is the biggest single cost of a frame.
 // On phones, and whenever the frame-rate governor has already lowered the picture or frames run under ~45 FPS, it is redrawn every
 // other frame (a 1/60 s old shadow is not visible; the light, map and matrix stay consistent with each other). PCs at full speed redraw every frame.
-/* Medium (effect level 1) with a camera that has not moved for two frames also redraws the shadow every other frame (smoothaudit big, PACK looks 2026-11-18): the light and map stay put, only moving units' shadows are a frame old */
-const _shCam={m:new Float32Array(16),still:0};
-function camStill(){try{const e=CAM.matrixWorld.elements,m=_shCam.m;let same=true;for(let i=0;i<16;i++){if(Math.abs(e[i]-m[i])>1e-4){same=false;}m[i]=e[i];}_shCam.still=same?_shCam.still+1:0;}catch(e){_shCam.still=0;}return _shCam.still>=2;}
-let _shN=0;function shadowDue(){_shN++;let lite=false;try{const still=camStill();lite=(typeof GFX_PHONE!=='undefined'&&GFX_PHONE)||fxLv()>=2||QUAL.fps<45||(fxLv()>=1&&still);}catch(e){}return !lite||(_shN&1)===0||_shN<4;}
+let _shN=0;function shadowDue(){_shN++;let lite=false;try{lite=(typeof GFX_PHONE!=='undefined'&&GFX_PHONE)||fxLv()>=2||QUAL.fps<45;}catch(e){}return !lite||(_shN&1)===0||_shN<4;}
 function softP(on){for(const P of [PN_,PA_]){if(!P)continue;const u=P.m.uniforms;u.soft.value=on?1:0;P.m.depthTest=!on;if(on){u.dep.value=POST.dRT.depthTexture;u.sres.value.set(POST.w,POST.h);u.nf.value.set(CAM.near,CAM.far);}}}
 // Ambient occlusion needs a second full pass over the scene (depth). A fast machine at full detail does it every frame; as soon as the
 // machine is struggling (under 50 FPS, or the frame-rate governor has lowered effects) it is redrawn every other frame and the
@@ -100,12 +97,12 @@ function pass(mat,target){POST.quad.material=mat;R3.setRenderTarget(target);R3.r
 // Every R3.render() walks the whole scene and recomputes every object's matrix (compose + multiply for ~16k objects, ~10 ms each on a mid PC
 // in a 300-unit fight). A frame renders the scene twice (depth pre-pass, then colour + shadows), so the matrices are brought up to date once
 // here and the passes reuse them (nothing moves between the passes). View only. (polishspeed 2026-11-14)
-function renderPost(){SCN.updateMatrixWorld();SCN.matrixWorldAutoUpdate=false;if(typeof SOLB!=='undefined')SOLB.stamp++;try{renderPost0();}finally{SCN.matrixWorldAutoUpdate=true;}}
+function renderPost(){SCN.updateMatrixWorld();SCN.matrixWorldAutoUpdate=false;try{renderPost0();}finally{SCN.matrixWorldAutoUpdate=true;}}
 function renderPost0(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.setRenderTarget(null);R3.shadowMap.needsUpdate=shadowDue();R3.render(SCN,CAM);return;}
   sizePost();if(typeof visionTick==='function')try{visionTick(0);}catch(e){}
   const fogWas=FOGM?FOGM.visible:false;let postFog=false;
   if(POST.mAO&&POST.aoOn!==false&&!(POST.aoLv!=null&&fxLv()>=POST.aoLv)){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}if(aoDue()){const hid=[];SCN.traverseVisible(o=>{const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
-    const bg=SCN.background;SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.clear();R3.render(SCN,CAM);SCN.overrideMaterial=null;if(typeof solbAO==='function')solbAO();for(const o of hid)o.visible=true;
+    const bg=SCN.background;SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.clear();R3.render(SCN,CAM);SCN.overrideMaterial=null;for(const o of hid)o.visible=true;
     const A=POST.mAO.uniforms;A.dep.value=POST.dRT.depthTexture;A.near.value=CAM.near;A.far.value=CAM.far;const ty=Math.tan(CAM.fov*Math.PI/360);A.tanF.value.set(ty*CAM.aspect,ty);A.res.value.set(POST.dRT.width,POST.dRT.height);A.pm.value=POST.dRT.height/(2*ty);A.cw.value.copy(CAM.matrixWorld);A.tt.value=performance.now()/1000;A.fogT.value=FOGT;A.cloudK.value=POST.cloud??1;A.mapS.value.set(MAPW,MAPH);
     pass(POST.mAO,POST.aA);const ab=(src,dst,x,y)=>{POST.mBlur.uniforms.tex.value=src.texture;POST.mBlur.uniforms.dir.value.set(x/src.width,y/src.height);pass(POST.mBlur,dst);};ab(POST.aA,POST.aB,1,0);ab(POST.aB,POST.aA,0,1);}POST.mFinal.uniforms.fogK.value=postFog?1:0;
     POST.mFinal.uniforms.ao.value=POST.aA.texture;POST.mFinal.uniforms.aoK.value=.85;softP(true);}else if(POST.mFinal.uniforms.ao){softP(false);POST.mFinal.uniforms.aoK.value=0;POST.mFinal.uniforms.fogK.value=0;POST.mFinal.uniforms.ao.value=POST.bA.texture;}

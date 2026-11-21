@@ -5,9 +5,9 @@ const MCFG={
   tank:{m:'tank',fit:'z',size:38},harv:{m:'truck',fit:'z',size:34},ammot:{m:'truck',fit:'z',size:34},dozer:{m:'truck',fit:'z',size:34,extra:'crane'},
   mortar:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],extra:'mortar'},recon:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#4a5242',tk:.5},officer:{m:'soldier',fit:'y',size:15.7,tint:'#3d4a36',tk:.5},medic:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#e8e4da',tk:.35},
   commissar:{m:'soldier',fit:'y',size:15.7,tint:'#5b4a3a',tk:.5},sapper:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#6a5a3c',tk:.4},guer:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#4c5a3a',tk:.55},atk:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],tint:'#3c4434',tk:.5},
-  idome:{m:'truck',fit:'z',size:36,extra:'samtruck'},ew:{m:'truck',fit:'z',size:35,extra:'dish'},cbr:{m:'truck',fit:'z',size:35,extra:'dish'},jeep:{m:'truck',fit:'z',size:26},atgm:{m:'truck',fit:'z',size:27,extra:'atgm',tint:'#55603f',tk:.4},saka:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#a08a5c',tk:.5},raidlead:{m:'truck',fit:'z',size:28,extra:'mg'},
+  idome:{m:'truck',fit:'z',size:36,extra:'samtruck'},ew:{m:'truck',fit:'z',size:35,extra:'dish'},cbr:{m:'truck',fit:'z',size:35,extra:'dish'},jeep:{m:'truck',fit:'z',size:26},atgm:{m:'truck',fit:'z',size:27,extra:'samtruck',tint:'#55603f',tk:.4},saka:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#a08a5c',tk:.5},raidlead:{m:'truck',fit:'z',size:28,extra:'mg'},
   inf:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7],[-11,0]]},spy:{m:'soldier',fit:'y',size:14.0},cleric:{m:'soldier',fit:'y',size:14.0,squad:[[4,0],[-5,-6],[-5,6]]},at:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]]},hacker:{m:'soldier',fit:'y',size:13.1,squad:[[3,-4],[-3,4]]},
-  hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},champ:{m:'soldier',fit:'y',size:19.5,tint:'#262a26',tk:.62},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},fast:{m:'boat',fit:'z',size:30,tint:'#7a8590',tk:.9},minel:{m:'ship',fit:'z',size:76,tint:'#6d7570',tk:.88},sweep:{m:'ship',fit:'z',size:68,tint:'#7d8a82',tk:.88},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
+  hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},champ:{m:'soldier',fit:'y',size:19.5,tint:'#262a26',tk:.62},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},fast:{m:'boat',fit:'z',size:30,tint:'#7a8590',tk:.9},minel:{m:'boat',fit:'z',size:50,tint:'#6d7570',tk:.9},sweep:{m:'boat',fit:'z',size:46,tint:'#7d8a82',tk:.9},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
 };
 // Realistic models (Objaverse / Sketchfab, CC-BY - authors credited in the menu): each nation fields the hardware it
 // actually flies and drives where a licensed model exists.
@@ -23,45 +23,16 @@ for(const f of ['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN'
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['JP','MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF','OB','BI','RV'];
+const WESTVEH=['JP','MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF','OB','BI'];
 Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',FR:'kf51',DE:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
 // China keeps the T-90, South Korea the Abrams-like K1 stand-in)
-Object.assign(RMAP.tank,{UA:'oplot',IR:'t72',KP:'t62',CU:'t55',TR:'leo2',RV:'t62'});   /* OB has no tank slot at all: MIL_TANK.OB is the Armed Technical (Palestine never shows an MBT) */
-// National paint on the shared hulls (visual only): China olive-green T-72 family hull, India a desert-sand T-90, Pakistan a sand/olive T-72
-Object.assign(RMOD,{cn72:{m:'m_t72',fit:'z',size:40,tint:'#5d6a4a',tk:.45},in90:{m:'m_t90',fit:'z',size:40,tint:'#a39266',tk:.5},pk72:{m:'m_t72',fit:'z',size:40,tint:'#8a8a62',tk:.45}});
-Object.assign(RMAP.tank,{CN:'cn72',IN:'in90',PK:'pk72'});
+Object.assign(RMAP.tank,{UA:'oplot',IR:'t72',KP:'t62',CU:'t55',TR:'leo2'});
 RMAP.arty={};RMAP.airlift={};RMAP.jeep={SA:'humvee'};RMAP.raidlead={DW:'hilux'};
 for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k]={};
 for(const f of WESTVEH){RMAP.arty[f]='g6';RMAP.airlift[f]='uh60';for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]='m35';}
-for(const f of EASTVEH){if(!['RS','DW','RV','OB'].includes(f))RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
-// National vehicle families, West (visual only, existing models + paint, no new meshes): the US keeps the plain M35 truck and a Humvee TOW carrier;
-// Britain a brown-olive truck, France a grey-olive one with the Ozelot-type light carrier, Germany NATO-olive with the Ozelot, Israel a sand truck and Humvee;
-// Ukraine keeps its Soviet-legacy Ural (olive) but gets the Western-supplied Humvee carrier.
-Object.assign(RMOD,{gb35:{m:'m_m35',fit:'z',size:36,tint:'#5c5a44',tk:.4},fr35:{m:'m_m35',fit:'z',size:36,tint:'#6b7058',tk:.4},de35:{m:'m_m35',fit:'z',size:36,tint:'#4a5540',tk:.4},il35:{m:'m_m35',fit:'z',size:36,tint:'#a89a74',tk:.4},ua_ural:{m:'m_ural',fit:'z',size:36,tint:'#66704d',tk:.4},
-  gbhum:{m:'m_humvee',fit:'z',size:27,tint:'#5c5a44',tk:.4},ilhum:{m:'m_humvee',fit:'z',size:27,tint:'#a89a74',tk:.4}});
-for(const k of ['harv','ammot','idome','ew','cbr']){Object.assign(RMAP[k],{GB:'gb35',FR:'fr35',DE:'de35',IL:'il35',UA:'ua_ural'});}
-Object.assign(RMAP.atgm,{US:'humvee',GB:'gbhum',IL:'ilhum',UA:'humvee',FR:'ozelot',DE:'ozelot'});
-// National vehicle families, East (visual only, existing models + paint): Russia a deep-green Ural, China a PLA olive-green Ural and its anti-tank teams on a green Humvee-type
-// carrier, North Korea a drab khaki-brown Ural with a brown light carrier. Iran, Russia's and the others keep what they had.
-Object.assign(RMOD,{ru_ural:{m:'m_ural',fit:'z',size:36,tint:'#4e5c3e',tk:.4},cn_ural:{m:'m_ural',fit:'z',size:36,tint:'#5f7040',tk:.4},kp_ural:{m:'m_ural',fit:'z',size:36,tint:'#6c6444',tk:.4},
-  cnhum:{m:'m_humvee',fit:'z',size:27,tint:'#5f7040',tk:.4},kphum:{m:'m_humvee',fit:'z',size:27,tint:'#6c6444',tk:.4}});
-for(const k of ['harv','ammot','idome','ew','cbr']){Object.assign(RMAP[k],{RU:'ru_ural',CN:'cn_ural',KP:'kp_ural'});}
-Object.assign(RMAP.atgm,{CN:'cnhum',KP:'kphum'});
-// National vehicle families, Regional (visual only, existing models + paint): India a khaki-olive Ural and Humvee-type carrier, Pakistan a sand-olive one, Japan and Korea
-// dark-green M35 trucks with Humvee carriers, Saudi Arabia, the Emirates and Egypt desert-sand trucks (the Emirates and Turkey carry their anti-tank teams on the light Ozelot), Turkey an olive-brown truck.
-{const P=(k,m,sz,t)=>{RMOD[k]={m,fit:'z',size:sz,tint:t,tk:.4};};
- P('in_ural','m_ural',36,'#7d7650');P('pk_ural','m_ural',36,'#85805a');P('inhum','m_humvee',27,'#7d7650');P('pkhum','m_humvee',27,'#85805a');
- P('jp35','m_m35',36,'#5b6a52');P('kr35','m_m35',36,'#4f5b3f');P('sa35','m_m35',36,'#b5a276');P('ae35','m_m35',36,'#c0ae84');P('tr35','m_m35',36,'#6a6a4c');P('eg35','m_m35',36,'#b09c70');
- P('jphum','m_humvee',27,'#5b6a52');P('krhum','m_humvee',27,'#4f5b3f');P('sahum','m_humvee',27,'#b5a276');P('eghum','m_humvee',27,'#b09c70');P('aeoz','m_ozelot',34,'#c0ae84');P('troz','m_ozelot',34,'#6a6a4c');
- for(const k of ['harv','ammot','idome','ew','cbr'])Object.assign(RMAP[k],{IN:'in_ural',PK:'pk_ural',JP:'jp35',KR:'kr35',SA:'sa35',AE:'ae35',TR:'tr35',EG:'eg35'});
- Object.assign(RMAP.atgm,{IN:'inhum',PK:'pkhum',JP:'jphum',KR:'krhum',SA:'sahum',EG:'eghum',AE:'aeoz',TR:'troz'});}
-// National vehicle families, Shia (visual only, same Ural hull, own paint per nation): Iran IRGC sand-olive, Lebanese mountain force cold grey-olive, Yemen dusty sand-brown,
-// Iraqi south-brigades dark olive, Palestine brigade pale khaki. The add-ons (ATGM tripod, ZU-23, rocket rack, EW mast) take the same paint, so the nations no longer look identical.
-{const P=(k,t)=>{RMOD[k]={m:'m_ural',fit:'z',size:36,tint:t,tk:.4};};
- P('ir_ural','#8a7f58');P('rs_ural','#5e6450');P('dw_ural','#9a8760');P('rv_ural','#4c5638');P('ob_ural','#a89c74');
- for(const f of ['IR','RS','DW','RV','OB'])for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]=f.toLowerCase()+'_ural';}
+for(const f of EASTVEH){if(f!=='RS'&&f!=='DW')RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','ammot','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
 // Faction-unique helicopters and warships (Objaverse / Sketchfab, CC BY, authors in the menu credits): Russia flies the Mi-28,
 // Egypt the Ka-52, Turkey, Pakistan and Iran an AH-1 Cobra-type gunship; Western navies a Type 45 destroyer (Germany an F123
 // frigate), Russia/China/North Korea/Ukraine/India/Pakistan/Cuba/Iran a Russian-style destroyer; the Shia nations'
@@ -155,7 +126,6 @@ function modelsFor(facs,onProg,maxMs){const ks=modelKeysFor(facs);let done=0;MQ.
     const bad=res?res.filter(Boolean):ks.filter(k=>!MODELS.proto[k]);MODELS.loadMs=Math.round(performance.now()-T0);
     try{navigator.serviceWorker.ready.then(g=>{if(g.active)g.active.postMessage({t:'models',urls:ks.filter(k=>MODELS.proto[k]).map(k=>MODEL_FILES[k])});}).catch(()=>{});}catch(e){} // keep this battle's models for offline play (sw.js)
     console.log('3D models for '+(facs||[]).join('/')+': '+(ks.length-bad.length)+' of '+ks.length+' ready in '+MODELS.loadMs+' ms'+(bad.length?' (missing: '+bad.join(', ')+')':''));
-    try{addonWarm(facs);}catch(e){console.warn('addonWarm',e);}
     return{n:ks.length,bad};});}
 // background downloads while the menu is up: shared models first (unpacked straight away, since every battle uses
 // them), then the player's nation, then the rest (downloaded only)
@@ -413,21 +383,11 @@ let ENVT=null;function envTex(){if(window.NOENV)return null;if(ENVT||typeof R3==
   const m=new THREE.ShaderMaterial({side:THREE.BackSide,vertexShader:'varying vec3 d;void main(){d=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
     fragmentShader:'varying vec3 d;void main(){float y=d.y;vec3 sky=mix(vec3(.75,.72,.66),vec3(.38,.55,.85),smoothstep(0.,.7,y));vec3 gr=mix(vec3(.42,.36,.28),vec3(.22,.19,.15),smoothstep(0.,-.6,y));vec3 c=y>0.?sky:gr;c+=vec3(1.,.9,.75)*pow(max(dot(d,normalize(vec3(-.55,.55,-.4))),0.),48.)*6.;gl_FragColor=vec4(c,1.);}'});
   sc.add(new THREE.Mesh(g,m));const pm=new THREE.PMREMGenerator(R3);ENVT=pm.fromScene(sc,.02).texture;pm.dispose();}catch(e){console.warn('env',e);}return ENVT;}
-// The M35-type truck texture carries the US white star (hood, door roundel, frame): only the US may wear it. For every other nation the star
-// spots are painted over once with the colour of the paint around them (one patched texture per source, shared by all nations, built at load).
-const NOSTAR={Body:[[380,43,25],[285,213,47]],Frame:[[193,475,11]]},NOSTAR_C=new Map();
-function noStarMap(tex,name){const sp=NOSTAR[name],im=tex&&tex.image;if(!sp||!im||!im.width)return tex;const ck=tex.uuid;if(NOSTAR_C.has(ck))return NOSTAR_C.get(ck);let out=tex;
-  try{const W=im.width,H=im.height,k=W/512,cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.drawImage(im,0,0);
-   for(const [cx,cy,r] of sp){const px=[];for(let i=0;i<24;i++){const a=i/24*6.283,d=(r+7)*k,sx=Math.round(cx*k+Math.cos(a)*d),sy=Math.round(cy*k+Math.sin(a)*d);if(sx<0||sy<0||sx>=W||sy>=H)continue;px.push(x.getImageData(sx,sy,1,1).data);}
-    if(!px.length)continue;const med=ch=>{const v=px.map(q=>q[ch]).sort((p,q)=>p-q);return v[v.length>>1];};const R=med(0),G=med(1),B=med(2);
-    const g=x.createRadialGradient(cx*k,cy*k,r*k*.8,cx*k,cy*k,(r+4)*k);g.addColorStop(0,`rgb(${R},${G},${B})`);g.addColorStop(1,`rgba(${R},${G},${B},0)`);x.fillStyle=g;x.beginPath();x.arc(cx*k,cy*k,(r+4)*k,0,6.283);x.fill();}
-   const t=tex.clone();t.source=new THREE.Source(cv);t.needsUpdate=true;out=t;}catch(e){console.warn('noStarMap',e);}
-  NOSTAR_C.set(ck,out);return out;}
 function tintedProto(key,team,kk){wxEnv();camoFreq(key);const LK=team&&team.fac?FLOOK[team.fac]:null;const id=key+'|'+(team?team.color:'none')+(kk||'')+(LK?team.fac:'');if(MODELS.tinted[id])return MODELS.tinted[id];const P=MODELS.proto[key];if(!P)return null;
   const tc=team?new THREE.Color(team.color).convertSRGBToLinear():null;const map=new Map();const root=P.scene;
   const k=kk||(isSol(key)?.0:key==='inf'||key==='hero'?.1:.16);
   const clone=(THREE.SkeletonUtils&&root.getObjectByProperty('type','SkinnedMesh'))?THREE.SkeletonUtils.clone(root):root.clone(true);
-  clone.traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];const nm=ms.map(m=>{if(!map.has(m)){const c=plainStd(m.clone());if(key==='m_m35'&&!(team&&team.fac==='US')&&c.map)c.map=noStarMap(c.map,m.name||'');if(key==='heli'&&/Gray_Aircraft/.test(m.name||'')){c.visible=false;}const isB=/^b_/.test(key);if(isB&&c.color){const hs={};c.color.getHSL(hs);c.color.setHSL(hs.h,hs.s*.55,hs.l*.95);}c.userData.wk=(key==='boat'||key==='ship'||/^m_(fr[egw]|spb|sub[emw])$/.test(key))?1:(/^(jet|heli|drone)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apache|ka52|mi24|mi28|mi8|uh60)$/.test(key)?2:0);const AS=airScheme(key,team);weather(c,['tree1','tree2','tree3','tree4'].includes(key)?.5:(key==='boat'||key==='ship')?.15:isB?1.35:1,AS&&AS.p!==3?airCamoFreq(key):CAMOK[key]?CAMOK[key]:0);const VK=['tank','tankE','tankW','truck','technical','toontank','m_t90','m_hilux','m_ozelot','m_abrams','m_merkava','m_kf51','m_msta','m_g6','m_ural','m_m35','m_humvee','m_oplot','m_t72','m_t62','m_t55','m_leo2'];if(isB)c.userData.refl=.35;{const LV={m_su35:.7,m_j10:.75,m_f18:.45,m_typhoon:.15,m_f15:.2,m_f16:.15,m_rafale:.15,m_mig29:.2};const lv=LV[key];if(lv&&c.color){const l=c.color.r*.3+c.color.g*.59+c.color.b*.11;c.color.lerp(new THREE.Color(.18,.2,.22).multiplyScalar(.7+l*1.6),lv);}}if(VK.includes(key)||/^m_|^(jet|heli|drone|boat|ship)$/.test(key))c.userData.refl=/^m_(f|su|ra|ty|j1|mig)|^jet$/.test(key)?1:.75;if(LK&&c.color){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.012){if(key==='soldier')c.color.lerp(new THREE.Color(LK.uni).convertSRGBToLinear(),.6);else if(isSol(key)){c.color.lerp(new THREE.Color((solX(team.fac)||LK).u||LK.uni).lerp(new THREE.Color('#ffffff'),.4).convertSRGBToLinear(),.5);c.color.multiplyScalar(1.8);}else if(VK.includes(key)){const tgt=new THREE.Color(LK.veh).convertSRGBToLinear().multiplyScalar(Math.min(1.6,.55+lum*2.2));c.color.lerp(tgt,.85);if(c.map&&TEXB[key])c.color.multiplyScalar(TEXB[key]);else if(!c.map&&UNTEX[key])c.color.multiplyScalar(UNTEX[key]);}}if(VK.includes(key)){const X=CAMOX[team.fac]||{};c.userData.camoA=new THREE.Color(LK.ca).convertSRGBToLinear();c.userData.camoB=new THREE.Color(LK.cb).convertSRGBToLinear();c.userData.camoP=X.p!=null?X.p:(LK.pat||0);c.userData.camoS=X.s||1;c.userData.camoC=new THREE.Color(X.c||LK.ca).convertSRGBToLinear();}}if(AS&&c.color&&!/glass|canopy|cockpit|window|light|lamp/i.test(m.name||'')){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.04){const bc=new THREE.Color(AS.b).convertSRGBToLinear(),bl=bc.r*.3+bc.g*.59+bc.b*.11;
+  clone.traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];const nm=ms.map(m=>{if(!map.has(m)){const c=plainStd(m.clone());if(key==='heli'&&/Gray_Aircraft/.test(m.name||'')){c.visible=false;}const isB=/^b_/.test(key);if(isB&&c.color){const hs={};c.color.getHSL(hs);c.color.setHSL(hs.h,hs.s*.55,hs.l*.95);}c.userData.wk=(key==='boat'||key==='ship'||/^m_(fr[egw]|spb|sub[emw])$/.test(key))?1:(/^(jet|heli|drone)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apache|ka52|mi24|mi28|mi8|uh60)$/.test(key)?2:0);const AS=airScheme(key,team);weather(c,['tree1','tree2','tree3','tree4'].includes(key)?.5:(key==='boat'||key==='ship')?.15:isB?1.35:1,AS&&AS.p!==3?airCamoFreq(key):CAMOK[key]?CAMOK[key]:0);const VK=['tank','tankE','tankW','truck','technical','toontank','m_t90','m_hilux','m_ozelot','m_abrams','m_merkava','m_kf51','m_msta','m_g6','m_ural','m_m35','m_humvee','m_oplot','m_t72','m_t62','m_t55','m_leo2'];if(isB)c.userData.refl=.35;{const LV={m_su35:.7,m_j10:.75,m_f18:.45,m_typhoon:.15,m_f15:.2,m_f16:.15,m_rafale:.15,m_mig29:.2};const lv=LV[key];if(lv&&c.color){const l=c.color.r*.3+c.color.g*.59+c.color.b*.11;c.color.lerp(new THREE.Color(.18,.2,.22).multiplyScalar(.7+l*1.6),lv);}}if(VK.includes(key)||/^m_|^(jet|heli|drone|boat|ship)$/.test(key))c.userData.refl=/^m_(f|su|ra|ty|j1|mig)|^jet$/.test(key)?1:.75;if(LK&&c.color){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.012){if(key==='soldier')c.color.lerp(new THREE.Color(LK.uni).convertSRGBToLinear(),.6);else if(isSol(key)){c.color.lerp(new THREE.Color((solX(team.fac)||LK).u||LK.uni).lerp(new THREE.Color('#ffffff'),.4).convertSRGBToLinear(),.5);c.color.multiplyScalar(1.8);}else if(VK.includes(key)){const tgt=new THREE.Color(LK.veh).convertSRGBToLinear().multiplyScalar(Math.min(1.6,.55+lum*2.2));c.color.lerp(tgt,.85);if(c.map&&TEXB[key])c.color.multiplyScalar(TEXB[key]);else if(!c.map&&UNTEX[key])c.color.multiplyScalar(UNTEX[key]);}}if(VK.includes(key)){const X=CAMOX[team.fac]||{};c.userData.camoA=new THREE.Color(LK.ca).convertSRGBToLinear();c.userData.camoB=new THREE.Color(LK.cb).convertSRGBToLinear();c.userData.camoP=X.p!=null?X.p:(LK.pat||0);c.userData.camoS=X.s||1;c.userData.camoC=new THREE.Color(X.c||LK.ca).convertSRGBToLinear();}}if(AS&&c.color&&!/glass|canopy|cockpit|window|light|lamp/i.test(m.name||'')){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.04){const bc=new THREE.Color(AS.b).convertSRGBToLinear(),bl=bc.r*.3+bc.g*.59+bc.b*.11;
         if(c.map)c.color.lerp(bc.multiplyScalar(Math.min(4,(.35+lum*.65)/bl)),.7);else c.color.lerp(bc.multiplyScalar(Math.min(1.6,.6+lum*1.4)),.82);
         if(AS.p!==3){c.userData.camoA=new THREE.Color(AS.a).convertSRGBToLinear();c.userData.camoB=new THREE.Color(AS.m).convertSRGBToLinear();c.userData.camoC=new THREE.Color(AS.c).convertSRGBToLinear();c.userData.camoP=AS.p;c.userData.camoS=AS.s||1;}}}
       if(tc&&c.color&&!['tree1','tree2','tree3','tree4'].includes(key))c.color.lerp(tc,LK&&(isSol(key)||VK.includes(key)||AS)?Math.min(k,AS?.03:.06):k);if(isB&&c.color){c.color.multiply(new THREE.Color(1.08,1.0,.84));const rg=team&&team.fac&&FACTIONS[team.fac]?FACTIONS[team.fac].music:null,BW={west:'#9aa3a8',mideast:'#d2b48a',slavic:'#8f9686',southasia:'#c9a27a',eastasia:'#a8a196',latin:'#d9c9a8'}[rg];if(BW){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.05&&lum<.85)c.color.lerp(new THREE.Color(BW).convertSRGBToLinear().multiplyScalar(.6+lum*.9),.32);}}{if(c.isMeshStandardMaterial&&['tank','tankE','tankW','truck','technical','toontank','heli','jet','ship','boat','drone','sam'].includes(key)){c.metalness=Math.min(Math.max(c.metalness||0,.12),.3);c.roughness=Math.min(Math.max(c.roughness??.7,.5),.7);c.userData.sheen=1;}}
@@ -778,63 +738,11 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
     E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
   if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}if(typeof gcKeep==='function'){gcKeep(E.geo);gcKeep(E.lo);}/* shared by every soldier of this look: never freed by the GPU clean-up (re-sending it mid-battle was a hitch) */
-  let lm0=null;if(E.lo){const lm=lm0=new THREE.SkinnedMesh(E.lo,E.mat);skinBS(lm);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
+  if(E.lo){const lm=new THREE.SkinnedMesh(E.lo,E.mat);skinBS(lm);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);skinBS(mm);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
-  sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());bonePool(skel);if(lm0)solbReg(lm0,E.mat);solbReg(mm,E.mat);for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
+  sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());bonePool(skel);for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
 /* a supply truck's crate load: one shared shape for every truck (it was built new per truck) */
-/* Instanced soldiers (smoothaudit2, Abdullah 2026-11-17 "Ensure the game runs smoothly"). Every merged soldier figure was a draw
-   call of its own - plus its own shadow draw, its own draw in the soft-shadow (AO) depth pass and its own bone-texture upload:
-   ~190 + ~50 draws and ~200 uploads per frame in a big battle. Now all figures of one look (shape + material, near or far
-   version) are drawn together by ONE instanced draw; their bone matrices are packed into one shared texture sent once a frame
-   (only the rows in use). The figure meshes stay where they were (squad, LOD switch, losses, bone posing, hiding all unchanged)
-   but sit on layer 7, which the cameras do not draw, while the batch draws them. Same shape, material and shader code: only
-   where the bones are read from changes. Figures in other scenes (command-bar portrait, encyclopedia) are drawn as before. */
-const SOLB={reg:new Set(),list:[],by:new Map(),U:{value:null},tex:null,arr:null,W:4096,H:0,rows:0,root:null,on:true,/* kill switch: OFF until the Test range wave hitch (Zolfaghar wave, 40-90 MB of bone texture sent per run) is found - superfreeze 2026-11-18 */ dm:null,stamp:0,done:-1};
-const SOLB_PARS='attribute vec4 skinIndex;attribute vec4 skinWeight;attribute vec3 sI;uniform highp sampler2D sBoneTex;mat4 sBX,sBY,sBZ,sBW;bool sOk=false;\n'+
-  'mat4 sBone(float i){int j=int(sI.x)+int(i)*4;int w=textureSize(sBoneTex,0).x;int x=j%w;int y=j/w;return mat4(texelFetch(sBoneTex,ivec2(x,y),0),texelFetch(sBoneTex,ivec2(x+1,y),0),texelFetch(sBoneTex,ivec2(x+2,y),0),texelFetch(sBoneTex,ivec2(x+3,y),0));}\n'+
-  'void sLoad(){if(sOk)return;sOk=true;sBX=sBone(skinIndex.x);sBY=sBone(skinIndex.y);sBZ=sBone(skinIndex.z);sBW=sBone(skinIndex.w);}\nmat4 sSkin(){return sBX*skinWeight.x+sBY*skinWeight.y+sBZ*skinWeight.z+sBW*skinWeight.w;}\n';
-// the figure's own skinning chunks, reading its bones from the shared texture (sI.x = its first texel); the weathering/look code keeps
-// the figure's own base height (sI.y) and scale (sI.z) it used to read from the mesh's model matrix (the batch mesh sits at the origin)
-function solbPatch(sh){sh.uniforms.sBoneTex=SOLB.U;sh.vertexShader=sh.vertexShader.replace('#include <skinning_pars_vertex>',SOLB_PARS).replace('#include <skinbase_vertex>','sLoad();')
-  .replace('#include <skinnormal_vertex>','sLoad();objectNormal=(sSkin()*vec4(objectNormal,0.)).xyz;').replace('#include <skinning_vertex>','sLoad();transformed=(sSkin()*vec4(transformed,1.)).xyz;')
-  .replace('vOY=(modelMatrix*vec4(0.,0.,0.,1.)).y;','vOY=sI.y;').replace('float lkS=length(vec3(modelMatrix[0]));','float lkS=sI.z;');}
-function solbReg(m,mat){if(!m||!SOLB.on)return;m.userData.solMat=mat;SOLB.reg.add(m);if(typeof SCN!=='undefined'&&SCN&&typeof decalUpdate==='function'&&SCN.onBeforeRender!==decalUpdate)SCN.onBeforeRender=decalUpdate;}
-function solbTex(texels){const need=Math.ceil(texels/SOLB.W);if(SOLB.tex&&need<=SOLB.H)return;let h=Math.max(64,SOLB.H);while(h<need)h*=2;if(SOLB.tex)SOLB.tex.dispose();
-  SOLB.arr=new Float32Array(SOLB.W*h*4);const t=SOLB.tex=new THREE.DataTexture(SOLB.arr,SOLB.W,h,THREE.RGBAFormat,THREE.FloatType);t.needsUpdate=true;SOLB.H=h;SOLB.U.value=t;}
-function solbBatch(m){const geo=m.geometry,mat=m.userData.solMat;let M=SOLB.by.get(geo);if(!M)SOLB.by.set(geo,M=new Map());let b=M.get(mat);if(b)return b;
-  const g=new THREE.InstancedBufferGeometry();g.index=geo.index;for(const k in geo.attributes)g.setAttribute(k,geo.attributes[k]);g.instanceCount=0;
-  const mt=mat.clone(),ob=mat.onBeforeCompile,ck=mat.customProgramCacheKey;mt.onBeforeCompile=(sh,r)=>{if(ob)ob.call(mat,sh,r);solbPatch(sh);};mt.customProgramCacheKey=()=>(ck?ck.call(mat):'')+'|solI';
-  if(!SOLB.dm){SOLB.dm=new THREE.MeshDepthMaterial();SOLB.dm.onBeforeCompile=solbPatch;SOLB.dm.customProgramCacheKey=()=>'solI';SOLB.am=new THREE.MeshBasicMaterial({colorWrite:false});SOLB.am.onBeforeCompile=solbPatch;SOLB.am.customProgramCacheKey=()=>'solIA';}
-  const ms=new THREE.Mesh(g,mt);ms.name='solBatch';ms.frustumCulled=false;ms.matrixAutoUpdate=false;ms.castShadow=true;ms.receiveShadow=m.receiveShadow;ms.customDepthMaterial=SOLB.dm;ms.visible=false;
-  b={g,mt,ms,cap:0,n:0,a:null};M.set(mat,b);SOLB.list.push(b);if(SOLB.root)SOLB.root.add(ms);if(typeof gcKeep==='function')gcKeep(g);return b;}
-const SOLM4=new THREE.Matrix4();
-/* refill every batch from the figures drawn this frame (called just before the battle scene is drawn) */
-function solbFill(force){if(!SOLB.reg.size||typeof SCN==='undefined'||!SCN)return;if(!force&&SOLB.done===SOLB.stamp)return;SOLB.done=SOLB.stamp;
-  if(!SOLB.root||SOLB.root.parent!==SCN){if(!SOLB.root){SOLB.root=new THREE.Group();SOLB.root.name='solBatches';SOLB.root.matrixAutoUpdate=false;}SCN.add(SOLB.root);for(const b of SOLB.list)if(b.ms.parent!==SOLB.root)SOLB.root.add(b.ms);}
-  for(const b of SOLB.list)b.n=0;const draw=[];let tx=0;const fr=!window.LOADING&&typeof CAM!=='undefined'&&CAM?SOLB.fr||(SOLB.fr=new THREE.Frustum()):null;if(fr){CAM.updateMatrixWorld();SOLM4.multiplyMatrices(CAM.projectionMatrix,CAM.matrixWorldInverse);fr.setFromProjectionMatrix(SOLM4);}const sp=SOLB.sp||(SOLB.sp=new THREE.Sphere());
-  for(const m of SOLB.reg){let q=m,v=true;while(q.parent){if(!q.visible)v=false;q=q.parent;}
-    if(q!==SCN||!SOLB.on||m.material!==m.userData.solMat||!m.skeleton){if(m.layers.mask!==1)m.layers.set(0);if(!q.isScene){if((m.userData.solOff=(m.userData.solOff||0)+1)>600)SOLB.reg.delete(m);}continue;}
-    m.userData.solOff=0;if(m.layers.mask!==128)m.layers.set(7);if(!v)continue;if(fr&&m.frustumCulled&&m.boundingSphere){sp.copy(m.boundingSphere).applyMatrix4(m.matrixWorld);if(!fr.intersectsSphere(sp))continue;}/* per figure, like three.js did */const b=solbBatch(m);b.n++;draw.push(m,b,tx);tx+=m.skeleton.bones.length*4;}
-  if(!draw.length){for(const b of SOLB.list)b.ms.visible=false;return;}
-  solbTex(tx);const A=SOLB.arr;for(const b of SOLB.list){if(b.n>b.cap){b.cap=Math.max(256,Math.ceil(b.n*2));b.a=new THREE.InstancedBufferAttribute(new Float32Array(b.cap*3),3);b.a.setUsage(THREE.DynamicDrawUsage);b.g.setAttribute('sI',b.a);}b.k=0;}
-  for(let i=0;i<draw.length;i+=3){const m=draw[i],b=draw[i+1],t0=draw[i+2],sk=m.skeleton,B=sk.bones,I=sk.boneInverses,rg=RGS.get(m);if(rg&&rg.f.userData.rgA){const a=rg.f.matrixWorld.elements,K=rg.K;for(let j=0,o=t0*4;j<B.length;j++,o+=16){const ko=j*16;for(let c=0;c<16;c+=4){const b0=K[ko+c],b1=K[ko+c+1],b2=K[ko+c+2],b3=K[ko+c+3];A[o+c]=a[0]*b0+a[4]*b1+a[8]*b2+a[12]*b3;A[o+c+1]=a[1]*b0+a[5]*b1+a[9]*b2+a[13]*b3;A[o+c+2]=a[2]*b0+a[6]*b1+a[10]*b2+a[14]*b3;A[o+c+3]=a[3]*b0+a[7]*b1+a[11]*b2+a[15]*b3;}}}else{for(let j=0;j<B.length;j++){SOLM4.multiplyMatrices(B[j].matrixWorld,I[j]);SOLM4.toArray(A,(t0+j*4)*4);}}
-    const e=m.matrixWorld.elements,o=b.k*3;b.a.array[o]=t0;b.a.array[o+1]=e[13];b.a.array[o+2]=Math.hypot(e[0],e[1],e[2]);b.k++;}
-  const ovr=!!SCN.overrideMaterial;for(const b of SOLB.list){b.g.instanceCount=b.n;b.ms.visible=b.n>0&&!ovr;if(b.n&&b.a){b.a.clearUpdateRanges();b.a.addUpdateRange(0,b.n*3);b.a.needsUpdate=true;}}
-  const t=SOLB.tex,rows=Math.ceil(tx/SOLB.W);t.clearUpdateRanges();for(let r=0;r<rows;r++)t.addUpdateRange(r*SOLB.W*4,SOLB.W*4);t.needsUpdate=true;SOLB.rows=rows;}
-/* the soft-shadow (AO) depth pass draws everything with one plain material, which cannot read the shared bones: the batches are hidden
-   there (the fill runs inside that pass and leaves them hidden) and drawn into the same depth target right after with their own depth-only material */
-function solbAO(){if(!SOLB.reg.size)return;solbFill(!!window.LOADING);if(!SOLB.root||SOLB.root.parent!==SCN)return;let any=false;for(const b of SOLB.list)if(b.n){any=true;break;}if(!any)return;
-  const ac=R3.autoClear;R3.autoClear=false;for(const b of SOLB.list){b.ms.material=SOLB.am;b.ms.visible=b.n>0;}
-  try{R3.render(SOLB.root,CAM);}catch(e){console.warn('solbAO',e);}finally{R3.autoClear=ac;for(const b of SOLB.list){b.ms.material=b.mt;b.ms.visible=b.n>0;}}}
-let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld(),W='#7a6240',Wd='#5a4630',T='#5b6445',T2='#666f4d',S='#2a2923';
-  /* art-west: a real supply load, not four yellow boxes - pallet, strapped tarp-covered stack, slatted wooden crates, two drums; one merged shared geometry */
-  B.box(14,1,14,-5.5,17.8,0,Wd);B.box(14.4,.5,1.4,-5.5,17.2,-4,Wd);B.box(14.4,.5,1.4,-5.5,17.2,4,Wd);
-  B.box(10.6,5.6,10.6,-6.5,21,0,T);B.box(9.2,1.8,9.2,-6.5,24.7,0,T2);B.box(7,1,7,-6.5,25.9,0,T);
-  for(const x of [-9.5,-3.5]){B.box(.8,6.2,10.9,x,21.2,0,S);B.box(.8,1.9,9.4,x,24.8,0,S);}
-  B.box(10.9,.8,.8,-6.5,22.6,-2.5,S);B.box(10.9,.8,.8,-6.5,22.6,2.5,S);
-  for(const z of [-4.3,3.9]){B.box(5,4.2,5,-.8,20.4,z,W);for(const y of [18.6,22.2])B.box(5.3,.5,5.3,-.8,y,z,Wd);for(const dx of [-2.2,2.2])for(const dz of [-2.2,2.2])B.box(.6,4.4,.6,-.8+dx,20.4,z+dz,Wd);B.box(5.2,.3,1.1,-.8,22.6,z,'#c9b04a');}
-  for(const [x,z] of [[-12.2,-5],[-12.2,5]]){B.cyl(1.7,1.7,4.6,12,x,20.4,z,'#4f5a3c');for(const y of [18.6,20.4,22.2])B.cyl(1.85,1.85,.35,12,x,y,z,'#2e3326');B.cyl(1.2,1.2,.3,10,x,22.8,z,'#222');}
-  HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
+let HARVCG=null;function harvCargoGeo(){if(!HARVCG){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');HARVCG=B.geo();if(typeof gcKeep==='function')gcKeep(HARVCG);}return HARVCG;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
   // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
@@ -860,7 +768,7 @@ function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B
 // short airborne moment, forward lean and a longer stride. The rifle stays in both hands at low-ready; it only bobs
 // up/down and fore-aft with the steps (chest pitch) - nothing in the upper body sways sideways, and the body never rolls.
 const WQ=new THREE.Quaternion(),WQ2=new THREE.Quaternion();
-function wSet(j,a,y){if(!j)return;WQ.setFromAxisAngle(j.ax,a);if(y){WQ2.setFromAxisAngle(j.up,y);WQ.multiply(WQ2);}{const q=j.b.quaternion,x=q._x,y1=q._y,z=q._z,w=q._w;q.copy(WQ).multiply(j.q0);if(q._x!==x||q._y!==y1||q._z!==z||q._w!==w)WCH++;}}
+function wSet(j,a,y){if(!j)return;WQ.setFromAxisAngle(j.ax,a);if(y){WQ2.setFromAxisAngle(j.up,y);WQ.multiply(WQ2);}j.b.quaternion.copy(WQ).multiply(j.q0);}
 // Side view of one leg (z forward, y up, from the rest leg measured in setupWalk): ankle forward offset and depth below
 // the hip for a thigh angle th (forward +) and knee bend kn.
 function gFz(W,th,kn){return W.hz*Math.cos(th)-W.hy*Math.sin(th)+W.kz*Math.cos(th-kn)-W.ky*Math.sin(th-kn);}
@@ -911,8 +819,8 @@ function postApply(m,ud,e,k,dt,tg,moving,fire){const W=ud.legs;if(!W||!W.uL)retu
 // (Iran, Lebanese Shia), a Kargu-style quadcopter (Turkey) and a small X-frame FPV racer (Ukraine and others).
 // Iran and the two Shia militias fly Shahed-style deltas (stencilled Shahed / Ababil / Qasef), Turkey a Bayraktar-style
 // light-grey drone, the US and Israel an MQ-9 / Hermes-style grey drone, Russia a Lancet-style dark loitering munition,
-// China and Korea a bigger quadcopter, India/Japan/UK/France an MQ-9-style grey drone, Saudi/UAE/Egypt a pale Wing Loong-style one, Pakistan and Ukraine a TB2; everyone else taped-up FPV racers.
-function droneType(fac){return fac==='IR'||fac==='RS'||fac==='DW'?'delta':fac==='TR'||fac==='PK'||fac==='UA'||fac==='KP'?'tb2':fac==='US'||fac==='IL'||fac==='GB'||fac==='FR'||fac==='IN'||fac==='JP'||fac==='SA'||fac==='AE'||fac==='EG'||fac==='CN'?'mq':fac==='RU'?'lancet':fac==='KR'?'kargu':'fpv';}
+// China and Korea a bigger quadcopter, everyone else taped-up FPV racers.
+function droneType(fac){return fac==='IR'||fac==='RS'||fac==='DW'?'delta':fac==='TR'?'tb2':fac==='US'||fac==='IL'?'mq':fac==='RU'?'lancet':fac==='CN'||fac==='KR'?'kargu':'fpv';}
 // Drones are built once per nation and then cloned (shared geometry and materials), so a swarm of dozens appears
 // without a hitch.
 const DPROTO={};
@@ -939,7 +847,7 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
   else if(ty==='tb2'||ty==='mq'){
     // Bayraktar TB2 (light grey, inverted-V tail) / MQ-9-Hermes style (darker grey, bulbous nose, Y tail): long straight
     // wing, slim fuselage, pusher propeller, sensor ball under the nose
-    const mq=ty==='mq',wl=mq&&(T.fac==='SA'||T.fac==='AE'||T.fac==='EG'||T.fac==='CN'),sk=wl?'#cfd0cb':mq?'#8b9196':'#b9bdbf',sk2=wl?'#bcbdb7':mq?'#7a8085':'#a7abad';
+    const mq=ty==='mq',sk=mq?'#8b9196':'#b9bdbf',sk2=mq?'#7a8085':'#a7abad';
     B.cyl(mq?1.2:.95,mq?1.2:.95,9,12,0,0,0,sk,0,0,Math.PI/2);B.sph(mq?1.2:.95,4.4,mq?.15:0,0,sk,mq?1.7:1.9,mq?1.15:1,1);B.cyl(mq?1.2:.95,.35,3.4,10,-6.2,0,0,sk2,0,0,Math.PI/2);B.sph(.62,3.3,-1.15,0,'#2a2c2d');
     const wing=new THREE.Shape();wing.moveTo(1.2,0);wing.lineTo(.9,11);wing.lineTo(-.4,11);wing.lineTo(-.7,0);wing.lineTo(-.4,-11);wing.lineTo(.9,-11);wing.closePath();
     const wg=new THREE.ExtrudeGeometry(wing,{depth:.28,bevelEnabled:true,bevelThickness:.08,bevelSize:.08,bevelSegments:1});wg.rotateX(Math.PI/2);B._p.push({g:wg,m:new THREE.Matrix4().makeTranslation(.3,mq?.25:.75,0),c:lin(sk)});
@@ -949,7 +857,7 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     const disc=new THREE.Mesh(new THREE.CircleGeometry(2.6,20),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-8.2,0,0);yaw.add(disc);}
   else if(ty==='lancet'){
     // Lancet-style loitering munition: dark slim body with two sets of X wings (front and rear), small pusher prop
-    const sk='#9da197',sk2='#6c7067';for(const x of [-3.4,-.4,2.6,5.2])B.cyl(.84,.84,.28,10,x,0,0,'#5d6158',0,0,Math.PI/2);B.cyl(.86,.86,1.1,10,.9,0,0,tc,0,0,Math.PI/2);B.sph(.5,7.6,-.5,0,'#1c1e1d');B.sph(.2,7.95,-.55,0,'#26464f');B.box(1.4,.9,.8,-1.8,.8,0,'#808479');B.cyl(.8,.8,12,10,0,0,0,sk,0,0,Math.PI/2);B.cyl(0,.8,2.2,10,7.1,0,0,sk2,0,0,-Math.PI/2);B.cyl(.8,.4,1.4,10,-6.7,0,0,sk2,0,0,Math.PI/2);B.sph(.35,7.4,-.35,0,'#151515');
+    const sk='#3c403a',sk2='#2f322d';B.cyl(.8,.8,12,10,0,0,0,sk,0,0,Math.PI/2);B.cyl(0,.8,2.2,10,7.1,0,0,sk2,0,0,-Math.PI/2);B.cyl(.8,.4,1.4,10,-6.7,0,0,sk2,0,0,Math.PI/2);B.sph(.35,7.4,-.35,0,'#151515');
     for(const [x,ch,sp] of [[3.2,2.6,3.6],[-4.4,2.8,4.4]])for(let i=0;i<4;i++){const a=Math.PI/4+i*Math.PI/2;B.box(ch,sp,.12,x,Math.cos(a)*(sp/2+.6),Math.sin(a)*(sp/2+.6),sk,a,0,0);}
     B.sph(.16,-4.4,0,5.3,'#2bc24a');B.sph(.16,-4.4,0,-5.3,'#c22a1e');
     const pr=new THREE.Group();const P=Bld();P.box(.25,3.2,.45,0,0,0,dk);pr.add(mesh(P.geo()));pr.position.set(-7.6,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
@@ -1044,11 +952,9 @@ const DECAL={sets:{}};
 function decalSet(k){let S=DECAL.sets[k];if(S)return S;let geo,mat,ro;
   if(k==='blob'){if(!window.BLOBTEX){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,4,32,32,31);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(.6,'rgba(0,0,0,.25)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);window.BLOBTEX=new THREE.CanvasTexture(c);}
     geo=new THREE.PlaneGeometry(1.5,1).rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({map:BLOBTEX,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});ro=1;}
-  else if(k==='lamp'){if(!window.LAMPTEX){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,2,32,32,31);g.addColorStop(0,'rgba(255,238,196,.85)');g.addColorStop(.5,'rgba(255,224,168,.3)');g.addColorStop(1,'rgba(255,220,160,0)');x.fillStyle=g;x.fillRect(0,0,64,64);window.LAMPTEX=new THREE.CanvasTexture(c);}
-    geo=new THREE.PlaneGeometry(1.8,1).rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({map:LAMPTEX,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});ro=1;}
   else if(k==='eye'){geo=spyEyeGeo();mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.92,depthTest:false,depthWrite:false,side:THREE.DoubleSide});ro=6;}
   else{geo=k==='ringS'?new THREE.RingGeometry(.5,.56,28):new THREE.RingGeometry(.36,.41,28);geo.rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.24,depthWrite:false});ro=2;}
-  return DECAL.sets[k]=S={geo,mat,ro,im:null,cap:0,list:new Set(),col:k!=='blob'&&k!=='lamp',night:k==='lamp'};}
+  return DECAL.sets[k]=S={geo,mat,ro,im:null,cap:0,list:new Set(),col:k!=='blob'};}
 // faction kit, ship radars and drone stencils are drawn as instances (one draw call per kit shape for the whole
 // battle, not one per unit): each unit only carries an empty marker whose world matrix feeds the instanced mesh
 function kitMarker(id,g){const k='kit:'+id;let S=DECAL.sets[k];if(!S)S=DECAL.sets[k]={geo:g,mat:kitMat(),ro:0,im:null,cap:0,list:new Set(),col:false};
@@ -1059,44 +965,40 @@ function decal(k,color){const S=decalSet(k),m=new THREE.Object3D();m.name='decal
 function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
     if(S.im&&S.im.parent!==SCN){if(S.im.parent)S.im.parent.remove(S.im);S.im.dispose();S.im=null;S.cap=0;}
     for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible)v=false;q=q.parent;}if(q!==SCN){if((m.userData.off=(m.userData.off||0)+1)>3600)S.list.delete(m);continue;}m.userData.off=0;if(v)n++;}
-    let dk=1;if(S.night){/* vehicle headlights: only drawn in the dark (G.tod / night battles); by day the set costs nothing */dk=typeof G!=='undefined'&&G&&G.todM&&typeof todDark==='function'?todDark():0;if(dk<.3){n=0;if(S.im)S.im.count=0;continue;}S.mat.opacity=Math.min(.55,dk*.55);}
     if(n>S.cap){if(S.im){SCN.remove(S.im);S.im.dispose();}S.cap=Math.max(64,Math.ceil(n*1.5));const im=new THREE.InstancedMesh(S.geo,S.mat,S.cap);im.name='decals_'+k;im.frustumCulled=false;im.renderOrder=S.ro;im.castShadow=im.receiveShadow=false;im.matrixAutoUpdate=false;
       if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));S.im=im;SCN.add(im);}
     if(!S.im)continue;const im=S.im;let i=0;
     for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible){v=false;break;}q=q.parent;}if(!v||q!==SCN)continue;im.setMatrixAt(i,m.matrixWorld);if(S.col&&m.userData.dc)im.setColorAt(i,m.userData.dc);i++;}
-    im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}
-  try{solbFill(!!window.LOADING);}catch(e){console.warn('solbFill',e);}}
+    im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}}
 const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',FR:'#3f4636',DE:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',IQ:'#5f5f3e',GB:'#5a5a3e',AU:'#6a6246',CA:'#434d33',SY:'#5a5a3c',CU:'#2e3a2c'};   // hero squad uniform colours
 function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.kind==='tb2')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='champ')c=Object.assign({},c,{tint:CHAMP_TINT[T.fac]||c.tint});if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
-  if(e.kind==='aa'&&!/Technical/.test(e.s.name||'')&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'aatruck'};
+  if(e.kind==='aa'&&!/Technical/.test(e.s.name||'')&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
   else if(e.kind==='arty'){if(e.s&&e.s.rocket||!MIL_TANK[T.fac]&&!MODELS.proto.tank)c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};else{const tc=MIL_TANK[T.fac]&&MIL_TANK[T.fac].m!=='technical'&&MIL_TANK[T.fac].m!=='toontank'?MIL_TANK[T.fac]:MCFG.tank;c=Object.assign({},tc,{size:tc.size*1.08,extra:'gun'});if(MIL_TANK[T.fac]&&(MIL_TANK[T.fac].m==='technical'||MIL_TANK[T.fac].m==='toontank'))c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};}}
   if(c&&(c.m==='boat'||c.m==='ship')&&T&&T.fac)c=Object.assign({},c,{tint:navyPaint(T.fac,c.m),tk:e.kind==='lander'?.6:.88});
   if(e.kind==='bmt')c={m:truckKey(T.fac),fit:'z',size:36,extra:'bm'};   /* Zolfaghar missile truck: a truck with one big tilted missile */
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
-  if(typeof eastPre==='function')c=eastPre(e,c,T);   /* art-east: RU/CN/KP support-vehicle kits (11e-east.js) */
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
   for(const [px,pz] of sq){const KD=e.kind==='cleric'?(px===sq[0][0]&&pz===sq[0][1]?'ldr':'inf'):e.kind;const VR=e.kind==='spy'||KD==='ldr'?0:Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=KD==='ldr'&&MODELS.proto.sol_m?'sol_m':c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const TK=KD==='ldr'?0:c.m==='soldier'&&!c.tint?[.03,.07,.11][VR%3]/* tint follows the kit variant: 4 looks per kind, not 12, so the shapes can be prepared at load */:c.tk;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,TK);if(!m)return null;m.position.set(-pz,c.dy||0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,KD,SK,VR);else if(e.kind!=='spy')soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),KD);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+(TK||0)+'|'+(T.fac||'')+'|'+KD+'|v'+(SK?VR:0));if(KD==='ldr')m.userData.ldr=1;}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
-  if(e.kind==='dozer'&&c.m!=='truck'){while(yaw.children.length)yaw.remove(yaw.children[0]);const DG=dozerGeo(apaint(T.fac));const dm=mesh(DG);dm.castShadow=true;o.add(dm);o.userData.parts.cargo=dm;}   /* art-west: a code-built armoured bulldozer replaces the blobby scanned mesh */
   if(e.kind==='spy'){const ey=decal('eye');ey.position.y=c.size+7;ey.scale.setScalar(5.2);ey.visible=false;o.add(ey);o.userData.parts.eye=ey;}
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
   {const ring=decal(c.squad?'ringS':'ringV',new THREE.Color(T.color));ring.scale.setScalar(c.size);ring.position.y=1.2;if(!['heli','jet'].includes(e.kind))o.add(ring);o.userData.parts.tring=ring;}
   // soft contact shadow so ground vehicles sit in the terrain instead of floating on it
-  if(T&&e.s&&e.s.dom==='ground'&&!isInf(e.s)){const bs=(c.size||30)*.62,bl=decal('blob');bl.scale.set(bs,1,bs);bl.position.y=.35;yaw.add(bl);{const lp=decal('lamp');lp.scale.set(bs*1.9,1,bs*1.05);lp.position.set(bs*1.35,.5,0);o.add(lp);}}
+  if(T&&e.s&&e.s.dom==='ground'&&!isInf(e.s)){const bs=(c.size||30)*.62,bl=decal('blob');bl.scale.set(bs,1,bs);bl.position.y=.35;yaw.add(bl);}
   const rotary=e.kind==='heli'||e.kind==='airlift'&&/^m_/.test(c.m),ownRotor=rotary?yaw.getObjectByName('main_rotor'):null;if(ownRotor){o.userData.parts.blades=ownRotor;const tr0=yaw.getObjectByName('tail_rotor');if(tr0)o.userData.parts.tailR0=tr0;}
   if(rotary&&!ownRotor){
     // main rotor on a mast just above the cabin roof and a tail rotor on the tail boom, both placed from the model's
     // real bounding box so every nation's helicopter gets correctly sized, visibly spinning rotors
     o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(yaw),ok=isFinite(bb.max.y)&&bb.max.y>2,top=ok?bb.max.y:13,L=ok?Math.max(bb.max.x-bb.min.x,bb.max.z-bb.min.z):50,alongX=!ok||(bb.max.x-bb.min.x)>=(bb.max.z-bb.min.z);
-    const R=Math.max(16,L*.46),bm=rotM('bm',()=>new THREE.MeshStandardMaterial({color:0x1d1f1c,roughness:.6,metalness:.3}));
-    const disc=new THREE.Mesh(rotG('disc',()=>new THREE.CircleGeometry(1,32).rotateX(-Math.PI/2)),rotM('dm',()=>new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.13,depthWrite:false})));disc.scale.set(R,1,R);disc.position.y=top+1.6;o.add(disc);o.userData.parts.rotor=disc;
-    const mast=new THREE.Mesh(rotG('mast',()=>new THREE.CylinderGeometry(.7,.9,2.2,8)),bm);mast.position.y=top+.6;o.add(mast);
-    const bl=new THREE.Group();bl.position.y=top+1.7;for(let k=0;k<4;k++){const b=new THREE.Mesh(rotG('bl',()=>new THREE.BoxGeometry(1,.3,1.5)),bm);b.scale.x=R;b.position.x=R/2;b.rotation.x=.06;const pv=new THREE.Group();pv.rotation.y=k*Math.PI/2;pv.add(b);bl.add(pv);}
-    const hub=new THREE.Mesh(rotG('hub',()=>new THREE.CylinderGeometry(1.3,1.3,1.2,8)),bm);bl.add(hub);bl.traverse(c=>{if(c.isMesh)c.castShadow=true;});o.add(bl);o.userData.parts.blades=bl;
-    const tr=new THREE.Group(),tl=R*.2;for(let k=0;k<2;k++){const b=new THREE.Mesh(rotG('tb',()=>new THREE.BoxGeometry(.9,1,.25)),bm);b.scale.y=tl;b.position.y=tl/2;const pv=new THREE.Group();pv.rotation.z=k*Math.PI;pv.add(b);tr.add(pv);}
-    const tdisc=new THREE.Mesh(rotG('td',()=>new THREE.CircleGeometry(1,16)),rotM('tdm',()=>new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.12,depthWrite:false,side:THREE.DoubleSide})));tdisc.scale.setScalar(tl);tr.add(tdisc);
+    const R=Math.max(16,L*.46),bm=new THREE.MeshStandardMaterial({color:0x1d1f1c,roughness:.6,metalness:.3});
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(R,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.13,depthWrite:false}));disc.position.y=top+1.6;o.add(disc);o.userData.parts.rotor=disc;
+    const mast=new THREE.Mesh(new THREE.CylinderGeometry(.7,.9,2.2,8),bm);mast.position.y=top+.6;o.add(mast);
+    const bl=new THREE.Group();bl.position.y=top+1.7;for(let k=0;k<4;k++){const b=new THREE.Mesh(new THREE.BoxGeometry(R,.3,1.5),bm);b.position.x=R/2;b.rotation.x=.06;const pv=new THREE.Group();pv.rotation.y=k*Math.PI/2;pv.add(b);bl.add(pv);}
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.3,1.2,8),bm);bl.add(hub);bl.traverse(c=>{if(c.isMesh)c.castShadow=true;});o.add(bl);o.userData.parts.blades=bl;
+    const tr=new THREE.Group(),tl=R*.2;for(let k=0;k<2;k++){const b=new THREE.Mesh(new THREE.BoxGeometry(.9,tl,.25),bm);b.position.y=tl/2;const pv=new THREE.Group();pv.rotation.z=k*Math.PI;pv.add(b);tr.add(pv);}
+    const tdisc=new THREE.Mesh(new THREE.CircleGeometry(tl,16),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.12,depthWrite:false,side:THREE.DoubleSide}));tr.add(tdisc);
     if(alongX){tr.position.set(ok?bb.min.x+tl*.9:-24,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,(ok?bb.max.z:2)*.15+1.2);}else{tr.rotation.y=Math.PI/2;tr.position.set((ok?bb.max.x:2)*.15+1.2,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,ok?bb.min.z+tl*.9:-24);}
     o.add(tr);o.userData.parts.tailR=tr;}
   if(e.kind==='jet'){mats();o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(yaw),ok=isFinite(bb.min.x);const tx=ok?bb.min.x+.6:-22,ty=ok?bb.min.y+(bb.max.y-bb.min.y)*.42:1;
@@ -1106,21 +1008,17 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
     let nz=null;{const nk=c.m+'|'+(c.size||0)+'|'+T.fac;nz=JETNZ.get(nk);if(nz===undefined){nz=null;try{if(ok)nz=jetNozzles(o,yaw,bb);}catch(err){}JETNZ.set(nk,nz);}}   /* the nozzle probe (275 ray casts, ~140 ms) runs once per jet model and nation, not for every jet (rangefreeze 2026-11-17) */if(!nz||!nz.length)nz=[{x:tx,y:ty,z:0,r:1.5}];
     const ex=new THREE.Group();ex.name='exhaust';for(const n of nz){const g=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());g.position.set(n.x,n.y,n.z);g.scale.setScalar(n.r);g.userData.r=n.r;g.renderOrder=3;g.frustumCulled=false;ex.add(g);}
     o.add(ex);o.userData.parts.glow=ex;}
-  if(e.s&&e.s.dom==='air'&&!o.userData.mixers&&typeof staticMerge==='function'){const kp=[];for(const k of ['blades','tailR0','tailR','rotor','glow','tring'])if(o.userData.parts[k])kp.push(o.userData.parts[k]);staticMerge(yaw,kp,q=>/rotor|prop|blade/i.test(q.name||''));for(const k of ['blades','tailR','tailR0']){const g=o.userData.parts[k];if(g&&g.isGroup)staticMerge(g,[]);}}
-  if(c.extra==='zu23'){const GM=addonGeo('x_zu23',()=>{const B=Bld(),D='#2a2c28',S='#4f5446';B.box(7,1.6,6,-5,9.6,0,S);B.cyl(1.4,1.6,1.6,10,-5,11,0,D);B.box(4,3.2,4.6,-5,13,0,S);B.box(.4,3,5.4,-3,13.6,0,S);for(const z of [-1.1,1.1]){B.cyl(.32,.32,13,8,1.2,16.2,z,D,0,0,Math.PI/2-.42);B.cyl(.5,.5,1.6,8,-3.2,13.6,z,D,0,0,Math.PI/2-.42);}return B.geo();});const g=mesh(GM);g.castShadow=true;o.add(g);o.userData.parts.turret=g;}
-  if(c.extra==='dshk'){const GM=addonGeo('x_dshk',()=>{const B=Bld();B.cyl(.5,.6,6,8,-6,9,0,'#2b2d2a');B.box(3,1.6,2.2,-6,12.6,0,'#33352f');B.cyl(.35,.35,9,8,-1.5,13,0,'#1e1f1d',0,0,Math.PI/2);B.box(.4,2.2,2.6,-6.8,13.4,0,'#4a4d45');return B.geo();});const g=mesh(GM);g.castShadow=true;o.add(g);}
-  if(c.extra==='aatruck'){const sp=new THREE.Group();sp.add(mesh(aaGeo(afam(T.fac),apaint(T.fac))));sp.position.set(-7,10.4+(c.m==='m_ural'?4.6:0),0);o.add(sp);o.userData.parts.turret=sp;}
-  if(c.extra==='atgm'){const fm=afam(T.fac),rf=roofOf(o,yaw,c.m+'|'+(c.size||0)),sp=new THREE.Group();sp.add(mesh(atgmGeo(fm,apaint(T.fac))));sp.position.set(rf.x,rf.y-.4,0);o.add(sp);o.userData.parts.turret=sp;}
+  if(c.extra==='zu23'){const B=Bld(),D='#2a2c28',S='#4f5446';B.box(7,1.6,6,-5,9.6,0,S);B.cyl(1.4,1.6,1.6,10,-5,11,0,D);B.box(4,3.2,4.6,-5,13,0,S);B.box(.4,3,5.4,-3,13.6,0,S);for(const z of [-1.1,1.1]){B.cyl(.32,.32,13,8,1.2,16.2,z,D,0,0,Math.PI/2-.42);B.cyl(.5,.5,1.6,8,-3.2,13.6,z,D,0,0,Math.PI/2-.42);}const g=mesh(B.geo());g.castShadow=true;o.add(g);o.userData.parts.turret=g;}
+  if(c.extra==='dshk'){const B=Bld();B.cyl(.5,.6,6,8,-6,9,0,'#2b2d2a');B.box(3,1.6,2.2,-6,12.6,0,'#33352f');B.cyl(.35,.35,9,8,-1.5,13,0,'#1e1f1d',0,0,Math.PI/2);B.box(.4,2.2,2.6,-6.8,13.4,0,'#4a4d45');const g=mesh(B.geo());g.castShadow=true;o.add(g);}
   if(c.extra==='samtruck'){const pg=PROCB.samSite(),sp=new THREE.Group(),hm=mesh(pg[1]);hm.scale.setScalar(.9);sp.add(hm);sp.position.set(-7,10.4,0);o.add(sp);o.userData.parts.turret=sp;}
-  if(c.extra==='bm'){const GM=addonGeo('x_bm',()=>{const B=Bld();B.cyl(1.7,1.7,24,10,0,0,0,'#d6d9d4',0,0,Math.PI/2);B.cyl(0,1.7,7,10,15.5,0,0,'#b53a2e',0,0,-Math.PI/2);B.box(3,.4,6,-11,0,0,'#7a7f7b');B.box(3,6,.4,-11,0,0,'#7a7f7b');B.box(8,1.6,3.4,-2,-3.2,0,'#3a3d36');return B.geo();});const g=mesh(GM);g.position.set(-5,13,0);g.rotation.z=.62;o.add(g);o.userData.parts.turret=g;}
-  if(c.extra==='mlrs'){const g=new THREE.Group(),G2=rackGeo(afam(T.fac),apaint(T.fac)),bm=mesh(G2[0]),m=mesh(G2[1]);m.position.y=1.6;m.rotation.z=.32;g.add(bm);g.add(m);g.position.set(-6,8.8+(c.m==='m_ural'?4.6:0),0);o.add(g);o.userData.parts.turret=g;}
-  if(c.extra==='crane'){const CG=addonGeo('x_crane',()=>{const B=Bld(),Y='#d9a21f',D='#3a3a34';B.box(9,4,10,-7,9,0,Y);B.cyl(2.2,2.6,3,10,-7,12,0,D);B.box(2,2,2,-7,14,0,D);const A=Bld();A.box(26,2.2,2.2,13,0,0,Y);A.box(2,6,1,25,-3,0,D);A.box(1.2,1.2,1.2,25,-6.5,0,'#222');
-      B.box(2.4,6.5,20,17,3.2,0,Y);B.box(1,1,18,18.6,0.6,0,D);B.box(5,1.2,1.2,14.5,4.2,-6,D);B.box(5,1.2,1.2,14.5,4.2,6,D);B.box(1.6,1.6,1.6,1,17.5,-4,'#f0a020');return [B.geo(),A.geo()];});
-    const g=new THREE.Group();const arm=mesh(CG[1]);arm.rotation.z=.42;g.add(arm);g.position.set(-7,14,0);g.rotation.y=.5;o.add(g);o.userData.parts.crane=g;o.add(mesh(CG[0]));}
-  if(c.extra==='dish'){const EG=ewGeo(afam(T.fac),apaint(T.fac),e.kind==='cbr'?'cbr':'ew'),g=new THREE.Group();const lf=c.m==='m_ural'?4.6:0,sh=mesh(EG[0]);sh.position.y=lf;g.add(mesh(EG[1]));g.position.set(-6,20+lf,0);o.add(sh);o.add(g);o.userData.parts.crane=g;}
-  if(c.extra==='mg'){const GM=addonGeo('x_mg',()=>{const B=Bld();B.box(3,3,3,-4,11,0,'#2c2e29');B.box(12,1.2,1.2,2,12,0,'#1e1f1b');B.box(1,6,8,-8,13,0,'#3a3a34');return B.geo();});o.add(mesh(GM));}
-  if(c.extra==='mortar'){const GM=addonGeo('x_mortar',()=>{const B=Bld();B.cyl(.9,1.1,8,8,4,3,6,'#2c2e29',0,0,.6);B.box(4,.6,4,6,0,6,'#3a3a34');return B.geo();});o.add(mesh(GM));}
-  if(c.extra==='gun'){const GM=addonGeo('x_gun',()=>{const B=Bld();B.cyl(1.1,1.4,30,10,15,0,0,'#3b3e36',0,0,Math.PI/2);B.cyl(1.7,1.7,3,10,29,0,0,'#2c2e29',0,0,Math.PI/2);B.box(7,4,6,1,0,0,'#4a4d44');return B.geo();});const m=mesh(GM);m.position.set(4,11.5,0);m.rotation.z=.12;o.add(m);}
+  if(c.extra==='bm'){const B=Bld();B.cyl(1.7,1.7,24,10,0,0,0,'#d6d9d4',0,0,Math.PI/2);B.cyl(0,1.7,7,10,15.5,0,0,'#b53a2e',0,0,-Math.PI/2);B.box(3,.4,6,-11,0,0,'#7a7f7b');B.box(3,6,.4,-11,0,0,'#7a7f7b');B.box(8,1.6,3.4,-2,-3.2,0,'#3a3d36');const g=mesh(B.geo());g.position.set(-5,13,0);g.rotation.z=.62;o.add(g);o.userData.parts.turret=g;}
+  if(c.extra==='mlrs'){const g=new THREE.Group(),G2=mlrsGeo(),bm=mesh(G2[0]),m=mesh(G2[1]);m.position.y=1.6;m.rotation.z=.32;g.add(bm);g.add(m);g.position.set(-6,8.8,0);o.add(g);o.userData.parts.turret=g;}
+  if(c.extra==='crane'){const B=Bld(),Y='#d9a21f',D='#3a3a34';B.box(9,4,10,-7,9,0,Y);B.cyl(2.2,2.6,3,10,-7,12,0,D);B.box(2,2,2,-7,14,0,D);const g=new THREE.Group();const arm=mesh((()=>{const A=Bld();A.box(26,2.2,2.2,13,0,0,Y);A.box(2,6,1,25,-3,0,D);A.box(1.2,1.2,1.2,25,-6.5,0,'#222');return A.geo();})());arm.rotation.z=.42;g.add(arm);g.position.set(-7,14,0);g.rotation.y=.5;o.add(g);o.userData.parts.crane=g;
+    B.box(2.4,6.5,20,17,3.2,0,Y);B.box(1,1,18,18.6,0.6,0,D);B.box(5,1.2,1.2,14.5,4.2,-6,D);B.box(5,1.2,1.2,14.5,4.2,6,D);B.box(1.6,1.6,1.6,1,17.5,-4,'#f0a020');o.add(mesh(B.geo()));}
+  if(c.extra==='dish'){const B=Bld();B.box(12,5,10,-6,9,0,'#4f5448');B.cyl(.8,.8,9,6,-6,15,0,'#2c2e29');const g=new THREE.Group();const d=mesh((()=>{const A=Bld();A.cyl(9,1,2,14,0,0,0,'#b8bcb4',Math.PI/2.4,0,0);A.cyl(.6,.6,6,6,0,1,3,'#2c2e29',Math.PI/2.4,0,0);return A.geo();})());g.add(d);g.position.set(-6,20,0);o.add(mesh(B.geo()));o.add(g);o.userData.parts.crane=g;}
+  if(c.extra==='mg'){const B=Bld();B.box(3,3,3,-4,11,0,'#2c2e29');B.box(12,1.2,1.2,2,12,0,'#1e1f1b');B.box(1,6,8,-8,13,0,'#3a3a34');o.add(mesh(B.geo()));}
+  if(c.extra==='mortar'){const B=Bld();B.cyl(.9,1.1,8,8,4,3,6,'#2c2e29',0,0,.6);B.box(4,.6,4,6,0,6,'#3a3a34');o.add(mesh(B.geo()));}
+  if(c.extra==='gun'){const B=Bld();B.cyl(1.1,1.4,30,10,15,0,0,'#3b3e36',0,0,Math.PI/2);B.cyl(1.7,1.7,3,10,29,0,0,'#2c2e29',0,0,Math.PI/2);B.box(7,4,6,1,0,0,'#4a4d44');const m=mesh(B.geo());m.position.set(4,11.5,0);m.rotation.z=.12;o.add(m);}
   if(e.kind==='tank'&&c.m!=='technical'&&!/^m_/.test(c.m)){const TB=tankBox(c.m,yaw);if(TB){const B=Bld(),{L,W,H,rear,ax,fwd,y0}=TB;
     // positions in "hull frame": u along hull (+u = toward gun), v across, h up
     const P=(u,v)=>ax==='x'?[u,v]:[v,u];const add=(f,u,h,v)=>{const [x,z]=P(u,v);f(x,h+y0,z);};
@@ -1135,15 +1033,8 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
      fl.geometry.translate(-H*.375,0,0);fl.position.set(x,y0+H*.95+H*.82,z);fl.rotation.y=ax==='x'?(fwd>0?0:Math.PI):(fwd>0?-Math.PI/2:Math.PI/2);yaw.add(fl);o.userData.parts.pennant=fl;fl.userData.base=Float32Array.from(fl.geometry.attributes.position.array);}
     
     const m=mesh(B.geo());yaw.add(m);}}
-  if(e.kind==='ammot'){const GM=addonGeo('x_ammot',()=>{const B=Bld(),G='#59603f',Gd='#464c31',Y='#c9b04a',Br='#a98b3e',Sh='#6b6f58';
-    /* art-west: stacked olive ammunition crates with lids, handles and yellow stencil bands, a rack of artillery shells and a tarp roll */
-    B.box(15,.8,14,-6,17.6,0,'#5a4630');
-    for(const [x,z] of [[-11,-3.6],[-3,-3.6],[-11,3.6],[-3,3.6]]){B.box(7.2,3.4,6.4,x,19.7,z,G);B.box(7.4,.5,6.6,x,21.5,z,Gd);B.box(.6,.6,3,x,22,z,'#2a2b25');B.box(7.3,.35,.9,x,20.1,z,Y);}
-    for(const [x,z] of [[-10,0],[-4,0]]){B.box(7.2,3.4,6.4,x,23.2,z,G);B.box(7.4,.5,6.4,x,25,z,Gd);B.box(.6,.6,3,x,25.5,z,'#2a2b25');B.box(7.3,.35,.9,x,23.6,z,Y);}
-    for(let i=0;i<4;i++)for(let k=0;k<2;k++){const z=-5.2+i*3.5,y=20.4+k*1.8;B.cyl(.95,.95,7,8,3.4,y,z,Sh,0,0,Math.PI/2);B.cyl(.4,.95,1.4,8,7.6,y,z,Br,0,0,-Math.PI/2);B.cyl(.98,.98,.5,8,4.6,y,z,Y,0,0,Math.PI/2);}
-    B.box(15,.7,.7,-6,22.4,-6.9,'#2a2b25');return B.geo();});const cg=mesh(GM);o.add(cg);o.userData.parts.cargo=cg;}
+  if(e.kind==='ammot'){const B=Bld();B.box(17,8,15,-6,22,0,'#5d6048');B.box(18,1,16,-6,26.6,0,'#4c5039');for(const z of [-5,0,5])B.box(3,3,3,-15.5,20,z,'#8a6a3a');B.box(7,4,6,5,21,0,'#8a6a3a');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
   if(e.kind==='harv'){const cg=mesh(harvCargoGeo());o.add(cg);o.userData.parts.cargo=cg;}
-  try{eastKit(e,c,o,yaw,T);}catch(err){console.warn('eastKit',err);}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}
 // polishlooks: rocket truck launcher = an open BM-21/Fajr-style tube pack (4 x 10 tubes with dark muzzles, side plates,
@@ -1158,96 +1049,6 @@ function mlrsGeo(){if(MLRSG)return MLRSG;const A=Bld(),B=Bld(),OL='#525846',OD='
   B.box(L*.92,.35,w+2*R+.9,-.2,.25,0,'#3d4134');B.box(L*.92,1.1,.35,-.2,.8,-w/2-R-.45,OD);B.box(L*.92,1.1,.35,-.2,.8,w/2+R+.45,OD);
   B.box(1.2,1.2,w*.5,-L/2+.6,-.4,0,D);B.cyl(.35,.35,.8,6,-L/2-.1,1.1+hh*.5,-w/2+.8,D,0,0,Math.PI/2);
   return MLRSG=[A.geo(),B.geo()];}
-// PACK looks7: distinct add-ons on the nation's truck, one look per family (West / East / Shia technical-style / Regional): anti-air turret, rocket-tube rack,
-// EW mast and antennas, anti-tank launcher. Every set is merged per material (vertex colours on the shared standard material), built once per family and
-// paint and shared by all vehicles, so the draw calls stay what they were (AA 1, rack 2, EW 2, ATGM 1) and no new shader program is needed.
-const AFAM={US:'W',GB:'W',FR:'W',DE:'W',IL:'W',UA:'W',RU:'E',CN:'E',KP:'E',IR:'S',RS:'S',DW:'S',RV:'S',OB:'S',IN:'R',JP:'R',KR:'R',PK:'R',SA:'R',AE:'R',TR:'R',EG:'R'};
-function afam(f){return AFAM[f]||'W';}
-function apaint(f){const rk=RMAP.harv&&RMAP.harv[f],t=rk&&RMOD[rk]&&RMOD[rk].tint;return t||'#5a5f4a';}
-function ashade(h,f){const n=parseInt(h.slice(1),16),r=Math.min(255,Math.round((n>>16&255)*f)),g=Math.min(255,Math.round((n>>8&255)*f)),b=Math.min(255,Math.round((n&255)*f));return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);}
-const ADDG=new Map();
-function addonGeo(key,fn){let g=ADDG.get(key);if(!g){g=fn();ADDG.set(key,g);if(typeof gcKeep==='function')for(const x of (Array.isArray(g)?g:[g]))gcKeep(x);}return g;}   /* shared by every unit that carries it: never freed by the GPU clean-up */
-
-/* art-west: armoured combat dozer, built once per paint and shared by every unit: track frames with grousers and sprockets, hull, hood, glazed cab with roof, exhaust, blade on push arms, rear ripper (+x = forward) */
-function dozerGeo(col){return addonGeo('dozer'+col,()=>{const B=Bld(),P=col,Pd=ashade(col,.7),D='#2b2b27',Dk='#1c1c1a',Gl='#26343a',Ste='#4a4d46';
-  for(const z of [-7.2,7.2]){B.box(26,5,4.4,-1,4.4,z,D);B.cyl(3.6,3.6,4.4,14,-13,5,z,Dk,Math.PI/2);B.cyl(3.6,3.6,4.4,14,11.5,5,z,Dk,Math.PI/2);B.cyl(1.6,1.6,4.8,10,-13,5,z,Ste,Math.PI/2);B.cyl(1.6,1.6,4.8,10,11.5,5,z,Ste,Math.PI/2);
-    for(let i=0;i<13;i++){B.box(1.2,.7,4.9,-12+i*1.9,1.8,z,Dk);B.box(1.2,.7,4.9,-12+i*1.9,7.1,z,Dk);}
-    for(let i=0;i<5;i++)B.cyl(1.7,1.7,4.7,8,-9+i*4.6,3.2,z,Ste,Math.PI/2);B.box(24,.6,5,-1,7.5,z,Pd);}
-  B.box(20,5.5,10.5,-1,9.2,0,P);B.box(11,4,9,7.5,12.6,0,P);B.box(11.4,.8,9.4,7.5,14.8,0,Pd);for(let i=0;i<5;i++)B.box(.5,.5,7,12.7,9.6+i*.9,0,Dk);
-  B.box(8,7.4,8.6,-5,15.4,0,P);B.box(8.3,5,8.9,-5,16.2,0,Gl);B.box(9.6,.9,10,-5,19.7,0,Pd);B.box(.6,4.6,.6,-8.8,17,-4,Ste);B.box(.6,4.6,.6,-8.8,17,4,Ste);
-  B.cyl(.5,.6,6,8,8.6,17.4,-3.4,D);B.cyl(.7,.7,.5,8,8.6,20.5,-3.4,Dk);B.box(.5,.5,2,11,15.1,-4.2,'#e8e0b0');B.box(.5,.5,2,11,15.1,4.2,'#e8e0b0');
-  B.box(2.8,8.4,23,19.5,6.8,0,P);B.box(2.4,1.2,23.4,19.2,11.4,0,Pd);B.box(1.6,1.2,23,20.8,2.4,0,Ste);B.box(.6,6.5,1.2,21.2,7,-6,Pd);B.box(.6,6.5,1.2,21.2,7,6,Pd);
-  for(const z of [-9.5,9.5]){B.box(11,1.7,1.9,13,5.6,z,Ste);B.box(2,2.6,2.2,17.5,6,z,Dk);}
-  B.box(4,6,9,-14.3,8.5,0,Pd);for(const z of [-3,0,3])B.box(1.4,5,1,-17.4,5.4,z,Ste);B.box(1.6,1.2,10,-16.6,8.6,0,Ste);
-  return B.geo();});}
-// a tube of length L from (x0,y0) at elevation a (rad) along +x, with a dark muzzle
-function atube(B,x0,y0,z,L,r,a,col,mz){const ca=Math.cos(a),sa=Math.sin(a);B.cyl(r,r,L,8,x0+L/2*ca,y0+L/2*sa,z,col,0,0,a-Math.PI/2);if(mz)B.cyl(r*.72,r*.72,.35,8,x0+(L+.05)*ca,y0+(L+.05)*sa,z,mz,0,0,a-Math.PI/2);}
-const AK='#24261f',AM='#0c0c0b';
-// anti-air turret, local origin on the truck bed, guns/missiles along +x (turns as one mesh)
-function aaGeo(fam,col){return addonGeo('aa'+fam+col,()=>{const B=Bld(),P=col,Dk=ashade(col,.55),Lt=ashade(col,1.25);
-  if(fam==='E'){// Tunguska / Pantsir type: twin 30 mm guns, missile tubes either side, search radar on a mast
-   B.cyl(3.8,4.2,1,14,0,.5,0,Dk);B.box(6.4,3.6,7.2,-.4,2.8,0,P);B.box(2.6,1.6,5.4,-3.6,5.2,0,Dk);
-   for(const s of [-1,1]){atube(B,.8,3.6,s*3.9,10.5,.36,.3,AK,AM);B.box(3,2,1.6,0,3.4,s*3.9,Dk);for(const h of [0,1])atube(B,-3.4,5.5+h*1.1,s*2.2,6.2,.55,.22,Lt,AM);}
-   B.cyl(.35,.35,2.4,6,-4,7.6,0,AK);B.box(.5,2.6,4.6,-4,9.4,0,Lt,0,0,.12);return B.geo();}
-  if(fam==='S'){// ZU-23 type twin barrels on a pedestal behind a gun shield, ammo boxes either side
-   B.cyl(1.2,1.5,2.4,8,0,1.2,0,AK);B.cyl(2.6,2.6,.4,12,0,2.5,0,Dk);B.box(3.4,1.2,3.4,0,2.8,0,Dk);
-   for(const z of [-.95,.95]){atube(B,.4,3.7,z,10,.42,.6,AK,AM);B.cyl(.62,.62,2.2,8,3.3,5.6,z,Lt,0,0,.6-Math.PI/2);B.cyl(.7,.7,.5,8,.2,3.5,z,Dk,Math.PI/2);}
-   B.box(.5,3.6,4.8,2.3,4.7,0,P,0,0,-.22);B.box(.6,.6,5.2,2.5,6.7,0,Dk,0,0,-.22);for(const z of [-2.2,2.2])B.box(.5,.5,.5,2.1,5,z,Lt);
-   B.box(2,1.6,1.4,-1.8,3.5,2.4,Dk);B.box(2,1.6,1.4,-1.8,3.5,-2.4,Dk);B.cyl(.7,.7,.4,8,-1.8,4.5,2.4,AK);B.cyl(.7,.7,.4,8,-1.8,4.5,-2.4,AK);
-   B.box(1.5,.5,1.5,-2.2,2.4,0,AK);B.box(1.4,.35,1.4,-3.2,3.6,0,AK);B.box(.4,2.2,.4,-3.2,2.5,0,Dk);B.box(.3,.3,2,-.4,4.3,2.3,AK);return B.geo();}
-  if(fam==='R'){// box-canister missile launcher: four angled square canisters and a small radar disc
-   B.cyl(3.6,4,1,14,0,.5,0,Dk);B.box(5.2,3,5.6,-.6,2.6,0,P);
-   for(const s of [-1,1])for(const h of [0,1]){const y=4.6+h*1.9;B.box(8,1.7,1.7,1.6,y,s*3.6,Lt,0,0,.5);B.box(.4,1.5,1.5,5.2,y+1.7,s*3.6,AM,0,0,.5);}
-   B.cyl(.35,.35,2.2,6,-3.6,5.8,0,AK);B.cyl(2.2,2.2,.4,12,-3.6,7.2,0,Lt,.5,0,0);return B.geo();}
-  // West, Avenger type: two four-tube missile pods either side of a small turret, a .50 gun on top
-  B.cyl(3.6,4,1,14,0,.5,0,Dk);B.box(5.6,3.4,5,-.5,2.7,0,P);B.box(2.6,1.6,2.6,-1.6,5.2,0,Dk);
-  for(const s of [-1,1]){B.box(6.6,2.6,2.4,1.2,5.4,s*3.9,Dk,0,0,.4);for(const h of [0,1])for(const k of [0,1])atube(B,-1.6,4.3+h*1.1,s*(3.2+k*1.5),7,.55,.4,Lt,AM);}
-  atube(B,0,6.4,0,6,.28,.1,AK,AM);B.box(1.6,1,1.6,-.6,6.1,0,Dk);return B.geo();});}
-// rocket-tube rack: [turntable base, tube pack]; the pack pivots on its middle, tubes along +x, like mlrsGeo
-function rackGeo(fam,col){if(fam==='E')return mlrsGeo();return addonGeo('rk'+fam+col,()=>{const A=Bld(),B=Bld(),P=col,Dk=ashade(col,.6),Lt=ashade(col,1.2);
-  A.cyl(4.2,4.6,1.2,16,0,.2,0,'#3c4036');A.box(9,1.1,9,0,-.6,0,'#41463a');A.box(2.4,2.6,2.2,3.4,1.6,0,Dk);A.box(1.6,1.2,3.4,-3.2,1,3.6,Dk);
-  if(fam==='W'){// HIMARS / M270 type: one closed launcher pod, six square tube ends
-   B.box(14,4.6,6.2,0,2.2,0,P);B.box(14.4,.5,6.6,0,4.7,0,Dk);B.box(.5,4.8,6.4,7.1,2.2,0,Dk);
-   for(const r of [0,1])for(const c of [-1,0,1])B.box(.4,1.7,1.7,7.2,1.2+r*2.1,c*1.95,AM);B.box(1.4,1.4,6,-7.2,1.2,0,Dk);return [A.geo(),B.geo()];}
-  if(fam==='S'){// Grad / Fajr type truck rack: two rows of six open round tubes on a plain cradle
-   const NC=6,S=1.75,L=13.5,w=(NC-1)*S;for(let i=0;i<2;i++)for(let j=0;j<NC;j++){const y=1.3+i*S,z=-w/2+j*S;B.cyl(.78,.78,L,8,0,y,z,(i+j)%2?Lt:P,0,0,Math.PI/2);B.cyl(.6,.6,.35,8,L/2+.02,y,z,AM,0,0,Math.PI/2);}
-   for(const x of [-L*.36,L*.3]){B.box(.6,3.9,.3,x,2.2,-w/2-1,Dk);B.box(.6,3.9,.3,x,2.2,w/2+1,Dk);B.box(.6,.3,w+2,x,4.2,0,Dk);}B.box(L*.95,.4,w+2,0,.2,0,Dk);B.box(2,1.2,w+2.4,-L*.5,1.8,0,Dk);B.box(.5,2.8,w+2.2,L*.5+.1,2,0,P,0,0,.1);for(const z of [-w/2,w/2])B.cyl(.2,.2,2.4,5,-L*.5-1,3.4,z,AK);return [A.geo(),B.geo()];}
-  // Regional: two side-by-side pods of three by three round tubes in an open frame
-  for(const s of [-1,1])for(let i=0;i<3;i++)for(let j=0;j<3;j++){const y=1.2+i*1.4,z=s*3+(j-1)*1.4;B.cyl(.62,.62,12.5,8,0,y,z,(i+j)%2?Lt:P,0,0,Math.PI/2);B.cyl(.46,.46,.35,8,6.3,y,z,AM,0,0,Math.PI/2);}
-  for(const s of [-1,1])for(const x of [-4,3.6]){B.box(.5,4.4,.3,x,2.4,s*3-2.2,Dk);B.box(.5,4.4,.3,x,2.4,s*3+2.2,Dk);}B.box(12.6,.4,9,0,.2,0,Dk);return [A.geo(),B.geo()];});}
-// EW / counter-battery truck: [static shelter + masts, turning antenna]; the turning part sits at (-6,20,0) like the old dish
-function ewGeo(fam,col,kind){return addonGeo('ew'+fam+col+kind,()=>{const B=Bld(),A=Bld(),P=col,Dk=ashade(col,.55),Lt='#b8bcb4';
-  if(kind==='cbr'){B.box(12,5,10,-6,9,0,Dk);B.box(2,2,2,-6,12.4,0,AK);A.box(.8,5.6,8.4,0,0,0,Lt);A.box(.5,5.2,8,-.7,0,0,Dk);A.cyl(.6,.6,3,6,0,-3.6,0,AK);return [B.geo(),A.geo()];}
-  if(fam==='E'){// big shelter with a folded lattice mast, four-panel antenna on top
-   B.box(14,6,10,-6,9.4,0,P);B.box(14.4,.5,10.4,-6,12.6,0,Dk);for(const z of [-1.2,1.2])B.cyl(.28,.28,12,5,-11,19,z,AK);for(let i=0;i<4;i++)B.box(.25,.25,3,-11,14+i*2.6,0,AK);
-   A.cyl(.6,.6,5,6,0,-2.4,0,AK);for(const z of [-2.6,-.9,.9,2.6]){A.box(.4,4.4,1.3,0,1.2,z,Lt);}return [B.geo(),A.geo()];}
-  if(fam==='S'){// open bed rack: radio boxes, three whips of different heights, a small dish on a pole
-   B.box(11,.6,9,-6,7.4,0,Dk);B.box(4,2.4,3.4,-9,9,2.4,P);B.box(4,2.4,3.4,-9,9,-2.4,Dk);B.box(3,1.8,3,-3,8.7,-2.6,AK);
-   for(const [x,z,h] of [[-11,4,9],[-11,-4,12],[-2,3.6,7]])B.cyl(.14,.14,h,4,x,7.7+h/2,z,AK);
-   A.cyl(.5,.5,4,6,0,-1.6,0,AK);A.cyl(3.6,.8,1.1,12,0,1.6,0,Lt,Math.PI/2.4,0,0);return [B.geo(),A.geo()];}
-  if(fam==='W'){// shelter with a telescoping mast carrying yagi bars, two whips
-   B.box(12,5.4,10,-6,9.2,0,P);B.box(12.4,.5,10.4,-6,12,0,Dk);B.cyl(.55,.7,11,6,-10,17.5,0,AK);for(const y of [15,18])B.box(.3,.3,5,-10,y,0,Lt);B.cyl(.14,.14,9,4,-2,16.5,4,AK);B.cyl(.14,.14,7,4,-2,15.5,-4,AK);
-   A.cyl(.4,.4,4,6,0,-2,0,AK);A.cyl(.3,.3,9,6,0,.2,0,Lt,0,0,Math.PI/2);for(let i=0;i<5;i++)A.box(.25,3.6-i*.4,.25,-3.2+i*1.6,.2,0,Lt);return [B.geo(),A.geo()];}
-  // Regional: shelter and the big parabolic dish
-  B.box(12,5,10,-6,9,0,Dk);B.cyl(.8,.8,9,6,-6,15,0,AK);A.cyl(9,1,2,14,0,0,0,Lt,Math.PI/2.4,0,0);A.cyl(.6,.6,6,6,0,1,3,AK,Math.PI/2.4,0,0);return [B.geo(),A.geo()];});}
-// anti-tank launcher on the carrier's roof, local origin on the roof, tubes along +x (turns as one mesh)
-// Rotor parts of a helicopter/airlifter without its own rotor node: one shared geometry and material per size, never one per unit
-// (a wave of 6 made ~240 GPU buffers in one frame: rangefreeze 2026-11-19); gcKeep so the clean-up never frees them
-const ROTC={};function rotG(k,f){return ROTC[k]||(ROTC[k]=gcKeep(f()));}function rotM(k,f){return ROTC['m'+k]||(ROTC['m'+k]=f());}
-function atgmGeo(fam,col){return addonGeo('at'+fam+col,()=>{const B=Bld(),P=col,Dk=ashade(col,.55),Lt=ashade(col,1.25);
-  if(fam==='E'){// Kornet type: two tubes on a pedestal, sight box on the side
-   B.cyl(.5,.6,2.2,6,0,1.1,0,AK);B.box(2,1.2,2.4,0,2.6,0,Dk);for(const z of [-.8,.8])atube(B,-1,3.6,z,7.5,.62,.12,P,AM);B.box(1.6,1.2,1.2,.6,4.6,1.7,AK);return B.geo();}
-  if(fam==='S'){// Konkurs-on-a-tripod type: legs, one canister, sight
-   for(const [x,z] of [[-1.4,1.4],[-1.4,-1.4],[1.4,0]]){B.cyl(.2,.1,2.6,5,x,1.2,z,AK,0,0,0);B.box(.9,.25,.9,x,.1,z,Dk);}B.box(1.6,.8,1.6,0,2.6,0,Dk);B.cyl(.5,.5,1,8,0,3,0,AK);
-   atube(B,-1.2,3.4,0,6.4,.55,.1,P,AM);atube(B,-1.2,3.4,1.4,5.4,.4,.1,Lt,AM);B.box(1.2,.9,.9,-.4,4.3,.9,AK);B.box(.9,.7,.7,-1.8,4,-.8,Dk);B.box(.3,.3,1.4,-1.2,2.8,-1.4,'#6a5a3a');return B.geo();}
-  if(fam==='R'){// Spike type: four-canister box launcher on a short arm
-   B.cyl(.5,.6,1.6,6,0,.8,0,AK);B.box(3.6,.6,3.6,0,1.9,0,Dk);for(const z of [-.9,.9])for(const h of [0,1])B.box(6,1.5,1.5,.8,3.2+h*1.7,z,P,0,0,.14);B.box(1.4,1.1,1.1,-2.4,4.6,1,AK);return B.geo();}
-  // West, TOW type: boxy two-tube launcher raised on a swing arm
-  B.cyl(.5,.6,1.8,6,0,.9,0,AK);B.box(1.8,1,1.8,0,2.1,0,Dk);B.box(5.4,1.8,3,.6,3.4,0,P,0,0,.18);for(const z of [-.8,.8])atube(B,-.6,3.4,z,6.4,.68,.18,Lt,AM);B.box(1.1,1,1.1,-1.8,4.6,0,AK);return B.geo();});}
-const ADDK_ATGM=new Map();
-// roof height / rear of a carrier model (cached per model and size) so the launcher sits on the real roof
-function roofOf(o,yaw,key){let r=ADDK_ATGM.get(key);if(!r){o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(yaw);r=isFinite(bb.max.y)&&bb.max.y>2?{y:bb.max.y,x:bb.min.x+(bb.max.x-bb.min.x)*.4}:{y:10,x:-3};ADDK_ATGM.set(key,r);}return r;}
-function addonWarm(fs){for(const f of (fs&&fs.length?fs:Object.keys(AFAM))){const c=apaint(f);aaGeo(AFAM[f],c);rackGeo(AFAM[f],c);ewGeo(AFAM[f],c,'ew');atgmGeo(AFAM[f],c);}ewGeo('W','#555555','cbr');ewGeo('W','#5a5f4a','cbr');}
 // polishlooks: the Defense Gun and the anti-air missile launcher (site + truck) are code-built from real silhouettes
 // instead of the old blocky low-poly models: a concrete emplacement with a sloped-armour gun turret (long barrel with
 // fume extractor and muzzle brake, mantlet, coax and roof MG, cupola, sight, smoke dischargers, antenna), and a
@@ -1465,34 +1266,6 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     for(const sd of [-1,1])for(let i=0;i<3;i++){const sb=propObj('sandbag',-h*.5+i*h*.42,sd*h*.97,0,o);if(sb)sb.position.y=2.4;}
     {const tk=truckKey(T.fac),ct=MODELS.proto[tk]?instModel(tk,{color:'#66694f'},'z',24,1,.7):null;if(ct){ct.position.set(h*.1,0,-h*1.35);ct.rotation.y=Math.PI*.5;ct.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});o.add(ct);B.cyl(.45,.45,5,6,h*.1-3,16,-h*1.35,'#33362e');B.cyl(2.8,.35,.8,14,h*.1-3,19,-h*1.35,'#7b8077',0,0,Math.PI/2*.8);const g=mesh(B.geo());g.castShadow=true;o.add(g);}}}
   return true;}
-/* ---------- Static merge (view only): one mesh per material instead of dozens ----------
-   A modelled building is ~55 meshes and a helicopter ~9, each one a draw call in every pass (depth, shadow, colour). After the object is
-   fully built, every plain mesh below `root` that never moves on its own is baked (its matrix relative to root applied to a copy of its
-   geometry) into one mesh per material + shadow flags. Parts the game animates (`keep`: flag, dish, rotors, crane ...), skinned, instanced,
-   transparent, multi-material, morphed or vertex-animated meshes stay as they are. Same materials, same picture; the merged geometry is the
-   object's own and is freed with it (gpuGc). */
-function staticMerge(root,keep,skip){try{
-  if(!root||root.userData.smerged)return 0;root.userData.smerged=1;root.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(root.matrixWorld).invert();
-  const kp=new Set();for(const k of keep||[])if(k)kp.add(k);const groups=new Map();
-  const blocked=q=>{for(let p=q;p&&p!==root;p=p.parent){if(kp.has(p)||(skip&&skip(p)))return true;if(!p.visible)return true;}return false;};
-  root.traverse(q=>{if(q===root||!q.isMesh||q.isSkinnedMesh||q.isInstancedMesh||!q.visible)return;const m=q.material,g=q.geometry;
-    if(!m||Array.isArray(m)||m.visible===false||!g||!g.attributes||!g.attributes.position||g.morphAttributes&&Object.keys(g.morphAttributes).length||g.attributes.tangent)return;
-    if(q.renderOrder||q.layers.mask!==1||q.userData.base||q.userData.dmg||q.customDepthMaterial||q.customDistanceMaterial||q.onBeforeRender!==THREE.Object3D.prototype.onBeforeRender)return;
-    if(blocked(q))return;const key=m.uuid+'|'+(q.castShadow?1:0)+(q.receiveShadow?1:0)+'|'+(q.frustumCulled?1:0)+'|'+Object.keys(g.attributes).sort().join(',')+'|'+(m.side);
-    let a=groups.get(key);if(!a)groups.set(key,a={m,cs:q.castShadow,rs:q.receiveShadow,fc:q.frustumCulled,list:[]});a.list.push(q);});
-  let made=0;const M=new THREE.Matrix4(),NM=new THREE.Matrix3(),v=new THREE.Vector3();
-  for(const a of groups.values()){if(a.list.length<2)continue;let nv=0,ni=0;for(const q of a.list){const g=q.geometry;nv+=g.attributes.position.count;ni+=g.index?g.index.count:g.attributes.position.count;}
-    const names=Object.keys(a.list[0].geometry.attributes),out={};for(const n of names){const s=a.list[0].geometry.attributes[n];out[n]=new Float32Array(nv*s.itemSize);}
-    const idx=nv>65535?new Uint32Array(ni):new Uint16Array(ni);let vo=0,io=0,ok=true;
-    for(const q of a.list){const g=q.geometry,P=g.attributes.position,c=P.count;q.updateMatrixWorld(true);M.multiplyMatrices(inv,q.matrixWorld);NM.getNormalMatrix(M);const flip=M.determinant()<0;
-      for(const n of names){const s=g.attributes[n];if(!s||s.itemSize!==a.list[0].geometry.attributes[n].itemSize){ok=false;break;}const o=out[n],is=s.itemSize;
-        if(n==='position'){for(let i=0;i<c;i++){v.set(s.getX(i),s.getY(i),s.getZ(i)).applyMatrix4(M);const k=(vo+i)*3;o[k]=v.x;o[k+1]=v.y;o[k+2]=v.z;}}
-        else if(n==='normal'){for(let i=0;i<c;i++){v.set(s.getX(i),s.getY(i),s.getZ(i)).applyMatrix3(NM).normalize();const k=(vo+i)*3;o[k]=v.x;o[k+1]=v.y;o[k+2]=v.z;}}
-        else{for(let i=0;i<c;i++){const k=(vo+i)*is;o[k]=s.getX(i);if(is>1)o[k+1]=s.getY(i);if(is>2)o[k+2]=s.getZ(i);if(is>3)o[k+3]=s.getW(i);}}}
-      if(!ok)break;const ix=g.index,ic=ix?ix.count:c;for(let i=0;i<ic;i+=3){const i0=ix?ix.getX(i):i,i1=ix?ix.getX(i+1):i+1,i2=ix?ix.getX(i+2):i+2;idx[io++]=vo+i0;idx[io++]=vo+(flip?i2:i1);idx[io++]=vo+(flip?i1:i2);}vo+=c;}
-    if(!ok)continue;const ng=new THREE.BufferGeometry();for(const n of names){const s=a.list[0].geometry.attributes[n];ng.setAttribute(n,new THREE.BufferAttribute(out[n],s.itemSize,false));}ng.setIndex(new THREE.BufferAttribute(idx,1));ng.computeBoundingSphere();ng.computeBoundingBox();
-    const mm=new THREE.Mesh(ng,a.m);mm.castShadow=a.cs;mm.receiveShadow=a.rs;mm.frustumCulled=a.fc;mm.name='smerge';root.add(mm);for(const q of a.list)if(q.parent)q.parent.remove(q);made++;}
-  return made;}catch(err){console.warn('staticMerge',err);return 0;}}
 // Smooth shading for merged, non-indexed foliage: average the face normals of every vertex that shares a position.
 function smoothNorm(g){const P=g.attributes.position,N=g.attributes.normal;if(!N)return;const m=new Map(),key=i=>Math.round(P.getX(i)*20)+','+Math.round(P.getY(i)*20)+','+Math.round(P.getZ(i)*20);
   for(let i=0;i<P.count;i++){const k=key(i);let a=m.get(k);if(!a){a=[0,0,0];m.set(k,a);}a[0]+=N.getX(i);a[1]+=N.getY(i);a[2]+=N.getZ(i);}
@@ -1952,18 +1725,6 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
         const bx=cx-L*.24,y=tt.y-u*.35,ww=u*1.3,dd=W*.6,col='#3c3e35';for(const yy of [y,y+u*.38]){B.bar(bx-ww/2,yy,-dd/2,bx+ww/2,yy,-dd/2,u*.03,col);B.bar(bx-ww/2,yy,dd/2,bx+ww/2,yy,dd/2,u*.03,col);B.bar(bx-ww/2,yy,-dd/2,bx-ww/2,yy,dd/2,u*.03,col);}
         for(let i=0;i<4;i++){const z=(i-1.5)*dd/3.2;B.bar(bx-ww/2,y,z,bx-ww/2,y+u*.38,z,u*.03,col);}bag(bx,y,-dd*.2,'#6b6650');bag(bx+u*.1,y,dd*.18,'#57563f');roll(bx-u*.3,y+u*.2,0,dd*.8,'#4e5040');
         const fx=cx+L*.14,fy=tt.y-u*.35,s=sideAt(fx,fy);if(s){const n=9;for(let i=0;i<n;i++){const z=(i-(n-1)/2)*(s*1.6/n);for(let j=0;j<4;j++)B.ell(u*.06,u*.06,u*.06,fx,fy-j*u*.13,z,'#2a2b28');}}}
-      if(tank&&tt&&(fac==='IN'||fac==='PK'||fac==='JP'||fac==='KR'||fac==='TR')){// art-regional: each nation's tank gets its own turret armour so the same hull reads as Arjun / Al-Khalid / Type 10 / K2 / Altay
-        const ts=sideAt(cx+L*.04,tt.y-u*.3)||W*.3,ty0=tt.y-u*.35,eraC=fac==='PK'?'#4b5036':fac==='TR'?'#5a5e46':'#444a35',eraD='#2b2e25';
-        if(fac==='IN'||fac==='PK'||fac==='TR'){for(let i=0;i<4;i++)for(const sg of [1,-1])for(let j=0;j<2;j++){B.rbox(u*.34,u*.34,u*.09,cx+L*.02+i*u*.4,ty0+j*u*.38,sg*(ts+u*.05),eraC);B.rbox(u*.3,u*.04,u*.1,cx+L*.02+i*u*.4,ty0+j*u*.38+u*.19,sg*(ts+u*.05),eraD);}}
-        if(fac==='IN'||fac==='PK'){const fx=cx+L*.1,fz=ts*.8;for(let i=0;i<5;i++)for(let j=0;j<2;j++)B.rbox(u*.1,u*.36,u*.34,fx+j*u*.02,ty0+u*.2,(i-2)*fz*.4,eraC,0,0,.05);}
-        if(fac==='JP'){for(const sg of [1,-1]){B.rbox(u*1.1,u*.62,u*.14,cx+L*.07,ty0+u*.3,sg*(ts-u*.02),'#4a5040',0,-sg*.35,0);B.rbox(u*.9,u*.5,u*.12,cx-L*.03,ty0+u*.28,sg*(ts+u*.1),'#434a37');}}
-        if(fac==='KR'){const x=cx-L*.1,y=tt.y;B.cyl(u*.16,u*.2,u*.16,8,x,y+u*.08,W*.14,'#3b3f38');B.rbox(u*.34,u*.22,u*.26,x,y+u*.28,W*.14,'#454a3f');B.bar(x+u*.15,y+u*.3,W*.14,x+u*.9,y+u*.3,W*.14,u*.04,'#1c1d1b',5);for(const sg of [1,-1])B.rbox(u*.4,u*.3,u*.07,cx+L*.1,ty0+u*.3,sg*(ts+u*.03),'#3d4235');}
-        if(fac!=='KR')smokeL(4);}
-      if(tank&&tt&&(fac==='RU'||fac==='CN'||fac==='KP')){// art-east: Type 99 wedge-and-ERA turret, T-90 Kontakt + Shtora, Chonma-ho side skirts + DShK
-        const ts=sideAt(cx+L*.04,tt.y-u*.3)||W*.3,ty0=tt.y-u*.35,eraC=fac==='CN'?'#4f5638':'#4a5039',eraD='#2b2e25';
-        if(fac==='CN'){for(const sg of [1,-1]){for(let i=0;i<4;i++)B.rbox(u*.3,u*.36,u*.1,cx+L*.1+i*u*.34-u*.4,ty0+u*.3,sg*(ts+u*.06),eraC,0,-sg*.3,0);B.rbox(u*.9,u*.5,u*.14,cx-L*.04,ty0+u*.28,sg*(ts+u*.1),'#434a37');}}
-        if(fac==='RU'){for(let i=0;i<5;i++)for(const sg of [1,-1])B.rbox(u*.3,u*.3,u*.08,cx+L*.02+i*u*.36,ty0+u*.3,sg*(ts+u*.04),eraC);for(const sg of [1,-1]){B.rbox(u*.22,u*.22,u*.22,cx+L*.16,ty0+u*.5,sg*(W*.14),'#7a3a30');}}
-        if(fac==='KP'){for(const sg of [1,-1])for(let i=0;i<6;i++)B.rbox(u*.34,u*.16,u*.06,cx-L*.2+i*u*.4,ty0-u*.55,sg*(W*.5),'#3a3d32');const x=cx-L*.1,y=tt.y;B.cyl(u*.12,u*.16,u*.12,8,x,y+u*.08,-W*.14,'#3b3f38');B.bar(x,y+u*.25,-W*.14,x+u*.8,y+u*.28,-W*.14,u*.04,'#1c1d1b',5);}}
       if(fac==='TR'&&tank&&frontD)for(let i=0;i<5;i++)B.rbox(u*.16,u*.08,u*.62,frontD.x-u*.25,frontD.y+u*.05,(i-2)*u*.33,'#2c2d2a',0,0,.2);
       if((fac==='EU'||fac==='FR'||fac==='DE'||fac==='CN'||fac==='KR')&&tank)smokeL(fac==='CN'?4:fac==='KR'?3:4);
       if((fac==='SA'||fac==='AE'||fac==='IN')&&rearD){bag(minx+L*.16,rearD.y,W*.2,'#8a7d5c');bag(minx+L*.16,rearD.y,-W*.18,'#77704f');if(fac!=='IN')for(let i=0;i<2;i++)jerry(minx+L*.08,rearD.y,(i-.5)*u*.22,'#7a7155');}

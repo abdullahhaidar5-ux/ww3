@@ -3,9 +3,9 @@
    drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
-const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','wxN','fixWx','wxB','ssn','mines','smokes','shields','smugs','craters','ruins','aiTT','upN','sqOf',
+const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','wxB','ssn','mines','smokes','shields','craters','ruins','aiTT','upN','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
-  'todM','live','todH0','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ','boccS'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
+  'todM','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ','boccS'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
 // (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
 // end of the sim step)

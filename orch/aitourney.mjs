@@ -54,8 +54,7 @@ if (process.argv[2] === '--child') {
     process.send(r);
   });
 } else {
-  // the playable nations: the one allow-list PLAYABLE in src/01-data.js (redfixF: the old hard-coded 19 had hidden nations and missed GB FR DE RV OB)
-  const ALL = (fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'src', '01-data.js'), 'utf8').match(/const PLAYABLE=\[([^\]]*)\]/)[1].match(/[A-Z]{2}/g));
+  const ALL = ['US', 'TR', 'IL', 'EU', 'UA', 'RU', 'IR', 'SA', 'AE', 'PK', 'IN', 'CN', 'KP', 'KR', 'EG', 'CU', 'RS', 'DW', 'JP'];
   const FAC = argS('factions', '') ? argS('factions').split(',').map(s => s.trim().toUpperCase()) : ALL;
   const VS = argS('vs', '') ? argS('vs').split(',').map(s => s.trim().toUpperCase()) : null;
   const MAPS = argS('maps', 'strait,oasis,plateau,fulda,zagros').split(',');

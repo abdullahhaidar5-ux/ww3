@@ -8,8 +8,7 @@ const BMIS=[],DEBRIS=[];
 function fxUpd(A,count){if(A.clearUpdateRanges){A.clearUpdateRanges();A.addUpdateRange(0,count);}else{A.updateRange.offset=0;A.updateRange.count=count;}A.needsUpdate=true;}
 // chunks of a destroyed structure thrown out by the blast, tumbling and bouncing until they settle
 // rock chunks share a few quantised materials (they used to make one material per chunk: up to 110 live ones, never freed)
-const CHUNKM=new Map();let CHUNKDM=null;function chunkDM(){return CHUNKDM||(CHUNKDM=new THREE.MeshDepthMaterial());}
-function chunkMat(col){const q=Math.floor(Math.random()*6),k=col+q;let m=CHUNKM.get(k);if(!m){m=new THREE.MeshStandardMaterial({color:new THREE.Color(col).multiplyScalar(.7+q*.07),roughness:.95});CHUNKM.set(k,m);}return m;}
+const CHUNKM=new Map();function chunkMat(col){const q=Math.floor(Math.random()*6),k=col+q;let m=CHUNKM.get(k);if(!m){m=new THREE.MeshStandardMaterial({color:new THREE.Color(col).multiplyScalar(.7+q*.07),roughness:.95});CHUNKM.set(k,m);}return m;}
 // Shapes that are built once and reused for the whole battle (strike markers, ping rings, missiles, rock chunks, rubble heaps,
 // banners). The GPU memory clean-up (gpuGc, below) must never free them: it used to free any shape not on screen at that
 // moment, so each of these was sent to the graphics card again in the very frame a strike needed it.
@@ -18,7 +17,7 @@ const GC_KEEP=new Set();function gcKeep(g){if(g)GC_KEEP.add(g);return g;}
 let MKG=null,PINGG=null;function mkGeo(){if(!MKG){MKG={ring:new THREE.RingGeometry(.95,1,56).rotateX(-Math.PI/2),inner:new THREE.RingGeometry(.9,1,56).rotateX(-Math.PI/2),disc:new THREE.CircleGeometry(1,48).rotateX(-Math.PI/2),bar:new THREE.PlaneGeometry(1,1).rotateX(-Math.PI/2)};for(const k in MKG)gcKeep(MKG[k]);}return MKG;}
 function pingGeo(){return PINGG||(PINGG=gcKeep(new THREE.RingGeometry(.9,1,64).rotateX(-Math.PI/2)));}
 function chunkGeos(){return CHUNKG||(CHUNKG=[0,1,2,3,4].map(i=>gcKeep(rockGeo(40+i*7,0,.6+i*.07,.55))));}
-let CHUNKG=null;function chunks(x,y,size,col,n){if(!inView(x,y,.3))return;chunkGeos();const g0=groundH(x,y);n=Math.round(n*1.6);for(let i=0;i<n&&DEBRIS.length<110;i++){const s=rnd(.025,.07)*size,dk=Math.random()<.35,mm=chunkMat(dk?'#2f2b27':col);const m=new THREE.Mesh(CHUNKG[i%5],mm);m.scale.set(s*rnd(.8,1.5),s*rnd(.5,1),s*rnd(.7,1.3));m.castShadow=true;m.customDepthMaterial=chunkDM();const a=Math.random()*6.28,r=Math.random()*size*.25;m.position.set(x+Math.cos(a)*r,g0+rnd(4,size*.4),y+Math.sin(a)*r);SCN.add(m);const sp=rnd(30,100);DEBRIS.push({m,vx:Math.cos(a)*sp,vz:Math.sin(a)*sp,vh:rnd(50,140),wx:rnd(-9,9),wy:rnd(-9,9),wz:rnd(-9,9),t:0,rest:0,chunk:1,sz:s});}
+let CHUNKG=null;function chunks(x,y,size,col,n){if(!inView(x,y,.3))return;chunkGeos();const g0=groundH(x,y);n=Math.round(n*1.6);for(let i=0;i<n&&DEBRIS.length<110;i++){const s=rnd(.025,.07)*size,dk=Math.random()<.35,mm=chunkMat(dk?'#2f2b27':col);const m=new THREE.Mesh(CHUNKG[i%5],mm);m.scale.set(s*rnd(.8,1.5),s*rnd(.5,1),s*rnd(.7,1.3));m.castShadow=true;const a=Math.random()*6.28,r=Math.random()*size*.25;m.position.set(x+Math.cos(a)*r,g0+rnd(4,size*.4),y+Math.sin(a)*r);SCN.add(m);const sp=rnd(30,100);DEBRIS.push({m,vx:Math.cos(a)*sp,vz:Math.sin(a)*sp,vh:rnd(50,140),wx:rnd(-9,9),wy:rnd(-9,9),wz:rnd(-9,9),t:0,rest:0,chunk:1,sz:s});}
   for(let i=0;i<Math.min(10,4+(size/8|0));i++){const a=rnd(0,6.28),v=rnd(20,70);part({x,y,h:g0+rnd(2,8),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,160),c:[.32,.27,.21],s:rnd(.9,1.8),f:.85,grav:1,bounce:1,d:rnd(1,1.8)});}}
 function debrisTick(dt){if(!DEBRIS.length)return;let w=0;for(const d of DEBRIS){d.t+=dt;const m=d.m;if(!d.rest){d.vh-=220*dt;m.position.x+=d.vx*dt;m.position.z+=d.vz*dt;m.position.y+=d.vh*dt;m.rotation.x+=d.wx*dt;m.rotation.y+=d.wy*dt;m.rotation.z+=d.wz*dt;
     const g=groundH(m.position.x,m.position.z)+(d.sz?d.sz*.2:1.5);if(m.position.y<g){m.position.y=g;if(Math.abs(d.vh)<25){d.rest=1;}else{d.vh=-d.vh*.32;d.vx*=.55;d.vz*=.55;d.wx*=.5;d.wy*=.5;d.wz*=.5;for(let q=0;q<6;q++)part({x:m.position.x,y:m.position.z,h:g,vx:rnd(-25,25),vy:rnd(-25,25),c:C_DUST,s:rnd(5,9),g:10,d:rnd(.6,1),a:.45});}}
@@ -360,23 +359,19 @@ function fxUpdate(dt){
   shake*=Math.exp(-7*dt);flash=Math.max(0,flash-dt*1.6);}
 // Weather on screen: rain streaks, blowing sand, heavy snow and thick fog close in the view; the haze colour and
 // distance ease in and out as the weather changes.
-let RAIN=null,WXV={k:'clear',m:0};const LTN={a:0,f:0,cd:6,ws:null,wh:null,bs:0,bh:0};
-function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&Math.round(todSeg(G.t).d*20)!==WXT)try{applyWeather(0);}catch(e){}const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far,si:SUN?SUN.intensity:0,hi:HEMI?HEMI.intensity:0};}const B=WXV.base;if(!B)return;
-  const kk=k==='storm'?'rain':k;/* a thunderstorm looks like heavy rain until PACK LOOKS paints lightning (G.wxv()) */if(WXV.k!==kk){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=kk;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;WETG.value+=((WXV.k==='rain'?m:0)-WETG.value)*Math.min(1,dt*.25);/* the ground dries slowly after the rain */
+let RAIN=null,WXV={k:'clear',m:0};
+function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&Math.round(todSeg(G.t).d*20)!==WXT)try{applyWeather(0);}catch(e){}const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far};}const B=WXV.base;if(!B)return;
+  if(WXV.k!==k){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=k;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;
   const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:30,f:720},blizzard:{c:'#dfe6ee',n:150,f:1700},snow:{c:'#e3e9f0',n:220,f:2300}}[K];
   if(T){const tc=lin(T.c);SCN.fog.color.copy(B.c).lerp(tc,m*.85);SCN.fog.near=B.n+(T.n-B.n)*m;SCN.fog.far=B.f+(T.f-B.f)*m;}else{SCN.fog.color.lerp(B.c,Math.min(1,dt*2));SCN.fog.near+=(B.n-SCN.fog.near)*Math.min(1,dt*2);SCN.fog.far+=(B.f-SCN.fog.far)*Math.min(1,dt*2);}
   const R=Math.max(420,cam.dist*1.1);
-  /* storm: the sky darkens (wet, dim ground) and lightning flashes light the whole field; rain also dims a little. View only, no allocations. */
-  {const sm=k==='storm'?m:0,dm=(K==='rain'?m*.12:0)+sm*.3;if(SUN&&HEMI){/* the base light is whatever the day cycle / weather last set (applyWeather): adopt it whenever someone else changed it since we last wrote */if(LTN.ws==null||SUN.intensity!==LTN.ws)LTN.bs=SUN.intensity;if(LTN.wh==null||HEMI.intensity!==LTN.wh)LTN.bh=HEMI.intensity;if(sm>.4){LTN.cd-=dt;if(LTN.cd<=0){LTN.a=1;LTN.f=.5+Math.random()*.5;LTN.cd=4+Math.random()*9;}}
-    if(LTN.a>0){LTN.a=Math.max(0,LTN.a-dt*(LTN.f>.75?5:3));if(LTN.f>.5&&LTN.a<.55&&LTN.a>.4)LTN.a=.9;LTN.f-=0;}
-    const L=LTN.a>0?LTN.a*LTN.a:0;SUN.intensity=LTN.ws=LTN.bs*(1-dm)+LTN.bs*L*2.2;HEMI.intensity=LTN.wh=LTN.bh*(1-dm*.6)+LTN.bh*L*1.6;if(L>.02)SCN.fog.color.lerp(lin('#d8e2ff'),Math.min(.7,L*.6));}}
   if(K==='sandstorm'&&m>.05){const n=(dt*90*m)|0;for(let i=0;i<n;i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(2,60),vx:rnd(90,160),vy:rnd(-15,15),vh:rnd(-4,8),f:.9,c:[.78,.6,.38],s:rnd(18,36),g:22,d:rnd(1.6,2.8),a:.3*m});}}
   if((K==='blizzard'||K==='snow')&&m>.05){const n=(dt*(K==='snow'?(SET.gfx==='low'?35:70):120)*m)|0;for(let i=0;i<n;i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(40,220),vx:rnd(50,90),vy:rnd(-10,14),vh:-rnd(30,50),f:1,c:[1.05,1.08,1.12],s:rnd(1.6,2.8),d:rnd(3,5),a:.9});}}
   if(K==='rain'){if(!RAIN){const N=1400,g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(N*6),3).setUsage(THREE.DynamicDrawUsage));RAIN=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xaab4be,transparent:true,opacity:.35,depthWrite:false}));RAIN.frustumCulled=false;RAIN.userData.d=[];for(let i=0;i<N;i++)RAIN.userData.d.push([rnd(-1,1),rnd(-1,1),rnd(0,1)]);SCN.add(RAIN);}
-    RAIN.visible=m>.02;RAIN.material.opacity=.35*m;const p=RAIN.geometry.attributes.position.array,D=RAIN.userData.d,H=320,RN=SET.gfx==='low'?600:D.length;RAIN.geometry.setDrawRange(0,RN*2);
-    for(let i=0;i<RN;i++){const d=D[i];d[2]-=dt*1.6;if(d[2]<0){d[2]+=1;d[0]=rnd(-1,1);d[1]=rnd(-1,1);}const x=cam.x+d[0]*R,y=cam.y+d[1]*R*.7,gh=groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y))),h=gh+d[2]*H;p.set([x,h,y,x+3,h+14,y],i*6);}
+    RAIN.visible=m>.02;RAIN.material.opacity=.35*m;const p=RAIN.geometry.attributes.position.array,D=RAIN.userData.d,H=320;
+    for(let i=0;i<D.length;i++){const d=D[i];d[2]-=dt*1.6;if(d[2]<0){d[2]+=1;d[0]=rnd(-1,1);d[1]=rnd(-1,1);}const x=cam.x+d[0]*R,y=cam.y+d[1]*R*.7,gh=groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y))),h=gh+d[2]*H;p.set([x,h,y,x+3,h+14,y],i*6);}
     RAIN.geometry.attributes.position.needsUpdate=true;}else if(RAIN)RAIN.visible=false;
-  const el=document.getElementById('wxchip');if(el){const W=WEATHER[k];const tl=G.todM?todLvl():0,tn=tl===2?'NIGHT':tl===1?(G.todM===3&&todClockSec()>=800?'DAWN':'DUSK'):'';const lv=G.live?todClockText():'',on=k!=='clear'||!!tn||!!lv;el.hidden=!on;if(on){const txt=(lv?lv+' · ':'')+(tn?tn+(k!=='clear'?' · ':' · sight '+(tl===2?'-40%':'-20%')+', thermal optics see further'):'')+(k!=='clear'?`${W.name.toUpperCase()} · vision ${Math.round((W.vis-1)*100)}% · accuracy ${Math.round((W.acc-1)*100)}%${W.air===0?' · jets grounded':''}`:'');if(el.textContent!==txt)el.textContent=txt;}}}
+  const el=document.getElementById('wxchip');if(el){const W=WEATHER[k];const tl=G.todM?todLvl():0,tn=tl===2?'NIGHT':tl===1?(G.todM===3&&(G.t%1200)>=800?'DAWN':'DUSK'):'';const on=k!=='clear'||!!tn;el.hidden=!on;if(on){const txt=(tn?tn+(k!=='clear'?' · ':' · sight '+(tl===2?'-40%':'-20%')+', thermal optics see further'):'')+(k!=='clear'?`${W.name.toUpperCase()} · vision ${Math.round((W.vis-1)*100)}% · accuracy ${Math.round((W.acc-1)*100)}%${W.air===0?' · jets grounded':''}`:'');if(el.textContent!==txt)el.textContent=txt;}}}
 /* ---------- Helicopter rotor wash ----------
    A helicopter's downwash blasts whatever is under it: a ring of dust rolls outward on land (powder snow on snow maps),
    white spray and a flattened, swirling ring on water. Strongest when the helicopter hovers low and slow; a fast pass
@@ -544,8 +539,8 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
   // draw only these groups once for real (everything else in the scene hidden for a moment, lights stay): a shape needs its own
   // vertex array per shader program, made on its first draw, so compiling alone would leave those for the first sight of a unit/wreck
   const hidAll=[];
-  const drawOnly=(grps,aoAlways)=>{hidAll.length=0;for(const c of SCN.children)if(!c.isLight&&c.visible&&!grps.includes(c)&&!(typeof SOLB!=='undefined'&&c===SOLB.root)){c.visible=false;hidAll.push(c);}
-    try{CAM.updateMatrixWorld();if(post()){sizePost();if(POST.ovr&&POST.dRT&&(aoAlways||(POST.mAO&&POST.aoOn!==false))){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;if(typeof solbAO==='function')solbAO();}R3.setRenderTarget(POST.rt);}R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
+  const drawOnly=(grps,aoAlways)=>{hidAll.length=0;for(const c of SCN.children)if(!c.isLight&&c.visible&&!grps.includes(c)){c.visible=false;hidAll.push(c);}
+    try{CAM.updateMatrixWorld();if(post()){sizePost();if(POST.ovr&&POST.dRT&&(aoAlways||(POST.mAO&&POST.aoOn!==false))){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}R3.setRenderTarget(POST.rt);}R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
     R3.setRenderTarget(null);for(const c of hidAll)c.visible=true;};
   const ex=[],step=async(name,grp,wait,keep)=>{MK('step '+name);const s0=performance.now(),lt=isLate();let tcomp=0,ttex=0;
     if(!lt)SCN.add(grp);
@@ -570,13 +565,13 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     try{grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);gg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*3).fill(.5),3));grp.add(new THREE.Mesh(gg,gm));grp.add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
     for(const op of [.8,.12])grp.add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
     /* the sun-shadow shape of a two-sided part (helicopter canopy glass): one plain caster of each side, so the first helicopter shadow never links a shader (rangefreeze 2026-11-17) */
-    {const tx=new THREE.DataTexture(new Uint8Array([255,255,255,255]),1,1);tx.needsUpdate=true;for(const [sd,cut] of [[THREE.DoubleSide,0],[THREE.BackSide,0],[THREE.FrontSide,1],[THREE.DoubleSide,1],[THREE.BackSide,2],[THREE.FrontSide,2],[THREE.DoubleSide,2]]){const m=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshStandardMaterial(cut===2?{map:tx,side:sd}:cut?{map:tx,alphaTest:.5,side:sd}:{color:0x808080,side:sd}));m.castShadow=true;grp.add(m);}}   /* + cut-out (alpha-tested) textured parts: the recon plane's shadow */
+    {const tx=new THREE.DataTexture(new Uint8Array([255,255,255,255]),1,1);tx.needsUpdate=true;for(const [sd,cut] of [[THREE.DoubleSide,0],[THREE.BackSide,0],[THREE.FrontSide,1],[THREE.DoubleSide,1]]){const m=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),new THREE.MeshStandardMaterial(cut?{map:tx,alphaTest:.5,side:sd}:{color:0x808080,side:sd}));m.castShadow=true;grp.add(m);}}   /* + cut-out (alpha-tested) textured parts: the recon plane's shadow */
     // an aircraft's exhaust plume is added when the unit is made (modelFor), not to the model itself: its shader and canvas texture are prepared here
     try{if(typeof jetPlumeMat==='function'){const pl=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());pl.renderOrder=3;grp.add(pl);}}catch(e){}
     grp.traverse(c=>{c.frustumCulled=false;});await step('shared',grp);await frame();}
   // what a strike shows for the first time (PC): missiles, flames, rock chunks / warning markers, ping rings, rubble, banner / shock rings
   if(!PH&&!dead()){
-    {const grp=mk();try{if(typeof mslWarm==='function')mslWarm(grp);for(const cg of chunkGeos()){const rk=new THREE.Mesh(cg,chunkMat('#4a4034'));rk.castShadow=true;rk.customDepthMaterial=chunkDM();rk.frustumCulled=false;rk.scale.setScalar(2);grp.add(rk);}}catch(e){console.warn('strike warm-up',e);}await step('missiles',grp,0,1);await frame();}
+    {const grp=mk();try{if(typeof mslWarm==='function')mslWarm(grp);for(const cg of chunkGeos()){const rk=new THREE.Mesh(cg,chunkMat('#4a4034'));rk.castShadow=true;rk.frustumCulled=false;rk.scale.setScalar(2);grp.add(rk);}}catch(e){console.warn('strike warm-up',e);}await step('missiles',grp,0,1);await frame();}
     if(!dead()){const grp=mk();try{const KG=mkGeo(),bm2=new THREE.MeshBasicMaterial({color:0xea3a2c,transparent:true,opacity:.01,depthWrite:false});for(const g of [KG.ring,KG.inner,KG.disc,KG.bar,pingGeo()]){const m=new THREE.Mesh(g,bm2);m.frustumCulled=false;m.scale.setScalar(20);m.position.y=3;grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('markers',grp,0,1);await frame();}
     // a garrisoned house's flag, marker and scaffold, and a supply truck's crate load (shared shapes, first drawn mid-battle when squads run into houses / a truck loads)
     if(!dead()){const grp=mk();try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));
@@ -585,7 +580,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       /* the wounded-soldier markers (05c-battlefield): built with the battle, not in the frame of the first casualty (a new canvas, texture and two shaders - rangefreeze 2026-11-17) */
       if(typeof bfWoundInit==='function'){bfWoundInit();const im=new THREE.InstancedMesh(BFX.wb.geometry,BFX.wb.material,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));im.setColorAt(0,new THREE.Color(1,1,1));grp.add(im);grp.add(new THREE.Points(BFX.wp.geometry,BFX.wp.material));}
       /* the instanced unit markers (spy eye, ground blob): their shader is made here, not when the first spy walks into view */
-      if(typeof decalSet==='function')for(const k of ['eye','blob','lamp']){const S=decalSet(k),im=new THREE.InstancedMesh(S.geo,S.mat,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));im.renderOrder=S.ro;grp.add(im);}
+      if(typeof decalSet==='function')for(const k of ['eye','blob']){const S=decalSet(k),im=new THREE.InstancedMesh(S.geo,S.mat,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));im.renderOrder=S.ro;grp.add(im);}
       grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
     // every side's riflemen and anti-tank teams in all their kit variants, one side per step: a fresh squad from the barracks mid-battle used to merge its soldier shapes (and link their shaders) on the spot
     for(const q of G.teams){if(dead()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;const grp=mk();
@@ -637,7 +632,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       // everything is drawn once even if it is outside the opening view (rocks, wrecks, depots across the map), so its shape is on the card before it is first seen
       const unc=[];for(const u of vis)u.traverse(c=>{if((c.isMesh||c.isLine||c.isPoints)&&c.frustumCulled){c.frustumCulled=false;unc.push(c);}});
       for(let i=0;i<vis.length&&!dead()&&!isLate();i+=SL){MK('slice '+i);const mine=new Set(vis.slice(i,i+SL));for(const u of vis)u.visible=mine.has(u);const s0=performance.now();
-        try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;if(typeof solbAO==='function')solbAO();}
+        try{CAM.updateMatrixWorld();if(aoOn){SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.render(SCN,CAM);SCN.overrideMaterial=null;}
           R3.setRenderTarget(POST.rt);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);}catch(e){SCN.overrideMaterial=null;console.warn('warm-up',e);}
         R3.setRenderTarget(null);for(const u of vis)u.visible=true;const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push(['slice '+i,Math.round(d)]);
         if(performance.now()-tl2>30){await frame();tl2=performance.now();}}
@@ -647,7 +642,6 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       if(!dead()&&!isLate()&&typeof mwPipWarm==='function'){MK('pip');const m0=performance.now();mwPipWarm();(W.slow=W.slow||[]).push(['pip',Math.round(performance.now()-m0)]);await frame();}}}
   lap('battlefield',ts);
   W.ms=Math.round(performance.now()-t0);W.progs=(R3.info.programs?R3.info.programs.length:0)-P0;
-  try{if(typeof perfGpu==='function')perfGpu();}catch(e){}/* the graphics-card name is a synchronous round trip to the GPU process: ask once here, while it is idle, not in the first slow frame of the battle (rangefreeze 2026-11-19: that call waited 0.9 s behind a shader link) */
   console.log('shader warm-up'+(PH?' (phone)':'')+' '+W.ms+' ms, '+W.models+' models, '+nObj+' objects in '+W.steps+' steps (longest '+W.maxStep+' ms), '+W.progs+' programs, textures '+Math.round(texB/1048576)+' MB'+(isLate()?' (finished in the background after the loading watchdog)':dead()?' (stopped)':''));}
 
 /* ---------- GPU memory clean-up ----------
