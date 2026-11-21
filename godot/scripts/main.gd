@@ -32,7 +32,7 @@ const MODELS := {
 	"tank0": ["m_t72", "xz", 46.0], "tank1": ["m_abrams", "xz", 46.0],
 	"harv0": ["m_ural", "xz", 40.0], "harv1": ["m_m35", "xz", 40.0],
 	"hq0": ["b_hq_me", "xz", 120.0], "hq1": ["b_hq", "xz", 120.0],
-	"barracks0": ["b_barr_me", "xz", 90.0], "barracks1": ["b_barr", "xz", 90.0],
+	"barracks0": ["b_barr", "xz", 90.0], "barracks1": ["b_barr", "xz", 90.0],
 	"factory0": ["b_fact_me", "xz", 110.0], "factory1": ["b_fact", "xz", 110.0],
 }
 var YAW_FIX := {}
@@ -41,7 +41,7 @@ const TINT := {
 	"m_t72": Color(0.50, 0.49, 0.33), "m_abrams": Color(0.78, 0.69, 0.50),
 	"m_ural": Color(0.46, 0.47, 0.33), "m_m35": Color(0.74, 0.66, 0.48),
 	"sol_m": Color(0.55, 0.56, 0.40), "sol_w": Color(0.80, 0.72, 0.55),
-	"b_barr": Color(0.80, 0.77, 0.70), "b_barr_me": Color(0.86, 0.76, 0.60), "b_fact": Color(0.82, 0.80, 0.74),
+	"b_barr": Color(0.80, 0.77, 0.70), "b_hq": Color(0.82, 0.78, 0.70), "b_barr_me": Color(0.86, 0.76, 0.60), "b_fact": Color(0.82, 0.80, 0.74),
 }   # per model key: extra turn so the model faces +X (filled after looking at it)
 
 class Ent:
@@ -81,8 +81,8 @@ var fx: Array = []     # [pos3, t0, life, size, color]
 var tracers: Array = []  # [a3, b3, t0]
 
 var cam: Camera3D
-var cam_target := Vector2(700, MAP_H * 0.5)
-var cam_dist := 700.0
+var cam_target := Vector2(520, MAP_H * 0.5 + 60)
+var cam_dist := 620.0
 var sun: DirectionalLight3D
 
 # ui
@@ -176,7 +176,7 @@ func _ground() -> void:
 	mat.normal_enabled = true
 	mat.normal_texture = load("res://tex/n1.png")
 	mat.normal_scale = 0.8
-	mat.albedo_color = Color(1.0, 0.86, 0.66)
+	mat.albedo_color = Color(0.93, 0.80, 0.62)
 	mat.uv1_scale = Vector3((MAP_W + 2400) / 240.0, (MAP_H + 2400) / 240.0, 1)
 	mat.roughness = 0.97
 	g.material_override = mat
@@ -189,7 +189,7 @@ func _ground() -> void:
 	w.mesh = wm
 	w.position = Vector3(CH_X, 0.6, MAP_H * 0.5)
 	var wmat := StandardMaterial3D.new()
-	wmat.albedo_color = Color(0.13, 0.33, 0.42)
+	wmat.albedo_color = Color(0.08, 0.22, 0.27)
 	wmat.metallic = 0.2
 	wmat.roughness = 0.08
 	w.material_override = wmat
@@ -704,9 +704,16 @@ func _process(dt: float) -> void:
 			var n: int = s.get("n", 1)
 			if n > 1:
 				var alive := int(ceil(e.hp / float(s["hp"])))
+				var moving := e.pos.distance_squared_to(e.prev) > 0.01
 				for i in alive:
 					var off := Vector2(((i % 2) - 0.5) * 16.0, (int(i / 2) - 0.5) * 16.0).rotated(e.ang)
-					per[dk].append(Transform3D(basis, Vector3(p.x + off.x, 0, p.y + off.y)))
+					var bob := 0.0
+					var lean := 0.0
+					if moving:
+						var ph := t * 11.0 + float(e.id * 3 + i * 2)
+						bob = absf(sin(ph)) * 1.4
+						lean = sin(ph) * 0.06
+					per[dk].append(Transform3D(basis * Basis(Vector3.FORWARD, lean), Vector3(p.x + off.x, bob, p.y + off.y)))
 			else:
 				var y := 0.0
 				if e.kind == "tank" and t - e.fire_t < 0.15:
@@ -1078,7 +1085,7 @@ func _bench_start() -> void:
 		b.order = "amove"
 		b.tpos = Vector2(600, cy)
 	enemy_fights = true
-	cam_target = Vector2(CH_X, cy)
+	cam_target = Vector2(CH_X, BRIDGES[0])
 	cam_dist = 900.0
 	bench_on = true
 	bench = {"t0": t, "frames": [], "cpu": []}
