@@ -21541,6 +21541,12 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
         if(fac==='JP'){for(const sg of [1,-1]){B.rbox(u*1.1,u*.62,u*.14,cx+L*.07,ty0+u*.3,sg*(ts-u*.02),'#4a5040',0,-sg*.35,0);B.rbox(u*.9,u*.5,u*.12,cx-L*.03,ty0+u*.28,sg*(ts+u*.1),'#434a37');}}
         if(fac==='KR'){const x=cx-L*.1,y=tt.y;B.cyl(u*.16,u*.2,u*.16,8,x,y+u*.08,W*.14,'#3b3f38');B.rbox(u*.34,u*.22,u*.26,x,y+u*.28,W*.14,'#454a3f');B.bar(x+u*.15,y+u*.3,W*.14,x+u*.9,y+u*.3,W*.14,u*.04,'#1c1d1b',5);for(const sg of [1,-1])B.rbox(u*.4,u*.3,u*.07,cx+L*.1,ty0+u*.3,sg*(ts+u*.03),'#3d4235');}
         if(fac!=='KR')smokeL(4);}
+      if(tank&&tt&&(fac==='US'||fac==='IL'||fac==='GB'||fac==='FR')){// art-west: M1 TUSK reactive tiles + loader gun, Merkava hull skirts, Challenger bar/Chobham cheeks + smoke launchers, Leclerc modular cheeks
+        const ts=sideAt(cx+L*.04,tt.y-u*.3)||W*.3,ty0=tt.y-u*.35,ac=fac==='GB'?'#5a5c44':fac==='FR'?'#6a6a52':'#4d5244',dk='#2b2d26';
+        if(fac==='US'){for(const sg of [1,-1])for(let i=0;i<4;i++)B.rbox(u*.3,u*.34,u*.09,cx+L*.0+i*u*.34-u*.3,ty0+u*.3,sg*(ts+u*.05),ac);const x=cx-L*.02,y=tt.y,z=W*.12;B.cyl(u*.14,u*.16,u*.1,8,x,y+u*.05,z,'#3b3f38');B.bar(x,y+u*.2,z,x+u*.6,y+u*.24,z,u*.035,'#1c1d1b',5);}
+        if(fac==='IL'){for(const sg of [1,-1])for(let i=0;i<6;i++)B.rbox(u*.3,u*.2,u*.06,cx-L*.22+i*u*.42,ty0-u*.55,sg*(W*.5),dk);}
+        if(fac==='GB'){for(const sg of [1,-1]){B.rbox(u*.9,u*.44,u*.13,cx+L*.08,ty0+u*.3,sg*(ts+u*.08),ac,0,-sg*.25,0);for(let i=0;i<4;i++)B.rbox(u*.2,u*.2,u*.2,cx+L*.12+i*u*.14,ty0+u*.62,sg*(ts*.8),dk);}}
+        if(fac==='FR'){for(const sg of [1,-1])for(let i=0;i<3;i++)B.rbox(u*.36,u*.4,u*.1,cx+L*.04+i*u*.4-u*.4,ty0+u*.3,sg*(ts+u*.06),ac,0,-sg*.2,0);}}
       if(tank&&tt&&(fac==='RU'||fac==='CN'||fac==='KP')){// art-east: Type 99 wedge-and-ERA turret, T-90 Kontakt + Shtora, Chonma-ho side skirts + DShK
         const ts=sideAt(cx+L*.04,tt.y-u*.3)||W*.3,ty0=tt.y-u*.35,eraC=fac==='CN'?'#4f5638':'#4a5039',eraD='#2b2e25';
         if(fac==='CN'){for(const sg of [1,-1]){for(let i=0;i<4;i++)B.rbox(u*.3,u*.36,u*.1,cx+L*.1+i*u*.34-u*.4,ty0+u*.3,sg*(ts+u*.06),eraC,0,-sg*.3,0);B.rbox(u*.9,u*.5,u*.14,cx-L*.04,ty0+u*.28,sg*(ts+u*.1),'#434a37');}}
