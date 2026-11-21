@@ -1,5 +1,6 @@
-# Conductor state — 2026-11-21 ~04:00 UTC
+# Conductor state — 2026-11-21 ~04:55 UTC
 
+Rerun 04:55Z: FREEZE still on, main still 261e9af9; no train, no landing. Candidate list unchanged (no candidate branch pushed since Nov 14; only conductor/lane branches active).
 **FREEZE still on: no train this run.** `train/20261121-0012-hold` (ORCH, 00:09Z): nothing lands on main except ORCH's reviewed pieces; conductor does step 1 only.
 
 main head 261e9af9 (2026-11-21 01:26Z, "Loading waits up to 60 s for graphics prep"), unchanged since last run.
