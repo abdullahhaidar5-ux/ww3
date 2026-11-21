@@ -1,0 +1,6 @@
+[52s] battle loaded; building 13 unit types x 18 nations
+built 234 units in 1061.7s
+kitDec total ms 319; kit build ms (kitGeo, per model/nation; total 551 for 150 kits): m_mi24/UA/heli 41, boat/AE/boat 22, m_subm/IR/sub 15, ship/EU/ship 14, m_fre/IN/ship 14, m_f18/US/jet 13, m_fre/UA/ship 13, m_frw/AE/ship 12
+audited 687 decals on 199 model/nation kits: flag 167, deckflag 44, roundel 54, numeral 252, free 142, unitletter 8, slogan 4, star 1, stencil 6, serial 9
+kit prop with broken geometry hidden: IcosahedronGeometry
+DECALCHECK PASS (687 decals, 18 nations, 1114s)
