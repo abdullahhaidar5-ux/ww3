@@ -1145,7 +1145,11 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone'||e.
   if(e.kind==='harv'){const cg=mesh(harvCargoGeo());o.add(cg);o.userData.parts.cargo=cg;}
   try{eastKit(e,c,o,yaw,T);}catch(err){console.warn('eastKit',err);}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
+  {const vs=vehScale(e,c);if(vs!==1)o.scale.setScalar(vs);}   /* view only: vehicles drawn to scale with the infantry (Abdullah 2026-11-19 18:52); the whole group scales, so add-ons, kits, ring, shadow and lamp stay attached */
   SCN.add(o);return o;}
+/* VEH_SCALE: one view-only multiplier per vehicle class (soldier ~16 units = 1.8 m; a tank hull ~6.9 m = ~62 units, a truck ~7.5 m, a jeep ~4.6 m). Never touches the simulation, radii or ranges. Infantry (MCFG.inf.size) is NOT changed. */
+const VEH_SCALE={tank:1.45,arty:1.4,aa:1.25,atgm:1.35,jeep:1.4,raidlead:1.4,idome:1.25,harv:1.15,ammot:1.15,ew:1.15,cbr:1.15,bmt:1.15,dozer:1.3,heli:1.5,airlift:1.4,jet:1.4,_ground:1.3,_air:1.4};
+function vehScale(e,c){if(!e||!e.s||!c||c.m==='soldier'||c.m==='boat'||c.m==='ship'||e.s.dom==='naval'||['inf','at','hacker','hero'].includes(e.s.cls))return 1;const k=VEH_SCALE[e.kind];if(k)return k;return e.s.dom==='air'?VEH_SCALE._air:e.s.dom==='ground'?VEH_SCALE._ground:1;}
 // polishlooks: rocket truck launcher = an open BM-21/Fajr-style tube pack (4 x 10 tubes with dark muzzles, side plates,
 // straps, cradle and elevating ram) on a turntable, instead of a closed grey slab. Built once and shared by every rocket truck.
 let MLRSG=null;
