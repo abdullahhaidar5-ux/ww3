@@ -42,8 +42,15 @@ function perfClock(t){t=Math.max(0,t|0);return Math.floor(t/60)+':'+String(t%60)
 function perfLine(e){return perfClock(e.t)+'  '+e.ms+' ms  programs '+e.p[0]+'→'+e.p[1]+'  textures '+e.x[0]+'→'+e.x[1]+'  shapes '+e.g[0]+'→'+e.g[1]+'  detail '+e.q[0]+'→'+e.q[1]+'  units '+e.u+'  events: '+e.ev+(e.bg?'  (warm-up still running)':'')+(e.np?'  new programs: '+e.np:'');}
 function perfProgs(){const N=PERF.np;if(!N.length)return 'No shader program made during the battle.\n';
   return 'Shader programs made during the battle: '+N.length+(N.some(x=>x.bg)?' ('+N.filter(x=>x.bg).length+' while the warm-up was still running)':'')+'\n'+N.slice(-12).map(x=>'  '+perfClock(x.t)+' '+x.d+(x.bg?' (warm-up)':'')).join('\n')+'\n';}
+/* what the machine is doing (Abdullah 2026-11-21: the same laptop logged 67 FPS and 13 FPS half an hour apart): browser, battery, screen refresh,
+   and how much of a frame is game code vs everything else (drawing / waiting for the graphics card) - so one log says whether it is the game or the laptop */
+const PFM={bat:null};try{if(navigator.getBattery)navigator.getBattery().then(b=>{PFM.bat=b;}).catch(()=>{});}catch(e){}
+function perfMach(){let br='?';try{const ua=navigator.userAgent;br=/Edg\//.test(ua)?'Edge '+(ua.match(/Edg\/(\d+)/)||[])[1]:/OPR\//.test(ua)?'Opera':/Firefox\//.test(ua)?'Firefox':/Chrome\//.test(ua)?'Chrome '+(ua.match(/Chrome\/(\d+)/)||[])[1]:'other';}catch(e){}
+  const b=PFM.bat,bat=b?(b.charging?'plugged in':'ON BATTERY')+' '+Math.round((b.level||0)*100)+'%':'battery unknown';
+  const fr=QUAL.ema?QUAL.ema*1000:0,js=QUAL.cost?QUAL.cost*1000:0;
+  return 'Machine: '+br+' · '+bat+' · screen '+Math.round(QUAL.hz||60)+' Hz · frame '+fr.toFixed(1)+' ms (game code '+js.toFixed(1)+' ms, rest '+Math.max(0,fr-js).toFixed(1)+' ms) · detail '+(QUAL.lv|0)+'/'+(QUAL.fx|0)+(document.hidden?' · page hidden':'')+'\n';}
 function perfText(){let v='';try{v=typeof BUILD!=='undefined'?' build '+BUILD:'';}catch(e){}
-  return 'World War 3 performance log'+v+'\nGraphics card: '+perfGpu()+'\nScreen: '+Math.round(innerWidth)+'×'+Math.round(innerHeight)+' @'+(window.devicePixelRatio||1)+'  '+Math.round(QUAL.fps||0)+' FPS now\n'+perfLoad()+perfProgs()+
+  return 'World War 3 performance log'+v+'\nGraphics card: '+perfGpu()+'\nScreen: '+Math.round(innerWidth)+'×'+Math.round(innerHeight)+' @'+(window.devicePixelRatio||1)+'  '+Math.round(QUAL.fps||0)+' FPS now\n'+perfMach()+perfLoad()+perfProgs()+
     (PERF.log.length?'Frames over '+PERF.slow+' ms (battle time, length, before→after):\n'+PERF.log.map(perfLine).join('\n'):'No frame over '+PERF.slow+' ms recorded in this session.');}
 function perfCss(){if(document.getElementById('pfCss'))return;const s=document.createElement('style');s.id='pfCss';s.textContent=`
 #pfWin{position:fixed;inset:0;z-index:960;background:rgba(8,11,10,.84);display:flex;align-items:center;justify-content:center}

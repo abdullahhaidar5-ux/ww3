@@ -1770,11 +1770,11 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&hbgNeeded(
 // Hosting on battery: Windows lets a laptop slow down, dim and sleep much sooner on battery, which shows up as lag or
 // dropped players for everyone in the match. Remind the host (once per match, and again if they unplug mid-match).
 const HBAT={b:null,warned:null,asked:false};
-function hbatCheck(){if(!(G&&!G.over&&hbgNeeded()))return;const b=HBAT.b;
+function hbatCheck(){if(!(G&&!G.over))return;   /* every battle, not only hosting (Abdullah's RTX laptop on battery: 13 FPS and 0.3-0.5 s stalls, 2026-11-21) */const b=HBAT.b;
   if(!b){if(!HBAT.asked&&navigator.getBattery){HBAT.asked=true;navigator.getBattery().then(x=>{HBAT.b=x;x.addEventListener('chargingchange',hbatCheck);hbatCheck();}).catch(()=>{});}return;}
   if(b.charging){if(HBAT.warned===G)HBAT.warned=null;return;}
   if(HBAT.warned===G)return;HBAT.warned=G;
-  try{pushLog("Your device is running this battle on battery. Plug your laptop in so it stays fast and awake for everyone in the match.",'w');}catch(e){}}
+  try{pushLog(hbgNeeded()?"Your device is running this battle on battery. Plug your laptop in so it stays fast and awake for everyone in the match.":"Running on battery: Windows slows the graphics card and processor right down. Plug your laptop in for smooth play.",'w');}catch(e){}}
 setInterval(hbatCheck,5000);
 // Keep the screen, and with it the PC, awake during an online match (host or player), so a laptop doesn't drift off to
 // sleep mid-battle and drop everyone. The browser only grants this while the game is on screen; it is let go after the match.
