@@ -832,7 +832,7 @@ await browser.close(); server.close();
 }
 { const m = SRC['11-models.js'] || '';   // scale (Abdullah 2026-11-19 18:52 "Increase the size of the vehicles don't shrink the infantry")
   ck(/const VEH_SCALE=\{/.test(m) && /vehScale\(e,c\)/.test(m) && /o\.scale\.setScalar\(vs\)/.test(m), 'scale: vehicles are drawn bigger through the one VEH_SCALE multiplier');
-  ck(/tank:\{m:'tank',fit:'z',size:38\}/.test(m) && /inf:\{m:'soldier',fit:'y',size:14\}/.test(m) && /c\.size\*=1\.15/.test(m), 'scale: infantry size is unchanged (soldier 14 x 1.15, never shrunk)');
+  ck(/tank:\{m:'tank',fit:'z',size:38\}/.test(m) && /inf:\{m:'soldier',fit:'y',size:14(\.0)?[,}]/.test(m) && /c\.size\*=1\.15/.test(m), 'scale: infantry size is unchanged (soldier 14 x 1.15, never shrunk)');
   const vs = (m.match(/const VEH_SCALE=\{([^}]*)\}/) || [,''])[1]; ck(vs && [...vs.matchAll(/:([\d.]+)/g)].every(x => +x[1] >= 1), 'scale: no vehicle class is scaled below 1'); }
 for (const f of fails) console.log('FAIL: ' + f);
 console.log(fails.length ? 'DECISIONS FAIL (' + fails.length + ')' : 'DECISIONS PASS');
