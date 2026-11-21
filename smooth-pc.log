@@ -1,0 +1,76 @@
+[0s] pc: launching browser
+[0s] ctx
+[0s] guarded
+[1s] page
+[1s] pc: loading page
+[1s] pc: page loaded
+[1s] pc: menu ready
+[24s] pc: LOADING {"tok":1,"tipI":7,"tipT":104,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10512],["Loading 3D models…",761]
+[43s] pc: battle loaded in 41s
+[51s] pc: army in place
+[52s] pc: measuring 150 frames
+[66s] pc: warm-up done, 113 shaders
+[68s] pc: frame 10
+[69s] pc: frame 20
+[70s] pc: frame 30
+[71s] pc: frame 40
+[72s] pc: frame 50
+[73s] pc: frame 60
+[74s] pc: frame 70
+[75s] pc: frame 80
+[76s] pc: frame 90
+[77s] pc: frame 100
+[78s] pc: frame 110
+[79s] pc: frame 120
+[81s] pc: frame 130
+[81s] pc: frame 140
+[82s] pc: frame 150
+[85s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) sim step p95 ms rose to 23.6 (baseline 10.9, allowed up to 17.35; +117%)
+[85s] pc: launching browser
+[85s] ctx
+[85s] guarded
+[85s] page
+[85s] pc: loading page
+[86s] pc: page loaded
+[86s] pc: menu ready
+[109s] pc: LOADING {"tok":1,"tipI":7,"tipT":104,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",9167],["Loading 3D models…",1209]
+[126s] pc: battle loaded in 39s
+[148s] pc: army in place
+[148s] pc: measuring 150 frames
+[150s] pc: warm-up done, 113 shaders
+[152s] pc: frame 10
+[153s] pc: frame 20
+[154s] pc: frame 30
+[155s] pc: frame 40
+[156s] pc: frame 50
+[157s] pc: frame 60
+[158s] pc: frame 70
+[159s] pc: frame 80
+[160s] pc: frame 90
+[161s] pc: frame 100
+[162s] pc: frame 110
+[163s] pc: frame 120
+[164s] pc: frame 130
+[165s] pc: frame 140
+[166s] pc: frame 150
+[169s] pc attempt 2: ok
+
+                       pc        
+units on screen        339       
+load time s            39.37     
+median frame ms        50.6      
+p95 frame ms           94.8      
+p99 frame ms           340.7     
+worst 1% FPS           2.42      
+frames >50 ms          77        
+first boom x median    1.88      
+2nd boom x median      1.65      
+weather/night x median 1.42      
+sim step p95 ms        15.6      
+draw calls             1198      
+k triangles            6403      
+heap MB/min            -160.65   
+runtime 2.8 min
+
+SMOOTH PASS
