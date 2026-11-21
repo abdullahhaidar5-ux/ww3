@@ -11844,6 +11844,9 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       if(typeof bfWoundInit==='function'){bfWoundInit();const im=new THREE.InstancedMesh(BFX.wb.geometry,BFX.wb.material,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));im.setColorAt(0,new THREE.Color(1,1,1));grp.add(im);grp.add(new THREE.Points(BFX.wp.geometry,BFX.wp.material));}
       /* the instanced unit markers (spy eye, ground blob): their shader is made here, not when the first spy walks into view */
       if(typeof decalSet==='function')for(const k of ['eye','blob','lamp']){const S=decalSet(k),im=new THREE.InstancedMesh(S.geo,S.mat,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));im.renderOrder=S.ro;grp.add(im);}
+      /* vehicle kits (tank add-ons, ship radars, drone stencils) are drawn as instances of ONE shared material: its instanced program was
+         first made when the first tank came out of the factory, ~4 min into a battle - a 1.6 s freeze measured on Abdullah's laptop (2026-11-21) */
+      if(typeof kitMat==='function'){const kg=new THREE.PlaneGeometry(1,1);kg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(kg.attributes.position.count*3).fill(1),3));const im=new THREE.InstancedMesh(kg,kitMat(),1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));grp.add(im);}
       grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await qstep('garrison',grp,0,1);}
     // every side's riflemen and anti-tank teams in all their kit variants, one side per step: a fresh squad from the barracks mid-battle used to merge its soldier shapes (and link their shaders) on the spot
     for(const q of G.teams){if(dead()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;const grp=mk();
