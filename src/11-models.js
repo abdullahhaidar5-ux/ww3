@@ -742,8 +742,31 @@ function boneRelease(skel){const t=skel&&skel.boneTexture;if(!t||!t.userData||!t
    squad on a slow PC, every fresh soldier in the Test range): soldiers get a ready sphere from their shared shape instead - the shape's
    rest-pose sphere, half again as large so a prone or kneeling pose stays inside (rangefreeze 2026-11-17) */
 function skinBS(m){const g=m&&m.geometry;if(!g)return;let s=g.userData.skBS;if(!s){if(!g.boundingSphere)g.computeBoundingSphere();s=g.userData.skBS=g.boundingSphere.clone();s.radius*=1.5;}m.boundingSphere=s;}
+/* Fewer soldier bones (Abdullah 2026-11-21 "It's still struggling", measured on his laptop: in a 320-unit fight ~14 ms of a 30 ms frame
+   went to soldier bones). The West/Middle-East soldier rig has 66 bones, 40 of them finger joints (+3 end markers) that never move
+   after the rifle grip is posed - yet every visible soldier recomputed them every frame and sent them to the GPU. When a soldier's
+   shared shape is built, the fingers are baked into it in the grip pose they have (each finger vertex placed where its curled
+   finger puts it, then made to ride the hand), and the finger bones leave the figure: 66 -> 23 bones per soldier. Same picture:
+   the hands keep their exact grip. View only. */
+const SOLDROP=/^(Left|Right)Hand(Thumb|Index|Middle|Ring|Pinky)\d$|_End$/;
+function solPrune(geo,skel){const B=skel.bones,n=B.length,drop=B.map(b=>SOLDROP.test(b.name));if(!drop.some(x=>x)||!geo.attributes.skinIndex)return null;
+  const idx=new Map(B.map((b,i)=>[b,i])),T=new Int32Array(n);
+  for(let i=0;i<n;i++){let j=i,g=0;while(drop[j]){const pi=B[j].parent?idx.get(B[j].parent):undefined;if(pi===undefined||++g>8)return null;j=pi;}T[i]=j;}
+  let r=B[0];while(r.parent)r=r.parent;r.updateMatrixWorld(true);
+  // D: a bind-pose vertex on a dropped bone -> the bind-pose spot that, riding the bone it hangs from, lands where it is drawn now
+  const D=[],W=new THREE.Matrix4();for(let i=0;i<n;i++){if(!drop[i]){D.push(null);continue;}const t=T[i];D.push(new THREE.Matrix4().copy(skel.boneInverses[t]).invert().multiply(W.copy(B[t].matrixWorld).invert()).multiply(B[i].matrixWorld).multiply(skel.boneInverses[i]));}
+  const si=geo.attributes.skinIndex,sw=geo.attributes.skinWeight,pa=geo.attributes.position,na=geo.attributes.normal,N=pa.count,M=new THREE.Matrix4(),e=M.elements,v=new THREE.Vector3(),nm=new THREE.Matrix3(),acc=new Map();
+  for(let q=0;q<N;q++){let hit=false;for(let k=0;k<4;k++)if(sw.getComponent(q,k)>0&&drop[si.getComponent(q,k)]){hit=true;break;}if(!hit)continue;
+    e.fill(0);let ws=0;for(let k=0;k<4;k++){const w=sw.getComponent(q,k);if(!(w>0))continue;const j=si.getComponent(q,k);ws+=w;if(drop[j]){const d=D[j].elements;for(let c=0;c<16;c++)e[c]+=w*d[c];}else{e[0]+=w;e[5]+=w;e[10]+=w;e[15]+=w;}}
+    if(!(ws>0))continue;for(let c=0;c<16;c++)e[c]/=ws;
+    v.fromBufferAttribute(pa,q).applyMatrix4(M);pa.setXYZ(q,v.x,v.y,v.z);if(na){nm.getNormalMatrix(M);v.fromBufferAttribute(na,q).applyMatrix3(nm).normalize();na.setXYZ(q,v.x,v.y,v.z);}
+    acc.clear();for(let k=0;k<4;k++){const w=sw.getComponent(q,k);if(!(w>0))continue;const j=T[si.getComponent(q,k)];acc.set(j,(acc.get(j)||0)+w);}
+    let k=0;for(const [j,w] of acc){si.setComponent(q,k,j);sw.setComponent(q,k,w);k++;}for(;k<4;k++){si.setComponent(q,k,0);sw.setComponent(q,k,0);}}
+  const keep=[],nI=new Int32Array(n).fill(-1);for(let i=0;i<n;i++)if(!drop[i]){nI[i]=keep.length;keep.push(i);}
+  for(let q=0;q<N;q++)for(let k=0;k<4;k++){const j=si.getComponent(q,k);si.setComponent(q,k,nI[j]>=0?nI[j]:0);if(nI[j]<0)sw.setComponent(q,k,0);}
+  pa.needsUpdate=true;if(na)na.needsUpdate=true;si.needsUpdate=true;sw.needsUpdate=true;return keep;}
 function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false;const sk=[];inner.traverse(o=>{if(o.isSkinnedMesh)sk.push(o);});if(!sk.length)return false;
-  const skel=sk[0].skeleton;if(!skel||sk.some(o=>!o.skeleton||o.skeleton.bones.length!==skel.bones.length||o.skeleton.bones.some((b,i)=>b!==skel.bones[i])||Array.isArray(o.material)||!o.geometry.attributes.skinIndex))return false;
+  let skel=sk[0].skeleton;if(!skel||sk.some(o=>!o.skeleton||o.skeleton.bones.length!==skel.bones.length||o.skeleton.bones.some((b,i)=>b!==skel.bones[i])||Array.isArray(o.material)||!o.geometry.attributes.skinIndex))return false;
   const gear=[];skel.bones.forEach((b,bi)=>{for(const c of b.children)if(c.isMesh&&c.userData.gear&&!c.isSkinnedMesh)gear.push([c,bi]);});
   // The realistic soldiers are ONE textured skinned mesh, so this used to bail out (nothing to merge) and the rifle stayed a
   // separate mesh - one more draw call per soldier, hidden when zoomed out past 480 (the default view is 560), so in a real
@@ -769,6 +792,7 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     geo.setAttribute('skinIndex',new THREE.BufferAttribute(SI,4));geo.setAttribute('skinWeight',new THREE.BufferAttribute(SW,4));geo.setIndex(new THREE.BufferAttribute(I,1));
     if(/\|spy\|v\d$/.test(key))try{spyPaint(geo,skel,tex);}catch(er){console.warn('spyPaint',er);}
     else if(/\|ldr\|v\d$/.test(key))try{const lf=key.split('|')[3],L=LDRLOOK[lf==='KP'?'KP':'IR'];spyPaint(geo,skel,tex,L.c,L.skin,parts.reduce((q,p)=>q+(p.sk?p.g.attributes.position.count:0),0));}catch(er){console.warn('ldrPaint',er);}
+    let keep=null;if(!(m.userData.anims&&m.userData.anims.length))try{keep=solPrune(geo,skel);}catch(er){console.warn('solPrune',er);keep=null;}
     // one material for the whole soldier: the uniform's (most triangles among the coloured parts), white so the baked
     // vertex colours show, keeping its weathering shader hook
     let src=sk[0].material,best=-1;for(const o of sk){const c=o.material.color,t=o.geometry.index?o.geometry.index.count:o.geometry.attributes.position.count;if(c&&c.r*.3+c.g*.59+c.b*.11>.02&&t>best){best=t;src=o.material;}}
@@ -776,8 +800,9 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     const mat=src.clone();mat.onBeforeCompile=src.onBeforeCompile;mat.customProgramCacheKey=src.customProgramCacheKey;mat.vertexColors=true;if(mat.color)mat.color.setRGB(1,1,1);mat.map=tex;
     if(tex){const ob=src.onBeforeCompile,ck=src.customProgramCacheKey;mat.onBeforeCompile=(sh,r)=>{if(ob)ob.call(src,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\nvec4 sampledDiffuseColor=texture2D(map,vMapUv);if(vMapUv.x<-2.)sampledDiffuseColor=vec4(1.);diffuseColor*=sampledDiffuseColor;\n#endif');};
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
-    E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
+    E=SOLM[key]={geo,mat,keep,nb:skel.bones.length,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
   if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}if(typeof gcKeep==='function'){gcKeep(E.geo);gcKeep(E.lo);}/* shared by every soldier of this look: never freed by the GPU clean-up (re-sending it mid-battle was a hitch) */
+  if(E.keep&&skel.bones.length===E.nb){const B=skel.bones,I=skel.boneInverses;skel=new THREE.Skeleton(E.keep.map(i=>B[i]),E.keep.map(i=>I[i]));const ks=new Set(skel.bones);for(const b of B)if(!ks.has(b)&&b.parent&&ks.has(b.parent))b.parent.remove(b);}
   let lm0=null;if(E.lo){const lm=lm0=new THREE.SkinnedMesh(E.lo,E.mat);skinBS(lm);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);skinBS(mm);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());bonePool(skel);if(lm0)solbReg(lm0,E.mat);solbReg(mm,E.mat);for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
