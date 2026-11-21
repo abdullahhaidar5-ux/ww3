@@ -1,0 +1,57 @@
+# Lane A (soldiers) before/after pictures on a GitHub runner (headless Chromium, software GL), branch-only.
+# Runs on pushes to orch/laneA-* that change src/ or the shot script: renders main's index.html ("before") and the branch's
+# ("after") with orch/laneAshots.mjs (Test range, bm_breakwater + snowy arctic, clear day, close-up ~20 m from front/side/back
+# and the normal battle camera) and pushes the JPGs + numbers to the same branch under orch/shots/laneA/. Never touches main.
+name: Lane A shots
+on:
+  push:
+    branches: ['orch/laneA-*']
+    paths: ['src/**', 'orch/laneAshots.mjs', '.github/workflows/laneashots.yml']
+  workflow_dispatch:
+permissions: { contents: write }
+concurrency:
+  group: laneashots-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        side: [before, after]
+        map: [bm_breakwater, arctic]
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Shots
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          git show origin/main:index.html > /tmp/main.html
+          H=index.html; [ "${{ matrix.side }}" = before ] && H=/tmp/main.html
+          mkdir -p /tmp/shots
+          node orch/laneAshots.mjs --tag ${{ matrix.side }} --html $H --maps ${{ matrix.map }} --out /tmp/shots 2>&1 | tail -40
+          mv /tmp/shots/${{ matrix.side }}.json /tmp/shots/${{ matrix.side }}-${{ matrix.map }}.json || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'shots-${{ matrix.side }}-${{ matrix.map }}', path: /tmp/shots, if-no-files-found: ignore }
+  push:
+    needs: shots
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: /tmp/all, merge-multiple: true }
+      - name: Push pictures to the branch
+        run: |
+          ls -la /tmp/all
+          for try in 1 2 3 4 5; do
+            rm -rf /tmp/b; git clone -q --depth 1 --branch "${GITHUB_REF_NAME}" "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" /tmp/b && cd /tmp/b || exit 1
+            mkdir -p orch/shots/laneA; cp /tmp/all/*.jpg /tmp/all/*.json orch/shots/laneA/ 2>/dev/null || true
+            git add orch/shots/laneA
+            git -c user.name=laneA-shots -c user.email=laneA-shots@users.noreply.github.com commit -q -m "lane A shots for ${GITHUB_SHA:0:10}" || exit 0
+            git push -q origin HEAD:"${GITHUB_REF_NAME}" && break
+            cd /; sleep $((RANDOM % 20 + 5)); done

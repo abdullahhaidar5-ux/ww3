@@ -3,7 +3,7 @@
 {
 const f='RV';
 if(!KFAC.includes(f))KFAC.push(f);
-EASTVEH.push(f);SOLV[f]='sol_e';MEFAC.add(f);
+EASTVEH.push(f);SOLV[f]='sol_m';/* lane A: Iraqi Shia brigades wear the Middle-Eastern fatigues (own camo, SOLCAM in 11-models.js) */MEFAC.add(f);
 RMAP.tank[f]='t72';RMAP.heli[f]='mi24';RMAP.jet[f]='mig29';RMAP.dozer[f]='jd550';RMAP.ship[f]='fre';RMAP.sub[f]='subm';
 MIL_TANK[f]={m:'technical',fit:'z',size:29};
 FLOOK[f]={veh:'#9a8d66',ca:'#6e6244',cb:'#2f3126',uni:'#3a3d2e',pat:3};
