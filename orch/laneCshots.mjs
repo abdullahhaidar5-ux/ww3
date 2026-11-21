@@ -76,6 +76,7 @@ try {
       if (G) G.over = true;
       const wi = Math.max(0, WX.findIndex(w => /clear day/i.test(w.n)));
       Object.assign(setup, { map, n: 1, p, a: p === 'US' ? 'RU' : 'US', others: [], tm: [], slot: -1, seed, w: wi });
+      const MR = Math.random; let z = seed * 2654435761 >>> 0; Math.random = () => ((z = (z * 1664525 + 1013904223) >>> 0) / 4294967296); // same battle every run (as orch/smooth.mjs)
       startSingle(); const w0 = performance.now();
       while (window.LOADING && performance.now() - w0 < 900000) await new Promise(r => setTimeout(r, 100));
       G.teams.forEach((T, i) => { T.ai = i ? mkAI(0) : null; }); G.paused = false;
@@ -92,7 +93,7 @@ try {
       for (let i = 0; i < 120; i++) simUpdate(1 / 60);
       for (const e of G.ents) { e.ox = e.x; e.oy = e.y; } G.alpha = 1;
       const w1 = performance.now(); while (!(MODELS && MODELS.ready) && performance.now() - w1 < 300000) await new Promise(r => setTimeout(r, 250));
-      G.paused = true;
+      G.paused = true; Math.random = MR;
       return { map: G.mapKey, facs: G.teams.map(T => T.fac), wx: WX[WXI] && WX[WXI].n, hx: hq.x, hy: hq.y, cx: dx, cy: dy, dist: cam.dist };
     }, [MAP, f, SEED]);
     console.log(f, JSON.stringify(info), secs());
