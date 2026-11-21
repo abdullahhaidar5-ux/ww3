@@ -1,0 +1,31 @@
+[0s] mp: opening 3 pages
+[4s] mp: pages open
+[5s] mp: lobby oac8ia
+[7s] mp: clients joined
+[121s] mp: battle loaded on all pages
+[121s] mp: playing 40s
+[161s] mp: checking sync
+[168s] mp attempt 1: REGRESSED
+  (re-running once to rule out noise) a client got no snapshot for 6753 ms (limit 2500) | snapshot jitter (std dev) ms rose to 351.53 (baseline 69.36, allowed up to 125.98; +407%) | order latency p95 ms rose to 4808 (baseline 111, allowed up to 215.4; +4232%)
+[168s] mp: opening 3 pages
+[171s] mp: pages open
+[172s] mp: lobby sa0782
+[172s] mp: clients joined
+[285s] mp: battle loaded on all pages
+[285s] mp: playing 40s
+[325s] mp: checking sync
+[332s] mp attempt 2: REGRESSED
+
+                       mp        
+snap interval p95      155       
+snap jitter sd         129.12    
+order latency p95      672       
+client frame p95       12.2      
+client snaps           0         
+biggest snap (units)   0         
+desyncs                0         
+runtime 5.5 min
+
+SMOOTH FAIL: 2 problem(s)
+  - mp: snapshot jitter (std dev) ms rose to 129.12 (baseline 69.36, allowed up to 125.98; +86%)
+  - mp: order latency p95 ms rose to 672 (baseline 111, allowed up to 215.4; +505%)
