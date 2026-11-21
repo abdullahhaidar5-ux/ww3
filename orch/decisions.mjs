@@ -84,6 +84,11 @@ const ck = (c, m) => { if (!c) fails.push(m); };
   else if (!/'src\/02\*\.js'/.test(m[0])) fails.push('gate.yml: mapsweep skip condition must watch \'src/02*.js\' (every map file: ' + mapFiles.join(', ') + ')'); }
 const srcFiles = fs.readdirSync(path.join(ROOT, 'src')).filter(f => f.endsWith('.js')).sort();
 const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')]));
+{ /* unit limit (Abdullah 2026-11-19 05:58): 500 per player up to 4 players, 300 for 5-8 */
+  const sm = SRC['03-sim.js'], m = sm.match(/const POP_CAP=[^;]*;/), f = sm.match(/function popCap\(\)\{[^\n]*\}/);
+  ck(m && f, 'unitlimit: POP_CAP/popCap not found');
+  if (m && f) { const pc = n => new Function('G', m[0] + f[0] + ';return popCap();')({ battle: true, teams: Array.from({ length: n }, () => ({})).concat([{ reb: true }]) }); ck(pc(2) === 500 && pc(4) === 500 && pc(5) === 300 && pc(8) === 300, 'unitlimit: battles of up to 4 players must allow 500 units each, 5-8 players 300'); }
+}
 // weathergfx 2026-11-14 (Abdullah: weather "Pick in setup + Random", graphics "Low/Med/High/Ultra"): ONE Conditions table (CONDS in 01-data) drives the setup/lobby picker and the Test range picker; Random and unfitting picks resolve through condFit (deterministic from the seed); ONE graphics row (GFX_PRESETS: Low/Medium/High/Ultra), no second quality setting.
 // redfixE (2026-11-17): the battle servers (server/build-sim.mjs) and the headless test run the simulation from SIM_FILES in orch/headless.mjs - every
 // src/01..03 file the page loads must be in it (4 were missing: faction mechanics, signature units, OB, the Iranian missile ran in browsers only)

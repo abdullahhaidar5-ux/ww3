@@ -169,9 +169,9 @@ function hiddenNow(e){if((e.detT||0)>G.t)return false;if(e.stlT&&!e.isB){if(G.t-
 /* ---------- production, research, building ---------- */
 function unitCount(team,kind){let n=0;for(const e of G.ents)if(!e.isB&&e.team===team&&e.kind===kind)n++;for(const i of qItems(G.teams[team],BASE[kind].from))if(i.kind===kind)n++;return n;}
 /* Population cap (Battle, Generals-style): infantry 1, light vehicles 2, tanks/heavy 3, aircraft 3 (small drones 1), boats 2, ships 3. Supply trucks and construction vehicles are free. Derived from live units + queues, so it needs no saved state and stays identical on host, clients and after a checkpoint. */
-const POP_CAP=300;   /* Abdullah 2026-11-14 14:38 "Raise unit cap to 300" */
+const POP_CAP=300,POP_CAP_SMALL=500;   /* Abdullah 2026-11-14 14:38 "Raise unit cap to 300"; 2026-11-19 05:58 500 per player in battles of up to 4 players (8 players at 500 not smooth yet) */
 function popOf(s){if(!s||s.cls==='harv'||s.cls==='dozer')return 0;if(s.dom==='air')return s.cls==='drone'?1:3;if(s.dom==='naval')return s.cls==='boat'?2:3;if(isInf(s))return 1;return(s.cls==='tank'||s.cls==='arty'||s.cost>=800)?3:2;}
-function popCap(){return G&&G.battle?POP_CAP:Infinity;}
+function popCap(){if(!G||!G.battle)return Infinity;let n=0;for(const T of G.teams)if(!T.reb)n++;return n<=4?POP_CAP_SMALL:POP_CAP;}   /* players = team slots (not the rebel team), fixed at game start: same on host, clients, servers, saves, migration */
 function popUsed(team,noQ){const T=G.teams[team];let n=0;for(const e of G.ents)if(!e.isB&&!e.dead&&e.team===team)n+=popOf(e.s);if(!noQ)for(const c of CATS)for(const i of qItems(T,c))n+=popOf(stats(T.fac,i.kind));return n;}
 function popFull(T,kind,noQ){const c=popCap();if(c===Infinity)return false;return popUsed(T.id,noQ)+popOf(stats(T.fac,kind))>c;}
 function popWarn(T){if(T.ai)return;if((T._popMsg||-99)>G.t-8)return;T._popMsg=G.t;log(T.id,'Unit limit reached ('+popCap()+').','w');}
