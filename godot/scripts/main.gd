@@ -110,6 +110,10 @@ var shot_at := 60
 var bench_n := 250
 
 func _ready() -> void:
+	# BATTLE HOOK (orch/godot-battle): Battle mode lives in scripts/battle/ (--battle / --battle-ai start straight in it)
+	if get_script() == preload("res://scripts/main.gd") and (OS.get_cmdline_user_args().has("--battle") or OS.get_cmdline_user_args().has("--battle-ai") or OS.get_cmdline_user_args().has("--demo")):
+		get_tree().change_scene_to_file.call_deferred("res://scenes/battle.tscn")
+		return
 	randomize()
 	_env()
 	_ground()
@@ -1121,6 +1125,11 @@ func _ui() -> void:
 	var h := Label.new()
 	h.text = "TEST RANGE  -  Iran vs United States"
 	vb.add_child(h)
+	# BATTLE HOOK (orch/godot-battle): one button to the Battle setup screen
+	var bbat := Button.new()
+	bbat.text = "BATTLE (vs AI) >"
+	bbat.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/battle.tscn"))
+	vb.add_child(bbat)
 	for it in [["Riflemen squad", "inf"], ["Anti-tank team", "at"], ["T-72 tank", "tank"], ["Supply truck", "harv"]]:
 		var b := Button.new()
 		b.text = "+ " + it[0]
