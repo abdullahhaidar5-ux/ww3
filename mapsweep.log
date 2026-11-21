@@ -1,0 +1,111 @@
+browser lock: skipped (--no-lock)
+map sweep: 41 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 6s)
+
+STATIC  588 map/player-count/seed combinations (4 seeds), 0 with issues
+  oasis        8p ok   1.0min 0.99ms/step peak 11/10/9/11/9/10/10/9 earn 1600/1280/1600/1440/1440/1440/1600/1536 1st 13/14/13/13/14/14/13/13s (77s, start 73s)
+  zagros       2p ok   1.0min 0.21ms/step peak 10/11 earn 1600/1600 1st 13/12s (18s, start 17s)
+  mesopotamia  4p ok   1.0min 0.54ms/step peak 11/12/9/11 earn 1440/1600/1600/1600 1st 14/13/13/12s (25s, start 23s)
+  taiwan       2p ok   1.0min 0.23ms/step peak 12/10 earn 1600/1600 1st 13/13s (16s, start 15s)
+  euphrates    2p ok   1.0min 0.20ms/step peak 9/12 earn 1600/1600 1st 13/13s (16s, start 16s)
+  taiga        4p ok   1.0min 0.30ms/step peak 9/9/11/9 earn 1512/1600/1600/1440 1st 13/13/13/14s (20s, start 19s)
+  tihama       2p ok   1.0min 0.69ms/step peak 11/11 earn 1600/1920 1st 13/12s (49s, start 46s)
+  aegean       6p ok   1.0min 0.57ms/step peak 10/13/11/10/12/9 earn 1600/1760/1440/1440/1600/1440 1st 13/13/13/13/13/14s (28s, start 26s)
+  rhine        8p ok   1.0min 0.71ms/step peak 12/11/11/12/12/12/8/10 earn 1760/1440/1440/1440/1600/1600/1280/1440 1st 12/13/13/13/12/13/13/13s (38s, start 35s)
+  donbas       4p ok   1.0min 0.59ms/step peak 10/9/9/10 earn 1232/1280/1120/1280 1st 15/14/16/14s (21s, start 18s)
+  marshes      2p ok   1.0min 0.31ms/step peak 10/12 earn 1600/1600 1st 13/12s (15s, start 14s)
+  blacksea     2p ok   1.0min 0.16ms/step peak 10/9 earn 1440/1920 1st 13/12s (13s, start 12s)
+  bm_ferryquarter 2p ok   1.0min 0.21ms/step peak 10/9 earn 1280/1120 1st 17/17s (42s, start 41s)
+  bm_sixroads  2p ok   1.0min 0.16ms/step peak 9/8 earn 960/800 1st 19/19s (6s, start 6s)
+  bm_sixroads  4p ok   1.0min 0.16ms/step peak 9/8/8/8 earn 1120/960/1056/960 1st 18/19/18/19s (7s, start 7s)
+
+BATTLES
+map          pl  min  ms/st  peak ents         harvest earned        result
+oasis         8  1.0   0.99  11/10/9/11/9/10/10/9 2k/1k/2k/1k/1k/1k/2k/2k ok
+zagros        2  1.0   0.21  10/11             2k/2k                 ok
+mesopotamia   4  1.0   0.54  11/12/9/11        1k/2k/2k/2k           ok
+taiwan        2  1.0   0.23  12/10             2k/2k                 ok
+euphrates     2  1.0   0.20  9/12              2k/2k                 ok
+taiga         4  1.0   0.30  9/9/11/9          2k/2k/2k/1k           ok
+tihama        2  1.0   0.69  11/11             2k/2k                 ok
+aegean        6  1.0   0.57  10/13/11/10/12/9  2k/2k/1k/1k/2k/1k     ok
+rhine         8  1.0   0.71  12/11/11/12/12/12/8/10 2k/1k/1k/1k/2k/2k/1k/1k ok
+donbas        4  1.0   0.59  10/9/9/10         1k/1k/1k/1k           ok
+marshes       2  1.0   0.31  10/12             2k/2k                 ok
+blacksea      2  1.0   0.16  10/9              1k/2k                 ok
+bm_ferryquarter  2  1.0   0.21  10/9              1k/1k                 ok
+bm_sixroads   2  1.0   0.16  9/8               960/800               ok
+bm_sixroads   4  1.0   0.16  9/8/8/8           1k/960/1k/960         ok
+peak memory (node + browser): 3482 MB
+
+MAPSWEEP PASS (683s): 588 static checks, 15 battles — overviews in orch/out/maps/
+browser lock: skipped (--no-lock)
+map sweep: 40 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 8s)
+
+STATIC  588 map/player-count/seed combinations (4 seeds), 0 with issues
+  gulf         2p ok   1.0min 0.68ms/step peak 12/10 earn 1760/1440 1st 12/13s (53s, start 51s)
+  gulf         4p ok   1.0min 0.61ms/step peak 9/10/10/14 earn 1512/1600/1600/1760 1st 13/13/13/12s (32s, start 30s)
+  arctic       2p ok   1.0min 0.23ms/step peak 12/11 earn 1600/1584 1st 13/13s (16s, start 15s)
+  lebanon      2p ok   1.0min 0.29ms/step peak 10/10 earn 1584/1760 1st 13/12s (18s, start 17s)
+  lebanon      4p ok   1.0min 0.54ms/step peak 9/11/11/10 earn 1440/1440/1600/1512 1st 13/13/13/13s (21s, start 19s)
+  yemen        4p ok   1.0min 0.30ms/step peak 10/11/10/8 earn 1600/1760/1600/1440 1st 13/12/13/14s (27s, start 25s)
+  caribbean    2p ok   1.0min 0.26ms/step peak 11/10 earn 1600/1600 1st 13/12s (10s, start 9s)
+  hawizeh      4p ok   1.0min 0.26ms/step peak 11/11/10/11 earn 1536/1600/1440/1600 1st 12/13/13/13s (20s, start 19s)
+  yangtze      8p ok   1.0min 1.15ms/step peak 11/10/10/10/12/11/8/11 earn 1280/1600/1536/1280/1920/1440/1280/1440 1st 14/12/12/22/12/14/13/13s (76s, start 72s)
+  hindukush    8p ok   1.0min 0.69ms/step peak 11/9/11/13/11/10/13/10 earn 1600/1440/1600/1760/1600/1280/1760/1440 1st 14/13/13/12/12/14/12/12s (32s, start 30s)
+  hormuzgate   2p ok   1.0min 0.31ms/step peak 10/10 earn 1600/1600 1st 12/13s (18s, start 17s)
+  hajar        2p ok   1.0min 0.17ms/step peak 12/12 earn 1600/1760 1st 13/12s (11s, start 10s)
+  bm_breakwater 2p ok   1.0min 0.17ms/step peak 9/8 earn 1120/1120 1st 20/19s (11s, start 10s)
+  bm_breakwater 4p ok   1.0min 0.17ms/step peak 9/9/9/9 earn 960/1192/960/1120 1st 27/20/19/17s (11s, start 10s)
+
+BATTLES
+map          pl  min  ms/st  peak ents         harvest earned        result
+gulf          2  1.0   0.68  12/10             2k/1k                 ok
+gulf          4  1.0   0.61  9/10/10/14        2k/2k/2k/2k           ok
+arctic        2  1.0   0.23  12/11             2k/2k                 ok
+lebanon       2  1.0   0.29  10/10             2k/2k                 ok
+lebanon       4  1.0   0.54  9/11/11/10        1k/1k/2k/2k           ok
+yemen         4  1.0   0.30  10/11/10/8        2k/2k/2k/1k           ok
+caribbean     2  1.0   0.26  11/10             2k/2k                 ok
+hawizeh       4  1.0   0.26  11/11/10/11       2k/2k/1k/2k           ok
+yangtze       8  1.0   1.15  11/10/10/10/12/11/8/11 1k/2k/2k/1k/2k/1k/1k/1k ok
+hindukush     8  1.0   0.69  11/9/11/13/11/10/13/10 2k/1k/2k/2k/2k/1k/2k/1k ok
+hormuzgate    2  1.0   0.31  10/10             2k/2k                 ok
+hajar         2  1.0   0.17  12/12             2k/2k                 ok
+bm_breakwater  2  1.0   0.17  9/8               1k/1k                 ok
+bm_breakwater  4  1.0   0.17  9/9/9/9           960/1k/960/1k         ok
+peak memory (node + browser): 3463 MB
+
+MAPSWEEP PASS (638s): 588 static checks, 14 battles — overviews in orch/out/maps/
+browser lock: skipped (--no-lock)
+map sweep: 40 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 7s)
+
+STATIC  604 map/player-count/seed combinations (4 seeds), 0 with issues
+  plateau      8p ok   1.0min 1.14ms/step peak 9/9/11/9/11/10/11/11 earn 1440/1440/1600/800/1600/1440/1440/1584 1st 13/13/12/21/12/13/13/13s (68s, start 64s)
+  islands      4p ok   1.0min 0.36ms/step peak 11/10/9/10 earn 1600/1600/1440/1440 1st 12/12/13/13s (21s, start 19s)
+  persia       4p ok   1.0min 0.34ms/step peak 10/9/9/10 earn 1440/1280/1512/1536 1st 13/13/13/12s (20s, start 19s)
+  rubalkhali   6p ok   1.0min 0.40ms/step peak 9/12/10/11/11/11 earn 1440/1600/1440/1440/1440/1440 1st 13/13/13/13/13/14s (28s, start 27s)
+  khyber       2p ok   1.0min 0.16ms/step peak 11/12 earn 1600/1936 1st 12/12s (15s, start 14s)
+  kuwait       8p ok   1.0min 0.62ms/step peak 11/10/9/12/12/10/9/11 earn 1440/1536/1440/1936/1600/1280/1536/1440 1st 13/13/13/12/13/14/13/13s (28s, start 26s)
+  atoll        8p ok   1.0min 1.12ms/step peak 9/10/11/12/9/9/12/11 earn 960/1280/1600/1600/1440/1280/1760/1760 1st 13/14/13/13/14/14/12/13s (70s, start 66s)
+  dmziron      6p ok   1.0min 0.52ms/step peak 9/10/10/8/11/9 earn 1280/1440/1120/1240/1440/1352 1st 14/13/15/14/14/14s (34s, start 31s)
+  bm_splitridge 2p ok   1.0min 0.19ms/step peak 9/9 earn 960/960 1st 19/27s (13s, start 12s)
+  bm_fourmills 2p ok   1.0min 0.18ms/step peak 8/9 earn 800/800 1st 22/24s (11s, start 11s)
+  bm_fourmills 4p ok   1.0min 0.20ms/step peak 9/9/9/8 earn 800/800/800/640 1st 22/25/22/22s (18s, start 17s)
+
+BATTLES
+map          pl  min  ms/st  peak ents         harvest earned        result
+plateau       8  1.0   1.14  9/9/11/9/11/10/11/11 1k/1k/2k/800/2k/1k/1k/2k ok
+islands       4  1.0   0.36  11/10/9/10        2k/2k/1k/1k           ok
+persia        4  1.0   0.34  10/9/9/10         1k/1k/2k/2k           ok
+rubalkhali    6  1.0   0.40  9/12/10/11/11/11  1k/2k/1k/1k/1k/1k     ok
+khyber        2  1.0   0.16  11/12             2k/2k                 ok
+kuwait        8  1.0   0.62  11/10/9/12/12/10/9/11 1k/2k/1k/2k/2k/1k/2k/1k ok
+atoll         8  1.0   1.12  9/10/11/12/9/9/12/11 960/1k/2k/2k/1k/1k/2k/2k ok
+dmziron       6  1.0   0.52  9/10/10/8/11/9    1k/1k/1k/1k/1k/1k     ok
+bm_splitridge  2  1.0   0.19  9/9               960/960               ok
+bm_fourmills  2  1.0   0.18  8/9               800/800               ok
+bm_fourmills  4  1.0   0.20  9/9/9/8           800/800/800/640       ok
+peak memory (node + browser): 3550 MB
+
+MAPSWEEP PASS (602s): 604 static checks, 11 battles — overviews in orch/out/maps/
+MAPSWEEP PASS (3 shards)
