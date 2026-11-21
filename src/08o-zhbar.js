@@ -367,7 +367,7 @@ if(typeof updateUI==='function'){const _iU=updateUI;updateUI=function(){_iU.appl
    one click arms it, then RIGHT-click the target (left-click cancels; Abdullah 2026-11-15 00:26) - the same as pressing LAUNCH on the building. */
 function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q)return;let b=document.getElementById('qpStrike');
   const own=!!sb&&!sb.hidden&&G&&G.ents&&G.ents.some(e=>e.isB&&e.team===ME&&!e.dead&&e.kind==='uplink'&&e.built>=1);
-  if(!own){if(b)b.hidden=true;return;}
+  if(!own||sb.disabled){if(b)b.hidden=true;if(Q.querySelector('.qcol')&&!Q.querySelector('.qcol').children.length)Q.hidden=true;return;}   /* right rail shows READY things only (Abdullah 2026-11-21 13:03) */
   if(!b){b=document.createElement('button');b.id='qpStrike';b.type='button';b.innerHTML='<div class="qf"></div>'+(ICON_SVG.missile||'')+'<span class="qc"></span>';b.onclick=()=>{const s=$('supbtn');if(s&&!s.disabled){s.click();try{sfxUI(620);}catch(_){}}};
     let col=Q.querySelector('.qstr');if(!col){col=document.createElement('div');col.className='qstr';Q.insertBefore(col,Q.querySelector('.qtab'));}col.append(b);}
   Q.hidden=false;b.hidden=false;const nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),T=G.teams[ME],c=T&&T.sup&&T.sup.charge?Math.min(1,(T.charge||0)/T.sup.charge):1,rdy=!sb.disabled,k=nm+st+rdy+(G.aim==='sup')+Math.round(c*40);

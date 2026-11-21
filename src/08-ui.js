@@ -244,7 +244,7 @@ function qpIcon(k){return '<svg viewBox="0 0 24 24" width="30" height="30" fill=
 function qpTip(k,btn){const T=G&&G.teams[ME];if(!k||!T||!btn){if(QPTIP)QPTIP.hidden=true;QPTK=null;return;}const P=powInfo(k,T.fac),hk=POW_KEY[k];
   if(!QPTIP){QPTIP=document.createElement('div');QPTIP.id='qptip';document.body.append(QPTIP);}
   const d=String(P.desc||'').split(/(?<=[.!?])\s/)[0];QPTIP.textContent='';const a=document.createElement('b');a.textContent=P.name+(hk?' ['+hk.toUpperCase()+']':'')+(P.cash?' · $'+P.cash:'');const c=document.createElement('span');c.textContent=d;QPTIP.append(a,c);
-  QPTK=k;QPTIP.hidden=false;const r=btn.getBoundingClientRect();QPTIP.style.left=Math.round(r.right+8)+'px';QPTIP.style.top=Math.round(r.top+r.height/2)+'px';}
+  QPTK=k;QPTIP.hidden=false;const r=btn.getBoundingClientRect();QPTIP.style.left=Math.max(4,Math.round(r.left-8-(QPTIP.offsetWidth||220)))+'px';QPTIP.style.top=Math.round(r.top+r.height/2)+'px';}
 function qpUpdate(){const T=G&&G.teams[ME];if(!T)return;const ks=Object.keys(POWERS).filter(k=>T.pw[k]&&!powInfo(k,T.fac).passive);
     if(!QPEL){QPEL=document.createElement('div');QPEL.id='qpow';QPEL.innerHTML='<div class="qcol"></div><button type="button" class="qtab" aria-label="Show or hide powers"></button>';document.body.append(QPEL);
     try{QPOFF=localStorage.getItem('ww3qpoff')==='1';}catch(e){}
@@ -255,10 +255,11 @@ function qpUpdate(){const T=G&&G.teams[ME];if(!T)return;const ks=Object.keys(POW
   const now=Date.now();QPSEEN=QPSEEN||{};QPRDY=QPRDY||{};
   const info=ks.map(k=>{const P=powInfo(k,T.fac),w=T.pw[k],cd=Math.max(0,w.cd||0),L=Math.max(1,Math.min(3,w.lv||1)),tot=Math.max(cd,QPSEEN[k]||0,Math.round((P.cd||0)*(typeof PCD!=='undefined'?PCD[L-1]:1)));
     if(cd>0){QPSEEN[k]=Math.max(QPSEEN[k]||0,cd);QPRDY[k]=-1;}else if(QPRDY[k]===-1)QPRDY[k]=now;
-    const locked=k==='bb'&&G.t<300,poor=!!P.cash&&T.credits<P.cash,pulse=cd<=0&&QPRDY[k]>0&&now-QPRDY[k]<2000;return{k,P,cd,tot,locked,poor,pulse};});
+    const locked=k==='bb'&&G.t<300,poor=!!P.cash&&T.credits<P.cash,pulse=cd<=0&&QPRDY[k]>0&&now-QPRDY[k]<2000;return{k,P,cd,tot,locked,poor,pulse};}).filter(o=>!(o.cd>0||o.locked));   /* power buttons appear on the right edge only once ready (Abdullah 2026-11-21 13:03 "As soon as any powers are ready have them appear as icons buttons on the right side of the screen") */
+  QPEL.hidden=!info.length&&!(document.getElementById('qpStrike')&&!document.getElementById('qpStrike').hidden);
   const sig=info.map(o=>o.k+(G.aim===o.k?'*':'')+(o.cd>0?Math.ceil(o.cd):'')+(o.pulse?'p':'')+(o.poor?'$':'')+(o.locked?'L':'')).join();if(sig===QPSIG)return;QPSIG=sig;col.innerHTML='';
   if(!document.getElementById('qpcss')){const st=document.createElement('style');st.id='qpcss';st.textContent='@keyframes qpp{0%,100%{box-shadow:0 0 0 0 rgba(120,255,140,0)}50%{box-shadow:0 0 12px 4px rgba(120,255,140,.9)}}'
-    +'#qpow{position:fixed;z-index:90;left:max(4px,env(safe-area-inset-left,0px));top:calc((100vh - var(--barh,180px))/2);transform:translateY(-50%);display:flex;align-items:center;gap:3px;pointer-events:none;max-height:calc(100vh - var(--barh,180px) - 70px)}#qpow[hidden]{display:none}'
+    +'#qpow{position:fixed;z-index:90;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(var(--barh,180px) + 16px);display:flex;flex-direction:column-reverse;align-items:flex-end;gap:6px;pointer-events:none;max-height:calc(100vh - var(--barh,180px) - 90px)}#qpow[hidden]{display:none}#qpow .qtab{display:none!important}#qpow.off .qcol,#qpow.off .qstr{display:flex!important}#qpow .qcol button,#qpStrike{animation:qpIn .35s cubic-bezier(.2,.9,.3,1.2)}@keyframes qpIn{from{transform:translateX(90px);opacity:0}}'
     +'#qpow .qcol{display:flex;flex-direction:column;flex-wrap:wrap;gap:6px;max-height:inherit;align-content:flex-start}#qpow.off .qcol{display:none}'
     +'#qpow .qtab{pointer-events:auto;width:20px;height:44px;padding:0;border:1px solid #5d6b54;border-radius:0 8px 8px 0;background:rgba(24,30,22,.9);color:#cfe3c0;font:700 15px sans-serif;cursor:pointer}'
     +'#qpow .qcol button{pointer-events:auto;position:relative;overflow:hidden;width:56px;height:56px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#d6e6c4;background:linear-gradient(160deg,#3b4636,#232b21);border:1px solid #9fc27f;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.5);cursor:pointer;touch-action:manipulation}'
