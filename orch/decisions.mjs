@@ -36,19 +36,10 @@ const ck = (c, m) => { if (!c) fails.push(m); };
 
 // Rules files (orch/loadF): CLAUDE.md = short current rules, orch/DECISIONS.md = the full dated record. Every standing decision's
 // key words must still be in one of the two files, and CLAUDE.md must stay short.
-// anthems 2026-11-17 (Abdullah 16:49 "Work on these now", CLAUDE.md Audio: nation identity = anthem at battle start and victory): every PLAYABLE
-// nation has mus/an_<CODE>.mp3, is in AN_FAC (09-audio.js) and has a credit line in AN_CRED (shown in the menu credits); sources: mus/an_pack.py
-{ const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8'); const dt = rd('src/01-data.js'), au = rd('src/09-audio.js');
-  const pm = dt.match(/const PLAYABLE=\[([^\]]*)\]/), pl = pm ? [...pm[1].matchAll(/'(\w+)'/g)].map(m => m[1]) : [];
-  const fm = au.match(/const AN_FAC=\/\*ANFAC\*\/\{([^}]*)\}/), fac = fm ? new Set([...fm[1].matchAll(/(\w+):1/g)].map(m => m[1])) : new Set();
-  const cm = au.match(/const AN_CRED=\{([\s\S]*?)\};/), cred = {}; if (cm) for (const m of cm[1].matchAll(/(\w+):'([^']+)'/g)) cred[m[1]] = m[2];
-  ck(pl.length === 22 && fm && cm && /id='anCred'/.test(au), 'anthems: PLAYABLE, AN_FAC, AN_CRED and the anCred menu-credits paragraph must all exist');
-  const AN_PENDING = ['KP'];   // KP Arirang (US Army Chorus, Commons File:Arirang.ogg) chosen; download was rate-limited 2026-11-17 - see orch/HANDOFF-anthems.md. Remove once mus/an_KP.mp3 lands.
-  for (const f of AN_PENDING) ck(!fs.existsSync(path.join(ROOT, 'mus', 'an_' + f + '.mp3')), 'anthems: ' + f + ' now has its file - take it off AN_PENDING in orch/decisions.mjs');
-  for (const f of pl.filter(f => !AN_PENDING.includes(f))) { const fp = path.join(ROOT, 'mus', 'an_' + f + '.mp3');
-    ck(fs.existsSync(fp) && fs.statSync(fp).size > 50000, 'anthems: ' + f + ' has no mus/an_' + f + '.mp3 (every playable nation gets its anthem at battle start and victory)');
-    ck(fac.has(f), 'anthems: ' + f + ' is missing from AN_FAC in src/09-audio.js'); ck(!!cred[f], 'anthems: ' + f + ' has no credit in AN_CRED (src/09-audio.js)');
-    ck(new RegExp("'" + f + "': \\('an/").test(rd('mus/an_pack.py')), 'anthems: ' + f + ' has no source row in mus/an_pack.py (source + licence)'); } }
+// anthems DROPPED 2026-11-20 (Abdullah 19:07 "Drop the anthems"): no anthem plays at battle start or victory, no anthem credits
+{ const au = fs.readFileSync(path.join(ROOT, 'src/09-audio.js'), 'utf8');
+  ck(/const AN_FAC=\/\*ANFAC\*\/\{\};/.test(au), 'anthems: AN_FAC must stay empty (Abdullah 2026-11-20 "Drop the anthems")');
+  ck(!/id='anCred'/.test(au), 'anthems: the anthem credits paragraph is back - anthems were dropped'); }
 // ---- UI audit guards (Abdullah 2026-11-14 21:55 "find duplicates and remove them"): ONE key table, no key twice, every handled letter has a row, no stale hints
 { const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8'); const kt = rd('src/06z-keys.js');
   const defs = [...kt.matchAll(/\{id:'(\w+)'[^}]*?def:'([^']+)'/g)].map(m => [m[1], m[2]]); const seen = {};
