@@ -4,7 +4,9 @@ const QUAL={lv:0,fx:0,t:0,wait:10,ema:1/60,bad:0,good:0,caps:[1,.85,.75,.67,.58,
 // Frame-rate governor: aims for the chosen target (default 120 FPS) or the screen's own refresh rate if lower (a 60 Hz
 // screen can never show more than 60). Missed frames step the render resolution and effects down; when frames are
 // finishing with plenty of time to spare it steps back up.
-function fpsTarget(){let t=120;try{t=+(localStorage.getItem('ww3_fpsT')||120)||120;}catch(e){}return Math.min(t,QUAL.hz*.97);}
+/* default 60 (was 120): Abdullah's RTX 2070 ran at 154 FPS yet the governor had cut the picture to half resolution and the fewest effects
+   ('detail 5/5' in his Performance log, 2026-11-21) chasing 120 - 'graphics really bad, blurry'. A smooth 60 keeps the full picture. */
+function fpsTarget(){let t=60;try{t=+(localStorage.getItem('ww3_fpsT')||60)||60;}catch(e){}return Math.min(t,QUAL.hz*.97);}
 // One governor (this function is tested by orch/qualgov.mjs, which cuts it out between the QUALGOV markers).
 // Two ladders: lv = resolution + effects (when drawing is the bottleneck), fx = effects only (when game code is the
 // bottleneck, a lower resolution would only blur the picture). Stepping down needs 1.5 s of missed frames; stepping up

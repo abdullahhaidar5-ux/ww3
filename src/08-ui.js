@@ -589,7 +589,7 @@ function cursorIntent(){HOVE=null;if(!G||G.over)return '';const lo=leftOrders(),
   if(G.place)return 'place';if(G.aim)return 'aim';if(G.amove)return 'amove';if(G.defm)return 'guard';
   const units=selfSel(),t=pickAt(mouse.x,mouse.y,false);HOVE=t;
   {const x=(ro||!units.length)?exitIntent(t,MODK.alt):null;if(x)return x.k==='fire'?'attack':'exit';}
-  if(!units.length){if(t)return t.team===ME?'sel':'';if((lo||ro)&&prodSel())return 'rally';return '';}
+  if(!units.length){if(t)return t.team===ME?'sel':'';return '';}   /* no flag-shaped mouse with a production building selected (Abdullah 2026-11-21 'The flag also stays'): the pointer stays normal; a click on the ground still sets the rally point and the rally flag on the ground shows it */
   if(!lo&&(MODK.ctrl||MODK.alt)){const w=screenToWorld(mouse.x,mouse.y);if(MODK.ctrl)return w&&forceTarget(t,w)?'force':'nogo';return w&&!noGo(units,w)?'way':'nogo';}
   if(!lo&&!ro)return t&&t.team===ME?'sel':'';
   const w=screenToWorld(mouse.x,mouse.y);
@@ -1263,10 +1263,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
     ['Deploying forces…',.9,()=>{buildPanels();}],
     // the first battle frame creates every unit, building and the fog of war on the GPU, by far the slowest frame
     // of the battle: draw it here, under the loading screen, so the battle appears already running
-    ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}],
-    // ...and every material that frame put in the scene (the HQ's roof/facade kit, props) gets its shader program built here, side by side,
-    // before the battle shows: on Abdullah's laptop the HQ kit was still being built in the battle's first frame (a 0.3 s freeze, 2026-11-21)
-    ['Deploying forces…',.99,()=>{if(!R3||!R3.compileAsync||!SCN||!CAM)return;let rt0=null,p=null;try{rt0=R3.getRenderTarget();R3.setRenderTarget(typeof POST!=='undefined'&&POST.on&&POST.rt?POST.rt:null);p=R3.compileAsync(SCN,CAM);}catch(e){console.warn('scene compile',e);}finally{try{R3.setRenderTarget(rt0);}catch(e){}}return p&&p.catch(()=>{});}]];
+    ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
   const T0=performance.now(),TL=LOAD.times=[];
   // every step has a watchdog: a step still not done after LOAD_WD ms (a download or a phone's shader compile that never
   // finishes) is logged and the loading moves on, so the loading screen can never hang for ever
@@ -1470,7 +1467,7 @@ $('start').onclick=()=>{initAudio();startSingle();};if($('sandbox'))$('sandbox')
   myList().then(l=>{MYM.list=l;myUI();});}
 if(window.WW3_P2P&&$('relayBox')){$('relayBox').hidden=false;let r={};try{r=JSON.parse(localStorage.getItem('ww3_relay')||'{}')||{};}catch(e){}$('relayU').value=r.urls||'';$('relayN').value=r.username||'';$('relayP').value=r.credential||'';
   const sv=()=>{try{const u=$('relayU').value.trim();if(u)localStorage.setItem('ww3_relay',JSON.stringify({urls:u,username:$('relayN').value.trim(),credential:$('relayP').value}));else localStorage.removeItem('ww3_relay');$('relayS').textContent='Saved. Takes effect for the next battle you start or join (reload the page).';}catch(e){}};for(const id of ['relayU','relayN','relayP'])$(id).onchange=sv;}
-{const seg=(id,key,def)=>{const el=$(id);if(!el)return;let v=def;try{v=localStorage.getItem(key)||def;}catch(e){}const paint=()=>{for(const b of el.querySelectorAll('button'))b.classList.toggle('on',b.dataset.v===v);};paint();for(const b of el.querySelectorAll('button'))b.onclick=()=>{v=b.dataset.v;try{localStorage.setItem(key,v);}catch(e){}paint();QUAL.bad=QUAL.good=0;};};seg('sFpsT','ww3_fpsT','120');seg('sHideIp','ww3_hideip','0');seg('sFpsS','ww3_fpsShow','0');}
+{const seg=(id,key,def)=>{const el=$(id);if(!el)return;let v=def;try{v=localStorage.getItem(key)||def;}catch(e){}const paint=()=>{for(const b of el.querySelectorAll('button'))b.classList.toggle('on',b.dataset.v===v);};paint();for(const b of el.querySelectorAll('button'))b.onclick=()=>{v=b.dataset.v;try{localStorage.setItem(key,v);}catch(e){}paint();QUAL.bad=QUAL.good=0;};};seg('sFpsT','ww3_fpsT','60');seg('sHideIp','ww3_hideip','0');seg('sFpsS','ww3_fpsShow','0');}
 $('aMus').onclick=()=>{initAudio();AU.musicOn=!AU.musicOn;saveAudio();applyAudio();};$('aSfx').onclick=()=>{initAudio();AU.sfxOn=!AU.sfxOn;saveAudio();applyAudio();};$('aVoc').onclick=()=>{initAudio();AU.voiceOn=!AU.voiceOn;saveAudio();applyAudio();};$('cancelHost').onclick=cancelHost;
 // settings panel (main menu and in game)
 // Phones (touch screen, no mouse): render at most 1.5 pixels per screen point instead of the full 2 (about half the
