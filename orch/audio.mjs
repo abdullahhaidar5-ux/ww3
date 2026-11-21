@@ -1,12 +1,12 @@
 // Audio test (cigate "audio" job): the shared soundtrack (src/09-audio.js "Shared soundtrack", files in mus/st/).
 // Boots the game in Chromium with the browser's normal autoplay rules, taps the menu, starts a US skirmish and checks:
 //   0) nothing plays before the first tap; after a real tap a menu track plays and is audible
-//   a) the anthem then a calm track play in battle; the old generated score and its sample sheets are gone (never fetched)
+//   a) a calm track plays in battle (no anthem: removed 2026-11-21); the old generated score and its sample sheets are gone (never fetched)
 //   b) fighting (AU.heat high) switches to a combat track with a crossfade
 //   c) the dwell rule: combat holds for its 60 s even when the fighting stops, then goes back to calm
-//   d) victory plays the victory track, then the anthem, then the menu pool; a second battle's defeat plays the defeat track
-//   e) the nation's anthem (mus/an_US.mp3) is fetched at battle start
-//   f) tracks stream one at a time, and the only music files downloaded are the ones that played (plus the anthem)
+//   d) victory plays the victory track, then the menu pool; a second battle's defeat plays the defeat track
+//   e) no anthem is fetched or played
+//   f) tracks stream one at a time, and the only music files downloaded are the ones that played
 //   g) if the soundtrack can't load, the music rests without errors breaking anything, and comes back once it can
 //   i) recorded battle sounds (sfx/): nothing fetched before a battle sound is needed; the sprite sheet then loads and
 //      shots/explosions play from it; loops (wind/rumble/engines) load only when wanted; a voice ducks music+effects;
@@ -126,14 +126,14 @@ try {
   await page.evaluate(() => { startSingle(); if (G && G.teams[0]) G.teams[0].ai = mkAI(1); });
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 500 });
   console.log('battle loaded:', await page.evaluate(() => G.teams.map(t => t.fac).join(' vs ')));
-  s = await until(s => s.an || s.anWait, 15000);
-  ok('e) anthem requested at battle start (US)', reqs.includes('mus/an_US.mp3'), reqs.filter(r => r.includes('an_')).join(','));
-  s = await until(s => s.an, 15000);
-  ok('e) anthem plays', !!s);
+  // no national anthems (Abdullah 2026-11-20/21 "Drop the anthems", "Remove the anthems"): none requested, none played
+  await sleep(4000);
+  ok('e) no anthem requested at battle start', !reqs.some(r => /mus\/an_/.test(r)), reqs.filter(r => r.includes('an_')).join(','));
+  ok('e) no anthem playing', !(await state()).an);
   // the battle itself may heat up; keep it cool until calm has started so the calm check is deterministic
   await page.evaluate(() => { window.__cool = setInterval(() => { AU.heat = 0; }, 100); });
   s = await until(s => s.mode === 'battle' && s.pool === 'calm' && s.playing && !s.an, 60000);
-  ok('a) a calm track plays after the anthem', !!s && /^calm-/.test(s.id), s ? s.id : JSON.stringify(await state()));
+  ok('a) a calm track plays in battle', !!s && /^calm-/.test(s.id), s ? s.id : JSON.stringify(await state()));
   if (s) { await sleep(3000); ok('a) calm is audible on the music bus', (L.calm = await level()) > 0.002); }
   const bad = reqs.filter(r => /mus\/(smp|me|as|we)\.mp3/.test(r));
   ok('a) old sample sheets not fetched (smp/me/as/we)', bad.length === 0, bad.join(','));
@@ -198,9 +198,8 @@ try {
   s = await until(s => s.pool === 'victory' && s.playing, 15000);
   ok('d) victory plays the victory track', !!s && s.id === 'victory-01' && reqs.includes('mus/st/victory-01.mp3'), s && s.id);
   await page.evaluate(() => { const d = ST.decks[ST.cur]; d.el.currentTime = Math.max(0, d.el.duration - 4); });
-  s = await until(s => s.an, 10000);
-  ok('d) the anthem follows the victory track', !!s);
-  await page.evaluate(() => { if (ST.an) ST.an.end = AU.ctx.currentTime + 3.5; });
+  await sleep(5000);
+  ok('d) no anthem after the victory track', !(await state()).an);
   s = await until(s => s.mode === 'menu' && /^menu-/.test(s.id || '') && s.playing, 15000);
   ok('d) then the menu pool', !!s, s && s.id);
 
@@ -214,8 +213,8 @@ try {
   ok('d) defeat plays the defeat track', !!s && s.id === 'defeat-02' && reqs.includes('mus/st/defeat-02.mp3'), s && s.id);
   const auErr = (await state()).err;
   ok('h) no audio error reported by the game (AU.err)', !auErr, auErr);
-  const extra = ST_REQ_CHECK(reqs, (await state()).req), odd = [...new Set(reqs)].filter(r => !/^mus\/(st\/[\w-]+|an_US)\.mp3$/.test(r));
-  ok('f) only needed music files downloaded (tracks that played + the anthem)', extra.length === 0 && odd.length === 0, extra.concat(odd).join(', '));
+  const extra = ST_REQ_CHECK(reqs, (await state()).req), odd = [...new Set(reqs)].filter(r => !/^mus\/st\/[\w-]+\.mp3$/.test(r));
+  ok('f) only needed music files downloaded (tracks that played)', extra.length === 0 && odd.length === 0, extra.concat(odd).join(', '));
 
   // soundtrack unreachable: the music rests (no fallback score, no breakage), then comes back once tracks load again
   blockST = true; blockLog = true;
