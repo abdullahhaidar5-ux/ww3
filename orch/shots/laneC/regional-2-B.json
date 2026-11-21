@@ -1,0 +1,33 @@
+{
+ "pc": {
+  "name": "pc",
+  "bench": 14.7,
+  "loadS": 39.03,
+  "units": 361,
+  "gameMin": 0,
+  "wx": "Clear day",
+  "gfx": "auto",
+  "quality": 0,
+  "frameMed": 89.2,
+  "frameP95": 272,
+  "frameP99": 341.9,
+  "worst1Fps": 2.85,
+  "longFrames": 150,
+  "cpuMed": 89.2,
+  "cpuP95": 272,
+  "cpuMax": 351.3,
+  "simP95": 16.3,
+  "drawCalls": 1886,
+  "kTris": 8258,
+  "newShaders": 0,
+  "hitchBoomX": 1.47,
+  "hitchBoom2X": 1.44,
+  "hitchWeatherX": 1.52,
+  "hitchWorstMs": 102.8,
+  "hitchErr": "",
+  "heapMB": -35.29,
+  "heapMBperMin": -118.45,
+  "frames": 150,
+  "errs": []
+ }
+}

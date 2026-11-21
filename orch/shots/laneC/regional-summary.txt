@@ -1,0 +1,5 @@
+run                 frameMed frameP95 drawCalls kTris newShaders simP95
+regional-1-A  64.5  305.7  1400  6243  1  10.6
+regional-2-B  89.2  272  1886  8258  0  16.3
+regional-3-B  72  257.1  1410  6232  0  11.2
+regional-4-A  56.8  223.6  1345  6212  0  10.4
