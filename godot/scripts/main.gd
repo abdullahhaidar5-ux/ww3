@@ -372,7 +372,11 @@ func _shahed_mesh(span: float) -> Mesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var L := span * 1.05
 	var h := span * 0.5
-	var tri := func(a: Vector3, b: Vector3, c: Vector3):
+	var R := Basis(Vector3.UP, -PI * 0.5)   # built nose +X, turned to face +Z like the imported models
+	var tri := func(a0: Vector3, b0: Vector3, c0: Vector3):
+		var a := R * a0
+		var b := R * b0
+		var c := R * c0
 		var n := (b - a).cross(c - a).normalized()
 		st.set_normal(n); st.add_vertex(a); st.set_normal(n); st.add_vertex(b); st.set_normal(n); st.add_vertex(c)
 		st.set_normal(-n); st.add_vertex(a); st.set_normal(-n); st.add_vertex(c); st.set_normal(-n); st.add_vertex(b)
