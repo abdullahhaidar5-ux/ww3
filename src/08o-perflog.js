@@ -13,24 +13,37 @@ function perfGpu(){if(PERF.gpu)return PERF.gpu;let n='unknown';try{const gl=R3.g
 function perfCount(){const i=R3.info;return [i.programs?i.programs.length:0,i.memory.textures,i.memory.geometries,QUAL.lv,QUAL.fx||0];}
 // called once at the start of every drawn battle frame (see the renderFrame wrapper below)
 function perfTick(){const now=performance.now(),c=perfCount();
-  if(PERF.G!==G){PERF.G=G;PERF.since=now;PERF.prev=0;}                                   // a new battle: its first seconds (loading work) are not hitches
+  if(PERF.G!==G){PERF.G=G;PERF.since=now;PERF.prev=0;PERF.np.length=0;PERF.pn=-1;}                                   // a new battle: its first seconds (loading work) are not hitches
   const gap=PERF.prev?now-PERF.prev:0;
   if(gap>PERF.slow&&gap<15000&&!PERF.hid&&now-PERF.since>3000&&!G.paused&&!window.LOADING){
     const a=PERF.c0||PERF.c1||c,ev=[];for(const e of PERF.ev)if(e&&now-e.t<gap+1500)ev.push([e.t,e.k]);ev.sort((x,y)=>x[0]-y[0]);
     const m={};for(const e of ev)m[e[1]]=(m[e[1]]||0)+1;
     PERF.log.push({t:G.t,ms:Math.round(gap),p:[a[0],c[0]],x:[a[1],c[1]],g:[a[2],c[2]],q:[a[3]+'/'+a[4],c[3]+'/'+c[4]],ev:Object.keys(m).map(k=>k+(m[k]>1?'×'+m[k]:'')).join(' ')||'-',u:G.ents?G.ents.length:0,mode:typeof MODE!=='undefined'?MODE:''});
     if(PERF.log.length>PERF.max)PERF.log.shift();perfGpu();}
+  if(c[0]>PERF.pn&&PERF.pn>=0&&!window.LOADING)perfNewProgs(c[0]-PERF.pn,gap>PERF.slow&&PERF.log.length?PERF.log[PERF.log.length-1]:null);PERF.pn=window.LOADING?-1:c[0];
   PERF.hid=0;PERF.prev=now;PERF.c0=PERF.c1;PERF.c1=c;}
+/* shader programs made after the loading screen (lane E): each one is a driver compile in the middle of the battle (on Windows /
+   Direct3D 11 about 0.3 s each). Their names are noted (material name, kind, a short key hash) and the frame they cost is tagged,
+   so the next log says exactly which ones the warm-up missed - and whether the warm-up was still running in the background. */
+PERF.np=[];PERF.pn=-1;
+function perfProgLbl(p){const k=String(p.cacheKey||''),i=k.lastIndexOf(','),tail=i>=0?k.slice(i+1):'';let h=0;for(let j=0;j<k.length;j++)h=(h*31+k.charCodeAt(j))|0;
+  return (p.name||'-')+' '+(k.split(',')[0]||'?')+(tail&&tail.length<=16?' '+tail:'')+' #'+(h>>>0).toString(36).slice(0,5);}
+function perfNewProgs(n,hit){const P=R3.info.programs,L=[];for(let i=Math.max(0,P.length-n);i<P.length;i++)L.push(perfProgLbl(P[i]));const bg=!!(LOAD.wt&&LOAD.wt[0]&&!LOAD.wt[1]);
+  for(const d of L){PERF.np.push({t:G.t,d,bg});if(PERF.np.length>60)PERF.np.shift();}
+  if(hit&&hit.t===G.t){hit.np=(hit.np?hit.np+', ':'')+L.join(', ');if(bg)hit.bg=1;}
+  try{console.log('shader program made during the battle at '+perfClock(G.t)+(bg?' (warm-up still running)':'')+': '+L.join(', '));}catch(e){}}
 try{document.addEventListener('visibilitychange',()=>{PERF.hid=1;});}catch(e){}             // a frame that spans a tab switch is not a hitch
 {const _rf=renderFrame;renderFrame=function(dt){try{if(G&&G.terrain&&R3&&!window.GLLOST)perfTick();}catch(e){}return _rf.apply(this,arguments);};}
 // loading: browser "long tasks" (over 50 ms, the pieces that make a tab feel stuck) seen while the loading screen is up
 PERF.lt=[];try{new PerformanceObserver(l=>{if(!window.LOADING)return;for(const e of l.getEntries())PERF.lt.push([Math.round(e.startTime),Math.round(e.duration)]);if(PERF.lt.length>400)PERF.lt.splice(0,200);}).observe({entryTypes:['longtask']});}catch(e){}
 function perfLoad(){const t=LOAD.times;if(!t||!t.length)return '';const W=LOAD.warm,w=LOAD.wt,lt=w&&w[1]?PERF.lt.filter(x=>x[0]>=w[0]-50&&x[0]<=w[1]).map(x=>x[1]):[];
-  return 'Last battle load (ms per stage): '+t.map(x=>x[0].replace('…','')+' '+x[1]).join(', ')+'\n'+(W?'Shader warm-up: '+W.ms+' ms, '+W.models+' models, '+W.progs+' programs compiled, '+W.steps+' steps (longest '+W.maxStep+' ms)'+(W.stage.length?' ['+W.stage.map(x=>x[0]+' '+x[1]).join(', ')+']':'')+(W.late?', finished after the loading watchdog':'')+'\n'+(lt.length?'Long tasks while preparing graphics: '+lt.length+', longest '+Math.max(...lt)+' ms\n':'No long task while preparing graphics.\n'):'')+'\n';}
+  return 'Last battle load (ms per stage): '+t.map(x=>x[0].replace('…','')+' '+x[1]).join(', ')+'\n'+(W?'Shader warm-up: '+W.ms+' ms, '+W.models+' models, '+W.progs+' programs compiled, '+W.steps+' steps (longest '+W.maxStep+' ms)'+(W.stage.length?' ['+W.stage.map(x=>x[0]+' '+x[1]).join(', ')+']':'')+(W.req?', '+W.req+' requested side by side':'')+(W.late?', finished after the loading watchdog':'')+'\n'+(lt.length?'Long tasks while preparing graphics: '+lt.length+', longest '+Math.max(...lt)+' ms\n':'No long task while preparing graphics.\n'):'')+'\n';}
 function perfClock(t){t=Math.max(0,t|0);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
-function perfLine(e){return perfClock(e.t)+'  '+e.ms+' ms  programs '+e.p[0]+'→'+e.p[1]+'  textures '+e.x[0]+'→'+e.x[1]+'  shapes '+e.g[0]+'→'+e.g[1]+'  detail '+e.q[0]+'→'+e.q[1]+'  units '+e.u+'  events: '+e.ev;}
+function perfLine(e){return perfClock(e.t)+'  '+e.ms+' ms  programs '+e.p[0]+'→'+e.p[1]+'  textures '+e.x[0]+'→'+e.x[1]+'  shapes '+e.g[0]+'→'+e.g[1]+'  detail '+e.q[0]+'→'+e.q[1]+'  units '+e.u+'  events: '+e.ev+(e.bg?'  (warm-up still running)':'')+(e.np?'  new programs: '+e.np:'');}
+function perfProgs(){const N=PERF.np;if(!N.length)return 'No shader program made during the battle.\n';
+  return 'Shader programs made during the battle: '+N.length+(N.some(x=>x.bg)?' ('+N.filter(x=>x.bg).length+' while the warm-up was still running)':'')+'\n'+N.slice(-12).map(x=>'  '+perfClock(x.t)+' '+x.d+(x.bg?' (warm-up)':'')).join('\n')+'\n';}
 function perfText(){let v='';try{v=typeof BUILD!=='undefined'?' build '+BUILD:'';}catch(e){}
-  return 'World War 3 performance log'+v+'\nGraphics card: '+perfGpu()+'\nScreen: '+Math.round(innerWidth)+'×'+Math.round(innerHeight)+' @'+(window.devicePixelRatio||1)+'  '+Math.round(QUAL.fps||0)+' FPS now\n'+perfLoad()+
+  return 'World War 3 performance log'+v+'\nGraphics card: '+perfGpu()+'\nScreen: '+Math.round(innerWidth)+'×'+Math.round(innerHeight)+' @'+(window.devicePixelRatio||1)+'  '+Math.round(QUAL.fps||0)+' FPS now\n'+perfLoad()+perfProgs()+
     (PERF.log.length?'Frames over '+PERF.slow+' ms (battle time, length, before→after):\n'+PERF.log.map(perfLine).join('\n'):'No frame over '+PERF.slow+' ms recorded in this session.');}
 function perfCss(){if(document.getElementById('pfCss'))return;const s=document.createElement('style');s.id='pfCss';s.textContent=`
 #pfWin{position:fixed;inset:0;z-index:960;background:rgba(8,11,10,.84);display:flex;align-items:center;justify-content:center}

@@ -546,18 +546,35 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     if(!lt)SCN.add(grp);
     try{if(post()){sizePost();R3.setRenderTarget(POST.rt);}const c0=performance.now();const p=R3.compileAsync(grp,CAM,SCN);tcomp=performance.now()-c0;R3.setRenderTarget(null);await Promise.race([p,new Promise(r=>setTimeout(r,wait||4000))]);const u0=performance.now();await upTex(grp);ttex=performance.now()-u0;}catch(e){console.warn('warm-up',e);R3.setRenderTarget(null);}
     if(!lt&&!PH){MK('draw '+name);try{drawOnly([grp],keep?1:0);}catch(e){}}/* kept groups too (with the depth pass): their programs link step by step, not all in the final extras draw */if(keep&&!lt)ex.push(grp);else if(!lt)unscene(grp);const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push([name,Math.round(d),Math.round(tcomp),Math.round(ttex)]);};
-  const MK=n=>{LOAD.wmark=n;},mk=()=>{const g=new THREE.Group();g.position.set(bx,gy,by);return g;};
+  const MK=n=>{LOAD.wmark=n;LOAD.beat=performance.now();},mk=()=>{const g=new THREE.Group();g.position.set(bx,gy,by);return g;};
   const lap=(n,t)=>{W.stage.push([n,Math.round(performance.now()-t)]);};
-  const BATCH=PH?4:1;let ts=performance.now();
-  for(let i=0;i<keys.length;i+=BATCH){if(dead())break;const grp=mk(),tb0=performance.now();MK('build '+keys.slice(i,i+BATCH).join('+'));
-    for(const k of keys.slice(i,i+BATCH)){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;W.models++;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);
-      // a burnt copy: phones only for a kind of material not seen yet (most wrecks share a handful of burnt shaders); PCs for every model (each shape needs its own burnt vertex array before the first wreck)
-      let s='';o.traverse(c=>{if(c.isMesh&&!c.isSkinnedMesh){const m=Array.isArray(c.material)?c.material[0]:c.material;if(m)s+=m.type+(m.map?'m':'')+(m.normalMap?'n':'')+(m.vertexColors?'v':'')+'|';}});
-      if(s&&(!PH||!sig.has(s))){sig.add(s);try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});grp.add(w);}catch(e){}}}
-    nObj+=grp.children.length;{const tb=performance.now()-tb0;if(tb>100)(W.slow=W.slow||[]).push(['build '+keys.slice(i,i+BATCH).join('+'),Math.round(tb)]);}await step('models '+keys.slice(i,i+BATCH).join('+'),grp);
-    if(onProg&&!isLate())try{onProg(Math.min(keys.length,i+BATCH),keys.length);}catch(e){}await frame();if(isLate()){W.late=1;
+  // request a group's programs now (no waiting) and draw it later in flush(): the strike extras below compile side by side too
+  const SQ=[];let qtl=performance.now(),qpl=0;
+  const qstep=async(name,grp,wait,keep)=>{if(dead())return;MK('request '+name);try{if(post()){sizePost();R3.setRenderTarget(POST.rt);}grp.updateMatrixWorld(true);R3.compile(grp,CAM,SCN);}catch(e){console.warn('warm-up',e);}R3.setRenderTarget(null);
+    SQ.push([name,grp,wait,keep]);if(performance.now()-qtl>30||npr()-qpl>=6){await frame();qtl=performance.now();qpl=npr();}};
+  const flush=async()=>{while(SQ.length){const a=SQ.shift();if(dead())continue;await step(...a);await frame();}};
+  const BATCH=PH?4:1;let ts=performance.now();const npr=()=>R3.info.programs?R3.info.programs.length:0;
+  /* lane E (Abdullah's RTX 2070 laptop, Direct3D 11 through ANGLE: 30 s warm-up, the battle started by the loading watchdog with the
+     rest compiling in the first seconds = 883 ms hitches): every model group is built and its shader programs REQUESTED first, all of
+     them, a few per frame, without waiting for any; the browser compiles them side by side in the background (KHR_parallel_shader_compile,
+     several worker threads on Windows) while the steps below draw them one by one. Before, one model's programs were compiled, waited for
+     and drawn before the next model's even started (one program at a time, ~290 ms each on that card). */
+  const MG=[];{let tl=performance.now(),pl=npr();
+    for(let i=0;i<keys.length;i+=BATCH){if(dead())break;const grp=mk(),tb0=performance.now(),nm=keys.slice(i,i+BATCH).join('+');MK('build '+nm);
+      for(const k of keys.slice(i,i+BATCH)){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;W.models++;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);
+        // a burnt copy: phones only for a kind of material not seen yet (most wrecks share a handful of burnt shaders); PCs for every model (each shape needs its own burnt vertex array before the first wreck)
+        let s='';o.traverse(c=>{if(c.isMesh&&!c.isSkinnedMesh){const m=Array.isArray(c.material)?c.material[0]:c.material;if(m)s+=m.type+(m.map?'m':'')+(m.normalMap?'n':'')+(m.vertexColors?'v':'')+'|';}});
+        if(s&&(!PH||!sig.has(s))){sig.add(s);try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});grp.add(w);}catch(e){}}}
+      nObj+=grp.children.length;{const tb=performance.now()-tb0;if(tb>100)(W.slow=W.slow||[]).push(['build '+nm,Math.round(tb)]);}
+      // request (not wait for) this group's programs, drawn into the post-processing target as in the battle; a frame is given back
+      // after ~30 ms of work or 6 new programs, so the page never sits on a pile of program links (orch/loadfreeze.mjs)
+      MK('request '+nm);try{if(post()){sizePost();R3.setRenderTarget(POST.rt);}grp.updateMatrixWorld(true);R3.compile(grp,CAM,SCN);}catch(e){console.warn('warm-up',e);}R3.setRenderTarget(null);
+      MG.push([nm,grp]);if(performance.now()-tl>30||npr()-pl>=6){await frame();tl=performance.now();pl=npr();}}
+    W.req=npr()-P0;lap('requests',ts);ts=performance.now();}
+  for(let j=0;j<MG.length;j++){if(dead())break;const [nm,grp]=MG[j];await step('models '+nm,grp);MG[j]=null;
+    if(onProg&&!isLate())try{onProg(j+1,MG.length);}catch(e){}await frame();if(isLate()){W.late=1;
       // the rest runs in the background: gently, and not at all on a machine that is already struggling (what is left is prepared when first seen)
-      if(typeof QUAL!=='undefined'&&QUAL.fps&&QUAL.fps<20){W.dropped=keys.length-i-BATCH;break;}await new Promise(r=>setTimeout(r,120));}}
+      if(typeof QUAL!=='undefined'&&QUAL.fps&&QUAL.fps<20){W.dropped=MG.length-j-1;break;}await new Promise(r=>setTimeout(r,120));}}
   lap('models',ts);ts=performance.now();
   // the merged one-mesh soldier and the shared plain materials
   if(!dead()){const grp=mk();
@@ -571,8 +588,8 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     grp.traverse(c=>{c.frustumCulled=false;});await step('shared',grp);await frame();}
   // what a strike shows for the first time (PC): missiles, flames, rock chunks / warning markers, ping rings, rubble, banner / shock rings
   if(!PH&&!dead()){
-    {const grp=mk();try{if(typeof mslWarm==='function')mslWarm(grp);for(const cg of chunkGeos()){const rk=new THREE.Mesh(cg,chunkMat('#4a4034'));rk.castShadow=true;rk.frustumCulled=false;rk.scale.setScalar(2);grp.add(rk);}}catch(e){console.warn('strike warm-up',e);}await step('missiles',grp,0,1);await frame();}
-    if(!dead()){const grp=mk();try{const KG=mkGeo(),bm2=new THREE.MeshBasicMaterial({color:0xea3a2c,transparent:true,opacity:.01,depthWrite:false});for(const g of [KG.ring,KG.inner,KG.disc,KG.bar,pingGeo()]){const m=new THREE.Mesh(g,bm2);m.frustumCulled=false;m.scale.setScalar(20);m.position.y=3;grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('markers',grp,0,1);await frame();}
+    {const grp=mk();try{if(typeof mslWarm==='function')mslWarm(grp);for(const cg of chunkGeos()){const rk=new THREE.Mesh(cg,chunkMat('#4a4034'));rk.castShadow=true;rk.frustumCulled=false;rk.scale.setScalar(2);grp.add(rk);}}catch(e){console.warn('strike warm-up',e);}await qstep('missiles',grp,0,1);}
+    if(!dead()){const grp=mk();try{const KG=mkGeo(),bm2=new THREE.MeshBasicMaterial({color:0xea3a2c,transparent:true,opacity:.01,depthWrite:false});for(const g of [KG.ring,KG.inner,KG.disc,KG.bar,pingGeo()]){const m=new THREE.Mesh(g,bm2);m.frustumCulled=false;m.scale.setScalar(20);m.position.y=3;grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await qstep('markers',grp,0,1);}
     // a garrisoned house's flag, marker and scaffold, and a supply truck's crate load (shared shapes, first drawn mid-battle when squads run into houses / a truck loads)
     if(!dead()){const grp=mk();try{if(typeof garParts==='function'){const GP=garParts(T.color);grp.add(new THREE.Mesh(GP.pole,GP.mPole));grp.add(new THREE.Mesh(GP.cloth,GP.mCloth));
         for(const q of G.teams)if(q&&q.fac&&FACTIONS[q.fac])grp.add(mesh(geoFor('garrison',q.fac,q,'main')));const gs=bstats(T.fac,'garrison');if(gs&&BH.garrison)grp.add(new THREE.LineSegments(scafGeo(gs.size+6,BH.garrison/BSC+6),scafMat()));}
@@ -581,12 +598,12 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       if(typeof bfWoundInit==='function'){bfWoundInit();const im=new THREE.InstancedMesh(BFX.wb.geometry,BFX.wb.material,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));im.setColorAt(0,new THREE.Color(1,1,1));grp.add(im);grp.add(new THREE.Points(BFX.wp.geometry,BFX.wp.material));}
       /* the instanced unit markers (spy eye, ground blob): their shader is made here, not when the first spy walks into view */
       if(typeof decalSet==='function')for(const k of ['eye','blob']){const S=decalSet(k),im=new THREE.InstancedMesh(S.geo,S.mat,1);im.setMatrixAt(0,new THREE.Matrix4().makeScale(.01,.01,.01));if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));im.renderOrder=S.ro;grp.add(im);}
-      grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await step('garrison',grp,0,1);await frame();}
+      grp.traverse(c=>{c.frustumCulled=false;});}catch(e){console.warn('garrison warm-up',e);}await qstep('garrison',grp,0,1);}
     // every side's riflemen and anti-tank teams in all their kit variants, one side per step: a fresh squad from the barracks mid-battle used to merge its soldier shapes (and link their shaders) on the spot
     for(const q of G.teams){if(dead()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;const grp=mk();
       for(const kd of ['inf','at']){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;
         for(const id of [1,2,5]){try{const o=makeObj({id:900000+id,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}}
-      grp.traverse(c=>{c.frustumCulled=false;});await step('soldiers '+q.fac,grp,0,1);await frame();}
+      grp.traverse(c=>{c.frustumCulled=false;});await qstep('soldiers '+q.fac,grp,0,1);}
     /* Test range: the player spawns every unit kind of the nation within seconds, so each kind's own 3D figure (nation kit, team paint, its shaders
        and shapes) is built here, a few kinds per step, instead of in the frame its first unit appears (rangefreeze 2026-11-17: first jets, clerics,
        spies, airlifters and drones stalled 150-900 ms). Battles keep the lighter list above (the AI trains a handful of kinds). */
@@ -595,14 +612,15 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
       for(let i=0;i<kinds.length&&!dead()&&!isLate();i+=3){const grp=mk();
         for(const kd of kinds.slice(i,i+3)){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;try{const o=makeObj({id:900100+i,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}
         {const nbs=new Set();grp.traverse(c=>{c.frustumCulled=false;if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});if(typeof bonePoolWarm==='function')for(const nb of nbs)bonePoolWarm(nb,PH?12:48);}   /* heroes and other own rigs: their bone textures ready too */
-        await step('range '+q.fac+' '+kinds.slice(i,i+3).join('+'),grp,0,1);await frame();}}
-    if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('rubble',grp,0,1);await frame();}
-    if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await step('banner',grp,0,1);await frame();}
+        await qstep('range '+q.fac+' '+kinds.slice(i,i+3).join('+'),grp,0,1);}}
+    if(!dead()){const grp=mk();try{for(let i=0;i<3;i++){const m=mesh(rubGeo(i));m.frustumCulled=false;m.scale.setScalar(.2);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await qstep('rubble',grp,0,1);}
+    if(!dead()){const grp=mk();try{const F=flagGeo();for(const [g,mt] of [[F.pole,F.mPole],[F.tip,F.mTip],[F.cloth,F.mCloth]]){const m=new THREE.Mesh(g,mt);m.castShadow=true;m.frustumCulled=false;m.scale.setScalar(.3);grp.add(m);}}catch(e){console.warn('strike warm-up',e);}await qstep('banner',grp,0,1);}
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
     // shockwave rings and the wash: their own drawing state (transparent, in view), compiled in place for a moment
     {const shk=SHOCKS.map(S=>[S.m.position.clone(),S.m.scale.x,S.m.material.opacity]);const grp=mk();
       if(!dead()&&!isLate()){try{for(const S of SHOCKS){S.m.position.set(bx,gy+2.5,by);S.m.scale.setScalar(60);S.m.material.opacity=.01;grp.add(S.m.clone());}const W0=WASH[0];if(W0)grp.add(W0.m.clone());}catch(e){}
-        grp.traverse(c=>{c.frustumCulled=false;c.visible=true;});await step('rings',grp,0,1);}
+        grp.traverse(c=>{c.frustumCulled=false;c.visible=true;});await qstep('rings',grp,0,1);}
+      await flush();
       // all of the above is drawn once for real (only these objects in view, everything else hidden for a moment), so their shapes are on the card
       // too: a strike would otherwise upload ~30 shapes in its first frames
       if(!dead()&&!isLate()&&ex.length){MK('extras draw');for(const g of ex)g.traverse(c=>{c.frustumCulled=false;});drawOnly(ex,1);}
@@ -614,7 +632,7 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     // units: each child of the scene, or the children of a big group, compiled one by one (sync compile = just requests the
     // programs; their linking goes on in the browser/GPU process); a frame is given back after every ~30 ms of work
     const units=[];for(const c of SCN.children){if(c.isLight)continue;if(c.children&&c.children.length>24&&!c.isMesh)for(const g of c.children)units.push(g);else units.push(c);}
-    const mats=new Set();let tl=performance.now();const npr=()=>R3.info.programs?R3.info.programs.length:0;let pl=npr();
+    const mats=new Set();let tl=performance.now();let pl=npr();
     for(const u of units){if(dead()||isLate())break;const s0=performance.now();MK('unit '+(u.name||u.type)+' '+(u.children?u.children.length:0));
       try{if(post()){sizePost();R3.setRenderTarget(POST.rt);}const ms=R3.compile(u,CAM,SCN);R3.setRenderTarget(null);for(const m of ms)mats.add(m);}catch(e){console.warn('warm-up',e);R3.setRenderTarget(null);}
       const d=performance.now()-s0;W.steps++;W.maxStep=Math.max(W.maxStep,Math.round(d));if(d>150)(W.slow=W.slow||[]).push(['unit '+(u.name||u.type)+' '+(u.children?u.children.length:0),Math.round(d)]);
