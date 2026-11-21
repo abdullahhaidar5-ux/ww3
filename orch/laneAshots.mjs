@@ -34,10 +34,10 @@ try {
       const hq = G.ents.find(b => b.team === ME && b.kind === 'hq') || { x: MAPW / 2, y: MAPH / 2 };
       const dx = Math.sign(MAPW / 2 - hq.x) || 1, x0 = hq.x + dx * 380, y0 = hq.y; const T = G.teams[0], f0 = T.fac; const out = [];
       for (let i = 0; i < N.length; i++) { T.fac = N[i]; const p = nearestPassXY('ground', x0 + i * 34 - (N.length - 1) * 17, y0) || [x0, y0];
-        const u = addUnit(0, 'inf', p[0], p[1]); if (u) { u.hp = u.max; u.dir = DIR; u.hold = 1; out.push([N[i], u.id]); } try { renderFrame(.016); } catch (e) {} }
+        const u = addUnit(0, 'inf', p[0], p[1]); if (u) { u.hp = u.max; u.dir = u.ang = DIR; u.hold = 1; out.push([N[i], u.id]); } try { renderFrame(.016); } catch (e) {} }
       T.fac = f0; G.treaty = 1e9;
       return { x: x0, y: y0, out };
-    }, [NATS, +arg('--dir', '0')]);
+    }, [NATS, +arg('--dir', String(Math.PI / 2))]);
     console.log(map, 'ready', JSON.stringify(info));
     // see-through check: every soldier material drawn must be opaque
     const st = await page.evaluate(() => { let n = 0, bad = 0, names = []; SCN.traverse(o => { if (!o.isMesh || !(o.name === 'soldier' || o.name === 'soldierLo' || o.name === 'solBatch')) return; const ms = Array.isArray(o.material) ? o.material : [o.material]; for (const m of ms) { n++; if (m.transparent || m.opacity < 1 || m.alphaTest > 0 || m.side === 1) { bad++; names.push(o.name + ':' + (m.transparent ? 'T' : '') + (m.opacity < 1 ? 'o' + m.opacity : '') + (m.side === 1 ? 'back' : '')); } } }); return { n, bad, names: names.slice(0, 8) }; });

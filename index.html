@@ -20005,19 +20005,26 @@ function noStarMap(tex,name){const sp=NOSTAR[name],im=tex&&tex.image;if(!sp||!im
     const g=x.createRadialGradient(cx*k,cy*k,r*k*.8,cx*k,cy*k,(r+4)*k);g.addColorStop(0,`rgb(${R},${G},${B})`);g.addColorStop(1,`rgba(${R},${G},${B},0)`);x.fillStyle=g;x.beginPath();x.arc(cx*k,cy*k,(r+4)*k,0,6.283);x.fill();}
    const t=tex.clone();t.source=new THREE.Source(cv);t.needsUpdate=true;out=t;}catch(e){console.warn('noStarMap',e);}
   NOSTAR_C.set(ck,out);return out;}
-/* Lane A (soldiers 1, view only): Shia field camouflage that reads at 20 m. The Middle-Eastern soldier's own woodland cloth
-   is grey and dark (median brightness 72/255), so at battle distance it was a black figure. For IR, RS, DW and RV the
-   cloth part of the texture (the two uniform panels of the 768 px atlas, never face, hands, hair, boots or rig) is
-   repainted ONCE per nation on a canvas: the old pattern's brightness bands become a dark olive base with brown and green
-   blotches and a few near-black ones (gradient map, so the folds stay). Same mesh, same material count, same shader:
-   no new draw call or shader program, one texture per nation. */
-const SOLCAM={IR:['#2f3a22','#5c6438','#7a5c3a','#a39a6a'],RS:['#2b3424','#56603e','#6c573e','#8f8e6c'],DW:['#3a4028','#6a6a40','#8a6a44','#ae9f74'],RV:['#2c3224','#5a6040','#6c5238','#8a8a62']},SOLCAM_C=new Map();
+/* Lane A (soldiers 1, view only): Shia field camouflage that reads at 20 m. The Middle-Eastern soldier's own cloth is a
+   grey, low-contrast pattern (median brightness 72/255), so in a battle the figure read as a black shape. For IR, RS, DW and
+   RV the cloth of the texture (trouser panels and jacket/sleeve panels of the 768 px atlas; never face, hands, hair, boots,
+   skin at the neck, belt or pouches) is repainted ONCE per nation on a canvas: the old pattern's brightness bands become a
+   dark olive base with brown blotches, dark green blotches and a few khaki flecks, crisp-edged so they read at a distance,
+   folds kept. Same mesh, same material count, same shader: no new draw call or shader program, one texture per nation. */
+const SOLCAM={IR:['#2e3a22','#76804e','#80603c','#b8ac78'],RS:['#2a3226','#6c7456','#745c44','#a2a284'],DW:['#3e4430','#868252','#96704a','#c4b488'],RV:['#2c3424','#6e7650','#7a6044','#a4a276']},SOLCAM_C=new Map();
 function solCamoMap(tex,fac){const P=SOLCAM[fac],im=tex&&tex.image;if(!P||!im||!im.width)return tex;const ck=tex.uuid+fac;if(SOLCAM_C.has(ck))return SOLCAM_C.get(ck);let out=tex;
-  try{const W=im.width,H=im.height,cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.drawImage(im,0,0);
-    const y0=Math.round(H*80/768),y1=Math.round(H/3),x1=Math.round(W*2/3),D=x.getImageData(0,y0,x1,y1-y0),d=D.data,st=P.map(h=>{const c=parseInt(h.slice(1),16);return[c>>16&255,c>>8&255,c&255];}),Ls=[45,69,94,140];
-    for(let i=0;i<d.length;i+=4){const L=d[i]*.3+d[i+1]*.59+d[i+2]*.11;let j=0;while(j<2&&L>Ls[j+1])j++;const t=Math.max(0,Math.min(1,(L-Ls[j])/(Ls[j+1]-Ls[j]))),a=st[j],b=st[j+1];
-      for(let c=0;c<3;c++)d[i+c]=Math.max(0,Math.min(255,a[c]+(b[c]-a[c])*t));}
-    x.putImageData(D,0,y0);const t=tex.clone();t.source=new THREE.Source(cv);t.needsUpdate=true;out=t;}catch(e){console.warn('solCamoMap',e);}
+  try{const W=im.width,H=im.height,k=W/768,cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.drawImage(im,0,0);
+    const st=P.map(h=>{const c=parseInt(h.slice(1),16);return[c>>16&255,c>>8&255,c&255];});
+    // [x0,x1,y0,y1] in 768-px atlas units: trousers (two panels), jacket/sleeves (above the belt and pouch strip), the sleeve strip beside the neck
+    for(const [x0,x1,y0,y1] of [[0,512,80,256],[512,736,4,150],[615,736,150,256]]){const X0=Math.round(x0*k),Y0=Math.round(y0*k),w=Math.round((x1-x0)*k),h=Math.round((y1-y0)*k),D=x.getImageData(X0,Y0,w,h),d=D.data,n=d.length>>2;
+      const L=new Float32Array(n),hist=new Uint32Array(256);let cnt=0;
+      for(let i=0;i<n;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2];if(r-b>35&&r>110){L[i]=-1;continue;}const l=r*.3+g*.59+b*.11;L[i]=l;hist[l|0]++;cnt++;}
+      const pc=q=>{let a=0;for(let v=0;v<256;v++){a+=hist[v];if(a>=cnt*q)return v;}return 255;},T=[pc(.22),pc(.64),pc(.88)],md=pc(.5);
+      for(let i=0;i<n;i++){const l=L[i];if(l<0)continue;let c0=st[0][0],c1=st[0][1],c2=st[0][2];
+        for(let j=0;j<3;j++){const t=Math.max(0,Math.min(1,(l-T[j])/4+.5));c0+=(st[j+1][0]-c0)*t;c1+=(st[j+1][1]-c1)*t;c2+=(st[j+1][2]-c2)*t;}
+        const f=1+(l-md)/400;d[i*4]=Math.min(255,c0*f);d[i*4+1]=Math.min(255,c1*f);d[i*4+2]=Math.min(255,c2*f);}
+      x.putImageData(D,X0,Y0);}
+    const t=tex.clone();t.source=new THREE.Source(cv);t.needsUpdate=true;out=t;}catch(e){console.warn('solCamoMap',e);}
   SOLCAM_C.set(ck,out);return out;}
 function tintedProto(key,team,kk){wxEnv();camoFreq(key);const LK=team&&team.fac?FLOOK[team.fac]:null;const id=key+'|'+(team?team.color:'none')+(kk||'')+(LK?team.fac:'');if(MODELS.tinted[id])return MODELS.tinted[id];const P=MODELS.proto[key];if(!P)return null;
   const tc=team?new THREE.Color(team.color).convertSRGBToLinear():null;const map=new Map();const root=P.scene;
