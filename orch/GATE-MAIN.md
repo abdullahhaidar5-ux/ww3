@@ -113,3 +113,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-20 22:50Z dfc70c48 **GREEN** (28 gates) — HISTORY: soldier rig and belt
 - 2026-11-20 23:45Z aeccc600 **RED** (28 gates) failing: migrate-down — Shia scouts: unarmed Toyota-style pickup (view only)
 - 2026-11-21 00:17Z 5e6044eb **GREEN** (28 gates) — EMERGENCY ROLLBACK: game code back to aae60d36 (Abdullah: super laggy,
+- 2026-11-21 00:42Z efec52ca **GREEN** (28 gates) — ROLLBACK to Monday Nov 17 (dc307f86): Abdullah picked it - units terri
