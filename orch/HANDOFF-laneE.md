@@ -1,9 +1,53 @@
-# HANDOFF laneE (2026-11-07 ~03:00Z)
-Shipped: warmer/richer desert grade (src/10-post.js TGRADE), controls hint now one clipped line (src/08-ui.js CSS), shot script `node orch/laneEshots.mjs <tag> [map] [fac]` (~4 min/shot on software GL; run in background; close-up shot's camera angle is wrong — tilt not set).
-Open: E1 soldiers (current sol_* models read small/plain at gameplay height; need bigger kit/LOD tune or real CC0 model), E2 buildings, E3 terrain texture detail/AO, E4, rest of E5.
-Note: local smooth mp profile fails on this slow box (jitter/desync) — unrelated to visuals; CI branches have no workflow, so verify on main.
-(03:50Z) +soldier size x1.45 shipped. Still open: E1 better soldier model/kit, E2 buildings, E3 terrain detail, E4, E5. smooth.mjs times out locally (>10 min) — rely on CI on main.
-(04:40Z, laneE-3) Re-shot IR/rivers base view (orch/shots/laneE/e3before-base.png): soldiers are already the rigged sol_* models, HQ is a textured compound, ground has CC0 detail - the old "boxy" photo is outdated. What still reads weak at gameplay height: squads of 3 are small, HQ compound is small next to the open ground, bare desert between buildings (needs scrub/rock/track props = E3), infantry have no visible cover/sandbag kit. laneEshots.mjs close shot is still top-down (set cam tilt) and the doctrine popup is not hidden. No src change this run; local gate is ~4 min/shot so pick ONE visual change per session and verify on CI.
-(09:35Z, laneE-4) Re-shot IR/rivers base (orch/shots/laneE/h1before-base.png): rigged soldiers, textured compound HQ with water tower/flag, bulldozer+truck, CC0 ground, scrub all read as a real game now - far from the 'blocky box' photo. Still weak: squad of 4 small vs open ground, no sandbag/cover kit around HQ, flat bare sand between props (E3 AO/track decals). No src change this run (local gate ~4 min/shot).
-(12:35Z, laneE-5) Re-checked i1after-base.png: sandbags, boulders, scrub, compound HQ, rigged squads all present; the 'boxy' photo is long outdated. No src change this run; remaining polish is E3 track decals/AO and E4 vehicle wear. Not re-firing: returns are diminishing vs 4-min local shots.
-(13:30Z, laneE-6) Re-viewed j1-base.png (IR base, crate/barrel PBR props, rigged squad, compound HQ, CC0 ground): reads as a real game, nothing like the old box photo. No src change this run; remaining ideas (E3 AO/track decals, E4 vehicle wear, RF4-RF13) need ~4-min software-GL shots and CI on main - left for the next lane-E run after Abdullah's PC feedback. Not re-firing.
+# HANDOFF — Lane E (real-PC load + hitches), branch `orch/laneE`
+
+Never pushed to main — ORCH lands it. Base: origin/main 10cf4bd (2026-11-21).
+
+## What Abdullah's Performance log says (RTX 2070 Max-Q, ANGLE Direct3D 11, 2026-11-21 01:25 UTC)
+- Shader warm-up **29,907 ms**, 63 models, **103 programs**, longest step 2805 ms, `models` stage 26,324 ms.
+- The loading watchdog is **20 s** (`LOAD_WD`, src/08-ui.js). So his battle **started with the warm-up unfinished**; the rest kept
+  compiling in the background during the first seconds of the battle. That is exactly the hitch list: 0:02 883 ms (programs 86→87),
+  0:02 539 ms (86→88), 0:03 308 ms (97), 0:07 258 ms (103 = the warm-up's final count). In "late" mode the warm-up also SKIPS the strike
+  extras and the battlefield draw slices, so more first-sight compiles follow later in the battle.
+- Headless runs (SwiftShader) of IR-US (47 s) and RS-IL (106 s of AI battle) make **0 programs after loading** with a finished warm-up:
+  the mid-battle programs come from the unfinished warm-up, not from something it misses.
+- Why 30 s: the models were done **one at a time** — request a model's 1-3 programs, wait until linked (≤4 s), draw, next model.
+  ~290 ms per program in a row. Direct3D's HLSL compile is the slow part; Chrome/ANGLE can run it on several worker threads
+  (KHR_parallel_shader_compile), but only if many programs are in flight at once.
+
+## What changed (view only; nothing in the simulation; looks identical)
+1. **src/05-fx3d.js `warmShadersChunked`**: every model group (and its burnt-wreck copy) is built and its programs **requested** first,
+   all of them (`R3.compile`, no waiting), a frame given back every ~30 ms or 6 new programs (keeps `orch/loadfreeze.mjs` LINKMAX 12);
+   then the old steps draw them one by one (their programs are already compiling side by side). The strike extras (missiles,
+   markers, garrison, soldiers per nation, Test-range kinds, rubble, banner, rings) are queued the same way (`qstep` + `flush`).
+   New stage `requests` and `W.req` (programs requested up front) in LOAD.warm / Performance log.
+2. **src/08-ui.js watchdog**: a loading step is given up after **20 s without progress** (the warm-up beats `LOAD.beat` at every
+   sub-step) or **45 s in total** — before: 20 s flat, which started his battle mid-warm-up. A truly stuck compile still ends at 20 s.
+3. **src/11-models.js `progDedupe`** (at model load, after mergeProto): RGBA vertex colours lose the alpha channel on solid parts / when
+   alpha is 1 everywhere (own program variant); "transparent" untextured parts at ≥99% opacity become solid (the F-18 pilot's arms/chest:
+   2 programs each, back + front pass). Measured headless: **IR-US 101 → 98 programs, warm-up 99 → 96**. Real glass (Mi-8/UH-60/Mi-24/
+   MiG-29/Apache canopies) keeps its two-pass look on purpose (forceSinglePass would save ~5 more programs but changes the glass look).
+4. **src/08o-perflog.js**: every shader program made after the loading screen is noted (material name, kind, short key hash), the
+   hitch frame it cost is tagged ("new programs: …", "(warm-up still running)"), and the log text gets a "Shader programs made during
+   the battle" block. Also `console.log`. So his next log names exactly what was late.
+5. **orch/progprobe.mjs** (new tool): loads a Battle headless, lists every program + the ones made after loading (`OUT=`, `EVAL=`).
+
+## Numbers (headless SwiftShader, 2 cores — no parallel compile there, so timing is NOT the proof)
+| | before | after |
+|---|---|---|
+| programs after load, IR vs US | 101 | 98 |
+| warm-up programs | 99 | 96 |
+| warm-up steps | 666 | 677 |
+| warm-up ms (SwiftShader, draws swallowed) | 7,937-8,245 | 7,577-7,837 |
+| programs requested side by side before the first model draw | 0 (1 model at a time) | 41-43 |
+| programs made in the battle after loading (47 s IR-US, 106 s RS-IL) | 0 | 0 |
+
+## Expected on Abdullah's PC (estimate — the real proof is his next Performance log)
+- If Chrome/ANGLE compiles on 4+ worker threads: warm-up ~8-12 s instead of 30 s; battle starts with everything compiled → no
+  0:02-0:07 hitches.
+- If it only overlaps a little: the warm-up may still take 20-30 s, but the battle now **waits for it** (up to 45 s, never stuck
+  >20 s without progress) instead of starting with programs compiling mid-battle.
+- Ask him: start a Battle as IR on PC, 2 minutes, then Settings → Graphics → Performance log → Copy: look for
+  "Shader warm-up: … ms … requested side by side" and "No shader program made during the battle."
+
+## Gate
+`orch/cigate.sh` on 39820b2 — see the bottom of this file / HISTORY when the result is in.
