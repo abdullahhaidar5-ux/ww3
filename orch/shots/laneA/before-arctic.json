@@ -1,0 +1,18 @@
+{
+ "arctic-close": {
+  "calls": 267,
+  "tris": 2399796
+ },
+ "arctic-close-side": {
+  "calls": 613,
+  "tris": 3932112
+ },
+ "arctic-close-back": {
+  "calls": 252,
+  "tris": 2253534
+ },
+ "arctic-battle": {
+  "calls": 330,
+  "tris": 2365905
+ }
+}
