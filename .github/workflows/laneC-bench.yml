@@ -31,9 +31,9 @@ jobs:
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
           npx playwright install --with-deps chromium >/dev/null
-          git fetch -q --depth 1 origin main "orch/laneC-${{ matrix.fam }}"
+          git fetch -q --depth 1 origin main "orch/laneC-${{ matrix.fam }}-v2"
           git show origin/main:index.html > /tmp/before.html
-          git show "origin/orch/laneC-${{ matrix.fam }}:index.html" > /tmp/after.html
+          git show "origin/orch/laneC-${{ matrix.fam }}-v2:index.html" > /tmp/after.html
           mkdir -p /tmp/out
           for v in before after before after after before; do
             node orch/laneCshots.mjs --html /tmp/$v.html --tag ${{ matrix.fam }}-$v --facs ${{ matrix.facs }} --out /tmp/out --bench 2>&1 | grep -E "BENCH|saved|Error|error" | tail -12

@@ -1,6 +1,5 @@
 # Lane C (base buildings) proof on GitHub's runners - branch-only, never touches main.
-# Push to orch/laneC-measure -> for each family branch orch/laneC-<fam>:
-#   shots:   before (main) / after (branch) pictures of that family's base on desert bm_breakwater, Clear day, normal battle camera
+# Push to orch/laneC-measure -> for each family branch orch/laneC-<fam>-v2 (pictures + controlled bench: laneC-bench.yml):
 #   measure: smooth-pc on main and on the branch in ONE job (order A B B A, same machine), battle filled with that family's nations
 # Results (jpg + json + summary) are pushed to branch orch/laneC-shots under orch/shots/laneC/.
 name: Lane C proof
@@ -31,9 +30,9 @@ jobs:
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
           npx playwright install --with-deps chromium >/dev/null
-          git fetch -q --depth 1 origin main "orch/laneC-${{ matrix.fam }}"
+          git fetch -q --depth 1 origin main "orch/laneC-${{ matrix.fam }}-v2"
           git show origin/main:index.html > /tmp/before.html
-          git show "origin/orch/laneC-${{ matrix.fam }}:index.html" > /tmp/after.html
+          git show "origin/orch/laneC-${{ matrix.fam }}-v2:index.html" > /tmp/after.html
           mkdir -p /tmp/out
           node orch/laneCshots.mjs --html /tmp/before.html --tag ${{ matrix.fam }}-before --facs ${{ matrix.facs }} --out /tmp/out 2>&1 | tail -30
           node orch/laneCshots.mjs --html /tmp/after.html --tag ${{ matrix.fam }}-after --facs ${{ matrix.facs }} --out /tmp/out 2>&1 | tail -30
@@ -73,9 +72,9 @@ jobs:
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
           npx playwright install --with-deps chromium >/dev/null
-          git fetch -q --depth 1 origin main "orch/laneC-${{ matrix.fam }}"
+          git fetch -q --depth 1 origin main "orch/laneC-${{ matrix.fam }}-v2"
           git show origin/main:index.html > /tmp/A.html
-          git show "origin/orch/laneC-${{ matrix.fam }}:index.html" > /tmp/B.html
+          git show "origin/orch/laneC-${{ matrix.fam }}-v2:index.html" > /tmp/B.html
           # same battle for both: fill it with this family's nations (the stock profile picks random nations)
           sed -i "s/setup.n = 7; setup.map = 'fulda';/setup.n = 7; setup.map = 'fulda'; Object.assign(setup, { ${{ matrix.nat }} });/" orch/smooth.mjs
           grep -c "Object.assign(setup, { p:" orch/smooth.mjs
