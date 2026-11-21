@@ -1,0 +1,110 @@
+# Lane C (base buildings) proof on GitHub's runners - branch-only, never touches main.
+# Push to orch/laneC-measure -> for each family branch orch/laneC-<fam>:
+#   shots:   before (main) / after (branch) pictures of that family's base on desert bm_breakwater, Clear day, normal battle camera
+#   measure: smooth-pc on main and on the branch in ONE job (order A B B A, same machine), battle filled with that family's nations
+# Results (jpg + json + summary) are pushed to branch orch/laneC-shots under orch/shots/laneC/.
+name: Lane C proof
+on:
+  push:
+    branches: ['orch/laneC-measure']
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { fam: shia, facs: 'IR,RV' }
+          - { fam: west, facs: 'US,GB' }
+          - { fam: east, facs: 'RU,KP' }
+          - { fam: regional, facs: 'TR,SA' }
+    env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Shots
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          git fetch -q --depth 1 origin main "orch/laneC-${{ matrix.fam }}"
+          git show origin/main:index.html > /tmp/before.html
+          git show "origin/orch/laneC-${{ matrix.fam }}:index.html" > /tmp/after.html
+          mkdir -p /tmp/out
+          node orch/laneCshots.mjs --html /tmp/before.html --tag ${{ matrix.fam }}-before --facs ${{ matrix.facs }} --out /tmp/out 2>&1 | tail -30
+          node orch/laneCshots.mjs --html /tmp/after.html --tag ${{ matrix.fam }}-after --facs ${{ matrix.facs }} --out /tmp/out 2>&1 | tail -30
+          ls -la /tmp/out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'shots-${{ matrix.fam }}', path: /tmp/out, if-no-files-found: ignore }
+      - name: Push to orch/laneC-shots
+        if: always()
+        run: |
+          for try in 1 2 3 4 5 6; do
+            rm -rf /tmp/cb; mkdir /tmp/cb; cd /tmp/cb; git init -q
+            git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+            if git fetch -q --depth 1 origin orch/laneC-shots 2>/dev/null; then git checkout -q -B orch/laneC-shots FETCH_HEAD; else git checkout -q --orphan orch/laneC-shots; fi
+            mkdir -p orch/shots/laneC; cp /tmp/out/*.jpg orch/shots/laneC/ 2>/dev/null; git add orch
+            git -c user.name=laneC-bot -c user.email=laneC-bot@users.noreply.github.com commit -q -m "lane C shots: ${{ matrix.fam }} (${{ github.sha }})" || exit 0
+            git push -q origin HEAD:refs/heads/orch/laneC-shots && break
+            sleep $((RANDOM % 20 + 5)); cd /; done
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { fam: shia, nat: "p:'IR',a:'RV',others:['RS','DW','OB','RS','DW','OB']" }
+          - { fam: west, nat: "p:'US',a:'GB',others:['FR','IL','UA','FR','IL','UA']" }
+          - { fam: east, nat: "p:'RU',a:'CN',others:['KP','KP','KP','KP','KP','KP']" }
+          - { fam: regional, nat: "p:'SA',a:'TR',others:['AE','EG','PK','AE','EG','PK']" }
+    env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Measure A B B A
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          git fetch -q --depth 1 origin main "orch/laneC-${{ matrix.fam }}"
+          git show origin/main:index.html > /tmp/A.html
+          git show "origin/orch/laneC-${{ matrix.fam }}:index.html" > /tmp/B.html
+          # same battle for both: fill it with this family's nations (the stock profile picks random nations)
+          sed -i "s/setup.n = 7; setup.map = 'fulda';/setup.n = 7; setup.map = 'fulda'; Object.assign(setup, { ${{ matrix.nat }} });/" orch/smooth.mjs
+          grep -c "Object.assign(setup, { p:" orch/smooth.mjs
+          mkdir -p /tmp/res
+          i=0; for v in A B B A; do i=$((i+1)); cp /tmp/$v.html index.html
+            node orch/smooth.mjs --profile pc --update-baseline 2>&1 | tail -12 || true
+            cp orch/out/smooth.json /tmp/res/${{ matrix.fam }}-$i-$v.json || echo '{}' > /tmp/res/${{ matrix.fam }}-$i-$v.json
+          done
+          python3 - <<'PY' > /tmp/res/${{ matrix.fam }}-summary.txt
+          import json,glob,os
+          rows=[]
+          for f in sorted(glob.glob('/tmp/res/${{ matrix.fam }}-*-*.json')):
+              r=json.load(open(f)).get('pc',{}) or {}
+              rows.append((os.path.basename(f)[:-5],r.get('frameMed'),r.get('frameP95'),r.get('drawCalls'),r.get('kTris'),r.get('newShaders'),r.get('simP95')))
+          print('run                 frameMed frameP95 drawCalls kTris newShaders simP95')
+          for x in rows: print('  '.join(str(v) for v in x))
+          PY
+          cat /tmp/res/${{ matrix.fam }}-summary.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'measure-${{ matrix.fam }}', path: /tmp/res, if-no-files-found: ignore }
+      - name: Push to orch/laneC-shots
+        if: always()
+        run: |
+          for try in 1 2 3 4 5 6; do
+            rm -rf /tmp/cb; mkdir /tmp/cb; cd /tmp/cb; git init -q
+            git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+            if git fetch -q --depth 1 origin orch/laneC-shots 2>/dev/null; then git checkout -q -B orch/laneC-shots FETCH_HEAD; else git checkout -q --orphan orch/laneC-shots; fi
+            mkdir -p orch/shots/laneC; cp /tmp/res/* orch/shots/laneC/ 2>/dev/null; git add orch
+            git -c user.name=laneC-bot -c user.email=laneC-bot@users.noreply.github.com commit -q -m "lane C measure: ${{ matrix.fam }} (${{ github.sha }})" || exit 0
+            git push -q origin HEAD:refs/heads/orch/laneC-shots && break
+            sleep $((RANDOM % 20 + 5)); cd /; done
