@@ -136,12 +136,24 @@ class SpecGloss{constructor(p){this.parser=p;this.name='KHR_materials_pbrSpecula
     const f=x.diffuseFactor;if(Array.isArray(f)){P.color=new THREE.Color(f[0],f[1],f[2]);P.opacity=f[3];}
     P.userData=Object.assign(P.userData||{},{sgGloss:x.glossinessFactor!=null?x.glossinessFactor:1});
     return x.diffuseTexture?this.parser.assignTexture(P,'map',x.diffuseTexture,THREE.SRGBColorSpace):Promise.resolve();}}
+/* fewer shader programs, same picture (lane E: every program is a slow driver compile on Windows / Direct3D 11):
+   - a vertex-colour set loses its alpha channel (RGBA colours are their own program variant) on solid parts, and wherever it is 1 everywhere;
+   - a "transparent" part at 99-100% opacity with no texture (the F-18 pilot's arms and chest) is drawn as solid: a transparent two-sided
+     part costs two programs (back faces, then front faces) and is sorted every frame. */
+function progDedupe(root){root.traverse(o=>{if(!o.isMesh||!o.geometry)return;const ms=Array.isArray(o.material)?o.material:[o.material];
+  for(const m of ms)if(m&&m.transparent&&m.opacity>=.99&&!m.map&&!m.alphaMap&&!m.alphaTest&&m.blending===THREE.NormalBlending){m.transparent=false;m.opacity=1;m.needsUpdate=true;}
+  const g=o.geometry,C=g.attributes.color;if(!C||C.itemSize!==4||g.userData.rgb)return;const n=C.count;
+  /* a solid part never shows its vertex alpha (three.js forces alpha 1 on opaque materials); otherwise only an alpha of 1 everywhere is dropped */
+  if(ms.some(m=>!m||m.transparent||m.alphaTest||m.alphaHash))for(let i=0;i<n;i++)if(C.getW(i)<.996)return;
+  const a=new Float32Array(n*3);for(let i=0;i<n;i++){a[i*3]=C.getX(i);a[i*3+1]=C.getY(i);a[i*3+2]=C.getZ(i);}
+  g.setAttribute('color',new THREE.BufferAttribute(a,3));g.userData.rgb=1;});}
 function parseModel(k){if(MQ.parsed[k])return MQ.parsed[k];return MQ.parsed[k]=(async()=>{try{
     if(!THREE.GLTFLoader)throw new Error('no GLTFLoader');const ld=MQ.ld=MQ.ld||new THREE.GLTFLoader().register(p=>new SpecGloss(p));
     let b=await modelBytes(k);const u=new Uint8Array(b);if(u[0]===0x1f&&u[1]===0x8b)b=await gunzipU8(u);
     const g=await new Promise((res,rej)=>{try{ld.parse(b,'',res,rej);}catch(e){rej(e);}});const P={scene:g.scene,anims:g.animations};
     P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);if(m.userData.sgGloss!=null){m.roughness=Math.min(1,Math.max(.35,1-m.userData.sgGloss*.7));m.metalness=.15;}if(m.transmission>0){m.opacity*=1-m.transmission;m.transmission=0;}/* everything solid (Abdullah 2026-11-21 'nothing should be see through, no buildings, no units, everything is solid'): model materials exported as BLEND (Abrams hull, G6 hull, KF51, M35, barracks fabric...) are drawn opaque; glass/canopies become solid dark glass; cut-out textures (fence) use alpha test */if(m.transparent||m.opacity<1){const gl=m.opacity<.95;if(m.map&&/fence/i.test(k)){m.alphaTest=.5;}m.transparent=false;m.opacity=1;m.depthWrite=true;if(gl&&m.color)m.color.multiplyScalar(.35);}}}});
     try{mergeProto(P);}catch(e){console.warn('merge',k,e);}
+    try{progDedupe(P.scene);}catch(e){console.warn('dedupe',k,e);}
     MODELS.proto[k]=P;MODELS.ready=true;MODELS.gen=(MODELS.gen|0)+1;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
     // the effects module keeps a list of model geometry it must never free; a model added later must join it
     try{GC_PROTO=null;}catch(e){}return true;}
