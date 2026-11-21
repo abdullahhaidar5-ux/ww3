@@ -50,4 +50,9 @@ Never pushed to main — ORCH lands it. Base: origin/main 10cf4bd (2026-11-21).
   "Shader warm-up: … ms … requested side by side" and "No shader program made during the battle."
 
 ## Gate
-`orch/cigate.sh` on 39820b2 — see the bottom of this file / HISTORY when the result is in.
+- Local: `node orch/loadfreeze.mjs IR` **PASS** (CPU 4x: most programs linked between two breaks 8, LINKMAX 12; longest own-work 1711 ms < 2500);
+  `python3 orch/build.py --check` OK. Local smoke/decisions time out on this 2-core sandbox (as CLAUDE.md warns) — not a result.
+- `orch/cigate.sh` on **39820b2** pushed as `gate/39820b25f4` at 02:05 UTC, but GitHub Actions was jammed (26 runs queued, 2 gate runs
+  from 01:01 still in progress); after ~75 min only 3 statuses (all success) had reported. **ORCH: re-check
+  `gh api repos/abdullahhaidar5-ux/ww3/commits/39820b25f43f8b2e0569bd6a9647dfba2066943e/statuses` and land only if all 25+ gate/* are green.**
+  (The handoff commit on top changes only this file.)
