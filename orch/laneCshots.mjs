@@ -106,8 +106,8 @@ try {
       const b = await page.evaluate(i => { const gl = R3.getContext(); const keep = {}; for (const fn of ['drawElements', 'drawElementsInstanced', 'drawArrays', 'drawArraysInstanced', 'drawRangeElements']) if (gl[fn]) { keep[fn] = gl[fn]; gl[fn] = function () {}; }
         const out = {}; for (const [nm, d] of [['battle', i.dist], ['wide', 900]]) { cam.x = cam.tx = i.hx + i.cx * 50; cam.y = cam.ty = i.hy + i.cy * 50; cam._xl = cam.x; cam._yl = cam.y; cam.dist = cam.td = d; cam._dl = d;
           for (let k = 0; k < 5; k++) renderFrame(1 / 60); const ts = [], cl = []; for (let k = 0; k < 40; k++) { const a = performance.now(); renderFrame(1 / 60); ts.push(performance.now() - a); cl.push(R3.info.render.calls); }
-          ts.sort((x, y) => x - y); R3.info.autoReset = false; R3.info.reset(); R3.shadowMap.needsUpdate = true; R3.render(SCN, CAM); const withSh = R3.info.render.calls, tri = R3.info.render.triangles; R3.info.autoReset = true;
-          out[nm] = { msMed: +ts[20].toFixed(2), calls: Math.max(...cl), callsWithShadow: withSh, kTris: Math.round(tri / 1000) }; }
+          ts.sort((x, y) => x - y); R3.info.autoReset = false; R3.info.reset(); R3.shadowMap.needsUpdate = false; R3.render(SCN, CAM); const noSh = R3.info.render.calls; R3.info.reset(); R3.shadowMap.needsUpdate = true; R3.render(SCN, CAM); const withSh = R3.info.render.calls, tri = R3.info.render.triangles; R3.info.autoReset = true;
+          out[nm] = { msMed: +ts[20].toFixed(2), calls: noSh, callsWithShadow: withSh, kTris: Math.round(tri / 1000) }; }
         for (const fn in keep) gl[fn] = keep[fn]; let prog = 0; try { prog = R3.info.programs.length; } catch (e) {} out.programs = prog; return out; }, info);
       console.log('BENCH ' + JSON.stringify({ tag: TAG, fac: f, ...b })); fs.appendFileSync(path.join(OUT, 'bench.jsonl'), JSON.stringify({ tag: TAG, fac: f, ...b }) + '\n');
     }
