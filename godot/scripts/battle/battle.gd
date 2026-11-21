@@ -12,6 +12,7 @@ extends "res://scripts/main.gd"
 const Sim = preload("res://sim/sim.gd")
 const Look = preload("res://scripts/battle/battle_look.gd")
 const Terrain = preload("res://scripts/battle/battle_terrain.gd")
+const BattleNet = preload("res://scripts/battle/battle_net.gd")
 
 const NATIONS := ["IR", "RS", "US", "IL"]
 const NAT_NAME := {"IR": "Iran", "RS": "Lebanese Shia", "US": "United States", "IL": "Israel"}
@@ -137,18 +138,44 @@ func _ready() -> void:
 	q.material = qm
 	bar_mmi = _inst_mmi(q, true, false)
 	_battle_ui()
-	if ai_only or Array(args).any(func(a): return String(a).begins_with("--fac=")):
+	var on_url := ""; var on_code := ""; var on_name := "Player"; var on_n := 0
+	for a in args:
+		if a.begins_with("--online="): on_url = a.substr(9)
+		elif a.begins_with("--code="): on_code = a.substr(7)
+		elif a.begins_with("--name="): on_name = a.substr(7)
+		elif a.begins_with("--start-at="): on_n = int(a.substr(11))
+	if on_url != "":
+		go_online(on_url, on_code, on_name, on_n)
+	elif ai_only or Array(args).any(func(a): return String(a).begins_with("--fac=")):
 		start_battle()
 	else:
 		_show_setup()
 
 # ---------------------------------------------------------------- setup
+func go_online(url: String, code: String, nm: String, start_n: int = 0) -> void:
+	if setup: setup.visible = false
+	online = BattleNet.new(self)
+	online.start_at = start_n
+	online.hash_log = headless_mode
+	add_child(online)
+	online.go(url, code, nm)
+
+## online: the relay decided map, seats and seed (battle_net.gd)
+func start_online(mk: String, players: Array, seat: int, sd: int) -> void:
+	map_key = mk; me = seat; seed_v = sd
+	my_fac = players[seat].fac
+	en_fac = players[(seat + 1) % players.size()].fac
+	_start(players)
+
 func start_battle() -> void:
+	_start([])
+
+func _start(players: Array) -> void:
 	if setup: setup.visible = false
 	map = Sim.load_json("res://data/map_%s.json" % map_key)
 	if map.is_empty(): map_key = "bm_splitridge"; map = Sim.load_json("res://data/map_bm_splitridge.json")
 	sim = Sim.new()
-	sim.init(map, _players(), seed_v, diff)
+	sim.init(map, players if players.size() else _players(), seed_v, diff)
 	if not headless_mode:
 		Terrain.build(self, sim, map, func(k: String): return _build_mesh(k, "y", randf_range(36, 52)))
 	var b: Array = sim.bases[me]
@@ -239,6 +266,10 @@ func _show_setup() -> void:
 	go.text = "Start battle"
 	go.pressed.connect(start_battle)
 	vb.add_child(go)
+	var onl := Button.new()
+	onl.text = "Play online (with your nation)"
+	onl.pressed.connect(func(): go_online(BattleNet.RELAY, "", "Player"))
+	vb.add_child(onl)
 	var back := Button.new()
 	back.text = "Back to Test range"
 	back.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/main.tscn"))
@@ -298,23 +329,45 @@ func _physics_process(dt: float) -> void:
 		_show_end()
 		if ai_only or (demo and headless_mode): _ai_report(true); get_tree().quit()
 		return
-	var steps := 2
-	if headless_mode and (ai_only or demo): steps = 600 if ai_only else 120     # 10 game-seconds per frame: AI vs AI to a result fast
-	elif (ai_only or demo) and shot_t > 0 and sim.t < shot_t - 1.0: steps = 30 if demo else 120
+	if online != null:
+		if demo and online.net.phase == "battle": _demo_tick()
+		return   # online: the relay's ticks drive the sim (battle_net.gd -> sim_tick)
+	var ticks := 1
+	if headless_mode and (ai_only or demo): ticks = 300 if ai_only else 60     # AI vs AI to a result fast
+	elif (ai_only or demo) and shot_t > 0 and sim.t < shot_t - 1.0: ticks = 15 if demo else 60
+	for i in ticks:
+		if sim.over: break
+		if demo: _demo_tick()
+		sim_tick(pending)
+		pending = []
+
+## ONE tick = 1/30 s = 2 sim steps of 1/60 s. Orders apply at the start of the tick, in order, on every machine.
+func sim_tick(orders: Array) -> void:
+	for o in orders: _apply(o)
 	for e in sim.ents:
 		prev[e.id] = Vector3(e.x, e.y, e.ang)
-	if demo: _demo_tick()
 	var m0 := int(sim.t / 60.0)
-	for i in steps:
-		if sim.over: break
-		sim.step()
+	sim.step()
+	if not sim.over: sim.step()
 	if (ai_only or demo) and int(sim.t / 60.0) != m0: _ai_report(false)
 	if (ai_only or demo) and sim.t >= minutes_cap * 60.0:
 		_ai_report(true); print("BATTLE-AI: time cap reached (%d min), no winner" % int(minutes_cap)); get_tree().quit()
 
+## state hash for online desync checks: positions, health, money, queue lengths (FNV-1a over ints)
+func hash_state() -> int:
+	var h := 2166136261
+	for e in sim.ents:
+		for v in [e.id, roundi(e.x * 16.0), roundi(e.y * 16.0), roundi(e.hp * 16.0), e.q.size()]:
+			h = ((h ^ (int(v) & 0xffffffff)) * 16777619) & 0xffffffff
+	for T in sim.teams:
+		h = ((h ^ (roundi(T.credits) & 0xffffffff)) * 16777619) & 0xffffffff
+	return h
+
 ## --demo: a scripted player that only uses cmd() (the same door as the mouse and keyboard) - proves the human
 ## path headless: power, barracks, factory, depot, queues, supply trucks, rally, attack waves.
 var demo := false
+var online = null          # battle_net.gd node while playing online
+var pending: Array = []    # single player: orders for the next tick
 var demo_t := 0.0
 var demo_step := 0
 func _demo_tick() -> void:
@@ -732,17 +785,24 @@ func _order_units(sp: Vector2, amove: bool) -> void:
 	_boom(Vector3(g.x, sim.ground_h(g.x, g.y) + 2, g.y), 8.0, Color(1.0, 0.5, 0.3) if amove else Color(0.4, 1.0, 0.5), 0.4)
 
 # ---------------------------------------------------------------- commands (one door: online play hooks in here)
+## every player command goes through here: single player queues it for the next tick, online sends it to the relay
 func cmd(o: Dictionary) -> bool:
 	o.team = me
+	if online != null: return online.send(o)
+	pending.append(o)
+	return true
+
+func _apply(o: Dictionary) -> bool:
 	if o.t == "cancel": return _cancel_one(o)
 	return sim.apply_order(o)
 
 func _cancel_one(o: Dictionary) -> bool:
+	var tm := int(o.team)
 	var b = sim.by_id.get(int(o.bid))
-	if b == null or b.team != me or b.q.is_empty(): return false
+	if b == null or not b.is_b or b.team != tm or b.q.is_empty(): return false
 	for i in range(b.q.size() - 1, -1, -1):
 		if b.q[i].kind == o.kind:
-			sim.teams[me].credits += float(b.q[i].c)
+			sim.teams[tm].credits += float(b.q[i].c)
 			b.q.remove_at(i)
 			return true
 	return false
@@ -779,7 +839,10 @@ func _place_here(sp: Vector2, keep: bool) -> void:
 	var dz := 0
 	for e in _sel_units():
 		if e.kind == "dozer": dz = e.id; break
-	if cmd({t = "build", kind = place_kind, x = g.x, y = g.y, dz = dz}):
+	var s: Dictionary = sim.bstats(my_fac, place_kind)
+	if sim.teams[me].credits < float(s.cost):
+		_msg("Not enough money"); return
+	if sim.valid_spot(me, place_kind, g.x, g.y) != 0 and cmd({t = "build", kind = place_kind, x = g.x, y = g.y, dz = dz}):
 		_boom(Vector3(g.x, sim.ground_h(g.x, g.y) + 2, g.y), 14.0, Color(0.95, 0.8, 0.35), 0.5)
 		if not keep: place_kind = ""
 	else:
