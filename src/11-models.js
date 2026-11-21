@@ -1129,6 +1129,11 @@ function roofKit(e,o,P){const h=e.size/2,k=e.kind,BP=basePal(e),rf=bkMat('concre
   {const x=w*.45,z=-w*.35;if(ok(x,z,2.5)){pid++;for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])bx(.4,2.2,.4,x+a*1.3,top+1.1,z+b*1.3,dk);cy(2.1,2.1,3.4,x,top+3.9,z,tin,14);cy(.2,1.8,.9,x,top+6.1,z,tin,14);}}
   {const x=-w*.55,z=w*.5;if(ok(x,z,3)){pid++;const dsh=cy(2.4,.3,.7,x,top+3.4,z,tin,14);dsh.rotation.set(.9,.5,0);cy(.15,.15,3,x,top+1.5,z,dk,6);}}
   for(let i=0;i<2;i++){const x=w*.2+i*3,z=w*.45;if(!ok(x,z,1.5))continue;pid++;cy(.12,.12,9+i*4,x,top+4.5+i*2,z,dk,5);bx(2.6,.15,.15,x,top+7+i*3,z,dk);}
+  /* art-shia: every Shia building (not only the HQ compound) gets roof pennants in the nation's plain colours on short masts + a dusty sand band on the parapet (no emblems, two small meshes per pole) */
+  if(['IR','RS','DW','RV','OB'].includes(T.fac)&&top!=null&&!['turret','sam'].includes(k)){const AC={IR:'#3a8a45',RS:'#d6c42a',DW:'#2f7a4a',RV:'#2a2a2a',OB:'#3a7d4a'}[T.fac]||'#3a7d4a';if(!window.BKSHP)window.BKSHP={};const sm=c=>window.BKSHP[c]||(window.BKSHP[c]=new THREE.MeshStandardMaterial({color:c,roughness:.9}));const ns=q=>{q.castShadow=false;return q;};/* lane C light pass: same program as the other standard props (no double-sided variant), the cloth pennants and the parapet band cast no shadow; poles and AC units share the existing pole/tin materials so they merge into meshes the roof kit already draws */
+    for(const [sx,sz] of [[-1,1],[1,1],[-1,-1]]){const x=sx*w*.9,z=sz*w*.9;if(!ok(x,z,1.5))continue;pid++;cy(.18,.18,7,x,top+3.5,z,dk,5);const fl=ns(bx(3.4,1.8,.12,x+1.8*sx*-1,top+6.1,z,sm(AC)));fl.rotation.z=.08*sx;}
+    if(top!=null&&ok(-w,w,1)&&ok(w,w,1)){pid++;ns(bx(w*2,.5,.2,0,top+1.4,w+.7,sm(['#a99468','#b39a6e','#9c8a62','#a8a07a'][(r>>3)&3])));// mudbrick tone differs per building
+    {const x=-w*.2,z=-w*.7;if(ok(x,z,2)){pid++;for(let i=0;i<2;i++){bx(1.8,1.2,1.2,x+i*2.2,top+.6,z,tin);}}}}}
   if((k==='hq'||k==='factory')&&ok(w*.1,-w*.1,4)){pid++;bx(5,3,5,w*.1,top+1.5,-w*.1,pl);bx(5.4,.5,5.4,w*.1,top+3.2,-w*.1,rf);}
   pid=-1;// ground yard wall meshes: no prop id (each one checked on its own)
   const RR=h+(k==='hq'?30:22),gate=7,seg=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(-(z1-z0),x1-x0);bx(L,.5,1.7,(x0+x1)/2,5.2,(z0+z1)/2,rf,a);return bx(L,5,1.1,(x0+x1)/2,2.5,(z0+z1)/2,pl,a);};
@@ -1237,6 +1242,12 @@ function meRoofKit(o,m,e,T){const B=Bld(),R=mulberry(e.kind.length*131+(e.size|0
   W(-xe,zf,-7,zf);W(7,zf,xe,zf);W(-xe,zf,-xe,zf-26);W(xe,zf,xe,zf-26);
   for(const gx of [-7,7]){B.box(2.6,9,2.6,gx,4.5,zf,cap);B.box(3.2,.8,3.2,gx,9.2,zf,'#8d785a');B.box(1.1,1.1,1.1,gx,10.1,zf,'#e8dfb0');}
   B.box(14,.4,3,0,.25,zf,'#6d665a');
+  /* art-shia: gate arch + hanging cloth banner (nation colour, no emblem) + sandbag shoulders + dusty base band on the compound wall (merged into this one mesh) */
+  {const SH=['IR','RS','DW','RV','OB'].includes(T.fac);if(SH){const ac='#9a8660';for(let i=0;i<=8;i++){const a=Math.PI*i/8,x=Math.cos(a)*7,y=9.4+Math.sin(a)*3.4;B.box(1.9,1.3,1.8,x,y,zf,ac,0,0,a-Math.PI/2);}
+    B.box(14.6,.6,2,0,9.2,zf,'#8d785a');
+    for(const sx of [-1,1]){B.box(11,6.4,.35,sx*(xe-4),3.4,zf-.9,tc);B.box(11,.7,.4,sx*(xe-4),6.4,zf-.9,'#2c2c28');B.box(11,.35,.4,sx*(xe-4),.4,zf-.9,'#2c2c28');}
+    for(const sx of [-1,1])for(let r=0;r<3;r++)for(let c=0;c<4-r;c++)B.box(2.6,1,1.6,sx*(9.6+c*2.7+r*1.3),.5+r*1,zf+3.2,'#a79a74',0,(c+r)%2?.06:-.05,0);
+    for(const [a,b,c2,d] of [[-xe,zf,-7,zf],[7,zf,xe,zf]]){const L=Math.abs(c2-a);B.box(L,1.3,2.5,(a+c2)/2,.65,zf,'#8a7a5a');}}}
   // slice 9: guard towers on the two far wall corners (legs, cabin with dark slit, roof, floodlight) and a camo-net lean-to beside the gate
   for(const [tx,tz] of [[-xe,zf-26],[xe,zf-26]]){for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])B.box(.7,12,.7,tx+a*1.8,6,tz+b*1.8,'#5b5a50');B.box(.4,.4,5,tx,5,tz,'#5b5a50');B.box(5.6,.6,5.6,tx,12.2,tz,'#6b6a5e');B.box(5,2.6,5,tx,13.8,tz,'#8a8368');B.box(5.1,.9,3.8,tx,14.2,tz,'#15130f');B.box(6.4,.5,6.4,tx,15.4,tz,tc);B.box(5.6,1,.5,tx,12.9,tz+2.8,'#9a8f6e');B.box(.5,.5,.5,tx+(tx<0?3.4:-3.4),15.2,tz+2,'#e8dfb0');}
   B.box(12,.3,9,-xe+10,5.2,zf-6,'#59604a',0,0,.2);for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])B.box(.4,5,.4,-xe+10+a*5.6,2.5,zf-6+b*4.2,'#4a4a44');
