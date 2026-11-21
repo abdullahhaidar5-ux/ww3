@@ -118,3 +118,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-21 04:48Z 261e9af9 **RED** (28 gates) failing: decisions,loadfreeze,smooth-mp,superfreeze — Loading waits up to 60 s for graphics prep (Abdullah's PC needed 30 s;
 - 2026-11-21 16:01Z 55365b45 **RED** (28 gates) failing: audio,decisions — Remove the national anthems (Abdullah: 'Remove the anthems'): none at 
 - 2026-11-21 16:27Z 1a09fdff **RED** (28 gates) failing: audio,decisions,smooth-mp,superfreeze — Bring back freeze fixes + China/Russia AI counter-pick (lane B, gated 
+- 2026-11-21 16:46Z 84e81261 **RED** (28 gates) failing: audio,decisions,smooth-mp — Batched soldier drawing back on (Abdullah: 'Yes, faster drawing' - uni
