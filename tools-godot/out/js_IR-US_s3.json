@@ -1,0 +1,396 @@
+{
+ "engine": "js",
+ "facs": [
+  "IR",
+  "US"
+ ],
+ "map": "strait",
+ "seed": 3,
+ "rows": [
+  {
+   "min": 0,
+   "over": false,
+   "ents": 10,
+   "msPerStep": 0,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 4,
+     "blds": 1,
+     "credits": 3000,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    },
+    {
+     "fac": "US",
+     "units": 4,
+     "blds": 1,
+     "credits": 3000,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  },
+  {
+   "min": 1,
+   "over": false,
+   "ents": 17,
+   "msPerStep": 1.214,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 5,
+     "blds": 3,
+     "credits": 960,
+     "built": 2,
+     "lost": 0,
+     "kills": 0
+    },
+    {
+     "fac": "US",
+     "units": 6,
+     "blds": 3,
+     "credits": 166,
+     "built": 2,
+     "lost": 0,
+     "kills": 0
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  },
+  {
+   "min": 2,
+   "over": false,
+   "ents": 32,
+   "msPerStep": 1.55,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 10,
+     "blds": 6,
+     "credits": 170,
+     "built": 7,
+     "lost": 0,
+     "kills": 0
+    },
+    {
+     "fac": "US",
+     "units": 12,
+     "blds": 4,
+     "credits": 201,
+     "built": 8,
+     "lost": 0,
+     "kills": 0
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  },
+  {
+   "min": 3,
+   "over": false,
+   "ents": 34,
+   "msPerStep": 1.532,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 11,
+     "blds": 7,
+     "credits": 405,
+     "built": 14,
+     "lost": 5,
+     "kills": 6
+    },
+    {
+     "fac": "US",
+     "units": 12,
+     "blds": 4,
+     "credits": 1288,
+     "built": 14,
+     "lost": 6,
+     "kills": 5
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  },
+  {
+   "min": 4,
+   "over": false,
+   "ents": 36,
+   "msPerStep": 1.245,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 11,
+     "blds": 7,
+     "credits": 1176,
+     "built": 17,
+     "lost": 8,
+     "kills": 12
+    },
+    {
+     "fac": "US",
+     "units": 9,
+     "blds": 9,
+     "credits": 148,
+     "built": 20,
+     "lost": 12,
+     "kills": 8
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  },
+  {
+   "min": 5,
+   "over": false,
+   "ents": 41,
+   "msPerStep": 1.202,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 12,
+     "blds": 7,
+     "credits": 487,
+     "built": 24,
+     "lost": 14,
+     "kills": 14
+    },
+    {
+     "fac": "US",
+     "units": 10,
+     "blds": 12,
+     "credits": 500,
+     "built": 24,
+     "lost": 14,
+     "kills": 14
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  },
+  {
+   "min": 6,
+   "over": false,
+   "ents": 50,
+   "msPerStep": 1.313,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 14,
+     "blds": 7,
+     "credits": 182,
+     "built": 29,
+     "lost": 17,
+     "kills": 18
+    },
+    {
+     "fac": "US",
+     "units": 13,
+     "blds": 16,
+     "credits": 491,
+     "built": 33,
+     "lost": 18,
+     "kills": 17
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  },
+  {
+   "min": 7,
+   "over": false,
+   "ents": 57,
+   "msPerStep": 1.563,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 14,
+     "blds": 8,
+     "credits": 72,
+     "built": 38,
+     "lost": 25,
+     "kills": 21
+    },
+    {
+     "fac": "US",
+     "units": 18,
+     "blds": 17,
+     "credits": 121,
+     "built": 39,
+     "lost": 21,
+     "kills": 25
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  },
+  {
+   "min": 8,
+   "over": false,
+   "ents": 57,
+   "msPerStep": 1.42,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 15,
+     "blds": 7,
+     "credits": 493,
+     "built": 45,
+     "lost": 32,
+     "kills": 29
+    },
+    {
+     "fac": "US",
+     "units": 15,
+     "blds": 20,
+     "credits": 46,
+     "built": 48,
+     "lost": 29,
+     "kills": 32
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  },
+  {
+   "min": 9,
+   "over": false,
+   "ents": 64,
+   "msPerStep": 1.288,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 17,
+     "blds": 7,
+     "credits": 894,
+     "built": 54,
+     "lost": 42,
+     "kills": 37
+    },
+    {
+     "fac": "US",
+     "units": 22,
+     "blds": 18,
+     "credits": 437,
+     "built": 59,
+     "lost": 37,
+     "kills": 39
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  },
+  {
+   "min": 10,
+   "over": false,
+   "ents": 56,
+   "msPerStep": 0.417,
+   "per": [
+    {
+     "fac": "IR",
+     "units": 17,
+     "blds": 6,
+     "credits": 99,
+     "built": 64,
+     "lost": 53,
+     "kills": 53
+    },
+    {
+     "fac": "US",
+     "units": 15,
+     "blds": 18,
+     "credits": 449,
+     "built": 68,
+     "lost": 53,
+     "kills": 50
+    },
+    {
+     "fac": "DW",
+     "units": 0,
+     "blds": 0,
+     "credits": 0,
+     "built": 0,
+     "lost": 0,
+     "kills": 0
+    }
+   ]
+  }
+ ]
+}

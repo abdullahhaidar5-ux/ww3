@@ -1,0 +1,353 @@
+{
+ "engine": "godot",
+ "facs": [
+  "RS",
+  "IL"
+ ],
+ "map": "bm_splitridge",
+ "prof": {
+  "  findPath": 14221.087,
+  "  morale": 13660.7260000579,
+  "  nearestEnemy": 2631.98199999985,
+  "  stepTo": 25283.1579998705,
+  "ai": 3728.14699999918,
+  "oil+power+supply": 6027.11499999964,
+  "prod+hash": 12626.972,
+  "proj+separate": 102708.369,
+  "units": 94939.2879999995,
+  "vision": 6275.79300000283
+ },
+ "rows": [
+  {
+   "ents": 10,
+   "min": 0,
+   "msPerStep": 0.0,
+   "over": false,
+   "per": [
+    {
+     "blds": 1,
+     "built": 0,
+     "credits": 3000,
+     "fac": "RS",
+     "kills": 0,
+     "lost": 0,
+     "out": false,
+     "units": 4
+    },
+    {
+     "blds": 1,
+     "built": 0,
+     "credits": 3000,
+     "fac": "IL",
+     "kills": 0,
+     "lost": 0,
+     "out": false,
+     "units": 4
+    }
+   ],
+   "steps": 0,
+   "winner": -1
+  },
+  {
+   "ents": 17,
+   "min": 1,
+   "msPerStep": 4.322,
+   "over": false,
+   "per": [
+    {
+     "blds": 2,
+     "built": 2,
+     "credits": 1048,
+     "fac": "RS",
+     "kills": 0,
+     "lost": 0,
+     "out": false,
+     "units": 6
+    },
+    {
+     "blds": 3,
+     "built": 2,
+     "credits": 73,
+     "fac": "IL",
+     "kills": 0,
+     "lost": 0,
+     "out": false,
+     "units": 6
+    }
+   ],
+   "steps": 3600,
+   "winner": -1
+  },
+  {
+   "ents": 28,
+   "min": 2,
+   "msPerStep": 5.562,
+   "over": false,
+   "per": [
+    {
+     "blds": 4,
+     "built": 7,
+     "credits": 283,
+     "fac": "RS",
+     "kills": 0,
+     "lost": 2,
+     "out": false,
+     "units": 9
+    },
+    {
+     "blds": 4,
+     "built": 7,
+     "credits": 729,
+     "fac": "IL",
+     "kills": 2,
+     "lost": 0,
+     "out": false,
+     "units": 11
+    }
+   ],
+   "steps": 3600,
+   "winner": -1
+  },
+  {
+   "ents": 29,
+   "min": 3,
+   "msPerStep": 6.104,
+   "over": false,
+   "per": [
+    {
+     "blds": 6,
+     "built": 11,
+     "credits": 179,
+     "fac": "RS",
+     "kills": 7,
+     "lost": 5,
+     "out": false,
+     "units": 10
+    },
+    {
+     "blds": 5,
+     "built": 11,
+     "credits": 249,
+     "fac": "IL",
+     "kills": 5,
+     "lost": 7,
+     "out": false,
+     "units": 8
+    }
+   ],
+   "steps": 3600,
+   "winner": -1
+  },
+  {
+   "ents": 33,
+   "min": 4,
+   "msPerStep": 5.56,
+   "over": false,
+   "per": [
+    {
+     "blds": 8,
+     "built": 14,
+     "credits": 814,
+     "fac": "RS",
+     "kills": 8,
+     "lost": 11,
+     "out": false,
+     "units": 7
+    },
+    {
+     "blds": 8,
+     "built": 14,
+     "credits": 259,
+     "fac": "IL",
+     "kills": 11,
+     "lost": 8,
+     "out": false,
+     "units": 10
+    }
+   ],
+   "steps": 3600,
+   "winner": -1
+  },
+  {
+   "ents": 41,
+   "min": 5,
+   "msPerStep": 6.351,
+   "over": false,
+   "per": [
+    {
+     "blds": 8,
+     "built": 21,
+     "credits": 874,
+     "fac": "RS",
+     "kills": 9,
+     "lost": 13,
+     "out": false,
+     "units": 12
+    },
+    {
+     "blds": 10,
+     "built": 16,
+     "credits": 129,
+     "fac": "IL",
+     "kills": 13,
+     "lost": 9,
+     "out": false,
+     "units": 11
+    }
+   ],
+   "steps": 3600,
+   "winner": -1
+  },
+  {
+   "ents": 46,
+   "min": 6,
+   "msPerStep": 7.292,
+   "over": false,
+   "per": [
+    {
+     "blds": 10,
+     "built": 23,
+     "credits": 79,
+     "fac": "RS",
+     "kills": 12,
+     "lost": 14,
+     "out": false,
+     "units": 13
+    },
+    {
+     "blds": 12,
+     "built": 19,
+     "credits": 430,
+     "fac": "IL",
+     "kills": 14,
+     "lost": 12,
+     "out": false,
+     "units": 11
+    }
+   ],
+   "steps": 3600,
+   "winner": -1
+  },
+  {
+   "ents": 43,
+   "min": 7,
+   "msPerStep": 6.62,
+   "over": false,
+   "per": [
+    {
+     "blds": 10,
+     "built": 28,
+     "credits": 105,
+     "fac": "RS",
+     "kills": 28,
+     "lost": 21,
+     "out": false,
+     "units": 11
+    },
+    {
+     "blds": 12,
+     "built": 34,
+     "credits": 220,
+     "fac": "IL",
+     "kills": 21,
+     "lost": 28,
+     "out": false,
+     "units": 10
+    }
+   ],
+   "steps": 3600,
+   "winner": -1
+  },
+  {
+   "ents": 54,
+   "min": 8,
+   "msPerStep": 7.005,
+   "over": false,
+   "per": [
+    {
+     "blds": 13,
+     "built": 31,
+     "credits": 195,
+     "fac": "RS",
+     "kills": 29,
+     "lost": 24,
+     "out": false,
+     "units": 11
+    },
+    {
+     "blds": 14,
+     "built": 41,
+     "credits": 245,
+     "fac": "IL",
+     "kills": 24,
+     "lost": 29,
+     "out": false,
+     "units": 16
+    }
+   ],
+   "steps": 3600,
+   "winner": -1
+  },
+  {
+   "ents": 64,
+   "min": 9,
+   "msPerStep": 7.186,
+   "over": false,
+   "per": [
+    {
+     "blds": 15,
+     "built": 35,
+     "credits": 315,
+     "fac": "RS",
+     "kills": 37,
+     "lost": 25,
+     "out": false,
+     "units": 14
+    },
+    {
+     "blds": 14,
+     "built": 54,
+     "credits": 385,
+     "fac": "IL",
+     "kills": 25,
+     "lost": 37,
+     "out": false,
+     "units": 21
+    }
+   ],
+   "steps": 3600,
+   "winner": -1
+  },
+  {
+   "ents": 65,
+   "min": 10,
+   "msPerStep": 6.972,
+   "over": false,
+   "per": [
+    {
+     "blds": 15,
+     "built": 44,
+     "credits": 255,
+     "fac": "RS",
+     "kills": 45,
+     "lost": 39,
+     "out": false,
+     "units": 9
+    },
+    {
+     "blds": 14,
+     "built": 68,
+     "credits": 41,
+     "fac": "IL",
+     "kills": 39,
+     "lost": 45,
+     "out": false,
+     "units": 27
+    }
+   ],
+   "steps": 3600,
+   "winner": -1
+  }
+ ],
+ "seed": 1
+}
