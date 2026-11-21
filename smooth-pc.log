@@ -1,0 +1,77 @@
+[0s] pc: launching browser
+[0s] ctx
+[0s] guarded
+[0s] page
+[0s] pc: loading page
+[1s] pc: page loaded
+[1s] pc: menu ready
+[24s] pc: LOADING {"tok":1,"tipI":7,"tipT":104,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10139],["Loading 3D models…",967]
+[42s] pc: battle loaded in 41s
+[66s] pc: army in place
+[66s] pc: measuring 150 frames
+[69s] pc: warm-up done, 114 shaders
+[71s] pc: frame 10
+[72s] pc: frame 20
+[73s] pc: frame 30
+[73s] pc: frame 40
+[75s] pc: frame 50
+[76s] pc: frame 60
+[77s] pc: frame 70
+[78s] pc: frame 80
+[79s] pc: frame 90
+[80s] pc: frame 100
+[81s] pc: frame 110
+[82s] pc: frame 120
+[83s] pc: frame 130
+[84s] pc: frame 140
+[85s] pc: frame 150
+[88s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) sim step p95 ms rose to 19.9 (baseline 10.9, allowed up to 18.02; +83%)
+[88s] pc: launching browser
+[88s] ctx
+[88s] guarded
+[88s] page
+[88s] pc: loading page
+[89s] pc: page loaded
+[89s] pc: menu ready
+[111s] pc: LOADING {"tok":1,"tipI":7,"tipT":104,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",9265],["Loading 3D models…",686],
+[128s] pc: battle loaded in 39s
+[152s] pc: army in place
+[152s] pc: measuring 150 frames
+[154s] pc: warm-up done, 113 shaders
+[156s] pc: frame 10
+[157s] pc: frame 20
+[158s] pc: frame 30
+[159s] pc: frame 40
+[160s] pc: frame 50
+[161s] pc: frame 60
+[162s] pc: frame 70
+[163s] pc: frame 80
+[165s] pc: frame 90
+[166s] pc: frame 100
+[167s] pc: frame 110
+[168s] pc: frame 120
+[169s] pc: frame 130
+[170s] pc: frame 140
+[171s] pc: frame 150
+[174s] pc attempt 2: REGRESSED
+
+                       pc        
+units on screen        333       
+load time s            38.81     
+median frame ms        54.4      
+p95 frame ms           100.9     
+p99 frame ms           453.2     
+worst 1% FPS           2.06      
+frames >50 ms          109       
+first boom x median    0.97      
+2nd boom x median      0.89      
+weather/night x median 1.49      
+sim step p95 ms        18.8      
+draw calls             1210      
+k triangles            6286      
+heap MB/min            -100.78   
+runtime 2.9 min
+
+SMOOTH FAIL: 1 problem(s)
+  - pc: sim step p95 ms rose to 18.8 (baseline 10.9, allowed up to 17.46; +72%)
