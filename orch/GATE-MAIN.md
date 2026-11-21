@@ -119,3 +119,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-21 16:01Z 55365b45 **RED** (28 gates) failing: audio,decisions — Remove the national anthems (Abdullah: 'Remove the anthems'): none at 
 - 2026-11-21 16:27Z 1a09fdff **RED** (28 gates) failing: audio,decisions,smooth-mp,superfreeze — Bring back freeze fixes + China/Russia AI counter-pick (lane B, gated 
 - 2026-11-21 16:46Z 84e81261 **RED** (28 gates) failing: audio,decisions,smooth-mp — Batched soldier drawing back on (Abdullah: 'Yes, faster drawing' - uni
+- 2026-11-21 18:06Z d7ea9c40 **RED** (28 gates) failing: decisions,migrate-down — HISTORY: fewer soldier bones
