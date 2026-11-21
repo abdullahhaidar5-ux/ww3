@@ -1268,7 +1268,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
   // every step has a watchdog: a step still not done after LOAD_WD ms (a download or a phone's shader compile that never
   // finishes) is logged and the loading moves on, so the loading screen can never hang for ever
   for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;const t1=performance.now();
-    try{const r=fn();if(r&&r.then){let wt=null;const to=await Promise.race([r.then(()=>0,e=>{throw e;}),new Promise(z=>{wt=setTimeout(()=>z(1),LOAD_WD);})]);clearTimeout(wt);
+    try{const r=fn();if(r&&r.then){let wt=null;const to=await Promise.race([r.then(()=>0,e=>{throw e;}),new Promise(z=>{wt=setTimeout(()=>z(1),/^Preparing graphics/.test(label)?60000:LOAD_WD);})/* graphics prep may take 60 s: on Abdullah's RTX 2070 (Windows/ANGLE) it needed 30 s and the 20 s watchdog started the battle early, so the rest compiled mid-battle = 0.3-0.9 s freezes (his Performance log 2026-11-21) */]);clearTimeout(wt);
         if(to){LOAD.wstop=1;console.warn('loading watchdog: "'+label.replace('…','')+'" still not done after '+LOAD_WD/1000+' s, moving on');}}
       TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
       console.error('3D graphics failed to start',err);R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
