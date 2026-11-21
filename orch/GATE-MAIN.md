@@ -115,3 +115,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-21 00:17Z 5e6044eb **GREEN** (28 gates) — EMERGENCY ROLLBACK: game code back to aae60d36 (Abdullah: super laggy,
 - 2026-11-21 00:42Z efec52ca **GREEN** (28 gates) — ROLLBACK to Monday Nov 17 (dc307f86): Abdullah picked it - units terri
 - 2026-11-21 02:40Z 55f2340f **RED** (28 gates) failing: superfreeze — Back to Nov 19 night version aae60d36 (Abdullah: Monday version super 
+- 2026-11-21 04:48Z 261e9af9 **RED** (28 gates) failing: decisions,loadfreeze,smooth-mp,superfreeze — Loading waits up to 60 s for graphics prep (Abdullah's PC needed 30 s;
