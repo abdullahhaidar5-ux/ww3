@@ -1,0 +1,18 @@
+battle   bm_splitridge stuck episodes   0  mover-seconds 5315
+battle   bm_ferryquarter stuck episodes   0  mover-seconds 5379
+battle   bm_breakwater stuck episodes   0  mover-seconds 6640
+battle   taiwan       stuck episodes   0  mover-seconds 3882
+battle   lebanon      stuck episodes   0  mover-seconds 5869
+battle   khyber       stuck episodes   0  mover-seconds 5079
+total stuck episodes 0 {}
+bridge40    n=40   95%    52 s  all  54.5 s (limit 75)  stuck 0  longest stall 8s  774ms ok 
+inf60       n=60   95%  33.5 s  all  34.5 s (limit 75)  stuck 0  longest stall 2s  666ms ok 
+mixed       n=52   95%  40.5 s  all  44.5 s (limit 80)  stuck 0  longest stall 3.5s  675ms ok 
+longbridge  n=30   95%  45.5 s  all    46 s (limit 90)  stuck 0  longest stall 3.5s  418ms ok 
+riverbank   n=40   95%    19 s  all  20.5 s (limit 45)  stuck 0  longest stall 0.5s  229ms ok 
+dragline    n=40   95%    39 s  all    40 s (limit 80)  stuck 0  longest stall 2.5s  467ms ok 
+corner      n=40   95%  19.5 s  all  21.5 s (limit 45)  stuck 0  longest stall 1s  264ms ok 
+boats       n=12   95%  50.5 s  all  50.5 s (limit 90)  stuck 0  longest stall 0s  251ms ok 
+base        n=40   95%  24.5 s  all    30 s (limit 60)  stuck 0  longest stall 8.5s  388ms ok 
+CHOKEPOINT PASS
+STUCKSCAN PASS (0 <= 8, chokepoints ok)
