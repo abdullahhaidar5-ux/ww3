@@ -1,0 +1,5 @@
+run                 frameMed frameP95 drawCalls kTris newShaders simP95
+shia-1-A  143.5  183.2  8041  6920  0  15.1
+shia-2-B  140.3  188.8  8397  7113  0  11.5
+shia-3-B  141  183.3  7832  7101  0  13.1
+shia-4-A  143.8  195.1  9159  7270  0  12.3
