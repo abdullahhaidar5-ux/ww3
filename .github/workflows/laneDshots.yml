@@ -1,0 +1,49 @@
+# Lane D vehicle-art pictures (branch-only: runs on pushes to shots/laneD-<theme>). Renders the same deterministic scene on
+# the base commit (before) and on the pushed commit (after) with orch/laneDshots.mjs and pushes the jpgs to branch
+# shots/laneD-out (out/<theme>/...). Never touches main.
+name: Lane D shots
+on:
+  push:
+    branches: ['shots/laneD-*']
+permissions: { contents: write }
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env: { BASE: 55f2340f75fa62a6633a0c4ce777b748aa8ae416 }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Shots
+        run: |
+          T=${GITHUB_REF_NAME#shots/laneD-}
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          cp orch/laneDshots.mjs /tmp/shots.mjs; cp orch/artaudit.mjs /tmp/artaudit.mjs
+          run() { # $1 = before|after
+            cp /tmp/shots.mjs orch/laneDshots.mjs; node orch/laneDshots.mjs $T $1 2>&1 | tail -20
+            case $T in
+              shia) KINDS=tank,aa,atgm node orch/artaudit.mjs shia ground -$1 | tail -3 ;;
+              west) KINDS=tank,jeep,arty,atgm node orch/artaudit.mjs west ground -$1 | tail -3; node orch/artaudit.mjs west navy -$1 | tail -3 ;;
+              regional) KINDS=aa,ew,dozer,atgm,drone node orch/artaudit.mjs regional ground -$1 | tail -3 ;;
+              drones) for F in shia west east regional; do KINDS=drone node orch/artaudit.mjs $F air -$1 | tail -3; done ;;
+            esac
+            mkdir -p /tmp/out/$T; cp orch/shots/laneD/*.jpg /tmp/out/$T/ 2>/dev/null; cp orch/shots/art-audit-*-$1.jpg /tmp/out/$T/ 2>/dev/null; ls /tmp/out/$T; }
+          run after
+          git checkout -q $BASE -- index.html src sw.js; rm -f orch/shots/laneD/*.jpg; run before
+      - name: Push to shots/laneD-out
+        run: |
+          T=${GITHUB_REF_NAME#shots/laneD-}
+          for try in 1 2 3 4 5 6; do
+            rm -rf /tmp/cb; mkdir /tmp/cb; cd /tmp/cb; git init -q
+            git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+            if git fetch -q --depth 1 origin shots/laneD-out 2>/dev/null; then git checkout -q -B out FETCH_HEAD; else git checkout -q --orphan out; fi
+            rm -rf out/$T; mkdir -p out/$T; cp /tmp/out/$T/*.jpg out/$T/; git add -A out
+            git -c user.name=shots-bot -c user.email=shots-bot@users.noreply.github.com commit -q -m "laneD shots $T (${{ github.sha }})"
+            git push -q origin HEAD:refs/heads/shots/laneD-out && break
+            sleep $((RANDOM % 20 + 5)); cd /; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'laneD-shots', path: /tmp/out, if-no-files-found: ignore }
