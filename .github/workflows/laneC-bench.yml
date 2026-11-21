@@ -1,0 +1,64 @@
+# Lane C (base buildings) bench + shots on GitHub's runners - branch-only, never touches main.
+# Push to orch/laneC-bench -> per family: before (main) / after (orch/laneC-<fam>) base pictures on desert bm_breakwater, Clear day, and a
+# controlled bench of the same scene (full base for every side): CPU ms per frame (draws swallowed like orch/smooth.mjs),
+# draw calls with/without the shadow pass, triangles, shader programs - before/after alternated in ONE job.
+# Results (jpg + json + summary) are pushed to branch orch/laneC-shots under orch/shots/laneC/.
+name: Lane C bench
+on:
+  push:
+    branches: ['orch/laneC-bench']
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { fam: shia, facs: 'IR,RV' }
+          - { fam: west, facs: 'US,GB' }
+          - { fam: east, facs: 'RU,KP' }
+          - { fam: regional, facs: 'TR,SA' }
+    env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Shots + bench (before/after alternated A B A B B A in one job, full bases for every side)
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          git fetch -q --depth 1 origin main "orch/laneC-${{ matrix.fam }}"
+          git show origin/main:index.html > /tmp/before.html
+          git show "origin/orch/laneC-${{ matrix.fam }}:index.html" > /tmp/after.html
+          mkdir -p /tmp/out
+          for v in before after before after after before; do
+            node orch/laneCshots.mjs --html /tmp/$v.html --tag ${{ matrix.fam }}-$v --facs ${{ matrix.facs }} --out /tmp/out --bench 2>&1 | grep -E "BENCH|saved|Error|error" | tail -12
+          done
+          mv /tmp/out/bench.jsonl /tmp/out/${{ matrix.fam }}-bench.jsonl
+          python3 - <<'PY' | tee /tmp/out/${{ matrix.fam }}-bench.txt
+          import json,statistics as st
+          R=[json.loads(l) for l in open('/tmp/out/${{ matrix.fam }}-bench.jsonl')]
+          for fac in sorted({r['fac'] for r in R}):
+            for v in ('before','after'):
+              X=[r for r in R if r['fac']==fac and r['tag'].endswith(v)]
+              for cam in ('battle','wide'):
+                print(fac,v.ljust(6),cam.ljust(6),'msMed',[x[cam]['msMed'] for x in X],'calls',[x[cam]['calls'] for x in X],'callsWithShadow',[x[cam]['callsWithShadow'] for x in X],'kTris',[x[cam]['kTris'] for x in X],'programs',[x['programs'] for x in X])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'shots-${{ matrix.fam }}', path: /tmp/out, if-no-files-found: ignore }
+      - name: Push to orch/laneC-shots
+        if: always()
+        run: |
+          for try in 1 2 3 4 5 6; do
+            rm -rf /tmp/cb; mkdir /tmp/cb; cd /tmp/cb; git init -q
+            git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+            if git fetch -q --depth 1 origin orch/laneC-shots 2>/dev/null; then git checkout -q -B orch/laneC-shots FETCH_HEAD; else git checkout -q --orphan orch/laneC-shots; fi
+            mkdir -p orch/shots/laneC; cp /tmp/out/*.jpg /tmp/out/*-bench.* orch/shots/laneC/ 2>/dev/null; git add orch
+            git -c user.name=laneC-bot -c user.email=laneC-bot@users.noreply.github.com commit -q -m "lane C bench: ${{ matrix.fam }} (${{ github.sha }})" || exit 0
+            git push -q origin HEAD:refs/heads/orch/laneC-shots && break
+            sleep $((RANDOM % 20 + 5)); cd /; done
