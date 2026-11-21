@@ -1,0 +1,38 @@
+# Lane B scale shots (branch-only): renders before (origin/main) / after (this branch) pictures with orch/laneBshots.mjs
+# and pushes them to branch orch/laneB-shots (orch/shots/laneB/*.jpg). Never touches main.
+name: Lane B shots
+on:
+  push:
+    branches: ['orch/laneB-scale']
+    paths: ['orch/laneBshots.mjs', '.github/workflows/laneBshots.yml']
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Render before/after
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          git fetch -q --depth 1 origin main && git show FETCH_HEAD:index.html > /tmp/before.html
+          node orch/laneBshots.mjs --tag before --html /tmp/before.html 2>&1 | tail -30
+          node orch/laneBshots.mjs --tag after 2>&1 | tail -30
+          ls -la orch/shots/laneB
+      - name: Push shots to orch/laneB-shots
+        if: always()
+        run: |
+          mkdir -p /tmp/s && cp orch/shots/laneB/*.jpg /tmp/s/ || exit 0
+          cd /tmp && rm -rf cb && mkdir cb && cd cb && git init -q
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git checkout -q --orphan orch/laneB-shots; mkdir -p orch/shots/laneB; cp /tmp/s/*.jpg orch/shots/laneB/; git add orch
+          git -c user.name=shots-bot -c user.email=shots-bot@users.noreply.github.com commit -q -m "laneB shots (${{ github.sha }})"
+          git push -q -f origin HEAD:refs/heads/orch/laneB-shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: laneB-shots, path: orch/shots/laneB, if-no-files-found: ignore }
