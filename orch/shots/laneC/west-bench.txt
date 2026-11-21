@@ -1,0 +1,8 @@
+GB before battle msMed [4.1, 5.2, 3.3] calls [185, 185, 185] callsWithShadow [318, 318, 318] kTris [1735, 1735, 1735] programs [132, 131, 131]
+GB before wide   msMed [4.2, 4.1, 4.2] calls [206, 206, 206] callsWithShadow [390, 390, 390] kTris [1884, 1884, 1884] programs [132, 131, 131]
+GB after  battle msMed [4.2, 4.4, 5.7] calls [190, 189, 189] callsWithShadow [323, 322, 322] kTris [1754, 1749, 1749] programs [132, 131, 131]
+GB after  wide   msMed [3, 3.7, 4.1] calls [211, 210, 210] callsWithShadow [395, 394, 394] kTris [1903, 1898, 1898] programs [132, 131, 131]
+US before battle msMed [3.9, 4.2, 4.4] calls [185, 185, 185] callsWithShadow [318, 318, 318] kTris [1735, 1735, 1735] programs [131, 131, 131]
+US before wide   msMed [9.6, 9.2, 8.2] calls [206, 206, 206] callsWithShadow [390, 390, 390] kTris [1884, 1884, 1884] programs [131, 131, 131]
+US after  battle msMed [3.7, 4.3, 4.6] calls [189, 189, 189] callsWithShadow [322, 322, 322] kTris [1749, 1749, 1749] programs [131, 130, 130]
+US after  wide   msMed [6.2, 8.6, 10] calls [210, 210, 210] callsWithShadow [394, 394, 394] kTris [1898, 1898, 1898] programs [131, 130, 130]

@@ -1,0 +1,12 @@
+{"tag":"west-before","fac":"US","battle":{"msMed":3.9,"calls":185,"callsWithShadow":318,"kTris":1735},"wide":{"msMed":9.6,"calls":206,"callsWithShadow":390,"kTris":1884},"programs":131}
+{"tag":"west-before","fac":"GB","battle":{"msMed":4.1,"calls":185,"callsWithShadow":318,"kTris":1735},"wide":{"msMed":4.2,"calls":206,"callsWithShadow":390,"kTris":1884},"programs":132}
+{"tag":"west-after","fac":"US","battle":{"msMed":3.7,"calls":189,"callsWithShadow":322,"kTris":1749},"wide":{"msMed":6.2,"calls":210,"callsWithShadow":394,"kTris":1898},"programs":131}
+{"tag":"west-after","fac":"GB","battle":{"msMed":4.2,"calls":190,"callsWithShadow":323,"kTris":1754},"wide":{"msMed":3,"calls":211,"callsWithShadow":395,"kTris":1903},"programs":132}
+{"tag":"west-before","fac":"US","battle":{"msMed":4.2,"calls":185,"callsWithShadow":318,"kTris":1735},"wide":{"msMed":9.2,"calls":206,"callsWithShadow":390,"kTris":1884},"programs":131}
+{"tag":"west-before","fac":"GB","battle":{"msMed":5.2,"calls":185,"callsWithShadow":318,"kTris":1735},"wide":{"msMed":4.1,"calls":206,"callsWithShadow":390,"kTris":1884},"programs":131}
+{"tag":"west-after","fac":"US","battle":{"msMed":4.3,"calls":189,"callsWithShadow":322,"kTris":1749},"wide":{"msMed":8.6,"calls":210,"callsWithShadow":394,"kTris":1898},"programs":130}
+{"tag":"west-after","fac":"GB","battle":{"msMed":4.4,"calls":189,"callsWithShadow":322,"kTris":1749},"wide":{"msMed":3.7,"calls":210,"callsWithShadow":394,"kTris":1898},"programs":131}
+{"tag":"west-after","fac":"US","battle":{"msMed":4.6,"calls":189,"callsWithShadow":322,"kTris":1749},"wide":{"msMed":10,"calls":210,"callsWithShadow":394,"kTris":1898},"programs":130}
+{"tag":"west-after","fac":"GB","battle":{"msMed":5.7,"calls":189,"callsWithShadow":322,"kTris":1749},"wide":{"msMed":4.1,"calls":210,"callsWithShadow":394,"kTris":1898},"programs":131}
+{"tag":"west-before","fac":"US","battle":{"msMed":4.4,"calls":185,"callsWithShadow":318,"kTris":1735},"wide":{"msMed":8.2,"calls":206,"callsWithShadow":390,"kTris":1884},"programs":131}
+{"tag":"west-before","fac":"GB","battle":{"msMed":3.3,"calls":185,"callsWithShadow":318,"kTris":1735},"wide":{"msMed":4.2,"calls":206,"callsWithShadow":390,"kTris":1884},"programs":131}
