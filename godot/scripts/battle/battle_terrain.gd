@@ -34,7 +34,7 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 			# slope for rock colour
 			var sl := absf(hat.call(hi + 2, hj) - hat.call(hi - 2, hj)) + absf(hat.call(hi, hj + 2) - hat.call(hi, hj - 2))
 			var hk := clampf(y / hmax, 0.0, 1.0)
-			var c := Color(0.93, 0.82, 0.64).lerp(Color(0.80, 0.78, 0.60), hk * 0.7)     # sand low, drier scrub up high
+			var c := Color(0.80, 0.68, 0.52).lerp(Color(0.66, 0.64, 0.48), hk * 0.8)     # sand low, drier scrub up high
 			c = c.lerp(Color(0.62, 0.57, 0.50), clampf((sl - 6.0) / 18.0, 0.0, 1.0))  # steep = rock
 			var gx := clampi(int(x / CELL), 0, GW - 1); var gz := clampi(int(z / CELL), 0, GH - 1)
 			if int(grid[gz * GW + gx]) == 3: c = c.lerp(Color(0.52, 0.48, 0.43), 0.7)

@@ -35,7 +35,18 @@ const BLD_ANY := {
 	"techb_plant": ["watertower", 1.4], "techb_quarry": ["container", 1.2], "techb_mine": ["b_crane", 1.3], "techb_hosp": ["tent", 1.2],
 	"derrick": ["@derrick", 1.0],
 }
-const BOX_COL := Color(0.62, 0.58, 0.5)
+const BOX_COL := Color(0.5, 0.46, 0.4)
+# paint for models that come in white / untextured (multiplies the model's own colours)
+const PAINT := {"tent": Color(0.72, 0.64, 0.5), "b_radar": Color(0.7, 0.68, 0.6), "sam": Color(0.62, 0.6, 0.46),
+	"b_turret": Color(0.66, 0.62, 0.52), "watertower": Color(0.75, 0.7, 0.6), "container": Color(0.75, 0.62, 0.45),
+	"b_pad": Color(0.75, 0.72, 0.66), "b_crane": Color(0.8, 0.7, 0.5), "truck": Color(0.62, 0.6, 0.45), "m_humvee": Color(0.85, 0.78, 0.6),
+	"m_msta": Color(0.8, 0.74, 0.58), "m_merkava": Color(0.85, 0.8, 0.66), "technical": Color(0.95, 0.9, 0.82), "crate": Color(0.85, 0.75, 0.55)}
+
+static func paint(mesh: Mesh, col: Color) -> void:
+	for i in mesh.get_surface_count():
+		var m = mesh.surface_get_material(i)
+		if m is BaseMaterial3D:
+			(m as BaseMaterial3D).albedo_color = (m as BaseMaterial3D).albedo_color * col
 
 static func unit_model(fac: String, kind: String) -> Array:
 	var ov: Dictionary = UNIT_FAC.get(fac, {})

@@ -50,6 +50,24 @@ var bmm := {}             # draw key -> MultiMeshInstance3D
 var bmesh := {}           # draw key -> {mesh, h}
 var crate_key := ""
 var amove_armed := false
+var auto_cam := false
+
+## screenshots: put the camera on the biggest fight (units that fired in the last 2 s)
+func _cam_on_fight() -> void:
+	var sum := Vector2.ZERO; var n := 0
+	var firing: Array = sim.ents.filter(func(e): return not e.dead and not e.is_b and sim.t - e.last_fire < 2.0)
+	var best = null; var bn := 0
+	for e in firing:
+		var c := 0
+		for o in firing:
+			if absf(o.x - e.x) + absf(o.y - e.y) < 400: c += 1
+		if c > bn: bn = c; best = e
+	for e in firing:
+		if best != null and absf(e.x - best.x) + absf(e.y - best.y) < 400: sum += Vector2(e.x, e.y); n += 1
+	if n == 0:
+		for e in sim.ents:
+			if not e.dead and not e.is_b and e.kind != "harv" and e.kind != "dozer": sum += Vector2(e.x, e.y); n += 1
+	if n > 0: cam_target = sum / n; cam_dist = 520.0; cam_y = sim.ground_h(cam_target.x, cam_target.y)
 
 # ui
 var top_lbl: Label
@@ -63,6 +81,7 @@ var tip_lbl: Label
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	ai_only = "--battle-ai" in args
+	demo = "--demo" in args
 	headless_mode = DisplayServer.get_name() == "headless"
 	for a in args:
 		if a.begins_with("--fac="): my_fac = a.substr(6)
@@ -72,6 +91,7 @@ func _ready() -> void:
 		elif a.begins_with("--minutes="): minutes_cap = float(a.substr(10))
 		elif a.begins_with("--shot="): shot_path = a.substr(7)
 		elif a.begins_with("--shot-t="): shot_t = float(a.substr(9))
+		elif a == "--cam=auto": auto_cam = true
 		elif a.begins_with("--cam="):
 			var v := a.substr(6).split(",")
 			cam_target = Vector2(float(v[0]), float(v[1])); cam_dist = float(v[2])
@@ -186,7 +206,9 @@ func _dk_info(key: String, spec: Array) -> Dictionary:
 	if model == "@shahed": info = {"mesh": _shahed_mesh(spec[2]), "h": 4.0}
 	elif model == "@derrick": info = {"mesh": Look.derrick_mesh(), "h": 40.0}
 	elif model == "@box": info = {"mesh": Look.box_mesh(spec[2], Look.BOX_COL), "h": spec[2] * 0.45}
-	else: info = _build_mesh(model, spec[1], spec[2])
+	else:
+		info = _build_mesh(model, spec[1], spec[2])
+		if not info.is_empty() and Look.PAINT.has(model): Look.paint(info["mesh"], Look.PAINT[model])
 	if info.is_empty(): info = {"mesh": Look.box_mesh(spec[2], Look.BOX_COL), "h": spec[2] * 0.45}
 	bmesh[key] = info
 	var m := MultiMeshInstance3D.new()
@@ -217,20 +239,73 @@ func _physics_process(dt: float) -> void:
 	t += dt
 	if sim.over:
 		_show_end()
-		if ai_only: _ai_report(true); get_tree().quit()
+		if ai_only or (demo and headless_mode): _ai_report(true); get_tree().quit()
 		return
 	var steps := 2
-	if headless_mode and ai_only: steps = 600     # 10 game-seconds per frame: AI vs AI to a result fast
-	elif ai_only and shot_t > 0 and sim.t < shot_t - 1.0: steps = 120
+	if headless_mode and (ai_only or demo): steps = 600 if ai_only else 120     # 10 game-seconds per frame: AI vs AI to a result fast
+	elif (ai_only or demo) and shot_t > 0 and sim.t < shot_t - 1.0: steps = 30 if demo else 120
 	for e in sim.ents:
 		prev[e.id] = Vector3(e.x, e.y, e.ang)
+	if demo: _demo_tick()
 	var m0 := int(sim.t / 60.0)
 	for i in steps:
 		if sim.over: break
 		sim.step()
-	if ai_only and int(sim.t / 60.0) != m0: _ai_report(false)
-	if ai_only and sim.t >= minutes_cap * 60.0:
+	if (ai_only or demo) and int(sim.t / 60.0) != m0: _ai_report(false)
+	if (ai_only or demo) and sim.t >= minutes_cap * 60.0:
 		_ai_report(true); print("BATTLE-AI: time cap reached (%d min), no winner" % int(minutes_cap)); get_tree().quit()
+
+## --demo: a scripted player that only uses cmd() (the same door as the mouse and keyboard) - proves the human
+## path headless: power, barracks, factory, depot, queues, supply trucks, rally, attack waves.
+var demo := false
+var demo_t := 0.0
+var demo_step := 0
+func _demo_tick() -> void:
+	if sim.t < demo_t: return
+	demo_t = sim.t + 2.0
+	var T: Dictionary = sim.teams[me]
+	var want := ["gen", "barracks", "factory", "gen", "depot", "turret"]
+	if demo_step < want.size():
+		var k: String = want[demo_step]
+		var s: Dictionary = sim.bstats(my_fac, k)
+		if T.credits >= float(s.cost) and sim.req_met(me, k) and not _demo_building():
+			var p = _find_spot(k)
+			if p != null and cmd({t = "build", kind = k, x = p.x, y = p.y}):
+				print("DEMO %.0fs: building %s" % [sim.t, s.name]); demo_step += 1
+		return_if_low(T)
+	for b in sim.ents:
+		if b.dead or not b.is_b or b.team != me or b.built < 1.0 or b.q.size() >= 2: continue
+		if b.kind == "barracks": cmd({t = "train", kind = "inf" if randi() % 3 else "at", bid = b.id})
+		elif b.kind == "factory": cmd({t = "train", kind = "tank", bid = b.id})
+		elif b.kind == "hq" and sim.unit_count(me, "harv") < 3: cmd({t = "train", kind = "harv", bid = b.id})
+	if int(sim.t) % 90 < 2 and sim.t > 240:
+		var army: Array = sim.ents.filter(func(e): return not e.dead and not e.is_b and e.team == me and not e.kind in ["harv", "dozer"])
+		var ehq = sim.hq_of(1 - me)
+		var tg: Array = sim.bases[1 - me]
+		if ehq != null: tg = [ehq.x, ehq.y]
+		if army.size() >= 8:
+			cmd({t = "amove", ids = army.map(func(e): return e.id), x = float(tg[0]), y = float(tg[1])})
+			print("DEMO %.0fs: attack-move %d units" % [sim.t, army.size()])
+
+func return_if_low(_T) -> void:
+	pass
+
+func _demo_building() -> bool:
+	for b in sim.ents:
+		if b.is_b and b.team == me and not b.dead and b.built < 1.0: return true
+	return false
+
+## nearest valid spot around the HQ, toward the map centre first
+func _find_spot(k: String):
+	var hq = sim.hq_of(me)
+	if hq == null: return null
+	var a0: float = sim.base_facing(me)
+	for r in [170.0, 240.0, 310.0, 380.0, 450.0]:
+		for i in 16:
+			var a := a0 + (float((i + 1) / 2) * (1 if i % 2 else -1)) * 0.39
+			var x: float = hq.x + cos(a) * r; var y: float = hq.y + sin(a) * r
+			if sim.valid_spot(me, k, x, y) != 0: return Vector2(x, y)
+	return null
 
 func _ai_report(final: bool) -> void:
 	var i: Dictionary = sim.info()
@@ -274,7 +349,7 @@ func _process(dt: float) -> void:
 			var kk := _bld_key(fac, e.kind, e.size)
 			var info := _dk_info(kk[0], kk[1])
 			var sink: float = (1.0 - e.built) * float(info["h"]) * 0.9
-			per[kk[0]].append(Transform3D(Basis(Vector3.UP, -sim.base_facing(e.team) + PI * 0.5), Vector3(p.x, gy - sink, p.y)))
+			per.get_or_add(kk[0], []).append(Transform3D(Basis(Vector3.UP, -sim.base_facing(e.team) + PI * 0.5), Vector3(p.x, gy - sink, p.y)))
 			rings.append([Vector3(p.x, gy + 1.0, p.y), e.size * 0.72, Color(1, 1, 1) if issel else Color(col.r, col.g, col.b, 0.8)])
 			if issel or e.hp < e.max or e.built < 1.0:
 				var f: float = e.built if e.built < 1.0 else e.hp / e.max
@@ -295,12 +370,12 @@ func _process(dt: float) -> void:
 					var bob := 0.0
 					if moving: bob = absf(sin(t * 11.0 + float(e.id * 3 + i * 2))) * 1.2
 					var q := p + off
-					per[kk[0]].append(Transform3D(basis, Vector3(q.x, sim.ground_h(q.x, q.y) + bob, q.y)))
+					per.get_or_add(kk[0], []).append(Transform3D(basis, Vector3(q.x, sim.ground_h(q.x, q.y) + bob, q.y)))
 			elif model == "@shahed":
-				per[kk[0]].append(Transform3D(basis, Vector3(p.x, gy + 60.0, p.y)))
+				per.get_or_add(kk[0], []).append(Transform3D(basis, Vector3(p.x, gy + 60.0, p.y)))
 			else:
 				var air: bool = e.s_dom == "air"
-				per[kk[0]].append(Transform3D(basis, Vector3(p.x, gy + (70.0 if air else 0.0), p.y)))
+				per.get_or_add(kk[0], []).append(Transform3D(basis, Vector3(p.x, gy + (70.0 if air else 0.0), p.y)))
 			var r: float = e.r * 1.7 + 4.0
 			rings.append([Vector3(p.x, gy + 1.0, p.y), r, Color(1, 1, 1) if issel else col])
 			if issel or e.hp < e.max:
@@ -322,7 +397,7 @@ func _process(dt: float) -> void:
 		var bk := _bld_key("", key, 40.0 if o.tb == null else 60.0)
 		_dk_info(bk[0], bk[1])
 		var oy: float = sim.ground_h(o.x, o.y)
-		per[bk[0]].append(Transform3D(Basis.IDENTITY, Vector3(o.x, oy, o.y)))
+		per.get_or_add(bk[0], []).append(Transform3D(Basis.IDENTITY, Vector3(o.x, oy, o.y)))
 		var oc := Color(0.75, 0.75, 0.75, 0.7)
 		if int(o.owner) == me: oc = COL_ME
 		elif int(o.owner) >= 0: oc = COL_EN
@@ -369,6 +444,7 @@ func _process(dt: float) -> void:
 	_ghost_tick()
 	_ui_battle_tick()
 	if shot_path != "" and (shot_t < 0 or sim.t >= shot_t):
+		if shot_frames == 0 and auto_cam: _cam_on_fight()
 		shot_frames += 1
 		if shot_frames == (shot_at if shot_t < 0 else 8):
 			get_viewport().get_texture().get_image().save_png(shot_path)
