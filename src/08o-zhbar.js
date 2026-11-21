@@ -365,12 +365,15 @@ if(typeof updateUI==='function'){const _iU=updateUI;updateUI=function(){_iU.appl
 /* STRIKE ON THE LEFT RAIL (Abdullah 2026-11-14 22:10 "Strike launch from the building and its own separate button like artillery barrage in left hand"):
    one rail button under the generals' powers, shown while you own a Strike Center; it fills up as the Strike charges, glows when READY,
    one click arms it, then RIGHT-click the target (left-click cancels; Abdullah 2026-11-15 00:26) - the same as pressing LAUNCH on the building. */
-function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q)return;let b=document.getElementById('qpStrike');
-  const own=!!sb&&!sb.hidden&&G&&G.ents&&G.ents.some(e=>e.isB&&e.team===ME&&!e.dead&&e.kind==='uplink'&&e.built>=1);
-  if(!own||sb.disabled){if(b)b.hidden=true;if(Q.querySelector('.qcol')&&!Q.querySelector('.qcol').children.length)Q.hidden=true;return;}   /* right rail shows READY things only (Abdullah 2026-11-21 13:03) */
-  if(!b){b=document.createElement('button');b.id='qpStrike';b.type='button';b.innerHTML='<div class="qf"></div>'+(ICON_SVG.missile||'')+'<span class="qc"></span>';b.onclick=()=>{const s=$('supbtn');if(s&&!s.disabled){s.click();try{sfxUI(620);}catch(_){}}};
+/* the ready column sits at the right edge; in the Test range it moves left of the range panel instead of covering it */
+function qpPlace(){const Q=document.getElementById('qpow'),X=document.getElementById('sbx');if(!Q)return;let r='';if(X&&X.offsetParent){const a=X.getBoundingClientRect();if(a.width)r=Math.round(innerWidth-a.left+10)+'px';}if(Q.style.right!==r)Q.style.right=r;}
+function qpStrike(){const Q=document.getElementById('qpow'),sb=$('supbtn');if(!Q)return;qpPlace();let b=document.getElementById('qpStrike');
+  /* readiness straight from the team (it used to follow the LAUNCH button, which only refreshed once some building was selected: Abdullah 2026-11-21 'Rocket barrage only appears after selecting another first') */
+  const TT=G&&G.teams&&G.teams[ME],own=!!(TT&&TT.sup&&!G.over&&G.ents&&G.ents.some(e=>e.isB&&e.team===ME&&!e.dead&&e.kind==='uplink'&&e.built>=1)),sRdy=own&&(TT.charge||0)>=TT.sup.charge;
+  if(!own||!sRdy){if(b)b.hidden=true;if(Q.querySelector('.qcol')&&!Q.querySelector('.qcol').children.length)Q.hidden=true;return;}   /* right rail shows READY things only (Abdullah 2026-11-21 13:03) */
+  if(!b){b=document.createElement('button');b.id='qpStrike';b.type='button';b.innerHTML='<div class="qf"></div>'+(ICON_SVG.missile||'')+'<span class="qc"></span>';b.onclick=()=>{G.place=null;G.aim='sup';try{sfxUI(620);}catch(_){}try{updateUI();}catch(_){}};
     let col=Q.querySelector('.qstr');if(!col){col=document.createElement('div');col.className='qstr';Q.insertBefore(col,Q.querySelector('.qtab'));}col.append(b);}
-  Q.hidden=false;b.hidden=false;const nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),T=G.teams[ME],c=T&&T.sup&&T.sup.charge?Math.min(1,(T.charge||0)/T.sup.charge):1,rdy=!sb.disabled,k=nm+st+rdy+(G.aim==='sup')+Math.round(c*40);
+  Q.hidden=false;b.hidden=false;const nm=(($('supname')||{}).textContent||'Strike'),st=(($('supt')||{}).textContent||''),T=G.teams[ME],c=T&&T.sup&&T.sup.charge?Math.min(1,(T.charge||0)/T.sup.charge):1,rdy=sRdy,k=nm+st+rdy+(G.aim==='sup')+Math.round(c*40);
   if(b.dataset.k===k)return;b.dataset.k=k;b.title=nm+(st?' - '+st:'')+(rdy?' - click, then click the target':'');b.setAttribute('aria-label',nm);
   b.className=(G.aim==='sup'?'arm ':'')+(rdy?'rdy':'');const f=b.querySelector('.qf');f.style.background=c<1?'conic-gradient(rgba(0,0,0,.68) '+Math.round(360*(1-c))+'deg,transparent 0)':'none';b.querySelector('.qc').textContent=rdy?'READY':Math.round(c*100)+'%';}
 {const st=document.createElement('style');st.textContent=`#qpow .qstr{display:flex;flex-direction:column;gap:6px;margin-top:8px}#qpow.off .qstr{display:none}
