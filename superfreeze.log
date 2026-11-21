@@ -1,0 +1,51 @@
+  page: shader warm-up 7266 ms, 63 models, 122 objects in 788 steps (longest 202 ms), 102 programs, textures 145 MB
+  [IR +0s] battle loaded
+  [IR +17s] normal frame 19 ms; firing
+IR {"sup":"Heavy Rocket Barrage","working":true,"n":12,"crowd":36} launched=true frames=298 normal=19ms (quiet max 89) longest=111ms three(progs/geo/tex)=+0/+0/+16 gl={"sh":0,"prog":0,"tex":16,"texUp":16,"texKB":9,"buf":0,"bufKB":0,"vao":4,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 111ms@0.2s {"tex":1,"texUp":1,"texKB":0.6} ; 108ms@4.1s {} ; 108ms@3.0s {} ; 105ms@3.7s {"aud":1} ; 96ms@6.6s {}
+  frames that made the GPU work (17):
+    0.22s 111ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/566
+    0.82s 49ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/567
+    1.41s 33ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/568
+    3.72s 105ms {"aud":1} three geo/tex 697/568
+    3.90s 88ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/569
+    4.53s 50ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/570
+    5.15s 90ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/571
+    5.79s 59ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/572
+    6.37s 57ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/573
+    7.02s 45ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/574
+    7.62s 25ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/575
+    8.23s 66ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/576
+    8.80s 31ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/577
+    9.43s 25ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/578
+    10.00s 24ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/579
+    10.61s 57ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/580
+    11.18s 22ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 697/581
+IR worst JS call (not drawing): simUpdate 44ms; FAIL: 16 new textures (max 2)
+  page: shader warm-up 4110 ms, 66 models, 127 objects in 744 steps (longest 46 ms), 99 programs, textures 154 MB
+  [RU +0s] battle loaded
+  [RU +17s] normal frame 19 ms; firing
+RU {"sup":"Thermobaric Strike","working":true,"n":2,"crowd":36} launched=true frames=276 normal=19ms (quiet max 80) longest=125ms three(progs/geo/tex)=+0/+0/+5 gl={"sh":0,"prog":0,"tex":5,"texUp":5,"texKB":3,"buf":0,"bufKB":0,"vao":1,"fbo":0,"read":0,"img":0,"url":0,"aud":1,"cnv":0}
+  worst frames: 125ms@3.0s {"vao":1} ; 89ms@4.2s {} ; 86ms@5.0s {} ; 83ms@1.3s {} ; 83ms@3.1s {}
+  frames that made the GPU work (6):
+    0.02s 53ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 785/637
+    3.23s 69ms {"aud":1} three geo/tex 785/637
+    3.55s 51ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 785/638
+    4.13s 21ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 785/639
+    4.71s 48ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 785/640
+    5.31s 23ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 785/641
+RU worst JS call (not drawing): simUpdate 56ms; FAIL: 5 new textures (max 2)
+  page: shader warm-up 3508 ms, 60 models, 116 objects in 748 steps (longest 44 ms), 94 programs, textures 78 MB
+  [US +0s] battle loaded
+  [US +17s] normal frame 20 ms; firing
+US {"sup":"Tomahawk Cruise-Missile Salvo","working":true,"n":6,"crowd":36} launched=true frames=285 normal=20ms (quiet max 93) longest=98ms three(progs/geo/tex)=+0/+0/+6 gl={"sh":0,"prog":0,"tex":6,"texUp":6,"texKB":3,"buf":0,"bufKB":0,"vao":1,"fbo":0,"read":0,"img":0,"url":0,"aud":0,"cnv":0}
+  worst frames: 98ms@3.9s {} ; 88ms@4.5s {} ; 83ms@5.1s {} ; 82ms@3.0s {} ; 81ms@4.4s {}
+  frames that made the GPU work (6):
+    0.00s 23ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 647/534
+    0.60s 26ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 647/535
+    3.64s 78ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 647/536
+    4.26s 66ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 647/537
+    4.91s 40ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 647/538
+    5.51s 22ms {"tex":1,"texUp":1,"texKB":0.6} three geo/tex 647/539
+US worst JS call (not drawing): simUpdate 56ms; FAIL: 6 new textures (max 2)
+SUPERFREEZE FAIL
