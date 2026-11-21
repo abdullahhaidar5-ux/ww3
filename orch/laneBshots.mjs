@@ -19,12 +19,12 @@ const server = http.createServer((q, s) => { const p = decodeURIComponent(new UR
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const URL0 = `http://127.0.0.1:${server.address().port}/index.html`;
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const ctx = await browser.newContext({ viewport: { width: 1600, height: 900 } }); const page = await ctx.newPage();
+const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 } }); const page = await ctx.newPage();
 await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
 page.on('pageerror', e => console.log('page error:', e.message.slice(0, 200)));
 await page.goto(URL0, { waitUntil: 'load', timeout: 180000 });
 await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 180000 });
-await page.evaluate(() => { window.__stopLoop = true; try { AU.musicOn = false; AU.sfxOn = false; AU.voiceOn = false; applyAudio(); } catch (e) {} });
+await page.evaluate(() => { window.__stopLoop = true; try { G && (G.paused = true); } catch (e) {} try { AU.musicOn = false; AU.sfxOn = false; AU.voiceOn = false; applyAudio(); } catch (e) {} });
 const SCENES = [['desert', 'bm_breakwater', 'battle'], ['snow', null, 'range']];
 for (const [scene, map0, kind] of SCENES) {
   const info = await page.evaluate(async ([map0, kind]) => {
@@ -46,8 +46,10 @@ for (const [scene, map0, kind] of SCENES) {
     return { map: G.mapKey, theme: MAPS[G.mapKey].theme, fac, dist: cam.dist, placed, w: setup.w };
   }, [map0, kind]);
   console.log(TAG, scene, JSON.stringify(info));
-  await page.evaluate(() => { for (let i = 0; i < 40; i++) renderFrame(1 / 60); });
-  await page.screenshot({ path: path.join(OUT, `${TAG}-${scene}.jpg`), type: 'jpeg', quality: 85, timeout: 300000 });
+  // render, then read the canvas in the same task (page.screenshot timed out on the runner while the game loop ran)
+  for (let i = 0; i < 4; i++) await page.evaluate(() => { for (let k = 0; k < 10; k++) renderFrame(1 / 60); });
+  const url = await page.evaluate(() => { renderFrame(1 / 60); return R3.domElement.toDataURL('image/jpeg', .88); });
+  fs.writeFileSync(path.join(OUT, `${TAG}-${scene}.jpg`), Buffer.from(url.split(',')[1], 'base64'));
   console.log('wrote', `${TAG}-${scene}.jpg`);
 }
 await browser.close(); server.close();
