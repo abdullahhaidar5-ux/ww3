@@ -24,6 +24,8 @@ const ANNS={last:{},busy:0};
 function annLang(){const b=((G&&G.teams[ME]&&G.teams[ME].F&&G.teams[ME].F.lang)||'en').split('-')[0];return ANN_TXT[b]?b:'en';}
 // the one gate: returns true (and records it) when `key` may speak at time t (ms)
 function annGate(key,t,test,st){st=st||ANNS;const k=ANN_MIN[key]||ANN_MIN._,gap=k*1000*(test?ANN_TEST_K:1);if(t<st.busy)return false;if(t-(st.last[key]??-1e9)<gap)return false;st.last[key]=t;return true;}
+/* decode the announcer sheet at battle start (first call only fetches and returns false: nothing plays) so no decodeAudioData runs at the first announcement */
+function annWarm(){try{const L=annLang(),o=ANN_OFF[L];if(!o||(annClip.B&&annClip.B[L]))return;const k=Object.keys(o)[0];if(k)annClip(L,k);}catch(e){}}
 function annSay(key){try{if(!G||!AU.voiceOn||!(SET.ann>0))return;if(G.battle===false&&!G.sandbox&&!G.camp)return;const test=!!G.sandbox,L=annLang(),txt=ANN_TXT[L][key];if(!txt)return;if(test&&key==='baseAtk')return;
   const t=performance.now();if(!annGate(key,t,test))return;ANNS.busy=t+900+txt.length*70;
   if(annClip(L,key))return;if(!window.speechSynthesis)return;const lc=(G.teams[ME].F.lang||'en-US');const vs=AU.voices.length?AU.voices:speechSynthesis.getVoices();const vo=(typeof pickVoice==='function'&&L===lc.split('-')[0])?pickVoice(vs,lc):null;

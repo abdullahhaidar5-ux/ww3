@@ -14973,7 +14973,11 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
   g.paused=!!g.ldHold;last=performance.now();g.acc=0;qualReset();try{applyQual();}catch(e){}loadHide();
   if(!g.ldHold)pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
-  setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}try{vohLoad(g.teams[ME].fac);}catch(_){}},0);}
+  setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}try{vohLoad(g.teams[ME].fac);}catch(_){}
+    /* the radio-reply and shout sheets decode now, not at the first order/wave (decodeAudioData bursts on a worker stalled the first big wave in the Test range) */
+    try{voRLoad(g.teams[ME].fac);}catch(_){}try{if(typeof vosLoad==='function')vosLoad(g.teams[ME].fac);}catch(_){}
+    /* the engine loops (tank, truck, heli, jet) are fetched and decoded now at zero volume, not when the first tank or aircraft shows up */
+    let wt=0;const warm=()=>{if(G!==g||++wt>40)return;try{if(!sfxEnsure()||SFX.st!=='ok'){setTimeout(warm,500);return;}for(const k of ['tank','truck','heli','jet','rumble','wind'])envLoop(k,.01);if(typeof annWarm==='function')annWarm();}catch(_){}};setTimeout(warm,1500);},0);}
 function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({battle:1,w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length),pc:pcClean(skPc(facs.length),facs.length)});G.teams.forEach((T,i)=>{if(T.ai)T.ai=mkAI(Math.max(0,Math.min(3,setup.d|0))+10*persCode((setup.pers||[])[i]));});}finally{TERR_DEFER=false;}afterStart();}
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 /* Test range (Abdullah 2026-11-13 19:59 "Why can't I choose nations in test range"): the nations come from the Test range window (src/14-menu.js, screen t-range); the old auto-pick is gone. */
@@ -17259,6 +17263,20 @@ FXH.emp=(x,y,r)=>{PINGS.push({x,y,r,t:0,d:1,c:0x66ccff});setTimeout(()=>{try{PIN
 FXH.mmst=(vt,dur)=>{if(vt===ME)MWV.mm=performance.now()+dur*1000;};
 {const _s=FXH.strike;FXH.strike=function(x,y,t,r,sup,arc){_s.apply(this,arguments);if(sup)mwPipShow(x,y,'MISSILE STRIKE',Math.max(0,(+t||2)-1.2));};}
 {const _t=FXH.tping;FXH.tping=function(team,x,y,k){_t.apply(this,arguments);if(team===ME&&(k===1||k===2))mwPipShow(x,y,k===2?'TOWN CAPTURED':'TOWN LOST',0);};}
+// The EW jam ring is big (radius 280 m): zoomed in, its outline runs thousands of pixels beyond the screen, and the card spent 300 ms to
+// seconds drawing that off-screen length (Test range froze after an EW wave; with the stroke off 0 of 20 runs froze, with it 7 of 20).
+// So only the part inside the screen (plus a margin) is drawn: the fill is clipped to the screen rectangle, the dashes (plain short lines
+// instead of setLineDash) are only emitted where the outline crosses it. Same picture: dash d, gap g, pattern shifted by ph along the outline.
+function clipPolyRect(pts,x0,y0,x1,y1){let o=pts;const E=[[p=>p.x>=x0,(a,b)=>{const t=(x0-a.x)/(b.x-a.x);return{x:x0,y:a.y+(b.y-a.y)*t};}],[p=>p.x<=x1,(a,b)=>{const t=(x1-a.x)/(b.x-a.x);return{x:x1,y:a.y+(b.y-a.y)*t};}],
+  [p=>p.y>=y0,(a,b)=>{const t=(y0-a.y)/(b.y-a.y);return{x:a.x+(b.x-a.x)*t,y:y0};}],[p=>p.y<=y1,(a,b)=>{const t=(y1-a.y)/(b.y-a.y);return{x:a.x+(b.x-a.x)*t,y:y1};}]];
+  for(const [inside,cut] of E){const r=[];for(let i=0;i<o.length;i++){const a=o[i],b=o[(i+1)%o.length],ia=inside(a),ib=inside(b);if(ia)r.push(a);if(ia!==ib)r.push(cut(a,b));}o=r;if(!o.length)break;}return o;}
+function dashPoly(c,pts,d,g,ph,x0,y0,x1,y1){const P=d+g;let pos=((ph%P)+P)%P,n=pts.length;const adv=l=>{pos=(pos+l)%P;};
+  for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%n],dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy);if(!(L>.01))continue;
+    let ta=0,tb=1;if(x0!==undefined){for(const [pp,qq] of [[-dx,a.x-x0],[dx,x1-a.x],[-dy,a.y-y0],[dy,y1-a.y]]){if(pp===0){if(qq<0){ta=2;break;}}else{const r=qq/pp;if(pp<0){if(r>ta)ta=r;}else if(r<tb)tb=r;}}}
+    if(ta>=tb){adv(L);continue;}
+    const ux=dx/L,uy=dy/L,s0=ta*L,s1=tb*L;adv(s0);let t=s0;
+    while(t<s1){const inD=pos<d,run=Math.min(s1-t,(inD?d:P)-pos);if(inD){c.moveTo(a.x+ux*t,a.y+uy*t);c.lineTo(a.x+ux*(t+run),a.y+uy*(t+run));}t+=run;pos+=run;if(pos>=P-1e-9)pos=0;}
+    adv(L-s1);}}
 // HUD: hacked buildings glitch, our own GPS-jam bubbles
 {const _dh=drawHUD;drawHUD=function(){_dh();try{const c=hx,now=performance.now();c.setTransform(dpr,0,0,dpr,0,0);
   MWV.hk=MWV.hk.filter(h=>h.until>now);
@@ -17268,7 +17286,7 @@ FXH.mmst=(vt,dur)=>{if(vt===ME)MWV.mm=performance.now()+dur*1000;};
     c.font='bold 11px monospace';c.textAlign='center';c.fillText(Math.random()<.2?'0xDEAD':'OFFLINE',p.x,p.y-s-4);c.restore();}
   const T=G&&G.teams[ME];if(T)for(const e of G.ents){if(e.dead||!e.s||!e.s.jam||e.team!==ME)continue;const pts=[];let ok=true;
     for(let i=0;i<=40;i++){const a=i/40*6.2832,q=toScreen(e.x+Math.cos(a)*e.s.jam,2,e.y+Math.sin(a)*e.s.jam);if(q.z>1){ok=false;break;}pts.push(q);}
-    if(!ok)continue;c.save();c.strokeStyle='rgba(120,220,255,.55)';c.fillStyle='rgba(120,220,255,.05)';c.lineWidth=1.5;c.setLineDash([8,6]);c.lineDashOffset=-now/60;c.beginPath();pts.forEach((q,i)=>i?c.lineTo(q.x,q.y):c.moveTo(q.x,q.y));c.closePath();c.fill();c.stroke();c.restore();}
+    if(!ok)continue;c.save();c.strokeStyle='rgba(120,220,255,.55)';c.fillStyle='rgba(120,220,255,.05)';c.lineWidth=1.5;const cp=clipPolyRect(pts,-20,-20,VW+20,VH+20);if(cp.length>2){c.beginPath();cp.forEach((q,i)=>i?c.lineTo(q.x,q.y):c.moveTo(q.x,q.y));c.closePath();c.fill();}c.beginPath();dashPoly(c,pts,8,6,-now/60,-20,-20,VW+20,VH+20);c.stroke();c.restore();}
   }catch(e){}};}
 // minimap static while our radio tower / Strike Center is hacked
 {const _dm=drawMini;drawMini=function(){_dm();const now=performance.now();if(MWV.mm>now){try{mx.save();mx.setTransform(1,0,0,1,0,0);const W=mm.width,H=mm.height;for(let i=0;i<220;i++){const g=(Math.random()*200)|0;mx.fillStyle='rgba('+g+','+g+','+g+',.55)';mx.fillRect(Math.random()*W,Math.random()*H,2+Math.random()*10,1+Math.random()*2);}
@@ -19381,6 +19399,8 @@ const ANNS={last:{},busy:0};
 function annLang(){const b=((G&&G.teams[ME]&&G.teams[ME].F&&G.teams[ME].F.lang)||'en').split('-')[0];return ANN_TXT[b]?b:'en';}
 // the one gate: returns true (and records it) when `key` may speak at time t (ms)
 function annGate(key,t,test,st){st=st||ANNS;const k=ANN_MIN[key]||ANN_MIN._,gap=k*1000*(test?ANN_TEST_K:1);if(t<st.busy)return false;if(t-(st.last[key]??-1e9)<gap)return false;st.last[key]=t;return true;}
+/* decode the announcer sheet at battle start (first call only fetches and returns false: nothing plays) so no decodeAudioData runs at the first announcement */
+function annWarm(){try{const L=annLang(),o=ANN_OFF[L];if(!o||(annClip.B&&annClip.B[L]))return;const k=Object.keys(o)[0];if(k)annClip(L,k);}catch(e){}}
 function annSay(key){try{if(!G||!AU.voiceOn||!(SET.ann>0))return;if(G.battle===false&&!G.sandbox&&!G.camp)return;const test=!!G.sandbox,L=annLang(),txt=ANN_TXT[L][key];if(!txt)return;if(test&&key==='baseAtk')return;
   const t=performance.now();if(!annGate(key,t,test))return;ANNS.busy=t+900+txt.length*70;
   if(annClip(L,key))return;if(!window.speechSynthesis)return;const lc=(G.teams[ME].F.lang||'en-US');const vs=AU.voices.length?AU.voices:speechSynthesis.getVoices();const vo=(typeof pickVoice==='function'&&L===lc.split('-')[0])?pickVoice(vs,lc):null;
