@@ -11856,8 +11856,10 @@ async function warmShadersChunked(onProg,stop,late){if(!R3||!SCN||!CAM||!G||G.he
     /* Test range: the player spawns every unit kind of the nation within seconds, so each kind's own 3D figure (nation kit, team paint, its shaders
        and shapes) is built here, a few kinds per step, instead of in the frame its first unit appears (rangefreeze 2026-11-17: first jets, clerics,
        spies, airlifters and drones stalled 150-900 ms). Battles keep the lighter list above (the AI trains a handful of kinds). */
-    if(G.sandbox&&typeof allUnits==='function')for(const q of G.teams){if(dead()||isLate()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;
-      const kinds=(q.id===ME?allUnits(q.fac):['tank','aa','arty','heli','boat']).filter((k,i,a)=>a.indexOf(k)===i&&k!=='inf'&&k!=='at'&&BASE[k]);
+    /* Battles too (Abdullah 2026-11-21 "It's still struggling", timed on his laptop): the first tank, drone, helicopter... of a battle each
+       stalled the game when it first appeared (0.2-1.6 s). Every kind every side can build is prepared here now, under the loading screen. */
+    if(typeof allUnits==='function')for(const q of G.teams){if(dead()||isLate()||!q||!q.fac||!FACTIONS[q.fac]||q.dead)continue;
+      const kinds=(q.id===ME||!G.sandbox?allUnits(q.fac):['tank','aa','arty','heli','boat']).filter((k,i,a)=>a.indexOf(k)===i&&k!=='inf'&&k!=='at'&&BASE[k]);
       for(let i=0;i<kinds.length&&!dead()&&!isLate();i+=3){const grp=mk();
         for(const kd of kinds.slice(i,i+3)){let st=null;try{st=stats(q.fac,kd);}catch(e){}if(!st)continue;try{const o=makeObj({id:900100+i,kind:kd,team:q.id,isB:false,s:st,x:bx,y:by,hp:1,max:1});if(o){THREE.Object3D.prototype.remove.call(SCN,o);o.position.set(0,0,0);grp.add(o);}}catch(e){}}
         {const nbs=new Set();grp.traverse(c=>{c.frustumCulled=false;if(c.isSkinnedMesh&&c.skeleton)nbs.add(c.skeleton.bones.length);});if(typeof bonePoolWarm==='function')for(const nb of nbs)bonePoolWarm(nb,PH?12:48);}   /* heroes and other own rigs: their bone textures ready too */
@@ -14977,7 +14979,10 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
     ['Deploying forces…',.9,()=>{buildPanels();}],
     // the first battle frame creates every unit, building and the fog of war on the GPU, by far the slowest frame
     // of the battle: draw it here, under the loading screen, so the battle appears already running
-    ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
+    ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}],
+    // ...and every material that frame put in the scene (the HQ's roof/facade kit, props) gets its shader program built here, side by side,
+    // before the battle shows: on Abdullah's laptop the HQ kit was still being built in the battle's first frame (a 0.3 s freeze, 2026-11-21)
+    ['Deploying forces…',.99,()=>{if(!R3||!R3.compileAsync||!SCN||!CAM)return;let rt0=null,p=null;try{rt0=R3.getRenderTarget();R3.setRenderTarget(typeof POST!=='undefined'&&POST.on&&POST.rt?POST.rt:null);p=R3.compileAsync(SCN,CAM);}catch(e){console.warn('scene compile',e);}finally{try{R3.setRenderTarget(rt0);}catch(e){}}return p&&p.catch(()=>{});}]];
   const T0=performance.now(),TL=LOAD.times=[];
   // every step has a watchdog: a step still not done after LOAD_WD ms (a download or a phone's shader compile that never
   // finishes) is logged and the loading moves on, so the loading screen can never hang for ever

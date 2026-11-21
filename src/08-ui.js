@@ -1263,7 +1263,10 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
     ['Deploying forces…',.9,()=>{buildPanels();}],
     // the first battle frame creates every unit, building and the fog of war on the GPU, by far the slowest frame
     // of the battle: draw it here, under the loading screen, so the battle appears already running
-    ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
+    ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}],
+    // ...and every material that frame put in the scene (the HQ's roof/facade kit, props) gets its shader program built here, side by side,
+    // before the battle shows: on Abdullah's laptop the HQ kit was still being built in the battle's first frame (a 0.3 s freeze, 2026-11-21)
+    ['Deploying forces…',.99,()=>{if(!R3||!R3.compileAsync||!SCN||!CAM)return;let rt0=null,p=null;try{rt0=R3.getRenderTarget();R3.setRenderTarget(typeof POST!=='undefined'&&POST.on&&POST.rt?POST.rt:null);p=R3.compileAsync(SCN,CAM);}catch(e){console.warn('scene compile',e);}finally{try{R3.setRenderTarget(rt0);}catch(e){}}return p&&p.catch(()=>{});}]];
   const T0=performance.now(),TL=LOAD.times=[];
   // every step has a watchdog: a step still not done after LOAD_WD ms (a download or a phone's shader compile that never
   // finishes) is logged and the loading moves on, so the loading screen can never hang for ever
