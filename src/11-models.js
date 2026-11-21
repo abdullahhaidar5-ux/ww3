@@ -1411,7 +1411,8 @@ function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new T
   else if(e.kind==='tunnel'){propObj('sandbag',-h-2,-6,Math.PI/2+.1,P);propObj('sandbag',-h-2,8,Math.PI/2-.08,P);propObj('sandbag',h+2,0,Math.PI/2,P);propObj('barrel',h+5,h-4,0,P);propObj('crate',-h-4,h+4,.5,P);}
   else if(e.kind==='depot'){propObj('containerG',-h-12,8,Math.PI/2,P);propObj('pallet',h+5,h-8,0,P);propObj('crate',h+7,-h+10,.4,P);propObj('barrel',-h+6,h+6,0,P);}
   else if(e.kind==='uplink'){propObj('barrel',h+8,h,0,P);propObj('fence',0,h+14,0,P);}
-  try{mergeKit(P);}catch(err){console.warn('mergeKit',err);}}
+  try{mergeKit(P);}catch(err){console.warn('mergeKit',err);}
+  try{if(typeof bfamKit==='function')bfamKit(e,o,G.teams[e.team]);}catch(err){console.warn('bfamKit',err);}}
 const BMOD={hq:{slab:1,list:[{m:'b_hq',fit:'xz',size:70,ys:.62,x:6,z:4},{m:'b_radar',fit:'y',size:30,x:-30,z:-30,part:'dish',col:'#8a908c',k:.82}]},
   barracks:{slab:1,list:[{m:'b_barr',fit:'xz',size:46,ys:.52,x:-4,z:-4}]},
   factory:{slab:1,list:[{m:'b_fact',fit:'xz',size:72,x:0,z:-2}]},
