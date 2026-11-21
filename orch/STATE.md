@@ -1,10 +1,14 @@
-# STATE — conductor run 2026-11-21 ~13:00 UTC
+# STATE — conductor run 2026-11-21 ~14:00 UTC
 
-HOLD still in force: `train/20261121-0012-hold` (ORCH 2 freeze; Abdullah 2026-11-20 18:09 approved plan: nothing lands on main except ORCH's reviewed pieces; conductor does step 1 only). No train, no gate, no landing this run.
+**Result: HOLD. No train built, nothing landed.**
 
-- origin/main head: 261e9af (2026-11-21 01:26 UTC, "Loading waits up to 60 s for graphics prep"). Main was rolled back to the Nov 19 night code on 11-20/21.
-- Battle candidate branches (all last pushed 2026-11-13/14, none newer): 0 commits ahead of main (already in main or empty): freezefix, sweepfixA, sweepfixB, orderfeel, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, groundreal, leaderlook, usvoice, looktest, onegame, nations20.
-- 1+ ahead but ~710-720 commits behind main (stale, not landable without a rebase by their owner): ghostslot (1), testrange (1), techbldgs (1), ammozone (7).
-- Never-land branches (camphud, nofightit, warpeace, mapshapes, eu4audit, civhumans): parked (removed from the game).
-- No fresh `orch/*` work found; HANDOFF/gate-status and taken-lock ages not collected (nothing to land; git fetch of the 4.9 GB repo times out here, REST lists give no dates).
-- Remote hygiene: ~1200 branches, mostly `gate/*` (~800) and `gate-logs/*`; they make fetch/listing very slow. Suggest ORCH prunes old ones.
+- A `train/20261121-0012-hold` branch exists (commit a870b16a6, 2026-11-20 18:09 CST): "ORCH 2 freeze - Abdullah approved plan: nothing lands on main except ORCH's reviewed pieces. Conductor: do step 1 only."
+- origin/main = 261e9af92 (2026-11-20 19:26 CST, "Loading waits up to 60 s ..."), after several rollbacks (to Nov 17 / Nov 19 night). Last 5 commits are ORCH's own.
+- Every candidate in the standing prompt (freezefix, sweepfixA/B, orderfeel, ghostslot, testrange, battleclean2, pileflag, unstuck, dugout, battlepower, bldqueue, techbldgs, groundreal, leaderlook, usvoice, ammozone, looktest, onegame, nations20) was last pushed 2026-11-13/14 — 7 days old, 8-40 commits on a base that main has since rolled back. Merging them now would undo the rollbacks. battlemaps2 does not exist.
+- Live work is the new lane branches (orch/laneA-1, laneB-*, laneC-*, laneD-*, laneE; newest push 11-21 05:42 UTC). Not conductor candidates (no HANDOFF, under ORCH 2's review).
+
+## Stale locks (taken/<name>, no orch/<name> branch, >90 min)
+rv-voice, drawcalls, redgates, savesync (6 days), freezefix2, spylook2 (9 days), finish-tokens, c-real-supply, realwar, seamless-hud, army-standards (10 days).
+
+## Housekeeping
+Repo has ~23,400 remote branches (20,963 gate-logs/*, 800 gate/*); a plain `git fetch` takes >5 min. Worth pruning (by the owner).
