@@ -31,3 +31,5 @@ Smoothness: texture-only, so frame time/draw calls should be unchanged; numbers 
 
 ## Status / numbers
 (filled in below when the runner jobs finish)
+- 02:55 UTC: GitHub runners are saturated (~30 runs queued across lanes). Gate for f942ff3775 started (2/28 done, both
+  green so far); the Lane A shots run (pictures) is still queued. Nothing is offered to ORCH until both are in.
