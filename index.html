@@ -21474,7 +21474,7 @@ function bfamGeo(fam,kind,size,fac){const K=fam+kind+size+(kind==='hq'?fac:'');i
   // dust drifts at the wall feet
   for(let i=0;i<8;i++){const x=-h+R()*h*2,z=zf+(R()<.5?-1.6:1.8);B.rock(4+R()*6,.9,2.2,x,.15,z,P.u,0,R()*3,0,i);}
   return BFGEO[K]=B.geo();}
-function bfamKit(e,o,T){if(!T||!['hq','barracks','factory','depot'].includes(e.kind))return;const fam=BFAM[T.fac];if(!fam||!BFON[fam])return;
+function bfamKit(e,o,T){if(!T||!['hq','barracks','factory','depot'].includes(e.kind))return;const fam=BFAM[T.fac];if(!fam||!BFON[fam])return;if(fam==='G'&&typeof MEFAC!=='undefined'&&MEFAC.has(T.fac))return;/* SA, AE, EG already have the walled Middle Eastern compound: a second wall ring inside it only cluttered the base (lane C pictures) */
   const m=mesh(bfamGeo(fam,e.kind,e.size|0,T.fac));m.userData.bfam=1;m.castShadow=false;o.add(m);if(typeof gcKeep==='function'&&!m.geometry.userData.kept){m.geometry.userData.kept=1;gcKeep(m.geometry);}}
 /* ===== nations-a2 (Abdullah 2026-11-06): Brazil BR, Venezuela VE, Mexico MX, Argentina AR, Colombia CO, Chile CL, Sweden SE =====
    Looks/names for the seven NEWNAT rows in 01-data.js. One module on purpose: other nation lanes work in parallel, so these
