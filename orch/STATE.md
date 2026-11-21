@@ -1,4 +1,10 @@
-# Conductor state — 2026-11-21 ~07:00 UTC
+# Conductor state — 2026-11-21 ~07:55 UTC
+
+Rerun 07:55Z: FREEZE still on (train/20261121-0012-hold is still the newest train branch). main still 261e9af9 (2026-11-21 01:26Z). No train, no landing, step 1 only.
+No candidate branch pushed since Nov 14; only lane branches (laneA/B/C/D, newest 05:42Z) and conductor are active. Gate statuses not checked (freeze).
+
+--- previous run ---
+
 
 Rerun 07:00Z: FREEZE still on (train/20261121-0012-hold, ORCH 00:09Z, newest train branch, nothing newer). main still 261e9af9 (2026-11-21 01:26Z). No train, no landing, step 1 only.
 Candidate ahead-counts vs main this run (differ from the earlier run because main was rolled back): ghostslot +26, testrange +30, techbldgs +35, onegame +40, nations20 +29, unstuck +8; freezefix/ammozone thousands (old base). None re-pushed since Nov 14, none is a candidate under the freeze.
