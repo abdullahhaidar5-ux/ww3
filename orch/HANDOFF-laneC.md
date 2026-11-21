@@ -62,4 +62,19 @@ vs ~1300-1900 calls / 60-110 ms for all-West, all-East or all-Regional battles i
 (0119b01) times the infantry-heavy Shia columns. Abdullah's group plays Shia most - this is probably the biggest lag lead.
 
 ### Gates (orch/cigate.sh per v2 branch)
-(see bottom - filled in when the runs finish; the runner queue was ~25 gate runs deep tonight)
+**Main 261e9af is itself RED** (gate/main: decisions, loadfreeze, smooth-mp, superfreeze). decisions fails on main because its guard
+still expects "instanced soldiers: ON" after 0119b01 switched soldiers back to one-by-one. So no branch can be all-green until main is.
+Every failure on my branches is one that is also red on main; none is new:
+- shia-v2 `47d1fa6b35`: 27/28 green (smooth-mp, superfreeze, loadfreeze PASS); decisions still pending when I stopped (expected: same main failure).
+- west-v2 `bbf6326cbe`: 27/28 green; only decisions (= main).
+- east-v2 `e9ce98df8e`: 26/28; decisions (= main) + smooth-mp (order latency / missing snapshots, the same network-timing failure main shows).
+- regional-v2 `fda6a58a14`: 25/28; decisions + smooth-mp + superfreeze (Test-range stalls; all red on main too).
+smooth-pc PASSES on all four. Re-run cigate after main is green again before landing.
+
+### Branches to ignore / clean up
+`orch/laneC-shia|west|east|regional` (no -v2) are VOID (stale base, see top). I could not force-update them (blocked), so they stay;
+ORCH may delete them. `orch/laneC-measure`, `orch/laneC-bench`, `orch/laneC-census` hold only the proof workflows (+ `orch/laneCshots.mjs`).
+
+### Ask Abdullah (2 minutes on PC, after ORCH lands one)
+Start a Battle as US (or Turkey) on Breakwater, Clear day, build barracks + War Factory + depot, and look at the base from the normal
+camera: does the new blast-wall/sand-wall ring look right, and does the game feel exactly as smooth as before?
