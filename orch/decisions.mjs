@@ -819,6 +819,9 @@ for (const e of errs) fails.push(e);
   ck(/smugOn\(id\)/.test(SRC['03-sim.js'] || '') && /buyPower\(id,k\)/.test(SRC['03-sim.js'] || '') && /usePower\(id,'mil'/.test(SRC['03-sim.js'] || ''), 'economy: the AI buys and uses both powers');
   ck(/'smugs'/.test(SRC['07b-ckpt.js'] || ''), 'economy: smuggling routes are in the checkpoint');
 }
+  // Test-range stalls (superfreeze): audio sheets and engine loops are decoded at battle start, not at the first wave/order
+  ck(/voRLoad\(g\.teams\[ME\]\.fac\)/.test(SRC['08-ui.js'] || '') && /vosLoad\(g\.teams\[ME\]\.fac\)/.test(SRC['08-ui.js'] || '') && /envLoop\(k,\.01\)/.test(SRC['08-ui.js'] || '') && /if\(g<\.01\|\|SFX\.loops/.test(SRC['09-audio.js'] || '') && /annWarm\(\)/.test(SRC['08-ui.js'] || ''), 'audio (the warm-up volume must be at least the .01 load threshold of envLoop, or nothing loads): radio, shout, announcer sheets and engine loops are decoded at battle start (no decodeAudioData burst in the first wave)');
+  ck(/function dashPoly\(/.test(SRC['08h-modern.js'] || '') && /clipPolyRect\(pts,-20,-20,VW\+20,VH\+20\)/.test(SRC['08h-modern.js'] || '') && !/setLineDash\(\[8,6\]\);c\.lineDashOffset/.test(SRC['08h-modern.js'] || ''), 'view: the EW jam ring is drawn only where it is on screen (clipped fill, plain short dashes), never its whole off-screen length (the card drawing it stalled Test range frames 300 ms to seconds)');
 await browser.close(); server.close();
 }
 for (const f of fails) console.log('FAIL: ' + f);
