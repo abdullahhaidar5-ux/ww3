@@ -1,0 +1,112 @@
+# Godot edition (godot/, Godot 4.4.1): headless tests, then Web + Windows + Linux exports.
+# Runs on every push to orch/godot-port and any orch/gport-* helper branch. Never touches main.
+# For orch/godot-port only: the web export (+ WorldWar3-windows.zip) is pushed to branch `godot-web-out`
+# (files at its root, same layout as main's godot-web/ folder); ORCH copies it into main when it lands a port step.
+# Posts the commit status "godot/build".
+name: Godot build
+on:
+  push:
+    branches: ['orch/godot-port', 'orch/gport-*']
+    paths: ['godot/**', 'server-godot/**', '.github/workflows/godot-build.yml']
+  workflow_dispatch: {}
+permissions:
+  contents: write
+  statuses: write
+concurrency: { group: 'godot-build-${{ github.ref }}', cancel-in-progress: true }
+env:
+  GODOT_VERSION: 4.4.1-stable
+  GODOT_TPL: 4.4.1.stable
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Godot + export templates (cached)
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot-kit
+          key: godot-kit-${{ env.GODOT_VERSION }}-v1
+      - name: Download Godot + export templates
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          mkdir -p ~/godot-kit/tpl && cd ~/godot-kit
+          base=https://github.com/godotengine/godot/releases/download/$GODOT_VERSION
+          curl -fsSL --retry 4 -o g.zip $base/Godot_v${GODOT_VERSION}_linux.x86_64.zip
+          unzip -q g.zip && mv Godot_v${GODOT_VERSION}_linux.x86_64 godot && rm g.zip
+          curl -fsSL --retry 4 -o t.tpz $base/Godot_v${GODOT_VERSION}_export_templates.tpz
+          unzip -q -j t.tpz templates/version.txt templates/web_nothreads_release.zip templates/web_nothreads_debug.zip \
+            templates/windows_release_x86_64.exe templates/windows_debug_x86_64.exe \
+            templates/linux_release.x86_64 templates/linux_debug.x86_64 -d tpl
+          rm t.tpz
+      - name: Install
+        run: |
+          set -e
+          mkdir -p ~/.local/share/godot/export_templates
+          ln -sfn ~/godot-kit/tpl ~/.local/share/godot/export_templates/$GODOT_TPL
+          chmod +x ~/godot-kit/godot
+          echo "GODOT=$HOME/godot-kit/godot" >> $GITHUB_ENV
+          ~/godot-kit/godot --version
+      - name: Import project
+        run: $GODOT --headless --path godot --import 2>&1 | tail -5
+      - name: Tests (headless)
+        id: tests
+        run: bash server-godot/test/ci-tests.sh
+      - name: Export Web + Windows + Linux
+        id: export
+        run: |
+          set -e
+          mkdir -p godot-build/web godot-build/win godot-build/linux
+          for p in Web Windows Linux; do
+            $GODOT --headless --path godot --export-release $p > export-$p.log 2>&1 || { tail -30 export-$p.log; exit 1; }
+            grep -iE "^ERROR|export.*fail" export-$p.log && { echo "export $p reported errors"; exit 1; } || true
+          done
+          test -s godot-build/web/index.wasm && test -s godot-build/web/index.pck && test -s godot-build/win/WorldWar3.exe && test -s godot-build/linux/WorldWar3.x86_64
+          (cd godot-build/win && zip -q -9 ../web/WorldWar3-windows.zip WorldWar3.exe)
+          ls -l godot-build/web
+          # GitHub Pages / git: no file over 95 MB; keep the .pck small (the wasm is ~42 MB on its own)
+          big=$(find godot-build/web -type f -size +95M | head -1); [ -z "$big" ] || { echo "too big: $big"; exit 1; }
+          pck=$(stat -c %s godot-build/web/index.pck); echo "pck_mb=$((pck / 1048576))" >> $GITHUB_OUTPUT
+          [ $pck -lt 62914560 ] || { echo "index.pck is over 60 MB ($pck bytes)"; exit 1; }
+      - name: Online check (two builds, one battle, local relay)
+        id: online
+        run: bash server-godot/test/ci-online.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: godot-build-${{ github.sha }}
+          path: |
+            godot-build/web
+            godot-build/linux
+            godot-build/*.log
+            godot-build/*.json
+          retention-days: 5
+      - name: Push web export to godot-web-out
+        if: github.ref == 'refs/heads/orch/godot-port'
+        run: |
+          set -e
+          cd godot-build/web
+          printf 'Godot web export of %s (%s), built by .github/workflows/godot-build.yml run %s.\nORCH copies these files into main:godot-web/.\n' \
+            "$GITHUB_SHA" "$GITHUB_REF_NAME" "$GITHUB_RUN_ID" > BUILD.txt
+          touch .nojekyll
+          git init -q -b godot-web-out
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Godot web export of ${GITHUB_SHA::10} (orch/godot-port)"
+          # one commit only: 100 MB of binaries per build would bloat the repository if history were kept
+          for i in 1 2 3 4; do
+            git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" godot-web-out && break
+            sleep $((i * 5))
+          done
+      - name: Status godot/build
+        if: always()
+        run: |
+          state=failure; [ "${{ job.status }}" = "success" ] && state=success
+          desc="tests ${{ steps.tests.outcome }}, export ${{ steps.export.outcome }} (pck ${{ steps.export.outputs.pck_mb }} MB), online ${{ steps.online.outcome }}"
+          curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -d "{\"state\":\"$state\",\"context\":\"godot/build\",\"description\":\"$desc\",\"target_url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"

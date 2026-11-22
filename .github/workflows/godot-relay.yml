@@ -1,0 +1,131 @@
+# Godot edition: the lockstep relay (server-godot/, Cloudflare Worker + Durable Objects). A SEPARATE Worker from the
+# website (ww3) and the browser game's servers (ww3-servers): this workflow never touches those two.
+#  - push to orch/godot-port or orch/gport-* that changes server-godot/ or godot/net/: deploys the STAGING copy
+#    (ww3-godot-relay-staging), then plays two real Battles through it between the Web export (headless Chromium) and
+#    the Linux export: 2 players, then 4 players, 10 game-minutes each, whole-state hash compared every game-second.
+#    Status "godot/relay-staging".
+#  - push to branch godot-relay-live: deploys the real one (ww3-godot-relay) and checks /health. Status "godot/relay".
+#    Move that branch only to a commit whose godot/relay-staging is green:  git push origin <sha>:refs/heads/godot-relay-live
+# Needs the repository secret CLOUDFLARE_API_TOKEN (the same one deploy-servers.yml uses).
+name: Godot relay
+on:
+  push:
+    branches: ['orch/godot-port', 'orch/gport-*', 'godot-relay-live']
+    paths: ['server-godot/**', 'godot/net/**', 'godot/sim/**', 'godot/scripts/battle/battle_net.gd', '.github/workflows/godot-relay.yml']
+permissions:
+  contents: read
+  statuses: write
+concurrency: { group: 'godot-relay-${{ github.ref }}', cancel-in-progress: false }
+env:
+  CLOUDFLARE_ACCOUNT_ID: 125601b8775d8b94cf1167c2c6ddaef5
+  GODOT_VERSION: 4.4.1-stable
+  GODOT_TPL: 4.4.1.stable
+  SUB: abdullah-haidar5.workers.dev
+jobs:
+  live:
+    if: github.ref == 'refs/heads/godot-relay-live'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Deploy ww3-godot-relay
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set +e
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "Missing repository secret CLOUDFLARE_API_TOKEN" > out.log; rc=1
+          else (cd server-godot && npm ci --no-audit --no-fund && npx wrangler deploy --name ww3-godot-relay) > out.log 2>&1; rc=$?; fi
+          tail -30 out.log
+          if [ $rc -eq 0 ]; then
+            for i in 1 2 3 4 5 6; do h=$(curl -s -m 10 https://ww3-godot-relay.$SUB/health); echo "health: $h"; echo "$h" | grep -q '"ok":true' && break; sleep 10; done
+            echo "$h" | grep -q '"ok":true' || { rc=1; echo "ERROR health check failed" >> out.log; }
+          fi
+          state=failure; [ $rc -eq 0 ] && state=success
+          desc=$(grep -E "Deployed|Uploaded|Missing repository secret|ERROR|Error" out.log | tail -1 | cut -c1-130 | sed 's/"/'"'"'/g')
+          curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -d "{\"state\":\"$state\",\"context\":\"godot/relay\",\"description\":\"${desc:-exit $rc}\",\"target_url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+          [ $rc -eq 0 ]
+  staging:
+    if: github.ref != 'refs/heads/godot-relay-live'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Deploy ww3-godot-relay-staging
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set +e
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "Missing repository secret CLOUDFLARE_API_TOKEN"; exit 1; fi
+          (cd server-godot && npm ci --no-audit --no-fund && npx wrangler deploy --name ww3-godot-relay-staging) > out.log 2>&1; rc=$?
+          tail -30 out.log
+          [ $rc -eq 0 ] || exit 1
+          for i in 1 2 3 4 5 6 7 8 9; do h=$(curl -s -m 10 https://ww3-godot-relay-staging.$SUB/health); echo "health: $h"; echo "$h" | grep -q '"ok":true' && exit 0; sleep 10; done
+          exit 1
+      - name: Godot + export templates (cached)
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ~/godot-kit
+          key: godot-kit-${{ env.GODOT_VERSION }}-v1
+      - name: Download Godot + export templates
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          mkdir -p ~/godot-kit/tpl && cd ~/godot-kit
+          base=https://github.com/godotengine/godot/releases/download/$GODOT_VERSION
+          curl -fsSL --retry 4 -o g.zip $base/Godot_v${GODOT_VERSION}_linux.x86_64.zip
+          unzip -q g.zip && mv Godot_v${GODOT_VERSION}_linux.x86_64 godot && rm g.zip
+          curl -fsSL --retry 4 -o t.tpz $base/Godot_v${GODOT_VERSION}_export_templates.tpz
+          unzip -q -j t.tpz templates/version.txt templates/web_nothreads_release.zip templates/web_nothreads_debug.zip \
+            templates/windows_release_x86_64.exe templates/windows_debug_x86_64.exe \
+            templates/linux_release.x86_64 templates/linux_debug.x86_64 -d tpl
+          rm t.tpz
+      - name: Export Web + Linux
+        run: |
+          set -e
+          mkdir -p ~/.local/share/godot/export_templates godot-build/web godot-build/linux
+          ln -sfn ~/godot-kit/tpl ~/.local/share/godot/export_templates/$GODOT_TPL
+          chmod +x ~/godot-kit/godot
+          ~/godot-kit/godot --headless --path godot --import > /dev/null 2>&1
+          for p in Web Linux; do ~/godot-kit/godot --headless --path godot --export-release $p > export-$p.log 2>&1 || { tail -30 export-$p.log; exit 1; }; done
+          test -s godot-build/web/index.wasm && test -s godot-build/linux/WorldWar3.x86_64
+          cd server-godot && npm install --no-save --no-audit --no-fund playwright > /dev/null 2>&1 && npx playwright install --with-deps chromium > /dev/null 2>&1
+      - name: 2-player Battle through the staging relay (Web + Linux, 10 game-minutes)
+        id: two
+        run: |
+          cd server-godot
+          node test/battle_soak.mjs --relay https://ww3-godot-relay-staging.$SUB --web 1 --native 1 --native-bin ../godot-build/linux/WorldWar3.x86_64 \
+            --minutes ${SOAK_MINUTES:-10} --digest --report ../godot-build/staging-2p.json 2>&1 | grep -vE '^\{' | tail -25
+          grep -q '"ok": true' ../godot-build/staging-2p.json
+      - name: 4-player Battle through the staging relay (2 Web + 2 Linux, 10 game-minutes)
+        id: four
+        if: always() && steps.deploy.outcome == 'success'
+        run: |
+          cd server-godot
+          node test/battle_soak.mjs --relay https://ww3-godot-relay-staging.$SUB --web 2 --native 2 --native-bin ../godot-build/linux/WorldWar3.x86_64 \
+            --map bm_fourmills --minutes ${SOAK_MINUTES:-10} --digest --report ../godot-build/staging-4p.json 2>&1 | grep -vE '^\{' | tail -25
+          grep -q '"ok": true' ../godot-build/staging-4p.json
+      - name: Results
+        if: always()
+        run: cat godot-build/staging-2p.json godot-build/staging-4p.json 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: godot-relay-soak-${{ github.sha }}
+          path: godot-build/*.json
+          retention-days: 14
+      - name: Status godot/relay-staging
+        if: always()
+        run: |
+          state=failure; [ "${{ job.status }}" = "success" ] && state=success
+          desc="deploy ${{ steps.deploy.outcome }}, 2-player web+desktop ${{ steps.two.outcome }}, 4-player ${{ steps.four.outcome }} (10 game-min each, hashes every second)"
+          curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -d "{\"state\":\"$state\",\"context\":\"godot/relay-staging\",\"description\":\"$desc\",\"target_url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"

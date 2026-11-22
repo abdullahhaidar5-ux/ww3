@@ -6,6 +6,7 @@
 ## attack/defence. Not ported yet: generals' powers, leaders, signature units, navy, air strikes, Hard-only probing/pincer/
 ## odds reading/regroup, ambush/raid personalities, expansion HQs, walls, dams, medics logic.
 extends RefCounted
+const DM = preload("res://net/det_math.gd")
 
 const E = preload("res://sim/sim_ent.gd")
 var S   # the Sim
@@ -257,7 +258,7 @@ func think(T: Dictionary) -> void:
 		for b: E in pb:
 			if b.kind == "hq": tg = b; break
 		if tg == null: tg = pb[0]
-		var ang := atan2(tg.y - anchor.y, tg.x - anchor.x); var Dd: float = S.hyp(tg.x - anchor.x, tg.y - anchor.y)
+		var ang := DM.datan2(tg.y - anchor.y, tg.x - anchor.x); var Dd: float = S.hyp(tg.x - anchor.x, tg.y - anchor.y)
 		var FL := int(D.flank)
 		var fl: Array = []
 		if FL and home.size() >= 6 and Dd > (700.0 if FL > 1 else 900.0):
@@ -268,8 +269,8 @@ func think(T: Dictionary) -> void:
 		var side := 1.0 if S.rng.next() < 0.5 else -1.0
 		for i in fl.size():
 			var u: E = fl[i]
-			var fx: float = anchor.x + cos(ang) * Dd * 0.62 + cos(ang + side * 1.57) * minf(650.0, Dd * 0.35)
-			var fy: float = anchor.y + sin(ang) * Dd * 0.62 + sin(ang + side * 1.57) * minf(650.0, Dd * 0.35)
+			var fx: float = anchor.x + DM.dcos(ang) * Dd * 0.62 + DM.dcos(ang + side * 1.57) * minf(650.0, Dd * 0.35)
+			var fy: float = anchor.y + DM.dsin(ang) * Dd * 0.62 + DM.dsin(ang + side * 1.57) * minf(650.0, Dd * 0.35)
 			S.set_move(u, fx + S.rnd(-50, 50), fy + S.rnd(-50, 50), "amove"); u.flank = S.t; u.fl_t = tg if FL > 1 else null
 		var gnd: Array = []
 		for u: E in home:
@@ -353,7 +354,7 @@ func find_spot(id: int, kind: String, anchor):
 				if f.amt > 0 and S.dist(e, f) < 750: lanes.append([e.x, e.y, f.x, f.y])
 	for k in 110:
 		var a: float = S.rnd(0, 6.28); var r: float = S.rnd(130, 430 if k < 50 else 720)
-		var x: float = anchor.x + cos(a) * r; var y: float = anchor.y + sin(a) * r
+		var x: float = anchor.x + DM.dcos(a) * r; var y: float = anchor.y + DM.dsin(a) * r
 		var roomy := true
 		if k < 80:
 			for L in lanes:
@@ -372,7 +373,7 @@ func form_move(us: Array, x: float, y: float, type: String) -> void:
 	var cx := 0.0; var cy := 0.0
 	for u: E in us: cx += u.x; cy += u.y
 	cx /= n; cy /= n
-	var dir := atan2(y - cy, x - cx); var fx := cos(dir); var fy := sin(dir); var px := -fy; var py := fx
+	var dir := DM.datan2(y - cy, x - cx); var fx := DM.dcos(dir); var fy := DM.dsin(dir); var px := -fy; var py := fx
 	var FROW: Dictionary = S.R.FROW
 	var sorted := us.duplicate()
 	sorted.sort_custom(func(p, q):

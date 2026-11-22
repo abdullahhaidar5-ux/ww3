@@ -8,6 +8,7 @@ config/features=PackedStringArray("4.4", "GL Compatibility")
 
 [autoload]
 Audio="*res://audio/audio_manager.gd"
+NetBoot="*res://net/net_boot.gd"
 
 [display]
 window/size/viewport_width=1536

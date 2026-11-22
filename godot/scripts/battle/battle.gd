@@ -182,6 +182,7 @@ func _ready() -> void:
 # ---------------------------------------------------------------- start (menu launch, command line, online)
 func go_online(url: String, code: String, nm: String, start_n: int = 0) -> void:
 	kind = "online"
+	use_bridge = false   # ORCH: online play runs on the GDScript sim (lane P7's tested lockstep, desktop + web) until it moves to the bridge
 	online = BattleNet.new(self)
 	online.start_at = start_n
 	online.hash_log = headless_mode
