@@ -86,7 +86,8 @@ jobs:
             godot-build/*.json
           retention-days: 5
       - name: Push web export to godot-web-out
-        if: github.ref == 'refs/heads/orch/godot-port'
+        # the online check must not hold back a working single-player build
+        if: always() && steps.tests.outcome == 'success' && steps.export.outcome == 'success' && github.ref == 'refs/heads/orch/godot-port'
         run: |
           set -e
           cd godot-build/web
