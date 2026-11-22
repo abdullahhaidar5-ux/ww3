@@ -3,7 +3,7 @@
 ## trees as one MultiMesh per tree model. Positions = the sim's design units (same as the browser game).
 extends RefCounted
 
-const STEP := 2           # every 2nd height sample (hgrid R=10 -> a vertex every 20 units)
+const MAX_VERTS := 60000.0   # the mesh is built in GDScript: big maps (hgrid 1090x750) take every 4th height sample, small ones every 2nd
 
 static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> void:
 	var H: Dictionary = map.hgrid
@@ -14,6 +14,12 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	var rh := rd.size() / rw
 	var GW := int(map.GW); var GH := int(map.GH); var CELL := float(map.CELL)
 	var grid: Array = map.grid
+	var STEP := maxi(2, ceili(sqrt(hw * hh / MAX_VERTS)))
+	# plain ground colours by the map's theme (KAIZEN 2; the real ground look is a later step)
+	var th := str(map.get("theme", "desert"))
+	var c_lo := Color(0.80, 0.68, 0.52); var c_hi := Color(0.66, 0.64, 0.48); var c_road := Color(0.55, 0.50, 0.43)
+	if th == "snow": c_lo = Color(0.86, 0.88, 0.90); c_hi = Color(0.95, 0.96, 0.98); c_road = Color(0.62, 0.60, 0.57)
+	elif th != "desert": c_lo = Color(0.42, 0.52, 0.30); c_hi = Color(0.50, 0.55, 0.36); c_road = Color(0.52, 0.47, 0.38)
 	var nx := (hw - 1) / STEP + 1
 	var nz := (hh - 1) / STEP + 1
 	var verts := PackedVector3Array(); verts.resize(nx * nz)
@@ -34,12 +40,12 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 			# slope for rock colour
 			var sl := absf(hat.call(hi + 2, hj) - hat.call(hi - 2, hj)) + absf(hat.call(hi, hj + 2) - hat.call(hi, hj - 2))
 			var hk := clampf(y / hmax, 0.0, 1.0)
-			var c := Color(0.80, 0.68, 0.52).lerp(Color(0.66, 0.64, 0.48), hk * 0.8)     # sand low, drier scrub up high
+			var c := c_lo.lerp(c_hi, hk * 0.8)     # desert: sand low, drier scrub up high
 			c = c.lerp(Color(0.62, 0.57, 0.50), clampf((sl - 6.0) / 18.0, 0.0, 1.0))  # steep = rock
 			var gx := clampi(int(x / CELL), 0, GW - 1); var gz := clampi(int(z / CELL), 0, GH - 1)
 			if int(grid[gz * GW + gx]) == 3: c = c.lerp(Color(0.52, 0.48, 0.43), 0.7)
 			var rx := clampi(int(x / rC), 0, rw - 1); var rz := clampi(int(z / rC), 0, rh - 1)
-			if int(rd[rz * rw + rx]) != 0: c = Color(0.55, 0.50, 0.43)                  # dirt road
+			if int(rd[rz * rw + rx]) != 0: c = c_road                  # dirt road
 			cols[k] = c
 	var idx := PackedInt32Array()
 	for j in nz - 1:
@@ -77,7 +83,7 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	for v in ha: hmin = minf(hmin, float(v))
 	sk.position = Vector3(float(map.MAPW) * 0.5, hmin - 40.0, float(map.MAPH) * 0.5)
 	var sm := StandardMaterial3D.new()
-	sm.albedo_color = Color(0.84, 0.74, 0.58)
+	sm.albedo_color = c_lo
 	sm.roughness = 1.0
 	sk.material_override = sm
 	sk.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

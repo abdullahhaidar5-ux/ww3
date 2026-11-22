@@ -162,7 +162,7 @@ Unknown types are safe to ignore.
 
 ## Map (`sim.map_data()`, once per game)
 
-`{key, name, MAPW, MAPH, CELL, GW, GH, bases:[[x,y]..],
+`{key, name, theme ("green" | "desert" | "snow"), MAPW, MAPH, CELL, GW, GH, bases:[[x,y]..],
   grid: PackedByteArray GW×GH (0 land, 1 water, 2 bridge deck/ford, 3 building/wall, 4 deep water / blown bridge),
   cover, wood: PackedByteArray GW×GH,
   hgrid:{R, w, h, a: PackedFloat32Array}  (ground height at (i*R, j*R)),
@@ -173,6 +173,11 @@ Unknown types are safe to ignore.
 `sim.lines()` (re-read when `sim.lgv` changes): `{roads:[[[x,y]..]..], cov:[per team {edge:{v:[[s0,s1]..], d:[..]}}],
 bead:[per team [[x,y,r]..]], craters:[{x,y,left}], bridges_dead:[i..], ck:[{team,x,y}], mines:[{team,x,y}],
 rc:{edge:{o,c,p}}, dug:[{x,y,a,k,team}]}` — colours: green yours, red enemy, gray neutral; `d` = cut (dashed).
+
+Which maps: `tables().maps` = `[{key, name, min, max, battle}]`; `battle` 1 = one of the sim's 35 Battle maps, playable
+with `min`..`max` players. The sim swaps any other key or player count for a fair Battle map, and the map's size can
+grow with the player count - so compare `map_data().key` with what you asked for (battle.gd shows an error), and an
+unknown key makes `new_game` fail (`sim.error`). Proof: `node tools-godot/bridge_test.mjs --maps`.
 
 ## Orders (`sim.order(team_slot, obj)`) — exactly the JS game's `act(team, a)` objects
 

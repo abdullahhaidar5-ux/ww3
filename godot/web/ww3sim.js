@@ -5589,10 +5589,11 @@ const __API=(function BRIDGE(W) {
     tables: () => JSON.stringify({ kinds, states: STATES, weapons, flags: F, E_STRIDE: ES, PROJ_STRIDE: PS, OIL_ID,
       events: ['txt', 'boom', 'ping', 'tping', 'heal', 'halo', 'die', 'strike', 'smoke', 'gone', 'flag', 'shout', 'plane', 'dam', 'bmis', 'vig', 'tr', 'toss', 'say', 'salvo', 'rubc', 'rank', 'pj', 'muz', 'mping', 'mmst', 'mdraw', 'log', 'icpt', 'hl', 'hack', 'give', 'flare', 'emp', 'elim', 'cyb', 'civs', 'civd', 'chf', 'cfs', 'cfo', 'cfb', 'bfx', 'bfh', 'ready', 'built', 'end'],
       nations: FKEYS.map(k => ({ key: k, name: FACTIONS[k].name, color: FACTIONS[k].color || FACTIONS[k].col || '', style: FACTIONS[k].morale || '' })),
-      maps: Object.keys(MAPS).filter(k => !MAPS[k].hidden && !MAPS[k].custom).map(k => ({ key: k, name: MAPS[k].name, max: MAPS[k].maxFull || MAPS[k].max || 2, battle: /^bm_/.test(k) ? 1 : 0 })) }),
+      maps: Object.keys(MAPS).filter(k => !MAPS[k].hidden && !MAPS[k].custom).map(k => ({ key: k, name: MAPS[k].name, min: MAPS[k].min || 2, max: MAPS[k].max || 2, battle: BM_KEYS.includes(k) ? 1 : 0 })) }),   // battle 1 = a Battle map (src/02d-battlemaps.js BATTLE_MAPS) for min..max players; the sim swaps any other key / player count for a fair Battle map
     // o = {map, seed, diff, players:[{nation, ai, team}]}
     newGame: js => {
       const o = typeof js === 'string' ? JSON.parse(js) : js, P = o.players || [];
+      if (o.map && !MAPS[o.map]) return JSON.stringify({ ok: 0, error: 'Unknown map "' + o.map + '": the simulation has no map with that key.' });   // never a silent fallback
       EV = []; Q = []; seen = new Map(); fogs = [];
       const r = W.start({ seed: (o.seed | 0) || 1, facs: P.map(p => p.nation), ai: P.map(p => p.ai !== false), tm: P.map((p, i) => p.team == null ? i : p.team), map: o.map || 'bm_splitridge', battle: 1, diff: o.diff == null ? 1 : o.diff,
         portMath: o.nativeMath ? [] : ['sin', 'cos', 'atan2', 'exp', 'pow'] });
@@ -5618,7 +5619,7 @@ const __API=(function BRIDGE(W) {
     info: () => JSON.stringify(W.info()),
     mapMeta: () => {
       const rm = G.roadMask, h = G.hgrid, B = (G.map && G.map.bridges) || [];
-      return JSON.stringify({ key: G.mapKey, name: (MAPS[G.mapKey] || {}).name, MAPW, MAPH, CELL, GW, GH, bases: BASES.slice(0, Math.max(G.teams.length, 2)).map(b => [b[0], b[1]]),
+      return JSON.stringify({ key: G.mapKey, name: (MAPS[G.mapKey] || {}).name, theme: (G.map && G.map.theme) || 'green', MAPW, MAPH, CELL, GW, GH, bases: BASES.slice(0, Math.max(G.teams.length, 2)).map(b => [b[0], b[1]]),
         hgrid: h ? { R: h.R, w: h.w, h: h.h } : null, road: rm ? { C: rm.C || 16, w: rm.w, h: rm.h } : null,
         fields: G.fields.map(f => ({ x: f.x, y: f.y, r: f.r, amt: f.amt })), oil: G.oil.map(o => ({ x: o.x, y: o.y, tb: o.tb || null, pw: o.pw || 0 })),
         civ: (G.civ || []).filter(c => !c.dug).map(c => ({ i: c.i, x: Math.round(c.x), y: Math.round(c.y), h: +(c.h || 0).toFixed(1), rot: +(c.rot || 0).toFixed(2), ruin: c.ruin ? 1 : 0 })),
@@ -5683,7 +5684,7 @@ if(typeof WorkerGlobalScope!=='undefined'&&typeof self!=='undefined'&&self insta
   var boot={c:'boot',tables:W.tables(),rules:{}};JSON.parse(boot.tables).nations.forEach(function(n){try{boot.rules[n.key]=W.rules(n.key);}catch(e){boot.rules[n.key]='{}';}});
   self.postMessage(boot);
   self.onmessage=function(e){var m=e.data;
-    if(m.c==='new'){lgv=-1;var r=W.newGame(m.o),b={},tr=[];['grid','cover','wood','hgrid','road'].forEach(function(k){b[k]=W.mapBuf(k).buffer;tr.push(b[k]);});
+    if(m.c==='new'){lgv=-1;var r=W.newGame(m.o),b={},tr=[];if(JSON.parse(r).ok!==1){self.postMessage({c:'new',r:r,meta:'{}',bufs:{},ent:new ArrayBuffer(0),lines:'{}',hash:''});return;}['grid','cover','wood','hgrid','road'].forEach(function(k){b[k]=W.mapBuf(k).buffer;tr.push(b[k]);});
       var ent=W.entBuf().buffer;tr.push(ent);self.postMessage({c:'new',r:r,meta:W.mapMeta(),bufs:b,ent:ent,lines:W.lines(),hash:W.hash()},tr);lgv=W.lgv();}
     else if(m.c==='step'){var t0=performance.now();for(var i=0;i<m.orders.length;i++)W.order(m.orders[i][0],m.orders[i][1]);
       var js=W.step(m.k),ent2=W.entBuf().buffer,pj=W.projBuf().buffer,o={c:'step',js:js,ent:ent2,proj:pj},tr2=[ent2,pj];

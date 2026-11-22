@@ -39,14 +39,22 @@ func available() -> bool:
 ## players = [{fac, ai, tm}] (the old Sim.init shape); the map comes from the JS sim (any of its maps).
 ## Asynchronous when the sim runs in a Web Worker: call init(), then wait until ready() is true (one or more frames).
 var _st: int = 0
+var err := ""            # set when the sim refused the battle (unknown map key...): ready() never turns true
 var _opts: Dictionary = {}
 func init(map_key, players: Array, seed_value: int = 1, difficulty: int = 1, _rules: Dictionary = {}) -> bool:
 	if not br.available(): push_error(Bridge.WEB_ONLY); return false
 	var ps: Array = []
 	for p in players: ps.append({nation = str(p.fac), ai = bool(p.get("ai", true)), team = int(p.get("tm", ps.size()))})
 	_opts = {map = str(map_key), seed = seed_value, diff = difficulty, players = ps}
-	_st = 0; ents = []; by_id = {}; events = []; teams = []
+	_st = 0; err = ""; ents = []; by_id = {}; events = []; teams = []
 	return true
+
+## the sim's own map list row for a key: {key, name, max (most players), battle} or {} (call once booted)
+func map_row(key: String) -> Dictionary:
+	if br.booted():
+		for m in br.tables().get("maps", []):
+			if str(m.key) == key: return m
+	return {}
 
 func ready() -> bool:
 	if _st == 2: return true
@@ -54,9 +62,12 @@ func ready() -> bool:
 		if not br.booted(): return false
 		T_ = br.tables()
 		var r := br.new_game(_opts)
-		if not int(r.get("ok", 0)): push_error(str(r.get("error", "new game failed"))); return false
+		if not int(r.get("ok", 0)): err = str(r.get("error", "new game failed")); _st = 3; return false
 		_st = 1
-	if not br.ready(): return false
+	if _st == 3: return false
+	if not br.ready():
+		if br.error != "": err = br.error; _st = 3
+		return false
 	var ps: Array = _opts.players
 	map = br.map_data()
 	# the old scene code types these as Array

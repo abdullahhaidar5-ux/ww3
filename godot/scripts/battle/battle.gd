@@ -31,6 +31,8 @@ const PROD := ["barracks", "factory", "airfield", "hq", "shipyard"]
 const INF := ["inf", "at", "medic", "officer", "mortar", "spy", "champ", "hero", "cleric", "hacker"]
 const PAIR := {"IR": "RS", "RS": "IR", "US": "IL", "IL": "US"}
 var map_key := "bm_splitridge"
+var map_min := 2             # fewest players the sim starts this map with (bridge)
+var map_n := 2               # most players of the map (bridge: the sim's map list; --gdsim: the json's bases)
 var mode := "1v1"         # command line only: 1v1 | 2v2 | ffa (4-player maps)
 var kind := "battle"      # battle | mission | tutorial | range | replay | online
 
@@ -200,7 +202,7 @@ func start_online(mk: String, players: Array, seat: int, sd: int) -> void:
 	_start(players, [])
 
 func start_battle() -> void:
-	last_launch = {kind = "battle", map = map_key, players = _players(), diff = diff, seed = seed_v}
+	last_launch = {kind = "battle", map = map_key, players = [], diff = diff, seed = seed_v}   # seats are worked out in _start once the map's player count is known
 	_start([], [])
 
 ## what the menu asked for (UI.launch): battle | range | mission | tutorial | load | replay | online
@@ -269,12 +271,25 @@ func _norm(o: Dictionary) -> Dictionary:
 	return out
 
 func _start(players: Array, starts: Array) -> void:
-	map = Sim.load_json("res://data/map_%s.json" % map_key)
-	if map.is_empty(): map_key = "bm_splitridge"; map = Sim.load_json("res://data/map_bm_splitridge.json")
+	# KAIZEN 2: on the bridge the map (size, heights, ground, roads, water, woods, bases) comes from the JS sim, any
+	# map it offers; the 3 json maps in res://data are only for the parked --gdsim path. No silent Split Ridge.
+	map = {}; map_n = 2; map_min = 2
+	if use_bridge:
+		sim = BridgeSim.new()
+		if not sim.available():
+			_web_only(); return
+		while not sim.br.booted(): await get_tree().process_frame
+		var row: Dictionary = sim.map_row(map_key)
+		if not row.is_empty(): map_n = int(row.max); map_min = int(row.get("min", 2))
+		elif not players.is_empty(): map_n = players.size()   # a map outside the sim's public list: the sim itself says if the key is unknown
+	else:
+		map = Sim.load_json("res://data/map_%s.json" % map_key)
+		if map.is_empty(): map_key = "bm_splitridge"; map = Sim.load_json("res://data/map_bm_splitridge.json")
+		map_n = map.bases.size()
 	if players.is_empty(): players = _players()
-	players = players.slice(0, map.bases.size())
+	players = players.slice(0, map_n)
 	# start spots: a chosen spot per seat, the rest in map order (seeded shuffle only when someone asked for Random explicitly)
-	if starts.size() == players.size() and starts.any(func(s): return int(s) >= 0):
+	if not use_bridge and starts.size() == players.size() and starts.any(func(s): return int(s) >= 0):
 		var all_b: Array = map.bases; var used := {}; var nb: Array = []; nb.resize(players.size())
 		for i in players.size():
 			var s := int(starts[i])
@@ -292,13 +307,14 @@ func _start(players: Array, starts: Array) -> void:
 	en_fac = str(players[(me + 1) % players.size()].fac)
 	# P1 BRIDGE: the simulation is the browser game's JavaScript (res://bridge/README.md); web build only
 	if use_bridge:
-		sim = BridgeSim.new()
-		if not sim.available():
-			_web_only(); return
 		if not sim.init(map_key, players, seed_v, diff):
 			_web_only(); return
-		while not sim.ready(): await get_tree().process_frame   # the sim runs in a Web Worker: it answers a few frames later
+		while not sim.ready():   # the sim runs in a Web Worker: it answers a few frames later
+			if sim.err != "": _start_failed(sim.err); return
+			await get_tree().process_frame
 		map = sim.map
+		if str(map.get("key", "")) != map_key: _start_failed("The simulation started map \"%s\" instead of \"%s\"." % [str(map.get("key", "")), map_key]); return
+		print("BATTLE map: %s \"%s\" %dx%d, %d bases, %d players" % [map_key, str(map.get("name", "")), int(map.MAPW), int(map.MAPH), map.bases.size(), players.size()])
 	else:
 		sim = Sim.new()
 		sim.init(map, players, seed_v, diff)
@@ -320,24 +336,29 @@ func _start(players: Array, starts: Array) -> void:
 
 ## P1 BRIDGE: desktop / headless Godot cannot run the JavaScript simulation
 func _web_only() -> void:
-	var msg: String = BridgeSim.Bridge.WEB_ONLY
+	_start_failed(BridgeSim.Bridge.WEB_ONLY, "\n(Developers: --gdsim runs the old GDScript rules instead.)")
+
+## the battle could not start (web-only sim on desktop, unknown map key...): say why on screen, never start another map
+func _start_failed(msg: String, more: String = "\nPress Esc for the menu.") -> void:
 	push_error(msg); print("BATTLE: " + msg)
 	if headless_mode: get_tree().quit(1); return
-	var l := Label.new(); l.text = msg + "\n(Developers: --gdsim runs the old GDScript rules instead.)"
+	var l := Label.new(); l.text = msg + more
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD; l.set_anchors_preset(Control.PRESET_CENTER); l.custom_minimum_size = Vector2(700, 0)
 	add_child(l)
 
 ## command-line seats: you (0), then the AIs. 2v2: your side's partner nation is your ally.
 func _players() -> Array:
 	var nats := UI.nations()
-	var nb: int = map.bases.size() if not map.is_empty() else int(UI.map_info(map_key).get("n", 2))
-	if nb < 4 or mode == "1v1": return [{fac = my_fac, ai = ai_only, tm = 1}, {fac = en_fac, ai = true, tm = 2}]
-	if mode == "2v2":
+	var nb: int = map_n
+	if map_min <= 2 and (nb < 4 or mode == "1v1"): return [{fac = my_fac, ai = ai_only, tm = 1}, {fac = en_fac, ai = true, tm = 2}]
+	if mode == "2v2" and map_min <= 4:
 		var ally_f: String = PAIR.get(my_fac, my_fac) if PAIR.get(my_fac, my_fac) != en_fac else my_fac
 		var en2: String = PAIR.get(en_fac, en_fac) if PAIR.get(en_fac, en_fac) != my_fac else en_fac
 		return [{fac = my_fac, ai = ai_only, tm = 1}, {fac = en_fac, ai = true, tm = 2}, {fac = ally_f, ai = true, tm = 1}, {fac = en2, ai = true, tm = 2}]
 	var rest: Array = nats.filter(func(f): return f != my_fac and f != en_fac)
-	return [{fac = my_fac, ai = ai_only, tm = 1}, {fac = en_fac, ai = true, tm = 2}, {fac = rest[0], ai = true, tm = 3}, {fac = rest[1], ai = true, tm = 4}]
+	var out := [{fac = my_fac, ai = ai_only, tm = 1}, {fac = en_fac, ai = true, tm = 2}]
+	for i in clampi(4, map_min, nb) - 2: out.append({fac = rest[i % rest.size()], ai = true, tm = 3 + i})   # free for all: 4 players, or the fewest the map takes (6 / 8 player maps)
+	return out
 
 func args_has_cam() -> bool:
 	return Array(OS.get_cmdline_user_args()).any(func(a): return String(a).begins_with("--cam="))

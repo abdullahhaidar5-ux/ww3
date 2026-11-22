@@ -86,15 +86,18 @@ func tables() -> Dictionary:
 		if tb != null and tb.has("kinds"): _tables = tb
 	return _tables
 
+var error := ""     # why the last new_game failed ("" = it did not); ready() stays false
 ## opts = {map, seed, diff, players = [{nation, ai, team}]}
 func new_game(opts: Dictionary) -> Dictionary:
 	if not _need(): return {ok = 0, error = WEB_ONLY}
+	error = ""
 	t = 0.0; over = false; winner = -1; events = []; _fresh = false
 	if worker:
 		js.newGame(JSON.stringify(opts))
 		return {ok = 1, pending = true}     # poll ready() each frame; the battle exists once it returns true
 	var r = JSON.parse_string(js.newGame(JSON.stringify(opts)))
 	if r == null: return {ok = 0, error = "newGame failed"}
+	if int(r.get("ok", 0)) != 1: error = str(r.get("error", "newGame failed")); return r
 	teams = r.teams
 	_read()
 	return r
@@ -104,8 +107,10 @@ func ready() -> bool:
 	if js == null: return false
 	if not worker: return true
 	if int(js.ready()) != 1: return false
+	if error != "": return false
 	if teams.is_empty() or t == 0.0:
 		var r = JSON.parse_string(js.initInfo())
+		if r != null and int(r.get("ok", 1)) != 1: error = str(r.get("error", "newGame failed")); return false   # e.g. unknown map key
 		if r != null and r.has("teams"): teams = r.teams
 		_read()
 	return true

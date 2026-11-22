@@ -12,7 +12,29 @@ const B = globalThis.WW3; let fail = 0;
 const ok = (c, msg) => { console.log((c ? '  ok   ' : '  FAIL ') + msg); if (!c) fail++; };
 const PM = ['sin', 'cos', 'atan2', 'exp', 'pow'];
 const T = JSON.parse(B.tables());
-if (has('nations')) {
+if (has('maps')) {
+  // KAIZEN 2: every Battle map the sim offers starts at the bridge level, with its fewest and its most players, and is
+  // the map that was asked for (the sim swaps a key / player count outside its Battle list for another map: must not happen here)
+  const F = T.nations.map(n => n.key), BM = T.maps.filter(m => m.battle); let good = 0; const rows = [];
+  for (const m of BM) {
+    try {
+      let fine = true, M;
+      for (const n of [...new Set([m.min, m.max])]) {
+        const r = JSON.parse(B.newGame({ map: m.key, seed: 2, players: Array.from({ length: n }, (_, i) => ({ nation: F[i % F.length], team: i })) }));
+        M = JSON.parse(B.mapMeta()); const g = B.mapBuf('grid'), h = B.mapBuf('hgrid'), s = JSON.parse(B.step(120));
+        const hq = s.teams.filter(t => t.blds > 0 && t.units > 0).length;
+        const one = r.ok === 1 && M.key === m.key && M.bases.length === n && g.length === M.GW * M.GH && h.length === M.hgrid.w * M.hgrid.h * 4 && s.teams.length === n && hq === n;
+        if (!one) { fine = false; ok(false, `${m.key} with ${n} players: got ${M.key}, ${M.bases.length} bases, ${hq} sides with units and buildings`); }
+      }
+      if (fine) good++;
+      rows.push(`${m.key} ${M.MAPW}x${M.MAPH} ${m.min}-${m.max}p ${M.theme}`);
+    } catch (e) { ok(false, `${m.key}: ${e.message}`); }
+  }
+  ok(good === BM.length && good > 3, `${good} of ${BM.length} Battle maps start with their fewest and most players (the sim's table has ${T.maps.length} map rows; the other ${T.maps.length - BM.length} are not Battle maps)`);
+  const bad = JSON.parse(B.newGame({ map: 'no_such_map', players: [{ nation: 'IR' }, { nation: 'US' }] }));
+  ok(bad.ok === 0 && /Unknown map/.test(bad.error), 'unknown map key is an error, not Split Ridge: ' + bad.error);
+  console.log(rows.join('\n'));
+} else if (has('nations')) {
   for (let i = 0; i < T.nations.length; i += 2) {
     const a = T.nations[i].key, b = T.nations[(i + 1) % T.nations.length].key;
     try { B.newGame({ map: 'bm_splitridge', seed: 3, players: [{ nation: a, team: 0 }, { nation: b, team: 1 }] }); const r = JSON.parse(B.step(3600)); ok(r.n > 8 && r.t > 59, `${a} vs ${b}: 60 s, ${r.n} entities, teams ${r.teams.map(t => t.units + 'u/' + t.blds + 'b').join(' ')}`); }
