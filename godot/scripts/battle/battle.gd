@@ -616,6 +616,7 @@ func _process(dt: float) -> void:
 	for k in bmm: per[k] = []
 	var rings: Array = []
 	var bars: Array = []
+	var fr := {per = per, rings = rings, bars = bars}   # this frame's draw lists: the lanes' _draw_* functions append to them
 	var alive := {}
 	for e in sim.ents:
 		if e.dead: continue
@@ -632,56 +633,89 @@ func _process(dt: float) -> void:
 		var col := COL_ME if mine else (COL_ALLY if sim.ally(me, e.team) else COL_EN)
 		var issel := bsel.has(e.id)
 		last_pos[e.id] = [p, e.is_b, e.kind, e.team, gy]
-		if e.is_b:
-			var kk := _bld_key(fac, e.kind, e.size)
-			var info := _dk_info(kk[0], kk[1])
-			var sink: float = (1.0 - e.built) * float(info["h"]) * 0.9
-			per.get_or_add(kk[0], []).append(Transform3D(Basis(Vector3.UP, -sim.base_facing(e.team) + PI * 0.5), Vector3(p.x, gy - sink, p.y)))
-			rings.append([Vector3(p.x, gy + 1.0, p.y), e.size * 0.72, Color(1, 1, 1) if issel else Color(col.r, col.g, col.b, 0.8)])
-			if issel or e.hp < e.max or e.built < 1.0:
-				var f: float = e.built if e.built < 1.0 else e.hp / e.max
-				bars.append([Vector3(p.x, gy + 70.0, p.y), 64.0, Color(0.1, 0.1, 0.1, 0.8), f, Color(0.95, 0.8, 0.3) if e.built < 1.0 else Color(1.0 - f, f, 0.15)])
-			if mine and issel and e.rally != null:
-				rings.append([Vector3(float(e.rally.x), sim.ground_h(e.rally.x, e.rally.y) + 1.0, float(e.rally.y)), 10.0, Color(0.4, 1.0, 0.5)])
+		if e.is_b: _draw_bld(fr, e, fac, p, gy, col, issel, mine)   # LANE B (battle_world.gd)
 		else:
-			var kk := _unit_key(fac, e.kind)
-			var info := _dk_info(kk[0], kk[1])
-			var model: String = kk[1][0]
-			var basis := Basis(Vector3.UP, -ang + PI * 0.5)
-			if Look.is_soldier(model):
-				var n := Look.team_size(e.kind)
-				var alive_n := clampi(int(ceil(e.hp / e.max * n)), 1, n)
-				var moving: bool = e.v > 2.0
-				for i in alive_n:
-					var off := Vector2(((i % 2) - 0.5) * 11.0 + (0.0 if i < 2 else 5.5), (int(i / 2) - 0.3) * 11.0).rotated(ang)
-					var bob := 0.0
-					if moving: bob = absf(sin(t * 11.0 + float(e.id * 3 + i * 2))) * 1.2
-					var q := p + off
-					per.get_or_add(kk[0], []).append(Transform3D(basis, Vector3(q.x, sim.ground_h(q.x, q.y) + bob, q.y)))
-			elif model == "@shahed":
-				per.get_or_add(kk[0], []).append(Transform3D(basis, Vector3(p.x, gy + 60.0, p.y)))
-			else:
-				var air: bool = e.s_dom == "air"
-				per.get_or_add(kk[0], []).append(Transform3D(basis, Vector3(p.x, gy + (70.0 if air else 0.0), p.y)))
-			var r: float = e.r * 1.7 + 4.0
-			rings.append([Vector3(p.x, gy + 1.0, p.y), r, Color(1, 1, 1) if issel else col])
-			if issel or e.hp < e.max:
-				var f2: float = e.hp / e.max
-				bars.append([Vector3(p.x, gy + 26.0, p.y), 22.0, Color(0.1, 0.1, 0.1, 0.8), f2, Color(1.0 - f2, f2, 0.15)])
-			# ammo bar (blue) under the health bar: units outside your supply area fight until it is empty
-			if mine and issel and e.amx > 0 and kind != "range":
-				bars.append([Vector3(p.x, gy + 22.0, p.y), 22.0, Color(0.1, 0.1, 0.1, 0.8), clampf(e.am / e.amx, 0, 1), Color(0.35, 0.65, 1.0) if e.am > 0 else Color(1.0, 0.3, 0.2)])
+			_draw_unit(fr, e, fac, p, ang, gy, col, issel, mine, vis)   # LANE A (battle_units.gd)
 			if mine and sim.t - e.last_hit < 0.5 and sim.t > alert_t + 8.0 and not _on_screen_xy(e.x, e.y):
 				alert_t = sim.t; hud.alert(Vector2(e.x, e.y)); hud.say("Our forces are under attack!  (Space)", "bad")
-			# shots: tracer from the shooter to its target, muzzle flash for big guns
-			if e.last_fire > float(last_fire.get(e.id, -99.0)):
-				last_fire[e.id] = e.last_fire
-				var tg = e.target if e.target != null else (e.order.get("target") if e.order != null else null)
-				if tg != null and not tg.dead and (ai_only or see_all or vis):
-					var big: bool = e.s_cls in ["tank", "arty", "aa"]
-					var from := Vector3(p.x, gy + (9.0 if big else 7.0), p.y)
-					tracers.append([from, Vector3(tg.x, sim.ground_h(tg.x, tg.y) + 6.0, tg.y), t, Color(1.0, 0.85, 0.45, 0.9)])
-					if big: _boom(from + Vector3(cos(ang) * 14.0, 0, sin(ang) * 14.0), 6.0, Color(1.0, 0.75, 0.35), 0.12)
+	_draw_map_objects(fr)   # LANE B: oil derricks, capturable buildings, supply piles
+	for k in bmm:
+		if per.has(k): _fill(bmm[k], per[k])
+	_draw_world_fx(fr, alive)   # LANE B: shells / missiles, impacts, deaths, supply area on the ground (L)
+	_draw_orders_overlay(fr)   # LANE C: waypoints, the armed order's cursor ring
+	_draw_rings_bars(rings, bars)
+	_draw_fx()
+	_ghost_tick()
+	_wp_tick()
+	_tut_tick()
+	_cameo_tick()
+	_ui_battle_tick()
+	if shot_path != "" and (shot_t < 0 or sim.t >= shot_t) and not loading:
+		if shot_frames == 0 and auto_cam: _cam_on_fight()
+		if shot_frames == 0 and demo_ui != "": _demo_ui()
+		shot_frames += 1
+		if shot_frames == (shot_at if shot_t < 0 else 40):
+			get_viewport().get_texture().get_image().save_png(shot_path)
+			print("BATTLE shot " + shot_path + " at %.0f s" % sim.t)
+			get_tree().quit()
+
+## LANE B: one building this frame (model rising out of the ground while built, ring, health / build bar, rally flag)
+func _draw_bld(fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Color, issel: bool, mine: bool) -> void:
+	var per: Dictionary = fr.per; var rings: Array = fr.rings; var bars: Array = fr.bars
+	var kk := _bld_key(fac, e.kind, e.size)
+	var info := _dk_info(kk[0], kk[1])
+	var sink: float = (1.0 - e.built) * float(info["h"]) * 0.9
+	per.get_or_add(kk[0], []).append(Transform3D(Basis(Vector3.UP, -sim.base_facing(e.team) + PI * 0.5), Vector3(p.x, gy - sink, p.y)))
+	rings.append([Vector3(p.x, gy + 1.0, p.y), e.size * 0.72, Color(1, 1, 1) if issel else Color(col.r, col.g, col.b, 0.8)])
+	if issel or e.hp < e.max or e.built < 1.0:
+		var f: float = e.built if e.built < 1.0 else e.hp / e.max
+		bars.append([Vector3(p.x, gy + 70.0, p.y), 64.0, Color(0.1, 0.1, 0.1, 0.8), f, Color(0.95, 0.8, 0.3) if e.built < 1.0 else Color(1.0 - f, f, 0.15)])
+	if mine and issel and e.rally != null:
+		rings.append([Vector3(float(e.rally.x), sim.ground_h(e.rally.x, e.rally.y) + 1.0, float(e.rally.y)), 10.0, Color(0.4, 1.0, 0.5)])
+
+## LANE A: one unit / vehicle / aircraft / drone this frame (model instances, soldiers of a squad, ring, bars, its shots)
+func _draw_unit(fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: float, col: Color, issel: bool, mine: bool, vis: bool) -> void:
+	var per: Dictionary = fr.per; var rings: Array = fr.rings; var bars: Array = fr.bars
+	var kk := _unit_key(fac, e.kind)
+	var info := _dk_info(kk[0], kk[1])
+	var model: String = kk[1][0]
+	var basis := Basis(Vector3.UP, -ang + PI * 0.5)
+	if Look.is_soldier(model):
+		var n := Look.team_size(e.kind)
+		var alive_n := clampi(int(ceil(e.hp / e.max * n)), 1, n)
+		var moving: bool = e.v > 2.0
+		for i in alive_n:
+			var off := Vector2(((i % 2) - 0.5) * 11.0 + (0.0 if i < 2 else 5.5), (int(i / 2) - 0.3) * 11.0).rotated(ang)
+			var bob := 0.0
+			if moving: bob = absf(sin(t * 11.0 + float(e.id * 3 + i * 2))) * 1.2
+			var q := p + off
+			per.get_or_add(kk[0], []).append(Transform3D(basis, Vector3(q.x, sim.ground_h(q.x, q.y) + bob, q.y)))
+	elif model == "@shahed":
+		per.get_or_add(kk[0], []).append(Transform3D(basis, Vector3(p.x, gy + 60.0, p.y)))
+	else:
+		var air: bool = e.s_dom == "air"
+		per.get_or_add(kk[0], []).append(Transform3D(basis, Vector3(p.x, gy + (70.0 if air else 0.0), p.y)))
+	var r: float = e.r * 1.7 + 4.0
+	rings.append([Vector3(p.x, gy + 1.0, p.y), r, Color(1, 1, 1) if issel else col])
+	if issel or e.hp < e.max:
+		var f2: float = e.hp / e.max
+		bars.append([Vector3(p.x, gy + 26.0, p.y), 22.0, Color(0.1, 0.1, 0.1, 0.8), f2, Color(1.0 - f2, f2, 0.15)])
+	# ammo bar (blue) under the health bar: units outside your supply area fight until it is empty
+	if mine and issel and e.amx > 0 and kind != "range":
+		bars.append([Vector3(p.x, gy + 22.0, p.y), 22.0, Color(0.1, 0.1, 0.1, 0.8), clampf(e.am / e.amx, 0, 1), Color(0.35, 0.65, 1.0) if e.am > 0 else Color(1.0, 0.3, 0.2)])
+	# shots: tracer from the shooter to its target, muzzle flash for big guns
+	if e.last_fire > float(last_fire.get(e.id, -99.0)):
+		last_fire[e.id] = e.last_fire
+		var tg = e.target if e.target != null else (e.order.get("target") if e.order != null else null)
+		if tg != null and not tg.dead and (ai_only or see_all or vis):
+			var big: bool = e.s_cls in ["tank", "arty", "aa"]
+			var from := Vector3(p.x, gy + (9.0 if big else 7.0), p.y)
+			tracers.append([from, Vector3(tg.x, sim.ground_h(tg.x, tg.y) + 6.0, tg.y), t, Color(1.0, 0.85, 0.45, 0.9)])
+			if big: _boom(from + Vector3(cos(ang) * 14.0, 0, sin(ang) * 14.0), 6.0, Color(1.0, 0.75, 0.35), 0.12)
+
+## LANE B: map buildings and supply piles (before the MultiMeshes are filled)
+func _draw_map_objects(fr: Dictionary) -> void:
+	var per: Dictionary = fr.per; var rings: Array = fr.rings; var bars: Array = fr.bars
 	# map buildings: oil derricks + capturable quarry / mine / power plant / hospital
 	for o in sim.oil:
 		if o.dead: continue
@@ -705,8 +739,10 @@ func _process(dt: float) -> void:
 			var rr := 10.0 + sqrt(float(i)) * 11.0
 			var cx: float = f.x + cos(ang2) * rr; var cz: float = f.y + sin(ang2) * rr
 			per["crate"].append(Transform3D(Basis(Vector3.UP, ang2), Vector3(cx, sim.ground_h(cx, cz) + (8.0 if i % 5 == 4 else 0.0), cz)))
-	for k in bmm:
-		if per.has(k): _fill(bmm[k], per[k])
+
+## LANE B: shells / missiles in flight, impacts, deaths, the supply area on the ground (L)
+func _draw_world_fx(fr: Dictionary, alive: Dictionary) -> void:
+	var per: Dictionary = fr.per; var rings: Array = fr.rings; var bars: Array = fr.bars
 	# shells / missiles in flight
 	for pj in sim.proj:
 		var px: float = pj.x; var pz: float = pj.y
@@ -731,30 +767,19 @@ func _process(dt: float) -> void:
 				_boom(Vector3(lv.x, lp[4] + 6.0, lv.y), (60.0 if lp[1] else 28.0) if big else 9.0, Color(1.0, 0.55, 0.2) if big else Color(0.9, 0.8, 0.6))
 			last_pos.erase(id)
 			bsel.erase(id)
+	if show_supply:
+		for s in sim.supply_points()[me]: rings.append([Vector3(s.x, sim.ground_h(s.x, s.y) + 1.5, s.y), s.z, Color(0.3, 1.0, 0.45, 0.9)])
+
+## LANE C: waypoints still to walk, the armed order's cursor ring
+func _draw_orders_overlay(fr: Dictionary) -> void:
+	var per: Dictionary = fr.per; var rings: Array = fr.rings; var bars: Array = fr.bars
 	# waypoints still to walk, the armed order's cursor ring, supply area on the ground (L)
 	for id in wp:
 		if bsel.has(id):
 			for q2 in wp[id]: rings.append([Vector3(q2.x, sim.ground_h(q2.x, q2.y) + 1.0, q2.y), 7.0, Color(0.4, 0.9, 1.0)])
-	if show_supply:
-		for s in sim.supply_points()[me]: rings.append([Vector3(s.x, sim.ground_h(s.x, s.y) + 1.5, s.y), s.z, Color(0.3, 1.0, 0.45, 0.9)])
 	if armed != "":
 		var ag := _ground_at(get_viewport().get_mouse_position())
 		if ag != Vector2.INF: rings.append([Vector3(ag.x, sim.ground_h(ag.x, ag.y) + 2.0, ag.y), 26.0 if armed.begins_with("power") else 12.0, Color(1.0, 0.5, 0.2) if armed != "guard" else Color(0.4, 0.8, 1.0)])
-	_draw_rings_bars(rings, bars)
-	_draw_fx()
-	_ghost_tick()
-	_wp_tick()
-	_tut_tick()
-	_cameo_tick()
-	_ui_battle_tick()
-	if shot_path != "" and (shot_t < 0 or sim.t >= shot_t) and not loading:
-		if shot_frames == 0 and auto_cam: _cam_on_fight()
-		if shot_frames == 0 and demo_ui != "": _demo_ui()
-		shot_frames += 1
-		if shot_frames == (shot_at if shot_t < 0 else 40):
-			get_viewport().get_texture().get_image().save_png(shot_path)
-			print("BATTLE shot " + shot_path + " at %.0f s" % sim.t)
-			get_tree().quit()
 
 func _draw_rings_bars(rings: Array, bars: Array) -> void:
 	_grow(ring_mmi, rings.size())

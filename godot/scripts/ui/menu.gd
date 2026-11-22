@@ -66,6 +66,7 @@ func _ready() -> void:
 	if start == "c-map": stack = ["title", "single", start]; cur = start
 	elif start != "title": stack = ["title", start]; cur = start
 	_show(cur, 0)
+	print("MENU ready")   # ORCH: tools-godot/check.sh waits for this line
 
 # ---------------------------------------------------------------- frame: picture, column, breadcrumb, Back, footer
 func _chrome() -> void:
