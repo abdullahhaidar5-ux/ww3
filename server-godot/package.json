@@ -1,0 +1,16 @@
+{
+  "name": "ww3-godot-relay",
+  "private": true,
+  "description": "World War 3 (Godot edition) lockstep relay on Cloudflare Workers + Durable Objects",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --var TEST_SPEED:1",
+    "local": "node local-server.mjs",
+    "test": "node test/soak.mjs --relay local --clients 3 --godot 1 --minutes 10 --turnms 10",
+    "test:wrangler": "node test/soak.mjs --relay http://127.0.0.1:8787 --clients 3 --godot 1 --minutes 10 --turnms 100"
+  },
+  "devDependencies": {
+    "wrangler": "4.153.0",
+    "ws": "8.18.3"
+  }
+}
