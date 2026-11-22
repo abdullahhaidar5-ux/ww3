@@ -16,6 +16,29 @@ Needs Node 22 + Playwright's Chromium (already in the cloud image). The script s
 network), ends with a per-nation table and `VALIDATION PASS` / `VALIDATION FAIL` (exit code 1): 22 nations, every nation has
 units / buildings / upgrades / powers, every icon key used in the data exists in `atlas.json`, every atlas file exists.
 
+## Status (2026-11-22, wrapped up early on ORCH's call to save usage)
+
+- Done and pushed: every file in the table below, from one full run that ended `VALIDATION PASS`
+  (`node tools-godot/export_data.mjs --check` re-checks the files on disk without a browser).
+- Repeatability: nations / units / buildings / upgrades / powers JSON and all 22 cameo sheets came out byte-identical in
+  three full runs. The repeat run for maps / menus / missions / tutorial / strings was stopped part-way (no file it had
+  rewritten differed); a full second run of those is **not proven yet**.
+- Looked at by eye: cameo sheet (IR), flags + emblems, the 91 button icons, one map preview. Not looked at: cursors,
+  minimap marks, profile emblems, the other 34 map previews.
+
+## Next steps (exact)
+
+1. `node tools-godot/export_data.mjs` once more, then `git status`: no changed file = the whole export is repeatable. If
+   `menus.json` or `strings.json` differ, the cause is live text (network status on the Multiplayer screen, clock on the
+   end screen): blank it the way `sndSt` is blanked in the Settings scrape.
+2. Interface lane: build the nation picker from `nations.json`, the map picker from `maps.json` + `map/<key>` previews, the
+   command bar from `units.json` / `buildings.json` / `upgrades.json` / `powers.json` + `atlas.json`, Settings from
+   `menus.json overlays.settings.tabs`, the key screen from `strings.json keys`.
+3. Set the import of `godot/ui/icons/cameos/*.png` to Lossy before the web export (23 MB of PNG otherwise).
+4. Hand-port the code-only parts listed at the end of this file.
+5. Open choice for ORCH: transparent unit portraits (208x160, `UK.icon`) were left out to keep the size down; one more
+   loop in the "icons" section of the script adds them if the selection card needs them.
+
 ## Files (all new; nothing existing was edited)
 
 | File | What | Count |
