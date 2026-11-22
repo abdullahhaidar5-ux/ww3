@@ -5514,7 +5514,7 @@ const __W=(function DRIVER() {
 
 /* ===== bridge API (tools-godot/build_bridge.mjs) ===== */
 const __API=(function BRIDGE(W) {
-  const ES = 16, PS = 8;
+  const ES = 18, PS = 8;
   const STATES = ['idle', 'move', 'fire', 'build', 'gather', 'dig', 'fly', 'park', 'rout', 'dead'];
   const F = { BUILDING: 1, BUILT: 2, SELECTABLE: 4, DEAD: 8, GARRISON: 16, ROUT: 32, DUG: 64, FIRED: 128, NOPOWER: 256, SELLING: 512, REPAIRING: 1024, SUPPLIED: 2048, ABANDONED: 4096, LANDED: 8192, WORKING: 16384, CAPTURABLE: 32768 };
   const kinds = KINDS.slice(), kIdx = new Map(kinds.map((k, i) => [k, i]));
@@ -5555,14 +5555,14 @@ const __API=(function BRIDGE(W) {
       a[o + 5] = groundH(e.x, e.y) + (air && !e.landed ? (s.alt === 'high' ? 110 : 55) : 0);
       a[o + 6] = e.isB ? (e.ang || 0) : (e.va ?? e.ang ?? 0); a[o + 7] = e.tang ?? e.ang ?? 0; a[o + 8] = e.max > 0 ? Math.max(0, e.hp / e.max) : 1; a[o + 9] = f;
       a[o + 10] = e.am === undefined || !(e.amx > 0) ? -1 : e.am / e.amx; a[o + 11] = e.rank | 0; a[o + 12] = st;
-      a[o + 13] = e.isB ? e.built : (s.spd > 0 ? Math.min(1, (e.v || 0) / s.spd) : 0); a[o + 14] = teamBit(e); a[o + 15] = e.isB ? e.size : (e.r || s.r || 8);
+      a[o + 13] = e.isB ? e.built : (s.spd > 0 ? Math.min(1, (e.v || 0) / s.spd) : 0); a[o + 14] = teamBit(e); a[o + 15] = e.isB ? e.size : (e.r || s.r || 8); a[o + 16] = e.target && !e.target.dead && e.target.id ? e.target.id : (e.order && e.order.target && e.order.target.id) || 0; a[o + 17] = e.max || 0;
       j++;
     }
     for (let i = 0; i < G.oil.length; i++) {
       const q = G.oil[i], o = j * ES; let f = F.BUILDING | F.CAPTURABLE; if (!q.dead) f |= F.BUILT;
       a[o] = OIL_ID + i; a[o + 1] = kindOf(q.tb ? 'tb_' + q.tb : q.pw ? 'pplant' : 'derrick'); a[o + 2] = q.owner; a[o + 3] = q.x; a[o + 4] = q.y; a[o + 5] = groundH(q.x, q.y);
       a[o + 6] = 0; a[o + 7] = 0; a[o + 8] = q.max > 0 ? Math.max(0, q.hp / q.max) : 1; a[o + 9] = f; a[o + 10] = -1; a[o + 11] = 0; a[o + 12] = q.dead ? 9 : 0; a[o + 13] = q.dead ? 0 : 1;
-      a[o + 14] = (1 << G.teams.length) - 1; a[o + 15] = 36; j++;
+      a[o + 14] = (1 << G.teams.length) - 1; a[o + 15] = 36; a[o + 16] = 0; a[o + 17] = q.max || 0; j++;
     }
     n = j; seen = now;
     const P = G.proj; if (proj.length < P.length * PS) proj = new Float32Array(P.length * PS * 2);
@@ -5582,6 +5582,8 @@ const __API=(function BRIDGE(W) {
       rank: T.rank | 0, spent: T.spent | 0, gxp: Math.round(T.gxp || 0), upg: Object.keys(T.upg || {}), research, charge: Math.round(T.charge || 0), charge_max: (T.sup && T.sup.charge) || 0, powers, leader: T.ld ? { on: 1 } : null,
       units, blds, kills: T.kills | 0, lost: T.lost | 0, tun: (T.tun || []).length };
   });
+  const prodRows = () => { const o = []; for (const e of G.ents) { if (!e.isB || e.dead || !((e.q && e.q.length) || e.rally)) continue; const T = G.teams[e.team];
+      o.push([e.id, (e.q || []).map(it => { let tot = 0; try { tot = prodTime(T, stats(T.fac, it.kind)); } catch (_) {} return [it.kind, +(+it.t || 0).toFixed(2), +tot.toFixed(2)]; }), e.rally ? Math.round(e.rally.x) : -1, e.rally ? Math.round(e.rally.y) : -1]); } return o; };
   const api = {
     ES, PS, OIL_ID, version: 1,
     tables: () => JSON.stringify({ kinds, states: STATES, weapons, flags: F, E_STRIDE: ES, PROJ_STRIDE: PS, OIL_ID,
@@ -5606,10 +5608,11 @@ const __API=(function BRIDGE(W) {
       const r = W.step((k | 0 || 1) / 60); stepT = r.steps / 60; fill();
       if (!was && G.over) EV.push(['end', G.winner == null ? -1 : G.winner, G.endWhy || '']);
       lastStepMs = W.realNow() - t0; const ev = EV; EV = [];
-      return JSON.stringify({ t: G.t, over: !!G.over, winner: G.winner == null ? -1 : G.winner, n, m, ms: +lastStepMs.toFixed(2), lgv: (G.lgv | 0) + (G.dugV | 0), ev, teams: teamRows() });
+      return JSON.stringify({ t: G.t, over: !!G.over, winner: G.winner == null ? -1 : G.winner, n, m, ms: +lastStepMs.toFixed(2), lgv: (G.lgv | 0) + (G.dugV | 0), ev, teams: teamRows(), prod: prodRows() });
     },
-    entBuf: () => new Uint8Array(ent.buffer, 0, n * ES * 4),
-    projBuf: () => new Uint8Array(proj.buffer, 0, m * PS * 4),
+    // exact-size copies (Godot's js_buffer_to_packed_byte_array takes the whole underlying buffer)
+    entBuf: () => new Uint8Array(ent.buffer.slice(0, n * ES * 4)),
+    projBuf: () => new Uint8Array(proj.buffer.slice(0, m * PS * 4)),
     hash: () => W.hash(),
     info: () => JSON.stringify(W.info()),
     mapMeta: () => {
@@ -5646,8 +5649,10 @@ const __API=(function BRIDGE(W) {
       for (const e of G.ents) { if (e.dead || e.team == null || e.team < 0 || !ally(e.team, team)) continue;
         const R = e._vr || 280, c0 = Math.max(0, Math.floor((e.x - R) / CELL)), c1 = Math.min(GW - 1, Math.floor((e.x + R) / CELL)), r0 = Math.max(0, Math.floor((e.y - R) / CELL)), r1 = Math.min(GH - 1, Math.floor((e.y + R) / CELL)), R2 = R * R;
         for (let cy = r0; cy <= r1; cy++) { const dy = cy * CELL + CELL / 2 - e.y; for (let cx = c0; cx <= c1; cx++) { const dx = cx * CELL + CELL / 2 - e.x; if (dx * dx + dy * dy <= R2) g[cy * GW + cx] = 2; } } }
-      return g;
+      return g.slice();
     },
+    validSpot: (team, kind, x, y) => { try { return validSpot(team, kind, x, y) ? 1 : 0; } catch (_) { return 0; } },
+    reqMet: (team, kind) => { try { return reqMet(team, kind) ? 1 : 0; } catch (_) { return 0; } },
     inside: id => {
       const b = G.byId.get(id); if (!b) return '[]'; let L = [];
       if (b.kind === 'garrison' && b.civ) L = b.civ.occ; else if (b.gar) L = b.gar; else if (b.kind === 'tunnel') L = G.teams[b.team].tun || []; else if (b.cargo) L = b.cargo;
@@ -5656,11 +5661,11 @@ const __API=(function BRIDGE(W) {
     rules: fac => {
       const Fc = FACTIONS[fac]; if (!Fc) return '{}'; const units = {}, blds = {}, upg = {}, powers = [];
       const cats = {}; try { for (const c of CATS) for (const k of (typeof rosterOf === 'function' ? rosterOf(fac, c) : [])) cats[k] = c; } catch (_) {}
-      for (const k of Object.keys(BASE)) { try { const s = stats(fac, k); if (!s || s.hide) continue; units[k] = { name: s.name, cost: s.cost, time: s.time, cat: cats[k] || s.from || s.cat || '', req: s.req || null, pop: typeof popOf === 'function' ? popOf(s) : 1, hp: s.hp, rng: s.rng || 0, cls: s.cls || '', dom: s.dom || 'ground' }; } catch (_) {} }
-      for (const k of Object.keys(STRUCT)) { try { const s = bstats(fac, k); if (!s) continue; blds[k] = { name: s.name, cost: s.cost, time: s.time, req: s.req || null, size: s.size, hp: s.hp }; } catch (_) {} }
+      for (const k of Object.keys(BASE)) { try { const s = stats(fac, k); if (!s || s.hide) continue; units[k] = { ...JSON.parse(JSON.stringify(s)), name: s.name, cost: s.cost, time: s.time, cat: cats[k] || s.from || s.cat || '', req: s.req || null, pop: typeof popOf === 'function' ? popOf(s) : 1, hp: s.hp, rng: s.rng || 0, cls: s.cls || '', dom: s.dom || 'ground' }; } catch (_) {} }
+      for (const k of Object.keys(STRUCT)) { try { const s = bstats(fac, k); if (!s) continue; blds[k] = { ...JSON.parse(JSON.stringify(s)), name: s.name, cost: s.cost, time: s.time, req: s.req || null, size: s.size, hp: s.hp }; } catch (_) {} }
       try { const U = typeof upgList === 'function' ? upgList(fac) : (Fc.upgList || []); for (const u of U) { const k = u.key || u.k || u; const d = typeof u === 'object' ? u : (typeof UPG !== 'undefined' && UPG[k]) || {}; upg[k] = { name: d.name || k, cost: d.cost || 0, time: d.time || 0, req: d.req || null, desc: d.desc || '' }; } } catch (_) {}
       try { for (const k of Object.keys(POWERS)) { if (typeof sigBan === 'function' && sigBan(fac, k)) continue; const p = powInfo(k, fac); powers.push({ k, name: p.name, desc: p.desc || '' }); } } catch (_) {}
-      return JSON.stringify({ units, blds, upg, powers, build_order: typeof BUILD_ORDER !== 'undefined' ? BUILD_ORDER : Object.keys(blds), roster: Fc.roster || null, style: Fc.morale || '' });
+      return JSON.stringify({ units, blds, upg, powers, build_order: typeof BUILD_ORDER !== 'undefined' ? BUILD_ORDER : Object.keys(blds), roster: Fc.roster || null, special: Fc.special || null, name: Fc.name, style: Fc.morale || '' });
     },
     // debug / tests only: evaluate inside the sim's scope
     ev: src => W.ev(src),

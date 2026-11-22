@@ -24,6 +24,10 @@ if (has('nations')) {
   let worst = 0, sum = 0, k = 0, r;
   for (let s = 0; s < 600 * 30; s++) { r = JSON.parse(B.step(2)); B.entBuf(); worst = Math.max(worst, r.ms); sum += r.ms; k++; if (r.over) break; if (s % 1800 === 1799) console.log(`  min ${Math.round(r.t / 60)}: ${r.n} entities  ${r.teams.map(t => t.nation + ' ' + t.units + 'u ' + t.blds + 'b $' + t.credits).join(' | ')}`); }
   ok(r.t >= 599 || r.over, `4-player AI battle ran ${Math.round(r.t)} s (over=${r.over}); mean ${(sum / k / 2).toFixed(2)} ms per tick, worst 30 Hz frame ${worst.toFixed(1)} ms`);
+} else if (has('hash4')) {   // the reference for godot/bridge/bridge_selftest.gd (index.html?bridge-test)
+  B.newGame({ map: 'bm_fourmills', seed: 1, diff: 1, players: ['IR', 'US', 'RU', 'TR'].map((f, i) => ({ nation: f, team: i })) });
+  console.log('  start hash ' + B.hash());
+  for (let mn = 1; mn <= 10; mn++) { let r; for (let s = 0; s < 1800; s++) { r = JSON.parse(B.step(2)); if (r.over) break; } console.log(`  min ${mn}: hash ${B.hash()}  ${r.n} entities`); if (r.over) break; }
 } else if (has('bench')) {
   B.newGame({ map: 'bm_splitridge', seed: 1, players: [{ nation: 'IR', ai: false, team: 0 }, { nation: 'US', ai: false, team: 1 }] });
   B.ev(`(()=>{for(let t=0;t<2;t++){const b=BASES[t],k=['inf','tank','inf','apc','inf'].filter(q=>{const s=stats(G.teams[t].fac,q);return s&&s.dom==='ground';});for(let i=0;i<500;i++){const u=addUnit(t,k[i%k.length],b[0]+(i%25)*22-270,b[1]+((i/25)|0)*22-220);}}})()`);

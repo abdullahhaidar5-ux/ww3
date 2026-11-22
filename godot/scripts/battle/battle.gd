@@ -10,6 +10,7 @@
 extends "res://scripts/main.gd"
 
 const Sim = preload("res://sim/sim.gd")
+const BridgeSim = preload("res://bridge/bridge_sim.gd")   # P1 BRIDGE: the web build runs the JS game's simulation
 const Look = preload("res://scripts/battle/battle_look.gd")
 const Terrain = preload("res://scripts/battle/battle_terrain.gd")
 const BattleNet = preload("res://scripts/battle/battle_net.gd")
@@ -40,6 +41,7 @@ var seed_v := 1
 var started := false
 var ai_only := false
 var headless_mode := false
+var use_bridge := true      # P1 BRIDGE: false only with --gdsim (the parked GDScript sim, for desktop tinkering)
 var minutes_cap := 40.0
 var shot_t := -1.0
 
@@ -103,6 +105,11 @@ var tip_lbl: Label
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
+	# P1 BRIDGE: on the web the same switches come from the page address: index.html?battle-ai&fac=IR&vs=US&minutes=10
+	if OS.has_feature("web"):
+		var qs := str(JavaScriptBridge.eval("location.search.slice(1)", true))
+		for kv in qs.split("&", false): args.append("--" + kv.uri_decode())
+	use_bridge = not ("--gdsim" in args)
 	ai_only = "--battle-ai" in args
 	demo = "--demo" in args
 	headless_mode = DisplayServer.get_name() == "headless"
@@ -172,10 +179,21 @@ func start_battle() -> void:
 
 func _start(players: Array) -> void:
 	if setup: setup.visible = false
-	map = Sim.load_json("res://data/map_%s.json" % map_key)
-	if map.is_empty(): map_key = "bm_splitridge"; map = Sim.load_json("res://data/map_bm_splitridge.json")
-	sim = Sim.new()
-	sim.init(map, players if players.size() else _players(), seed_v, diff)
+	# P1 BRIDGE: the simulation is the browser game's JavaScript (res://bridge/README.md); web build only
+	if use_bridge:
+		sim = BridgeSim.new()
+		if not sim.available():
+			_web_only(); return
+		var np: int = 4 if map_key == "bm_fourmills" else 2
+		map = {bases = [0, 0, 0, 0].slice(0, np)}
+		if not sim.init(map_key, players if players.size() else _players(), seed_v, diff):
+			_web_only(); return
+		map = sim.map
+	else:
+		map = Sim.load_json("res://data/map_%s.json" % map_key)
+		if map.is_empty(): map_key = "bm_splitridge"; map = Sim.load_json("res://data/map_bm_splitridge.json")
+		sim = Sim.new()
+		sim.init(map, players if players.size() else _players(), seed_v, diff)
 	if not headless_mode:
 		Terrain.build(self, sim, map, func(k: String): return _build_mesh(k, "y", randf_range(36, 52)))
 	var b: Array = sim.bases[me]
@@ -185,6 +203,15 @@ func _start(players: Array) -> void:
 	_make_ghost()
 	started = true
 	print("BATTLE start: %s (%s) vs %s (AI, difficulty %d), seed %d%s" % [NAT_NAME[my_fac], "AI" if ai_only else "you", NAT_NAME[en_fac], diff, seed_v, "" if not headless_mode else " [headless]"])
+
+## P1 BRIDGE: desktop / headless Godot cannot run the JavaScript simulation
+func _web_only() -> void:
+	var msg: String = BridgeSim.Bridge.WEB_ONLY
+	push_error(msg); print("BATTLE: " + msg)
+	if headless_mode: get_tree().quit(1); return
+	var l := Label.new(); l.text = msg + "\n(Developers: --gdsim runs the old GDScript rules instead.)"
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD; l.set_anchors_preset(Control.PRESET_CENTER); l.custom_minimum_size = Vector2(700, 0)
+	add_child(l)
 
 ## seats: you (0), then the AIs. 2v2: your side's partner nation is your ally (Iran + Lebanese Shia, US + Israel).
 func _players() -> Array:
@@ -347,8 +374,13 @@ func sim_tick(orders: Array) -> void:
 	for e in sim.ents:
 		prev[e.id] = Vector3(e.x, e.y, e.ang)
 	var m0 := int(sim.t / 60.0)
-	sim.step()
-	if not sim.over: sim.step()
+	if use_bridge:   # P1 BRIDGE: one JS call for both steps, then explosions from the sim's event list
+		sim.step_n(2)
+		for ev in sim.take_events():
+			if ev[0] == "boom" and not headless_mode: _boom(Vector3(float(ev[1]), sim.ground_h(float(ev[1]), float(ev[2])) + 4.0, float(ev[2])), clampf(float(ev[3]) * 0.5, 8.0, 40.0), Color(1.0, 0.6, 0.25))
+	else:
+		sim.step()
+		if not sim.over: sim.step()
 	if (ai_only or demo) and int(sim.t / 60.0) != m0: _ai_report(false)
 	if (ai_only or demo) and sim.t >= minutes_cap * 60.0:
 		_ai_report(true); print("BATTLE-AI: time cap reached (%d min), no winner" % int(minutes_cap)); get_tree().quit()
@@ -793,7 +825,7 @@ func cmd(o: Dictionary) -> bool:
 	return true
 
 func _apply(o: Dictionary) -> bool:
-	if o.t == "cancel": return _cancel_one(o)
+	if o.t == "cancel" and not use_bridge: return _cancel_one(o)
 	return sim.apply_order(o)
 
 func _cancel_one(o: Dictionary) -> bool:

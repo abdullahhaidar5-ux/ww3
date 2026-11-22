@@ -111,6 +111,17 @@ var bench_n := 250
 
 func _ready() -> void:
 	# BATTLE HOOK (orch/godot-battle): Battle mode lives in scripts/battle/ (--battle / --battle-ai start straight in it)
+	# P1 BRIDGE: on the web the switches come from the page address (index.html?battle-ai&fac=IR / ?bridge-test)
+	if get_script() == preload("res://scripts/main.gd") and OS.has_feature("web"):
+		var qs := str(JavaScriptBridge.eval("location.search.slice(1)", true))
+		if qs.begins_with("bridge-test"):
+			var bt: Node = load("res://bridge/bridge_selftest.gd").new()
+			for kv in qs.split("&", false):
+				if kv.begins_with("minutes="): bt.minutes = float(kv.substr(8))
+				elif kv == "bench": bt.bench = true
+			set_process(false); set_physics_process(false); set_process_input(false); set_process_unhandled_input(false); add_child(bt); return
+		if qs.begins_with("battle") or qs.begins_with("demo"):
+			get_tree().change_scene_to_file.call_deferred("res://scenes/battle.tscn"); return
 	if get_script() == preload("res://scripts/main.gd") and (OS.get_cmdline_user_args().has("--battle") or OS.get_cmdline_user_args().has("--battle-ai") or OS.get_cmdline_user_args().has("--demo")):
 		get_tree().change_scene_to_file.call_deferred("res://scenes/battle.tscn")
 		return

@@ -33,10 +33,13 @@ var info := sim.new_game({map = "bm_splitridge", seed = 1, diff = 1,
 sim.order(0, {t = "go", ids = [12, 13], x = 2100, y = 900})   # queued; applied at the start of the next tick
 sim.step(2)                                       # 2 fixed ticks; then ONE bulk read fills the arrays below
 sim.n                                             # entities this tick
-sim.ent  : PackedFloat32Array                     # n × ENT_STRIDE (16)  — see Entity record
+sim.ent  : PackedFloat32Array                     # n × ENT_STRIDE (18)  — see Entity record
 sim.proj : PackedFloat32Array                     # shells / missiles in flight, m × PROJ_STRIDE (8)
 sim.events : Array                                # everything that happened in these ticks (see Events)
 sim.teams : Array                                 # refreshed every step (cheap): money, power, pop... (see Teams)
+sim.prod : Dictionary                             # building id -> {q:[[kind, done_s, total_s]..], rally: Vector2 or null}
+sim.valid_spot(team, kind, x, y) -> bool          # may this building go here (the JS validSpot)
+sim.req_met(team, kind) -> bool                   # tech requirement met
 sim.t, sim.over, sim.winner                       # game seconds, bool, winning team slot or -1
 sim.map_data()                                    # once after new_game: heightfield, grid, roads, props (see Map)
 sim.lines()                                       # supply lines, craters, bridges; re-read when sim.lgv changed
@@ -47,7 +50,7 @@ sim.state_hash() -> String                        # same 16-hex hash as orch/hea
 ```
 Zero per-entity JS calls: `step` makes one JS call and three buffer copies (ents, proj, events+teams JSON).
 
-## Entity record (`sim.ent`, 16 floats each; `SimBridge.E_*` constants)
+## Entity record (`sim.ent`, 18 floats each; `SimBridge.E_*` constants)
 
 | # | const | what |
 |---|---|---|
@@ -66,6 +69,8 @@ Zero per-entity JS calls: `step` makes one JS call and three buffer copies (ents
 | 13 | E_BUILT | buildings: construction 0..1 (1 = finished); units: speed now ÷ top speed, 0..1 |
 | 14 | E_VIS | bit mask of team slots that see it now (bit t = team t). Draw an enemy only if your bit is set |
 | 15 | E_SIZE | footprint: building side length, unit radius |
+| 16 | E_TARGET | id of what it is shooting at / ordered to attack, 0 = none |
+| 17 | E_MAXHP | full hit points (absolute) |
 
 Flags (`SimBridge.F_*`): 1 BUILDING · 2 BUILT (finished) · 4 SELECTABLE (a player may select it) · 8 DEAD (died in this
 step; it is gone from the next one) · 16 GARRISON (a building/dugout/tunnel/transport holding troops) · 32 ROUT ·

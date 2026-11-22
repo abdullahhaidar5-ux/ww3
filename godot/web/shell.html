@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+<title>$GODOT_PROJECT_NAME</title>
+<style>
+html,body,#canvas{margin:0;padding:0;border:0}
+body{color:#fff;background:#0b0f0c;overflow:hidden;touch-action:none}
+#canvas{display:block}#canvas:focus{outline:none}
+#status{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;font:16px system-ui,sans-serif;background:#0b0f0c}
+#status progress{width:320px;height:8px;margin-top:14px}
+#status-notice{max-width:80%;white-space:pre-wrap;text-align:center}
+</style>
+$GODOT_HEAD_INCLUDE
+</head>
+<body>
+<canvas id="canvas">Your browser does not support the canvas tag.</canvas>
+<noscript>This game needs JavaScript.</noscript>
+<div id="status"><div id="status-notice">Loading World War 3...</div><progress id="status-progress" value="0" max="1"></progress></div>
+<!-- the battle simulation (the browser game's own rules + AI); must load before the engine: godot/bridge/README.md -->
+<script src="ww3sim.js"></script>
+<script src="$GODOT_URL"></script>
+<script>
+const GODOT_CONFIG = $GODOT_CONFIG;
+const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
+const engine = new Engine(GODOT_CONFIG);
+(function () {
+	const st = document.getElementById('status'), pr = document.getElementById('status-progress'), nt = document.getElementById('status-notice');
+	const fail = e => { const m = e && e.message ? e.message : String(e); nt.textContent = 'Could not start: ' + m; pr.style.display = 'none'; console.error(e); };
+	if (!window.WW3) return fail('ww3sim.js did not load');
+	const miss = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
+	if (miss.length) return fail('This browser lacks: ' + miss.join(', '));
+	engine.startGame({ onProgress: (c, t) => { if (t > 0) pr.value = c / t; } }).then(() => { st.style.display = 'none'; }, fail);
+}());
+</script>
+</body>
+</html>
