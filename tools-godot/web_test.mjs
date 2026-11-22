@@ -22,6 +22,6 @@ pg.on('pageerror', e => { console.log('PAGE ERROR ' + String(e).slice(0, 400)); 
 await pg.goto(`http://127.0.0.1:${srv.address().port}/index.html?${q}`);
 const t0 = Date.now();
 while (!done && Date.now() - t0 < secs * 1000) await pg.waitForTimeout(500);
-if (shot) { fs.mkdirSync(path.dirname(shot), { recursive: true }); await pg.screenshot({ path: shot }); console.log('shot ' + shot); }
+if (shot) { fs.mkdirSync(path.dirname(shot), { recursive: true }); await pg.screenshot({ path: shot, timeout: 240000 }); console.log('shot ' + shot); }
 console.log(`web_test: ${done ? 'finished' : 'stopped at the time limit'} after ${Math.round((Date.now() - t0) / 1000)} s, ${errs} error lines`);
 await br.close(); srv.close();

@@ -20,6 +20,20 @@ Units everywhere = the browser game's design units (bm_splitridge is 4800×3320;
 on the map (Godot: x → X, y → Z); heights `z` in the same units. Angles in radians, `atan2(dy, dx)` on the map.
 Time: the sim runs fixed ticks of **1/60 s**; call `step(2)` per 30 Hz frame (or `step(1)` per 60 Hz).
 
+## Status (2026-11-22) — implemented and proven
+- `node tools-godot/build_bridge.mjs` → `godot/web/ww3sim.js` (≈0.8 MB, 22 sim modules). `tools-godot/export_web.sh`
+  = build + export + copy `ww3sim.js` next to `index.html` → `godot-build/web/` (not committed).
+- `node tools-godot/bridge_test.mjs` (BRIDGE PASS): same state hash as `orch/headless.mjs` every 30 s for 3 min, events,
+  buffers, map, supply lines, fog, rules, a human seat's move / build / train orders. `--nations`: all 22 start and run.
+  `--long`: 4-player AI battle 10 min. `--bench`: 500 units a side.
+- In the browser (`node tools-godot/web_test.mjs "bridge-test&minutes=10&bench"`, headless Chromium, Godot 4.4.1 web
+  export): 4-player AI battle 10 game-minutes, **state hash every minute identical to Node**; JS sim 0.41 ms per tick,
+  Godot's bulk read 0.27 ms per step; 500 units a side: 7.6 ms per tick + 0.35 ms read (cloud sandbox CPU).
+- `scenes/battle.tscn` runs on the bridge through `bridge_sim.gd` (an adapter with the old GDScript sim's interface, so
+  the scene code kept working). **New visuals / UI / audio code should read `sim.br` (this API) directly.**
+  URL switches on the web: `index.html?battle-ai&fac=IR&vs=US`, `?battle`, `?bridge-test`.
+- Desktop / headless: prints the "web only" error (`--gdsim` = the parked GDScript rules, developers only).
+
 ## GDScript API (`sim_bridge.gd`)
 
 ```gdscript
@@ -62,7 +76,7 @@ Zero per-entity JS calls: `step` makes one JS call and three buffer copies (ents
 | 6 | E_ANG | hull heading |
 | 7 | E_TANG | turret / aim heading (= hull for things without a turret) |
 | 8 | E_HP | hp ÷ max, 0..1 |
-| 9 | E_FLAGS | bit field, see below |
+| 9 | E_FLAGS | bit field, see below (`int(ent[i + E_FLAGS]) & F_ROUT`) |
 | 10 | E_AMMO | ammo left 0..1; −1 = this thing has no ammo rule |
 | 11 | E_RANK | veterancy 0..3 |
 | 12 | E_STATE | animation / action: index into `tables().states` ("idle","move","fire","build","gather","dig","fly","park","rout","dead") |
@@ -72,12 +86,14 @@ Zero per-entity JS calls: `step` makes one JS call and three buffer copies (ents
 | 16 | E_TARGET | id of what it is shooting at / ordered to attack, 0 = none |
 | 17 | E_MAXHP | full hit points (absolute) |
 
-Flags (`SimBridge.F_*`): 1 BUILDING · 2 BUILT (finished) · 4 SELECTABLE (a player may select it) · 8 DEAD (died in this
-step; it is gone from the next one) · 16 GARRISON (a building/dugout/tunnel/transport holding troops) · 32 ROUT ·
+Flags (`SimBridge.F_*`): 1 BUILDING · 2 BUILT (finished) · 4 SELECTABLE (a player may select it) · 8 DEAD (reserved:
+the sim removes the dead before the read - use the `die` event, or an id missing from the next read) · 16 GARRISON (a building/dugout/tunnel/transport holding troops) · 32 ROUT ·
 64 DUG (a dugout, or a unit in a trench) · 128 FIRED (shot during this step) · 256 NOPOWER (building switched off /
 disabled) · 512 SELLING · 1024 REPAIRING · 2048 SUPPLIED (inside its side's supply area) · 4096 ABANDONED (crew bailed
 out) · 8192 LANDED (aircraft on the ground) · 16384 WORKING (dozer building / truck loading) · 32768 CAPTURABLE (neutral
 derrick / quarry / mine / power plant / hospital; `E_TEAM` = owner or −1).
+Derricks and capturable map buildings come as entities with ids `OIL_ID (1000000) + index` (kinds `derrick`, `pplant`,
+`tb_<key>`; attack them with `{t:"atkOil", fi: id - OIL_ID}`).
 Soldiers inside a building, dugout, tunnel or transport are **not** in the list (the JS sim removes them from the
 world); the holder has F_GARRISON and `inside(id)` lists them `[{id, kind, hp}]`.
 
