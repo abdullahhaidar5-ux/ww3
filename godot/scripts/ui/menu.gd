@@ -48,12 +48,14 @@ func _ready() -> void:
 	tr.fac = st.fac; tr.target = st.enemy; tr.map = st.map
 	_seats_sync()
 	_chrome()
-	var start := "title"
+	var start := "title" if UI.menu_start == "" else UI.menu_start
+	UI.menu_start = ""
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--menu="): start = a.substr(7)
 		elif a.begins_with("--shot="): shot_path = a.substr(7)
 		elif a.begins_with("--arg="): arg = a.substr(6)
-	if start != "title": stack = ["title", start]; cur = start
+	if start == "c-map": stack = ["title", "single", start]; cur = start
+	elif start != "title": stack = ["title", start]; cur = start
 	_show(cur, 0)
 
 # ---------------------------------------------------------------- frame: picture, column, breadcrumb, Back, footer

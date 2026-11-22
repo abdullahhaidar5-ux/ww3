@@ -48,6 +48,8 @@ const SEAT_COL := [Color(0.35, 0.9, 0.45), Color(0.95, 0.3, 0.25), Color(0.4, 0.
 # ---------------------------------------------------------------- launch slot (menu -> Battle scene)
 ## {kind = "battle"|"mission"|"tutorial"|"load"|"replay"|"online", map, players:[{fac, ai, tm, diff}], seed, diff, mission, file, code, name}
 static var launch: Dictionary = {}
+## the screen the menu opens on when a scene sends the player back to it ("" = title)
+static var menu_start := ""
 
 # ---------------------------------------------------------------- settings (user://settings.cfg)
 const SET_DEF := {
