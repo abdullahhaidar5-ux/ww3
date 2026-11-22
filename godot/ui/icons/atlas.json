@@ -1,0 +1,10506 @@
+{
+ "_source": "tools-godot/export_data.mjs: pictures captured from the running JS game (canvas.toDataURL / inline SVG tables). key -> {file, x, y, w, h}; paths are relative to godot/ui/icons/",
+ "icons": {
+  "b/AE/airfield": {
+   "file": "cameos/AE.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/barracks": {
+   "file": "cameos/AE.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/coast": {
+   "file": "cameos/AE.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/depot": {
+   "file": "cameos/AE.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/econ": {
+   "file": "cameos/AE.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/factory": {
+   "file": "cameos/AE.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/fort": {
+   "file": "cameos/AE.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/garrison": {
+   "file": "cameos/AE.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/gen": {
+   "file": "cameos/AE.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/hq": {
+   "file": "cameos/AE.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/radio": {
+   "file": "cameos/AE.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/sam": {
+   "file": "cameos/AE.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/shipyard": {
+   "file": "cameos/AE.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/tunnel": {
+   "file": "cameos/AE.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/turret": {
+   "file": "cameos/AE.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/AE/uplink": {
+   "file": "cameos/AE.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/airfield": {
+   "file": "cameos/CN.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/barracks": {
+   "file": "cameos/CN.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/coast": {
+   "file": "cameos/CN.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/depot": {
+   "file": "cameos/CN.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/econ": {
+   "file": "cameos/CN.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/factory": {
+   "file": "cameos/CN.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/fort": {
+   "file": "cameos/CN.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/garrison": {
+   "file": "cameos/CN.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/gen": {
+   "file": "cameos/CN.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/hq": {
+   "file": "cameos/CN.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/radio": {
+   "file": "cameos/CN.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/sam": {
+   "file": "cameos/CN.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/shipyard": {
+   "file": "cameos/CN.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/tunnel": {
+   "file": "cameos/CN.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/turret": {
+   "file": "cameos/CN.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/CN/uplink": {
+   "file": "cameos/CN.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/airfield": {
+   "file": "cameos/DE.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/barracks": {
+   "file": "cameos/DE.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/coast": {
+   "file": "cameos/DE.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/depot": {
+   "file": "cameos/DE.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/econ": {
+   "file": "cameos/DE.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/factory": {
+   "file": "cameos/DE.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/fort": {
+   "file": "cameos/DE.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/garrison": {
+   "file": "cameos/DE.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/gen": {
+   "file": "cameos/DE.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/hq": {
+   "file": "cameos/DE.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/radio": {
+   "file": "cameos/DE.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/sam": {
+   "file": "cameos/DE.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/shipyard": {
+   "file": "cameos/DE.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/tunnel": {
+   "file": "cameos/DE.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/turret": {
+   "file": "cameos/DE.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DE/uplink": {
+   "file": "cameos/DE.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/airfield": {
+   "file": "cameos/DW.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/barracks": {
+   "file": "cameos/DW.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/coast": {
+   "file": "cameos/DW.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/depot": {
+   "file": "cameos/DW.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/econ": {
+   "file": "cameos/DW.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/factory": {
+   "file": "cameos/DW.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/fort": {
+   "file": "cameos/DW.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/garrison": {
+   "file": "cameos/DW.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/gen": {
+   "file": "cameos/DW.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/hq": {
+   "file": "cameos/DW.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/radio": {
+   "file": "cameos/DW.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/sam": {
+   "file": "cameos/DW.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/shipyard": {
+   "file": "cameos/DW.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/tunnel": {
+   "file": "cameos/DW.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/turret": {
+   "file": "cameos/DW.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/DW/uplink": {
+   "file": "cameos/DW.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/airfield": {
+   "file": "cameos/EG.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/barracks": {
+   "file": "cameos/EG.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/coast": {
+   "file": "cameos/EG.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/depot": {
+   "file": "cameos/EG.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/econ": {
+   "file": "cameos/EG.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/factory": {
+   "file": "cameos/EG.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/fort": {
+   "file": "cameos/EG.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/garrison": {
+   "file": "cameos/EG.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/gen": {
+   "file": "cameos/EG.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/hq": {
+   "file": "cameos/EG.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/radio": {
+   "file": "cameos/EG.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/sam": {
+   "file": "cameos/EG.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/shipyard": {
+   "file": "cameos/EG.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/tunnel": {
+   "file": "cameos/EG.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/turret": {
+   "file": "cameos/EG.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/EG/uplink": {
+   "file": "cameos/EG.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/airfield": {
+   "file": "cameos/FR.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/barracks": {
+   "file": "cameos/FR.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/coast": {
+   "file": "cameos/FR.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/depot": {
+   "file": "cameos/FR.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/econ": {
+   "file": "cameos/FR.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/factory": {
+   "file": "cameos/FR.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/fort": {
+   "file": "cameos/FR.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/garrison": {
+   "file": "cameos/FR.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/gen": {
+   "file": "cameos/FR.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/hq": {
+   "file": "cameos/FR.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/radio": {
+   "file": "cameos/FR.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/sam": {
+   "file": "cameos/FR.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/shipyard": {
+   "file": "cameos/FR.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/tunnel": {
+   "file": "cameos/FR.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/turret": {
+   "file": "cameos/FR.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/FR/uplink": {
+   "file": "cameos/FR.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/airfield": {
+   "file": "cameos/GB.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/barracks": {
+   "file": "cameos/GB.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/coast": {
+   "file": "cameos/GB.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/depot": {
+   "file": "cameos/GB.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/econ": {
+   "file": "cameos/GB.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/factory": {
+   "file": "cameos/GB.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/fort": {
+   "file": "cameos/GB.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/garrison": {
+   "file": "cameos/GB.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/gen": {
+   "file": "cameos/GB.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/hq": {
+   "file": "cameos/GB.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/radio": {
+   "file": "cameos/GB.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/sam": {
+   "file": "cameos/GB.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/shipyard": {
+   "file": "cameos/GB.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/tunnel": {
+   "file": "cameos/GB.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/turret": {
+   "file": "cameos/GB.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/GB/uplink": {
+   "file": "cameos/GB.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/airfield": {
+   "file": "cameos/IL.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/barracks": {
+   "file": "cameos/IL.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/coast": {
+   "file": "cameos/IL.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/depot": {
+   "file": "cameos/IL.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/econ": {
+   "file": "cameos/IL.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/factory": {
+   "file": "cameos/IL.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/fort": {
+   "file": "cameos/IL.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/garrison": {
+   "file": "cameos/IL.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/gen": {
+   "file": "cameos/IL.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/hq": {
+   "file": "cameos/IL.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/radio": {
+   "file": "cameos/IL.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/sam": {
+   "file": "cameos/IL.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/shipyard": {
+   "file": "cameos/IL.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/tunnel": {
+   "file": "cameos/IL.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/turret": {
+   "file": "cameos/IL.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IL/uplink": {
+   "file": "cameos/IL.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/airfield": {
+   "file": "cameos/IN.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/barracks": {
+   "file": "cameos/IN.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/coast": {
+   "file": "cameos/IN.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/depot": {
+   "file": "cameos/IN.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/econ": {
+   "file": "cameos/IN.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/factory": {
+   "file": "cameos/IN.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/fort": {
+   "file": "cameos/IN.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/garrison": {
+   "file": "cameos/IN.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/gen": {
+   "file": "cameos/IN.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/hq": {
+   "file": "cameos/IN.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/radio": {
+   "file": "cameos/IN.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/sam": {
+   "file": "cameos/IN.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/shipyard": {
+   "file": "cameos/IN.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/tunnel": {
+   "file": "cameos/IN.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/turret": {
+   "file": "cameos/IN.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IN/uplink": {
+   "file": "cameos/IN.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/airfield": {
+   "file": "cameos/IR.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/barracks": {
+   "file": "cameos/IR.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/coast": {
+   "file": "cameos/IR.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/depot": {
+   "file": "cameos/IR.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/econ": {
+   "file": "cameos/IR.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/factory": {
+   "file": "cameos/IR.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/fort": {
+   "file": "cameos/IR.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/garrison": {
+   "file": "cameos/IR.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/gen": {
+   "file": "cameos/IR.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/hq": {
+   "file": "cameos/IR.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/radio": {
+   "file": "cameos/IR.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/sam": {
+   "file": "cameos/IR.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/shipyard": {
+   "file": "cameos/IR.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/tunnel": {
+   "file": "cameos/IR.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/turret": {
+   "file": "cameos/IR.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/IR/uplink": {
+   "file": "cameos/IR.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/airfield": {
+   "file": "cameos/JP.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/barracks": {
+   "file": "cameos/JP.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/coast": {
+   "file": "cameos/JP.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/depot": {
+   "file": "cameos/JP.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/econ": {
+   "file": "cameos/JP.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/factory": {
+   "file": "cameos/JP.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/fort": {
+   "file": "cameos/JP.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/garrison": {
+   "file": "cameos/JP.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/gen": {
+   "file": "cameos/JP.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/hq": {
+   "file": "cameos/JP.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/radio": {
+   "file": "cameos/JP.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/sam": {
+   "file": "cameos/JP.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/shipyard": {
+   "file": "cameos/JP.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/tunnel": {
+   "file": "cameos/JP.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/turret": {
+   "file": "cameos/JP.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/JP/uplink": {
+   "file": "cameos/JP.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/airfield": {
+   "file": "cameos/KP.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/barracks": {
+   "file": "cameos/KP.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/coast": {
+   "file": "cameos/KP.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/depot": {
+   "file": "cameos/KP.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/econ": {
+   "file": "cameos/KP.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/factory": {
+   "file": "cameos/KP.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/fort": {
+   "file": "cameos/KP.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/garrison": {
+   "file": "cameos/KP.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/gen": {
+   "file": "cameos/KP.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/hq": {
+   "file": "cameos/KP.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/radio": {
+   "file": "cameos/KP.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/sam": {
+   "file": "cameos/KP.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/shipyard": {
+   "file": "cameos/KP.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/tunnel": {
+   "file": "cameos/KP.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/turret": {
+   "file": "cameos/KP.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KP/uplink": {
+   "file": "cameos/KP.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/airfield": {
+   "file": "cameos/KR.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/barracks": {
+   "file": "cameos/KR.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/coast": {
+   "file": "cameos/KR.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/depot": {
+   "file": "cameos/KR.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/econ": {
+   "file": "cameos/KR.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/factory": {
+   "file": "cameos/KR.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/fort": {
+   "file": "cameos/KR.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/garrison": {
+   "file": "cameos/KR.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/gen": {
+   "file": "cameos/KR.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/hq": {
+   "file": "cameos/KR.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/radio": {
+   "file": "cameos/KR.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/sam": {
+   "file": "cameos/KR.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/shipyard": {
+   "file": "cameos/KR.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/tunnel": {
+   "file": "cameos/KR.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/turret": {
+   "file": "cameos/KR.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/KR/uplink": {
+   "file": "cameos/KR.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/airfield": {
+   "file": "cameos/OB.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/barracks": {
+   "file": "cameos/OB.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/coast": {
+   "file": "cameos/OB.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/depot": {
+   "file": "cameos/OB.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/econ": {
+   "file": "cameos/OB.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/factory": {
+   "file": "cameos/OB.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/fort": {
+   "file": "cameos/OB.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/garrison": {
+   "file": "cameos/OB.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/gen": {
+   "file": "cameos/OB.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/hq": {
+   "file": "cameos/OB.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/radio": {
+   "file": "cameos/OB.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/sam": {
+   "file": "cameos/OB.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/shipyard": {
+   "file": "cameos/OB.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/tunnel": {
+   "file": "cameos/OB.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/turret": {
+   "file": "cameos/OB.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/OB/uplink": {
+   "file": "cameos/OB.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/airfield": {
+   "file": "cameos/PK.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/barracks": {
+   "file": "cameos/PK.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/coast": {
+   "file": "cameos/PK.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/depot": {
+   "file": "cameos/PK.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/econ": {
+   "file": "cameos/PK.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/factory": {
+   "file": "cameos/PK.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/fort": {
+   "file": "cameos/PK.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/garrison": {
+   "file": "cameos/PK.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/gen": {
+   "file": "cameos/PK.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/hq": {
+   "file": "cameos/PK.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/radio": {
+   "file": "cameos/PK.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/sam": {
+   "file": "cameos/PK.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/shipyard": {
+   "file": "cameos/PK.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/tunnel": {
+   "file": "cameos/PK.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/turret": {
+   "file": "cameos/PK.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/PK/uplink": {
+   "file": "cameos/PK.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/airfield": {
+   "file": "cameos/RS.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/barracks": {
+   "file": "cameos/RS.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/coast": {
+   "file": "cameos/RS.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/depot": {
+   "file": "cameos/RS.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/econ": {
+   "file": "cameos/RS.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/factory": {
+   "file": "cameos/RS.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/fort": {
+   "file": "cameos/RS.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/garrison": {
+   "file": "cameos/RS.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/gen": {
+   "file": "cameos/RS.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/hq": {
+   "file": "cameos/RS.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/radio": {
+   "file": "cameos/RS.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/sam": {
+   "file": "cameos/RS.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/shipyard": {
+   "file": "cameos/RS.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/tunnel": {
+   "file": "cameos/RS.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/turret": {
+   "file": "cameos/RS.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RS/uplink": {
+   "file": "cameos/RS.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/airfield": {
+   "file": "cameos/RU.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/barracks": {
+   "file": "cameos/RU.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/coast": {
+   "file": "cameos/RU.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/depot": {
+   "file": "cameos/RU.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/econ": {
+   "file": "cameos/RU.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/factory": {
+   "file": "cameos/RU.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/fort": {
+   "file": "cameos/RU.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/garrison": {
+   "file": "cameos/RU.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/gen": {
+   "file": "cameos/RU.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/hq": {
+   "file": "cameos/RU.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/radio": {
+   "file": "cameos/RU.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/sam": {
+   "file": "cameos/RU.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/shipyard": {
+   "file": "cameos/RU.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/tunnel": {
+   "file": "cameos/RU.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/turret": {
+   "file": "cameos/RU.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RU/uplink": {
+   "file": "cameos/RU.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/airfield": {
+   "file": "cameos/RV.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/barracks": {
+   "file": "cameos/RV.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/coast": {
+   "file": "cameos/RV.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/depot": {
+   "file": "cameos/RV.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/econ": {
+   "file": "cameos/RV.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/factory": {
+   "file": "cameos/RV.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/fort": {
+   "file": "cameos/RV.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/garrison": {
+   "file": "cameos/RV.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/gen": {
+   "file": "cameos/RV.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/hq": {
+   "file": "cameos/RV.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/radio": {
+   "file": "cameos/RV.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/sam": {
+   "file": "cameos/RV.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/shipyard": {
+   "file": "cameos/RV.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/tunnel": {
+   "file": "cameos/RV.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/turret": {
+   "file": "cameos/RV.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/RV/uplink": {
+   "file": "cameos/RV.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/airfield": {
+   "file": "cameos/SA.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/barracks": {
+   "file": "cameos/SA.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/coast": {
+   "file": "cameos/SA.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/depot": {
+   "file": "cameos/SA.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/econ": {
+   "file": "cameos/SA.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/factory": {
+   "file": "cameos/SA.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/fort": {
+   "file": "cameos/SA.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/garrison": {
+   "file": "cameos/SA.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/gen": {
+   "file": "cameos/SA.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/hq": {
+   "file": "cameos/SA.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/radio": {
+   "file": "cameos/SA.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/sam": {
+   "file": "cameos/SA.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/shipyard": {
+   "file": "cameos/SA.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/tunnel": {
+   "file": "cameos/SA.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/turret": {
+   "file": "cameos/SA.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/SA/uplink": {
+   "file": "cameos/SA.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/airfield": {
+   "file": "cameos/TR.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/barracks": {
+   "file": "cameos/TR.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/coast": {
+   "file": "cameos/TR.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/depot": {
+   "file": "cameos/TR.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/econ": {
+   "file": "cameos/TR.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/factory": {
+   "file": "cameos/TR.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/fort": {
+   "file": "cameos/TR.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/garrison": {
+   "file": "cameos/TR.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/gen": {
+   "file": "cameos/TR.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/hq": {
+   "file": "cameos/TR.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/radio": {
+   "file": "cameos/TR.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/sam": {
+   "file": "cameos/TR.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/shipyard": {
+   "file": "cameos/TR.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/tunnel": {
+   "file": "cameos/TR.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/turret": {
+   "file": "cameos/TR.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/TR/uplink": {
+   "file": "cameos/TR.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/airfield": {
+   "file": "cameos/UA.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/barracks": {
+   "file": "cameos/UA.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/coast": {
+   "file": "cameos/UA.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/depot": {
+   "file": "cameos/UA.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/econ": {
+   "file": "cameos/UA.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/factory": {
+   "file": "cameos/UA.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/fort": {
+   "file": "cameos/UA.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/garrison": {
+   "file": "cameos/UA.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/gen": {
+   "file": "cameos/UA.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/hq": {
+   "file": "cameos/UA.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/radio": {
+   "file": "cameos/UA.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/sam": {
+   "file": "cameos/UA.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/shipyard": {
+   "file": "cameos/UA.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/tunnel": {
+   "file": "cameos/UA.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/turret": {
+   "file": "cameos/UA.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/UA/uplink": {
+   "file": "cameos/UA.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/airfield": {
+   "file": "cameos/US.png",
+   "x": 0,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/barracks": {
+   "file": "cameos/US.png",
+   "x": 1022,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/coast": {
+   "file": "cameos/US.png",
+   "x": 584,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/depot": {
+   "file": "cameos/US.png",
+   "x": 1168,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/econ": {
+   "file": "cameos/US.png",
+   "x": 0,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/factory": {
+   "file": "cameos/US.png",
+   "x": 1314,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/fort": {
+   "file": "cameos/US.png",
+   "x": 146,
+   "y": 684,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/garrison": {
+   "file": "cameos/US.png",
+   "x": 1314,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/gen": {
+   "file": "cameos/US.png",
+   "x": 1168,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/hq": {
+   "file": "cameos/US.png",
+   "x": 876,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/radio": {
+   "file": "cameos/US.png",
+   "x": 876,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/sam": {
+   "file": "cameos/US.png",
+   "x": 438,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/shipyard": {
+   "file": "cameos/US.png",
+   "x": 146,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/tunnel": {
+   "file": "cameos/US.png",
+   "x": 730,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/turret": {
+   "file": "cameos/US.png",
+   "x": 292,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/US/uplink": {
+   "file": "cameos/US.png",
+   "x": 1022,
+   "y": 570,
+   "w": 144,
+   "h": 112
+  },
+  "b/_/garrison": {
+   "file": "cameos/_neutral.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "b/_/hosp": {
+   "file": "cameos/_neutral.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "b/_/house": {
+   "file": "cameos/_neutral.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "b/_/mine": {
+   "file": "cameos/_neutral.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "b/_/oil": {
+   "file": "cameos/_neutral.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "b/_/plant": {
+   "file": "cameos/_neutral.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "b/_/quarry": {
+   "file": "cameos/_neutral.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "emblem/DW": {
+   "file": "emblems/DW.png",
+   "x": 0,
+   "y": 0,
+   "w": 128,
+   "h": 128
+  },
+  "emblem/RS": {
+   "file": "emblems/RS.png",
+   "x": 0,
+   "y": 0,
+   "w": 128,
+   "h": 128
+  },
+  "emblem/RV": {
+   "file": "emblems/RV.png",
+   "x": 0,
+   "y": 0,
+   "w": 128,
+   "h": 128
+  },
+  "flag/AE": {
+   "file": "flags/AE.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/CN": {
+   "file": "flags/CN.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/DE": {
+   "file": "flags/DE.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/DW": {
+   "file": "flags/DW.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/EG": {
+   "file": "flags/EG.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/FR": {
+   "file": "flags/FR.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/GB": {
+   "file": "flags/GB.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/IL": {
+   "file": "flags/IL.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/IN": {
+   "file": "flags/IN.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/IR": {
+   "file": "flags/IR.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/JP": {
+   "file": "flags/JP.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/KP": {
+   "file": "flags/KP.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/KR": {
+   "file": "flags/KR.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/OB": {
+   "file": "flags/OB.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/PK": {
+   "file": "flags/PK.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/RS": {
+   "file": "flags/RS.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/RU": {
+   "file": "flags/RU.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/RV": {
+   "file": "flags/RV.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/SA": {
+   "file": "flags/SA.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/TR": {
+   "file": "flags/TR.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/UA": {
+   "file": "flags/UA.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "flag/US": {
+   "file": "flags/US.png",
+   "x": 0,
+   "y": 0,
+   "w": 120,
+   "h": 72
+  },
+  "pow/barrage": {
+   "file": "pow/barrage.png",
+   "x": 0,
+   "y": 0,
+   "w": 60,
+   "h": 60,
+   "svg": "pow/barrage.svg"
+  },
+  "pow/bb": {
+   "file": "pow/bb.png",
+   "x": 0,
+   "y": 0,
+   "w": 60,
+   "h": 60,
+   "svg": "pow/bb.svg"
+  },
+  "pow/flare": {
+   "file": "pow/flare.png",
+   "x": 0,
+   "y": 0,
+   "w": 60,
+   "h": 60,
+   "svg": "pow/flare.svg"
+  },
+  "pow/mil": {
+   "file": "pow/mil.png",
+   "x": 0,
+   "y": 0,
+   "w": 60,
+   "h": 60,
+   "svg": "pow/mil.svg"
+  },
+  "pow/nat": {
+   "file": "pow/nat.png",
+   "x": 0,
+   "y": 0,
+   "w": 60,
+   "h": 60,
+   "svg": "pow/nat.svg"
+  },
+  "pow/para": {
+   "file": "pow/para.png",
+   "x": 0,
+   "y": 0,
+   "w": 60,
+   "h": 60,
+   "svg": "pow/para.svg"
+  },
+  "pow/recon": {
+   "file": "pow/recon.png",
+   "x": 0,
+   "y": 0,
+   "w": 60,
+   "h": 60,
+   "svg": "pow/recon.svg"
+  },
+  "pow/repair": {
+   "file": "pow/repair.png",
+   "x": 0,
+   "y": 0,
+   "w": 60,
+   "h": 60,
+   "svg": "pow/repair.svg"
+  },
+  "pow/sanc": {
+   "file": "pow/sanc.png",
+   "x": 0,
+   "y": 0,
+   "w": 60,
+   "h": 60,
+   "svg": "pow/sanc.svg"
+  },
+  "svg/alert": {
+   "file": "svg/alert.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/alert.svg"
+  },
+  "svg/alift": {
+   "file": "svg/alift.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/alift.svg"
+  },
+  "svg/armor": {
+   "file": "svg/armor.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/armor.svg"
+  },
+  "svg/army": {
+   "file": "svg/army.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/army.svg"
+  },
+  "svg/atk": {
+   "file": "svg/atk.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/atk.svg"
+  },
+  "svg/ban": {
+   "file": "svg/ban.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/ban.svg"
+  },
+  "svg/bolt": {
+   "file": "svg/bolt.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/bolt.svg"
+  },
+  "svg/bomb": {
+   "file": "svg/bomb.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/bomb.svg"
+  },
+  "svg/burst": {
+   "file": "svg/burst.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/burst.svg"
+  },
+  "svg/camera": {
+   "file": "svg/camera.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/camera.svg"
+  },
+  "svg/camo": {
+   "file": "svg/camo.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/camo.svg"
+  },
+  "svg/cash": {
+   "file": "svg/cash.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/cash.svg"
+  },
+  "svg/check": {
+   "file": "svg/check.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/check.svg"
+  },
+  "svg/ckpt": {
+   "file": "svg/ckpt.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/ckpt.svg"
+  },
+  "svg/clock": {
+   "file": "svg/clock.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/clock.svg"
+  },
+  "svg/cloud": {
+   "file": "svg/cloud.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/cloud.svg"
+  },
+  "svg/clr": {
+   "file": "svg/clr.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/clr.svg"
+  },
+  "svg/cnl": {
+   "file": "svg/cnl.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/cnl.svg"
+  },
+  "svg/crate": {
+   "file": "svg/crate.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/crate.svg"
+  },
+  "svg/demo": {
+   "file": "svg/demo.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/demo.svg"
+  },
+  "svg/dig": {
+   "file": "svg/dig.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/dig.svg"
+  },
+  "svg/down": {
+   "file": "svg/down.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/down.svg"
+  },
+  "svg/drone": {
+   "file": "svg/drone.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/drone.svg"
+  },
+  "svg/dusk": {
+   "file": "svg/dusk.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/dusk.svg"
+  },
+  "svg/eye": {
+   "file": "svg/eye.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/eye.svg"
+  },
+  "svg/fix": {
+   "file": "svg/fix.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/fix.svg"
+  },
+  "svg/fixb": {
+   "file": "svg/fixb.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/fixb.svg"
+  },
+  "svg/flag": {
+   "file": "svg/flag.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/flag.svg"
+  },
+  "svg/flare": {
+   "file": "svg/flare.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/flare.svg"
+  },
+  "svg/fly": {
+   "file": "svg/fly.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/fly.svg"
+  },
+  "svg/fuel": {
+   "file": "svg/fuel.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/fuel.svg"
+  },
+  "svg/gear": {
+   "file": "svg/gear.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/gear.svg"
+  },
+  "svg/grd": {
+   "file": "svg/grd.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/grd.svg"
+  },
+  "svg/heli": {
+   "file": "svg/heli.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/heli.svg"
+  },
+  "svg/help": {
+   "file": "svg/help.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/help.svg"
+  },
+  "svg/leaf": {
+   "file": "svg/leaf.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/leaf.svg"
+  },
+  "svg/map": {
+   "file": "svg/map.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/map.svg"
+  },
+  "svg/medic": {
+   "file": "svg/medic.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/medic.svg"
+  },
+  "svg/menu": {
+   "file": "svg/menu.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/menu.svg"
+  },
+  "svg/mine": {
+   "file": "svg/mine.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/mine.svg"
+  },
+  "svg/missile": {
+   "file": "svg/missile.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/missile.svg"
+  },
+  "svg/moon": {
+   "file": "svg/moon.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/moon.svg"
+  },
+  "svg/music": {
+   "file": "svg/music.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/music.svg"
+  },
+  "svg/para": {
+   "file": "svg/para.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/para.svg"
+  },
+  "svg/parachute": {
+   "file": "svg/parachute.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/parachute.svg"
+  },
+  "svg/pause": {
+   "file": "svg/pause.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/pause.svg"
+  },
+  "svg/plane": {
+   "file": "svg/plane.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/plane.svg"
+  },
+  "svg/play": {
+   "file": "svg/play.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/play.svg"
+  },
+  "svg/plus": {
+   "file": "svg/plus.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/plus.svg"
+  },
+  "svg/pont": {
+   "file": "svg/pont.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/pont.svg"
+  },
+  "svg/quit": {
+   "file": "svg/quit.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/quit.svg"
+  },
+  "svg/radar": {
+   "file": "svg/radar.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/radar.svg"
+  },
+  "svg/rain": {
+   "file": "svg/rain.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/rain.svg"
+  },
+  "svg/rally": {
+   "file": "svg/rally.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/rally.svg"
+  },
+  "svg/restart": {
+   "file": "svg/restart.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/restart.svg"
+  },
+  "svg/ret": {
+   "file": "svg/ret.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/ret.svg"
+  },
+  "svg/rifle": {
+   "file": "svg/rifle.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/rifle.svg"
+  },
+  "svg/rocket": {
+   "file": "svg/rocket.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/rocket.svg"
+  },
+  "svg/same": {
+   "file": "svg/same.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/same.svg"
+  },
+  "svg/scope": {
+   "file": "svg/scope.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/scope.svg"
+  },
+  "svg/sell": {
+   "file": "svg/sell.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/sell.svg"
+  },
+  "svg/shell": {
+   "file": "svg/shell.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/shell.svg"
+  },
+  "svg/ship": {
+   "file": "svg/ship.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/ship.svg"
+  },
+  "svg/skull": {
+   "file": "svg/skull.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/skull.svg"
+  },
+  "svg/snow": {
+   "file": "svg/snow.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/snow.svg"
+  },
+  "svg/sound": {
+   "file": "svg/sound.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/sound.svg"
+  },
+  "svg/speed": {
+   "file": "svg/speed.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/speed.svg"
+  },
+  "svg/squad": {
+   "file": "svg/squad.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/squad.svg"
+  },
+  "svg/star": {
+   "file": "svg/star.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/star.svg"
+  },
+  "svg/storm": {
+   "file": "svg/storm.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/storm.svg"
+  },
+  "svg/stp": {
+   "file": "svg/stp.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/stp.svg"
+  },
+  "svg/sun": {
+   "file": "svg/sun.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/sun.svg"
+  },
+  "svg/swords": {
+   "file": "svg/swords.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/swords.svg"
+  },
+  "svg/tank": {
+   "file": "svg/tank.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/tank.svg"
+  },
+  "svg/target": {
+   "file": "svg/target.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/target.svg"
+  },
+  "svg/trash": {
+   "file": "svg/trash.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/trash.svg"
+  },
+  "svg/troops": {
+   "file": "svg/troops.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/troops.svg"
+  },
+  "svg/up": {
+   "file": "svg/up.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/up.svg"
+  },
+  "svg/vest": {
+   "file": "svg/vest.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/vest.svg"
+  },
+  "svg/voice": {
+   "file": "svg/voice.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/voice.svg"
+  },
+  "svg/wall": {
+   "file": "svg/wall.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/wall.svg"
+  },
+  "svg/wrench": {
+   "file": "svg/wrench.png",
+   "x": 0,
+   "y": 0,
+   "w": 96,
+   "h": 96,
+   "svg": "svg/wrench.svg"
+  },
+  "u/AE/aa": {
+   "file": "cameos/AE.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/airlift": {
+   "file": "cameos/AE.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/ammot": {
+   "file": "cameos/AE.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/arty": {
+   "file": "cameos/AE.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/at": {
+   "file": "cameos/AE.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/atgm": {
+   "file": "cameos/AE.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/atk": {
+   "file": "cameos/AE.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/bmt": {
+   "file": "cameos/AE.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/boat": {
+   "file": "cameos/AE.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/cbr": {
+   "file": "cameos/AE.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/champ": {
+   "file": "cameos/AE.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/cleric": {
+   "file": "cameos/AE.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/commissar": {
+   "file": "cameos/AE.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/darty": {
+   "file": "cameos/AE.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/dozer": {
+   "file": "cameos/AE.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/drone": {
+   "file": "cameos/AE.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/dsam": {
+   "file": "cameos/AE.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/dtank": {
+   "file": "cameos/AE.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/ew": {
+   "file": "cameos/AE.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/fast": {
+   "file": "cameos/AE.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/fpvt": {
+   "file": "cameos/AE.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/guer": {
+   "file": "cameos/AE.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/hacker": {
+   "file": "cameos/AE.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/harv": {
+   "file": "cameos/AE.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/heli": {
+   "file": "cameos/AE.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/hero": {
+   "file": "cameos/AE.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/idome": {
+   "file": "cameos/AE.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/inf": {
+   "file": "cameos/AE.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/jeep": {
+   "file": "cameos/AE.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/jet": {
+   "file": "cameos/AE.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/krb": {
+   "file": "cameos/AE.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/lander": {
+   "file": "cameos/AE.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/medic": {
+   "file": "cameos/AE.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/minel": {
+   "file": "cameos/AE.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/mortar": {
+   "file": "cameos/AE.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/officer": {
+   "file": "cameos/AE.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/raidlead": {
+   "file": "cameos/AE.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/recon": {
+   "file": "cameos/AE.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/saka": {
+   "file": "cameos/AE.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/sapper": {
+   "file": "cameos/AE.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/ship": {
+   "file": "cameos/AE.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/spy": {
+   "file": "cameos/AE.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/sub": {
+   "file": "cameos/AE.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/sweep": {
+   "file": "cameos/AE.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/tank": {
+   "file": "cameos/AE.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/AE/tb2": {
+   "file": "cameos/AE.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/aa": {
+   "file": "cameos/CN.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/airlift": {
+   "file": "cameos/CN.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/ammot": {
+   "file": "cameos/CN.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/arty": {
+   "file": "cameos/CN.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/at": {
+   "file": "cameos/CN.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/atgm": {
+   "file": "cameos/CN.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/atk": {
+   "file": "cameos/CN.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/bmt": {
+   "file": "cameos/CN.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/boat": {
+   "file": "cameos/CN.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/cbr": {
+   "file": "cameos/CN.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/champ": {
+   "file": "cameos/CN.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/cleric": {
+   "file": "cameos/CN.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/commissar": {
+   "file": "cameos/CN.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/darty": {
+   "file": "cameos/CN.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/dozer": {
+   "file": "cameos/CN.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/drone": {
+   "file": "cameos/CN.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/dsam": {
+   "file": "cameos/CN.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/dtank": {
+   "file": "cameos/CN.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/ew": {
+   "file": "cameos/CN.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/fast": {
+   "file": "cameos/CN.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/fpvt": {
+   "file": "cameos/CN.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/guer": {
+   "file": "cameos/CN.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/hacker": {
+   "file": "cameos/CN.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/harv": {
+   "file": "cameos/CN.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/heli": {
+   "file": "cameos/CN.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/hero": {
+   "file": "cameos/CN.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/idome": {
+   "file": "cameos/CN.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/inf": {
+   "file": "cameos/CN.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/jeep": {
+   "file": "cameos/CN.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/jet": {
+   "file": "cameos/CN.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/krb": {
+   "file": "cameos/CN.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/lander": {
+   "file": "cameos/CN.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/medic": {
+   "file": "cameos/CN.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/minel": {
+   "file": "cameos/CN.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/mortar": {
+   "file": "cameos/CN.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/officer": {
+   "file": "cameos/CN.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/raidlead": {
+   "file": "cameos/CN.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/recon": {
+   "file": "cameos/CN.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/saka": {
+   "file": "cameos/CN.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/sapper": {
+   "file": "cameos/CN.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/ship": {
+   "file": "cameos/CN.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/spy": {
+   "file": "cameos/CN.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/sub": {
+   "file": "cameos/CN.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/sweep": {
+   "file": "cameos/CN.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/tank": {
+   "file": "cameos/CN.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/CN/tb2": {
+   "file": "cameos/CN.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/aa": {
+   "file": "cameos/DE.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/airlift": {
+   "file": "cameos/DE.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/ammot": {
+   "file": "cameos/DE.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/arty": {
+   "file": "cameos/DE.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/at": {
+   "file": "cameos/DE.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/atgm": {
+   "file": "cameos/DE.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/atk": {
+   "file": "cameos/DE.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/bmt": {
+   "file": "cameos/DE.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/boat": {
+   "file": "cameos/DE.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/cbr": {
+   "file": "cameos/DE.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/champ": {
+   "file": "cameos/DE.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/cleric": {
+   "file": "cameos/DE.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/commissar": {
+   "file": "cameos/DE.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/darty": {
+   "file": "cameos/DE.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/dozer": {
+   "file": "cameos/DE.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/drone": {
+   "file": "cameos/DE.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/dsam": {
+   "file": "cameos/DE.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/dtank": {
+   "file": "cameos/DE.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/ew": {
+   "file": "cameos/DE.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/fast": {
+   "file": "cameos/DE.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/fpvt": {
+   "file": "cameos/DE.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/guer": {
+   "file": "cameos/DE.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/hacker": {
+   "file": "cameos/DE.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/harv": {
+   "file": "cameos/DE.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/heli": {
+   "file": "cameos/DE.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/hero": {
+   "file": "cameos/DE.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/idome": {
+   "file": "cameos/DE.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/inf": {
+   "file": "cameos/DE.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/jeep": {
+   "file": "cameos/DE.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/jet": {
+   "file": "cameos/DE.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/krb": {
+   "file": "cameos/DE.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/lander": {
+   "file": "cameos/DE.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/medic": {
+   "file": "cameos/DE.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/minel": {
+   "file": "cameos/DE.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/mortar": {
+   "file": "cameos/DE.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/officer": {
+   "file": "cameos/DE.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/raidlead": {
+   "file": "cameos/DE.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/recon": {
+   "file": "cameos/DE.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/saka": {
+   "file": "cameos/DE.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/sapper": {
+   "file": "cameos/DE.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/ship": {
+   "file": "cameos/DE.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/spy": {
+   "file": "cameos/DE.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/sub": {
+   "file": "cameos/DE.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/sweep": {
+   "file": "cameos/DE.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/tank": {
+   "file": "cameos/DE.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DE/tb2": {
+   "file": "cameos/DE.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/aa": {
+   "file": "cameos/DW.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/airlift": {
+   "file": "cameos/DW.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/ammot": {
+   "file": "cameos/DW.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/arty": {
+   "file": "cameos/DW.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/at": {
+   "file": "cameos/DW.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/atgm": {
+   "file": "cameos/DW.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/atk": {
+   "file": "cameos/DW.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/bmt": {
+   "file": "cameos/DW.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/boat": {
+   "file": "cameos/DW.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/cbr": {
+   "file": "cameos/DW.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/champ": {
+   "file": "cameos/DW.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/cleric": {
+   "file": "cameos/DW.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/commissar": {
+   "file": "cameos/DW.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/darty": {
+   "file": "cameos/DW.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/dozer": {
+   "file": "cameos/DW.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/drone": {
+   "file": "cameos/DW.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/dsam": {
+   "file": "cameos/DW.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/dtank": {
+   "file": "cameos/DW.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/ew": {
+   "file": "cameos/DW.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/fast": {
+   "file": "cameos/DW.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/fpvt": {
+   "file": "cameos/DW.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/guer": {
+   "file": "cameos/DW.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/hacker": {
+   "file": "cameos/DW.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/harv": {
+   "file": "cameos/DW.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/heli": {
+   "file": "cameos/DW.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/hero": {
+   "file": "cameos/DW.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/idome": {
+   "file": "cameos/DW.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/inf": {
+   "file": "cameos/DW.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/jeep": {
+   "file": "cameos/DW.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/jet": {
+   "file": "cameos/DW.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/krb": {
+   "file": "cameos/DW.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/lander": {
+   "file": "cameos/DW.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/medic": {
+   "file": "cameos/DW.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/minel": {
+   "file": "cameos/DW.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/mortar": {
+   "file": "cameos/DW.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/officer": {
+   "file": "cameos/DW.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/raidlead": {
+   "file": "cameos/DW.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/recon": {
+   "file": "cameos/DW.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/saka": {
+   "file": "cameos/DW.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/sapper": {
+   "file": "cameos/DW.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/ship": {
+   "file": "cameos/DW.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/spy": {
+   "file": "cameos/DW.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/sub": {
+   "file": "cameos/DW.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/sweep": {
+   "file": "cameos/DW.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/tank": {
+   "file": "cameos/DW.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/DW/tb2": {
+   "file": "cameos/DW.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/aa": {
+   "file": "cameos/EG.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/airlift": {
+   "file": "cameos/EG.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/ammot": {
+   "file": "cameos/EG.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/arty": {
+   "file": "cameos/EG.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/at": {
+   "file": "cameos/EG.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/atgm": {
+   "file": "cameos/EG.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/atk": {
+   "file": "cameos/EG.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/bmt": {
+   "file": "cameos/EG.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/boat": {
+   "file": "cameos/EG.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/cbr": {
+   "file": "cameos/EG.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/champ": {
+   "file": "cameos/EG.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/cleric": {
+   "file": "cameos/EG.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/commissar": {
+   "file": "cameos/EG.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/darty": {
+   "file": "cameos/EG.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/dozer": {
+   "file": "cameos/EG.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/drone": {
+   "file": "cameos/EG.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/dsam": {
+   "file": "cameos/EG.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/dtank": {
+   "file": "cameos/EG.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/ew": {
+   "file": "cameos/EG.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/fast": {
+   "file": "cameos/EG.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/fpvt": {
+   "file": "cameos/EG.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/guer": {
+   "file": "cameos/EG.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/hacker": {
+   "file": "cameos/EG.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/harv": {
+   "file": "cameos/EG.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/heli": {
+   "file": "cameos/EG.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/hero": {
+   "file": "cameos/EG.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/idome": {
+   "file": "cameos/EG.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/inf": {
+   "file": "cameos/EG.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/jeep": {
+   "file": "cameos/EG.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/jet": {
+   "file": "cameos/EG.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/krb": {
+   "file": "cameos/EG.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/lander": {
+   "file": "cameos/EG.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/medic": {
+   "file": "cameos/EG.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/minel": {
+   "file": "cameos/EG.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/mortar": {
+   "file": "cameos/EG.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/officer": {
+   "file": "cameos/EG.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/raidlead": {
+   "file": "cameos/EG.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/recon": {
+   "file": "cameos/EG.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/saka": {
+   "file": "cameos/EG.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/sapper": {
+   "file": "cameos/EG.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/ship": {
+   "file": "cameos/EG.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/spy": {
+   "file": "cameos/EG.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/sub": {
+   "file": "cameos/EG.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/sweep": {
+   "file": "cameos/EG.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/tank": {
+   "file": "cameos/EG.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/EG/tb2": {
+   "file": "cameos/EG.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/aa": {
+   "file": "cameos/FR.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/airlift": {
+   "file": "cameos/FR.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/ammot": {
+   "file": "cameos/FR.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/arty": {
+   "file": "cameos/FR.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/at": {
+   "file": "cameos/FR.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/atgm": {
+   "file": "cameos/FR.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/atk": {
+   "file": "cameos/FR.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/bmt": {
+   "file": "cameos/FR.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/boat": {
+   "file": "cameos/FR.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/cbr": {
+   "file": "cameos/FR.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/champ": {
+   "file": "cameos/FR.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/cleric": {
+   "file": "cameos/FR.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/commissar": {
+   "file": "cameos/FR.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/darty": {
+   "file": "cameos/FR.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/dozer": {
+   "file": "cameos/FR.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/drone": {
+   "file": "cameos/FR.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/dsam": {
+   "file": "cameos/FR.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/dtank": {
+   "file": "cameos/FR.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/ew": {
+   "file": "cameos/FR.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/fast": {
+   "file": "cameos/FR.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/fpvt": {
+   "file": "cameos/FR.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/guer": {
+   "file": "cameos/FR.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/hacker": {
+   "file": "cameos/FR.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/harv": {
+   "file": "cameos/FR.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/heli": {
+   "file": "cameos/FR.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/hero": {
+   "file": "cameos/FR.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/idome": {
+   "file": "cameos/FR.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/inf": {
+   "file": "cameos/FR.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/jeep": {
+   "file": "cameos/FR.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/jet": {
+   "file": "cameos/FR.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/krb": {
+   "file": "cameos/FR.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/lander": {
+   "file": "cameos/FR.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/medic": {
+   "file": "cameos/FR.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/minel": {
+   "file": "cameos/FR.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/mortar": {
+   "file": "cameos/FR.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/officer": {
+   "file": "cameos/FR.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/raidlead": {
+   "file": "cameos/FR.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/recon": {
+   "file": "cameos/FR.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/saka": {
+   "file": "cameos/FR.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/sapper": {
+   "file": "cameos/FR.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/ship": {
+   "file": "cameos/FR.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/spy": {
+   "file": "cameos/FR.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/sub": {
+   "file": "cameos/FR.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/sweep": {
+   "file": "cameos/FR.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/tank": {
+   "file": "cameos/FR.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/FR/tb2": {
+   "file": "cameos/FR.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/aa": {
+   "file": "cameos/GB.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/airlift": {
+   "file": "cameos/GB.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/ammot": {
+   "file": "cameos/GB.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/arty": {
+   "file": "cameos/GB.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/at": {
+   "file": "cameos/GB.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/atgm": {
+   "file": "cameos/GB.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/atk": {
+   "file": "cameos/GB.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/bmt": {
+   "file": "cameos/GB.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/boat": {
+   "file": "cameos/GB.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/cbr": {
+   "file": "cameos/GB.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/champ": {
+   "file": "cameos/GB.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/cleric": {
+   "file": "cameos/GB.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/commissar": {
+   "file": "cameos/GB.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/darty": {
+   "file": "cameos/GB.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/dozer": {
+   "file": "cameos/GB.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/drone": {
+   "file": "cameos/GB.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/dsam": {
+   "file": "cameos/GB.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/dtank": {
+   "file": "cameos/GB.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/ew": {
+   "file": "cameos/GB.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/fast": {
+   "file": "cameos/GB.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/fpvt": {
+   "file": "cameos/GB.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/guer": {
+   "file": "cameos/GB.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/hacker": {
+   "file": "cameos/GB.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/harv": {
+   "file": "cameos/GB.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/heli": {
+   "file": "cameos/GB.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/hero": {
+   "file": "cameos/GB.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/idome": {
+   "file": "cameos/GB.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/inf": {
+   "file": "cameos/GB.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/jeep": {
+   "file": "cameos/GB.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/jet": {
+   "file": "cameos/GB.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/krb": {
+   "file": "cameos/GB.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/lander": {
+   "file": "cameos/GB.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/medic": {
+   "file": "cameos/GB.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/minel": {
+   "file": "cameos/GB.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/mortar": {
+   "file": "cameos/GB.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/officer": {
+   "file": "cameos/GB.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/raidlead": {
+   "file": "cameos/GB.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/recon": {
+   "file": "cameos/GB.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/saka": {
+   "file": "cameos/GB.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/sapper": {
+   "file": "cameos/GB.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/ship": {
+   "file": "cameos/GB.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/spy": {
+   "file": "cameos/GB.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/sub": {
+   "file": "cameos/GB.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/sweep": {
+   "file": "cameos/GB.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/tank": {
+   "file": "cameos/GB.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/GB/tb2": {
+   "file": "cameos/GB.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/aa": {
+   "file": "cameos/IL.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/airlift": {
+   "file": "cameos/IL.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/ammot": {
+   "file": "cameos/IL.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/arty": {
+   "file": "cameos/IL.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/at": {
+   "file": "cameos/IL.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/atgm": {
+   "file": "cameos/IL.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/atk": {
+   "file": "cameos/IL.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/bmt": {
+   "file": "cameos/IL.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/boat": {
+   "file": "cameos/IL.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/cbr": {
+   "file": "cameos/IL.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/champ": {
+   "file": "cameos/IL.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/cleric": {
+   "file": "cameos/IL.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/commissar": {
+   "file": "cameos/IL.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/darty": {
+   "file": "cameos/IL.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/dozer": {
+   "file": "cameos/IL.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/drone": {
+   "file": "cameos/IL.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/dsam": {
+   "file": "cameos/IL.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/dtank": {
+   "file": "cameos/IL.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/ew": {
+   "file": "cameos/IL.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/fast": {
+   "file": "cameos/IL.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/fpvt": {
+   "file": "cameos/IL.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/guer": {
+   "file": "cameos/IL.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/hacker": {
+   "file": "cameos/IL.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/harv": {
+   "file": "cameos/IL.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/heli": {
+   "file": "cameos/IL.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/hero": {
+   "file": "cameos/IL.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/idome": {
+   "file": "cameos/IL.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/inf": {
+   "file": "cameos/IL.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/jeep": {
+   "file": "cameos/IL.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/jet": {
+   "file": "cameos/IL.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/krb": {
+   "file": "cameos/IL.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/lander": {
+   "file": "cameos/IL.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/medic": {
+   "file": "cameos/IL.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/minel": {
+   "file": "cameos/IL.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/mortar": {
+   "file": "cameos/IL.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/officer": {
+   "file": "cameos/IL.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/raidlead": {
+   "file": "cameos/IL.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/recon": {
+   "file": "cameos/IL.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/saka": {
+   "file": "cameos/IL.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/sapper": {
+   "file": "cameos/IL.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/ship": {
+   "file": "cameos/IL.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/spy": {
+   "file": "cameos/IL.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/sub": {
+   "file": "cameos/IL.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/sweep": {
+   "file": "cameos/IL.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/tank": {
+   "file": "cameos/IL.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IL/tb2": {
+   "file": "cameos/IL.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/aa": {
+   "file": "cameos/IN.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/airlift": {
+   "file": "cameos/IN.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/ammot": {
+   "file": "cameos/IN.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/arty": {
+   "file": "cameos/IN.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/at": {
+   "file": "cameos/IN.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/atgm": {
+   "file": "cameos/IN.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/atk": {
+   "file": "cameos/IN.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/bmt": {
+   "file": "cameos/IN.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/boat": {
+   "file": "cameos/IN.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/cbr": {
+   "file": "cameos/IN.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/champ": {
+   "file": "cameos/IN.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/cleric": {
+   "file": "cameos/IN.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/commissar": {
+   "file": "cameos/IN.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/darty": {
+   "file": "cameos/IN.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/dozer": {
+   "file": "cameos/IN.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/drone": {
+   "file": "cameos/IN.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/dsam": {
+   "file": "cameos/IN.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/dtank": {
+   "file": "cameos/IN.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/ew": {
+   "file": "cameos/IN.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/fast": {
+   "file": "cameos/IN.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/fpvt": {
+   "file": "cameos/IN.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/guer": {
+   "file": "cameos/IN.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/hacker": {
+   "file": "cameos/IN.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/harv": {
+   "file": "cameos/IN.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/heli": {
+   "file": "cameos/IN.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/hero": {
+   "file": "cameos/IN.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/idome": {
+   "file": "cameos/IN.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/inf": {
+   "file": "cameos/IN.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/jeep": {
+   "file": "cameos/IN.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/jet": {
+   "file": "cameos/IN.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/krb": {
+   "file": "cameos/IN.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/lander": {
+   "file": "cameos/IN.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/medic": {
+   "file": "cameos/IN.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/minel": {
+   "file": "cameos/IN.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/mortar": {
+   "file": "cameos/IN.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/officer": {
+   "file": "cameos/IN.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/raidlead": {
+   "file": "cameos/IN.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/recon": {
+   "file": "cameos/IN.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/saka": {
+   "file": "cameos/IN.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/sapper": {
+   "file": "cameos/IN.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/ship": {
+   "file": "cameos/IN.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/spy": {
+   "file": "cameos/IN.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/sub": {
+   "file": "cameos/IN.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/sweep": {
+   "file": "cameos/IN.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/tank": {
+   "file": "cameos/IN.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IN/tb2": {
+   "file": "cameos/IN.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/aa": {
+   "file": "cameos/IR.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/airlift": {
+   "file": "cameos/IR.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/ammot": {
+   "file": "cameos/IR.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/arty": {
+   "file": "cameos/IR.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/at": {
+   "file": "cameos/IR.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/atgm": {
+   "file": "cameos/IR.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/atk": {
+   "file": "cameos/IR.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/bmt": {
+   "file": "cameos/IR.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/boat": {
+   "file": "cameos/IR.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/cbr": {
+   "file": "cameos/IR.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/champ": {
+   "file": "cameos/IR.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/cleric": {
+   "file": "cameos/IR.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/commissar": {
+   "file": "cameos/IR.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/darty": {
+   "file": "cameos/IR.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/dozer": {
+   "file": "cameos/IR.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/drone": {
+   "file": "cameos/IR.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/dsam": {
+   "file": "cameos/IR.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/dtank": {
+   "file": "cameos/IR.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/ew": {
+   "file": "cameos/IR.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/fast": {
+   "file": "cameos/IR.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/fpvt": {
+   "file": "cameos/IR.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/guer": {
+   "file": "cameos/IR.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/hacker": {
+   "file": "cameos/IR.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/harv": {
+   "file": "cameos/IR.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/heli": {
+   "file": "cameos/IR.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/hero": {
+   "file": "cameos/IR.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/idome": {
+   "file": "cameos/IR.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/inf": {
+   "file": "cameos/IR.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/jeep": {
+   "file": "cameos/IR.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/jet": {
+   "file": "cameos/IR.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/krb": {
+   "file": "cameos/IR.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/lander": {
+   "file": "cameos/IR.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/medic": {
+   "file": "cameos/IR.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/minel": {
+   "file": "cameos/IR.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/mortar": {
+   "file": "cameos/IR.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/officer": {
+   "file": "cameos/IR.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/raidlead": {
+   "file": "cameos/IR.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/recon": {
+   "file": "cameos/IR.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/saka": {
+   "file": "cameos/IR.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/sapper": {
+   "file": "cameos/IR.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/ship": {
+   "file": "cameos/IR.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/spy": {
+   "file": "cameos/IR.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/sub": {
+   "file": "cameos/IR.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/sweep": {
+   "file": "cameos/IR.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/tank": {
+   "file": "cameos/IR.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/IR/tb2": {
+   "file": "cameos/IR.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/aa": {
+   "file": "cameos/JP.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/airlift": {
+   "file": "cameos/JP.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/ammot": {
+   "file": "cameos/JP.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/arty": {
+   "file": "cameos/JP.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/at": {
+   "file": "cameos/JP.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/atgm": {
+   "file": "cameos/JP.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/atk": {
+   "file": "cameos/JP.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/bmt": {
+   "file": "cameos/JP.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/boat": {
+   "file": "cameos/JP.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/cbr": {
+   "file": "cameos/JP.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/champ": {
+   "file": "cameos/JP.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/cleric": {
+   "file": "cameos/JP.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/commissar": {
+   "file": "cameos/JP.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/darty": {
+   "file": "cameos/JP.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/dozer": {
+   "file": "cameos/JP.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/drone": {
+   "file": "cameos/JP.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/dsam": {
+   "file": "cameos/JP.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/dtank": {
+   "file": "cameos/JP.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/ew": {
+   "file": "cameos/JP.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/fast": {
+   "file": "cameos/JP.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/fpvt": {
+   "file": "cameos/JP.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/guer": {
+   "file": "cameos/JP.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/hacker": {
+   "file": "cameos/JP.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/harv": {
+   "file": "cameos/JP.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/heli": {
+   "file": "cameos/JP.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/hero": {
+   "file": "cameos/JP.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/idome": {
+   "file": "cameos/JP.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/inf": {
+   "file": "cameos/JP.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/jeep": {
+   "file": "cameos/JP.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/jet": {
+   "file": "cameos/JP.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/krb": {
+   "file": "cameos/JP.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/lander": {
+   "file": "cameos/JP.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/medic": {
+   "file": "cameos/JP.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/minel": {
+   "file": "cameos/JP.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/mortar": {
+   "file": "cameos/JP.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/officer": {
+   "file": "cameos/JP.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/raidlead": {
+   "file": "cameos/JP.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/recon": {
+   "file": "cameos/JP.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/saka": {
+   "file": "cameos/JP.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/sapper": {
+   "file": "cameos/JP.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/ship": {
+   "file": "cameos/JP.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/spy": {
+   "file": "cameos/JP.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/sub": {
+   "file": "cameos/JP.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/sweep": {
+   "file": "cameos/JP.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/tank": {
+   "file": "cameos/JP.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/JP/tb2": {
+   "file": "cameos/JP.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/aa": {
+   "file": "cameos/KP.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/airlift": {
+   "file": "cameos/KP.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/ammot": {
+   "file": "cameos/KP.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/arty": {
+   "file": "cameos/KP.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/at": {
+   "file": "cameos/KP.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/atgm": {
+   "file": "cameos/KP.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/atk": {
+   "file": "cameos/KP.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/bmt": {
+   "file": "cameos/KP.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/boat": {
+   "file": "cameos/KP.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/cbr": {
+   "file": "cameos/KP.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/champ": {
+   "file": "cameos/KP.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/cleric": {
+   "file": "cameos/KP.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/commissar": {
+   "file": "cameos/KP.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/darty": {
+   "file": "cameos/KP.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/dozer": {
+   "file": "cameos/KP.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/drone": {
+   "file": "cameos/KP.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/dsam": {
+   "file": "cameos/KP.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/dtank": {
+   "file": "cameos/KP.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/ew": {
+   "file": "cameos/KP.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/fast": {
+   "file": "cameos/KP.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/fpvt": {
+   "file": "cameos/KP.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/guer": {
+   "file": "cameos/KP.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/hacker": {
+   "file": "cameos/KP.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/harv": {
+   "file": "cameos/KP.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/heli": {
+   "file": "cameos/KP.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/hero": {
+   "file": "cameos/KP.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/idome": {
+   "file": "cameos/KP.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/inf": {
+   "file": "cameos/KP.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/jeep": {
+   "file": "cameos/KP.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/jet": {
+   "file": "cameos/KP.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/krb": {
+   "file": "cameos/KP.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/lander": {
+   "file": "cameos/KP.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/medic": {
+   "file": "cameos/KP.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/minel": {
+   "file": "cameos/KP.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/mortar": {
+   "file": "cameos/KP.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/officer": {
+   "file": "cameos/KP.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/raidlead": {
+   "file": "cameos/KP.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/recon": {
+   "file": "cameos/KP.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/saka": {
+   "file": "cameos/KP.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/sapper": {
+   "file": "cameos/KP.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/ship": {
+   "file": "cameos/KP.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/spy": {
+   "file": "cameos/KP.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/sub": {
+   "file": "cameos/KP.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/sweep": {
+   "file": "cameos/KP.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/tank": {
+   "file": "cameos/KP.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KP/tb2": {
+   "file": "cameos/KP.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/aa": {
+   "file": "cameos/KR.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/airlift": {
+   "file": "cameos/KR.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/ammot": {
+   "file": "cameos/KR.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/arty": {
+   "file": "cameos/KR.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/at": {
+   "file": "cameos/KR.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/atgm": {
+   "file": "cameos/KR.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/atk": {
+   "file": "cameos/KR.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/bmt": {
+   "file": "cameos/KR.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/boat": {
+   "file": "cameos/KR.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/cbr": {
+   "file": "cameos/KR.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/champ": {
+   "file": "cameos/KR.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/cleric": {
+   "file": "cameos/KR.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/commissar": {
+   "file": "cameos/KR.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/darty": {
+   "file": "cameos/KR.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/dozer": {
+   "file": "cameos/KR.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/drone": {
+   "file": "cameos/KR.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/dsam": {
+   "file": "cameos/KR.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/dtank": {
+   "file": "cameos/KR.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/ew": {
+   "file": "cameos/KR.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/fast": {
+   "file": "cameos/KR.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/fpvt": {
+   "file": "cameos/KR.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/guer": {
+   "file": "cameos/KR.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/hacker": {
+   "file": "cameos/KR.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/harv": {
+   "file": "cameos/KR.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/heli": {
+   "file": "cameos/KR.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/hero": {
+   "file": "cameos/KR.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/idome": {
+   "file": "cameos/KR.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/inf": {
+   "file": "cameos/KR.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/jeep": {
+   "file": "cameos/KR.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/jet": {
+   "file": "cameos/KR.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/krb": {
+   "file": "cameos/KR.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/lander": {
+   "file": "cameos/KR.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/medic": {
+   "file": "cameos/KR.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/minel": {
+   "file": "cameos/KR.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/mortar": {
+   "file": "cameos/KR.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/officer": {
+   "file": "cameos/KR.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/raidlead": {
+   "file": "cameos/KR.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/recon": {
+   "file": "cameos/KR.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/saka": {
+   "file": "cameos/KR.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/sapper": {
+   "file": "cameos/KR.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/ship": {
+   "file": "cameos/KR.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/spy": {
+   "file": "cameos/KR.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/sub": {
+   "file": "cameos/KR.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/sweep": {
+   "file": "cameos/KR.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/tank": {
+   "file": "cameos/KR.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/KR/tb2": {
+   "file": "cameos/KR.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/aa": {
+   "file": "cameos/OB.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/airlift": {
+   "file": "cameos/OB.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/ammot": {
+   "file": "cameos/OB.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/arty": {
+   "file": "cameos/OB.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/at": {
+   "file": "cameos/OB.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/atgm": {
+   "file": "cameos/OB.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/atk": {
+   "file": "cameos/OB.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/bmt": {
+   "file": "cameos/OB.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/boat": {
+   "file": "cameos/OB.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/cbr": {
+   "file": "cameos/OB.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/champ": {
+   "file": "cameos/OB.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/cleric": {
+   "file": "cameos/OB.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/commissar": {
+   "file": "cameos/OB.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/darty": {
+   "file": "cameos/OB.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/dozer": {
+   "file": "cameos/OB.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/drone": {
+   "file": "cameos/OB.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/dsam": {
+   "file": "cameos/OB.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/dtank": {
+   "file": "cameos/OB.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/ew": {
+   "file": "cameos/OB.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/fast": {
+   "file": "cameos/OB.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/fpvt": {
+   "file": "cameos/OB.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/guer": {
+   "file": "cameos/OB.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/hacker": {
+   "file": "cameos/OB.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/harv": {
+   "file": "cameos/OB.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/heli": {
+   "file": "cameos/OB.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/hero": {
+   "file": "cameos/OB.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/idome": {
+   "file": "cameos/OB.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/inf": {
+   "file": "cameos/OB.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/jeep": {
+   "file": "cameos/OB.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/jet": {
+   "file": "cameos/OB.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/krb": {
+   "file": "cameos/OB.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/lander": {
+   "file": "cameos/OB.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/medic": {
+   "file": "cameos/OB.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/minel": {
+   "file": "cameos/OB.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/mortar": {
+   "file": "cameos/OB.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/officer": {
+   "file": "cameos/OB.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/raidlead": {
+   "file": "cameos/OB.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/recon": {
+   "file": "cameos/OB.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/saka": {
+   "file": "cameos/OB.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/sapper": {
+   "file": "cameos/OB.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/ship": {
+   "file": "cameos/OB.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/spy": {
+   "file": "cameos/OB.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/sub": {
+   "file": "cameos/OB.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/sweep": {
+   "file": "cameos/OB.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/tank": {
+   "file": "cameos/OB.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/OB/tb2": {
+   "file": "cameos/OB.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/aa": {
+   "file": "cameos/PK.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/airlift": {
+   "file": "cameos/PK.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/ammot": {
+   "file": "cameos/PK.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/arty": {
+   "file": "cameos/PK.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/at": {
+   "file": "cameos/PK.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/atgm": {
+   "file": "cameos/PK.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/atk": {
+   "file": "cameos/PK.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/bmt": {
+   "file": "cameos/PK.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/boat": {
+   "file": "cameos/PK.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/cbr": {
+   "file": "cameos/PK.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/champ": {
+   "file": "cameos/PK.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/cleric": {
+   "file": "cameos/PK.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/commissar": {
+   "file": "cameos/PK.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/darty": {
+   "file": "cameos/PK.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/dozer": {
+   "file": "cameos/PK.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/drone": {
+   "file": "cameos/PK.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/dsam": {
+   "file": "cameos/PK.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/dtank": {
+   "file": "cameos/PK.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/ew": {
+   "file": "cameos/PK.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/fast": {
+   "file": "cameos/PK.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/fpvt": {
+   "file": "cameos/PK.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/guer": {
+   "file": "cameos/PK.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/hacker": {
+   "file": "cameos/PK.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/harv": {
+   "file": "cameos/PK.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/heli": {
+   "file": "cameos/PK.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/hero": {
+   "file": "cameos/PK.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/idome": {
+   "file": "cameos/PK.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/inf": {
+   "file": "cameos/PK.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/jeep": {
+   "file": "cameos/PK.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/jet": {
+   "file": "cameos/PK.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/krb": {
+   "file": "cameos/PK.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/lander": {
+   "file": "cameos/PK.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/medic": {
+   "file": "cameos/PK.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/minel": {
+   "file": "cameos/PK.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/mortar": {
+   "file": "cameos/PK.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/officer": {
+   "file": "cameos/PK.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/raidlead": {
+   "file": "cameos/PK.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/recon": {
+   "file": "cameos/PK.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/saka": {
+   "file": "cameos/PK.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/sapper": {
+   "file": "cameos/PK.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/ship": {
+   "file": "cameos/PK.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/spy": {
+   "file": "cameos/PK.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/sub": {
+   "file": "cameos/PK.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/sweep": {
+   "file": "cameos/PK.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/tank": {
+   "file": "cameos/PK.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/PK/tb2": {
+   "file": "cameos/PK.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/aa": {
+   "file": "cameos/RS.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/airlift": {
+   "file": "cameos/RS.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/ammot": {
+   "file": "cameos/RS.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/arty": {
+   "file": "cameos/RS.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/at": {
+   "file": "cameos/RS.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/atgm": {
+   "file": "cameos/RS.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/atk": {
+   "file": "cameos/RS.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/bmt": {
+   "file": "cameos/RS.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/boat": {
+   "file": "cameos/RS.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/cbr": {
+   "file": "cameos/RS.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/champ": {
+   "file": "cameos/RS.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/cleric": {
+   "file": "cameos/RS.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/commissar": {
+   "file": "cameos/RS.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/darty": {
+   "file": "cameos/RS.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/dozer": {
+   "file": "cameos/RS.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/drone": {
+   "file": "cameos/RS.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/dsam": {
+   "file": "cameos/RS.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/dtank": {
+   "file": "cameos/RS.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/ew": {
+   "file": "cameos/RS.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/fast": {
+   "file": "cameos/RS.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/fpvt": {
+   "file": "cameos/RS.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/guer": {
+   "file": "cameos/RS.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/hacker": {
+   "file": "cameos/RS.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/harv": {
+   "file": "cameos/RS.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/heli": {
+   "file": "cameos/RS.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/hero": {
+   "file": "cameos/RS.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/idome": {
+   "file": "cameos/RS.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/inf": {
+   "file": "cameos/RS.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/jeep": {
+   "file": "cameos/RS.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/jet": {
+   "file": "cameos/RS.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/krb": {
+   "file": "cameos/RS.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/lander": {
+   "file": "cameos/RS.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/medic": {
+   "file": "cameos/RS.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/minel": {
+   "file": "cameos/RS.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/mortar": {
+   "file": "cameos/RS.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/officer": {
+   "file": "cameos/RS.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/raidlead": {
+   "file": "cameos/RS.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/recon": {
+   "file": "cameos/RS.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/saka": {
+   "file": "cameos/RS.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/sapper": {
+   "file": "cameos/RS.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/ship": {
+   "file": "cameos/RS.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/spy": {
+   "file": "cameos/RS.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/sub": {
+   "file": "cameos/RS.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/sweep": {
+   "file": "cameos/RS.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/tank": {
+   "file": "cameos/RS.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RS/tb2": {
+   "file": "cameos/RS.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/aa": {
+   "file": "cameos/RU.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/airlift": {
+   "file": "cameos/RU.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/ammot": {
+   "file": "cameos/RU.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/arty": {
+   "file": "cameos/RU.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/at": {
+   "file": "cameos/RU.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/atgm": {
+   "file": "cameos/RU.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/atk": {
+   "file": "cameos/RU.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/bmt": {
+   "file": "cameos/RU.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/boat": {
+   "file": "cameos/RU.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/cbr": {
+   "file": "cameos/RU.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/champ": {
+   "file": "cameos/RU.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/cleric": {
+   "file": "cameos/RU.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/commissar": {
+   "file": "cameos/RU.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/darty": {
+   "file": "cameos/RU.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/dozer": {
+   "file": "cameos/RU.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/drone": {
+   "file": "cameos/RU.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/dsam": {
+   "file": "cameos/RU.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/dtank": {
+   "file": "cameos/RU.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/ew": {
+   "file": "cameos/RU.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/fast": {
+   "file": "cameos/RU.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/fpvt": {
+   "file": "cameos/RU.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/guer": {
+   "file": "cameos/RU.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/hacker": {
+   "file": "cameos/RU.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/harv": {
+   "file": "cameos/RU.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/heli": {
+   "file": "cameos/RU.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/hero": {
+   "file": "cameos/RU.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/idome": {
+   "file": "cameos/RU.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/inf": {
+   "file": "cameos/RU.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/jeep": {
+   "file": "cameos/RU.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/jet": {
+   "file": "cameos/RU.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/krb": {
+   "file": "cameos/RU.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/lander": {
+   "file": "cameos/RU.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/medic": {
+   "file": "cameos/RU.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/minel": {
+   "file": "cameos/RU.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/mortar": {
+   "file": "cameos/RU.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/officer": {
+   "file": "cameos/RU.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/raidlead": {
+   "file": "cameos/RU.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/recon": {
+   "file": "cameos/RU.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/saka": {
+   "file": "cameos/RU.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/sapper": {
+   "file": "cameos/RU.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/ship": {
+   "file": "cameos/RU.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/spy": {
+   "file": "cameos/RU.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/sub": {
+   "file": "cameos/RU.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/sweep": {
+   "file": "cameos/RU.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/tank": {
+   "file": "cameos/RU.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RU/tb2": {
+   "file": "cameos/RU.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/aa": {
+   "file": "cameos/RV.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/airlift": {
+   "file": "cameos/RV.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/ammot": {
+   "file": "cameos/RV.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/arty": {
+   "file": "cameos/RV.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/at": {
+   "file": "cameos/RV.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/atgm": {
+   "file": "cameos/RV.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/atk": {
+   "file": "cameos/RV.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/bmt": {
+   "file": "cameos/RV.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/boat": {
+   "file": "cameos/RV.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/cbr": {
+   "file": "cameos/RV.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/champ": {
+   "file": "cameos/RV.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/cleric": {
+   "file": "cameos/RV.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/commissar": {
+   "file": "cameos/RV.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/darty": {
+   "file": "cameos/RV.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/dozer": {
+   "file": "cameos/RV.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/drone": {
+   "file": "cameos/RV.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/dsam": {
+   "file": "cameos/RV.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/dtank": {
+   "file": "cameos/RV.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/ew": {
+   "file": "cameos/RV.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/fast": {
+   "file": "cameos/RV.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/fpvt": {
+   "file": "cameos/RV.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/guer": {
+   "file": "cameos/RV.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/hacker": {
+   "file": "cameos/RV.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/harv": {
+   "file": "cameos/RV.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/heli": {
+   "file": "cameos/RV.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/hero": {
+   "file": "cameos/RV.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/idome": {
+   "file": "cameos/RV.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/inf": {
+   "file": "cameos/RV.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/jeep": {
+   "file": "cameos/RV.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/jet": {
+   "file": "cameos/RV.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/krb": {
+   "file": "cameos/RV.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/lander": {
+   "file": "cameos/RV.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/medic": {
+   "file": "cameos/RV.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/minel": {
+   "file": "cameos/RV.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/mortar": {
+   "file": "cameos/RV.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/officer": {
+   "file": "cameos/RV.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/raidlead": {
+   "file": "cameos/RV.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/recon": {
+   "file": "cameos/RV.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/saka": {
+   "file": "cameos/RV.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/sapper": {
+   "file": "cameos/RV.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/ship": {
+   "file": "cameos/RV.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/spy": {
+   "file": "cameos/RV.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/sub": {
+   "file": "cameos/RV.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/sweep": {
+   "file": "cameos/RV.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/tank": {
+   "file": "cameos/RV.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/RV/tb2": {
+   "file": "cameos/RV.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/aa": {
+   "file": "cameos/SA.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/airlift": {
+   "file": "cameos/SA.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/ammot": {
+   "file": "cameos/SA.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/arty": {
+   "file": "cameos/SA.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/at": {
+   "file": "cameos/SA.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/atgm": {
+   "file": "cameos/SA.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/atk": {
+   "file": "cameos/SA.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/bmt": {
+   "file": "cameos/SA.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/boat": {
+   "file": "cameos/SA.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/cbr": {
+   "file": "cameos/SA.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/champ": {
+   "file": "cameos/SA.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/cleric": {
+   "file": "cameos/SA.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/commissar": {
+   "file": "cameos/SA.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/darty": {
+   "file": "cameos/SA.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/dozer": {
+   "file": "cameos/SA.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/drone": {
+   "file": "cameos/SA.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/dsam": {
+   "file": "cameos/SA.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/dtank": {
+   "file": "cameos/SA.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/ew": {
+   "file": "cameos/SA.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/fast": {
+   "file": "cameos/SA.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/fpvt": {
+   "file": "cameos/SA.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/guer": {
+   "file": "cameos/SA.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/hacker": {
+   "file": "cameos/SA.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/harv": {
+   "file": "cameos/SA.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/heli": {
+   "file": "cameos/SA.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/hero": {
+   "file": "cameos/SA.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/idome": {
+   "file": "cameos/SA.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/inf": {
+   "file": "cameos/SA.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/jeep": {
+   "file": "cameos/SA.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/jet": {
+   "file": "cameos/SA.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/krb": {
+   "file": "cameos/SA.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/lander": {
+   "file": "cameos/SA.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/medic": {
+   "file": "cameos/SA.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/minel": {
+   "file": "cameos/SA.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/mortar": {
+   "file": "cameos/SA.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/officer": {
+   "file": "cameos/SA.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/raidlead": {
+   "file": "cameos/SA.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/recon": {
+   "file": "cameos/SA.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/saka": {
+   "file": "cameos/SA.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/sapper": {
+   "file": "cameos/SA.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/ship": {
+   "file": "cameos/SA.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/spy": {
+   "file": "cameos/SA.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/sub": {
+   "file": "cameos/SA.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/sweep": {
+   "file": "cameos/SA.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/tank": {
+   "file": "cameos/SA.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/SA/tb2": {
+   "file": "cameos/SA.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/aa": {
+   "file": "cameos/TR.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/airlift": {
+   "file": "cameos/TR.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/ammot": {
+   "file": "cameos/TR.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/arty": {
+   "file": "cameos/TR.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/at": {
+   "file": "cameos/TR.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/atgm": {
+   "file": "cameos/TR.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/atk": {
+   "file": "cameos/TR.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/bmt": {
+   "file": "cameos/TR.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/boat": {
+   "file": "cameos/TR.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/cbr": {
+   "file": "cameos/TR.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/champ": {
+   "file": "cameos/TR.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/cleric": {
+   "file": "cameos/TR.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/commissar": {
+   "file": "cameos/TR.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/darty": {
+   "file": "cameos/TR.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/dozer": {
+   "file": "cameos/TR.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/drone": {
+   "file": "cameos/TR.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/dsam": {
+   "file": "cameos/TR.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/dtank": {
+   "file": "cameos/TR.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/ew": {
+   "file": "cameos/TR.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/fast": {
+   "file": "cameos/TR.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/fpvt": {
+   "file": "cameos/TR.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/guer": {
+   "file": "cameos/TR.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/hacker": {
+   "file": "cameos/TR.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/harv": {
+   "file": "cameos/TR.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/heli": {
+   "file": "cameos/TR.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/hero": {
+   "file": "cameos/TR.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/idome": {
+   "file": "cameos/TR.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/inf": {
+   "file": "cameos/TR.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/jeep": {
+   "file": "cameos/TR.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/jet": {
+   "file": "cameos/TR.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/krb": {
+   "file": "cameos/TR.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/lander": {
+   "file": "cameos/TR.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/medic": {
+   "file": "cameos/TR.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/minel": {
+   "file": "cameos/TR.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/mortar": {
+   "file": "cameos/TR.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/officer": {
+   "file": "cameos/TR.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/raidlead": {
+   "file": "cameos/TR.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/recon": {
+   "file": "cameos/TR.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/saka": {
+   "file": "cameos/TR.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/sapper": {
+   "file": "cameos/TR.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/ship": {
+   "file": "cameos/TR.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/spy": {
+   "file": "cameos/TR.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/sub": {
+   "file": "cameos/TR.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/sweep": {
+   "file": "cameos/TR.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/tank": {
+   "file": "cameos/TR.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/TR/tb2": {
+   "file": "cameos/TR.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/aa": {
+   "file": "cameos/UA.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/airlift": {
+   "file": "cameos/UA.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/ammot": {
+   "file": "cameos/UA.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/arty": {
+   "file": "cameos/UA.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/at": {
+   "file": "cameos/UA.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/atgm": {
+   "file": "cameos/UA.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/atk": {
+   "file": "cameos/UA.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/bmt": {
+   "file": "cameos/UA.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/boat": {
+   "file": "cameos/UA.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/cbr": {
+   "file": "cameos/UA.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/champ": {
+   "file": "cameos/UA.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/cleric": {
+   "file": "cameos/UA.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/commissar": {
+   "file": "cameos/UA.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/darty": {
+   "file": "cameos/UA.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/dozer": {
+   "file": "cameos/UA.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/drone": {
+   "file": "cameos/UA.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/dsam": {
+   "file": "cameos/UA.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/dtank": {
+   "file": "cameos/UA.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/ew": {
+   "file": "cameos/UA.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/fast": {
+   "file": "cameos/UA.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/fpvt": {
+   "file": "cameos/UA.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/guer": {
+   "file": "cameos/UA.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/hacker": {
+   "file": "cameos/UA.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/harv": {
+   "file": "cameos/UA.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/heli": {
+   "file": "cameos/UA.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/hero": {
+   "file": "cameos/UA.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/idome": {
+   "file": "cameos/UA.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/inf": {
+   "file": "cameos/UA.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/jeep": {
+   "file": "cameos/UA.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/jet": {
+   "file": "cameos/UA.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/krb": {
+   "file": "cameos/UA.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/lander": {
+   "file": "cameos/UA.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/medic": {
+   "file": "cameos/UA.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/minel": {
+   "file": "cameos/UA.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/mortar": {
+   "file": "cameos/UA.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/officer": {
+   "file": "cameos/UA.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/raidlead": {
+   "file": "cameos/UA.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/recon": {
+   "file": "cameos/UA.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/saka": {
+   "file": "cameos/UA.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/sapper": {
+   "file": "cameos/UA.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/ship": {
+   "file": "cameos/UA.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/spy": {
+   "file": "cameos/UA.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/sub": {
+   "file": "cameos/UA.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/sweep": {
+   "file": "cameos/UA.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/tank": {
+   "file": "cameos/UA.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/UA/tb2": {
+   "file": "cameos/UA.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/aa": {
+   "file": "cameos/US.png",
+   "x": 1168,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/airlift": {
+   "file": "cameos/US.png",
+   "x": 1168,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/ammot": {
+   "file": "cameos/US.png",
+   "x": 146,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/arty": {
+   "file": "cameos/US.png",
+   "x": 0,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/at": {
+   "file": "cameos/US.png",
+   "x": 438,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/atgm": {
+   "file": "cameos/US.png",
+   "x": 1022,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/atk": {
+   "file": "cameos/US.png",
+   "x": 730,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/bmt": {
+   "file": "cameos/US.png",
+   "x": 730,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/boat": {
+   "file": "cameos/US.png",
+   "x": 1314,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/cbr": {
+   "file": "cameos/US.png",
+   "x": 1022,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/champ": {
+   "file": "cameos/US.png",
+   "x": 876,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/cleric": {
+   "file": "cameos/US.png",
+   "x": 876,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/commissar": {
+   "file": "cameos/US.png",
+   "x": 292,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/darty": {
+   "file": "cameos/US.png",
+   "x": 730,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/dozer": {
+   "file": "cameos/US.png",
+   "x": 146,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/drone": {
+   "file": "cameos/US.png",
+   "x": 146,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/dsam": {
+   "file": "cameos/US.png",
+   "x": 584,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/dtank": {
+   "file": "cameos/US.png",
+   "x": 438,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/ew": {
+   "file": "cameos/US.png",
+   "x": 292,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/fast": {
+   "file": "cameos/US.png",
+   "x": 0,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/fpvt": {
+   "file": "cameos/US.png",
+   "x": 438,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/guer": {
+   "file": "cameos/US.png",
+   "x": 584,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/hacker": {
+   "file": "cameos/US.png",
+   "x": 0,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/harv": {
+   "file": "cameos/US.png",
+   "x": 0,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/heli": {
+   "file": "cameos/US.png",
+   "x": 876,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/hero": {
+   "file": "cameos/US.png",
+   "x": 584,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/idome": {
+   "file": "cameos/US.png",
+   "x": 876,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/inf": {
+   "file": "cameos/US.png",
+   "x": 292,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/jeep": {
+   "file": "cameos/US.png",
+   "x": 1168,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/jet": {
+   "file": "cameos/US.png",
+   "x": 1022,
+   "y": 114,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/krb": {
+   "file": "cameos/US.png",
+   "x": 292,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/lander": {
+   "file": "cameos/US.png",
+   "x": 730,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/medic": {
+   "file": "cameos/US.png",
+   "x": 730,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/minel": {
+   "file": "cameos/US.png",
+   "x": 438,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/mortar": {
+   "file": "cameos/US.png",
+   "x": 1314,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/officer": {
+   "file": "cameos/US.png",
+   "x": 146,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/raidlead": {
+   "file": "cameos/US.png",
+   "x": 1314,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/recon": {
+   "file": "cameos/US.png",
+   "x": 0,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/saka": {
+   "file": "cameos/US.png",
+   "x": 1168,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/sapper": {
+   "file": "cameos/US.png",
+   "x": 438,
+   "y": 342,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/ship": {
+   "file": "cameos/US.png",
+   "x": 292,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/spy": {
+   "file": "cameos/US.png",
+   "x": 1022,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/sub": {
+   "file": "cameos/US.png",
+   "x": 146,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/sweep": {
+   "file": "cameos/US.png",
+   "x": 584,
+   "y": 228,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/tank": {
+   "file": "cameos/US.png",
+   "x": 1314,
+   "y": 0,
+   "w": 144,
+   "h": 112
+  },
+  "u/US/tb2": {
+   "file": "cameos/US.png",
+   "x": 584,
+   "y": 456,
+   "w": 144,
+   "h": 112
+  }
+ },
+ "count": 1487
+}
