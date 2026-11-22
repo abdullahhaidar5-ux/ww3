@@ -1,0 +1,135 @@
+{
+ "_source": "src/08b-social.js TUTB (steps: t = text, a = what to do, ok() = done when true, hl() = what to highlight, cam() = where to look, enter() = on entering the step) + tutEl() (the step box) / startBattleTutorial()  (JS game, branch js-final; read from the running page by tools-godot/export_data.mjs)",
+ "_notes": "Step texts are data; ok / hl / cam / enter are small JS functions (source in script_js). The step header is \"Step i/n\"; the box has Show me / Skip step / Exit tutorial.",
+ "header_format": "Step {i}/{n}",
+ "box": [
+  {
+   "t": "div",
+   "cls": "tt",
+   "c": [
+    {
+     "t": "b",
+     "id": "tutN"
+    },
+    {
+     "t": "span",
+     "id": "tutT"
+    }
+   ]
+  },
+  {
+   "t": "div",
+   "id": "tutA",
+   "cls": "ta"
+  },
+  {
+   "t": "div",
+   "cls": "tb",
+   "c": [
+    {
+     "t": "button",
+     "text": "Show me",
+     "id": "tutShow"
+    },
+    {
+     "t": "button",
+     "text": "Skip step",
+     "id": "tutSkip"
+    },
+    {
+     "t": "button",
+     "text": "Exit tutorial",
+     "id": "tutExit"
+    }
+   ]
+  }
+ ],
+ "steps": [
+  {
+   "key": "gen",
+   "order": 0,
+   "text": "Welcome to Battle! Air defense, the Strike Center, radio and the Airfield need power. Build a Generator; capturing map power plants adds more.",
+   "action": "Click your Dozer (Construction Vehicle), open Build, click Generator, then click the ground near your base.",
+   "action_shown": "▶ Click your Dozer (Construction Vehicle), open Build, click Generator, then click the ground near your base.",
+   "script_js": {
+    "ok": "()=>!!tutBld('gen')",
+    "hl": "()=>tutBPlace('gen',-100,-110)",
+    "cam": "()=>tutHQ()"
+   }
+  },
+  {
+   "key": "dep",
+   "order": 1,
+   "text": "Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.",
+   "action": "Click your Dozer, open Build, click Supply Depot, then click the ground near your base.",
+   "action_shown": "▶ Click your Dozer, open Build, click Supply Depot, then click the ground near your base.",
+   "script_js": {
+    "ok": "()=>!!tutBld('depot')",
+    "hl": "()=>tutBPlace('depot',-130,90)",
+    "cam": "()=>tutHQ()"
+   }
+  },
+  {
+   "key": "bar",
+   "order": 2,
+   "text": "Barracks train infantry, and they unlock the rest of your tech tree.",
+   "action": "Click your Dozer, open Build, click Barracks, then click next to your base. Hold Shift to line up several buildings.",
+   "action_shown": "▶ Click your Dozer, open Build, click Barracks, then click next to your base. Hold Shift to line up several buildings.",
+   "script_js": {
+    "ok": "()=>!!tutBld('barracks')",
+    "hl": "()=>tutBPlace('barracks',120,90)",
+    "cam": "()=>tutHQ()"
+   }
+  },
+  {
+   "key": "fac",
+   "order": 3,
+   "text": "The War Factory builds tanks and other vehicles. It needs a Barracks first.",
+   "action": "With your Dozer selected, open Build and place a War Factory next to your base. Right-click a half-built building with another Dozer to help.",
+   "action_shown": "▶ With your Dozer selected, open Build and place a War Factory next to your base. Right-click a half-built building with another Dozer to help.",
+   "script_js": {
+    "ok": "()=>!!tutBld('factory')",
+    "hl": "()=>tutBPlace('factory',150,-60)",
+    "cam": "()=>tutHQ()"
+   }
+  },
+  {
+   "key": "sup",
+   "order": 4,
+   "text": "SUPPLY LINES: troops refill ammo near your buildings and along your supply roads (green). Outside them they fight until empty, then must come back or get an Ammo Truck (War Factory). Craters and blown bridges cut a line.",
+   "action": "Press L to show your supply lines (the minimap shows them too).",
+   "action_shown": "▶ Press L to show your supply lines (the minimap shows them too).",
+   "script_js": {
+    "ok": "()=>!!(typeof LGU!=='undefined'&&LGU.on)",
+    "hl": "()=>({d:'#mm'})",
+    "cam": "()=>tutHQ()"
+   }
+  },
+  {
+   "key": "veh",
+   "order": 5,
+   "text": "Now put the factory to work. A selected production building shows what it can make and its own queue. Vehicles are built only in the War Factory.",
+   "action": "Click your War Factory, then click a vehicle to train it.",
+   "action_shown": "▶ Click your War Factory, then click a vehicle to train it.",
+   "script_js": {
+    "ok": "()=>tutMob().length>TUTS.k0",
+    "hl": "()=>{const b=tutBld('factory');if(!b)return{w:tutHQ()};return G.sel.includes(b)?{d:'#u_tank'}:{w:b};}",
+    "cam": "()=>tutBld('factory')",
+    "enter": "()=>{TUTS.k0=tutMob().length;}"
+   }
+  },
+  {
+   "key": "atk",
+   "order": 6,
+   "text": "Your army is ready. Select it (Ctrl+A selects everything), then send it at the enemy with a right-click. Keep an eye on its ammo bar far from your supply lines. Destroy every enemy building to win.",
+   "action": "Select your army and right-click an enemy building.",
+   "action_shown": "▶ Select your army and right-click an enemy building.",
+   "script_js": {
+    "ok": "()=>false",
+    "hl": "()=>({w:tutFoeHQ()})",
+    "cam": "()=>tutFoeHQ()",
+    "enter": "()=>{G.teams[ME].credits+=2500;}"
+   }
+  }
+ ]
+}

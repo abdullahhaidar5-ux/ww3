@@ -1,0 +1,307 @@
+{
+ "_source": "src/12-campaign.js CAMPAIGN (id, title, sub, fac, enemy, map, brief, obj, win, lose) + CAMP_DIFF / CAMP_MUL  (JS game, branch js-final; read from the running page by tools-godot/export_data.mjs)",
+ "_notes": "Texts and objective lists are data. The scripted triggers are JavaScript (setup(c) places the forces, tick(c,dt) runs waves / timers / objective checks through the CH helper table): their source is in script_js for the hand-port, and radio_lines are the argument lists of every CH.say(text, kind) call in them, as written in the script (JS string expressions: a quoted text, + a value, + more text).",
+ "difficulty": [
+  "Easy",
+  "Medium",
+  "Hard"
+ ],
+ "difficulty_mult": [
+  0.7,
+  1,
+  1.4
+ ],
+ "helper_functions": [
+  "ax",
+  "pt",
+  "has",
+  "unit",
+  "units",
+  "bld",
+  "base",
+  "go",
+  "alive",
+  "combat",
+  "count",
+  "blds",
+  "near",
+  "say",
+  "enemyName",
+  "tag",
+  "flash",
+  "radio",
+  "civs",
+  "village",
+  "garrison",
+  "depot"
+ ],
+ "missions": [
+  {
+   "key": "pass",
+   "order": 0,
+   "number": 1,
+   "title": "Hold the Pass",
+   "subtitle": "Lebanese Shia · Ridge defense in the southern hills",
+   "nation": "RS",
+   "enemy_nation": "FR",
+   "enemy_name": "Invasion Force",
+   "map": "beqaa",
+   "length_text": "12-16 min",
+   "briefing": [
+    "An invasion force is pushing up the only road into our valleys, below the limestone ridge. Our main columns are still six minutes away on the mountain tracks.",
+    "You hold the ridge above the road with a small garrison: riflemen, anti-tank teams, two tanks and three dug-in guns. A depot behind the ridge keeps the guns supplied - keep it ours.",
+    "Hold the ridge until the reinforcements arrive. Then do not let the enemy rest: take the fight back down the pass and destroy their forward base."
+   ],
+   "objectives": [
+    {
+     "key": "hold",
+     "text": "Hold the ridge until reinforcements arrive"
+    },
+    {
+     "key": "reinf",
+     "text": "Reinforcements arrive"
+    },
+    {
+     "key": "crush",
+     "text": "Destroy the enemy forward base"
+    }
+   ],
+   "win_text": "The pass is ours. The valley is safe, and the road is closed to the invaders.",
+   "lose_text": "The ridge has fallen. The valley will have to be defended from the next line.",
+   "radio_lines": [
+    "'Briefing: hold the ridge for '+campClock(c.T)+'. Dug-in guns cover the road; the depot behind you is yours while you stand near it.','g'",
+    "'Wave '+k+' is on the road.','w'"
+   ],
+   "script_js": {
+    "setup": "setup(c){const d=c.mul;c.T=360;const R=CH.pt(.2,0),F=CH.pt(.1,0);c.ridge=R;c.focus=R;G.teams[0].credits=400;\n  CH.base(0,BASES[0][0],BASES[0][1]);const g=[];\n  g.push(...CH.units(0,'inf',Math.round(14/Math.max(.8,d)+2),R[0],R[1],70),...CH.units(0,'at',4,R[0],R[1],50),...CH.units(0,'tank',2,R[0],R[1],50));\n  for(const o of [-120,0,120]){const p=CH.pt(.23,o);CH.bld(0,'turret',p[0],p[1]);}c.garrison=g;\n  const dp=CH.pt(.12,150);c.depot=CH.depot(dp[0],dp[1],0,'Ridge depot');\n  CH.base(1,BASES[1][0],BASES[1][1]);const q=CH.pt(.86,0);for(const o of [-130,0,130]){const p=CH.pt(.8,o);CH.bld(1,'turret',p[0],p[1]);}CH.bld(1,'barracks',q[0],q[1]);\n  G.teams[1].credits=500;c.wave=0;c.nextWave=25;c.armies=[];\n  CH.say('Briefing: hold the ridge for '+campClock(c.T)+'. Dug-in guns cover the road; the depot behind you is yours while you stand near it.','g');}",
+    "tick": "tick(c,dt){const d=c.mul;\n  if(c.t<c.T+60&&c.t>=c.nextWave){c.nextWave+=Math.round(48/Math.max(.7,d)),c.wave++;const k=c.wave,s=CH.pt(.8,0);let us=[...CH.units(1,'inf',(5+k*1.6)*d,s[0],s[1],90),...CH.units(1,'at',1+k*.4*d,s[0],s[1],70)];if(k>=3)us.push(...CH.units(1,'tank',(k-1)*.7*d,s[0],s[1],70));if(k>=5)us.push(...CH.units(1,'arty',d>1?2:1,s[0],s[1],70));CH.go(1,us,c.ridge[0],c.ridge[1],true);\n   if(k===1)CH.flash('Contact! First enemy column on the road below the ridge.','w');\n   else if(k===3)CH.flash('Enemy armor is coming up the road. Keep the anti-tank teams behind the guns.','w');\n   else if(k===5)CH.flash('Enemy artillery has arrived below the ridge.','w');\n   else CH.say('Wave '+k+' is on the road.','w');}\n  if(!c.o.reinf&&c.t>=c.T-60&&!c.warned){c.warned=1;CH.radio('Column leader','Thabbetu, ya shabab - dakika w nuss w mnuusal','Hold on, lads - one more minute and we are there','g');}\n  if(!c.o.reinf&&c.t>=c.T){c.o.hold=c.o.reinf=true;const b=CH.pt(.02,0);const r=[...CH.units(0,'inf',10,b[0],b[1],90),...CH.units(0,'tank',5,b[0],b[1],90),...CH.units(0,'at',3,b[0],b[1],60),...CH.units(0,'arty',2,b[0],b[1],60)];CH.go(0,r,c.ridge[0],c.ridge[1],true);CH.flash('Reinforcements have arrived on the mountain track! Counter-attack - drive them off the pass.','g');G.teams[0].credits+=1500;}\n  if(c.depot&&c.depot.owner!==0&&!c.depotLost){c.depotLost=1;CH.flash('The ridge depot was taken. Retake it with infantry.','bad');}\n  if(c.depot&&c.depot.owner===0)c.depotLost=0;\n  if(c.o.reinf&&!c.o.crush&&CH.blds(1).length===0)c.o.crush=true;\n  if(c.o.crush)c.win();\n  else if(!c.o.reinf&&c.t>5&&CH.combat(0)===0)c.lose('Every defender on the ridge has fallen.');\n  else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Headquarters and garrison are gone.');\n  c.status=c.o.reinf?(c.o.crush?null:'Enemy base buildings left: '+CH.blds(1).length):'Reinforcements in '+campClock(c.T-c.t)+' · wave '+c.wave;}"
+   }
+  },
+  {
+   "key": "supply",
+   "order": 1,
+   "number": 2,
+   "title": "Supply Run",
+   "subtitle": "Zaidi Shia Movement · Convoy escort across the highlands",
+   "nation": "DW",
+   "enemy_nation": "US",
+   "enemy_name": "Siege Force",
+   "map": "tihama",
+   "length_text": "12-18 min",
+   "briefing": [
+    "A highland town is surrounded. Its people have food for days, not weeks, and the road in is held by irregulars and raiders of the besieging force.",
+    "Six supply trucks are loaded at your depot. Escort them up through the wadis to the town. Expect ambushes from the ridges and the dry riverbeds - they will hit the trucks first.",
+    "At least four trucks must reach the town. An old cistern depot sits at the halfway ridge: take it for water and money. Scout ahead, keep the escort close, and do not drive blind into the narrows."
+   ],
+   "objectives": [
+    {
+     "key": "half",
+     "text": "Cross the highlands to the halfway ridge"
+    },
+    {
+     "key": "depot",
+     "text": "Take the cistern depot at the ridge (optional)"
+    },
+    {
+     "key": "clear",
+     "text": "Break the siege line around the town"
+    },
+    {
+     "key": "deliver",
+     "text": "Deliver at least 4 of 6 trucks to the town"
+    }
+   ],
+   "win_text": "The convoy has reached the town. The siege is broken and the people eat tonight.",
+   "lose_text": "The convoy is lost. The town is on its own.",
+   "radio_lines": [
+    "'Briefing: six trucks, four must arrive. Ambushes wait on both sides of the road.','g'",
+    "'A truck has reached the town ('+(got+1)+').','g'"
+   ],
+   "script_js": {
+    "setup": "setup(c){const d=c.mul;const B=BASES[0];G.teams[0].credits=600;CH.base(0,B[0],B[1]);const s=CH.pt(.07,0);c.focus=s;\n  const esc=[...CH.units(0,'inf',8,s[0],s[1],110),...CH.units(0,'tank',4,s[0],s[1],110),...CH.units(0,'at',2,s[0],s[1],70),...CH.units(0,'aa',1,s[0],s[1],70)];\n  c.trucks=CH.units(0,'dozer',6,s[0]-60,s[1]+30,60);CH.tag(c.trucks,'Supply Truck',420);\n  const town=CH.pt(.86,0);c.town=town;c.half=CH.pt(.5,0);const dp=CH.pt(.5,170);c.depot=CH.depot(dp[0],dp[1],-1,'Cistern depot');\n  for(const o of [-90,90]){const p=CH.pt(.88,o);CH.bld(0,'turret',p[0],p[1]);}CH.units(0,'inf',4,town[0],town[1],60);\n  CH.base(1,BASES[1][0],BASES[1][1]);G.teams[1].credits=300;\n  c.siege=[];for(const o of [-200,-80,80,200]){const p=CH.pt(.77,o);c.siege.push(...CH.units(1,'inf',Math.round(4*d),p[0],p[1],60),...CH.units(1,'tank',Math.round(1*d),p[0],p[1],60));}\n  for(const o of [-170,120]){const p=CH.pt(.8,o);CH.bld(1,'turret',p[0],p[1]);}\n  c.amb=[];for(const [t,o] of [[.26,300],[.4,-320],[.6,290],[.68,-260]]){const p=CH.pt(t,o);c.amb.push({t,pos:p,fired:false,us:[...CH.units(1,'inf',Math.round(5*d),p[0],p[1],50),...CH.units(1,'at',Math.round(2*d),p[0],p[1],40),...(t>.5?CH.units(1,'tank',Math.round(1*d),p[0],p[1],40):[])]});}\n  CH.say('Briefing: six trucks, four must arrive. Ambushes wait on both sides of the road.','g');}",
+    "tick": "tick(c,dt){const tr=CH.alive(c.trucks);\n  for(const a of c.amb){if(a.fired)continue;let hit=null;for(const u of tr){if(Math.hypot(u.x-a.pos[0],u.y-a.pos[1])<420){hit=u;break;}}if(hit){a.fired=true;CH.go(1,a.us,hit.x,hit.y,true);CH.flash('Ambush! Raiders are coming down from the ridge.','w');CH.radio('Lead truck','Kameen! Min el-wadi!','Ambush! From the wadi!','w');\n    if(a.t>.5){const b=CH.pt(a.t-.12,0),us=CH.units(1,'inf',Math.round(4*c.mul),b[0],b[1],50);CH.go(1,us,hit.x,hit.y,true);}}}\n  if(!c.o.half&&tr.some(u=>Math.hypot(u.x-c.half[0],u.y-c.half[1])<260)){c.o.half=true;CH.flash('Halfway ridge passed. The besieged town is ahead.','g');}\n  if(!c.o.depot&&c.depot.owner===0){c.o.depot=true;CH.flash('The cistern depot is ours: water and money for the last stretch.','g');}\n  let got=0;for(const u of c.trucks){if(!u.dead&&Math.hypot(u.x-c.town[0],u.y-c.town[1])<190){if(!u.delivered)CH.say('A truck has reached the town ('+(got+1)+').','g');u.delivered=true;}if(u.delivered)got++;}\n  c.status='Trucks delivered '+got+'/6 (need 4) · alive '+tr.length;\n  if(!c.o.clear&&CH.alive(c.siege).length<=Math.round(2*c.mul)){c.o.clear=true;CH.flash('The siege line is broken. The town can open its gates.','g');}\n  if(got>=4){c.o.deliver=true;c.win();}\n  else if(tr.length+0<4&&got+tr.length<4)c.lose('Too many supply trucks were lost.');\n  else if(CH.combat(0)===0&&tr.length&&got<4)c.lose('The escort is gone.');}"
+   }
+  },
+  {
+   "key": "fortress",
+   "order": 2,
+   "number": 3,
+   "title": "Mountain Fortress",
+   "subtitle": "Iran · Build and defend in the Zagros",
+   "nation": "IR",
+   "enemy_nation": "US",
+   "enemy_name": "Coalition Task Force",
+   "map": "zagros",
+   "length_text": "14-18 min",
+   "briefing": [
+    "Our command post sits in a mountain valley that the enemy must take to open the road to the plains. They will come in waves - infantry first, then armor, then everything they have. The Ayatollah is with the garrison; stay close to him and his sermon will steady your lines.",
+    "Build a Mountain Fortress: its rock-cut bunker is nearly immune to shells, and a garrison inside is safe from artillery. A field depot beside the command post pays you while you hold it.",
+    "Hold headquarters until the relief columns arrive. Late in the battle the enemy will send bunker-buster aircraft against the Fortress - you get a warning; take the garrison out in time."
+   ],
+   "objectives": [
+    {
+     "key": "fort",
+     "text": "Build the Mountain Fortress"
+    },
+    {
+     "key": "hold",
+     "text": "Hold headquarters until relief arrives"
+    },
+    {
+     "key": "bb",
+     "text": "Survive the bunker-buster strikes"
+    }
+   ],
+   "win_text": "Relief columns have arrived. The valley held.",
+   "lose_text": "Headquarters has fallen. The valley is lost.",
+   "radio_lines": [
+    "'Briefing: build the Mountain Fortress, hold '+campClock(c.T)+'. E and Shift+E use the Ayatollah.','g'",
+    "'Bunker-buster bombs falling!','bad'",
+    "'The air raids are over.','g'"
+   ],
+   "script_js": {
+    "setup": "setup(c){const B=BASES[0];G.teams[0].credits=Math.round(7000/Math.max(.85,c.mul));c.T=720;c.focus=[B[0],B[1]];const hq=CH.base(0,B[0],B[1]);CH.unit(0,'dozer',B[0]+60,B[1]+110);\n  for(const k of ['barracks','factory']){const p=sbSpot(0,k,hq,170,360);if(p)addBld(0,k,p[0],p[1],true);}\n  CH.units(0,'inf',8,B[0]+160,B[1],90);CH.units(0,'at',3,B[0]+160,B[1],60);for(const o of [-150,150]){const p=CH.pt(.1,o);CH.bld(0,'turret',p[0],p[1]);}\n  if(CH.has('IR','cleric'))c.ayatollah=CH.unit(0,'cleric',B[0]+90,B[1]+60);\n  const dp=CH.pt(.06,260);c.depot=CH.depot(dp[0],dp[1],0,'Valley depot');\n  CH.base(1,BASES[1][0],BASES[1][1]);G.teams[1].credits=0;c.wave=0;c.next=45;c.bb=[[500,525],[640,665]];c.bbDone=0;\n  CH.say('Briefing: build the Mountain Fortress, hold '+campClock(c.T)+'. E and Shift+E use the Ayatollah.','g');}",
+    "tick": "tick(c,dt){const d=c.mul,hq=CH.blds(0).find(b=>b.kind==='hq');\n  if(c.t>=c.next&&c.t<c.T-30){c.wave++;c.next+=Math.round(62/Math.max(.75,d));const k=c.wave,s=CH.pt(.88,0);let us=[...CH.units(1,'inf',(5+k*1.7)*d,s[0],s[1],100)];if(k>=2)us.push(...CH.units(1,'at',k*.5*d,s[0],s[1],70));if(k>=3)us.push(...CH.units(1,'tank',(k-1)*.9*d,s[0],s[1],80));if(k>=7)us.push(...CH.units(1,'arty',2,s[0],s[1],70));if(k>=8)us.push(...CH.units(1,'heli',d>1?3:2,s[0],s[1],70));\n   const T0=hq||{x:BASES[0][0],y:BASES[0][1]};CH.go(1,us,T0.x,T0.y,true);CH.flash('Wave '+k+': enemy column approaching from the plains.','w');\n   if(k===1)CH.radio('Scout post','Dushman az jonub miyad - amade bāshid','The enemy comes from the south - be ready','w');}\n  const fort=G.ents.find(e=>e.team===0&&e.kind==='fort'&&!e.dead&&e.built>=1);if(fort&&!c.o.fort){c.o.fort=true;CH.flash('The Mountain Fortress stands. Garrison it - a unit inside is safe from artillery.','g');}if(fort)c.fortSeen=true;\n  for(let i=0;i<c.bb.length;i++){const w=c.bb[i];if(c.bbDone===i&&c.t>=w[0]&&!w.warn){w.warn=true;CH.flash('WARNING: bunker-buster aircraft inbound on the Fortress. Evacuate the garrison now!','bad');}\n   if(c.bbDone===i&&c.t>=w[1]){c.bbDone++;const f=G.ents.find(e=>e.team===0&&e.kind==='fort'&&!e.dead);const tg=f||hq;if(tg){addStrike(tg.x,tg.y,3,POWERS.bb.r||150,1500,1,'bb');CH.say('Bunker-buster bombs falling!','bad');}}}\n  if(c.bbDone>=c.bb.length&&c.t>c.bb[1][1]+8&&!c.o.bb){c.o.bb=true;CH.say('The air raids are over.','g');}\n  if(c.t>=c.T&&hq){c.o.hold=true;c.win();}\n  else if(!hq)c.lose('Headquarters was destroyed.');\n  c.status=c.t<c.T?'Relief in '+campClock(c.T-c.t)+' · wave '+c.wave:null;}"
+   }
+  },
+  {
+   "key": "town",
+   "order": 3,
+   "number": 4,
+   "title": "Retake the Village",
+   "subtitle": "Lebanese Shia + Zaidi Shia Movement · Fortified village",
+   "nation": "RS",
+   "enemy_nation": "FR",
+   "enemy_name": "Occupation Force",
+   "map": "golan",
+   "length_text": "14-20 min",
+   "briefing": [
+    "An occupation force has dug into a hill village at the crossroads. Its stone houses are held by infantry and anti-tank teams, with armor in the lanes and their own fuel depot at the far gate.",
+    "Lebanese Shia and Zaidi Shia Movement fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.",
+    "Clear the approach and the two flank lanes, take the village square, then recapture the fuel depot at the far gate. Put infantry into houses to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves from the north."
+   ],
+   "objectives": [
+    {
+     "key": "z0",
+     "text": "Clear the southern approach"
+    },
+    {
+     "key": "z1",
+     "text": "Clear the west lane"
+    },
+    {
+     "key": "z2",
+     "text": "Clear the east lane"
+    },
+    {
+     "key": "z3",
+     "text": "Take the village square"
+    },
+    {
+     "key": "z4",
+     "text": "Recapture the fuel depot at the far gate"
+    },
+    {
+     "key": "gar",
+     "text": "Garrison a house to hold ground"
+    },
+    {
+     "key": "hold",
+     "text": "Beat back the counter-attacks and hold the village"
+    }
+   ],
+   "win_text": "The village is free and the depot is ours again. Both flags fly over the square.",
+   "lose_text": "The assault has failed. Our columns fall back.",
+   "radio_lines": [
+    "'Briefing: five fronts - three approaches, the square, the depot. Houses can be garrisoned.','g'"
+   ],
+   "extra": {
+    "ally": "DW"
+   },
+   "script_js": {
+    "setup": "setup(c){const d=c.mul,B=BASES[0];const ap=CH.pt(.62,0);const V=CH.village(ap[0],ap[1],900),C=[V.x,V.y];c.village=V;\n  const ang=Math.atan2(C[1]-B[1],C[0]-B[0]),nx=-Math.sin(ang),ny=Math.cos(ang),ux=Math.cos(ang),uy=Math.sin(ang);\n  const Rt=290*WK;c.zr=Rt*.33;const zp=(f,s)=>{const x=C[0]-ux*Rt*f+nx*Rt*s,y=C[1]-uy*Rt*f+ny*Rt*s;return nearestPassXY('ground',x,y)||[x,y];};\n  c.zones=[zp(.72,0),zp(.15,-.55),zp(.15,.55),[C[0],C[1]],zp(-.72,0)];c.focus=zp(1.3,0);\n  G.teams[0].credits=1200;G.teams[1].credits=1000;c.ehp=1.7;\n  CH.base(0,B[0],B[1]);const a=[B[0]+nx*420,B[1]+ny*420];CH.base(1,a[0],a[1]);\n  const m0=zp(1.35,-.15),m1=zp(1.35,.35);\n  c.me=[...CH.units(0,'inf',14,m0[0],m0[1],80),...CH.units(0,'at',4,m0[0],m0[1],60),...CH.units(0,'tank',2,m0[0],m0[1],60),...CH.units(0,'arty',2,m0[0],m0[1],50),...CH.units(0,'mortar',2,m0[0],m0[1],50)];\n  c.ally=[...CH.units(1,'inf',12,m1[0],m1[1],80),...CH.units(1,'tank',4,m1[0],m1[1],60),...CH.units(1,'at',3,m1[0],m1[1],50)];\n  c.depot=CH.depot(c.zones[4][0],c.zones[4][1],2,'Fuel depot');\n  c.foe=[];c.zoneFoe=c.zones.map((p,i)=>{const us=[...CH.units(2,'inf',Math.round((12+i*2)*d),p[0],p[1],c.zr*.7),...CH.units(2,'at',Math.round(4*d),p[0],p[1],c.zr*.6),...(i>=2?CH.units(2,'tank',Math.round((i>=3?2.5:1)*d),p[0],p[1],c.zr*.5):[])];\n   const ks=CH.civs(p[0],p[1],c.zr*1.2);if(ks.length)us.filter(u=>u.kind==='inf'||u.kind==='at').forEach((u,j)=>{if(j<ks.length*3)CH.garrison(u,ks[j%ks.length]);});\n   if(i===3||i===4)for(const o of [-1,1]){const q=zp(i===3?0:-.72,o*.35);CH.bld(2,'turret',q[0],q[1]);}\n   c.foe.push(...us);return us;});\n  c.raid=[[110,.6],[220,.8],[330,1]];c.rd=[];c.done=[false,false,false,false,false];c.nextOrder=8;\n  CH.say('Briefing: five fronts - three approaches, the square, the depot. Houses can be garrisoned.','g');}",
+    "tick": "tick(c,dt){const d=c.mul;\n  const gate=[()=>true,()=>c.done[0],()=>c.done[0],()=>c.done[1]&&c.done[2],()=>c.done[3]];\n  const msg=['Southern approach clear. The lanes are open.','West lane clear.','East lane clear.','The village square is taken! Push on to the far gate.','The fuel depot is ours again!'];\n  for(let i=0;i<5;i++){if(c.done[i]||!gate[i]())continue;const p=c.zones[i];const foes=CH.near(2,p[0],p[1],c.zr*1.15),mine=CH.near(0,p[0],p[1],c.zr*1.4)+CH.near(1,p[0],p[1],c.zr*1.4);if(foes<=2&&mine>0&&CH.alive(c.zoneFoe[i]).length<=Math.round(c.zoneFoe[i].length*.15)&&(i<4||c.depot.owner===0||c.depot.owner===1)){c.done[i]=true;c.o['z'+i]=true;CH.flash(msg[i],'g');if(i===3)CH.radio('Squad leader','Wasalna ya shabab, 3al-saaha!','We have arrived, lads - in the square!','g');}}\n  if(!c.o.gar){for(const k of (G.civ||[]))if(k.occ&&k.occ.some(u=>u.team<2)){c.o.gar=true;CH.flash('House garrisoned - held ground is hard to dislodge.','g');break;}}\n  for(const r of c.raid){if(!r.fired&&c.t>=r[0]){r.fired=true;const s=CH.pt(.96,0),us=[...CH.units(2,'inf',(10+r[1]*6)*d,s[0],s[1],90),...CH.units(2,'tank',(2+r[1]*3)*d,s[0],s[1],70)];c.foe.push(...us);c.rd.push(...us);const z=c.zones[c.done[3]?2:3];CH.go(2,us,z[0],z[1],true);CH.flash('Enemy reserves are counter-attacking from the north!','w');}}\n  if(c.t>=c.nextOrder){c.nextOrder+=26;const k=c.done.findIndex(x=>!x);if(k>=0){const z=c.zones[k],o=(k%2?1:-1)*c.zr*.5;CH.go(1,c.ally,z[0]+o,z[1]-o,true);}\n   if(c.t%104<26)CH.go(1,CH.units(1,'inf',4,CH.ax().P[0]+300,CH.ax().P[1]+300,60).concat(c.ally),c.zones[Math.max(0,k)][0],c.zones[Math.max(0,k)][1],true);}\n  c.ally=CH.alive(c.ally);\n  const left=c.done.filter(x=>!x).length;c.status=left?left+' objective'+(left>1?'s':'')+' left in the village':null;\n  const raidsOn=!c.raid.every(r=>r.fired)||CH.alive(c.rd).length>Math.round(3*d);\n  if(c.done.every(x=>x)&&!raidsOn){c.o.hold=true;c.win();}\n  else if(c.done.every(x=>x)&&!c.o.hold)c.status='Hold the village - counter-attack '+c.raid.filter(r=>r.fired).length+'/3 · '+CH.alive(c.rd).length+' enemy left';\n  else if(CH.combat(0)===0&&G.teams[0].credits<200)c.lose('Our assault force is spent.');\n  else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and assault force lost.');}"
+   }
+  },
+  {
+   "key": "finale",
+   "order": 4,
+   "number": 5,
+   "title": "Combined Arms",
+   "subtitle": "Iran · Final assault on the Caspian coast",
+   "nation": "IR",
+   "enemy_nation": "RU",
+   "enemy_name": "Northern Group",
+   "map": "caspian",
+   "length_text": "14-20 min",
+   "briefing": [
+    "This is the strike that ends the offensive. The enemy has dug a fortified base on the coast: air-defence sites on the approaches, armor in depth, a War Factory and a command post at the back.",
+    "You command a combined force: loitering drones, missile artillery, tanks, infantry and anti-air. The drones cannot fly while the enemy air-defence sites stand - take those out first with artillery and the ground force, then bring the drones in.",
+    "Break the air defenses, destroy the vehicle factory so the armor cannot be replaced, then destroy the headquarters. You have a field depot and a small base behind you for reinforcements."
+   ],
+   "objectives": [
+    {
+     "key": "sam",
+     "text": "Destroy the enemy air-defence sites"
+    },
+    {
+     "key": "fac",
+     "text": "Destroy the vehicle factory"
+    },
+    {
+     "key": "hq",
+     "text": "Destroy the enemy headquarters"
+    }
+   ],
+   "win_text": "The enemy command post is rubble. The offensive is over.",
+   "lose_text": "The assault force is destroyed.",
+   "radio_lines": [
+    "'Briefing: air defenses first, then the factory, then the headquarters.','g'"
+   ],
+   "script_js": {
+    "setup": "setup(c){const d=c.mul,B=BASES[0];G.teams[0].credits=3500;const s=CH.pt(.14,0);c.focus=s;CH.base(0,B[0],B[1]);\n  const hq=G.ents.find(e=>e.team===0&&e.kind==='hq');for(const k of ['barracks','factory']){const p=sbSpot(0,k,hq,170,360);if(p)addBld(0,k,p[0],p[1],true);}\n  CH.units(0,'drone',8,s[0],s[1],90);CH.units(0,'arty',5,s[0],s[1],90);CH.units(0,'tank',8,s[0],s[1],110);CH.units(0,'inf',12,s[0],s[1],110);CH.units(0,'at',4,s[0],s[1],70);CH.units(0,'aa',2,s[0],s[1],70);\n  const dp=CH.pt(.3,200);c.depot=CH.depot(dp[0],dp[1],-1,'Forward depot');\n  const E=BASES[1];const T=G.teams[1];T.credits=3000;CH.base(1,E[0],E[1]);const ehq=G.ents.find(e=>e.team===1&&e.kind==='hq');\n  for(const k of ['barracks','factory']){const p=sbSpot(1,k,ehq,170,320);if(p)addBld(1,k,p[0],p[1],true);}\n  for(const o of [-260,-90,90,260]){const p=CH.pt(.8,o);CH.bld(1,'turret',p[0],p[1]);}\n  for(const o of [-200,0,200]){const p=CH.pt(.9,o);CH.bld(1,'sam',p[0],p[1]);}\n  const q=CH.pt(.85,0);CH.units(1,'tank',Math.round(5*d),q[0],q[1],140);CH.units(1,'inf',Math.round(10*d),q[0],q[1],140);CH.units(1,'at',Math.round(4*d),q[0],q[1],100);CH.units(1,'aa',2,q[0],q[1],100);\n  T.ai=mkAI(c.diff);CH.say('Briefing: air defenses first, then the factory, then the headquarters.','g');}",
+    "tick": "tick(c,dt){const sam=CH.count(1,'sam'),fac=CH.count(1,'factory'),hq=CH.count(1,'hq');\n  if(!c.o.sam&&sam===0){c.o.sam=true;CH.flash('Air defenses down - the drones have a free sky.','g');CH.radio('Drone team','Al-sama\\' maftuha','The sky is open','g');}\n  if(!c.o.fac&&fac===0){c.o.fac=true;CH.flash('The vehicle factory is rubble - no more armor for them.','g');}\n  if(!c.o.hq&&hq===0)c.o.hq=true;\n  c.status=c.o.hq?null:'Enemy: '+sam+' air-defence site'+(sam===1?'':'s')+' · '+fac+' factory · '+hq+' HQ';if(c.o.hq)c.win();\n  else if(CH.combat(0)===0&&G.teams[0].credits<250)c.lose('The assault force is destroyed.');\n  else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and force lost.');}"
+   }
+  },
+  {
+   "key": "marsh",
+   "order": 5,
+   "number": 6,
+   "title": "Bridgehead on the Euphrates",
+   "subtitle": "Iraqi Shia Brigades · River crossing in the southern marshes",
+   "nation": "RV",
+   "enemy_nation": "GB",
+   "enemy_name": "Southern Task Group",
+   "map": "euphrates",
+   "length_text": "16-22 min",
+   "briefing": [
+    "The road to the shrine cities runs over the Euphrates. The far bank is held by a task group dug in among the reeds: emplacements at the bridge end, anti-tank teams in the marsh grass, and an ammunition dump behind them that feeds their guns.",
+    "Our volunteer brigades gather on the west bank with riflemen, anti-tank teams, tanks and mortars. Mortars and guns can cover the bridge from your side - use them before the infantry cross. Armor on a bridge is a target; send riflemen first.",
+    "Seize the far end of the bridge, capture the ammunition dump so our guns have supplies on the east bank, and then hold the bridgehead while the engineers bring the main column over. Expect hard counter-attacks along the causeway."
+   ],
+   "objectives": [
+    {
+     "key": "cross",
+     "text": "Seize the east end of the bridge"
+    },
+    {
+     "key": "dump",
+     "text": "Capture the ammunition dump on the east bank"
+    },
+    {
+     "key": "hold",
+     "text": "Hold the bridgehead until the column crosses"
+    }
+   ],
+   "win_text": "The bridgehead held and the column is over the river. The road to the shrine cities is open.",
+   "lose_text": "The bridgehead is lost. The brigades fall back to the west bank.",
+   "radio_lines": [
+    "'Briefing: mortars first, riflemen across, then the dump. Hold '+campClock(c.HOLD)+' once the east end is ours.','g'"
+   ],
+   "script_js": {
+    "setup": "setup(c){const d=c.mul,B=BASES[0],br=G.map.bridges||[];const mid=CH.pt(.5,0);let bg=null,bd=1e9;for(const b of br){const q=Math.hypot(b.x-mid[0],b.y-mid[1]);if(q<bd){bd=q;bg=b;}}\n  if(!bg)bg={x:mid[0],y:mid[1],a:[mid[0]-160,mid[1]],b:[mid[0]+160,mid[1]]};\n  const da=Math.hypot(bg.a[0]-B[0],bg.a[1]-B[1]),db=Math.hypot(bg.b[0]-B[0],bg.b[1]-B[1]);c.near=da<db?bg.a:bg.b;c.far=da<db?bg.b:bg.a;c.bridge=[bg.x,bg.y];\n  const ex=c.far[0]-c.near[0],ey=c.far[1]-c.near[1],L=Math.hypot(ex,ey)||1,ux=ex/L,uy=ey/L,vx=-uy,vy=ux;const at=(f,s)=>{const x=c.far[0]+ux*f+vx*s,y=c.far[1]+uy*f+vy*s;return nearestPassXY('ground',x,y)||[x,y];};\n  c.focus=[c.near[0]-ux*150,c.near[1]-uy*150];G.teams[0].credits=2200;c.HOLD=60*Math.round(6+(c.mul-.7)*3);\n  CH.base(0,B[0],B[1]);const hq=G.ents.find(e=>e.team===0&&e.kind==='hq');for(const k of ['barracks']){const p=sbSpot(0,k,hq,170,360);if(p)addBld(0,k,p[0],p[1],true);}\n  const m=[c.near[0]-ux*260,c.near[1]-uy*260];\n  CH.units(0,'inf',18,m[0],m[1],110);CH.units(0,'at',6,m[0],m[1],80);CH.units(0,'tank',4,m[0]-ux*80,m[1]-uy*80,100);CH.units(0,'mortar',4,m[0]-ux*160,m[1]-uy*160,70);CH.units(0,'arty',2,m[0]-ux*200,m[1]-uy*200,70);\n  const dr=at(300,0);c.depot=CH.depot(dr[0],dr[1],1,'Ammunition dump');\n  CH.base(1,BASES[1][0],BASES[1][1]);G.teams[1].credits=1500;c.fe=[];\n  for(const s of [-170,0,170]){const p=at(120,s);CH.bld(1,'turret',p[0],p[1]);}\n  c.fe=[...CH.units(1,'inf',Math.round(12*d),dr[0],dr[1],150),...CH.units(1,'at',Math.round(4*d),dr[0],dr[1],110),...CH.units(1,'tank',Math.round(3*d),dr[0],dr[1],110),...CH.units(1,'mortar',Math.round(2*d),dr[0],dr[1],90)];\n  c.wave=0;c.nextWave=0;c.at=at;c.hs=null;\n  CH.say('Briefing: mortars first, riflemen across, then the dump. Hold '+campClock(c.HOLD)+' once the east end is ours.','g');}",
+    "tick": "tick(c,dt){const d=c.mul,farN=CH.near(0,c.far[0],c.far[1],300),foeFar=CH.near(1,c.far[0],c.far[1],330),tur=G.ents.filter(e=>e.team===1&&e.kind==='turret'&&!e.dead&&Math.hypot(e.x-c.far[0],e.y-c.far[1])<500).length;\n  if(!c.o.cross&&farN>=4&&foeFar<=Math.round(2*d)&&tur===0){c.o.cross=true;c.hs=c.t;c.nextWave=c.t+35;CH.flash('The east end of the bridge is ours! Hold it - the enemy will counter-attack along the causeway.','g');CH.radio('Brigade commander','Ya shabab, el-jisir saar ilna','Lads, the bridge is ours','g');G.teams[0].credits+=800;const b=c.near,u=CH.units(0,'inf',8,b[0],b[1],80);CH.go(0,u,c.far[0],c.far[1],true);}\n  if(!c.o.dump&&c.depot.owner===0){c.o.dump=true;CH.flash('The ammunition dump is ours: guns on this bank are supplied.','g');}\n  if(c.o.cross&&c.t>=c.nextWave){c.wave++;c.nextWave+=Math.round(62/Math.max(.75,d));const k=c.wave,s=CH.pt(.86,0);let us=[...CH.units(1,'inf',(5+k*1.5)*d,s[0],s[1],100),...CH.units(1,'at',(1+k*.4)*d,s[0],s[1],70)];if(k>=2)us.push(...CH.units(1,'tank',(k-.5)*.7*d,s[0],s[1],80));if(k>=4)us.push(...CH.units(1,'arty',d>1?2:1,s[0],s[1],70));\n   CH.go(1,us,c.far[0],c.far[1],true);CH.flash('Counter-attack '+k+' is coming down the east causeway.','w');if(k===1)CH.radio('Lookout','Intabihu - el-aduw jaay min el-qasab','Watch out - the enemy comes through the reeds','w');}\n  const held=c.o.cross&&c.o.dump;let hold=0;if(c.o.cross){hold=c.hold!=null?c.hold:0;if(held)hold=Math.min(c.HOLD,hold+dt);c.hold=hold;}\n  if(c.o.cross&&!c.o.dump&&c.t-c.hs>240&&!c.nag){c.nag=1;CH.flash('The ammunition dump is still in enemy hands. Capture it: infantry stand next to it for a few seconds.','w');}\n  if(held&&hold>=c.HOLD&&!c.o.hold){c.o.hold=true;CH.flash('The engineers report: the main column is across.','g');}\n  c.status=!c.o.cross?'East end: '+foeFar+' enemy near · '+tur+' emplacements':(held?(c.o.hold?null:'Hold the bridgehead · '+campClock(c.HOLD-hold)):'Capture the dump · hold clock waits');\n  if(c.o.cross&&held&&c.o.hold)c.win();\n  else if(c.o.cross&&c.t-c.hs>40&&CH.near(0,c.far[0],c.far[1],420)===0&&!c.o.hold)c.lose('The bridgehead was overrun.');\n  else if(CH.combat(0)===0&&G.teams[0].credits<250)c.lose('The brigades are spent.');\n  else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and brigades lost.');}"
+   }
+  }
+ ]
+}

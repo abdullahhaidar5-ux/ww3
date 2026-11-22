@@ -2514,6 +2514,215 @@
    "w": 144,
    "h": 112
   },
+  "cursor/aim": {
+   "file": "cursors/aim.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/amove": {
+   "file": "cursors/amove.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/arrow": {
+   "file": "cursors/arrow.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    3,
+    2
+   ]
+  },
+  "cursor/attack": {
+   "file": "cursors/attack.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/capture": {
+   "file": "cursors/capture.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    5,
+    30
+   ]
+  },
+  "cursor/enter": {
+   "file": "cursors/enter.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/exit": {
+   "file": "cursors/exit.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/force": {
+   "file": "cursors/force.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/guard": {
+   "file": "cursors/guard.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/line": {
+   "file": "cursors/line.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/move": {
+   "file": "cursors/move.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    27
+   ]
+  },
+  "cursor/nogo": {
+   "file": "cursors/nogo.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/place": {
+   "file": "cursors/place.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/rally": {
+   "file": "cursors/rally.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    5,
+    30
+   ]
+  },
+  "cursor/repair": {
+   "file": "cursors/repair.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/scroll": {
+   "file": "cursors/scroll.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/sel": {
+   "file": "cursors/sel.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    3,
+    2
+   ]
+  },
+  "cursor/sell": {
+   "file": "cursors/sell.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    16,
+    16
+   ]
+  },
+  "cursor/way": {
+   "file": "cursors/way.png",
+   "x": 0,
+   "y": 0,
+   "w": 32,
+   "h": 32,
+   "hot": [
+    5,
+    30
+   ]
+  },
   "emblem/DW": {
    "file": "emblems/DW.png",
    "x": 0,
@@ -2689,6 +2898,461 @@
    "w": 120,
    "h": 72
   },
+  "idemb/bolt": {
+   "file": "idemb/bolt.png",
+   "x": 0,
+   "y": 0,
+   "w": 64,
+   "h": 64
+  },
+  "idemb/chevron": {
+   "file": "idemb/chevron.png",
+   "x": 0,
+   "y": 0,
+   "w": 64,
+   "h": 64
+  },
+  "idemb/crown": {
+   "file": "idemb/crown.png",
+   "x": 0,
+   "y": 0,
+   "w": 64,
+   "h": 64
+  },
+  "idemb/diamond": {
+   "file": "idemb/diamond.png",
+   "x": 0,
+   "y": 0,
+   "w": 64,
+   "h": 64
+  },
+  "idemb/hex": {
+   "file": "idemb/hex.png",
+   "x": 0,
+   "y": 0,
+   "w": 64,
+   "h": 64
+  },
+  "idemb/shield": {
+   "file": "idemb/shield.png",
+   "x": 0,
+   "y": 0,
+   "w": 64,
+   "h": 64
+  },
+  "idemb/skull": {
+   "file": "idemb/skull.png",
+   "x": 0,
+   "y": 0,
+   "w": 64,
+   "h": 64
+  },
+  "idemb/star": {
+   "file": "idemb/star.png",
+   "x": 0,
+   "y": 0,
+   "w": 64,
+   "h": 64
+  },
+  "idemb/target": {
+   "file": "idemb/target.png",
+   "x": 0,
+   "y": 0,
+   "w": 64,
+   "h": 64
+  },
+  "idemb/wings": {
+   "file": "idemb/wings.png",
+   "x": 0,
+   "y": 0,
+   "w": 64,
+   "h": 64
+  },
+  "map/aegean": {
+   "file": "maps/aegean.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/arctic": {
+   "file": "maps/arctic.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/atoll": {
+   "file": "maps/atoll.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/blacksea": {
+   "file": "maps/blacksea.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/bm_breakwater": {
+   "file": "maps/bm_breakwater.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/bm_ferryquarter": {
+   "file": "maps/bm_ferryquarter.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/bm_fourmills": {
+   "file": "maps/bm_fourmills.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/bm_sixroads": {
+   "file": "maps/bm_sixroads.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/bm_splitridge": {
+   "file": "maps/bm_splitridge.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/caribbean": {
+   "file": "maps/caribbean.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/dmziron": {
+   "file": "maps/dmziron.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/donbas": {
+   "file": "maps/donbas.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/euphrates": {
+   "file": "maps/euphrates.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/gulf": {
+   "file": "maps/gulf.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/hajar": {
+   "file": "maps/hajar.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/hawizeh": {
+   "file": "maps/hawizeh.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/hindukush": {
+   "file": "maps/hindukush.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/hormuzgate": {
+   "file": "maps/hormuzgate.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/islands": {
+   "file": "maps/islands.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/khyber": {
+   "file": "maps/khyber.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/kuwait": {
+   "file": "maps/kuwait.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/lebanon": {
+   "file": "maps/lebanon.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/marshes": {
+   "file": "maps/marshes.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/mesopotamia": {
+   "file": "maps/mesopotamia.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/oasis": {
+   "file": "maps/oasis.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/persia": {
+   "file": "maps/persia.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/plateau": {
+   "file": "maps/plateau.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/rhine": {
+   "file": "maps/rhine.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/rubalkhali": {
+   "file": "maps/rubalkhali.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/taiga": {
+   "file": "maps/taiga.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/taiwan": {
+   "file": "maps/taiwan.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/tihama": {
+   "file": "maps/tihama.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/yangtze": {
+   "file": "maps/yangtze.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/yemen": {
+   "file": "maps/yemen.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "map/zagros": {
+   "file": "maps/zagros.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
+  },
+  "mm/team0": {
+   "file": "mm/team0.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team0_big": {
+   "file": "mm/team0_big.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team1": {
+   "file": "mm/team1.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team1_big": {
+   "file": "mm/team1_big.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team2": {
+   "file": "mm/team2.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team2_big": {
+   "file": "mm/team2_big.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team3": {
+   "file": "mm/team3.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team3_big": {
+   "file": "mm/team3_big.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team4": {
+   "file": "mm/team4.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team4_big": {
+   "file": "mm/team4_big.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team5": {
+   "file": "mm/team5.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team5_big": {
+   "file": "mm/team5_big.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team6": {
+   "file": "mm/team6.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team6_big": {
+   "file": "mm/team6_big.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team7": {
+   "file": "mm/team7.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/team7_big": {
+   "file": "mm/team7_big.png",
+   "x": 0,
+   "y": 0,
+   "w": 12,
+   "h": 12
+  },
+  "mm/tech_hosp": {
+   "file": "mm/tech_hosp.png",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  "mm/tech_mine": {
+   "file": "mm/tech_mine.png",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  "mm/tech_plant": {
+   "file": "mm/tech_plant.png",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
+  "mm/tech_quarry": {
+   "file": "mm/tech_quarry.png",
+   "x": 0,
+   "y": 0,
+   "w": 16,
+   "h": 16
+  },
   "pow/barrage": {
    "file": "pow/barrage.png",
    "x": 0,
@@ -2760,6 +3424,13 @@
    "w": 60,
    "h": 60,
    "svg": "pow/sanc.svg"
+  },
+  "ref/minimap_battle": {
+   "file": "ref/minimap_battle.png",
+   "x": 0,
+   "y": 0,
+   "w": 384,
+   "h": 264
   },
   "svg/alert": {
    "file": "svg/alert.png",
@@ -10502,5 +11173,5 @@
    "h": 112
   }
  },
- "count": 1487
+ "count": 1572
 }
