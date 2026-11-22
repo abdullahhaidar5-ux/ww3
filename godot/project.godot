@@ -6,6 +6,9 @@ config/name="World War 3"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 
+[autoload]
+NetBoot="*res://net/net_boot.gd"
+
 [display]
 window/size/viewport_width=1536
 window/size/viewport_height=790

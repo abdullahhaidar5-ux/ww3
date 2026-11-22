@@ -13,6 +13,7 @@
 ## direction per tick, one AI think per tick, vision every 0.2 s, end check every 1 s).
 ## What is and isn't ported yet: see orch/HANDOFF-godot-sim.md.
 extends RefCounted
+const DM = preload("res://net/det_math.gd")
 
 const E = preload("res://sim/sim_ent.gd")
 const Nav = preload("res://sim/sim_nav.gd")
@@ -130,7 +131,7 @@ func init(map: Dictionary, players: Array, seed_value: int = 1, difficulty: int 
 	for i in N:
 		var b: Array = bases[i]
 		var bx := float(b[0]); var by := float(b[1])
-		var a := base_facing(i); var cx := cos(a); var cy := sin(a)
+		var a := base_facing(i); var cx := DM.dcos(a); var cy := DM.dsin(a)
 		add_bld(i, "hq", bx, by, true)
 		add_unit(i, "harv", bx + cx * 150 - cy * 60, by + cy * 150 + cx * 60)
 		add_unit(i, "dozer", bx + cx * 120 - cy * 110, by + cy * 120 + cx * 110)
@@ -152,7 +153,7 @@ func mk_team(i: int, fac: String, is_ai: bool, tm: int) -> Dictionary:
 
 func base_facing(team: int) -> float:
 	var b: Array = bases[team] if team < bases.size() else bases[0]
-	return atan2(MAPH / 2.0 - float(b[1]), MAPW / 2.0 - float(b[0]))
+	return DM.datan2(MAPH / 2.0 - float(b[1]), MAPW / 2.0 - float(b[0]))
 
 func stats(fac: String, kind: String) -> Dictionary:
 	var u: Dictionary = R.factions[fac].units
@@ -436,15 +437,15 @@ func step() -> void:
 			if e.kind != "jet":
 				e.va = lerp_a(e.va, e.ang, dt * 7)
 				var tt := e.va
-				if e.target != null and not e.target.dead: tt = atan2(e.target.y - e.y, e.target.x - e.x)
-				elif e.order != null and e.order.get("target") != null and not e.order.target.dead: tt = atan2(e.order.target.y - e.y, e.order.target.x - e.x)
+				if e.target != null and not e.target.dead: tt = DM.datan2(e.target.y - e.y, e.target.x - e.x)
+				elif e.order != null and e.order.get("target") != null and not e.order.target.dead: tt = DM.datan2(e.order.target.y - e.y, e.order.target.x - e.x)
 				e.tang = lerp_a(e.tang, tt, dt * 8)
 			upd_unit(e, dt)
 			if e.v > 0 and e.vt != t:
 				var M: Array = R.MOVE.get(e.s_cls, [4, 80])
 				e.v = maxf(0.0, e.v - float(M[1]) * 2.5 * dt)
 				if e.v > 1 and e.s_dom != "air":
-					var nx := e.x + cos(e.hd) * e.v * dt; var ny := e.y + sin(e.hd) * e.v * dt
+					var nx := e.x + DM.dcos(e.hd) * e.v * dt; var ny := e.y + DM.dsin(e.hd) * e.v * dt
 					if nav.pass_xy(dom_of(e), nx, ny): e.x = nx; e.y = ny; e.mv = t
 	if do_prof: t0 = _pt("units", t0)
 	upd_proj(dt)
@@ -585,8 +586,8 @@ func q_refund(b: E) -> void:
 
 func spawn_from(T: Dictionary, b: E, kind: String) -> void:
 	var s := stats(T.fac, kind)
-	var a := atan2(MAPH / 2 - b.y, MAPW / 2 - b.x)
-	var x := b.x + cos(a) * (b.size / 2 + 16); var y := b.y + sin(a) * (b.size / 2 + 16)
+	var a := DM.datan2(MAPH / 2 - b.y, MAPW / 2 - b.x)
+	var x := b.x + DM.dcos(a) * (b.size / 2 + 16); var y := b.y + DM.dsin(a) * (b.size / 2 + 16)
 	if s.get("dom") == "naval": return   # navy not ported (no water battle maps in the 4-nation slice)
 	if s.get("dom") == "ground":
 		var p = nav.nearest_pass_xy(Nav.DOM_GROUND, x, y)
@@ -598,7 +599,7 @@ func spawn_from(T: Dictionary, b: E, kind: String) -> void:
 		u.state = "park"; u.ang = -1.57; u.va = -1.57
 	elif kind != "harv":
 		var Rl = b.rally if b.rally != null else T.rally
-		if Rl == null: Rl = {x = b.x + cos(a) * (b.size / 2 + 70), y = b.y + sin(a) * (b.size / 2 + 70)}
+		if Rl == null: Rl = {x = b.x + DM.dcos(a) * (b.size / 2 + 70), y = b.y + DM.dsin(a) * (b.size / 2 + 70)}
 		set_move(u, Rl.x + rnd(-35, 35), Rl.y + rnd(-35, 35), "move")
 
 func start_research(team: int, key: String) -> bool:
@@ -713,7 +714,7 @@ func upd_bld(b: E, dt: float) -> void:
 		if b.sc_t <= 0 or b.last_hit > t - dt * 1.5:
 			b.sc_t = 0.2 + (b.id % 7) * 0.02; b.target = nearest_enemy(b, rng_of(b))
 	if b.target != null:
-		b.ang = atan2(b.target.y - b.y, b.target.x - b.x)
+		b.ang = DM.datan2(b.target.y - b.y, b.target.x - b.x)
 		if b.cd <= 0: fire(b, b.target, b.s_dmg, b.s_wpn, 0.0); b.cd = b.s_rof
 
 # ------------------------------------------------------------------------------------------------ units
@@ -766,7 +767,7 @@ func step_to(u: E, x: float, y: float, dt: float, fin: bool) -> void:
 	_step_to(u, x, y, dt, fin)
 
 func _step_to(u: E, x: float, y: float, dt: float, fin: bool) -> void:
-	var want := atan2(y - u.y, x - u.x)
+	var want := DM.datan2(y - u.y, x - u.x)
 	var dist2 := hyp(x - u.x, y - u.y)
 	if u.av_t > t and dist2 > 60: want += u.av_o
 	var M: Array = R.MOVE.get(u.s_cls, [4, 80]); var m0 := float(M[0]); var m1 := float(M[1])
@@ -780,11 +781,11 @@ func _step_to(u: E, x: float, y: float, dt: float, fin: bool) -> void:
 		if u.v < 6 and absf(err) > 0.6: u.v = maxf(u.v, 7.0)
 	u.hd += clampf(err, -tr, tr)
 	var ae := absf(ang_diff(u.hd, want)); var foot := m0 >= 8
-	var f := (1.0 if ae < 1.2 else 0.35) if foot else maxf(0.12, cos(minf(ae, 1.45)))
-	if whl: f = maxf(0.35, cos(minf(ae, 1.2)))
+	var f := (1.0 if ae < 1.2 else 0.35) if foot else maxf(0.12, DM.dcos(minf(ae, 1.45)))
+	if whl: f = maxf(0.35, DM.dcos(minf(ae, 1.2)))
 	var sl := 1.0
 	if d == Nav.DOM_GROUND:
-		var ca := cos(u.hd); var sa := sin(u.hd); var g0 := ground_h(u.x, u.y); var g1 := ground_h(u.x + ca * 14, u.y + sa * 14); var gr := (g1 - g0) / 14.0
+		var ca := DM.dcos(u.hd); var sa := DM.dsin(u.hd); var g0 := ground_h(u.x, u.y); var g1 := ground_h(u.x + ca * 14, u.y + sa * 14); var gr := (g1 - g0) / 14.0
 		sl = clampf(1 - gr * (0.9 if foot else 1.6), 0.45, 1.15)
 	var T: Dictionary = teams[u.team]
 	var top := u.s_spd * f * sl * upg_k(T, u.kind, "spd")
@@ -796,14 +797,14 @@ func _step_to(u: E, x: float, y: float, dt: float, fin: bool) -> void:
 		top = minf(top, sqrt(2 * brake * maxf(0.0, dist2 - 2)) + 4)
 	if u.retreat: top *= 1.15
 	if d == Nav.DOM_GROUND and not foot and u.v > 4:
-		var la := u.r * 2 + 12; var px2 := u.x + cos(u.hd) * la; var py2 := u.y + sin(u.hd) * la
+		var la := u.r * 2 + 12; var px2 := u.x + DM.dcos(u.hd) * la; var py2 := u.y + DM.dsin(u.hd) * la
 		for o: E in nearby(px2, py2, 34, _nb_av):
 			if o == u or o.dead or o.is_b or o.s_dom != "ground" or (o.order == null and o.team == u.team and u.order != null): continue
 			var dx := o.x - px2; var dy := o.y - py2
 			if dx * dx + dy * dy > (o.r + u.r * 0.8) * (o.r + u.r * 0.8): continue
 			if o.v > 4 and absf(ang_diff(u.hd, o.ang)) < 0.6: top = minf(top, maxf(8.0, o.v * 0.95))
 			elif mass_of(o) >= mass_of(u) * 0.5:
-				var ah := ang_diff(u.hd, atan2(o.y - u.y, o.x - u.x))
+				var ah := ang_diff(u.hd, DM.datan2(o.y - u.y, o.x - u.x))
 				var sg := signf(ah) if ah != 0 else 1.0
 				u.hd -= sg * minf(1.8 * dt, 0.12); top *= 0.75
 				if o.v <= 4: u.av_o = -sg * 0.85; u.av_t = t + 0.8
@@ -811,7 +812,7 @@ func _step_to(u: E, x: float, y: float, dt: float, fin: bool) -> void:
 	var acc := (m1 if u.v < top else m1 * 2.2) * dt
 	u.v += clampf(top - u.v, -acc, acc); u.vt = t
 	var stp := minf(u.v * dt, dist2 + 0.5)
-	var nx := u.x + cos(u.hd) * stp; var ny := u.y + sin(u.hd) * stp
+	var nx := u.x + DM.dcos(u.hd) * stp; var ny := u.y + DM.dsin(u.hd) * stp
 	u.ang = u.hd
 	if nav.pass_xy(d, nx, ny): u.x = nx; u.y = ny
 	elif nav.pass_xy(d, nx, u.y): u.x = nx; u.v *= 0.97
@@ -858,10 +859,10 @@ func nav_to(u: E, x: float, y: float, dt: float, fin: bool = false) -> void:
 	elif dd < u.np_d - 3: u.np_d = dd; u.np_t = t
 	elif t - u.np_t > 2.5 and dd > 20:
 		u.np_t = t
-		var base := atan2(wp[1] - u.y, wp[0] - u.x); var sg := 1.0 if (u.id + int(t)) % 2 else -1.0
+		var base := DM.datan2(wp[1] - u.y, wp[0] - u.x); var sg := 1.0 if (u.id + int(t)) % 2 else -1.0
 		var ok = null
 		for c in [[1.57 * sg, 45], [-1.57 * sg, 45], [2.3 * sg, 60], [-2.3 * sg, 60], [1.57 * sg, 80]]:
-			var x2: float = u.x + cos(base + c[0]) * c[1]; var y2: float = u.y + sin(base + c[0]) * c[1]
+			var x2: float = u.x + DM.dcos(base + c[0]) * c[1]; var y2: float = u.y + DM.dsin(base + c[0]) * c[1]
 			if nav.pass_xy(d, x2, y2) and nav.los(d, u.x, u.y, x2, y2): ok = [x2, y2]; break
 		if ok != null: u.path.push_front(ok); u.np_w = ok; u.np_d = 1e9
 		u.prt = minf(u.prt, t + 1.2)
@@ -921,7 +922,7 @@ func auto_engage(u: E, o, T: Dictionary) -> void:
 		var e2 = nearest_enemy(u, rng_of(u) + 10, null, 0.5)
 		if e2 == null or e2.is_b: return
 		if mass_of(u) >= 10 and mass_of(e2) < 2 and hyp(e2.x - u.x, e2.y - u.y) < 160: return
-		var ah := atan2(o.y - u.y, o.x - u.x); var ae := atan2(e2.y - u.y, e2.x - u.x)
+		var ah := DM.datan2(o.y - u.y, o.x - u.x); var ae := DM.datan2(e2.y - u.y, e2.x - u.x)
 		if absf(ang_diff(ah, ae)) < 1.05 or hit: u.target = e2
 		return
 	var help := o == null and friends_under_fire(u)
@@ -955,8 +956,8 @@ func unit_brain(u: E, dt: float, o) -> bool:
 					if q2 < hd2: hd2 = q2; home = b
 			if home != null and hd2 > 260:
 				u.rt = t
-				var a := atan2(home.y - u.y, home.x - u.x); var k := minf(480.0, hd2 - 200) if RD > 1 else 260.0
-				set_move(u, u.x + cos(a) * k, u.y + sin(a) * k, "move"); u.order.auto = 1
+				var a := DM.datan2(home.y - u.y, home.x - u.x); var k := minf(480.0, hd2 - 200) if RD > 1 else 260.0
+				set_move(u, u.x + DM.dcos(a) * k, u.y + DM.dsin(a) * k, "move"); u.order.auto = 1
 				return true
 		if u.rt > 0 and t - u.rt > 12: u.rt = 0
 		if u.is_inf and o == null and t - u.last_hit < 1.5 and not cover_at(u.x, u.y) and t - u.cv_t > (3.0 if u.st == 3 else 6.0):
@@ -980,13 +981,13 @@ func unit_brain(u: E, dt: float, o) -> bool:
 	if tg == null or tg.dead: return false
 	var d := hyp(tg.x - u.x, tg.y - u.y) - tg.r; var Rr := rng_of(u)
 	if not tg.is_b and tg.s_rng > 0 and u.s_dom == "ground" and u.s_minr == 0 and Rr > tg.s_rng * 1.3 and d < minf(Rr * 0.6, tg.s_rng + 30) and can_target(tg.s, u):
-		var a2 := atan2(u.y - tg.y, u.x - tg.x)
-		step_to(u, u.x + cos(a2) * 60, u.y + sin(a2) * 60, dt, false)
-		if u.cd <= 0 and absf(ang_diff(u.tang, atan2(tg.y - u.y, tg.x - u.x))) < 0.35:
+		var a2 := DM.datan2(u.y - tg.y, u.x - tg.x)
+		step_to(u, u.x + DM.dcos(a2) * 60, u.y + DM.dsin(a2) * 60, dt, false)
+		if u.cd <= 0 and absf(ang_diff(u.tang, DM.datan2(tg.y - u.y, tg.x - u.x))) < 0.35:
 			fire(u, tg, u.s_dmg * dmg_out(u), u.s_wpn, u.s_splash); u.cd = u.s_rof * rof_mult(u)
 		return true
 	if u.is_veh and d <= Rr and t - u.mv > 0.4:
-		var want := atan2(tg.y - u.y, tg.x - u.x); var M: Array = R.MOVE.get(u.s_cls, [2, 40])
+		var want := DM.datan2(tg.y - u.y, tg.x - u.x); var M: Array = R.MOVE.get(u.s_cls, [2, 40])
 		if not u.has_hd: u.hd = u.ang; u.has_hd = true
 		var e := ang_diff(u.hd, want)
 		if absf(e) > 0.35:
@@ -1032,9 +1033,9 @@ func upd_unit(u: E, dt: float) -> void:
 		if d > Rr:
 			if o != null and o.type == "move": u.target = null; nav_to(u, o.x, o.y, dt, true); return
 			nav_to(u, tg.x, tg.y, dt); return
-		if not TANG_CLS.has(u.s_cls): u.ang = atan2(tg.y - u.y, tg.x - u.x)
+		if not TANG_CLS.has(u.s_cls): u.ang = DM.datan2(tg.y - u.y, tg.x - u.x)
 		if u.s_minr > 0 and d < u.s_minr: step_to(u, u.x * 2 - tg.x, u.y * 2 - tg.y, dt, false); return
-		if u.cd <= 0 and absf(ang_diff(u.tang, atan2(tg.y - u.y, tg.x - u.x))) < 0.35:
+		if u.cd <= 0 and absf(ang_diff(u.tang, DM.datan2(tg.y - u.y, tg.x - u.x))) < 0.35:
 			fire(u, tg, u.s_dmg * dmg_out(u), u.s_wpn, u.s_splash * upg_k(T, u.kind, "splash")); u.cd = u.s_rof * rof_mult(u)
 		return
 	if o != null and (o.type == "move" or o.type == "amove"):
@@ -1110,7 +1111,7 @@ func upd_dozer(u: E, dt: float) -> void:
 			return
 		var d := hyp(b.x - u.x, b.y - u.y)
 		if d > b.size / 2 + 30: nav_to(u, b.x, b.y, dt); return
-		u.building = true; u.ang = atan2(b.y - u.y, b.x - u.x); u.last_fire = t; return
+		u.building = true; u.ang = DM.datan2(b.y - u.y, b.x - u.x); u.last_fire = t; return
 	if o != null and o.type == "move":
 		if hyp(o.x - u.x, o.y - u.y) < 14 or stalled(u, o): u.order = null
 		else: nav_to(u, o.x, o.y, dt, true); return
@@ -1133,9 +1134,9 @@ func fire(src: E, tg: E, dmg: float, wpn: String, splash: float) -> void:
 			dmg *= 0.12
 		else: src.am -= 1
 	src.last_fire = t
-	var a := src.ang if src.is_b else (src.tang if TANG_CLS.has(src.s_cls) else atan2(tg.y - src.y, tg.x - src.x))
+	var a := src.ang if src.is_b else (src.tang if TANG_CLS.has(src.s_cls) else DM.datan2(tg.y - src.y, tg.x - src.x))
 	var ln := 20.0 if src.is_b else float({inf = 8, at = 10, hero = 10, tank = 24, arty = 27, aa = 16, boat = 16, ship = 30, heli = 14, jet = 10}.get(src.s_cls, 10))
-	var ox := src.x + cos(a) * ln; var oy := src.y + sin(a) * ln
+	var ox := src.x + DM.dcos(a) * ln; var oy := src.y + DM.dsin(a) * ln
 	if wpn == "gun" or wpn == "tower" or wpn == "snipe" or wpn == "flak":
 		apply_dmg(tg, dmg, wpn, src.team, src, 0.0); return
 	var d := hyp(tg.x - ox, tg.y - oy)
@@ -1146,14 +1147,14 @@ func upd_proj(dt: float) -> void:
 	for p in proj:
 		var tg: E = p.tgt
 		if p.wpn != "shell" and p.wpn != "bomb" and not tg.dead: p.tx = tg.x; p.ty = tg.y
-		var a := atan2(p.ty - p.y, p.tx - p.x); var st := float(p.spd) * dt; var rem := hyp(p.tx - p.x, p.ty - p.y)
+		var a := DM.datan2(p.ty - p.y, p.tx - p.x); var st := float(p.spd) * dt; var rem := hyp(p.tx - p.x, p.ty - p.y)
 		p.p += st
 		if rem <= st:
 			p.done = true
 			var src = p.src if (p.src != null and not p.src.dead) else null
 			if p.splash > 0: explode(p.tx, p.ty, p.splash, p.dmg, p.team, p.wpn, src)
 			elif not tg.dead: apply_dmg(tg, p.dmg, p.wpn, p.team, src, 0.0)
-		else: p.x += cos(a) * st; p.y += sin(a) * st
+		else: p.x += DM.dcos(a) * st; p.y += DM.dsin(a) * st
 	proj = proj.filter(func(q): return not q.done)
 
 func tactic(e: E, wpn: String, src, splash: float) -> float:
@@ -1161,7 +1162,7 @@ func tactic(e: E, wpn: String, src, splash: float) -> float:
 	if e.is_b or src == null or src.is_b: return m
 	var air: bool = e.s_dom == "air"; var sair: bool = src.s_dom == "air"
 	if not air and (e.is_veh or e.s_dom == "naval") and splash == 0 and wpn != "bomb":
-		var a := atan2(e.y - src.y, e.x - src.x); var rel := absf(ang_diff(e.hd if e.has_hd else e.ang, a))
+		var a := DM.datan2(e.y - src.y, e.x - src.x); var rel := absf(ang_diff(e.hd if e.has_hd else e.ang, a))
 		if rel < 0.95: m *= 1.6
 		elif rel < 2.1: m *= 1.2
 		else: m *= 0.8
@@ -1308,8 +1309,8 @@ func _morale_tick(u: E, dt: float) -> bool:
 			if d < bd and d > 140 * 140: bd = d; best = b
 		if best == null:
 			u.last = t + 10; u.fear = C * 0.85; u.supp = maxf(u.supp, 0.75); return false
-		var a := atan2(u.y - best.y, u.x - best.x)
-		u.rt_to = {x = best.x + cos(a) * (best.size / 2 + 60), y = best.y + sin(a) * (best.size / 2 + 60)}
+		var a := DM.datan2(u.y - best.y, u.x - best.x)
+		u.rt_to = {x = best.x + DM.dcos(a) * (best.size / 2 + 60), y = best.y + DM.dsin(a) * (best.size / 2 + 60)}
 		u.rout = t + maxf(4.0, 9 - 3 * (C - 0.9)); u.target = null; u.order = null; u.guard = null
 		return true
 	return false
@@ -1321,7 +1322,7 @@ func bail_out(u: E) -> void:
 		if q.crew and not q.dead and q.team == u.team: nc += 1
 	if nc >= 4: return
 	var a := fmod(u.id * 2.399, 6.28)
-	var c := add_unit(u.team, "inf", u.x + cos(a) * (u.r + 10), u.y + sin(a) * (u.r + 10))
+	var c := add_unit(u.team, "inf", u.x + DM.dcos(a) * (u.r + 10), u.y + DM.dsin(a) * (u.r + 10))
 	if c != null: c.hp = c.max * 0.5; c.crew = 1; c.cr_t = t + 16; c.fear = courage_of(c) * 1.05
 
 # ------------------------------------------------------------------------------------------------ separation (HOT PATH)
