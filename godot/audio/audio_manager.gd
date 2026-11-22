@@ -57,6 +57,7 @@ var _rate: Dictionary = {}
 var _loops: Dictionary = {}
 var _decks: Array = []
 var _rng := RandomNumberGenerator.new()
+var _clk := 0.0                        # seconds of frames played (the audio follows frame time, so movie capture stays in step)
 
 var _cam_t := Vector2.ZERO
 var _cam_d := 760.0
@@ -104,6 +105,10 @@ var _far_t := 0.0
 var _theme := "desert"
 var _over := false
 var _settings: Control = null
+var _log_path := ""
+var _demo := false
+var _demo_t := 0.0
+var _dbg_t := 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -127,13 +132,23 @@ func _ready() -> void:
 			var d := _mk("Music"); _decks.append({p = d, on = false, id = "", pool = "", g = 0.0, to = 0.0, rate = 0.0, started = false, adv = false})
 	get_tree().node_added.connect(_node_added)
 	_apply_vol()
-	if "--audio-log" in OS.get_cmdline_user_args(): keep_log = true
+	if DisplayServer.get_name() != "headless": menu.call_deferred()      # menu music until a battle starts (web: after the first click)
+	for a in OS.get_cmdline_user_args():
+		if a == "--audio-log": keep_log = true
+		elif a.begins_with("--audio-log="):
+			keep_log = true; _log_path = a.substr(12)
+		elif a == "--audio-demo": _demo = true      # captures: stands in for the player's clicks (a select / move / attack line every few seconds)
+
+func _exit_tree() -> void:
+	if _log_path != "":
+		var f := FileAccess.open(_log_path, FileAccess.WRITE)
+		if f != null: f.store_string("\n".join(log_lines) + "\n")
 
 func _mk(bus: String) -> AudioStreamPlayer:
 	var p := AudioStreamPlayer.new(); p.bus = bus; add_child(p); return p
 
 func now() -> float:
-	return test_clock if test_clock >= 0.0 else Time.get_ticks_msec() / 1000.0
+	return test_clock if test_clock >= 0.0 else _clk
 
 func _note(ev: String, clip: String) -> void:
 	if keep_log:
@@ -251,9 +266,9 @@ func _bases() -> Array:
 	if _base_ok != "": return [_base_ok]
 	var out: Array = []
 	if web:
-		var q = JavaScriptBridge.eval("(function(){try{var a=new URLSearchParams(location.search).get('assets');if(a)return new URL(a,location.href).href;return new URL('./',location.href).href;}catch(e){return ''}})()")
+		var q = JavaScriptBridge.eval("(function(){try{var a=new URLSearchParams(location.search).get('assets');if(a)return new URL(a,location.href).href;return new URL('../',location.href).href;}catch(e){return ''}})()")
 		if q != null and str(q) != "":
-			out.append(str(q)); out.append(str(q) + "../")
+			out.append(str(q)); out.append(str(q) + "godot/")      # the site root (the build sits in a folder under it), then the build's own folder
 	else:
 		out.append(ProjectSettings.globalize_path("res://").path_join("..") + "/")
 		out.append(OS.get_executable_path().get_base_dir() + "/")
@@ -784,6 +799,12 @@ func observe(sim, me: int, fast: bool = false) -> void:
 	if pl != _pw_low:
 		_pw_low = pl
 		if not first: ann("lowPower" if pl else "powerBack")
+	if _demo and t - _demo_t > 6.0:
+		_demo_t = t
+		var ks: Array = []
+		for e in sim.ents:
+			if not e.dead and e.team == me and not e.is_b and ks.size() < 6: ks.append(e.kind)
+		speak(int(t / 6.0) % 3, ks)
 	if sim.over and not _over:
 		battle_end(sim.winner >= 0 and sim.ally(me, sim.winner))
 
@@ -871,6 +892,7 @@ func _input(ev: InputEvent) -> void:
 		_st_t = 1.0
 
 func _process(dt: float) -> void:
+	_clk += dt
 	_stop_slices()
 	_run_queue()
 	var t := now()
@@ -891,3 +913,19 @@ func _process(dt: float) -> void:
 	_far_t += dt
 	if _far_t >= 0.45:
 		_far_t = 0.0; _far()
+	if web and keep_log:
+		_dbg_t += dt
+		if _dbg_t >= 1.0:
+			_dbg_t = 0.0; JavaScriptBridge.eval("window.__ww3a=" + JSON.stringify(status()), true)
+
+## what the sound system is doing right now (tests, and the web build with --audio-log)
+func status() -> Dictionary:
+	var n := {}
+	for l in log_lines:
+		var k: String = str(l).split(" ")[1]
+		n[k] = int(n.get(k, 0)) + 1
+	var ok := 0; var bad: Array = []
+	for k in _streams.keys():
+		if _streams[k] is AudioStream: ok += 1
+		elif _streams[k] is String and _streams[k] == "fail": bad.append(k)
+	return {unlocked = unlocked, events = n, music = st_id, pool = st_pool, mode = st_mode, heat = snappedf(heat, 0.01), base = _base_ok, loaded = ok, failed = bad, voices = active_sfx(), last = log_lines.slice(-6)}
