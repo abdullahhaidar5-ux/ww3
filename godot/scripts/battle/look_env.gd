@@ -1,0 +1,254 @@
+## Lane P4c: the battle's light, sky, haze, exposure, shadows, weather and final colour grade - the browser game's
+## numbers (src/04-gfx.js WX table + applyWeather, src/05-fx3d.js weatherFX, src/10-post.js LOOKP / TGRADE / mFinal).
+##   var env = LookEnv.setup(host, map, {tod = "day", weather = "clear"})   # once, after the map is known
+##   env.tick(dt, cam)                                                      # every frame
+##   env.set_conditions("dusk", "rain")  ·  env.flash += 0.1  ·  env.shake  (read by the camera owner)
+## Time of day: day (the "Cinematic" look, the browser default), golden, overcast, dusk, night.
+## Weather: clear, rain, storm, fog, sandstorm, snow, blizzard. Purely visual, nothing here touches the simulation.
+extends RefCounted
+
+const WX := {
+	"day": {sun = "#ffeccc", si = 3.1, off = [-900, 860, -620], sky = "#a9c4ec", gnd = "#9c8058", hi = 1.7, fog = "#c4ae86", fn = 1800.0, ff = 6200.0, expo = 1.22, sr = 2.0, hor = [.86, .78, .64], zen = [.30, .50, .80], gr = [1, 1, 1], sat = 1.0, fx = 1.0, amb = [1, 1, 1]},
+	"golden": {sun = "#ffc283", si = 3.0, off = [-1150, 470, -520], sky = "#9fb2d4", gnd = "#7a5a3c", hi = 1.12, fog = "#c09a72", fn = 1700.0, ff = 6000.0, expo = 1.04, sr = 2.0, hor = [.98, .74, .48], zen = [.36, .48, .72], gr = [1.05, 1, .9], sat = 1.08, fx = 1.1, amb = [1.03, .95, .86]},
+	"overcast": {sun = "#e4e9ef", si = 1.15, off = [-450, 1150, -300], sky = "#b7bfc8", gnd = "#625d51", hi = 1.6, fog = "#a2a7a9", fn = 1300.0, ff = 5200.0, expo = .98, sr = 6.0, hor = [.7, .72, .74], zen = [.52, .56, .62], gr = [.97, .99, 1.03], sat = .82, fx = 1.15, amb = [.9, .92, .95]},
+	"dusk": {sun = "#ffa868", si = 2.5, off = [-1320, 290, -560], sky = "#6a7aa8", gnd = "#40352f", hi = .95, fog = "#6c5a68", fn = 1400.0, ff = 5400.0, expo = 1.08, sr = 3.0, hor = [.95, .5, .32], zen = [.13, .18, .36], gr = [1, .95, .98], sat = .92, fx = 2.1, amb = [.5, .48, .55]},
+	"night": {sun = "#9db4e8", si = .5, off = [-900, 700, -500], sky = "#1a2644", gnd = "#14161e", hi = .45, fog = "#0b1020", fn = 900.0, ff = 4200.0, expo = 1.2, sr = 4.0, hor = [.07, .09, .16], zen = [.01, .02, .06], gr = [.9, .96, 1.1], sat = .75, fx = 2.6, amb = [.45, .5, .7]},
+}
+## the browser's default look ("Cinematic", ?look=b): replaces the daytime light, and sets the post numbers
+const LOOK_WX := {sun = "#ffc48e", si = 3.0, off = [-1250, 430, -560], sky = "#8fa3c8", gnd = "#54443a", hi = .9, fog = "#cfa47a", fn = 1000.0, ff = 4800.0, expo = 1.04, sr = 3.0, hor = [.98, .68, .42], zen = [.28, .40, .66], gr = [1.04, 1, .92], sat = 1.0, amb = [1.02, .96, .88]}
+const LOOK := {v = 1.6, g = .012, sh = 1.2, k = 1.1, bl = 1.7, s = [.94, .97, 1.05], h = [1.05, 1.01, .92]}
+const TGRADE := {"desert": {tg = [1.06, 1, .86], s = 1.2}, "green": {tg = [.99, 1.01, .98], s = .98}, "snow": {tg = [.93, .99, 1.09], s = .86}}
+const WFOG := {"rain": ["#7d868c", 500.0, 3200.0], "storm": ["#7d868c", 500.0, 3200.0], "fog": ["#b9bdbb", 150.0, 1500.0], "sandstorm": ["#b88a52", 30.0, 720.0],
+	"blizzard": ["#dfe6ee", 150.0, 1700.0], "snow": ["#e3e9f0", 220.0, 2300.0]}
+## Godot's ACES curve has a 1.8 exposure bias built in and the browser's (Narkowicz x 0.6) does not
+var expo_k := 0.62
+const RAIN_N := 1400
+
+var host: Node3D
+var map: Dictionary
+var theme := "desert"
+var tod := "day"
+var weather := "clear"
+var w: Dictionary = {}             # the light preset in use
+var we: WorldEnvironment
+var env: Environment
+var sun: DirectionalLight3D
+var hemi: DirectionalLight3D       # the "sky minus ground" half of the browser's hemisphere light
+var sky_mat: ShaderMaterial
+var grade: ShaderMaterial
+var grade_layer: CanvasLayer
+var fx_amb := Vector3.ONE          # tint for unlit smoke / dust (WXAMB)
+var fx_k := 1.0                    # effect light multiplier for this time of day (WXFX)
+var night := 0                     # 0 day, 1 dusk, 2 night
+var flash := 0.0                   # screen flash from big explosions (look_fx adds, decays here)
+var shake := 0.0                   # camera shake in world units (look_fx adds, decays here; the camera owner applies it)
+var wet := 0.0                     # rain wetness 0..1
+var wm := 0.0                      # weather blend 0..1
+var base_fog: Array = []
+var base_si := 1.0
+var base_hi := 1.0
+var ltn := 0.0; var ltn_cd := 6.0; var ltn_f := 0.0
+var rain: MultiMeshInstance3D
+var rain_d := PackedFloat32Array()
+var fx = null                      # look_fx (sandstorm / snow use its particle pool)
+var height_fn: Callable            # ground height at (x, z)
+
+static func setup(host_: Node3D, map_: Dictionary, opts: Dictionary = {}):
+	var e = new()
+	e._setup(host_, map_, opts)
+	return e
+
+static func theme_of(map_: Dictionary) -> String:
+	var th := String(map_.get("theme", ""))
+	if th in ["desert", "green", "snow"]: return th
+	return "desert"
+
+func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
+	host = host_; map = map_
+	theme = theme_of(map)
+	# P4c HOOK: the Test range's light and sky (main.gd _env) are replaced by this module
+	for c in host.get_children():
+		if c is WorldEnvironment or c is DirectionalLight3D: c.queue_free()
+	env = Environment.new()
+	env.background_mode = Environment.BG_SKY
+	var sky := Sky.new()
+	sky_mat = ShaderMaterial.new()
+	sky_mat.shader = load("res://shaders/sky_dome.gdshader")
+	sky.sky_material = sky_mat
+	sky.radiance_size = Sky.RADIANCE_SIZE_32
+	sky.process_mode = Sky.PROCESS_MODE_INCREMENTAL
+	env.sky = sky
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_sky_contribution = 0.0
+	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
+	env.tonemap_mode = Environment.TONE_MAPPER_ACES
+	env.tonemap_white = 6.0
+	env.fog_enabled = true
+	env.fog_mode = Environment.FOG_MODE_DEPTH
+	env.fog_density = 1.0
+	env.fog_depth_curve = 1.0
+	env.fog_sky_affect = 0.0
+	env.fog_sun_scatter = 0.0
+	env.fog_aerial_perspective = 0.0
+	env.glow_enabled = true
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
+	env.glow_hdr_threshold = 0.95
+	env.glow_hdr_scale = 1.0
+	env.glow_bloom = 0.0
+	env.glow_strength = 1.0
+	env.set_glow_level(0, 0.0); env.set_glow_level(1, 0.75); env.set_glow_level(2, 0.0); env.set_glow_level(3, 0.9); env.set_glow_level(4, 0.0)
+	we = WorldEnvironment.new()
+	we.environment = env
+	host.add_child(we)
+	sun = DirectionalLight3D.new()
+	sun.shadow_enabled = true
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	sun.directional_shadow_max_distance = 1800.0
+	sun.directional_shadow_fade_start = 0.9
+	sun.shadow_bias = 0.08
+	sun.shadow_normal_bias = 1.4
+	sun.shadow_opacity = 1.0
+	host.add_child(sun)
+	hemi = DirectionalLight3D.new()
+	hemi.shadow_enabled = false
+	hemi.light_specular = 0.0
+	hemi.rotation_degrees = Vector3(-90, 0, 0)
+	host.add_child(hemi)
+	grade_layer = CanvasLayer.new()
+	grade_layer.layer = -100
+	var cr := ColorRect.new()
+	cr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	cr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	grade = ShaderMaterial.new()
+	grade.shader = load("res://shaders/fx_grade.gdshader")
+	cr.material = grade
+	grade_layer.add_child(cr)
+	host.add_child(grade_layer)
+	if opts.get("grade", true) == false: grade_layer.visible = false
+	set_conditions(String(opts.get("tod", "day")), String(opts.get("weather", "clear")))
+	wm = 1.0 if weather != "clear" else 0.0   # a battle starts already in its weather
+
+## conditions of the battle: bridge / menu values ("dusk", "night", "rain"...) or the JS condition numbers
+func set_conditions(tod_: String, weather_: String) -> void:
+	tod = tod_ if WX.has(tod_) else "day"
+	weather = {"sand": "sandstorm"}.get(weather_, weather_)
+	if weather != "clear" and not WFOG.has(weather): weather = "clear"
+	_apply()
+
+func _c(hex: String) -> Color: return Color(hex)
+func _v(a: Array) -> Vector3: return Vector3(a[0], a[1], a[2])
+
+func _apply() -> void:
+	w = WX[tod].duplicate()
+	if tod == "day": w.merge(LOOK_WX, true)   # lookW(): the Cinematic look owns the daytime light
+	night = 2 if tod == "night" else (1 if tod == "dusk" else 0)
+	var sunc := _c(w.sun); var skyc := _c(w.sky); var gndc := _c(w.gnd); var fogc := _c(w.fog); var hi: float = w.hi
+	if theme == "snow":
+		var dk := night > 0
+		sunc = sunc.lerp(_c("#f4f7ff"), 0.2 if dk else 0.6)
+		skyc = _c("#7486ad" if dk else "#c2d0e2"); gndc = _c("#6a7286" if dk else "#a3abb5")
+		fogc = _c("#d9c9bd" if tod == "golden" else ("#8f8296" if dk else "#cfd8e2"))
+		hi *= 1.08
+	sun.light_color = sunc
+	base_si = w.si; base_hi = hi
+	var off := _v(w.off)
+	sun.look_at_from_position(off, Vector3.ZERO, Vector3.UP)
+	sun.shadow_blur = clampf(float(w.sr) * 0.5, 0.5, 3.0)
+	# hemisphere light = ground colour everywhere + (sky - ground) by how far a face looks up: ambient + a light from above
+	var sl := skyc.srgb_to_linear(); var gl := gndc.srgb_to_linear()
+	var mid := Color((sl.r + gl.r) * 0.5, (sl.g + gl.g) * 0.5, (sl.b + gl.b) * 0.5)
+	var up := Color(maxf(0.0, sl.r - gl.r) * 0.5, maxf(0.0, sl.g - gl.g) * 0.5, maxf(0.0, sl.b - gl.b) * 0.5)
+	env.ambient_light_color = mid.linear_to_srgb()
+	hemi.light_color = up.linear_to_srgb()
+	base_fog = [fogc, float(w.fn), float(w.ff)]
+	env.tonemap_exposure = float(w.expo) * expo_k
+	env.glow_intensity = 0.5 * float(LOOK.bl)
+	sky_mat.set_shader_parameter("hor", _v(w.hor)); sky_mat.set_shader_parameter("zen", _v(w.zen))
+	fx_amb = _v(w.amb); fx_k = float(w.get("fx", 1.0))
+	var T: Dictionary = TGRADE[theme]
+	var tg := _v(T.tg)
+	if tod == "dusk": tg *= Vector3(1.08, 0.92, 0.88)
+	grade.set_shader_parameter("mul", _v(w.gr) * tg)
+	grade.set_shader_parameter("sat", float(w.sat) * float(T.s))
+	grade.set_shader_parameter("sharpen", LOOK.sh); grade.set_shader_parameter("vig", LOOK.v); grade.set_shader_parameter("grain", LOOK.g)
+	grade.set_shader_parameter("contrast", LOOK.k); grade.set_shader_parameter("lk_s", _v(LOOK.s)); grade.set_shader_parameter("lk_h", _v(LOOK.h))
+	_light(0.0, 0.0)
+
+func _light(dim: float, L: float) -> void:
+	sun.light_energy = base_si * (1.0 - dim) + base_si * L * 2.2
+	var hk := base_hi * (1.0 - dim * 0.6) + base_hi * L * 1.6
+	env.ambient_light_energy = hk
+	hemi.light_energy = hk
+
+func tick(dt: float, cam: Camera3D) -> void:
+	# weather blends in / out (weatherFX)
+	wm = minf(1.0, wm + dt * 0.35) if weather != "clear" else maxf(0.0, wm - dt * 0.5)
+	var fogc: Color = base_fog[0]; var fn: float = base_fog[1]; var ff: float = base_fog[2]
+	if WFOG.has(weather):
+		var T: Array = WFOG[weather]
+		fogc = fogc.lerp(_c(T[0]), wm * 0.85); fn = lerpf(fn, T[1], wm); ff = lerpf(ff, T[2], wm)
+	var raining := weather == "rain" or weather == "storm"
+	wet += ((wm if raining else 0.0) - wet) * minf(1.0, dt * 0.25)
+	var sm := wm if weather == "storm" else 0.0
+	if sm > 0.4:
+		ltn_cd -= dt
+		if ltn_cd <= 0.0: ltn = 1.0; ltn_f = randf_range(0.5, 1.0); ltn_cd = randf_range(4.0, 13.0)
+	if ltn > 0.0:
+		ltn = maxf(0.0, ltn - dt * (5.0 if ltn_f > 0.75 else 3.0))
+	var L := ltn * ltn
+	_light((wm * 0.12 if raining else 0.0) + sm * 0.3, L)
+	if L > 0.02: fogc = fogc.lerp(_c("#d8e2ff"), minf(0.7, L * 0.6))
+	env.fog_light_color = fogc; env.fog_depth_begin = fn; env.fog_depth_end = ff
+	# the shadow box follows the zoom (the browser's +-900 box at the default zoom)
+	if cam != null:
+		var hgt := maxf(200.0, cam.global_position.y)
+		sun.directional_shadow_max_distance = clampf(hgt * 2.6, 900.0, 3600.0)
+	flash = maxf(0.0, flash - dt * 1.6)
+	shake *= exp(-7.0 * dt)
+	grade.set_shader_parameter("flash", flash)
+	env.tonemap_exposure = float(w.expo) * expo_k * (1.0 + flash * 1.5)
+	if cam != null: _precip(dt, cam)
+
+## rain = 1400 streaks in one MultiMesh around the view; sandstorm / snow = particles from the effects pool
+func _precip(dt: float, cam: Camera3D) -> void:
+	var raining := (weather == "rain" or weather == "storm") and wm > 0.02
+	if raining and rain == null: _make_rain()
+	if rain != null:
+		rain.visible = raining
+		if raining:
+			var fwd := -cam.global_transform.basis.z
+			var c := cam.global_position + fwd * (cam.global_position.y / maxf(0.2, -fwd.y))
+			var R := maxf(420.0, cam.global_position.distance_to(c) * 1.1)
+			(rain.material_override as ShaderMaterial).set_shader_parameter("centre", Vector3(c.x, c.y, c.z))
+			(rain.material_override as ShaderMaterial).set_shader_parameter("radius", R)
+			(rain.material_override as ShaderMaterial).set_shader_parameter("opacity", 0.35 * wm)
+	if fx == null or wm <= 0.05: return
+	var fwd2 := -cam.global_transform.basis.z
+	var c2 := cam.global_position + fwd2 * (cam.global_position.y / maxf(0.2, -fwd2.y))
+	var R2 := maxf(420.0, cam.global_position.distance_to(c2) * 1.1)
+	if weather == "sandstorm":
+		for i in int(dt * 90.0 * wm + randf()):
+			var x := c2.x + randf_range(-R2, R2); var z := c2.z + randf_range(-R2 * 0.7, R2 * 0.7)
+			fx.part(false, Vector3(x, fx.gh(x, z) + randf_range(2, 60), z), Vector3(randf_range(90, 160), randf_range(-4, 8), randf_range(-15, 15)), randf_range(1.6, 2.8), randf_range(18, 36), 22.0, 0.3 * wm, Color(0.78, 0.6, 0.38), null, 0.0, 0.9, 16)
+	elif weather == "snow" or weather == "blizzard":
+		for i in int(dt * (70.0 if weather == "snow" else 120.0) * wm + randf()):
+			var x := c2.x + randf_range(-R2, R2); var z := c2.z + randf_range(-R2 * 0.7, R2 * 0.7)
+			fx.part(false, Vector3(x, fx.gh(x, z) + randf_range(40, 220), z), Vector3(randf_range(50, 90), -randf_range(30, 50), randf_range(-10, 14)), randf_range(3, 5), randf_range(1.6, 2.8), 0.0, 0.9, Color(1.05, 1.08, 1.12), null, 0.0, 1.0, 16)
+
+func _make_rain() -> void:
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	var q := QuadMesh.new()
+	q.size = Vector2(1, 1)
+	mm.mesh = q
+	mm.instance_count = RAIN_N
+	for i in RAIN_N:
+		mm.set_instance_transform(i, Transform3D(Basis(), Vector3(randf_range(-1, 1), randf(), randf_range(-1, 1))))
+	rain = MultiMeshInstance3D.new()
+	rain.multimesh = mm
+	var m := ShaderMaterial.new()
+	m.shader = load("res://shaders/fx_rain.gdshader")
+	rain.material_override = m
+	rain.custom_aabb = AABB(Vector3(-1e5, -1e4, -1e5), Vector3(2e5, 2e4, 2e5))
+	rain.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	host.add_child(rain)
