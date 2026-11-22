@@ -1,0 +1,6853 @@
+{
+ "_source": "src/08-ui.js buildPanels() (Upgrades buttons), src/01-data.js UPG / upgList() / upgName(), src/08o-zhbar.js zhIconFor() (icon)  (JS game, branch js-final; read from the running page by tools-godot/export_data.mjs)",
+ "_notes": "Upgrades are researched at their building (at). label has \" ★\" for the nation's signature upgrade. icon = key in atlas.json (button icon table ICON_SVG).",
+ "nations": {
+  "IR": {
+   "order": [
+    "ir7",
+    "ir8",
+    "ir1",
+    "ir2",
+    "ir3",
+    "ir4",
+    "ir5",
+    "ir6",
+    "ir9"
+   ],
+   "upgrades": {
+    "ir7": {
+     "key": "ir7",
+     "order": 0,
+     "name": "Missile City Logistics",
+     "label": "Missile City Logistics",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Artillery fire 11% faster; Supply trucks carry 15% more",
+     "effects": [
+      [
+       "rof",
+       "arty",
+       0.9
+      ],
+      [
+       "harv",
+       "all",
+       1.15
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/missile"
+    },
+    "ir8": {
+     "key": "ir8",
+     "order": 1,
+     "name": "Passive Defense",
+     "label": "Passive Defense",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Buildings take 20% less damage; Detect stealth units at 2x the distance",
+     "effects": [
+      [
+       "taken",
+       "bld",
+       0.8
+      ],
+      [
+       "detect",
+       "all",
+       2
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/camo"
+    },
+    "ir1": {
+     "key": "ir1",
+     "order": 2,
+     "name": "Mass Mobilization Drive",
+     "label": "Mass Mobilization Drive",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry train 67% faster",
+     "effects": [
+      [
+       "build",
+       "inf",
+       0.6
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "ir2": {
+     "key": "ir2",
+     "order": 3,
+     "name": "Martyrdom Spirit",
+     "label": "Martyrdom Spirit",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry are 30% harder to break; Infantry +10% damage",
+     "effects": [
+      [
+       "courage",
+       "inf",
+       1.3
+      ],
+      [
+       "dmg",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "ir3": {
+     "key": "ir3",
+     "order": 4,
+     "name": "Thermobaric Warheads",
+     "label": "Thermobaric Warheads ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery +30% damage; Drones +30% damage; Artillery +20% blast radius",
+     "effects": [
+      [
+       "dmg",
+       "arty",
+       1.3
+      ],
+      [
+       "dmg",
+       "drone",
+       1.3
+      ],
+      [
+       "splash",
+       "arty",
+       1.2
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/tank"
+    },
+    "ir4": {
+     "key": "ir4",
+     "order": 5,
+     "name": "Karrar Armor Kit",
+     "label": "Karrar Armor Kit",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Vehicles +15% hit points",
+     "effects": [
+      [
+       "hp",
+       "veh",
+       1.15
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/armor"
+    },
+    "ir5": {
+     "key": "ir5",
+     "order": 6,
+     "name": "Tomcat Overhaul",
+     "label": "Tomcat Overhaul",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "air",
+       1.2
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/plane"
+    },
+    "ir6": {
+     "key": "ir6",
+     "order": 7,
+     "name": "Phoenix Missile Stocks",
+     "label": "Phoenix Missile Stocks",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Jets +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "rng",
+       "jet",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/missile"
+    },
+    "ir9": {
+     "key": "ir9",
+     "order": 8,
+     "name": "Swarm Boat Tactics",
+     "label": "Swarm Boat Tactics",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% damage; Patrol boats move 15% faster",
+     "effects": [
+      [
+       "dmg",
+       "naval",
+       1.2
+      ],
+      [
+       "spd",
+       "boat",
+       1.15
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/drone"
+    }
+   }
+  },
+  "RS": {
+   "order": [
+    "rs6",
+    "rs7",
+    "rs8",
+    "rs1",
+    "rs2",
+    "rs3",
+    "rs4",
+    "rs5",
+    "rs9"
+   ],
+   "upgrades": {
+    "rs6": {
+     "key": "rs6",
+     "order": 0,
+     "name": "Fortified Positions",
+     "label": "Fortified Positions ★",
+     "signature": true,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Buildings take 25% less damage; Defenses +15% weapon range",
+     "effects": [
+      [
+       "taken",
+       "bld",
+       0.75
+      ],
+      [
+       "rng",
+       "bld",
+       1.15
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/wall"
+    },
+    "rs7": {
+     "key": "rs7",
+     "order": 1,
+     "name": "Supply Tunnels",
+     "label": "Supply Tunnels",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 25% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.25
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "rs8": {
+     "key": "rs8",
+     "order": 2,
+     "name": "Underground Command",
+     "label": "Underground Command",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 2x the distance; All units earn ranks 1.3x as fast",
+     "effects": [
+      [
+       "detect",
+       "all",
+       2
+      ],
+      [
+       "xp",
+       "all",
+       1.3
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/shell"
+    },
+    "rs1": {
+     "key": "rs1",
+     "order": 3,
+     "name": "Radwan Training",
+     "label": "Radwan Training",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "rs2": {
+     "key": "rs2",
+     "order": 4,
+     "name": "Hill Fighters",
+     "label": "Hill Fighters",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/para"
+    },
+    "rs3": {
+     "key": "rs3",
+     "order": 5,
+     "name": "Kornet Ambush Teams",
+     "label": "Kornet Ambush Teams",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Anti-tank infantry +25% damage; Anti-tank infantry +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "atinf",
+       1.25
+      ],
+      [
+       "rng",
+       "atinf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1100",
+     "icon": "svg/rifle"
+    },
+    "rs4": {
+     "key": "rs4",
+     "order": 6,
+     "name": "Rocket Barrage Doctrine",
+     "label": "Rocket Barrage Doctrine",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery fire 18% faster; Artillery +5% weapon range",
+     "effects": [
+      [
+       "rof",
+       "arty",
+       0.85
+      ],
+      [
+       "rng",
+       "arty",
+       1.05
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/missile"
+    },
+    "rs5": {
+     "key": "rs5",
+     "order": 7,
+     "name": "Drone Workshops",
+     "label": "Drone Workshops",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Drones +20% damage; Drones +25% hit points",
+     "effects": [
+      [
+       "dmg",
+       "drone",
+       1.2
+      ],
+      [
+       "hp",
+       "drone",
+       1.25
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/drone"
+    },
+    "rs9": {
+     "key": "rs9",
+     "order": 8,
+     "name": "Coastal Boat Raids",
+     "label": "Coastal Boat Raids",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Patrol boats +20% damage; Patrol boats move 10% faster",
+     "effects": [
+      [
+       "dmg",
+       "boat",
+       1.2
+      ],
+      [
+       "spd",
+       "boat",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "DW": {
+   "order": [
+    "dw7",
+    "dw8",
+    "dw1",
+    "dw2",
+    "dw3",
+    "dw4",
+    "dw5",
+    "dw6",
+    "dw9"
+   ],
+   "upgrades": {
+    "dw7": {
+     "key": "dw7",
+     "order": 0,
+     "name": "Qat Trade Routes",
+     "label": "Qat Trade Routes",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 20% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.2
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "dw8": {
+     "key": "dw8",
+     "order": 1,
+     "name": "Mountain Lookouts",
+     "label": "Mountain Lookouts",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 2x the distance; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "detect",
+       "all",
+       2
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/eye"
+    },
+    "dw1": {
+     "key": "dw1",
+     "order": 2,
+     "name": "Camouflage Netting",
+     "label": "Camouflage Netting ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry turn invisible after standing still for 3 seconds",
+     "effects": [
+      [
+       "camo",
+       "inf",
+       1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/camo"
+    },
+    "dw2": {
+     "key": "dw2",
+     "order": 3,
+     "name": "Mountain Raiders",
+     "label": "Mountain Raiders",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry move 10% faster; Infantry +5% damage",
+     "effects": [
+      [
+       "spd",
+       "inf",
+       1.1
+      ],
+      [
+       "dmg",
+       "inf",
+       1.05
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/wall"
+    },
+    "dw3": {
+     "key": "dw3",
+     "order": 4,
+     "name": "Hardened Militia",
+     "label": "Hardened Militia",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.15
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1100",
+     "icon": "svg/rifle"
+    },
+    "dw4": {
+     "key": "dw4",
+     "order": 5,
+     "name": "Technical Armor",
+     "label": "Technical Armor",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Vehicles +10% hit points",
+     "effects": [
+      [
+       "hp",
+       "veh",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/armor"
+    },
+    "dw5": {
+     "key": "dw5",
+     "order": 6,
+     "name": "Long-Range Rocket Crews",
+     "label": "Long-Range Rocket Crews",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery +10% weapon range; Artillery +10% damage",
+     "effects": [
+      [
+       "rng",
+       "arty",
+       1.1
+      ],
+      [
+       "dmg",
+       "arty",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/missile"
+    },
+    "dw6": {
+     "key": "dw6",
+     "order": 7,
+     "name": "Raid Doctrine",
+     "label": "Raid Doctrine",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Vehicles move 10% faster; Air-defence & light vehicles +10% damage",
+     "effects": [
+      [
+       "spd",
+       "veh",
+       1.1
+      ],
+      [
+       "dmg",
+       "aa",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1000",
+     "icon": "svg/tank"
+    },
+    "dw9": {
+     "key": "dw9",
+     "order": 8,
+     "name": "Red Sea Raiders",
+     "label": "Red Sea Raiders",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Patrol boats +20% damage; Patrol boats +15% hit points",
+     "effects": [
+      [
+       "dmg",
+       "boat",
+       1.2
+      ],
+      [
+       "hp",
+       "boat",
+       1.15
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "RV": {
+   "order": [
+    "rv7",
+    "rv8",
+    "gpr",
+    "rv1",
+    "rv2",
+    "rv3",
+    "rv4",
+    "rv5",
+    "rv6",
+    "rv9"
+   ],
+   "upgrades": {
+    "rv7": {
+     "key": "rv7",
+     "order": 0,
+     "name": "Southern Oil Revenue",
+     "label": "Southern Oil Revenue",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 25% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.25
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/cash"
+    },
+    "rv8": {
+     "key": "rv8",
+     "order": 1,
+     "name": "Defense of the Shrines",
+     "label": "Defense of the Shrines",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "All units are 15% harder to break; Buildings take 10% less damage",
+     "effects": [
+      [
+       "courage",
+       "all",
+       1.15
+      ],
+      [
+       "taken",
+       "bld",
+       0.9
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "rv1": {
+     "key": "rv1",
+     "order": 3,
+     "name": "Shrine Guard Course",
+     "label": "Shrine Guard Course",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry move 10% faster; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "spd",
+       "inf",
+       1.1
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "rv2": {
+     "key": "rv2",
+     "order": 4,
+     "name": "Volunteer Kit",
+     "label": "Volunteer Kit",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +25% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.25
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "rv3": {
+     "key": "rv3",
+     "order": 5,
+     "name": "T-72 Crew Training",
+     "label": "T-72 Crew Training ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points; Tanks +10% damage",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ],
+      [
+       "dmg",
+       "tank",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/tank"
+    },
+    "rv4": {
+     "key": "rv4",
+     "order": 6,
+     "name": "Grad Fire Control",
+     "label": "Grad Fire Control",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery +25% damage; Artillery +15% blast radius; Artillery fire 5% faster",
+     "effects": [
+      [
+       "dmg",
+       "arty",
+       1.25
+      ],
+      [
+       "splash",
+       "arty",
+       1.15
+      ],
+      [
+       "rof",
+       "arty",
+       0.95
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/radar"
+    },
+    "rv5": {
+     "key": "rv5",
+     "order": 7,
+     "name": "Frogfoot Overhaul",
+     "label": "Frogfoot Overhaul",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Jets +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "rng",
+       "jet",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/plane"
+    },
+    "rv6": {
+     "key": "rv6",
+     "order": 8,
+     "name": "Hind Maintenance",
+     "label": "Hind Maintenance",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters +25% hit points; Helicopters take 10% less damage",
+     "effects": [
+      [
+       "hp",
+       "heli",
+       1.25
+      ],
+      [
+       "taken",
+       "heli",
+       0.9
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/fix"
+    },
+    "rv9": {
+     "key": "rv9",
+     "order": 9,
+     "name": "Marsh Boat Refit",
+     "label": "Marsh Boat Refit",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% hit points; Ships & boats +10% damage",
+     "effects": [
+      [
+       "hp",
+       "naval",
+       1.2
+      ],
+      [
+       "dmg",
+       "naval",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "OB": {
+   "order": [
+    "ob7",
+    "ob8",
+    "gpr",
+    "ob1",
+    "ob2",
+    "ob3",
+    "ob4",
+    "ob5",
+    "ob6",
+    "ob9"
+   ],
+   "upgrades": {
+    "ob7": {
+     "key": "ob7",
+     "order": 0,
+     "name": "Remittance Fund",
+     "label": "Remittance Fund",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 25% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.25
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "ob8": {
+     "key": "ob8",
+     "order": 1,
+     "name": "Defense of the City",
+     "label": "Defense of the City",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "All units are 15% harder to break; Buildings take 10% less damage",
+     "effects": [
+      [
+       "courage",
+       "all",
+       1.15
+      ],
+      [
+       "taken",
+       "bld",
+       0.9
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "ob1": {
+     "key": "ob1",
+     "order": 3,
+     "name": "Marksman Course",
+     "label": "Marksman Course",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry move 10% faster; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "spd",
+       "inf",
+       1.1
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "ob2": {
+     "key": "ob2",
+     "order": 4,
+     "name": "Light Fighter Kit",
+     "label": "Light Fighter Kit",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +25% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.25
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "ob3": {
+     "key": "ob3",
+     "order": 5,
+     "name": "Rubble Fighting Drills",
+     "label": "Rubble Fighting Drills ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points; Tanks +10% damage",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ],
+      [
+       "dmg",
+       "tank",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/tank"
+    },
+    "ob4": {
+     "key": "ob4",
+     "order": 6,
+     "name": "Mortar Fire Control",
+     "label": "Mortar Fire Control",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery +25% damage; Artillery +15% blast radius; Artillery fire 5% faster",
+     "effects": [
+      [
+       "dmg",
+       "arty",
+       1.25
+      ],
+      [
+       "splash",
+       "arty",
+       1.15
+      ],
+      [
+       "rof",
+       "arty",
+       0.95
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/radar"
+    },
+    "ob5": {
+     "key": "ob5",
+     "order": 7,
+     "name": "Rocket Workshops",
+     "label": "Rocket Workshops",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Jets +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "rng",
+       "jet",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/missile"
+    },
+    "ob6": {
+     "key": "ob6",
+     "order": 8,
+     "name": "Drone Workshop",
+     "label": "Drone Workshop",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters +25% hit points; Helicopters take 10% less damage",
+     "effects": [
+      [
+       "hp",
+       "heli",
+       1.25
+      ],
+      [
+       "taken",
+       "heli",
+       0.9
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/drone"
+    },
+    "ob9": {
+     "key": "ob9",
+     "order": 9,
+     "name": "Skiff Patrol Refit",
+     "label": "Skiff Patrol Refit",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% hit points; Ships & boats +10% damage",
+     "effects": [
+      [
+       "hp",
+       "naval",
+       1.2
+      ],
+      [
+       "dmg",
+       "naval",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "US": {
+   "order": [
+    "us7",
+    "us8",
+    "gpr",
+    "us1",
+    "us2",
+    "us3",
+    "us4",
+    "us5",
+    "us6",
+    "us9"
+   ],
+   "upgrades": {
+    "us7": {
+     "key": "us7",
+     "order": 0,
+     "name": "Combined Arms Training",
+     "label": "Combined Arms Training ★",
+     "signature": true,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "All units earn ranks 2x as fast; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "xp",
+       "all",
+       2
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "us8": {
+     "key": "us8",
+     "order": 1,
+     "name": "Joint Logistics Command",
+     "label": "Joint Logistics Command",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 20% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.2
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "us1": {
+     "key": "us1",
+     "order": 3,
+     "name": "Marine Raider Training",
+     "label": "Marine Raider Training",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry move 10% faster",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "spd",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "us2": {
+     "key": "us2",
+     "order": 4,
+     "name": "IOTV Plate Carriers",
+     "label": "IOTV Plate Carriers",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/armor"
+    },
+    "us3": {
+     "key": "us3",
+     "order": 5,
+     "name": "M829A4 Sabot Rounds",
+     "label": "M829A4 Sabot Rounds",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +25% damage; Tanks +5% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "tank",
+       1.25
+      ],
+      [
+       "rng",
+       "tank",
+       1.05
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/shell"
+    },
+    "us4": {
+     "key": "us4",
+     "order": 6,
+     "name": "Chobham Armor Package",
+     "label": "Chobham Armor Package",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/armor"
+    },
+    "us5": {
+     "key": "us5",
+     "order": 7,
+     "name": "JDAM Guidance",
+     "label": "JDAM Guidance",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +25% damage",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.25
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/missile"
+    },
+    "us6": {
+     "key": "us6",
+     "order": 8,
+     "name": "Stealth Coatings",
+     "label": "Stealth Coatings",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft take 25% less damage",
+     "effects": [
+      [
+       "taken",
+       "air",
+       0.75
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/camo"
+    },
+    "us9": {
+     "key": "us9",
+     "order": 9,
+     "name": "Aegis Combat System",
+     "label": "Aegis Combat System",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +15% damage; Ships & boats take 10% less damage",
+     "effects": [
+      [
+       "dmg",
+       "naval",
+       1.15
+      ],
+      [
+       "taken",
+       "naval",
+       0.9
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/radar"
+    }
+   }
+  },
+  "GB": {
+   "order": [
+    "gb7",
+    "gb8",
+    "gpr",
+    "gb1",
+    "gb2",
+    "gb3",
+    "gb4",
+    "gb5",
+    "gb6",
+    "gb9"
+   ],
+   "upgrades": {
+    "gb7": {
+     "key": "gb7",
+     "order": 0,
+     "name": "City of London Revenue",
+     "label": "City of London Revenue",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 25% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.25
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/cash"
+    },
+    "gb8": {
+     "key": "gb8",
+     "order": 1,
+     "name": "Special Relationship",
+     "label": "Special Relationship",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "All units are 15% harder to break; Buildings take 10% less damage",
+     "effects": [
+      [
+       "courage",
+       "all",
+       1.15
+      ],
+      [
+       "taken",
+       "bld",
+       0.9
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "gb1": {
+     "key": "gb1",
+     "order": 3,
+     "name": "Commando Course",
+     "label": "Commando Course",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry move 10% faster; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "spd",
+       "inf",
+       1.1
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "gb2": {
+     "key": "gb2",
+     "order": 4,
+     "name": "MTP Combat Kit",
+     "label": "MTP Combat Kit",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +25% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.25
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "gb3": {
+     "key": "gb3",
+     "order": 5,
+     "name": "Challenger Crew Training",
+     "label": "Challenger Crew Training ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points; Tanks +10% damage",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ],
+      [
+       "dmg",
+       "tank",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/tank"
+    },
+    "gb4": {
+     "key": "gb4",
+     "order": 6,
+     "name": "Braveheart Fire Control",
+     "label": "Braveheart Fire Control",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery +25% damage; Artillery +15% blast radius; Artillery fire 5% faster",
+     "effects": [
+      [
+       "dmg",
+       "arty",
+       1.25
+      ],
+      [
+       "splash",
+       "arty",
+       1.15
+      ],
+      [
+       "rof",
+       "arty",
+       0.95
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/radar"
+    },
+    "gb5": {
+     "key": "gb5",
+     "order": 7,
+     "name": "Typhoon Upgrade",
+     "label": "Typhoon Upgrade",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Jets +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "rng",
+       "jet",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/missile"
+    },
+    "gb6": {
+     "key": "gb6",
+     "order": 8,
+     "name": "Apache Maintenance",
+     "label": "Apache Maintenance",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters +25% hit points; Helicopters take 10% less damage",
+     "effects": [
+      [
+       "hp",
+       "heli",
+       1.25
+      ],
+      [
+       "taken",
+       "heli",
+       0.9
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/fix"
+    },
+    "gb9": {
+     "key": "gb9",
+     "order": 9,
+     "name": "Fleet Refit",
+     "label": "Fleet Refit",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% hit points; Ships & boats +10% damage",
+     "effects": [
+      [
+       "hp",
+       "naval",
+       1.2
+      ],
+      [
+       "dmg",
+       "naval",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "FR": {
+   "order": [
+    "fr7",
+    "fr8",
+    "gpr",
+    "fr1",
+    "fr2",
+    "fr3",
+    "fr4",
+    "fr5",
+    "fr6",
+    "fr9"
+   ],
+   "upgrades": {
+    "fr7": {
+     "key": "fr7",
+     "order": 0,
+     "name": "Recettes Exportation",
+     "label": "Recettes Exportation ★",
+     "signature": true,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "All units +8% weapon range",
+     "effects": [
+      [
+       "rng",
+       "all",
+       1.08
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "fr8": {
+     "key": "fr8",
+     "order": 1,
+     "name": "Doctrine Interarmes",
+     "label": "Doctrine Interarmes",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 20% more; Vehicles repair 1.5 hit points a second out of combat",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.2
+      ],
+      [
+       "regen",
+       "veh",
+       1.5
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "fr1": {
+     "key": "fr1",
+     "order": 3,
+     "name": "Formation Commando",
+     "label": "Formation Commando",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "fr2": {
+     "key": "fr2",
+     "order": 4,
+     "name": "Équipement FELIN",
+     "label": "Équipement FELIN",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +10% weapon range; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "rng",
+       "inf",
+       1.1
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "fr3": {
+     "key": "fr3",
+     "order": 5,
+     "name": "Équipages Leclerc",
+     "label": "Équipages Leclerc",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +15% damage; Artillery +20% damage",
+     "effects": [
+      [
+       "dmg",
+       "tank",
+       1.15
+      ],
+      [
+       "dmg",
+       "arty",
+       1.2
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/tank"
+    },
+    "fr4": {
+     "key": "fr4",
+     "order": 6,
+     "name": "Artillerie CAESAR",
+     "label": "Artillerie CAESAR",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Vehicles +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "veh",
+       1.2
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/shell"
+    },
+    "fr5": {
+     "key": "fr5",
+     "order": 7,
+     "name": "Intégration Rafale",
+     "label": "Intégration Rafale",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Jets +25% damage; Jets +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "jet",
+       1.25
+      ],
+      [
+       "rng",
+       "jet",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/plane"
+    },
+    "fr6": {
+     "key": "fr6",
+     "order": 8,
+     "name": "Maintenance Tigre",
+     "label": "Maintenance Tigre",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters +20% damage; Helicopters take 15% less damage",
+     "effects": [
+      [
+       "dmg",
+       "heli",
+       1.2
+      ],
+      [
+       "taken",
+       "heli",
+       0.85
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/fix"
+    },
+    "fr9": {
+     "key": "fr9",
+     "order": 9,
+     "name": "Refonte Patrouille Navale",
+     "label": "Refonte Patrouille Navale",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Warships +20% damage; Warships +5% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "ship",
+       1.2
+      ],
+      [
+       "rng",
+       "ship",
+       1.05
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "DE": {
+   "order": [
+    "de7",
+    "de8",
+    "gpr",
+    "de1",
+    "de2",
+    "de3",
+    "de4",
+    "de5",
+    "de6",
+    "de9"
+   ],
+   "upgrades": {
+    "de7": {
+     "key": "de7",
+     "order": 0,
+     "name": "Exportüberschuss",
+     "label": "Exportüberschuss ★",
+     "signature": true,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "All units +8% weapon range",
+     "effects": [
+      [
+       "rng",
+       "all",
+       1.08
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "de8": {
+     "key": "de8",
+     "order": 1,
+     "name": "Führen mit Aufträgen",
+     "label": "Führen mit Aufträgen",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 20% more; Vehicles repair 1.5 hit points a second out of combat",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.2
+      ],
+      [
+       "regen",
+       "veh",
+       1.5
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "de1": {
+     "key": "de1",
+     "order": 3,
+     "name": "Spezialkräfte Ausbildung",
+     "label": "Spezialkräfte Ausbildung",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "de2": {
+     "key": "de2",
+     "order": 4,
+     "name": "Infanterie der Zukunft",
+     "label": "Infanterie der Zukunft",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +10% weapon range; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "rng",
+       "inf",
+       1.1
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "de3": {
+     "key": "de3",
+     "order": 5,
+     "name": "Panzerbesatzungen",
+     "label": "Panzerbesatzungen",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +15% damage; Artillery +20% damage",
+     "effects": [
+      [
+       "dmg",
+       "tank",
+       1.15
+      ],
+      [
+       "dmg",
+       "arty",
+       1.2
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/tank"
+    },
+    "de4": {
+     "key": "de4",
+     "order": 6,
+     "name": "PzH Feuerleitung",
+     "label": "PzH Feuerleitung",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Vehicles +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "veh",
+       1.2
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/tank"
+    },
+    "de5": {
+     "key": "de5",
+     "order": 7,
+     "name": "Eurofighter Integration",
+     "label": "Eurofighter Integration",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Jets +25% damage; Jets +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "jet",
+       1.25
+      ],
+      [
+       "rng",
+       "jet",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/plane"
+    },
+    "de6": {
+     "key": "de6",
+     "order": 8,
+     "name": "Tiger Wartung",
+     "label": "Tiger Wartung",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters +20% damage; Helicopters take 15% less damage",
+     "effects": [
+      [
+       "dmg",
+       "heli",
+       1.2
+      ],
+      [
+       "taken",
+       "heli",
+       0.85
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/plane"
+    },
+    "de9": {
+     "key": "de9",
+     "order": 9,
+     "name": "Marine Modernisierung",
+     "label": "Marine Modernisierung",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Warships +20% damage; Warships +5% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "ship",
+       1.2
+      ],
+      [
+       "rng",
+       "ship",
+       1.05
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "IL": {
+   "order": [
+    "il7",
+    "il8",
+    "gpr",
+    "il1",
+    "il2",
+    "il3",
+    "il4",
+    "il5",
+    "il6",
+    "il9"
+   ],
+   "upgrades": {
+    "il7": {
+     "key": "il7",
+     "order": 0,
+     "name": "Iron Dome Radars",
+     "label": "Iron Dome Radars",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 2x the distance; Buildings take 15% less damage",
+     "effects": [
+      [
+       "detect",
+       "all",
+       2
+      ],
+      [
+       "taken",
+       "bld",
+       0.85
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/radar"
+    },
+    "il8": {
+     "key": "il8",
+     "order": 1,
+     "name": "Northern Supply Lines",
+     "label": "Northern Supply Lines",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 20% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.2
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "il1": {
+     "key": "il1",
+     "order": 3,
+     "name": "Sayeret Training",
+     "label": "Sayeret Training",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +10% damage; Infantry fire 11% faster",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.1
+      ],
+      [
+       "rof",
+       "inf",
+       0.9
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "il2": {
+     "key": "il2",
+     "order": 4,
+     "name": "Ceramic Plate Vests",
+     "label": "Ceramic Plate Vests",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.15
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/armor"
+    },
+    "il3": {
+     "key": "il3",
+     "order": 5,
+     "name": "Trophy Protection",
+     "label": "Trophy Protection ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Vehicles take 30% less damage from missiles and rockets",
+     "effects": [
+      [
+       "mis",
+       "veh",
+       0.7
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/tank"
+    },
+    "il4": {
+     "key": "il4",
+     "order": 6,
+     "name": "Merkava Mk4 Modules",
+     "label": "Merkava Mk4 Modules",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +25% hit points; Vehicles repair 2 hit points a second out of combat",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.25
+      ],
+      [
+       "regen",
+       "veh",
+       2
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/armor"
+    },
+    "il5": {
+     "key": "il5",
+     "order": 7,
+     "name": "Elbit Countermeasures",
+     "label": "Elbit Countermeasures",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft take 20% less damage",
+     "effects": [
+      [
+       "taken",
+       "air",
+       0.8
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/radar"
+    },
+    "il6": {
+     "key": "il6",
+     "order": 8,
+     "name": "SPICE Guidance Kits",
+     "label": "SPICE Guidance Kits",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Aircraft +5% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "rng",
+       "air",
+       1.05
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/missile"
+    },
+    "il9": {
+     "key": "il9",
+     "order": 9,
+     "name": "Shayetet 13 Hulls",
+     "label": "Shayetet 13 Hulls",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats take 15% less damage; Ships & boats move 10% faster",
+     "effects": [
+      [
+       "taken",
+       "naval",
+       0.85
+      ],
+      [
+       "spd",
+       "naval",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "UA": {
+   "order": [
+    "ua7",
+    "ua8",
+    "gpr",
+    "ua1",
+    "ua2",
+    "ua3",
+    "ua4",
+    "ua5",
+    "ua6",
+    "ua9"
+   ],
+   "upgrades": {
+    "ua7": {
+     "key": "ua7",
+     "order": 0,
+     "name": "Starlink Terminals",
+     "label": "Starlink Terminals",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 1.5x the distance; Artillery fire 11% faster",
+     "effects": [
+      [
+       "detect",
+       "all",
+       1.5
+      ],
+      [
+       "rof",
+       "arty",
+       0.9
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/radar"
+    },
+    "ua8": {
+     "key": "ua8",
+     "order": 1,
+     "name": "Grain Corridor",
+     "label": "Grain Corridor",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 25% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.25
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "ua1": {
+     "key": "ua1",
+     "order": 3,
+     "name": "Territorial Defense",
+     "label": "Territorial Defense",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points; Infantry are 20% harder to break",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ],
+      [
+       "courage",
+       "inf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "ua2": {
+     "key": "ua2",
+     "order": 4,
+     "name": "Javelin & NLAW Drills",
+     "label": "Javelin & NLAW Drills",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Anti-tank infantry +30% damage; Anti-tank infantry +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "atinf",
+       1.3
+      ],
+      [
+       "rng",
+       "atinf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "ua3": {
+     "key": "ua3",
+     "order": 5,
+     "name": "Captured Armor",
+     "label": "Captured Armor ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Destroyed enemy vehicles pay out 25% of their cost; Vehicles +5% hit points",
+     "effects": [
+      [
+       "salvage",
+       "all",
+       0.25
+      ],
+      [
+       "hp",
+       "veh",
+       1.05
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/armor"
+    },
+    "ua4": {
+     "key": "ua4",
+     "order": 6,
+     "name": "FPV Workshops",
+     "label": "FPV Workshops",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Drones build 67% faster; Drones +15% damage",
+     "effects": [
+      [
+       "build",
+       "drone",
+       0.6
+      ],
+      [
+       "dmg",
+       "drone",
+       1.15
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/drone"
+    },
+    "ua5": {
+     "key": "ua5",
+     "order": 7,
+     "name": "Western Air Packages",
+     "label": "Western Air Packages",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Aircraft take 15% less damage",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "taken",
+       "air",
+       0.85
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/plane"
+    },
+    "ua6": {
+     "key": "ua6",
+     "order": 8,
+     "name": "Storm Shadow Integration",
+     "label": "Storm Shadow Integration",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Jets +15% weapon range; Jets +15% damage",
+     "effects": [
+      [
+       "rng",
+       "jet",
+       1.15
+      ],
+      [
+       "dmg",
+       "jet",
+       1.15
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/missile"
+    },
+    "ua9": {
+     "key": "ua9",
+     "order": 9,
+     "name": "Sea Baby Workshops",
+     "label": "Sea Baby Workshops",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Patrol boats +30% damage; Patrol boats move 10% faster; Patrol boats +10% hit points",
+     "effects": [
+      [
+       "dmg",
+       "boat",
+       1.3
+      ],
+      [
+       "spd",
+       "boat",
+       1.1
+      ],
+      [
+       "hp",
+       "boat",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/drone"
+    }
+   }
+  },
+  "RU": {
+   "order": [
+    "ru7",
+    "ru8",
+    "gpr",
+    "ru1",
+    "ru2",
+    "ru3",
+    "ru4",
+    "ru5",
+    "ru6",
+    "ru9"
+   ],
+   "upgrades": {
+    "ru7": {
+     "key": "ru7",
+     "order": 0,
+     "name": "Railway Troops",
+     "label": "Railway Troops",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 20% more; Vehicles build 18% faster",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.2
+      ],
+      [
+       "build",
+       "veh",
+       0.85
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "ru8": {
+     "key": "ru8",
+     "order": 1,
+     "name": "Kasta Radar",
+     "label": "Kasta Radar",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 2x the distance; Air-defence & light vehicles +15% weapon range",
+     "effects": [
+      [
+       "detect",
+       "all",
+       2
+      ],
+      [
+       "rng",
+       "aa",
+       1.15
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/radar"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "ru1": {
+     "key": "ru1",
+     "order": 3,
+     "name": "Ratnik Combat Gear",
+     "label": "Ratnik Combat Gear",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "ru2": {
+     "key": "ru2",
+     "order": 4,
+     "name": "Motor Rifle Drills",
+     "label": "Motor Rifle Drills",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "ru3": {
+     "key": "ru3",
+     "order": 5,
+     "name": "Kontakt-5 Reactive Armor",
+     "label": "Kontakt-5 Reactive Armor ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Vehicles take 25% less damage from missiles and rockets",
+     "effects": [
+      [
+       "mis",
+       "veh",
+       0.75
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/armor"
+    },
+    "ru4": {
+     "key": "ru4",
+     "order": 6,
+     "name": "Massed Artillery Doctrine",
+     "label": "Massed Artillery Doctrine",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery fire 25% faster; Artillery +15% blast radius",
+     "effects": [
+      [
+       "rof",
+       "arty",
+       0.8
+      ],
+      [
+       "splash",
+       "arty",
+       1.15
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/shell"
+    },
+    "ru5": {
+     "key": "ru5",
+     "order": 7,
+     "name": "Krasukha Jamming",
+     "label": "Krasukha Jamming",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft take 20% less damage",
+     "effects": [
+      [
+       "taken",
+       "air",
+       0.8
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/radar"
+    },
+    "ru6": {
+     "key": "ru6",
+     "order": 8,
+     "name": "Kh-38 Missiles",
+     "label": "Kh-38 Missiles",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +20% damage",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.2
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/missile"
+    },
+    "ru9": {
+     "key": "ru9",
+     "order": 9,
+     "name": "Kalibr Refit",
+     "label": "Kalibr Refit",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +15% damage; Warships +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "naval",
+       1.15
+      ],
+      [
+       "rng",
+       "ship",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/missile"
+    }
+   }
+  },
+  "CN": {
+   "order": [
+    "cn7",
+    "cn8",
+    "gpr",
+    "cn1",
+    "cn2",
+    "cn3",
+    "cn4",
+    "cn5",
+    "cn6",
+    "cn9"
+   ],
+   "upgrades": {
+    "cn7": {
+     "key": "cn7",
+     "order": 0,
+     "name": "Belt and Road Logistics",
+     "label": "Belt and Road Logistics",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 20% more; Vehicles build 18% faster",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.2
+      ],
+      [
+       "build",
+       "veh",
+       0.85
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "cn8": {
+     "key": "cn8",
+     "order": 1,
+     "name": "Great Firewall",
+     "label": "Great Firewall",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 2x the distance; Buildings take 10% less damage",
+     "effects": [
+      [
+       "detect",
+       "all",
+       2
+      ],
+      [
+       "taken",
+       "bld",
+       0.9
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/radar"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "cn1": {
+     "key": "cn1",
+     "order": 3,
+     "name": "Patriotic Education",
+     "label": "Patriotic Education ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry fire 25% faster; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "rof",
+       "inf",
+       0.8
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/radar"
+    },
+    "cn2": {
+     "key": "cn2",
+     "order": 4,
+     "name": "Type 21 Body Armor",
+     "label": "Type 21 Body Armor",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/armor"
+    },
+    "cn3": {
+     "key": "cn3",
+     "order": 5,
+     "name": "PHL Rocket Upgrades",
+     "label": "PHL Rocket Upgrades",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery +25% damage; Artillery +15% blast radius",
+     "effects": [
+      [
+       "dmg",
+       "arty",
+       1.25
+      ],
+      [
+       "splash",
+       "arty",
+       1.15
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/missile"
+    },
+    "cn4": {
+     "key": "cn4",
+     "order": 6,
+     "name": "Type 99A Armor",
+     "label": "Type 99A Armor",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points; Air-defence & light vehicles +10% hit points",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ],
+      [
+       "hp",
+       "aa",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/armor"
+    },
+    "cn5": {
+     "key": "cn5",
+     "order": 7,
+     "name": "J-20 Stealth Coating",
+     "label": "J-20 Stealth Coating",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Jets take 25% less damage; Jets +15% damage",
+     "effects": [
+      [
+       "taken",
+       "jet",
+       0.75
+      ],
+      [
+       "dmg",
+       "jet",
+       1.15
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/camo"
+    },
+    "cn6": {
+     "key": "cn6",
+     "order": 8,
+     "name": "Z-10 Upgrades",
+     "label": "Z-10 Upgrades",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters +20% damage; Helicopters +15% hit points",
+     "effects": [
+      [
+       "dmg",
+       "heli",
+       1.2
+      ],
+      [
+       "hp",
+       "heli",
+       1.15
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/missile"
+    },
+    "cn9": {
+     "key": "cn9",
+     "order": 9,
+     "name": "Type 055 Refit",
+     "label": "Type 055 Refit",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +15% damage; Ships & boats +15% hit points",
+     "effects": [
+      [
+       "dmg",
+       "naval",
+       1.15
+      ],
+      [
+       "hp",
+       "naval",
+       1.15
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "KP": {
+   "order": [
+    "kp7",
+    "kp8",
+    "kp1",
+    "kp2",
+    "kp3",
+    "kp4",
+    "kp5",
+    "kp6",
+    "kp9"
+   ],
+   "upgrades": {
+    "kp7": {
+     "key": "kp7",
+     "order": 0,
+     "name": "Tunnel Logistics",
+     "label": "Tunnel Logistics",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 15% more; Infantry repair 1 hit points a second out of combat",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.15
+      ],
+      [
+       "regen",
+       "inf",
+       1
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "kp8": {
+     "key": "kp8",
+     "order": 1,
+     "name": "Hwasong Readiness",
+     "label": "Hwasong Readiness",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Buildings take 20% less damage; Detect stealth units at 1.5x the distance",
+     "effects": [
+      [
+       "taken",
+       "bld",
+       0.8
+      ],
+      [
+       "detect",
+       "all",
+       1.5
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/missile"
+    },
+    "kp1": {
+     "key": "kp1",
+     "order": 2,
+     "name": "Mass Conscription",
+     "label": "Mass Conscription ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry train 100% faster",
+     "effects": [
+      [
+       "build",
+       "inf",
+       0.5
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "kp2": {
+     "key": "kp2",
+     "order": 3,
+     "name": "Juche Spirit",
+     "label": "Juche Spirit",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry are 25% harder to break; Infantry +10% hit points",
+     "effects": [
+      [
+       "courage",
+       "inf",
+       1.25
+      ],
+      [
+       "hp",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "kp3": {
+     "key": "kp3",
+     "order": 4,
+     "name": "Koksan Gun Crews",
+     "label": "Koksan Gun Crews",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery +10% weapon range; Artillery +15% damage",
+     "effects": [
+      [
+       "rng",
+       "arty",
+       1.1
+      ],
+      [
+       "dmg",
+       "arty",
+       1.15
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/shell"
+    },
+    "kp4": {
+     "key": "kp4",
+     "order": 5,
+     "name": "Chonma Armor",
+     "label": "Chonma Armor",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Vehicles +15% hit points",
+     "effects": [
+      [
+       "hp",
+       "veh",
+       1.15
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/armor"
+    },
+    "kp5": {
+     "key": "kp5",
+     "order": 6,
+     "name": "MiG Overhaul Program",
+     "label": "MiG Overhaul Program",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "air",
+       1.2
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/plane"
+    },
+    "kp6": {
+     "key": "kp6",
+     "order": 7,
+     "name": "Hidden Air Bases",
+     "label": "Hidden Air Bases",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft build 67% faster",
+     "effects": [
+      [
+       "build",
+       "air",
+       0.6
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/camo"
+    },
+    "kp9": {
+     "key": "kp9",
+     "order": 8,
+     "name": "Midget Submarine Tactics",
+     "label": "Midget Submarine Tactics",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% damage; Patrol boats move 15% faster",
+     "effects": [
+      [
+       "dmg",
+       "naval",
+       1.2
+      ],
+      [
+       "spd",
+       "boat",
+       1.15
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "IN": {
+   "order": [
+    "in7",
+    "in8",
+    "gpr",
+    "in1",
+    "in2",
+    "in3",
+    "in4",
+    "in5",
+    "in6",
+    "in9"
+   ],
+   "upgrades": {
+    "in7": {
+     "key": "in7",
+     "order": 0,
+     "name": "Indian Railways",
+     "label": "Indian Railways",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 20% more; Infantry train 18% faster",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.2
+      ],
+      [
+       "build",
+       "inf",
+       0.85
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "in8": {
+     "key": "in8",
+     "order": 1,
+     "name": "NETRA Radar",
+     "label": "NETRA Radar",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 2x the distance; Air-defence & light vehicles +10% weapon range",
+     "effects": [
+      [
+       "detect",
+       "all",
+       2
+      ],
+      [
+       "rng",
+       "aa",
+       1.1
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/radar"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "in1": {
+     "key": "in1",
+     "order": 3,
+     "name": "Para SF Training",
+     "label": "Para SF Training",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry are 10% harder to break; Infantry move 10% faster",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ],
+      [
+       "spd",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/para"
+    },
+    "in2": {
+     "key": "in2",
+     "order": 4,
+     "name": "Bharat Kavach Armor",
+     "label": "Bharat Kavach Armor",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/armor"
+    },
+    "in3": {
+     "key": "in3",
+     "order": 5,
+     "name": "Cold Start Doctrine",
+     "label": "Cold Start Doctrine ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Vehicles move 15% faster; Vehicles +10% damage",
+     "effects": [
+      [
+       "spd",
+       "veh",
+       1.15
+      ],
+      [
+       "dmg",
+       "veh",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/tank"
+    },
+    "in4": {
+     "key": "in4",
+     "order": 6,
+     "name": "Arjun Armor Package",
+     "label": "Arjun Armor Package",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points; Artillery +15% hit points",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ],
+      [
+       "hp",
+       "arty",
+       1.15
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/armor"
+    },
+    "in5": {
+     "key": "in5",
+     "order": 7,
+     "name": "Astra Missiles",
+     "label": "Astra Missiles",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Jets +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "rng",
+       "jet",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/missile"
+    },
+    "in6": {
+     "key": "in6",
+     "order": 8,
+     "name": "Rudra Armor",
+     "label": "Rudra Armor",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters +25% hit points; Helicopters +10% damage",
+     "effects": [
+      [
+       "hp",
+       "heli",
+       1.25
+      ],
+      [
+       "dmg",
+       "heli",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/armor"
+    },
+    "in9": {
+     "key": "in9",
+     "order": 9,
+     "name": "BrahMos Integration",
+     "label": "BrahMos Integration",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Warships +25% damage; Warships +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "ship",
+       1.25
+      ],
+      [
+       "rng",
+       "ship",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/missile"
+    }
+   }
+  },
+  "JP": {
+   "order": [
+    "jp7",
+    "jp8",
+    "gpr",
+    "jp1",
+    "jp2",
+    "jp3",
+    "jp4",
+    "jp5",
+    "jp6",
+    "jp9"
+   ],
+   "upgrades": {
+    "jp7": {
+     "key": "jp7",
+     "order": 0,
+     "name": "Keiretsu Contracts",
+     "label": "Keiretsu Contracts",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Vehicles build 25% faster; Aircraft build 25% faster",
+     "effects": [
+      [
+       "build",
+       "veh",
+       0.8
+      ],
+      [
+       "build",
+       "air",
+       0.8
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "jp8": {
+     "key": "jp8",
+     "order": 1,
+     "name": "FPS-5 Radar Network",
+     "label": "FPS-5 Radar Network",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 2x the distance; Air-defence & light vehicles +10% weapon range",
+     "effects": [
+      [
+       "detect",
+       "all",
+       2
+      ],
+      [
+       "rng",
+       "aa",
+       1.1
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/radar"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "jp1": {
+     "key": "jp1",
+     "order": 3,
+     "name": "Ranger Training",
+     "label": "Ranger Training",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points; Infantry +5% weapon range",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ],
+      [
+       "rng",
+       "inf",
+       1.05
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "jp2": {
+     "key": "jp2",
+     "order": 4,
+     "name": "Special Operations Course",
+     "label": "Special Operations Course",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry move 10% faster",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "spd",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "jp3": {
+     "key": "jp3",
+     "order": 5,
+     "name": "Type 10 Fire Control",
+     "label": "Type 10 Fire Control ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% weapon range; Artillery +20% weapon range",
+     "effects": [
+      [
+       "rng",
+       "tank",
+       1.2
+      ],
+      [
+       "rng",
+       "arty",
+       1.2
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/radar"
+    },
+    "jp4": {
+     "key": "jp4",
+     "order": 6,
+     "name": "Hybrid Suspension Armor",
+     "label": "Hybrid Suspension Armor",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points; Vehicles take 15% less damage from missiles and rockets",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ],
+      [
+       "mis",
+       "veh",
+       0.85
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/armor"
+    },
+    "jp5": {
+     "key": "jp5",
+     "order": 7,
+     "name": "F-35B/F-2 Avionics",
+     "label": "F-35B/F-2 Avionics",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Jets take 15% less damage",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "taken",
+       "jet",
+       0.85
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/radar"
+    },
+    "jp6": {
+     "key": "jp6",
+     "order": 8,
+     "name": "Apache Upgrades",
+     "label": "Apache Upgrades",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters +20% hit points; Helicopters +10% damage",
+     "effects": [
+      [
+       "hp",
+       "heli",
+       1.2
+      ],
+      [
+       "dmg",
+       "heli",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/missile"
+    },
+    "jp9": {
+     "key": "jp9",
+     "order": 9,
+     "name": "Aegis Combat System",
+     "label": "Aegis Combat System",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% damage; Warships +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "naval",
+       1.2
+      ],
+      [
+       "rng",
+       "ship",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/radar"
+    }
+   }
+  },
+  "KR": {
+   "order": [
+    "kr7",
+    "kr8",
+    "gpr",
+    "kr1",
+    "kr2",
+    "kr3",
+    "kr4",
+    "kr5",
+    "kr6",
+    "kr9"
+   ],
+   "upgrades": {
+    "kr7": {
+     "key": "kr7",
+     "order": 0,
+     "name": "Chaebol Contracts",
+     "label": "Chaebol Contracts",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Vehicles build 25% faster; Aircraft build 25% faster",
+     "effects": [
+      [
+       "build",
+       "veh",
+       0.8
+      ],
+      [
+       "build",
+       "air",
+       0.8
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "kr8": {
+     "key": "kr8",
+     "order": 1,
+     "name": "Green Pine Radar",
+     "label": "Green Pine Radar",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 2x the distance; Air-defence & light vehicles +10% weapon range",
+     "effects": [
+      [
+       "detect",
+       "all",
+       2
+      ],
+      [
+       "rng",
+       "aa",
+       1.1
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/radar"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "kr1": {
+     "key": "kr1",
+     "order": 3,
+     "name": "Warrior Platform",
+     "label": "Warrior Platform",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points; Infantry +5% weapon range",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ],
+      [
+       "rng",
+       "inf",
+       1.05
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "kr2": {
+     "key": "kr2",
+     "order": 4,
+     "name": "ROK Special Warfare",
+     "label": "ROK Special Warfare",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry move 10% faster",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "spd",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "kr3": {
+     "key": "kr3",
+     "order": 5,
+     "name": "K2 Fire Control",
+     "label": "K2 Fire Control ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% weapon range; Artillery +20% weapon range",
+     "effects": [
+      [
+       "rng",
+       "tank",
+       1.2
+      ],
+      [
+       "rng",
+       "arty",
+       1.2
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/radar"
+    },
+    "kr4": {
+     "key": "kr4",
+     "order": 6,
+     "name": "K2 Black Panther Armor",
+     "label": "K2 Black Panther Armor",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points; Vehicles take 15% less damage from missiles and rockets",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ],
+      [
+       "mis",
+       "veh",
+       0.85
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/armor"
+    },
+    "kr5": {
+     "key": "kr5",
+     "order": 7,
+     "name": "KF-21 Avionics",
+     "label": "KF-21 Avionics",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Jets take 15% less damage",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "taken",
+       "jet",
+       0.85
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/radar"
+    },
+    "kr6": {
+     "key": "kr6",
+     "order": 8,
+     "name": "Surion Upgrades",
+     "label": "Surion Upgrades",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters +20% hit points; Helicopters +10% damage",
+     "effects": [
+      [
+       "hp",
+       "heli",
+       1.2
+      ],
+      [
+       "dmg",
+       "heli",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/missile"
+    },
+    "kr9": {
+     "key": "kr9",
+     "order": 9,
+     "name": "KDX Refit",
+     "label": "KDX Refit",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% damage; Warships +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "naval",
+       1.2
+      ],
+      [
+       "rng",
+       "ship",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "PK": {
+   "order": [
+    "pk7",
+    "pk8",
+    "gpr",
+    "pk1",
+    "pk2",
+    "pk3",
+    "pk4",
+    "pk5",
+    "pk6",
+    "pk9"
+   ],
+   "upgrades": {
+    "pk7": {
+     "key": "pk7",
+     "order": 0,
+     "name": "NLC Supply Convoys",
+     "label": "NLC Supply Convoys",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 20% more; Vehicles repair 1.5 hit points a second out of combat",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.2
+      ],
+      [
+       "regen",
+       "veh",
+       1.5
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "pk8": {
+     "key": "pk8",
+     "order": 1,
+     "name": "Strategic Plans Division",
+     "label": "Strategic Plans Division",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 2x the distance; Buildings take 15% less damage",
+     "effects": [
+      [
+       "detect",
+       "all",
+       2
+      ],
+      [
+       "taken",
+       "bld",
+       0.85
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "pk1": {
+     "key": "pk1",
+     "order": 3,
+     "name": "Baktar-Shikan Teams",
+     "label": "Baktar-Shikan Teams ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Anti-tank infantry +35% damage; Anti-tank infantry +15% weapon range; Anti-tank infantry +20% hit points",
+     "effects": [
+      [
+       "dmg",
+       "atinf",
+       1.35
+      ],
+      [
+       "rng",
+       "atinf",
+       1.15
+      ],
+      [
+       "hp",
+       "atinf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "pk2": {
+     "key": "pk2",
+     "order": 4,
+     "name": "Frontier Hardening",
+     "label": "Frontier Hardening",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +25% hit points; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.25
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/wall"
+    },
+    "pk3": {
+     "key": "pk3",
+     "order": 5,
+     "name": "Al-Khalid Armor",
+     "label": "Al-Khalid Armor",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points; Tanks take 15% less damage from missiles and rockets",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ],
+      [
+       "mis",
+       "tank",
+       0.85
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/armor"
+    },
+    "pk4": {
+     "key": "pk4",
+     "order": 6,
+     "name": "Nasr Fire Control",
+     "label": "Nasr Fire Control",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery +20% damage; Artillery +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "arty",
+       1.2
+      ],
+      [
+       "rng",
+       "arty",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/radar"
+    },
+    "pk5": {
+     "key": "pk5",
+     "order": 7,
+     "name": "JF-17 Avionics",
+     "label": "JF-17 Avionics",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Jets fire 18% faster",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "rof",
+       "jet",
+       0.85
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/radar"
+    },
+    "pk6": {
+     "key": "pk6",
+     "order": 8,
+     "name": "Cobra Rotor Armor",
+     "label": "Cobra Rotor Armor",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters take 25% less damage; Helicopters +10% hit points",
+     "effects": [
+      [
+       "taken",
+       "heli",
+       0.75
+      ],
+      [
+       "hp",
+       "heli",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/armor"
+    },
+    "pk9": {
+     "key": "pk9",
+     "order": 9,
+     "name": "Babur Missiles",
+     "label": "Babur Missiles",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% damage",
+     "effects": [
+      [
+       "dmg",
+       "naval",
+       1.2
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/missile"
+    }
+   }
+  },
+  "SA": {
+   "order": [
+    "sa7",
+    "sa8",
+    "gpr",
+    "sa1",
+    "sa2",
+    "sa3",
+    "sa4",
+    "sa5",
+    "sa6",
+    "sa9"
+   ],
+   "upgrades": {
+    "sa7": {
+     "key": "sa7",
+     "order": 0,
+     "name": "Aramco Logistics",
+     "label": "Aramco Logistics",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 30% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.3
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "sa8": {
+     "key": "sa8",
+     "order": 1,
+     "name": "Vision 2030 Contracts",
+     "label": "Vision 2030 Contracts",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "All units build 11% faster",
+     "effects": [
+      [
+       "build",
+       "all",
+       0.9
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "sa1": {
+     "key": "sa1",
+     "order": 3,
+     "name": "Royal Guard Equipment",
+     "label": "Royal Guard Equipment",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "sa2": {
+     "key": "sa2",
+     "order": 4,
+     "name": "Special Forces Course",
+     "label": "Special Forces Course",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry +5% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "rng",
+       "inf",
+       1.05
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "sa3": {
+     "key": "sa3",
+     "order": 5,
+     "name": "Abrams Upgrade Contract",
+     "label": "Abrams Upgrade Contract",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points; Tanks +10% damage",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ],
+      [
+       "dmg",
+       "tank",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/missile"
+    },
+    "sa4": {
+     "key": "sa4",
+     "order": 6,
+     "name": "Patriot Integration",
+     "label": "Patriot Integration",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Air-defence & light vehicles +20% damage; Air-defence & light vehicles +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "aa",
+       1.2
+      ],
+      [
+       "rng",
+       "aa",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/radar"
+    },
+    "sa5": {
+     "key": "sa5",
+     "order": 7,
+     "name": "AWACS Coverage",
+     "label": "AWACS Coverage ★",
+     "signature": true,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft fire 25% faster",
+     "effects": [
+      [
+       "rof",
+       "air",
+       0.8
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/radar"
+    },
+    "sa6": {
+     "key": "sa6",
+     "order": 8,
+     "name": "F-15 Sniper Pods",
+     "label": "F-15 Sniper Pods",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +20% damage",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.2
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/radar"
+    },
+    "sa9": {
+     "key": "sa9",
+     "order": 9,
+     "name": "Royal Navy Refit",
+     "label": "Royal Navy Refit",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "naval",
+       1.2
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "AE": {
+   "order": [
+    "ae7",
+    "ae8",
+    "gpr",
+    "ae1",
+    "ae2",
+    "ae3",
+    "ae4",
+    "ae5",
+    "ae6",
+    "ae9"
+   ],
+   "upgrades": {
+    "ae7": {
+     "key": "ae7",
+     "order": 0,
+     "name": "Defense Contracts",
+     "label": "Defense Contracts ★",
+     "signature": true,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Vehicles build 33% faster; Aircraft build 33% faster",
+     "effects": [
+      [
+       "build",
+       "veh",
+       0.75
+      ],
+      [
+       "build",
+       "air",
+       0.75
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "ae8": {
+     "key": "ae8",
+     "order": 1,
+     "name": "Free Zone Trade",
+     "label": "Free Zone Trade",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 25% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.25
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "ae1": {
+     "key": "ae1",
+     "order": 3,
+     "name": "Presidential Guard Kit",
+     "label": "Presidential Guard Kit",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% hit points; Infantry +10% damage",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.15
+      ],
+      [
+       "dmg",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "ae2": {
+     "key": "ae2",
+     "order": 4,
+     "name": "Desert Warfare School",
+     "label": "Desert Warfare School",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry move 10% faster; Infantry are 15% harder to break",
+     "effects": [
+      [
+       "spd",
+       "inf",
+       1.1
+      ],
+      [
+       "courage",
+       "inf",
+       1.15
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "ae3": {
+     "key": "ae3",
+     "order": 5,
+     "name": "Leclerc Upgrade",
+     "label": "Leclerc Upgrade",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% damage; Tanks move 10% faster",
+     "effects": [
+      [
+       "dmg",
+       "tank",
+       1.2
+      ],
+      [
+       "spd",
+       "tank",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/missile"
+    },
+    "ae4": {
+     "key": "ae4",
+     "order": 6,
+     "name": "Pantsir Integration",
+     "label": "Pantsir Integration",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Air-defence & light vehicles +25% damage",
+     "effects": [
+      [
+       "dmg",
+       "aa",
+       1.25
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/radar"
+    },
+    "ae5": {
+     "key": "ae5",
+     "order": 7,
+     "name": "Rafale SPECTRA",
+     "label": "Rafale SPECTRA",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft take 25% less damage",
+     "effects": [
+      [
+       "taken",
+       "air",
+       0.75
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/radar"
+    },
+    "ae6": {
+     "key": "ae6",
+     "order": 8,
+     "name": "Al Tariq Guided Bombs",
+     "label": "Al Tariq Guided Bombs",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +20% damage",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.2
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/missile"
+    },
+    "ae9": {
+     "key": "ae9",
+     "order": 9,
+     "name": "Baynunah Refit",
+     "label": "Baynunah Refit",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats take 15% less damage; Ships & boats +10% damage",
+     "effects": [
+      [
+       "taken",
+       "naval",
+       0.85
+      ],
+      [
+       "dmg",
+       "naval",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "TR": {
+   "order": [
+    "tr7",
+    "tr8",
+    "gpr",
+    "tr1",
+    "tr2",
+    "tr3",
+    "tr4",
+    "tr5",
+    "tr6",
+    "tr9"
+   ],
+   "upgrades": {
+    "tr7": {
+     "key": "tr7",
+     "order": 0,
+     "name": "KALKAN Radar Net",
+     "label": "KALKAN Radar Net",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Detect stealth units at 2x the distance; Air-defence & light vehicles +15% weapon range",
+     "effects": [
+      [
+       "detect",
+       "all",
+       2
+      ],
+      [
+       "rng",
+       "aa",
+       1.15
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/radar"
+    },
+    "tr8": {
+     "key": "tr8",
+     "order": 1,
+     "name": "Defense Industry Agency",
+     "label": "Defense Industry Agency",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Vehicles build 25% faster; Aircraft build 25% faster",
+     "effects": [
+      [
+       "build",
+       "veh",
+       0.8
+      ],
+      [
+       "build",
+       "air",
+       0.8
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/crate"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "tr1": {
+     "key": "tr1",
+     "order": 3,
+     "name": "Maroon Beret Doctrine",
+     "label": "Maroon Beret Doctrine",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% damage; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.2
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "tr2": {
+     "key": "tr2",
+     "order": 4,
+     "name": "Mehmetcik Kevlar",
+     "label": "Mehmetcik Kevlar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +20% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.2
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/armor"
+    },
+    "tr3": {
+     "key": "tr3",
+     "order": 5,
+     "name": "Aselsan Fire Control",
+     "label": "Aselsan Fire Control",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +15% damage; Artillery +15% damage; Air-defence & light vehicles +15% damage",
+     "effects": [
+      [
+       "dmg",
+       "tank",
+       1.15
+      ],
+      [
+       "dmg",
+       "arty",
+       1.15
+      ],
+      [
+       "dmg",
+       "aa",
+       1.15
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/radar"
+    },
+    "tr4": {
+     "key": "tr4",
+     "order": 6,
+     "name": "Altay Armor Package",
+     "label": "Altay Armor Package",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Vehicles +15% hit points",
+     "effects": [
+      [
+       "hp",
+       "veh",
+       1.15
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/armor"
+    },
+    "tr5": {
+     "key": "tr5",
+     "order": 7,
+     "name": "Bayraktar Datalink",
+     "label": "Bayraktar Datalink ★",
+     "signature": true,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Drones +30% damage; Helicopters +25% damage; Drones move 10% faster",
+     "effects": [
+      [
+       "dmg",
+       "drone",
+       1.3
+      ],
+      [
+       "dmg",
+       "heli",
+       1.25
+      ],
+      [
+       "spd",
+       "drone",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/drone"
+    },
+    "tr6": {
+     "key": "tr6",
+     "order": 8,
+     "name": "KORAL Electronic Warfare",
+     "label": "KORAL Electronic Warfare",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft take 25% less damage",
+     "effects": [
+      [
+       "taken",
+       "air",
+       0.75
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/radar"
+    },
+    "tr9": {
+     "key": "tr9",
+     "order": 9,
+     "name": "MILGEM Hulls",
+     "label": "MILGEM Hulls",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% hit points; Ships & boats repair 3 hit points a second out of combat",
+     "effects": [
+      [
+       "hp",
+       "naval",
+       1.2
+      ],
+      [
+       "regen",
+       "naval",
+       3
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  },
+  "EG": {
+   "order": [
+    "eg7",
+    "eg8",
+    "gpr",
+    "eg1",
+    "eg2",
+    "eg3",
+    "eg4",
+    "eg5",
+    "eg6",
+    "eg9"
+   ],
+   "upgrades": {
+    "eg7": {
+     "key": "eg7",
+     "order": 0,
+     "name": "Suez Canal Revenue",
+     "label": "Suez Canal Revenue",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Supply trucks carry 25% more",
+     "effects": [
+      [
+       "harv",
+       "all",
+       1.25
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/cash"
+    },
+    "eg8": {
+     "key": "eg8",
+     "order": 1,
+     "name": "October War Doctrine",
+     "label": "October War Doctrine",
+     "signature": false,
+     "cost": 1400,
+     "research_time": 30,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "All units are 15% harder to break; Buildings take 10% less damage",
+     "effects": [
+      [
+       "courage",
+       "all",
+       1.15
+      ],
+      [
+       "taken",
+       "bld",
+       0.9
+      ]
+     ],
+     "tip": "",
+     "cost_text": "$1400",
+     "icon": "svg/star"
+    },
+    "gpr": {
+     "key": "gpr",
+     "order": 2,
+     "name": "Ground-Penetrating Radar",
+     "label": "Ground-Penetrating Radar",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 25,
+     "at": "hq",
+     "at_name": "Command HQ",
+     "requires": [
+      "hq"
+     ],
+     "group": "Command HQ",
+     "hotkey": null,
+     "description": "Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot), you get a warning when troops move underground there, and troops coming out of a tunnel stay revealed for 8 seconds. Only for nations without tunnels.",
+     "effects": [],
+     "tip": "",
+     "cost_text": "$1200",
+     "icon": "svg/radar"
+    },
+    "eg1": {
+     "key": "eg1",
+     "order": 3,
+     "name": "Sa'ka Commando Course",
+     "label": "Sa'ka Commando Course",
+     "signature": false,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +15% damage; Infantry move 10% faster; Infantry are 10% harder to break",
+     "effects": [
+      [
+       "dmg",
+       "inf",
+       1.15
+      ],
+      [
+       "spd",
+       "inf",
+       1.1
+      ],
+      [
+       "courage",
+       "inf",
+       1.1
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1300",
+     "icon": "svg/rifle"
+    },
+    "eg2": {
+     "key": "eg2",
+     "order": 4,
+     "name": "Central Security Kit",
+     "label": "Central Security Kit",
+     "signature": false,
+     "cost": 1200,
+     "research_time": 26,
+     "at": "barracks",
+     "at_name": "Barracks",
+     "requires": [
+      "barracks"
+     ],
+     "group": "Barracks",
+     "hotkey": null,
+     "description": "Infantry +25% hit points",
+     "effects": [
+      [
+       "hp",
+       "inf",
+       1.25
+      ]
+     ],
+     "tip": "Requires Barracks",
+     "cost_text": "$1200",
+     "icon": "svg/rifle"
+    },
+    "eg3": {
+     "key": "eg3",
+     "order": 5,
+     "name": "Veteran Tank Crews",
+     "label": "Veteran Tank Crews ★",
+     "signature": true,
+     "cost": 1300,
+     "research_time": 28,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Tanks +20% hit points; Tanks +10% damage",
+     "effects": [
+      [
+       "hp",
+       "tank",
+       1.2
+      ],
+      [
+       "dmg",
+       "tank",
+       1.1
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1300",
+     "icon": "svg/tank"
+    },
+    "eg4": {
+     "key": "eg4",
+     "order": 6,
+     "name": "Ramses Artillery",
+     "label": "Ramses Artillery",
+     "signature": false,
+     "cost": 1100,
+     "research_time": 24,
+     "at": "factory",
+     "at_name": "War Factory",
+     "requires": [
+      "factory"
+     ],
+     "group": "War Factory",
+     "hotkey": null,
+     "description": "Artillery +25% damage; Artillery +15% blast radius; Artillery fire 5% faster",
+     "effects": [
+      [
+       "dmg",
+       "arty",
+       1.25
+      ],
+      [
+       "splash",
+       "arty",
+       1.15
+      ],
+      [
+       "rof",
+       "arty",
+       0.95
+      ]
+     ],
+     "tip": "Requires War Factory",
+     "cost_text": "$1100",
+     "icon": "svg/shell"
+    },
+    "eg5": {
+     "key": "eg5",
+     "order": 7,
+     "name": "Rafale Integration",
+     "label": "Rafale Integration",
+     "signature": false,
+     "cost": 1000,
+     "research_time": 22,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Aircraft +15% damage; Jets +10% weapon range",
+     "effects": [
+      [
+       "dmg",
+       "air",
+       1.15
+      ],
+      [
+       "rng",
+       "jet",
+       1.1
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$1000",
+     "icon": "svg/plane"
+    },
+    "eg6": {
+     "key": "eg6",
+     "order": 8,
+     "name": "Apache Maintenance",
+     "label": "Apache Maintenance",
+     "signature": false,
+     "cost": 850,
+     "research_time": 18,
+     "at": "airfield",
+     "at_name": "Airfield",
+     "requires": [
+      "airfield"
+     ],
+     "group": "Airfield",
+     "hotkey": null,
+     "description": "Helicopters +25% hit points; Helicopters take 10% less damage",
+     "effects": [
+      [
+       "hp",
+       "heli",
+       1.25
+      ],
+      [
+       "taken",
+       "heli",
+       0.9
+      ]
+     ],
+     "tip": "Requires Airfield",
+     "cost_text": "$850",
+     "icon": "svg/fix"
+    },
+    "eg9": {
+     "key": "eg9",
+     "order": 9,
+     "name": "Mistral Refit",
+     "label": "Mistral Refit",
+     "signature": false,
+     "cost": 650,
+     "research_time": 14,
+     "at": "shipyard",
+     "at_name": "Shipyard",
+     "requires": [
+      "shipyard"
+     ],
+     "group": "Shipyard",
+     "hotkey": null,
+     "description": "Ships & boats +20% hit points; Ships & boats +10% damage",
+     "effects": [
+      [
+       "hp",
+       "naval",
+       1.2
+      ],
+      [
+       "dmg",
+       "naval",
+       1.1
+      ]
+     ],
+     "tip": "Requires Shipyard",
+     "cost_text": "$650",
+     "icon": "svg/ship"
+    }
+   }
+  }
+ }
+}

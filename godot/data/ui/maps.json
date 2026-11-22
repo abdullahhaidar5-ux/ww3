@@ -1,0 +1,2342 @@
+{
+ "_source": "src/01-data.js + src/02*.js MAPS, src/02d-battlemaps.js BM_KEYS / bmInfo(), src/08-ui.js mapListKeys() (picker order) / mapFacts() / mpSize() / mapPreview() (the 384x264 card picture, drawn in code), src/14-menu.js mxMapCards() (card texts), src/08-ui.js CONDS / SEASONS (Battle options)  (JS game, branch js-final; read from the running page by tools-godot/export_data.mjs)",
+ "_notes": "order = the one map picker of Battle (5 Battle maps, then every other battlefield). world = map size in sim units for the smallest / largest player count (setWorld). test_range = the maps the Test range window offers. The terrain itself comes from the bridge (map_data()), not from here.",
+ "order": [
+  "bm_splitridge",
+  "bm_ferryquarter",
+  "bm_breakwater",
+  "bm_fourmills",
+  "bm_sixroads",
+  "lebanon",
+  "gulf",
+  "euphrates",
+  "tihama",
+  "zagros",
+  "caribbean",
+  "hormuzgate",
+  "taiwan",
+  "arctic",
+  "khyber",
+  "hajar",
+  "marshes",
+  "blacksea",
+  "yemen",
+  "hawizeh",
+  "islands",
+  "donbas",
+  "mesopotamia",
+  "persia",
+  "taiga",
+  "aegean",
+  "dmziron",
+  "rubalkhali",
+  "oasis",
+  "atoll",
+  "hindukush",
+  "kuwait",
+  "rhine",
+  "yangtze",
+  "plateau"
+ ],
+ "maps": {
+  "bm_splitridge": {
+   "key": "bm_splitridge",
+   "order": 0,
+   "name": "Split Ridge",
+   "battle_map": true,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small · mountain pass",
+   "theme": "snow",
+   "tag": "mountain pass",
+   "symmetry": "none",
+   "description": "A mountain wall cuts the map in two. Only the north pass and the south pass lead through, each with a derrick in its mouth.",
+   "home": [],
+   "home_text": "",
+   "card_text": "A mountain wall cuts the map in two. Only the north pass and the south pass lead through, each with a derrick in its mouth.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 1.5,
+     "width": 4800,
+     "height": 3320
+    }
+   ],
+   "info": {
+    "k": "bm_splitridge",
+    "name": "Split Ridge",
+    "players": 2,
+    "size": "Small",
+    "theme": "mountain pass",
+    "desc": "A mountain wall cuts the map in two. Only the north pass and the south pass lead through, each with a derrick in its mouth.",
+    "supply": 6,
+    "oil": 4,
+    "tech": 4
+   },
+   "start_slots": [
+    [
+     440,
+     1100
+    ],
+    [
+     2760,
+     1100
+    ]
+   ],
+   "preview": "map/bm_splitridge"
+  },
+  "bm_ferryquarter": {
+   "key": "bm_ferryquarter",
+   "order": 1,
+   "name": "Ferry Quarter",
+   "battle_map": true,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small · river city",
+   "theme": "green",
+   "tag": "river city",
+   "symmetry": "none",
+   "description": "A river splits an old city. Three bridges, street fighting on both banks, and derricks by the outer bridges.",
+   "home": [],
+   "home_text": "",
+   "card_text": "A river splits an old city. Three bridges, street fighting on both banks, and derricks by the outer bridges.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 1.5,
+     "width": 4800,
+     "height": 3320
+    }
+   ],
+   "info": {
+    "k": "bm_ferryquarter",
+    "name": "Ferry Quarter",
+    "players": 2,
+    "size": "Small",
+    "theme": "river city",
+    "desc": "A river splits an old city. Three bridges, street fighting on both banks, and derricks by the outer bridges.",
+    "supply": 6,
+    "oil": 4,
+    "tech": 4
+   },
+   "start_slots": [
+    [
+     430,
+     1100
+    ],
+    [
+     2770,
+     1100
+    ]
+   ],
+   "preview": "map/bm_ferryquarter"
+  },
+  "bm_breakwater": {
+   "key": "bm_breakwater",
+   "order": 2,
+   "name": "Breakwater",
+   "battle_map": true,
+   "players_min": 2,
+   "players_max": 4,
+   "player_counts": [
+    2,
+    3,
+    4
+   ],
+   "players_text": "2–4 players",
+   "size": "Medium",
+   "facts": "4 players · Medium · coast · naval lane",
+   "theme": "desert",
+   "tag": "coast · naval lane",
+   "symmetry": "none",
+   "description": "A sea lane runs through the middle from coast to coast. Two bridges cross it; ships in the lane can shell both of them.",
+   "home": [],
+   "home_text": "",
+   "card_text": "A sea lane runs through the middle from coast to coast. Two bridges cross it; ships in the lane can shell both of them.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2,
+     "width": 6400,
+     "height": 4400
+    },
+    {
+     "players": 4,
+     "scale": 2,
+     "width": 6400,
+     "height": 4400
+    }
+   ],
+   "info": {
+    "k": "bm_breakwater",
+    "name": "Breakwater",
+    "players": 4,
+    "size": "Medium",
+    "theme": "coast · naval lane",
+    "desc": "A sea lane runs through the middle from coast to coast. Two bridges cross it; ships in the lane can shell both of them.",
+    "supply": 12,
+    "oil": 10,
+    "tech": 6
+   },
+   "start_slots": [
+    [
+     560,
+     560
+    ],
+    [
+     2640,
+     1640
+    ],
+    [
+     2640,
+     560
+    ],
+    [
+     560,
+     1640
+    ]
+   ],
+   "preview": "map/bm_breakwater"
+  },
+  "bm_fourmills": {
+   "key": "bm_fourmills",
+   "order": 3,
+   "name": "Four Mills",
+   "battle_map": true,
+   "players_min": 2,
+   "players_max": 4,
+   "player_counts": [
+    2,
+    3,
+    4
+   ],
+   "players_text": "2–4 players",
+   "size": "Medium",
+   "facts": "4 players · Medium · valley · mills",
+   "theme": "green",
+   "tag": "valley · mills",
+   "symmetry": "none",
+   "description": "Four old mills in a green valley. Hill spurs split north from south; the two gaps between them hold the derricks.",
+   "home": [],
+   "home_text": "",
+   "card_text": "Four old mills in a green valley. Hill spurs split north from south; the two gaps between them hold the derricks.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2,
+     "width": 6400,
+     "height": 4400
+    },
+    {
+     "players": 4,
+     "scale": 2,
+     "width": 6400,
+     "height": 4400
+    }
+   ],
+   "info": {
+    "k": "bm_fourmills",
+    "name": "Four Mills",
+    "players": 4,
+    "size": "Medium",
+    "theme": "valley · mills",
+    "desc": "Four old mills in a green valley. Hill spurs split north from south; the two gaps between them hold the derricks.",
+    "supply": 10,
+    "oil": 6,
+    "tech": 6
+   },
+   "start_slots": [
+    [
+     500,
+     430
+    ],
+    [
+     2700,
+     1770
+    ],
+    [
+     2700,
+     430
+    ],
+    [
+     500,
+     1770
+    ]
+   ],
+   "preview": "map/bm_fourmills"
+  },
+  "bm_sixroads": {
+   "key": "bm_sixroads",
+   "order": 4,
+   "name": "Six Roads",
+   "battle_map": true,
+   "players_min": 2,
+   "players_max": 6,
+   "player_counts": [
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "players_text": "2–6 players",
+   "size": "Large",
+   "facts": "6 players · Large · mixed · lake, hills, ruins",
+   "theme": "green",
+   "tag": "mixed · lake, hills, ruins",
+   "symmetry": "none",
+   "description": "Six bases in a ring around a lake. Every neighbor shares a derrick with you, and every road ends at the lakeside.",
+   "home": [],
+   "home_text": "",
+   "card_text": "Six bases in a ring around a lake. Every neighbor shares a derrick with you, and every road ends at the lakeside.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.6,
+     "width": 8320,
+     "height": 5720
+    },
+    {
+     "players": 6,
+     "scale": 2.6,
+     "width": 8320,
+     "height": 5720
+    }
+   ],
+   "info": {
+    "k": "bm_sixroads",
+    "name": "Six Roads",
+    "players": 6,
+    "size": "Large",
+    "theme": "mixed · lake, hills, ruins",
+    "desc": "Six bases in a ring around a lake. Every neighbor shares a derrick with you, and every road ends at the lakeside.",
+    "supply": 18,
+    "oil": 6,
+    "tech": 6
+   },
+   "start_slots": [
+    [
+     350,
+     1100
+    ],
+    [
+     2850,
+     1100
+    ],
+    [
+     1040,
+     300
+    ],
+    [
+     2160,
+     1900
+    ],
+    [
+     2160,
+     300
+    ],
+    [
+     1040,
+     1900
+    ]
+   ],
+   "preview": "map/bm_sixroads"
+  },
+  "lebanon": {
+   "key": "lebanon",
+   "order": 5,
+   "name": "South Lebanon",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 4,
+   "player_counts": [
+    2,
+    3,
+    4
+   ],
+   "players_text": "2–4 players",
+   "size": "Small",
+   "facts": "2–4 players · Small",
+   "theme": "green",
+   "tag": "green hills · coast · river",
+   "symmetry": "none",
+   "description": "Green limestone hills between the Mediterranean coast and the Litani River. Villages to fight through, ridges to hold, two river crossings.",
+   "home": [
+    "RS",
+    "IL"
+   ],
+   "home_text": "Home turf: Lebanese Shia & Israel.",
+   "card_text": "Green limestone hills between the Mediterranean coast and the Litani River. Villages to fight through, ridges to hold, two river crossings. Home turf: Lebanese Shia & Israel.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    },
+    {
+     "players": 4,
+     "scale": 3.26,
+     "width": 10440,
+     "height": 7160
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     760,
+     1960
+    ],
+    [
+     2860,
+     1180
+    ],
+    [
+     1300,
+     260
+    ],
+    [
+     2880,
+     1960
+    ],
+    [
+     2900,
+     260
+    ],
+    [
+     1800,
+     1260
+    ]
+   ],
+   "preview": "map/lebanon"
+  },
+  "gulf": {
+   "key": "gulf",
+   "order": 6,
+   "name": "Gulf Coast Landings",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 4,
+   "player_counts": [
+    2,
+    3,
+    4
+   ],
+   "players_text": "2–4 players",
+   "size": "Small",
+   "facts": "2–4 players · Small",
+   "theme": "",
+   "tag": "desert shore · naval-heavy",
+   "symmetry": "mirrorX",
+   "description": "Bases on a desert shore above the open sea. Naval power matters.",
+   "home": [
+    "SA",
+    "AE"
+   ],
+   "home_text": "Home turf: Saudi Arabia & United Arab Emirates.",
+   "card_text": "Bases on a desert shore above the open sea. Naval power matters. Home turf: Saudi Arabia & United Arab Emirates.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    },
+    {
+     "players": 4,
+     "scale": 3.26,
+     "width": 10440,
+     "height": 7160
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     450,
+     330
+    ],
+    [
+     2750,
+     330
+    ],
+    [
+     520,
+     1250
+    ],
+    [
+     2680,
+     1250
+    ]
+   ],
+   "preview": "map/gulf"
+  },
+  "euphrates": {
+   "key": "euphrates",
+   "order": 7,
+   "name": "Euphrates Crossing",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "",
+   "tag": "river · three bridges · river towns · duel",
+   "symmetry": "point",
+   "description": "A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armor.",
+   "home": [
+    "RS",
+    "IR",
+    "RV"
+   ],
+   "home_text": "Home turf: Lebanese Shia & Iran & Iraqi Shia Brigades.",
+   "card_text": "A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armor. Home turf: Lebanese Shia & Iran & Iraqi Shia Brigades.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     700
+    ],
+    [
+     2780,
+     1500
+    ]
+   ],
+   "preview": "map/euphrates"
+  },
+  "tihama": {
+   "key": "tihama",
+   "order": 8,
+   "name": "Yemen: Tihama and Highlands",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "desert",
+   "tag": "coastal plains · highland diamond · wadis",
+   "symmetry": "quad",
+   "description": "Hot coastal plains on both sides and a rugged highland diamond in the middle with the old capital inside. The wadi passes along the middle are the only easy way in; the ridge corners are for snipers and artillery.",
+   "home": [
+    "DW",
+    "SA"
+   ],
+   "home_text": "Home turf: Zaidi Shia Movement & Saudi Arabia.",
+   "card_text": "Hot coastal plains on both sides and a rugged highland diamond in the middle with the old capital inside. The wadi passes along the middle are the only easy way in; the ridge corners are for snipers and artillery. Home turf: Zaidi Shia Movement & Saudi Arabia.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     300
+    ],
+    [
+     2780,
+     1900
+    ],
+    [
+     2780,
+     300
+    ],
+    [
+     420,
+     1900
+    ],
+    [
+     420,
+     1100
+    ],
+    [
+     2780,
+     1100
+    ]
+   ],
+   "preview": "map/tihama"
+  },
+  "zagros": {
+   "key": "zagros",
+   "order": 9,
+   "name": "Zagros: Mountain Fortress",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "",
+   "tag": "mountain ranges · three valleys",
+   "symmetry": "point",
+   "description": "Two snow-capped ranges split the land into three valleys. Armies fight for the mountain passes.",
+   "home": [
+    "IR"
+   ],
+   "home_text": "Home turf: Iran.",
+   "card_text": "Two snow-capped ranges split the land into three valleys. Armies fight for the mountain passes. Home turf: Iran.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     450,
+     1100
+    ],
+    [
+     2750,
+     1100
+    ],
+    [
+     450,
+     380
+    ],
+    [
+     2750,
+     1820
+    ],
+    [
+     450,
+     1820
+    ],
+    [
+     2750,
+     380
+    ],
+    [
+     1600,
+     350
+    ],
+    [
+     1600,
+     1850
+    ]
+   ],
+   "preview": "map/zagros"
+  },
+  "caribbean": {
+   "key": "caribbean",
+   "order": 10,
+   "name": "Caribbean Island",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "green",
+   "tag": "tropical island · beaches · naval-heavy",
+   "symmetry": "point",
+   "description": "A long tropical island in warm seas: Havana on the north shore, palm-fringed cays and landings on the beaches.",
+   "home": [],
+   "home_text": "",
+   "card_text": "A long tropical island in warm seas: Havana on the north shore, palm-fringed cays and landings on the beaches.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     700,
+     900
+    ],
+    [
+     2500,
+     1300
+    ],
+    [
+     1250,
+     1450
+    ],
+    [
+     1950,
+     750
+    ]
+   ],
+   "preview": "map/caribbean"
+  },
+  "hormuzgate": {
+   "key": "hormuzgate",
+   "order": 11,
+   "name": "Strait of Hormuz: Island Gate",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "desert",
+   "tag": "sea strait · island chain · two coasts · navies",
+   "symmetry": "quad",
+   "description": "The narrow strait between the Iranian and Arabian coasts, wide gulf at both ends and a chain of three islands in the narrows. Bridges hop island to island; fleets fight for the water, tanks for the causeways.",
+   "home": [
+    "IR",
+    "AE"
+   ],
+   "home_text": "Home turf: Iran & United Arab Emirates.",
+   "card_text": "The narrow strait between the Iranian and Arabian coasts, wide gulf at both ends and a chain of three islands in the narrows. Bridges hop island to island; fleets fight for the water, tanks for the causeways. Home turf: Iran & United Arab Emirates.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     300
+    ],
+    [
+     2780,
+     1900
+    ],
+    [
+     2780,
+     300
+    ],
+    [
+     420,
+     1900
+    ]
+   ],
+   "preview": "map/hormuzgate"
+  },
+  "taiwan": {
+   "key": "taiwan",
+   "order": 12,
+   "name": "Taiwan Strait",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "green",
+   "tag": "sea strait · island · naval-heavy",
+   "symmetry": "none",
+   "description": "Mainland China faces the island across the strait. Two long military causeways can be stormed, but navies, landing craft and air power decide who lands where.",
+   "home": [
+    "CN",
+    "JP"
+   ],
+   "home_text": "Home turf: China & Japan.",
+   "card_text": "Mainland China faces the island across the strait. Two long military causeways can be stormed, but navies, landing craft and air power decide who lands where. Home turf: China & Japan.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     450,
+     1900
+    ],
+    [
+     2850,
+     1600
+    ],
+    [
+     450,
+     400
+    ],
+    [
+     2850,
+     600
+    ],
+    [
+     700,
+     1150
+    ],
+    [
+     2500,
+     1100
+    ]
+   ],
+   "preview": "map/taiwan"
+  },
+  "arctic": {
+   "key": "arctic",
+   "order": 13,
+   "name": "Arctic Front: Frozen Armies",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "snow",
+   "tag": "frozen river · forests · rocky hills",
+   "symmetry": "point",
+   "description": "A frozen river and snowbound forests. Three bridges, rocky hills and falling snow.",
+   "home": [],
+   "home_text": "",
+   "card_text": "A frozen river and snowbound forests. Three bridges, rocky hills and falling snow.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     450,
+     1100
+    ],
+    [
+     2750,
+     1100
+    ],
+    [
+     1050,
+     330
+    ],
+    [
+     2150,
+     1870
+    ],
+    [
+     1050,
+     1870
+    ],
+    [
+     2150,
+     330
+    ],
+    [
+     420,
+     330
+    ],
+    [
+     2780,
+     1870
+    ]
+   ],
+   "preview": "map/arctic"
+  },
+  "khyber": {
+   "key": "khyber",
+   "order": 14,
+   "name": "Khyber Pass: Gate of Fortresses",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "",
+   "tag": "mountain pass · two goat tracks · duel",
+   "symmetry": "point",
+   "description": "A duel through the Spin Ghar range: one narrow pass split by a rock fort in the middle, and a long goat track along each edge to outflank it.",
+   "home": [
+    "PK"
+   ],
+   "home_text": "Home turf: Pakistan.",
+   "card_text": "A duel through the Spin Ghar range: one narrow pass split by a rock fort in the middle, and a long goat track along each edge to outflank it. Home turf: Pakistan.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     1500
+    ],
+    [
+     2780,
+     700
+    ]
+   ],
+   "preview": "map/khyber"
+  },
+  "hajar": {
+   "key": "hajar",
+   "order": 15,
+   "name": "Hajar Mountains: Wadi Passes",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "desert",
+   "tag": "bare mountains · deep wadis · oasis forts",
+   "symmetry": "quad",
+   "description": "The Hajar range: bare mountains cut by deep wadis, oasis villages with old forts and a single paved pass over the top. Pass control is everything.",
+   "home": [
+    "AE",
+    "IR"
+   ],
+   "home_text": "Home turf: United Arab Emirates & Iran.",
+   "card_text": "The Hajar range: bare mountains cut by deep wadis, oasis villages with old forts and a single paved pass over the top. Pass control is everything. Home turf: United Arab Emirates & Iran.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     300
+    ],
+    [
+     2780,
+     1900
+    ],
+    [
+     2780,
+     300
+    ],
+    [
+     420,
+     1900
+    ],
+    [
+     420,
+     1100
+    ],
+    [
+     2780,
+     1100
+    ]
+   ],
+   "preview": "map/hajar"
+  },
+  "marshes": {
+   "key": "marshes",
+   "order": 16,
+   "name": "Southern Marshes",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "green",
+   "tag": "reed marsh · lagoons · causeways · villages",
+   "symmetry": "quad",
+   "description": "The great southern marshes: reed islands and shallow lagoons, canoe villages and narrow causeways. Few roads, many ambush lanes; the island market town in the middle supplies the winner.",
+   "home": [
+    "RV",
+    "IR"
+   ],
+   "home_text": "Home turf: Iraqi Shia Brigades & Iran.",
+   "card_text": "The great southern marshes: reed islands and shallow lagoons, canoe villages and narrow causeways. Few roads, many ambush lanes; the island market town in the middle supplies the winner. Home turf: Iraqi Shia Brigades & Iran.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     300
+    ],
+    [
+     2780,
+     1900
+    ],
+    [
+     2780,
+     300
+    ],
+    [
+     420,
+     1900
+    ],
+    [
+     420,
+     1100
+    ],
+    [
+     2780,
+     1100
+    ]
+   ],
+   "preview": "map/marshes"
+  },
+  "blacksea": {
+   "key": "blacksea",
+   "order": 17,
+   "name": "Black Sea Coast: Green Mountains",
+   "battle_map": false,
+   "players_min": 2,
+   "players_max": 2,
+   "player_counts": [
+    2
+   ],
+   "players_text": "2 players",
+   "size": "Small",
+   "facts": "2 players · Small",
+   "theme": "green",
+   "tag": "wet green mountains · tea slopes · coast road · navies",
+   "symmetry": "quad",
+   "description": "The rainy north coast of Turkey: forested mountains with tea terraces dropping to a port-lined coast road, small valleys and ships offshore. Everything is narrow and green.",
+   "home": [
+    "TR",
+    "RU",
+    "UA"
+   ],
+   "home_text": "Home turf: Turkey & Russia & Ukraine.",
+   "card_text": "The rainy north coast of Turkey: forested mountains with tea terraces dropping to a port-lined coast road, small valleys and ships offshore. Everything is narrow and green. Home turf: Turkey & Russia & Ukraine.",
+   "world": [
+    {
+     "players": 2,
+     "scale": 2.86,
+     "width": 9160,
+     "height": 6280
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     300
+    ],
+    [
+     2780,
+     1900
+    ],
+    [
+     2780,
+     300
+    ],
+    [
+     420,
+     1900
+    ],
+    [
+     420,
+     1100
+    ],
+    [
+     2780,
+     1100
+    ]
+   ],
+   "preview": "map/blacksea"
+  },
+  "yemen": {
+   "key": "yemen",
+   "order": 18,
+   "name": "Yemen Highlands",
+   "battle_map": false,
+   "players_min": 4,
+   "players_max": 4,
+   "player_counts": [
+    4
+   ],
+   "players_text": "4 players",
+   "size": "Small",
+   "facts": "4 players · Small",
+   "theme": "",
+   "tag": "mountains · coast · narrow passes",
+   "symmetry": "none",
+   "description": "From the Red Sea coast up into the Sarawat mountains: tower-house cities of the highlands, narrow passes and a port on the plain.",
+   "home": [
+    "DW",
+    "SA"
+   ],
+   "home_text": "Home turf: Zaidi Shia Movement & Saudi Arabia.",
+   "card_text": "From the Red Sea coast up into the Sarawat mountains: tower-house cities of the highlands, narrow passes and a port on the plain. Home turf: Zaidi Shia Movement & Saudi Arabia.",
+   "world": [
+    {
+     "players": 4,
+     "scale": 3.26,
+     "width": 10440,
+     "height": 7160
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     660,
+     400
+    ],
+    [
+     2850,
+     1900
+    ],
+    [
+     660,
+     1900
+    ],
+    [
+     2850,
+     350
+    ],
+    [
+     1950,
+     1460
+    ],
+    [
+     1850,
+     150
+    ]
+   ],
+   "preview": "map/yemen"
+  },
+  "hawizeh": {
+   "key": "hawizeh",
+   "order": 19,
+   "name": "Hawizeh Marshes",
+   "battle_map": false,
+   "players_min": 4,
+   "players_max": 4,
+   "player_counts": [
+    4
+   ],
+   "players_text": "4 players",
+   "size": "Small",
+   "facts": "4 players · Small",
+   "theme": "green",
+   "tag": "marshland · causeway crossroads",
+   "symmetry": "quad",
+   "description": "The reed marshes on the Iran-Iraq border: a lagoon in the middle crossed by two causeways that meet on an island, and marsh pools that channel every advance.",
+   "home": [
+    "IR",
+    "RS",
+    "RV"
+   ],
+   "home_text": "Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades.",
+   "card_text": "The reed marshes on the Iran-Iraq border: a lagoon in the middle crossed by two causeways that meet on an island, and marsh pools that channel every advance. Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades.",
+   "world": [
+    {
+     "players": 4,
+     "scale": 3.26,
+     "width": 10440,
+     "height": 7160
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     480,
+     380
+    ],
+    [
+     2720,
+     1820
+    ],
+    [
+     2720,
+     380
+    ],
+    [
+     480,
+     1820
+    ]
+   ],
+   "preview": "map/hawizeh"
+  },
+  "islands": {
+   "key": "islands",
+   "order": 20,
+   "name": "Island Chain Armada",
+   "battle_map": false,
+   "players_min": 4,
+   "players_max": 4,
+   "player_counts": [
+    4
+   ],
+   "players_text": "4 players",
+   "size": "Small",
+   "facts": "4 players · Small",
+   "theme": "",
+   "tag": "island chain · naval-heavy",
+   "symmetry": "point",
+   "description": "Four island fortresses around a central isle in open sea. Long bridges are the only land routes, so fleets decide the war.",
+   "home": [],
+   "home_text": "",
+   "card_text": "Four island fortresses around a central isle in open sea. Long bridges are the only land routes, so fleets decide the war.",
+   "world": [
+    {
+     "players": 4,
+     "scale": 3.26,
+     "width": 10440,
+     "height": 7160
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     560,
+     470
+    ],
+    [
+     2640,
+     1730
+    ],
+    [
+     560,
+     1730
+    ],
+    [
+     2640,
+     470
+    ]
+   ],
+   "preview": "map/islands"
+  },
+  "donbas": {
+   "key": "donbas",
+   "order": 21,
+   "name": "Donbas Steppe",
+   "battle_map": false,
+   "players_min": 4,
+   "players_max": 4,
+   "player_counts": [
+    4
+   ],
+   "players_text": "4 players",
+   "size": "Small",
+   "facts": "4 players · Small",
+   "theme": "green",
+   "tag": "open fields · two rivers · mining towns · autumn mud",
+   "symmetry": "quad",
+   "description": "The open black-earth steppe of eastern Ukraine: two meandering rivers, slag-heap hills and mining towns around a big crossroads town. Best in autumn mud, when only the roads move fast.",
+   "home": [
+    "UA",
+    "RU"
+   ],
+   "home_text": "Home turf: Ukraine & Russia.",
+   "card_text": "The open black-earth steppe of eastern Ukraine: two meandering rivers, slag-heap hills and mining towns around a big crossroads town. Best in autumn mud, when only the roads move fast. Home turf: Ukraine & Russia.",
+   "world": [
+    {
+     "players": 4,
+     "scale": 3.26,
+     "width": 10440,
+     "height": 7160
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     300
+    ],
+    [
+     2780,
+     1900
+    ],
+    [
+     2780,
+     300
+    ],
+    [
+     420,
+     1900
+    ],
+    [
+     420,
+     1100
+    ],
+    [
+     2780,
+     1100
+    ]
+   ],
+   "preview": "map/donbas"
+  },
+  "mesopotamia": {
+   "key": "mesopotamia",
+   "order": 22,
+   "name": "Mesopotamia",
+   "battle_map": false,
+   "players_min": 4,
+   "players_max": 4,
+   "player_counts": [
+    4
+   ],
+   "players_text": "4 players",
+   "size": "Small",
+   "facts": "4 players · Small",
+   "theme": "",
+   "tag": "two rivers · cities",
+   "symmetry": "none",
+   "description": "Iraq between the Tigris and the Euphrates: Baghdad between the rivers, Basra by the Shatt al-Arab and bridges everywhere.",
+   "home": [
+    "IR",
+    "RS",
+    "RV"
+   ],
+   "home_text": "Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades.",
+   "card_text": "Iraq between the Tigris and the Euphrates: Baghdad between the rivers, Basra by the Shatt al-Arab and bridges everywhere. Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades.",
+   "world": [
+    {
+     "players": 4,
+     "scale": 3.26,
+     "width": 10440,
+     "height": 7160
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     450,
+     1620
+    ],
+    [
+     2880,
+     360
+    ],
+    [
+     1300,
+     2000
+    ],
+    [
+     2700,
+     920
+    ],
+    [
+     600,
+     160
+    ],
+    [
+     2150,
+     240
+    ]
+   ],
+   "preview": "map/mesopotamia"
+  },
+  "persia": {
+   "key": "persia",
+   "order": 23,
+   "name": "Persian Plateau",
+   "battle_map": false,
+   "players_min": 4,
+   "players_max": 4,
+   "player_counts": [
+    4
+   ],
+   "players_text": "4 players",
+   "size": "Small",
+   "facts": "4 players · Small",
+   "theme": "",
+   "tag": "high desert · salt lake · mountain passes",
+   "symmetry": "none",
+   "description": "Iran's high desert below the Alborz range: a salt lake in the middle, cities on the old caravan road and three mountain passes to the north.",
+   "home": [
+    "IR"
+   ],
+   "home_text": "Home turf: Iran.",
+   "card_text": "Iran's high desert below the Alborz range: a salt lake in the middle, cities on the old caravan road and three mountain passes to the north. Home turf: Iran.",
+   "world": [
+    {
+     "players": 4,
+     "scale": 3.26,
+     "width": 10440,
+     "height": 7160
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     380,
+     1180
+    ],
+    [
+     2840,
+     1180
+    ],
+    [
+     420,
+     1960
+    ],
+    [
+     2800,
+     1960
+    ],
+    [
+     380,
+     640
+    ],
+    [
+     2840,
+     640
+    ],
+    [
+     1250,
+     1980
+    ],
+    [
+     2050,
+     1980
+    ]
+   ],
+   "preview": "map/persia"
+  },
+  "taiga": {
+   "key": "taiga",
+   "order": 24,
+   "name": "Siberian Taiga",
+   "battle_map": false,
+   "players_min": 4,
+   "players_max": 4,
+   "player_counts": [
+    4
+   ],
+   "players_text": "4 players",
+   "size": "Small",
+   "facts": "4 players · Small",
+   "theme": "snow",
+   "tag": "snow forest · frozen lakes · hills",
+   "symmetry": "quad",
+   "description": "Deep winter in the taiga: frozen lakes and wooded hills break the snow into lanes, with a logging town in the middle worth holding.",
+   "home": [
+    "RU"
+   ],
+   "home_text": "Home turf: Russia.",
+   "card_text": "Deep winter in the taiga: frozen lakes and wooded hills break the snow into lanes, with a logging town in the middle worth holding. Home turf: Russia.",
+   "world": [
+    {
+     "players": 4,
+     "scale": 3.26,
+     "width": 10440,
+     "height": 7160
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     1100
+    ],
+    [
+     2780,
+     1100
+    ],
+    [
+     1600,
+     300
+    ],
+    [
+     1600,
+     1900
+    ]
+   ],
+   "preview": "map/taiga"
+  },
+  "aegean": {
+   "key": "aegean",
+   "order": 25,
+   "name": "Aegean Islands",
+   "battle_map": false,
+   "players_min": 6,
+   "players_max": 6,
+   "player_counts": [
+    6
+   ],
+   "players_text": "6 players",
+   "size": "Medium",
+   "facts": "6 players · Medium",
+   "theme": "green",
+   "tag": "sea · island bridges · navy",
+   "symmetry": "point",
+   "description": "Two coasts facing each other across the Aegean. Two islands carry bridges across the sea; the rock in the middle belongs to whoever rules the waves.",
+   "home": [
+    "TR",
+    "GB",
+    "FR"
+   ],
+   "home_text": "Home turf: Turkey & United Kingdom & France.",
+   "card_text": "Two coasts facing each other across the Aegean. Two islands carry bridges across the sea; the rock in the middle belongs to whoever rules the waves. Home turf: Turkey & United Kingdom & France.",
+   "world": [
+    {
+     "players": 6,
+     "scale": 3.03,
+     "width": 9680,
+     "height": 6680
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     830
+    ],
+    [
+     2780,
+     1370
+    ],
+    [
+     420,
+     1370
+    ],
+    [
+     2780,
+     830
+    ],
+    [
+     420,
+     330
+    ],
+    [
+     2780,
+     1870
+    ],
+    [
+     420,
+     1870
+    ],
+    [
+     2780,
+     330
+    ]
+   ],
+   "preview": "map/aegean"
+  },
+  "dmziron": {
+   "key": "dmziron",
+   "order": 26,
+   "name": "Korean DMZ: Iron Triangle",
+   "battle_map": false,
+   "players_min": 6,
+   "players_max": 6,
+   "player_counts": [
+    6
+   ],
+   "players_text": "6 players",
+   "size": "Medium",
+   "facts": "6 players · Medium",
+   "theme": "green",
+   "tag": "hills · two rivers · fortified strip · winter",
+   "symmetry": "quad",
+   "description": "The narrow demilitarized strip between two rivers, studded with fortified hills, and a wooded ridge on each flank. Armies cross by a few bridges under artillery cover. Best in winter snow.",
+   "home": [
+    "KR",
+    "KP"
+   ],
+   "home_text": "Home turf: South Korea & North Korea.",
+   "card_text": "The narrow demilitarized strip between two rivers, studded with fortified hills, and a wooded ridge on each flank. Armies cross by a few bridges under artillery cover. Best in winter snow. Home turf: South Korea & North Korea.",
+   "world": [
+    {
+     "players": 6,
+     "scale": 3.03,
+     "width": 9680,
+     "height": 6680
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     300
+    ],
+    [
+     2780,
+     1900
+    ],
+    [
+     2780,
+     300
+    ],
+    [
+     420,
+     1900
+    ],
+    [
+     420,
+     1100
+    ],
+    [
+     2780,
+     1100
+    ]
+   ],
+   "preview": "map/dmziron"
+  },
+  "rubalkhali": {
+   "key": "rubalkhali",
+   "order": 27,
+   "name": "Empty Quarter Edge",
+   "battle_map": false,
+   "players_min": 6,
+   "players_max": 6,
+   "player_counts": [
+    6
+   ],
+   "players_text": "6 players",
+   "size": "Medium",
+   "facts": "6 players · Medium",
+   "theme": "desert",
+   "tag": "giant dunes · sabkha flats · oil road",
+   "symmetry": "quad",
+   "description": "The edge of the Empty Quarter: giant dunes, salt flats you can cross and dunes you cannot, a gravel road with oil camps. Open, fast and brutal on fuel.",
+   "home": [
+    "SA",
+    "AE",
+    "DW"
+   ],
+   "home_text": "Home turf: Saudi Arabia & United Arab Emirates & Zaidi Shia Movement.",
+   "card_text": "The edge of the Empty Quarter: giant dunes, salt flats you can cross and dunes you cannot, a gravel road with oil camps. Open, fast and brutal on fuel. Home turf: Saudi Arabia & United Arab Emirates & Zaidi Shia Movement.",
+   "world": [
+    {
+     "players": 6,
+     "scale": 3.03,
+     "width": 9680,
+     "height": 6680
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     300
+    ],
+    [
+     2780,
+     1900
+    ],
+    [
+     2780,
+     300
+    ],
+    [
+     420,
+     1900
+    ],
+    [
+     420,
+     1100
+    ],
+    [
+     2780,
+     1100
+    ]
+   ],
+   "preview": "map/rubalkhali"
+  },
+  "oasis": {
+   "key": "oasis",
+   "order": 28,
+   "name": "Oasis Basin: Last Water",
+   "battle_map": false,
+   "players_min": 6,
+   "players_max": 8,
+   "player_counts": [
+    6,
+    7,
+    8
+   ],
+   "players_text": "6–8 players",
+   "size": "Large",
+   "facts": "6–8 players · Large",
+   "theme": "",
+   "tag": "open desert · central lake",
+   "symmetry": "point",
+   "description": "Open desert ringed around a central lake. No bridges, many approaches.",
+   "home": [],
+   "home_text": "",
+   "card_text": "Open desert ringed around a central lake. No bridges, many approaches.",
+   "world": [
+    {
+     "players": 6,
+     "scale": 3.03,
+     "width": 9680,
+     "height": 6680
+    },
+    {
+     "players": 8,
+     "scale": 3.4,
+     "width": 10880,
+     "height": 7480
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     598.5704805663329,
+     1578.7777152831652
+    ],
+    [
+     2602.619697355366,
+     622.2436469100863
+    ],
+    [
+     2327.1038618298544,
+     1750.7324038314991
+    ],
+    [
+     874.5164210559726,
+     448.5272860593632
+    ],
+    [
+     350.00158534057573,
+     1101.2741223331896
+    ],
+    [
+     2850,
+     1100
+    ],
+    [
+     1600.9954083884165,
+     300.00025365453234
+    ],
+    [
+     1600.9954083884165,
+     1899.9997463454677
+    ]
+   ],
+   "preview": "map/oasis"
+  },
+  "atoll": {
+   "key": "atoll",
+   "order": 29,
+   "name": "Pacific Atolls",
+   "battle_map": false,
+   "players_min": 6,
+   "players_max": 8,
+   "player_counts": [
+    6,
+    7,
+    8
+   ],
+   "players_text": "6–8 players",
+   "size": "Large",
+   "facts": "6–8 players · Large",
+   "theme": "",
+   "tag": "ocean · island bases · offshore oil · big navies",
+   "symmetry": "point",
+   "description": "Eight island bases ring a great ocean. Bridges link neighbors around the ring and to the central isle; rock-pad oil rigs sit in open water between them, and fleets and landings decide who holds them.",
+   "home": [],
+   "home_text": "",
+   "card_text": "Eight island bases ring a great ocean. Bridges link neighbors around the ring and to the central isle; rock-pad oil rigs sit in open water between them, and fleets and landings decide who holds them.",
+   "world": [
+    {
+     "players": 6,
+     "scale": 3.03,
+     "width": 9680,
+     "height": 6680
+    },
+    {
+     "players": 8,
+     "scale": 3.4,
+     "width": 10880,
+     "height": 7480
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     560,
+     430
+    ],
+    [
+     2640,
+     1770
+    ],
+    [
+     1600,
+     380
+    ],
+    [
+     1600,
+     1820
+    ],
+    [
+     2640,
+     430
+    ],
+    [
+     560,
+     1770
+    ],
+    [
+     560,
+     1100
+    ],
+    [
+     2640,
+     1100
+    ]
+   ],
+   "preview": "map/atoll"
+  },
+  "hindukush": {
+   "key": "hindukush",
+   "order": 30,
+   "name": "Hindu Kush",
+   "battle_map": false,
+   "players_min": 8,
+   "players_max": 8,
+   "player_counts": [
+    8
+   ],
+   "players_text": "8 players",
+   "size": "Large",
+   "facts": "8 players · Large",
+   "theme": "snow",
+   "tag": "eight valleys · central massif · ring road",
+   "symmetry": "quad",
+   "description": "Eight valleys around a snow massif. Ridges wall each valley off from the next, so armies meet on the road around the mountain - or go round the outside.",
+   "home": [
+    "PK",
+    "IR"
+   ],
+   "home_text": "Home turf: Pakistan & Iran.",
+   "card_text": "Eight valleys around a snow massif. Ridges wall each valley off from the next, so armies meet on the road around the mountain - or go round the outside. Home turf: Pakistan & Iran.",
+   "world": [
+    {
+     "players": 8,
+     "scale": 3.4,
+     "width": 10880,
+     "height": 7480
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     720,
+     1100
+    ],
+    [
+     2480,
+     1100
+    ],
+    [
+     978,
+     478
+    ],
+    [
+     2223,
+     1722
+    ],
+    [
+     978,
+     1722
+    ],
+    [
+     2223,
+     478
+    ],
+    [
+     1600,
+     220
+    ],
+    [
+     1600,
+     1980
+    ]
+   ],
+   "preview": "map/hindukush"
+  },
+  "kuwait": {
+   "key": "kuwait",
+   "order": 31,
+   "name": "Burning Oil Fields: Inferno",
+   "battle_map": false,
+   "players_min": 8,
+   "players_max": 8,
+   "player_counts": [
+    8
+   ],
+   "players_text": "8 players",
+   "size": "Large",
+   "facts": "8 players · Large",
+   "theme": "",
+   "tag": "eight-way war · oil field in the middle",
+   "symmetry": "quad",
+   "description": "Eight armies around a great oil field in the open desert. The derricks in the middle pay the most; rock outcrops between the bases cover the approaches.",
+   "home": [
+    "SA",
+    "AE"
+   ],
+   "home_text": "Home turf: Saudi Arabia & United Arab Emirates.",
+   "card_text": "Eight armies around a great oil field in the open desert. The derricks in the middle pay the most; rock outcrops between the bases cover the approaches. Home turf: Saudi Arabia & United Arab Emirates.",
+   "world": [
+    {
+     "players": 8,
+     "scale": 3.4,
+     "width": 10880,
+     "height": 7480
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     720,
+     1100
+    ],
+    [
+     2480,
+     1100
+    ],
+    [
+     978,
+     478
+    ],
+    [
+     2223,
+     1722
+    ],
+    [
+     978,
+     1722
+    ],
+    [
+     2223,
+     478
+    ],
+    [
+     1600,
+     220
+    ],
+    [
+     1600,
+     1980
+    ]
+   ],
+   "preview": "map/kuwait"
+  },
+  "rhine": {
+   "key": "rhine",
+   "order": 32,
+   "name": "Rhine Front",
+   "battle_map": false,
+   "players_min": 8,
+   "players_max": 8,
+   "player_counts": [
+    8
+   ],
+   "players_text": "8 players",
+   "size": "Large",
+   "facts": "8 players · Large",
+   "theme": "green",
+   "tag": "river · four bridges · forest hills · four a side",
+   "symmetry": "point",
+   "description": "Four armies on each bank of the Rhine: four bridges, river towns, and forested hills that hide flanking moves.",
+   "home": [
+    "DE",
+    "FR",
+    "GB"
+   ],
+   "home_text": "Home turf: Germany & France & United Kingdom.",
+   "card_text": "Four armies on each bank of the Rhine: four bridges, river towns, and forested hills that hide flanking moves. Home turf: Germany & France & United Kingdom.",
+   "world": [
+    {
+     "players": 8,
+     "scale": 3.4,
+     "width": 10880,
+     "height": 7480
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     420,
+     830
+    ],
+    [
+     2780,
+     1370
+    ],
+    [
+     420,
+     1370
+    ],
+    [
+     2780,
+     830
+    ],
+    [
+     420,
+     330
+    ],
+    [
+     2780,
+     1870
+    ],
+    [
+     420,
+     1870
+    ],
+    [
+     2780,
+     330
+    ]
+   ],
+   "preview": "map/rhine"
+  },
+  "yangtze": {
+   "key": "yangtze",
+   "order": 33,
+   "name": "Yangtze Gorges",
+   "battle_map": false,
+   "players_min": 8,
+   "players_max": 8,
+   "player_counts": [
+    8
+   ],
+   "players_text": "8 players",
+   "size": "Large",
+   "facts": "8 players · Large",
+   "theme": "green",
+   "tag": "great river · four bridges · gorge hills",
+   "symmetry": "point",
+   "description": "The Yangtze cuts the map in two between steep gorge hills. Four bridges, towns at both ends of the middle ones, four bases on each bank.",
+   "home": [
+    "CN"
+   ],
+   "home_text": "Home turf: China.",
+   "card_text": "The Yangtze cuts the map in two between steep gorge hills. Four bridges, towns at both ends of the middle ones, four bases on each bank. Home turf: China.",
+   "world": [
+    {
+     "players": 8,
+     "scale": 3.4,
+     "width": 10880,
+     "height": 7480
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     1250,
+     330
+    ],
+    [
+     1950,
+     1870
+    ],
+    [
+     1950,
+     330
+    ],
+    [
+     1250,
+     1870
+    ],
+    [
+     500,
+     330
+    ],
+    [
+     2700,
+     1870
+    ],
+    [
+     2700,
+     330
+    ],
+    [
+     500,
+     1870
+    ]
+   ],
+   "preview": "map/yangtze"
+  },
+  "plateau": {
+   "key": "plateau",
+   "order": 34,
+   "name": "Sinai: Iron Mesa",
+   "battle_map": false,
+   "players_min": 8,
+   "players_max": 8,
+   "player_counts": [
+    8
+   ],
+   "players_text": "8 players",
+   "size": "Large",
+   "facts": "8 players · Large",
+   "theme": "",
+   "tag": "dry highlands · rock mesas · no water",
+   "symmetry": "point",
+   "description": "Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.",
+   "home": [
+    "EG"
+   ],
+   "home_text": "Home turf: Egypt.",
+   "card_text": "Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte. Home turf: Egypt.",
+   "world": [
+    {
+     "players": 8,
+     "scale": 3.4,
+     "width": 10880,
+     "height": 7480
+    }
+   ],
+   "info": null,
+   "start_slots": [
+    [
+     574.5361720999249,
+     1590.7471581652444
+    ],
+    [
+     2626.6825700918944,
+     610.2997380828385
+    ],
+    [
+     2344.5543545137707,
+     1767.0007139272866
+    ],
+    [
+     857.104815161316,
+     432.2404682108473
+    ],
+    [
+     320.0016233887495,
+     1101.3059753915193
+    ],
+    [
+     2880,
+     1100
+    ],
+    [
+     1601.0192981897385,
+     280.0002599958956
+    ],
+    [
+     1601.0192981897385,
+     1919.9997400041043
+    ]
+   ],
+   "preview": "map/plateau"
+  }
+ },
+ "test_range": [
+  "bm_splitridge",
+  "bm_ferryquarter",
+  "bm_breakwater",
+  "bm_fourmills",
+  "bm_sixroads",
+  "lebanon",
+  "gulf",
+  "euphrates",
+  "tihama",
+  "zagros",
+  "caribbean",
+  "hormuzgate",
+  "taiwan",
+  "arctic",
+  "khyber",
+  "hajar",
+  "marshes",
+  "blacksea"
+ ],
+ "conditions": [
+  {
+   "w": -1,
+   "n": "Random",
+   "t": "The seed picks day, dusk, night or the weather that suits this map"
+  },
+  {
+   "w": 0,
+   "n": "Day",
+   "t": "Clear daylight"
+  },
+  {
+   "w": 3,
+   "n": "Dusk",
+   "t": "Low red sun, long shadows; units see a little less far. Gunfire lights the field"
+  },
+  {
+   "w": 4,
+   "n": "Night",
+   "t": "Dark battlefield: units see a little less far (tanks, aircraft, commandos and recon keep thermal sight); fire and flashes light the field"
+  },
+  {
+   "w": 9,
+   "n": "Live day",
+   "t": "The sun moves: a full day passes in 48 game minutes, starting at an hour the battle picks. Night cuts sight, and fog, sandstorms and thunderstorms (aircraft grounded) roll in"
+  },
+  {
+   "w": 7,
+   "n": "Rain",
+   "th": [
+    "green"
+   ],
+   "t": "Rain: vision and accuracy a little down, mud slows ground units. Temperate maps only"
+  },
+  {
+   "w": 6,
+   "n": "Sandstorm",
+   "th": [
+    "desert"
+   ],
+   "t": "Brown haze: units see a little less far and shoot a little worse. Desert and Gulf maps only"
+  },
+  {
+   "w": 8,
+   "n": "Snow",
+   "th": [
+    "snow"
+   ],
+   "t": "Snowfall: white haze, deep snow slows ground units. Snow maps only"
+  }
+ ],
+ "seasons": [
+  "Map default",
+  "Summer",
+  "Autumn mud",
+  "Winter snow"
+ ],
+ "weather": {
+  "clear": {
+   "name": "Clear",
+   "vis": 1,
+   "acc": 1,
+   "spd": 1,
+   "air": 1
+  },
+  "rain": {
+   "name": "Rain",
+   "vis": 0.8,
+   "acc": 0.9,
+   "spd": 0.88,
+   "air": 0.9,
+   "tip": "Mud slows ground units, visibility and accuracy drop."
+  },
+  "fog": {
+   "name": "Fog",
+   "vis": 0.55,
+   "acc": 0.92,
+   "spd": 0.95,
+   "air": 0.85,
+   "tip": "Heavy fog: units see barely half as far. Ambush weather."
+  },
+  "sandstorm": {
+   "name": "Sandstorm",
+   "vis": 0.75,
+   "acc": 0.88,
+   "spd": 0.92,
+   "air": 0.5,
+   "tip": "Sandstorm: units see a little less far and shoot a little worse; aircraft fly slower."
+  },
+  "snow": {
+   "name": "Snow",
+   "vis": 0.8,
+   "acc": 0.92,
+   "spd": 0.9,
+   "air": 0.8,
+   "tip": "Deep snow slows ground units; vision and aircraft are a little worse."
+  },
+  "storm": {
+   "name": "Thunderstorm",
+   "vis": 0.65,
+   "acc": 0.85,
+   "spd": 0.9,
+   "air": 0,
+   "tip": "Thunderstorm: aircraft and drones are grounded and return to base; sight and accuracy drop and ground units slow a little."
+  },
+  "blizzard": {
+   "name": "Blizzard",
+   "vis": 0.6,
+   "acc": 0.85,
+   "spd": 0.8,
+   "air": 0,
+   "tip": "Blizzard: snow slows everything, jets grounded, vision cut."
+  }
+ },
+ "difficulty": [
+  {
+   "text": "Easy",
+   "value": "0",
+   "tip": "Slow to build and attack, small waves, no tricks",
+   "on": false
+  },
+  {
+   "text": "Medium",
+   "value": "1",
+   "tip": "A fair fight",
+   "on": true
+  },
+  {
+   "text": "Hard",
+   "value": "2",
+   "tip": "Fast, rich and cunning: early attacks, flanking, focus fire, pulls back damaged units",
+   "on": false
+  },
+  {
+   "text": "Brutal",
+   "value": "3",
+   "tip": "Hard's tactics, sharper: faster thinking, more flanking, focus fire, raids on supply trucks, damaged units pulled back to repair. No extra money and no extra vision",
+   "on": false
+  }
+ ]
+}
