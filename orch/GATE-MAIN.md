@@ -122,3 +122,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-21 18:06Z d7ea9c40 **RED** (28 gates) failing: decisions,migrate-down — HISTORY: fewer soldier bones
 - 2026-11-21 19:56Z 2d25171a **GREEN** (28 gates) — Bone-texture pool sized for the 23-bone soldiers (it ran dry in big fi
 - 2026-11-21 21:29Z 9ff51b0e **RED** (28 gates) failing: smooth-mp — Performance log names browser, battery, refresh rate and the game-code
+- 2026-11-22 01:23Z 9ff51b0e **GREEN** (28 gates) — Performance log names browser, battery, refresh rate and the game-code
