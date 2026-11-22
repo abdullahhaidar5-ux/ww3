@@ -94,6 +94,30 @@ function PAGE(){
     const map=new Map(),idx=new Uint32Array(cnt),keep=[];for(let i=0;i<cnt;i++){let k='';for(let a=0;a<at.length;a++){const v=views[a],n=sz[a],b=i*n;for(let q=0;q<n;q++)k+=v[b+q].toString(36)+',';}let j=map.get(k);if(j===undefined){j=keep.length;map.set(k,j);keep.push(i);}idx[i]=j;}
     if(keep.length>cnt*.9)return;const n2=keep.length;names.forEach((n,a)=>{const src=at[a].array,is=sz[a],A=new Float32Array(n2*is);for(let j=0;j<n2;j++)for(let q=0;q<is;q++)A[j*is+q]=src[keep[j]*is+q];o.setAttribute(n,new THREE.BufferAttribute(A,is));});
     o.setIndex(new THREE.BufferAttribute(n2>65535?idx:new Uint16Array(idx),1));};
+  // Paint apart from shape. A vertex-coloured mesh is not written when it is met: its shape (everything but the colours) is
+  // remembered together with every colouring ("variant") the nations give it. At the end (X.resolve) each shape is written ONCE:
+  // vertices that have the same colour in all variants keep it (alpha 1); vertices that differ are white with alpha = slot/255
+  // and every look gets "pal" = its colours for those slots. So one code-built shape painted for 22 nations is one file.
+  X.shapes=new Map();X.solShapes=new Map();X.animSigs=new Map();
+  X.shapeHash=g=>{if(g.__sh)return g.__sh;let h='';for(const n of Object.keys(g.attributes).sort()){if(n==='color')continue;const a=g.attributes[n].array;h+=n+X.hash(new Uint8Array(a.buffer,a.byteOffset,a.byteLength));}if(g.index){const a=g.index.array;h+='i'+X.hash(new Uint8Array(a.buffer,a.byteOffset,a.byteLength));}h+=JSON.stringify(g.groups||[]);Object.defineProperty(g,'__sh',{value:X.hash(new TextEncoder().encode(h)),enumerable:false});return g.__sh;};
+  X.colKey=g=>{const c=g.attributes.color;if(c.__k)return c.__k;const n=c.count,is=c.itemSize,A=new Float32Array(n*3);for(let i=0;i<n;i++){A[i*3]=c.array[i*is];A[i*3+1]=c.array[i*is+1];A[i*3+2]=c.array[i*is+2];}const k=X.hash(new Uint8Array(A.buffer));Object.defineProperty(c,'__k',{value:k,enumerable:false});Object.defineProperty(c,'__a',{value:A,enumerable:false});return k;};
+  X.addVar=(S,g)=>{const k=X.colKey(g);if(!S.vars.has(k))S.vars.set(k,g.attributes.color.__a);return k;};
+  // canonical colour attribute of a shape + the palette of each variant (null = more than 254 differing colour sets)
+  X.canon=S=>{const V=[...S.vars.entries()],n=V[0][1].length/3;if(V.length===1){return{attr:new THREE.BufferAttribute(V[0][1],3),pals:new Map([[V[0][0],null]])};}
+    const out=new Float32Array(n*4),slots=new Map(),tup=[];for(let i=0;i<n;i++){const r=V[0][1][i*3],g=V[0][1][i*3+1],b=V[0][1][i*3+2];let same=true;for(let v=1;v<V.length&&same;v++){const A=V[v][1];if(A[i*3]!==r||A[i*3+1]!==g||A[i*3+2]!==b)same=false;}
+      if(same){out[i*4]=r;out[i*4+1]=g;out[i*4+2]=b;out[i*4+3]=1;continue;}let k='';for(let v=0;v<V.length;v++){const A=V[v][1];k+=A[i*3]+','+A[i*3+1]+','+A[i*3+2]+';';}let sl=slots.get(k);if(sl===undefined){sl=tup.length;if(sl>=254)return null;slots.set(k,sl);tup.push(i);}
+      out[i*4]=out[i*4+1]=out[i*4+2]=1;out[i*4+3]=sl/255;}
+    const pals=new Map();V.forEach(([k,A])=>pals.set(k,tup.map(i=>[+A[i*3].toFixed(4),+A[i*3+1].toFixed(4),+A[i*3+2].toFixed(4)])));return{attr:new THREE.BufferAttribute(out,4),pals};};
+  X.withColor=(g,attr)=>{const o=new THREE.BufferGeometry();for(const k of Object.keys(g.attributes))if(k!=='color')o.setAttribute(k,g.attributes[k]);o.setAttribute('color',attr);if(g.index)o.setIndex(g.index);for(const q of g.groups||[])o.addGroup(q.start,q.count,q.materialIndex);X.geo.set(o,o);return o;};
+  X.resolve=async()=>{const T={},A={};
+    for(const [key,S] of X.shapes){let C=X.canon(S);const each=async(attr,hint)=>{const mesh={geometry:X.withColor(S.geo,attr),material:S.material};return(await X.meshFile(mesh,hint)).file;};
+      if(C){const f=await each(C.attr,S.hint);for(const [k,pal] of C.pals)T['@'+key+'@'+k]=pal?{f,pal}:{f};}else for(const [k,arr] of S.vars)T['@'+key+'@'+k]={f:await each(new THREE.BufferAttribute(arr,3),S.hint)};}
+    for(const [key,S] of X.solShapes){const C=X.canon(S),vars=C?[[null,C.attr]]:[...S.vars].map(([k,a])=>[k,new THREE.BufferAttribute(a,3)]);
+      for(const [vk,attr] of vars){S.want.geometry=X.withColor(S.geo,attr);const st=await __x1store(X.b64(await X.glb(S.root,[])),S.hint);
+        if(vk===null){for(const [k,pal] of C.pals)T['@S'+key+'@'+k]=pal?{f:st.file,pal}:{f:st.file};}else T['@S'+key+'@'+vk]={f:st.file};
+        if(S.B&&X.animSigs.get(S.B.sig)===S&&!A[S.B.sig]){const s2=await __x1store(X.b64(await X.glb(S.root,S.B.clips)),'sol_anim');A[S.B.sig]={file:s2.file,pal:vk===null?[...C.pals.values()][0]:null};}}}
+    return{T,A};};
+  X.noCol=new WeakMap();X.noColGeo=g=>{if(!g.attributes.color)return g;let o=X.noCol.get(g);if(o)return o;o=new THREE.BufferGeometry();for(const k of Object.keys(g.attributes))if(k!=='color')o.setAttribute(k,g.attributes[k]);if(g.index)o.setIndex(g.index);for(const q of g.groups||[])o.addGroup(q.start,q.count,q.materialIndex);X.geo.set(o,o);X.noCol.set(g,o);return o;};
   X.hash=u8=>{let a=0x811c9dc5,b=0x1234567;for(let i=0;i<u8.length;i++){const c=u8[i];a=Math.imul(a^c,16777619);b=Math.imul(b+c,0x5bd1e995)^(b>>>13);}return(a>>>0).toString(16).padStart(8,'0')+(b>>>0).toString(16).padStart(8,'0');};
   X.geoHash=g=>{if(g.__h)return g.__h;let h='';for(const n of Object.keys(g.attributes).sort()){const a=g.attributes[n].array;h+=n+X.hash(new Uint8Array(a.buffer,a.byteOffset,a.byteLength));}if(g.index){const a=g.index.array;h+='i'+X.hash(new Uint8Array(a.buffer,a.byteOffset,a.byteLength));}h+=JSON.stringify(g.groups||[]);Object.defineProperty(g,'__h',{value:X.hash(new TextEncoder().encode(h)),enumerable:false});return g.__h;};
   // export copy of a material: the plain PBR values + what the game's shader patches add at runtime (as small extras)
@@ -160,7 +184,9 @@ function PAGE(){
     const parts={};for(const [n,k] of pn){if(!n.parent&&n!==o)continue;if(n===o)continue;const up=partOf(n.parent);parts[k]={parent:up?pn.get(up):null,m:rel(n,up)};if(info.parts[k]&&info.parts[k].was)parts[k].was=info.parts[k].was;}
     for(const k in info.parts)if(!parts[k]&&info.parts[k].node!==k&&parts[info.parts[k].node])parts[k]={same:info.parts[k].node};
     const meshes=[];const list=[];o.traverse(n=>{if(n.isMesh)list.push(n);});
-    for(const n of list){const f=await X.meshFile(n,hint),pp=partOf(n),ms=Array.isArray(n.material)?n.material:[n.material],I={f:f.file};if(pp)I.p=pn.get(pp);const m=rel(n,pp);if(m.join(',')!==ID12)I.m=m;
+    for(const n of list){const ms=Array.isArray(n.material)?n.material:[n.material],pp=partOf(n),I={};
+      if(ms.some(q=>q.vertexColors)&&n.geometry.attributes.color&&!ms.some(q=>q.transparent)){const key=X.shapeHash(n.geometry)+'_'+X.hash(new TextEncoder().encode(ms.map(shapeKey).join('|')));let S=X.shapes.get(key);if(!S){S={geo:n.geometry,material:n.material,hint,vars:new Map()};X.shapes.set(key,S);}I.f='@'+key+'@'+X.addVar(S,n.geometry);}
+      else{if(!ms.some(q=>q.vertexColors))n.geometry=X.noColGeo(n.geometry);I.f=(await X.meshFile(n,hint)).file;}if(pp)I.p=pn.get(pp);const m=rel(n,pp);if(m.join(',')!==ID12)I.m=m;
       I.mat=ms.map(q=>{const x=Object.assign({},q.userData.x1||{});const r={c:lin(q.color)};if(q.transparent&&q.opacity<1)r.a=r3(q.opacity);if(q.roughness!=null)r.r=r3(q.roughness);if(q.metalness)r.mt=r3(q.metalness);if(q.emissive&&(q.emissive.r+q.emissive.g+q.emissive.b)>0)r.e=lin(q.emissive).map(v=>r3(v*(q.emissiveIntensity==null?1:q.emissiveIntensity)));if(q.isMeshBasicMaterial)r.unlit=1;if(q.side===THREE.DoubleSide)r.ds=1;
         if(x.camo)r.camo=x.camo;if(x.look)r.look=x.look;if(x.refl)r.refl=x.refl;if(x.wake)r.wake=x.wake;if(x.trim)r.trim=x.trim;return r;});meshes.push(I);}
     return Object.assign({meshes,parts,scale:r3(sc),tris:info.tris,bbox:info.bbox,runtime:info.runtime,hidden:info.hidden,anims:[]},fl,info.kit?{kit:1}:{});};
@@ -204,10 +230,12 @@ function PAGE(){
     let B=null;if(W1&&W1.uL){try{B=X.bake(root,m,W1);}catch(er){X.log.push('bake '+X.err(er));}}
     const srcMat=want.material,tex=srcMat&&srcMat.map,srcGeo=want.geometry;const info=X.prep(root,{});
     let bad=0;if(tex){const A=X.solAtlas(tex);if(!A.split){want.geometry=X.solGeo(srcGeo,A);bad=want.geometry.__bad|0;let mm=X.mat.get('sol|'+srcMat.uuid);if(!mm){mm=want.material.clone();mm.map=A.tex;mm.userData={};mm.name='soldier';X.mat.set('sol|'+srcMat.uuid,mm);X.mat.set(mm.uuid,mm);}want.material=mm;}else info.gearUvTrick=1;}
-    const sk=want.skeleton;const buf=await X.glb(root,[]);const st=await __x1store(X.b64(buf),hint);let af=null;
-    // the clips are the same for every look of one skeleton: written once, inside a copy of the first look that has them
-    if(B){af=X.animFiles.get(B.sig);if(!af){const b2=await X.glb(root,B.clips);const s2=await __x1store(X.b64(b2),'sol_anim');af={file:s2.file,meta:B.meta,names:B.clips.map(c=>c.name)};X.animFiles.set(B.sig,af);}}
-    return{file:st.file,bytes:st.bytes,tex:st.tex,tris:info.tris,bbox:info.bbox,bones:sk?sk.bones.length:0,animFile:af?af.file:null,anims:af?af.names:[],animMeta:af?af.meta:{},uvOut:bad,lod:want===lo?'lo':'hi'};};
+    const sk=want.skeleton,g=want.geometry;if(!g.attributes.color){const n=g.attributes.position.count;g.setAttribute('color',new THREE.BufferAttribute(new Float32Array(n*3).fill(1),3));}
+    // same shape = same vertices, same skeleton rest pose, same texture; the colours are a variant of it
+    let ts='';root.traverse(q=>{if(q.isMesh)return;ts+=q.name+':'+q.matrix.elements.map(v=>v.toFixed(4)).join(',')+';';});if(sk)for(const bi of sk.boneInverses)ts+=bi.elements.map(v=>v.toFixed(4)).join(',')+';';
+    const key=X.shapeHash(g)+'_'+X.hash(new TextEncoder().encode(ts+'|'+(tex?tex.uuid:'')+'|'+lod));let S=X.solShapes.get(key);
+    if(!S){S={root,want,geo:g,hint,vars:new Map(),B};X.solShapes.set(key,S);if(B&&!X.animSigs.has(B.sig))X.animSigs.set(B.sig,S);}const vk=X.addVar(S,g);
+    return{file:'@S'+key+'@'+vk,tris:info.tris,bbox:info.bbox,bones:sk?sk.bones.length:0,animSig:B?B.sig:null,anims:B?B.clips.map(c=>c.name):[],animMeta:B?B.meta:{},uvOut:bad,lod:want===lo?'lo':'hi'};};
   X.squad=async(e,o,hint,opt)=>{const P=o.userData.parts,yaw=P.body,fl=flagsOf(o,e),yr=yaw.rotation.y,members=yaw.children.slice(),lay=[],got={},files=[];
     members.forEach((m,i)=>{const k=X.memberKey(e,m,i);lay.push({x:r3(m.position.z),z:r3(-m.position.x),y:r3(m.position.y),look:k});});
     // more squads (other unit ids) until every wanted look has been seen
@@ -236,6 +264,7 @@ man._meta={made:'tools-godot/export_models.mjs (lane X1) from the JS game, branc
   units:'JS game world units (a rifleman is about 16 tall, a tank about 40 long). +Y up, the unit FRONT is +X, origin on the ground under the unit centre. Buildings: origin at the footprint centre.',
   colours:'every colour here ("c", "e") is LINEAR rgb and may be above 1 (the game brightens some textures); convert to sRGB for a Godot albedo_color',
   rigid:'a unit/building that is not a squad = "meshes": [{f: shared shape file (one mesh, white material + its texture), p: animated part it belongs to (absent = fixed to the unit root), m: 3x4 matrix (12 numbers, column-major, relative to that part), mat:[per surface {c colour, a alpha, r roughness, mt metalness, e emissive, unlit, ds double-sided, camo/look/refl/wake/trim = runtime shader flags}]}], "parts": {name:{parent, m}} = the nodes the game moves (see partsDoc).',
+  palette:'"pal" on a mesh instance or soldier look = this look\'s colours for the vertices that differ between nations: in the file those vertices are white with ALPHA = slot/255 (alpha 1 = keep the colour in the file). For every vertex with round(alpha*255) < 255 set its colour to pal[that number] (linear rgb), alpha 1. No "pal" = use the file as it is.',
   squad:'an infantry kind = "squad": soldier places in the unit frame (x forward, z right) with the look each one wears, "looks": {v0..v3|ldr: {lo: skinned low-detail soldier (what the game shows at the default zoom), hi: close-zoom soldier where exported}}, "extra": rigid meshes that belong to the unit (mortar tube...). Every soldier file is root "soldier" > "pose" (the clips move it: hip height, prone, death) > skeleton + one mesh "soldier_mesh". The clips live in "animFile" (same node paths: copy its AnimationLibrary).',
   clips:{idle:'rest pose',walk:'one stride, loop; play at speed/cycleDist cycles per second',run:'the jog every infantry unit uses at full speed, loop',crouch:'stand to crouch, hold the last frame',prone:'stand to prone, hold',reload:'chest bows to the rifle',grenade:'wind back and throw',die:'tips over backwards; the game removes the body after 6 s',fire:'none in the game: firing is a muzzle flash and tracer only'},
   partsDoc:{body:'the model itself (the game bobs / banks it)',turret:'turned toward the target (weapon mount, launcher rack)',gun:'building gun, turned toward the target',blades:'main rotor, spins about Y',tailR:'tail rotor, spins',tailR0:"the model's own tail rotor",rotor:'faint rotor disc',glow:'jet exhaust plumes (runtime shader; positions under runtime)',cargo:'supply-truck load, shown only when loaded',crane:'dozer arm / EW dish: swings or spins about Y',dish:'HQ radar dish, spins',radar:'spins about Y',flag:'cloth takes the team colour / nation flag',scaf:'construction scaffold (runtime lines)',tring:'team-colour ring under the unit (runtime decal)',eye:'spy marker (runtime)',da:'missile silo door',db:'missile silo door',missile:'strike missile, rises on launch'},
@@ -250,6 +279,10 @@ for(const fac of NATS){const t0=Date.now(),N=await pg.evaluate(f=>__X1.nation(f)
   for(const kind of UK){const opt={hi:HI==='all'?'all':(HI==='inf'&&kind==='inf')||HI==='v0'?1:0,looks:VAR4.has(kind)?['v0','v1','v2','v3']:null,first:N.roster.includes(kind)?0:1};const r=await pg.evaluate(([f,k,o])=>__X1.unit(f,k,o),[fac,kind,opt]);r.type='unit';r.inRoster=N.roster.includes(kind)?1:0;E[kind]=r;if(r.err)fails.push(fac+'/'+kind+': '+r.err);else pairs++;}
   for(const kind of BK){const r=await pg.evaluate(([f,k])=>__X1.bld(f,k),[fac,kind]);r.type='building';r.allowed=N.buildings.includes(kind)?1:0;E[kind]=r;if(r.err)fails.push(fac+'/'+kind+': '+r.err);else pairs++;}
   man[fac]=E;fs.writeFileSync(MANIFEST,JSON.stringify(man));console.log(fac,'done in',((Date.now()-t0)/1000).toFixed(1)+'s','glbs',written.size,'tex',texSeen.size);}
+{const R=await pg.evaluate(()=>__X1.resolve());const fix=I=>{if(I&&typeof I.f==='string'&&I.f[0]==='@'){const t=R.T[I.f];if(!t)throw new Error('unresolved '+I.f);I.f=t.f;if(t.pal)I.pal=t.pal;}};
+  for(const fac in man){if(fac[0]==='_')continue;for(const k in man[fac]){const r=man[fac][k];if(!r||typeof r!=='object')continue;for(const I of r.meshes||[])fix(I);if(r.extra)for(const I of r.extra.meshes||[])fix(I);
+    for(const L of Object.values(r.looks||{}))for(const q of Object.values(L)){if(q.file&&q.file[0]==='@'){const t=R.T[q.file];if(!t)throw new Error('unresolved '+q.file);q.file=t.f;if(t.pal)q.pal=t.pal;}if(q.animSig){q.animFile=R.A[q.animSig]?R.A[q.animSig].file:null;delete q.animSig;}}}}
+  fs.writeFileSync(MANIFEST,JSON.stringify(man));}
 const logs=await pg.evaluate(()=>__X1.log.slice(0,30));if(logs.length)console.log('page log:',logs.join('\n').slice(0,2000));
 await br.close();srv.close();
 let tb=0;for(const f of fs.readdirSync(AUTO))if(f.endsWith('.glb'))tb+=fs.statSync(path.join(AUTO,f)).size;let xb=0;for(const f of fs.readdirSync(TEX))xb+=fs.statSync(path.join(TEX,f)).size;
