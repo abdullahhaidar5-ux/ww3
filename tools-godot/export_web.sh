@@ -9,5 +9,5 @@ OUT="${1:-$ROOT/godot-build/web}"
 mkdir -p "$OUT"
 node "$ROOT/tools-godot/build_bridge.mjs"
 "$GODOT" --headless --path "$ROOT/godot" --export-release Web "$OUT/index.html" 2>&1 | grep -v "^$" | tail -${EXPORT_LOG_LINES:-15}
-cp "$ROOT/godot/web/ww3sim.js" "$OUT/ww3sim.js"
+cp "$ROOT/godot/web/ww3sim.js" "$ROOT/godot/web/ww3bridge.js" "$OUT/"
 ls -la "$OUT" | tail -12

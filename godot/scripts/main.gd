@@ -114,6 +114,11 @@ func _ready() -> void:
 	# P1 BRIDGE: on the web the switches come from the page address (index.html?battle-ai&fac=IR / ?bridge-test)
 	if get_script() == preload("res://scripts/main.gd") and OS.has_feature("web"):
 		var qs := str(JavaScriptBridge.eval("location.search.slice(1)", true))
+		if qs.begins_with("worker-test"):
+			var wt: Node = load("res://bridge/bridge_workertest.gd").new()
+			for kv in qs.split("&", false):
+				if kv.begins_with("units="): wt.units = int(kv.substr(6))
+			set_process(false); set_physics_process(false); set_process_input(false); set_process_unhandled_input(false); add_child(wt); return
 		if qs.begins_with("bridge-test"):
 			var bt: Node = load("res://bridge/bridge_selftest.gd").new()
 			for kv in qs.split("&", false):

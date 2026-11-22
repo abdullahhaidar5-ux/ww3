@@ -15,6 +15,7 @@ var k := 0
 var next_min := 1
 
 func _ready() -> void:
+	br.want_worker = false   # this test compares hashes tick by tick: the sim stays on the page's thread
 	if not br.available(): print("BRIDGETEST FAIL: " + Bridge.WEB_ONLY); return
 	var T := br.tables()
 	print("BRIDGETEST tables: %d kinds, %d nations, %d maps" % [T.kinds.size(), T.nations.size(), T.maps.size()])

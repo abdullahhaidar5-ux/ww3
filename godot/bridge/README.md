@@ -14,7 +14,7 @@ godot/bridge/sim_bridge.gd  (autoload-free: `const SimBridge = preload("res://br
 
 Files: `godot/web/ww3sim.js` (build output, never edit), `godot/web/shell.html` (custom HTML shell → P7 sets
 `html/custom_html_shell="res://web/shell.html"` in `export_presets.cfg` and ships `ww3sim.js` next to `index.html`),
-`godot/bridge/sim_bridge.gd`, `tools-godot/build_bridge.mjs`, `tools-godot/bridge_test.mjs` (Node proof).
+`godot/web/ww3bridge.js` (worker client, ships next to `index.html` too), `godot/bridge/sim_bridge.gd`, `tools-godot/build_bridge.mjs`, `tools-godot/bridge_test.mjs` (Node proof).
 
 Units everywhere = the browser game's design units (bm_splitridge is 4800×3320; a soldier ≈ 8 wide). `x` right, `y` down
 on the map (Godot: x → X, y → Z); heights `z` in the same units. Angles in radians, `atan2(dy, dx)` on the map.
@@ -31,8 +31,35 @@ Time: the sim runs fixed ticks of **1/60 s**; call `step(2)` per 30 Hz frame (or
   Godot's bulk read 0.27 ms per step; 500 units a side: 7.6 ms per tick + 0.35 ms read (cloud sandbox CPU).
 - `scenes/battle.tscn` runs on the bridge through `bridge_sim.gd` (an adapter with the old GDScript sim's interface, so
   the scene code kept working). **New visuals / UI / audio code should read `sim.br` (this API) directly.**
-  URL switches on the web: `index.html?battle-ai&fac=IR&vs=US`, `?battle`, `?bridge-test`.
+  URL switches on the web: `index.html?battle-ai&fac=IR&vs=US`, `?battle`, `?bridge-test`, `?worker-test&units=500`.
 - Desktop / headless: prints the "web only" error (`--gdsim` = the parked GDScript rules, developers only).
+
+## The sim runs in a Web Worker (default)
+
+`godot/web/ww3bridge.js` (loaded by the shell) starts `new Worker("ww3sim.js")`: the simulation and Godot's rendering run
+on two cores. Godot posts orders + "step k"; the worker answers with one **transferred** ArrayBuffer snapshot (entities),
+one for projectiles, and the step's JSON (events, teams, clock). Plain Worker + transferables: no SharedArrayBuffer, so
+no COOP/COEP headers (GitHub Pages works). Nothing in the sim needs the main thread.
+What that changes for callers - everything else below is the same:
+- `sim.booted()` → the worker has loaded (tables + rules of all 22 nations are in; menus can be built before a game).
+- `sim.new_game(opts)` returns `{ok, pending=true}`; wait until `sim.ready()` is true (a few frames), then `map_data()`.
+- `sim.step(k)` only *asks*; every frame do `while sim.poll(): ...` - each true = one finished step is now in
+  `ent / proj / events / teams / prod` (0, 1 or a few per frame). **Interpolate** positions between the last two steps.
+  At most 6 steps are in flight; a `step` beyond that is dropped (`sim.js.pending()` tells), orders are never dropped.
+- `sim.fog_team = me` → the fog grid of that team comes with every step (`sim.fog(me)`); `sim.want_hash = true` → the
+  state hash too (`sim.state_hash()`); `lines()` is pushed whenever it changed.
+- `valid_spot`, `req_met`, `inside` answer from the last reply and refresh in the background (one frame late).
+- `sim.want_worker = false` before the first call keeps the sim on the page's thread (synchronous; tests use it).
+- `sim.worker_stats()` → `{steps, bytesPerStep, workerMsPerStep, mainMsPerStep}` since the last call.
+
+Measured in headless Chromium (cloud sandbox CPU, `node tools-godot/web_test.mjs "worker-test&units=500"`):
+
+| Units a side | Worker, per tick | Bytes per 2-tick step | Main thread per frame (request + read + JSON) | Message handler per step |
+|---|---|---|---|---|
+| 300 (618 entities) | 4.9 ms | 43.8 KB | 0.32 ms | 0.03 ms |
+| 500 (1019 entities) | 8.0 ms | 72.6 KB | 0.32 ms | 0.04 ms |
+
+The worker gives the same state hash as Node after one game-minute of the 4-player battle (69d57490568345ba).
 
 ## GDScript API (`sim_bridge.gd`)
 

@@ -26,6 +26,15 @@ ORCH 2026-11-22: the Godot WEB build runs the browser game's own JavaScript simu
 | `--bench` (Node) | same scene: 11.4 ms per tick mean (includes state fill + JSON), worst 141 ms |
 | `?battle-ai&fac=IR&vs=US` (the real battle scene on the bridge) | starts and draws on the bridge (terrain, base, HUD money/power/army/clock, minimap: `orch/shots/godot-bridge/battle-ai.png`), 0 console errors; software GL in the sandbox gives ~1 FPS, so only 8 game-seconds passed in 4 min - **not yet seen on a real GPU, no fight seen in the scene** |
 
+## Web Worker mode (ORCH's addition) - done, default
+`godot/web/ww3bridge.js` + worker glue at the end of `ww3sim.js`; `sim_bridge.gd` is asynchronous in that mode
+(`booted()`, `ready()`, `step()` asks, `poll()` reads); battle.gd awaits `sim.ready()` in `_start`. Numbers (Chromium,
+sandbox CPU): 300 a side 4.9 ms per tick in the worker, 43.8 KB per step; 500 a side 8.0 ms per tick, 72.6 KB per step;
+main thread 0.32 ms per frame + 0.03-0.04 ms per message. Hash after 1 game-minute = Node's. Battle scene starts in
+worker mode with 0 console errors (RS vs IL).
+NOT done from ORCH's notes: per-(kind, nation) buffers already in MultiMesh layout (needs the layout agreed with P4);
+battle.gd does not interpolate between worker steps beyond what it already did.
+
 ## Not done / honest gaps
 1. battle.gd still draws through the adapter (per-entity GDScript objects) and knows 4 nations and 3 maps in its
    menus; the sim accepts all 22 nations and every JS map. P4/P6 should move to `sim.br` + `tables()`.

@@ -36,14 +36,28 @@ var _facs: Array = []
 func available() -> bool:
 	return br.available()
 
-## players = [{fac, ai, tm}] (the old Sim.init shape); the map comes from the JS sim (any of its maps)
+## players = [{fac, ai, tm}] (the old Sim.init shape); the map comes from the JS sim (any of its maps).
+## Asynchronous when the sim runs in a Web Worker: call init(), then wait until ready() is true (one or more frames).
+var _st: int = 0
+var _opts: Dictionary = {}
 func init(map_key, players: Array, seed_value: int = 1, difficulty: int = 1, _rules: Dictionary = {}) -> bool:
 	if not br.available(): push_error(Bridge.WEB_ONLY); return false
-	T_ = br.tables()
 	var ps: Array = []
 	for p in players: ps.append({nation = str(p.fac), ai = bool(p.get("ai", true)), team = int(p.get("tm", ps.size()))})
-	var r := br.new_game({map = str(map_key), seed = seed_value, diff = difficulty, players = ps})
-	if not int(r.get("ok", 0)): push_error(str(r.get("error", "new game failed"))); return false
+	_opts = {map = str(map_key), seed = seed_value, diff = difficulty, players = ps}
+	_st = 0; ents = []; by_id = {}; events = []; teams = []
+	return true
+
+func ready() -> bool:
+	if _st == 2: return true
+	if _st == 0:
+		if not br.booted(): return false
+		T_ = br.tables()
+		var r := br.new_game(_opts)
+		if not int(r.get("ok", 0)): push_error(str(r.get("error", "new game failed"))); return false
+		_st = 1
+	if not br.ready(): return false
+	var ps: Array = _opts.players
 	map = br.map_data()
 	# the old scene code types these as Array
 	map.grid = Array(map.grid); map.cover = Array(map.cover); map.wood = Array(map.wood)
@@ -58,14 +72,15 @@ func init(map_key, players: Array, seed_value: int = 1, difficulty: int = 1, _ru
 	for o in map.oil: oil.append({x = float(o.x), y = float(o.y), tb = o.tb, pw = int(o.pw), owner = -1, dead = false, hp = 1.0, max = 1.0, i = oil.size()})
 	_facs = []
 	for p in ps: _facs.append(p.nation)
-	ents = []; by_id = {}; events = []
 	_sync()
+	_st = 2
 	return true
 
 func step_n(k: int = 2) -> void:
 	br.step(k)
-	events.append_array(br.events)
-	_sync()
+	while br.poll():      # worker: the steps that have come back since the last frame (none, one or a few)
+		events.append_array(br.events)
+		_sync()
 
 func step() -> void:
 	step_n(1)

@@ -42,7 +42,12 @@ const F_WORKING := 16384
 const F_CAPTURABLE := 32768
 const WEB_ONLY := "The battle simulation is the browser game's JavaScript and runs in the WEB build only (export the Web preset and open it in a browser). Desktop / headless Godot has no JavaScript engine."
 
-var js = null                       # JavaScriptObject window.WW3
+var js = null                       # JavaScriptObject: window.WW3W (sim in a Web Worker) or window.WW3 (sim on the page)
+var worker: bool = false            # true = the sim runs in a Web Worker: new_game and step are asynchronous (ready() / poll())
+var want_worker: bool = true        # set false before the first call to keep the sim on the page's thread (tests)
+var fog_team: int = -1              # worker mode: team whose fog comes back with every step (-1 = none)
+var want_hash: bool = false         # worker mode: also send the state hash with every step
+var _fresh: bool = false
 var n: int = 0
 var ent := PackedFloat32Array()
 var proj := PackedFloat32Array()
@@ -60,8 +65,15 @@ var _rules: Dictionary = {}
 func available() -> bool:
 	if js != null: return true
 	if not OS.has_feature("web"): return false
+	if want_worker:
+		var w = JavaScriptBridge.get_interface("WW3W")
+		if w != null and int(w.start("ww3sim.js")) == 1: js = w; worker = true; return true
 	js = JavaScriptBridge.get_interface("WW3")
 	return js != null
+
+## worker mode: the worker has loaded the sim and sent the tables + rules (menus can be built). Always true on the page.
+func booted() -> bool:
+	return available() and (not worker or int(js.booted()) == 1)
 
 func _need() -> bool:
 	if available(): return true
@@ -69,17 +81,34 @@ func _need() -> bool:
 	return false
 
 func tables() -> Dictionary:
-	if _tables.is_empty() and _need(): _tables = JSON.parse_string(js.tables())
+	if _tables.is_empty() and _need():
+		var tb = JSON.parse_string(js.tables())
+		if tb != null and tb.has("kinds"): _tables = tb
 	return _tables
 
 ## opts = {map, seed, diff, players = [{nation, ai, team}]}
 func new_game(opts: Dictionary) -> Dictionary:
 	if not _need(): return {ok = 0, error = WEB_ONLY}
+	t = 0.0; over = false; winner = -1; events = []; _fresh = false
+	if worker:
+		js.newGame(JSON.stringify(opts))
+		return {ok = 1, pending = true}     # poll ready() each frame; the battle exists once it returns true
 	var r = JSON.parse_string(js.newGame(JSON.stringify(opts)))
 	if r == null: return {ok = 0, error = "newGame failed"}
-	teams = r.teams; t = 0.0; over = false; winner = -1; events = []
+	teams = r.teams
 	_read()
 	return r
+
+## worker mode: has the battle asked for by new_game arrived? (true at once when the sim is on the page)
+func ready() -> bool:
+	if js == null: return false
+	if not worker: return true
+	if int(js.ready()) != 1: return false
+	if teams.is_empty() or t == 0.0:
+		var r = JSON.parse_string(js.initInfo())
+		if r != null and r.has("teams"): teams = r.teams
+		_read()
+	return true
 
 func order(team: int, o: Dictionary) -> void:
 	if js != null: js.order(team, JSON.stringify(o))
@@ -87,8 +116,25 @@ func order(team: int, o: Dictionary) -> void:
 ## k fixed ticks of 1/60 s, then the one bulk read
 func step(k: int = 2) -> void:
 	if js == null: return
-	var r = JSON.parse_string(js.step(k))
+	if worker:
+		js.step(k, fog_team, want_hash)   # the answer arrives a little later: poll()
+		return
+	_apply(JSON.parse_string(js.step(k)))
+
+## true when a finished step was read into ent / proj / events / teams (call in a loop each frame: `while sim.poll(): ...`)
+func poll() -> bool:
+	if js == null: return false
+	if not worker:
+		var f := _fresh; _fresh = false; return f
+	var s := str(js.poll())
+	if s == "": return false
+	_apply(JSON.parse_string(s))
+	_fresh = false
+	return true
+
+func _apply(r) -> void:
 	if r == null or not r.has("t"): return
+	_fresh = true
 	t = float(r.t); over = bool(r.over); winner = int(r.winner); lgv = int(r.lgv); step_ms = float(r.ms)
 	events = r.ev; teams = r.teams
 	prod = {}
@@ -116,13 +162,17 @@ func lines() -> Dictionary:
 	return JSON.parse_string(js.lines()) if js != null else {}
 
 func fog(team: int) -> PackedByteArray:
-	return JavaScriptBridge.js_buffer_to_packed_byte_array(js.fog(team)) if js != null else PackedByteArray()
+	if js == null: return PackedByteArray()
+	if worker: fog_team = team; return JavaScriptBridge.js_buffer_to_packed_byte_array(js.fog())   # empty until the next step answers
+	return JavaScriptBridge.js_buffer_to_packed_byte_array(js.fog(team))
 
 func inside(id: int) -> Array:
 	return JSON.parse_string(js.inside(id)) if js != null else []
 
 func rules(nation: String) -> Dictionary:
-	if not _rules.has(nation) and _need(): _rules[nation] = JSON.parse_string(js.rules(nation))
+	if not _rules.has(nation) and _need():
+		var ru = JSON.parse_string(js.rules(nation))
+		if ru != null and ru.has("units"): _rules[nation] = ru
 	return _rules.get(nation, {})
 
 func valid_spot(team: int, kind: String, x: float, y: float) -> bool:
@@ -132,4 +182,8 @@ func req_met(team: int, kind: String) -> bool:
 	return js != null and int(js.reqMet(team, kind)) != 0
 
 func state_hash() -> String:
-	return str(js.hash()) if js != null else ""
+	return str(js.hash()) if js != null else ""     # worker mode: the hash of the last step asked with want_hash
+
+## worker mode: {steps, bytesPerStep, workerMsPerStep, mainMsPerStep} since the last call
+func worker_stats() -> Dictionary:
+	return JSON.parse_string(js.stats()) if worker else {}

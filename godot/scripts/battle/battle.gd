@@ -188,6 +188,7 @@ func _start(players: Array) -> void:
 		map = {bases = [0, 0, 0, 0].slice(0, np)}
 		if not sim.init(map_key, players if players.size() else _players(), seed_v, diff):
 			_web_only(); return
+		while not sim.ready(): await get_tree().process_frame   # the sim runs in a Web Worker: it answers a few frames later
 		map = sim.map
 	else:
 		map = Sim.load_json("res://data/map_%s.json" % map_key)
@@ -965,7 +966,7 @@ func _mini_bake() -> void:
 	mini_tex = ImageTexture.create_from_image(img)
 
 func _mini_draw() -> void:
-	if sim == null: return
+	if sim == null or not started: return   # P1 BRIDGE: the battle arrives a few frames after the start (sim in a Web Worker)
 	if mini_tex == null: _mini_bake()
 	var k := _mini_scale()
 	mini.draw_texture(mini_tex, Vector2.ZERO)
