@@ -12,9 +12,10 @@ extends Node
 const Net = preload("res://net/lockstep_net.gd")
 const Codec = preload("res://net/state_codec.gd")
 const Sim = preload("res://sim/sim.gd")
+const UI = preload("res://scripts/ui/ui_kit.gd")
 ## the deployed Cloudflare relay (Worker ww3-godot-relay, .github/workflows/godot-relay.yml)
 const RELAY := "https://ww3-godot-relay.abdullah-haidar5.workers.dev"
-const WEB_PAGE := "https://abdullahhaidar5-ux.github.io/ww3/godot-web/"
+const WEB_PAGE := "https://abdullahhaidar5-ux.github.io/ww3/"
 const MAX_SEATS := 8
 const SAVE := "user://ww3_online.json"
 
@@ -74,7 +75,7 @@ func _connect_net(code: String, turnms: String = "", fast: bool = false, fresh: 
 	if turnms != "": net.set_test_query("&turnms=" + turnms)
 	if fast: net.realtime = false
 	net.state_hash = _hash
-	net.snapshot = func(): return Codec.save(B.sim)
+	net.snapshot = _snapshot
 	net.restore = _restore
 	net.joined.connect(func(_you, c):
 		B._msg("Joined game %s" % c.to_upper())
@@ -100,18 +101,38 @@ func _connect_net(code: String, turnms: String = "", fast: bool = false, fresh: 
 	else: net.quick_play(url, my_name)
 
 func _hash() -> int:
-	var h: int = Codec.hash_of(B.sim)
+	var h: int = int(B.sim.state_hash_int()) if (B.use_bridge and B.sim != null and B.sim.has_method("state_hash_int")) else Codec.hash_of(B.sim)
 	hashes += 1
 	if hash_log: print("HASH %d %d" % [net.turn - 1, h])
-	if digest_log: print("DIGEST %d %s" % [net.turn - 1, "|".join(Codec.digest(B.sim))])
+	if digest_log and not B.use_bridge: print("DIGEST %d %s" % [net.turn - 1, "|".join(Codec.digest(B.sim))])
 	return h
+
+func _snapshot() -> PackedByteArray:
+	if B.use_bridge and B.sim != null and B.sim.has_method("save_snapshot"):
+		return JSON.stringify({"bridge_snap": B.sim.save_snapshot(), "tick": B.tick_n}).to_utf8_buffer()
+	return Codec.save(B.sim)
 
 func _pick() -> void:
 	if net == null or net.phase != "lobby": return
 	net.set_pick({"nation": B.my_fac, "team": my_team})
 
+func _nations() -> Array:
+	if B.use_bridge: return UI.nations()
+	var F: Dictionary = UI.rules().get("factions", {})
+	var out: Array = []
+	for k in UI.nations():
+		if F.has(k): out.append(k)
+	return out if not out.is_empty() else ["IR", "US"]
+
+func _maps() -> Array:
+	var out: Array = []
+	for m in UI.maps():
+		if not B.use_bridge and not FileAccess.file_exists(str(m.get("file", ""))): continue
+		out.append([str(m.key), str(m.name), int(m.get("n", 2))])
+	return out if not out.is_empty() else [["bm_splitridge", "Split Ridge", 2]]
+
 func _map_seats(key: String) -> int:
-	for m in B.MAPS:
+	for m in _maps():
 		if m[0] == key: return int(m[2])
 	return 2
 
@@ -123,7 +144,7 @@ func _on_lobby(l: Dictionary) -> void:
 	if leader:
 		# the leader owns the game settings: keep them sensible for the players who are in
 		if _map_seats(cfg_map) < ps.size():
-			for m in B.MAPS:
+			for m in _maps():
 				if int(m[2]) >= ps.size(): cfg_map = m[0]; break
 		while ai_seats.size() > 0 and ps.size() + ai_seats.size() > mini(MAX_SEATS, _map_seats(cfg_map)): ai_seats.pop_back()
 		var want := {"map": cfg_map, "ai": ai_seats}
@@ -151,18 +172,19 @@ func _on_started(info: Dictionary) -> void:
 	var cap := mini(MAX_SEATS, _map_seats(mk))
 	var players: Array = []
 	seats = {}
+	var nats := _nations()
 	for p in ps:
 		if players.size() >= cap: break
 		var pk: Dictionary = p.get("pick", {}) if p.get("pick") is Dictionary else {}
 		var fac: String = str(pk.get("nation", "IR"))
-		if not B.NATIONS.has(fac): fac = "IR"
+		if not nats.has(fac): fac = "IR"
 		seats[int(p.s)] = players.size()
 		var tm: int = int(pk.get("team", 0))
 		players.append({fac = fac, ai = false, tm = tm if tm > 0 else 100 + players.size()})
 	var d := 1
 	for a in cfg.ai:
 		if players.size() >= cap: break
-		var fac: String = a.n if B.NATIONS.has(a.n) else "US"
+		var fac: String = a.n if nats.has(a.n) else "US"
 		players.append({fac = fac, ai = true, tm = a.t if a.t > 0 else 100 + players.size()})
 		d = clampi(a.d, 0, 2)
 	if not seats.has(int(info.you)):
@@ -189,6 +211,14 @@ func _fresh_sim():
 
 ## a healthy player's snapshot replaces our state (desync repair, rejoin after a crash)
 func _restore(bytes: PackedByteArray) -> void:
+	if B.use_bridge and B.sim != null and B.sim.has_method("load_snapshot"):
+		var parsed = JSON.parse_string(bytes.get_string_from_utf8())
+		if parsed is Dictionary and parsed.has("bridge_snap") and B.sim.load_snapshot(str(parsed.bridge_snap)):
+			B.tick_n = int(parsed.get("tick", B.tick_n))
+			B.prev = {}; B.last_pos = {}
+			return
+		print("ONLINE snapshot refused")
+		return
 	var s = _fresh_sim()
 	if not Codec.load_into(s, bytes):
 		print("ONLINE snapshot refused")
@@ -215,7 +245,13 @@ func _on_tick(_t: int, orders: Array) -> void:
 func _sys(o: Dictionary) -> void:
 	var slot := int(o.get("s", -1))
 	if not seats.has(slot): return
-	var T: Dictionary = B.sim.teams[seats[slot]]
+	var seat: int = seats[slot]
+	if B.use_bridge and B.sim != null and B.sim.has_method("range_cmd"):
+		match str(o.get("sys", "")):
+			"left": B.sim.range_cmd({cmd = "set_ai", team = seat, on = true})
+			"back": B.sim.range_cmd({cmd = "set_ai", team = seat, on = false})
+		return
+	var T: Dictionary = B.sim.teams[seat]
 	var S = B.sim
 	match str(o.get("sys", "")):
 		"left":
@@ -293,10 +329,11 @@ func _panel() -> void:
 	list_lbl = Label.new()
 	vb.add_child(list_lbl)
 	# your nation and team
-	var hn := HBoxContainer.new(); vb.add_child(hn)
+	var nats := _nations()
+	var hn := HFlowContainer.new(); vb.add_child(hn)
 	var grp := ButtonGroup.new()
-	for f in B.NATIONS:
-		var bt := _btn(hn, B.NAT_NAME[f], func():
+	for f in nats:
+		var bt := _btn(hn, B.NAT_NAME.get(f, f), func():
 			B.my_fac = f
 			_pick())
 		bt.toggle_mode = true; bt.button_group = grp; bt.button_pressed = B.my_fac == f
@@ -311,16 +348,16 @@ func _panel() -> void:
 	leader_box = VBoxContainer.new()
 	leader_box.visible = false
 	vb.add_child(leader_box)
-	var hm := HBoxContainer.new(); leader_box.add_child(hm)
+	var hm := HFlowContainer.new(); leader_box.add_child(hm)
 	var gm := ButtonGroup.new()
-	for mm in B.MAPS:
+	for mm in _maps():
 		var key: String = mm[0]
 		var bt := _btn(hm, "%s (%d)" % [mm[1], mm[2]], func():
 			cfg_map = key
 			_on_lobby(lobby))
 		bt.toggle_mode = true; bt.button_group = gm; bt.button_pressed = cfg_map == key
-	var ha := HBoxContainer.new(); leader_box.add_child(ha)
-	for f in B.NATIONS:
+	var ha := HFlowContainer.new(); leader_box.add_child(ha)
+	for f in nats:
 		_btn(ha, "+ AI " + f, func():
 			ai_seats.append({n = f, t = 0, d = ai_diff})
 			_on_lobby(lobby))
@@ -347,7 +384,7 @@ func _panel() -> void:
 	_btn(vb, "Leave", func():
 		net.leave()
 		B.get_tree().reload_current_scene())
-	B._style(panel)
+	if B.has_method("_style"): B._style(panel)
 
 func _show_lobby(l: Dictionary, cfg: Dictionary) -> void:
 	if panel == null: return
@@ -361,7 +398,7 @@ func _show_lobby(l: Dictionary, cfg: Dictionary) -> void:
 		lines.append("  AI  -  %s%s" % [B.NAT_NAME.get(a.n, a.n), "  (team %d)" % a.t if a.t > 0 else ""])
 	var mk := str(cfg.get("map", cfg_map))
 	var mname := mk
-	for m in B.MAPS:
+	for m in _maps():
 		if m[0] == mk: mname = "%s (%d players)" % [m[1], m[2]]
 	code_lbl.text = "Game code  %s" % str(l.get("code", "")).to_upper()
 	list_lbl.text = "Map: %s\n%s" % [mname, "\n".join(lines)]

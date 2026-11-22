@@ -2,13 +2,15 @@
 // cores. Godot sends orders + "step k" and gets one transferred ArrayBuffer snapshot + events per step. Plain Worker,
 // transferable buffers: no SharedArrayBuffer, so no COOP/COEP headers (works on GitHub Pages). Contract: godot/bridge/README.md
 window.WW3W = (function () {
-  var w = null, boot = null, init = null, Q = [], cur = null, orders = [], pending = 0, lines = '{}', fog = null, hash = '', ans = {}, asked = {}, reqLast = {}, st0 = 0;
+  var w = null, boot = null, init = null, Q = [], cur = null, orders = [], pending = 0, lines = '{}', fog = null, hash = '', snap = '', ans = {}, asked = {}, reqLast = {}, st0 = 0;
   var st = { steps: 0, bytes: 0, wms: 0, mainMs: 0 };
   function onmsg(e) {
     var t0 = performance.now(), m = e.data;
     if (m.c === 'boot') boot = m;
-    else if (m.c === 'new') { init = m; Q = []; pending = 0; cur = { js: '', ent: m.ent, proj: new ArrayBuffer(0) }; lines = m.lines; hash = m.hash; fog = null; }
-    else if (m.c === 'step') { pending--; Q.push(m); if (m.lines) lines = m.lines; if (m.fog) fog = m.fog; if (m.hash) hash = m.hash; st0++; st.steps++; st.bytes += m.ent.byteLength + m.proj.byteLength + m.js.length; st.wms += m.wms; }
+    else if (m.c === 'new') { init = m; Q = []; pending = 0; cur = { js: '', ent: m.ent, proj: new ArrayBuffer(0) }; lines = m.lines; hash = m.hash; snap = m.snap || ''; fog = null; }
+    else if (m.c === 'step') { pending--; Q.push(m); if (m.lines) lines = m.lines; if (m.fog) fog = m.fog; if (m.hash) hash = m.hash; if (m.snap) snap = m.snap; st0++; st.steps++; st.bytes += m.ent.byteLength + m.proj.byteLength + m.js.length; st.wms += m.wms; }
+    else if (m.c === 'sync') { Q.push(m); if (m.lines) lines = m.lines; if (m.hash) hash = m.hash; if (m.snap) snap = m.snap; }
+    else if (m.c === 'snap') { if (m.snap) snap = m.snap; }
     else if (m.c === 'ans') { ans[m.key] = m.v; delete asked[m.key]; }
     st.mainMs += performance.now() - t0;
   }
@@ -37,6 +39,9 @@ window.WW3W = (function () {
     validSpot: function (t, k, x, y) { return ask('valid', [t, k, Math.round(x / 8) * 8, Math.round(y / 8) * 8], 0); },
     reqMet: function (t, k) { var b = st0 >> 5, v = ask('req', [t, k, b], undefined); if (v !== undefined) reqLast[t + ',' + k] = v; return reqLast[t + ',' + k] || 0; },
     inside: function (id) { return ask('inside', [id, st0 >> 4], '[]'); },
+    rangeCmd: function (json) { if (!init) return 0; w.postMessage({ c: 'range', o: json }); return 1; },
+    saveSnap: function () { if (init) w.postMessage({ c: 'snap' }); return snap; },
+    loadSnap: function (json) { if (!init || !json) return 0; Q = []; w.postMessage({ c: 'load', snap: json }); snap = json; return 1; },
     ev: function (src) { return ask('ev', [src], 'null'); },
     stats: function () { var o = JSON.stringify({ steps: st.steps, bytesPerStep: st.steps ? Math.round(st.bytes / st.steps) : 0, workerMsPerStep: st.steps ? +(st.wms / st.steps).toFixed(3) : 0, mainMsPerStep: st.steps ? +(st.mainMs / st.steps).toFixed(4) : 0 }); st = { steps: 0, bytes: 0, wms: 0, mainMs: 0 }; return o; },
   };

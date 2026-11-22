@@ -45,6 +45,11 @@ func _ready() -> void:
 	var cl := OS.get_cmdline_user_args()
 	if qs.begins_with("battle") or qs.begins_with("demo") or qs.begins_with("selftest") or cl.has("--battle") or cl.has("--battle-ai") or cl.has("--demo") or cl.has("--selftest"):
 		get_tree().change_scene_to_file.call_deferred("res://scenes/battle.tscn"); return
+	if OS.has_feature("web"):
+		var invite_code := preload("res://scripts/battle/battle_net.gd").web_code()
+		if invite_code != "":
+			UI.launch = {kind = "online", code = invite_code, name = str(UI.opt("player_name")), fac = str(UI.opt("last_fac"))}
+			get_tree().change_scene_to_file.call_deferred("res://scenes/battle.tscn"); return
 	Audio.menu()   # P5 HOOK
 	UI.apply_settings()
 	UI.lock_mouse(false)
@@ -672,7 +677,7 @@ func _s_t_range(vb: VBoxContainer) -> void:
 	vb.add_child(UI.spacer(4))
 	vb.add_child(UI.label("YOUR NATION", 12, UI.TEXT_DIM))
 	_nat_picker(vb, tr.fac, func(k): tr.fac = k; _show(cur, 0))
-	var sb := UI.button("Start", func(): _launch({kind = "range", map = tr.map, players = [{fac = tr.fac, ai = false, tm = 1}, {fac = tr.target, ai = true, tm = 2}], diff = 1, seed = 7}), 20, 0, true)
+	var sb := UI.button("Start", func(): _launch({kind = "range", map = tr.map, players = [{fac = tr.fac, ai = false, tm = 1}, {fac = tr.target, ai = false, tm = 2}], diff = 1, seed = 7}), 20, 0, true)
 	sb.name = "Start"
 	_foot([sb])
 

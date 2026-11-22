@@ -103,8 +103,11 @@ var tut_k0 := 0
 var last_launch := {}
 var ended := false
 var range_ai = null
+var range_ai_on := false
 var alert_t := -99.0
 var selftest = null
+var _cursor_cache := {}
+var _cur_cursor := ""
 
 # ui (main.gd fields: ui, lbl_fps, msg_lbl, box)
 var cameo_tex := {}
@@ -222,16 +225,30 @@ func start_launch(L: Dictionary) -> void:
 		return
 	if kind == "load" or kind == "replay":
 		var f := UI.read_file(str(L.get("file", "")))
-		if f.is_empty() or int(f.get("v", 0)) != 1: leave(); return
+		if f.is_empty() or not (int(f.get("v", 0)) in [1, 2]): leave(); return
 		var k2 := kind
 		var L2 := {kind = str(f.get("kind", "battle")), map = f.map, players = f.players, starts = f.get("starts", []), diff = int(f.get("diff", 1)), seed = int(f.get("seed", 1)), mission = str(f.get("mission", ""))}
 		play = []
 		for it in f.get("orders", []): play.append([int(it[0]), _norm(it[1])])
 		play_i = 0; play_to = int(f.get("ticks", 0))
 		if k2 == "load":
-			loading = true
-			start_launch(L2)
-			last_launch = {kind = "load", file = L.file}
+			var snap := str(f.get("snap", ""))
+			if snap != "" and use_bridge:
+				await start_launch(L2)
+				if started and sim != null and sim.has_method("load_snapshot") and sim.load_snapshot(snap):
+					tick_n = int(f.get("ticks", 0))
+					rec.orders = play.duplicate()
+					prev.clear(); last_pos.clear(); bsel.clear()
+					_msg("Game loaded")
+					print("LOADED snapshot tick %d" % tick_n)
+					if "--quit-after-load" in OS.get_cmdline_user_args(): get_tree().quit()
+				elif started:
+					loading = true
+				last_launch = {kind = "load", file = L.file}
+			else:
+				loading = true
+				await start_launch(L2)
+				last_launch = {kind = "load", file = L.file}
 		else:
 			start_launch(L2)
 			kind = "replay"; see_all = true; mission = mission
@@ -267,7 +284,8 @@ func start_launch(L: Dictionary) -> void:
 	await _start(players, L.get("starts", []))
 	if not started: return
 	if kind == "range":
-		if not use_bridge: range_ai = sim.mk_team(1, sim.teams[1].fac, true, sim.teams[1].tm).ai   # P1 BRIDGE: the JS range AI is not exposed yet
+		range_ai_on = false
+		if not use_bridge: range_ai = sim.mk_team(1, sim.teams[1].fac, true, sim.teams[1].tm).ai
 		_range_panel()
 
 ## JSON gives floats: ids and targets must be ints again
@@ -296,6 +314,9 @@ func _start(players: Array, starts: Array) -> void:
 		map_n = map.bases.size()
 	if players.is_empty(): players = _players()
 	players = players.slice(0, map_n)
+	if kind == "range" and players.size() > 1:
+		players = players.duplicate(true)
+		players[1].ai = false
 	# start spots: a chosen spot per seat, the rest in map order (seeded shuffle only when someone asked for Random explicitly)
 	if not use_bridge and starts.size() == players.size() and starts.any(func(s): return int(s) >= 0):
 		var all_b: Array = map.bases; var used := {}; var nb: Array = []; nb.resize(players.size())
@@ -315,7 +336,7 @@ func _start(players: Array, starts: Array) -> void:
 	en_fac = str(players[(me + 1) % players.size()].fac)
 	# P1 BRIDGE: the simulation is the browser game's JavaScript (res://bridge/README.md); web build only
 	if use_bridge:
-		if not sim.init(map_key, players, seed_v, diff):
+		if not sim.init(map_key, players, seed_v, diff, starts):
 			_web_only(); return
 		while not sim.ready():   # the sim runs in a Web Worker: it answers a few frames later
 			if sim.err != "": _start_failed(sim.err); return
@@ -378,12 +399,14 @@ func _panel_style() -> StyleBoxFlat:
 	return UI.panel_style()
 
 func restart() -> void:
+	_set_cursor("arrow")
 	units_view.clear(); world_view.clear()
 	UI.launch = last_launch.duplicate(true)
 	if online != null: online.queue_free()
 	get_tree().reload_current_scene()
 
 func leave() -> void:
+	_set_cursor("arrow")
 	units_view.clear(); world_view.clear()
 	UI.lock_mouse(false)
 	if online != null and online.net != null: online.net.leave()
@@ -402,7 +425,11 @@ func _rec_data(nm: String) -> Dictionary:
 
 func save_game(nm: String, fname: String = "") -> String:
 	if online != null or sim == null or sim.over or not kind in ["battle", "mission", "tutorial"]: return ""
-	var p := UI.write_file("saves", fname if fname != "" else "save_%d" % int(Time.get_unix_time_from_system()), _rec_data(nm))
+	var d := _rec_data(nm)
+	if use_bridge and sim.has_method("save_snapshot"):
+		var snap := str(sim.save_snapshot())
+		if snap != "": d.snap = snap
+	var p := UI.write_file("saves", fname if fname != "" else "save_%d" % int(Time.get_unix_time_from_system()), d)
 	_msg("Game saved" if p != "" else "Could not save")
 	return p
 
@@ -543,7 +570,10 @@ func sim_tick(orders: Array) -> void:
 		if online == null: rec.orders.append([tick_n, o])
 		_apply(o)
 	tick_n += 1
-	if kind == "range": sim.teams[me].credits = 999999.0
+	if kind == "range":
+		if sim.has_method("range_cmd") and float(sim.teams[me].credits) < 500000.0:
+			sim.range_cmd({cmd = "money", team = me, amt = 999999.0})
+		sim.teams[me].credits = 999999.0
 	for e in sim.ents:
 		prev[e.id] = Vector3(e.x, e.y, e.ang)
 	var m0 := int(sim.t / 60.0)
@@ -564,6 +594,8 @@ func sim_tick(orders: Array) -> void:
 
 ## state hash for online desync checks: positions, health, money, queue lengths (FNV-1a over ints)
 func hash_state() -> int:
+	if use_bridge and sim != null and sim.has_method("state_hash_int"):
+		return int(sim.state_hash_int())
 	var h := 2166136261
 	for e in sim.ents:
 		for v in [e.id, roundi(e.x * 16.0), roundi(e.y * 16.0), roundi(e.hp * 16.0), e.q.size()]:
@@ -697,6 +729,7 @@ func _process(dt: float) -> void:
 	_tut_tick()
 	_cameo_tick()
 	_ui_battle_tick()
+	_cursor_tick()
 	if shot_path != "" and (shot_t < 0 or sim.t >= shot_t) and not loading:
 		if shot_frames == 0 and auto_cam: _cam_on_fight()
 		if shot_frames == 0 and demo_ui != "": _demo_ui()
@@ -1277,7 +1310,10 @@ func _apply(o: Dictionary) -> bool:
 	match str(o.t):
 		"cancel":
 			if not use_bridge: return _cancel_one(o)   # P1 BRIDGE: the JS sim cancels by itself
-		"tut_money": sim.teams[int(o.team)].credits += 2500.0; return true
+		"tut_money":
+			if sim.has_method("range_cmd"): sim.range_cmd({cmd = "money", team = int(o.team), amt = 2500.0})
+			else: sim.teams[int(o.team)].credits += 2500.0
+			return true
 	if sim.apply_order(o): return true
 	match str(o.t):
 		"guard", "force":
@@ -1601,6 +1637,64 @@ func _ui_battle_tick() -> void:
 	if msg_t <= 0: msg_lbl.text = ""
 	hud.tick(dt)
 
+# ---------------------------------------------------------------- custom RTS context cursors
+func _set_cursor(nm: String) -> void:
+	if headless_mode or nm == _cur_cursor: return
+	_cur_cursor = nm
+	if not _cursor_cache.has(nm):
+		var fp := "res://ui/icons/cursors/%s.png" % nm
+		_cursor_cache[nm] = load(fp) if ResourceLoader.exists(fp) else null
+	var tex = _cursor_cache[nm]
+	if tex == null:
+		Input.set_custom_mouse_cursor(null, Input.CURSOR_ARROW)
+		return
+	var hs := Vector2(2, 2) if nm == "arrow" else Vector2(16, 16)
+	Input.set_custom_mouse_cursor(tex, Input.CURSOR_ARROW, hs)
+
+func _cursor_tick() -> void:
+	if headless_mode: return
+	if not started or ai_only or kind == "replay" or loading or paused or (hud != null and hud.window != null):
+		_set_cursor("arrow"); return
+	var mp := get_viewport().get_mouse_position()
+	var vs := get_viewport().get_visible_rect().size
+	if mp.y >= vs.y - Hud.BAR_H:
+		_set_cursor("arrow"); return
+	if range_panel != null and range_panel.visible and range_panel.get_global_rect().has_point(mp):
+		_set_cursor("arrow"); return
+	var g := _ground_at(mp)
+	if place_kind != "":
+		_set_cursor("place" if g != Vector2.INF and sim.valid_spot(me, place_kind, g.x, g.y) != 0 else "nogo")
+		return
+	if armed.begins_with("power"):
+		_set_cursor("aim"); return
+	if armed == "amove":
+		_set_cursor("amove"); return
+	if armed == "guard":
+		_set_cursor("guard"); return
+	if rdrag_on and line_node != null and line_node.visible:
+		_set_cursor("line"); return
+	var units := _sel_units()
+	if not units.is_empty():
+		if Input.is_key_pressed(KEY_CTRL):
+			_set_cursor("force"); return
+		if Input.is_key_pressed(KEY_ALT):
+			_set_cursor("way"); return
+		var tg = _pick_sim(mp)
+		if tg != null:
+			if tg.team >= 0 and tg.team != me and not sim.ally(me, tg.team):
+				_set_cursor("attack"); return
+			if (tg.team == me or sim.ally(me, tg.team)) and not bsel.has(tg.id) and (tg.is_b or tg.s_cls != "inf"):
+				_set_cursor("enter"); return
+		if g != Vector2.INF and not _sel_inf().is_empty():
+			for o in sim.oil:
+				if not o.dead and int(o.owner) != me and (int(o.owner) < 0 or not sim.ally(me, int(o.owner))) and Vector2(float(o.x), float(o.y)).distance_to(g) <= 40.0:
+					_set_cursor("capture"); return
+		_set_cursor("arrow"); return
+	var se := _sel_ents()
+	if se.size() == 1 and se[0].is_b and se[0].team == me and PROD.has(se[0].kind) and g != Vector2.INF:
+		_set_cursor("rally"); return
+	_set_cursor("arrow")
+
 # ---------------------------------------------------------------- Test range panel (unlimited money, a target nation that does not act)
 var range_panel: PanelContainer
 func _range_panel() -> void:
@@ -1620,7 +1714,7 @@ func _range_panel() -> void:
 	vb.add_child(g)
 	var F: Dictionary = sim.teams[me].F
 	for k in F.units:
-		if NO_TRAIN.has(k): continue
+		if not use_bridge and NO_TRAIN.has(k): continue
 		var kk: String = k
 		var b := UI.button(_short(F.units[k].name).substr(0, 16), func(): _range_spawn(me, kk, 1), 11, 132)
 		b.name = "Spawn_" + k
@@ -1635,25 +1729,42 @@ func _range_panel() -> void:
 	vb.add_child(tb)
 	vb.add_child(UI.button("+ Target building", func():
 		var p := cam_target + Vector2(cos(sim.base_facing(me)), sin(sim.base_facing(me))) * 380.0
+		if sim.has_method("range_cmd"):
+			sim.range_cmd({cmd = "spawn_bld", team = 1, kind = "barracks", x = p.x, y = p.y})
+			return
 		for r in 30:
 			var q := p + Vector2(cos(r * 2.4), sin(r * 2.4)) * r * 14.0
 			if sim.valid_spot(1, "barracks", q.x, q.y) != 0: sim.add_bld(1, "barracks", q.x, q.y, true); break, 12))
 	vb.add_child(UI.button("Clear targets", func():
+		if sim.has_method("range_cmd"):
+			sim.range_cmd({cmd = "clear", team = 1})
+			return
 		for e in sim.ents:
 			if e.team == 1 and not e.dead and not (e.is_b and e.kind == "hq"): sim.kill(e, me, null), 12))
+	range_ai_on = false
 	var fb := UI.button("Target fights back: off", Callable(), 12)
 	fb.name = "FightBack"
 	fb.pressed.connect(func():
-		sim.teams[1].ai = range_ai if sim.teams[1].ai == null else null
-		fb.text = "TARGET FIGHTS BACK: " + ("ON" if sim.teams[1].ai != null else "OFF"))
+		range_ai_on = not range_ai_on
+		if sim.has_method("range_cmd"):
+			sim.range_cmd({cmd = "set_ai", team = 1, on = range_ai_on})
+		else:
+			sim.teams[1].ai = range_ai if range_ai_on else null
+		fb.text = "TARGET FIGHTS BACK: " + ("ON" if range_ai_on else "OFF"))
 	vb.add_child(fb)
 	vb.add_child(UI.button("Heal my units", func():
+		if sim.has_method("range_cmd"):
+			sim.range_cmd({cmd = "heal", team = me})
+			return
 		for e in sim.ents:
 			if e.team == me and not e.dead: e.hp = e.max, 12))
 
 func _range_spawn(team: int, k: String, n: int, ahead: float = 0.0) -> void:
 	if sim.stats(sim.teams[team].fac, k).is_empty(): return
 	var p := cam_target + Vector2(cos(sim.base_facing(me)), sin(sim.base_facing(me))) * ahead
+	if sim.has_method("range_cmd"):
+		sim.range_cmd({cmd = "spawn", team = team, kind = k, x = p.x, y = p.y, n = n})
+		return
 	for i in n:
 		var q := p + Vector2(randf_range(-60, 60), randf_range(-60, 60))
 		if sim.nav.pass_xy(0, q.x, q.y): sim.add_unit(team, k, q.x, q.y)

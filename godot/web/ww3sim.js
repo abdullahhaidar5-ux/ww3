@@ -5185,6 +5185,385 @@ function fmTick(dt){const q=Math.floor(G.t);if(G._fmQ===q)return;G._fmQ=q;   /* 
   const L=[];for(const e of G.ents){if(e.dead||!IADS_KIND[e.kind]||(e.isB&&e.built<1))continue;const T=G.teams[e.team];if(T&&IADS_NAT[T.fac])L.push(e);}
   for(const e of L){let ok=false;for(const o of L){if(o!==e&&o.team===e.team&&Math.abs(o.x-e.x)<IADS_R&&Math.abs(o.y-e.y)<IADS_R&&Math.hypot(o.x-e.x,o.y-e.y)<IADS_R){ok=true;break;}}if(ok)e.iadsT=G.t+1.5;}}
 
+/* ===== src/07a-hostsnap.js ===== */
+/* ================= HOST NETCODE: snapshots, events, team panels (browser-free) =================
+   Everything the authoritative side of a battle sends to its players: entity snapshots (encEnt, sendSnapP, …), the
+   per-player event streams (visGrid, evWho, sendEvtP2P), team panels (teamMsg), order validation (cleanCmd),
+   reconnects (hostRejoin, discTick), and the send loop (netTick). It uses only the battle (01-data, 02-map, 03-sim),
+   the checkpoints in 07b-ckpt, and the room object NET.game ({emit(topic,data)->Promise, buffered?(to)}), so the
+   same code can run in a host's browser today and in a server (Node or a Cloudflare Durable Object) for Stage 2.
+   No DOM, no window, no Three.js here: orch/headless.mjs --hostsnap loads 01+02+03+07a+07b in plain Node.
+   NET.p2p (true/false) overrides the transport style; unset = the page's own (window.WW3_P2P, the online edition). */
+const NET={room:null,user:null,game:null,code:null,opp:null,hostPeer:null,myPeer:null,snapT:0,bT:0,evT:0,teamT:0,helloI:null,names:{}};
+const FLG={built:1,cargo:2,dis:4,chg:8,hack:16,plant:32,land:64,hid:128,mem:256,mov:2048,busy:4096,nd:8192,stall:16384,supp:32768,mark:65536,rout:131072,shak:262144,last:524288,aband:1048576};
+// per-player streams and bundles (online edition / servers) vs one broadcast per topic (claude.ai artifact room)
+function hostP2P(){return NET.p2p!=null?!!NET.p2p:typeof window!=='undefined'&&!!window.WW3_P2P;}
+const CMD_T=['ldr','go','atk','atkOil','fld','q','dq','cb','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret','spoof','stance','resup','doc','dbuy','dig','wall','clr','atkDam','fix','hab','lg','ping','spy','auto'];
+function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
+  if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.ti=Math.max(0,num(a.ti)|0);o.r=Math.max(0,Math.min(3,num(a.r)|0));o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
+  if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.at=a.at?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
+const NET_PV=9;   // 7 = Conquest (towns, tax command, rebel team); 9 = one game: Battle only, supply lines, no towns (2026-11-14)
+// A 'start' message for a battle where players picked start spots ('st') carries NET_PVS instead: an older game, which
+// would ignore the picks and put the bases elsewhere, refuses it as another version (close and reopen) instead.
+const NET_PVS=NET_PV+100;
+// picked start spots as sent: a spot per side (-1 = Random; a spot named twice counts once), or null when nobody picked
+function stClean(st,n){if(!Array.isArray(st))return null;const o=[];for(let i=0;i<n;i++){const v=st[i];o.push(Number.isInteger(v)&&v>=0&&v<8&&!o.includes(v)?v:-1);}return o.some(v=>v>=0)?o:null;}
+// A dropped player gets 30 s to reconnect (same team, same units) before the AI takes over their side. A player counts as
+// dropped after 8 s without a word, or 90 s while their keep-alive says they are still on the loading screen (NET.ldOf).
+// Reconnect tokens never leave the host in the clear: a checkpoint (sent to the standby player, kept by the server)
+// carries only 'h:'+tokHash(token), so the standby can't use another player's token to take over their side
+// (review R1). A host that picked the battle up from a checkpoint matches a returning player's token by its hash.
+function tokHash(t){t='ww3tok|'+String(t);let a=0x811c9dc5|0,b=0x9e3779b9|0;for(let i=0;i<t.length;i++){const c=t.charCodeAt(i);a=Math.imul(a^c,0x01000193);b=Math.imul(b^c,0x5bd1e995);b^=b>>>13;}
+  for(let r=0;r<4;r++){a=Math.imul(a^(a>>>15),0x85ebca6b)^b;b=Math.imul(b^(b>>>16),0xc2b2ae35)^a;}return (a>>>0).toString(36)+'.'+(b>>>0).toString(36);}
+function tokIx(tok){if(!tok||typeof tok!=='string'||tok.startsWith('h:')||!NET.toks)return -1;let ix=NET.toks.indexOf(tok);if(ix<0){const h='h:'+tokHash(tok);ix=NET.toks.indexOf(h);}return ix;}
+function tokSafe(){return NET.toks?NET.toks.map(t=>typeof t==='string'&&t?(t.startsWith('h:')?t:'h:'+tokHash(t)):null):null;}
+function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=tokIx(tok);if(ix<0||ix===ME)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.toks[ix]=tok;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,((NET.cseqSlot||[])[ix]||0));
+  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',Object.assign({pv:S.st?NET_PVS:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0,bm:S.bm?1:0},S.sv?{sv:1}:{},S.st?{st:S.st}:{},S.cm?{cm:S.cm}:{})).catch(()=>{});
+  for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');
+  // P2P: the rejoined player starts from a fresh map, so collapsed city blocks are re-sent as they come into view
+  if(hostP2P()){(NET.gq=NET.gq||[])[ix]=[];(NET.civQ=NET.civQ||[])[ix]=(G.civ||[]).map((c,i)=>c.dead?i:-1).filter(i=>i>=0);}}
+function discTick(){if(!NET.peers||!G)return;const now=performance.now();
+  // the host's own page froze (loading, a slow PC): what queued up meanwhile is not the players' silence, so that gap is not counted
+  if(NET.dtW&&now-NET.dtW>2500&&NET.seen){const gap=now-NET.dtW;for(const p in NET.seen)NET.seen[p]+=gap;}NET.dtW=now;for(let k=0;k<NET.peers.length;k++){const p=NET.peers[k];if(k===ME||!p)continue;const ls=(NET.seen||{})[p];if(ls&&now-ls>((NET.ldOf||{})[p]?90000:8000)&&!G.teams[k].discT&&!G.teams[k].ai){NET.peers[k]=null;playerLeft(k);}}for(let k=0;k<NET.peers.length;k++){const T=G.teams[k];if(k!==ME&&T&&T.discT&&G.t-T.discT>30&&!T.out){T.discT=0;T.ai=mkAI(1);T.aiTook=1;for(const O of G.teams)log(O.id,`${T.F.name}'s commander did not come back. The AI has taken over (they can still rejoin).`,'w');}}}
+function playerLeft(ix){if(!G||G.over)return;const T=G.teams[ix];if(!T||T.out||T.ai)return;T.discT=G.t;for(const O of G.teams)log(O.id,`${T.F.name}'s commander lost connection. Waiting up to 30 s for them to reconnect…`,'w');}
+/* ---------- host: what players send (shared by the browser host's wireHost and the server host) ----------
+   A server-hosted battle has no side of its own (ME=-1), so every slot is a player; a browser host is slot ME=0. */
+// a player's order (their presence order queue, or a 'cmd' message): only for their own side, while it is in the battle
+function hostCmd(peer,data){if(MODE!=='host')return;const ix=NET.peers?NET.peers.indexOf(peer):-1;if(ix<0||ix===ME)return;if(G&&G.teams[ix]&&G.teams[ix].out)return;const a=cleanCmd(data);if(a)act(ix,a);}
+// one player's presence (q: {peer,by,presence}): heard-from time, may-host flag, reconnects, the hello (hello(peer,by,
+// nation,token): the lobby greeting, or a reconnect once the battle runs), ping answers, the numbered order queue
+// (de-duplicated), and requests for a full snapshot
+// (order numbers start at Date.now()/10, past 32 bits: never "|0" them, or acknowledgements and checkpoints garble them)
+function hostPres(q,hello){const pr=q.presence;(NET.seen=NET.seen||{})[q.peer]=performance.now();
+  if(specIs(q.peer,pr)){specPres(q,pr);return;}
+  if(pr.hi&&pr.hi.ed!=null)(NET.edOf=NET.edOf||{})[q.peer]=pr.hi.ed?1:0;
+  if(pr.hi&&typeof pr.hi.hp==='number'&&pr.hi.hp>0)(NET.hpOf=NET.hpOf||{})[q.peer]=Math.min(1e5,pr.hi.hp);   // host benchmark (07b sbPick)
+  if(pr.ld!=null)(NET.ldOf=NET.ldOf||{})[q.peer]=pr.ld?1:0;
+  // a player the heartbeat marked as gone (e.g. their PC stalled while loading) is linked back as soon as they are heard from again
+  if(MODE==='host'&&NET.peers&&pr.hi&&typeof pr.hi.tok==='string'&&NET.peers.indexOf(q.peer)<0)hostRejoin(q.peer,pr.hi.tok.slice(0,16));
+  if(pr.hi&&(MODE==='single'||MODE==='host')&&(NET.lastHi||{})[q.peer]!==pr.hi.n){(NET.lastHi=NET.lastHi||{})[q.peer]=pr.hi.n;hello(q.peer,q.by,pr.hi.f,typeof pr.hi.tok==='string'?pr.hi.tok.slice(0,16):null);}
+  if(typeof pr.pg==='number'&&(NET.lastPg||{})[q.peer]!==pr.pg){(NET.lastPg=NET.lastPg||{})[q.peer]=pr.pg;NET.game.emit('pong',{to:q.peer,t:pr.pg}).catch(()=>{});if(typeof pr.pi==='number')(NET.pings=NET.pings||{})[q.peer]=pr.pi;}
+  if(Array.isArray(pr.cq)&&MODE==='host'){let last=NET.cseq[q.peer]||0;for(const c of pr.cq){if(!c||typeof c.s!=='number'||c.s<=last)continue;last=c.s;hostCmd(q.peer,c.a);}NET.cseq[q.peer]=last;const ix=NET.peers?NET.peers.indexOf(q.peer):-1;if(ix>=0&&ix!==ME)(NET.cseqSlot=NET.cseqSlot||[])[ix]=Math.max(((NET.cseqSlot||[])[ix]||0),last);}
+  if(typeof pr.kr==='number'&&MODE==='host'&&NET.peers&&(NET.lastKr||{})[q.peer]!==pr.kr){(NET.lastKr=NET.lastKr||{})[q.peer]=pr.kr;const ix=NET.peers.indexOf(q.peer);if(ix>=0&&ix!==ME&&NET.kf)NET.kf[ix]=0;}}
+// a player's connection closed during the battle: 30 s to come back before the AI takes their side (playerLeft)
+function hostGone(peer){specGone(peer);if(MODE!=='host'||!NET.peers)return;const ix=NET.peers.indexOf(peer);if(ix>=0&&ix!==ME){NET.peers[ix]=null;playerLeft(ix);}}
+/* ---------- host: send ---------- */
+function encEnt(e,mem){let f=0,x=0;if(e.isB){if(e.rep)f|=FLG.rout;if(e.sell)f|=FLG.shak;if(e.built<1){f|=FLG.built;x=Math.round(e.built*100);}if(e.dis>G.t)f|=FLG.dis;if(e.charge)f|=FLG.chg;if(e.kind==='uplink'){x=Math.round(G.teams[e.team].charge/G.teams[e.team].sup.charge*100);}if(e.kind==='garrison'&&e.civ){x=e.civ.occ.length*16+e.civ.cap;}if(e.kind==='factory'&&(e.q&&e.q.length))f|=FLG.busy;if(mem)f|=FLG.mem;if(e.nd&&e.built<1)f|=FLG.nd;if(e.stall&&e.built<1)f|=FLG.stall;}
+  else{if(e.cargo)f|=FLG.cargo;if(e.hacking)f|=FLG.hack;if(e.planting)f|=FLG.plant;if(e.landed)f|=FLG.land;if(e.hid)f|=FLG.hid;if(G.t-(e.mv||-9)<.25)f|=FLG.mov;if(e.building)f|=FLG.busy;if((e.supp||0)>.5)f|=FLG.supp;if(e.rout>G.t)f|=FLG.rout;else if(e.s&&canRout(e)&&(e.fear||0)>courageOf(e)*.65)f|=FLG.shak;if(e.mark>G.t)f|=FLG.mark;if(e.last>G.t)f|=FLG.last;if(e.aband)f|=FLG.aband;f|=((e.st|0)&3)*2097152;f|=(e.rank||0)<<9;if(e.am!==undefined&&e.amx)f|=(e.am<=0?1:Math.max(2,1+Math.round(e.am/e.amx*126)))<<23;if(e.sup)f|=1<<30;{const m=moraleOf(e);x=m?(m.st==='fearless'?101:Math.round(m.v*20)*5):-1;x=(x+1)+128*((e.crit|0)&7);}}
+  return[e.id,KINDS.indexOf(e.kind),e.team,Math.round(e.x),Math.round(e.y),Math.round((e.va||0)*100),Math.round((e.tang||0)*100),Math.round(e.hp),Math.round(e.max),f,x];}
+function sendSnap(key,to,items,bit){NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+(bit?4+((key|0)%8)*.25:2);const old=NET.sc[key];let c=old;if(!c||full)c=NET.sc[key]=new Map();
+  // the keep-alive list (ids of unchanged entities) only needs to beat the client's expiry, so it goes out every 0.5 s, not every tick
+  const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+(bit?.4:0);
+  const ch=[],keep=[],seen=new Set();for(const a of items){seen.add(a[0]);const s=a.join(',');if(c.get(a[0])===s){if(sendKeep){if(bit)keep.push(a[0]);else keep.push(a[0],a[11]|a[12]);}}else{c.set(a[0],s);ch.push(a);}}
+  const dr=[];if(old)for(const id of old.keys())if(!seen.has(id)){if(old===c)c.delete(id);dr.push(id);}
+  const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
+  if(ch.length||!keep.length&&sendKeep||dr.length)snapOut(base,ch,snapDrops(dr));const per=bit?1400:700;for(let i=0;i<keep.length;i+=per)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+per)},bit?{kb:1}:{})).catch(()=>{});}
+// P2P: each entity's state is encoded and compared ONCE per tick (a version number per entity), then each player's
+// cache only stores version*2+remembered-bit - no per-player strings, so the host's cost barely grows with player count.
+function verItems(items){const V=NET.ver||(NET.ver=new Map());const st=NET.verSt=(NET.verSt|0)+1;
+  for(const a of items){const s=a.slice(0,11).join(',');let r=V.get(a[0]);if(!r){r=[s,1,st];V.set(a[0],r);}else{if(r[0]!==s){r[0]=s;r[1]++;}r[2]=st;}a._v=r[1];}
+  if(V.size>items.length*1.5+64)for(const [id,r] of V)if(r[2]!==st)V.delete(id);}
+function sendSnapP(k,to,items,skey){const all=k<0,b=all?0:1<<k,key=all?skey:k;NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+4+(k%8)*.25;const old=NET.sc[key];let c=old;if(!c||full)c=NET.sc[key]=new Map();
+  const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+.4;const ch=[],keep=[];let n=0,dv=null;
+  for(const a of items){if(!all&&!((a[11]|a[12])&b))continue;n++;const mem=!all&&!(a[11]&b),code=a._v*2+(mem?1:0);if(c.get(a[0])===code){if(sendKeep)keep.push(a[0]);continue;}
+    c.set(a[0],code);const r=a.slice(0,11);r[9]=mem?(r[9]|FLG.mem):(r[9]&~FLG.mem);ch.push(r);}
+  const dr=[];if(old&&(old!==c||c.size>n)){const seen=new Set();for(const a of items)if(all||(a[11]|a[12])&b)seen.add(a[0]);for(const [id,ov] of old)if(!seen.has(id)){if(old===c)c.delete(id);dr.push(id);if(ov%2===0)(dv||(dv=new Set())).add(id);}}
+  const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
+  // a remembered building that died out of this player's sight stays on their map until they see the spot ('gone' queue)
+  if(!all&&dr.length&&NET.gq&&NET.gq[k]&&NET.gq[k].length){const q=new Set(NET.gq[k].map(g=>g[0]));for(let i=dr.length-1;i>=0;i--)if(q.has(dr[i]))dr.splice(i,1);}
+  if(ch.length||!keep.length&&sendKeep||dr.length)snapOut(base,ch,snapDrops(dr));for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});
+  // just-died units left out of the drop list are still on this player's screen until their 'die' arrives (dieWho)
+  if(!all&&dr.length&&NET.dyC){const dy=NET.dyC.s;for(const id of dr)if(dy.has(id)&&dv&&dv.has(id))dhSet(k).add(id);}}
+function dhSet(k){if(NET.dhG!==G){NET.dhG=G;NET.dh=[];}const D=NET.dh;return D[k]||(D[k]=new Set());}
+// P2P: one copy per player, so the two visibility masks are folded into that player's 'remembered' flag and dropped
+function forPlayer(items,k){const b=1<<k,out=[];for(const a of items){if(!((a[11]|a[12])&b))continue;const c=a.slice(0,11);c[9]=(a[11]&b)?(c[9]&~FLG.mem):(c[9]|FLG.mem);out.push(c);}return out;}
+// a player who sees nothing at all (their side was wiped out) still gets an empty snapshot every 0.4 s: it moves their
+// clock on, so enemies that were in sight fade out instead of lingering as stale ghosts (it was sent as nothing)
+function snapOut(base,ch,first){if(ch.length||first)sendChunks('snap',base,ch,first);else NET.game.emit('snap',{...base,e:[]}).catch(()=>{});}
+// first (optional): extra fields carried by the first message only (a snapshot's drop list); sent even with no items
+function sendChunks(topic,base,items,first){let cur=[],len=first?JSON.stringify(first).length:0;const flush=()=>{if(cur.length||first){NET.game.emit(topic,first?{...base,...first,e:cur}:{...base,e:cur}).catch(()=>{});first=null;cur=[];len=0;}};
+  for(const it of items){const s=JSON.stringify(it).length+1;if(len+s>3500&&cur.length)flush();cur.push(it);len+=s;}flush();}
+// Units that leave a player's view are named in that player's next snapshot ('dr': ids only, no position) so their
+// screen drops them at once - before, they lingered up to ~1 s until the client's own expiry noticed the silence.
+// Anything that just died is left out: its 'die' event (explosion, wreck) is still on its way and removes it.
+function snapDrops(dr){if(!dr.length)return null;let c=NET.dyC;if(!c||c.t!==G.t||c.n!==G.out.length){const s=new Set();for(const v of G.out)if(Array.isArray(v)&&v[0]==='die')s.add(v[1]);c=NET.dyC={t:G.t,n:G.out.length,s};}const dy=c.s;
+  const o=dr.filter(id=>!dy.has(id));return o.length?{dr:o.slice(0,400)}:null;}
+// map-wide state (resource fields, oil derricks, who is out) is built once per flush and sent to a player only when it
+// changed since what they last got, or once a second as a refresh - it was resent to everyone 4x a second
+function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),lg=lgPack(),sf=G.teams.map(T=>T.reb||!T._upl||!T.sup?-1:Math.round(100*T.charge/T.sup.charge)),gd=G.teams.map(O=>O.gdoc||'');NET.tgC={t:G.t,v:{fa,oil,out,lg,sf,gd},js:JSON.stringify([fa,oil,out,lg,sf,gd])};}
+  const C=NET.tgC,S=NET.tgS||(NET.tgS={}),last=S[k];if(last&&last.js===C.js&&G.t-last.t<1)return {};S[k]={js:C.js,t:G.t};return C.v;}
+// EW minimap data for this team only (enemy bubbles over its units, ghost contacts, own spoof cooldowns); null when empty
+function ewPack(k){const v=ewView(k);return v.j.length||v.g.length||v.cd.length?{j:v.j,g:v.g,cd:v.cd}:null;}
+function teamMsg(T){const q={};for(const e of G.ents)if(e.isB&&e.team===T.id&&!e.dead&&CATS.includes(e.kind)&&((e.q&&e.q.length)||e.rally))q[e.id]=[(e.q||[]).map(i=>[i.kind,+(i.t/prodTime(T,stats(T.fac,i.kind))).toFixed(2),i.c||0]),e.rally?[e.rally.x|0,e.rally.y|0]:0];const rq={};for(const c in T.rq)if(T.rq[c])rq[c]=[T.rq[c].key,+(T.rq[c].t/UPG[T.rq[c].key].time).toFixed(2)];
+  const pw={};for(const k in T.pw)pw[k]=[Math.ceil(T.pw[k].cd),T.pw[k].lv||1];
+  return{au:bfAuPack(T),sn:T.sanc>G.t?+(T.sanc-G.t).toFixed(1):0,mo:(T.mart||0)>G.t?+(T.mart-G.t).toFixed(1):0,rb:(T.rebuy||0)>G.t?+(T.rebuy-G.t).toFixed(1):0,hb:(T.hrb||0)>G.t?+(T.hrb-G.t).toFixed(1):0,ld:T.ld?[Math.max(0,+(T.ld.c1-G.t).toFixed(1)),Math.max(0,+(T.ld.c2-G.t).toFixed(1)),Math.max(0,+((T.ld.mm||0)-G.t).toFixed(1))]:null,hc:G.ents.filter(e=>e.kind==='champ'&&e.team===T.id&&!e.dead).map(e=>[e.id,Math.max(0,+((e.habT||0)-G.t).toFixed(1))]),c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,dc:T.gdoc||'',dp:Object.keys(T.gperk||{}).join(','),pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),ct:ctPack(T.id),tn:T.tun.length,tk:tunKinds(T),fn:fortN(T.id),fk:fortKinds(T.id),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,ew:ewPack(T.id),mn:(G.mines||[]).filter(m=>m.team===T.id||(m.nav&&(ally(m.team,T.id)||(m.dt&&m.dt[T.id]>G.t)))).map(m=>[m.x,m.y,m.team,m.nav?1:0,m.team!==T.id&&!ally(m.team,T.id)?1:0]),...(dgPack(T)||{}),...(wdPack(T)||{}),...(damPack(T)||{}),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
+// P2P: everything a player gets in one tick (snapshot chunks, effects, panel) travels as ONE bundle ('b') - about 10
+// messages a second per connection instead of ~17-24, less per-message overhead, and effects arrive with their snapshot.
+function netTick(dt){if(!hostP2P()||MODE!=='host'||!NET.game||!NET.peers)return netTick0(dt);const g=NET.game,real=g.emit,B=new Map();
+  g.emit=(t,d)=>{const to=d&&typeof d==='object'&&d.to;if(!to||t==='ck')return real.call(g,t,d);let L=B.get(to);if(!L){L=[];B.set(to,L);}const dd=Object.assign({},d);delete dd.to;L.push([t,dd]);if(L.length>=4)real.call(g,'b',{to,m:L.splice(0)}).catch(()=>{});return Promise.resolve();};
+  try{netTick0(dt);}finally{g.emit=real;for(const [to,L] of B)if(L.length)real.call(g,'b',{to,m:L}).catch(()=>{});}}
+function netTick0(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTick();if(NET.ckOut)ckFlush();NET.snapT-=dt;NET.evT-=dt;NET.teamT-=dt;NET.bT-=dt;const live=[];for(let k=0;k<NET.peers.length;k++)if(k!==ME&&NET.peers[k]&&!G.teams[k].ai)live.push(k);const SP=NET.specs&&NET.specs.length?NET.specs:null;if(!live.length&&!SP){if(G.out.length>400)G.out.length=0;return;}try{ckTick(dt,live);}catch(e){}
+  // The room allows each sender about 40 messages a second, so with many players the host BROADCASTS one snapshot and
+  // one event stream to everyone (each entity tagged with which players can see it, each client keeps only its own)
+  // instead of one copy per player; team panels go out round-robin.
+  // Delta snapshots: an entity whose state has not changed since the last copy that player got is listed only by id
+  // (keeps it alive on their screen); full copies go out only for what changed, plus a full keyframe every 2 s that
+  // also repairs anything a dropped message missed. Typical armies are mostly idle, so this cuts traffic several-fold.
+  if(NET.snapT<=0){const items=[],SK=hostP2P()?(NET.sk=NET.sk||new Map()):null;
+    for(const e of G.ents){if(e.dead)continue;let vm=0,mm=0;for(const k of live){const v=e.team===k||(e.vs&&e.vs[k]);if(e.isB){if(v)vm|=1<<k;else if((e.sn|0)&(1<<k))mm|=1<<k;}else if(v)vm|=1<<k;}
+      if(!vm&&!mm&&!SP)continue;if(SK&&(vm||mm))skNote(SK,e,vm,mm,live);const a=encEnt(e,false);a.push(vm,mm);items.push(a);}
+    NET.snapT=hostP2P()?.1:Math.max(.2,Math.min(.6,Math.ceil(items.length/150)*.1));
+    if(hostP2P()){verItems(items);for(const k of live){const to=NET.peers[k];if(NET.game.buffered&&NET.game.buffered(to)>12000)continue;sendSnapP(k,to,items);(NET.snapTo=NET.snapTo||[])[k]=G.t;}if(SP)for(const s of SP){if(NET.game.buffered&&NET.game.buffered(s.peer)>12000)continue;sendSnapP(-1,s.peer,items,'s:'+s.peer);}}else sendSnap('all',null,items);}
+  if(NET.evT<=0){NET.evT=hostP2P()?.1:.15;let evs=G.out;G.out=[];
+    // P2P: one filtered stream per player (sendEvtP2P); room mode: one broadcast stream as before
+    if(hostP2P()){if(SP&&evs.length)specEvts(evs,SP);sendEvtP2P(evs,live);}else if(evs.length){let len=JSON.stringify(evs).length;if(len>3400){const imp=evs.filter(v=>v[0]!=='muz'&&v[0]!=='tr');const lo=evs.filter(v=>v[0]==='muz'||v[0]==='tr');evs=imp;len=JSON.stringify(evs).length;for(const v of lo){const s=JSON.stringify(v).length+1;if(len+s>3400)break;evs.push(v);len+=s;}}
+    if(JSON.stringify(evs).length>3400)sendChunks('evt',{},evs);else if(evs.length)NET.game.emit('evt',{e:evs}).catch(()=>{});}}
+  if(SP){NET.specTT=(NET.specTT||0)-dt;if(NET.specTT<=0){NET.specTT=hostP2P()?.5:1;for(const s of SP){const T=G.teams[s.sv];if(T)NET.game.emit('team',Object.assign(teamMsg(T),{to:s.peer,sb:0,ak:0})).catch(()=>{});}}}
+  if(NET.teamT<=0&&live.length){NET.teamT=.25;const per=hostP2P()?live.length:Math.min(live.length,3);NET.trr=NET.trr||0;for(let n=0;n<per;n++){const k=live[(NET.trr++)%live.length];NET.game.emit('team',teamMsg(G.teams[k])).catch(()=>{});}}}
+
+/* ---------- host: per-player event streams (P2P only) ----------
+   In P2P every player is sent their own copy of the event stream anyway, so each copy carries only what that player
+   could perceive: effects inside their own or an ally's vision, messages addressed to them, their side's general's
+   powers, and the few global announcements. Fights in the fog no longer reach (or give away) anyone who cannot see
+   them. Vision is a coarse grid of team bitmasks rebuilt at each 0.15 s flush from the same sources as updateVis:
+   every unit's and building's sight radius (shared with allies), each team's own reveals, plus the cell of anything a
+   team currently sees (counter-battery reveals and the like). One lookup answers for all players at once. */
+const VG={c:64,w:0,h:0,a:null,t:-1,AM:[]};
+function visGrid(){if(VG.t===G.t&&VG.a)return;const c=VG.c,w=Math.ceil(MAPW/c)+1,h=Math.ceil(MAPH/c)+1,N=G.teams.length;
+  if(!VG.a||VG.w!==w||VG.h!==h){VG.a=new Uint8Array(w*h);VG.w=w;VG.h=h;}else VG.a.fill(0);const a=VG.a,AM=VG.AM;AM.length=N;
+  for(let i=0;i<N;i++){let m=0;for(let j=0;j<N;j++)if(sameTm(i,j))m|=1<<j;AM[i]=m;}
+  // a cell counts as seen when its centre is within sight radius + half a cell (the client's own fog hole is drawn 8%
+  // wider than the sight radius with a soft edge, so this matches what the player actually sees within a few metres)
+  const disc=(x,y,R,m)=>{if(!m||!(R>0))return;const R2=(R+c*.5)**2,x0=Math.max(0,Math.floor((x-R)/c)),x1=Math.min(w-1,Math.floor((x+R)/c)),y0=Math.max(0,Math.floor((y-R)/c)),y1=Math.min(h-1,Math.floor((y+R)/c));
+    for(let cy=y0;cy<=y1;cy++){const dy=(cy+.5)*c-y,dy2=dy*dy;if(dy2>R2)continue;const row=cy*w;for(let cx=x0;cx<=x1;cx++){const dx=(cx+.5)*c-x;if(dx*dx+dy2<=R2)a[row+cx]|=m;}}};
+  for(const e of G.ents){if(e.dead||!(e.team>=0&&e.team<N))continue;disc(e.x,e.y,e._vr||visR(e),AM[e.team]);
+    if(e.vs){let m=0;for(let k=0;k<N;k++)if(e.vs[k])m|=1<<k;const cx=Math.floor(e.x/c),cy=Math.floor(e.y/c);if(m&&cx>=0&&cy>=0&&cx<w&&cy<h)a[cy*w+cx]|=m;}}
+  for(const T of G.teams)for(const r of T.reveals||[])disc(r.x,r.y,r.r,1<<T.id);VG.t=G.t;}
+// bitmask of the teams that see any part of the circle (x,y,m)
+function visAt(x,y,m){const c=VG.c,w=VG.w,h=VG.h,a=VG.a,cx=Math.floor(x/c),cy=Math.floor(y/c);
+  if(!(m>c*.5))return cx>=0&&cy>=0&&cx<w&&cy<h?a[cy*w+cx]:0;
+  const r=Math.ceil(m/c),M2=(m+c*.5)**2;let o=0;
+  for(let j=Math.max(0,cy-r),j1=Math.min(h-1,cy+r);j<=j1;j++)for(let i=Math.max(0,cx-r),i1=Math.min(w-1,cx+r);i<=i1;i++){const dx=(i+.5)*c-x,dy=(j+.5)*c-y;if(dx*dx+dy*dy<=M2)o|=a[j*w+i];}return o;}
+// who gets each kind of event (v = [type,...FXH args]); anything not listed (end, elim, oilDry, new types) goes to all
+function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
+  switch(v[0]){
+    case 'muz':return visAt(v[1],v[2],v[5]>=13?60:20);                     // gun position; big guns throw smoke and dust
+    case 'tr':case 'pj':return visAt(v[1],v[2],16)|visAt(v[4],v[5],16);     // either end in sight: you see it fly in/out
+    case 'salvo':return visAt(v[1],v[2],30)|visAt(v[4],v[5],60);
+    case 'boom':return own|visAt(v[1],v[2],Math.min(400,20+(+v[3]||0)*(v[4]?2.5:1.5)));  // fireball, smoke column and flash reach past the fog edge
+    case 'hack':return visAt(v[1],v[2],40);
+    case 'flag':return own|visAt(v[1],v[2],40);                                // martyr banner: its side and whoever sees the spot
+    case 'rank':return visAt(v[3],v[4],30);
+    case 'chf':return visAt(v[1],v[2],40);
+    case 'flare':return true;                                                // everyone sees a flare go up
+    case 'ping':case 'heal':case 'smoke':case 'halo':return own|visAt(v[1],v[2],+v[3]||0);
+    case 'vig':return own;
+    case 'strike':return v[5]?255:own|visAt(v[1],v[2],(+v[4]||0)+40);      // superweapon-class warnings are global (alarm + "inbound" log)
+    case 'bmis':return visAt(v[1],v[2],120);                                 // only where the launch is seen: never hands out the silo's position
+    case 'plane':{const sx=v[1],sy=v[2],tx=v[3],ty=v[4],L=Math.hypot(tx-sx,ty-sy)||1,E=L*6/2.6,n=Math.min(24,Math.ceil(E/200));let m=AM[v[5]]|0;
+      for(let i=0;i<=n;i++){const u=i/n*E/L;m|=visAt(sx+(tx-sx)*u,sy+(ty-sy)*u,150);}return m;}   // its whole flight path
+    case 'toss':{const e=G.byId.get(v[1]);if(!e||e.dead||!e.vs)return 0;let m=AM[e.team]|0;for(let k=0;k<e.vs.length;k++)if(e.vs[k])m|=1<<k;return m;}
+    case 'txt':{const t=v[4],w=v[5];let m=(t>=0?1<<t:0)|(w>=0?1<<w:0);if(w===-2)m|=(AM[t]|0)|visAt(v[1],v[2],0);return m;}
+    case 'log':return v[1]>=0?1<<v[1]:0;
+    case 'give':return (1<<v[1])|(1<<v[2]);
+    case 'mping':case 'mdraw':case 'say':return ctMask(v[1]);                  // pings, drawings and quick lines: the sender's team only
+    case 'cfo':return (1<<v[1])|(1<<v[2]);case 'cfs':case 'cfb':return (1<<v[1])|(1<<v[2]);
+    default:return 255;}}
+// what each player was last sent of an entity: r.t[k] = when it was last in k's snapshot as visible, r.m = players
+// that hold it as a remembered (fogged) building
+function skNote(SK,e,vm,mm,live){let r=SK.get(e.id);if(!r)SK.set(e.id,r={t:[],m:0,s:0});for(const k of live)if(vm&(1<<k))r.t[k]=G.t;r.m|=mm;r.s=G.t;}
+// 'die' goes to everyone who sees the spot, and to anyone who still has that entity on screen: it is in the last
+// snapshot cache for that player (NET.sc[k]; a snapshot skipped for a congested link leaves it there), or it was
+// dropped from that cache only because it had just died (dhSet). A unit that walked out of sight was already named in
+// that player's drop list, so it dying later in the fog shows them nothing (8.5 s covers the client's absolute expiry).
+// A remembered building never expires on the client, so if it dies out of sight it is queued as a silent 'gone'.
+function dieWho(v,live){const id=v[1],x=v[2],y=v[3],ki=v[4],isB=v[5];let m=visAt(x,y,isB?120:30);const r=NET.sk&&NET.sk.get(id);
+  const dh=NET.dhG===G?NET.dh:null;let held=0;if(dh)for(const k of live)if(dh[k]&&dh[k].delete(id))held|=1<<k;
+  if(r){NET.sk.delete(id);const sc=NET.sc||{};for(const k of live){const b=1<<k;if(m&b)continue;const t=r.t[k];
+    if(t!=null&&((held&b)||sc[k]&&sc[k].get(id)%2===0)&&G.t-t<=8.5)m|=b;
+    else if(isB&&(r.m&b)){const q=NET.gq[k]=NET.gq[k]||[];q.push([id,x,y,ki]);if(q.length>300)q.shift();}}}
+  return m;}
+// a city block collapsing changes the map (passability, cover), so every player must get it eventually: now if they see
+// it, otherwise quietly (no explosion) once they do
+function civWho(v,live){const c=G.civ&&G.civ[v[1]];if(!c)return 255;const m=visAt(c.x,c.y,60);for(const k of live)if(!(m&(1<<k)))(NET.civQ[k]=NET.civQ[k]||[]).push(v[1]);return m;}
+function sendEvtP2P(evs,live){const gq=NET.gq=NET.gq||[],vq=NET.civQ=NET.civQ||[];let lm=0,pend=evs.length;
+  for(const k of live){lm|=1<<k;pend+=(gq[k]||[]).length+(vq[k]||[]).length;}if(!pend)return;
+  visGrid();const per=[];for(const k of live)per[k]=[];
+  for(const v of evs){if(!Array.isArray(v))continue;const m=(v[0]==='die'||v[0]==='gone'?dieWho(v,live):v[0]==='civd'?civWho(v,live):evWho(v))&lm;if(!m)continue;
+    const s=JSON.stringify(v);for(const k of live)if(m&(1<<k))per[k].push([v,s]);}
+  for(const k of live){const b=1<<k,L=per[k],add=v=>L.push([v,JSON.stringify(v)]);
+    if(gq[k]&&gq[k].length)gq[k]=gq[k].filter(g=>{if(!(visAt(g[1],g[2],40)&b))return true;add(['gone',...g]);return false;});
+    if(vq[k]&&vq[k].length)vq[k]=vq[k].filter(i=>{const c=G.civ&&G.civ[i];if(!c)return false;if(!(visAt(c.x,c.y,60)&b))return true;add(['civd',i,1]);return false;});
+    if(!L.length)continue;const to=NET.peers[k];
+    // same budget per player as the broadcast had: ~3.4 KB per 0.15 s, muzzle flashes and tracers dropped first
+    let len=1;for(const x of L)len+=x[1].length+1;let out=L;
+    if(len>3400){out=[];len=1;const lo=[];for(const x of L){if(x[0][0]==='muz'||x[0][0]==='tr')lo.push(x);else{out.push(x);len+=x[1].length+1;}}
+      for(const x of lo){if(len+x[1].length+1>3400)break;out.push(x);len+=x[1].length+1;}}
+    const e=out.map(x=>x[0]);if(len>3400)sendChunks('evt',{to},e);else NET.game.emit('evt',{e,to}).catch(()=>{});}
+  if(NET.sk&&!(NET.skP>G.t)){NET.skP=G.t+5;for(const [id,r] of NET.sk)if(G.t-r.s>15&&!G.byId.has(id))NET.sk.delete(id);}}
+
+/* ---------- spectators (Abdullah 2026-11-03): friends watch an online battle, at most SPEC_MAX at a time ----------
+   A spectator is a connection that greets with hi.sp. It is never in NET.peers, so it has no side, its orders are never
+   read (hostCmd/hostPres look sides up in NET.peers), it never gets checkpoints and so can never be the standby or the
+   next host (ckTick only picks from the players). The host sends each spectator the whole battle - every unit and
+   building with nothing hidden (sendSnapP k=-1), every effect, and the team panel of the side they follow (sv) - from
+   copies of what it already builds for the players, so a spectator joining or leaving changes nothing for them.
+   Lobby bookkeeping is the host's own (NET.onSpec: the browser lobby in 07-net, the server's BattleHost.spec). */
+const SPEC_MAX=4;
+function specIs(peer,pr){if(NET.peers&&NET.peers.indexOf(peer)>=0)return false;if(pr&&pr.hi&&pr.hi.sp){(NET.isSpec=NET.isSpec||{})[peer]=1;return true;}return !!(NET.isSpec&&NET.isSpec[peer]);}
+function specOf(peer){return (NET.specs||[]).find(s=>s.peer===peer)||null;}
+// the battle is running: add the spectator (if there is room) and send them the battle's start
+function specJoin(peer){if(MODE!=='host'||!G||!NET.startInfo||!NET.game)return false;if(NET.peers&&NET.peers.indexOf(peer)>=0)return false;NET.specs=NET.specs||[];
+  if(!specOf(peer)){if(NET.specs.length>=SPEC_MAX){NET.game.emit('lobby',{n:0,to:peer,full:1,spec:1}).catch(()=>{});return false;}NET.specs.push({peer,sv:0});}
+  const si=NET.startInfo,st=Object.assign(Array.isArray(si.st)?{st:si.st}:{},Array.isArray(si.pc)?{pc:si.pc}:{});
+  NET.game.emit('start',Object.assign({pv:st.st?NET_PVS:NET_PV,seed:si.seed,facs:si.facs,slot:0,to:peer,map:si.map,tm:si.tm,w:si.w|0,bm:si.bm?1:0,sp:1},ME<0||si.sv?{sv:1}:{},st)).catch(()=>{});
+  if(NET.kf)NET.kf['s:'+peer]=0;return true;}
+function specGone(peer){if(NET.isSpec)delete NET.isSpec[peer];if(!NET.specs)return;const i=NET.specs.findIndex(s=>s.peer===peer);if(i<0)return;NET.specs.splice(i,1);
+  const k='s:'+peer;for(const m of ['sc','kf','kt'])if(NET[m])delete NET[m][k];if(NET.onSpecGone)try{NET.onSpecGone(peer);}catch(e){}}
+function specPres(q,pr){const peer=q.peer;
+  if(pr.hi&&(NET.lastHi||{})[peer]!==pr.hi.n){(NET.lastHi=NET.lastHi||{})[peer]=pr.hi.n;if(NET.onSpec)NET.onSpec(peer);else if(MODE==='host')specJoin(peer);}
+  if(typeof pr.pg==='number'&&(NET.lastPg||{})[peer]!==pr.pg&&NET.game){(NET.lastPg=NET.lastPg||{})[peer]=pr.pg;NET.game.emit('pong',{to:peer,t:pr.pg}).catch(()=>{});}
+  const s=specOf(peer);if(!s)return;if(typeof pr.sv==='number'&&G&&pr.sv>=0&&pr.sv<G.teams.length)s.sv=pr.sv|0;
+  if(typeof pr.kr==='number'&&(NET.lastKr||{})[peer]!==pr.kr){(NET.lastKr=NET.lastKr||{})[peer]=pr.kr;if(NET.kf)NET.kf['s:'+peer]=0;}}
+// every effect to every spectator (same ~3.4 KB budget per flush as a player's stream: muzzle flashes / tracers go first)
+function specEvts(evs,SP){let e=evs.filter(v=>Array.isArray(v)),len=JSON.stringify(e).length;
+  if(len>3400){const imp=e.filter(v=>v[0]!=='muz'&&v[0]!=='tr'),lo=e.filter(v=>v[0]==='muz'||v[0]==='tr');e=imp;len=JSON.stringify(e).length;for(const v of lo){const s=JSON.stringify(v).length+1;if(len+s>3400)break;e.push(v);len+=s;}}
+  if(!e.length)return;for(const s of SP){if(len>3400)sendChunks('evt',{to:s.peer},e);else NET.game.emit('evt',{e,to:s.peer}).catch(()=>{});}}
+
+/* ===== src/07b-ckpt.js ===== */
+/* ---------- Battle checkpoints (for host migration) ----------
+   The host periodically packs the whole battle into a compact checkpoint and sends it to a standby player. If the host
+   drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
+   Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
+   index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
+const CK_G=['truce','tOff','aidQ','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','wxN','fixWx','wxB','ssn','mines','smokes','shields','smugs','craters','ruins','aiTT','upN','sqOf',
+  'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
+  'todM','live','todH0','humA','rebT','radT','stT','gprT','supT','prT','tbT','pwT','dgT','n2T','wndS','bfWd','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','battle','reb','N','seed','mapKey','roadV','_fmQ','boccS'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
+const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
+// (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
+// end of the sim step)
+const ckSafe=(k,v)=>k==='oil'?undefined:v;   /* an order aimed at an oil derrick points at the derrick row, which points back at its target (circular): leave the row out when comparing */
+/* underscore fields are caches and are not saved, EXCEPT these, which the simulation reads to decide things (2026-11-14 savesync: a loaded save or a migrated host played on differently): _fc, artillery first-shot clock _arT (damage), cover cache _cvT/_cvK (who sees whom), AI target spreading _dv/_dvT/_dvTg */
+const CK_UKEEP=new Set(['_fc','_arT','_cvT','_cvK','_dv','_dvT','_dvTg']);
+function ckEncode(){const ids=new Map();for(const e of G.ents)if(!e.inTun)ids.set(e,e.id);const fi=new Map(G.fields.map((f,i)=>[f,i])),oi=new Map(G.oil.map((o,i)=>[o,i])),ci=new Map((G.civ||[]).map((c,i)=>[c,i]));
+  const S=[],SI=new Map();const sref=s=>{let i=SI.get(s);if(i==null){i=S.length;SI.set(s,i);S.push(s);}return i;};
+  const seen=new WeakSet();
+  const enc=(v,depth)=>{if(v==null||typeof v!=='object')return typeof v==='function'?undefined:v;if(v.isObject3D||v.isMaterial||v.isBufferGeometry)return undefined;
+    if(ids.has(v)&&depth>0)return {$e:ids.get(v)};if(fi.has(v))return {$f:fi.get(v)};if(oi.has(v))return {$o:oi.get(v)};if(ci.has(v)&&depth>0)return {$c:ci.get(v)};
+    if(v instanceof Map||v instanceof Set||v instanceof WeakSet||ArrayBuffer.isView(v))return undefined;if(depth>7||seen.has(v))return undefined;seen.add(v);
+    // a unit kept off the map (inside a tunnel or the Mountain Fortress) shares its stat block through the table too
+    const unit=!Array.isArray(v)&&typeof v.id==='number'&&typeof v.kind==='string'&&v.s&&typeof v.s==='object'&&!ids.has(v);
+    let out;if(Array.isArray(v)){out=v.map(x=>{const y=enc(x,depth+1);return y===undefined?null:y;});}else{out={};for(const k in v){if(unit&&(k==='s'||k==='vs'||k==='_vr'||(k[0]==='_'&&!CK_UKEEP.has(k)))){if(k==='s')out.$s=sref(v.s);continue;}const y=enc(v[k],depth+1);if(y!==undefined)out[k]=y;}}seen.delete(v);return out;};
+  const ents=G.ents.filter(e=>!e.dead&&!e.inTun).map(e=>{const o={};for(const k in e){if(k==='s'){o.$s=sref(e.s);continue;}if(k==='vs'||k==='_vr'||(k[0]==='_'&&!CK_UKEEP.has(k)))continue;const y=enc(e[k],1);if(y!==undefined)o[k]=y;}if(e.vs){let m=0;for(let i=0;i<e.vs.length&&i<31;i++)if(e.vs[i])m|=1<<i;o.$vs=m;}return o;});  // who sees it: the AI decides from this, and it is only refreshed every few ticks
+  const teams=G.teams.map(T=>{const o={};for(const k in T){if(CK_TEAM_SKIP.has(k))continue;const y=enc(T[k],1);if(y!==undefined)o[k]=y;}o.$ai=!!T.ai;o.$aiD=T.ai?T.ai.d+10*(T.ai.p|0):null;o.$aiS=T.ai?enc(T.ai,1):null;o.aiTook=!!T.aiTook;return o;});
+  const g={};for(const k of CK_G)if(G[k]!==undefined){const y=enc(G[k],1);if(y!==undefined)g[k]=y;}
+  const fields=G.fields.map(f=>({amt:f.amt,owner:f.owner}));
+  const oil=G.oil.map(o=>{const r={};for(const k in o){if(k==='tg')continue;const y=enc(o[k],1);if(y!==undefined&&(typeof y!=='object'||Array.isArray(y)||y===null||y.$e!=null))r[k]=y;}return r;});
+  const civ=(G.civ||[]).map(c=>{const r={};for(const k in c){if(k==='obj'||k==='mesh')continue;const y=enc(c[k],2);if(y!==undefined)r[k]=y;}return r;});
+  const okRef=v=>v&&(ids.has(v)||fi.has(v)||oi.has(v)||ci.has(v));const proj=(G.proj||[]).filter(p=>p&&ids.has(p.src)&&okRef(p.tgt)).map(p=>{const o={};for(const k in p){const y=enc(p[k],1);if(y!==undefined)o[k]=y;}return o;});
+  const camp=G.camp?(()=>{const o={};for(const k in G.camp){if(k==='m'||k==='R')continue;const y=enc(G.camp[k],1);if(y!==undefined)o[k]=y;}return o;})():null;
+  const L=G.lg,lgc=L?{sig:L.sig,cvT:L.cvT,cvs:L.cvs,csig:L.csig,rcA:L.rcA,lgv:G.lgv,reach:L.reach?L.reach.map(a=>a?Array.from(a):null):null,trade:L.trade?L.trade.map(a=>a?Array.from(a):null):null,cov:L.cov?enc(L.cov,1):null,bead:L.bead?enc(L.bead,1):null}:null;   /* redfixE: the supply network as last worked out (it is refreshed once a second, so a fresh rebuild on load differs) */
+  const ffc=ckFfcSave();
+  return {v:2,lgc,ffc,proj,camp,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,toks:tokSafe(),start:NET.startInfo||null,me:ME,cs:NET.peers?NET.peers.map((p,i)=>Math.max(p&&NET.cseq?(NET.cseq[p]||0):0,((NET.cseqSlot||[])[i]||0))):null};}
+/* redfixE: the route fields the units follow (FFC in 03-sim, last 8 goals) are part of what the battle does next (a fresh one costs route budget, a stale
+   one is used until there is budget) - the checkpoint lists them: fresh ones are rebuilt on load (same map state = same field), stale ones are stored as they are */
+const ckB64F=a=>{const u=new Uint8Array(a.buffer,a.byteOffset,a.byteLength);let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b);};
+const ckF64B=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new Float32Array(u.buffer);};
+function ckFfcSave(){if(typeof FFC==='undefined')return null;const out=[];for(const [k,F] of FFC){const ok=F.gv===(G.gridV|0)&&F.bv===(G.boccV|0)&&F.pn===PN;
+    out.push({k,t:F.t,ok:ok?1:0,no:F.f===false?1:0,g:F.f?F.f.goal:null,d:!ok&&F.f&&F.pn===PN?ckB64F(F.f.d):null});}return {L:out,bd:G.bdirty?1:0};}
+function ckFfcLoad(c){if(typeof FFC==='undefined')return;FFC.clear();if(!c||!Array.isArray(c.L))return;const pn=G.pfN;G.boccU=G.upN;try{bocc();}catch(e){}
+  for(const q of c.L){let f;if(q.no)f=false;else if(q.ok){P_B=true;try{f=ffBuild((q.k%GW)*CELL+CELL/2,((q.k/GW)|0)*CELL+CELL/2);}finally{P_B=false;}}else if(q.d){const d=ckF64B(q.d);if(d.length!==PN)continue;f={d,goal:q.g};}else continue;
+    FFC.set(q.k,{f,gv:q.ok?G.gridV|0:-1,bv:q.ok?G.boccV|0:-1,t:q.t,pn:PN});}
+  G.pfN=pn;if(c.bd)G.bdirty=true;}
+function ckDecode(ck){const byId=new Map();const S=ck.S;const ents=ck.ents.map(o=>Object.assign({},o));for(const e of ents)byId.set(e.id,e);
+  let sTab=[];const dec=v=>{if(v==null||typeof v!=='object')return v;if(Array.isArray(v))return v.map(dec);if(v.$e!=null)return byId.get(v.$e)||null;if(v.$f!=null)return G.fields[v.$f]||null;if(v.$o!=null)return G.oil[v.$o]||null;if(v.$c!=null)return (G.civ||[])[v.$c]||null;
+    const o={};for(const k in v){if(k==='$s')continue;o[k]=dec(v[k]);}if(v.$s!=null&&sTab[v.$s]){o.s=sTab[v.$s];o.vs=new Array(G.teams.length).fill(false);}return o;};  // $s: a unit off the map (tunnel / fortress)
+  sTab=S.map(s=>dec(s));
+  {const cn=new Array(sTab.length);for(const e of ents){const i=e.$s;if(i==null||cn[i]!==undefined||!sTab[i])continue;cn[i]=null;try{const T=G.teams[e.team],c=T&&T.fac&&stats(T.fac,e.kind);if(c&&JSON.stringify(c)===JSON.stringify(sTab[i])){sTab[i]=c;cn[i]=c;}}catch(_){}}}   // redfixE: a unit whose stats are the nation's shared table gets that same table back (new units of that kind share it, as before the save)
+  for(const e of ents){for(const k in e){if(k==='$s')continue;e[k]=dec(e[k]);}e.s=sTab[e.$s];delete e.$s;e.vs=new Array(G.teams.length).fill(false);}
+  return {ents,byId,dec};}
+// Turn this page (currently a client in the battle) into the host, from a checkpoint.
+function ckRestore(ck){const N=G.teams.length;dugEnsure(ck.civ?ck.civ.length:0);const {ents,byId,dec}=ckDecode(ck);  // dugout slots are added to the civ list after the map's own buildings: make room before refs are resolved
+  G.ents=ents;G.byId=byId;G.proj=[];G.strikes=[];G.timers=[];G.planes=[];G.out=[];G.spoofs=[];G.mban=[];G.mbanN=0;G._ewv=null;  // defaults for checkpoints from before these were saved
+  for(const k in ck.g){const d=ck.g[k];G[k]=(d&&typeof d==='object')?JSON.parse(JSON.stringify(d)):d;}
+  const reb=dec;
+  for(const k of ['mines','smokes','shields','ruins'])if(Array.isArray(G[k]))G[k]=reb(G[k]);   // ruins: map buildings stored by index (redfixE: were left as {$c} stubs)
+  ck.fields.forEach((f,i)=>{if(G.fields[i])Object.assign(G.fields[i],f);});
+  ck.oil.forEach((o,i)=>{if(G.oil[i])Object.assign(G.oil[i],reb(o));});
+  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});dugAtRebuild();
+  if(Array.isArray(ck.proj))G.proj=ck.proj.map(p=>{const o={};for(const k in p)o[k]=reb(p[k]);return o;}).filter(p=>p.src&&p.tgt);
+  if(ck.camp&&G.camp)for(const k in ck.camp){const v=reb(ck.camp[k]);if(typeof G.camp[k]!=='function')G.camp[k]=v;}try{rubSync();bfSync();}catch(e){}
+  ck.teams.forEach((t,i)=>{const T=G.teams[i];if(!T)return;for(const k in t){if(k==='$ai'||k==='$aiD'||k==='$aiS'||k==='aiTook')continue;T[k]=reb(t[k]);}T.ai=(t.$ai||t.aiTook)?mkAI(t.$aiD!=null?t.$aiD:1):null;if(T.ai&&t.$aiS){const S=reb(t.$aiS);for(const k in S)T.ai[k]=S[k];}T.aiTook=!!t.aiTook;});
+  for(const T of G.teams){if(T.q){for(const c of CATS){const L=(T.q[c]||[]);if(!L.length)continue;const b=G.ents.filter(e=>e.isB&&e.team===T.id&&e.kind===c&&e.built>=1&&!e.dead).sort((x,y)=>x.id-y.id)[0];if(b)b.q=(b.q||[]).concat(L.map(i=>({kind:i.kind,t:i.t||0,c:Math.round((BASE[i.kind]&&BASE[i.kind].cost)||0)})));else for(const i of L)T.credits+=BASE[i.kind]?BASE[i.kind].cost:0;}delete T.q;}}  // old saves: the shared queue of a building type moves onto its first building (no building left: refunded)
+  for(const e of ents){if(e.so&&e.order&&e.so!==e.order&&JSON.stringify(e.so,ckSafe)===JSON.stringify(e.order,ckSafe))e.so=e.order;}  // stall watch compares the order by identity
+  for(const e of ents){const p=e.path,w=e.npW;if(w&&p&&p[0]&&w[0]===p[0][0]&&w[1]===p[0][1])e.npW=p[0];}  // path-progress watch compares the waypoint by identity
+  try{lgSync();}catch(e){}try{const c=ck.lgc,L=G.lg;if(c&&L){const U8=a=>a?Uint8Array.from(a):null;L.sig=c.sig;L.cvT=c.cvT;L.cvs=c.cvs;L.csig=c.csig;L.rcA=c.rcA;if(c.lgv!=null)G.lgv=c.lgv;if(c.reach)L.reach=c.reach.map(U8);if(c.trade)L.trade=c.trade.map(U8);if(c.cov)L.cov=JSON.parse(JSON.stringify(c.cov));if(c.bead)L.bead=JSON.parse(JSON.stringify(c.bead));}}catch(e){}try{damSync();}catch(e){}G.civDirty=true;G.bdirty=true;G.hash=null;try{buildHash();}catch(e){}try{ckFfcLoad(ck.ffc);}catch(e){}try{updateVis();}catch(e){}
+  for(const e of ents){if(e.$vs!=null){const m=e.$vs;for(let i=0;i<e.vs.length&&i<31;i++)e.vs[i]=!!(m>>i&1);delete e.$vs;e.vis=e.vs[ME]||(e.isB&&!!((e.sn|0)&(1<<ME)));}}G.sel=G.sel.filter(e=>byId.has(e.id)).map(e=>byId.get(e.id));}
+/* ---------- Host migration ----------
+   Every 8 s the host packs a checkpoint (gzip, ~25 KB for a busy 8-player battle) and sends it to one standby player
+   (the first connected player who is allowed to host). If the host disappears, everyone first tries to reconnect to
+   the same room; after two failed tries the standby restores the checkpoint and opens the follow-up room
+   "<code>-m1"; the other players move there automatically and rejoin as their own commanders. The old host's army is
+   handed to the AI. */
+async function ckPack(ck){const js=JSON.stringify(ck);if(typeof CompressionStream==='undefined'||typeof Blob==='undefined')return 'J'+js;
+  const buf=new Uint8Array(await new Response(new Blob([js]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());let b='';for(let i=0;i<buf.length;i+=32768)b+=String.fromCharCode.apply(null,buf.subarray(i,i+32768));return 'Z'+btoa(b);}
+async function ckUnpack(s){if(s[0]==='J')return JSON.parse(s.slice(1));const bin=atob(s.slice(1)),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  return JSON.parse(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text());}
+function migRoom(gen){return gen>0?NET.baseCode+'-m'+gen:NET.baseCode;}
+// the standby (who takes the battle over if the host goes, or if a Cloudflare host can't keep up): the strongest player
+// PC, by the short benchmark each page reports (hi.hp, 07-net hostPower) and its ping; players who can't send (ed 0)
+// never. The current standby keeps the job unless someone is clearly (15%) better, so checkpoints don't hop around.
+function sbScore(k){const q=NET.peers[k],hp=(NET.hpOf||{})[q],pi=(NET.pings||{})[q];return (hp>0?hp:50)/(1+(pi>0?Math.min(pi,2000):100)/200);}
+function sbPick(live){const c=live.filter(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(!c.length)return null;let b=c[0];for(const k of c)if(sbScore(k)>sbScore(b))b=k;
+  const cur=NET.sbSlot;return cur!=null&&cur!==b&&c.includes(cur)&&sbScore(cur)>=.85*sbScore(b)?cur:b;}
+function ckTick(dt,live){NET.ckT=(NET.ckT==null?4:NET.ckT)-dt;if(NET.ckT>0||NET.ckBusy||NET.ckOut||!live.length||!NET.game)return;NET.ckT=8;
+  const sb=sbPick(live);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
+  let ck;try{ck=ckEncode();ck.gen=NET.gen||0;}catch(e){console.warn('checkpoint',e);NET.ckBusy=false;return;}
+  // packing (JSON + gzip) waits for the next turn of the event loop: a separate slice from the step that took the checkpoint
+  new Promise(r=>setTimeout(r,0)).then(()=>ckPack(ck)).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,sb,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
+// the checkpoint trickles out 2 chunks per tick (it used to go in one ~30 KB burst that delayed that player's snapshots)
+function ckFlush(){const O=NET.ckOut;if(!O||!NET.game){NET.ckOut=null;return;}if(NET.game.buffered&&NET.game.buffered(O.to)>12000)return;for(let k=0;k<2&&O.i<O.n;k++,O.i++)NET.game.emit('ck',{to:O.to,id:O.id,i:O.i,n:O.n,d:O.s.slice(O.i*3000,(O.i+1)*3000)}).catch(()=>{});if(O.i>=O.n){NET.ckAk=O.cs;NET.sbSlot=O.sb;NET.ckOut=null;}}  // the standby flag moves only once the new standby holds a whole checkpoint
+function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;const P=NET.ckParts||(NET.ckParts={});let e=P[d.id];if(!e){e=P[d.id]={n:d.n,got:0,a:new Array(d.n)};for(const k in P)if(+k<d.id-2)delete P[k];}
+  if(e.a[d.i]==null){e.a[d.i]=d.d;e.got++;}if(e.got===e.n){NET.lastCk=e.a.join('');NET.isStandby=true;delete P[d.id];}}
+async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e){console.warn('checkpoint unpack',e);return false;}
+  const gen=(ck.gen||0)+1,code2=migRoom(gen),me=ME;
+  // open the follow-up room first, while still a client: if another player already opened it (two players held a
+  // checkpoint), this page stays a client and simply joins that room instead of restoring and splitting the battle
+  {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}NET.code=code2;
+  // (at most 12 s: a matchmaking service that never answers must not hold up the takeover for good; it is tried again)
+  // "taken" usually means another player already opened it (then this page steps back). But right after one of OUR tries
+  // timed out, the room may still be held by that late, abandoned attempt of ours (it is being closed): giving up then
+  // left nobody to take over (no standby any more), so for 30 s after a timeout of ours, "taken" means try again.
+  let g;try{g=await joinT('tc-'+code2,12000,1);}catch(e){NET.code='join';const t=e&&e.type;console.warn('new host room',t||e);if(t==='timeout')NET.promoLateW=performance.now();
+    return t==='unavailable-id'&&!(NET.promoLateW&&performance.now()-NET.promoLateW<30000)?false:'retry';}
+  if(MODE!=='client'||!G||G.over){NET.code='join';try{g.leave().catch(()=>{});}catch(e){}return false;}
+  // Only one player may take over. A shared room (claude.ai room, or the Nostr network when this page could not get the
+  // game's id on PeerJS) lets two standbys in at once, so each first stakes a claim [checkpoint time, side] in the room
+  // for ~0.8 s: the newest checkpoint wins, then the lowest side number. A player who sees a better claim, or a host
+  // already there, steps back and simply rejoins as a player.
+  const cl=[+(ck.g&&ck.g.t)||0,me],beats=c=>Array.isArray(c)&&(+c[0]>cl[0]+1e-6||Math.abs(+c[0]-cl[0])<=1e-6&&(c[1]|0)<me);
+  const rival=()=>g.peers().some(q=>!q.sameTab&&q.presence&&(q.presence.h||beats(q.presence.cl)));
+  for(let k=0,kn=window.WW3_P2P?4:10;k<kn&&!rival();k++){g.presence({cl}).catch(()=>{});await new Promise(r=>setTimeout(r,200));}
+  if(rival()||MODE!=='client'||!G||G.over){console.info('takeover: another player is taking over');NET.code='join';try{g.leave().catch(()=>{});}catch(e){}return false;}
+  try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);NET.code='join';try{g.leave().catch(()=>{});}catch(_){}return false;}
+  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};try{if(NET.room&&NET.startInfo)NET.room.presence({g:{c:NET.baseCode||NET.jcode,f:G.teams[me].fac,s:'full',n:G.teams.length,m:NET.startInfo.map}}).catch(()=>{});}catch(e){}
+  const oldHost=ck.me|0;for(let k=0;k<G.teams.length;k++){const T=G.teams[k];if(k===ME){T.ai=null;T.discT=0;continue;}if(k===oldHost){if(!T.ai){T.ai=mkAI(1);T.aiTook=1;}continue;}if(!T.ai&&!T.out)T.discT=G.t;}
+  // the host flag goes out again each second for 10 s, so a claimant that only reaches the room now still sees it
+  // In its first 10 s a new host that sees another host with a better claim (the two never saw each other's claims in
+  // time) steps down: it leaves and rejoins that host as a player, so the battle doesn't split in two.
+  NET.game=g;wireHost(g);g.presence({h:1,cl}).catch(()=>{});
+  for(let k=1;k<=10;k++)setTimeout(()=>{if(MODE!=='host'||NET.game!==g)return;
+    if(g.peers().some(q=>!q.sameTab&&q.presence&&q.presence.h&&beats(q.presence.cl))){console.info('takeover: another player took over first, rejoining as a player');
+      NET.game=null;try{g.leave().catch(()=>{});}catch(e){}MODE='client';NET.code='join';NET.gen=gen-1;NET.isStandby=false;NET.lastCk=null;NET.lastRx=performance.now();
+      // this screen still shows the restored checkpoint (a host's view, with no client bookkeeping): from now on the other
+      // host's updates draw it, and whatever they don't show (units in the fog) fades out as on any player's screen,
+      // instead of standing frozen forever. This page no longer lists the battle in the game list either.
+      for(const e of G.ents){e.seenAt=NET.lastSnapT||0;e.seenL=G.t;if(!e.isB){e.fx=e.tx=e.x;e.fy=e.ty=e.y;e.it=1;}}
+      try{if(NET.room)NET.room.presence({g:null}).catch(()=>{});}catch(e){}
+      clientReconnect();return;}
+    g.presence({h:1,cl}).catch(()=>{});},k*1000);
+  for(const O of G.teams)log(O.id,`Connection lost for a moment. The battle goes on; the other commanders are reconnecting.`,'w');return true;}
+
 /* ===== headless stand-ins ===== */
 
 const mm={width:256,height:176};        // 04-gfx: minimap canvas; only its size is read (map thumbnail, never drawn)
@@ -5590,13 +5969,29 @@ const __API=(function BRIDGE(W) {
       events: ['txt', 'boom', 'ping', 'tping', 'heal', 'halo', 'die', 'strike', 'smoke', 'gone', 'flag', 'shout', 'plane', 'dam', 'bmis', 'vig', 'tr', 'toss', 'say', 'salvo', 'rubc', 'rank', 'pj', 'muz', 'mping', 'mmst', 'mdraw', 'log', 'icpt', 'hl', 'hack', 'give', 'flare', 'emp', 'elim', 'cyb', 'civs', 'civd', 'chf', 'cfs', 'cfo', 'cfb', 'bfx', 'bfh', 'ready', 'built', 'end'],
       nations: FKEYS.map(k => ({ key: k, name: FACTIONS[k].name, color: FACTIONS[k].color || FACTIONS[k].col || '', style: FACTIONS[k].morale || '' })),
       maps: Object.keys(MAPS).filter(k => !MAPS[k].hidden && !MAPS[k].custom).map(k => ({ key: k, name: MAPS[k].name, min: MAPS[k].min || 2, max: MAPS[k].max || 2, battle: BM_KEYS.includes(k) ? 1 : 0 })) }),   // battle 1 = a Battle map (src/02d-battlemaps.js BATTLE_MAPS) for min..max players; the sim swaps any other key / player count for a fair Battle map
-    // o = {map, seed, diff, players:[{nation, ai, team}]}
+    // o = {map, seed, diff, players:[{nation, ai, team}], starts?:[idx...]}
     newGame: js => {
       const o = typeof js === 'string' ? JSON.parse(js) : js, P = o.players || [];
       if (o.map && !MAPS[o.map]) return JSON.stringify({ ok: 0, error: 'Unknown map "' + o.map + '": the simulation has no map with that key.' });   // never a silent fallback
       EV = []; Q = []; seen = new Map(); fogs = [];
       const r = W.start({ seed: (o.seed | 0) || 1, facs: P.map(p => p.nation), ai: P.map(p => p.ai !== false), tm: P.map((p, i) => p.team == null ? i : p.team), map: o.map || 'bm_splitridge', battle: 1, diff: o.diff == null ? 1 : o.diff,
         portMath: o.nativeMath ? [] : ['sin', 'cos', 'atan2', 'exp', 'pow'] });
+      if (Array.isArray(o.starts) && o.starts.length === P.length && o.starts.some(s => (s | 0) >= 0) && typeof BASES !== 'undefined' && BASES.length >= P.length) {
+        // Re-map starting entities to the player-chosen base indices when specified
+        const used = new Set(), perm = new Array(P.length).fill(-1);
+        for (let i = 0; i < P.length; i++) { const s = o.starts[i] | 0; if (s >= 0 && s < BASES.length && !used.has(s)) { perm[i] = s; used.add(s); } }
+        let nxt = 0;
+        for (let i = 0; i < P.length; i++) if (perm[i] < 0) { while (used.has(nxt)) nxt++; perm[i] = nxt; used.add(nxt); }
+        const oldB = BASES.map(b => [b[0], b[1]]);
+        for (let i = 0; i < P.length; i++) {
+          if (perm[i] === i) continue;
+          const dx = oldB[perm[i]][0] - oldB[i][0], dy = oldB[perm[i]][1] - oldB[i][1];
+          for (const e of G.ents) if (e.team === i) { e.x = Math.max(40, Math.min(MAPW - 40, e.x + dx)); e.y = Math.max(40, Math.min(MAPH - 40, e.y + dy)); }
+        }
+        const nb = perm.map(idx => BASES[idx]);
+        for (let i = 0; i < BASES.length; i++) if (!used.has(i)) nb.push(BASES[i]);
+        BASES.splice(0, BASES.length, ...nb);
+      }
       stepT = 0; fill(); EV = [];
       return JSON.stringify({ ok: 1, ms: Math.round(r.ms), map: { key: G.mapKey, name: (MAPS[G.mapKey] || {}).name, MAPW, MAPH, CELL, GW, GH }, teams: teamRows() });
     },
@@ -5669,6 +6064,52 @@ const __API=(function BRIDGE(W) {
       try { for (const k of Object.keys(POWERS)) { if (typeof sigBan === 'function' && sigBan(fac, k)) continue; const p = powInfo(k, fac); powers.push({ k, name: p.name, desc: p.desc || '' }); } } catch (_) {}
       return JSON.stringify({ units, blds, upg, powers, build_order: typeof BUILD_ORDER !== 'undefined' ? BUILD_ORDER : Object.keys(blds), roster: Fc.roster || null, special: Fc.special || null, name: Fc.name, style: Fc.morale || '' });
     },
+    // Test Range + Tutorial commands (spawn / spawn_bld / clear / set_ai / heal / money)
+    rangeCmd: js => {
+      if (typeof G === 'undefined' || !G) return 0;
+      const o = typeof js === 'string' ? JSON.parse(js) : js;
+      const tm = o.team | 0;
+      W.sim(() => {
+        if (o.cmd === 'spawn') {
+          const n = Math.max(1, Math.min(20, o.n | 0 || 1));
+          for (let i = 0; i < n; i++) {
+            const p = nearestPassXY('ground', (+o.x || 0) + (i ? (Math.random() - .5) * 100 : 0), (+o.y || 0) + (i ? (Math.random() - .5) * 100 : 0));
+            if (p) addUnit(tm, String(o.kind || 'inf'), p[0], p[1]);
+          }
+        } else if (o.cmd === 'spawn_bld') {
+          const k = String(o.kind || 'barracks');
+          let bx = +o.x || 0, by = +o.y || 0;
+          for (let r = 0; r < 24; r++) {
+            const qx = bx + Math.cos(r * 2.4) * r * 16, qy = by + Math.sin(r * 2.4) * r * 16;
+            if (validSpot(tm, k, qx, qy)) { addBld(tm, k, qx, qy, true); break; }
+          }
+        } else if (o.cmd === 'clear') {
+          for (const e of G.ents) if (!e.dead && e.team === tm && !(e.isB && e.kind === 'hq')) kill(e, 0, null);
+        } else if (o.cmd === 'set_ai') {
+          const T = G.teams[tm]; if (T) T.ai = o.on ? (T.ai || mkAI(1)) : null;
+        } else if (o.cmd === 'heal') {
+          for (const e of G.ents) if (!e.dead && e.team === tm) { e.hp = e.max; if (e.amx > 0) e.am = e.amx; }
+        } else if (o.cmd === 'money') {
+          const T = G.teams[tm]; if (T) T.credits += (+o.amt || 0);
+        }
+      });
+      fill();
+      return 1;
+    },
+    // Whole-battle checkpoint snapshot (src/07b-ckpt.js ckEncode / ckRestore) for saves & online resync
+    saveSnap: () => {
+      if (typeof G === 'undefined' || !G || typeof ckEncode !== 'function') return '';
+      try { return JSON.stringify(ckEncode()); } catch (e) { return ''; }
+    },
+    loadSnap: js => {
+      if (typeof G === 'undefined' || !G || typeof ckRestore !== 'function' || !js) return 0;
+      try {
+        const ck = typeof js === 'string' ? JSON.parse(js) : js;
+        W.sim(() => { ckRestore(ck); });
+        fill();
+        return 1;
+      } catch (e) { return 0; }
+    },
     // debug / tests only: evaluate inside the sim's scope
     ev: src => W.ev(src),
   };
@@ -5680,16 +6121,21 @@ return __API;
 })(typeof globalThis!=='undefined'?globalThis:this);
 /* ===== Web Worker mode: new Worker('ww3sim.js') - the sim runs off the page's main thread (godot/web/ww3bridge.js is the client) ===== */
 if(typeof WorkerGlobalScope!=='undefined'&&typeof self!=='undefined'&&self instanceof WorkerGlobalScope){(function(){
-  var W=self.WW3,lgv=-1;
+  var W=self.WW3,lgv=-1,stepCnt=0;
   var boot={c:'boot',tables:W.tables(),rules:{}};JSON.parse(boot.tables).nations.forEach(function(n){try{boot.rules[n.key]=W.rules(n.key);}catch(e){boot.rules[n.key]='{}';}});
   self.postMessage(boot);
   self.onmessage=function(e){var m=e.data;
-    if(m.c==='new'){lgv=-1;var r=W.newGame(m.o),b={},tr=[];if(JSON.parse(r).ok!==1){self.postMessage({c:'new',r:r,meta:'{}',bufs:{},ent:new ArrayBuffer(0),lines:'{}',hash:''});return;}['grid','cover','wood','hgrid','road'].forEach(function(k){b[k]=W.mapBuf(k).buffer;tr.push(b[k]);});
-      var ent=W.entBuf().buffer;tr.push(ent);self.postMessage({c:'new',r:r,meta:W.mapMeta(),bufs:b,ent:ent,lines:W.lines(),hash:W.hash()},tr);lgv=W.lgv();}
+    if(m.c==='new'){lgv=-1;stepCnt=0;var r=W.newGame(m.o),b={},tr=[];if(JSON.parse(r).ok!==1){self.postMessage({c:'new',r:r,meta:'{}',bufs:{},ent:new ArrayBuffer(0),lines:'{}',hash:''});return;}['grid','cover','wood','hgrid','road'].forEach(function(k){b[k]=W.mapBuf(k).buffer;tr.push(b[k]);});
+      var ent=W.entBuf().buffer;tr.push(ent);self.postMessage({c:'new',r:r,meta:W.mapMeta(),bufs:b,ent:ent,lines:W.lines(),hash:W.hash(),snap:W.saveSnap()},tr);lgv=W.lgv();}
     else if(m.c==='step'){var t0=performance.now();for(var i=0;i<m.orders.length;i++)W.order(m.orders[i][0],m.orders[i][1]);
       var js=W.step(m.k),ent2=W.entBuf().buffer,pj=W.projBuf().buffer,o={c:'step',js:js,ent:ent2,proj:pj},tr2=[ent2,pj];
       var v=W.lgv();if(v!==lgv){lgv=v;o.lines=W.lines();}
-      if(m.fog>=0){o.fog=W.fog(m.fog).buffer;tr2.push(o.fog);}if(m.hash)o.hash=W.hash();o.wms=performance.now()-t0;self.postMessage(o,tr2);}
+      if(m.fog>=0){o.fog=W.fog(m.fog).buffer;tr2.push(o.fog);}if(m.hash)o.hash=W.hash();
+      stepCnt++;if(m.snap||(stepCnt%90===0))o.snap=W.saveSnap();
+      o.wms=performance.now()-t0;self.postMessage(o,tr2);}
+    else if(m.c==='range'){W.rangeCmd(m.o);var ent3=W.entBuf().buffer,pj3=W.projBuf().buffer;self.postMessage({c:'sync',js:W.step(0),ent:ent3,proj:pj3,snap:W.saveSnap()},[ent3,pj3]);}
+    else if(m.c==='snap'){self.postMessage({c:'snap',snap:W.saveSnap()});}
+    else if(m.c==='load'){var ok=W.loadSnap(m.snap);var ent4=W.entBuf().buffer,pj4=W.projBuf().buffer;self.postMessage({c:'sync',ok:ok,js:W.step(0),ent:ent4,proj:pj4,lines:W.lines(),hash:W.hash(),snap:m.snap},[ent4,pj4]);}
     else if(m.c==='ask'){var a=m.a,val=m.q==='valid'?W.validSpot(a[0],a[1],a[2],a[3]):m.q==='req'?W.reqMet(a[0],a[1]):m.q==='inside'?W.inside(a[0]):m.q==='ev'?JSON.stringify(W.ev(a[0])):null;self.postMessage({c:'ans',key:m.key,v:val});}
   };
 })();}

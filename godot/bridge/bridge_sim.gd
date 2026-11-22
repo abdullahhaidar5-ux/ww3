@@ -89,11 +89,12 @@ func available() -> bool:
 var _st: int = 0
 var err := ""            # set when the sim refused the battle (unknown map key...): ready() never turns true
 var _opts: Dictionary = {}
-func init(map_key, players: Array, seed_value: int = 1, difficulty: int = 1, _rules: Dictionary = {}) -> bool:
+func init(map_key, players: Array, seed_value: int = 1, difficulty: int = 1, starts: Array = []) -> bool:
 	if not br.available(): push_error(Bridge.WEB_ONLY); return false
 	var ps: Array = []
 	for p in players: ps.append({nation = str(p.fac), ai = bool(p.get("ai", true)), team = int(p.get("tm", ps.size()))})
 	_opts = {map = str(map_key), seed = seed_value, diff = difficulty, players = ps}
+	if not starts.is_empty(): _opts.starts = starts
 	_st = 0; err = ""; ents = []; by_id = {}; events = []; teams = []; _lines_cache = {}; _lines_lgv = -1
 	return true
 
@@ -407,6 +408,21 @@ func power_list(team: int) -> Array:
 
 func dig_in() -> bool:
 	return true
+
+func range_cmd(cmd: Dictionary) -> bool:
+	return br.range_cmd(cmd)
+
+func save_snapshot() -> String:
+	return br.save_snap()
+
+func load_snapshot(snap_json: String) -> bool:
+	return br.load_snap(snap_json)
+
+func state_hash_int() -> int:
+	var h := br.state_hash()
+	if h.length() >= 8:
+		return int(("0x" + h.substr(0, 8)).hex_to_int()) & 0xffffffff
+	return hash(h) & 0xffffffff
 
 func info() -> Dictionary:
 	var per: Array = []

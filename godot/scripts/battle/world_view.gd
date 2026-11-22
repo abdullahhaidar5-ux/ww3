@@ -29,6 +29,7 @@ const FOG_INTERVAL := 0.25
 
 static var _meta_cache: Dictionary = {} # "fac|kind" -> {ok, pack, pxf, h, scale}
 static var _box_cache: Dictionary = {}  # int_size -> Mesh
+static var _civ_mesh_cache: Dictionary = {} # "theme|variant" -> ArrayMesh
 
 var env = null          # LookEnv instance
 var fx = null           # LookFx Node3D instance
@@ -77,6 +78,7 @@ func setup(host: Node3D, sim, map: Dictionary, opts: Dictionary = {}) -> void:
 	_root = Node3D.new()
 	_root.name = "WorldView"
 	host.add_child(_root)
+	_setup_civ_buildings(sim, map)
 
 
 func on_step(sim, events: Array, me: int, see_all: bool = false, ai_only: bool = false) -> void:
@@ -97,6 +99,7 @@ func on_step(sim, events: Array, me: int, see_all: bool = false, ai_only: bool =
 					if i != me and sim.ally(me, i):
 						allies.append(i)
 			fx.set_lines(_lines_cache, me, allies)
+			_sync_bridges(_lines_cache)
 		if see_all or ai_only:
 			fx.fog_off()
 		elif float(fx.t) >= _fog_next:
@@ -502,3 +505,310 @@ static func _compute_height(parts: Dictionary, pxf: Dictionary, sc: float, fallb
 	if max_y > 1.0:
 		return maxf(16.0, max_y * sc)
 	return maxf(16.0, fallback_h)
+
+
+# ------------------------------------------------------------------ destroyed bridge sync
+func _sync_bridges(L: Dictionary) -> void:
+	if _host == null or not L.has("bridges_dead"):
+		return
+	var b_root := _host.get_node_or_null("Bridges")
+	if b_root == null:
+		return
+	var dead_raw = L.get("bridges_dead", [])
+	if not (dead_raw is Array):
+		return
+	var dead_set := {}
+	for idx in dead_raw:
+		dead_set[int(idx)] = true
+	for ch in b_root.get_children():
+		var nm := String(ch.name)
+		if nm.begins_with("Bridge_") and ch is Node3D:
+			var bi := int(nm.substr(7))
+			(ch as Node3D).visible = not dead_set.has(bi)
+
+
+# ------------------------------------------------------------------ static civilian / village buildings (map.civ)
+func _setup_civ_buildings(sim, map: Dictionary) -> void:
+	if _root == null:
+		return
+	var civ_raw = map.get("civ", null)
+	if not (civ_raw is Array) or (civ_raw as Array).is_empty():
+		return
+	var civ_arr: Array = civ_raw
+	var th := String(map.get("theme", "desert"))
+	var has_gh: bool = sim != null and sim.has_method("ground_h")
+	var buckets := [[], [], []]
+
+	for idx in civ_arr.size():
+		var c = civ_arr[idx]
+		if not (c is Dictionary):
+			continue
+		var cx := float(c.get("x", 0.0))
+		var cz := float(c.get("y", 0.0))
+		var ch := float(c.get("h", 26.0))
+		var rot := float(c.get("rot", 0.0))
+		var is_ruin := int(c.get("ruin", 0)) != 0
+		var ci := int(c.get("i", idx))
+		var gy := float(sim.ground_h(cx, cz)) if has_gh else 0.0
+
+		var v := 2 if is_ruin else (ci & 1)
+		var sy: float
+		var sxz: float
+		if is_ruin:
+			sy = clampf(maxf(ch, 10.0) / 14.0, 0.75, 1.35)
+			sxz = 0.94 + float((ci * 29) % 15) * 0.01
+		else:
+			sy = clampf(maxf(ch, 16.0) / 30.0, 0.55, 1.85)
+			sxz = 0.92 + float((ci * 37) % 17) * 0.01
+		var xf := Transform3D(Basis(Vector3.UP, -rot).scaled(Vector3(sxz, sy, sxz)), Vector3(cx, gy - 1.5, cz))
+		(buckets[v] as Array).append(xf)
+
+	for v in 3:
+		var xfs: Array = buckets[v]
+		if xfs.is_empty():
+			continue
+		var mesh := _get_civ_mesh(th, v)
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = mesh
+		mm.instance_count = xfs.size()
+		for i in xfs.size():
+			mm.set_instance_transform(i, xfs[i] as Transform3D)
+		var mi := MultiMeshInstance3D.new()
+		mi.name = "CivBuildings_%d" % v
+		mi.multimesh = mm
+		mi.custom_aabb = HUGE_AABB
+		mi.extra_cull_margin = 16384.0
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		_root.add_child(mi)
+
+
+static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
+	var th := "snow" if theme == "snow" else ("desert" if theme == "desert" else "green")
+	var key := "%s|%d" % [th, variant]
+	if _civ_mesh_cache.has(key):
+		return _civ_mesh_cache[key] as ArrayMesh
+
+	var st_wall := SurfaceTool.new(); st_wall.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var st_roof := SurfaceTool.new(); st_roof.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var st_win := SurfaceTool.new(); st_win.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var has_win := false
+
+	var c_win := Color(0.11, 0.13, 0.17)
+	var c_door := Color(0.18, 0.14, 0.11)
+
+	if variant == 2:
+		# Broken-wall ruin (base height ~14)
+		var c_w := Color(0.70, 0.62, 0.49)
+		var c_r := Color(0.45, 0.41, 0.35)
+		var c_beam := Color(0.22, 0.20, 0.19)
+		if th == "green":
+			c_w = Color(0.56, 0.54, 0.50); c_r = Color(0.42, 0.41, 0.39)
+		elif th == "snow":
+			c_w = Color(0.58, 0.61, 0.65); c_r = Color(0.75, 0.80, 0.86)
+		# Rubble foundation slab
+		_civ_box(st_roof, Vector3(0.0, 0.8, 0.0), Vector3(30.0, 1.6, 28.0), c_r)
+		# Jagged broken walls on 3 sides + corner pillar
+		_civ_box(st_wall, Vector3(-13.2, 6.2, -3.5), Vector3(2.8, 12.4, 20.0), c_w)
+		_civ_box(st_wall, Vector3(-13.2, 13.0, -9.0), Vector3(2.8, 3.0, 7.0), c_w * 0.94)
+		_civ_box(st_wall, Vector3(-2.0, 4.8, -12.6), Vector3(22.0, 9.6, 2.8), c_w * 0.96)
+		_civ_box(st_wall, Vector3(13.0, 3.4, -5.5), Vector3(2.8, 6.8, 14.0), c_w * 0.92)
+		_civ_box(st_wall, Vector3(-12.5, 7.2, 11.5), Vector3(4.5, 14.4, 4.5), c_w * 0.90)
+		# Scattered interior rubble chunks & charred timber beam
+		_civ_box(st_roof, Vector3(-4.0, 2.4, 2.0), Vector3(7.5, 3.2, 6.5), c_r * 0.92)
+		_civ_box(st_roof, Vector3(5.5, 2.0, 5.0), Vector3(8.0, 2.4, 5.5), c_r * 0.86)
+		_civ_box(st_roof, Vector3(2.0, 2.8, -5.0), Vector3(6.0, 3.8, 5.0), c_w * 0.85)
+		_civ_box(st_roof, Vector3(0.5, 4.3, 1.0), Vector3(16.0, 1.1, 1.6), c_beam)
+	elif th == "desert":
+		if variant == 0:
+			# Flat-roofed Middle Eastern sandstone compound with parapet, windows & rooftop AC
+			var c_plinth := Color(0.64, 0.56, 0.44)
+			var c_stucco := Color(0.83, 0.75, 0.61)
+			var c_parapet := Color(0.87, 0.79, 0.65)
+			var c_roof := Color(0.68, 0.61, 0.49)
+			var c_ac := Color(0.66, 0.69, 0.68)
+			_civ_box(st_wall, Vector3(0.0, 1.5, 0.0), Vector3(31.2, 3.0, 29.2), c_plinth)
+			_civ_box(st_wall, Vector3(0.0, 15.0, 0.0), Vector3(30.0, 24.0, 28.0), c_stucco)
+			# Roof slab + 4 parapet walls
+			_civ_box(st_roof, Vector3(0.0, 27.3, 0.0), Vector3(28.0, 0.8, 26.0), c_roof)
+			_civ_box(st_wall, Vector3(0.0, 28.6, 13.0), Vector3(30.4, 3.2, 2.0), c_parapet)
+			_civ_box(st_wall, Vector3(0.0, 28.6, -13.0), Vector3(30.4, 3.2, 2.0), c_parapet)
+			_civ_box(st_wall, Vector3(14.0, 28.6, 0.0), Vector3(2.0, 3.2, 24.4), c_parapet)
+			_civ_box(st_wall, Vector3(-14.0, 28.6, 0.0), Vector3(2.0, 3.2, 24.4), c_parapet)
+			# Rooftop stairwell penthouse + AC condenser + water tank
+			_civ_box(st_wall, Vector3(-6.0, 30.2, -5.0), Vector3(9.5, 5.4, 8.5), c_stucco * 0.96)
+			_civ_box(st_roof, Vector3(-6.0, 33.1, -5.0), Vector3(10.0, 0.6, 9.0), c_roof)
+			_civ_box(st_roof, Vector3(6.5, 29.3, 4.5), Vector3(5.6, 3.6, 4.4), c_ac)
+			_civ_box(st_roof, Vector3(7.0, 29.9, -5.5), Vector3(4.0, 4.8, 4.0), Color(0.75, 0.77, 0.76))
+			# Window cutouts on all 4 facades + doorway
+			has_win = true
+			for row_y in [11.5, 20.5]:
+				for wx in [-8.5, 0.0, 8.5]:
+					if not (row_y < 14.0 and absf(wx) < 1.0):
+						_civ_box(st_win, Vector3(wx, row_y, 14.15), Vector3(4.0, 4.6, 0.4), c_win)
+					_civ_box(st_win, Vector3(wx, row_y, -14.15), Vector3(4.0, 4.6, 0.4), c_win)
+				for wz in [-7.0, 7.0]:
+					_civ_box(st_win, Vector3(15.15, row_y, wz), Vector3(0.4, 4.6, 4.2), c_win)
+					_civ_box(st_win, Vector3(-15.15, row_y, wz), Vector3(0.4, 4.6, 4.2), c_win)
+			_civ_box(st_win, Vector3(0.0, 7.2, 14.18), Vector3(5.2, 8.8, 0.45), c_door)
+		else:
+			# Stepped ochre terrace compound with side annex & roof shade pergola
+			var c_stucco := Color(0.77, 0.66, 0.50)
+			var c_annex := Color(0.84, 0.77, 0.64)
+			var c_roof := Color(0.65, 0.57, 0.45)
+			var c_wood := Color(0.42, 0.31, 0.22)
+			_civ_box(st_wall, Vector3(-5.0, 13.8, 0.0), Vector3(22.0, 27.6, 26.0), c_stucco)
+			_civ_box(st_wall, Vector3(11.0, 9.0, 1.0), Vector3(12.0, 18.0, 22.0), c_annex)
+			# Parapet walls on main roof & annex roof
+			_civ_box(st_roof, Vector3(-5.0, 27.9, 0.0), Vector3(20.4, 0.7, 24.4), c_roof)
+			_civ_box(st_wall, Vector3(-5.0, 29.1, 12.1), Vector3(22.4, 2.8, 1.8), c_stucco * 1.04)
+			_civ_box(st_wall, Vector3(-5.0, 29.1, -12.1), Vector3(22.4, 2.8, 1.8), c_stucco * 1.04)
+			_civ_box(st_wall, Vector3(-15.1, 29.1, 0.0), Vector3(1.8, 2.8, 22.6), c_stucco * 1.04)
+			_civ_box(st_wall, Vector3(5.1, 29.1, 0.0), Vector3(1.8, 2.8, 22.6), c_stucco * 1.04)
+			_civ_box(st_roof, Vector3(11.0, 18.3, 1.0), Vector3(10.8, 0.6, 20.6), c_roof)
+			_civ_box(st_wall, Vector3(11.0, 19.3, 11.2), Vector3(12.2, 2.2, 1.6), c_annex * 1.04)
+			_civ_box(st_wall, Vector3(11.0, 19.3, -9.2), Vector3(12.2, 2.2, 1.6), c_annex * 1.04)
+			_civ_box(st_wall, Vector3(16.2, 19.3, 1.0), Vector3(1.6, 2.2, 19.2), c_annex * 1.04)
+			# Roof AC unit + shade canopy on annex terrace
+			_civ_box(st_roof, Vector3(-9.0, 29.8, -5.0), Vector3(5.4, 3.4, 4.2), Color(0.65, 0.68, 0.67))
+			_civ_box(st_roof, Vector3(11.0, 23.6, 1.0), Vector3(9.0, 0.8, 12.0), c_wood)
+			for px in [7.2, 14.8]:
+				for pz in [-4.0, 6.0]:
+					_civ_box(st_roof, Vector3(px, 21.0, pz), Vector3(0.9, 5.0, 0.9), c_wood)
+			has_win = true
+			for row_y in [10.5, 20.0]:
+				for wx in [-10.0, 0.0]:
+					_civ_box(st_win, Vector3(wx, row_y, 13.15), Vector3(4.0, 4.6, 0.4), c_win)
+					_civ_box(st_win, Vector3(wx, row_y, -13.15), Vector3(4.0, 4.6, 0.4), c_win)
+				for wz in [-6.5, 6.5]:
+					_civ_box(st_win, Vector3(-16.15, row_y, wz), Vector3(0.4, 4.6, 4.2), c_win)
+			_civ_box(st_win, Vector3(11.0, 10.0, 12.15), Vector3(4.2, 4.6, 0.4), c_win)
+			_civ_box(st_win, Vector3(17.15, 10.0, 1.0), Vector3(0.4, 4.6, 4.6), c_win)
+			_civ_box(st_win, Vector3(-5.0, 6.8, 13.18), Vector3(4.8, 8.2, 0.45), c_door)
+	else:
+		# Temperate ("green") or Winter ("snow") pitched-roof stone/plaster village houses
+		var is_snow := th == "snow"
+		if variant == 0:
+			var c_base := Color(0.40, 0.42, 0.45) if is_snow else Color(0.48, 0.46, 0.43)
+			var c_wall := Color(0.75, 0.77, 0.81) if is_snow else Color(0.77, 0.74, 0.67)
+			var c_roof := Color(0.88, 0.91, 0.95) if is_snow else Color(0.57, 0.27, 0.19)
+			var c_chim := Color(0.45, 0.36, 0.34) if is_snow else Color(0.54, 0.29, 0.23)
+			_civ_box(st_wall, Vector3(0.0, 2.0, 0.0), Vector3(31.0, 4.0, 27.0), c_base)
+			_civ_box(st_wall, Vector3(0.0, 12.75, 0.0), Vector3(30.0, 17.5, 26.0), c_wall)
+			_civ_gable_roof(st_roof, st_wall, Vector3(0.0, 21.5, 0.0), 32.6, 28.6, 9.8, c_roof, c_wall)
+			_civ_box(st_roof, Vector3(8.5, 29.0, -5.5), Vector3(3.8, 9.0, 3.8), c_chim)
+			has_win = true
+			for row_y in [9.5, 16.5]:
+				for wx in [-8.5, 0.0, 8.5]:
+					if not (row_y < 12.0 and absf(wx) < 1.0):
+						_civ_box(st_win, Vector3(wx, row_y, 13.15), Vector3(3.8, 4.2, 0.4), c_win)
+					_civ_box(st_win, Vector3(wx, row_y, -13.15), Vector3(3.8, 4.2, 0.4), c_win)
+				for wz in [-6.5, 6.5]:
+					_civ_box(st_win, Vector3(15.15, row_y, wz), Vector3(0.4, 4.2, 3.8), c_win)
+					_civ_box(st_win, Vector3(-15.15, row_y, wz), Vector3(0.4, 4.2, 3.8), c_win)
+			_civ_box(st_win, Vector3(0.0, 6.8, 13.18), Vector3(4.8, 8.0, 0.45), c_door)
+		else:
+			var c_base := Color(0.46, 0.47, 0.49) if is_snow else Color(0.51, 0.49, 0.45)
+			var c_upper := Color(0.64, 0.63, 0.62) if is_snow else Color(0.70, 0.65, 0.56)
+			var c_trim := Color(0.27, 0.25, 0.24)
+			var c_roof := Color(0.84, 0.88, 0.93) if is_snow else Color(0.35, 0.34, 0.33)
+			_civ_box(st_wall, Vector3(0.0, 5.2, 0.0), Vector3(34.0, 10.4, 26.0), c_base)
+			_civ_box(st_roof, Vector3(0.0, 10.8, 0.0), Vector3(35.0, 1.1, 27.0), c_trim)
+			_civ_box(st_wall, Vector3(0.0, 16.5, 0.0), Vector3(34.2, 10.6, 26.2), c_upper)
+			_civ_gable_roof(st_roof, st_wall, Vector3(0.0, 21.8, 0.0), 36.8, 28.8, 9.6, c_roof, c_upper)
+			_civ_box(st_roof, Vector3(-9.5, 29.2, 5.5), Vector3(3.6, 8.6, 3.6), Color(0.46, 0.33, 0.28))
+			has_win = true
+			for row_y in [7.2, 16.4]:
+				for wx in [-10.5, 0.0, 10.5]:
+					if not (row_y < 10.0 and absf(wx) < 1.0):
+						_civ_box(st_win, Vector3(wx, row_y, 13.25), Vector3(4.0, 4.4, 0.4), c_win)
+					_civ_box(st_win, Vector3(wx, row_y, -13.25), Vector3(4.0, 4.4, 0.4), c_win)
+				for wz in [-6.5, 6.5]:
+					_civ_box(st_win, Vector3(17.25, row_y, wz), Vector3(0.4, 4.4, 4.0), c_win)
+					_civ_box(st_win, Vector3(-17.25, row_y, wz), Vector3(0.4, 4.4, 4.0), c_win)
+			_civ_box(st_win, Vector3(0.0, 5.8, 13.28), Vector3(5.0, 8.2, 0.45), c_door)
+
+	var am := ArrayMesh.new()
+	var mat_wall := StandardMaterial3D.new()
+	mat_wall.vertex_color_use_as_albedo = true
+	mat_wall.albedo_color = Color.WHITE
+	mat_wall.roughness = 0.90
+	mat_wall.metallic = 0.04
+
+	var mat_roof := StandardMaterial3D.new()
+	mat_roof.vertex_color_use_as_albedo = true
+	mat_roof.albedo_color = Color.WHITE
+	mat_roof.roughness = 0.72
+	mat_roof.metallic = 0.14
+
+	var mat_win := StandardMaterial3D.new()
+	mat_win.vertex_color_use_as_albedo = true
+	mat_win.albedo_color = Color.WHITE
+	mat_win.roughness = 0.24
+	mat_win.metallic = 0.35
+
+	st_wall.commit(am)
+	am.surface_set_material(am.get_surface_count() - 1, mat_wall)
+	st_roof.commit(am)
+	am.surface_set_material(am.get_surface_count() - 1, mat_roof)
+	if has_win:
+		st_win.commit(am)
+		am.surface_set_material(am.get_surface_count() - 1, mat_win)
+
+	_civ_mesh_cache[key] = am
+	return am
+
+
+static func _civ_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, n: Vector3, col: Color) -> void:
+	if (p2 - p0).cross(p1 - p0).dot(n) >= 0.0:
+		for v in [p0, p1, p2, p0, p2, p3]:
+			st.set_color(col); st.set_normal(n); st.add_vertex(v)
+	else:
+		for v in [p0, p3, p2, p0, p2, p1]:
+			st.set_color(col); st.set_normal(n); st.add_vertex(v)
+
+
+static func _civ_tri(st: SurfaceTool, p0: Vector3, p1: Vector3, p2: Vector3, n: Vector3, col: Color) -> void:
+	if (p2 - p0).cross(p1 - p0).dot(n) >= 0.0:
+		for v in [p0, p1, p2]:
+			st.set_color(col); st.set_normal(n); st.add_vertex(v)
+	else:
+		for v in [p0, p2, p1]:
+			st.set_color(col); st.set_normal(n); st.add_vertex(v)
+
+
+static func _civ_box(st: SurfaceTool, c: Vector3, s: Vector3, col: Color) -> void:
+	var h := s * 0.5
+	var x0 := c.x - h.x; var x1 := c.x + h.x
+	var y0 := c.y - h.y; var y1 := c.y + h.y
+	var z0 := c.z - h.z; var z1 := c.z + h.z
+	_civ_quad(st, Vector3(x0, y1, z0), Vector3(x1, y1, z0), Vector3(x1, y1, z1), Vector3(x0, y1, z1), Vector3.UP, col)
+	_civ_quad(st, Vector3(x0, y0, z1), Vector3(x1, y0, z1), Vector3(x1, y0, z0), Vector3(x0, y0, z0), Vector3.DOWN, col * 0.72)
+	_civ_quad(st, Vector3(x1, y0, z0), Vector3(x1, y1, z0), Vector3(x1, y1, z1), Vector3(x1, y0, z1), Vector3.RIGHT, col * 0.90)
+	_civ_quad(st, Vector3(x0, y0, z1), Vector3(x0, y1, z1), Vector3(x0, y1, z0), Vector3(x0, y0, z0), Vector3.LEFT, col * 0.86)
+	_civ_quad(st, Vector3(x0, y0, z1), Vector3(x0, y1, z1), Vector3(x1, y1, z1), Vector3(x1, y0, z1), Vector3.BACK, col * 0.95)
+	_civ_quad(st, Vector3(x1, y0, z0), Vector3(x1, y1, z0), Vector3(x0, y1, z0), Vector3(x0, y0, z0), Vector3.FORWARD, col * 0.84)
+
+
+static func _civ_gable_roof(st_roof: SurfaceTool, st_wall: SurfaceTool, base: Vector3, w: float, d: float, h: float, c_roof: Color, c_gable: Color) -> void:
+	var hx := w * 0.5
+	var hz := d * 0.5
+	var y0 := base.y
+	var y1 := base.y + h
+	var p_fl := Vector3(base.x - hx, y0, base.z + hz)
+	var p_fr := Vector3(base.x + hx, y0, base.z + hz)
+	var p_bl := Vector3(base.x - hx, y0, base.z - hz)
+	var p_br := Vector3(base.x + hx, y0, base.z - hz)
+	var r_l := Vector3(base.x - hx, y1, base.z)
+	var r_r := Vector3(base.x + hx, y1, base.z)
+	var n_front := Vector3(0.0, hz, h).normalized()
+	var n_back := Vector3(0.0, hz, -h).normalized()
+	# Two pitched roof slopes + thin underside eaves
+	_civ_quad(st_roof, p_fl, p_fr, r_r, r_l, n_front, c_roof)
+	_civ_quad(st_roof, p_br, p_bl, r_l, r_r, n_back, c_roof * 0.88)
+	_civ_quad(st_roof, p_bl, p_br, p_fr, p_fl, Vector3.DOWN, c_roof * 0.55)
+	# Inset gable triangles matching wall plaster
+	var gx := hx - 1.2
+	var gz := hz - 1.2
+	_civ_tri(st_wall, Vector3(base.x - gx, y0, base.z + gz), Vector3(base.x - gx, y0, base.z - gz), Vector3(base.x - gx, y1 - 0.3, base.z), Vector3.LEFT, c_gable * 0.86)
+	_civ_tri(st_wall, Vector3(base.x + gx, y0, base.z - gz), Vector3(base.x + gx, y0, base.z + gz), Vector3(base.x + gx, y1 - 0.3, base.z), Vector3.RIGHT, c_gable * 0.90)

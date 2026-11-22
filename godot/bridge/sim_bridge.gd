@@ -189,6 +189,15 @@ func req_met(team: int, kind: String) -> bool:
 func state_hash() -> String:
 	return str(js.hash()) if js != null else ""     # worker mode: the hash of the last step asked with want_hash
 
+func range_cmd(cmd: Dictionary) -> bool:
+	return js != null and int(js.rangeCmd(JSON.stringify(cmd))) != 0
+
+func save_snap() -> String:
+	return str(js.saveSnap()) if js != null else ""
+
+func load_snap(snap_json: String) -> bool:
+	return js != null and snap_json != "" and int(js.loadSnap(snap_json)) != 0
+
 ## worker mode: {steps, bytesPerStep, workerMsPerStep, mainMsPerStep} since the last call
 func worker_stats() -> Dictionary:
 	return JSON.parse_string(js.stats()) if worker else {}

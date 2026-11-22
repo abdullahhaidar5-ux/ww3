@@ -96,13 +96,29 @@ function BRIDGE(W) {
       events: ['txt', 'boom', 'ping', 'tping', 'heal', 'halo', 'die', 'strike', 'smoke', 'gone', 'flag', 'shout', 'plane', 'dam', 'bmis', 'vig', 'tr', 'toss', 'say', 'salvo', 'rubc', 'rank', 'pj', 'muz', 'mping', 'mmst', 'mdraw', 'log', 'icpt', 'hl', 'hack', 'give', 'flare', 'emp', 'elim', 'cyb', 'civs', 'civd', 'chf', 'cfs', 'cfo', 'cfb', 'bfx', 'bfh', 'ready', 'built', 'end'],
       nations: FKEYS.map(k => ({ key: k, name: FACTIONS[k].name, color: FACTIONS[k].color || FACTIONS[k].col || '', style: FACTIONS[k].morale || '' })),
       maps: Object.keys(MAPS).filter(k => !MAPS[k].hidden && !MAPS[k].custom).map(k => ({ key: k, name: MAPS[k].name, min: MAPS[k].min || 2, max: MAPS[k].max || 2, battle: BM_KEYS.includes(k) ? 1 : 0 })) }),   // battle 1 = a Battle map (src/02d-battlemaps.js BATTLE_MAPS) for min..max players; the sim swaps any other key / player count for a fair Battle map
-    // o = {map, seed, diff, players:[{nation, ai, team}]}
+    // o = {map, seed, diff, players:[{nation, ai, team}], starts?:[idx...]}
     newGame: js => {
       const o = typeof js === 'string' ? JSON.parse(js) : js, P = o.players || [];
       if (o.map && !MAPS[o.map]) return JSON.stringify({ ok: 0, error: 'Unknown map "' + o.map + '": the simulation has no map with that key.' });   // never a silent fallback
       EV = []; Q = []; seen = new Map(); fogs = [];
       const r = W.start({ seed: (o.seed | 0) || 1, facs: P.map(p => p.nation), ai: P.map(p => p.ai !== false), tm: P.map((p, i) => p.team == null ? i : p.team), map: o.map || 'bm_splitridge', battle: 1, diff: o.diff == null ? 1 : o.diff,
         portMath: o.nativeMath ? [] : ['sin', 'cos', 'atan2', 'exp', 'pow'] });
+      if (Array.isArray(o.starts) && o.starts.length === P.length && o.starts.some(s => (s | 0) >= 0) && typeof BASES !== 'undefined' && BASES.length >= P.length) {
+        // Re-map starting entities to the player-chosen base indices when specified
+        const used = new Set(), perm = new Array(P.length).fill(-1);
+        for (let i = 0; i < P.length; i++) { const s = o.starts[i] | 0; if (s >= 0 && s < BASES.length && !used.has(s)) { perm[i] = s; used.add(s); } }
+        let nxt = 0;
+        for (let i = 0; i < P.length; i++) if (perm[i] < 0) { while (used.has(nxt)) nxt++; perm[i] = nxt; used.add(nxt); }
+        const oldB = BASES.map(b => [b[0], b[1]]);
+        for (let i = 0; i < P.length; i++) {
+          if (perm[i] === i) continue;
+          const dx = oldB[perm[i]][0] - oldB[i][0], dy = oldB[perm[i]][1] - oldB[i][1];
+          for (const e of G.ents) if (e.team === i) { e.x = Math.max(40, Math.min(MAPW - 40, e.x + dx)); e.y = Math.max(40, Math.min(MAPH - 40, e.y + dy)); }
+        }
+        const nb = perm.map(idx => BASES[idx]);
+        for (let i = 0; i < BASES.length; i++) if (!used.has(i)) nb.push(BASES[i]);
+        BASES.splice(0, BASES.length, ...nb);
+      }
       stepT = 0; fill(); EV = [];
       return JSON.stringify({ ok: 1, ms: Math.round(r.ms), map: { key: G.mapKey, name: (MAPS[G.mapKey] || {}).name, MAPW, MAPH, CELL, GW, GH }, teams: teamRows() });
     },
@@ -175,13 +191,59 @@ function BRIDGE(W) {
       try { for (const k of Object.keys(POWERS)) { if (typeof sigBan === 'function' && sigBan(fac, k)) continue; const p = powInfo(k, fac); powers.push({ k, name: p.name, desc: p.desc || '' }); } } catch (_) {}
       return JSON.stringify({ units, blds, upg, powers, build_order: typeof BUILD_ORDER !== 'undefined' ? BUILD_ORDER : Object.keys(blds), roster: Fc.roster || null, special: Fc.special || null, name: Fc.name, style: Fc.morale || '' });
     },
+    // Test Range + Tutorial commands (spawn / spawn_bld / clear / set_ai / heal / money)
+    rangeCmd: js => {
+      if (typeof G === 'undefined' || !G) return 0;
+      const o = typeof js === 'string' ? JSON.parse(js) : js;
+      const tm = o.team | 0;
+      W.sim(() => {
+        if (o.cmd === 'spawn') {
+          const n = Math.max(1, Math.min(20, o.n | 0 || 1));
+          for (let i = 0; i < n; i++) {
+            const p = nearestPassXY('ground', (+o.x || 0) + (i ? (Math.random() - .5) * 100 : 0), (+o.y || 0) + (i ? (Math.random() - .5) * 100 : 0));
+            if (p) addUnit(tm, String(o.kind || 'inf'), p[0], p[1]);
+          }
+        } else if (o.cmd === 'spawn_bld') {
+          const k = String(o.kind || 'barracks');
+          let bx = +o.x || 0, by = +o.y || 0;
+          for (let r = 0; r < 24; r++) {
+            const qx = bx + Math.cos(r * 2.4) * r * 16, qy = by + Math.sin(r * 2.4) * r * 16;
+            if (validSpot(tm, k, qx, qy)) { addBld(tm, k, qx, qy, true); break; }
+          }
+        } else if (o.cmd === 'clear') {
+          for (const e of G.ents) if (!e.dead && e.team === tm && !(e.isB && e.kind === 'hq')) kill(e, 0, null);
+        } else if (o.cmd === 'set_ai') {
+          const T = G.teams[tm]; if (T) T.ai = o.on ? (T.ai || mkAI(1)) : null;
+        } else if (o.cmd === 'heal') {
+          for (const e of G.ents) if (!e.dead && e.team === tm) { e.hp = e.max; if (e.amx > 0) e.am = e.amx; }
+        } else if (o.cmd === 'money') {
+          const T = G.teams[tm]; if (T) T.credits += (+o.amt || 0);
+        }
+      });
+      fill();
+      return 1;
+    },
+    // Whole-battle checkpoint snapshot (src/07b-ckpt.js ckEncode / ckRestore) for saves & online resync
+    saveSnap: () => {
+      if (typeof G === 'undefined' || !G || typeof ckEncode !== 'function') return '';
+      try { return JSON.stringify(ckEncode()); } catch (e) { return ''; }
+    },
+    loadSnap: js => {
+      if (typeof G === 'undefined' || !G || typeof ckRestore !== 'function' || !js) return 0;
+      try {
+        const ck = typeof js === 'string' ? JSON.parse(js) : js;
+        W.sim(() => { ckRestore(ck); });
+        fill();
+        return 1;
+      } catch (e) { return 0; }
+    },
     // debug / tests only: evaluate inside the sim's scope
     ev: src => W.ev(src),
   };
   return api;
 }
 
-const body = simSource() +
+const body = simSource(undefined, { host: true }) +
   '\n/* ===== bridge: effects go to the event list ===== */\nlet __WW3FX=null;function fxPlay(type,args){if(__WW3FX)__WW3FX(type,args);}\n' +
   `\n/* ===== driver (orch/headless.mjs) ===== */\nconst __W=(${driver})();\n` +
   `\n/* ===== bridge API (tools-godot/build_bridge.mjs) ===== */\nconst __API=(${BRIDGE.toString()})(__W);__WW3FX=__W.fx;\nreturn __API;\n`;
@@ -203,16 +265,21 @@ ${body}
 })(typeof globalThis!=='undefined'?globalThis:this);
 /* ===== Web Worker mode: new Worker('ww3sim.js') - the sim runs off the page's main thread (godot/web/ww3bridge.js is the client) ===== */
 if(typeof WorkerGlobalScope!=='undefined'&&typeof self!=='undefined'&&self instanceof WorkerGlobalScope){(function(){
-  var W=self.WW3,lgv=-1;
+  var W=self.WW3,lgv=-1,stepCnt=0;
   var boot={c:'boot',tables:W.tables(),rules:{}};JSON.parse(boot.tables).nations.forEach(function(n){try{boot.rules[n.key]=W.rules(n.key);}catch(e){boot.rules[n.key]='{}';}});
   self.postMessage(boot);
   self.onmessage=function(e){var m=e.data;
-    if(m.c==='new'){lgv=-1;var r=W.newGame(m.o),b={},tr=[];if(JSON.parse(r).ok!==1){self.postMessage({c:'new',r:r,meta:'{}',bufs:{},ent:new ArrayBuffer(0),lines:'{}',hash:''});return;}['grid','cover','wood','hgrid','road'].forEach(function(k){b[k]=W.mapBuf(k).buffer;tr.push(b[k]);});
-      var ent=W.entBuf().buffer;tr.push(ent);self.postMessage({c:'new',r:r,meta:W.mapMeta(),bufs:b,ent:ent,lines:W.lines(),hash:W.hash()},tr);lgv=W.lgv();}
+    if(m.c==='new'){lgv=-1;stepCnt=0;var r=W.newGame(m.o),b={},tr=[];if(JSON.parse(r).ok!==1){self.postMessage({c:'new',r:r,meta:'{}',bufs:{},ent:new ArrayBuffer(0),lines:'{}',hash:''});return;}['grid','cover','wood','hgrid','road'].forEach(function(k){b[k]=W.mapBuf(k).buffer;tr.push(b[k]);});
+      var ent=W.entBuf().buffer;tr.push(ent);self.postMessage({c:'new',r:r,meta:W.mapMeta(),bufs:b,ent:ent,lines:W.lines(),hash:W.hash(),snap:W.saveSnap()},tr);lgv=W.lgv();}
     else if(m.c==='step'){var t0=performance.now();for(var i=0;i<m.orders.length;i++)W.order(m.orders[i][0],m.orders[i][1]);
       var js=W.step(m.k),ent2=W.entBuf().buffer,pj=W.projBuf().buffer,o={c:'step',js:js,ent:ent2,proj:pj},tr2=[ent2,pj];
       var v=W.lgv();if(v!==lgv){lgv=v;o.lines=W.lines();}
-      if(m.fog>=0){o.fog=W.fog(m.fog).buffer;tr2.push(o.fog);}if(m.hash)o.hash=W.hash();o.wms=performance.now()-t0;self.postMessage(o,tr2);}
+      if(m.fog>=0){o.fog=W.fog(m.fog).buffer;tr2.push(o.fog);}if(m.hash)o.hash=W.hash();
+      stepCnt++;if(m.snap||(stepCnt%90===0))o.snap=W.saveSnap();
+      o.wms=performance.now()-t0;self.postMessage(o,tr2);}
+    else if(m.c==='range'){W.rangeCmd(m.o);var ent3=W.entBuf().buffer,pj3=W.projBuf().buffer;self.postMessage({c:'sync',js:W.step(0),ent:ent3,proj:pj3,snap:W.saveSnap()},[ent3,pj3]);}
+    else if(m.c==='snap'){self.postMessage({c:'snap',snap:W.saveSnap()});}
+    else if(m.c==='load'){var ok=W.loadSnap(m.snap);var ent4=W.entBuf().buffer,pj4=W.projBuf().buffer;self.postMessage({c:'sync',ok:ok,js:W.step(0),ent:ent4,proj:pj4,lines:W.lines(),hash:W.hash(),snap:m.snap},[ent4,pj4]);}
     else if(m.c==='ask'){var a=m.a,val=m.q==='valid'?W.validSpot(a[0],a[1],a[2],a[3]):m.q==='req'?W.reqMet(a[0],a[1]):m.q==='inside'?W.inside(a[0]):m.q==='ev'?JSON.stringify(W.ev(a[0])):null;self.postMessage({c:'ans',key:m.key,v:val});}
   };
 })();}
