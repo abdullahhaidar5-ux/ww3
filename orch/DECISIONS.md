@@ -301,3 +301,4 @@ Every token an agent reads counts against Abdullah's plan. Work like this:
 - 2026-11-21 Abdullah (2026-11-20 19:07 "Drop the anthems", 2026-11-21 09:34 "Remove the anthems"): national anthems removed - none at battle start or victory; anthem credits removed; guard in orch/decisions.mjs. Supersedes 'nation identity = anthem at battle start and victory'.
 - 2026-11-21 12:37 Abdullah: "Visuals should match generals more than company of heros" - look reference is C&C Generals Zero Hour (TASTE.md updated; replaces CoH3 gritty realism).
 - 2026-11-21 12:42 Abdullah: "Keep the company of heros style but make it brighter" - supersedes 12:37 (Generals look): CoH3 gritty realism stays, made brighter.
+- 2026-11-22 (Godot port): "No need to make a picture and waste time" - no picture to Abdullah before a landing; ORCH still runs the automatic check. "We need to slow down now", "Slowest cheapest kaizen" - one small step at a time, no parallel lanes (orch/KAIZEN.md).

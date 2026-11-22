@@ -1,26 +1,28 @@
-# KAIZEN — non-stop small improvements (Abdullah 2026-11-06 17:15: "Become faster and more efficient. Follow kaizen style development. Non stop iterations and improvements. Let's really go.")
+# KAIZEN queue — Godot port, slowest/cheapest mode (Abdullah 2026-11-22 "Slowest cheapest kaizen")
 
-## The cycle (one iteration ≈ 1 hour, then the next starts immediately)
-1. **Measure** (cheap, from tools — not by reading code): gate statuses on main, `node orch/smooth.mjs --profile pc` fps, console
-   errors in smoke, `node orch/grandtest.mjs`, newest screenshots, open HANDOFF-*.md files, stale orch/* branches (no push > 3 h
-   and not merged), BACKLOG top, player-visible bugs.
-2. **Pick ONE improvement** with the best value ÷ effort that no running helper is touching (check branches pushed in the last
-   60 min and the files they change: `git diff --stat origin/main...origin/orch/<b>`). Priority order:
-   a) broken/regressed things on main (failing gate, errors, crashes, desyncs);
-   b) stalled work (a HANDOFF or a branch stale > 3 h): finish or ship it;
-   c) Abdullah's top pains: **looks** (battle graphics realism; the grand map has its own art loop) and **performance**;
-   d) intuitiveness/feel (feedback, wording, clutter); e) waste in our own process (slow tests, repeated reading).
-3. **Change the smallest thing that gives a visible/measurable gain.** No new systems (SYSTEMS.md), no balance numbers
-   (balance helpers own them), no control changes.
-4. **Prove it**: same measurement before/after; gate green; never regress.
-5. **Ship** (fast-forward to main), **log** one line in the table below, **refresh orch/BRIEF.md**, start the next iteration.
+Rule: ONE small step at a time. Each step = one small change on `orch/godot-port` -> `tools-godot/check.sh` -> push.
+No parallel lanes, no scheduled tasks. A step that grows gets split. Land on main only when the check passes in full
+and a player can see or feel the improvement. No picture to Abdullah needed before landing (2026-11-22 "No need to
+make a picture and waste time"); ORCH still runs the automatic check.
 
-## Efficiency rules for every helper (saves Abdullah's usage)
-- Read **orch/BRIEF.md** first — the one-page state of the game — instead of many old reports; open a report only when your
-  task needs its details.
-- grep + ~100-line ranges only; never whole modules; never index.html; outputs through `tail`.
-- One blocking wait instead of polling; quick local checks while working, the full gate once at the end.
+Lane notes to reuse (do not re-read the code from scratch): orch/HANDOFF-gport-{a,b,c,d,e,f}.md on branches
+`orch/gport-a` .. `orch/gport-f`; exports on `orch/gport-x1` (models) and `orch/gport-x2` (data, text, icons).
 
-## Log (newest first)
-| When (UTC) | Iteration | Improvement | Measured gain |
-|---|---|---|---|
+## Queue (top = next)
+1. Check: finish the fast-forward battle step so check.sh passes in full on this machine (software graphics).
+2. Battle starts on ANY map the sim offers (today every other map silently becomes Split Ridge).
+3. Pickers list all 22 nations and every Battle map (from the bridge tables / X2 data).
+4. HUD on the JS sim: selecting a dozer or a production building works (adapter fields the HUD reads).
+5. Orders in the JS sim's format: guard, enter, unload, dig in.
+6. Minimap and end report on the JS sim.
+7. Generals' powers and leader abilities (orders + panel).
+8. Sound events: audio sees the sim's events before battle.gd drains them (under attack, low power, impacts).
+9. Units drawn in bulk from the bridge buffers (boxes first, measure 1,000 / 2,000 units), then X1's models.
+10. Animated soldiers.
+11. World: every map's ground, buildings from X1, effects, supply lines on the ground (L).
+12. Saves by sim snapshot; Continue; Test range with enemy AI; Missions and Tutorial on the JS sim.
+13. Online on the JS sim (snapshot resync first), then the relay deploy.
+
+## Done
+- 2026-11-22: Godot 4.4.1 installed for all lanes; lanes P5 (audio), P6 (HUD, menus), P7 (online) merged;
+  check.sh, godot/OWNERS.md, orch/BRIEF.md written. check.sh has NOT yet passed in full (battle step).
