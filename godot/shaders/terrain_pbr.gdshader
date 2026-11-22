@@ -65,8 +65,11 @@ void fragment() {
 	vec3 det_nrm = mix(nrm_a, nrm_b, detail_blend);
 
 	// Base biome albedo from smooth vertex colors subtly modulated by dual-scale detail
-	float micro_mod = (theme_id == 2) ? mix(0.90, 1.09, det_lum) : mix(0.84, 1.16, det_lum);
+	float micro_mod = (theme_id == 2) ? mix(0.92, 1.07, det_lum) : mix(0.86, 1.14, det_lum);
 	vec3 col = COLOR.rgb * micro_mod;
+	if (theme_id == 1) {
+		col *= vec3(1.12, 1.15, 1.04);   // sunlit Mediterranean olive warmth
+	}
 	float rough = (theme_id == 2) ? 0.80 : ((theme_id == 1) ? 0.92 : 0.94);
 	float nrm_d = (theme_id == 2) ? nrm_strength * 0.65 : nrm_strength;
 
@@ -110,17 +113,17 @@ void fragment() {
 		vec3 road_col;
 		vec3 shoulder_col;
 		if (theme_id == 2) {
-			// Snow: cleared gravel/slate road (readable, never harsh pitch-black)
-			road_col = vec3(0.44, 0.45, 0.47);
-			shoulder_col = vec3(0.66, 0.69, 0.73);
+			// Snow: sunlit cleared gravel/stone road
+			road_col = vec3(0.68, 0.70, 0.73);
+			shoulder_col = vec3(0.81, 0.84, 0.88);
 		} else if (theme_id == 1) {
-			// Green: weathered asphalt/gravel
-			road_col = vec3(0.36, 0.35, 0.33);
-			shoulder_col = vec3(0.43, 0.41, 0.34);
+			// Green: sunlit compacted dirt & weathered gravel road
+			road_col = vec3(0.60, 0.54, 0.44);
+			shoulder_col = vec3(0.54, 0.51, 0.39);
 		} else {
-			// Desert: worn ochre-grey packed road
-			road_col = vec3(0.47, 0.41, 0.34);
-			shoulder_col = vec3(0.65, 0.55, 0.42);
+			// Desert: sunlit ochre packed road
+			road_col = vec3(0.68, 0.60, 0.48);
+			shoulder_col = vec3(0.76, 0.67, 0.53);
 		}
 		road_col *= mix(0.92, 1.08, r_wear);
 		shoulder_col *= mix(0.94, 1.06, r_wear);

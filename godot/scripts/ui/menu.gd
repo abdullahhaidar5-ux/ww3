@@ -88,17 +88,20 @@ func _chrome() -> void:
 		pic.clip_contents = true
 		add_child(pic)
 	var shade := ColorRect.new()
+	shade.name = "Shade"
 	shade.color = Color(0.02, 0.03, 0.04, 0.985)
-	shade.anchor_left = 998.0 / 1536.0; shade.anchor_right = 1.0; shade.anchor_bottom = 1.0
+	shade.anchor_left = 1.0; shade.anchor_right = 1.0; shade.anchor_bottom = 1.0
+	shade.offset_left = -560.0
 	add_child(shade)
 	var line := ColorRect.new()
+	line.name = "Divider"
 	line.color = Color(UI.CYAN.r, UI.CYAN.g, UI.CYAN.b, 0.55)
-	line.anchor_left = 998.0 / 1536.0; line.anchor_right = 998.0 / 1536.0; line.anchor_bottom = 1.0
-	line.offset_right = 2
+	line.anchor_left = 1.0; line.anchor_right = 1.0; line.anchor_bottom = 1.0
+	line.offset_left = -560.0; line.offset_right = -558.0
 	add_child(line)
 	col = Control.new()
-	col.anchor_left = COL_X; col.anchor_right = 1.0; col.anchor_bottom = 1.0
-	col.offset_right = -28; col.offset_top = 0
+	col.anchor_left = 1.0; col.anchor_right = 1.0; col.anchor_bottom = 1.0
+	col.offset_left = -534.0; col.offset_right = -24.0; col.offset_top = 0
 	col.clip_contents = true
 	add_child(col)
 	crumb = HBoxContainer.new()
@@ -358,13 +361,14 @@ func _nat_tile(k: String, on: bool, cb: Callable, hover: Callable = Callable()) 
 	var b := Button.new()
 	b.name = "Nat_" + k
 	b.focus_mode = Control.FOCUS_NONE
-	b.custom_minimum_size = Vector2(234, 46)
+	b.custom_minimum_size = Vector2(218, 44)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.clip_text = true
 	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.text = "          " + UI.nat_name(k).to_upper()
+	b.text = "           " + UI.nat_name(k).to_upper()
 	b.add_theme_font_override("font", UI.font("display"))
-	b.add_theme_font_size_override("font_size", 17)
+	b.add_theme_font_size_override("font_size", 16)
 	b.add_theme_color_override("font_color", UI.GOLD_HI if on else UI.TEXT)
 	b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
 	var n := UI.box(Color("3a3113") if on else UI.PLATE, UI.GOLD if on else UI.CYAN, 1, 8, 9, UI.GOLD if on else UI.CYAN)
@@ -375,8 +379,8 @@ func _nat_tile(k: String, on: bool, cb: Callable, hover: Callable = Callable()) 
 	b.add_theme_stylebox_override("hover", h)
 	b.add_theme_stylebox_override("pressed", h)
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	var fl := Missions.flag(k)
-	fl.position = Vector2(9, 5)
+	var fl := Missions.flag(k, 40.0, 24.0)
+	fl.position = Vector2(8, 10)
 	b.add_child(fl)
 	b.pressed.connect(cb)
 	if hover.is_valid(): b.mouse_entered.connect(hover)
@@ -438,14 +442,16 @@ func _nat_picker(vb: VBoxContainer, cur_fac: String, cb: Callable) -> void:
 	find.add_theme_font_size_override("font_size", 13)
 	find.add_theme_stylebox_override("normal", UI.box(Color("0b1116"), Color("2b3c46"), 1, 10))
 	find.add_theme_stylebox_override("focus", UI.box(Color("0b1116"), UI.GOLD, 1, 10))
+	find.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vb.add_child(find)
-	var det := UI.para(_nat_detail(cur_fac), 12, UI.TEXT_DIM)
+	var det := UI.para(_nat_detail(cur_fac), 12, UI.TEXT_DIM, 470)
 	var det_h := UI.label(UI.nat_name(cur_fac).to_upper(), 24, UI.TEXT, "bold")
 	var inner := _scroll(vb, 8)
 	var grid := GridContainer.new()
 	grid.name = "Nations"
 	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 10); grid.add_theme_constant_override("v_separation", 8)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 8); grid.add_theme_constant_override("v_separation", 6)
 	inner.add_child(grid)
 	var fill := func(q: String):
 		for c in grid.get_children(): c.queue_free()

@@ -84,18 +84,19 @@ const FLAG_COL := {"IR": ["239f40", "ffffff", "da0000"], "RS": ["f7d117", "f7d11
 const FLAG_VERT := ["FR"]
 
 ## real flag PNG from res://ui/icons/flags/<KEY>.png if present, else procedural colour bands with code
-static func flag(k: String, w: float = 38.0, h: float = 34.0) -> Control:
+static func flag(k: String, w: float = 40.0, h: float = 24.0) -> Control:
 	var path := "res://ui/icons/flags/%s.png" % k.to_upper()
 	if ResourceLoader.exists(path):
 		var tex: Texture2D = load(path)
 		if tex != null:
 			var tr := TextureRect.new()
-			tr.texture = tex
-			tr.custom_minimum_size = Vector2(w, h)
-			tr.size = Vector2(w, h)
 			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tr.custom_minimum_size = Vector2(w, h)
+			tr.size = Vector2(w, h)
+			tr.clip_contents = true
 			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			tr.texture = tex
 			return tr
 	var c := Control.new()
 	c.custom_minimum_size = Vector2(w, h)

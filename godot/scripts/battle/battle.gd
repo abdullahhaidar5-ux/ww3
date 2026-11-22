@@ -284,9 +284,10 @@ func start_launch(L: Dictionary) -> void:
 	await _start(players, L.get("starts", []))
 	if not started: return
 	if kind == "range":
+		see_all = true
 		range_ai_on = false
 		if not use_bridge: range_ai = sim.mk_team(1, sim.teams[1].fac, true, sim.teams[1].tm).ai
-		_range_panel()
+		if not headless_mode: _range_panel()
 
 ## JSON gives floats: ids and targets must be ints again
 func _norm(o: Dictionary) -> Dictionary:
@@ -1716,51 +1717,85 @@ func _cursor_tick() -> void:
 # ---------------------------------------------------------------- Test range panel (unlimited money, a target nation that does not act)
 var range_panel: PanelContainer
 func _range_panel() -> void:
-	range_panel = UI.panel(10)
+	range_panel = UI.panel(8)
 	range_panel.name = "Range"
-	range_panel.position = Vector2(10, 34)
+	range_panel.position = Vector2(10, 10)
+	range_panel.custom_minimum_size = Vector2(296, 0)
 	hud.root.add_child(range_panel)
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 4)
 	range_panel.add_child(vb)
-	vb.add_child(UI.label("TEST RANGE", 18, UI.GOLD_HI, "display"))
-	vb.add_child(UI.label("%s  vs  %s" % [UI.nat_name(my_fac), UI.nat_name(sim.teams[1].fac)], 12, UI.TEXT_DIM))
-	vb.add_child(UI.label("SPAWN AT THE CAMERA", 11, UI.TEXT_DIM))
+	var hdr := HBoxContainer.new()
+	hdr.add_theme_constant_override("separation", 6)
+	var title := UI.label("TEST RANGE", 16, UI.GOLD_HI, "display")
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hdr.add_child(title)
+	var body_vb := VBoxContainer.new()
+	body_vb.add_theme_constant_override("separation", 4)
+	var tog := UI.button("HIDE", Callable(), 11, 52)
+	tog.pressed.connect(func():
+		body_vb.visible = not body_vb.visible
+		tog.text = "HIDE" if body_vb.visible else "SHOW")
+	hdr.add_child(tog)
+	vb.add_child(hdr)
+	vb.add_child(body_vb)
+	body_vb.add_child(UI.label("%s  vs  %s" % [UI.nat_name(my_fac), UI.nat_name(sim.teams[1].fac)], 12, UI.TEXT_DIM))
+	body_vb.add_child(UI.label("SPAWN AT CAMERA (Shift = x5)", 11, UI.TEXT_DIM))
+	var sc := ScrollContainer.new()
+	sc.custom_minimum_size = Vector2(280, 260)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	body_vb.add_child(sc)
 	var g := GridContainer.new()
 	g.columns = 2
+	g.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	g.add_theme_constant_override("h_separation", 4); g.add_theme_constant_override("v_separation", 4)
-	vb.add_child(g)
+	sc.add_child(g)
 	var F: Dictionary = sim.teams[me].F
 	for k in F.units:
 		if not use_bridge and NO_TRAIN.has(k): continue
+		var u_row = F.units[k]
+		if not (u_row is Dictionary): continue
+		var raw_nm = u_row.get("name", null)
+		if raw_nm == null or str(raw_nm).strip_edges() == "" or str(raw_nm) == "<null>": continue
+		var unm := str(raw_nm)
 		var kk: String = k
-		var b := UI.button(_short(F.units[k].name).substr(0, 16), func(): _range_spawn(me, kk, 1), 11, 132)
+		var b := UI.button(_short(unm).substr(0, 15), func(): _range_spawn(me, kk, 1), 11, 130)
 		b.name = "Spawn_" + k
-		b.tooltip_text = "Spawn one %s (Shift: five)" % F.units[k].name
+		b.tooltip_text = "Spawn one %s (Shift: five)" % unm
 		b.gui_input.connect(func(ev):
 			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT and ev.shift_pressed: _range_spawn(me, kk, 4))
 		g.add_child(b)
-	vb.add_child(UI.hsep())
+	body_vb.add_child(UI.hsep())
+	var act_g := GridContainer.new()
+	act_g.columns = 2
+	act_g.add_theme_constant_override("h_separation", 4); act_g.add_theme_constant_override("v_separation", 4)
+	body_vb.add_child(act_g)
 	var tb := UI.button("+ Target group", func():
-		for it in [["inf", 6], ["at", 2], ["tank", 3]]: _range_spawn(1, it[0], it[1], 320.0), 12)
+		for it in [["inf", 6], ["at", 2], ["tank", 3]]: _range_spawn(1, it[0], it[1], 320.0), 11, 134)
 	tb.name = "Targets"
-	vb.add_child(tb)
-	vb.add_child(UI.button("+ Target building", func():
+	act_g.add_child(tb)
+	act_g.add_child(UI.button("+ Target bldg", func():
 		var p := cam_target + Vector2(cos(sim.base_facing(me)), sin(sim.base_facing(me))) * 380.0
 		if sim.has_method("range_cmd"):
 			sim.range_cmd({cmd = "spawn_bld", team = 1, kind = "barracks", x = p.x, y = p.y})
 			return
 		for r in 30:
 			var q := p + Vector2(cos(r * 2.4), sin(r * 2.4)) * r * 14.0
-			if sim.valid_spot(1, "barracks", q.x, q.y) != 0: sim.add_bld(1, "barracks", q.x, q.y, true); break, 12))
-	vb.add_child(UI.button("Clear targets", func():
+			if sim.valid_spot(1, "barracks", q.x, q.y) != 0: sim.add_bld(1, "barracks", q.x, q.y, true); break, 11, 134))
+	act_g.add_child(UI.button("Clear targets", func():
 		if sim.has_method("range_cmd"):
 			sim.range_cmd({cmd = "clear", team = 1})
 			return
 		for e in sim.ents:
-			if e.team == 1 and not e.dead and not (e.is_b and e.kind == "hq"): sim.kill(e, me, null), 12))
+			if e.team == 1 and not e.dead and not (e.is_b and e.kind == "hq"): sim.kill(e, me, null), 11, 134))
+	act_g.add_child(UI.button("Heal my units", func():
+		if sim.has_method("range_cmd"):
+			sim.range_cmd({cmd = "heal", team = me})
+			return
+		for e in sim.ents:
+			if e.team == me and not e.dead: e.hp = e.max, 11, 134))
 	range_ai_on = false
-	var fb := UI.button("Target fights back: off", Callable(), 12)
+	var fb := UI.button("Target fights back: OFF", Callable(), 11)
 	fb.name = "FightBack"
 	fb.pressed.connect(func():
 		range_ai_on = not range_ai_on
@@ -1769,13 +1804,7 @@ func _range_panel() -> void:
 		else:
 			sim.teams[1].ai = range_ai if range_ai_on else null
 		fb.text = "TARGET FIGHTS BACK: " + ("ON" if range_ai_on else "OFF"))
-	vb.add_child(fb)
-	vb.add_child(UI.button("Heal my units", func():
-		if sim.has_method("range_cmd"):
-			sim.range_cmd({cmd = "heal", team = me})
-			return
-		for e in sim.ents:
-			if e.team == me and not e.dead: e.hp = e.max, 12))
+	body_vb.add_child(fb)
 
 func _range_spawn(team: int, k: String, n: int, ahead: float = 0.0) -> void:
 	if sim.stats(sim.teams[team].fac, k).is_empty(): return

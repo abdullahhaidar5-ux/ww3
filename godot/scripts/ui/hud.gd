@@ -356,7 +356,7 @@ func _bar() -> void:
 	# ---- CLEAN DOCKED BAR TABS & CONTEXT HINT (flush with top edge of bottom bar)
 	hint_lbl = UI.label("", 12, Color(0.86, 0.90, 0.88, 0.88))
 	hint_lbl.anchor_top = 1.0; hint_lbl.anchor_bottom = 1.0
-	hint_lbl.offset_left = 8; hint_lbl.offset_top = -BAR_H - 22; hint_lbl.offset_right = 580; hint_lbl.offset_bottom = -BAR_H - 1
+	hint_lbl.offset_left = 8; hint_lbl.offset_top = -BAR_H - 22; hint_lbl.offset_right = 860; hint_lbl.offset_bottom = -BAR_H - 1
 	hint_lbl.clip_text = true
 	var hsb := _steel(Color(0.04, 0.07, 0.09, 0.78), Color("2c414a"), 1, 2)
 	hsb.content_margin_left = 8; hsb.content_margin_right = 8
