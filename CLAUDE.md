@@ -1,44 +1,43 @@
 # World War 3 — current rules for every agent working in this repo
 
+> **2026-11-22: the game is now the Godot edition (see the section below). The standing decisions below are the spec of the game (rules, controls, nations, look, sound); anything in them about src/, index.html builds, JS gates or the claude.ai artifact refers to the removed JS game.**
+
 Browser RTS in the style of C&C Generals Zero Hour — one game, **Battle**, with supply lines. Live at https://abdullahhaidar5-ux.github.io/ww3/ (GitHub Pages
 serves `main`). The owner, Abdullah, shares it with friends on Discord, so **whatever lands on `main` is what his friends
 play next**. All development is directed by **ORCH** — read `orch/ORCH.md` first, then `orch/BRIEF.md` (one-page state).
 **Full history of every decision (dates, his quotes, superseded wording): [`orch/DECISIONS.md`](orch/DECISIONS.md)** — append-only; read it
 only when you need the why. **Abdullah's taste (look, sound, UI, pace, trailers): [`orch/TASTE.md`](orch/TASTE.md) — read it before any art, UI, audio or video work.** Everything below is the current rule; don't reverse it unless Abdullah asks.
 
-## Where things live
+## THE GAME IS THE GODOT EDITION (Abdullah 2026-11-22: "Drop the browser game entirely", "Godot now", "Everything on godot version now Stalingrad development")
 
-| Path | What it is | Edit? |
-|---|---|---|
-| `src/NN-*.js` | **The game**, single source of truth. `01-data` factions/units/powers/balance · `02-map` maps, pathfinding · `03-sim` simulation + AI · `03c-logistics` supply lines (roads, craters, network) · `04-gfx` 3D engine · `05-fx3d` effects · `06-view` camera/HUD/minimap · `07-net`, `07a`, `07b-ckpt` multiplayer + host-migration checkpoints · `08-ui` + `08*` UI/menus/main loop · `09-audio` · `10-post` · `11-models` · `12-campaign` story missions · `14-menu` main menu | Yes — only here |
-| `index.html` | Build output: shell + vendored libs + `MODEL_FILES` line + every `src/` module inline | Never by hand |
-| `models/` | 3D models, one gzipped `.glb` each (`<key>.<hash>.glb.gz`) | Via `build.py --add-model KEY file.glb` |
-| `orch/build.py` | Rebuilds `index.html` and the `sw.js` lists from `src/` + `models/`; `--check` verifies them; `--single` writes a one-file page; `--artifact` the claude.ai edition (everything inline) | |
-| `orch/smoke.mjs`, `smooth.mjs`, `decisions.mjs`, `tutorialtest.mjs`, `cigate.sh` | Test gates (see below) | |
-| `orch/BACKLOG.md` · `HISTORY.md` (append only) · `LOG.md` · `ROADMAP.md` · `board.py`→`board.html` (Command Board) | Work lists/logs | ORCH + whoever ships |
-| `orch/SYSTEMS.md`, `SIGNATURES.md`, `PLAN-SAT.md`, `ART-BAR.md`, `SMOOTH.md`, `ARTIFACT.md`, `AUTODEPLOY.md` | Specs: system owners, nation signatures, plan, art checklist, smoothness gate, artifact publishing, auto server updates | |
-| `vo/`, `mus/`, `sfx/` | Voices per nation, shared soundtrack + anthems, battle sounds | Audio squad |
-| `server/`, `relay-worker.js`, `tools/` | Cloudflare battle servers, relay, host tune-up scripts | Netcode squad |
+The JavaScript game (src/, its index.html, sw.js offline cache, orch/*.mjs gates, build.py, server/ battle servers code, JS workflows)
+is **removed from main**; it lives only in git history and on branch `js-final` (main 9ff51b0, 2026-11-21). Read it there as the
+**reference spec** for logic, rules, look and sound (`git show js-final:src/03-sim.js | grep -n ...` - never a whole module, never
+its index.html). Don't bring the JS game back unless Abdullah asks.
+
+| Path | What it is |
+|---|---|
+| `index.html`, `index.js`, `index.wasm`, `index.pck`, `index.*` (repo root, main) | **The live game**: Godot 4.4.1 web export (Compatibility renderer, thread_support=false), served by GitHub Pages at https://abdullahhaidar5-ux.github.io/ww3/. Only ORCH replaces them, from the build of `orch/godot-port`. |
+| `orch/godot-port` (branch) | **Integration branch of the Godot project** (`godot/` source, `godot/sim/`, `godot/net/`, `server-godot/`, `tools-godot/`). Lanes P1-P7 work on `orch/gport-p<N>` and merge it in; ORCH merges lanes into it, builds, and lands the web export on main. |
+| `models/`, `mus/`, `vo/`, `sfx/`, `art/` | Assets the Godot edition reuses (never read as text). |
+| `sw.js` | Kill switch only: clears the old JS game's offline copy for old visitors and unregisters itself. Don't add a service worker back. |
+| `_redirects`, `.assetsignore` | The Cloudflare Worker copy (ww3.abdullah-haidar5.workers.dev, deploy-site.yml) now only redirects to GitHub Pages (index.wasm is over Cloudflare's 25 MB file limit). |
 
 ## Every change
 
-Edit `src/` → `python3 orch/build.py` (syntax-checks; refuses to write on error) → `node orch/smoke.mjs` prints `SMOKE PASS` →
-`node orch/decisions.mjs` prints `DECISIONS PASS` → commit `src/` **and** `index.html` together (plus `sw.js`, `models/` if changed).
-Never write `</script` in `src/` (use `<\/script`). Don't touch the vendored libraries or the `MODEL_FILES` line (`build.py` writes it). `python3 orch/build.py --check` must pass.
-Never force-push `main`; rebase on `origin/main` before every push; `index.html` conflicts → rebuild; HISTORY conflicts keep both sides.
-Describe each change in plain words a player would understand.
+Work on the Godot project on your lane branch → its headless tests pass (`godot --headless` battle_test / selftest, see
+`orch/HANDOFF-godot-battle.md` on orch/godot-port) → pictures/numbers in your HANDOFF → ORCH merges into `orch/godot-port`, exports
+Web, checks it in headless Chromium (loads, menu, a battle runs, no errors), and replaces the root `index.*` files on main in one
+commit. Main is for landings only (every push redeploys Pages). Never force-push main. Describe each change in plain player words.
+The JS gate rules (cigate.sh, smooth.mjs, decisions.mjs, build.py) are gone with the JS game; the LESSONS rules still hold
+(look at every visible change yourself, one landing at a time, smoothness first, never report unseen work as working).
 
-## Ground rules
+## Ground rules (Godot edition)
 
-- **Test on GitHub, not here:** the cloud sandboxes are too slow to run `orch/smooth.mjs` (it times out or fail on unchanged main) — do NOT conclude anything from a local smooth run and do not stop because of one: run the gate on GitHub's runners with `orch/cigate.sh` (pushes your commit to `gate/<sha>`, waits for the `gate/*` statuses). The gate is 25 jobs since the one-game change (2026-11-14: grand, grandsmooth, grandlive removed); a change ships only if its own `orch/cigate.sh` run is green.
-- **Main is for landings only (2026-11-10 19:25, ORCH):** every push to `main` restarts the live-site update (GitHub Pages cancels the build in progress) and a full test run; with many helpers pushing queue marks every few minutes the live site did not update for 6 hours. So: do NOT push queue marks, logs, handoffs, reports or other docs-only commits to `main` on their own. To take a queue item, create its lock branch instead: `git push origin HEAD:refs/heads/taken/<short-item-name>` — if that branch already exists (`git ls-remote --heads origin 'taken/*'`) and is younger than 12 h the item is taken, pick the next; a `[>]` mark already on main also still counts. Change `orch/QUEUE.md`, HISTORY, LOOP, BRIEF and reports only inside the commit that lands code (or on your own branch). This overrides any helper prompt that says to push a mark to main first.
-- **Smooth first:** every visual change keeps `gate/smooth-pc` and `gate/smooth-mp` green; new props/decals/labels are instanced or merged per material, never one mesh each; never raise a budget or re-baseline to pass. Smooth gate red on main → all look work stops until fixed (the lane that broke it fixes it).
-- **A decision is done only when its leftovers are gone:** when you ship or change a decision, grep and play-test for every trace of the old way (buttons, hotkeys, menu items, tooltips, encyclopedia/what's-new text, AI build lists, tests, saves), remove it in the same ship, and add a guard (`orch/smoke.mjs` or `orch/decisions.mjs`).
-- **One system per idea:** read `orch/SYSTEMS.md`, extend the owner of your idea, never add a second system for the same job. New sim state goes into the checkpoint (`src/07b-ckpt.js`) so saves and host migration work; new hotkeys go in the one key table.
-- **Kaizen & lanes:** read `orch/BRIEF.md`; follow `orch/KAIZEN.md` (measure → one small high-value change → prove → ship → log) and the lanes in `orch/PLAN-SAT.md` (one owner per file). Loops obey `orch/BUDGET.md` (max 8 helpers at once, 24 iterations/loop/day — full throttle since 2026-11-10; landings on main still go one at a time, each on its own gate run, stop cleanly on rate limits).
-- Work only in your squad's files unless ORCH assigned otherwise; small verifiable changes; no new runtime dependencies from other hosts (Three.js r186 via `orch/three/vendor.mjs`, PeerJS bundled); never delete branches/files you didn't create or rewrite history.
-- **Save early:** push your work branch after every commit (`git push origin HEAD:refs/heads/orch/<name>`), before any long test or wait; work that exists only in your sandbox is lost if the session stops.
-- **Ship what is green in small pieces; never leave main broken.** Write `orch/HANDOFF-<branch>.md` when stopping early.
+- Determinism for online lockstep: randomness only via the sim RNG, no frame-time or float drift between web and desktop (`godot/net/README.md`).
+- One system per idea; new sim state goes into save/restore (snapshot) so saves and online rejoin work.
+- Save early: push your lane branch after every commit; HANDOFF current; stop cleanly on rate limits.
+- Free art/audio only (CC0/CC-BY, credited).
 
 ## Standing decisions (short; dates and quotes in orch/DECISIONS.md)
 
