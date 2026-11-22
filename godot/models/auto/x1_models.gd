@@ -85,12 +85,14 @@ static func painted(file: String, pal) -> Mesh:
 			for i in pc.size():
 				var a := int(round(pc[i].a * 255.0))
 				if a < cols.size(): pc[i] = cols[a]
-				elif a < 255: pc[i] = Color(1, 0, 1)
+				elif a < 255 and cols.size() > 0: pc[i] = cols[cols.size() - 1]   # clamp stray palette slots (fixes RV/OB pink soldier torso)
 			arr[Mesh.ARRAY_COLOR] = pc
 		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 		out.surface_set_material(s, mesh.surface_get_material(s))
 	_painted[key] = out
 	return out
+
+const BAD_TEX := ["3c2e377f5259", "2ef43cfa2455"]   # corrupted black-gutter T-72 textures -> use clean nation paint colour
 
 ## a material for one painted surface: texture from the shape file, everything else from the manifest
 static func material(src: Material, m: Dictionary, vertex_colours: bool) -> StandardMaterial3D:
@@ -99,7 +101,12 @@ static func material(src: Material, m: Dictionary, vertex_colours: bool) -> Stan
 	var mat := StandardMaterial3D.new()
 	if src is BaseMaterial3D:
 		var b := src as BaseMaterial3D
-		mat.albedo_texture = b.albedo_texture
+		var tp := b.albedo_texture.resource_path if b.albedo_texture != null else ""
+		var drop_tex := false
+		for bad in BAD_TEX:
+			if tp.contains(bad): drop_tex = true; break
+		if not drop_tex:
+			mat.albedo_texture = b.albedo_texture
 		mat.normal_enabled = b.normal_enabled
 		mat.normal_texture = b.normal_texture
 		mat.transparency = b.transparency
@@ -263,3 +270,29 @@ static func merged(nation: String, kind: String) -> Dictionary:
 			am.surface_set_material(am.get_surface_count() - 1, mat)
 		out[p] = am
 	return out
+
+static var _pack_cache: Dictionary = {}
+## cached MultiMesh package for one (nation, kind): {parts: {part -> ArrayMesh}, pxf: {part -> Transform3D}, scale: float, h: float, is_squad: bool, squad: Array}
+static func merged_pack(nation: String, kind: String) -> Dictionary:
+	var key := nation + "|" + kind
+	if _pack_cache.has(key): return _pack_cache[key]
+	var e := entry(nation, kind)
+	if e.is_empty() or e.has("err"):
+		_pack_cache[key] = {}
+		return {}
+	var is_sq := e.has("squad")
+	var parts := merged(nation, kind)
+	var pxf := {}
+	var src: Dictionary = e.get("extra", {}) if is_sq and e.get("extra", null) is Dictionary else e
+	var pd: Dictionary = src.get("parts", {})
+	for pk in pd.keys():
+		if not pd[pk].has("same"):
+			pxf[pk] = xf(pd[pk].get("m", null))
+	var sc := float(e.get("scale", 1.0))
+	var h := 16.0
+	if parts.has(""):
+		var bb: AABB = (parts[""] as ArrayMesh).get_aabb()
+		h = maxf(6.0, bb.size.y * sc)
+	var pack := {parts = parts, pxf = pxf, scale = sc, h = h, is_squad = is_sq, squad = e.get("squad", [])}
+	_pack_cache[key] = pack
+	return pack

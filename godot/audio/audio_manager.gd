@@ -794,11 +794,27 @@ func observe(sim, me: int, fast: bool = false) -> void:
 				ann("unitLost")
 				if not radio("lost"): speak(6)
 		if o[10] and int(o[4]) >= 0: _shout_at("manDown", o[0], o[1], int(o[4]), t)
-	# power
-	var pl := int(sim.teams[me].get("pw_low", 0))
+	# power (works on both GDScript sim's pw_low and bridge_sim's Vector2 pw)
+	var pw_v = sim.teams[me].get("pw", Vector2.ZERO)
+	var pl := int(sim.teams[me].get("pw_low", 1 if (pw_v is Vector2 and pw_v.y > pw_v.x) else 0))
 	if pl != _pw_low:
 		_pw_low = pl
 		if not first: ann("lowPower" if pl else "powerBack")
+	# JS sim bridge events (KAIZEN 8: read before battle.gd drains take_events())
+	if sim.has_method("peek_events"):
+		for ev in sim.peek_events():
+			if not (ev is Array) or ev.is_empty(): continue
+			var kind_ev := str(ev[0])
+			if kind_ev == "boom" and ev.size() >= 4:
+				boom(float(ev[1]), float(ev[2]), clampf(float(ev[3]) * 0.5, 6.0, 48.0), float(ev[3]) >= 45.0)
+			elif kind_ev == "muz" and ev.size() >= 4:
+				shot(float(ev[1]), float(ev[2]), float(ev[3]))
+			elif kind_ev == "rank" and ev.size() >= 2 and int(ev[1]) == me:
+				ann("rank")
+			elif kind_ev == "strike" or kind_ev == "bmis":
+				ann("super")
+			elif kind_ev == "ready" and ev.size() >= 2 and int(ev[1]) == me:
+				ann("superReady")
 	if _demo and t - _demo_t > 6.0:
 		_demo_t = t
 		var ks: Array = []

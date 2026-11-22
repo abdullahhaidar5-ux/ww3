@@ -94,30 +94,107 @@ static func lock_mouse(on: bool) -> void:
 	if on and bool(opt("mouse_lock")) and not OS.has_feature("web"): Input.mouse_mode = Input.MOUSE_MODE_CONFINED
 	else: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
-# ---------------------------------------------------------------- data (nations + maps come from godot/data, lane P3 exports them)
+# ---------------------------------------------------------------- data (nations + maps come from res://data/ui/*.json, fallback to res://data/rules.json + map_*.json)
 static var _rules: Dictionary = {}
 static func rules() -> Dictionary:
 	if _rules.is_empty():
 		var f := FileAccess.open("res://data/rules.json", FileAccess.READ)
-		if f != null: _rules = JSON.parse_string(f.get_as_text())
+		if f != null:
+			var parsed = JSON.parse_string(f.get_as_text())
+			if typeof(parsed) == TYPE_DICTIONARY: _rules = parsed
 	return _rules
 
+static var _nat_data: Dictionary = {}
+static var _nat_loaded := false
+static func _load_nat_data() -> Dictionary:
+	if not _nat_loaded:
+		_nat_loaded = true
+		var f := FileAccess.open("res://data/ui/nations.json", FileAccess.READ)
+		if f != null:
+			var parsed = JSON.parse_string(f.get_as_text())
+			if typeof(parsed) == TYPE_DICTIONARY: _nat_data = parsed
+	return _nat_data
+
 static func nations() -> Array:
-	var F: Dictionary = rules().get("factions", {})
+	var nd := _load_nat_data()
+	var N: Dictionary = nd.get("nations", {})
 	var out: Array = []
+	if not N.is_empty():
+		for k in PLAYABLE:
+			if N.has(k): out.append(k)
+		if not out.is_empty(): return out
+	var F: Dictionary = rules().get("factions", {})
 	for k in PLAYABLE:
 		if F.has(k): out.append(k)
 	return out
 
-static func nat_name(k: String) -> String:
+static func nat_data(k: String) -> Dictionary:
+	var nd := _load_nat_data()
+	var N: Dictionary = nd.get("nations", {})
+	if N.has(k) and typeof(N[k]) == TYPE_DICTIONARY: return N[k]
 	var F: Dictionary = rules().get("factions", {})
-	if F.has(k): return str(F[k].get("name", NAT_FALLBACK.get(k, k)))
+	if F.has(k) and typeof(F[k]) == TYPE_DICTIONARY: return F[k]
+	if NAT_FALLBACK.has(k): return {key = k, name = NAT_FALLBACK[k]}
+	return {}
+
+static func nat_name(k: String) -> String:
+	var nd := _load_nat_data()
+	var N: Dictionary = nd.get("nations", {})
+	if N.has(k) and typeof(N[k]) == TYPE_DICTIONARY:
+		return str(N[k].get("name", NAT_FALLBACK.get(k, k)))
+	var F: Dictionary = rules().get("factions", {})
+	if F.has(k) and typeof(F[k]) == TYPE_DICTIONARY:
+		return str(F[k].get("name", NAT_FALLBACK.get(k, k)))
 	return str(NAT_FALLBACK.get(k, k))
 
-## every map in res://data (map_<key>.json): [{key, name, n (most players), w, h}], Battle maps first
+static var _map_data: Dictionary = {}
+static var _map_loaded := false
+static func _load_map_data() -> Dictionary:
+	if not _map_loaded:
+		_map_loaded = true
+		var f := FileAccess.open("res://data/ui/maps.json", FileAccess.READ)
+		if f != null:
+			var parsed = JSON.parse_string(f.get_as_text())
+			if typeof(parsed) == TYPE_DICTIONARY: _map_data = parsed
+	return _map_data
+
+## all Battle maps from res://data/ui/maps.json (fallback: scan res://data/map_*.json)
 static var _maps: Array = []
 static func maps() -> Array:
 	if not _maps.is_empty(): return _maps
+	var md := _load_map_data()
+	var M: Dictionary = md.get("maps", {})
+	var order: Array = md.get("order", [])
+	if not M.is_empty():
+		var keys: Array = order if not order.is_empty() else M.keys()
+		for k in keys:
+			var key := str(k)
+			if not M.has(key) or typeof(M[key]) != TYPE_DICTIONARY: continue
+			var raw: Dictionary = M[key]
+			var pmax := int(raw.get("players_max", 2))
+			var pmin := int(raw.get("players_min", 2))
+			var w := 4800.0
+			var h := 3320.0
+			var worlds = raw.get("world", [])
+			if typeof(worlds) == TYPE_ARRAY and worlds.size() > 0:
+				var wd = worlds[worlds.size() - 1]
+				if typeof(wd) == TYPE_DICTIONARY:
+					w = float(wd.get("width", w))
+					h = float(wd.get("height", h))
+			_maps.append({
+				key = key,
+				name = str(raw.get("name", key)),
+				n = pmax,
+				min = pmin,
+				w = w,
+				h = h,
+				theme = str(raw.get("theme", "")),
+				facts = str(raw.get("facts", "")),
+				desc = str(raw.get("description", "")),
+				battle_map = bool(raw.get("battle_map", key.begins_with("bm_"))),
+				file = "res://data/map_%s.json" % key,
+			})
+		if not _maps.is_empty(): return _maps
 	var d := DirAccess.open("res://data")
 	if d == null: return _maps
 	var names: Array = []
@@ -133,7 +210,23 @@ static func maps() -> Array:
 		var m = JSON.parse_string(txt)
 		if typeof(m) != TYPE_DICTIONARY or not m.has("bases"): continue
 		var key := str(m.get("key", f.substr(4, f.length() - 9)))
-		_maps.append({key = key, name = str(m.get("name", key)), n = int(m.bases.size()), w = float(m.MAPW), h = float(m.MAPH), file = "res://data/" + f})
+		var pmax := int(m.bases.size())
+		var mw := float(m.MAPW)
+		var mh := float(m.MAPH)
+		var sz := "Large" if mw > 6000.0 else ("Medium" if mw > 4000.0 else "Small")
+		_maps.append({
+			key = key,
+			name = str(m.get("name", key)),
+			n = pmax,
+			min = 2,
+			w = mw,
+			h = mh,
+			theme = "",
+			facts = "%d players · %s" % [pmax, sz],
+			desc = "",
+			battle_map = key.begins_with("bm_"),
+			file = "res://data/" + f,
+		})
 	_maps.sort_custom(func(a, b):
 		var ab: bool = str(a.key).begins_with("bm_"); var bb: bool = str(b.key).begins_with("bm_")
 		if ab != bb: return ab

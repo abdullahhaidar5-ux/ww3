@@ -14,6 +14,8 @@ const BridgeSim = preload("res://bridge/bridge_sim.gd")   # P1 BRIDGE: the web b
 const Look = preload("res://scripts/battle/battle_look.gd")
 const Terrain = preload("res://scripts/battle/battle_terrain.gd")
 const BattleNet = preload("res://scripts/battle/battle_net.gd")
+const UnitsView = preload("res://scripts/battle/units_view.gd")   # LANE A: X1 3D models + animated soldiers
+const WorldView = preload("res://scripts/battle/world_view.gd")   # LANE B: P4c sky/lighting/GPU FX + X1 buildings
 const UI = preload("res://scripts/ui/ui_kit.gd")
 const Hud = preload("res://scripts/ui/hud.gd")
 const Missions = preload("res://scripts/ui/missions.gd")
@@ -64,6 +66,10 @@ var ghost: MeshInstance3D
 var ghost_mat: StandardMaterial3D
 var bmm := {}             # draw key -> MultiMeshInstance3D
 var bmesh := {}           # draw key -> {mesh, h}
+var units_view := UnitsView.new()   # LANE A HOOK
+var world_view := WorldView.new()   # LANE B HOOK
+var battle_tod := "day"
+var battle_weather := "clear"
 var crate_key := ""
 var auto_cam := false
 var demo_ui := ""
@@ -132,6 +138,8 @@ func _ready() -> void:
 		elif a.begins_with("--minutes="): minutes_cap = float(a.substr(10))
 		elif a.begins_with("--map="): map_key = a.substr(6)
 		elif a.begins_with("--mode="): mode = a.substr(7)
+		elif a.begins_with("--tod="): battle_tod = a.substr(6)
+		elif a.begins_with("--weather="): battle_weather = a.substr(10)
 		elif a.begins_with("--shot="): shot_path = a.substr(7)
 		elif a.begins_with("--shot-t="): shot_t = float(a.substr(9))
 		elif a.begins_with("--ff="): ff = int(a.substr(5))   # CHECK HOOK
@@ -324,6 +332,9 @@ func _start(players: Array, starts: Array) -> void:
 	tick_n = 0
 	if not headless_mode:
 		Terrain.build(self, sim, map, func(k: String): return _build_mesh(k, "y", randf_range(36, 52)))
+		var w_opts := {tod = str(last_launch.get("tod", battle_tod)), weather = str(last_launch.get("weather", battle_weather))}
+		world_view.setup(self, sim, map, w_opts)   # LANE B HOOK (P4c sky/lighting/weather/GPU FX + X1 buildings)
+		units_view.setup(self)                     # LANE A HOOK (X1 3D units + animated soldiers)
 	var b: Array = sim.bases[me]
 	if not args_has_cam():
 		cam_target = Vector2(float(b[0]), float(b[1])) + Vector2(cos(sim.base_facing(me)), sin(sim.base_facing(me))) * 200.0
@@ -367,11 +378,13 @@ func _panel_style() -> StyleBoxFlat:
 	return UI.panel_style()
 
 func restart() -> void:
+	units_view.clear(); world_view.clear()
 	UI.launch = last_launch.duplicate(true)
 	if online != null: online.queue_free()
 	get_tree().reload_current_scene()
 
 func leave() -> void:
+	units_view.clear(); world_view.clear()
 	UI.lock_mouse(false)
 	if online != null and online.net != null: online.net.leave()
 	UI.menu_start = ""
@@ -534,14 +547,16 @@ func sim_tick(orders: Array) -> void:
 	for e in sim.ents:
 		prev[e.id] = Vector3(e.x, e.y, e.ang)
 	var m0 := int(sim.t / 60.0)
-	if use_bridge:   # P1 BRIDGE: one JS call for both steps, then explosions from the sim's event list
+	if use_bridge:   # P1 BRIDGE: one JS call for both steps, audio observes events before drain
 		sim.step_n(2 * ff_k)
-		for ev in sim.take_events():
-			if ev[0] == "boom" and not headless_mode: _boom(Vector3(float(ev[1]), sim.ground_h(float(ev[1]), float(ev[2])) + 4.0, float(ev[2])), clampf(float(ev[3]) * 0.5, 8.0, 40.0), Color(1.0, 0.6, 0.25))
+		Audio.observe(sim, me, headless_mode and (ai_only or demo))   # P5 HOOK (KAIZEN 8: before take_events)
+		var evs: Array = sim.take_events()
+		if not headless_mode:
+			world_view.on_step(sim, evs, me, see_all, ai_only)   # LANE B HOOK (LookFx GPU particles, tracers, craters, fog, supply lines)
 	else:
 		sim.step()
 		if not sim.over: sim.step()
-	Audio.observe(sim, me, headless_mode and (ai_only or demo))   # P5 HOOK
+		Audio.observe(sim, me, headless_mode and (ai_only or demo))   # P5 HOOK
 	if mission != null: mission.tick(1.0 / 30.0)
 	if (ai_only or demo) and int(sim.t / 60.0) != m0: _ai_report(false)
 	if (ai_only or demo) and sim.t >= minutes_cap * 60.0:
@@ -638,6 +653,8 @@ func _process(dt: float) -> void:
 		return
 	if headless_mode: return
 	var a := Engine.get_physics_interpolation_fraction()
+	units_view.begin_frame(self)   # LANE A HOOK
+	world_view.begin_frame()       # LANE B HOOK
 	var per := {}
 	for k in bmm: per[k] = []
 	var rings: Array = []
@@ -659,15 +676,19 @@ func _process(dt: float) -> void:
 		var col := COL_ME if mine else (COL_ALLY if sim.ally(me, e.team) else COL_EN)
 		var issel := bsel.has(e.id)
 		last_pos[e.id] = [p, e.is_b, e.kind, e.team, gy]
-		if e.is_b: _draw_bld(fr, e, fac, p, gy, col, issel, mine)   # LANE B (battle_world.gd)
+		if e.is_b: _draw_bld(fr, e, fac, p, gy, col, issel, mine)   # LANE B (world_view.gd)
 		else:
-			_draw_unit(fr, e, fac, p, ang, gy, col, issel, mine, vis)   # LANE A (battle_units.gd)
+			_draw_unit(fr, e, fac, p, ang, gy, col, issel, mine, vis)   # LANE A (units_view.gd)
 			if mine and sim.t - e.last_hit < 0.5 and sim.t > alert_t + 8.0 and not _on_screen_xy(e.x, e.y):
 				alert_t = sim.t; hud.alert(Vector2(e.x, e.y)); hud.say("Our forces are under attack!  (Space)", "bad")
 	_draw_map_objects(fr)   # LANE B: oil derricks, capturable buildings, supply piles
+	units_view.end_frame()   # LANE A HOOK
+	world_view.end_frame()   # LANE B HOOK
+	world_view.tick(dt, cam, show_supply)   # LANE B HOOK (P4c env + GPU FX + supply lines)
 	for k in bmm:
 		if per.has(k): _fill(bmm[k], per[k])
-	_draw_world_fx(fr, alive)   # LANE B: shells / missiles, impacts, deaths, supply area on the ground (L)
+	if not use_bridge or world_view.fx == null:
+		_draw_world_fx(fr, alive)   # legacy fallback when LookFx is inactive
 	_draw_orders_overlay(fr)   # LANE C: waypoints, the armed order's cursor ring
 	_draw_rings_bars(rings, bars)
 	_draw_fx()
@@ -685,8 +706,11 @@ func _process(dt: float) -> void:
 			print("BATTLE shot " + shot_path + " at %.0f s" % sim.t)
 			get_tree().quit()
 
-## LANE B: one building this frame (model rising out of the ground while built, ring, health / build bar, rally flag)
+## LANE B: one building this frame (X1 3D models + nation flags via world_view.gd)
 func _draw_bld(fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Color, issel: bool, mine: bool) -> void:
+	world_view.draw_bld(self, fr, e, fac, p, gy, col, issel, mine); return   # LANE B HOOK
+
+func _draw_bld_fallback(fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Color, issel: bool, mine: bool) -> void:
 	var per: Dictionary = fr.per; var rings: Array = fr.rings; var bars: Array = fr.bars
 	var kk := _bld_key(fac, e.kind, e.size)
 	var info := _dk_info(kk[0], kk[1])
@@ -699,8 +723,11 @@ func _draw_bld(fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Color
 	if mine and issel and e.rally != null:
 		rings.append([Vector3(float(e.rally.x), sim.ground_h(e.rally.x, e.rally.y) + 1.0, float(e.rally.y)), 10.0, Color(0.4, 1.0, 0.5)])
 
-## LANE A: one unit / vehicle / aircraft / drone this frame (model instances, soldiers of a squad, ring, bars, its shots)
+## LANE A: one unit / vehicle / aircraft / drone this frame (X1 3D models + animated soldiers via units_view.gd)
 func _draw_unit(fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: float, col: Color, issel: bool, mine: bool, vis: bool) -> void:
+	units_view.draw_unit(self, fr, e, fac, p, ang, gy, col, issel, mine, vis); return   # LANE A HOOK
+
+func _draw_unit_fallback(fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: float, col: Color, issel: bool, mine: bool, vis: bool) -> void:
 	var per: Dictionary = fr.per; var rings: Array = fr.rings; var bars: Array = fr.bars
 	var kk := _unit_key(fac, e.kind)
 	var info := _dk_info(kk[0], kk[1])
@@ -739,32 +766,9 @@ func _draw_unit(fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: floa
 			tracers.append([from, Vector3(tg.x, sim.ground_h(tg.x, tg.y) + 6.0, tg.y), t, Color(1.0, 0.85, 0.45, 0.9)])
 			if big: _boom(from + Vector3(cos(ang) * 14.0, 0, sin(ang) * 14.0), 6.0, Color(1.0, 0.75, 0.35), 0.12)
 
-## LANE B: map buildings and supply piles (before the MultiMeshes are filled)
+## LANE B: map buildings and supply piles (X1 _map models via world_view.gd)
 func _draw_map_objects(fr: Dictionary) -> void:
-	var per: Dictionary = fr.per; var rings: Array = fr.rings; var bars: Array = fr.bars
-	# map buildings: oil derricks + capturable quarry / mine / power plant / hospital
-	for o in sim.oil:
-		if o.dead: continue
-		var key := "derrick" if o.tb == null else "techb_" + str(o.tb)
-		var bk := _bld_key("", key, 40.0 if o.tb == null else 60.0)
-		_dk_info(bk[0], bk[1])
-		var oy: float = sim.ground_h(o.x, o.y)
-		per.get_or_add(bk[0], []).append(Transform3D(Basis.IDENTITY, Vector3(o.x, oy, o.y)))
-		var oc := Color(0.75, 0.75, 0.75, 0.7)
-		if int(o.owner) == me: oc = COL_ME
-		elif int(o.owner) >= 0: oc = COL_ALLY if sim.ally(me, int(o.owner)) else COL_EN
-		rings.append([Vector3(o.x, oy + 1.0, o.y), 34.0, oc])
-	# supply piles: crates shrink as the trucks haul them away
-	var ck := ["crate", ["crate", "xz", 16.0]]
-	_dk_info(ck[0], ck[1])
-	if not per.has("crate"): per["crate"] = []
-	for f in sim.fields:
-		var n := clampi(int(ceil(f.amt / 800.0)), 0, 16)
-		for i in n:
-			var ang2 := float(i) * 2.399
-			var rr := 10.0 + sqrt(float(i)) * 11.0
-			var cx: float = f.x + cos(ang2) * rr; var cz: float = f.y + sin(ang2) * rr
-			per["crate"].append(Transform3D(Basis(Vector3.UP, ang2), Vector3(cx, sim.ground_h(cx, cz) + (8.0 if i % 5 == 4 else 0.0), cz)))
+	world_view.draw_map_objects(self, fr); return   # LANE B HOOK
 
 ## LANE B: shells / missiles in flight, impacts, deaths, the supply area on the ground (L)
 func _draw_world_fx(fr: Dictionary, alive: Dictionary) -> void:
@@ -974,8 +978,9 @@ func _place_cam() -> void:
 		cam_y = lerpf(cam_y, sim.ground_h(cam_target.x, cam_target.y), 0.1)
 	var pitch := deg_to_rad(lerpf(40.0, 58.0, clampf((cam_dist - 300.0) / 1300.0, 0.0, 1.0)))
 	var tgt := Vector3(cam_target.x, cam_y, cam_target.y)
-	cam.position = tgt + Vector3(sin(cam_yaw) * cos(pitch) * cam_dist, sin(pitch) * cam_dist, cos(cam_yaw) * cos(pitch) * cam_dist)
-	cam.look_at(tgt, Vector3.UP)
+	var shk := world_view.shake_offset() if started else Vector3.ZERO
+	cam.position = tgt + Vector3(sin(cam_yaw) * cos(pitch) * cam_dist, sin(pitch) * cam_dist, cos(cam_yaw) * cos(pitch) * cam_dist) + shk
+	cam.look_at(tgt + shk * 0.4, Vector3.UP)
 
 func _zoom(f: float) -> void:
 	cam_dist = clampf(cam_dist * f, 220.0, 2400.0)
@@ -1219,10 +1224,16 @@ func _line_formation(a: Vector2, b: Vector2) -> void:
 	inf.sort_custom(func(x, y): return Vector2(x.x, x.y).dot(dir) < Vector2(y.x, y.y).dot(dir))
 	var others := _sel_units().filter(func(e): return not inf.has(e))
 	_wp_clear(_sel_ids())
-	for i in inf.size():
-		var p := ga.lerp(gb, float(i) / maxf(1.0, inf.size() - 1.0))
-		cmd({t = "move", ids = [inf[i].id], x = p.x, y = p.y, line = 1})
-		_boom(Vector3(p.x, sim.ground_h(p.x, p.y) + 2, p.y), 4.0, Color(0.4, 1.0, 0.5), 0.4)
+	if use_bridge:
+		cmd({t = "line", ids = inf.map(func(e): return e.id), x = ga.x, y = ga.y, x2 = gb.x, y2 = gb.y})
+		for i in inf.size():
+			var p := ga.lerp(gb, float(i) / maxf(1.0, inf.size() - 1.0))
+			_boom(Vector3(p.x, sim.ground_h(p.x, p.y) + 2, p.y), 4.0, Color(0.4, 1.0, 0.5), 0.4)
+	else:
+		for i in inf.size():
+			var p := ga.lerp(gb, float(i) / maxf(1.0, inf.size() - 1.0))
+			cmd({t = "move", ids = [inf[i].id], x = p.x, y = p.y, line = 1})
+			_boom(Vector3(p.x, sim.ground_h(p.x, p.y) + 2, p.y), 4.0, Color(0.4, 1.0, 0.5), 0.4)
 	var mid := (ga + gb) * 0.5 - Vector2(-dir.y, dir.x) * 50.0
 	if others.size(): cmd({t = "move", ids = others.map(func(e): return e.id), x = mid.x, y = mid.y})
 	_after_order()
@@ -1378,7 +1389,7 @@ func cmd_items() -> Dictionary:
 	if kind == "replay" or ai_only: return {title = "", sub = "", items = []}
 	if dz != null and se.all(func(e): return e.kind == "dozer"):
 		for k in sim.R.BUILD_ORDER:
-			if NO_BUILD.has(k) or not F.blds.has(k): continue
+			if (not use_bridge and NO_BUILD.has(k)) or not F.blds.has(k): continue
 			var s: Dictionary = sim.bstats(my_fac, k)
 			if s.is_empty(): continue
 			var req: bool = sim.req_met(me, k)
@@ -1394,7 +1405,7 @@ func cmd_items() -> Dictionary:
 		var counts := {}
 		for it in b.q: counts[it.kind] = counts.get(it.kind, 0) + 1
 		for k in F.roster.get(b.kind, []):
-			if NO_TRAIN.has(k): continue
+			if not use_bridge and NO_TRAIN.has(k): continue
 			var s: Dictionary = sim.stats(my_fac, k)
 			if s.is_empty(): continue
 			if k == F.special and int(T.rank) < 2: continue
@@ -1460,10 +1471,37 @@ func portrait() -> Dictionary:
 	if se.size() > 1: info = "%d selected · %s" % [se.size(), info]
 	return {name = str(e.s.get("name", e.kind)), hp = clampf(e.hp / maxf(1.0, e.max), 0, 1), info = info, cameo = ("b|%s|%s" if e.is_b else "u|%s|%s") % [fac, e.kind] if e.team >= 0 else ""}
 
-# ---------------------------------------------------------------- cameos: each model photographed once in a small viewport
+# ---------------------------------------------------------------- cameos: X2 pre-rendered atlas first (instant, all 22 nations), 3D viewport fallback
+var _x2_atlas: Dictionary = {}
+var _x2_sheets: Dictionary = {}
+var _x2_loaded := false
+func _x2_cameo(key: String):
+	if not _x2_loaded:
+		_x2_loaded = true
+		var f := FileAccess.open("res://ui/icons/atlas.json", FileAccess.READ)
+		if f != null:
+			var j = JSON.parse_string(f.get_as_text())
+			if j is Dictionary and j.has("icons"): _x2_atlas = j.icons
+	var ak := key.replace("|", "/")
+	var row = _x2_atlas.get(ak)
+	if row == null or not (row is Dictionary): return null
+	var fp := "res://ui/icons/" + str(row.get("file", ""))
+	if not _x2_sheets.has(fp):
+		_x2_sheets[fp] = load(fp) if ResourceLoader.exists(fp) else null
+	var sh = _x2_sheets[fp]
+	if sh == null: return null
+	var at := AtlasTexture.new()
+	at.atlas = sh
+	at.region = Rect2(float(row.x), float(row.y), float(row.w), float(row.h))
+	return at
+
 func cameo(key: String):
 	if key == "" or headless_mode: return null
 	if cameo_tex.has(key): return cameo_tex[key]
+	var x2 = _x2_cameo(key)
+	if x2 != null:
+		cameo_tex[key] = x2
+		return x2
 	if not cameo_q.has(key) and cameo_busy != key: cameo_q.append(key)
 	return null
 

@@ -57,7 +57,7 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 			var y: float = hat.call(hi, hj)
 			var k := j * nx + i
 			verts[k] = Vector3(x, y, z)
-			uvs[k] = Vector2(x / 240.0, z / 240.0)
+			uvs[k] = Vector2(x / 380.0, z / 380.0)
 			# slope for rock colour
 			var sl := absf(hat.call(hi + 2, hj) - hat.call(hi - 2, hj)) + absf(hat.call(hi, hj + 2) - hat.call(hi, hj - 2))
 			var hk := clampf(y / hmax, 0.0, 1.0)
@@ -90,8 +90,8 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	mat.albedo_texture = load("res://tex/a1.png")
 	mat.normal_enabled = true
 	mat.normal_texture = load("res://tex/n1.png")
-	mat.normal_scale = 0.7
-	mat.roughness = 0.97
+	mat.normal_scale = 0.28 if th == "snow" else 0.48
+	mat.roughness = 0.96
 	g.material_override = mat
 	g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	host.add_child(g)

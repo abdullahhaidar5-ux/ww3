@@ -127,7 +127,7 @@ func _bar() -> void:
 	pb.name = "PauseBtn"
 	pb.position = Vector2(244, 14); pb.size = Vector2(40, 30)
 	bar.add_child(pb)
-	var mb := _green("≡", func(): open_pause(), "Menu (Esc)")
+	var mb := _green("ESC", func(): open_pause(), "Menu (Esc)")
 	mb.name = "MenuBtn"
 	mb.position = Vector2(244, 136); mb.size = Vector2(40, 30)
 	bar.add_child(mb)
@@ -213,8 +213,8 @@ func _bar() -> void:
 	ph.alignment = BoxContainer.ALIGNMENT_CENTER
 	ph.add_theme_constant_override("separation", 14)
 	pl.add_child(ph)
-	plate_pw = UI.label("⚡ 0 / 0", 14, UI.TEXT, "tight")
-	plate_pw.custom_minimum_size.x = 70
+	plate_pw = UI.label("PWR 0/0", 14, UI.TEXT, "tight")
+	plate_pw.custom_minimum_size.x = 76
 	pw_bar = _progress(Color("3fd35c"))
 	pw_bar.custom_minimum_size = Vector2(66, 5)
 	pw_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -233,11 +233,11 @@ func _bar() -> void:
 	hint_lbl.clip_text = true
 	hint_lbl.add_theme_stylebox_override("normal", UI.box(Color(0.05, 0.06, 0.07, 0.6), Color(0, 0, 0, 0), 0, 8))
 	root.add_child(hint_lbl)
-	var cb := _green("⌄", func(): collapsed = not collapsed; bar.visible = not collapsed, "Hide / show the command bar")
+	var cb := _green("HUD", func(): collapsed = not collapsed; bar.visible = not collapsed, "Hide / show the command bar")
 	cb.anchor_left = 1.0; cb.anchor_right = 1.0; cb.anchor_top = 1.0; cb.anchor_bottom = 1.0
 	cb.offset_left = -114; cb.offset_right = -64; cb.offset_top = -BAR_H - 26; cb.offset_bottom = -BAR_H - 2
 	root.add_child(cb)
-	star_btn = _green("★", func(): open_powers(), "Generals' powers (P)")
+	star_btn = _green("GP", func(): open_powers(), "Generals' powers (P)")
 	star_btn.name = "StarBtn"
 	star_btn.anchor_left = 1.0; star_btn.anchor_right = 1.0; star_btn.anchor_top = 1.0; star_btn.anchor_bottom = 1.0
 	star_btn.offset_left = -60; star_btn.offset_right = -10; star_btn.offset_top = -BAR_H - 26; star_btn.offset_bottom = -BAR_H - 2
@@ -270,7 +270,7 @@ func _top() -> void:
 	chip.add_child(ch)
 	chip_money = UI.label("$0", 15, UI.TEXT, "tight")
 	chip_sup = UI.label("Supply lines OK", 15, UI.GREEN, "tight")
-	chip_alert = UI.label("⚠ 0", 15, UI.TEXT, "tight")
+	chip_alert = UI.label("! 0", 15, UI.TEXT, "tight")
 	chip_alert.mouse_filter = Control.MOUSE_FILTER_STOP
 	chip_alert.tooltip_text = "Alerts - Space jumps to the last one"
 	ch.add_child(chip_money); ch.add_child(chip_sup); ch.add_child(chip_alert)
@@ -361,7 +361,7 @@ func tick(dt: float) -> void:
 	var T: Dictionary = sim.teams[B.me]
 	var pw: Vector2 = sim.pwr_of(B.me)
 	var low := pw.y > pw.x
-	plate_pw.text = "⚡ %d / %d" % [int(pw.y), int(pw.x)]
+	plate_pw.text = "PWR %d/%d" % [int(pw.y), int(pw.x)]
 	plate_pw.add_theme_color_override("font_color", Color(1, 0.5, 0.4) if low else UI.TEXT)
 	pw_bar.value = clampf(pw.y / maxf(1.0, pw.x), 0, 1)
 	pw_meter.value = clampf((pw.x - pw.y) / maxf(1.0, pw.x), 0, 1) if not low else 0.04
@@ -373,7 +373,7 @@ func tick(dt: float) -> void:
 	var sup = B.supply_state()
 	chip_sup.text = sup[0]
 	chip_sup.add_theme_color_override("font_color", sup[1])
-	chip_alert.text = "⚠ %d" % alerts
+	chip_alert.text = "! %d" % alerts
 	chip_alert.add_theme_color_override("font_color", Color("ffb040") if alerts > 0 else UI.TEXT_DIM)
 	if B.kind == "replay": replay_lbl.text = "REPLAY · %s · speed x%s%s · Space pause, + / − speed, Esc menu" % [UI.fmt_time(sim.t), str(B.replay_speed), "  (paused)" if B.paused else ""]
 	elif B.paused and window == null: replay_lbl.text = "PAUSED"

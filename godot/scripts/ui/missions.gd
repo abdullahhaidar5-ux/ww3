@@ -83,8 +83,20 @@ const FLAG_COL := {"IR": ["239f40", "ffffff", "da0000"], "RS": ["f7d117", "f7d11
 	"PK": ["01411c", "01411c", "ffffff"], "SA": ["006c35", "006c35", "ffffff"], "AE": ["00732f", "ffffff", "000000"], "TR": ["e30a17", "e30a17", "ffffff"], "EG": ["ce1126", "ffffff", "000000"]}
 const FLAG_VERT := ["FR"]
 
-## a small flag-coloured tile with the nation code (plain colour bands; emblems are the visual lane's)
+## real flag PNG from res://ui/icons/flags/<KEY>.png if present, else procedural colour bands with code
 static func flag(k: String, w: float = 38.0, h: float = 34.0) -> Control:
+	var path := "res://ui/icons/flags/%s.png" % k.to_upper()
+	if ResourceLoader.exists(path):
+		var tex: Texture2D = load(path)
+		if tex != null:
+			var tr := TextureRect.new()
+			tr.texture = tex
+			tr.custom_minimum_size = Vector2(w, h)
+			tr.size = Vector2(w, h)
+			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			return tr
 	var c := Control.new()
 	c.custom_minimum_size = Vector2(w, h)
 	c.size = Vector2(w, h)
@@ -106,9 +118,20 @@ static func flag(k: String, w: float = 38.0, h: float = 34.0) -> Control:
 	return c
 
 static var _thumbs := {}
-## top-down picture of a map file: heights, water, roads, woods, start spots (numbered by colour)
-static func map_thumb(file: String, w: int = 160) -> Texture2D:
-	if _thumbs.has(file): return _thumbs[file]
+## real map preview PNG from res://ui/icons/maps/<KEY>.png if present, else procedural top-down picture of a map JSON
+static func map_thumb(key_or_file: String, w: int = 160) -> Texture2D:
+	if _thumbs.has(key_or_file): return _thumbs[key_or_file]
+	var key := key_or_file.get_file()
+	if key.ends_with(".json"): key = key.trim_suffix(".json")
+	elif key.ends_with(".png"): key = key.trim_suffix(".png")
+	if key.begins_with("map_"): key = key.trim_prefix("map_")
+	var png := "res://ui/icons/maps/%s.png" % key
+	if key != "" and ResourceLoader.exists(png):
+		var tex: Texture2D = load(png)
+		if tex != null:
+			_thumbs[key_or_file] = tex
+			return tex
+	var file := key_or_file if key_or_file.ends_with(".json") else "res://data/map_%s.json" % key
 	var fa := FileAccess.open(file, FileAccess.READ)
 	if fa == null: return null
 	var m = JSON.parse_string(fa.get_as_text())
@@ -145,7 +168,7 @@ static func map_thumb(file: String, w: int = 160) -> Texture2D:
 				var q := p + Vector2i(dx, dy)
 				if q.x >= 0 and q.y >= 0 and q.x < w and q.y < h: img.set_pixelv(q, Color(0.05, 0.05, 0.05) if absi(dx) == 4 or absi(dy) == 4 else UI.SEAT_COL[i % 8])
 	var t := ImageTexture.create_from_image(img)
-	_thumbs[file] = t
+	_thumbs[key_or_file] = t
 	return t
 
 ## the mission's own map when lane P3 has exported it, else the nearest fit of what is there (2-seat first)

@@ -424,12 +424,12 @@ func _shahed_mesh(span: float) -> Mesh:
 func _ring_mesh() -> Mesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var n := 28
+	var n := 36
 	for i in n:
 		var a0 := TAU * i / n
 		var a1 := TAU * (i + 1) / n
 		var p := [Vector3(cos(a0), 0, sin(a0)), Vector3(cos(a1), 0, sin(a1))]
-		var r0 := 0.86
+		var r0 := 0.93
 		st.add_vertex(p[0] * r0); st.add_vertex(p[0]); st.add_vertex(p[1])
 		st.add_vertex(p[0] * r0); st.add_vertex(p[1]); st.add_vertex(p[1] * r0)
 	var m := st.commit()

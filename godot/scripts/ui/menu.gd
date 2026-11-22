@@ -284,7 +284,7 @@ func _map_thumb(m: Dictionary, w: float) -> TextureRect:
 	t.custom_minimum_size = Vector2(w, w * 22.0 / 32.0)
 	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	t.stretch_mode = TextureRect.STRETCH_SCALE
-	t.texture = Missions.map_thumb(str(m.file), 160)
+	t.texture = Missions.map_thumb(str(m.get("file", m.get("key", ""))), 160)
 	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return t
 
@@ -300,7 +300,10 @@ func _s_c_map(vb: VBoxContainer) -> void:
 		var b := Button.new()
 		b.name = "Map_" + str(m.key)
 		b.focus_mode = Control.FOCUS_NONE
+		b.clip_contents = true
 		b.custom_minimum_size = Vector2(228, 228)
+		var desc := str(m.get("desc", ""))
+		b.tooltip_text = "%s\n%s" % [str(m.name), desc] if desc != "" else str(m.name)
 		var on: bool = st.map == m.key
 		b.add_theme_stylebox_override("normal", UI.box(Color("2a2412") if on else Color(0.055, 0.075, 0.067, 0.8), UI.GOLD if on else UI.LINE, 1, 0))
 		b.add_theme_stylebox_override("hover", UI.box(Color(0.08, 0.1, 0.1, 0.9), UI.TEXT, 1, 0))
@@ -308,24 +311,42 @@ func _s_c_map(vb: VBoxContainer) -> void:
 		var v := VBoxContainer.new()
 		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		v.position = Vector2(1, 1)
+		v.size = Vector2(226, 226)
 		v.add_theme_constant_override("separation", 0)
 		b.add_child(v)
 		v.add_child(_map_thumb(m, 226))
 		var mc := MarginContainer.new()
-		mc.add_theme_constant_override("margin_left", 12); mc.add_theme_constant_override("margin_top", 6)
+		mc.add_theme_constant_override("margin_left", 10); mc.add_theme_constant_override("margin_right", 10); mc.add_theme_constant_override("margin_top", 5)
+		mc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		mc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var tv := VBoxContainer.new()
-		tv.add_theme_constant_override("separation", 0)
+		tv.add_theme_constant_override("separation", 1)
+		tv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tv.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tv.add_child(UI.label(str(m.name).to_upper(), 20, UI.TEXT, "bold"))
-		tv.add_child(UI.label("%d players · %s" % [m.n, "large" if m.w > 6000 else ("medium" if m.w > 4000 else "small")], 12, UI.GOLD))
+		var nl := UI.label(str(m.name).to_upper(), 18, UI.TEXT, "bold")
+		nl.clip_text = true
+		nl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		nl.custom_minimum_size.x = 206
+		nl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tv.add_child(nl)
+		var facts := str(m.get("facts", ""))
+		if facts == "":
+			facts = "%d players · %s" % [int(m.n), "Large" if float(m.w) > 6000.0 else ("Medium" if float(m.w) > 4000.0 else "Small")]
+		var fl := UI.label(facts, 11, UI.GOLD)
+		fl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		fl.max_lines_visible = 2
+		fl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		fl.custom_minimum_size.x = 206
+		fl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tv.add_child(fl)
 		mc.add_child(tv); v.add_child(mc)
 		var key: String = m.key
 		b.pressed.connect(func(): st.map = key; UI.set_opt("last_map", key); _seats_sync(); go("c-nation"))
 		grid.add_child(b)
 	_foot([UI.button("Random map", func():
 		var ms := UI.maps()
-		st.map = ms[randi() % ms.size()].key; _seats_sync(); go("c-nation"), 16), UI.button("Next: Nation →", go.bind("c-nation"), 18, 0, true)])
+		if ms.is_empty(): return
+		st.map = ms[randi() % ms.size()].key; UI.set_opt("last_map", st.map); _seats_sync(); go("c-nation"), 16), UI.button("Next: Nation →", go.bind("c-nation"), 18, 0, true)])
 
 # ---------------------------------------------------------------- Battle 2: nation
 func _nat_tile(k: String, on: bool, cb: Callable, hover: Callable = Callable()) -> Button:
@@ -334,6 +355,7 @@ func _nat_tile(k: String, on: bool, cb: Callable, hover: Callable = Callable()) 
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(234, 46)
 	b.clip_text = true
+	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.text = "          " + UI.nat_name(k).to_upper()
 	b.add_theme_font_override("font", UI.font("display"))
@@ -356,20 +378,51 @@ func _nat_tile(k: String, on: bool, cb: Callable, hover: Callable = Callable()) 
 	return b
 
 func _nat_detail(k: String) -> String:
+	var N: Dictionary = UI.nat_data(k)
 	var F: Dictionary = UI.rules().get("factions", {}).get(k, {})
-	if F.is_empty(): return ""
-	var d: Dictionary = F.get("doct", {})
-	var out := "%s · morale: %s\n" % [str(d.get("name", "")), str(UI.MORALE_NAME.get(str(F.get("morale", "")), "")).split(" - ")[0]]
-	var sp = F.get("special")
-	if sp != null and F.units.has(sp): out += "Special: %s\n" % str(F.units[sp].name)
-	if F.get("sup") != null: out += "Strike: %s\n" % str(F.sup.name)
-	if F.get("natpow") != null: out += "Power: %s - %s\n" % [str(F.natpow.name), str(F.natpow.get("desc", ""))]
+	if N.is_empty() and F.is_empty(): return ""
+	var doct := str(N.get("doctrine_name", ""))
+	if doct == "" and typeof(F.get("doct")) == TYPE_DICTIONARY:
+		doct = str(F.doct.get("name", ""))
+	var morale := str(N.get("morale_name", ""))
+	if morale == "":
+		var ms := str(N.get("morale_style", F.get("morale", "")))
+		morale = str(UI.MORALE_NAME.get(ms, "")).split(" - ")[0]
+	var lines: Array = []
+	if doct != "" or morale != "":
+		lines.append("%s · morale: %s" % [doct, morale] if doct != "" and morale != "" else (doct if doct != "" else "Morale: " + morale))
+	var sp_name := ""
+	var spu = N.get("special_unit")
+	if typeof(spu) == TYPE_DICTIONARY:
+		sp_name = str(spu.get("name", ""))
+	elif F.get("special") != null and typeof(F.get("units")) == TYPE_DICTIONARY and F.units.has(F.special):
+		sp_name = str(F.units[F.special].get("name", ""))
+	if sp_name != "": lines.append("Special: %s" % sp_name)
+	var strike_name := ""
+	var st_d = N.get("strike")
+	if typeof(st_d) == TYPE_DICTIONARY:
+		strike_name = str(st_d.get("name", ""))
+	elif typeof(F.get("sup")) == TYPE_DICTIONARY:
+		strike_name = str(F.sup.get("name", ""))
+	if strike_name != "": lines.append("Strike: %s" % strike_name)
+	var pow_name := ""
+	var pow_desc := ""
+	var np_d = N.get("national_power")
+	if typeof(np_d) == TYPE_DICTIONARY:
+		pow_name = str(np_d.get("name", ""))
+		pow_desc = str(np_d.get("description", ""))
+	elif typeof(F.get("natpow")) == TYPE_DICTIONARY:
+		pow_name = str(F.natpow.get("name", ""))
+		pow_desc = str(F.natpow.get("desc", ""))
+	if pow_name != "":
+		lines.append("Power: %s - %s" % [pow_name, pow_desc] if pow_desc != "" else "Power: %s" % pow_name)
 	var perks: Array = []
-	if bool(F.get("tunnels", false)): perks.append("tunnels")
-	if bool(F.get("noAir", false)): perks.append("no air force")
-	if bool(F.get("noShip", false)): perks.append("no navy")
-	if perks.size(): out += "Traits: " + ", ".join(perks)
-	return out
+	if bool(N.get("tunnels", F.get("tunnels", false))): perks.append("tunnels")
+	if bool(N.get("firing_post", false)): perks.append("firing posts")
+	if bool(N.get("no_air", F.get("noAir", false))): perks.append("no air force")
+	if bool(N.get("no_ships", F.get("noShip", false))): perks.append("no navy")
+	if perks.size(): lines.append("Traits: " + ", ".join(perks))
+	return "\n".join(lines)
 
 func _nat_picker(vb: VBoxContainer, cur_fac: String, cb: Callable) -> void:
 	var find := LineEdit.new()
@@ -417,23 +470,36 @@ func _s_c_nation(vb: VBoxContainer) -> void:
 	_foot([UI.button("Next: Players →", go.bind("c-players"), 18, 0, true)])
 
 # ---------------------------------------------------------------- Battle 3: players
+func _min_ai() -> int:
+	var m := UI.map_info(st.map)
+	var lo := int(m.get("min", 2))
+	var hi := int(m.get("n", 2))
+	return clampi(mini(lo, hi) - 1, 1, 7)
+
 func _max_ai() -> int:
-	return clampi(int(UI.map_info(st.map).get("n", 2)) - 1, 1, 7)
+	var m := UI.map_info(st.map)
+	var lo := int(m.get("min", 2))
+	var hi := int(m.get("n", 2))
+	return clampi(maxi(lo, hi) - 1, 1, 7)
 
 ## seats = you + n_ai computers; keeps what the player already chose
 func _seats_sync() -> void:
-	st.n_ai = clampi(int(st.n_ai), 1, _max_ai())
+	st.n_ai = clampi(int(st.n_ai), _min_ai(), _max_ai())
 	var nats := UI.nations()
+	var nb := maxi(2, int(UI.map_info(st.map).get("n", 2)))
 	var seats: Array = st.seats
 	if seats.is_empty(): seats.append({fac = st.fac, ai = false, tm = 1, start = -1, style = 0})
 	seats[0].fac = st.fac
+	var ei := maxi(0, nats.find(st.enemy))
 	while seats.size() < st.n_ai + 1:
 		var i := seats.size()
 		var f: String = st.enemy
-		if i > 1 and nats.size(): f = nats[(nats.find(st.enemy) + i - 1) % nats.size()]
+		if i > 1 and nats.size(): f = nats[(ei + i - 1) % nats.size()]
 		seats.append({fac = f, ai = true, tm = i + 1, start = -1, style = 0})
 	while seats.size() > st.n_ai + 1: seats.pop_back()
 	if seats.size() > 1: seats[1].fac = st.enemy
+	for s in seats:
+		if int(s.start) >= nb: s.start = -1
 	st.seats = seats
 
 func _s_c_players(vb: VBoxContainer) -> void:
@@ -446,7 +512,7 @@ func _s_c_players(vb: VBoxContainer) -> void:
 	var add := UI.button("+ Add computer", func(): st.n_ai += 1; _seats_sync(); _show(cur, 0), 13)
 	add.name = "AddAI"; add.disabled = st.n_ai >= _max_ai()
 	var rem := UI.button("− Remove", func(): st.n_ai -= 1; _seats_sync(); _show(cur, 0), 13)
-	rem.name = "RemAI"; rem.disabled = st.n_ai <= 1
+	rem.name = "RemAI"; rem.disabled = st.n_ai <= _min_ai()
 	hb.add_child(add); hb.add_child(rem)
 	var grp := ButtonGroup.new()
 	var dh := _row(vb, "Difficulty", null)
@@ -465,7 +531,7 @@ func _s_c_players(vb: VBoxContainer) -> void:
 	for i in st.seats.size():
 		var s: Dictionary = st.seats[i]
 		var p := PanelContainer.new()
-		var psb := UI.box(Color(0.055, 0.085, 0.105, 0.9), Color("2b3c46"), 1, 10, 9, UI.SEAT_COL[i])
+		var psb := UI.box(Color(0.055, 0.085, 0.105, 0.9), Color("2b3c46"), 1, 10, 9, UI.SEAT_COL[i % UI.SEAT_COL.size()])
 		psb.border_width_top = 1; psb.border_width_right = 1; psb.border_width_bottom = 1
 		p.add_theme_stylebox_override("panel", psb)
 		var pv := VBoxContainer.new()
@@ -502,7 +568,8 @@ func _s_c_players(vb: VBoxContainer) -> void:
 		var th := _map_thumb(m, 300)
 		th.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		inner.add_child(th)
-		inner.add_child(UI.label("%s · %d players" % [str(m.name).to_upper(), m.n], 13, UI.TEXT_DIM, "display"))
+		var mf := str(m.get("facts", ""))
+		inner.add_child(UI.label("%s · %s" % [str(m.name).to_upper(), mf if mf != "" else "%d players" % int(m.n)], 13, UI.TEXT_DIM, "display"))
 	var sb := UI.button("Start battle", start_battle, 20, 0, true)
 	sb.name = "Start"
 	_foot([UI.button("Battle options →", go.bind("c-opts"), 16), sb])
@@ -716,8 +783,20 @@ func _s_ency(vb: VBoxContainer) -> void:
 	_row(vb, "Nation", UI.dropdown(nats.map(func(x): return UI.nat_name(x)), nats.find(k), func(i): arg = nats[i]; _show(cur, 0), 220))
 	var F: Dictionary = UI.rules().get("factions", {}).get(k, {})
 	var inner := _scroll(vb, 20)
-	if F.is_empty(): return
-	inner.add_child(UI.para(_nat_detail(k), 12, UI.TEXT))
+	var det := _nat_detail(k)
+	if det != "": inner.add_child(UI.para(det, 12, UI.TEXT))
+	if F.is_empty():
+		var N: Dictionary = UI.nat_data(k)
+		var desc := str(N.get("description", ""))
+		if desc != "":
+			inner.add_child(UI.spacer(6))
+			inner.add_child(UI.para(desc, 12, UI.TEXT_DIM))
+		var spu = N.get("special_unit")
+		if typeof(spu) == TYPE_DICTIONARY and str(spu.get("text", "")) != "":
+			inner.add_child(UI.spacer(6))
+			inner.add_child(UI.label(str(spu.get("name", "SPECIAL UNIT")).to_upper(), 16, UI.GOLD, "display"))
+			inner.add_child(UI.para(str(spu.get("text", "")), 12, UI.TEXT_DIM))
+		return
 	for sec in [["Units", F.units, true], ["Buildings", F.blds, false]]:
 		inner.add_child(UI.spacer(6))
 		inner.add_child(UI.label(str(sec[0]).to_upper(), 20, UI.GOLD, "bold"))
