@@ -61,11 +61,14 @@ jobs:
         run: |
           set -e
           mkdir -p godot-build/web godot-build/win godot-build/linux
+          node tools-godot/build_bridge.mjs   # the JS sim bundle (ww3sim.js) the web build runs
           for p in Web Windows Linux; do
             $GODOT --headless --path godot --export-release $p > export-$p.log 2>&1 || { tail -30 export-$p.log; exit 1; }
             grep -iE "^ERROR|export.*fail" export-$p.log && { echo "export $p reported errors"; exit 1; } || true
           done
           test -s godot-build/web/index.wasm && test -s godot-build/web/index.pck && test -s godot-build/win/WorldWar3.exe && test -s godot-build/linux/WorldWar3.x86_64
+          cp godot/web/ww3sim.js godot/web/ww3bridge.js godot-build/web/   # the web page loads these next to index.html (tools-godot/export_web.sh does the same)
+          for f in godot/web/ww3ui.js godot/web/ww3ui.css godot/web/ww3audio.js; do [ -f $f ] && cp $f godot-build/web/ || true; done
           (cd godot-build/win && zip -q -9 ../web/WorldWar3-windows.zip WorldWar3.exe)
           ls -l godot-build/web
           # GitHub Pages / git: no file over 95 MB; keep the .pck small (the wasm is ~42 MB on its own)
