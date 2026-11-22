@@ -9,7 +9,6 @@ Lane notes to reuse (do not re-read the code from scratch): orch/HANDOFF-gport-{
 `orch/gport-a` .. `orch/gport-f`; exports on `orch/gport-x1` (models) and `orch/gport-x2` (data, text, icons).
 
 ## Queue (top = next)
-1. Check: finish the fast-forward battle step so check.sh passes in full on this machine (software graphics).
 2. Battle starts on ANY map the sim offers (today every other map silently becomes Split Ridge).
 3. Pickers list all 22 nations and every Battle map (from the bridge tables / X2 data).
 4. HUD on the JS sim: selecting a dozer or a production building works (adapter fields the HUD reads).
@@ -26,3 +25,6 @@ Lane notes to reuse (do not re-read the code from scratch): orch/HANDOFF-gport-{
 ## Done
 - 2026-11-22: Godot 4.4.1 installed for all lanes; lanes P5 (audio), P6 (HUD, menus), P7 (online) merged;
   check.sh, godot/OWNERS.md, orch/BRIEF.md written. check.sh has NOT yet passed in full (battle step).
+- 2026-11-22: step 1 done - check.sh passes in full: 9 steps, 159 s total (web step 92 s; the AI battle reaches 60
+  game-seconds in 34 s instead of not in 900 s, 0 console errors, IR 6 units 5 buildings, US 7 units 5 buildings).
+  How: `?ff=150` (CHECK HOOK in battle.gd) asks the worker sim for 150 ticks in one call instead of waiting on drawn frames.

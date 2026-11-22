@@ -47,6 +47,8 @@ var headless_mode := false
 var use_bridge := true      # P1 BRIDGE: false only with --gdsim (the parked GDScript sim, for desktop tinkering)
 var minutes_cap := 40.0
 var shot_t := -1.0
+var ff := 0               # CHECK HOOK: ?ff=N (with shot-t, AI vs AI on the bridge) = N ticks in ONE worker call per frame, so the check does not wait on drawn frames
+var ff_k := 1
 var see_all := false      # replays and AI-vs-AI: no fog for the viewer
 
 var prev := {}            # id -> Vector3(x, y, ang) at the previous sim step (render interpolation)
@@ -130,6 +132,7 @@ func _ready() -> void:
 		elif a.begins_with("--mode="): mode = a.substr(7)
 		elif a.begins_with("--shot="): shot_path = a.substr(7)
 		elif a.begins_with("--shot-t="): shot_t = float(a.substr(9))
+		elif a.begins_with("--ff="): ff = int(a.substr(5))   # CHECK HOOK
 		elif a.begins_with("--shotf="): shot_at = int(a.substr(8))
 		elif a == "--cam=auto": auto_cam = true
 		elif a.begins_with("--demo-ui="): demo_ui = a.substr(10)
@@ -486,6 +489,8 @@ func _physics_process(dt: float) -> void:
 	var ticks := 1
 	if headless_mode and (ai_only or demo): ticks = 300 if ai_only else 60     # AI vs AI to a result fast
 	elif (ai_only or demo) and shot_t > 0 and sim.t < shot_t - 1.0: ticks = 15 if demo else 60
+	ff_k = 1
+	if ff > 0 and use_bridge and ai_only and shot_t > 0 and sim.t < shot_t - 1.0: ticks = 1; ff_k = ff   # CHECK HOOK
 	for i in ticks:
 		if sim.over: break
 		if demo: _demo_tick()
@@ -509,7 +514,7 @@ func sim_tick(orders: Array) -> void:
 		prev[e.id] = Vector3(e.x, e.y, e.ang)
 	var m0 := int(sim.t / 60.0)
 	if use_bridge:   # P1 BRIDGE: one JS call for both steps, then explosions from the sim's event list
-		sim.step_n(2)
+		sim.step_n(2 * ff_k)
 		for ev in sim.take_events():
 			if ev[0] == "boom" and not headless_mode: _boom(Vector3(float(ev[1]), sim.ground_h(float(ev[1]), float(ev[2])) + 4.0, float(ev[2])), clampf(float(ev[3]) * 0.5, 8.0, 40.0), Color(1.0, 0.6, 0.25))
 	else:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ONE-COMMAND CHECK of the Godot edition: the gate every lane passes before ORCH merges it.
-#   tools-godot/check.sh            (from anywhere; ~5-15 min on the sandbox, most of it the web battle in software GL)
+#   tools-godot/check.sh            (from anywhere; ~3 min on the sandbox, about half of it the web build in software GL)
 #   SKIP_WEB=1 tools-godot/check.sh  quick: everything but the export + Chromium
 # Prints one PASS / FAIL line per step with its time, stops at the first FAIL, exit 0 only if all pass.
 # Heavy jobs (Godot export, Chromium) queue on /tmp/ww3-heavy.lock so parallel lanes don't starve the 4 cores.

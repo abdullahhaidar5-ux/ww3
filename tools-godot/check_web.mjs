@@ -55,13 +55,17 @@ async function open(q, until, budget) {
 }
 // 2. AI vs AI battle on the JS-sim bridge, SECS game-seconds
 {
-  const want = Math.round(SECS / 60);
-  const until = new RegExp(`^min +${want} `);
-  const r = await open(`battle-ai&fac=IR&vs=US&seed=1&shot-t=${SECS + 5}`, until, LIMIT)   // shot-t: AI-vs-AI fast-forwards (60 ticks a frame) up to that game time;
+  // ff=150 + shot-t: the worker sim is asked for 150 ticks (5 game-seconds) per call up to that game time, so the
+  // battle does not wait on drawn frames (software GL here draws well under 1 frame a second in a battle)
+  const want = Math.max(1, Math.round(SECS / 60));
+  const until = { test: t => { const m = /^min +(\d+) /.exec(t); return !!m && +m[1] >= want; } };
+  const r = await open(`battle-ai&fac=IR&vs=US&seed=1&shot-t=${SECS + 5}&ff=150`, until, LIMIT);
   const start = r.log.find(t => /^BATTLE start/.test(t));
   await r.pg.waitForTimeout(1500);
   await r.pg.screenshot({ path: path.join(SHOTS, 'battle.png'), timeout: 240000 });
   line(!!start, 'battle starts on the JS sim (Web Worker)', start ? start.slice(0, 90) : '');
+  const sides = r.hit ? [...r.hit.matchAll(/(\w+) (\d+)u (\d+)b /g)] : [];
+  line(sides.length >= 2 && sides.every(m => +m[2] > 0 && +m[3] > 0), 'both sides still have units and buildings', sides.map(m => `${m[1]} ${m[2]} units ${m[3]} buildings`).join(', '));
   line(!!r.hit && r.errs.length === 0, `battle runs ${SECS} game-seconds`, `${(r.ms / 1000).toFixed(1)} s wall, ${r.errs.length} console errors${r.hit ? ', ' + r.hit.replace(/\s+/g, ' ').slice(0, 90) : ''}`);
   for (const e of r.errs.slice(0, 8)) console.log('   ' + e);
   await r.pg.close();
