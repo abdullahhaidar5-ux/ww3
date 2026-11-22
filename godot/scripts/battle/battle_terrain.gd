@@ -5,15 +5,36 @@ extends RefCounted
 
 const STEP := 2           # every 2nd height sample (hgrid R=10 -> a vertex every 20 units)
 
+## ground height at a map point, straight from the bridge's height field (bilinear, same as the JS groundH)
+static func height_at(map: Dictionary, x: float, z: float) -> float:
+	var H: Dictionary = map.hgrid
+	var R := float(H.R); var w := int(H.w); var h := int(H.h)
+	var fx := clampf(x / R, 0.0, w - 1.001); var fz := clampf(z / R, 0.0, h - 1.001)
+	var i := int(fx); var j := int(fz); var u := fx - i; var v := fz - j
+	var k := j * w + i
+	var a = H.a
+	return lerpf(lerpf(a[k], a[k + 1], u), lerpf(a[k + w], a[k + w + 1], u), v)
+
+## P4c HOOK: lane P4d exports each map's whole static scene from the browser game (ground with its real textures,
+## roads, water, bridges, cliffs, trees, props) to res://models/auto/maps/<map>.glb. When that file is there it IS the
+## ground; the code-built ground below is only the stand-in for maps not exported yet.
 static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> void:
+	var glb := "res://models/auto/maps/%s.glb" % String(map.get("key", ""))
+	if ResourceLoader.exists(glb):
+		var ps = load(glb)
+		if ps is PackedScene:
+			var n: Node = (ps as PackedScene).instantiate()
+			n.name = "MapScene"
+			host.add_child(n)
+			return
 	var H: Dictionary = map.hgrid
 	var R := float(H.R); var hw := int(H.w); var hh := int(H.h)
-	var ha: Array = H.a
+	var ha := PackedFloat32Array(H.a)
 	var road: Dictionary = map.road
-	var rC := float(road.C); var rw := int(road.w); var rd: Array = road.d
+	var rC := float(road.C); var rw := int(road.w); var rd := PackedByteArray(road.d)
 	var rh := rd.size() / rw
 	var GW := int(map.GW); var GH := int(map.GH); var CELL := float(map.CELL)
-	var grid: Array = map.grid
+	var grid := PackedByteArray(map.grid)
 	var nx := (hw - 1) / STEP + 1
 	var nz := (hh - 1) / STEP + 1
 	var verts := PackedVector3Array(); verts.resize(nx * nz)
@@ -83,11 +104,11 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	sk.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	host.add_child(sk)
 	_water(host, sim, map)
-	_trees(host, sim, map, tree_mesh)
+	if tree_mesh.is_valid(): _trees(host, sim, map, tree_mesh)
 
 ## water cells (grid 1 = water, 2 = ford / shallows): one quad per cell just above the ground, one mesh
 static func _water(host: Node3D, sim, map: Dictionary) -> void:
-	var grid: Array = map.grid
+	var grid := PackedByteArray(map.grid)
 	var GW := int(map.GW); var CELL := float(map.CELL)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -99,13 +120,13 @@ static func _water(host: Node3D, sim, map: Dictionary) -> void:
 		for o in [-1, 1, -GW, GW]:
 			var j: int = i + o
 			if j >= 0 and j < grid.size() and int(grid[j]) == 0:
-				bank += sim.ground_h((j % GW) * CELL + CELL * 0.5, (j / GW) * CELL + CELL * 0.5); nb += 1
+				bank += height_at(map, (j % GW) * CELL + CELL * 0.5, (j / GW) * CELL + CELL * 0.5); nb += 1
 	var level := bank / maxf(1, nb) - 4.0
 	for i in grid.size():
 		var g := int(grid[i])
 		if g != 1 and g != 2: continue
 		var x := (i % GW) * CELL; var z := (i / GW) * CELL
-		var y: float = maxf(level, sim.ground_h(x + CELL * 0.5, z + CELL * 0.5) + 1.0) if g == 1 else sim.ground_h(x + CELL * 0.5, z + CELL * 0.5) + 1.0
+		var y: float = maxf(level, height_at(map, x + CELL * 0.5, z + CELL * 0.5) + 1.0) if g == 1 else height_at(map, x + CELL * 0.5, z + CELL * 0.5) + 1.0
 		var wc := Color(0.10, 0.27, 0.32, 0.88) if g == 1 else Color(0.25, 0.4, 0.42, 0.6)
 		var e := 2.0
 		for v in [Vector3(x - e, y, z - e), Vector3(x + CELL + e, y, z - e), Vector3(x - e, y, z + CELL + e), Vector3(x + CELL + e, y, z - e), Vector3(x + CELL + e, y, z + CELL + e), Vector3(x - e, y, z + CELL + e)]:
@@ -125,7 +146,7 @@ static func _water(host: Node3D, sim, map: Dictionary) -> void:
 
 ## woods: the map's wood density per 40-unit cell -> that many trees (capped), three tree models, one MultiMesh each
 static func _trees(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> void:
-	var wood: Array = map.wood
+	var wood := PackedByteArray(map.wood)
 	var GW := int(map.GW); var CELL := float(map.CELL)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 11
@@ -137,7 +158,7 @@ static func _trees(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> v
 		for k in n:
 			var x := cx + rng.randf_range(4, CELL - 4); var z := cz + rng.randf_range(4, CELL - 4)
 			var s := rng.randf_range(0.75, 1.25)
-			per[rng.randi() % 3].append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s, s)), Vector3(x, sim.ground_h(x, z) - 1.0, z)))
+			per[rng.randi() % 3].append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s, s)), Vector3(x, height_at(map, x, z) - 1.0, z)))
 	for t in 3:
 		var info: Dictionary = tree_mesh.call("tree%d" % (t + 1))
 		if info.is_empty(): continue
