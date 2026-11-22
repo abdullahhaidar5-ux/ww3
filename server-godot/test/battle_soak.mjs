@@ -78,7 +78,7 @@ async function main() {
   log(`battle soak: ${nWeb} web + ${nNative} desktop client(s)${arg('ai', '') ? ' + AI ' + arg('ai', '') : ''}, ${minutes} game-minutes, relay ${relay}, game ${code}`);
 
   const mk = (name, kind) => { const c = { name, kind, hashes: new Map(), digests: new Map(), lines: [], errors: [], last: Date.now() }; clients.push(c); return c; };
-  const procs = []; let browser = null, web = null;
+  const procs = [], browsers = []; let web = null;
   let idx = 0;
   // desktop clients first (they start in a second; the first one in leads the lobby)
   for (let i = 0; i < nNative; i++, idx++) {
@@ -97,11 +97,12 @@ async function main() {
     const pw = await playwright();
     web = await serveWeb(webDir);
     const base = `http://127.0.0.1:${web.address().port}/`;
-    browser = await pw.chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-features=LocalNetworkAccessChecks,BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessRespectPreflightResults', '--autoplay-policy=no-user-gesture-required', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'] });
+    const launch = () => pw.chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-features=LocalNetworkAccessChecks,BlockInsecurePrivateNetworkRequests,PrivateNetworkAccessRespectPreflightResults', '--autoplay-policy=no-user-gesture-required', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'] });
     for (let i = 0; i < nWeb; i++, idx++) {
       const c = mk('web' + (i + 1), 'web');
       const args = ['--', ...common, `--name=${c.name}`, `--fac=${NATIONS[idx % 4]}`];
-      const ctx = await browser.newContext({ viewport: { width: 640, height: 360 } });
+      const br = await launch(); browsers.push(br);   // one browser each: a background tab would be throttled
+      const ctx = await br.newContext({ viewport: { width: 640, height: 360 } });
       const page = await ctx.newPage();
       // the exported page starts the engine with "args":[] - hand it this client's command line
       await page.route('**/index.html', async (route) => {
@@ -126,7 +127,7 @@ async function main() {
     if (Date.now() - lastNote > 60e3) { lastNote = Date.now(); log(`  ${Math.round((Date.now() - t0) / 1000)} s: turns ${mins.join(' / ')} of ${target}`); }
   }
   for (const p of procs) try { p.kill('SIGKILL'); } catch (e) {}
-  if (browser) await browser.close();
+  for (const b of browsers) await b.close().catch(() => {});
   if (web) web.close();
   if (local) { try { local.close(); } catch (e) {} }
 
