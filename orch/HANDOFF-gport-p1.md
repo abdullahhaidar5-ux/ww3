@@ -24,7 +24,7 @@ ORCH 2026-11-22: the Godot WEB build runs the browser game's own JavaScript simu
 | Web export in headless Chromium, `?bridge-test&minutes=10` | same battle: **hash identical to Node at every one of the 10 minutes**; JS 0.41 ms per tick, Godot read 0.27 ms per step, worst step 19.5 ms |
 | `?bridge-test&bench` | 500 units a side attack-moving, 60 s: JS 7.6 ms per tick, Godot read 0.35 ms, worst tick 94 ms |
 | `--bench` (Node) | same scene: 11.4 ms per tick mean (includes state fill + JSON), worst 141 ms |
-| `?battle-ai&fac=IR&vs=US` (the real battle scene on the bridge) | starts, 0 console errors in 60 s; under software GL the scene ran slower than real time, so no minute report was reached - **not yet seen on a real GPU** |
+| `?battle-ai&fac=IR&vs=US` (the real battle scene on the bridge) | starts and draws on the bridge (terrain, base, HUD money/power/army/clock, minimap: `orch/shots/godot-bridge/battle-ai.png`), 0 console errors; software GL in the sandbox gives ~1 FPS, so only 8 game-seconds passed in 4 min - **not yet seen on a real GPU, no fight seen in the scene** |
 
 ## Not done / honest gaps
 1. battle.gd still draws through the adapter (per-entity GDScript objects) and knows 4 nations and 3 maps in its
