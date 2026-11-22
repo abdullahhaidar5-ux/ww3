@@ -30,8 +30,8 @@ Textures are external shared files (Godot imports each once), not embedded.
 2. **IR and RV tank (m_t72) is black with pale lines**: texture colour under zero alpha was lost in the canvas round trip. Fixed with
    `X.opaqueTex` / `X.pixels` (raw WebGL read-back). Other models with alpha-carrying textures may be affected the same way.
 3. The script now also records `mat.wx`, `mat.camo.freq`, `mat.wall` and adds `_map` (3 rubble heaps, quarry, mine, plant, hospital,
-   oil derrick, dugout) - these are NOT in the committed manifest. `_map` worked in a 2-nation scratch run; the three fixes above were
-   being tested when the lane was stopped - **unverified**.
+   oil derrick, dugout) - these are NOT in the committed manifest. `_map` worked in a 2-nation scratch run. A last 2-nation scratch run of
+   the fixed script ran clean (8 pairs, 0 failed) and IR and RS now get different HQ flag files; the T-72 texture fix was **not looked at**.
 
 ## Not verified / gaps
 - Only the Shia sheets were rendered and looked at: models complete, textured, upright, to scale with the rifleman, apart from 1 and 2.
