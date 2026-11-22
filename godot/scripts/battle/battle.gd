@@ -203,6 +203,7 @@ func _start(players: Array) -> void:
 		cam_dist = 760.0
 	_make_ghost()
 	started = true
+	Audio.battle_start(sim, me)   # P5 HOOK
 	print("BATTLE start: %s (%s) vs %s (AI, difficulty %d), seed %d%s" % [NAT_NAME[my_fac], "AI" if ai_only else "you", NAT_NAME[en_fac], diff, seed_v, "" if not headless_mode else " [headless]"])
 
 ## P1 BRIDGE: desktop / headless Godot cannot run the JavaScript simulation
@@ -235,6 +236,7 @@ func _show_setup() -> void:
 	setup.custom_minimum_size = Vector2(520, 0)
 	setup.add_theme_stylebox_override("panel", _panel_style())
 	ui.add_child(setup)
+	Audio.menu()   # P5 HOOK
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 10)
 	setup.add_child(vb)
@@ -382,6 +384,7 @@ func sim_tick(orders: Array) -> void:
 	else:
 		sim.step()
 		if not sim.over: sim.step()
+	Audio.observe(sim, me, headless_mode and (ai_only or demo))   # P5 HOOK
 	if (ai_only or demo) and int(sim.t / 60.0) != m0: _ai_report(false)
 	if (ai_only or demo) and sim.t >= minutes_cap * 60.0:
 		_ai_report(true); print("BATTLE-AI: time cap reached (%d min), no winner" % int(minutes_cap)); get_tree().quit()
@@ -466,6 +469,7 @@ func _ai_report(final: bool) -> void:
 func _process(dt: float) -> void:
 	_cam_input(dt)
 	_place_cam()
+	Audio.set_cam(cam_target, cam_dist, cam)   # P5 HOOK
 	top_lbl.get_parent().visible = started
 	cmd_box.get_parent().get_parent().visible = started
 	mini.visible = started
@@ -731,6 +735,7 @@ func _unhandled_input(ev: InputEvent) -> void:
 				box.visible = false
 				if mb.position.distance_to(drag_start) > 8: _box_sel(drag_start, mb.position, mb.shift_pressed)
 				else: _click_sel(mb.position, mb.shift_pressed, mb.double_click)
+				Audio.speak(0, _sel_units().map(func(e): return e.kind))   # P5 HOOK
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			if place_kind != "":
 				place_kind = ""; ghost.visible = false
@@ -743,6 +748,7 @@ func _unhandled_input(ev: InputEvent) -> void:
 			bsel = []
 			for e in sim.ents:
 				if not e.dead and e.team == me and not e.is_b and e.kind != "harv" and e.kind != "dozer": bsel.append(e.id)
+			Audio.speak(0, _sel_units().map(func(e): return e.kind))   # P5 HOOK
 		elif k.keycode == KEY_X:
 			cmd({t = "stop", ids = _sel_units().map(func(e): return e.id)})
 		elif k.keycode == KEY_F:
@@ -806,6 +812,7 @@ func _order_units(sp: Vector2, amove: bool) -> void:
 	var tg = _pick_sim(sp)
 	if tg != null and tg.team != me and not sim.ally(me, tg.team) and tg.team >= 0:
 		cmd({t = "attack", ids = units.map(func(e): return e.id), target = tg.id})
+		Audio.speak(2, units.map(func(e): return e.kind))   # P5 HOOK
 		_boom(Vector3(tg.x, sim.ground_h(tg.x, tg.y) + 3, tg.y), 10.0, Color(1.0, 0.3, 0.2), 0.35)
 		return
 	var g := _ground_at(sp)
@@ -816,6 +823,7 @@ func _order_units(sp: Vector2, amove: bool) -> void:
 		var off := Vector2((i % cols) - (cols - 1) * 0.5, int(i / cols) - (cols - 1) * 0.5) * 30.0
 		cmd({t = "amove" if amove else "move", ids = [e.id], x = g.x + off.x, y = g.y + off.y})
 	_boom(Vector3(g.x, sim.ground_h(g.x, g.y) + 2, g.y), 8.0, Color(1.0, 0.5, 0.3) if amove else Color(0.4, 1.0, 0.5), 0.4)
+	Audio.speak(2 if amove else 1, units.map(func(e): return e.kind))   # P5 HOOK
 
 # ---------------------------------------------------------------- commands (one door: online play hooks in here)
 ## every player command goes through here: single player queues it for the next tick, online sends it to the relay
@@ -874,12 +882,14 @@ func _place_here(sp: Vector2, keep: bool) -> void:
 		if e.kind == "dozer": dz = e.id; break
 	var s: Dictionary = sim.bstats(my_fac, place_kind)
 	if sim.teams[me].credits < float(s.cost):
+		Audio.ann("funds")   # P5 HOOK
 		_msg("Not enough money"); return
 	if sim.valid_spot(me, place_kind, g.x, g.y) != 0 and cmd({t = "build", kind = place_kind, x = g.x, y = g.y, dz = dz}):
 		_boom(Vector3(g.x, sim.ground_h(g.x, g.y) + 2, g.y), 14.0, Color(0.95, 0.8, 0.35), 0.5)
 		if not keep: place_kind = ""
 	else:
 		_msg("Can't build there")
+		Audio.ann("cantBuild")   # P5 HOOK
 
 # ---------------------------------------------------------------- HUD (classic Generals: money top, command bar bottom)
 func _battle_ui() -> void:
@@ -935,6 +945,7 @@ func _battle_ui() -> void:
 	mini.draw.connect(_mini_draw)
 	mini.gui_input.connect(_mini_input)
 	ui.add_child(mini)
+	Audio.add_button(ui)   # P5 HOOK (Sound: volumes)
 	_style(ui)
 
 # ---------------------------------------------------------------- minimap (green yours, red enemy, gray neutral)
