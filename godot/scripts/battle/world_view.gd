@@ -26,6 +26,15 @@ const Look = preload("res://scripts/battle/battle_look.gd")
 
 const HUGE_AABB := AABB(Vector3(-1e5, -1e4, -1e5), Vector3(2e5, 4e4, 2e5))
 const FOG_INTERVAL := 0.25
+const BLD_FX_DIST_SQ := 2000.0 * 2000.0
+
+const C_BLD_SMK1 := Color(0.24, 0.23, 0.22)
+const C_BLD_SMK2 := Color(0.32, 0.31, 0.30)
+const C_BLD_BLK := Color(0.14, 0.13, 0.12)
+const C_BLD_FIRE1 := Color(1.0, 0.52, 0.14)
+const C_BLD_FIRE2 := Color(0.90, 0.16, 0.04)
+const C_BLD_EMBER1 := Color(1.0, 0.78, 0.32)
+const C_BLD_EMBER2 := Color(1.0, 0.35, 0.08)
 
 static var _meta_cache: Dictionary = {} # "fac|kind" -> {ok, pack, pxf, h, scale}
 static var _box_cache: Dictionary = {}  # int_size -> Mesh
@@ -37,6 +46,7 @@ var _host: Node3D = null
 var _root: Node3D = null
 var _mmi: Dictionary = {} # key -> MultiMeshInstance3D
 var _buf: Dictionary = {} # key -> Array[Transform3D]
+var _bld_fx_cd: Dictionary = {} # eid (int) -> float (next damage smoke/fire emit time)
 var _headless: bool = false
 var _fog_next: float = 0.0
 var _last_lgv: int = -1
@@ -120,6 +130,10 @@ func tick(dt: float, cam: Camera3D, show_supply: bool) -> void:
 	_shake_phase += dt * 47.0
 	if env != null:
 		env.tick(dt, cam)
+		if _host != null:
+			var tm := _host.get_node_or_null("TerrainMesh")
+			if tm is MeshInstance3D and (tm as MeshInstance3D).material_override is ShaderMaterial:
+				((tm as MeshInstance3D).material_override as ShaderMaterial).set_shader_parameter("wetness", float(env.wet))
 	if fx != null:
 		fx.tick(dt, cam)
 		fx.show_lines(show_supply)
@@ -193,6 +207,7 @@ func draw_bld(B, fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Col
 				part_xf = root_xf * pt
 		_push_mm("b|" + fac + "|" + kind_s + "|" + pks, parts[pk] as Mesh, part_xf)
 
+	_emit_bld_damage_fx(B, e, p, gy, h, now)
 	_append_bld_overlays(B, fr, e, p, gy, h, col, issel, mine)
 
 
@@ -343,12 +358,37 @@ func clear() -> void:
 	_host = null
 	_mmi.clear()
 	_buf.clear()
+	_bld_fx_cd.clear()
 	_lines_cache.clear()
 	_last_lgv = -1
 	_fog_next = 0.0
 
 
 # ------------------------------------------------------------------ internals
+func _emit_bld_damage_fx(B, e, p: Vector2, gy: float, h: float, now: float) -> void:
+	if fx == null or float(e.built) < 1.0 or float(e.max) <= 0.0:
+		return
+	var hp_ratio: float = float(e.hp) / float(e.max)
+	if hp_ratio >= 0.55:
+		return
+	if p.distance_squared_to(B.cam_target) > BLD_FX_DIST_SQ:
+		return
+	var eid_i: int = int(e.id)
+	if now < float(_bld_fx_cd.get(eid_i, 0.0)):
+		return
+	var critical: bool = hp_ratio < 0.30
+	_bld_fx_cd[eid_i] = now + (0.20 if critical else 0.28)
+	var spread: float = maxf(6.0, float(e.size) * 0.25)
+	var sx: float = p.x + randf_range(-spread, spread)
+	var sz: float = p.y + randf_range(-spread, spread)
+	fx.part(false, Vector3(sx, gy + h * 0.65, sz), Vector3(randf_range(-5.0, 5.0), 14.0, randf_range(-5.0, 5.0)), 2.4, 12.0, 22.0, 0.60, C_BLD_BLK if critical else C_BLD_SMK1, C_BLD_SMK2, 16.0, 0.42, 0)
+	if critical:
+		var fx_x: float = p.x + randf_range(-spread, spread)
+		var fx_z: float = p.y + randf_range(-spread, spread)
+		fx.part(true, Vector3(fx_x, gy + h * 0.50, fx_z), Vector3(randf_range(-4.0, 4.0), randf_range(10.0, 20.0), randf_range(-4.0, 4.0)), 0.55, 11.0, -4.0, 0.95, C_BLD_FIRE1, C_BLD_FIRE2, 16.0, 0.40, 0)
+		fx.part(true, Vector3(fx_x, gy + h * 0.62, fx_z), Vector3(randf_range(-16.0, 16.0), randf_range(26.0, 48.0), randf_range(-16.0, 16.0)), 0.95, 2.6, -1.5, 1.0, C_BLD_EMBER1, C_BLD_EMBER2, 18.0, 0.55, 0)
+
+
 func _append_bld_overlays(B, fr: Dictionary, e, p: Vector2, gy: float, model_h: float, col: Color, issel: bool, mine: bool) -> void:
 	var rings: Array = fr["rings"]
 	var bars: Array = fr["bars"]
@@ -371,6 +411,7 @@ func _draw_bld_box_fallback(B, fr: Dictionary, e, p: Vector2, gy: float, col: Co
 	var h: float = float(sz) * 0.45
 	var sink: float = (1.0 - clampf(float(e.built), 0.0, 1.0)) * h * 0.9
 	_push_mm("b|_box|" + str(sz), _box_cache[sz] as Mesh, Transform3D(Basis.IDENTITY, Vector3(p.x, gy - sink, p.y)))
+	_emit_bld_damage_fx(B, e, p, gy, h, float(B.t))
 	_append_bld_overlays(B, fr, e, p, gy, h, col, issel, mine)
 
 

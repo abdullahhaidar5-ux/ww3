@@ -31,34 +31,30 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	var H: Dictionary = map.hgrid
 	var R := float(H.R); var hw := int(H.w); var hh := int(H.h)
 	var ha := PackedFloat32Array(H.a)
-	var road: Dictionary = map.road
-	var rC := float(road.C); var rw := int(road.w); var rd := PackedByteArray(road.d)
-	var rh := rd.size() / rw
+	var road: Dictionary = map.get("road", {})
+	var rC := float(road.get("C", 16.0)); var rw := int(road.get("w", 0)); var rd := PackedByteArray(road.get("d", []))
+	var rh := (rd.size() / rw) if rw > 0 else 0
 	var GW := int(map.GW); var GH := int(map.GH); var CELL := float(map.CELL)
 	var grid := PackedByteArray(map.grid)
 	var STEP := maxi(2, ceili(sqrt(hw * hh / MAX_VERTS)))
-	# multi-tone biome palettes: altitude transitions, slope rock cliffs, mountain tint, road wear
-	var th := str(map.get("theme", "desert"))
+	# multi-tone biome palettes: smooth altitude transitions + impassable mountain tint (roads/cliffs/shores are per-pixel in terrain_pbr.gdshader)
+	var th_raw := str(map.get("theme", "desert"))
+	var th := th_raw if th_raw in ["desert", "green", "snow"] else "desert"
+	var theme_id := 2 if th == "snow" else (0 if th == "desert" else 1)
 	var c_lo := Color(0.84, 0.72, 0.54)
 	var c_mid := Color(0.73, 0.61, 0.43)
 	var c_hi := Color(0.64, 0.55, 0.41)
-	var c_rock := Color(0.45, 0.37, 0.29)
-	var c_mtn := Color(0.39, 0.33, 0.27)
-	var c_road := Color(0.50, 0.43, 0.35)
+	var c_mtn := Color(0.41, 0.34, 0.27)
 	if th == "snow":
 		c_lo = Color(0.87, 0.90, 0.94)
 		c_mid = Color(0.80, 0.85, 0.91)
 		c_hi = Color(0.74, 0.82, 0.90)
-		c_rock = Color(0.33, 0.36, 0.42)
-		c_mtn = Color(0.28, 0.31, 0.37)
-		c_road = Color(0.36, 0.36, 0.38)
+		c_mtn = Color(0.32, 0.36, 0.42)
 	elif th != "desert":
 		c_lo = Color(0.36, 0.49, 0.26)
 		c_mid = Color(0.30, 0.44, 0.23)
 		c_hi = Color(0.24, 0.36, 0.21)
-		c_rock = Color(0.47, 0.47, 0.44)
-		c_mtn = Color(0.40, 0.40, 0.39)
-		c_road = Color(0.51, 0.47, 0.40)
+		c_mtn = Color(0.41, 0.41, 0.39)
 	var nx := (hw - 1) / STEP + 1
 	var nz := (hh - 1) / STEP + 1
 	var verts := PackedVector3Array(); verts.resize(nx * nz)
@@ -80,21 +76,15 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 			var k := j * nx + i
 			verts[k] = Vector3(x, y, z)
 			uvs[k] = Vector2(x / 380.0, z / 380.0)
-			# slope for rock cliffs & multi-tone altitude transitions
-			var sl := absf(hat.call(hi + 2, hj) - hat.call(hi - 2, hj)) + absf(hat.call(hi, hj + 2) - hat.call(hi, hj - 2))
+			# pure smooth elevation + biome tinting + gentle macro variation + impassable mountain rock tint
 			var hk := clampf(y / hmax, 0.0, 1.0)
 			var c: Color = c_lo.lerp(c_mid, hk * 2.0) if hk < 0.5 else c_mid.lerp(c_hi, (hk - 0.5) * 2.0)
 			var macro := sin(x * 0.0031 + z * 0.0017) * cos(z * 0.0027 - x * 0.0013) * 0.042
 			c = Color(clampf(c.r + macro, 0.0, 1.0), clampf(c.g + macro * 0.9, 0.0, 1.0), clampf(c.b + macro * 0.7, 0.0, 1.0))
-			c = c.lerp(c_rock, clampf((sl - 5.0) / 16.0, 0.0, 1.0))  # steep = rock cliff
 			var gx := clampi(int(x / CELL), 0, GW - 1); var gz := clampi(int(z / CELL), 0, GH - 1)
 			var gcell := int(grid[gz * GW + gx])
 			if gcell == 3:
-				c = c.lerp(c_mtn, 0.65)
-			elif gcell == 1:
-				c = c.lerp(c_rock * 0.65, 0.45)  # damp riverbed/shoreline
-			var rx := clampi(int(x / rC), 0, rw - 1); var rz := clampi(int(z / rC), 0, rh - 1)
-			if int(rd[rz * rw + rx]) != 0: c = c_road                  # road
+				c = c.lerp(c_mtn, 0.55)
 			cols[k] = c
 	var idx := PackedInt32Array()
 	for j in nz - 1:
@@ -110,16 +100,36 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	arr[Mesh.ARRAY_INDEX] = idx
 	st.create_from_arrays(arr)
 	st.generate_normals()
+	st.generate_tangents()
 	var mesh := st.commit()
+	# Build 1-pass blurred L8 masks for per-pixel anti-aliased roads and damp riverbanks
+	var rbuf := PackedByteArray()
+	if rw > 0 and rh > 0 and rd.size() >= rw * rh:
+		rbuf.resize(rw * rh)
+		for ri in rw * rh:
+			rbuf[ri] = 255 if int(rd[ri]) != 0 else 0
+	var road_tex := _blur_l8(rbuf, rw, rh)
+	var sbuf := PackedByteArray()
+	if GW > 0 and GH > 0 and grid.size() >= GW * GH:
+		sbuf.resize(GW * GH)
+		for gi in GW * GH:
+			var gcell := int(grid[gi])
+			sbuf[gi] = 255 if gcell == 1 else (160 if gcell == 2 else 0)
+	var shore_tex := _blur_l8(sbuf, GW, GH)
 	var g := MeshInstance3D.new()
+	g.name = "TerrainMesh"
 	g.mesh = mesh
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.albedo_texture = load("res://tex/a1.png")
-	mat.normal_enabled = true
-	mat.normal_texture = load("res://tex/n1.png")
-	mat.normal_scale = 0.28 if th == "snow" else 0.45
-	mat.roughness = 0.96
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/terrain_pbr.gdshader")
+	mat.set_shader_parameter("detail_alb", load("res://tex/a1.png"))
+	mat.set_shader_parameter("detail_nrm", load("res://tex/n1.png"))
+	mat.set_shader_parameter("road_tex", road_tex)
+	mat.set_shader_parameter("shore_tex", shore_tex)
+	mat.set_shader_parameter("map_size", Vector2(float(GW) * CELL, float(GH) * CELL))
+	mat.set_shader_parameter("road_size", Vector2(float(rw) * rC, float(rh) * rC) if (rw > 0 and rh > 0) else Vector2(float(GW) * CELL, float(GH) * CELL))
+	mat.set_shader_parameter("theme_id", theme_id)
+	mat.set_shader_parameter("nrm_strength", 0.30 if th == "snow" else 0.45)
+	mat.set_shader_parameter("wetness", 0.0)
 	g.material_override = mat
 	g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	host.add_child(g)
@@ -139,7 +149,31 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	_bridges(host, map)
 	if tree_mesh.is_valid(): _trees(host, sim, map, tree_mesh)
 
-## water cells (grid 1 = water, 2 = ford / shallows): one quad per cell just above the ground, one mesh
+## 1-pass separable [1, 2, 1] / 4 blur (3x3 Gaussian kernel) producing an L8 ImageTexture for smooth bilinear shader masks
+static func _blur_l8(src: PackedByteArray, w: int, h: int) -> ImageTexture:
+	if w <= 0 or h <= 0 or src.size() < w * h:
+		var empty_img := Image.create_from_data(1, 1, false, Image.FORMAT_L8, PackedByteArray([0]))
+		return ImageTexture.create_from_image(empty_img)
+	var tmp := PackedByteArray()
+	tmp.resize(w * h)
+	for y in h:
+		var row := y * w
+		for x in w:
+			var xm := x - 1 if x > 0 else 0
+			var xp := x + 1 if x + 1 < w else w - 1
+			tmp[row + x] = (int(src[row + xm]) + (int(src[row + x]) << 1) + int(src[row + xp]) + 2) >> 2
+	var out := PackedByteArray()
+	out.resize(w * h)
+	for y in h:
+		var ym := (y - 1 if y > 0 else 0) * w
+		var y0 := y * w
+		var yp := (y + 1 if y + 1 < h else h - 1) * w
+		for x in w:
+			out[y0 + x] = (int(tmp[ym + x]) + (int(tmp[y0 + x]) << 1) + int(tmp[yp + x]) + 2) >> 2
+	var img := Image.create_from_data(w, h, false, Image.FORMAT_L8, out)
+	return ImageTexture.create_from_image(img)
+
+## water cells (grid 1 = water, 2 = ford / shallows): one quad per cell just above the ground, animated PBR water shader
 static func _water(host: Node3D, sim, map: Dictionary) -> void:
 	var grid := PackedByteArray(map.grid)
 	var GW := int(map.GW); var CELL := float(map.CELL)
@@ -161,21 +195,26 @@ static func _water(host: Node3D, sim, map: Dictionary) -> void:
 		var x := (i % GW) * CELL; var z := (i / GW) * CELL
 		var ch := height_at(map, x + CELL * 0.5, z + CELL * 0.5) + 1.0
 		var y: float = maxf(level, ch) if g == 1 else maxf(level - 0.15, ch)
-		var wc := Color(0.06, 0.21, 0.29) if g == 1 else Color(0.20, 0.37, 0.40)
+		# alpha encodes shallowness for water_pbr.gdshader (a < 0.75 enables animated ford foam shimmer)
+		var wc := Color(0.06, 0.21, 0.29, 1.0) if g == 1 else Color(0.20, 0.37, 0.40, 0.55)
 		var e := 2.0
 		for v in [Vector3(x - e, y, z - e), Vector3(x + CELL + e, y, z - e), Vector3(x - e, y, z + CELL + e), Vector3(x + CELL + e, y, z - e), Vector3(x + CELL + e, y, z + CELL + e), Vector3(x - e, y, z + CELL + e)]:
 			st.set_color(wc); st.set_normal(Vector3.UP); st.add_vertex(v)
 		n += 1
 	if n == 0: return
+	var th_raw := str(map.get("theme", "desert"))
+	var th := th_raw if th_raw in ["desert", "green", "snow"] else "desert"
 	var w := MeshInstance3D.new()
+	w.name = "WaterMesh"
 	w.mesh = st.commit()
-	var m := StandardMaterial3D.new()
-	m.vertex_color_use_as_albedo = true
-	m.albedo_color = Color.WHITE
-	m.roughness = 0.16
-	m.metallic = 0.22
-	m.metallic_specular = 0.65
-	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var m := ShaderMaterial.new()
+	m.shader = load("res://shaders/water_pbr.gdshader")
+	var sky_hor := Color(0.90, 0.80, 0.65)
+	if th == "snow":
+		sky_hor = Color(0.78, 0.85, 0.94)
+	elif th == "green":
+		sky_hor = Color(0.76, 0.84, 0.90)
+	m.set_shader_parameter("sky_horizon", sky_hor)
 	w.material_override = m
 	w.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	host.add_child(w)
@@ -311,11 +350,14 @@ static func _add_box(st: SurfaceTool, c: Vector3, s: Vector3, col: Color) -> voi
 	_add_quad(st, Vector3(x1, y0, z0), Vector3(x1, y1, z0), Vector3(x0, y1, z0), Vector3(x0, y0, z0), Vector3.FORWARD, col * 0.82)
 
 ## woods: exact JS tree placement from map.trees ([x, y, scale], capped at MAX_TREES) when present,
-## falling back to density scatter over map.wood (--gdsim) otherwise; three tree models, one MultiMesh each
+## falling back to density scatter over map.wood (--gdsim) otherwise; three tree models, one MultiMesh each,
+## with subtle organic lean (+/- 0.05 rad) and per-biome foliage modulation.
 static func _trees(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> void:
 	var GW := int(map.GW); var GH := int(map.GH); var CELL := float(map.CELL)
 	var grid := PackedByteArray(map.get("grid", []))
 	var has_grid := grid.size() >= GW * GH and GW > 0 and GH > 0
+	var th_raw := str(map.get("theme", "desert"))
+	var th := th_raw if th_raw in ["desert", "green", "snow"] else "desert"
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 11
 	var per := [[], [], []]
@@ -341,7 +383,11 @@ static func _trees(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> v
 			var js_s := float(entry[2]) if (entry as Array).size() >= 3 else 1.0
 			var s := clampf(js_s, 0.55, 1.65) * rng.randf_range(0.92, 1.08)
 			var sy := s * rng.randf_range(0.92, 1.10)
-			per[rng.randi() % 3].append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, sy, s)), Vector3(x, height_at(map, x, z) - 1.0, z)))
+			var yaw := rng.randf() * TAU
+			var lean_x := rng.randf_range(-0.05, 0.05)
+			var lean_z := rng.randf_range(-0.05, 0.05)
+			var b := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, lean_x) * Basis(Vector3.FORWARD, lean_z)
+			per[rng.randi() % 3].append(Transform3D(b.scaled(Vector3(s, sy, s)), Vector3(x, height_at(map, x, z) - 1.0, z)))
 	elif map.has("wood"):
 		var wood := PackedByteArray(map.wood)
 		var placed := 0
@@ -361,18 +407,77 @@ static func _trees(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> v
 				var x := cx + rng.randf_range(4, CELL - 4); var z := cz + rng.randf_range(4, CELL - 4)
 				var s := rng.randf_range(0.75, 1.25)
 				var sy := s * rng.randf_range(0.92, 1.10)
-				per[rng.randi() % 3].append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, sy, s)), Vector3(x, height_at(map, x, z) - 1.0, z)))
+				var yaw := rng.randf() * TAU
+				var lean_x := rng.randf_range(-0.05, 0.05)
+				var lean_z := rng.randf_range(-0.05, 0.05)
+				var b := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, lean_x) * Basis(Vector3.FORWARD, lean_z)
+				per[rng.randi() % 3].append(Transform3D(b.scaled(Vector3(s, sy, s)), Vector3(x, height_at(map, x, z) - 1.0, z)))
 				placed += 1
+
+	# Biome-tuned tree palettes (foliage + bark)
+	var fol_col := Color(0.37, 0.41, 0.19)    # desert: sun-parched olive/sage scrub
+	var bark_col := Color(0.41, 0.34, 0.25)
+	var tex_tint := Color(1.02, 0.96, 0.85)
+	if th == "snow":
+		fol_col = Color(0.31, 0.43, 0.41)     # snow: frosty winter spruce
+		bark_col = Color(0.31, 0.30, 0.32)
+		tex_tint = Color(0.92, 0.98, 1.06)
+	elif th == "green":
+		fol_col = Color(0.24, 0.42, 0.15)     # green: rich deep woodland foliage
+		bark_col = Color(0.30, 0.23, 0.16)
+		tex_tint = Color(0.95, 1.02, 0.93)
 
 	for t in 3:
 		if (per[t] as Array).is_empty(): continue
 		var info: Dictionary = tree_mesh.call("tree%d" % (t + 1))
 		if info.is_empty(): continue
+		var mesh: Mesh = info["mesh"]
+		var use_inst_colors := false
+		if mesh != null:
+			for s in mesh.get_surface_count():
+				var smat := mesh.surface_get_material(s)
+				if not (smat is BaseMaterial3D):
+					continue
+				var bm: BaseMaterial3D = (smat as BaseMaterial3D).duplicate()
+				if bm.albedo_texture == null:
+					var mname := bm.resource_name.to_lower()
+					var is_bark := mname.contains("wood") or mname.contains("bark") or mname.contains("trunk")
+					var is_foliage := (not is_bark) and (mname.contains("green") or mname.contains("leaf") or mname.contains("foliage") or bm.albedo_color.g > bm.albedo_color.r)
+					if is_foliage:
+						bm.albedo_color = fol_col
+						bm.roughness = 0.82
+						var has_vcol := false
+						if mesh is ArrayMesh:
+							var sarr := (mesh as ArrayMesh).surface_get_arrays(s)
+							has_vcol = sarr.size() > Mesh.ARRAY_COLOR and sarr[Mesh.ARRAY_COLOR] != null
+						if not has_vcol:
+							bm.vertex_color_use_as_albedo = true
+							use_inst_colors = true
+					else:
+						bm.albedo_color = bark_col
+						bm.roughness = 0.90
+				else:
+					# Preserve existing textures; apply only a gentle biome tint
+					bm.albedo_color = bm.albedo_color * tex_tint
+				mesh.surface_set_material(s, bm)
 		var m := MultiMeshInstance3D.new()
+		m.name = "Trees_%d" % (t + 1)
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
-		mm.mesh = info["mesh"]
+		if use_inst_colors:
+			mm.use_colors = true
+		mm.mesh = mesh
 		mm.instance_count = per[t].size()
-		for i in per[t].size(): mm.set_instance_transform(i, per[t][i])
+		for i in per[t].size():
+			mm.set_instance_transform(i, per[t][i])
+			if use_inst_colors:
+				var v := rng.randf_range(0.86, 1.14)
+				var warm := rng.randf_range(-0.05, 0.05)
+				if th == "snow":
+					# subtle snow-frost shimmer variation across evergreen crowns
+					var frost := rng.randf_range(0.0, 0.22)
+					mm.set_instance_color(i, Color(clampf(v + frost, 0.72, 1.25), clampf(v + frost, 0.72, 1.25), clampf(v + frost * 1.15, 0.75, 1.28)))
+				else:
+					mm.set_instance_color(i, Color(clampf(v + warm, 0.75, 1.20), clampf(v, 0.75, 1.20), clampf(v - warm * 0.6, 0.75, 1.20)))
 		m.multimesh = mm
 		host.add_child(m)

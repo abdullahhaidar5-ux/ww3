@@ -1493,7 +1493,25 @@ func cmd_items() -> Dictionary:
 	if se.size():
 		var e0 = se[0]
 		return {title = ("Enemy · " if e0.team >= 0 and not sim.ally(me, e0.team) else "") + str(e0.s.get("name", e0.kind)), sub = "", items = []}
-	return {title = "", sub = "Select your Construction Vehicle to build, or a building to train units.", items = []}
+	# Zero Hour idle command deck: quick-select base / dozer / production / army so the bar is always structured and useful
+	var hq_e = sim.hq_of(me)
+	if hq_e != null:
+		var hid: int = hq_e.id
+		items.append({id = "q_hq", label = "Command Ctr", price = "H", cameo = "b|%s|hq" % my_fac, tip = "Select & center on Command Center (H)", on_click = func(_sh): bsel = [hid]; cam_target = Vector2(hq_e.x, hq_e.y)})
+	for k_b in [["dozer", "Dozer", false], ["barracks", "Barracks", true], ["factory", "War Factory", true], ["airfield", "Airfield", true]]:
+		var found = null
+		for e in sim.ents:
+			if not e.dead and e.team == me and e.kind == k_b[0] and (not k_b[2] or e.built >= 1.0): found = e; break
+		if found != null:
+			var fid: int = found.id; var fx: float = found.x; var fy: float = found.y
+			items.append({id = "q_" + k_b[0], label = k_b[1], price = "", cameo = ("%s|%s|%s" % ["b" if k_b[2] else "u", my_fac, k_b[0]]), tip = "Select %s (double-click to jump)" % k_b[1], on_click = func(_sh): bsel = [fid]; cam_target = Vector2(fx, fy)})
+	items.append({id = "q_army", label = "All Army", price = "Ctrl+A", cameo = "", tip = "Select all combat units (Ctrl+A)", on_click = func(_sh):
+		bsel = []
+		for e in sim.ents:
+			if not e.dead and e.team == me and not e.is_b and e.kind != "harv" and e.kind != "dozer" and not _dug_in(e): bsel.append(e.id)})
+	items.append({id = "q_sup", label = "Supply Lines", price = "L", cameo = "", on = show_supply, tip = "Toggle supply lines on the ground (L)", on_click = func(_sh): toggle_supply()})
+	items.append({id = "q_pow", label = "Gen. Powers", price = "P", cameo = "", tip = "Open Generals' Powers (P)", on_click = func(_sh): hud.open_powers()})
+	return {title = "Tactical Command", sub = "Select Dozer to build, a building to train, or units to command", items = items}
 
 func portrait() -> Dictionary:
 	var se := _sel_ents()
@@ -1606,7 +1624,7 @@ func _battle_ui() -> void:
 	hud = Hud.new(self)
 	add_child(hud)
 	hud.build(ui)
-	Audio.add_button(ui)   # P5 HOOK (Sound: volumes)
+	# Audio settings live inside the Zero Hour MENU -> Settings window (no loose floating Sound button)
 	msg_lbl = UI.label("", 16, Color(1, 0.95, 0.75), "display")
 	msg_lbl.anchor_left = 0.5; msg_lbl.anchor_right = 0.5
 	msg_lbl.offset_left = -400; msg_lbl.offset_right = 400; msg_lbl.offset_top = 62

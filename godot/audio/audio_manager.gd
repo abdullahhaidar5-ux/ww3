@@ -21,6 +21,7 @@ signal fired(ev: String, clip: String)
 const SITE := "https://abdullahhaidar5-ux.github.io/ww3/"
 const CFG := "user://audio.cfg"
 const SFX_CAP := 28                    # JS SFX.cap
+const SYNTH_CAP := 8                   # dedicated pool for procedural Hollywood SFX layers (WebAudio + Desktop safe)
 const VOICE_GAP := 1.3                 # JS speak(): 1300 ms between unit lines
 const ST_GAIN := 2.6                   # JS ST.gain (deck level into the music bus)
 const ST_FADE := 3.0
@@ -47,6 +48,18 @@ var _waiting: Dictionary = {}          # rel path -> [Callable]
 var _base_ok := ""
 var _sfx: Array = []                   # pool of AudioStreamPlayer2D (panned)
 var _sfx_end: Array = []
+var _synth_2d: Array = []              # dedicated spatial pool for procedural sub-bass / EMP / flyby WAVs
+var _synth_2d_end: Array = []
+var _synth_ui: Array = []              # dedicated UI pool for klaxon / promo / built confirmation WAVs
+var _synth_ui_i := 0
+var _synth_vox: AudioStreamPlayer      # dedicated Voice-bus player for military VHF PTT squelch chirp
+var _wav_sub: AudioStreamWAV
+var _wav_chirp: AudioStreamWAV
+var _wav_klaxon: AudioStreamWAV
+var _wav_promo: AudioStreamWAV
+var _wav_emp: AudioStreamWAV
+var _wav_jet: AudioStreamWAV
+var _wav_built: AudioStreamWAV
 var _vox: AudioStreamPlayer            # unit lines + radio
 var _annp: AudioStreamPlayer           # announcer
 var _shoutp: AudioStreamPlayer2D
@@ -123,9 +136,22 @@ func _ready() -> void:
 		var p := AudioStreamPlayer2D.new()
 		p.max_distance = 1000000.0; p.attenuation = 1.0; p.panning_strength = 1.0; p.bus = "Sfx"
 		add_child(p); _sfx.append(p); _sfx_end.append(0.0)
+	for i in SYNTH_CAP:
+		var sp2 := AudioStreamPlayer2D.new()
+		sp2.max_distance = 1000000.0; sp2.attenuation = 1.0; sp2.panning_strength = 1.0; sp2.bus = "Sfx"
+		add_child(sp2); _synth_2d.append(sp2); _synth_2d_end.append(0.0)
+	for i in 3: _synth_ui.append(_mk("UI"))
+	_synth_vox = _mk("Voice")
 	_vox = _mk("Voice"); _annp = _mk("Voice"); _uip = _mk("UI")
 	_shoutp = AudioStreamPlayer2D.new(); _shoutp.max_distance = 1000000.0; _shoutp.bus = "Voice"; add_child(_shoutp)
 	_uip.stream = _tick_wav()
+	_wav_sub = _sub_boom_wav()
+	_wav_chirp = _radio_chirp_wav()
+	_wav_klaxon = _klaxon_wav()
+	_wav_promo = _promo_wav()
+	_wav_emp = _emp_wav()
+	_wav_jet = _jet_whoosh_wav()
+	_wav_built = _built_chime_wav()
 	if web: _web_decks()
 	else:
 		for i in 2:
@@ -397,6 +423,9 @@ func shot(x: float, y: float, s: float) -> void:
 	else:
 		if not limit("can", 3): return
 		_clip("cannon", sp, 1.1, 0.88 if s > 14 else 1.0, sp.far * 0.2)
+		if s >= 11.0 and limit("sub_can", 3, 0.14):
+			var cg: float = float(sp.v) * clampf(0.32 + (s - 11.0) * 0.04, 0.32, 0.68)
+			_play_synth_2d(_wav_sub, sp, cg, 1.12 + _rng.randf() * 0.12, "Sfx")
 
 ## an explosion; s = size, big = building / heavy blast. Feeds the music's heat even with effects off (JS sfxBoom).
 func boom(x: float, y: float, s: float, big: bool) -> void:
@@ -410,6 +439,9 @@ func boom(x: float, y: float, s: float, big: bool) -> void:
 	var k := minf(1.0, 0.3 + s / 40.0) * (1.3 if big else 1.0)
 	if _stream("sfx/sfx.mp3") != null:
 		_clip("boomL" if (big or s > 26) else "boomS", sp, (1.1 if big else 0.9) * minf(1.2, 0.6 + k), 0.94 if big else 1.0, sp.far * 0.3)
+	if (big or s >= 18.0) and limit("sub", 3, 0.14):
+		var sub_g: float = float(sp.v) * clampf(0.45 + s / 50.0, 0.45, 1.15) * (1.2 if big else 0.9)
+		_play_synth_2d(_wav_sub, sp, sub_g, (0.86 if big else 1.0) * (0.94 + _rng.randf() * 0.12), "Sfx")
 	heat = minf(1.0, heat + (0.25 if big else 0.06))
 
 func _clip(cat: String, sp: Dictionary, g: float, rate: float, delay: float) -> void:
@@ -467,6 +499,192 @@ func _tick_wav() -> AudioStreamWAV:      # 540 -> 330 Hz sine, 40 ms, + a trace 
 	var w := AudioStreamWAV.new(); w.format = AudioStreamWAV.FORMAT_16_BITS; w.mix_rate = sr; w.data = by
 	return w
 
+func _mk_wav(by: PackedByteArray, sr: int = 22050) -> AudioStreamWAV:
+	var w := AudioStreamWAV.new()
+	w.format = AudioStreamWAV.FORMAT_16_BITS; w.mix_rate = sr; w.data = by
+	return w
+
+## 1. Deep concussive 52 Hz -> 24 Hz exponential sub-bass punch + low-pass shockwave transient + tail rumble (0.75 s)
+func _sub_boom_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 0.75; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var ph := 0.0; var lp := 0.0; var lp2 := 0.0
+	for i in n:
+		var t := float(i) / sr
+		var f := 24.0 + 28.0 * exp(-t * 6.5)
+		ph += TAU * f / sr
+		var atk := minf(1.0, t / 0.006)
+		var tail_out := clampf((dur - t) / 0.02, 0.0, 1.0)
+		var body := sin(ph) * exp(-t * 4.2) * 0.82
+		var ns := randf() * 2.0 - 1.0
+		lp += 0.085 * (ns - lp)
+		lp2 += 0.028 * (lp - lp2)
+		var shock := lp * exp(-t * 15.0) * 0.85
+		var rumble := lp2 * exp(-t * 3.1) * 0.55
+		var v := tanh((body + shock + rumble) * 1.45) * 0.88 * atk * tail_out
+		by.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
+## 2. Military VHF radio PTT squelch chirp (0.045 s: bandpass-like noise + crisp 1850 -> 2200 Hz micro-tone)
+func _radio_chirp_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 0.045; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var ph := 0.0; var lo := 0.0; var hi := 0.0
+	for i in n:
+		var t := float(i) / sr; var k := float(i) / n
+		var f := lerpf(1850.0, 2200.0, minf(1.0, k * 1.45))
+		ph += TAU * f / sr
+		var ns := randf() * 2.0 - 1.0
+		lo += 0.35 * (ns - lo)
+		hi += 0.09 * (ns - hi)
+		var bp := lo - hi
+		var tone_env := sin(PI * clampf(t / 0.028, 0.0, 1.0)) if t < 0.028 else 0.0
+		var sq_env := exp(-k * 3.2) * clampf((1.0 - k) * 6.0, 0.0, 1.0)
+		var v := (sin(ph) * 0.14 * tone_env + bp * 0.32 * sq_env)
+		by.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
+## 3. Urgent military 2-pulse warning klaxon (0.65 s: 520 Hz + 780 Hz harmonic pulse with soft envelope)
+func _klaxon_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 0.65; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var ph1 := 0.0; var ph2 := 0.0
+	for i in n:
+		var t := float(i) / sr
+		var env := 0.0
+		if t < 0.27:
+			env = minf(1.0, t / 0.014) * minf(1.0, (0.27 - t) / 0.028)
+		elif t >= 0.33 and t < 0.63:
+			var lt := t - 0.33
+			env = minf(1.0, lt / 0.014) * minf(1.0, (0.30 - lt) / 0.032)
+		var bend := 1.0 - 0.025 * exp(-fmod(t, 0.33) * 28.0)
+		ph1 += TAU * 520.0 * bend / sr
+		ph2 += TAU * 780.0 * bend / sr
+		var raw := sin(ph1) * 0.55 + sin(ph2) * 0.38 + sin(ph1 * 2.0) * 0.14
+		var v := tanh(raw * 1.5) * 0.55 * env
+		by.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
+## 4. Crisp 3-note ascending tactical brass/synth triad sting (0.48 s: 440 -> 554 -> 659 Hz)
+func _promo_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 0.48; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var notes := [[0.0, 0.14, 440.0], [0.11, 0.15, 554.37], [0.22, 0.26, 659.25]]
+	var phs := [0.0, 0.0, 0.0]
+	for i in n:
+		var t := float(i) / sr
+		var acc := 0.0
+		for j in 3:
+			var t0: float = notes[j][0]; var nd: float = notes[j][1]; var fq: float = notes[j][2]
+			if t >= t0 and t < t0 + nd:
+				var lt := t - t0
+				phs[j] += TAU * fq / sr
+				var a := minf(1.0, lt / 0.009)
+				var r := minf(1.0, (nd - lt) / (0.09 if j == 2 else 0.035))
+				var dec := exp(-lt * (3.2 if j == 2 else 4.5))
+				var p: float = phs[j]
+				var brass := sin(p) * 0.62 + sin(p * 2.0) * 0.28 + sin(p * 3.0) * 0.13
+				acc += brass * a * r * dec
+		var v := tanh(acc * 1.1) * 0.62
+		by.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
+## 5. Descending electronic EMP sweep (0.65 s: 1400 Hz -> 95 Hz + electric crackle)
+func _emp_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 0.65; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var ph := 0.0; var prev_ns := 0.0
+	for i in n:
+		var t := float(i) / sr
+		var f := 95.0 + 1305.0 * exp(-t * 5.8)
+		ph += TAU * f / sr
+		var atk := minf(1.0, t / 0.005)
+		var rel := clampf((dur - t) / 0.04, 0.0, 1.0)
+		var env := exp(-t * 2.8) * atk * rel
+		var sweep := sin(ph) * (0.72 + 0.28 * sin(ph * 0.5)) * env * 0.68
+		var ns := randf() * 2.0 - 1.0
+		var hp := ns - prev_ns; prev_ns = ns
+		var spark := (hp * 0.55 if randf() < 0.09 else hp * 0.08) * exp(-t * 4.8)
+		var snap := hp * exp(-t * 45.0) * 0.65
+		var v := tanh((sweep + spark + snap) * 1.25) * 0.78 * rel
+		by.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
+## 6. Spatial jet flyover roar (0.95 s: Doppler-swept turbine whoosh + afterburner rumble)
+func _jet_whoosh_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 0.95; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var ph_low := 0.0; var ph_whine := 0.0; var lp := 0.0
+	for i in n:
+		var k := float(i) / n
+		var env := pow(sin(PI * pow(k, 0.82)), 1.35)
+		ph_low += TAU * lerpf(155.0, 72.0, k) / sr
+		ph_whine += TAU * lerpf(720.0, 310.0, k) / sr
+		var ns := randf() * 2.0 - 1.0
+		var cut := lerpf(0.26, 0.07, k)
+		lp += cut * (ns - lp)
+		var roar := lp * 0.9 + sin(ph_low) * 0.22 + sin(ph_whine) * 0.07
+		var v := tanh(roar * 1.3) * 0.72 * env
+		by.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
+## 7. Subtle metallic construction-complete mechanical lock confirmation (0.24 s)
+func _built_chime_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 0.24; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var p1 := 0.0; var p2 := 0.0
+	for i in n:
+		var t := float(i) / sr
+		var acc := 0.0
+		if t < 0.11:
+			p1 += TAU * 660.0 / sr
+			var e1 := minf(1.0, t / 0.004) * exp(-t * 28.0)
+			acc += (sin(p1) * 0.65 + sin(p1 * 1.5) * 0.35) * e1
+		if t >= 0.075:
+			var lt := t - 0.075
+			p2 += TAU * 880.0 / sr
+			var e2 := minf(1.0, lt / 0.004) * exp(-lt * 19.0) * clampf((dur - t) / 0.02, 0.0, 1.0)
+			acc += (sin(p2) * 0.65 + sin(p2 * 1.5) * 0.30) * e2
+		by.encode_s16(i * 2, int(clampf(acc * 0.42, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
+func _play_synth_2d(wav: AudioStreamWAV, sp: Dictionary, lin: float, rate: float = 1.0, bus: String = "") -> void:
+	if not _sfx_on() or wav == null or sp.is_empty(): return
+	var t := now()
+	var idx := -1
+	for i in SYNTH_CAP:
+		if _synth_2d_end[i] <= t: idx = i; break
+	if idx < 0: return
+	var p: AudioStreamPlayer2D = _synth_2d[idx]
+	if bus != "": p.bus = bus
+	else:
+		var far: float = float(sp.get("far", 0.0))
+		p.bus = "Sfx" if far < 0.3 else ("SfxMid" if far < 0.62 else "SfxFar")
+	var vp := get_viewport()
+	var vs := vp.get_visible_rect().size if vp != null else Vector2(1280, 720)
+	p.global_position = Vector2(vs.x * 0.5 * (1.0 + float(sp.get("pan", 0.0))), vs.y * 0.5)
+	p.stream = wav
+	p.pitch_scale = maxf(rate, 0.1)
+	p.volume_db = linear_to_db(maxf(lin, 0.0001))
+	p.play()
+	_synth_2d_end[idx] = t + wav.get_length() / p.pitch_scale
+
+func _play_synth_ui(wav: AudioStreamWAV, lin: float = 0.72, rate: float = 1.0) -> void:
+	if not _sfx_on() or wav == null or _synth_ui.is_empty(): return
+	var p: AudioStreamPlayer = _synth_ui[_synth_ui_i % _synth_ui.size()]
+	_synth_ui_i += 1
+	p.stream = wav
+	p.pitch_scale = maxf(rate, 0.1)
+	p.volume_db = linear_to_db(maxf(lin, 0.0001))
+	p.play()
+
+func _play_chirp() -> void:
+	if not _voice_on() or _wav_chirp == null or _synth_vox == null: return
+	_synth_vox.stream = _wav_chirp
+	_synth_vox.pitch_scale = 0.96 + _rng.randf() * 0.08
+	_synth_vox.volume_db = linear_to_db(maxf(_vo_vol() * 0.32, 0.0001))
+	_synth_vox.play()
+
 # ------------------------------------------------------------------------------------------------ voices (JS speak / voRPlay / voPlay / heroSpeak / duck)
 func _vo_vol() -> float: return clampf(float(vol.voices) / 100.0 * 1.25, 0.0, 1.5)
 func _voice_on() -> bool: return unlocked and int(vol.voices) > 0 and int(vol.master) > 0
@@ -523,6 +741,7 @@ func _voh(fac: String, key: String, over: bool) -> bool:
 	_say(_vox, st, ent[_rng.randi() % ent.size()], "voh", "%s_h/%s" % [fac, key]); return true
 
 func _say(p: AudioStreamPlayer, st: AudioStream, od: Array, ev: String, clip: String) -> void:
+	_play_chirp()
 	var d := float(od[1])
 	_slice(p, st, float(od[0]), d, _vo_vol())
 	_vo_end = now() + 0.02 + d
@@ -753,6 +972,7 @@ func observe(sim, me: int, fast: bool = false) -> void:
 			continue
 		o[0] = e.x; o[1] = e.y
 		if e.is_b and float(o[5]) < 1.0 and e.built >= 1.0 and mine:
+			if limit("built", 2, 0.5): _play_synth_ui(_wav_built, 0.58)
 			speak(7); ann("complete")                                  # JS log(.., ' ready.', 'v7') + 'ann:complete'
 		o[5] = e.built
 		if e.last_fire > float(o[7]):
@@ -806,15 +1026,55 @@ func observe(sim, me: int, fast: bool = false) -> void:
 			if not (ev is Array) or ev.is_empty(): continue
 			var kind_ev := str(ev[0])
 			if kind_ev == "boom" and ev.size() >= 4:
-				boom(float(ev[1]), float(ev[2]), clampf(float(ev[3]) * 0.5, 6.0, 48.0), float(ev[3]) >= 45.0)
+				var bsz: float = clampf(float(ev[3]), 6.0, 48.0)
+				var bbig: bool = (ev.size() >= 5 and int(ev[4]) != 0) or float(ev[3]) >= 30.0
+				boom(float(ev[1]), float(ev[2]), bsz, bbig)
 			elif kind_ev == "muz" and ev.size() >= 4:
-				shot(float(ev[1]), float(ev[2]), float(ev[3]))
-			elif kind_ev == "rank" and ev.size() >= 2 and int(ev[1]) == me:
-				ann("rank")
+				var msz := float(ev[5]) if ev.size() >= 6 else float(ev[3])
+				shot(float(ev[1]), float(ev[2]), msz)
+			elif kind_ev == "plane" and ev.size() >= 3:
+				if limit("plane", 2, 1.5):
+					var px := float(ev[3]) if ev.size() >= 5 else float(ev[1])
+					var py := float(ev[4]) if ev.size() >= 5 else float(ev[2])
+					var sp := spatial(px, py)
+					if sp.is_empty() and ev.size() >= 5: sp = spatial((float(ev[1]) + px) * 0.5, (float(ev[2]) + py) * 0.5)
+					if not sp.is_empty() and sp.v >= 0.02:
+						_play_synth_2d(_wav_jet, sp, sp.v * 0.9, 0.92 + _rng.randf() * 0.16, "Sfx")
+						_note("synth", "plane")
 			elif kind_ev == "strike" or kind_ev == "bmis":
-				ann("super")
+				if limit("klaxon", 1, 3.5):
+					_play_synth_ui(_wav_klaxon, 0.72)
+					_note("synth", "klaxon")
+				if not ann("super"): ann("enemyStrike")
+				var sx := float(ev[3]) if (kind_ev == "bmis" and ev.size() >= 5) else (float(ev[1]) if ev.size() >= 3 else 0.0)
+				var sy := float(ev[4]) if (kind_ev == "bmis" and ev.size() >= 5) else (float(ev[2]) if ev.size() >= 3 else 0.0)
+				if ev.size() >= 3 and limit("sub_strike", 2, 0.35):
+					var sp := spatial(sx, sy)
+					if not sp.is_empty() and sp.v >= 0.12:
+						_play_synth_2d(_wav_sub, sp, sp.v * 0.85, 0.78, "Sfx")
+			elif kind_ev == "emp" and ev.size() >= 3:
+				if limit("emp", 2, 0.5):
+					var sp := spatial(float(ev[1]), float(ev[2]))
+					if not sp.is_empty() and sp.v >= 0.02:
+						_play_synth_2d(_wav_emp, sp, maxf(0.35, sp.v * 0.95), 0.96 + _rng.randf() * 0.08, "Sfx")
+						_note("synth", "emp")
+			elif kind_ev == "rank" and ev.size() >= 2:
+				var rid := int(ev[1])
+				var rank_mine: bool = (int(_seen[rid][4]) == me) if _seen.has(rid) else (ev.size() == 2 and rid == me)
+				if rank_mine and limit("promo", 1, 1.2):
+					_play_synth_ui(_wav_promo, 0.72)
+					_note("synth", "promo")
+					ann("rank")
 			elif kind_ev == "ready" and ev.size() >= 2 and int(ev[1]) == me:
-				ann("superReady")
+				if ev.size() == 2:
+					if not ann("superReady"): ann("strikeReady")
+				else:
+					ann("superReady")
+			elif kind_ev == "built" and ev.size() >= 2 and int(ev[1]) == me:
+				if limit("built", 2, 0.5):
+					_play_synth_ui(_wav_built, 0.58)
+					_note("synth", "built")
+				speak(7); ann("complete")
 	if _demo and t - _demo_t > 6.0:
 		_demo_t = t
 		var ks: Array = []

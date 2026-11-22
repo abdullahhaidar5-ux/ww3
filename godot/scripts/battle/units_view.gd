@@ -19,11 +19,34 @@ const Look = preload("res://scripts/battle/battle_look.gd")
 
 const MAX_ANIM_SOLDIERS := 120
 const MAX_SOLDIER_POOL := 240
+const MAX_DYING_SOLDIERS := 24
+const DYING_HOLD_TIME := 3.8
+const DYING_SINK_TIME := 1.0
 const ANIM_DIST_SQ := 950.0 * 950.0
+const DUST_DIST_SQ := 1100.0 * 1100.0
+const DMG_FX_DIST_SQ := 1800.0 * 1800.0
 const HUGE_AABB := AABB(Vector3(-1e5, -1e4, -1e5), Vector3(2e5, 4e4, 2e5))
 const HIGH_AIR_KINDS := ["jet", "airlift", "tb2"]
 const LOW_AIR_KINDS := ["heli", "drone"]
+const RECOIL_CLS := ["tank", "arty", "aa"]
+const RECOIL_KINDS := ["tank", "arty", "aa", "mlrs", "ifv", "spg"]
 const LOOP_CLIPS := ["idle", "walk", "run"]
+
+# Reusable combat VFX / overlay colors (zero per-frame allocations)
+const C_VEH_SMK1 := Color(0.22, 0.21, 0.20)
+const C_VEH_SMK2 := Color(0.32, 0.31, 0.30)
+const C_VEH_BLK := Color(0.09, 0.08, 0.08)
+const C_FIRE_HI := Color(1.0, 0.48, 0.12)
+const C_FIRE_LO := Color(0.9, 0.18, 0.04)
+const C_DUST_DESERT := Color(0.82, 0.72, 0.56)
+const C_DUST_GREEN := Color(0.56, 0.51, 0.42)
+const C_DUST_SNOW := Color(0.88, 0.91, 0.96)
+const C_DUST_HARD := Color(0.64, 0.63, 0.60)
+const C_WASH_WATER := Color(0.85, 0.92, 0.96)
+const C_VET_BG := Color(0.08, 0.06, 0.04, 0.92)
+const C_VET_1 := Color(0.86, 0.74, 0.54)
+const C_VET_2 := Color(1.0, 0.84, 0.25)
+const C_VET_3 := Color(1.35, 0.96, 0.30)
 
 # Shared immutable caches across battles (ArrayMesh / metadata only, no scene nodes)
 static var _meta_cache: Dictionary = {}        # "fac|kind" -> {ok, pack, pxf, h, scale, is_squad, squad}
@@ -33,12 +56,19 @@ static var _box_cache: Dictionary = {}         # int_size -> Mesh
 var _root: Node3D = null
 var _mm_root: Node3D = null
 var _sol_root: Node3D = null
-var _mmi: Dictionary = {}        # key -> MultiMeshInstance3D
-var _buf: Dictionary = {}        # key -> Array[Transform3D]
-var _active_sol: Dictionary = {} # slot_id (int) -> {node, ap, key, clip, used, last_frame}
-var _idle_sol: Dictionary = {}   # "fac|kind|look" -> Array[Dictionary]
+var _mmi: Dictionary = {}            # key -> MultiMeshInstance3D
+var _buf: Dictionary = {}            # key -> Array[Transform3D]
+var _active_sol: Dictionary = {}     # slot_id (int) -> {node, ap, key, clip, used, last_frame}
+var _idle_sol: Dictionary = {}       # "fac|kind|look" -> Array[Dictionary]
+var _dying_soldiers: Array = []      # Array[{node, ap, key, clip, start_t, base_y}]
+var _prev_sq_alive: Dictionary = {}  # eid (int) -> int
+var _fx_cd: Dictionary = {}          # eid (int) -> float (next damage smoke/fire emit time)
+var _dust_cd: Dictionary = {}        # eid (int) -> float (next dust/downwash emit time)
+var _last_fire_seen: Dictionary = {} # eid (int) -> float (last observed e.last_fire)
+var _recoil_t: Dictionary = {}       # eid (int) -> float (B.t when cannon fired)
 var _anim_count: int = 0
 var _frame_id: int = 0
+var _now_t: float = 0.0
 var _headless: bool = false
 
 
@@ -61,6 +91,8 @@ func setup(host: Node3D) -> void:
 func begin_frame(_B = null) -> void:
 	if _headless or _root == null:
 		return
+	if _B != null:
+		_now_t = float(_B.t)
 	_frame_id += 1
 	_anim_count = 0
 	for k in _buf.keys():
@@ -83,6 +115,7 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 		return
 
 	var sc: float = float(meta["scale"])
+	var model_h: float = float(meta["h"])
 	var pack: Dictionary = meta["pack"]
 	var parts: Dictionary = pack.get("parts", {})
 	var pxf: Dictionary = meta["pxf"]
@@ -91,6 +124,10 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 	var eid_i: int = int(e.id)
 	var eid_f: float = float(eid_i)
 	var alt_y: float = gy
+	var cam_t: Vector2 = B.cam_target
+	var cam_dist_sq: float = p.distance_squared_to(cam_t)
+	var wv = B.world_view if B != null else null
+	var fx = wv.fx if wv != null else null
 
 	if is_sq:
 		var sq: Array = meta["squad"]
@@ -101,20 +138,55 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 			synth = true
 		var max_hp: float = maxf(1.0, float(e.max))
 		var alive_n: int = clampi(int(ceil(float(e.hp) / max_hp * float(n_total))), 1, n_total)
-		var cam_t: Vector2 = B.cam_target
-		var near_cam: bool = p.distance_squared_to(cam_t) <= ANIM_DIST_SQ
+		var near_cam: bool = cam_dist_sq <= ANIM_DIST_SQ
+		var sim_t: float = float(B.sim.t)
+		var firing_recent: bool = float(e.last_fire) > sim_t - 0.9
+		var has_live_target: bool = e.target != null and not bool(e.target.dead)
+		var aim_ang: float = ang
+		if firing_recent and has_live_target:
+			aim_ang = atan2(float(e.target.y) - p.y, float(e.target.x) - p.x)
 		var spd: float = float(e.v)
+		var combat_stance := false
 		var clip := "idle"
 		if spd > 28.0:
 			clip = "run"
 		elif spd > 2.0:
 			clip = "walk"
-		elif float(e.last_fire) > float(B.sim.t) - 1.2:
+		elif firing_recent and has_live_target:
+			combat_stance = true
+			clip = "crouch"
+		elif float(e.last_fire) > sim_t - 1.2:
 			clip = "crouch"
 		var scaled_basis := Basis(Vector3.UP, -ang).scaled(Vector3(sc, sc, sc))
-		# Skinned soldier GLBs face +Z in local space (rifle along +Z), so Y rotation = -ang + PI * 0.5 aligns +Z with (cos(ang), sin(ang))
-		var sol_yaw := -ang + PI * 0.5
+		# Skinned soldier GLBs face +Z in local space (rifle along +Z), so Y rotation = -aim_ang + PI * 0.5 aligns +Z with (cos(aim_ang), sin(aim_ang))
+		var sol_yaw := -aim_ang + PI * 0.5
 		var sol_basis := Basis(Vector3.UP, sol_yaw).scaled(Vector3(sc, sc, sc))
+
+		# Spawn dying soldier animations when this squad loses members near camera
+		var prev_alive: int = int(_prev_sq_alive.get(eid_i, alive_n))
+		_prev_sq_alive[eid_i] = alive_n
+		if alive_n < prev_alive and near_cam and _dying_soldiers.size() < MAX_DYING_SOLDIERS:
+			var stop_i: int = mini(prev_alive, n_total)
+			for di in range(alive_n, stop_i):
+				if _dying_soldiers.size() >= MAX_DYING_SOLDIERS:
+					break
+				var dlx := 0.0
+				var dlz := 0.0
+				var dly := 0.0
+				var dlook := "v0"
+				if synth:
+					dlx = (float(di % 2) - 0.5) * 11.0 + (0.0 if di < 2 else 5.5)
+					dlz = (float(int(di / 2)) - 0.3) * 11.0
+				else:
+					var dpl: Dictionary = sq[di]
+					dlx = float(dpl.get("x", 0.0)) * sc
+					dlz = float(dpl.get("z", 0.0)) * sc
+					dly = float(dpl.get("y", 0.0)) * sc
+					dlook = String(dpl.get("look", "v0"))
+				var doff := Vector2(dlx, dlz).rotated(ang)
+				var dq := p + doff
+				var dqy: float = float(B.sim.ground_h(dq.x, dq.y)) + dly
+				_spawn_dying_soldier(eid_i * 16 + di, fac, kind_s, dlook, Vector3(dq.x, dqy, dq.y), sol_yaw, sc, now)
 
 		for i in alive_n:
 			var lx := 0.0
@@ -146,7 +218,11 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 					node.position = Vector3(q.x, qy, q.y)
 					node.rotation = Vector3(0.0, sol_yaw, 0.0)
 					node.scale = Vector3(sc, sc, sc)
-					_drive_anim(rec, clip, slot_id)
+					var s_clip := clip
+					if combat_stance:
+						var phase: int = int(floor((now + float(eid_i * 7 + i * 3) * 0.37) / 1.4)) % 3
+						s_clip = "reload" if phase == 0 else "crouch"
+					_drive_anim(rec, s_clip, slot_id)
 					continue
 
 			var smesh := _get_static_soldier_mesh(fac, kind_s, look)
@@ -174,20 +250,38 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 
 		var px := p.x
 		var pz := p.y
+		var tang: float = float(e.tang)
 		var hull_basis := Basis(Vector3.UP, -ang)
 		if dom == "naval":
 			alt_y += sin(now * 1.4 + eid_f) * 0.6
 			hull_basis = hull_basis * Basis.from_euler(Vector3(sin(now * 0.8 + eid_f * 2.0) * 0.02, 0.0, sin(now * 1.1 + eid_f) * 0.025))
+
+		# Cannon recoil impulse for heavy vehicles (tanks, artillery, AA, MLRS, IFV, SPG)
+		var has_turret: bool = parts.has("turret") or parts.has("turret2") or parts.has("gun")
+		var recoil_off := Vector3.ZERO
+		if String(e.s_cls) in RECOIL_CLS or kind_s in RECOIL_KINDS:
+			var lf: float = float(e.last_fire)
+			if lf > float(_last_fire_seen.get(eid_i, -99.0)):
+				_last_fire_seen[eid_i] = lf
+				if float(B.sim.t) - lf < 0.35:
+					_recoil_t[eid_i] = now
+			if _recoil_t.has(eid_i):
+				var age: float = now - float(_recoil_t[eid_i])
+				if age >= 0.0 and age < 0.28:
+					recoil_off = -Vector3(cos(tang), 0.0, sin(tang)) * (3.8 * exp(-age * 14.0))
+				else:
+					_recoil_t.erase(eid_i)
+			if not has_turret and recoil_off != Vector3.ZERO:
+				px += recoil_off.x
+				pz += recoil_off.z
 		elif dom == "ground" and String(e.s_armor) == "heavy":
 			var ft: float = float(B.sim.t) - float(e.last_fire)
 			if ft >= 0.0 and ft < 0.2:
 				var kick: float = (1.0 - ft / 0.2) * 2.2
-				var fang: float = float(e.tang)
-				px -= cos(fang) * kick
-				pz -= sin(fang) * kick
+				px -= cos(tang) * kick
+				pz -= sin(tang) * kick
 
 		var root_xf := Transform3D(hull_basis.scaled(Vector3(sc, sc, sc)), Vector3(px, alt_y, pz))
-		var tang: float = float(e.tang)
 		var is_working: bool = bool(e.building)
 
 		for pk in parts.keys():
@@ -198,6 +292,8 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 			match pks:
 				"turret", "turret2", "gun":
 					part_xf = root_xf * Transform3D(Basis(Vector3.UP, ang - tang) * pt.basis, pt.origin)
+					if recoil_off != Vector3.ZERO:
+						part_xf.origin += recoil_off
 				"blades":
 					part_xf = root_xf * (pt * Transform3D(Basis(Vector3.UP, now * 22.0 + eid_f), Vector3.ZERO))
 				"rotor":
@@ -221,7 +317,11 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 					part_xf = root_xf * pt
 			_push_mm("u|" + fac + "|" + kind_s + "|" + pks, parts[pk] as Mesh, part_xf, shadow)
 
-	_append_overlays(B, fr, e, p, ang, gy, alt_y, float(meta["h"]), col, issel, mine, vis)
+		# Battle damage smoke/fire, track dust, & helicopter rotor downwash
+		if fx != null:
+			_emit_vehicle_fx(fx, e, kind_s, dom, p, ang, gy, alt_y, model_h, eid_i, now, cam_dist_sq)
+
+	_append_overlays(B, fr, e, p, ang, gy, alt_y, model_h, col, issel, mine, vis)
 
 
 func end_frame() -> void:
@@ -243,6 +343,24 @@ func end_frame() -> void:
 		for i in n:
 			mm.set_instance_transform(i, arr[i] as Transform3D)
 		mm.visible_instance_count = n
+
+	# Update dying soldiers: lie on ground for 3.8s, gently sink, then recycle to idle pool
+	var di := _dying_soldiers.size() - 1
+	while di >= 0:
+		var drec: Dictionary = _dying_soldiers[di]
+		var dnode = drec.get("node", null)
+		if dnode == null or not is_instance_valid(dnode):
+			_dying_soldiers.remove_at(di)
+			di -= 1
+			continue
+		var age: float = _now_t - float(drec["start_t"])
+		if age >= DYING_HOLD_TIME + DYING_SINK_TIME:
+			_dying_soldiers.remove_at(di)
+			_park_soldier(drec)
+		elif age > DYING_HOLD_TIME:
+			var sink_f: float = (age - DYING_HOLD_TIME) / DYING_SINK_TIME
+			(dnode as Node3D).position.y = float(drec["base_y"]) - sink_f * 6.0
+		di -= 1
 
 	# Retire soldiers not drawn this frame back into the reusable idle pool
 	var stale: Array = []
@@ -267,11 +385,70 @@ func clear() -> void:
 	_buf.clear()
 	_active_sol.clear()
 	_idle_sol.clear()
+	_dying_soldiers.clear()
+	_prev_sq_alive.clear()
+	_fx_cd.clear()
+	_dust_cd.clear()
+	_last_fire_seen.clear()
+	_recoil_t.clear()
 	_anim_count = 0
 	_frame_id = 0
+	_now_t = 0.0
 
 
 # ------------------------------------------------------------------ internals
+func _emit_vehicle_fx(fx, e, kind_s: String, dom: String, p: Vector2, ang: float, gy: float, alt_y: float, model_h: float, eid_i: int, now: float, cam_dist_sq: float) -> void:
+	# 1. Battle damage engine smoke (<55% HP) & thick black smoke + flickering fire (<28% HP)
+	if float(e.max) > 0.0 and cam_dist_sq <= DMG_FX_DIST_SQ:
+		var hp_ratio: float = float(e.hp) / float(e.max)
+		if hp_ratio < 0.28:
+			if now >= float(_fx_cd.get(eid_i, 0.0)):
+				_fx_cd[eid_i] = now + 0.16
+				var sx := p.x + randf_range(-2.5, 2.5)
+				var sz := p.y + randf_range(-2.5, 2.5)
+				fx.part(false, Vector3(sx, alt_y + model_h * 0.55, sz), Vector3(randf_range(-4.0, 4.0), 14.0, randf_range(-4.0, 4.0)), 1.9, 9.0, 16.0, 0.65, C_VEH_BLK, C_VEH_SMK2, 12.0, 0.45, 0)
+				fx.part(true, Vector3(sx, alt_y + model_h * 0.52, sz), Vector3(randf_range(-3.0, 3.0), randf_range(8.0, 14.0), randf_range(-3.0, 3.0)), 0.42, 7.0, -3.5, 0.90, C_FIRE_HI, C_FIRE_LO, 11.0, 0.40, 0)
+		elif hp_ratio < 0.55:
+			if (int(now * 8.0) + eid_i) % 5 == 0 and now >= float(_fx_cd.get(eid_i, 0.0)):
+				_fx_cd[eid_i] = now + 0.22
+				fx.part(false, Vector3(p.x, alt_y + model_h * 0.55, p.y), Vector3(randf_range(-4.0, 4.0), 12.0, randf_range(-4.0, 4.0)), 1.6, 8.0, 14.0, 0.55, C_VEH_SMK1, C_VEH_SMK2, 10.0, 0.45, 0)
+
+	# 2. Vehicle track / wheel dust for moving ground vehicles
+	if dom != "air" and dom != "sea" and dom != "naval":
+		if float(e.v) > 14.0 and cam_dist_sq <= DUST_DIST_SQ and now >= float(_dust_cd.get(eid_i, 0.0)):
+			_dust_cd[eid_i] = now + 0.22
+			var surf_s: String = String(fx.surf(p.x, p.y)) if fx.has_method("surf") else String(fx.theme)
+			if surf_s != "water":
+				var back := -Vector2(cos(ang), sin(ang)) * (float(e.r) * 0.8)
+				var dp := Vector3(p.x + back.x + randf_range(-3.0, 3.0), gy + 1.8, p.y + back.y + randf_range(-3.0, 3.0))
+				var dcol := _biome_dust_color(surf_s)
+				fx.part(false, dp, Vector3(back.x * 0.35 + randf_range(-4.0, 4.0), randf_range(3.0, 6.5), back.y * 0.35 + randf_range(-4.0, 4.0)), 1.3, 6.5, 10.0, 0.32, dcol, null, 2.5, 0.35, 0)
+	# 3. Helicopter rotor downwash expanding radially across the ground
+	elif kind_s == "heli" and cam_dist_sq <= ANIM_DIST_SQ and now >= float(_dust_cd.get(eid_i, 0.0)):
+		_dust_cd[eid_i] = now + 0.18
+		var surf_s: String = String(fx.surf(p.x, p.y)) if fx.has_method("surf") else String(fx.theme)
+		var wash_col := C_WASH_WATER if surf_s == "water" else _biome_dust_color(surf_s)
+		var ra: float = randf() * TAU
+		for side in 2:
+			var a2: float = ra + (PI if side == 1 else 0.0)
+			var ca := cos(a2)
+			var sa := sin(a2)
+			var rad: float = randf_range(8.0, 16.0)
+			fx.part(false, Vector3(p.x + ca * rad, gy + 2.0, p.y + sa * rad), Vector3(ca * 34.0, randf_range(1.5, 4.0), sa * 34.0), 0.95, 7.0, 15.0, 0.24, wash_col, null, 1.0, 0.22, 0)
+
+
+static func _biome_dust_color(surf_s: String) -> Color:
+	match surf_s:
+		"snow":
+			return C_DUST_SNOW
+		"green":
+			return C_DUST_GREEN
+		"hard":
+			return C_DUST_HARD
+		_:
+			return C_DUST_DESERT
+
+
 func _append_overlays(B, fr: Dictionary, e, p: Vector2, ang: float, gy: float, alt_y: float, model_h: float, col: Color, issel: bool, mine: bool, vis: bool) -> void:
 	var rings: Array = fr["rings"]
 	var bars: Array = fr["bars"]
@@ -285,6 +462,19 @@ func _append_overlays(B, fr: Dictionary, e, p: Vector2, ang: float, gy: float, a
 	if mine and issel and float(e.amx) > 0.0 and String(B.kind) != "range":
 		var af: float = clampf(float(e.am) / float(e.amx), 0.0, 1.0)
 		bars.append([Vector3(p.x, bar_y - 4.0, p.y), 22.0, Color(0.1, 0.1, 0.1, 0.8), af, Color(0.35, 0.65, 1.0) if float(e.am) > 0.0 else Color(1.0, 0.3, 0.2)])
+	# 3D Veterancy stars/pips right above HP bar (1=Veteran, 2=Elite, 3=Heroic)
+	var rank_n: int = mini(3, int(e.rank))
+	if rank_n > 0:
+		var pip_col: Color = C_VET_1 if rank_n == 1 else (C_VET_2 if rank_n == 2 else C_VET_3)
+		var cam_r: Vector3 = Vector3.RIGHT
+		if B != null and B.cam != null:
+			cam_r = B.cam.global_transform.basis.x if B.cam.is_inside_tree() else B.cam.transform.basis.x
+		var pip_y: float = bar_y + 4.4
+		var spacing: float = 5.4
+		var base_off: float = -0.5 * float(rank_n - 1) * spacing
+		for ri in rank_n:
+			var pip_pos := Vector3(p.x, pip_y, p.y) + cam_r * (base_off + float(ri) * spacing)
+			bars.append([pip_pos, 3.8, C_VET_BG, 0.82, pip_col])
 	# Legacy --gdsim tracer fallback (on bridge, LookFx handles all tracers & muzzle flashes from JS events)
 	if not bool(B.use_bridge):
 		if float(e.last_fire) > float(B.last_fire.get(e.id, -99.0)):
@@ -327,23 +517,7 @@ func _push_mm(key: String, mesh: Mesh, xf: Transform3D, cast_shadow: bool) -> vo
 	(_buf[key] as Array).append(xf)
 
 
-func _acquire_soldier(slot_id: int, fac: String, kind_s: String, look: String) -> Dictionary:
-	var key := fac + "|" + kind_s + "|" + look
-	if _active_sol.has(slot_id):
-		var existing: Dictionary = _active_sol[slot_id]
-		if String(existing["key"]) == key and is_instance_valid(existing["node"]):
-			return existing
-		_active_sol.erase(slot_id)
-		_park_soldier(existing)
-
-	if _idle_sol.has(key):
-		var bucket: Array = _idle_sol[key]
-		while not bucket.is_empty():
-			var rec: Dictionary = bucket.pop_back()
-			if is_instance_valid(rec["node"]):
-				_active_sol[slot_id] = rec
-				return rec
-
+func _create_soldier_rec(fac: String, kind_s: String, look: String, key: String) -> Dictionary:
 	var node: Node3D = X1.soldier(fac, kind_s, look, false)
 	if node == null:
 		return {}
@@ -365,9 +539,73 @@ func _acquire_soldier(slot_id: int, fac: String, kind_s: String, look: String) -
 				var anim := ap.get_animation(cname)
 				if anim != null and anim.loop_mode == Animation.LOOP_NONE:
 					anim.loop_mode = Animation.LOOP_LINEAR
-	var rec := {node = node, ap = ap, key = key, clip = "", used = true, last_frame = _frame_id}
+	return {node = node, ap = ap, key = key, clip = "", used = true, last_frame = _frame_id}
+
+
+func _acquire_soldier(slot_id: int, fac: String, kind_s: String, look: String) -> Dictionary:
+	var key := fac + "|" + kind_s + "|" + look
+	if _active_sol.has(slot_id):
+		var existing: Dictionary = _active_sol[slot_id]
+		if String(existing["key"]) == key and is_instance_valid(existing["node"]):
+			return existing
+		_active_sol.erase(slot_id)
+		_park_soldier(existing)
+
+	if _idle_sol.has(key):
+		var bucket: Array = _idle_sol[key]
+		while not bucket.is_empty():
+			var rec: Dictionary = bucket.pop_back()
+			if is_instance_valid(rec["node"]):
+				_active_sol[slot_id] = rec
+				return rec
+
+	var rec := _create_soldier_rec(fac, kind_s, look, key)
+	if rec.is_empty():
+		return {}
 	_active_sol[slot_id] = rec
 	return rec
+
+
+func _spawn_dying_soldier(slot_id: int, fac: String, kind_s: String, look: String, pos: Vector3, yaw: float, sc: float, now: float) -> void:
+	if _dying_soldiers.size() >= MAX_DYING_SOLDIERS:
+		return
+	var key := fac + "|" + kind_s + "|" + look
+	var rec: Dictionary = {}
+	# Prefer claiming the exact live animated soldier from this slot for zero-pop continuity
+	if _active_sol.has(slot_id):
+		var existing: Dictionary = _active_sol[slot_id]
+		if String(existing["key"]) == key and is_instance_valid(existing["node"]):
+			_active_sol.erase(slot_id)
+			rec = existing
+	if rec.is_empty() and _idle_sol.has(key):
+		var bucket: Array = _idle_sol[key]
+		while not bucket.is_empty():
+			var cand: Dictionary = bucket.pop_back()
+			if is_instance_valid(cand["node"]):
+				rec = cand
+				break
+	if rec.is_empty():
+		rec = _create_soldier_rec(fac, kind_s, look, key)
+	if rec.is_empty():
+		return
+	var node: Node3D = rec["node"]
+	node.visible = true
+	node.position = pos
+	node.rotation = Vector3(0.0, yaw, 0.0)
+	node.scale = Vector3(sc, sc, sc)
+	var ap = rec.get("ap", null)
+	if ap != null and is_instance_valid(ap):
+		var player := ap as AnimationPlayer
+		if player.has_animation("die"):
+			var anim := player.get_animation("die")
+			if anim != null:
+				anim.loop_mode = Animation.LOOP_NONE
+			player.stop()
+			player.play("die")
+	rec["clip"] = "die"
+	rec["start_t"] = now
+	rec["base_y"] = pos.y
+	_dying_soldiers.append(rec)
 
 
 static func _fallback_anim_file(fac: String, kind_s: String, look: String) -> String:
@@ -409,7 +647,7 @@ func _trim_idle_pool() -> void:
 	var total_idle := 0
 	for k in _idle_sol.keys():
 		total_idle += (_idle_sol[k] as Array).size()
-	var cap := maxi(0, MAX_SOLDIER_POOL - _active_sol.size())
+	var cap := maxi(0, MAX_SOLDIER_POOL - _active_sol.size() - _dying_soldiers.size())
 	if total_idle <= cap:
 		return
 	var to_drop := total_idle - cap
@@ -430,9 +668,9 @@ func _drive_anim(rec: Dictionary, clip: String, slot_id: int) -> void:
 	if ap == null or not is_instance_valid(ap):
 		return
 	var player := ap as AnimationPlayer
-	if String(rec["clip"]) == clip and player.is_playing():
+	if String(rec["clip"]) == clip and (player.is_playing() or clip == "crouch"):
 		return
-	var use_clip := clip if player.has_animation(clip) else ("idle" if player.has_animation("idle") else "")
+	var use_clip := clip if player.has_animation(clip) else ("crouch" if clip == "reload" and player.has_animation("crouch") else ("idle" if player.has_animation("idle") else ""))
 	if use_clip == "":
 		return
 	player.play(use_clip)
