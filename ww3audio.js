@@ -231,41 +231,41 @@
     masterGain.connect(limiter);
     limiter.connect(ctx.destination);
 
-    // Cinematic Music Bus (+warm bass shelf & crisp orchestral air)
+    // Cinematic Music Bus (+epic sub-bass warmth & crisp orchestral concert air)
     musicGain = ctx.createGain();
     musicLowShelf = ctx.createBiquadFilter();
     musicLowShelf.type = 'lowshelf';
-    musicLowShelf.frequency.value = 95;
-    musicLowShelf.gain.value = 3.8;
+    musicLowShelf.frequency.value = 92;
+    musicLowShelf.gain.value = 4.6;
     musicHighShelf = ctx.createBiquadFilter();
     musicHighShelf.type = 'highshelf';
-    musicHighShelf.frequency.value = 6500;
-    musicHighShelf.gain.value = 2.0;
+    musicHighShelf.frequency.value = 6800;
+    musicHighShelf.gain.value = 2.6;
     musicGain.connect(musicLowShelf);
     musicLowShelf.connect(musicHighShelf);
     musicHighShelf.connect(masterGain);
 
-    // Faction Score Bus + Lush 2.4s Concert Hall / Cathedral Reverb (makes strings & brass sound HUGE & cinematic)
+    // Faction Score Bus + Lush 2.6s Concert Hall / Cathedral Reverb (makes strings, brass & war drums sound HUGE)
     scoreBus = ctx.createGain();
-    scoreBus.gain.value = 0.65;
+    scoreBus.gain.value = 0.78;
     scoreBus.connect(musicGain);
     try {
-      const rLen = Math.floor(ctx.sampleRate * 2.4);
+      const rLen = Math.floor(ctx.sampleRate * 2.6);
       const rIr = ctx.createBuffer(2, rLen, ctx.sampleRate);
       for (let ch = 0; ch < 2; ch++) {
         const d = rIr.getChannelData(ch);
         let lp = 0;
         for (let i = 0; i < rLen; i++) {
           const t = i / rLen;
-          const n = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.2);
+          const n = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.05);
           lp += 0.14 * (n - lp);
-          d[i] = lp * 0.52;
+          d[i] = lp * 0.56;
         }
       }
       scoreRev = ctx.createConvolver();
       scoreRev.buffer = rIr;
       scoreRevSend = ctx.createGain();
-      scoreRevSend.gain.value = 0.42;
+      scoreRevSend.gain.value = 0.48;
       scoreBus.connect(scoreRevSend);
       scoreRevSend.connect(scoreRev);
       scoreRev.connect(musicGain);
@@ -298,22 +298,22 @@
     sfxFarLPF.connect(sfxGain);
 
     try {
-      const len = Math.floor(ctx.sampleRate * 1.15);
+      const len = Math.floor(ctx.sampleRate * 1.45);
       const ir = ctx.createBuffer(2, len, ctx.sampleRate);
       for (let ch = 0; ch < 2; ch++) {
         const d = ir.getChannelData(ch);
         let lp = 0;
         for (let i = 0; i < len; i++) {
           const t = i / len;
-          const n = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.5);
-          lp += 0.20 * (n - lp);
-          d[i] = lp * 0.48;
+          const n = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.3);
+          lp += 0.19 * (n - lp);
+          d[i] = lp * 0.54;
         }
       }
       sfxRevNode = ctx.createConvolver();
       sfxRevNode.buffer = ir;
       sfxRevSend = ctx.createGain();
-      sfxRevSend.gain.value = 0.17;
+      sfxRevSend.gain.value = 0.24;
       sfxGain.connect(sfxRevSend);
       sfxRevSend.connect(sfxRevNode);
       sfxRevNode.connect(battleGain);
@@ -360,22 +360,90 @@
         d[i] = (Math.sin(ph) * 0.12 + (Math.random() * 2 - 1) * 0.025 * (1 - k)) * (1 - k);
       }
     });
-    // Seismic sub-bass shockwave (artillery / tanks / nukes)
-    synths.sub = makeBuf(0.95, (d, n, sr) => {
+    // Seismic sub-bass shockwave + supersonic crack (heavy tanks / artillery / building blasts)
+    synths.sub = makeBuf(1.25, (d, n, sr) => {
       let ph = 0, lp = 0, lp2 = 0;
       for (let i = 0; i < n; i++) {
         const t = i / sr;
-        const f = 24 + 40 * Math.exp(-t * 6.2);
+        const f = 22 + 48 * Math.exp(-t * 5.8);
         ph += Math.PI * 2 * f / sr;
-        const atk = Math.min(1, t / 0.004);
-        const tail = Math.min(1, (0.95 - t) / 0.04);
-        const body = Math.sin(ph) * Math.exp(-t * 3.4) * 0.92;
+        const atk = Math.min(1, t / 0.003);
+        const tail = Math.min(1, (1.25 - t) / 0.06);
+        const body = Math.sin(ph) * Math.exp(-t * 2.8) * 0.96;
         const ns = Math.random() * 2 - 1;
-        lp += 0.11 * (ns - lp);
+        lp += 0.14 * (ns - lp);
         lp2 += 0.022 * (lp - lp2);
-        const shock = lp * Math.exp(-t * 13.0) * 0.95;
-        const rumble = lp2 * Math.exp(-t * 2.5) * 0.65;
-        d[i] = Math.tanh((body + shock + rumble) * 1.55) * 0.92 * atk * tail;
+        const crack = ns * Math.exp(-t * 42.0) * 0.55;
+        const shock = lp * Math.exp(-t * 11.0) * 0.98;
+        const rumble = lp2 * Math.exp(-t * 1.95) * 0.72;
+        d[i] = Math.tanh((body + crack + shock + rumble) * 1.65) * 0.94 * atk * tail;
+      }
+    });
+    // Heavy 120mm tank / artillery cannon breech thump + metallic resonance
+    synths.cannon = makeBuf(0.58, (d, n, sr) => {
+      let ph = 0, phM = 0, lp = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        ph += Math.PI * 2 * (34 + 62 * Math.exp(-t * 16.0)) / sr;
+        phM += Math.PI * 2 * 410 / sr;
+        const ns = Math.random() * 2 - 1;
+        lp += 0.24 * (ns - lp);
+        const atk = Math.min(1, t / 0.002);
+        const rel = Math.min(1, (0.58 - t) / 0.04);
+        const punch = Math.sin(ph) * Math.exp(-t * 7.8) * 0.92;
+        const blast = lp * Math.exp(-t * 15.0) * 0.95;
+        const snap = ns * Math.exp(-t * 68.0) * 0.65;
+        const ring = Math.sin(phM) * Math.exp(-t * 22.0) * 0.14;
+        d[i] = Math.tanh((punch + blast + snap + ring) * 1.55) * 0.90 * atk * rel;
+      }
+    });
+    // Colossal 2.35s Thermonuclear Detonation Shockwave + Rolling Fallout Thunder
+    synths.nuke = makeBuf(2.35, (d, n, sr) => {
+      let ph = 0, lp = 0, lp2 = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        ph += Math.PI * 2 * (20 + 62 * Math.exp(-t * 2.2)) / sr;
+        const ns = Math.random() * 2 - 1;
+        lp += (0.18 * Math.exp(-t * 1.4) + 0.018) * (ns - lp);
+        lp2 += 0.015 * (lp - lp2);
+        const atk = Math.min(1, t / 0.004);
+        const rel = Math.min(1, (2.35 - t) / 0.18);
+        const flash = ns * Math.exp(-t * 18.0) * 0.72;
+        const sub = Math.sin(ph) * Math.exp(-t * 1.15) * 1.05;
+        const thunder = (lp * 1.25 + lp2 * 1.1) * Math.exp(-t * 0.92);
+        d[i] = Math.tanh((flash + sub + thunder) * 1.7) * 0.96 * atk * rel;
+      }
+    });
+    // Orbital Particle Cannon: surging harmonic ion charge + searing plasma hum + electric arcs
+    synths.beam = makeBuf(2.20, (d, n, sr) => {
+      let ph1 = 0, ph2 = 0, prev = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        const charge = Math.min(1, t / 0.55);
+        const f1 = 110 + 260 * charge * charge + 18 * Math.sin(t * 24);
+        ph1 += Math.PI * 2 * f1 / sr;
+        ph2 += Math.PI * 2 * (f1 * 2.01) / sr;
+        const env = Math.min(1, t / 0.08) * Math.min(1, (2.20 - t) / 0.25);
+        const ns = Math.random() * 2 - 1;
+        const hp = ns - prev; prev = ns;
+        const hum = (Math.sin(ph1) * 0.65 + Math.sin(ph2) * 0.35 + Math.sin(ph1 * 0.5) * 0.45);
+        const arc = hp * (0.14 + (Math.random() < 0.08 ? 0.55 : 0)) * (0.4 + 0.6 * charge);
+        d[i] = Math.tanh((hum * 0.72 + arc) * 1.5) * 0.88 * env;
+      }
+    });
+    // SCUD Storm: roaring multi-rocket booster ignition whoosh + ballistic thunder
+    synths.scud = makeBuf(1.60, (d, n, sr) => {
+      let ph = 0, lp = 0, bp = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        const k = i / n;
+        ph += Math.PI * 2 * (85 + 95 * Math.sin(Math.PI * k)) / sr;
+        const ns = Math.random() * 2 - 1;
+        lp += (0.28 - 0.16 * k) * (ns - lp);
+        bp += 0.06 * (lp - bp);
+        const env = Math.min(1, t / 0.06) * Math.pow(Math.sin(Math.PI * Math.pow(k, 0.72)), 0.85);
+        const roar = (lp - bp * 0.5) * 1.15 + Math.sin(ph) * 0.32;
+        d[i] = Math.tanh(roar * 1.5) * 0.86 * env;
       }
     });
     synths.chirp = makeBuf(0.045, (d, n, sr) => {
@@ -523,12 +591,80 @@
         lo += 0.35 * (ns - lo); hi += 0.12 * (ns - hi);
         const bp = lo - hi;
         const env = Math.min(1, t / 0.002) * Math.exp(-t * 28);
-        d[i] = Math.tanh((Math.sin(ph) * 0.45 + bp * 0.85) * 1.2) * 0.42 * env;
+        d[i] = Math.tanh((Math.sin(ph) * 0.45 + bp * 0.85) * 1.2) * 0.44 * env;
+      }
+    });
+    // Crisp tactical military snare drum (drives combat urgency)
+    synths.snare = makeBuf(0.20, (d, n, sr) => {
+      let ph = 0, lp = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        ph += Math.PI * 2 * (195 + 120 * Math.exp(-t * 45)) / sr;
+        const ns = Math.random() * 2 - 1;
+        lp += 0.48 * (ns - lp);
+        const env = Math.min(1, t / 0.002) * Math.exp(-t * 19);
+        d[i] = Math.tanh((Math.sin(ph) * 0.55 + lp * 0.92) * 1.35) * 0.52 * env;
+      }
+    });
+    // Heavy metallic industrial anvil strike (Hans Zimmer / Red Alert climax percussion)
+    synths.anvil = makeBuf(0.34, (d, n, sr) => {
+      const fqs = [1180, 1735, 2410, 3890];
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        const env = Math.min(1, t / 0.0015) * Math.exp(-t * 15);
+        let acc = (Math.random() * 2 - 1) * Math.exp(-t * 55) * 0.55;
+        for (let k = 0; k < fqs.length; k++) acc += Math.sin(Math.PI * 2 * fqs[k] * t) * 0.24;
+        d[i] = Math.tanh(acc * 1.25) * 0.45 * env;
       }
     });
   }
 
-  // ---- Lush Real-Time Orchestral Voice Helpers (Strings Ensemble + Expressive Brass/Ney Solo)
+  // ---- Lush Real-Time Orchestral Voice Helpers (Strings Ensemble + Cinema BRAAAM + Staccato Ostinato + Brass/Ney Solo)
+  function playBrassBraaam(rootFreq, durSec, gainVal) {
+    if (!ctx || !scoreBus || !rootFreq || gainVal < 0.005) return;
+    const now = ctx.currentTime;
+    const lpf = ctx.createBiquadFilter();
+    lpf.type = 'lowpass';
+    lpf.frequency.setValueAtTime(220, now);
+    lpf.frequency.exponentialRampToValueAtTime(1450, now + Math.min(0.24, durSec * 0.18));
+    lpf.frequency.exponentialRampToValueAtTime(340, now + durSec);
+    lpf.Q.value = 1.6;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.linearRampToValueAtTime(gainVal, now + 0.065);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gainVal * 0.52), now + durSec * 0.65);
+    g.gain.linearRampToValueAtTime(0.0001, now + durSec + 0.14);
+    lpf.connect(g); g.connect(scoreBus);
+    const layers = [[rootFreq * 0.5, 'sine', 0.52, 0], [rootFreq, 'sawtooth', 0.30, -6], [rootFreq, 'sawtooth', 0.30, 6], [rootFreq * 1.5, 'sawtooth', 0.18, 3]];
+    for (const [f, tp, a, dt] of layers) {
+      const osc = ctx.createOscillator();
+      osc.type = tp; osc.frequency.value = f; osc.detune.value = dt;
+      const og = ctx.createGain(); og.gain.value = a;
+      osc.connect(og); og.connect(lpf);
+      osc.start(now); osc.stop(now + durSec + 0.18);
+    }
+  }
+
+  function playOstinato(freq, durSec, gainVal) {
+    if (!ctx || !scoreBus || !freq || gainVal < 0.005) return;
+    const now = ctx.currentTime;
+    const lpf = ctx.createBiquadFilter();
+    lpf.type = 'lowpass';
+    lpf.frequency.setValueAtTime(1650, now);
+    lpf.frequency.exponentialRampToValueAtTime(480, now + durSec);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.linearRampToValueAtTime(gainVal, now + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + durSec);
+    lpf.connect(g); g.connect(scoreBus);
+    for (const dt of [-4.5, 4.5]) {
+      const osc = ctx.createOscillator();
+      osc.type = 'sawtooth'; osc.frequency.value = freq; osc.detune.value = dt;
+      const og = ctx.createGain(); og.gain.value = 0.42;
+      osc.connect(og); og.connect(lpf);
+      osc.start(now); osc.stop(now + durSec + 0.03);
+    }
+  }
   function playStringChord(freqs, durSec, gainVal) {
     if (!ctx || !scoreBus || gainVal < 0.005) return;
     const now = ctx.currentTime;
@@ -644,43 +780,72 @@
     scoreAccum -= theme.stepSec;
 
     const mp3Alive = isMp3MusicActivelyPlaying();
-    // In battle: solemn war-drums + strings + Hijaz/NATO/East brass surge with combat heat;
-    // if external MP3 isn't playing, faction score leads at full cinematic volume!
-    const scorePresence = !mp3Alive ? 1.0 : (inBattle ? (0.34 + Math.min(0.66, battleHeat * 0.85)) : 0.22);
+    // Adaptive Epic War Orchestra: full blockbuster strings, low brass BRAAAMs, driving ostinato & war drums!
+    const scorePresence = !mp3Alive ? 1.0 : (inBattle ? (0.44 + Math.min(0.56, battleHeat * 0.82)) : 0.32);
     const sIdx = scoreStep % 32;
     const dIdx = scoreStep % 16;
+    const chIdx = Math.floor(sIdx / 8) % theme.chords.length;
+    const curChord = theme.chords[chIdx];
 
     // 1. Deep Lush String Ensemble Pad every 8 steps (1 bar)
     if (sIdx % 8 === 0) {
-      const chIdx = Math.floor(sIdx / 8) % theme.chords.length;
-      playStringChord(theme.chords[chIdx], theme.stepSec * 8.2, 0.38 * scorePresence);
+      playStringChord(curChord, theme.stepSec * 8.2, 0.42 * scorePresence);
     }
-    // 2. Emotional Heroic Hijaz / Martial Brass-Ney Solo Melody (plays in battle or when leading)
+    // 2. Monumental Cinema BRAAAM Low Brass Swells on bar 1 & bar 3 (epic Hans Zimmer weight!)
+    if (sIdx === 0 || (sIdx === 16 && (inBattle || !mp3Alive))) {
+      const brGain = (!mp3Alive ? 0.38 : (inBattle ? 0.22 + battleHeat * 0.24 : 0.16)) * scorePresence;
+      playBrassBraaam(curChord[0], theme.stepSec * 6.5, brGain);
+    }
+    // 3. Driving Staccato Cello/Viola Ostinato during battle (surges with combat intensity!)
+    if (inBattle && (battleHeat > 0.12 || !mp3Alive)) {
+      const ostNote = (sIdx % 4 === 0) ? curChord[1] : ((sIdx % 4 === 2) ? curChord[2] : curChord[1]);
+      const ostGain = (0.10 + Math.min(0.18, battleHeat * 0.24)) * scorePresence;
+      playOstinato(ostNote, theme.stepSec * 0.82, ostGain);
+    }
+    // 4. Emotional Heroic Hijaz / Martial Brass-Ney Solo Melody
     const melFreq = theme.melody[sIdx];
     if (melFreq > 0 && (inBattle || !mp3Alive)) {
-      const leadGain = (!mp3Alive ? 0.34 : (0.14 + Math.min(0.24, battleHeat * 0.32))) * scorePresence;
-      playLeadMotif(melFreq, theme.stepSec * 1.9, leadGain, style === 'axis');
+      const leadGain = (!mp3Alive ? 0.38 : (0.18 + Math.min(0.26, battleHeat * 0.34))) * scorePresence;
+      playLeadMotif(melFreq, theme.stepSec * 1.95, leadGain, style === 'axis');
     }
-    // 3. Pounding War-Drum / Daf Cadence (strong during battle & combat heat!)
+    // 5. Pounding War-Drum / Snare / Industrial Anvil Section (full climax during heavy combat!)
     if (inBattle || !mp3Alive) {
       const drumHit = theme.drums[dIdx];
-      const drumPow = !mp3Alive ? 0.62 : (0.28 + Math.min(0.68, battleHeat * 0.85));
+      const drumPow = !mp3Alive ? 0.68 : (0.34 + Math.min(0.66, battleHeat * 0.85));
       if (drumHit > 0 && synths.wardrum) {
         const src = ctx.createBufferSource();
         src.buffer = synths.wardrum;
-        src.playbackRate.value = drumHit > 0.8 ? 0.90 : 1.16;
+        src.playbackRate.value = drumHit > 0.8 ? 0.88 : 1.15;
         const g = ctx.createGain();
-        g.gain.value = drumHit * drumPow * 0.56;
+        g.gain.value = drumHit * drumPow * 0.62;
         src.connect(g); g.connect(scoreBus);
         try { src.start(ctx.currentTime); } catch (_) {}
       }
       const rimHit = theme.rims[dIdx];
-      if (rimHit > 0 && synths.rim && (battleHeat > 0.18 || !mp3Alive)) {
+      if (rimHit > 0 && synths.rim && (battleHeat > 0.12 || !mp3Alive)) {
         const src = ctx.createBufferSource();
         src.buffer = synths.rim;
         src.playbackRate.value = 0.95 + (dIdx % 3) * 0.06;
         const g = ctx.createGain();
-        g.gain.value = rimHit * drumPow * 0.40;
+        g.gain.value = rimHit * drumPow * 0.44;
+        src.connect(g); g.connect(scoreBus);
+        try { src.start(ctx.currentTime); } catch (_) {}
+      }
+      // Crisp military snare on backbeats when fighting heats up
+      if ((dIdx === 4 || dIdx === 12) && synths.snare && (battleHeat > 0.25 || !mp3Alive)) {
+        const src = ctx.createBufferSource();
+        src.buffer = synths.snare;
+        const g = ctx.createGain();
+        g.gain.value = drumPow * 0.42;
+        src.connect(g); g.connect(scoreBus);
+        try { src.start(ctx.currentTime); } catch (_) {}
+      }
+      // Heavy metallic industrial anvil accent at high combat intensity!
+      if ((dIdx === 0 || dIdx === 8) && synths.anvil && (battleHeat > 0.45 || (style === 'east' && battleHeat > 0.22))) {
+        const src = ctx.createBufferSource();
+        src.buffer = synths.anvil;
+        const g = ctx.createGain();
+        g.gain.value = drumPow * 0.34;
         src.connect(g); g.connect(scoreBus);
         try { src.start(ctx.currentTime); } catch (_) {}
       }
