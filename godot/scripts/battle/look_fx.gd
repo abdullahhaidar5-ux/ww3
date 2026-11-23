@@ -137,9 +137,9 @@ func setup(map_: Dictionary, tables: Dictionary, env_ = null) -> void:
 	mm_crater = _pool(pl, N_CRATER, false, "res://shaders/fx_decal.gdshader", huge, 1, {tex = load("res://tex/fx_crater.png"), opacity = 0.95})
 	mm_scorch.visible_instance_count = 0; mm_crater.visible_instance_count = 0
 	_rubble_pool()
-	for i in 6: lights.append([_light(Color("#ffac58"), 380.0), 0.0, 1.0])
-	for i in 3: mlights.append([_light(Color("#ffb864"), 160.0), 0.0, 0.06])
-	for i in 3: wlights.append([_light(Color("#ff8a3a"), 190.0), 0.0, 1.0])
+	for i in 6: lights.append([_light(Color("#ffac58"), 480.0), 0.0, 1.0])
+	for i in 3: mlights.append([_light(Color("#ffc068"), 190.0), 0.0, 0.07])
+	for i in 3: wlights.append([_light(Color("#ff8430"), 230.0), 0.0, 1.0])
 	_setup_beam_rig()
 	_fow_setup()
 
@@ -151,11 +151,11 @@ func _setup_beam_rig() -> void:
 	var h := 1400.0
 	# Inner blazing white-cyan laser core cylinder
 	var c1 := CylinderMesh.new()
-	c1.top_radius = 4.2; c1.bottom_radius = 5.4; c1.height = h; c1.radial_segments = 16
+	c1.top_radius = 5.2; c1.bottom_radius = 6.8; c1.height = h; c1.radial_segments = 16
 	var m1 := StandardMaterial3D.new()
 	m1.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m1.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	m1.albedo_color = Color(2.4, 3.4, 4.2, 0.96)
+	m1.albedo_color = Color(2.8, 3.8, 4.6, 0.98)
 	m1.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_beam_core = MeshInstance3D.new()
 	_beam_core.mesh = c1; _beam_core.material_override = m1
@@ -164,11 +164,11 @@ func _setup_beam_rig() -> void:
 	_beam_rig.add_child(_beam_core)
 	# Outer pulsing ionized blue plasma sheath
 	var c2 := CylinderMesh.new()
-	c2.top_radius = 12.0; c2.bottom_radius = 18.0; c2.height = h; c2.radial_segments = 18
+	c2.top_radius = 15.0; c2.bottom_radius = 22.0; c2.height = h; c2.radial_segments = 18
 	var m2 := StandardMaterial3D.new()
 	m2.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m2.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	m2.albedo_color = Color(0.28, 0.85, 2.2, 0.42)
+	m2.albedo_color = Color(0.32, 0.92, 2.5, 0.48)
 	m2.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_beam_sheath = MeshInstance3D.new()
 	_beam_sheath.mesh = c2; _beam_sheath.material_override = m2
@@ -353,10 +353,10 @@ func boom(x: float, z: float, s: float, big: bool, h := 0.0) -> void:
 	if s <= 10.0 and not big:
 		for i in 12: partg(true, P + Vector3(0, 2, 0), _dir(R(80, 240), R(70, 210)), R(.28, .68), R(1.2, 2.2), 1.0, C_SPARK, g0, true)
 		part(true, P + Vector3(0, 2, 0), Vector3.ZERO, 0.075, s * 3.0, 0.0, 1.0, Color(4.0, 2.9, 1.6))
-	# Zero Hour Enhanced blinding multi-stage blast core & billowing fireballs
-	part(true, P + Vector3(0, s * 0.35, 0), Vector3.ZERO, 0.11 if big else 0.075, s * 1.45 * wk, 0.0, 0.95, Color(4.4, 3.6, 2.4))
-	for i in (16 if big else (2 if wet else 8)):
-		part(true, P + Vector3(R(-s, s) * 0.32, R(0, s * 0.45), R(-s, s) * 0.32), _dir(R(0, s * 1.5), R(0, s * 1.3)), R(.38, .82), s * R(.25, .44), s * 1.25, 1.0, Color(3.4, 1.45, .34), Color(.62, .14, .03), R(14, 30))
+	# Epic Hollywood blinding multi-stage blast core & billowing incandescent fireballs
+	part(true, P + Vector3(0, s * 0.35, 0), Vector3.ZERO, 0.13 if big else 0.09, s * 1.68 * wk, 0.0, 0.98, Color(5.2, 4.1, 2.4))
+	for i in (18 if big else (2 if wet else 10)):
+		part(true, P + Vector3(R(-s, s) * 0.32, R(0, s * 0.45), R(-s, s) * 0.32), _dir(R(0, s * 1.6), R(0, s * 1.4)), R(.42, .88), s * R(.28, .48), s * 1.35, 1.0, Color(3.8, 1.65, .36), Color(.68, .16, .03), R(16, 34))
 	for i in (4 if wet else mini(24, 8 + int(s / 3.2))):
 		var hk := R(.88, 1.25)
 		part(false, P + Vector3(R(-s, s) * 0.38, R(0, s * 0.55), R(-s, s) * 0.38), _dir(R(0, s * 1.7), R(5, s * 1.1)), R(2.8, 4.6), s * R(.52, .90), s * 0.65, 0.76, Color(3.8 * hk, 1.65 * hk, .42 * hk), C_DARK if i % 2 else Color(.22, .21, .20), R(16, 32))
@@ -600,7 +600,7 @@ func _tr(e: Array) -> void:
 	var flak := e.size() > 7 and int(e[7]) != 0
 	var a := Vector3(x1, gh(x1, z1) + float(e[3]), z1); var b := Vector3(x2, gh(x2, z2) + float(e[6]), z2)
 	if not _seen(x1, z1) and not _seen(x2, z2): return
-	tracer(a, b, Color(3.8, 1.9, .55) if flak else Color(3.6, 2.3, .85), 0.13 if flak else 0.10)
+	tracer(a, b, Color(4.4, 2.2, .65) if flak else Color(4.2, 2.6, .95), 0.14 if flak else 0.11)
 	if randf() < 0.45: _flash_light(mlights, a, (2.2 if flak else 1.4) * 1.4, 110.0, 0.07)
 	if flak:
 		# "We will defend this airspace!" dramatic AA flak airburst cloud + glowing shrapnel flash
@@ -626,9 +626,10 @@ func _muz(x: float, z: float, h: float, ang: float, s: float) -> void:
 		for i in 12:
 			var b2 := randf() * TAU; var v2 := R(40, 80)
 			part(false, Vector3(x + cos(b2) * 6.0, g + 1.5, z + sin(b2) * 6.0), Vector3(cos(b2) * v2, R(2, 8), sin(b2) * v2), R(.8, 1.3), R(5, 8), 10.0, 0.35, DUSTC.get(surf(x, z), DUSTC.desert)[i % 3])
-		part(true, P + F * 8.0, Vector3.ZERO, 0.08, s * 1.9, 0.0, 1.0, Color(3.2, 1.8, .6))
-		part(true, P, Vector3.ZERO, 0.06, s * 1.5, 0.0, 1.0, Color(3.2, 2.4, 1.2))
-		part(true, P + F * s * 0.8, Vector3.ZERO, 0.05, s * 1.15, 0.0, 1.0, Color(2.8, 1.5, .5))
+		part(true, P + F * 8.0, Vector3.ZERO, 0.09, s * 2.2, 0.0, 1.0, Color(4.2, 2.3, .72))
+		part(true, P, Vector3.ZERO, 0.075, s * 1.8, 0.0, 1.0, Color(4.4, 3.1, 1.5))
+		part(true, P + F * s * 0.85, Vector3.ZERO, 0.06, s * 1.35, 0.0, 1.0, Color(3.4, 1.8, .55))
+		_ring(Vector3(x, g + 1.0, z), 6.0, s * 2.8, 0.32, Color("#dfd0b2"), 0.42, 0.76, 0)
 		for sd in [-1.0, 1.0]: part(true, P + Vector3(-sa, 0, ca) * sd * s * 0.45, Vector3.ZERO, 0.045, s * 0.6, 0.0, 1.0, Color(2.8, 1.5, .5))
 	else:
 		var L := s * R(.55, .85)

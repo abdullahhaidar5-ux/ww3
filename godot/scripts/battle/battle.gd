@@ -83,6 +83,8 @@ var auto_cam := false
 var demo_ui := ""
 var demo_sw := ""
 var demo_sw_done := false
+var trailer_act := ""
+var trailer_cam = null
 
 # player state (lane P6)
 var hud
@@ -183,6 +185,7 @@ func _ready() -> void:
 		elif a == "--cam=auto": auto_cam = true
 		elif a.begins_with("--demo-ui="): demo_ui = a.substr(10)
 		elif a.begins_with("--demo-sw="): demo_sw = a.substr(10)
+		elif a.begins_with("--trailer="): trailer_act = a.substr(10); ai_only = true
 		elif a.begins_with("--pitch="):
 			cam_pitch_off = clampf(float(a.substr(8)), -32.0, 28.0)
 			cam_pitch_off_t = cam_pitch_off
@@ -231,6 +234,9 @@ func _ready() -> void:
 		start_launch(L)
 	else:
 		start_battle()
+	if trailer_act != "":
+		trailer_cam = load("res://tools/trailer_cam.gd").new(self, trailer_act)
+		add_child(trailer_cam)
 
 # ---------------------------------------------------------------- start (menu launch, command line, online)
 func go_online(url: String, code: String, nm: String, start_n: int = 0) -> void:
@@ -336,7 +342,7 @@ func _norm(o: Dictionary) -> Dictionary:
 
 func _start(players: Array, starts: Array) -> void:
 	# loading screen first, so the player sees his flag + a faction quote instead of a blank screen while the battle is built
-	if not headless_mode and intro == null and shot_path == "" and selftest == null:
+	if not headless_mode and intro == null and shot_path == "" and selftest == null and trailer_act == "":
 		if OS.has_feature("web"):
 			JavaScriptBridge.eval("window.__ww3HideBoot&&window.__ww3HideBoot()", true)
 		var mf := my_fac; var ef := en_fac
@@ -734,7 +740,10 @@ func _ai_report(final: bool) -> void:
 
 # ---------------------------------------------------------------- drawing
 func _process(dt: float) -> void:
-	_cam_input(dt)
+	if trailer_cam != null:
+		trailer_cam.tick()
+	else:
+		_cam_input(dt)
 	_place_cam()
 	Audio.set_cam(cam_target, cam_dist, cam)   # P5 HOOK
 	if not started and hud != null: hud.tick(dt)

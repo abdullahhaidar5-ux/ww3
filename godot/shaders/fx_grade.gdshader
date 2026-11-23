@@ -40,8 +40,8 @@ void fragment() {
 	vec2 q = SCREEN_UV - 0.5;
 	c *= 1.0 - dot(q, q) * 0.42 * vig;
 
-	// Ultra-fine film texture + big blast flash
+	// Ultra-fine film texture + fiery golden-white thermal blast flash
 	c += (hh(SCREEN_UV / px + TIME * 43.0) - 0.5) * grain;
-	c = mix(c, vec3(1.0, 0.94, 0.84), clamp(flash * 0.42, 0.0, 1.0));
+	c = mix(c, vec3(1.0, 0.92, 0.76), clamp(flash * 0.46, 0.0, 1.0));
 	COLOR = vec4(clamp(c, 0.0, 1.0), 1.0);
 }

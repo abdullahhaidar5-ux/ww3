@@ -14,9 +14,9 @@ const WX := {
 	"dusk": {sun = "#ffa868", si = 2.20, off = [-1320, 340, -560], sky = "#7688b6", gnd = "#50423b", hi = 1.08, fog = "#7c6874", fn = 1400.0, ff = 5400.0, expo = 1.06, sr = 3.0, hor = [.95, .52, .34], zen = [.15, .20, .38], gr = [1.0, .95, .98], sat = .94, fx = 2.1, amb = [.58, .54, .60]},
 	"night": {sun = "#9db8ec", si = .65, off = [-900, 700, -500], sky = "#223258", gnd = "#1c202c", hi = .62, fog = "#0e1528", fn = 950.0, ff = 4400.0, expo = 1.24, sr = 4.0, hor = [.09, .12, .20], zen = [.02, .03, .08], gr = [.92, .97, 1.1], sat = .78, fx = 2.6, amb = [.52, .58, .76]},
 }
-## Zero Hour Enhanced / CoH3 photographic sunlit daylight: crisp golden sun + vivid azure sky + sharp contrast
-const LOOK_WX := {sun = "#fff5e4", si = 2.48, off = [-1080, 680, -600], sky = "#9cc4f4", gnd = "#8c7f6c", hi = 1.24, fog = "#d8d4c8", fn = 1750.0, ff = 6600.0, expo = 1.05, sr = 2.1, hor = [.87, .85, .79], zen = [.15, .39, .78], gr = [1.0, 1.0, 1.0], sat = 1.05, fx = 1.15, amb = [1.0, .99, .96]}
-const LOOK := {v = 0.28, g = .002, sh = 0.78, k = 1.10, bl = 1.06, s = [.93, .97, 1.04], h = [1.03, 1.01, .97]}
+## Blockbuster Cinema / Zero Hour Enhanced heroic daylight: warm golden sun + deep azure sky + sculptural shadows
+const LOOK_WX := {sun = "#fff0d6", si = 2.60, off = [-1160, 620, -640], sky = "#96c2f8", gnd = "#8c7c66", hi = 1.28, fog = "#dcd4c4", fn = 1750.0, ff = 6600.0, expo = 1.05, sr = 2.0, hor = [.88, .84, .76], zen = [.12, .36, .80], gr = [1.0, 1.0, 1.0], sat = 1.07, fx = 1.22, amb = [1.0, .98, .94]}
+const LOOK := {v = 0.30, g = .002, sh = 0.84, k = 1.12, bl = 1.16, s = [.91, .96, 1.06], h = [1.05, 1.01, .94]}
 const TGRADE := {"desert": {tg = [.99, .99, 1.01], s = 0.98}, "green": {tg = [.99, 1.00, .99], s = 0.98}, "snow": {tg = [.96, .99, 1.04], s = 1.00}}
 const WFOG := {"rain": ["#7d868c", 500.0, 3200.0], "storm": ["#7d868c", 500.0, 3200.0], "fog": ["#b9bdbb", 150.0, 1500.0], "sandstorm": ["#c49a64", 45.0, 780.0],
 	"blizzard": ["#dfe6ee", 150.0, 1700.0], "snow": ["#e3e9f0", 220.0, 2300.0]}
@@ -95,11 +95,11 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	env.fog_aerial_perspective = 0.0
 	env.glow_enabled = not is_mob
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
-	env.glow_hdr_threshold = 1.02
-	env.glow_hdr_scale = 1.35
-	env.glow_bloom = 0.06
-	env.glow_strength = 1.05
-	env.set_glow_level(0, 0.0); env.set_glow_level(1, 0.65); env.set_glow_level(2, 0.35); env.set_glow_level(3, 0.7); env.set_glow_level(4, 0.0)
+	env.glow_hdr_threshold = 0.96
+	env.glow_hdr_scale = 1.42
+	env.glow_bloom = 0.08
+	env.glow_strength = 1.12
+	env.set_glow_level(0, 0.0); env.set_glow_level(1, 0.72); env.set_glow_level(2, 0.42); env.set_glow_level(3, 0.76); env.set_glow_level(4, 0.0)
 	we = WorldEnvironment.new()
 	we.environment = env
 	host.add_child(we)

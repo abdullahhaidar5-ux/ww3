@@ -32,7 +32,7 @@ const ANN_MIN := {"_": 6.0, "baseAtk": 20.0, "unitsAtk": 20.0}
 const SHOUT_GAP := {"contact": 14.0, "tank": 11.0, "medic": 7.0}
 
 # ---- settings (0..100, like the JS SET.mus / SET.fx / SET.vo; "master" is new in this edition)
-var vol := {"master": 100, "music": 70, "voices": 100, "effects": 100, "announcer": 80}
+var vol := {"master": 100, "music": 78, "voices": 100, "effects": 100, "announcer": 85}
 
 var T: Dictionary = {}                 # audio_tables.json
 var web := false
@@ -55,6 +55,10 @@ var _synth_ui: Array = []              # dedicated UI pool for klaxon / promo / 
 var _synth_ui_i := 0
 var _synth_vox: AudioStreamPlayer      # dedicated Voice-bus player for military VHF PTT squelch chirp
 var _wav_sub: AudioStreamWAV
+var _wav_cannon: AudioStreamWAV
+var _wav_nuke: AudioStreamWAV
+var _wav_beam: AudioStreamWAV
+var _wav_scud: AudioStreamWAV
 var _wav_chirp: AudioStreamWAV
 var _wav_klaxon: AudioStreamWAV
 var _wav_promo: AudioStreamWAV
@@ -147,6 +151,10 @@ func _ready() -> void:
 	_shoutp = AudioStreamPlayer2D.new(); _shoutp.max_distance = 1000000.0; _shoutp.bus = "Voice"; add_child(_shoutp)
 	_uip.stream = _tick_wav()
 	_wav_sub = _sub_boom_wav()
+	_wav_cannon = _cannon_wav()
+	_wav_nuke = _nuke_wav()
+	_wav_beam = _beam_wav()
+	_wav_scud = _scud_wav()
 	_wav_chirp = _radio_chirp_wav()
 	_wav_klaxon = _klaxon_wav()
 	_wav_promo = _promo_wav()
@@ -473,10 +481,10 @@ func shot(x: float, y: float, s: float) -> void:
 		_clip("rocket", sp, 0.8, 1.0, sp.far * 0.15)
 	else:
 		if not limit("can", 3): return
-		_clip("cannon", sp, 1.1, 0.88 if s > 14 else 1.0, sp.far * 0.2)
+		_clip("cannon", sp, 1.15, 0.88 if s > 14 else 1.0, sp.far * 0.2)
 		if s >= 11.0 and limit("sub_can", 3, 0.14):
-			var cg: float = float(sp.v) * clampf(0.32 + (s - 11.0) * 0.04, 0.32, 0.68)
-			_play_synth_2d(_wav_sub, sp, cg, 1.12 + _rng.randf() * 0.12, "Sfx")
+			var cg: float = float(sp.v) * clampf(0.42 + (s - 11.0) * 0.05, 0.42, 0.78)
+			_play_synth_2d(_wav_cannon, sp, cg, 0.94 + _rng.randf() * 0.12, "Sfx")
 
 ## an explosion; s = size, big = building / heavy blast. Feeds the music's heat even with effects off (JS sfxBoom).
 func boom(x: float, y: float, s: float, big: bool) -> void:
@@ -706,8 +714,82 @@ func _built_chime_wav() -> AudioStreamWAV:
 		by.encode_s16(i * 2, int(clampf(acc * 0.42, -1.0, 1.0) * 32767.0))
 	return _mk_wav(by, sr)
 
+## 8. Heavy 120mm tank / artillery cannon breech thump + metallic resonance (0.55 s)
+func _cannon_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 0.55; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var ph := 0.0; var ph_m := 0.0; var lp := 0.0
+	for i in n:
+		var t := float(i) / sr
+		ph += TAU * (34.0 + 62.0 * exp(-t * 16.0)) / sr
+		ph_m += TAU * 410.0 / sr
+		var ns := randf() * 2.0 - 1.0
+		lp += 0.24 * (ns - lp)
+		var atk := minf(1.0, t / 0.002)
+		var rel := clampf((dur - t) / 0.04, 0.0, 1.0)
+		var v := tanh((sin(ph) * exp(-t * 7.8) * 0.92 + lp * exp(-t * 15.0) * 0.95 + ns * exp(-t * 68.0) * 0.65 + sin(ph_m) * exp(-t * 22.0) * 0.14) * 1.55) * 0.90 * atk * rel
+		by.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
+## 9. Colossal thermonuclear shockwave boom + rolling fallout thunder (2.1 s)
+func _nuke_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 2.10; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var ph := 0.0; var lp := 0.0; var lp2 := 0.0
+	for i in n:
+		var t := float(i) / sr
+		ph += TAU * (20.0 + 62.0 * exp(-t * 2.2)) / sr
+		var ns := randf() * 2.0 - 1.0
+		lp += (0.18 * exp(-t * 1.4) + 0.018) * (ns - lp)
+		lp2 += 0.015 * (lp - lp2)
+		var atk := minf(1.0, t / 0.004)
+		var rel := clampf((dur - t) / 0.18, 0.0, 1.0)
+		var v := tanh((ns * exp(-t * 18.0) * 0.72 + sin(ph) * exp(-t * 1.15) * 1.05 + (lp * 1.25 + lp2 * 1.1) * exp(-t * 0.92)) * 1.7) * 0.95 * atk * rel
+		by.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
+## 10. Orbital Particle Cannon surging ion charge + searing plasma hum (1.95 s)
+func _beam_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 1.95; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var ph1 := 0.0; var ph2 := 0.0; var prev := 0.0
+	for i in n:
+		var t := float(i) / sr
+		var ch := minf(1.0, t / 0.55)
+		var f1 := 110.0 + 260.0 * ch * ch + 18.0 * sin(t * 24.0)
+		ph1 += TAU * f1 / sr
+		ph2 += TAU * (f1 * 2.01) / sr
+		var env := minf(1.0, t / 0.08) * clampf((dur - t) / 0.22, 0.0, 1.0)
+		var ns := randf() * 2.0 - 1.0
+		var hp := ns - prev; prev = ns
+		var hum := sin(ph1) * 0.65 + sin(ph2) * 0.35 + sin(ph1 * 0.5) * 0.45
+		var arc := hp * (0.14 + (0.55 if randf() < 0.08 else 0.0)) * (0.4 + 0.6 * ch)
+		var v := tanh((hum * 0.72 + arc) * 1.5) * 0.88 * env
+		by.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
+## 11. SCUD Storm multi-rocket ignition roar + ballistic whoosh (1.45 s)
+func _scud_wav() -> AudioStreamWAV:
+	var sr := 22050; var dur := 1.45; var n := int(sr * dur)
+	var by := PackedByteArray(); by.resize(n * 2)
+	var ph := 0.0; var lp := 0.0; var bp := 0.0
+	for i in n:
+		var t := float(i) / sr; var k := float(i) / n
+		ph += TAU * (85.0 + 95.0 * sin(PI * k)) / sr
+		var ns := randf() * 2.0 - 1.0
+		lp += (0.28 - 0.16 * k) * (ns - lp)
+		bp += 0.06 * (lp - bp)
+		var env := minf(1.0, t / 0.06) * pow(sin(PI * pow(k, 0.72)), 0.85)
+		var v := tanh(((lp - bp * 0.5) * 1.15 + sin(ph) * 0.32) * 1.5) * 0.86 * env
+		by.encode_s16(i * 2, int(clampf(v, -1.0, 1.0) * 32767.0))
+	return _mk_wav(by, sr)
+
 func _synth_name(wav: AudioStreamWAV) -> String:
 	if wav == _wav_sub: return "sub"
+	if wav == _wav_cannon: return "cannon"
+	if wav == _wav_nuke: return "nuke"
+	if wav == _wav_beam: return "beam"
+	if wav == _wav_scud: return "scud"
 	if wav == _wav_emp: return "emp"
 	if wav == _wav_jet: return "jet"
 	if wav == _wav_klaxon: return "klaxon"
@@ -1101,16 +1183,18 @@ func superweapon_sfx(style: String, tx: float = 0.0, tz: float = 0.0) -> void:
 	var lv := maxf(0.42, float(sp.get("v", 0.65)))
 	match style:
 		"beam":
-			_play_synth_2d(_wav_emp, sp, lv * 1.05, 0.72, "Sfx")
-			_play_synth_2d(_wav_sub, sp, lv * 0.90, 0.65, "Sfx")
+			_play_synth_2d(_wav_beam, sp, lv * 1.12, 1.0, "Sfx")
+			_play_synth_2d(_wav_sub, sp, lv * 0.95, 0.65, "Sfx")
 		"nuke":
-			_play_synth_2d(_wav_sub, sp, lv * 1.15, 0.58, "Sfx")
+			_play_synth_2d(_wav_nuke, sp, lv * 1.20, 0.92, "Sfx")
 		"storm":
-			_play_synth_2d(_wav_emp, sp, lv * 1.05, 1.12, "Sfx")
+			_play_synth_2d(_wav_emp, sp, lv * 1.12, 1.08, "Sfx")
+			_play_synth_2d(_wav_nuke, sp, lv * 0.82, 1.18, "Sfx")
 		"carpet":
-			_play_synth_2d(_wav_jet, sp, lv * 1.0, 0.88, "Sfx")
-			_play_synth_2d(_wav_sub, sp, lv * 0.80, 0.82, "Sfx")
+			_play_synth_2d(_wav_jet, sp, lv * 1.08, 0.88, "Sfx")
+			_play_synth_2d(_wav_sub, sp, lv * 0.96, 0.78, "Sfx")
 		_:
+			_play_synth_2d(_wav_scud, sp, lv * 1.10, 1.0, "Sfx")
 			_play_synth_2d(_wav_sub, sp, lv * 0.95, 0.76, "Sfx")
 
 ## Called once per sim tick. Reads the sim (never writes) and raises the same sound events the JS sim logs / FXEs:
