@@ -4,7 +4,8 @@
 extends RefCounted
 
 const MAX_VERTS := 60000.0   # the mesh is built in GDScript: big maps (hgrid 1090x750) take every 4th height sample, small ones every 2nd
-const MAX_TREES := 3500      # cap total tree instances for smooth WebGL2 Compatibility performance
+const MAX_TREES := 3500      # cap total tree instances for smooth WebGL2 Compatibility performance (halved on mobile)
+const UI_KIT = preload("res://scripts/ui/ui_kit.gd")
 
 ## ground height at a map point, straight from the bridge's height field (bilinear, same as the JS groundH)
 static func height_at(map: Dictionary, x: float, z: float) -> float:
@@ -37,24 +38,24 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	var GW := int(map.GW); var GH := int(map.GH); var CELL := float(map.CELL)
 	var grid := PackedByteArray(map.grid)
 	var STEP := maxi(2, ceili(sqrt(hw * hh / MAX_VERTS)))
-	# multi-tone biome palettes: smooth altitude transitions + impassable mountain tint (roads/cliffs/shores are per-pixel in terrain_pbr.gdshader)
+	# multi-tone biome palettes: natural CoH3 / Broken Arrow realism (never neon orange or plastic green)
 	var th_raw := str(map.get("theme", "desert"))
 	var th := th_raw if th_raw in ["desert", "green", "snow"] else "desert"
 	var theme_id := 2 if th == "snow" else (0 if th == "desert" else 1)
-	var c_lo := Color(0.79, 0.71, 0.56)
-	var c_mid := Color(0.71, 0.62, 0.47)
-	var c_hi := Color(0.63, 0.56, 0.44)
-	var c_mtn := Color(0.46, 0.39, 0.31)
+	var c_lo := Color(0.80, 0.73, 0.60)
+	var c_mid := Color(0.74, 0.66, 0.53)
+	var c_hi := Color(0.67, 0.59, 0.47)
+	var c_mtn := Color(0.55, 0.47, 0.38)
 	if th == "snow":
-		c_lo = Color(0.76, 0.80, 0.86)
-		c_mid = Color(0.70, 0.75, 0.82)
-		c_hi = Color(0.65, 0.71, 0.79)
-		c_mtn = Color(0.35, 0.39, 0.45)
+		c_lo = Color(0.82, 0.86, 0.92)
+		c_mid = Color(0.76, 0.81, 0.88)
+		c_hi = Color(0.71, 0.76, 0.84)
+		c_mtn = Color(0.42, 0.46, 0.52)
 	elif th != "desert":
-		c_lo = Color(0.40, 0.51, 0.29)
-		c_mid = Color(0.35, 0.46, 0.26)
-		c_hi = Color(0.30, 0.40, 0.24)
-		c_mtn = Color(0.45, 0.44, 0.41)
+		c_lo = Color(0.45, 0.53, 0.33)
+		c_mid = Color(0.40, 0.48, 0.29)
+		c_hi = Color(0.36, 0.44, 0.27)
+		c_mtn = Color(0.50, 0.49, 0.45)
 	var nx := (hw - 1) / STEP + 1
 	var nz := (hh - 1) / STEP + 1
 	var verts := PackedVector3Array(); verts.resize(nx * nz)
@@ -76,15 +77,17 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 			var k := j * nx + i
 			verts[k] = Vector3(x, y, z)
 			uvs[k] = Vector2(x / 380.0, z / 380.0)
-			# pure smooth elevation + biome tinting + gentle macro variation + impassable mountain rock tint
+			# elevation + biome tinting + gentle macro variation + baked valley concavity AO in alpha!
 			var hk := clampf(y / hmax, 0.0, 1.0)
 			var c: Color = c_lo.lerp(c_mid, hk * 2.0) if hk < 0.5 else c_mid.lerp(c_hi, (hk - 0.5) * 2.0)
-			var macro := sin(x * 0.0031 + z * 0.0017) * cos(z * 0.0027 - x * 0.0013) * 0.042
-			c = Color(clampf(c.r + macro, 0.0, 1.0), clampf(c.g + macro * 0.9, 0.0, 1.0), clampf(c.b + macro * 0.7, 0.0, 1.0))
+			var macro := sin(x * 0.0029 + z * 0.0016) * cos(z * 0.0025 - x * 0.0012) * 0.036
+			var h_avg: float = (hat.call(hi - STEP * 2, hj) + hat.call(hi + STEP * 2, hj) + hat.call(hi, hj - STEP * 2) + hat.call(hi, hj + STEP * 2)) * 0.25
+			var cav := clampf(1.0 + (y - h_avg) * 0.0045, 0.80, 1.08)
+			c = Color(clampf(c.r + macro, 0.0, 1.0), clampf(c.g + macro * 0.9, 0.0, 1.0), clampf(c.b + macro * 0.7, 0.0, 1.0), cav)
 			var gx := clampi(int(x / CELL), 0, GW - 1); var gz := clampi(int(z / CELL), 0, GH - 1)
 			var gcell := int(grid[gz * GW + gx])
 			if gcell == 3:
-				c = c.lerp(c_mtn, 0.55)
+				c = Color(c.r * 0.5 + c_mtn.r * 0.5, c.g * 0.5 + c_mtn.g * 0.5, c.b * 0.5 + c_mtn.b * 0.5, cav)
 			cols[k] = c
 	var idx := PackedInt32Array()
 	for j in nz - 1:
@@ -102,33 +105,39 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	st.generate_normals()
 	st.generate_tangents()
 	var mesh := st.commit()
-	# Build 1-pass blurred L8 masks for per-pixel anti-aliased roads and damp riverbanks
+	# Build 2-pass smoothed L8 masks for silky anti-aliased roads (no stair-step jagged edges!) and damp riverbanks
 	var rbuf := PackedByteArray()
 	if rw > 0 and rh > 0 and rd.size() >= rw * rh:
 		rbuf.resize(rw * rh)
 		for ri in rw * rh:
 			rbuf[ri] = 255 if int(rd[ri]) != 0 else 0
-	var road_tex := _blur_l8(rbuf, rw, rh)
+	var road_tex := _blur_l8(rbuf, rw, rh, 2)
 	var sbuf := PackedByteArray()
 	if GW > 0 and GH > 0 and grid.size() >= GW * GH:
 		sbuf.resize(GW * GH)
 		for gi in GW * GH:
 			var gcell := int(grid[gi])
 			sbuf[gi] = 255 if gcell == 1 else (160 if gcell == 2 else 0)
-	var shore_tex := _blur_l8(sbuf, GW, GH)
+	var shore_tex := _blur_l8(sbuf, GW, GH, 2)
 	var g := MeshInstance3D.new()
 	g.name = "TerrainMesh"
 	g.mesh = mesh
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://shaders/terrain_pbr.gdshader")
-	mat.set_shader_parameter("detail_alb", load("res://tex/a1.png"))
-	mat.set_shader_parameter("detail_nrm", load("res://tex/n1.png"))
+	var alb_p := "res://tex/%s_alb.png" % th
+	var nrm_p := "res://tex/%s_nrm.png" % th
+	mat.set_shader_parameter("biome_alb", load(alb_p) if ResourceLoader.exists(alb_p) else load("res://tex/a1.png"))
+	mat.set_shader_parameter("biome_nrm", load(nrm_p) if ResourceLoader.exists(nrm_p) else load("res://tex/n1.png"))
+	mat.set_shader_parameter("rock_alb", load("res://tex/rock_alb.png") if ResourceLoader.exists("res://tex/rock_alb.png") else load("res://tex/a1.png"))
+	mat.set_shader_parameter("rock_nrm", load("res://tex/rock_nrm.png") if ResourceLoader.exists("res://tex/rock_nrm.png") else load("res://tex/n1.png"))
+	mat.set_shader_parameter("road_alb", load("res://tex/road_alb.png") if ResourceLoader.exists("res://tex/road_alb.png") else load("res://tex/a1.png"))
+	mat.set_shader_parameter("road_nrm", load("res://tex/road_nrm.png") if ResourceLoader.exists("res://tex/road_nrm.png") else load("res://tex/n1.png"))
 	mat.set_shader_parameter("road_tex", road_tex)
 	mat.set_shader_parameter("shore_tex", shore_tex)
 	mat.set_shader_parameter("map_size", Vector2(float(GW) * CELL, float(GH) * CELL))
 	mat.set_shader_parameter("road_size", Vector2(float(rw) * rC, float(rh) * rC) if (rw > 0 and rh > 0) else Vector2(float(GW) * CELL, float(GH) * CELL))
 	mat.set_shader_parameter("theme_id", theme_id)
-	mat.set_shader_parameter("nrm_strength", 0.34 if th == "snow" else 0.54)
+	mat.set_shader_parameter("nrm_strength", 0.45 if th == "snow" else 0.72)
 	mat.set_shader_parameter("wetness", 0.0)
 	g.material_override = mat
 	g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -150,27 +159,30 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	if tree_mesh.is_valid(): _trees(host, sim, map, tree_mesh)
 	_env_props(host, map)
 
-## 1-pass separable [1, 2, 1] / 4 blur (3x3 Gaussian kernel) producing an L8 ImageTexture for smooth bilinear shader masks
-static func _blur_l8(src: PackedByteArray, w: int, h: int) -> ImageTexture:
+## Multi-pass separable [1, 2, 1] / 4 Gaussian blur producing a silky L8 ImageTexture for anti-aliased roads & shores
+static func _blur_l8(src: PackedByteArray, w: int, h: int, passes: int = 1) -> ImageTexture:
 	if w <= 0 or h <= 0 or src.size() < w * h:
 		var empty_img := Image.create_from_data(1, 1, false, Image.FORMAT_L8, PackedByteArray([0]))
 		return ImageTexture.create_from_image(empty_img)
+	var cur := src.duplicate()
 	var tmp := PackedByteArray()
 	tmp.resize(w * h)
-	for y in h:
-		var row := y * w
-		for x in w:
-			var xm := x - 1 if x > 0 else 0
-			var xp := x + 1 if x + 1 < w else w - 1
-			tmp[row + x] = (int(src[row + xm]) + (int(src[row + x]) << 1) + int(src[row + xp]) + 2) >> 2
 	var out := PackedByteArray()
 	out.resize(w * h)
-	for y in h:
-		var ym := (y - 1 if y > 0 else 0) * w
-		var y0 := y * w
-		var yp := (y + 1 if y + 1 < h else h - 1) * w
-		for x in w:
-			out[y0 + x] = (int(tmp[ym + x]) + (int(tmp[y0 + x]) << 1) + int(tmp[yp + x]) + 2) >> 2
+	for _p in maxi(1, passes):
+		for y in h:
+			var row := y * w
+			for x in w:
+				var xm := x - 1 if x > 0 else 0
+				var xp := x + 1 if x + 1 < w else w - 1
+				tmp[row + x] = (int(cur[row + xm]) + (int(cur[row + x]) << 1) + int(cur[row + xp]) + 2) >> 2
+		for y in h:
+			var ym := (y - 1 if y > 0 else 0) * w
+			var y0 := y * w
+			var yp := (y + 1 if y + 1 < h else h - 1) * w
+			for x in w:
+				out[y0 + x] = (int(tmp[ym + x]) + (int(tmp[y0 + x]) << 1) + int(tmp[yp + x]) + 2) >> 2
+		cur = out.duplicate()
 	var img := Image.create_from_data(w, h, false, Image.FORMAT_L8, out)
 	return ImageTexture.create_from_image(img)
 
@@ -523,14 +535,17 @@ static func _build_boulder(th: String, variant: int) -> ArrayMesh:
 		return _rock_cache[key] as ArrayMesh
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var c_rock := Color(0.57, 0.46, 0.35)
-	if th == "snow": c_rock = Color(0.45, 0.48, 0.54)
-	elif th == "green": c_rock = Color(0.48, 0.47, 0.43)
+	# Biome-matched weathered rock (grounded sandstone/limestone/granite, never glaring white blobs!)
+	var c_rock := Color(0.52, 0.43, 0.33)
+	if th == "snow": c_rock = Color(0.36, 0.40, 0.46)
+	elif th == "green": c_rock = Color(0.42, 0.42, 0.38)
 	if variant == 0:
-		_add_cluster(st, Vector3(0, 2.2, 0), 6.5, 3.8, 5.4, c_rock, 501)
-		_add_cluster(st, Vector3(4.6, 1.2, 2.4), 3.6, 2.2, 3.2, c_rock * 0.88, 502)
+		_add_cluster(st, Vector3(0, 1.8, 0), 6.8, 3.6, 5.6, c_rock, 501)
+		_add_cluster(st, Vector3(4.8, 0.9, 2.2), 3.8, 2.1, 3.3, c_rock * 0.86, 502)
+		_add_cluster(st, Vector3(-3.8, 0.7, -2.0), 3.2, 1.8, 2.8, c_rock * 0.80, 503)
 	else:
-		_add_cluster(st, Vector3(0, 1.5, 0), 4.2, 2.4, 3.6, c_rock * 0.94, 505)
+		_add_cluster(st, Vector3(0, 1.2, 0), 4.6, 2.2, 3.9, c_rock * 0.92, 505)
+		_add_cluster(st, Vector3(2.8, 0.6, -1.6), 2.4, 1.3, 2.2, c_rock * 0.82, 506)
 	var mesh := st.commit()
 	mesh.surface_set_material(0, _matte_vcol_mat(0.95, false))
 	_rock_cache[key] = mesh
@@ -659,11 +674,12 @@ static func _trees(host: Node3D, sim, map: Dictionary, _tree_mesh: Callable) -> 
 	rng.seed = 11
 	var per := [[], [], []]
 
+	var tree_cap := 1400 if UI_KIT.is_mobile() else MAX_TREES
 	var raw_trees = map.get("trees", null)
 	if raw_trees is Array and (raw_trees as Array).size() > 0:
 		var tarr: Array = raw_trees
 		var total := tarr.size()
-		var count := mini(total, MAX_TREES)
+		var count := mini(total, tree_cap)
 		var stride := float(total) / float(count)
 		for k in count:
 			var entry = tarr[mini(total - 1, int(floor(float(k) * stride)))]

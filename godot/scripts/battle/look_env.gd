@@ -14,10 +14,10 @@ const WX := {
 	"dusk": {sun = "#ffa868", si = 2.20, off = [-1320, 340, -560], sky = "#7688b6", gnd = "#50423b", hi = 1.08, fog = "#7c6874", fn = 1400.0, ff = 5400.0, expo = 1.06, sr = 3.0, hor = [.95, .52, .34], zen = [.15, .20, .38], gr = [1.0, .95, .98], sat = .94, fx = 2.1, amb = [.58, .54, .60]},
 	"night": {sun = "#9db8ec", si = .65, off = [-900, 700, -500], sky = "#223258", gnd = "#1c202c", hi = .62, fog = "#0e1528", fn = 950.0, ff = 4400.0, expo = 1.24, sr = 4.0, hor = [.09, .12, .20], zen = [.02, .03, .08], gr = [.92, .97, 1.1], sat = .78, fx = 2.6, amb = [.52, .58, .76]},
 }
-## CoH3-inspired bright sunlit desert cinematic default (warm sun, airy cool-blue shadow fill, readable terrain & units)
-const LOOK_WX := {sun = "#ffebd0", si = 2.25, off = [-980, 740, -580], sky = "#b6d4f6", gnd = "#a89272", hi = 1.38, fog = "#e0d0b4", fn = 1500.0, ff = 6400.0, expo = 1.04, sr = 2.6, hor = [.93, .84, .68], zen = [.25, .48, .80], gr = [1.02, 1.0, .96], sat = 1.05, fx = 1.05, amb = [1.02, .99, .94]}
-const LOOK := {v = 0.38, g = .005, sh = 0.58, k = 1.05, bl = 0.95, s = [.93, .97, 1.05], h = [1.03, 1.01, .95]}
-const TGRADE := {"desert": {tg = [1.02, 1.0, .94], s = 1.06}, "green": {tg = [.99, 1.02, .97], s = 1.04}, "snow": {tg = [.95, .99, 1.06], s = .92}}
+## CoH3-inspired crisp sunlit daylight default (natural warm sun, airy cool-blue shadow fill, never hyper-orange)
+const LOOK_WX := {sun = "#fff2dc", si = 2.15, off = [-980, 780, -580], sky = "#b8d6f6", gnd = "#9c8d76", hi = 1.42, fog = "#dcd2be", fn = 1700.0, ff = 6800.0, expo = 1.04, sr = 2.6, hor = [.91, .85, .74], zen = [.24, .47, .79], gr = [1.0, 1.0, 1.0], sat = 1.02, fx = 1.05, amb = [1.0, .99, .96]}
+const LOOK := {v = 0.34, g = .004, sh = 0.52, k = 1.05, bl = 0.92, s = [.94, .98, 1.04], h = [1.02, 1.01, .97]}
+const TGRADE := {"desert": {tg = [1.00, 1.00, .97], s = 1.01}, "green": {tg = [.98, 1.01, .98], s = 1.02}, "snow": {tg = [.96, .99, 1.05], s = .94}}
 const WFOG := {"rain": ["#7d868c", 500.0, 3200.0], "storm": ["#7d868c", 500.0, 3200.0], "fog": ["#b9bdbb", 150.0, 1500.0], "sandstorm": ["#c49a64", 45.0, 780.0],
 	"blizzard": ["#dfe6ee", 150.0, 1700.0], "snow": ["#e3e9f0", 220.0, 2300.0]}
 ## Godot's ACES curve has a built-in exposure bias; calibrated so sunlit sand stays rich sandstone (~0.66-0.78) and explosions bloom cleanly
@@ -92,7 +92,8 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	env.fog_sky_affect = 0.0
 	env.fog_sun_scatter = 0.0
 	env.fog_aerial_perspective = 0.0
-	env.glow_enabled = true
+	var is_mob := preload("res://scripts/ui/ui_kit.gd").is_mobile()
+	env.glow_enabled = not is_mob
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
 	env.glow_hdr_threshold = 1.15
 	env.glow_hdr_scale = 1.2
@@ -104,9 +105,9 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	host.add_child(we)
 	sun = DirectionalLight3D.new()
 	sun.shadow_enabled = true
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_mob else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 	sun.directional_shadow_split_1 = 0.25
-	sun.directional_shadow_max_distance = 1800.0
+	sun.directional_shadow_max_distance = 1200.0 if is_mob else 1800.0
 	sun.directional_shadow_fade_start = 0.85
 	sun.shadow_bias = 0.06
 	sun.shadow_normal_bias = 1.25

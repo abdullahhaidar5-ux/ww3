@@ -19,6 +19,7 @@ const WorldView = preload("res://scripts/battle/world_view.gd")   # LANE B: P4c 
 const UI = preload("res://scripts/ui/ui_kit.gd")
 const Hud = preload("res://scripts/ui/hud.gd")
 const Missions = preload("res://scripts/ui/missions.gd")
+const BattleIntro = preload("res://scripts/ui/battle_intro.gd")
 
 var NAT_NAME := {}        # nation key -> name (filled from data/rules.json; battle_net.gd reads it)
 const COL_ME := Color(0.35, 0.9, 0.45)
@@ -51,6 +52,7 @@ var headless_mode := false
 var use_bridge := true      # P1 BRIDGE: false only with --gdsim (the parked GDScript sim, for desktop tinkering)
 var minutes_cap := 40.0
 var shot_t := -1.0
+var intro = null   # battle_intro.gd loading screen (faction quote), fades out once the battle runs
 var shot_seq := 1
 var shot_every := 6
 var shot_follow := ""
@@ -113,6 +115,17 @@ var alert_t := -99.0
 var selftest = null
 var _cursor_cache := {}
 var _cur_cursor := ""
+
+# Mobile touch RTS state (zero interference with PC mouse controls)
+var touch_box_mode := false
+var _touches := {}            # finger_id -> Vector2 screen pos
+var _touch_start := Vector2.ZERO
+var _touch_moved := false
+var _touch_multi := false
+var _pinch_dist := 0.0
+var _pinch_ang := 0.0
+var _last_tap_t := -9.0
+var _last_tap_pos := Vector2.ZERO
 
 # ui (main.gd fields: ui, lbl_fps, msg_lbl, box)
 var cameo_tex := {}
@@ -307,6 +320,22 @@ func _norm(o: Dictionary) -> Dictionary:
 	return out
 
 func _start(players: Array, starts: Array) -> void:
+	# loading screen first, so the player sees his flag + a faction quote instead of a blank screen while the battle is built
+	if not headless_mode and intro == null and shot_path == "":
+		if OS.has_feature("web"):
+			JavaScriptBridge.eval("window.__ww3HideBoot&&window.__ww3HideBoot()", true)
+		var mf := my_fac; var ef := en_fac
+		for pl in players:
+			if not bool(pl.get("ai", true)): mf = str(pl.fac); break
+		for pl in players:
+			if str(pl.fac) != mf: ef = str(pl.fac); break
+		var mi: Dictionary = UI.map_info(map_key)
+		var kl: String = {"range": "Test Range", "battle": "Skirmish", "mission": "Mission", "tutorial": "Training", "load": "Saved Battle", "replay": "Replay", "online": "Online Battle"}.get(kind, "Battle")
+		intro = BattleIntro.make(self, mf, ef, str(mi.get("name", "")), kl, map_key)
+		await get_tree().process_frame
+		await get_tree().process_frame
+	elif OS.has_feature("web"):
+		JavaScriptBridge.eval("window.__ww3HideBoot&&window.__ww3HideBoot()", true)
 	# KAIZEN 2: on the bridge the map (size, heights, ground, roads, water, woods, bases) comes from the JS sim, any
 	# map it offers; the 3 json maps in res://data are only for the parked --gdsim path. No silent Split Ridge.
 	map = {}; map_n = 2; map_min = 2
@@ -362,9 +391,11 @@ func _start(players: Array, starts: Array) -> void:
 	rec = {v = 1, kind = kind, map = map_key, players = players, starts = starts, seed = seed_v, diff = diff, mission = "", fac = my_fac, orders = []}
 	tick_n = 0
 	if not headless_mode:
+		BattleIntro.set_stage("Surveying terrain & roads")
 		for a in OS.get_cmdline_user_args():   # CHECK HOOK: --theme=desert|green|snow repaints the map's look (pictures of every biome)
 			if a.begins_with("--theme="): map["theme"] = a.substr(8)
 		Terrain.build(self, sim, map, func(k: String): return _build_mesh(k, "y", randf_range(36, 52)))
+		BattleIntro.set_stage("Deploying armor & infantry")
 		var w_opts := {tod = str(last_launch.get("tod", battle_tod)), weather = str(last_launch.get("weather", battle_weather))}
 		world_view.setup(self, sim, map, w_opts)   # LANE B HOOK (P4c sky/lighting/weather/GPU FX + X1 buildings)
 		units_view.setup(self)                     # LANE A HOOK (X1 3D units + animated soldiers)
@@ -374,6 +405,8 @@ func _start(players: Array, starts: Array) -> void:
 		cam_dist = 760.0
 	_make_ghost()
 	started = true
+	BattleIntro.mark_ready()
+	if intro != null and is_instance_valid(intro): intro.set_ready()
 	Audio.battle_start(sim, me)   # P5 HOOK
 	if not ai_only and not demo and selftest == null: UI.lock_mouse(true)
 	print("BATTLE start: %s (%s) vs %s, %s, difficulty %d, seed %d%s" % [UI.nat_name(my_fac), "AI" if ai_only else "you", UI.nat_name(en_fac), kind, diff, seed_v, "" if not headless_mode else " [headless]"])
@@ -386,6 +419,8 @@ func _web_only() -> void:
 func _start_failed(msg: String, more: String = "\nPress Esc for the menu.") -> void:
 	push_error(msg); print("BATTLE: " + msg)
 	if headless_mode: get_tree().quit(1); return
+	BattleIntro.dismiss_immediate()
+	intro = null   # never hide the reason behind the loading screen
 	var l := Label.new(); l.text = msg + more
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD; l.set_anchors_preset(Control.PRESET_CENTER); l.custom_minimum_size = Vector2(700, 0)
 	add_child(l)
@@ -1097,10 +1132,118 @@ func _q_release(shift: bool) -> void:
 		q_tap = now
 	q_down = -1.0
 
-# ---------------------------------------------------------------- input
+# ---------------------------------------------------------------- input (PC mouse/keyboard + native Mobile Touch RTS)
+func _handle_touch(ev: InputEvent) -> void:
+	if hud != null and hud.window != null: return
+	if ev is InputEventScreenTouch:
+		var st := ev as InputEventScreenTouch
+		if st.pressed:
+			_touches[st.index] = st.position
+			if _touches.size() == 1:
+				_touch_start = st.position
+				_touch_moved = false
+				_touch_multi = false
+				if touch_box_mode and place_kind == "":
+					drag_start = st.position
+			elif _touches.size() == 2:
+				_touch_multi = true
+				_touch_moved = true
+				box.visible = false
+				var pts := _touches.values()
+				_pinch_dist = (pts[0] as Vector2).distance_to(pts[1] as Vector2)
+				_pinch_ang = (pts[1] as Vector2 - pts[0] as Vector2).angle()
+		else:
+			var was_one := _touches.size() == 1 and not _touch_multi
+			var end_pos := st.position
+			_touches.erase(st.index)
+			if _touches.is_empty():
+				if touch_box_mode and box.visible:
+					box.visible = false
+					if end_pos.distance_to(drag_start) > 14.0:
+						_box_sel(drag_start, end_pos, false)
+						Audio.speak(0, _sel_units().map(func(e): return e.kind))
+					touch_box_mode = false
+					return
+				if was_one and not _touch_moved:
+					_touch_tap(end_pos)
+	elif ev is InputEventScreenDrag:
+		var sd := ev as InputEventScreenDrag
+		_touches[sd.index] = sd.position
+		if _touches.size() == 1 and not _touch_multi:
+			if sd.position.distance_to(_touch_start) > 14.0:
+				_touch_moved = true
+			if touch_box_mode and place_kind == "":
+				if _touch_moved:
+					box.visible = true
+					box.position = Vector2(minf(drag_start.x, sd.position.x), minf(drag_start.y, sd.position.y))
+					box.size = (sd.position - drag_start).abs()
+			elif _touch_moved:
+				# Smooth 1-finger battlefield pan scaled to camera altitude and rotation
+				var pan_k := cam_dist * 0.00145
+				var dv := -sd.relative * pan_k
+				cam_target += Vector2(cos(cam_yaw), -sin(cam_yaw)) * dv.x + Vector2(sin(cam_yaw), cos(cam_yaw)) * dv.y
+				var mw: float = float(map.get("MAPW", 4800)); var mh: float = float(map.get("MAPH", 3320))
+				cam_target.x = clampf(cam_target.x, 0.0, mw)
+				cam_target.y = clampf(cam_target.y, 0.0, mh)
+		elif _touches.size() >= 2:
+			_touch_multi = true
+			var pts := _touches.values()
+			var d := (pts[0] as Vector2).distance_to(pts[1] as Vector2)
+			var a := (pts[1] as Vector2 - pts[0] as Vector2).angle()
+			if _pinch_dist > 10.0 and d > 10.0:
+				_zoom(clampf(_pinch_dist / d, 0.85, 1.18))
+			var da := wrapf(a - _pinch_ang, -PI, PI)
+			if absf(da) > 0.015 and absf(da) < 0.6:
+				cam_yaw_t += da * 0.85
+			_pinch_dist = d
+			_pinch_ang = a
+
+## Smart 1-finger tap: places buildings, fires powers, selects own units (double-tap = all of type), or orders selected units!
+func _touch_tap(pos: Vector2) -> void:
+	if ai_only or kind == "replay" or loading: return
+	if place_kind != "":
+		_place_here(pos, false)
+		return
+	if armed.begins_with("power"):
+		_launch_power(pos)
+		return
+	if armed != "":
+		_order_units(pos, false, false)
+		return
+	var now := Time.get_ticks_msec() / 1000.0
+	var is_dbl := (now - _last_tap_t) < 0.38 and pos.distance_to(_last_tap_pos) < 42.0
+	_last_tap_t = now; _last_tap_pos = pos
+	var hit = _pick_sim(pos)
+	var my_u := _sel_units()
+	var my_b := _sel_ents().filter(func(e): return e.is_b and e.team == me)
+	if hit != null:
+		if hit.team == me:
+			# If infantry selected & tapping an own bunker/transport/dugout, board/garrison it; otherwise select it!
+			if not my_u.is_empty() and hit.is_b and not bsel.has(hit.id) and hit.kind in ["fort", "tunnel", "bunker"]:
+				_order_units(pos, false, false)
+			else:
+				_click_sel(pos, false, is_dbl)
+				Audio.speak(0, _sel_units().map(func(e): return e.kind))
+		else:
+			if not my_u.is_empty():
+				_order_units(pos, false, false)
+			else:
+				_click_sel(pos, false, false)
+	else:
+		if not my_u.is_empty() or not my_b.is_empty():
+			_order_units(pos, false, false)
+		else:
+			bsel.clear()
+
 func _unhandled_input(ev: InputEvent) -> void:
 	if not started:
 		if ev is InputEventMouseMotion: mouse_in = true
+		return
+	if ev is InputEventScreenTouch or ev is InputEventScreenDrag:
+		_handle_touch(ev)
+		return
+	# Ignore emulated mouse events on touchscreens so taps never double-fire!
+	if (ev is InputEventMouseButton or ev is InputEventMouseMotion) and ev.device == InputEvent.DEVICE_ID_EMULATION:
 		return
 	if ev is InputEventMouseMotion:
 		mouse_in = true

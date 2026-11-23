@@ -92,6 +92,9 @@ var last_event := Vector2.INF
 var load_lbl: Label
 var replay_lbl: Label
 var collapsed := false
+var mob_bar: HBoxContainer = null
+var mob_box_btn: Button = null
+var _mob_box_lit := false
 
 func _init(battle) -> void:
 	B = battle
@@ -485,6 +488,28 @@ func _bar() -> void:
 	hide_btn.offset_left = -54; hide_btn.offset_right = -8; hide_btn.offset_top = -BAR_H - 22; hide_btn.offset_bottom = -BAR_H
 	root.add_child(hide_btn)
 
+	# Mobile Touch Tactical Strip (auto-shown on phones/tablets or ?mobile): thumb-first RTS controls!
+	if UI.is_mobile():
+		hint_lbl.offset_left = 378; hint_lbl.offset_right = 1100
+		mob_bar = HBoxContainer.new()
+		mob_bar.name = "MobileBar"
+		mob_bar.anchor_top = 1.0; mob_bar.anchor_bottom = 1.0
+		mob_bar.offset_left = 8; mob_bar.offset_top = -BAR_H - 42; mob_bar.offset_right = 420; mob_bar.offset_bottom = -BAR_H - 4
+		mob_bar.add_theme_constant_override("separation", 6)
+		root.add_child(mob_bar)
+		mob_box_btn = _tac_btn("BOX SEL", func():
+			B.touch_box_mode = not B.touch_box_mode
+			B._msg("Drag a box to select units" if B.touch_box_mode else "Pan mode"), "Toggle drag-box unit selection", 72.0, 34.0)
+		mob_bar.add_child(mob_box_btn)
+		mob_bar.add_child(_tac_btn("ATK-MV", func(): B._arm("amove"), "Tap target to Attack-Move", 68.0, 34.0))
+		mob_bar.add_child(_tac_btn("CLEAR", func():
+			B.place_kind = ""; B.armed = ""; B.touch_box_mode = false
+			if B.ghost != null: B.ghost.visible = false
+			B.bsel.clear(), "Deselect / cancel active order", 62.0, 34.0))
+		mob_bar.add_child(_tac_btn("Z+", func(): B._zoom(0.80), "Zoom in", 40.0, 34.0))
+		mob_bar.add_child(_tac_btn("Z-", func(): B._zoom(1.25), "Zoom out", 40.0, 34.0))
+		mob_bar.add_child(_tac_btn("N", func(): B.cam_yaw_t = 0.0, "Reset camera north-up", 36.0, 34.0))
+
 func _toggle_collapse() -> void:
 	collapsed = not collapsed
 	bar.visible = not collapsed
@@ -493,6 +518,8 @@ func _toggle_collapse() -> void:
 	hide_btn.offset_top = y_bot - 22.0; hide_btn.offset_bottom = y_bot
 	pause_btn.offset_top = y_bot - 22.0; pause_btn.offset_bottom = y_bot
 	hint_lbl.offset_top = y_bot - 24.0; hint_lbl.offset_bottom = y_bot - 2.0
+	if mob_bar != null:
+		mob_bar.offset_top = y_bot - 42.0; mob_bar.offset_bottom = y_bot - 4.0
 	powers_col.offset_bottom = y_bot - 28.0; powers_col.offset_top = y_bot - 380.0
 
 func _draw_pw_ticks() -> void:
@@ -713,6 +740,13 @@ func tick(dt: float) -> void:
 		if gp_now: _style_tac(star_btn, Color("44330e"), UI.GOLD_HI, UI.GOLD_HI)
 		else: _style_tac(star_btn, Color("15232b"), STEEL_HI, UI.TEXT)
 
+	if mob_box_btn != null:
+		var mb_now: bool = bool(B.touch_box_mode)
+		if mb_now != _mob_box_lit:
+			_mob_box_lit = mb_now
+			if mb_now: _style_tac(mob_box_btn, Color("44330e"), UI.GOLD_HI, UI.GOLD_HI)
+			else: _style_tac(mob_box_btn, Color("15232b"), STEEL_HI, UI.TEXT)
+
 	pause_btn.text = "|>" if B.paused else "II"
 
 	if B.kind == "replay":
@@ -782,7 +816,36 @@ static func _cmd_icon(id: String) -> Texture2D:
 	_cmd_icon_cache[id] = t
 	return t
 
-## Authentic C&C Zero Hour cameo card: crisp inset artwork on left (fixed expand_mode order!), bold title + top-right gold cost badge, zero overlap
+static var _scrim_tex: GradientTexture2D = null
+static var _tac_bg_tex: GradientTexture2D = null
+static func _get_scrim() -> GradientTexture2D:
+	if _scrim_tex == null:
+		_scrim_tex = GradientTexture2D.new()
+		_scrim_tex.width = 16; _scrim_tex.height = 64
+		_scrim_tex.fill = GradientTexture2D.FILL_LINEAR
+		_scrim_tex.fill_from = Vector2(0, 0); _scrim_tex.fill_to = Vector2(0, 1)
+		var gr := Gradient.new()
+		gr.set_offset(0, 0.0); gr.set_color(0, Color(0.02, 0.04, 0.06, 0.28))
+		gr.add_point(0.45, Color(0.02, 0.04, 0.06, 0.02))
+		gr.add_point(0.68, Color(0.02, 0.04, 0.06, 0.62))
+		gr.set_offset(gr.get_point_count() - 1, 1.0); gr.set_color(gr.get_point_count() - 1, Color(0.01, 0.02, 0.03, 0.92))
+		_scrim_tex.gradient = gr
+	return _scrim_tex
+
+static func _get_tac_bg() -> GradientTexture2D:
+	if _tac_bg_tex == null:
+		_tac_bg_tex = GradientTexture2D.new()
+		_tac_bg_tex.width = 64; _tac_bg_tex.height = 64
+		_tac_bg_tex.fill = GradientTexture2D.FILL_RADIAL
+		_tac_bg_tex.fill_from = Vector2(0.5, 0.36); _tac_bg_tex.fill_to = Vector2(0.5, 1.05)
+		var gr := Gradient.new()
+		gr.set_color(0, Color(0.18, 0.29, 0.36, 1.0))
+		gr.add_point(0.55, Color(0.09, 0.15, 0.20, 1.0))
+		gr.set_color(gr.get_point_count() - 1, Color(0.04, 0.07, 0.10, 1.0))
+		_tac_bg_tex.gradient = gr
+	return _tac_bg_tex
+
+## Authentic C&C Generals: Zero Hour full-bleed 3D cameo button with beveled steel frame, gradient scrim, gold price pill & hotkey badge
 func _cameo_btn(it: Dictionary) -> Button:
 	var b := Button.new()
 	b.name = "Cmd_" + str(it.get("id", it.label))
@@ -794,7 +857,7 @@ func _cameo_btn(it: Dictionary) -> Button:
 	b.tooltip_text = str(it.get("tip", ""))
 	b.clip_contents = true
 	var is_on := bool(it.get("on", false))
-	var n_sb := _bevel(SLOT_BG, STEEL_HI, Color("4c6c7a"), 2)
+	var n_sb := _bevel(SLOT_BG, STEEL_HI, Color("5a7e8e"), 2)
 	var h_sb := _bevel(Color("1c3540"), UI.GOLD, UI.GOLD_HI, 2)
 	var p_sb := _bevel(Color("3a2d10"), UI.GOLD_HI, UI.GOLD_HI, 2)
 	var d_sb := _steel(Color("0a1115"), Color("202f36"), 1, 2)
@@ -808,55 +871,106 @@ func _cameo_btn(it: Dictionary) -> Button:
 	if tex == null:
 		tex = _cmd_icon(str(it.get("id", "")))
 		is_svg_icon = tex != null
-	if tex != null:
-		# Framed portrait box on the left (expand_mode set BEFORE texture so Godot honors exact bounds!)
-		var frame := Panel.new()
-		frame.position = Vector2(4, 5); frame.size = Vector2(58 if not is_svg_icon else 42, 48)
-		frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		frame.add_theme_stylebox_override("panel", _steel(WELL, Color("3c5966") if not b.disabled else Color("202d34"), 1, 1))
-		b.add_child(frame)
+
+	if tex != null and not is_svg_icon:
+		# Full-bleed 3D rendered Generals cameo portrait filling the entire metallic card!
+		var tr := TextureRect.new()
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+		tr.offset_left = 2; tr.offset_top = 2; tr.offset_right = -2; tr.offset_bottom = -2
+		tr.texture = tex
+		if b.disabled: tr.modulate = Color(0.38, 0.40, 0.43)
+		elif is_on: tr.modulate = Color(1.12, 1.06, 0.92)
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(tr)
+
+		# Sleek top/bottom scrim so unit title & cost pill pop crisply over the 3D render
+		var sc := TextureRect.new()
+		sc.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		sc.stretch_mode = TextureRect.STRETCH_SCALE
+		sc.set_anchors_preset(Control.PRESET_FULL_RECT)
+		sc.offset_left = 2; sc.offset_top = 2; sc.offset_right = -2; sc.offset_bottom = -2
+		sc.texture = _get_scrim()
+		sc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(sc)
+	elif tex != null and is_svg_icon:
+		# 3D-lit beveled tactical studio backdrop + embossed metallic emblem with drop shadow
+		var bg := TextureRect.new()
+		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg.stretch_mode = TextureRect.STRETCH_SCALE
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.offset_left = 2; bg.offset_top = 2; bg.offset_right = -2; bg.offset_bottom = -2
+		bg.texture = _get_tac_bg()
+		bg.modulate = Color(1.15, 1.0, 0.65) if is_on else (Color(0.55, 0.58, 0.62) if b.disabled else Color.WHITE)
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(bg)
+
+		var sh := TextureRect.new()
+		sh.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		sh.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		sh.anchor_left = 0.5; sh.anchor_right = 0.5; sh.anchor_top = 0.0; sh.anchor_bottom = 0.0
+		sh.offset_left = -14; sh.offset_right = 18; sh.offset_top = 7; sh.offset_bottom = 37
+		sh.texture = tex
+		sh.modulate = Color(0.0, 0.0, 0.0, 0.65)
+		sh.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(sh)
 
 		var tr := TextureRect.new()
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.anchor_left = 0.5; tr.anchor_right = 0.5; tr.anchor_top = 0.0; tr.anchor_bottom = 0.0
+		tr.offset_left = -16; tr.offset_right = 16; tr.offset_top = 5; tr.offset_bottom = 35
 		tr.texture = tex
-		if is_svg_icon:
-			tr.position = Vector2(7, 10); tr.size = Vector2(28, 28)
-			tr.modulate = UI.GOLD_HI if is_on else (Color("c8dde6") if not b.disabled else Color(0.42, 0.44, 0.46))
-		else:
-			tr.position = Vector2(1, 1); tr.size = Vector2(56, 46)
-			if b.disabled: tr.modulate = Color(0.42, 0.44, 0.46)
+		tr.modulate = UI.GOLD_HI if is_on else (Color("e2f0f6") if not b.disabled else Color(0.42, 0.44, 0.46))
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		frame.add_child(tr)
+		b.add_child(tr)
 
-	var tx := (50.0 if is_svg_icon else 66.0) if tex != null else 8.0
-	var nm := UI.label(str(it.label), 13, UI.GOLD_HI if is_on else (UI.TEXT if not b.disabled else Color(0.48, 0.54, 0.54)), "tight")
-	nm.anchor_right = 1.0
-	nm.offset_left = tx; nm.offset_top = 4; nm.offset_right = -5; nm.offset_bottom = 36
-	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	nm.add_theme_constant_override("line_spacing", -4)
-	nm.max_lines_visible = 2
-	nm.clip_text = true
-	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	b.add_child(nm)
+	# Crisp bottom title label across the scrim
+	var lbl_s := str(it.label)
+	if lbl_s != "":
+		var nm := UI.label(lbl_s, 12, UI.GOLD_HI if is_on else (Color(0.96, 0.97, 0.96) if not b.disabled else Color(0.56, 0.60, 0.60)), "bold")
+		nm.anchor_left = 0.0; nm.anchor_right = 1.0; nm.anchor_top = 1.0; nm.anchor_bottom = 1.0
+		nm.offset_left = 4; nm.offset_right = -4; nm.offset_top = -19; nm.offset_bottom = -2
+		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		nm.clip_text = true
+		nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		nm.add_theme_constant_override("outline_size", 3)
+		nm.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.92))
+		nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(nm)
 
+	# Top-right sleek dark pill for cost ($900) or hotkey (H / B / F)
 	var price_s := str(it.get("price", ""))
 	if price_s != "":
 		var is_key := not price_s.begins_with("$") and not price_s.begins_with("+$") and price_s != "owned" and price_s != "researching"
-		var pcol: Color = UI.CYAN if is_key else (UI.GOLD_HI if not b.disabled else Color(0.55, 0.48, 0.32))
-		var pr := UI.label(price_s, 12, pcol, "bold")
-		pr.position = Vector2(tx, 38); pr.size = Vector2(88, 16)
+		var pcol: Color = UI.CYAN if is_key else (UI.GOLD_HI if not b.disabled else Color(0.62, 0.54, 0.36))
+		var pp := PanelContainer.new()
+		pp.anchor_left = 1.0; pp.anchor_right = 1.0; pp.anchor_top = 0.0; pp.anchor_bottom = 0.0
+		var pw := 22.0 if price_s.length() <= 1 else (36.0 if price_s.length() <= 3 else (50.0 if price_s.length() <= 5 else 68.0))
+		pp.offset_left = -pw - 3.0; pp.offset_right = -3; pp.offset_top = 3; pp.offset_bottom = 19
+		pp.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		pp.size_flags_horizontal = Control.SIZE_SHRINK_END
+		pp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var psb := StyleBoxFlat.new()
+		psb.bg_color = Color(0.03, 0.06, 0.08, 0.84)
+		psb.border_color = Color(pcol.r, pcol.g, pcol.b, 0.45)
+		psb.set_border_width_all(1); psb.set_corner_radius_all(2)
+		psb.content_margin_left = 4; psb.content_margin_right = 4; psb.content_margin_top = 0; psb.content_margin_bottom = 0
+		pp.add_theme_stylebox_override("panel", psb)
+		var pr := UI.label(price_s, 11, pcol, "bold")
+		pr.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		pr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(pr)
+		pp.add_child(pr)
+		b.add_child(pp)
 
+	# Top-left badge for queue count / ready mark (x3, OK)
 	var mark_s := str(it.get("mark", ""))
 	if mark_s == "✓": mark_s = "OK"
 	if mark_s != "":
-		var mk := UI.label(mark_s, 13, Color(1, 1, 1), "bold")
-		mk.add_theme_constant_override("outline_size", 4); mk.add_theme_color_override("font_outline_color", Color(0, 0, 0))
-		mk.anchor_left = 1.0; mk.anchor_right = 1.0; mk.anchor_top = 1.0; mk.anchor_bottom = 1.0
-		mk.offset_left = -32; mk.offset_right = -5; mk.offset_top = -22; mk.offset_bottom = -3
-		mk.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		var mk := UI.label(mark_s, 13, Color(1, 0.96, 0.72), "bold")
+		mk.add_theme_constant_override("outline_size", 4); mk.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.95))
+		mk.position = Vector2(5, 2); mk.size = Vector2(40, 18)
 		mk.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(mk)
 
@@ -906,14 +1020,8 @@ func _cmd_bar() -> void:
 	for q in queue:
 		if qn >= 5: break
 		var qb := _cameo_btn({label = "", cameo = q.cameo, id = "q%d" % qn, tip = "%s - right-click cancels" % q.name, on_right = q.cancel, prog = q.p if qn == 0 else 0.0})
-		qb.custom_minimum_size = Vector2(54, 58)
+		qb.custom_minimum_size = Vector2(56, 58)
 		qb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		for ch in qb.get_children():
-			if ch is Panel:
-				ch.position = Vector2(2, 3); ch.size = Vector2(50, 48)
-				for sub_c in ch.get_children():
-					if sub_c is TextureRect: sub_c.position = Vector2(1, 1); sub_c.size = Vector2(48, 46)
-			elif ch is Label: ch.visible = false
 		queue_row.add_child(qb)
 		qn += 1
 

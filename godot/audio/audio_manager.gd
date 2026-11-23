@@ -36,6 +36,7 @@ var vol := {"master": 100, "music": 70, "voices": 100, "effects": 100, "announce
 
 var T: Dictionary = {}                 # audio_tables.json
 var web := false
+var _web_au := false                   # true when godot/web/ww3audio.js (WebAudio engine) is loaded
 var unlocked := true                   # web: false until the first click / key (browser autoplay rule)
 var test_clock := -1.0                 # >= 0: tests drive the clock (seconds) instead of real time
 var keep_log := false
@@ -152,7 +153,10 @@ func _ready() -> void:
 	_wav_emp = _emp_wav()
 	_wav_jet = _jet_whoosh_wav()
 	_wav_built = _built_chime_wav()
-	if web: _web_decks()
+	if web:
+		_web_au = bool(JavaScriptBridge.eval("Boolean(window.WW3Audio)", true))
+		if not _web_au: _web_decks()
+		else: unlocked = bool(JavaScriptBridge.eval("window.WW3Audio.isUnlocked()", true))
 	else:
 		for i in 2:
 			var d := _mk("Music"); _decks.append({p = d, on = false, id = "", pool = "", g = 0.0, to = 0.0, rate = 0.0, started = false, adv = false})
@@ -292,15 +296,27 @@ func _bases() -> Array:
 	if _base_ok != "": return [_base_ok]
 	var out: Array = []
 	if web:
-		# the live site (GitHub Pages /ww3/, Cloudflare) serves the build next to vo/ sfx/ mus/: try the page's own folder first
-		var own = JavaScriptBridge.eval("(function(){try{return new URL('./',location.href).href;}catch(e){return ''}})()")
-		var q = JavaScriptBridge.eval("(function(){try{var a=new URLSearchParams(location.search).get('assets');if(a)return new URL(a,location.href).href;return new URL('../',location.href).href;}catch(e){return ''}})()")
-		var has_assets = JavaScriptBridge.eval("location.search.indexOf('assets=')>=0")
-		if q != null and str(q) != "" and has_assets == true: out.append(str(q))   # ?assets= wins when given
-		if own != null and str(own) != "": out.append(str(own))
-		if q != null and str(q) != "":
-			if not out.has(str(q)): out.append(str(q))
-			out.append(str(q) + "godot/")      # test layout: the build sits in a folder under the site root, sounds one folder up
+		# the live site (GitHub Pages /ww3/, Cloudflare) serves the build next to vo/ sfx/ mus/: try the page's own folder
+		# first. Built in GDScript from the plain page address (location.href) - no JavaScript URL objects.
+		var href := str(JavaScriptBridge.eval("String(window.location.href)", true))
+		var page := href.split("#")[0].split("?")[0]
+		var search := href.split("#")[0].substr(page.length())
+		var own := page.substr(0, page.rfind("/") + 1) if page.begins_with("http") else ""
+		var parent := ""
+		if own != "":
+			var trimmed := own.substr(0, own.length() - 1)
+			var cut := trimmed.rfind("/")
+			if cut > 8: parent = trimmed.substr(0, cut + 1)
+		var assets := ""
+		for kv in search.trim_prefix("?").split("&", false):
+			if kv.begins_with("assets="): assets = kv.substr(7).uri_decode()
+		if assets != "":
+			out.append(assets if assets.begins_with("http") else own + assets.trim_prefix("./"))   # ?assets= wins when given
+		if own != "": out.append(own)
+		if parent != "":
+			out.append(parent)
+			out.append(parent + "godot/")      # test layout: the build sits in a folder under the site root, sounds one folder up
+		print("AUDIO bases ", out)
 	else:
 		out.append(ProjectSettings.globalize_path("res://").path_join("..") + "/")
 		out.append(OS.get_executable_path().get_base_dir() + "/")
@@ -308,8 +324,20 @@ func _bases() -> Array:
 	out.append(SITE)
 	return out
 
+func _is_valid_mp3(by: PackedByteArray) -> bool:
+	if by.size() < 256: return false
+	if by[0] == 0x3C: return false      # '<' -> HTML / XML error page, never an MP3
+	if by[0] == 0x49 and by[1] == 0x44 and by[2] == 0x33: return true   # "ID3"
+	var lim := mini(by.size() - 1, 32)
+	for j in lim:
+		if by[j] == 0xFF and (by[j + 1] & 0xE0) == 0xE0: return true    # MPEG audio sync
+	return false
+
 ## get a sound file as an AudioStreamMP3 (cached); cb(stream or null)
 func _load(rel: String, cb: Callable = Callable()) -> void:
+	if _web_au:
+		JavaScriptBridge.eval("window.WW3Audio.preload(%s)" % JSON.stringify(rel), true)
+		return
 	var s = _streams.get(rel)
 	if s is AudioStream:
 		if cb.is_valid(): cb.call(s)
@@ -328,14 +356,14 @@ func _try(rel: String, bases: Array, i: int) -> void:
 	if not b.begins_with("http"):
 		if FileAccess.file_exists(b + rel):
 			var by := FileAccess.get_file_as_bytes(b + rel)
-			if by.size() > 0:
+			if _is_valid_mp3(by):
 				_base_ok = b if not b.begins_with("user://") else _base_ok
 				_got(rel, by); return
 		_try(rel, bases, i + 1); return
 	var h := HTTPRequest.new(); add_child(h)
 	h.request_completed.connect(func(res, code, _hd, body):
 		h.queue_free()
-		if res == HTTPRequest.RESULT_SUCCESS and code == 200 and body.size() > 256:
+		if res == HTTPRequest.RESULT_SUCCESS and code == 200 and _is_valid_mp3(body):
 			_base_ok = b
 			if not web:
 				DirAccess.make_dir_recursive_absolute("user://audio_cache/" + rel.get_base_dir())
@@ -345,6 +373,20 @@ func _try(rel: String, bases: Array, i: int) -> void:
 		else: _try(rel, bases, i + 1))
 	if h.request(b + rel) != OK:
 		h.queue_free(); _try(rel, bases, i + 1)
+
+func _web_has(rel: String) -> bool:
+	if not _web_au: return false
+	var ok := bool(JavaScriptBridge.eval("window.WW3Audio.has(%s)" % JSON.stringify(rel), true))
+	if not ok: JavaScriptBridge.eval("window.WW3Audio.preload(%s)" % JSON.stringify(rel), true)
+	return ok
+
+func _web_slice(rel: String, off: float, dur: float, lin: float, rate: float, pan: float, bus: String, slot: String = "") -> bool:
+	return bool(JavaScriptBridge.eval("window.WW3Audio.playSlice(%s,%f,%f,%f,%f,%f,%s,%s)" % [
+		JSON.stringify(rel), off, dur, lin, rate, pan, JSON.stringify(bus), JSON.stringify(slot)], true))
+
+func _web_synth(nm: String, lin: float, rate: float, pan: float, bus: String) -> void:
+	JavaScriptBridge.eval("window.WW3Audio.playSynth(%s,%f,%f,%f,%s)" % [
+		JSON.stringify(nm), lin, rate, pan, JSON.stringify(bus)], true)
 
 func _got(rel: String, by: PackedByteArray) -> void:
 	var st := AudioStreamMP3.new(); st.data = by
@@ -411,6 +453,9 @@ func limit(k: String, n: int, win: float = 0.12) -> bool:
 
 func _sfx_on() -> bool: return unlocked and int(vol.effects) > 0 and int(vol.master) > 0
 
+func _sfx_ready() -> bool:
+	return _web_has("sfx/sfx.mp3") if _web_au else (_stream("sfx/sfx.mp3") != null)
+
 ## a shot at (x, y); s = the JS muzzle size: 5 rifle / machine gun, 7 flak, 8 rocket / missile, 13 cannon
 func shot(x: float, y: float, s: float) -> void:
 	if not _sfx_on(): return
@@ -418,7 +463,7 @@ func shot(x: float, y: float, s: float) -> void:
 	if sp.is_empty() or sp.v < 0.02:
 		far_h = minf(8.0, far_h + (0.5 if s > 8 else 0.1)); return
 	if not limit("all", 14, 0.15): return
-	if _stream("sfx/sfx.mp3") == null: return
+	if not _sfx_ready(): return
 	if s <= 5:
 		if not limit("gun", 6): return
 		var n := 1 + _rng.randi_range(0, 2)
@@ -443,7 +488,7 @@ func boom(x: float, y: float, s: float, big: bool) -> void:
 		far_h = minf(8.0, far_h + (2.0 if big else 0.6)); return
 	if not limit("boom", 3 if big else 4, 0.15): return
 	var k := minf(1.0, 0.3 + s / 40.0) * (1.3 if big else 1.0)
-	if _stream("sfx/sfx.mp3") != null:
+	if _sfx_ready():
 		_clip("boomL" if (big or s > 26) else "boomS", sp, (1.1 if big else 0.9) * minf(1.2, 0.6 + k), 0.94 if big else 1.0, sp.far * 0.3)
 	if (big or s >= 18.0) and limit("sub", 3, 0.14):
 		var sub_g: float = float(sp.v) * clampf(0.45 + s / 50.0, 0.45, 1.15) * (1.2 if big else 0.9)
@@ -464,14 +509,20 @@ func _run_queue() -> void:
 	var keep: Array = []
 	for q in _queue:
 		if q[0] > t: keep.append(q); continue
-		var st = _streams.get("sfx/sfx.mp3")
 		var L: Array = T.sfx.clips.get(q[1], [])
-		var i := _free_sfx()
-		if not (st is AudioStream) or L.is_empty() or i < 0: continue      # JS: SFX.nv >= SFX.cap -> dropped
+		if L.is_empty(): continue
 		var cl: Array = L[_rng.randi() % L.size()]
-		var p: AudioStreamPlayer2D = _sfx[i]
 		var far: float = q[5]
-		p.bus = "Sfx" if far < 0.3 else ("SfxMid" if far < 0.62 else "SfxFar")
+		var bus_n := "Sfx" if far < 0.3 else ("SfxMid" if far < 0.62 else "SfxFar")
+		if _web_au:
+			if _web_slice("sfx/sfx.mp3", float(cl[0]), float(cl[1]), float(q[2]), float(q[3]), float(q[4]), bus_n):
+				_note("sfx", q[1])
+			continue
+		var st = _streams.get("sfx/sfx.mp3")
+		var i := _free_sfx()
+		if not (st is AudioStream) or i < 0: continue      # JS: SFX.nv >= SFX.cap -> dropped
+		var p: AudioStreamPlayer2D = _sfx[i]
+		p.bus = bus_n
 		var vs := get_viewport().get_visible_rect().size
 		p.global_position = Vector2(vs.x * 0.5 * (1.0 + float(q[4])), vs.y * 0.5)
 		_slice(p, st, float(cl[0]), float(cl[1]), q[2], q[3])
@@ -488,6 +539,7 @@ func active_sfx() -> int:
 ## JS uiTick(): every button makes a soft tick
 func ui_tick() -> void:
 	if not _sfx_on(): return
+	if _web_au: _web_synth("tick", 0.75, 1.0, 0.0, "UI"); _note("ui", "tick"); return
 	_uip.play(); _note("ui", "tick")
 
 func _node_added(n: Node) -> void:
@@ -654,18 +706,33 @@ func _built_chime_wav() -> AudioStreamWAV:
 		by.encode_s16(i * 2, int(clampf(acc * 0.42, -1.0, 1.0) * 32767.0))
 	return _mk_wav(by, sr)
 
+func _synth_name(wav: AudioStreamWAV) -> String:
+	if wav == _wav_sub: return "sub"
+	if wav == _wav_emp: return "emp"
+	if wav == _wav_jet: return "jet"
+	if wav == _wav_klaxon: return "klaxon"
+	if wav == _wav_promo: return "promo"
+	if wav == _wav_built: return "built"
+	if wav == _wav_chirp: return "chirp"
+	return ""
+
 func _play_synth_2d(wav: AudioStreamWAV, sp: Dictionary, lin: float, rate: float = 1.0, bus: String = "") -> void:
 	if not _sfx_on() or wav == null or sp.is_empty(): return
+	var bus_n := bus
+	if bus_n == "":
+		var far: float = float(sp.get("far", 0.0))
+		bus_n = "Sfx" if far < 0.3 else ("SfxMid" if far < 0.62 else "SfxFar")
+	if _web_au:
+		var sn := _synth_name(wav)
+		if sn != "": _web_synth(sn, lin, rate, float(sp.get("pan", 0.0)), bus_n)
+		return
 	var t := now()
 	var idx := -1
 	for i in SYNTH_CAP:
 		if _synth_2d_end[i] <= t: idx = i; break
 	if idx < 0: return
 	var p: AudioStreamPlayer2D = _synth_2d[idx]
-	if bus != "": p.bus = bus
-	else:
-		var far: float = float(sp.get("far", 0.0))
-		p.bus = "Sfx" if far < 0.3 else ("SfxMid" if far < 0.62 else "SfxFar")
+	p.bus = bus_n
 	var vp := get_viewport()
 	var vs := vp.get_visible_rect().size if vp != null else Vector2(1280, 720)
 	p.global_position = Vector2(vs.x * 0.5 * (1.0 + float(sp.get("pan", 0.0))), vs.y * 0.5)
@@ -676,7 +743,12 @@ func _play_synth_2d(wav: AudioStreamWAV, sp: Dictionary, lin: float, rate: float
 	_synth_2d_end[idx] = t + wav.get_length() / p.pitch_scale
 
 func _play_synth_ui(wav: AudioStreamWAV, lin: float = 0.72, rate: float = 1.0) -> void:
-	if not _sfx_on() or wav == null or _synth_ui.is_empty(): return
+	if not _sfx_on() or wav == null: return
+	if _web_au:
+		var sn := _synth_name(wav)
+		if sn != "": _web_synth(sn, lin, rate, 0.0, "UI")
+		return
+	if _synth_ui.is_empty(): return
 	var p: AudioStreamPlayer = _synth_ui[_synth_ui_i % _synth_ui.size()]
 	_synth_ui_i += 1
 	p.stream = wav
@@ -685,7 +757,11 @@ func _play_synth_ui(wav: AudioStreamWAV, lin: float = 0.72, rate: float = 1.0) -
 	p.play()
 
 func _play_chirp() -> void:
-	if not _voice_on() or _wav_chirp == null or _synth_vox == null: return
+	if not _voice_on(): return
+	if _web_au:
+		_web_synth("chirp", _vo_vol() * 0.34, 0.96 + _rng.randf() * 0.08, 0.0, "Voice")
+		return
+	if _wav_chirp == null or _synth_vox == null: return
 	_synth_vox.stream = _wav_chirp
 	_synth_vox.pitch_scale = 0.96 + _rng.randf() * 0.08
 	_synth_vox.volume_db = linear_to_db(maxf(_vo_vol() * 0.32, 0.0001))
@@ -709,8 +785,15 @@ func speak(kind: int, kinds: Array = []) -> bool:
 	return false
 
 func _vor(fac: String, kind: int, kinds: Array) -> bool:
-	var st = _streams.get("vo/%s_r.mp3" % fac); var M: Dictionary = T.vor.get(fac, {})
-	if not (st is AudioStream) or M.is_empty() or kind > 2 or kinds.is_empty(): return false
+	var rel := "vo/%s_r.mp3" % fac
+	var M: Dictionary = T.vor.get(fac, {})
+	if M.is_empty() or kind > 2 or kinds.is_empty(): return false
+	var st = null
+	if _web_au:
+		if not _web_has(rel): return false
+	else:
+		st = _streams.get(rel)
+		if not (st is AudioStream): return false
 	var role: String = T.role.get(kinds[_rng.randi() % kinds.size()], "inf")
 	var sets: Array = M.get(role, [])
 	if kind >= sets.size() or sets[kind].is_empty(): return false
@@ -720,11 +803,18 @@ func _vor(fac: String, kind: int, kinds: Array) -> bool:
 	var j := _rng.randi() % se.size()
 	if se.size() > 1 and j == int(_vor_last.get(lk, -1)): j = (j + 1) % se.size()
 	_vor_last[lk] = j
-	_say(_vox, st, se[j], "vor", "%s_r/%s/%d/%d" % [fac, role, kind, j]); return true
+	_say(_vox, st, se[j], "vor", "%s_r/%s/%d/%d" % [fac, role, kind, j], rel); return true
 
 func _vo(fac: String, kind: int) -> bool:
-	var st = _streams.get("vo/%s.mp3" % fac); var M: Dictionary = T.vo.get(fac, {})
-	if not (st is AudioStream) or M.is_empty(): return false
+	var rel := "vo/%s.mp3" % fac
+	var M: Dictionary = T.vo.get(fac, {})
+	if M.is_empty(): return false
+	var st = null
+	if _web_au:
+		if not _web_has(rel): return false
+	else:
+		st = _streams.get(rel)
+		if not (st is AudioStream): return false
 	var L: Array = M.l
 	var se: Array = L[kind] if (kind < L.size() and not L[kind].is_empty()) else (L[0] if kind < 5 else [])
 	var tag := "l"
@@ -734,22 +824,30 @@ func _vo(fac: String, kind: int) -> bool:
 	if se.is_empty(): return false
 	if now() < _vo_end - 0.05: return true
 	var j := _rng.randi() % se.size()
-	_say(_vox, st, se[j], "vo", "%s/%s%d/%d" % [fac, tag, kind, j]); return true
+	_say(_vox, st, se[j], "vo", "%s/%s%d/%d" % [fac, tag, kind, j], rel); return true
 
 func _voh(fac: String, key: String, over: bool) -> bool:
-	var st = _streams.get("vo/%s_h.mp3" % fac); var M: Dictionary = T.voh.get(fac, {})
-	if not (st is AudioStream) or not M.has(key): return false
+	var rel := "vo/%s_h.mp3" % fac
+	var M: Dictionary = T.voh.get(fac, {})
+	if not M.has(key): return false
+	var st = null
+	if _web_au:
+		if not _web_has(rel): return false
+	else:
+		st = _streams.get(rel)
+		if not (st is AudioStream): return false
 	var ent: Array = []
 	for a in M[key]:
 		if a != null and not a.is_empty(): ent = a; break
 	if ent.is_empty(): return false
 	if now() < _vo_end - 0.05 and not over: return false
-	_say(_vox, st, ent[_rng.randi() % ent.size()], "voh", "%s_h/%s" % [fac, key]); return true
+	_say(_vox, st, ent[_rng.randi() % ent.size()], "voh", "%s_h/%s" % [fac, key], rel); return true
 
-func _say(p: AudioStreamPlayer, st: AudioStream, od: Array, ev: String, clip: String) -> void:
+func _say(p: AudioStreamPlayer, st, od: Array, ev: String, clip: String, rel: String = "") -> void:
 	_play_chirp()
 	var d := float(od[1])
-	_slice(p, st, float(od[0]), d, _vo_vol())
+	if _web_au: _web_slice(rel, float(od[0]), d, _vo_vol(), 1.0, 0.0, "Voice", "vox")
+	else: _slice(p, st, float(od[0]), d, _vo_vol())
 	_vo_end = now() + 0.02 + d
 	_mus_duck_until = now() + d + 0.1                              # music to 45 % while a unit talks
 	_note(ev, clip)
@@ -788,9 +886,15 @@ func ann(key: String) -> bool:
 	_ann_last[key] = t
 	var od: Array = O[key]
 	_ann_busy = t + 0.9 + float(od[1])
-	var st = _stream("vo/ann_%s.mp3" % L)
-	if st == null: return false                                    # first call only fetches (JS annClip)
-	_slice(_annp, st, float(od[0]), float(od[1]), minf(1.5, float(vol.announcer) / 100.0 * 1.25))
+	var rel := "vo/ann_%s.mp3" % L
+	var lin := minf(1.5, float(vol.announcer) / 100.0 * 1.25)
+	if _web_au:
+		if not _web_has(rel): return false
+		_web_slice(rel, float(od[0]), float(od[1]), lin, 1.0, 0.0, "Voice", "ann")
+	else:
+		var st = _stream(rel)
+		if st == null: return false                                    # first call only fetches (JS annClip)
+		_slice(_annp, st, float(od[0]), float(od[1]), lin)
 	_ann_busy = maxf(_ann_busy, t + float(od[1]) + 0.2)
 	_note("ann", "ann_%s/%s" % [L, key]); return true
 
@@ -800,8 +904,13 @@ func shout(type: String, x: float, y: float, team: int) -> bool:
 	var fac: String = _sim.teams[team].fac
 	var M: Dictionary = T.vos.get(fac, {})
 	if not M.has(type) or M[type].is_empty(): return false
-	var st = _stream("vo/%s_s.mp3" % fac)
-	if st == null: return false
+	var rel := "vo/%s_s.mp3" % fac
+	var st = null
+	if _web_au:
+		if not _web_has(rel): return false
+	else:
+		st = _stream(rel)
+		if st == null: return false
 	var t := now()
 	if t < _sh_end - 0.05 or t - float(_sh_type.get(type, -99.0)) < 5.0: return false
 	var dx := x - _cam_t.x
@@ -811,9 +920,14 @@ func shout(type: String, x: float, y: float, team: int) -> bool:
 	var on := d < _cam_d * 0.9
 	var se: Array = M[type]
 	var j := _rng.randi() % se.size()
-	var vs := get_viewport().get_visible_rect().size
-	_shoutp.global_position = Vector2(vs.x * 0.5 * (1.0 + clampf(dx / 900.0, -0.9, 0.9)), vs.y * 0.5)
-	_slice(_shoutp, st, float(se[j][0]), float(se[j][1]), _vo_vol() * maxf(0.18, 1.05 - d / 1500.0) * (1.0 if on else 0.8))
+	var pan := clampf(dx / 900.0, -0.9, 0.9)
+	var lin := _vo_vol() * maxf(0.18, 1.05 - d / 1500.0) * (1.0 if on else 0.8)
+	if _web_au:
+		_web_slice(rel, float(se[j][0]), float(se[j][1]), lin, 1.0, pan, "Voice", "shout")
+	else:
+		var vs := get_viewport().get_visible_rect().size
+		_shoutp.global_position = Vector2(vs.x * 0.5 * (1.0 + pan), vs.y * 0.5)
+		_slice(_shoutp, st, float(se[j][0]), float(se[j][1]), lin)
 	_sh_end = t + 0.02 + float(se[j][1]); _sh_type[type] = t
 	_note("shout", "%s_s/%s/%d" % [fac, type, j]); return true
 
@@ -866,7 +980,8 @@ func _st_play(pool: String, fade: float = ST_FADE) -> void:
 
 func _st_halt() -> void:
 	st_mode = ""; st_pool = ""; st_id = ""
-	if web: JavaScriptBridge.eval("window.__ww3m&&window.__ww3m.stop(0.8)")
+	if _web_au: JavaScriptBridge.eval("window.WW3Audio.stopMusic(0.8)", true)
+	elif web: JavaScriptBridge.eval("window.__ww3m&&window.__ww3m.stop(0.8)")
 	for d in _decks:
 		if d.on: d.on = false; d.to = 0.0; d.rate = maxf(d.g, 0.01) / 0.8
 
@@ -884,7 +999,8 @@ func _st_tick() -> void:
 	heat = maxf(0.0, heat - 0.006)
 	if st_mode == "": return
 	if not _music_on():
-		if web: JavaScriptBridge.eval("window.__ww3m&&window.__ww3m.stop(0.3)")
+		if _web_au: JavaScriptBridge.eval("window.WW3Audio.stopMusic(0.3)", true)
+		elif web: JavaScriptBridge.eval("window.__ww3m&&window.__ww3m.stop(0.3)")
 		for d in _decks:
 			if d.on: d.on = false; d.to = 0.0; d.rate = maxf(d.g, 0.01) / 0.3
 		st_id = ""; return
@@ -896,7 +1012,7 @@ func _st_tick() -> void:
 		if want != st_pool and now() - _st_since >= float(ST_DWELL[st_pool]):
 			_st_play(want); return
 	if web:
-		var r = JavaScriptBridge.eval("window.__ww3m?window.__ww3m.left():-1")
+		var r = JavaScriptBridge.eval("window.WW3Audio?window.WW3Audio.musicLeft():(window.__ww3m?window.__ww3m.left():-1)", true)
 		if r != null and float(r) >= 0.0 and float(r) < ST_FADE + 0.25: _st_next(st_pool)
 		return
 	if _st_cur < 0: return
@@ -926,10 +1042,18 @@ left:function(){if(cur<0)return -1;var a=D[cur];if(a.paused&&to[cur]>0){var p=a.
 id:function(){return cur<0?'':D[cur].src;}};})();""", true)
 
 func _web_play(id: String, fade: float) -> void:
+	if _web_au:
+		JavaScriptBridge.eval("window.WW3Audio.playMusic(%s,%f)" % [JSON.stringify("mus/st/" + id + ".mp3"), fade], true)
+		return
 	var b: String = _base_ok if _base_ok.begins_with("http") else str(_bases()[0])
 	JavaScriptBridge.eval("window.__ww3m.play(%s,%f)" % [JSON.stringify(b + "mus/st/" + id + ".mp3"), fade])
 
 func _web_vol() -> void:
+	if _web_au:
+		JavaScriptBridge.eval("window.WW3Audio.setVol(%f,%f,%f,%f,%f,%f,%f)" % [
+			float(vol.master) / 100.0, float(vol.music) / 100.0, float(vol.voices) / 100.0,
+			float(vol.effects) / 100.0, float(vol.announcer) / 100.0, _mus_k, _sfx_k], true)
+		return
 	JavaScriptBridge.eval("window.__ww3m&&window.__ww3m.vol(%f)" % clampf(_mus_base() * _mus_k * ST_GAIN * 0.68 * float(vol.master) / 100.0, 0.0, 1.0))
 
 # ------------------------------------------------------------------------------------------------ the battle
@@ -952,6 +1076,7 @@ func battle_end(won: bool) -> void:
 
 func battle_leave() -> void:
 	_sim = null; _over = false
+	if _web_au: JavaScriptBridge.eval("window.WW3Audio.stopLoops()", true)
 	for k in _loops.keys(): _loops[k].p.stop()
 
 ## Called once per sim tick. Reads the sim (never writes) and raises the same sound events the JS sim logs / FXEs:
@@ -1132,6 +1257,9 @@ func _env() -> void:
 	_loop("rumble", (0.05 + minf(0.45, heat * 0.45)) * 0.5 if on else 0.0)
 
 func _loop(k: String, g: float) -> void:
+	if _web_au:
+		JavaScriptBridge.eval("window.WW3Audio.setLoop(%s,%s,%f)" % [JSON.stringify(k), JSON.stringify("sfx/%s.mp3" % k), g], true)
+		return
 	var L = _loops.get(k)
 	if L == null:
 		if g < 0.01: return
@@ -1150,6 +1278,14 @@ func _loop(k: String, g: float) -> void:
 ## fire too far to hear directly comes back as muffled far-off thumps (JS ambTick "distant fire")
 func _far() -> void:
 	if far_h <= 0.05 or not _sfx_on(): far_h = 0.0; return
+	if _web_au:
+		if _web_has("sfx/sfx.mp3") and _rng.randf() < minf(0.9, far_h * 0.25):
+			var L: Array = T.sfx.clips.boomS
+			var cl: Array = L[_rng.randi() % L.size()]
+			if _web_slice("sfx/sfx.mp3", float(cl[0]), float(cl[1]), 0.1 + 0.02 * minf(far_h, 5.0), 0.62, _rng.randf_range(-0.6, 0.6), "SfxFar"):
+				_note("sfx", "far")
+		far_h = maxf(0.0, far_h * 0.6 - 0.1)
+		return
 	var st = _streams.get("sfx/sfx.mp3")
 	if st is AudioStream and _rng.randf() < minf(0.9, far_h * 0.25):
 		var i := _free_sfx()
@@ -1175,6 +1311,11 @@ func _input(ev: InputEvent) -> void:
 
 func _process(dt: float) -> void:
 	_clk += dt
+	if _web_au and not unlocked:
+		if bool(JavaScriptBridge.eval("window.WW3Audio.isUnlocked()", true)):
+			unlocked = true
+			_note("unlock", "dom gesture")
+			_st_t = 1.0
 	_stop_slices()
 	_run_queue()
 	var t := now()

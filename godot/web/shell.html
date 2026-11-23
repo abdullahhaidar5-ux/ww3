@@ -2,37 +2,173 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#070b0d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>$GODOT_PROJECT_NAME</title>
 <style>
-html,body,#canvas{margin:0;padding:0;border:0}
-body{color:#fff;background:#0b0f0c;overflow:hidden;touch-action:none}
+*{box-sizing:border-box}
+html,body,#canvas{margin:0;padding:0;border:0;width:100%;height:100%}
+body{color:#ece9df;background:#070b0d;overflow:hidden;touch-action:none;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
 #canvas{display:block}#canvas:focus{outline:none}
-#status{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;font:16px system-ui,sans-serif;background:#0b0f0c}
-#status progress{width:320px;height:8px;margin-top:14px}
-#status-notice{max-width:80%;white-space:pre-wrap;text-align:center}
+#status{position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:42px 32px 36px;background:#06090b;transition:opacity .7s ease;overflow:hidden}
+#status.fade{opacity:0;pointer-events:none}
+#bg-art{position:absolute;inset:-4%;background:radial-gradient(ellipse at 50% 42%,rgba(28,44,54,.35),rgba(5,8,10,.95) 75%),url('menu-world.webp') center/cover no-repeat;filter:brightness(.55) contrast(1.08) saturate(1.1);animation:ken 24s ease-in-out infinite alternate;z-index:0}
+@keyframes ken{0%{transform:scale(1.0)}100%{transform:scale(1.08)}}
+#bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(184,146,58,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(184,146,58,.035) 1px,transparent 1px);background-size:64px 64px;z-index:1;pointer-events:none}
+#bg-vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(0,0,0,.18) 20%,rgba(4,7,9,.92) 92%);z-index:2;pointer-events:none}
+.topbar,.mid,.bot{position:relative;z-index:5;width:100%;max-width:980px;text-align:center}
+.topbar{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(184,146,58,.28);padding-bottom:12px;letter-spacing:.22em;font-size:11px;color:#8aa2ac;text-transform:uppercase}
+.brand-kicker{color:#d4ab48;font-weight:700}
+.title-wrap{margin-top:18px}
+.title-main{font-size:clamp(42px,6.4vw,80px);font-weight:900;letter-spacing:.10em;line-height:.98;text-transform:uppercase;color:#f3efe4;text-shadow:0 6px 28px rgba(0,0,0,.85)}
+.title-main span{color:#e6bc52;text-shadow:0 0 32px rgba(230,188,82,.35)}
+.title-sub{margin-top:10px;font-size:13px;letter-spacing:.34em;color:#9bb2bc;text-transform:uppercase}
+.rule{width:180px;height:2px;margin:22px auto 26px;background:linear-gradient(90deg,transparent,#d4ab48,transparent)}
+.quote-box{min-height:142px;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:18px 28px;background:linear-gradient(180deg,rgba(9,16,20,.68),rgba(6,11,14,.80));border:1px solid rgba(184,146,58,.28);border-left:3px solid #d4ab48;border-right:3px solid #d4ab48;box-shadow:0 16px 48px rgba(0,0,0,.55);transition:opacity .45s ease}
+.quote-box.swap{opacity:0}
+.q-fac{font-size:11px;font-weight:700;letter-spacing:.26em;color:#58b8d4;text-transform:uppercase;margin-bottom:8px}
+.q-orig{font-size:19px;color:rgba(230,196,110,.88);margin-bottom:6px;line-height:1.4}
+.q-text{font-size:clamp(18px,2.2vw,25px);font-weight:600;color:#f2eee2;line-height:1.38;max-width:820px;font-style:italic}
+.q-by{margin-top:10px;font-size:13px;letter-spacing:.12em;color:#d8b14c;text-transform:uppercase}
+.bot{max-width:720px}
+.bar-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+#status-notice{color:#c9d9e0;font-weight:600}
+#status-pct{color:#e6bc52;font-weight:800;font-variant-numeric:tabular-nums}
+.bar-track{position:relative;width:100%;height:10px;background:rgba(10,18,24,.92);border:1px solid rgba(108,144,160,.45);border-radius:2px;overflow:hidden;box-shadow:inset 0 2px 6px rgba(0,0,0,.7)}
+#bar-fill{position:absolute;left:0;top:0;bottom:0;width:4%;background:linear-gradient(90deg,#9c7520,#e6bc52 65%,#fff0b8);box-shadow:0 0 18px rgba(230,188,82,.55);transition:width .18s ease-out}
+.tip-row{margin-top:14px;font-size:12px;letter-spacing:.08em;color:#869ba4}
+.tip-row b{color:#58b8d4;margin-right:8px}
+#rotate-hint{display:none;position:fixed;inset:0;z-index:1200;background:rgba(5,9,12,.94);flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px;gap:14px}
+#rotate-hint h2{margin:0;font-size:24px;letter-spacing:.12em;color:#e6bc52;text-transform:uppercase}
+#rotate-hint p{margin:0;max-width:320px;color:#b8c9d0;font-size:14px;line-height:1.45}
+#rotate-hint button{margin-top:8px;padding:10px 22px;background:#162832;border:1px solid #d4ab48;color:#f4e6be;font-weight:700;letter-spacing:.12em;text-transform:uppercase;border-radius:3px}
+@media (orientation:portrait) and (max-width:740px){#rotate-hint:not(.off){display:flex}}
 </style>
 $GODOT_HEAD_INCLUDE
 </head>
 <body>
 <canvas id="canvas">Your browser does not support the canvas tag.</canvas>
+<div id="rotate-hint"><h2>Rotate to Landscape</h2><p>World War 3 is best commanded in widescreen landscape mode with touch pan, pinch-zoom, and 1-tap orders.</p><button onclick="this.parentNode.classList.add('off')">Continue Anyway</button></div>
 <noscript>This game needs JavaScript.</noscript>
-<div id="status"><div id="status-notice">Loading World War 3...</div><progress id="status-progress" value="0" max="1"></progress></div>
-<!-- the battle simulation (the browser game's own rules + AI); must load before the engine: godot/bridge/README.md -->
+<div id="status">
+	<div id="bg-art"></div>
+	<div id="bg-grid"></div>
+	<div id="bg-vig"></div>
+	<div class="topbar">
+		<span class="brand-kicker">THEATER COMMAND // LIVE DEPLOYMENT</span>
+		<span>22 NATIONS · 35 BATTLEFIELDS · REAL-TIME LOGISTICS</span>
+	</div>
+	<div class="mid">
+		<div class="title-wrap">
+			<div class="title-main">WORLD WAR <span>3</span></div>
+			<div class="title-sub">Modern Warfare Real-Time Strategy</div>
+		</div>
+		<div class="rule"></div>
+		<div class="quote-box" id="qbox">
+			<div class="q-fac" id="q-fac"></div>
+			<div class="q-orig" id="q-orig"></div>
+			<div class="q-text" id="q-text"></div>
+			<div class="q-by" id="q-by"></div>
+		</div>
+	</div>
+	<div class="bot">
+		<div class="bar-head">
+			<div id="status-notice">INITIALIZING THEATER ENGINE...</div>
+			<div id="status-pct">0%</div>
+		</div>
+		<div class="bar-track"><div id="bar-fill"></div></div>
+		<div class="tip-row"><b>TACTICAL BRIEF</b><span id="tip-txt">Hold your supply lines — an armored column without ammunition grinds to a halt.</span></div>
+	</div>
+</div>
+<!-- Battle simulation + AAA WebAudio engine (loaded before Godot so audio unlocks synchronously on first click) -->
 <script src="ww3sim.js"></script>
 <script src="ww3bridge.js"></script>
+<script src="ww3audio.js"></script>
 <script src="$GODOT_URL"></script>
 <script>
 const GODOT_CONFIG = $GODOT_CONFIG;
 const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
 (function () {
-	const st = document.getElementById('status'), pr = document.getElementById('status-progress'), nt = document.getElementById('status-notice');
-	const fail = e => { const m = e && e.message ? e.message : String(e); nt.textContent = 'Could not start: ' + m; pr.style.display = 'none'; console.error(e); };
+	const QUOTES = [
+		{ fac: 'IRAN', orig: 'هيهات منا الذلة', text: 'Humiliation is far from us!', by: 'Imam Hussein ibn Ali, Karbala, 680' },
+		{ fac: 'HEZBOLLAH', orig: 'فكِدْ كيدك، واسعَ سعيك، فوالله لا تمحو ذكرنا', text: 'Plot your plots, strive your utmost: by God, you will never erase our remembrance.', by: 'Sayyida Zaynab bint Ali, Damascus, 680' },
+		{ fac: 'ANSARALLAH', orig: 'فَوَاللَّهِ مَا غُزِيَ قَوْمٌ قَطُّ فِي عُقْرِ دَارِهِمْ إِلَّا ذَلُّوا', text: 'By God, never was a people attacked in the heart of their homes but they were humiliated.', by: 'Imam Ali ibn Abi Talib, Nahj al-Balagha' },
+		{ fac: 'KATAIB HEZBOLLAH', orig: 'تزول الجبال ولا تزل، أعر الله جمجمتك، تِد في الأرض قدمك', text: 'The mountains may move, but do not you move. Plant your feet firmly in the earth.', by: 'Imam Ali ibn Abi Talib, Nahj al-Balagha' },
+		{ fac: 'UNITED STATES', orig: '', text: 'A good plan violently executed now is better than a perfect plan executed next week.', by: 'Gen. George S. Patton' },
+		{ fac: 'RUSSIA', orig: 'Тяжело в ученье — легко в походе.', text: 'Hard in training, easy on the march.', by: 'Field Marshal Alexander Suvorov' },
+		{ fac: 'CHINA', orig: '其疾如风，其徐如林，侵掠如火，不动如山', text: 'Swift as the wind, silent as the forest, fierce as fire, immovable as the mountain.', by: 'Sun Tzu, The Art of War' },
+		{ fac: 'TURKEY', orig: 'Hatt-ı müdafaa yoktur, sath-ı müdafaa vardır.', text: 'There is no line of defense, there is a surface of defense. That surface is the whole homeland.', by: 'Mustafa Kemal Atatürk, 1921' },
+		{ fac: 'PAKISTAN', orig: 'تو شاہیں ہے، پرواز ہے کام تیرا', text: 'You are a falcon: flight is your calling. There are other skies before you.', by: 'Allama Muhammad Iqbal, 1935' },
+		{ fac: 'UNITED KINGDOM', orig: '', text: 'We shall fight on the beaches, we shall fight on the landing grounds... we shall never surrender.', by: 'Winston Churchill, 1940' },
+		{ fac: 'GERMANY', orig: '', text: 'Everything in war is very simple, but the simplest thing is difficult.', by: 'Carl von Clausewitz, On War' },
+		{ fac: 'ISRAEL', orig: 'שֵׁנִית מְצָדָה לֹא תִּפֹּל', text: 'Masada shall not fall again.', by: 'Yitzhak Lamdan, 1927' }
+	];
+	const TIPS = [
+		'Hold your supply lines — units refill ammunition inside your supply area.',
+		'Flank heavy armor: side and rear armor are far thinner than the glacis.',
+		'Garrison buildings and dig in (I) to cut incoming rifle and shell fire dramatically.',
+		'Right-click issues move and attack orders; left-click deploys buildings and rally points.',
+		'Hold Q + drag (or tap Q) to rotate the battlefield camera; Home returns north-up.'
+	];
+	const STAGES = ['INITIALIZING THEATER ENGINE', 'LOADING 3D ARMOR & TERRAIN PACK', 'MOUNTING SIMULATION & LOGISTICS', 'ESTABLISHING COMMAND LINK'];
+	const st = document.getElementById('status'), fill = document.getElementById('bar-fill'), pct = document.getElementById('status-pct'), nt = document.getElementById('status-notice');
+	const qbox = document.getElementById('qbox'), qf = document.getElementById('q-fac'), qo = document.getElementById('q-orig'), qt = document.getElementById('q-text'), qb = document.getElementById('q-by');
+	document.getElementById('tip-txt').textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+	let qi = Math.floor(Math.random() * QUOTES.length);
+	function showQ(i) {
+		const q = QUOTES[i % QUOTES.length];
+		qf.textContent = q.fac + '  //  COMMAND DOSSIER';
+		qo.textContent = q.orig || '';
+		qo.style.display = q.orig ? 'block' : 'none';
+		qt.textContent = '\u201C' + q.text + '\u201D';
+		qb.textContent = '\u2014 ' + q.by;
+	}
+	showQ(qi);
+	const qTimer = setInterval(() => {
+		qbox.classList.add('swap');
+		setTimeout(() => { qi = (qi + 1) % QUOTES.length; showQ(qi); qbox.classList.remove('swap'); }, 450);
+	}, 5200);
+
+	let dismissed = false;
+	window.__ww3HideBoot = function () {
+		if (dismissed) return;
+		dismissed = true;
+		clearInterval(qTimer);
+		fill.style.width = '100%'; pct.textContent = '100%'; nt.textContent = 'COMMAND LINK ACTIVE';
+		st.classList.add('fade');
+		setTimeout(() => { st.style.display = 'none'; }, 750);
+	};
+
+	const fail = e => {
+		clearInterval(qTimer);
+		const m = e && e.message ? e.message : String(e);
+		nt.textContent = 'DEPLOYMENT ERROR: ' + m;
+		pct.textContent = 'ERR';
+		console.error(e);
+	};
 	if (!window.WW3) return fail('ww3sim.js did not load');
 	const miss = Engine.getMissingFeatures({ threads: GODOT_THREADS_ENABLED });
 	if (miss.length) return fail('This browser lacks: ' + miss.join(', '));
-	engine.startGame({ onProgress: (c, t) => { if (t > 0) pr.value = c / t; } }).then(() => { st.style.display = 'none'; }, fail);
+	engine.startGame({
+		onProgress: (c, t) => {
+			if (t > 0) {
+				const f = Math.max(0.04, Math.min(0.98, c / t));
+				fill.style.width = (f * 100).toFixed(1) + '%';
+				pct.textContent = Math.round(f * 100) + '%';
+				nt.textContent = STAGES[Math.min(STAGES.length - 1, Math.floor(f * STAGES.length))] + '...';
+			}
+		}
+	}).then(() => {
+		fill.style.width = '99%'; pct.textContent = '99%'; nt.textContent = 'ENTERING COMMAND CENTER...';
+		// Fallback dismiss in case scene callback fires before or without JS bridge
+		setTimeout(() => { window.__ww3HideBoot(); }, 1800);
+	}, fail);
 }());
 </script>
 </body>

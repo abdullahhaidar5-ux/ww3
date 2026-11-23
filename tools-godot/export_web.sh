@@ -10,4 +10,6 @@ mkdir -p "$OUT"
 node "$ROOT/tools-godot/build_bridge.mjs"
 "$GODOT" --headless --path "$ROOT/godot" --export-release Web "$OUT/index.html" 2>&1 | grep -v "^$" | tail -${EXPORT_LOG_LINES:-15}
 cp "$ROOT/godot/web/ww3sim.js" "$ROOT/godot/web/ww3bridge.js" "$OUT/"
+[ -f "$ROOT/godot/web/ww3audio.js" ] && cp "$ROOT/godot/web/ww3audio.js" "$OUT/" || true
+[ -f "$ROOT/godot/ui/menu-world.webp" ] && cp "$ROOT/godot/ui/menu-world.webp" "$OUT/" || true
 ls -la "$OUT" | tail -12

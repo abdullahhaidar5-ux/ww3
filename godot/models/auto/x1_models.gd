@@ -92,17 +92,37 @@ static func painted(file: String, pal) -> Mesh:
 	_painted[key] = out
 	return out
 
-const BAD_TEX := ["3c2e377f5259", "2ef43cfa2455"]   # corrupted black-gutter T-72 textures -> use clean nation paint colour
+const BAD_TEX := ["3c2e377f5259", "2ef43cfa2455"]   # corrupted black-gutter T-72 textures -> replace with real military armor camo + nation paint
+
+# Authentic per-nation rolled-armor paint (sRGB) for T-72/Karrar/Type-96 hulls when BAD_TEX strips the broken GLB map
+const ARMOR_PAINT := {
+	"IR": Color(0.56, 0.53, 0.36),   # IRGC Karrar / T-72S arid olive-ochre
+	"RS": Color(0.45, 0.44, 0.33),   # Lebanese mountain olive-drab
+	"DW": Color(0.62, 0.53, 0.39),   # Yemeni highland sandstone tan
+	"RV": Color(0.58, 0.52, 0.37),   # Iraqi desert olive-khaki
+	"OB": Color(0.42, 0.44, 0.34),   # Urban olive-slate
+	"CN": Color(0.44, 0.50, 0.43),   # PLA digital sage-green
+	"PK": Color(0.55, 0.52, 0.38),   # Al-Khalid arid khaki-olive
+	"RU": Color(0.39, 0.44, 0.34),   # Russian protective dark green
+}
+
+static var _armor_alb: Texture2D = null
+static var _armor_nrm: Texture2D = null
+static func _load_armor_tex() -> void:
+	if _armor_alb == null and ResourceLoader.exists("res://tex/armor_camo.png"):
+		_armor_alb = load("res://tex/armor_camo.png")
+	if _armor_nrm == null and ResourceLoader.exists("res://tex/armor_nrm.png"):
+		_armor_nrm = load("res://tex/armor_nrm.png")
 
 ## a material for one painted surface: texture from the shape file, everything else from the manifest
-static func material(src: Material, m: Dictionary, vertex_colours: bool) -> StandardMaterial3D:
-	var key := str(src.get_instance_id() if src != null else 0) + JSON.stringify(m) + str(vertex_colours)
+static func material(src: Material, m: Dictionary, vertex_colours: bool, nation: String = "") -> StandardMaterial3D:
+	var key := str(src.get_instance_id() if src != null else 0) + JSON.stringify(m) + str(vertex_colours) + "|" + nation
 	if _mats.has(key): return _mats[key]
 	var mat := StandardMaterial3D.new()
+	var drop_tex := false
 	if src is BaseMaterial3D:
 		var b := src as BaseMaterial3D
 		var tp := b.albedo_texture.resource_path if b.albedo_texture != null else ""
-		var drop_tex := false
 		for bad in BAD_TEX:
 			if tp.contains(bad): drop_tex = true; break
 		if not drop_tex:
@@ -114,13 +134,35 @@ static func material(src: Material, m: Dictionary, vertex_colours: bool) -> Stan
 		mat.texture_filter = b.texture_filter
 		mat.uv1_scale = b.uv1_scale
 		mat.uv1_offset = b.uv1_offset
-	var col := lin(m.get("c", [1, 1, 1]))
+	var c_arr = m.get("c", [1, 1, 1])
+	var has_tex := mat.albedo_texture != null
+	# Clamp Three.js over-1.0 linear color multipliers so highlights never clip into blinding white under Godot ACES
+	var cap := 1.12 if has_tex else 0.92
+	var col := Color(minf(float(c_arr[0]), cap), minf(float(c_arr[1]), cap), minf(float(c_arr[2]), cap)).linear_to_srgb()
+	if drop_tex:
+		_load_armor_tex()
+		if _armor_alb != null:
+			mat.albedo_texture = _armor_alb
+			mat.uv1_scale = Vector3(2.2, 2.2, 1.0)
+			mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+		if _armor_nrm != null:
+			mat.normal_enabled = true
+			mat.normal_texture = _armor_nrm
+			mat.normal_scale = 0.65
+		col = ARMOR_PAINT.get(nation, Color(col.r * 0.62, col.g * 0.62, col.b * 0.58))
 	if m.has("a"):
 		col.a = float(m["a"])
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.albedo_color = col
-	mat.roughness = float(m.get("r", 0.8))
-	mat.metallic = float(m.get("mt", 0.0))
+	var r_val := float(m.get("r", 0.8))
+	var mt_val := float(m.get("mt", 0.0))
+	if drop_tex:
+		r_val = 0.64
+		mt_val = 0.28
+	elif String(m.get("look", "")) == "metal":
+		r_val = maxf(r_val, 0.52)   # painted military armor steel (never shiny chrome/plastic)
+	mat.roughness = r_val
+	mat.metallic = mt_val
 	if m.has("e"):
 		mat.emission_enabled = true
 		mat.emission = lin(m["e"])
@@ -173,7 +215,7 @@ static func _add_rigid(root: Node3D, e: Dictionary, nation: String = "") -> Dict
 		var p = inst.get("p", null)
 		for s in mesh.get_surface_count():
 			var md: Dictionary = mats[min(s, mats.size() - 1)] if mats.size() > 0 else {}
-			var mat := material(mesh.surface_get_material(s), md, _has_colours(mesh, s))
+			var mat := material(mesh.surface_get_material(s), md, _has_colours(mesh, s), nation)
 			if p != null and String(p) == "flag" and nation != "": mat = flag_material(mat, nation)
 			mi.set_surface_override_material(s, mat)
 		var host: Node3D = parts[p] if p != null and parts.has(p) else root
@@ -273,7 +315,7 @@ static func merged(nation: String, kind: String) -> Dictionary:
 		var mats: Array = inst.get("mat", [])
 		for s in mesh.get_surface_count():
 			var md: Dictionary = mats[min(s, mats.size() - 1)] if mats.size() > 0 else {}
-			var mat := material(mesh.surface_get_material(s), md, _has_colours(mesh, s))
+			var mat := material(mesh.surface_get_material(s), md, _has_colours(mesh, s), nation)
 			if p == "flag": mat = flag_material(mat, nation)
 			if not tools.has(p): tools[p] = {}
 			if not tools[p].has(mat):

@@ -8,6 +8,7 @@ extends Control
 
 const UI = preload("res://scripts/ui/ui_kit.gd")
 const Missions = preload("res://scripts/ui/missions.gd")
+const BattleIntro = preload("res://scripts/ui/battle_intro.gd")
 const COL_X := 1026.0 / 1536.0     # the column starts at 1026 of 1536, like the browser menu
 const TITLES := {"title": "", "single": "Play", "c-map": "Battle", "c-nation": "Battle", "c-players": "Battle", "c-opts": "Battle", "online": "Multiplayer",
 	"t-range": "Test range", "settings": "Settings", "extras": "Extras", "credits": "Credits", "load": "Load game", "missions": "Missions", "brief": "Missions",
@@ -71,6 +72,8 @@ func _ready() -> void:
 	if start == "c-map": stack = ["title", "single", start]; cur = start
 	elif start != "title": stack = ["title", start]; cur = start
 	_show(cur, 0)
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("window.__ww3HideBoot&&window.__ww3HideBoot()", true)
 	print("MENU ready")   # ORCH: tools-godot/check.sh waits for this line
 
 # ---------------------------------------------------------------- frame: picture, column, breadcrumb, Back, footer
@@ -615,13 +618,31 @@ func start_battle() -> void:
 func _launch(l: Dictionary) -> void:
 	UI.launch = l
 	var scene := "res://scenes/main.tscn" if l.get("kind") == "range_old" else "res://scenes/battle.tscn"
-	var fade := ColorRect.new()
-	fade.color = Color(0, 0, 0, 0)
-	fade.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(fade)
-	var tw := create_tween()
-	tw.tween_property(fade, "color:a", 1.0, 0.25)
-	tw.tween_callback(func(): get_tree().change_scene_to_file(scene))
+	if DisplayServer.get_name() != "headless" and shot_path == "":
+		var k := str(l.get("kind", "battle"))
+		var mf := str(l.get("fac", st.fac))
+		var ef := str(st.enemy)
+		var pls: Array = l.get("players", [])
+		if k == "mission":
+			var m := Missions.by_id(str(l.get("mission", "")))
+			if not m.is_empty(): pls = Missions.players_for(m)
+		for pl in pls:
+			if not bool(pl.get("ai", true)): mf = str(pl.fac); break
+		for pl in pls:
+			if str(pl.fac) != mf: ef = str(pl.fac); break
+		if k == "load" or k == "replay":
+			var f := UI.read_file(str(l.get("file", "")))
+			if not f.is_empty():
+				mf = str(f.get("fac", mf))
+				for pl in f.get("players", []):
+					if str(pl.fac) != mf: ef = str(pl.fac); break
+		var mk := str(l.get("map", st.map))
+		var mi: Dictionary = UI.map_info(mk)
+		var kl: String = {"range": "Test Range", "battle": "Skirmish", "mission": "Mission", "tutorial": "Training", "load": "Saved Battle", "replay": "Replay", "online": "Online Battle"}.get(k, "Battle")
+		BattleIntro.show_screen(get_tree(), mf, ef, mk, str(mi.get("name", "")), kl)
+		await get_tree().process_frame
+		await get_tree().process_frame
+	get_tree().change_scene_to_file(scene)
 
 # ---------------------------------------------------------------- Multiplayer (Battle only)
 func _s_online(vb: VBoxContainer) -> void:

@@ -87,11 +87,22 @@ static func apply_settings() -> void:
 		var cur := DisplayServer.window_get_mode()
 		if (cur == DisplayServer.WINDOW_MODE_FULLSCREEN) != (want == DisplayServer.WINDOW_MODE_FULLSCREEN): DisplayServer.window_set_mode(want)
 
-## mouse stays inside the window on PC during a battle (Esc releases it); browsers only allow full capture, so there
-## the game keeps the normal cursor
+static var _mobile_cached := -1
+static func is_mobile() -> bool:
+	if _mobile_cached >= 0: return _mobile_cached == 1
+	var m := OS.has_feature("web_android") or OS.has_feature("web_ios") or OS.has_feature("android") or OS.has_feature("ios")
+	if "--mobile" in OS.get_cmdline_user_args(): m = true
+	if not m and DisplayServer.get_name() != "headless" and DisplayServer.is_touchscreen_available(): m = true
+	if not m and OS.has_feature("web"):
+		var w := bool(JavaScriptBridge.eval("(function(){try{return location.search.indexOf('mobile')>=0 || (navigator.maxTouchPoints>0 && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent));}catch(e){return false;}})()", true))
+		if w: m = true
+	_mobile_cached = 1 if m else 0
+	return m
+
+## mouse stays inside the window on PC during a battle (Esc releases it); browsers/mobile keep the normal pointer
 static func lock_mouse(on: bool) -> void:
 	if DisplayServer.get_name() == "headless": return
-	if on and bool(opt("mouse_lock")) and not OS.has_feature("web"): Input.mouse_mode = Input.MOUSE_MODE_CONFINED
+	if on and bool(opt("mouse_lock")) and not OS.has_feature("web") and not is_mobile(): Input.mouse_mode = Input.MOUSE_MODE_CONFINED
 	else: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 # ---------------------------------------------------------------- data (nations + maps come from res://data/ui/*.json, fallback to res://data/rules.json + map_*.json)

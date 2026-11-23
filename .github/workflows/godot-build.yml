@@ -68,7 +68,7 @@ jobs:
           done
           test -s godot-build/web/index.wasm && test -s godot-build/web/index.pck && test -s godot-build/win/WorldWar3.exe && test -s godot-build/linux/WorldWar3.x86_64
           cp godot/web/ww3sim.js godot/web/ww3bridge.js godot-build/web/   # the web page loads these next to index.html (tools-godot/export_web.sh does the same)
-          for f in godot/web/ww3ui.js godot/web/ww3ui.css godot/web/ww3audio.js; do [ -f $f ] && cp $f godot-build/web/ || true; done
+          for f in godot/web/ww3ui.js godot/web/ww3ui.css godot/web/ww3audio.js godot/ui/menu-world.webp; do [ -f $f ] && cp $f godot-build/web/ || true; done
           (cd godot-build/win && zip -q -9 ../web/WorldWar3-windows.zip WorldWar3.exe)
           ls -l godot-build/web
           # GitHub Pages / git: no file over 95 MB; keep the .pck small (the wasm is ~42 MB on its own)

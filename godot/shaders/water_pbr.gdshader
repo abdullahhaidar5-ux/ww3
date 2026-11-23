@@ -1,13 +1,15 @@
-// Milestone 3 Stream 1: Animated reflective PBR water shader (WebGL2 Compatibility safe, zero texture lookups).
-// Dual-scrolling analytical wave ripple normals, Fresnel sky-horizon reflection, crisp sun specular glints,
-// and subtle animated shoreline foam shimmer on shallow ford cells (COLOR.a < 0.75).
+// $75 AAA Animated Reflective PBR Water Shader (WebGL2 Compatibility safe).
+// Features: multi-directional capillary wave harmonics, crisp Fresnel sky reflections, sunlit specular sparkle,
+// deep-to-shallow bathymetry tint, and organic shoreline/ford foam lace.
 shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_disabled, diffuse_burley, specular_schlick_ggx;
 
-uniform vec3 sky_horizon : source_color = vec3(0.86, 0.78, 0.64);
-uniform float wave_speed = 1.0;
-uniform float wave_scale = 0.055;
-uniform float ripple_strength = 0.24;
+uniform vec3 sky_horizon : source_color = vec3(0.86, 0.82, 0.72);
+uniform vec3 deep_color : source_color = vec3(0.05, 0.16, 0.24);
+uniform vec3 shallow_color : source_color = vec3(0.16, 0.34, 0.36);
+uniform float wave_speed = 0.95;
+uniform float wave_scale = 0.052;
+uniform float ripple_strength = 0.22;
 
 varying vec3 v_wpos;
 
@@ -19,46 +21,53 @@ void fragment() {
 	vec2 p = v_wpos.xz * wave_scale;
 	float t = TIME * wave_speed;
 
-	// Dual scrolling procedural wave harmonics with analytical partial derivatives
-	vec2 p1 = p + vec2(t * 0.72, t * 0.41);
-	float ph1a = p1.x * 1.30 + p1.y * 0.70;
-	float ph1b = p1.x * 2.10 - p1.y * 1.40 + t * 0.50;
-	float d1x = cos(ph1a) * 1.30 + cos(ph1b) * 0.85;
-	float d1z = cos(ph1a) * 0.70 - cos(ph1b) * 0.55;
+	// Triple-layer scrolling wave harmonics for organic ripples without visible grid patterns
+	vec2 p1 = p + vec2(t * 0.65, t * 0.38);
+	float ph1a = p1.x * 1.25 + p1.y * 0.72;
+	float ph1b = p1.x * 2.05 - p1.y * 1.35 + t * 0.45;
+	float d1x = cos(ph1a) * 1.25 + cos(ph1b) * 0.80;
+	float d1z = cos(ph1a) * 0.72 - cos(ph1b) * 0.52;
 
-	vec2 p2 = p * 2.35 + vec2(-t * 0.58, t * 0.83);
-	float ph2a = p2.x * 1.70 - p2.y * 1.10;
-	float ph2b = p2.x * 2.90 + p2.y * 2.20 - t * 0.90;
-	float d2x = cos(ph2a) * 0.75 + cos(ph2b) * 0.45;
-	float d2z = -cos(ph2a) * 0.50 + cos(ph2b) * 0.35;
+	vec2 p2 = p * 2.25 + vec2(-t * 0.52, t * 0.78);
+	float ph2a = p2.x * 1.65 - p2.y * 1.15;
+	float ph2b = p2.x * 2.85 + p2.y * 2.15 - t * 0.85;
+	float d2x = cos(ph2a) * 0.72 + cos(ph2b) * 0.42;
+	float d2z = -cos(ph2a) * 0.48 + cos(ph2b) * 0.34;
 
-	float nx = (d1x * 0.55 + d2x * 0.45) * ripple_strength;
-	float nz = (d1z * 0.55 + d2z * 0.45) * ripple_strength;
+	vec2 p3 = p * 4.6 + vec2(t * 0.9, -t * 0.65);
+	float ph3 = p3.x * 1.4 + p3.y * 1.9;
+	float d3x = cos(ph3) * 0.26;
+	float d3z = cos(ph3) * 0.26;
+
+	float nx = (d1x * 0.48 + d2x * 0.38 + d3x * 0.14) * ripple_strength;
+	float nz = (d1z * 0.48 + d2z * 0.38 + d3z * 0.14) * ripple_strength;
 	vec3 w_nrm = normalize(vec3(-nx, 1.0, -nz));
 	vec3 v_nrm = normalize((VIEW_MATRIX * vec4(w_nrm, 0.0)).xyz);
 
-	// Fresnel rim reflection blending water depth tint toward warm sky horizon at grazing angles
 	float ndotv = clamp(dot(v_nrm, normalize(VIEW)), 0.0, 1.0);
-	float fresnel = pow(max(1.0 - ndotv, 0.0001), 3.2);
-	float refl = clamp(0.08 + fresnel * 0.78, 0.0, 0.88);
+	float fresnel = pow(max(1.0 - ndotv, 0.0001), 3.6);
+	float refl = clamp(0.10 + fresnel * 0.82, 0.0, 0.90);
 
-	float wave_h = sin(ph1a) * 0.5 + sin(ph2a) * 0.5;
-	vec3 base_water = COLOR.rgb * (1.0 + wave_h * 0.08);
-	vec3 col = mix(base_water, sky_horizon * 0.72, refl * 0.65);
+	float wave_h = sin(ph1a) * 0.45 + sin(ph2a) * 0.35 + sin(ph3) * 0.20;
+	float shallow_k = clamp((1.0 - COLOR.a) * 1.85, 0.0, 1.0);
+	vec3 water_tint = mix(deep_color, shallow_color, shallow_k);
+	water_tint *= (1.0 + wave_h * 0.09);
 
-	// Subtle animated shoreline foam shimmer on shallow ford cells (COLOR.a < 0.75)
+	vec3 col = mix(water_tint, sky_horizon * 0.78, refl * 0.68);
+
+	// Organic animated foam lace on shallow fords & wave crests
 	float foam = 0.0;
-	if (COLOR.a < 0.75) {
-		float ford_k = clamp((0.75 - COLOR.a) / 0.25, 0.35, 1.0);
-		float foam_pat = sin(p.x * 3.1 + p.y * 2.4 + t * 2.1) * cos(p.x * 1.9 - p.y * 3.3 - t * 1.6);
-		float foam_crest = smoothstep(0.24, 0.82, foam_pat * 0.5 + 0.5 + wave_h * 0.28);
-		foam = ford_k * foam_crest * 0.42;
-		col = mix(col, vec3(0.76, 0.82, 0.85), foam);
+	if (COLOR.a < 0.78) {
+		float ford_k = clamp((0.78 - COLOR.a) / 0.28, 0.30, 1.0);
+		float lace = sin(p.x * 3.4 + p.y * 2.5 + t * 2.0) * cos(p.x * 2.1 - p.y * 3.5 - t * 1.5);
+		float crest = smoothstep(0.20, 0.80, lace * 0.5 + 0.5 + wave_h * 0.30);
+		foam = ford_k * crest * 0.48;
+		col = mix(col, vec3(0.84, 0.89, 0.92), foam);
 	}
 
 	NORMAL = v_nrm;
 	ALBEDO = col;
-	ROUGHNESS = mix(0.12, 0.42, foam);
-	METALLIC = mix(0.25, 0.04, foam);
-	SPECULAR = 0.75;
+	ROUGHNESS = mix(0.08, 0.40, foam);
+	METALLIC = mix(0.28, 0.04, foam);
+	SPECULAR = 0.82;
 }
