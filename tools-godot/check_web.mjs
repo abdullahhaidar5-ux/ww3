@@ -22,7 +22,9 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/jav
 const srv = http.createServer((rq, rs) => {
   let u = decodeURIComponent(rq.url.split('?')[0]);
   if (u === '/' || u === '/godot' || u === '/godot/') u = '/godot/index.html';
-  const f = u.startsWith('/godot/') ? path.join(BUILD, u.slice(7)) : path.join(ROOT, u);
+  let f = u.startsWith('/godot/') ? path.join(BUILD, u.slice(7)) : path.join(ROOT, u);
+  // on the live site index.html sits at the site root next to vo/ mus/ sfx/ models/ art/: serve those beside the build too
+  if (u.startsWith('/godot/') && !fs.existsSync(f) && /^\/godot\/(vo|mus|sfx|models|art)\//.test(u)) f = path.join(ROOT, u.slice(7));
   if (!f.startsWith(ROOT)) { rs.writeHead(403); rs.end(); return; }
   fs.readFile(f, (e, d) => { if (e) { rs.writeHead(404); rs.end(); return; } rs.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream', 'Cache-Control': 'no-store' }); rs.end(d); });
 });
