@@ -1011,6 +1011,59 @@ SPECIAL_TIP.tb2=u=>'Loiters a long time and hits vehicles from afar with light g
 /* IR has no Shahed launcher truck (Abdullah 2026-11-15 00:19); it has the Zolfaghar Missile Launcher in 01f-irbm.js */
 SPECIAL_TIP.fpvt=u=>'Short-range FPV drones that only attack vehicles. '+(u.amCap||8)+' drones, then resupply.';
 
+/* ---- UNIQUE GENERALS / RED ALERT SUPERWEAPONS & 22-NATION DOCTRINE PERKS (never modifies morale or faction hierarchy) ---- */
+const SUP_STYLE={
+  US:'beam',JP:'beam',KR:'beam',AE:'beam',
+  RU:'nuke',CN:'nuke',KP:'nuke',PK:'nuke',IN:'nuke',
+  IR:'scud',RS:'scud',DW:'scud',RV:'scud',OB:'scud',
+  GB:'storm',DE:'storm',FR:'storm',
+  IL:'carpet',TR:'carpet',UA:'carpet',SA:'carpet',EG:'carpet'
+};
+const SUP_SPEC={
+  US:{name:'Orbital Particle Cannon',charge:165,n:6,dmg:380,r:82,spread:115,style:'beam'},
+  JP:{name:'Helios Orbital Beam',charge:165,n:6,dmg:365,r:80,spread:110,style:'beam'},
+  KR:{name:'Aegis Ion Lance',charge:160,n:6,dmg:370,r:80,spread:110,style:'beam'},
+  AE:{name:'Solar Thermal Lance',charge:160,n:6,dmg:365,r:80,spread:110,style:'beam'},
+  RU:{name:'Sarmat Nuclear ICBM',charge:190,n:1,dmg:1080,r:205,spread:0,style:'nuke'},
+  CN:{name:'DF-41 Nuclear Missile',charge:190,n:1,dmg:1120,r:210,spread:0,style:'nuke'},
+  KP:{name:'Hwasong Nuclear Strike',charge:205,n:1,dmg:1050,r:225,spread:0,style:'nuke'},
+  PK:{name:'Shaheen Nuclear Warhead',charge:185,n:1,dmg:1020,r:195,spread:0,style:'nuke'},
+  IN:{name:'Agni Thermonuclear Strike',charge:185,n:1,dmg:1040,r:200,spread:0,style:'nuke'},
+  IR:{name:'Kheibar / SCUD Storm',charge:150,n:12,dmg:340,r:78,spread:205,style:'scud'},
+  RS:{name:'Radwan Rocket Storm',charge:155,n:14,dmg:310,r:70,spread:225,style:'scud'},
+  DW:{name:'Toofan Ballistic Storm',charge:150,n:13,dmg:315,r:68,spread:220,style:'scud'},
+  RV:{name:'Quds Rocket Storm',charge:155,n:11,dmg:345,r:75,spread:195,style:'scud'},
+  OB:{name:'Saturation Rocket Storm',charge:155,n:12,dmg:325,r:72,spread:200,style:'scud'},
+  GB:{name:'Tempest Weather Storm',charge:170,n:9,dmg:340,r:82,spread:168,style:'storm'},
+  DE:{name:'Donner Lightning Storm',charge:170,n:9,dmg:350,r:82,spread:168,style:'storm'},
+  FR:{name:'Foudre Ion Storm',charge:165,n:9,dmg:340,r:80,spread:165,style:'storm'},
+  IL:{name:'Bunker-Buster Air Armada',charge:155,n:8,dmg:445,r:82,spread:180,style:'carpet'},
+  TR:{name:'Tayfun & Drone Armada',charge:155,n:8,dmg:420,r:80,spread:175,style:'carpet'},
+  UA:{name:'Neptune Strike Armada',charge:155,n:8,dmg:415,r:84,spread:175,style:'carpet'},
+  SA:{name:'Desert Storm Air Armada',charge:155,n:8,dmg:425,r:82,spread:180,style:'carpet'},
+  EG:{name:'Sinai Heavy Air Armada',charge:155,n:8,dmg:430,r:80,spread:180,style:'carpet'}
+};
+{
+  const patchU=(fk,uk,fn)=>{const F=FACTIONS[fk];if(!F)return;F.units=F.units||{};const base=Object.assign({},BASE[uk]||{},F.units[uk]||{});F.units[uk]=Object.assign({},F.units[uk]||{},fn(base));};
+  for(const k in SUP_SPEC){if(FACTIONS[k])FACTIONS[k].sup=Object.assign({},FACTIONS[k].sup||{},SUP_SPEC[k]);}
+  // Distinct Generals / Red Alert signature unit perks across all 22 playable nations (balanced with clear trade-offs)
+  patchU('US','tank',b=>({name:'M1A2 Abrams (Laser PD)',aps:9,cost:Math.round((b.cost||800)*1.06/25)*25}));
+  patchU('GB','tank',b=>({name:'Challenger 2 (Chobham)',chobham:1,hp:Math.round((b.hp||460)*1.14),spd:Math.round((b.spd||56)*0.93)}));
+  patchU('FR','tank',b=>({name:'Leclerc (Autoloader)',rof:+(Math.max(0.8,(b.rof||2.2)*0.84)).toFixed(2),spd:Math.round((b.spd||56)*1.12),hp:Math.round((b.hp||460)*0.94)}));
+  patchU('JP','tank',b=>({name:'Type 10 (Agile MBT)',spd:Math.round((b.spd||56)*1.18),rng:Math.round((b.rng||175)*1.10),hp:Math.round((b.hp||460)*0.92)}));
+  patchU('KR','arty',b=>({name:'K9 Thunder (Counter-Battery)',rng:Math.round((b.rng||360)*1.12),rof:+(Math.max(1.2,(b.rof||5.2)*0.88)).toFixed(2),cost:Math.round((b.cost||650)*1.06/25)*25}));
+  patchU('IN','arty',b=>({name:'BrahMos Supersonic Battery',dmg:Math.round((b.dmg||85)*1.14),splash:Math.round((b.splash||50)*1.16),cost:Math.round((b.cost||650)*1.08/25)*25}));
+  patchU('PK','tank',b=>({name:'Al-Khalid (Flanker)',spd:Math.round((b.spd||56)*1.12),rof:+(Math.max(0.8,(b.rof||2.2)*0.92)).toFixed(2)}));
+  patchU('RU','arty',b=>({name:'TOS-1A Solntsepek',splash:Math.round((b.splash||50)*1.28),dmg:Math.round((b.dmg||85)*1.14),rng:Math.round((b.rng||360)*0.90)}));
+  patchU('CN','tank',b=>({name:'Type 99A (Heavy Overlord)',hp:Math.round((b.hp||460)*1.09),spd:Math.round((b.spd||56)*0.94)}));
+  patchU('EG','tank',b=>({name:'M1A1 Nile Armor',cost:Math.round((b.cost||800)*0.90/25)*25,time:Math.max(5,Math.round((b.time||12)*0.88))}));
+  patchU('SA','jet',b=>({name:'F-15SA Heavy Strike',hp:Math.round((b.hp||240)*1.14),dmg:Math.round((b.dmg||90)*1.12)}));
+  patchU('AE','drone',b=>({name:'Precision Strike Drone',spd:Math.round((b.spd||115)*1.16),dmg:Math.round((b.dmg||120)*1.12)}));
+  patchU('DW','jeep',b=>({name:'Toofan Desert Raider',spd:Math.round((b.spd||92)*1.16),cost:Math.round((b.cost||300)*0.90/25)*25}));
+  patchU('RV','mortar',b=>({name:'Hashd Heavy Mortar',hp:Math.round((b.hp||90)*1.22),splash:Math.round((b.splash||34)*1.16)}));
+  patchU('OB','at',b=>({name:'Al-Yassin Ambush Team',dmg:Math.round((b.dmg||52)*1.15),hp:Math.round((b.hp||95)*1.14)}));
+}
+
 /* ===== src/01e-ob.js ===== */
 /* ---- OB "Hamas": a light urban resistance force (Abdullah 2026-11-15 00:20 "Palestinian units are not realistic" / "They have wrong unit types") ----
    Before this OB borrowed Egypt's army (tanks, jets, attack helicopters, frigate) and only renamed it. Now it has no regular-army heavy kit:
@@ -3180,23 +3233,67 @@ function swTick(T){if(T.reb||T.dummy||T.out)return;const nm=T.F.name,lg=(m,k)=>{
   if(T._upl&&!T._swA){T._swA=1;if(T.charge<T.sup.charge)lg(`${nm} Strike Center is online: ${T.sup.name} in ${Math.round((T.sup.charge-T.charge)/60*10)/10} min. Destroy it!`,'r:msl');}
   else if(!T._upl&&T._swA){T._swA=0;T._swR=0;lg(`${nm} Strike Center destroyed.`,'g');}
   if(T._upl&&T.charge>=T.sup.charge&&!T._swR){T._swR=1;lg(`${nm} ${T.sup.name} is READY to fire!`,'r:msl');}else if(T.charge<T.sup.charge)T._swR=0;}
-function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!working(team,'uplink'))return false;
-  if(G.battle){G.sid=(G.sid|0)+1;}   /* Battle: the Strike Center itself is the price ($5000, built late) and the ~6 min timer is the limit; the one-salvo building cap and missile defence below still apply */
+function _fireSuperStyle(team,x,y,styleOverride){const T=G.teams[team],S=T.sup;
+  const up=G.ents.find(e=>e.team===team&&e.kind==='uplink'&&!e.dead&&e.built>=1)||hqOf(team);
+  const sx=up?up.x:x-600,sy=up?up.y:y-600;
+  const sty=styleOverride||S.style||(typeof SUP_STYLE!=='undefined'&&SUP_STYLE[T.fac])||'scud';
   const sid=G.sid|0;
-  // missile nations: every missile visibly launches from the strike building and arcs through the sky onto its target
-  // (same timing, damage and warning as before - only the visuals changed)
-  const up=G.ents.find(e=>e.team===team&&e.kind==='uplink'&&!e.dead&&e.built>=1),sty=(UPLINK[T.fac]||[])[1],arc=up&&sty&&sty!=='air';
-  for(let i=0;i<S.n;i++){const a=rnd(0,6.28),r=S.n>1?rnd(0,S.spread):0,tx=x+Math.cos(a)*r,ty=y+Math.sin(a)*r,t=3+i*.28;G.strikes.push({x:tx,y:ty,t,r:S.r,dmg:S.dmg,team,kind:'sup'});FXE('strike',[tx|0,ty|0,+t.toFixed(2),S.r|0,1,arc?1:0]);
-    if(arc)FXE('bmis',[(up.x+rnd(-14,14))|0,(up.y+rnd(-14,14))|0,tx|0,ty|0,+t.toFixed(2),i]);}
+  FXE('sup',[sty,sx|0,sy|0,x|0,y|0,T.fac]);
+  if(sty==='beam'){
+    // Generals Orbital Particle Cannon: uninterceptable sweeping ionized laser path + short vehicle EMP
+    const a0=rnd(0,6.28),n=Math.max(5,S.n||6);
+    for(let i=0;i<n;i++){const u=i/Math.max(1,n-1),ang=a0+u*2.8,rr=(S.r||82)*0.48*Math.sin(u*Math.PI);
+      const tx=x+Math.cos(ang)*rr,ty=y+Math.sin(ang)*rr,t=1.4+i*0.48;
+      G.strikes.push({x:tx,y:ty,t,r:S.r||82,dmg:S.dmg||370,team,kind:'sup',sid,noIcpt:1,empT:3.5});
+      FXE('strike',[tx|0,ty|0,+t.toFixed(2),(S.r||82)|0,1,0]);}
+  }else if(sty==='nuke'){
+    // Generals China Nuclear ICBM: colossal single warhead + 14 s lingering radioactive fallout zone
+    const r=Math.max(185,S.r||205),dmg=Math.max(980,S.dmg||1080),t=2.8;
+    G.strikes.push({x,y,t,r,dmg,team,kind:'sup',sid,nuke:1});
+    FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,1,1]);
+    FXE('bmis',[sx|0,sy|0,x|0,y|0,+t.toFixed(2),0]);
+    for(let k=1;k<=7;k++){G.strikes.push({x,y,t:t+k*2.0,r:r*0.85,dmg:65,team,kind:'fallout',noIcpt:1,fallout:1});}
+  }else if(sty==='storm'){
+    // Red Alert 2 Weather Control Lightning Storm: uninterceptable supercell with 9 EMP lightning bolts
+    const n=Math.max(8,S.n||9),sp=Math.max(150,S.spread||168);
+    for(let i=0;i<n;i++){const a=rnd(0,6.28),rr=Math.sqrt(rnd(0,1))*sp,tx=x+Math.cos(a)*rr,ty=y+Math.sin(a)*rr,t=1.3+i*0.44;
+      G.strikes.push({x:tx,y:ty,t,r:S.r||82,dmg:S.dmg||345,team,kind:'sup',sid,noIcpt:1,empT:6.0});
+      FXE('strike',[tx|0,ty|0,+t.toFixed(2),(S.r||82)|0,1,0]);}
+  }else if(sty==='carpet'){
+    // Rolling Fuel-Air Bunker-Buster Carpet Bombing Armada along base-to-target vector
+    const a=Math.atan2(y-sy,x-sx),c=Math.cos(a),s=Math.sin(a),n=Math.max(7,S.n||8);
+    FXE('plane',[(x-c*1100)|0,(y-s*1100)|0,x|0,y|0,team]);
+    for(let i=0;i<n;i++){const d=-175+(350*i/Math.max(1,n-1)),tx=x+c*d+rnd(-18,18),ty=y+s*d+rnd(-18,18),t=1.5+i*0.20;
+      G.strikes.push({x:tx,y:ty,t,r:S.r||82,dmg:S.dmg||430,team,kind:'sup',sid,bldBonus:1.35});
+      FXE('strike',[tx|0,ty|0,+t.toFixed(2),(S.r||82)|0,1,0]);}
+  }else{
+    // Generals GLA SCUD Storm / Saturation Ballistic Barrage + lingering chemical/fuel-air hazard pockets
+    const n=Math.max(9,S.n||11),sp=Math.max(165,S.spread||205);
+    for(let i=0;i<n;i++){const a=rnd(0,6.28),rr=Math.sqrt(rnd(0,1))*sp,tx=x+Math.cos(a)*rr,ty=y+Math.sin(a)*rr,t=2.4+i*0.24;
+      G.strikes.push({x:tx,y:ty,t,r:S.r||74,dmg:S.dmg||325,team,kind:'sup',sid});
+      FXE('strike',[tx|0,ty|0,+t.toFixed(2),(S.r||74)|0,1,1]);
+      FXE('bmis',[(sx+rnd(-18,18))|0,(sy+rnd(-18,18))|0,tx|0,ty|0,+t.toFixed(2),i]);}
+    for(let k=1;k<=5;k++){G.strikes.push({x:x+rnd(-sp*0.5,sp*0.5),y:y+rnd(-sp*0.5,sp*0.5),t:4.5+k*1.8,r:95,dmg:48,team,kind:'fallout',noIcpt:1,fallout:1});}
+  }
+  return up;}
+function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!working(team,'uplink'))return false;
+  if(G.battle){G.sid=(G.sid|0)+1;}
+  const up=_fireSuperStyle(team,x,y,null);
   if(G.battle&&up)for(const O of G.teams)if(!O.reb&&!ally(O.id,team))O.reveals.push({x:up.x,y:up.y,r:170,t:45});   // the launch site is exposed on the enemy's map for 45 s
   T.charge=0;log(team,`${S.name} launched.`,'g');for(const O of G.teams)if(O.id!==team)log(O.id,`Warning: enemy ${S.name} inbound. Move your units!`,'r:msl',x,y);return true;}
 function addStrike(x,y,t,r,dmg,team,kind){G.strikes.push({x,y,t,r,dmg,team,kind});FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,kind==='sup'?1:0],team);}
 function updStrikes(dt){for(const s of G.strikes){s.t-=dt;if(s.t<=0){s.done=true;
-    if(G.battle&&(s.kind==='sup'||s.kind==='bm')){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<MD_R){md++;if(d<nd){nd=d;nb=e;}}}
+    if(s.fallout){
+      for(const e of G.ents){if(e.dead||e.isB||e.team===s.team||ally(e.team,s.team))continue;if(Math.hypot(e.x-s.x,e.y-s.y)<=s.r){const k=(e.s&&e.s.cls==='inf')?1.35:0.55;applyDmg(e,s.dmg*k,'shell',s.team,null);}}
+      continue;
+    }
+    if(G.battle&&!s.noIcpt&&(s.kind==='sup'||s.kind==='bm')){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<MD_R){md++;if(d<nd){nd=d;nb=e;}}}
       if(s.kind==='bm')for(const e of G.ents)if(!e.isB&&!e.dead&&e.s&&!ally(e.team,s.team)&&e.team>=0&&(e.kind==='idome'||(e.s.cls==='aa'&&e.s.wpn==='flak'&&e.s.aa>=2))){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<(e.kind==='idome'?MD_R:MD_R*.6)){md+=e.kind==='idome'?2:1;if(d<nd){nd=d;nb=e;}}}   /* Iron-Dome-type batteries count double, flak AA once */
       if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-MD_P,md))){if(nb)FXE('icpt',[nb.x|0,nb.y|0,s.x|0,s.y|0]);FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<MD_R))log(T.id,'Missile defense intercepted an incoming missile.','g');continue;}
       }
-    G.curSid=s.kind==='sup'?s.sid|0:0;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?'super':s.kind==='bb'?'bb':'shell',s.kind);G.curSid=0;}}G.strikes=G.strikes.filter(s=>!s.done);}
+    G.curSid=s.kind==='sup'?s.sid|0:0;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?(s.bldBonus?'bb':'super'):s.kind==='bb'?'bb':'shell',s.kind);G.curSid=0;
+    if(s.empT>0&&typeof koSet==='function'){for(const e of G.ents){if(e.dead||e.team===s.team||ally(e.team,s.team)||Math.hypot(e.x-s.x,e.y-s.y)>s.r*1.15)continue;if(e.isB||isVeh(e.s)||e.s.dom==='air')koSet(e,s.empT,'emp');}}
+  }}G.strikes=G.strikes.filter(s=>!s.done);}
 
 /* ---------- general's powers ---------- */
 function hqOf(team){return G.ents.find(e=>e.team===team&&e.kind==='hq'&&!e.dead)||G.ents.find(e=>e.team===team&&e.isB&&!e.dead);}
@@ -3622,7 +3719,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   if(T.ai.t%3===1){const hq0=mine.find(e=>e.isB&&e.kind==='hq');for(const d of mine){if(d.kind!=='dozer'||!d.order||d.order.type!=='build')continue;const b=d.order.target;if(!b||b.dead)continue;let foe=null,fd=1e9;for(const e of G.ents){if(e.dead||e.isB||e.team===id||ally(e.team,id)||e.team<0||!e.s||e.s.noAttack)continue;const q=Math.hypot(e.x-d.x,e.y-d.y);if(q<fd){fd=q;foe=e;}}
     if(foe&&fd<260&&hq0&&Math.hypot(hq0.x-d.x,hq0.y-d.y)>200){d.dzFlee=G.t+8;d.order={type:'move',x:hq0.x,y:hq0.y};d.path=null;continue;}
     let g=0;for(const u of mine){if(g>=3)break;if(u.isB||u.kind==='dozer'||u.kind==='harv'||u.kind==='hacker'||u.s.noAttack||u.s.dom!=='ground'||u.order||u.target)continue;if(Math.hypot(u.x-b.x,u.y-b.y)<700){g++;if(Math.hypot(u.x-b.x,u.y-b.y)>150)setMove(u,b.x+((u.id%5)-2)*30,b.y+((u.id%3)-1)*40,'amove');}}}}
-  let ORD=aiPers(T).ord?[...aiPers(T).ord,...AIORDER]:AIORDER;if(G.battle)ORD=[...ORD.filter(k=>k!=='uplink'),...(T.ai.d>=2?['uplink']:[])];   /* Battle: only Hard and Brutal build the late $5000 Strike Center, after everything else */
+  let ORD=aiPers(T).ord?[...aiPers(T).ord,...AIORDER]:AIORDER;if(G.battle){ORD=ORD.filter(k=>k!=='uplink');if(T.ai.d>=1&&G.t>330)ORD.splice(Math.min(7,ORD.length),0,'uplink');}   /* Battle: Medium/Hard/Brutal build their faction superweapon once mid-game is underway so Generals-style superweapon battles actually unfold */
   while(ORD[T.ai.bi]&&(!bldAllowed(T.fac,ORD[T.ai.bi])||ORD[T.ai.bi]==='shipyard'))T.ai.bi++;
   /* a side the AI takes over mid-battle (host left, 07b ckpt) starts its build list at 0: steps it already owns are done, not saved up for again (it used to hoard for a second Barracks and never trained anyone) */
   while(ORD[T.ai.bi]&&STRUCT[ORD[T.ai.bi]]){const k=ORD[T.ai.bi];let had=0,before=0;for(const e of mine)if(e.isB&&e.kind===k)had++;for(let i=0;i<T.ai.bi;i++)if(ORD[i]===k)before++;if(had<=before)break;T.ai.bi++;}
@@ -5087,7 +5184,8 @@ function aiModern(id,T,mine,en){if(G.t<240)return;
 {const _sm=specialMult;specialMult=function(e,wpn,src){let m=_sm(e,wpn,src);
   if(src&&src.s&&src.s.tunAmb&&src.ambT>G.t)m*=SIG.tunAmbK;                       // RS Kornet team: first shots out of a tunnel hit double
   const s=e.s;if(!e.isB&&s){
-    if(s.aps&&wpn==='at'&&!(src&&src.s&&src.s.dom==='air')&&G.t>=(e.apsT||0)){e.apsT=G.t+s.aps;m*=.05;FXE('boom',[e.x|0,e.y|0,8,0]);}   // APS soaks one anti-tank hit per 8 s
+    if(s.aps&&wpn==='at'&&!(src&&src.s&&src.s.dom==='air')&&G.t>=(e.apsT||0)){e.apsT=G.t+s.aps;m*=.05;FXE('boom',[e.x|0,e.y|0,8,0]);}   // APS / Laser PD soaks one anti-tank hit per cooldown
+    if(s.chobham&&wpn==='shell')m*=.85;   // GB Challenger 2 Chobham composite armor resists heavy shells
     if(s.mass){let n=0;for(const v of G.ents)if(v!==e&&!v.dead&&!v.isB&&v.team===e.team&&v.s&&v.s.mass&&Math.hypot(v.x-e.x,v.y-e.y)<SIG.massR&&++n>=SIG.massN)break;if(n>=SIG.massN)m*=SIG.massK;}}
   return m;};}
 
@@ -6091,6 +6189,11 @@ const __API=(function BRIDGE(W) {
           for (const e of G.ents) if (!e.dead && e.team === tm) { e.hp = e.max; if (e.amx > 0) e.am = e.amx; }
         } else if (o.cmd === 'money') {
           const T = G.teams[tm]; if (T) T.credits += (+o.amt || 0);
+        } else if (o.cmd === 'super') {
+          if (typeof _fireSuperStyle === 'function') {
+            G.sid = (G.sid | 0) + 1;
+            _fireSuperStyle(tm, +o.x || 0, +o.y || 0, o.style ? String(o.style) : null);
+          }
         }
       });
       fill();
