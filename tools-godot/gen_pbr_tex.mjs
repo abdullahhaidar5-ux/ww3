@@ -139,105 +139,103 @@ function buildSet(name, fn, nrmStrength) {
   console.log(`wrote ${name}_alb.png & ${name}_nrm.png`);
 }
 
-// 1. DESERT: sun-baked Levantine/North African hard-packed sand, subtle organic ripples, fine pebbles & dry clay
+// 1. DESERT: Zero Hour Enhanced / CoH3 sun-baked arid earth, grit pebbles, dry cracked wadi clay & crisp micro-relief
 buildSet('desert', (u, v) => {
-  const macro = pfbm(u, v, 4, 4, 11, 0.52);
-  const med = pfbm(u, v, 16, 3, 29, 0.55);
-  const grit = pfbm(u, v, 64, 2, 71, 0.55);
-  const [cell, edge] = pworley(u + macro * 0.04, v + med * 0.04, 14, 103);
-  const crack = 1 - smoothstep(0.015, 0.085, edge);
-  const crackMask = smoothstep(0.55, 0.80, macro) * 0.55;
-  // gentle diagonal wind micro-ripples ONLY in sandy zones (very subtle, broken by noise — never tiger stripes!)
-  const ripWarp = pfbm(u, v, 6, 3, 41) * 0.22;
-  const rip = Math.sin((u * 10 + v * 6 + ripWarp * 5) * Math.PI * 2) * 0.5 + 0.5;
+  const macro = pfbm(u, v, 4, 4, 11, 0.54);
+  const med = pfbm(u, v, 16, 4, 29, 0.56);
+  const grit = pfbm(u, v, 64, 3, 71, 0.58);
+  const [cell, edge] = pworley(u + macro * 0.04, v + med * 0.04, 16, 103);
+  const crack = 1 - smoothstep(0.014, 0.075, edge);
+  const crackMask = smoothstep(0.50, 0.78, macro) * 0.68;
+  const ripWarp = pfbm(u, v, 6, 3, 41) * 0.24;
+  const rip = Math.sin((u * 11 + v * 6 + ripWarp * 5) * Math.PI * 2) * 0.5 + 0.5;
   const sandZone = 1 - smoothstep(0.42, 0.72, macro);
-  const pebble = smoothstep(0.76, 0.90, pnoise(u, v, 96, 131)) * 0.6 + smoothstep(0.80, 0.95, pnoise(u, v, 160, 149)) * 0.4;
+  const pebble = smoothstep(0.72, 0.88, pnoise(u, v, 96, 131)) * 0.62 + smoothstep(0.76, 0.93, pnoise(u, v, 176, 149)) * 0.38;
 
-  // neutral-warm desaturated real desert sand (works cleanly under warm sunlight without turning neon orange!)
-  let r = mix(0.68, 0.80, macro * 0.6 + med * 0.4);
-  let g = mix(0.61, 0.72, macro * 0.6 + med * 0.4);
-  let b = mix(0.50, 0.59, macro * 0.6 + med * 0.4);
-  const clay = smoothstep(0.52, 0.82, macro);
-  r = mix(r, 0.64, clay * 0.35);
-  g = mix(g, 0.55, clay * 0.35);
-  b = mix(b, 0.44, clay * 0.35);
+  let r = mix(0.60, 0.75, macro * 0.55 + med * 0.45);
+  let g = mix(0.52, 0.66, macro * 0.55 + med * 0.45);
+  let b = mix(0.41, 0.52, macro * 0.55 + med * 0.45);
+  const clay = smoothstep(0.48, 0.80, macro);
+  r = mix(r, 0.54, clay * 0.42);
+  g = mix(g, 0.45, clay * 0.42);
+  b = mix(b, 0.35, clay * 0.42);
 
-  const shade = 0.90 + 0.16 * grit + 0.04 * rip * sandZone - crack * crackMask * 0.22 - pebble * 0.14;
+  const shade = 0.86 + 0.22 * grit + 0.05 * rip * sandZone - crack * crackMask * 0.28 - pebble * 0.18;
   r *= shade; g *= shade; b *= shade;
-  const h = 0.5 + med * 0.22 + grit * 0.14 + rip * sandZone * 0.09 - crack * crackMask * 0.28 + pebble * 0.24 - cell * 0.04;
+  const h = 0.5 + med * 0.24 + grit * 0.18 + rip * sandZone * 0.10 - crack * crackMask * 0.34 + pebble * 0.30 - cell * 0.05;
   return [r, g, b, h];
+}, 3.2);
+
+// 2. GREEN / MEDITERRANEAN: Zero Hour Enhanced / CoH3 deep grounded olive turf, dry straw tufts & dark battlefield loam
+buildSet('green', (u, v) => {
+  const macro = pfbm(u, v, 4, 4, 211, 0.56);
+  const turf = pfbm(u, v, 24, 4, 227, 0.62);
+  const blades = pnoise(u, v, 128, 251) * 0.58 + pnoise(u + 0.13, v + 0.27, 208, 263) * 0.42;
+  const dry = smoothstep(0.50, 0.80, pfbm(u, v, 8, 3, 281));
+  const soil = smoothstep(0.60, 0.85, pfbm(u, v, 6, 3, 307));
+
+  let r = mix(0.24, 0.38, turf);
+  let g = mix(0.32, 0.47, turf);
+  let b = mix(0.16, 0.25, turf);
+  // weathered golden dry grass flecks
+  r = mix(r, 0.48, dry * 0.52);
+  g = mix(g, 0.44, dry * 0.52);
+  b = mix(b, 0.26, dry * 0.52);
+  // dark war-torn earth/mud loam patches
+  r = mix(r, 0.28, soil * 0.55);
+  g = mix(g, 0.24, soil * 0.55);
+  b = mix(b, 0.17, soil * 0.55);
+
+  const k = 0.80 + 0.34 * blades + (macro - 0.5) * 0.18;
+  const h = turf * 0.35 + blades * 0.50 + dry * 0.12 - soil * 0.24;
+  return [r * k, g * k, b * k, h];
+}, 3.5);
+
+// 3. SNOW: realistic wind-sculpted powder snow with crisp sastrugi ridges & crunchy crystalline grain
+buildSet('snow', (u, v) => {
+  const macro = pfbm(u, v, 4, 4, 401, 0.52);
+  const driftWarp = pfbm(u, v, 4, 3, 419) * 0.38;
+  const drift = pfbm(u * 1.0 + driftWarp, v * 0.5, 8, 4, 431, 0.52);
+  const grain = pnoise(u, v, 96, 449) * 0.55 + pnoise(u, v, 192, 461) * 0.45;
+  const crust = smoothstep(0.60, 0.88, pfbm(u, v, 12, 3, 479));
+
+  let r = mix(0.72, 0.86, drift * 0.65 + macro * 0.35);
+  let g = mix(0.77, 0.90, drift * 0.65 + macro * 0.35);
+  let b = mix(0.84, 0.95, drift * 0.65 + macro * 0.35);
+  const k = 0.91 + 0.14 * grain - crust * 0.08;
+  const h = drift * 0.50 + macro * 0.25 + grain * 0.14 - crust * 0.10;
+  return [r * k, g * k, b * k, h];
 }, 2.4);
 
-// 2. GREEN / MEDITERRANEAN: organic olive-emerald meadow blades, warm dry grass tufts, dark loam earth
-buildSet('green', (u, v) => {
-  const macro = pfbm(u, v, 4, 4, 211, 0.55);
-  const turf = pfbm(u, v, 24, 3, 227, 0.6);
-  const blades = pnoise(u, v, 128, 251) * 0.6 + pnoise(u + 0.13, v + 0.27, 192, 263) * 0.4;
-  const dry = smoothstep(0.55, 0.82, pfbm(u, v, 8, 3, 281));
-  const soil = smoothstep(0.65, 0.88, pfbm(u, v, 6, 3, 307));
-
-  let r = mix(0.32, 0.46, turf);
-  let g = mix(0.41, 0.56, turf);
-  let b = mix(0.22, 0.31, turf);
-  // golden dry hillside grass flecks
-  r = mix(r, 0.56, dry * 0.48);
-  g = mix(g, 0.52, dry * 0.48);
-  b = mix(b, 0.32, dry * 0.48);
-  // earthy loam patches
-  r = mix(r, 0.36, soil * 0.45);
-  g = mix(g, 0.31, soil * 0.45);
-  b = mix(b, 0.23, soil * 0.45);
-
-  const k = 0.84 + 0.28 * blades + (macro - 0.5) * 0.14;
-  const h = turf * 0.35 + blades * 0.45 + dry * 0.1 - soil * 0.2;
-  return [r * k, g * k, b * k, h];
-}, 2.8);
-
-// 3. SNOW: realistic wind-sculpted powder snow with soft sastrugi ridges & crunchy crystalline grain
-buildSet('snow', (u, v) => {
-  const macro = pfbm(u, v, 4, 4, 401, 0.5);
-  const driftWarp = pfbm(u, v, 4, 3, 419) * 0.35;
-  const drift = pfbm(u * 1.0 + driftWarp, v * 0.5, 8, 3, 431, 0.5);
-  const grain = pnoise(u, v, 96, 449) * 0.55 + pnoise(u, v, 192, 461) * 0.45;
-  const crust = smoothstep(0.65, 0.90, pfbm(u, v, 12, 3, 479));
-
-  let r = mix(0.76, 0.88, drift * 0.65 + macro * 0.35);
-  let g = mix(0.80, 0.91, drift * 0.65 + macro * 0.35);
-  let b = mix(0.86, 0.95, drift * 0.65 + macro * 0.35);
-  const k = 0.93 + 0.11 * grain - crust * 0.05;
-  const h = drift * 0.45 + macro * 0.25 + grain * 0.12 - crust * 0.08;
-  return [r * k, g * k, b * k, h];
-}, 1.9);
-
-// 4. ROCK: stratified sedimentary cliff rock with natural weathered bands and subtle fractures (no cartoon polygons)
+// 4. ROCK: deep stratified canyon cliff rock with dark shadow fissures & weathered mineral bands
 buildSet('rock', (u, v) => {
-  const warp = pfbm(u, v, 6, 3, 503) * 0.14;
-  const strata = pfbm(u * 0.5, v * 3.0 + warp, 8, 4, 521, 0.55);
-  const fineBand = Math.sin((v * 14 + warp * 8) * Math.PI * 2) * 0.5 + 0.5;
-  const [cell, edge] = pworley(u + warp * 0.4, v + warp * 0.6, 12, 541);
-  const fissure = (1 - smoothstep(0.008, 0.055, edge)) * 0.24;
-  const grit = pfbm(u, v, 48, 3, 563, 0.58);
+  const warp = pfbm(u, v, 6, 3, 503) * 0.16;
+  const strata = pfbm(u * 0.5, v * 3.0 + warp, 8, 4, 521, 0.56);
+  const fineBand = Math.sin((v * 16 + warp * 9) * Math.PI * 2) * 0.5 + 0.5;
+  const [cell, edge] = pworley(u + warp * 0.45, v + warp * 0.65, 14, 541);
+  const fissure = (1 - smoothstep(0.008, 0.062, edge)) * 0.36;
+  const grit = pfbm(u, v, 48, 3, 563, 0.60);
 
-  const base = mix(0.46, 0.72, strata * 0.75 + fineBand * 0.25) * (0.88 + 0.22 * grit) * (1 - fissure);
-  const r = base * 1.03;
+  const base = mix(0.38, 0.68, strata * 0.72 + fineBand * 0.28) * (0.84 + 0.28 * grit) * (1 - fissure);
+  const r = base * 1.04;
   const g = base * 0.99;
-  const b = base * 0.93;
-  const h = strata * 0.42 + fineBand * 0.14 + grit * 0.22 + cell * 0.08 - fissure * 0.45;
+  const b = base * 0.92;
+  const h = strata * 0.44 + fineBand * 0.16 + grit * 0.24 + cell * 0.08 - fissure * 0.58;
   return [r, g, b, h];
-}, 3.6);
+}, 4.5);
 
-// 5. ROAD: sun-bleached military tarmac / compacted gravel aggregate (clean fine grain, no giant polygon cracks!)
+// 5. ROAD: weathered military asphalt tarmac with crisp mineral aggregate, subtle tar patches & hairline cracks
 buildSet('road', (u, v) => {
-  const patch = pfbm(u, v, 6, 4, 601, 0.52);
-  const med = pfbm(u, v, 24, 3, 613, 0.55);
-  const agg = pnoise(u, v, 96, 617) * 0.55 + pnoise(u, v, 192, 631) * 0.45;
-  const [, edge] = pworley(u + patch * 0.04, v + patch * 0.04, 16, 647);
-  const crack = (1 - smoothstep(0.004, 0.018, edge)) * smoothstep(0.55, 0.85, patch) * 0.16;
+  const patch = pfbm(u, v, 6, 4, 601, 0.54);
+  const med = pfbm(u, v, 24, 3, 613, 0.56);
+  const agg = pnoise(u, v, 96, 617) * 0.52 + pnoise(u, v, 208, 631) * 0.48;
+  const [, edge] = pworley(u + patch * 0.05, v + patch * 0.05, 18, 647);
+  const crack = (1 - smoothstep(0.004, 0.020, edge)) * smoothstep(0.50, 0.84, patch) * 0.24;
 
-  const base = mix(0.54, 0.66, patch * 0.6 + med * 0.4) * (0.90 + 0.18 * agg) * (1 - crack);
-  const h = agg * 0.24 + med * 0.14 - crack * 0.22;
-  return [base * 1.01, base * 0.99, base * 0.95, h];
-}, 1.8);
+  const base = mix(0.46, 0.60, patch * 0.55 + med * 0.45) * (0.86 + 0.24 * agg) * (1 - crack);
+  const h = agg * 0.28 + med * 0.16 - crack * 0.30;
+  return [base * 1.00, base * 0.99, base * 0.97, h];
+}, 2.4);
 
 // 6. ARMOR: rolled military steel + authentic 3-tone tactical camo + subtle weld seams, scratches & dust grime
 {

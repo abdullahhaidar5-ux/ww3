@@ -226,7 +226,7 @@ func _set_bus(n: String, lin: float) -> void:
 	var i := AudioServer.get_bus_index(n)
 	if i >= 0: AudioServer.set_bus_volume_db(i, linear_to_db(maxf(lin, 0.0001))); AudioServer.set_bus_mute(i, lin <= 0.0001)
 
-func _mus_base() -> float: return 0.19 * (float(vol.music) / 70.0)      # JS musBase()
+func _mus_base() -> float: return 0.34 * (float(vol.music) / 70.0)      # $75 AAA epic orchestral score level
 
 func _apply_vol() -> void:
 	_set_bus("Master", float(vol.master) / 100.0)
@@ -958,7 +958,9 @@ func menu() -> void:
 	st_mode = "menu"; _st_play("menu")
 
 func _st_play(pool: String, fade: float = ST_FADE) -> void:
-	if not _music_on():
+	if int(vol.music) <= 0 or int(vol.master) <= 0:
+		st_pool = pool; return
+	if not unlocked and not _web_au:
 		st_pool = pool; return
 	var id := _st_pick(pool)
 	if id == "": return
@@ -997,8 +999,13 @@ func _st_next(pool: String) -> void:
 ## every 250 ms (JS stTick): heat cools, calm <-> combat with a least stay in each, next track near the end of this one
 func _st_tick() -> void:
 	heat = maxf(0.0, heat - 0.006)
+	if _web_au:
+		JavaScriptBridge.eval("window.WW3Audio.setBattleState(%s,%f)" % ["true" if st_mode == "battle" else "false", heat], true)
 	if st_mode == "": return
-	if not _music_on():
+	if not unlocked:
+		# Never call stopMusic before user gesture unlock — that would clear the pre-queued menu track!
+		return
+	if int(vol.music) <= 0 or int(vol.master) <= 0:
 		if _web_au: JavaScriptBridge.eval("window.WW3Audio.stopMusic(0.3)", true)
 		elif web: JavaScriptBridge.eval("window.__ww3m&&window.__ww3m.stop(0.3)")
 		for d in _decks:
@@ -1065,6 +1072,9 @@ func battle_start(sim, me: int) -> void:
 	_theme = str(sim.map.get("theme", "desert")) if ("map" in sim and sim.map is Dictionary) else "desert"
 	preload_nation(_fac)
 	_st_fac = _fac; st_mode = "battle"; _st_play(_battle_pool())
+	if _web_au:
+		JavaScriptBridge.eval("window.WW3Audio.setFaction(%s)" % JSON.stringify(_fac), true)
+		_web_synth("fanfare", 0.78, 1.0, 0.0, "Music")
 	_note("battle", "start " + _fac)
 
 func battle_end(won: bool) -> void:

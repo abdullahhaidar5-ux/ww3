@@ -422,25 +422,13 @@ func _shahed_mesh(span: float) -> Mesh:
 	return m
 
 func _ring_mesh() -> Mesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var n := 44
-	for i in n:
-		var a0 := TAU * i / n
-		var a1 := TAU * (i + 1) / n
-		var p := [Vector3(cos(a0), 0, sin(a0)), Vector3(cos(a1), 0, sin(a1))]
-		var r0 := 0.945
-		st.add_vertex(p[0] * r0); st.add_vertex(p[0]); st.add_vertex(p[1])
-		st.add_vertex(p[0] * r0); st.add_vertex(p[1]); st.add_vertex(p[1] * r0)
-	var m := st.commit()
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.vertex_color_use_as_albedo = true
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.no_depth_test = false
-	m.surface_set_material(0, mat)
-	return m
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(2.0, 2.0)
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/sel_reticle.gdshader")
+	mat.render_priority = 2
+	pm.material = mat
+	return pm
 
 func _inst_mmi(mesh: Mesh, colors: bool, shadow: bool) -> MultiMeshInstance3D:
 	var m := MultiMeshInstance3D.new()

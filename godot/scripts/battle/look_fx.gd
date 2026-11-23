@@ -263,23 +263,24 @@ func boom(x: float, z: float, s: float, big: bool, h := 0.0) -> void:
 	if env != null:
 		if s > 14.0: env.shake = minf(18.0, env.shake + s / (5.0 if big else 13.0) * kd)
 		if big: env.flash = minf(0.2, env.flash + 0.1)
-	if s > 12.0: _flash_light(lights, P + Vector3(0, 22, 0), (8.5 if big else 4.0) * (env.fx_k if env != null else 1.0) * 1.6, 680.0 if big else 340.0, 0.9 if big else 0.4)
+	if s > 12.0: _flash_light(lights, P + Vector3(0, 24, 0), (11.5 if big else 5.8) * (env.fx_k if env != null else 1.0) * 1.6, 780.0 if big else 400.0, 1.05 if big else 0.45)
 	if not _seen(x, z): return
-	var n := mini(22, 5 + int(s / 4.2)); var wk := 0.45 if wet else 1.0
+	var n := mini(26, 6 + int(s / 3.8)); var wk := 0.45 if wet else 1.0
 	if wet: _splash(x, z, g, s, big)
 	if s <= 10.0 and not big:
-		for i in 10: partg(true, P + Vector3(0, 2, 0), _dir(R(80, 220), R(60, 190)), R(.25, .62), R(1.1, 2.0), 1.0, C_SPARK, g0, true)
-		part(true, P + Vector3(0, 2, 0), Vector3.ZERO, 0.065, s * 2.5, 0.0, 1.0, Color(3.6, 2.7, 1.5))
-	part(true, P + Vector3(0, s * 0.3, 0), Vector3.ZERO, 0.085 if big else 0.06, s * 1.05 * wk, 0.0, 0.85, Color(3.8, 3.2, 2.2))
-	for i in (12 if big else (2 if wet else 6)):
-		part(true, P + Vector3(R(-s, s) * 0.3, R(0, s * 0.4), R(-s, s) * 0.3), _dir(R(0, s * 1.35), R(0, s * 1.1)), R(.32, .68), s * R(.20, .36), s * 1.05, 1.0, Color(3.0, 1.35, .32), Color(.65, .16, .04), R(10, 24))
-	for i in (3 if wet else mini(20, 6 + int(s / 3.5))):
-		var hk := R(.85, 1.2)
-		part(false, P + Vector3(R(-s, s) * 0.35, R(0, s * 0.5), R(-s, s) * 0.35), _dir(R(0, s * 1.6), R(4, s)), R(2.2, 3.6), s * R(.45, .78), s * 0.55, 0.68, Color(3.6 * hk, 1.6 * hk, .42 * hk), C_SMOKE if i % 2 else Color(.26, .25, .23), R(12, 26))
-	for i in (n / 4 if wet else n / 2):
-		part(true, P + Vector3(0, R(0, s * 0.3), 0), _dir(R(0, s * 2.2), R(0, s * 1.7)), R(.26, .55), s * R(.18, .38), 0.0, 1.0, C_FIRE if i % 2 else C_FIRE2)
+		for i in 12: partg(true, P + Vector3(0, 2, 0), _dir(R(80, 240), R(70, 210)), R(.28, .68), R(1.2, 2.2), 1.0, C_SPARK, g0, true)
+		part(true, P + Vector3(0, 2, 0), Vector3.ZERO, 0.075, s * 3.0, 0.0, 1.0, Color(4.0, 2.9, 1.6))
+	# Zero Hour Enhanced blinding multi-stage blast core & billowing fireballs
+	part(true, P + Vector3(0, s * 0.35, 0), Vector3.ZERO, 0.11 if big else 0.075, s * 1.45 * wk, 0.0, 0.95, Color(4.4, 3.6, 2.4))
+	for i in (16 if big else (2 if wet else 8)):
+		part(true, P + Vector3(R(-s, s) * 0.32, R(0, s * 0.45), R(-s, s) * 0.32), _dir(R(0, s * 1.5), R(0, s * 1.3)), R(.38, .82), s * R(.25, .44), s * 1.25, 1.0, Color(3.4, 1.45, .34), Color(.62, .14, .03), R(14, 30))
+	for i in (4 if wet else mini(24, 8 + int(s / 3.2))):
+		var hk := R(.88, 1.25)
+		part(false, P + Vector3(R(-s, s) * 0.38, R(0, s * 0.55), R(-s, s) * 0.38), _dir(R(0, s * 1.7), R(5, s * 1.1)), R(2.8, 4.6), s * R(.52, .90), s * 0.65, 0.76, Color(3.8 * hk, 1.65 * hk, .42 * hk), C_DARK if i % 2 else Color(.22, .21, .20), R(16, 32))
+	for i in (n / 4 if wet else int(n * 0.65)):
+		part(true, P + Vector3(0, R(0, s * 0.35), 0), _dir(R(0, s * 2.4), R(0, s * 1.9)), R(.30, .62), s * R(.22, .44), 0.0, 1.0, C_FIRE if i % 2 else C_FIRE2)
 	for i in (n / 2 if wet else n):
-		part(false, P + Vector3(R(-s, s) * 0.4, R(0, s * 0.5), R(-s, s) * 0.4), _dir(R(0, s * 0.85), R(0, 12)), R(2.4, 4.2), s * R(.44, .78), s * 0.65, 0.55, Color(.74, .77, .8) if wet else (C_SMOKE if i % 3 else C_DARK), null, R(18, 38))
+		part(false, P + Vector3(R(-s, s) * 0.42, R(0, s * 0.55), R(-s, s) * 0.42), _dir(R(0, s * 0.9), R(0, 14)), R(3.2, 5.4), s * R(.50, .88), s * 0.72, 0.64, Color(.74, .77, .8) if wet else (C_DARK if i % 2 else C_SMOKE), null, R(22, 44))
 	if grd and s > 8.0:
 		for i in mini(18, 6 + int(s / 2.0)):
 			part(false, P, _dir(R(s * .5, s * 1.6), R(s * 3.2, s * 6.5)), R(.95, 1.6), s * R(.38, .66), 0.0, 0.78, SC[i % 2], null, g0, 0.25, GRAV)
@@ -414,11 +415,12 @@ func _tr(e: Array) -> void:
 	var flak := e.size() > 7 and int(e[7]) != 0
 	var a := Vector3(x1, gh(x1, z1) + float(e[3]), z1); var b := Vector3(x2, gh(x2, z2) + float(e[6]), z2)
 	if not _seen(x1, z1) and not _seen(x2, z2): return
-	tracer(a, b, Color(3, 1.5, .5) if flak else Color(3, 1.9, .7))
-	if randf() < 0.35: _flash_light(mlights, a, (1.6 if flak else 1.1) * 1.4, 90.0, 0.06)
+	tracer(a, b, Color(3.8, 1.9, .55) if flak else Color(3.6, 2.3, .85), 0.13 if flak else 0.10)
+	if randf() < 0.45: _flash_light(mlights, a, (2.2 if flak else 1.4) * 1.4, 110.0, 0.07)
 	if flak:
-		part(true, b, Vector3.ZERO, 0.12, 7.0, 0.0, 1.0, C_FIRE)
-		part(false, b, _dir(R(0, 8), R(0, 6)), 0.8, 5.0, 7.0, 0.5, Color(.3, .29, .27), Color(.5, .48, .45), 0.0, 0.25, KEEP)
+		# "We will defend this airspace!" dramatic AA flak airburst cloud + glowing shrapnel flash
+		part(true, b, Vector3.ZERO, 0.16, 11.0, 0.0, 1.0, Color(3.8, 1.9, 0.45))
+		part(false, b, _dir(R(0, 10), R(0, 8)), 1.35, 7.5, 9.0, 0.68, Color(.18, .18, .17), Color(.42, .41, .39), 2.0, 0.28, KEEP)
 	elif float(e[6]) < 10.0:
 		var q := randf()
 		if q < 0.12:

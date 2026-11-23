@@ -48,11 +48,14 @@ body{color:#ece9df;background:#070b0d;overflow:hidden;touch-action:none;font-fam
 #rotate-hint p{margin:0;max-width:320px;color:#b8c9d0;font-size:14px;line-height:1.45}
 #rotate-hint button{margin-top:8px;padding:10px 22px;background:#162832;border:1px solid #d4ab48;color:#f4e6be;font-weight:700;letter-spacing:.12em;text-transform:uppercase;border-radius:3px}
 @media (orientation:portrait) and (max-width:740px){#rotate-hint:not(.off){display:flex}}
+#ww3-snd-badge{position:fixed;top:14px;right:14px;z-index:850;padding:8px 14px;background:rgba(10,18,24,.90);border:1px solid #e3b341;color:#f5d57a;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border-radius:3px;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.6);transition:opacity .35s ease;display:none}
+#ww3-snd-badge:hover{background:#1b2c36;color:#fff}
 </style>
 $GODOT_HEAD_INCLUDE
 </head>
 <body>
 <canvas id="canvas">Your browser does not support the canvas tag.</canvas>
+<button id="ww3-snd-badge" type="button" onclick="window.WW3Audio&&window.WW3Audio.unlockNow()">🔊 Enable Sound</button>
 <div id="rotate-hint"><h2>Rotate to Landscape</h2><p>World War 3 is best commanded in widescreen landscape mode with touch pan, pinch-zoom, and 1-tap orders.</p><button onclick="this.parentNode.classList.add('off')">Continue Anyway</button></div>
 <noscript>This game needs JavaScript.</noscript>
 <div id="status">
@@ -142,7 +145,11 @@ const engine = new Engine(GODOT_CONFIG);
 		clearInterval(qTimer);
 		fill.style.width = '100%'; pct.textContent = '100%'; nt.textContent = 'COMMAND LINK ACTIVE';
 		st.classList.add('fade');
-		setTimeout(() => { st.style.display = 'none'; }, 750);
+		setTimeout(() => {
+			st.style.display = 'none';
+			const sb = document.getElementById('ww3-snd-badge');
+			if (sb && window.WW3Audio && !window.WW3Audio.isUnlocked()) sb.style.display = 'block';
+		}, 750);
 	};
 
 	const fail = e => {

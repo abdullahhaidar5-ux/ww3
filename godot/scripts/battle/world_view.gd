@@ -49,6 +49,8 @@ var _buf: Dictionary = {} # key -> Array[Transform3D]
 var _ao_mi: MultiMeshInstance3D = null
 var _ao_xf: Array[Transform3D] = []
 var _ao_col: Array[Color] = []
+var _pad_mi: MultiMeshInstance3D = null
+var _pad_xf: Array[Transform3D] = []
 var _bld_fx_cd: Dictionary = {} # eid (int) -> float (next damage smoke/fire emit time)
 var _headless: bool = false
 var _fog_next: float = 0.0
@@ -92,7 +94,52 @@ func setup(host: Node3D, sim, map: Dictionary, opts: Dictionary = {}) -> void:
 	_root.name = "WorldView"
 	host.add_child(_root)
 	_setup_ao()
+	_setup_base_pads(String(map.get("theme", "desert")))
 	_setup_civ_buildings(sim, map)
+
+
+func _setup_base_pads(th: String) -> void:
+	# Grounded C&C Generals concrete/gravel military compound apron under every base building
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var c_edge := Color(0.32, 0.31, 0.28)
+	var c_slab := Color(0.46, 0.44, 0.40)
+	var c_trim := Color(0.58, 0.52, 0.34)
+	if th == "snow":
+		c_edge = Color(0.36, 0.39, 0.44); c_slab = Color(0.50, 0.53, 0.57)
+	elif th == "green":
+		c_edge = Color(0.28, 0.30, 0.26); c_slab = Color(0.40, 0.40, 0.38)
+	# Outer compacted bevel skirt + inner poured military concrete pad + corner hazard stripes
+	_civ_box(st, Vector3(0.0, 0.14, 0.0), Vector3(2.35, 0.28, 2.35), c_edge)
+	_civ_box(st, Vector3(0.0, 0.26, 0.0), Vector3(2.08, 0.24, 2.08), c_slab)
+	for sx in [-0.94, 0.94]:
+		for sz in [-0.94, 0.94]:
+			_civ_box(st, Vector3(sx, 0.39, sz), Vector3(0.24, 0.04, 0.24), c_trim)
+	var m := st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.albedo_color = Color.WHITE
+	mat.roughness = 0.88
+	mat.metallic = 0.04
+	if ResourceLoader.exists("res://tex/road_nrm.png"):
+		mat.normal_enabled = true
+		mat.normal_texture = load("res://tex/road_nrm.png")
+		mat.normal_scale = 0.45
+	m.surface_set_material(0, mat)
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = m
+	mm.instance_count = 64
+	mm.visible_instance_count = 0
+	var mi := MultiMeshInstance3D.new()
+	mi.name = "BldFoundationPads"
+	mi.multimesh = mm
+	mi.custom_aabb = HUGE_AABB
+	mi.extra_cull_margin = 16384.0
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_root.add_child(mi)
+	_pad_mi = mi
 
 
 func _setup_ao() -> void:
@@ -190,6 +237,7 @@ func begin_frame() -> void:
 		return
 	_ao_xf.clear()
 	_ao_col.clear()
+	_pad_xf.clear()
 	for k in _buf.keys():
 		(_buf[k] as Array).clear()
 
@@ -236,10 +284,12 @@ func draw_bld(B, fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Col
 				part_xf = root_xf * pt
 		_push_mm("b|" + fac + "|" + kind_s + "|" + pks, parts[pk] as Mesh, part_xf)
 
-	# Grounded CoH3 contact AO shadow disc beneath building footprint
-	var ao_r: float = maxf(float(e.r) * 1.18, 22.0)
-	_ao_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(ao_r, 1.0, ao_r)), Vector3(p.x, gy + 0.32, p.y)))
-	_ao_col.append(Color(1.0, 1.0, 1.0, 0.36 * maxf(0.25, built)))
+	# Grounded CoH3/Zero Hour concrete military compound pad + contact AO shadow disc beneath building footprint
+	var pad_r: float = maxf(float(e.r) * 0.96, 18.0)
+	_pad_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(pad_r, 1.0, pad_r)), Vector3(p.x, gy + 0.04, p.y)))
+	var ao_r: float = maxf(float(e.r) * 1.24, 22.0)
+	_ao_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(ao_r, 1.0, ao_r)), Vector3(p.x, gy + 0.36, p.y)))
+	_ao_col.append(Color(1.0, 1.0, 1.0, 0.38 * maxf(0.25, built)))
 
 	_emit_bld_damage_fx(B, e, p, gy, h, now)
 	_append_bld_overlays(B, fr, e, p, gy, h, col, issel, mine)
@@ -369,6 +419,21 @@ func end_frame() -> void:
 			mm.set_instance_transform(i, arr[i] as Transform3D)
 		mm.visible_instance_count = n
 
+	if _pad_mi != null:
+		var pad_mm := _pad_mi.multimesh
+		var pad_n := _pad_xf.size()
+		if pad_n == 0:
+			pad_mm.visible_instance_count = 0
+		else:
+			if pad_mm.instance_count < pad_n:
+				var cap := maxi(64, pad_mm.instance_count)
+				while cap < pad_n:
+					cap *= 2
+				pad_mm.instance_count = cap
+			for i in pad_n:
+				pad_mm.set_instance_transform(i, _pad_xf[i])
+			pad_mm.visible_instance_count = pad_n
+
 	if _ao_mi != null:
 		var ao_mm := _ao_mi.multimesh
 		var ao_n := _ao_xf.size()
@@ -406,6 +471,8 @@ func clear() -> void:
 	_ao_mi = null
 	_ao_xf.clear()
 	_ao_col.clear()
+	_pad_mi = null
+	_pad_xf.clear()
 	fx = null
 	env = null
 	_host = null
@@ -715,13 +782,19 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 		_civ_box(st_roof, Vector3(0.5, 4.3, 1.0), Vector3(16.0, 1.1, 1.6), c_beam)
 	elif th == "desert":
 		if variant == 0:
-			# Flat-roofed Middle Eastern sandstone compound with parapet, windows & rooftop AC
-			var c_plinth := Color(0.64, 0.56, 0.44)
-			var c_stucco := Color(0.83, 0.75, 0.61)
-			var c_parapet := Color(0.87, 0.79, 0.65)
-			var c_roof := Color(0.68, 0.61, 0.49)
-			var c_ac := Color(0.66, 0.69, 0.68)
-			_civ_box(st_wall, Vector3(0.0, 1.5, 0.0), Vector3(31.2, 3.0, 29.2), c_plinth)
+			# Flat-roofed Middle Eastern sandstone compound with courtyard yard plinth, low mudbrick perimeter wall, parapet & rooftop gear
+			var c_yard := Color(0.50, 0.44, 0.34)
+			var c_plinth := Color(0.58, 0.50, 0.39)
+			var c_stucco := Color(0.76, 0.68, 0.55)
+			var c_parapet := Color(0.80, 0.72, 0.59)
+			var c_roof := Color(0.58, 0.52, 0.42)
+			var c_ac := Color(0.58, 0.61, 0.60)
+			# Grounded dusty compound courtyard slab + low corner garden walls
+			_civ_box(st_roof, Vector3(0.0, 0.5, 0.0), Vector3(44.0, 1.0, 42.0), c_yard)
+			_civ_box(st_wall, Vector3(-20.6, 3.2, -5.0), Vector3(1.8, 5.4, 28.0), c_plinth)
+			_civ_box(st_wall, Vector3(0.0, 3.2, -19.6), Vector3(42.0, 5.4, 1.8), c_plinth)
+			_civ_box(st_wall, Vector3(20.6, 3.2, 6.0), Vector3(1.8, 5.4, 24.0), c_plinth)
+			_civ_box(st_wall, Vector3(0.0, 1.8, 0.0), Vector3(31.2, 3.4, 29.2), c_plinth)
 			_civ_box(st_wall, Vector3(0.0, 15.0, 0.0), Vector3(30.0, 24.0, 28.0), c_stucco)
 			# Roof slab + 4 parapet walls
 			_civ_box(st_roof, Vector3(0.0, 27.3, 0.0), Vector3(28.0, 0.8, 26.0), c_roof)
@@ -729,11 +802,13 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 			_civ_box(st_wall, Vector3(0.0, 28.6, -13.0), Vector3(30.4, 3.2, 2.0), c_parapet)
 			_civ_box(st_wall, Vector3(14.0, 28.6, 0.0), Vector3(2.0, 3.2, 24.4), c_parapet)
 			_civ_box(st_wall, Vector3(-14.0, 28.6, 0.0), Vector3(2.0, 3.2, 24.4), c_parapet)
-			# Rooftop stairwell penthouse + AC condenser + water tank
+			# Rooftop stairwell penthouse + AC condenser + water tank + satellite mast
 			_civ_box(st_wall, Vector3(-6.0, 30.2, -5.0), Vector3(9.5, 5.4, 8.5), c_stucco * 0.96)
 			_civ_box(st_roof, Vector3(-6.0, 33.1, -5.0), Vector3(10.0, 0.6, 9.0), c_roof)
 			_civ_box(st_roof, Vector3(6.5, 29.3, 4.5), Vector3(5.6, 3.6, 4.4), c_ac)
-			_civ_box(st_roof, Vector3(7.0, 29.9, -5.5), Vector3(4.0, 4.8, 4.0), Color(0.75, 0.77, 0.76))
+			_civ_box(st_roof, Vector3(7.0, 29.9, -5.5), Vector3(4.0, 4.8, 4.0), Color(0.68, 0.70, 0.70))
+			_civ_box(st_roof, Vector3(-11.0, 31.2, 9.5), Vector3(0.7, 5.2, 0.7), Color(0.42, 0.44, 0.46))
+			_civ_box(st_roof, Vector3(-10.4, 33.4, 9.5), Vector3(3.4, 2.4, 0.8), Color(0.74, 0.75, 0.76))
 			# Window cutouts on all 4 facades + doorway
 			has_win = true
 			for row_y in [11.5, 20.5]:
@@ -746,11 +821,13 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 					_civ_box(st_win, Vector3(-15.15, row_y, wz), Vector3(0.4, 4.6, 4.2), c_win)
 			_civ_box(st_win, Vector3(0.0, 7.2, 14.18), Vector3(5.2, 8.8, 0.45), c_door)
 		else:
-			# Stepped ochre terrace compound with side annex & roof shade pergola
-			var c_stucco := Color(0.77, 0.66, 0.50)
-			var c_annex := Color(0.84, 0.77, 0.64)
-			var c_roof := Color(0.65, 0.57, 0.45)
-			var c_wood := Color(0.42, 0.31, 0.22)
+			# Stepped ochre terrace compound with dusty yard pad, side annex & roof shade pergola
+			var c_yard := Color(0.48, 0.42, 0.32)
+			var c_stucco := Color(0.72, 0.62, 0.47)
+			var c_annex := Color(0.78, 0.71, 0.58)
+			var c_roof := Color(0.58, 0.51, 0.40)
+			var c_wood := Color(0.38, 0.28, 0.20)
+			_civ_box(st_roof, Vector3(1.0, 0.5, 0.5), Vector3(45.0, 1.0, 38.0), c_yard)
 			_civ_box(st_wall, Vector3(-5.0, 13.8, 0.0), Vector3(22.0, 27.6, 26.0), c_stucco)
 			_civ_box(st_wall, Vector3(11.0, 9.0, 1.0), Vector3(12.0, 18.0, 22.0), c_annex)
 			# Parapet walls on main roof & annex roof
@@ -764,7 +841,7 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 			_civ_box(st_wall, Vector3(11.0, 19.3, -9.2), Vector3(12.2, 2.2, 1.6), c_annex * 1.04)
 			_civ_box(st_wall, Vector3(16.2, 19.3, 1.0), Vector3(1.6, 2.2, 19.2), c_annex * 1.04)
 			# Roof AC unit + shade canopy on annex terrace
-			_civ_box(st_roof, Vector3(-9.0, 29.8, -5.0), Vector3(5.4, 3.4, 4.2), Color(0.65, 0.68, 0.67))
+			_civ_box(st_roof, Vector3(-9.0, 29.8, -5.0), Vector3(5.4, 3.4, 4.2), Color(0.60, 0.63, 0.62))
 			_civ_box(st_roof, Vector3(11.0, 23.6, 1.0), Vector3(9.0, 0.8, 12.0), c_wood)
 			for px in [7.2, 14.8]:
 				for pz in [-4.0, 6.0]:
@@ -780,13 +857,20 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 			_civ_box(st_win, Vector3(17.15, 10.0, 1.0), Vector3(0.4, 4.6, 4.6), c_win)
 			_civ_box(st_win, Vector3(-5.0, 6.8, 13.18), Vector3(4.8, 8.2, 0.45), c_door)
 	else:
-		# Temperate ("green") or Winter ("snow") pitched-roof stone/plaster village houses
+		# Temperate ("green") or Winter ("snow") pitched-roof stone/plaster village houses with grounded stone yard & perimeter wall
 		var is_snow := th == "snow"
+		var c_yard := Color(0.56, 0.60, 0.66) if is_snow else Color(0.36, 0.35, 0.31)
+		var c_fence := Color(0.44, 0.46, 0.49) if is_snow else Color(0.46, 0.44, 0.40)
 		if variant == 0:
-			var c_base := Color(0.40, 0.42, 0.45) if is_snow else Color(0.48, 0.46, 0.43)
-			var c_wall := Color(0.75, 0.77, 0.81) if is_snow else Color(0.77, 0.74, 0.67)
-			var c_roof := Color(0.88, 0.91, 0.95) if is_snow else Color(0.57, 0.27, 0.19)
-			var c_chim := Color(0.45, 0.36, 0.34) if is_snow else Color(0.54, 0.29, 0.23)
+			var c_base := Color(0.38, 0.40, 0.43) if is_snow else Color(0.42, 0.40, 0.37)
+			var c_wall := Color(0.70, 0.72, 0.76) if is_snow else Color(0.70, 0.67, 0.60)
+			# Weathered muted terracotta (NOT neon toy orange!)
+			var c_roof := Color(0.84, 0.88, 0.93) if is_snow else Color(0.43, 0.27, 0.21)
+			var c_chim := Color(0.42, 0.35, 0.33) if is_snow else Color(0.44, 0.28, 0.23)
+			# Grounded cobbled/earth yard + low stone garden walls
+			_civ_box(st_roof, Vector3(0.0, 0.5, 0.0), Vector3(44.0, 1.0, 39.0), c_yard)
+			_civ_box(st_wall, Vector3(-20.8, 2.5, -2.0), Vector3(1.8, 4.2, 30.0), c_fence)
+			_civ_box(st_wall, Vector3(0.0, 2.5, -18.5), Vector3(42.0, 4.2, 1.8), c_fence)
 			_civ_box(st_wall, Vector3(0.0, 2.0, 0.0), Vector3(31.0, 4.0, 27.0), c_base)
 			_civ_box(st_wall, Vector3(0.0, 12.75, 0.0), Vector3(30.0, 17.5, 26.0), c_wall)
 			_civ_gable_roof(st_roof, st_wall, Vector3(0.0, 21.5, 0.0), 32.6, 28.6, 9.8, c_roof, c_wall)
@@ -802,15 +886,17 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 					_civ_box(st_win, Vector3(-15.15, row_y, wz), Vector3(0.4, 4.2, 3.8), c_win)
 			_civ_box(st_win, Vector3(0.0, 6.8, 13.18), Vector3(4.8, 8.0, 0.45), c_door)
 		else:
-			var c_base := Color(0.46, 0.47, 0.49) if is_snow else Color(0.51, 0.49, 0.45)
-			var c_upper := Color(0.64, 0.63, 0.62) if is_snow else Color(0.70, 0.65, 0.56)
-			var c_trim := Color(0.27, 0.25, 0.24)
-			var c_roof := Color(0.84, 0.88, 0.93) if is_snow else Color(0.35, 0.34, 0.33)
+			var c_base := Color(0.42, 0.44, 0.46) if is_snow else Color(0.44, 0.42, 0.39)
+			var c_upper := Color(0.60, 0.60, 0.60) if is_snow else Color(0.64, 0.60, 0.52)
+			var c_trim := Color(0.25, 0.24, 0.23)
+			var c_roof := Color(0.80, 0.85, 0.91) if is_snow else Color(0.30, 0.31, 0.32)
+			_civ_box(st_roof, Vector3(0.0, 0.5, 0.0), Vector3(46.0, 1.0, 38.0), c_yard)
+			_civ_box(st_wall, Vector3(21.8, 2.5, 2.0), Vector3(1.8, 4.2, 28.0), c_fence)
 			_civ_box(st_wall, Vector3(0.0, 5.2, 0.0), Vector3(34.0, 10.4, 26.0), c_base)
 			_civ_box(st_roof, Vector3(0.0, 10.8, 0.0), Vector3(35.0, 1.1, 27.0), c_trim)
 			_civ_box(st_wall, Vector3(0.0, 16.5, 0.0), Vector3(34.2, 10.6, 26.2), c_upper)
 			_civ_gable_roof(st_roof, st_wall, Vector3(0.0, 21.8, 0.0), 36.8, 28.8, 9.6, c_roof, c_upper)
-			_civ_box(st_roof, Vector3(-9.5, 29.2, 5.5), Vector3(3.6, 8.6, 3.6), Color(0.46, 0.33, 0.28))
+			_civ_box(st_roof, Vector3(-9.5, 29.2, 5.5), Vector3(3.6, 8.6, 3.6), Color(0.40, 0.30, 0.26))
 			has_win = true
 			for row_y in [7.2, 16.4]:
 				for wx in [-10.5, 0.0, 10.5]:
