@@ -1,5 +1,5 @@
 /* ================= SUPPLY DUMP LOOK (view only, never read by the sim) =================
-   Abdullah 2026-11-13 19:52 (photo of Battle as Lebanese Shia, "In conquest and battle"): the supply source read as "Blocky supply pile".
+   Abdullah 2026-11-13 19:52 (photo of Battle as Hezbollah, "In conquest and battle"): the supply source read as "Blocky supply pile".
    Then (19:58, "Make cargo look more like generals"): a chunky, readable stepped pyramid of supply crates on pallets (lids, stencils,
    straps) with low dressing around it (sandbags, fuel drums, a tarp-covered stack, one container) on a trodden dirt pad. Bevelled (chamfered) edges with worn paint, grime at the bottom, and one shared
    texture atlas with a normal map drawn here in code (our own procedural art, no third-party files).

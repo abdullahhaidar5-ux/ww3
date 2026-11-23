@@ -1,4 +1,4 @@
-/* ---- OB "Palestine Islamic Brigade": a light urban resistance force (Abdullah 2026-11-15 00:20 "Palestinian units are not realistic" / "They have wrong unit types") ----
+/* ---- OB "Hamas": a light urban resistance force (Abdullah 2026-11-15 00:20 "Palestinian units are not realistic" / "They have wrong unit types") ----
    Before this OB borrowed Egypt's army (tanks, jets, attack helicopters, frigate) and only renamed it. Now it has no regular-army heavy kit:
    AK rifle squads, RPG teams, ATGM teams, snipers, mortars, armed technicals (heavy MG, ZU-23), home-made rocket trucks and quadcopter drone teams.
    No jets / airfield / helicopters / warships (noAir, noShip); a coastal skiff stays. Fictional, inspired-by only; military vs military.

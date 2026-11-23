@@ -42,7 +42,7 @@ const CH={
 // Every mission: a plain briefing, objectives that update on screen (banner + radio line), a depot (capturable derrick) where it fits,
 // emplacements ("Defense Gun") for dug-in positions, and Easy / Medium / Hard through c.mul. Radio lines are in the nation's own language + English.
 const CAMPAIGN=[
-{id:'pass',n:1,title:'Hold the Pass',sub:'Lebanese Shia · Ridge defense in the southern hills',fac:'RS',enemy:'FR',enemyName:'Invasion Force',map:'beqaa',min:'12-16 min',
+{id:'pass',n:1,title:'Hold the Pass',sub:'Hezbollah · Ridge defense in the southern hills',fac:'RS',enemy:'FR',enemyName:'Invasion Force',map:'beqaa',min:'12-16 min',
  brief:['An invasion force is pushing up the only road into our valleys, below the limestone ridge. Our main columns are still six minutes away on the mountain tracks.','You hold the ridge above the road with a small garrison: riflemen, anti-tank teams, two tanks and three dug-in guns. A depot behind the ridge keeps the guns supplied - keep it ours.','Hold the ridge until the reinforcements arrive. Then do not let the enemy rest: take the fight back down the pass and destroy their forward base.'],
  obj:[['hold','Hold the ridge until reinforcements arrive'],['reinf','Reinforcements arrive'],['crush','Destroy the enemy forward base']],
  win:'The pass is ours. The valley is safe, and the road is closed to the invaders.',lose:'The ridge has fallen. The valley will have to be defended from the next line.',
@@ -70,7 +70,7 @@ const CAMPAIGN=[
   else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Headquarters and garrison are gone.');
   c.status=c.o.reinf?(c.o.crush?null:'Enemy base buildings left: '+CH.blds(1).length):'Reinforcements in '+campClock(c.T-c.t)+' · wave '+c.wave;}},
 
-{id:'supply',n:2,title:'Supply Run',sub:'Zaidi Shia Movement · Convoy escort across the highlands',fac:'DW',enemy:'US',enemyName:'Siege Force',map:'tihama',min:'12-18 min',
+{id:'supply',n:2,title:'Supply Run',sub:'Ansarallah · Convoy escort across the highlands',fac:'DW',enemy:'US',enemyName:'Siege Force',map:'tihama',min:'12-18 min',
  brief:['A highland town is surrounded. Its people have food for days, not weeks, and the road in is held by irregulars and raiders of the besieging force.','Six supply trucks are loaded at your depot. Escort them up through the wadis to the town. Expect ambushes from the ridges and the dry riverbeds - they will hit the trucks first.','At least four trucks must reach the town. An old cistern depot sits at the halfway ridge: take it for water and money. Scout ahead, keep the escort close, and do not drive blind into the narrows.'],
  obj:[['half','Cross the highlands to the halfway ridge'],['depot','Take the cistern depot at the ridge (optional)'],['clear','Break the siege line around the town'],['deliver','Deliver at least 4 of 6 trucks to the town']],
  win:'The convoy has reached the town. The siege is broken and the people eat tonight.',lose:'The convoy is lost. The town is on its own.',
@@ -119,8 +119,8 @@ const CAMPAIGN=[
   else if(!hq)c.lose('Headquarters was destroyed.');
   c.status=c.t<c.T?'Relief in '+campClock(c.T-c.t)+' · wave '+c.wave:null;}},
 
-{id:'town',n:4,title:'Retake the Village',sub:'Lebanese Shia + Zaidi Shia Movement · Fortified village',fac:'RS',ally:'DW',enemy:'FR',enemyName:'Occupation Force',map:'golan',min:'14-20 min',
- brief:['An occupation force has dug into a hill village at the crossroads. Its stone houses are held by infantry and anti-tank teams, with armor in the lanes and their own fuel depot at the far gate.','Lebanese Shia and Zaidi Shia Movement fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the approach and the two flank lanes, take the village square, then recapture the fuel depot at the far gate. Put infantry into houses to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves from the north.'],
+{id:'town',n:4,title:'Retake the Village',sub:'Hezbollah + Ansarallah · Fortified village',fac:'RS',ally:'DW',enemy:'FR',enemyName:'Occupation Force',map:'golan',min:'14-20 min',
+ brief:['An occupation force has dug into a hill village at the crossroads. Its stone houses are held by infantry and anti-tank teams, with armor in the lanes and their own fuel depot at the far gate.','Hezbollah and Ansarallah fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the approach and the two flank lanes, take the village square, then recapture the fuel depot at the far gate. Put infantry into houses to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves from the north.'],
  obj:[['z0','Clear the southern approach'],['z1','Clear the west lane'],['z2','Clear the east lane'],['z3','Take the village square'],['z4','Recapture the fuel depot at the far gate'],['gar','Garrison a house to hold ground'],['hold','Beat back the counter-attacks and hold the village']],
  win:'The village is free and the depot is ours again. Both flags fly over the square.',lose:'The assault has failed. Our columns fall back.',
  setup(c){const d=c.mul,B=BASES[0];const ap=CH.pt(.62,0);const V=CH.village(ap[0],ap[1],900),C=[V.x,V.y];c.village=V;
@@ -177,7 +177,7 @@ const CAMPAIGN=[
   else if(CH.combat(0)===0&&G.teams[0].credits<250)c.lose('The assault force is destroyed.');
   else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and force lost.');}},
 
-{id:'marsh',n:6,title:'Bridgehead on the Euphrates',sub:'Iraqi Shia Brigades · River crossing in the southern marshes',fac:'RV',enemy:'GB',enemyName:'Southern Task Group',map:'euphrates',min:'16-22 min',
+{id:'marsh',n:6,title:'Bridgehead on the Euphrates',sub:'Kataib Hezbollah · River crossing in the southern marshes',fac:'RV',enemy:'GB',enemyName:'Southern Task Group',map:'euphrates',min:'16-22 min',
  brief:['The road to the shrine cities runs over the Euphrates. The far bank is held by a task group dug in among the reeds: emplacements at the bridge end, anti-tank teams in the marsh grass, and an ammunition dump behind them that feeds their guns.','Our volunteer brigades gather on the west bank with riflemen, anti-tank teams, tanks and mortars. Mortars and guns can cover the bridge from your side - use them before the infantry cross. Armor on a bridge is a target; send riflemen first.','Seize the far end of the bridge, capture the ammunition dump so our guns have supplies on the east bank, and then hold the bridgehead while the engineers bring the main column over. Expect hard counter-attacks along the causeway.'],
  obj:[['cross','Seize the east end of the bridge'],['dump','Capture the ammunition dump on the east bank'],['hold','Hold the bridgehead until the column crosses']],
  win:'The bridgehead held and the column is over the river. The road to the shrine cities is open.',lose:'The bridgehead is lost. The brigades fall back to the west bank.',
@@ -294,4 +294,4 @@ function campPanel(){
   let bn=document.getElementById('campBanner');if(!bn){bn=campEl('div','position:fixed;left:50%;top:92px;transform:translateX(-50%);z-index:610;max-width:min(560px,86vw);background:rgba(12,16,10,.9);border:1px solid #9fd36b;border-radius:8px;padding:9px 16px;color:#f4f0e0;font-size:17px;line-height:1.4;text-align:center;pointer-events:none;transition:opacity .5s;');bn.id='campBanner';document.body.appendChild(bn);}
 }
 setInterval(()=>{try{if(G&&G.camp)cqBanner();campPanel();}catch(e){}},400);
-(function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Missions';b.title='Six single-player missions for Iran, the Lebanese Shia, the Zaidi Shia Movement and the Iraqi Shia Brigades';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();
+(function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Missions';b.title='Six single-player missions for Iran, Hezbollah, Ansarallah and Kataib Hezbollah';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();

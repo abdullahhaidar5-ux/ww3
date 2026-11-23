@@ -375,8 +375,8 @@
     "RS",
     "IL"
    ],
-   "home_text": "Home turf: Lebanese Shia & Israel.",
-   "card_text": "Green limestone hills between the Mediterranean coast and the Litani River. Villages to fight through, ridges to hold, two river crossings. Home turf: Lebanese Shia & Israel.",
+   "home_text": "Home turf: Hezbollah & Israel.",
+   "card_text": "Green limestone hills between the Mediterranean coast and the Litani River. Villages to fight through, ridges to hold, two river crossings. Home turf: Hezbollah & Israel.",
    "world": [
     {
      "players": 2,
@@ -502,8 +502,8 @@
     "IR",
     "RV"
    ],
-   "home_text": "Home turf: Lebanese Shia & Iran & Iraqi Shia Brigades.",
-   "card_text": "A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armor. Home turf: Lebanese Shia & Iran & Iraqi Shia Brigades.",
+   "home_text": "Home turf: Hezbollah & Iran & Kataib Hezbollah.",
+   "card_text": "A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armor. Home turf: Hezbollah & Iran & Kataib Hezbollah.",
    "world": [
     {
      "players": 2,
@@ -546,8 +546,8 @@
     "DW",
     "SA"
    ],
-   "home_text": "Home turf: Zaidi Shia Movement & Saudi Arabia.",
-   "card_text": "Hot coastal plains on both sides and a rugged highland diamond in the middle with the old capital inside. The wadi passes along the middle are the only easy way in; the ridge corners are for snipers and artillery. Home turf: Zaidi Shia Movement & Saudi Arabia.",
+   "home_text": "Home turf: Ansarallah & Saudi Arabia.",
+   "card_text": "Hot coastal plains on both sides and a rugged highland diamond in the middle with the old capital inside. The wadi passes along the middle are the only easy way in; the ridge corners are for snipers and artillery. Home turf: Ansarallah & Saudi Arabia.",
    "world": [
     {
      "players": 2,
@@ -1002,8 +1002,8 @@
     "RV",
     "IR"
    ],
-   "home_text": "Home turf: Iraqi Shia Brigades & Iran.",
-   "card_text": "The great southern marshes: reed islands and shallow lagoons, canoe villages and narrow causeways. Few roads, many ambush lanes; the island market town in the middle supplies the winner. Home turf: Iraqi Shia Brigades & Iran.",
+   "home_text": "Home turf: Kataib Hezbollah & Iran.",
+   "card_text": "The great southern marshes: reed islands and shallow lagoons, canoe villages and narrow causeways. Few roads, many ambush lanes; the island market town in the middle supplies the winner. Home turf: Kataib Hezbollah & Iran.",
    "world": [
     {
      "players": 2,
@@ -1123,8 +1123,8 @@
     "DW",
     "SA"
    ],
-   "home_text": "Home turf: Zaidi Shia Movement & Saudi Arabia.",
-   "card_text": "From the Red Sea coast up into the Sarawat mountains: tower-house cities of the highlands, narrow passes and a port on the plain. Home turf: Zaidi Shia Movement & Saudi Arabia.",
+   "home_text": "Home turf: Ansarallah & Saudi Arabia.",
+   "card_text": "From the Red Sea coast up into the Sarawat mountains: tower-house cities of the highlands, narrow passes and a port on the plain. Home turf: Ansarallah & Saudi Arabia.",
    "world": [
     {
      "players": 4,
@@ -1184,8 +1184,8 @@
     "RS",
     "RV"
    ],
-   "home_text": "Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades.",
-   "card_text": "The reed marshes on the Iran-Iraq border: a lagoon in the middle crossed by two causeways that meet on an island, and marsh pools that channel every advance. Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades.",
+   "home_text": "Home turf: Iran & Hezbollah & Kataib Hezbollah.",
+   "card_text": "The reed marshes on the Iran-Iraq border: a lagoon in the middle crossed by two causeways that meet on an island, and marsh pools that channel every advance. Home turf: Iran & Hezbollah & Kataib Hezbollah.",
    "world": [
     {
      "players": 4,
@@ -1346,8 +1346,8 @@
     "RS",
     "RV"
    ],
-   "home_text": "Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades.",
-   "card_text": "Iraq between the Tigris and the Euphrates: Baghdad between the rivers, Basra by the Shatt al-Arab and bridges everywhere. Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades.",
+   "home_text": "Home turf: Iran & Hezbollah & Kataib Hezbollah.",
+   "card_text": "Iraq between the Tigris and the Euphrates: Baghdad between the rivers, Basra by the Shatt al-Arab and bridges everywhere. Home turf: Iran & Hezbollah & Kataib Hezbollah.",
    "world": [
     {
      "players": 4,
@@ -1654,8 +1654,8 @@
     "AE",
     "DW"
    ],
-   "home_text": "Home turf: Saudi Arabia & United Arab Emirates & Zaidi Shia Movement.",
-   "card_text": "The edge of the Empty Quarter: giant dunes, salt flats you can cross and dunes you cannot, a gravel road with oil camps. Open, fast and brutal on fuel. Home turf: Saudi Arabia & United Arab Emirates & Zaidi Shia Movement.",
+   "home_text": "Home turf: Saudi Arabia & United Arab Emirates & Ansarallah.",
+   "card_text": "The edge of the Empty Quarter: giant dunes, salt flats you can cross and dunes you cannot, a gravel road with oil camps. Open, fast and brutal on fuel. Home turf: Saudi Arabia & United Arab Emirates & Ansarallah.",
    "world": [
     {
      "players": 6,

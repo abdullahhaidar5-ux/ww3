@@ -136,7 +136,22 @@ static func _has_colours(mesh: Mesh, s: int) -> bool:
 	if mesh is ArrayMesh: return ((mesh as ArrayMesh).surface_get_format(s) & Mesh.ARRAY_FORMAT_COLOR) != 0
 	return false
 
-static func _add_rigid(root: Node3D, e: Dictionary) -> Dictionary:
+## Flag cloth on buildings: the exported 120x72 flag baked into the model is swapped for the game's real, high-resolution
+## flag of that nation (res://ui/icons/flags/<KEY>.png, 320x192). The cloth's UVs cover the whole picture (0..1).
+static var _flag_mats: Dictionary = {}
+static func flag_material(mat: StandardMaterial3D, nation: String) -> StandardMaterial3D:
+	if mat == null or mat.albedo_texture == null: return mat
+	var path := "res://ui/icons/flags/%s.png" % nation
+	if not ResourceLoader.exists(path): return mat
+	var key := str(mat.get_instance_id()) + "|" + nation
+	if _flag_mats.has(key): return _flag_mats[key]
+	var m2 := mat.duplicate() as StandardMaterial3D
+	m2.albedo_texture = load(path)
+	m2.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	_flag_mats[key] = m2
+	return m2
+
+static func _add_rigid(root: Node3D, e: Dictionary, nation: String = "") -> Dictionary:
 	var parts := {}
 	var pd: Dictionary = e.get("parts", {})
 	for k in pd.keys():
@@ -155,10 +170,12 @@ static func _add_rigid(root: Node3D, e: Dictionary) -> Dictionary:
 		var mi := MeshInstance3D.new()
 		mi.mesh = mesh
 		var mats: Array = inst.get("mat", [])
+		var p = inst.get("p", null)
 		for s in mesh.get_surface_count():
 			var md: Dictionary = mats[min(s, mats.size() - 1)] if mats.size() > 0 else {}
-			mi.set_surface_override_material(s, material(mesh.surface_get_material(s), md, _has_colours(mesh, s)))
-		var p = inst.get("p", null)
+			var mat := material(mesh.surface_get_material(s), md, _has_colours(mesh, s))
+			if p != null and String(p) == "flag" and nation != "": mat = flag_material(mat, nation)
+			mi.set_surface_override_material(s, mat)
 		var host: Node3D = parts[p] if p != null and parts.has(p) else root
 		host.add_child(mi)
 		mi.transform = xf(inst.get("m", null)) * (shape(inst["f"])[1] as Transform3D)
@@ -176,9 +193,9 @@ static func build(nation: String, kind: String, hi: bool = false) -> Node3D:
 			if s == null: continue
 			root.add_child(s)
 			s.position = Vector3(float(pl["x"]), float(pl.get("y", 0.0)), float(pl["z"]))
-		if e.get("extra", null) != null: _add_rigid(root, e["extra"])
+		if e.get("extra", null) != null: _add_rigid(root, e["extra"], nation)
 	else:
-		_add_rigid(root, e)
+		_add_rigid(root, e, nation)
 	var sc := float(e.get("scale", 1.0))
 	root.scale = Vector3(sc, sc, sc)
 	return root
@@ -257,6 +274,7 @@ static func merged(nation: String, kind: String) -> Dictionary:
 		for s in mesh.get_surface_count():
 			var md: Dictionary = mats[min(s, mats.size() - 1)] if mats.size() > 0 else {}
 			var mat := material(mesh.surface_get_material(s), md, _has_colours(mesh, s))
+			if p == "flag": mat = flag_material(mat, nation)
 			if not tools.has(p): tools[p] = {}
 			if not tools[p].has(mat):
 				var st := SurfaceTool.new()

@@ -334,7 +334,7 @@ function drawEmblem(x,fac,bg){const W=120,H=72;
     x.fillStyle='#3a2414';x.fillRect(-17,-2.4,10.5,4.8);x.fillStyle=gd;x.beginPath();x.moveTo(-17,-2.4);x.lineTo(-23,-6.5);x.quadraticCurveTo(-25,0,-23,6.5);x.lineTo(-17,2.4);x.closePath();x.fill();x.stroke();
     x.fillStyle=gd;x.beginPath();x.arc(-11.5,0,1.1,0,7);x.fill();x.restore();
   }}
-// Lebanese Shia: printed cloth banner (Abdullah 21:19 "as realistic as you are allowed to") — real militia-banner style, our own emblem; never the real organisation's marks
+// Hezbollah: printed cloth banner (Abdullah 21:19 "as realistic as you are allowed to") — real militia-banner style, our own emblem; never the real organisation's marks
 function emCloth(x,W,H,base,seed){x.fillStyle=base;x.fillRect(0,0,W,H);
   for(let i=0;i<7;i++){const fx=i*W/6+((seed*37+i*53)%9)-4,g=x.createLinearGradient(fx-10,0,fx+10,0);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.5,i%2?'rgba(255,255,255,.10)':'rgba(70,40,0,.13)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(fx-10,0,20,H);}
   let s=seed|0||7;const r=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
@@ -359,7 +359,7 @@ function drawRS(x,bg){const W=120,H=72,G='#0f6a2e',G2='#0a4d20';
   x.beginPath();x.moveTo(-22,-3.2);x.lineTo(16,-4.4);x.quadraticCurveTo(31,-6.5,42,-12);x.lineTo(36,-4.8);x.quadraticCurveTo(28,-2.2,21,-.9);x.lineTo(21,.9);x.quadraticCurveTo(28,2.2,36,4.8);x.lineTo(42,12);x.quadraticCurveTo(31,6.5,16,4.4);x.lineTo(-22,3.2);x.closePath();x.fill();x.stroke();
   x.beginPath();x.moveTo(-21,-11);x.quadraticCurveTo(-26,0,-21,11);x.lineTo(-25,11);x.quadraticCurveTo(-30,0,-25,-11);x.closePath();x.fill();x.stroke();
   x.fillRect(-40,-2.8,15,5.6);x.strokeRect(-40,-2.8,15,5.6);x.beginPath();x.arc(-42,0,3.6,0,7);x.fill();x.stroke();x.restore();}
-// Iraqi Shia Brigades (RV, was River Shias; Abdullah 2026-11-07 19:42 "Fix logo"): original printed cloth banner, distinct from the Lebanese Shia' black/green — deep Iraqi green field, GOLD shrine dome & two minarets (the Karbala/Najaf golden domes) over the twin rivers in blue, gold ring + laurels, red foot band. Our own mark; never a real organisation's.
+// Kataib Hezbollah (RV, was River Shias; Abdullah 2026-11-07 19:42 "Fix logo"): original printed cloth banner, distinct from Hezbollah' black/green — deep Iraqi green field, GOLD shrine dome & two minarets (the Karbala/Najaf golden domes) over the twin rivers in blue, gold ring + laurels, red foot band. Our own mark; never a real organisation's.
 function drawRV(x,bg){const W=120,H=72,G='#e8b83e',G2='#a87a1c',GL='#7cc7ff',FB='#0e3b21';
   if(bg){emCloth(x,W,H,FB,23);
     const b=x.createLinearGradient(0,H*.8,0,H);b.addColorStop(0,'#b5141c');b.addColorStop(1,'#7e0c12');x.fillStyle=b;x.fillRect(0,H*.8,W,H*.2);
@@ -945,7 +945,7 @@ function postApply(m,ud,e,k,dt,tg,moving,fire){const W=ud.legs;if(!W||!W.uL)retu
   const y=0.5*(gDepth(W,thL,knL)+gDepth(W,thR,knR))-W.D0;
   m.position.y=y*(1-pr)+pr*1.25;m.rotation.x=pr*1.5;if(ud.bz===undefined)ud.bz=m.position.z;m.position.z=ud.bz-pr*3.6;ud.pp=1;return 1;}
 // Drones are built by hand so each nation's looks right: a Shahed-style delta wing with a pusher propeller
-// (Iran, Lebanese Shia), a Kargu-style quadcopter (Turkey) and a small X-frame FPV racer (Ukraine and others).
+// (Iran, Hezbollah), a Kargu-style quadcopter (Turkey) and a small X-frame FPV racer (Ukraine and others).
 // Iran and the two Shia militias fly Shahed-style deltas (stencilled Shahed / Ababil / Qasef), Turkey a Bayraktar-style
 // light-grey drone, the US and Israel an MQ-9 / Hermes-style grey drone, Russia a Lancet-style dark loitering munition,
 // China and Korea a bigger quadcopter, India/Japan/UK/France an MQ-9-style grey drone, Saudi/UAE/Egypt a pale Wing Loong-style one, Pakistan and Ukraine a TB2; everyone else taped-up FPV racers.
@@ -1741,12 +1741,12 @@ const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
  NATX_FLAG.ET=c=>{c.hs(['#078930','#fcdd09','#da121a']);c.circ(60,36,11,'#0f47af');c.star(60,36,9,'#fcdd09');};
  NATX_FLAG.LY=c=>{c.rect('#4a4f55',0,0,c.W,c.H);c.rect('#a89466',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};
  NATX_FLAG.SD=c=>{c.rect('#4b5246',0,0,c.W,c.H);c.rect('#a89a6e',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};}
-// nation-obbd: Palestine Islamic Brigade (OB, was Olive Brigades) and Desert Islamic Faction (BI, was Black Desert Insurgency). Looks on shared models; ORIGINAL emblems in the printed-cloth style (no real group's banner, seal, shahada or slogan).
+// nation-obbd: Hamas (OB, was Olive Brigades) and Desert Islamic Faction (BI, was Black Desert Insurgency). Looks on shared models; ORIGINAL emblems in the printed-cloth style (no real group's banner, seal, shahada or slogan).
 {const L={ OB:{tk:'hilux',he:null,je:null,sol:'sol_e',fl:{veh:'#6b6a52',ca:'#7a7556',cb:'#3a3a2c',uni:'#5d6048',pat:1},cx:{p:1,s:1,c:'#6b6a52',t:'#3c6b3a',w:3},ax:{b:'#878d91',p:3,h:{b:'#aeb09a',p:3}},ch:'#4a5036',rt:'#aeb09a',nv:'slav'},
  BI:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#9a8a62',ca:'#a89a6c',cb:'#3a3a3e',uni:'#8f8460',pat:0},cx:{p:0,s:1,c:'#9a8a62',t:'#3b3b3f',w:3},ax:{b:'#878d91',p:3,h:{b:'#bfb08a',p:3}},ch:'#5a5238',rt:'#bfb08a',nv:'slav'}};
  for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;if(q.nv)NATX_NAVY[k]=q.nv;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
 RMAP.boat.OB='spb';MIL_TANK.OB={m:'technical',fit:'z',size:29};delete RMAP.ship.OB;   /* OB: pickup technicals + rocket trucks, no tank/jet/helicopter/frigate model */
- // OB "Palestine Islamic Brigade" (Abdullah 2026-11-07 19:40): ORIGINAL emblem — an old house key crossed with an olive branch on a sand/olive shield, cream printed cloth, red/green/black foot band, name in Arabic. No real group's banner, seal, shahada or slogan.
+ // OB "Hamas" (Abdullah 2026-11-07 19:40): ORIGINAL emblem — an old house key crossed with an olive branch on a sand/olive shield, cream printed cloth, red/green/black foot band, name in Arabic. No real group's banner, seal, shahada or slogan.
  NATX_FLAG.OB=c=>{const{x,W,H}=c;emCloth(x,W,H,'#efe6cf',23);
   x.fillStyle='#2b2b2b';x.fillRect(0,H*.84,W,H*.16);x.fillStyle='#b3262e';x.fillRect(0,H*.84,W*.34,H*.16);x.fillStyle='#2f6b3a';x.fillRect(W*.66,H*.84,W*.34,H*.16);
   emText(x,'لواء فلسطين الإسلامي',60,9,10,'#2f5a30');

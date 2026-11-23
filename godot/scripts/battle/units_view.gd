@@ -73,6 +73,15 @@ var _anim_count: int = 0
 var _frame_id: int = 0
 var _now_t: float = 0.0
 var _headless: bool = false
+# ---- realistic motion (visual only: the simulation, its hashes and multiplayer sync never see any of this) ----
+# Every unit keeps a small motion state so the picture behaves like real machines and men instead of copying the
+# simulation's instant headings: hulls turn at a limited rate, suspensions squat / dive / rock on slopes, turrets slew at
+# their own speed, aircraft bank, and each soldier of a squad runs to his own spot with his own reaction and stride.
+var _vs: Dictionary = {}             # eid (int) -> motion state
+var _prev_now: float = -1.0
+var _dt: float = 0.016
+const TRACKED_CLS := ["tank", "arty", "aa", "spg"]
+const TRACKED_KINDS := ["tank", "ifv", "spg", "arty", "aa", "dozer", "msta", "g6"]
 
 
 func setup(host: Node3D) -> void:
@@ -116,6 +125,8 @@ func begin_frame(_B = null) -> void:
 		return
 	if _B != null:
 		_now_t = float(_B.t)
+	_dt = clampf(_now_t - _prev_now, 0.0, 0.1) if _prev_now >= 0.0 else 0.016
+	_prev_now = _now_t
 	_frame_id += 1
 	_anim_count = 0
 	_ao_xf.clear()
@@ -153,6 +164,7 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 	var cam_dist_sq: float = p.distance_squared_to(cam_t)
 	var wv = B.world_view if B != null else null
 	var fx = wv.fx if wv != null else null
+	var vis_ang: float = ang
 
 	if is_sq:
 		var sq: Array = meta["squad"]
@@ -210,9 +222,18 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 					dlook = String(dpl.get("look", "v0"))
 				var doff := Vector2(dlx, dlz).rotated(ang)
 				var dq := p + doff
+				var dst: Dictionary = _vs.get(eid_i, {})
+				if dst.has("sol") and di < (dst["sol"] as Array).size() and Vector2((dst["sol"] as Array)[di]["q"]) != Vector2.INF:
+					dq = (dst["sol"] as Array)[di]["q"]   # he falls where he actually stood
 				var dqy: float = float(B.sim.ground_h(dq.x, dq.y)) + dly
 				_spawn_dying_soldier(eid_i * 16 + di, fac, kind_s, dlook, Vector3(dq.x, dqy, dq.y), sol_yaw, sc, now)
 
+		var sst := _sq_state(eid_i, p, ang, n_total)
+		var fh: float = float(sst["fh"])
+		var sols: Array = sst["sol"]
+		# loose CoH-style spacing: wider while moving (wedge-like spread), a little wider than the tight export pose at rest
+		var moving_sq: bool = spd > 2.0
+		var spread: float = 1.45 if moving_sq else 1.15
 		for i in alive_n:
 			var lx := 0.0
 			var lz := 0.0
@@ -227,8 +248,23 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 				lz = float(pl.get("z", 0.0)) * sc
 				ly = float(pl.get("y", 0.0)) * sc
 				look = String(pl.get("look", "v0"))
-			var off := Vector2(lx, lz).rotated(ang)
-			var q := p + off
+			var sd: Dictionary = sols[i]
+			var off := Vector2(lx * spread + float(sd["jx"]), lz * spread + float(sd["jz"])).rotated(fh)
+			_sol_step(sd, p + off + Vector2(sst.get("vel", Vector2.ZERO)) * 0.22, spd, _dt)
+			var q: Vector2 = sd["q"]
+			var sv: Vector2 = sd["v"]
+			var own_spd: float = sv.length()
+			# each man faces where he is going; when stopped he faces the enemy he shoots at, else the squad's heading
+			var face: float = float(sd["yaw"])
+			if own_spd > 5.0: face = atan2(sv.y, sv.x)
+			elif firing_recent and has_live_target: face = atan2(float(e.target.y) - q.y, float(e.target.x) - q.x)
+			elif not moving_sq: face = ang
+			sd["yaw"] = _ang_step(float(sd["yaw"]), face, 9.0 * _dt)
+			var i_yaw: float = -float(sd["yaw"]) + PI * 0.5
+			var i_clip := clip
+			if own_spd > 26.0: i_clip = "run"
+			elif own_spd > 3.0: i_clip = "walk"
+			elif clip == "run" or clip == "walk": i_clip = "idle"   # already at his spot while the squad still moves
 			var qy: float = float(B.sim.ground_h(q.x, q.y)) + ly
 			var slot_id: int = eid_i * 16 + i
 
@@ -241,19 +277,25 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 					var node: Node3D = rec["node"]
 					node.visible = true
 					node.position = Vector3(q.x, qy, q.y)
-					node.rotation = Vector3(0.0, sol_yaw, 0.0)
+					node.rotation = Vector3(0.0, i_yaw, 0.0)
 					node.scale = Vector3(sc, sc, sc)
-					var s_clip := clip
-					if combat_stance:
+					var s_clip := i_clip
+					if combat_stance and own_spd <= 3.0:
 						var phase: int = int(floor((now + float(eid_i * 7 + i * 3) * 0.37) / 1.4)) % 3
 						s_clip = "reload" if phase == 0 else "crouch"
 					_drive_anim(rec, s_clip, slot_id)
+					# stride matches ground speed (no ice-skating): scale walk / run playback by how fast he really moves
+					var apn = rec.get("ap", null)
+					if apn != null and is_instance_valid(apn):
+						var ref := 40.0 if s_clip == "run" else (16.0 if s_clip == "walk" else 0.0)
+						(apn as AnimationPlayer).speed_scale = clampf(own_spd / ref, 0.75, 1.3) if ref > 0.0 else 1.0
 					continue
 
 			var smesh := _get_static_soldier_mesh(fac, kind_s, look)
 			if smesh != null:
-				var bob := absf(sin(now * 11.0 + float(eid_i * 3 + i * 2))) * 1.1 if spd > 2.0 else 0.0
-				_push_mm("s|" + fac + "|" + kind_s + "|" + look, smesh, Transform3D(sol_basis, Vector3(q.x, qy + bob, q.y)), true)
+				var bob := absf(sin(now * 11.0 + float(eid_i * 3 + i * 2))) * 1.1 if own_spd > 3.0 else 0.0
+				var i_basis := Basis(Vector3.UP, i_yaw).scaled(Vector3(sc, sc, sc))
+				_push_mm("s|" + fac + "|" + kind_s + "|" + look, smesh, Transform3D(i_basis, Vector3(q.x, qy + bob, q.y)), true)
 
 		# Squad extra rigid pieces (e.g. mortar tube, cleric banner)
 		if not parts.is_empty():
@@ -275,8 +317,12 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 
 		var px := p.x
 		var pz := p.y
-		var tang: float = float(e.tang)
-		var hull_basis := Basis(Vector3.UP, -ang)
+		var mo := _veh_motion(B, e, eid_i, p, ang, dom, kind_s)
+		var vyaw: float = float(mo["yaw"])
+		vis_ang = vyaw
+		var tang: float = float(mo["tur"])
+		var hull_basis := Basis(Vector3.UP, -vyaw) * Basis(Vector3(0, 0, 1), float(mo["pitch"])) * Basis(Vector3(1, 0, 0), float(mo["roll"]))
+		alt_y += float(mo["dy"])
 		if dom == "naval":
 			alt_y += sin(now * 1.4 + eid_f) * 0.6
 			hull_basis = hull_basis * Basis.from_euler(Vector3(sin(now * 0.8 + eid_f * 2.0) * 0.02, 0.0, sin(now * 1.1 + eid_f) * 0.025))
@@ -316,7 +362,7 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 			var shadow := true
 			match pks:
 				"turret", "turret2", "gun":
-					part_xf = root_xf * Transform3D(Basis(Vector3.UP, ang - tang) * pt.basis, pt.origin)
+					part_xf = root_xf * Transform3D(Basis(Vector3.UP, vyaw - tang) * pt.basis, pt.origin)
 					if recoil_off != Vector3.ZERO:
 						part_xf.origin += recoil_off
 				"blades":
@@ -344,7 +390,7 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 
 		# Battle damage smoke/fire, track dust, & helicopter rotor downwash
 		if fx != null:
-			_emit_vehicle_fx(fx, e, kind_s, dom, p, ang, gy, alt_y, model_h, eid_i, now, cam_dist_sq)
+			_emit_vehicle_fx(fx, e, kind_s, dom, p, vyaw, gy, alt_y, model_h, eid_i, now, cam_dist_sq)
 
 	# Grounded CoH3 contact AO shadow disc under ground units & infantry squads
 	if is_sq:
@@ -353,7 +399,7 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 		_ao_col.append(Color(1.0, 1.0, 1.0, 0.24))
 	elif String(e.s_dom) != "air":
 		var vr: float = maxf(float(e.r) * 1.24, 11.0)
-		_ao_xf.append(Transform3D(Basis(Vector3.UP, -ang).scaled(Vector3(vr * 1.18, 1.0, vr * 0.90)), Vector3(p.x, gy + 0.26, p.y)))
+		_ao_xf.append(Transform3D(Basis(Vector3.UP, -vis_ang).scaled(Vector3(vr * 1.18, 1.0, vr * 0.90)), Vector3(p.x, gy + 0.26, p.y)))
 		_ao_col.append(Color(1.0, 1.0, 1.0, 0.42))
 
 	_append_overlays(B, fr, e, p, ang, gy, alt_y, model_h, col, issel, mine, vis)
@@ -414,6 +460,11 @@ func end_frame() -> void:
 		di -= 1
 
 	# Retire soldiers not drawn this frame back into the reusable idle pool
+	if _frame_id % 120 == 0:
+		var gone: Array = []
+		for k in _vs.keys():
+			if float((_vs[k] as Dictionary).get("seen", 0.0)) < _now_t - 4.0: gone.append(k)
+		for k in gone: _vs.erase(k)
 	var stale: Array = []
 	for slot_id in _active_sol.keys():
 		var rec: Dictionary = _active_sol[slot_id]
@@ -445,12 +496,143 @@ func clear() -> void:
 	_dust_cd.clear()
 	_last_fire_seen.clear()
 	_recoil_t.clear()
+	_vs.clear()
+	_prev_now = -1.0
 	_anim_count = 0
 	_frame_id = 0
 	_now_t = 0.0
 
 
 # ------------------------------------------------------------------ internals
+static func _ang_step(cur: float, target: float, max_step: float) -> float:
+	return cur + clampf(wrapf(target - cur, -PI, PI), -max_step, max_step)
+
+static func _h01(a: float, b: float) -> float:
+	return fposmod(sin(a * 12.9898 + b * 78.233) * 43758.5453, 1.0)
+
+## Vehicle / aircraft motion (numbers from Company of Heroes 3 data and Zero Hour's Locomotor.ini, see orch research):
+## - hull heading turns at a real rate (medium tank ~45 deg/s, wheeled ~70, heavy ~32, ships 20) instead of snapping
+## - chassis on a damped spring (~2 Hz): squats back when accelerating, dives 2-4 deg on braking and rocks once when it
+##   stops, rolls outward in fast turns, and settles onto the slope it stands on (4 ground samples around the hull)
+## - wheeled trucks / technicals bounce on soft suspension, tracked armour stays stiff
+## - turrets slew to their target at their own traverse speed (MBT 40 deg/s, light guns 60, MGs 120)
+## - helicopters dip the nose with speed and bank into turns; jets bank hard
+func _veh_motion(B, e, eid_i: int, p: Vector2, ang: float, dom: String, kind_s: String) -> Dictionary:
+	var dt := _dt
+	var st: Dictionary = _vs.get(eid_i, {})
+	if st.is_empty() or Vector2(st["p"]).distance_squared_to(p) > 250.0 * 250.0:
+		st = {p = p, yaw = ang, spd = float(e.v), acc = 0.0, pitch = 0.0, pv = 0.0, roll = 0.0, rv = 0.0, tur = float(e.tang), bank = 0.0, nose = 0.0, seen = _now_t}
+		_vs[eid_i] = st
+	st["seen"] = _now_t
+	st["p"] = p
+	var cls := String(e.s_cls)
+	var armor := String(e.s_armor)
+	var tracked: bool = cls in TRACKED_CLS or kind_s in TRACKED_KINDS or armor == "heavy"
+	var heavy: bool = armor == "heavy" and tracked
+	# speed / acceleration from the simulation's own speed (smooth, no frame jitter)
+	var spd_new: float = absf(float(e.v))
+	var spd_s: float = lerpf(float(st["spd"]), spd_new, clampf(dt * 8.0, 0.0, 1.0))
+	var acc_raw: float = (spd_s - float(st["spd"])) / maxf(dt, 0.001)
+	st["acc"] = lerpf(float(st["acc"]), acc_raw, clampf(dt * 6.0, 0.0, 1.0))
+	st["spd"] = spd_s
+	# heading at a real turn rate
+	var rate_deg := 70.0
+	if dom == "air": rate_deg = 120.0
+	elif dom == "naval": rate_deg = 20.0
+	elif heavy: rate_deg = 32.0
+	elif tracked: rate_deg = 45.0
+	var prev_yaw: float = float(st["yaw"])
+	var yaw: float = _ang_step(prev_yaw, ang, deg_to_rad(rate_deg) * dt)
+	st["yaw"] = yaw
+	var yaw_rate: float = wrapf(yaw - prev_yaw, -PI, PI) / maxf(dt, 0.001)
+	# turret traverse (tang is a world angle in the simulation)
+	var trate := 120.0
+	if heavy: trate = 32.0
+	elif cls == "tank": trate = 40.0
+	elif tracked: trate = 55.0
+	st["tur"] = _ang_step(float(st["tur"]), float(e.tang), deg_to_rad(trate) * dt)
+	var out := {yaw = yaw, tur = float(st["tur"]), pitch = 0.0, roll = 0.0, dy = 0.0}
+	var spd: float = spd_s
+	if dom == "air":
+		var high: bool = kind_s in HIGH_AIR_KINDS
+		var bank_t := clampf(-yaw_rate * (0.45 if high else 0.30), -0.62 if high else -0.38, 0.62 if high else 0.38)
+		st["bank"] = lerpf(float(st["bank"]), bank_t, clampf(dt * 3.0, 0.0, 1.0))
+		var nose_t := 0.0 if high else -clampf(spd / 90.0, 0.0, 1.0) * 0.16   # helicopters dip the nose to fly forward
+		st["nose"] = lerpf(float(st["nose"]), nose_t, clampf(dt * 2.0, 0.0, 1.0))
+		out["roll"] = float(st["bank"])
+		out["pitch"] = float(st["nose"])
+		if not high: out["dy"] = sin(_now_t * 1.7 + float(eid_i)) * 1.2   # hover drift
+		return out
+	if dom == "naval":
+		return out
+	# ground: slope under the hull (front/back, left/right) + accel squat / brake dive + turn roll
+	var L: float = clampf(float(e.r) * 1.05, 7.0, 26.0)
+	var Wd: float = L * 0.62
+	var fwd := Vector2(cos(yaw), sin(yaw))
+	var side := Vector2(-fwd.y, fwd.x)
+	var gh = B.sim
+	var hf: float = float(gh.ground_h(p.x + fwd.x * L, p.y + fwd.y * L))
+	var hb: float = float(gh.ground_h(p.x - fwd.x * L, p.y - fwd.y * L))
+	var hs: float = float(gh.ground_h(p.x + side.x * Wd, p.y + side.y * Wd))
+	var hn: float = float(gh.ground_h(p.x - side.x * Wd, p.y - side.y * Wd))
+	var lim := deg_to_rad(2.2 if heavy else (3.8 if tracked else 5.0))
+	var k_acc := 0.0011 if tracked else 0.0016
+	var pitch_t: float = atan2(hf - hb, 2.0 * L) + clampf(float(st["acc"]) * k_acc, -lim, lim)
+	var roll_t: float = -atan2(hs - hn, 2.0 * Wd) + clampf(yaw_rate * spd * (0.0009 if tracked else 0.0016), -lim, lim)
+	# damped spring: tracked ~2 Hz zeta 0.5 (one rock on a stop), wheeled softer and bouncier
+	var w := TAU * (2.0 if tracked else 1.6)
+	var zeta := 0.5 if tracked else 0.28
+	var K := w * w
+	var C := 2.0 * zeta * w
+	var pv: float = float(st["pv"]) + (K * (pitch_t - float(st["pitch"])) - C * float(st["pv"])) * dt
+	var pitch: float = float(st["pitch"]) + pv * dt
+	var rv: float = float(st["rv"]) + (K * (roll_t - float(st["roll"])) - C * float(st["rv"])) * dt
+	var roll: float = float(st["roll"]) + rv * dt
+	st["pv"] = pv; st["pitch"] = pitch; st["rv"] = rv; st["roll"] = roll
+	out["pitch"] = pitch
+	out["roll"] = roll
+	if not tracked and spd > 4.0:
+		var sk := clampf(spd / 60.0, 0.0, 1.0)
+		var ef := float(eid_i)
+		out["dy"] = (sin(_now_t * 14.0 + ef) * 0.35 + sin(_now_t * 23.0 + ef * 1.7) * 0.18) * sk
+		out["pitch"] = pitch + sin(_now_t * 11.0 + ef * 2.3) * 0.012 * sk
+		out["roll"] = roll + sin(_now_t * 9.0 + ef * 3.1) * 0.014 * sk
+	elif tracked and spd > 4.0:
+		out["dy"] = sin(_now_t * 19.0 + float(eid_i)) * 0.08 * clampf(spd / 40.0, 0.0, 1.0)   # track / road-wheel rumble
+	return out
+
+## Squad motion state: the formation turns at a human rate, each soldier runs to his own (slightly loose) spot with his
+## own stiffness, top speed and reaction, and faces where HE is going (CoH: leader paths, followers catch up / slow down).
+func _sq_state(eid_i: int, p: Vector2, ang: float, n: int) -> Dictionary:
+	var st: Dictionary = _vs.get(eid_i, {})
+	if st.is_empty() or Vector2(st["p"]).distance_squared_to(p) > 300.0 * 300.0:
+		st = {p = p, fh = ang, sol = [], seen = _now_t, mv = 0.0}
+		_vs[eid_i] = st
+	st["seen"] = _now_t
+	var sol: Array = st["sol"]
+	while sol.size() < n:
+		var i := sol.size()
+		var hk := _h01(float(eid_i), float(i))
+		sol.append({q = Vector2.INF, v = Vector2.ZERO, yaw = ang, k = 4.0 + hk * 2.4, vmax = 1.0 + (hk - 0.5) * 0.14, jx = (_h01(float(eid_i) + 3.1, float(i)) - 0.5) * 7.0, jz = (_h01(float(eid_i) + 7.7, float(i)) - 0.5) * 7.0})
+	st["fh"] = _ang_step(float(st["fh"]), ang, deg_to_rad(110.0) * _dt)
+	# squad velocity (smoothed): followers aim slightly ahead of where the squad is going, like CoH's look-ahead
+	var vel_raw: Vector2 = (p - Vector2(st["p"])) / maxf(_dt, 0.001) if _dt > 0.0001 else Vector2(st.get("vel", Vector2.ZERO))
+	st["vel"] = Vector2(st.get("vel", Vector2.ZERO)).lerp(vel_raw, clampf(_dt * 5.0, 0.0, 1.0))
+	st["p"] = p
+	return st
+
+func _sol_step(s: Dictionary, target: Vector2, sq_spd: float, dt: float) -> void:
+	if Vector2(s["q"]) == Vector2.INF or Vector2(s["q"]).distance_squared_to(target) > 140.0 * 140.0:
+		s["q"] = target; s["v"] = Vector2.ZERO
+		return
+	var q: Vector2 = s["q"]
+	var d := target - q
+	var vmax: float = (sq_spd * 1.3 + 14.0) * float(s["vmax"])
+	var desired := d * float(s["k"])
+	if desired.length() > vmax: desired = desired.normalized() * vmax
+	var v: Vector2 = Vector2(s["v"]).move_toward(desired, 240.0 * dt)
+	s["v"] = v
+	s["q"] = q + v * dt
 func _emit_vehicle_fx(fx, e, kind_s: String, dom: String, p: Vector2, ang: float, gy: float, alt_y: float, model_h: float, eid_i: int, now: float, cam_dist_sq: float) -> void:
 	# 1. Battle damage engine smoke (<55% HP) & thick black smoke + flickering fire (<28% HP)
 	if float(e.max) > 0.0 and cam_dist_sq <= DMG_FX_DIST_SQ:

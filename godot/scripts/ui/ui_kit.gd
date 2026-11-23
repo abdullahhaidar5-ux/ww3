@@ -39,7 +39,7 @@ static func font(kind: String = "display") -> Font:
 # the 22 playable nations in the picker's order (CLAUDE.md "Factions"); the picker shows the ones data/rules.json has
 const PLAYABLE := ["IR", "RS", "DW", "RV", "OB", "US", "GB", "FR", "DE", "IL", "UA", "RU", "CN", "KP", "IN", "JP", "KR", "PK", "SA", "AE", "TR", "EG"]
 const BLOCS := [["Shia and allies", ["IR", "RS", "DW", "RV", "OB"]], ["West", ["US", "GB", "FR", "DE", "IL", "UA"]], ["East", ["RU", "CN", "KP"]], ["Asia", ["IN", "JP", "KR", "PK"]], ["Regional", ["SA", "AE", "TR", "EG"]]]
-const NAT_FALLBACK := {"IR": "Iran", "RS": "Lebanese Shia", "DW": "Zaidi Shia Movement", "RV": "Iraqi Shia Brigades", "OB": "Palestine Islamic Brigade",
+const NAT_FALLBACK := {"IR": "Iran", "RS": "Hezbollah", "DW": "Ansarallah", "RV": "Kataib Hezbollah", "OB": "Hamas",
 	"US": "United States", "GB": "United Kingdom", "FR": "France", "DE": "Germany", "IL": "Israel", "UA": "Ukraine", "RU": "Russia", "CN": "China",
 	"KP": "North Korea", "IN": "India", "JP": "Japan", "KR": "South Korea", "PK": "Pakistan", "SA": "Saudi Arabia", "AE": "UAE", "TR": "Turkey", "EG": "Egypt"}
 const MORALE_NAME := {"zeal": "Zealous - never routs", "prof": "Professional", "home": "Home defenders", "fire": "Firepower-reliant"}

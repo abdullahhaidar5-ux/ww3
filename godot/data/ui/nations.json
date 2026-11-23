@@ -362,7 +362,7 @@
   "RS": {
    "key": "RS",
    "order": 1,
-   "name": "Lebanese Shia",
+   "name": "Hezbollah",
    "group": "S",
    "group_name": "Shia and allies",
    "color": "#b3262c",
@@ -375,7 +375,7 @@
    "description_short": "Fortress & Ambush · morale: Zealous",
    "description": "Doctrine: Fortress & Ambush (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. The Lebanese mountain Shia resistance: stone villages of Bint Jbeil and the Bekaa, Ashura banners and Ya Hussein walls, rocket barrages, cheap strong drones, ATGM ambush teams, tunnels and mountain forts. Longer-ranged rockets that fire faster, far stronger Defense Guns and tunnels, infantry whose dugouts take 30% less damage. No air force or navy. Tunnel warfare: hidden tunnels move units across the map instantly.",
    "card": {
-    "name": "Lebanese Shia",
+    "name": "Hezbollah",
     "short": "Fortress & Ambush · morale: Zealous",
     "doctrine": "Doctrine: Fortress & Ambush (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. The Lebanese mountain Shia resistance: stone villages of Bint Jbeil and the Bekaa, Ashura banners and Ya Hussein walls, rocket barrages, cheap strong drones, ATGM ambush teams, tunnels and mountain forts. Longer-ranged rockets that fire faster, far stronger Defense Guns and tunnels, infantry whose dugouts take 30% less damage. No air force or navy. Tunnel warfare: hidden tunnels move units across the map instantly.",
     "special": "Special: Mountain Rocket Team · bunkers",
@@ -491,7 +491,7 @@
   "DW": {
    "key": "DW",
    "order": 2,
-   "name": "Zaidi Shia Movement",
+   "name": "Ansarallah",
    "group": "S",
    "group_name": "Shia and allies",
    "color": "#c8a46e",
@@ -504,7 +504,7 @@
    "description_short": "Desert Raiders · morale: Zealous",
    "description": "Doctrine: Desert Raiders (infantry, AT teams and drones holding still or in cover deal 20% more damage; infantry and light vehicles sprint 25% faster for 3s after firing). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Yemeni highland raiders: tower-house towns of Sana'a and the Sarawat, coffee terraces and Red Sea coast. Tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force. Tunnel warfare: hidden tunnels move units across the map instantly.",
    "card": {
-    "name": "Zaidi Shia Movement",
+    "name": "Ansarallah",
     "short": "Desert Raiders · morale: Zealous",
     "doctrine": "Doctrine: Desert Raiders (infantry, AT teams and drones holding still or in cover deal 20% more damage; infantry and light vehicles sprint 25% faster for 3s after firing). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Yemeni highland raiders: tower-house towns of Sana'a and the Sarawat, coffee terraces and Red Sea coast. Tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force. Tunnel warfare: hidden tunnels move units across the map instantly.",
     "special": "Special: Raid Leader Technical · camo",
@@ -606,7 +606,7 @@
   "RV": {
    "key": "RV",
    "order": 3,
-   "name": "Iraqi Shia Brigades",
+   "name": "Kataib Hezbollah",
    "group": "S",
    "group_name": "Shia and allies",
    "color": "#1f7a3a",
@@ -619,7 +619,7 @@
    "description_short": "Defense of the Shrines · morale: Zealous",
    "description": "Doctrine: Defense of the Shrines (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Volunteer brigades of the south, defenders of the shrines: infantry cost 18% less and train faster, units ambush hard from cover and fight 15% harder near their own buildings, and they never rout. Mixed militia and state-issued gear. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).",
    "card": {
-    "name": "Iraqi Shia Brigades",
+    "name": "Kataib Hezbollah",
     "short": "Defense of the Shrines · morale: Zealous",
     "doctrine": "Doctrine: Defense of the Shrines (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Volunteer brigades of the south, defenders of the shrines: infantry cost 18% less and train faster, units ambush hard from cover and fight 15% harder near their own buildings, and they never rout. Mixed militia and state-issued gear. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).",
     "special": "Special: Marsh Scout Team · crews",
@@ -716,7 +716,7 @@
   "OB": {
    "key": "OB",
    "order": 4,
-   "name": "Palestine Islamic Brigade",
+   "name": "Hamas",
    "group": "S",
    "group_name": "Shia and allies",
    "color": "#3c6b3a",
@@ -727,11 +727,11 @@
    "morale_description": "Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses.",
    "doctrine_name": "Urban Labyrinth",
    "description_short": "Urban Labyrinth · morale: Zealous",
-   "description": "Doctrine: Urban Labyrinth (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Palestine Islamic Brigade, a fictional light urban resistance force of a dense coastal city: rifle squads, RPG and ATGM teams, snipers and mortars, armed technicals, home-made rocket trucks and quadcopter drone teams. No tanks, jets, helicopters or warships. Cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armor. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).",
+   "description": "Doctrine: Urban Labyrinth (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Hamas, a light urban resistance force of a dense coastal city: rifle squads, RPG and ATGM teams, snipers and mortars, armed technicals, home-made rocket trucks and quadcopter drone teams. No tanks, jets, helicopters or warships. Cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armor. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).",
    "card": {
-    "name": "Palestine Islamic Brigade",
+    "name": "Hamas",
     "short": "Urban Labyrinth · morale: Zealous",
-    "doctrine": "Doctrine: Urban Labyrinth (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Palestine Islamic Brigade, a fictional light urban resistance force of a dense coastal city: rifle squads, RPG and ATGM teams, snipers and mortars, armed technicals, home-made rocket trucks and quadcopter drone teams. No tanks, jets, helicopters or warships. Cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armor. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).",
+    "doctrine": "Doctrine: Urban Labyrinth (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Hamas, a light urban resistance force of a dense coastal city: rifle squads, RPG and ATGM teams, snipers and mortars, armed technicals, home-made rocket trucks and quadcopter drone teams. No tanks, jets, helicopters or warships. Cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armor. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).",
     "special": "Special: Rooftop Observers · crews",
     "strike": "Strike: Rocket Salvo",
     "badge": "OB"

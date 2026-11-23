@@ -51,9 +51,9 @@ function idMiniMark(c,x,y,team,big){const sg=ID_SEG[((team|0)+8)%8],r=big?3.6:2.
   if(sg<10)c.closePath();c.globalAlpha=.9;c.fill();c.globalAlpha=1;c.stroke();c.restore();}
 function idRingSeg(team){return ID_SEG[((team|0)+8)%8];}
 /* ---------- medals ---------- */
-const ID_MEDALS=(()=>{const n=(k,t,d)=>({k:'win_'+k,t,d,f:k,w:1});const M=[n('IR','Iran: Labbaik ya Hussein','Win a battle as Iran.'),n('RS','Lebanese Shia: Radwan\'s Sons','Win a battle as the Lebanese Shia.'),n('DW','Zaidi Shia Movement: Desert Raiders','Win a battle as the Zaidi Shia Movement.'),
-  {k:'dw_notank',t:'Zaidi Shia Movement: Steel Untouched',d:'Win as the Zaidi Shia Movement without losing a single tank (you must have built some).',f:'DW',w:1},
-  {k:'rs_fort',t:'Lebanese Shia: Rock Stands',d:'Win a Battle as the Lebanese Shia with your Mountain Fortress still standing.',f:'RS',w:1},
+const ID_MEDALS=(()=>{const n=(k,t,d)=>({k:'win_'+k,t,d,f:k,w:1});const M=[n('IR','Iran: Labbaik ya Hussein','Win a battle as Iran.'),n('RS','Hezbollah: Radwan\'s Sons','Win a battle as Hezbollah.'),n('DW','Ansarallah: Desert Raiders','Win a battle as Ansarallah.'),
+  {k:'dw_notank',t:'Ansarallah: Steel Untouched',d:'Win as Ansarallah without losing a single tank (you must have built some).',f:'DW',w:1},
+  {k:'rs_fort',t:'Hezbollah: Rock Stands',d:'Win a Battle as Hezbollah with your Mountain Fortress still standing.',f:'RS',w:1},
   {k:'fort20',t:'Hold the Mountain',d:'Keep a Mountain Fortress standing for 20 minutes in one Conquest or Battle game.',w:1},
   {k:'ir_bb',t:'Fire and Fury',d:'Call in a Bunker Buster strike in Conquest, Battle, a mission or on the test range.',w:1}];
   for(const k of PLAYABLE)M.push(n(k,FACTIONS[k].name+': Victory','Win a battle as '+FACTIONS[k].name+'.'));

@@ -475,7 +475,7 @@
       },
       {
        "t": "button",
-       "text": "South Lebanon2–4 playersSouth Lebanon2–4 players · green · green hills · coast · riverGreen limestone hills between the Mediterranean coast and the Litani River. Villages to fight through, ridges to hold, two river crossings. Home turf: Lebanese Shia & Israel.",
+       "text": "South Lebanon2–4 playersSouth Lebanon2–4 players · green · green hills · coast · riverGreen limestone hills between the Mediterranean coast and the Litani River. Villages to fight through, ridges to hold, two river crossings. Home turf: Hezbollah & Israel.",
        "cls": "mxmap",
        "data_k": "lebanon"
       },
@@ -487,13 +487,13 @@
       },
       {
        "t": "button",
-       "text": "Euphrates Crossing2 playersEuphrates Crossing2 players · river · three bridges · river towns · duelA duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armor. Home turf: Lebanese Shia & Iran & Iraqi Shia Brigades.",
+       "text": "Euphrates Crossing2 playersEuphrates Crossing2 players · river · three bridges · river towns · duelA duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armor. Home turf: Hezbollah & Iran & Kataib Hezbollah.",
        "cls": "mxmap",
        "data_k": "euphrates"
       },
       {
        "t": "button",
-       "text": "Yemen: Tihama and Highlands2 playersYemen: Tihama and Highlands2 players · desert · coastal plains · highland diamond · wadisHot coastal plains on both sides and a rugged highland diamond in the middle with the old capital inside. The wadi passes along the middle are the only easy way in; the ridge corners are for snipers and artillery. Home turf: Zaidi Shia Movement & Saudi Arabia.",
+       "text": "Yemen: Tihama and Highlands2 playersYemen: Tihama and Highlands2 players · desert · coastal plains · highland diamond · wadisHot coastal plains on both sides and a rugged highland diamond in the middle with the old capital inside. The wadi passes along the middle are the only easy way in; the ridge corners are for snipers and artillery. Home turf: Ansarallah & Saudi Arabia.",
        "cls": "mxmap",
        "data_k": "tihama"
       },
@@ -541,7 +541,7 @@
       },
       {
        "t": "button",
-       "text": "Southern Marshes2 playersSouthern Marshes2 players · green · reed marsh · lagoons · causeways · villagesThe great southern marshes: reed islands and shallow lagoons, canoe villages and narrow causeways. Few roads, many ambush lanes; the island market town in the middle supplies the winner. Home turf: Iraqi Shia Brigades & Iran.",
+       "text": "Southern Marshes2 playersSouthern Marshes2 players · green · reed marsh · lagoons · causeways · villagesThe great southern marshes: reed islands and shallow lagoons, canoe villages and narrow causeways. Few roads, many ambush lanes; the island market town in the middle supplies the winner. Home turf: Kataib Hezbollah & Iran.",
        "cls": "mxmap",
        "data_k": "marshes"
       },
@@ -553,13 +553,13 @@
       },
       {
        "t": "button",
-       "text": "Yemen Highlands4 playersYemen Highlands4 players · mountains · coast · narrow passesFrom the Red Sea coast up into the Sarawat mountains: tower-house cities of the highlands, narrow passes and a port on the plain. Home turf: Zaidi Shia Movement & Saudi Arabia.",
+       "text": "Yemen Highlands4 playersYemen Highlands4 players · mountains · coast · narrow passesFrom the Red Sea coast up into the Sarawat mountains: tower-house cities of the highlands, narrow passes and a port on the plain. Home turf: Ansarallah & Saudi Arabia.",
        "cls": "mxmap",
        "data_k": "yemen"
       },
       {
        "t": "button",
-       "text": "Hawizeh Marshes4 playersHawizeh Marshes4 players · green · marshland · causeway crossroadsThe reed marshes on the Iran-Iraq border: a lagoon in the middle crossed by two causeways that meet on an island, and marsh pools that channel every advance. Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades.",
+       "text": "Hawizeh Marshes4 playersHawizeh Marshes4 players · green · marshland · causeway crossroadsThe reed marshes on the Iran-Iraq border: a lagoon in the middle crossed by two causeways that meet on an island, and marsh pools that channel every advance. Home turf: Iran & Hezbollah & Kataib Hezbollah.",
        "cls": "mxmap",
        "data_k": "hawizeh"
       },
@@ -577,7 +577,7 @@
       },
       {
        "t": "button",
-       "text": "Mesopotamia4 playersMesopotamia4 players · two rivers · citiesIraq between the Tigris and the Euphrates: Baghdad between the rivers, Basra by the Shatt al-Arab and bridges everywhere. Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades.",
+       "text": "Mesopotamia4 playersMesopotamia4 players · two rivers · citiesIraq between the Tigris and the Euphrates: Baghdad between the rivers, Basra by the Shatt al-Arab and bridges everywhere. Home turf: Iran & Hezbollah & Kataib Hezbollah.",
        "cls": "mxmap",
        "data_k": "mesopotamia"
       },
@@ -607,7 +607,7 @@
       },
       {
        "t": "button",
-       "text": "Empty Quarter Edge6 playersEmpty Quarter Edge6 players · desert · giant dunes · sabkha flats · oil roadThe edge of the Empty Quarter: giant dunes, salt flats you can cross and dunes you cannot, a gravel road with oil camps. Open, fast and brutal on fuel. Home turf: Saudi Arabia & United Arab Emirates & Zaidi Shia Movement.",
+       "text": "Empty Quarter Edge6 playersEmpty Quarter Edge6 players · desert · giant dunes · sabkha flats · oil roadThe edge of the Empty Quarter: giant dunes, salt flats you can cross and dunes you cannot, a gravel road with oil camps. Open, fast and brutal on fuel. Home turf: Saudi Arabia & United Arab Emirates & Ansarallah.",
        "cls": "mxmap",
        "data_k": "rubalkhali"
       },
@@ -715,22 +715,22 @@
           },
           {
            "t": "button",
-           "text": "Lebanese ShiaFortress & Ambush · morale: ZealousDoctrine: Fortress & Ambush (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. The Lebanese mountain Shia resistance: stone villages of Bint Jbeil and the Bekaa, Ashura banners and Ya Hussein walls, rocket barrages, cheap strong drones, ATGM ambush teams, tunnels and mountain forts. Longer-ranged rockets that fire faster, far stronger Defense Guns and tunnels, infantry whose dugouts take 30% less damage. No air force or navy. Tunnel warfare: hidden tunnels move units across the map instantly.Special: Mountain Rocket Team · bunkersStrike: Mountain Rocket Storm",
+           "text": "HezbollahFortress & Ambush · morale: ZealousDoctrine: Fortress & Ambush (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. The Lebanese mountain Shia resistance: stone villages of Bint Jbeil and the Bekaa, Ashura banners and Ya Hussein walls, rocket barrages, cheap strong drones, ATGM ambush teams, tunnels and mountain forts. Longer-ranged rockets that fire faster, far stronger Defense Guns and tunnels, infantry whose dugouts take 30% less damage. No air force or navy. Tunnel warfare: hidden tunnels move units across the map instantly.Special: Mountain Rocket Team · bunkersStrike: Mountain Rocket Storm",
            "cls": "fac"
           },
           {
            "t": "button",
-           "text": "Zaidi Shia MovementDesert Raiders · morale: ZealousDoctrine: Desert Raiders (infantry, AT teams and drones holding still or in cover deal 20% more damage; infantry and light vehicles sprint 25% faster for 3s after firing). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Yemeni highland raiders: tower-house towns of Sana'a and the Sarawat, coffee terraces and Red Sea coast. Tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force. Tunnel warfare: hidden tunnels move units across the map instantly.Special: Raid Leader Technical · camoStrike: Long-Range Rocket Salvo",
+           "text": "AnsarallahDesert Raiders · morale: ZealousDoctrine: Desert Raiders (infantry, AT teams and drones holding still or in cover deal 20% more damage; infantry and light vehicles sprint 25% faster for 3s after firing). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Yemeni highland raiders: tower-house towns of Sana'a and the Sarawat, coffee terraces and Red Sea coast. Tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force. Tunnel warfare: hidden tunnels move units across the map instantly.Special: Raid Leader Technical · camoStrike: Long-Range Rocket Salvo",
            "cls": "fac"
           },
           {
            "t": "button",
-           "text": "Iraqi Shia BrigadesDefense of the Shrines · morale: ZealousDoctrine: Defense of the Shrines (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Volunteer brigades of the south, defenders of the shrines: infantry cost 18% less and train faster, units ambush hard from cover and fight 15% harder near their own buildings, and they never rout. Mixed militia and state-issued gear. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).Special: Marsh Scout Team · crewsStrike: Grad Salvo",
+           "text": "Kataib HezbollahDefense of the Shrines · morale: ZealousDoctrine: Defense of the Shrines (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Volunteer brigades of the south, defenders of the shrines: infantry cost 18% less and train faster, units ambush hard from cover and fight 15% harder near their own buildings, and they never rout. Mixed militia and state-issued gear. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).Special: Marsh Scout Team · crewsStrike: Grad Salvo",
            "cls": "fac"
           },
           {
            "t": "button",
-           "text": "OBPalestine Islamic BrigadeUrban Labyrinth · morale: ZealousDoctrine: Urban Labyrinth (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Palestine Islamic Brigade, a fictional light urban resistance force of a dense coastal city: rifle squads, RPG and ATGM teams, snipers and mortars, armed technicals, home-made rocket trucks and quadcopter drone teams. No tanks, jets, helicopters or warships. Cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armor. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).Special: Rooftop Observers · crewsStrike: Rocket Salvo",
+           "text": "OBHamasUrban Labyrinth · morale: ZealousDoctrine: Urban Labyrinth (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Hamas, a light urban resistance force of a dense coastal city: rifle squads, RPG and ATGM teams, snipers and mortars, armed technicals, home-made rocket trucks and quadcopter drone teams. No tanks, jets, helicopters or warships. Cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armor. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).Special: Rooftop Observers · crewsStrike: Rocket Salvo",
            "cls": "fac"
           },
           {
@@ -918,19 +918,19 @@
             },
             {
              "value": "RS",
-             "text": "Lebanese Shia"
+             "text": "Hezbollah"
             },
             {
              "value": "DW",
-             "text": "Zaidi Shia Movement"
+             "text": "Ansarallah"
             },
             {
              "value": "RV",
-             "text": "Iraqi Shia Brigades"
+             "text": "Kataib Hezbollah"
             },
             {
              "value": "OB",
-             "text": "Palestine Islamic Brigade"
+             "text": "Hamas"
             },
             {
              "value": "US",
@@ -1291,7 +1291,7 @@
                 },
                 {
                  "value": "lebanon",
-                 "text": "South Lebanon · Home turf: Lebanese Shia & Israel (2–4 players)"
+                 "text": "South Lebanon · Home turf: Hezbollah & Israel (2–4 players)"
                 },
                 {
                  "value": "gulf",
@@ -1299,11 +1299,11 @@
                 },
                 {
                  "value": "euphrates",
-                 "text": "Euphrates Crossing · Home turf: Lebanese Shia & Iran & Iraqi Shia Brigades (2–2 players)"
+                 "text": "Euphrates Crossing · Home turf: Hezbollah & Iran & Kataib Hezbollah (2–2 players)"
                 },
                 {
                  "value": "tihama",
-                 "text": "Yemen: Tihama and Highlands · Home turf: Zaidi Shia Movement & Saudi Arabia (2–2 players)"
+                 "text": "Yemen: Tihama and Highlands · Home turf: Ansarallah & Saudi Arabia (2–2 players)"
                 },
                 {
                  "value": "zagros",
@@ -1335,7 +1335,7 @@
                 },
                 {
                  "value": "marshes",
-                 "text": "Southern Marshes · Home turf: Iraqi Shia Brigades & Iran (2–2 players)"
+                 "text": "Southern Marshes · Home turf: Kataib Hezbollah & Iran (2–2 players)"
                 },
                 {
                  "value": "blacksea",
@@ -1343,11 +1343,11 @@
                 },
                 {
                  "value": "yemen",
-                 "text": "Yemen Highlands · Home turf: Zaidi Shia Movement & Saudi Arabia (4–4 players)"
+                 "text": "Yemen Highlands · Home turf: Ansarallah & Saudi Arabia (4–4 players)"
                 },
                 {
                  "value": "hawizeh",
-                 "text": "Hawizeh Marshes · Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades (4–4 players)"
+                 "text": "Hawizeh Marshes · Home turf: Iran & Hezbollah & Kataib Hezbollah (4–4 players)"
                 },
                 {
                  "value": "islands",
@@ -1359,7 +1359,7 @@
                 },
                 {
                  "value": "mesopotamia",
-                 "text": "Mesopotamia · Home turf: Iran & Lebanese Shia & Iraqi Shia Brigades (4–4 players)"
+                 "text": "Mesopotamia · Home turf: Iran & Hezbollah & Kataib Hezbollah (4–4 players)"
                 },
                 {
                  "value": "persia",
@@ -1379,7 +1379,7 @@
                 },
                 {
                  "value": "rubalkhali",
-                 "text": "Empty Quarter Edge · Home turf: Saudi Arabia & United Arab Emirates & Zaidi Shia Movement (6–6 players)"
+                 "text": "Empty Quarter Edge · Home turf: Saudi Arabia & United Arab Emirates & Ansarallah (6–6 players)"
                 },
                 {
                  "value": "oasis",
@@ -1906,19 +1906,19 @@
             },
             {
              "value": "RS",
-             "text": "Lebanese Shia"
+             "text": "Hezbollah"
             },
             {
              "value": "DW",
-             "text": "Zaidi Shia Movement"
+             "text": "Ansarallah"
             },
             {
              "value": "RV",
-             "text": "Iraqi Shia Brigades"
+             "text": "Kataib Hezbollah"
             },
             {
              "value": "OB",
-             "text": "Palestine Islamic Brigade"
+             "text": "Hamas"
             },
             {
              "value": "US",
@@ -2031,22 +2031,22 @@
             },
             {
              "t": "button",
-             "text": "Lebanese ShiaFortress & Ambush · morale: ZealousDoctrine: Fortress & Ambush (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. The Lebanese mountain Shia resistance: stone villages of Bint Jbeil and the Bekaa, Ashura banners and Ya Hussein walls, rocket barrages, cheap strong drones, ATGM ambush teams, tunnels and mountain forts. Longer-ranged rockets that fire faster, far stronger Defense Guns and tunnels, infantry whose dugouts take 30% less damage. No air force or navy. Tunnel warfare: hidden tunnels move units across the map instantly.Special: Mountain Rocket Team · bunkersStrike: Mountain Rocket Storm",
+             "text": "HezbollahFortress & Ambush · morale: ZealousDoctrine: Fortress & Ambush (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. The Lebanese mountain Shia resistance: stone villages of Bint Jbeil and the Bekaa, Ashura banners and Ya Hussein walls, rocket barrages, cheap strong drones, ATGM ambush teams, tunnels and mountain forts. Longer-ranged rockets that fire faster, far stronger Defense Guns and tunnels, infantry whose dugouts take 30% less damage. No air force or navy. Tunnel warfare: hidden tunnels move units across the map instantly.Special: Mountain Rocket Team · bunkersStrike: Mountain Rocket Storm",
              "cls": "fac"
             },
             {
              "t": "button",
-             "text": "Zaidi Shia MovementDesert Raiders · morale: ZealousDoctrine: Desert Raiders (infantry, AT teams and drones holding still or in cover deal 20% more damage; infantry and light vehicles sprint 25% faster for 3s after firing). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Yemeni highland raiders: tower-house towns of Sana'a and the Sarawat, coffee terraces and Red Sea coast. Tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force. Tunnel warfare: hidden tunnels move units across the map instantly.Special: Raid Leader Technical · camoStrike: Long-Range Rocket Salvo",
+             "text": "AnsarallahDesert Raiders · morale: ZealousDoctrine: Desert Raiders (infantry, AT teams and drones holding still or in cover deal 20% more damage; infantry and light vehicles sprint 25% faster for 3s after firing). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Yemeni highland raiders: tower-house towns of Sana'a and the Sarawat, coffee terraces and Red Sea coast. Tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force. Tunnel warfare: hidden tunnels move units across the map instantly.Special: Raid Leader Technical · camoStrike: Long-Range Rocket Salvo",
              "cls": "fac"
             },
             {
              "t": "button",
-             "text": "Iraqi Shia BrigadesDefense of the Shrines · morale: ZealousDoctrine: Defense of the Shrines (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Volunteer brigades of the south, defenders of the shrines: infantry cost 18% less and train faster, units ambush hard from cover and fight 15% harder near their own buildings, and they never rout. Mixed militia and state-issued gear. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).Special: Marsh Scout Team · crewsStrike: Grad Salvo",
+             "text": "Kataib HezbollahDefense of the Shrines · morale: ZealousDoctrine: Defense of the Shrines (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Volunteer brigades of the south, defenders of the shrines: infantry cost 18% less and train faster, units ambush hard from cover and fight 15% harder near their own buildings, and they never rout. Mixed militia and state-issued gear. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).Special: Marsh Scout Team · crewsStrike: Grad Salvo",
              "cls": "fac"
             },
             {
              "t": "button",
-             "text": "OBPalestine Islamic BrigadeUrban Labyrinth · morale: ZealousDoctrine: Urban Labyrinth (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Palestine Islamic Brigade, a fictional light urban resistance force of a dense coastal city: rifle squads, RPG and ATGM teams, snipers and mortars, armed technicals, home-made rocket trucks and quadcopter drone teams. No tanks, jets, helicopters or warships. Cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armor. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).Special: Rooftop Observers · crewsStrike: Rocket Salvo",
+             "text": "OBHamasUrban Labyrinth · morale: ZealousDoctrine: Urban Labyrinth (infantry, AT teams and drones holding still or in cover deal 20% more damage; +15% damage near their own buildings). Morale style: Zealous - Slow to break; fervor rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses. Hamas, a light urban resistance force of a dense coastal city: rifle squads, RPG and ATGM teams, snipers and mortars, armed technicals, home-made rocket trucks and quadcopter drone teams. No tanks, jets, helicopters or warships. Cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armor. Hidden Firing Posts: cheap small posts that stay hidden until they fire (no tunnel network).Special: Rooftop Observers · crewsStrike: Rocket Salvo",
              "cls": "fac"
             },
             {
@@ -5309,7 +5309,7 @@
              "c": [
               {
                "t": "text",
-               "text": "Lebanese Shia · Ridge defense in the southern hills · about 12-16 min"
+               "text": "Hezbollah · Ridge defense in the southern hills · about 12-16 min"
               }
              ]
             },
@@ -5341,7 +5341,7 @@
              "c": [
               {
                "t": "text",
-               "text": "Zaidi Shia Movement · Convoy escort across the highlands · about 12-18 min"
+               "text": "Ansarallah · Convoy escort across the highlands · about 12-18 min"
               }
              ]
             },
@@ -5405,7 +5405,7 @@
              "c": [
               {
                "t": "text",
-               "text": "Lebanese Shia + Zaidi Shia Movement · Fortified village · about 14-20 min"
+               "text": "Hezbollah + Ansarallah · Fortified village · about 14-20 min"
               }
              ]
             },
@@ -5469,7 +5469,7 @@
              "c": [
               {
                "t": "text",
-               "text": "Iraqi Shia Brigades · River crossing in the southern marshes · about 16-22 min"
+               "text": "Kataib Hezbollah · River crossing in the southern marshes · about 16-22 min"
               }
              ]
             },
@@ -5645,19 +5645,19 @@
           },
           {
            "value": "RS",
-           "text": "Lebanese Shia"
+           "text": "Hezbollah"
           },
           {
            "value": "DW",
-           "text": "Zaidi Shia Movement"
+           "text": "Ansarallah"
           },
           {
            "value": "RV",
-           "text": "Iraqi Shia Brigades"
+           "text": "Kataib Hezbollah"
           },
           {
            "value": "OB",
-           "text": "Palestine Islamic Brigade"
+           "text": "Hamas"
           },
           {
            "value": "US",
@@ -6944,11 +6944,11 @@
                "c": [
                 {
                  "t": "b",
-                 "text": "Lebanese Shia: Radwan's Sons"
+                 "text": "Hezbollah: Radwan's Sons"
                 },
                 {
                  "t": "span",
-                 "text": "Win a battle as the Lebanese Shia."
+                 "text": "Win a battle as Hezbollah."
                 }
                ]
               }
@@ -6968,11 +6968,11 @@
                "c": [
                 {
                  "t": "b",
-                 "text": "Zaidi Shia Movement: Desert Raiders"
+                 "text": "Ansarallah: Desert Raiders"
                 },
                 {
                  "t": "span",
-                 "text": "Win a battle as the Zaidi Shia Movement."
+                 "text": "Win a battle as Ansarallah."
                 }
                ]
               }
@@ -6992,11 +6992,11 @@
                "c": [
                 {
                  "t": "b",
-                 "text": "Zaidi Shia Movement: Steel Untouched"
+                 "text": "Ansarallah: Steel Untouched"
                 },
                 {
                  "t": "span",
-                 "text": "Win as the Zaidi Shia Movement without losing a single tank (you must have built some)."
+                 "text": "Win as Ansarallah without losing a single tank (you must have built some)."
                 }
                ]
               }
@@ -7016,11 +7016,11 @@
                "c": [
                 {
                  "t": "b",
-                 "text": "Lebanese Shia: Rock Stands"
+                 "text": "Hezbollah: Rock Stands"
                 },
                 {
                  "t": "span",
-                 "text": "Win a Battle as the Lebanese Shia with your Mountain Fortress still standing."
+                 "text": "Win a Battle as Hezbollah with your Mountain Fortress still standing."
                 }
                ]
               }
@@ -7112,11 +7112,11 @@
                "c": [
                 {
                  "t": "b",
-                 "text": "Lebanese Shia: Victory"
+                 "text": "Hezbollah: Victory"
                 },
                 {
                  "t": "span",
-                 "text": "Win a battle as Lebanese Shia."
+                 "text": "Win a battle as Hezbollah."
                 }
                ]
               }
@@ -7136,11 +7136,11 @@
                "c": [
                 {
                  "t": "b",
-                 "text": "Zaidi Shia Movement: Victory"
+                 "text": "Ansarallah: Victory"
                 },
                 {
                  "t": "span",
-                 "text": "Win a battle as Zaidi Shia Movement."
+                 "text": "Win a battle as Ansarallah."
                 }
                ]
               }
@@ -7160,11 +7160,11 @@
                "c": [
                 {
                  "t": "b",
-                 "text": "Iraqi Shia Brigades: Victory"
+                 "text": "Kataib Hezbollah: Victory"
                 },
                 {
                  "t": "span",
-                 "text": "Win a battle as Iraqi Shia Brigades."
+                 "text": "Win a battle as Kataib Hezbollah."
                 }
                ]
               }
@@ -7184,11 +7184,11 @@
                "c": [
                 {
                  "t": "b",
-                 "text": "Palestine Islamic Brigade: Victory"
+                 "text": "Hamas: Victory"
                 },
                 {
                  "t": "span",
-                 "text": "Win a battle as Palestine Islamic Brigade."
+                 "text": "Win a battle as Hamas."
                 }
                ]
               }

@@ -51,6 +51,11 @@ var headless_mode := false
 var use_bridge := true      # P1 BRIDGE: false only with --gdsim (the parked GDScript sim, for desktop tinkering)
 var minutes_cap := 40.0
 var shot_t := -1.0
+var shot_seq := 1
+var shot_every := 6
+var shot_follow := ""
+var shot_follow_id := -999
+var shot_zoom := 260.0
 var ff := 0               # CHECK HOOK: ?ff=N (with shot-t, AI vs AI on the bridge) = N ticks in ONE worker call per frame, so the check does not wait on drawn frames
 var ff_k := 1
 var see_all := false      # replays and AI-vs-AI: no fog for the viewer
@@ -145,6 +150,10 @@ func _ready() -> void:
 		elif a.begins_with("--weather="): battle_weather = a.substr(10)
 		elif a.begins_with("--shot="): shot_path = a.substr(7)
 		elif a.begins_with("--shot-t="): shot_t = float(a.substr(9))
+		elif a.begins_with("--shotseq="): shot_seq = int(a.substr(10))
+		elif a.begins_with("--shotevery="): shot_every = maxi(1, int(a.substr(12)))
+		elif a.begins_with("--follow="): shot_follow = a.substr(9)
+		elif a.begins_with("--zoom="): shot_zoom = float(a.substr(7))
 		elif a.begins_with("--ff="): ff = int(a.substr(5))   # CHECK HOOK
 		elif a.begins_with("--shotf="): shot_at = int(a.substr(8))
 		elif a == "--cam=auto": auto_cam = true
@@ -736,11 +745,42 @@ func _process(dt: float) -> void:
 	if shot_path != "" and (shot_t < 0 or sim.t >= shot_t) and not loading:
 		if shot_frames == 0 and auto_cam: _cam_on_fight()
 		if shot_frames == 0 and demo_ui != "": _demo_ui()
+		_shot_follow_tick()
 		shot_frames += 1
-		if shot_frames == (shot_at if shot_t < 0 else 40):
+		var first_f: int = shot_at if shot_t < 0 else 40
+		if shot_seq > 1:
+			# CHECK HOOK: --shotseq=N --shotevery=F saves N pictures F frames apart (motion checks: name_00.png ...)
+			if shot_frames >= first_f and (shot_frames - first_f) % shot_every == 0:
+				var si: int = (shot_frames - first_f) / shot_every
+				var sp := shot_path.get_basename() + "_%02d.png" % si
+				get_viewport().get_texture().get_image().save_png(sp)
+				print("BATTLE shot " + sp + " at %.2f s" % sim.t)
+				if si >= shot_seq - 1: get_tree().quit()
+		elif shot_frames == first_f:
 			get_viewport().get_texture().get_image().save_png(shot_path)
 			print("BATTLE shot " + shot_path + " at %.0f s" % sim.t)
 			get_tree().quit()
+
+## CHECK HOOK: --follow=tank|veh|inf|any keeps the camera close on one moving unit (picture sequences of real motion)
+func _shot_follow_tick() -> void:
+	if shot_follow == "": return
+	var fe = null
+	for e in sim.ents:
+		if e.id == shot_follow_id and not e.dead: fe = e; break
+	if fe == null:
+		var best := 1e18
+		for e in sim.ents:
+			if e.dead or e.is_b or String(e.s_dom) != "ground" or absf(float(e.v)) < 8.0: continue
+			var is_inf := String(e.s_cls) == "inf"
+			if shot_follow == "inf" and not is_inf: continue
+			if shot_follow == "tank" and String(e.s_cls) != "tank": continue
+			if shot_follow == "veh" and is_inf: continue
+			var d := Vector2(e.x, e.y).distance_squared_to(cam_target)
+			if d < best: best = d; fe = e
+		if fe != null: shot_follow_id = fe.id
+	if fe != null:
+		cam_target = Vector2(fe.x, fe.y)
+		cam_dist = shot_zoom
 
 ## LANE B: one building this frame (X1 3D models + nation flags via world_view.gd)
 func _draw_bld(fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Color, issel: bool, mine: bool) -> void:
