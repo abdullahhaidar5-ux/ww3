@@ -46,9 +46,9 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	var c_hi := Color(0.63, 0.56, 0.44)
 	var c_mtn := Color(0.46, 0.39, 0.31)
 	if th == "snow":
-		c_lo = Color(0.86, 0.89, 0.94)
-		c_mid = Color(0.79, 0.84, 0.91)
-		c_hi = Color(0.73, 0.80, 0.89)
+		c_lo = Color(0.76, 0.80, 0.86)
+		c_mid = Color(0.70, 0.75, 0.82)
+		c_hi = Color(0.65, 0.71, 0.79)
 		c_mtn = Color(0.35, 0.39, 0.45)
 	elif th != "desert":
 		c_lo = Color(0.40, 0.51, 0.29)

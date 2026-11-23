@@ -292,9 +292,15 @@ func _bases() -> Array:
 	if _base_ok != "": return [_base_ok]
 	var out: Array = []
 	if web:
+		# the live site (GitHub Pages /ww3/, Cloudflare) serves the build next to vo/ sfx/ mus/: try the page's own folder first
+		var own = JavaScriptBridge.eval("(function(){try{return new URL('./',location.href).href;}catch(e){return ''}})()")
 		var q = JavaScriptBridge.eval("(function(){try{var a=new URLSearchParams(location.search).get('assets');if(a)return new URL(a,location.href).href;return new URL('../',location.href).href;}catch(e){return ''}})()")
+		var has_assets = JavaScriptBridge.eval("location.search.indexOf('assets=')>=0")
+		if q != null and str(q) != "" and has_assets == true: out.append(str(q))   # ?assets= wins when given
+		if own != null and str(own) != "": out.append(str(own))
 		if q != null and str(q) != "":
-			out.append(str(q)); out.append(str(q) + "godot/")      # the site root (the build sits in a folder under it), then the build's own folder
+			if not out.has(str(q)): out.append(str(q))
+			out.append(str(q) + "godot/")      # test layout: the build sits in a folder under the site root, sounds one folder up
 	else:
 		out.append(ProjectSettings.globalize_path("res://").path_join("..") + "/")
 		out.append(OS.get_executable_path().get_base_dir() + "/")

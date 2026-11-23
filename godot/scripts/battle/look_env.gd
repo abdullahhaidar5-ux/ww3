@@ -22,6 +22,8 @@ const WFOG := {"rain": ["#7d868c", 500.0, 3200.0], "storm": ["#7d868c", 500.0, 3
 	"blizzard": ["#dfe6ee", 150.0, 1700.0], "snow": ["#e3e9f0", 220.0, 2300.0]}
 ## Godot's ACES curve has a built-in exposure bias; calibrated so sunlit sand stays rich sandstone (~0.66-0.78) and explosions bloom cleanly
 var expo_k := 0.66
+## snow reflects ~2x the light of sand: without its own exposure the whole snow map clips to flat white
+var theme_k := 1.0
 const RAIN_N := 1400
 
 var host: Node3D
@@ -144,12 +146,14 @@ func _apply() -> void:
 	if tod == "day": w.merge(LOOK_WX, true)   # lookW(): the Cinematic look owns the daytime light
 	night = 2 if tod == "night" else (1 if tod == "dusk" else 0)
 	var sunc := _c(w.sun); var skyc := _c(w.sky); var gndc := _c(w.gnd); var fogc := _c(w.fog); var hi: float = w.hi
+	theme_k = 1.0
 	if theme == "snow":
 		var dk := night > 0
 		sunc = sunc.lerp(_c("#f4f7ff"), 0.2 if dk else 0.6)
-		skyc = _c("#7486ad" if dk else "#c2d4ea"); gndc = _c("#6a7286" if dk else "#a8b2be")
-		fogc = _c("#d9c9bd" if tod == "golden" else ("#8f8296" if dk else "#d4dee8"))
-		hi *= 1.08
+		skyc = _c("#7486ad" if dk else "#b4c6de"); gndc = _c("#5e6676" if dk else "#8e98a6")
+		fogc = _c("#d9c9bd" if tod == "golden" else ("#8f8296" if dk else "#c6d0dc"))
+		hi *= 0.82
+		theme_k = 0.9 if dk else 0.74
 	elif theme == "green":
 		sunc = sunc.lerp(_c("#fff6e4"), 0.4)
 		fogc = _c("#c4d2d6") if night == 0 else fogc
@@ -166,7 +170,7 @@ func _apply() -> void:
 	env.ambient_light_color = mid.linear_to_srgb()
 	hemi.light_color = up.linear_to_srgb()
 	base_fog = [fogc, float(w.fn), float(w.ff)]
-	env.tonemap_exposure = float(w.expo) * expo_k
+	env.tonemap_exposure = float(w.expo) * expo_k * theme_k
 	env.glow_intensity = 0.48 * float(LOOK.bl)
 	sky_mat.set_shader_parameter("hor", _v(w.hor)); sky_mat.set_shader_parameter("zen", _v(w.zen))
 	sky_mat.set_shader_parameter("sun_dir", off.normalized())
@@ -212,7 +216,7 @@ func tick(dt: float, cam: Camera3D) -> void:
 	flash = maxf(0.0, flash - dt * 1.6)
 	shake *= exp(-7.0 * dt)
 	grade.set_shader_parameter("flash", flash)
-	env.tonemap_exposure = float(w.expo) * expo_k * (1.0 + flash * 1.5)
+	env.tonemap_exposure = float(w.expo) * expo_k * theme_k * (1.0 + flash * 1.5)
 	if cam != null: _precip(dt, cam)
 
 ## rain = 1400 streaks in one MultiMesh around the view; sandstorm / snow = particles from the effects pool

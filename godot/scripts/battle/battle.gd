@@ -353,6 +353,8 @@ func _start(players: Array, starts: Array) -> void:
 	rec = {v = 1, kind = kind, map = map_key, players = players, starts = starts, seed = seed_v, diff = diff, mission = "", fac = my_fac, orders = []}
 	tick_n = 0
 	if not headless_mode:
+		for a in OS.get_cmdline_user_args():   # CHECK HOOK: --theme=desert|green|snow repaints the map's look (pictures of every biome)
+			if a.begins_with("--theme="): map["theme"] = a.substr(8)
 		Terrain.build(self, sim, map, func(k: String): return _build_mesh(k, "y", randf_range(36, 52)))
 		var w_opts := {tod = str(last_launch.get("tod", battle_tod)), weather = str(last_launch.get("weather", battle_weather))}
 		world_view.setup(self, sim, map, w_opts)   # LANE B HOOK (P4c sky/lighting/weather/GPU FX + X1 buildings)

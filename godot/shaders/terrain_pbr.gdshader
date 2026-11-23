@@ -102,13 +102,20 @@ void fragment() {
 		col *= mix(0.84, 1.14, det_lum);
 		rough = 0.91;
 	} else {
-		// Snow: sunlit powder drifts + cool blue-grey wind-swept ice patches
-		vec3 snow_hi = vec3(0.85, 0.89, 0.94);
-		vec3 snow_drift = vec3(0.70, 0.76, 0.84);
-		col = mix(col, mix(snow_drift, snow_hi, smoothstep(0.3, 0.78, macro_n)), 0.48);
-		col *= mix(0.92, 1.06, det_lum);
-		rough = mix(0.76, 0.88, det_lum);
-		nrm_d = nrm_strength * 0.65;
+		// Snow: wind-packed powder with sculpted drift ridges (sastrugi), cool blue-grey hollows, crunchy surface grain
+		// and patches where the wind has scoured the snow thin over frozen earth / dead grass - never one flat white sheet
+		vec3 snow_hi = vec3(0.80, 0.84, 0.90);
+		vec3 snow_drift = vec3(0.60, 0.67, 0.77);
+		vec3 thin_snow = vec3(0.52, 0.53, 0.52);
+		float drift_phase = (v_wpos.x * 0.045 - v_wpos.z * 0.028) + vnoise(v_wpos.xz * 0.011) * 6.5;
+		float drifts = sin(drift_phase) * 0.5 + 0.5;
+		float grain = vnoise(v_wpos.xz * 0.31) * 0.6 + vnoise(v_wpos.xz * 0.83) * 0.4;
+		vec3 snow_var = mix(snow_drift, snow_hi, smoothstep(0.22, 0.80, macro_n));
+		snow_var = mix(snow_var, thin_snow, smoothstep(0.66, 0.92, patch_n) * 0.42);
+		col = mix(col, snow_var, 0.62);
+		col *= mix(0.80, 1.10, det_lum) * mix(0.93, 1.05, drifts) * mix(0.95, 1.04, grain);
+		rough = mix(0.72, 0.90, det_lum);
+		nrm_d = nrm_strength * mix(0.85, 1.25, drifts);
 	}
 
 	// Per-pixel steep cliff rock with stratified world-space sedimentary layers & crevice AO
@@ -157,8 +164,9 @@ void fragment() {
 		vec3 road_col;
 		vec3 shoulder_col;
 		if (theme_id == 2) {
-			road_col = vec3(0.48, 0.50, 0.55);
-			shoulder_col = vec3(0.72, 0.75, 0.80);
+			// ploughed, vehicle-churned slush: muddy brown-grey ruts with dirty packed-snow banks (not blue ice)
+			road_col = vec3(0.56, 0.53, 0.50);
+			shoulder_col = vec3(0.66, 0.67, 0.69);
 		} else if (theme_id == 1) {
 			road_col = vec3(0.44, 0.43, 0.40);
 			shoulder_col = vec3(0.54, 0.50, 0.40);
