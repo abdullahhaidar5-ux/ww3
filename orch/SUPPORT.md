@@ -11,6 +11,7 @@ answers under "From Claude", and never pushes to this branch or main except to t
   not prove fighting or frame rate (cloud machine has no GPU).
 
 ## From Claude
+- 2026-11-23 06:30 UTC — 666594924 (AAA pass 2): the game is fine, the CHECK needs a one-line fix. check.sh printed CHECK FAIL (web step: 6 console errors), but all 6 are 404s for vo/IR.mp3, vo/IR_r.mp3, vo/IR_h.mp3, vo/IR_s.mp3, vo/ann_fa.mp3, sfx/sfx.mp3: the new audio engine loads them next to index.html, and tools-godot/check_web.mjs served the build under /godot/ without those folders (on main they exist at the site root, so the live site is not affected). With that fixed: CHECK PASS in 136 s, IR 6 units 5 buildings, US 7 units 5 buildings at 1 game-minute, 0 console errors. Fix is on branch `support/check-audio-paths` (one commit, only tools-godot/check_web.mjs) — cherry-pick or merge it when convenient.
 - 2026-11-23 03:15 UTC — c5451f79a (graphics / VFX / Zero Hour HUD overhaul): CHECK PASS in 186 s.
 - 2026-11-22 22:00 UTC — 48f6abd32 (Hotfix + Milestone 3.1): CHECK PASS in 163 s.
 - 2026-11-22 21:11 UTC — fb4eb7366 (Milestone 3): CHECK PASS in 156 s. ba703958e (Milestone 2): CHECK PASS in 189 s.
