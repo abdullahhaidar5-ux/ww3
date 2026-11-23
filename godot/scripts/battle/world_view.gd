@@ -46,6 +46,9 @@ var _host: Node3D = null
 var _root: Node3D = null
 var _mmi: Dictionary = {} # key -> MultiMeshInstance3D
 var _buf: Dictionary = {} # key -> Array[Transform3D]
+var _ao_mi: MultiMeshInstance3D = null
+var _ao_xf: Array[Transform3D] = []
+var _ao_col: Array[Color] = []
 var _bld_fx_cd: Dictionary = {} # eid (int) -> float (next damage smoke/fire emit time)
 var _headless: bool = false
 var _fog_next: float = 0.0
@@ -88,7 +91,31 @@ func setup(host: Node3D, sim, map: Dictionary, opts: Dictionary = {}) -> void:
 	_root = Node3D.new()
 	_root.name = "WorldView"
 	host.add_child(_root)
+	_setup_ao()
 	_setup_civ_buildings(sim, map)
+
+
+func _setup_ao() -> void:
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(2.0, 2.0)
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = pm
+	mm.instance_count = 64
+	mm.visible_instance_count = 0
+	var mi := MultiMeshInstance3D.new()
+	mi.name = "BldContactAO"
+	mi.multimesh = mm
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/contact_ao.gdshader")
+	mat.render_priority = -1
+	mi.material_override = mat
+	mi.custom_aabb = HUGE_AABB
+	mi.extra_cull_margin = 16384.0
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_root.add_child(mi)
+	_ao_mi = mi
 
 
 func on_step(sim, events: Array, me: int, see_all: bool = false, ai_only: bool = false) -> void:
@@ -161,6 +188,8 @@ func set_conditions(tod: String, weather: String) -> void:
 func begin_frame() -> void:
 	if _headless or _root == null:
 		return
+	_ao_xf.clear()
+	_ao_col.clear()
 	for k in _buf.keys():
 		(_buf[k] as Array).clear()
 
@@ -206,6 +235,11 @@ func draw_bld(B, fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Col
 			_:
 				part_xf = root_xf * pt
 		_push_mm("b|" + fac + "|" + kind_s + "|" + pks, parts[pk] as Mesh, part_xf)
+
+	# Grounded CoH3 contact AO shadow disc beneath building footprint
+	var ao_r: float = maxf(float(e.r) * 1.18, 22.0)
+	_ao_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(ao_r, 1.0, ao_r)), Vector3(p.x, gy + 0.32, p.y)))
+	_ao_col.append(Color(1.0, 1.0, 1.0, 0.36 * maxf(0.25, built)))
 
 	_emit_bld_damage_fx(B, e, p, gy, h, now)
 	_append_bld_overlays(B, fr, e, p, gy, h, col, issel, mine)
@@ -335,6 +369,22 @@ func end_frame() -> void:
 			mm.set_instance_transform(i, arr[i] as Transform3D)
 		mm.visible_instance_count = n
 
+	if _ao_mi != null:
+		var ao_mm := _ao_mi.multimesh
+		var ao_n := _ao_xf.size()
+		if ao_n == 0:
+			ao_mm.visible_instance_count = 0
+		else:
+			if ao_mm.instance_count < ao_n:
+				var cap := maxi(64, ao_mm.instance_count)
+				while cap < ao_n:
+					cap *= 2
+				ao_mm.instance_count = cap
+			for i in ao_n:
+				ao_mm.set_instance_transform(i, _ao_xf[i])
+				ao_mm.set_instance_color(i, _ao_col[i])
+			ao_mm.visible_instance_count = ao_n
+
 
 func clear() -> void:
 	if _root != null and is_instance_valid(_root):
@@ -353,6 +403,9 @@ func clear() -> void:
 		if env.rain != null and is_instance_valid(env.rain):
 			env.rain.queue_free()
 	_root = null
+	_ao_mi = null
+	_ao_xf.clear()
+	_ao_col.clear()
 	fx = null
 	env = null
 	_host = null
@@ -772,18 +825,21 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 	var am := ArrayMesh.new()
 	var mat_wall := StandardMaterial3D.new()
 	mat_wall.vertex_color_use_as_albedo = true
+	mat_wall.vertex_color_is_srgb = true
 	mat_wall.albedo_color = Color.WHITE
-	mat_wall.roughness = 0.90
-	mat_wall.metallic = 0.04
+	mat_wall.roughness = 0.92
+	mat_wall.metallic = 0.03
 
 	var mat_roof := StandardMaterial3D.new()
 	mat_roof.vertex_color_use_as_albedo = true
+	mat_roof.vertex_color_is_srgb = true
 	mat_roof.albedo_color = Color.WHITE
-	mat_roof.roughness = 0.72
-	mat_roof.metallic = 0.14
+	mat_roof.roughness = 0.78
+	mat_roof.metallic = 0.10
 
 	var mat_win := StandardMaterial3D.new()
 	mat_win.vertex_color_use_as_albedo = true
+	mat_win.vertex_color_is_srgb = true
 	mat_win.albedo_color = Color.WHITE
 	mat_win.roughness = 0.24
 	mat_win.metallic = 0.35

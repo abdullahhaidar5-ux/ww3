@@ -1,24 +1,26 @@
-## BATTLE HUD (lane P6) - Command & Conquer: Generals - Zero Hour unified bottom control bar:
-## left wing = framed radar minimap with animated alert ripples + 4 flush tactical buttons (MENU, SUP, ALERT, GEN);
-## center wing = integrated top status bezel (selection, cash, supply, army, power) + classic 2x6 Zero Hour cameo grid + queue;
-## right wing = rank-accented portrait & HP status card + vertical segmented Zero Hour power gauge;
-## clean docked overlays = ready powers rail above right wing, flush HIDE/pause tabs, context hint strip, top-left radio feed pills.
+## BATTLE HUD (lane P6) - Command & Conquer: Generals - Zero Hour remastered metallic tactical control bar:
+## left wing = heavy beveled radar minimap with corner ticks, compass N, alert ripples + 5 flush tactical buttons (MENU, DOZER, SUP, ALERT, GEN+XP);
+## center wing = integrated Zero Hour telemetry bezel (flag, title, gold cash, supply, army, power, match clock) + framed 2x6 Zero Hour cameo cards + queue;
+## right wing = framed unit/faction portrait card with rank chevrons, HP & ammo bars + vertical segmented Zero Hour power gauge;
+## docked overlays = ready powers rail with real power icons, flush HIDE/pause tabs, clean contextual hint strip, top-left radio feed.
 ## It only reads the battle (B) and sends orders through B.cmd().
 extends Node
 
 const UI = preload("res://scripts/ui/ui_kit.gd")
 const Missions = preload("res://scripts/ui/missions.gd")
-const BAR_H := 178.0
+const BAR_H := 182.0
 const MINI_W := 214.0
-const MINI_H := 154.0
-const STEEL := Color("0e171c")
-const STEEL_HI := Color("36515c")
-const STEEL_TOP := Color("4f7280")
-const WELL := Color("080f14")
-const SLOT_BG := Color("122128")
-const SLOT_EMPTY := Color("0a1217")
-const SLOT_EMPTY_EDGE := Color("1e3038")
-const GREEN_BTN := Color("1d6e39")
+const MINI_H := 156.0
+const STEEL := Color("11191d")
+const STEEL_DARK := Color("0a1014")
+const STEEL_HI := Color("3b5560")
+const STEEL_TOP := Color("6e8c96")
+const BRASS := Color("b8923a")
+const WELL := Color("070c10")
+const SLOT_BG := Color("142127")
+const SLOT_EMPTY := Color("091015")
+const SLOT_EMPTY_EDGE := Color("1f323b")
+const GREEN_BTN := Color("1b6a38")
 const COLS := 6
 
 var B                         # battle.gd
@@ -31,14 +33,22 @@ var mini_t := 0.0
 var cmd_grid: GridContainer
 var cmd_title: Label
 var cmd_sub: Label
+var cmd_flag: Control
 var queue_row: HBoxContainer
 var port_name: Label
 var port_info: Label
 var port_hp: ProgressBar
+var port_ammo: ProgressBar
 var port_pic: TextureRect
+var port_idle_box: VBoxContainer
+var port_idle_nat: Label
+var port_idle_rank: Label
+var port_idle_xp: ProgressBar
+var port_idle_flag: Control
 var plate_pw: Label
 var plate_money: Label
 var plate_pop: Label
+var plate_time: Label
 var pw_bar: ProgressBar
 var pw_meter: ProgressBar
 var pw_ticks: Control
@@ -46,6 +56,8 @@ var chip_money: Label
 var chip_sup: Label
 var chip_alert: Label
 var sup_btn: Button
+var dozer_btn: Button
+var dozer_lbl: Label
 var alert_btn: Button
 var pause_btn: Button
 var hide_btn: Button
@@ -53,6 +65,8 @@ var mode_lbl: Label
 var hint_lbl: Label
 var powers_col: VBoxContainer
 var star_btn: Button
+var star_rank: Label
+var star_xp: ProgressBar
 var obj_panel: PanelContainer
 var obj_box: VBoxContainer
 var banner: Label
@@ -69,6 +83,9 @@ var obj_sig := ""
 var _sup_on := false
 var _alert_lit := false
 var _gen_lit := false
+var _dz_lit := false
+var _flag_fac := ""
+var _pow_icons: Dictionary = {}
 var feed_n := 0
 var alerts := 0
 var last_event := Vector2.INF
@@ -95,32 +112,43 @@ func build(l: CanvasLayer) -> void:
 	load_lbl.visible = false
 	layer.add_child(load_lbl)
 
-# ---------------------------------------------------------------- Zero Hour steel style helpers
+# ---------------------------------------------------------------- Zero Hour beveled steel style helpers
 func _steel(bg: Color, edge: Color, bw: int = 1, rad: int = 2) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg; sb.border_color = edge
 	sb.set_border_width_all(bw); sb.set_corner_radius_all(rad)
 	return sb
 
-func _tac_btn(txt: String, on: Callable, tip: String, w: float = 56.0, h: float = 36.0) -> Button:
+func _bevel(bg: Color, edge: Color, top_edge: Color, rad: int = 2) -> StyleBoxFlat:
+	var sb := _steel(bg, edge, 1, rad)
+	sb.border_width_top = 2
+	sb.border_color = edge
+	sb.shadow_color = Color(0, 0, 0, 0.35)
+	sb.shadow_size = 2
+	sb.shadow_offset = Vector2(0, 1)
+	if top_edge != edge:
+		sb.border_color = top_edge
+	return sb
+
+func _tac_btn(txt: String, on: Callable, tip: String, w: float = 60.0, h: float = 29.0) -> Button:
 	var b := Button.new()
 	b.text = txt
 	b.focus_mode = Control.FOCUS_NONE
 	b.tooltip_text = tip
 	b.custom_minimum_size = Vector2(w, h)
 	b.add_theme_font_override("font", UI.font("bold"))
-	b.add_theme_font_size_override("font_size", 13)
+	b.add_theme_font_size_override("font_size", 12)
 	b.add_theme_color_override("font_color", UI.TEXT)
 	b.add_theme_color_override("font_hover_color", UI.GOLD_HI)
 	b.add_theme_color_override("font_pressed_color", UI.GOLD_HI)
-	_style_tac(b, Color("132028"), STEEL_HI, UI.TEXT)
+	_style_tac(b, Color("15232b"), STEEL_HI, UI.TEXT)
 	b.pressed.connect(on)
 	return b
 
 func _style_tac(b: Button, bg: Color, edge: Color, txt_col: Color) -> void:
-	var n := _steel(bg, edge, 1, 2); n.border_width_top = 2
-	var hv := _steel(bg.lightened(0.12), UI.GOLD, 1, 2); hv.border_width_top = 2
-	var pr := _steel(Color("2b2310"), UI.GOLD_HI, 1, 2); pr.border_width_top = 2
+	var n := _bevel(bg, edge, edge, 2)
+	var hv := _bevel(bg.lightened(0.14), UI.GOLD, UI.GOLD_HI, 2)
+	var pr := _bevel(Color("322810"), UI.GOLD_HI, UI.GOLD_HI, 2)
 	b.add_theme_stylebox_override("normal", n)
 	b.add_theme_stylebox_override("hover", hv)
 	b.add_theme_stylebox_override("pressed", pr)
@@ -133,14 +161,14 @@ func _tab_btn(txt: String, on: Callable, tip: String) -> Button:
 	b.tooltip_text = tip
 	b.add_theme_font_override("font", UI.font("bold"))
 	b.add_theme_font_size_override("font_size", 11)
-	b.add_theme_color_override("font_color", Color("b6c8cc"))
+	b.add_theme_color_override("font_color", Color("c4d6dc"))
 	b.add_theme_color_override("font_hover_color", UI.GOLD_HI)
-	var n := _steel(Color("0e171c"), STEEL_HI, 1, 0)
-	n.corner_radius_top_left = 3; n.corner_radius_top_right = 3; n.border_width_bottom = 0
-	var hv := _steel(Color("192a33"), UI.GOLD, 1, 0)
-	hv.corner_radius_top_left = 3; hv.corner_radius_top_right = 3; hv.border_width_bottom = 0
-	var pr := _steel(Color("2b2310"), UI.GOLD_HI, 1, 0)
-	pr.corner_radius_top_left = 3; pr.corner_radius_top_right = 3; pr.border_width_bottom = 0
+	var n := _steel(Color("111b20"), STEEL_HI, 1, 0)
+	n.corner_radius_top_left = 3; n.corner_radius_top_right = 3; n.border_width_bottom = 0; n.border_width_top = 2
+	var hv := _steel(Color("1c2e38"), UI.GOLD, 1, 0)
+	hv.corner_radius_top_left = 3; hv.corner_radius_top_right = 3; hv.border_width_bottom = 0; hv.border_width_top = 2
+	var pr := _steel(Color("322810"), UI.GOLD_HI, 1, 0)
+	pr.corner_radius_top_left = 3; pr.corner_radius_top_right = 3; pr.border_width_bottom = 0; pr.border_width_top = 2
 	b.add_theme_stylebox_override("normal", n)
 	b.add_theme_stylebox_override("hover", hv)
 	b.add_theme_stylebox_override("pressed", pr)
@@ -155,7 +183,24 @@ func _vdiv() -> ColorRect:
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return r
 
-# ---------------------------------------------------------------- bottom Zero Hour control bar
+func _pow_icon(key: String) -> Texture2D:
+	if _pow_icons.has(key): return _pow_icons[key]
+	var k := key.to_lower()
+	var fname := "nat"
+	if "barrage" in k or "arty" in k or "rocket" in k or "scud" in k or "carpet" in k: fname = "barrage"
+	elif "para" in k or "drop" in k or "air" in k: fname = "para"
+	elif "recon" in k or "spy" in k or "sat" in k or "radar" in k: fname = "recon"
+	elif "repair" in k or "heal" in k or "amb" in k: fname = "repair"
+	elif "flare" in k or "smoke" in k or "emp" in k: fname = "flare"
+	elif "bunker" in k or "bb" in k or "nuke" in k or "strike" in k or "sup" in k: fname = "bb"
+	elif "mil" in k or "mob" in k or "rebel" in k: fname = "mil"
+	elif "sanc" in k or "cash" in k or "hack" in k: fname = "sanc"
+	var fp := "res://ui/icons/pow/%s.png" % fname
+	var tex: Texture2D = load(fp) if ResourceLoader.exists(fp) else null
+	_pow_icons[key] = tex
+	return tex
+
+# ---------------------------------------------------------------- bottom Zero Hour metallic control bar
 func _bar() -> void:
 	bar = Panel.new()
 	bar.name = "Bar"
@@ -166,10 +211,18 @@ func _bar() -> void:
 	bar.add_theme_stylebox_override("panel", sb)
 	root.add_child(bar)
 
-	# ---- LEFT WING: Framed Radar Minimap + 4 flush tactical buttons
+	# Subtle brass-gold top trim accent line across the Zero Hour console
+	var trim := ColorRect.new()
+	trim.color = Color(BRASS.r, BRASS.g, BRASS.b, 0.55)
+	trim.anchor_right = 1.0
+	trim.offset_top = 2; trim.offset_bottom = 3
+	trim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(trim)
+
+	# ---- LEFT WING: Heavy Beveled Radar Minimap + 5 Zero Hour Tactical Keys (MENU, DOZER, SUP, ALERT, GEN+XP)
 	var mf := Panel.new()
 	mf.position = Vector2(8, 10); mf.size = Vector2(MINI_W + 6, MINI_H + 6)
-	var mfs := _steel(WELL, STEEL_HI, 2, 2); mfs.border_color = Color("446572")
+	var mfs := _steel(WELL, Color("4d707f"), 2, 2)
 	mf.add_theme_stylebox_override("panel", mfs)
 	bar.add_child(mf)
 	mini = Control.new()
@@ -180,46 +233,62 @@ func _bar() -> void:
 	mini.gui_input.connect(_mini_input)
 	mf.add_child(mini)
 
-	# 4 flush military steel buttons right beside radar: MENU, SUP, ALERT, GEN
-	var mb := _tac_btn("MENU", func(): open_pause(), "Menu / Options / Sound (Esc)")
+	# 5 flush military steel keys right beside radar: MENU, DOZER, SUP, ALERT, GEN (with live Rank/XP)
+	var bx := 234.0; var bw := 62.0
+	var mb := _tac_btn("MENU", func(): open_pause(), "Menu / Options / Sound (Esc)", bw, 28.0)
 	mb.name = "MenuBtn"
-	mb.position = Vector2(232, 12); mb.size = Vector2(56, 36)
+	mb.position = Vector2(bx, 10); mb.size = Vector2(bw, 28)
 	bar.add_child(mb)
 
-	sup_btn = _tac_btn("SUP", func(): B.toggle_supply(), "Toggle supply lines on the ground (L)")
+	dozer_btn = _tac_btn("", func():
+		if B.has_method("select_idle_dozer"): B.select_idle_dozer(), "Jump to idle Construction Vehicle (B)", bw, 28.0)
+	dozer_btn.name = "DozerBtn"
+	dozer_btn.position = Vector2(bx, 41); dozer_btn.size = Vector2(bw, 28)
+	dozer_lbl = UI.label("DOZER", 11, UI.TEXT, "bold")
+	dozer_lbl.position = Vector2(0, 5); dozer_lbl.size = Vector2(bw, 18)
+	dozer_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dozer_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	dozer_btn.add_child(dozer_lbl)
+	bar.add_child(dozer_btn)
+
+	sup_btn = _tac_btn("SUPPLY", func(): B.toggle_supply(), "Toggle supply lines on the ground (L)", bw, 28.0)
 	sup_btn.name = "SupBtn"
-	sup_btn.position = Vector2(232, 52); sup_btn.size = Vector2(56, 36)
+	sup_btn.position = Vector2(bx, 72); sup_btn.size = Vector2(bw, 28)
 	bar.add_child(sup_btn)
 
 	alert_btn = _tac_btn("", func():
 		if last_event != Vector2.INF:
 			B.cam_target = last_event
-			alerts = 0, "Jump to last tactical alert (Space)")
+			alerts = 0, "Jump to last tactical alert (Space)", bw, 28.0)
 	alert_btn.name = "AlertBtn"
-	alert_btn.position = Vector2(232, 92); alert_btn.size = Vector2(56, 36)
-	var al_cap := UI.label("ALERT", 9, Color("86a2ab"), "tight")
-	al_cap.position = Vector2(0, 2); al_cap.size = Vector2(56, 12)
-	al_cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	al_cap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	alert_btn.add_child(al_cap)
-	chip_alert = UI.label("! 0", 14, UI.TEXT_DIM, "bold")
-	chip_alert.position = Vector2(0, 14); chip_alert.size = Vector2(56, 20)
+	alert_btn.position = Vector2(bx, 103); alert_btn.size = Vector2(bw, 28)
+	chip_alert = UI.label("ALT 0", 11, UI.TEXT_DIM, "bold")
+	chip_alert.position = Vector2(0, 5); chip_alert.size = Vector2(bw, 18)
 	chip_alert.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	chip_alert.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	alert_btn.add_child(chip_alert)
 	bar.add_child(alert_btn)
 
-	star_btn = _tac_btn("GEN", func(): open_powers(), "Generals' Powers (P)")
+	star_btn = _tac_btn("", func(): open_powers(), "Generals' Promotions & Powers (P)", bw, 38.0)
 	star_btn.name = "StarBtn"
-	star_btn.position = Vector2(232, 132); star_btn.size = Vector2(56, 36)
+	star_btn.position = Vector2(bx, 134); star_btn.size = Vector2(bw, 38)
+	star_rank = UI.label("GEN R1", 11, UI.GOLD_HI, "bold")
+	star_rank.position = Vector2(0, 4); star_rank.size = Vector2(bw, 16)
+	star_rank.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	star_rank.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	star_btn.add_child(star_rank)
+	star_xp = _progress(UI.GOLD_HI)
+	star_xp.position = Vector2(5, 25); star_xp.size = Vector2(bw - 10, 6)
+	star_xp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	star_btn.add_child(star_xp)
 	bar.add_child(star_btn)
 
-	# ---- CENTER WING: Integrated Status Bezel + Classic 2x6 Zero Hour Cameo Grid
+	# ---- CENTER WING: Integrated Zero Hour Telemetry Bezel + Framed 2x6 Zero Hour Cameo Deck
 	var ca := Panel.new()
 	ca.name = "Cmd"
 	ca.anchor_right = 1.0
-	ca.offset_left = 294; ca.offset_right = -222; ca.offset_top = 10; ca.offset_bottom = 170
-	ca.add_theme_stylebox_override("panel", _steel(Color("0b1318"), STEEL_HI, 2, 2))
+	ca.offset_left = 302; ca.offset_right = -226; ca.offset_top = 10; ca.offset_bottom = 172
+	ca.add_theme_stylebox_override("panel", _steel(STEEL_DARK, STEEL_HI, 2, 2))
 	bar.add_child(ca)
 
 	var cv := VBoxContainer.new()
@@ -228,11 +297,11 @@ func _bar() -> void:
 	cv.add_theme_constant_override("separation", 3)
 	ca.add_child(cv)
 
-	# Integrated Top Status Bezel (height = 28px) inside the center frame
+	# Integrated Top Telemetry Bezel (height = 30px)
 	var hdr := PanelContainer.new()
 	hdr.name = "Plate"
-	hdr.custom_minimum_size.y = 28
-	var hs := _steel(Color("081016"), STEEL_HI, 0, 0)
+	hdr.custom_minimum_size.y = 30
+	var hs := _steel(Color("0b141a"), STEEL_HI, 0, 0)
 	hs.border_width_bottom = 1
 	hs.content_margin_left = 8; hs.content_margin_right = 8; hs.content_margin_top = 2; hs.content_margin_bottom = 2
 	hdr.add_theme_stylebox_override("panel", hs)
@@ -243,16 +312,22 @@ func _bar() -> void:
 	th.alignment = BoxContainer.ALIGNMENT_CENTER
 	hdr.add_child(th)
 
+	cmd_flag = Control.new()
+	cmd_flag.custom_minimum_size = Vector2(26, 16)
+	cmd_flag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	cmd_flag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	th.add_child(cmd_flag)
+
 	cmd_title = UI.label("TACTICAL COMMAND", 15, UI.GOLD_HI, "bold")
 	cmd_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	cmd_sub = UI.label("", 11, Color("86a6b0"))
+	cmd_sub = UI.label("", 11, Color("8baab4"))
 	cmd_sub.clip_text = true
 	cmd_sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cmd_sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	th.add_child(cmd_title)
 	th.add_child(cmd_sub)
 
-	plate_money = UI.label("$0", 17, UI.GOLD_HI, "bold")
+	plate_money = UI.label("$0", 18, UI.GOLD_HI, "bold")
 	plate_money.name = "Money"
 	plate_money.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	chip_money = plate_money
@@ -272,13 +347,18 @@ func _bar() -> void:
 	plate_pw = UI.label("PWR 0/0", 12, UI.TEXT, "tight")
 	plate_pw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	pw_bar = _progress(Color("38d65a"))
-	pw_bar.custom_minimum_size = Vector2(48, 6)
+	pw_bar.custom_minimum_size = Vector2(44, 7)
 	pw_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	th.add_child(_vdiv())
 	th.add_child(plate_pw)
 	th.add_child(pw_bar)
 
-	# 2-Row Cameo Grid + docked Production Queue strip
+	plate_time = UI.label("0:00", 12, Color("9cb4bc"), "mono")
+	plate_time.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	th.add_child(_vdiv())
+	th.add_child(plate_time)
+
+	# 2-Row Framed Zero Hour Cameo Grid + docked Production Queue strip
 	var grid_pad := MarginContainer.new()
 	grid_pad.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	grid_pad.add_theme_constant_override("margin_left", 4)
@@ -308,42 +388,70 @@ func _bar() -> void:
 	queue_row.visible = false
 	hb2.add_child(queue_row)
 
-	# ---- RIGHT WING: Unit Portrait & Status Card + Classic Vertical Zero Hour Power Gauge
+	# ---- RIGHT WING: Zero Hour Unit/Faction Portrait Card + Vertical Segmented Power Gauge
 	var pf := Panel.new()
 	pf.name = "Portrait"
 	pf.anchor_left = 1.0; pf.anchor_right = 1.0
-	pf.offset_left = -214; pf.offset_right = -36; pf.offset_top = 10; pf.offset_bottom = 170
-	pf.add_theme_stylebox_override("panel", _steel(Color("0b1318"), STEEL_HI, 2, 2))
+	pf.offset_left = -218; pf.offset_right = -36; pf.offset_top = 10; pf.offset_bottom = 172
+	pf.add_theme_stylebox_override("panel", _steel(STEEL_DARK, STEEL_HI, 2, 2))
 	bar.add_child(pf)
 
 	var pwell := Panel.new()
-	pwell.position = Vector2(6, 6); pwell.size = Vector2(166, 90)
-	pwell.add_theme_stylebox_override("panel", _steel(WELL, Color("243840"), 1, 2))
+	pwell.position = Vector2(6, 6); pwell.size = Vector2(170, 92)
+	pwell.add_theme_stylebox_override("panel", _steel(WELL, Color("29414b"), 1, 2))
 	pf.add_child(pwell)
 
 	port_pic = TextureRect.new()
-	port_pic.position = Vector2(2, 2); port_pic.size = Vector2(162, 86)
 	port_pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	port_pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	port_pic.position = Vector2(3, 3); port_pic.size = Vector2(164, 86)
 	pwell.add_child(port_pic)
 
-	port_name = UI.label("", 15, UI.TEXT, "bold")
-	port_name.position = Vector2(8, 98); port_name.size = Vector2(162, 20); port_name.clip_text = true
+	# Idle faction command card shown inside Portrait well whenever nothing is selected (never an empty black void)
+	port_idle_box = VBoxContainer.new()
+	port_idle_box.position = Vector2(8, 8); port_idle_box.size = Vector2(154, 78)
+	port_idle_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	port_idle_box.add_theme_constant_override("separation", 4)
+	port_idle_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pwell.add_child(port_idle_box)
+	var fl_row := HBoxContainer.new()
+	fl_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	fl_row.add_theme_constant_override("separation", 6)
+	port_idle_flag = Control.new()
+	port_idle_flag.custom_minimum_size = Vector2(34, 21)
+	fl_row.add_child(port_idle_flag)
+	port_idle_nat = UI.label("", 15, UI.GOLD_HI, "bold")
+	fl_row.add_child(port_idle_nat)
+	port_idle_box.add_child(fl_row)
+	port_idle_rank = UI.label("GENERAL RANK 1", 11, UI.CYAN, "tight")
+	port_idle_rank.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	port_idle_box.add_child(port_idle_rank)
+	port_idle_xp = _progress(UI.GOLD_HI)
+	port_idle_xp.custom_minimum_size = Vector2(138, 6)
+	port_idle_box.add_child(port_idle_xp)
+
+	port_name = UI.label("", 14, UI.TEXT, "bold")
+	port_name.position = Vector2(8, 100); port_name.size = Vector2(166, 19); port_name.clip_text = true
 	pf.add_child(port_name)
 
 	port_hp = _progress(Color("38d65a"))
-	port_hp.position = Vector2(8, 120); port_hp.size = Vector2(162, 7)
+	port_hp.position = Vector2(8, 121); port_hp.size = Vector2(166, 7)
 	pf.add_child(port_hp)
 
-	port_info = UI.label("", 11, UI.TEXT_DIM)
-	port_info.position = Vector2(8, 130); port_info.size = Vector2(162, 26); port_info.clip_text = true
+	port_ammo = _progress(Color("4da6ff"))
+	port_ammo.position = Vector2(8, 130); port_ammo.size = Vector2(166, 4)
+	port_ammo.visible = false
+	pf.add_child(port_ammo)
+
+	port_info = UI.label("", 11, Color("bcced9"))
+	port_info.position = Vector2(8, 136); port_info.size = Vector2(166, 22); port_info.clip_text = true
 	pf.add_child(port_info)
 
-	# Classic Zero Hour Vertical Power Gauge (20 x 154) with subtle segment tick marks
+	# Classic Zero Hour Vertical Segmented Power Gauge (20 x 158)
 	pw_meter = _progress(Color("38d65a"))
 	pw_meter.fill_mode = ProgressBar.FILL_BOTTOM_TO_TOP
 	pw_meter.anchor_left = 1.0; pw_meter.anchor_right = 1.0
-	pw_meter.offset_left = -28; pw_meter.offset_right = -8; pw_meter.offset_top = 12; pw_meter.offset_bottom = 166
+	pw_meter.offset_left = -28; pw_meter.offset_right = -8; pw_meter.offset_top = 12; pw_meter.offset_bottom = 170
 	pw_meter.tooltip_text = "Power: made / used"
 	bar.add_child(pw_meter)
 
@@ -353,13 +461,14 @@ func _bar() -> void:
 	pw_ticks.draw.connect(_draw_pw_ticks)
 	pw_meter.add_child(pw_ticks)
 
-	# ---- CLEAN DOCKED BAR TABS & CONTEXT HINT (flush with top edge of bottom bar)
-	hint_lbl = UI.label("", 12, Color(0.86, 0.90, 0.88, 0.88))
+	# ---- CLEAN DOCKED BAR TABS & CONTEXT HINT (shown only during active placement / armed orders)
+	hint_lbl = UI.label("", 12, Color(0.95, 0.94, 0.84, 0.96), "bold")
 	hint_lbl.anchor_top = 1.0; hint_lbl.anchor_bottom = 1.0
-	hint_lbl.offset_left = 8; hint_lbl.offset_top = -BAR_H - 22; hint_lbl.offset_right = 860; hint_lbl.offset_bottom = -BAR_H - 1
+	hint_lbl.offset_left = 8; hint_lbl.offset_top = -BAR_H - 24; hint_lbl.offset_right = 760; hint_lbl.offset_bottom = -BAR_H - 2
 	hint_lbl.clip_text = true
-	var hsb := _steel(Color(0.04, 0.07, 0.09, 0.78), Color("2c414a"), 1, 2)
-	hsb.content_margin_left = 8; hsb.content_margin_right = 8
+	var hsb := _steel(Color(0.05, 0.09, 0.12, 0.88), UI.GOLD_DIM, 1, 2)
+	hsb.border_width_left = 3
+	hsb.content_margin_left = 9; hsb.content_margin_right = 9
 	hint_lbl.add_theme_stylebox_override("normal", hsb)
 	hint_lbl.visible = false
 	root.add_child(hint_lbl)
@@ -383,15 +492,15 @@ func _toggle_collapse() -> void:
 	var y_bot := 0.0 if collapsed else -BAR_H
 	hide_btn.offset_top = y_bot - 22.0; hide_btn.offset_bottom = y_bot
 	pause_btn.offset_top = y_bot - 22.0; pause_btn.offset_bottom = y_bot
-	hint_lbl.offset_top = y_bot - 22.0; hint_lbl.offset_bottom = y_bot - 1.0
-	powers_col.offset_bottom = y_bot - 28.0; powers_col.offset_top = y_bot - 360.0
+	hint_lbl.offset_top = y_bot - 24.0; hint_lbl.offset_bottom = y_bot - 2.0
+	powers_col.offset_bottom = y_bot - 28.0; powers_col.offset_top = y_bot - 380.0
 
 func _draw_pw_ticks() -> void:
 	var sz := pw_ticks.size
-	var y := 11.0
+	var y := 10.0
 	while y < sz.y - 4.0:
-		pw_ticks.draw_line(Vector2(1, y), Vector2(sz.x - 1, y), Color(0.03, 0.05, 0.07, 0.72), 1.5)
-		y += 11.0
+		pw_ticks.draw_line(Vector2(1, y), Vector2(sz.x - 1, y), Color(0.03, 0.05, 0.07, 0.78), 1.6)
+		y += 10.0
 
 func _progress(col: Color) -> ProgressBar:
 	var p := ProgressBar.new()
@@ -406,7 +515,6 @@ func _progress(col: Color) -> ProgressBar:
 
 # ---------------------------------------------------------------- clean top overlays (only when needed) & top-left radio feed
 func _top() -> void:
-	# Subtle mode indicator: hidden during normal battle, only visible in TEST RANGE or REPLAY
 	mode_lbl = UI.label("", 13, Color(0.92, 0.94, 0.92, 0.88), "bold")
 	mode_lbl.anchor_left = 0.5; mode_lbl.anchor_right = 0.5
 	mode_lbl.offset_left = -280; mode_lbl.offset_right = 280; mode_lbl.offset_top = 8
@@ -477,8 +585,8 @@ func _side() -> void:
 	powers_col.name = "Powers"
 	powers_col.anchor_left = 1.0; powers_col.anchor_right = 1.0
 	powers_col.anchor_top = 1.0; powers_col.anchor_bottom = 1.0
-	powers_col.offset_left = -82; powers_col.offset_right = -8
-	powers_col.offset_top = -BAR_H - 360; powers_col.offset_bottom = -BAR_H - 28
+	powers_col.offset_left = -92; powers_col.offset_right = -8
+	powers_col.offset_top = -BAR_H - 380; powers_col.offset_bottom = -BAR_H - 28
 	powers_col.alignment = BoxContainer.ALIGNMENT_END
 	powers_col.add_theme_constant_override("separation", 5)
 	powers_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -513,24 +621,45 @@ func alert(p: Vector2) -> void:
 	alerts += 1
 	last_event = p
 
+func _sync_flags(fac: String) -> void:
+	if fac == _flag_fac or fac == "": return
+	_flag_fac = fac
+	for host_c in [[cmd_flag, 26.0, 16.0], [port_idle_flag, 34.0, 21.0]]:
+		var c: Control = host_c[0]
+		for ch in c.get_children(): ch.queue_free()
+		var fl: Control = Missions.flag(fac, float(host_c[1]), float(host_c[2]))
+		fl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		c.add_child(fl)
+
 # ---------------------------------------------------------------- per frame
 func tick(dt: float) -> void:
 	root.visible = B.started
 	if not B.started or B.sim == null: return
 	var sim = B.sim
 	var T: Dictionary = sim.teams[B.me]
+	_sync_flags(str(B.my_fac))
+
 	var pw: Vector2 = sim.pwr_of(B.me)
 	var low := pw.y > pw.x
+	var tight := not low and pw.x > 0.0 and (pw.x - pw.y) <= maxf(2.0, pw.x * 0.12)
 	plate_pw.text = "PWR %d/%d" % [int(pw.y), int(pw.x)]
-	plate_pw.add_theme_color_override("font_color", Color("ff6c5c") if low else UI.TEXT)
+	plate_pw.add_theme_color_override("font_color", Color("ff6c5c") if low else (Color("f4c454") if tight else UI.TEXT))
 	pw_bar.value = clampf(pw.y / maxf(1.0, pw.x), 0, 1)
-	pw_meter.value = clampf((pw.x - pw.y) / maxf(1.0, pw.x), 0, 1) if not low else 0.04
-	for p in [pw_bar, pw_meter]:
-		(p.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = Color("e84038") if low else Color("38d65a")
+	var p_col := Color("e84038") if low else (Color("e8b238") if tight else Color("38d65a"))
+	if low:
+		pw_meter.value = clampf(pw.x / maxf(1.0, pw.y) * 0.45, 0.14, 0.45)
+	elif pw.x <= 0.0:
+		pw_meter.value = 0.12
+	else:
+		var surplus := clampf((pw.x - pw.y) / maxf(1.0, pw.x), 0.0, 1.0)
+		pw_meter.value = 0.56 + surplus * 0.44
+	(pw_bar.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = p_col
+	(pw_meter.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = p_col
 
 	var money := "INF" if B.kind == "range" else "$" + _commas(int(T.credits))
 	plate_money.text = money
-	plate_pop.text = "%d/%d" % [sim.pop_used(B.me, false), sim.pop_cap()]
+	plate_pop.text = "ARMY %d/%d" % [sim.pop_used(B.me, false), sim.pop_cap()]
+	plate_time.text = UI.fmt_time(float(sim.t))
 
 	var sup = B.supply_state()
 	var sup_txt := str(sup[0])
@@ -538,27 +667,51 @@ func tick(dt: float) -> void:
 	chip_sup.text = sup_txt
 	chip_sup.add_theme_color_override("font_color", sup[1])
 
-	chip_alert.text = "! %d" % alerts
-	chip_alert.add_theme_color_override("font_color", Color("ffb848") if alerts > 0 else UI.TEXT_DIM)
+	chip_alert.text = "ALT %d" % alerts
+	chip_alert.add_theme_color_override("font_color", Color("ffb848") if alerts > 0 else Color("a6b8c4"))
 
-	# Glow states on the 4 flush Zero Hour sidebar buttons
+	# Idle Dozer status button (iconic Zero Hour macro helper)
+	var idle_dz: int = B.idle_dozer_count() if B.has_method("idle_dozer_count") else 0
+	dozer_lbl.text = "DOZER %d" % idle_dz if idle_dz > 0 else "DOZER"
+	var dz_now := idle_dz > 0
+	if dz_now != _dz_lit:
+		_dz_lit = dz_now
+		if dz_now: _style_tac(dozer_btn, Color("163038"), UI.CYAN, Color("b8f0ff"))
+		else: _style_tac(dozer_btn, Color("15232b"), STEEL_HI, UI.TEXT_DIM)
+	dozer_lbl.add_theme_color_override("font_color", Color("b8f0ff") if dz_now else UI.TEXT_DIM)
+
+	# General's Rank & XP live meter on GEN button
+	var rk := int(T.get("rank", 1))
+	var ranks: Array = sim.R.RANKS if sim.R is Dictionary and sim.R.has("RANKS") else []
+	var xp_f := 1.0
+	if rk < ranks.size():
+		var prev_r := float(ranks[rk - 1]) if rk > 0 else 0.0
+		xp_f = clampf((float(T.get("gxp", 0.0)) - prev_r) / maxf(1.0, float(ranks[rk]) - prev_r), 0.0, 1.0)
+	var gp_pts: int = B.gp_points()
+	star_rank.text = "GEN +%d" % gp_pts if gp_pts > 0 else "GEN R%d" % rk
+	star_xp.value = xp_f
+	port_idle_nat.text = UI.nat_name(str(B.my_fac)).to_upper()
+	port_idle_rank.text = "RANK %d  |  %d PT%s" % [rk, gp_pts, "" if gp_pts == 1 else "S"] if gp_pts > 0 else "GENERAL RANK %d" % rk
+	port_idle_xp.value = xp_f
+
+	# Glow states on the flush Zero Hour sidebar buttons
 	var sup_now: bool = bool(B.show_supply)
 	if sup_now != _sup_on:
 		_sup_on = sup_now
 		if sup_now: _style_tac(sup_btn, GREEN_BTN, Color("6ce88e"), Color("e2ffea"))
-		else: _style_tac(sup_btn, Color("132028"), STEEL_HI, UI.TEXT)
+		else: _style_tac(sup_btn, Color("15232b"), STEEL_HI, UI.TEXT)
 
 	var al_now: bool = alerts > 0
 	if al_now != _alert_lit:
 		_alert_lit = al_now
-		if al_now: _style_tac(alert_btn, Color("38240e"), Color("f0a828"), Color("ffd88a"))
-		else: _style_tac(alert_btn, Color("132028"), STEEL_HI, UI.TEXT)
+		if al_now: _style_tac(alert_btn, Color("3c240c"), Color("f0a828"), Color("ffd88a"))
+		else: _style_tac(alert_btn, Color("15232b"), STEEL_HI, UI.TEXT)
 
-	var gp_now: bool = B.gp_points() > 0
+	var gp_now: bool = gp_pts > 0
 	if gp_now != _gen_lit:
 		_gen_lit = gp_now
-		if gp_now: _style_tac(star_btn, Color("42320e"), UI.GOLD_HI, UI.GOLD_HI)
-		else: _style_tac(star_btn, Color("132028"), STEEL_HI, UI.TEXT)
+		if gp_now: _style_tac(star_btn, Color("44330e"), UI.GOLD_HI, UI.GOLD_HI)
+		else: _style_tac(star_btn, Color("15232b"), STEEL_HI, UI.TEXT)
 
 	pause_btn.text = "|>" if B.paused else "II"
 
@@ -594,7 +747,7 @@ func _commas(n: int) -> String:
 	while s.length() > 3: out = "," + s.substr(s.length() - 3) + out; s = s.substr(0, s.length() - 3)
 	return ("-" if n < 0 else "") + s + out
 
-# ---------------------------------------------------------------- command area (Zero Hour 2x6 cameo grid)
+# ---------------------------------------------------------------- command area (Zero Hour 2x6 framed cameo deck)
 func _empty_slot() -> Panel:
 	var p := Panel.new()
 	p.custom_minimum_size = Vector2(96, 58)
@@ -602,11 +755,34 @@ func _empty_slot() -> Panel:
 	p.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var sb := _steel(SLOT_EMPTY, SLOT_EMPTY_EDGE, 1, 2)
-	sb.border_width_top = 1
 	p.add_theme_stylebox_override("panel", sb)
 	return p
 
-## a Zero Hour cameo button: framed artwork on left, name + gold price on right, count badge, progress bar
+static var _cmd_icon_cache := {}
+static func _cmd_icon(id: String) -> Texture2D:
+	if _cmd_icon_cache.has(id):
+		return _cmd_icon_cache[id]
+	var f := ""
+	match id:
+		"amove": f = "swords"
+		"guard": f = "grd"
+		"stop": f = "stp"
+		"digin": f = "dig"
+		"unload": f = "down"
+		"sell": f = "sell"
+		"repair": f = "fix"
+		"q_army": f = "army"
+		"q_sup": f = "crate"
+		"q_pow": f = "star"
+		_:
+			_cmd_icon_cache[id] = null
+			return null
+	var p := "res://ui/icons/svg/%s.png" % f
+	var t: Texture2D = load(p) if ResourceLoader.exists(p) else null
+	_cmd_icon_cache[id] = t
+	return t
+
+## Authentic C&C Zero Hour cameo card: crisp inset artwork on left (fixed expand_mode order!), bold title + top-right gold cost badge, zero overlap
 func _cameo_btn(it: Dictionary) -> Button:
 	var b := Button.new()
 	b.name = "Cmd_" + str(it.get("id", it.label))
@@ -617,30 +793,46 @@ func _cameo_btn(it: Dictionary) -> Button:
 	b.disabled = not bool(it.get("ok", true))
 	b.tooltip_text = str(it.get("tip", ""))
 	b.clip_contents = true
-	var n_sb := _steel(SLOT_BG, STEEL_HI, 1, 2); n_sb.border_width_top = 2
-	var h_sb := _steel(Color("1b333d"), UI.GOLD, 1, 2); h_sb.border_width_top = 2
-	var p_sb := _steel(Color("332910"), UI.GOLD_HI, 2, 2)
-	var d_sb := _steel(Color("0a1115"), Color("223037"), 1, 2)
-	b.add_theme_stylebox_override("normal", p_sb if bool(it.get("on", false)) else n_sb)
+	var is_on := bool(it.get("on", false))
+	var n_sb := _bevel(SLOT_BG, STEEL_HI, Color("4c6c7a"), 2)
+	var h_sb := _bevel(Color("1c3540"), UI.GOLD, UI.GOLD_HI, 2)
+	var p_sb := _bevel(Color("3a2d10"), UI.GOLD_HI, UI.GOLD_HI, 2)
+	var d_sb := _steel(Color("0a1115"), Color("202f36"), 1, 2)
+	b.add_theme_stylebox_override("normal", p_sb if is_on else n_sb)
 	b.add_theme_stylebox_override("hover", h_sb)
 	b.add_theme_stylebox_override("pressed", p_sb)
 	b.add_theme_stylebox_override("disabled", d_sb)
 
 	var tex = B.cameo(str(it.get("cameo", "")))
+	var is_svg_icon := false
+	if tex == null:
+		tex = _cmd_icon(str(it.get("id", "")))
+		is_svg_icon = tex != null
 	if tex != null:
+		# Framed portrait box on the left (expand_mode set BEFORE texture so Godot honors exact bounds!)
+		var frame := Panel.new()
+		frame.position = Vector2(4, 5); frame.size = Vector2(58 if not is_svg_icon else 42, 48)
+		frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		frame.add_theme_stylebox_override("panel", _steel(WELL, Color("3c5966") if not b.disabled else Color("202d34"), 1, 1))
+		b.add_child(frame)
+
 		var tr := TextureRect.new()
-		tr.texture = tex
-		tr.position = Vector2(3, 4); tr.size = Vector2(44, 50)
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.texture = tex
+		if is_svg_icon:
+			tr.position = Vector2(7, 10); tr.size = Vector2(28, 28)
+			tr.modulate = UI.GOLD_HI if is_on else (Color("c8dde6") if not b.disabled else Color(0.42, 0.44, 0.46))
+		else:
+			tr.position = Vector2(1, 1); tr.size = Vector2(56, 46)
+			if b.disabled: tr.modulate = Color(0.42, 0.44, 0.46)
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if b.disabled: tr.modulate = Color(0.42, 0.44, 0.46)
-		b.add_child(tr)
+		frame.add_child(tr)
 
-	var tx := 50.0 if tex != null else 7.0
-	var nm := UI.label(str(it.label), 13, UI.TEXT if not b.disabled else Color(0.48, 0.54, 0.54), "tight")
+	var tx := (50.0 if is_svg_icon else 66.0) if tex != null else 8.0
+	var nm := UI.label(str(it.label), 13, UI.GOLD_HI if is_on else (UI.TEXT if not b.disabled else Color(0.48, 0.54, 0.54)), "tight")
 	nm.anchor_right = 1.0
-	nm.offset_left = tx; nm.offset_top = 3; nm.offset_right = -4; nm.offset_bottom = 38
+	nm.offset_left = tx; nm.offset_top = 4; nm.offset_right = -5; nm.offset_bottom = 36
 	nm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	nm.add_theme_constant_override("line_spacing", -4)
 	nm.max_lines_visible = 2
@@ -648,19 +840,22 @@ func _cameo_btn(it: Dictionary) -> Button:
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(nm)
 
-	if str(it.get("price", "")) != "":
-		var pr := UI.label(str(it.price), 12, UI.GOLD_HI if not b.disabled else Color(0.55, 0.48, 0.32), "bold")
-		pr.position = Vector2(tx, 39); pr.size = Vector2(72, 16)
+	var price_s := str(it.get("price", ""))
+	if price_s != "":
+		var is_key := not price_s.begins_with("$") and not price_s.begins_with("+$") and price_s != "owned" and price_s != "researching"
+		var pcol: Color = UI.CYAN if is_key else (UI.GOLD_HI if not b.disabled else Color(0.55, 0.48, 0.32))
+		var pr := UI.label(price_s, 12, pcol, "bold")
+		pr.position = Vector2(tx, 38); pr.size = Vector2(88, 16)
 		pr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(pr)
 
 	var mark_s := str(it.get("mark", ""))
 	if mark_s == "✓": mark_s = "OK"
 	if mark_s != "":
-		var mk := UI.label(mark_s, 14, Color(1, 1, 1), "bold")
+		var mk := UI.label(mark_s, 13, Color(1, 1, 1), "bold")
 		mk.add_theme_constant_override("outline_size", 4); mk.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 		mk.anchor_left = 1.0; mk.anchor_right = 1.0; mk.anchor_top = 1.0; mk.anchor_bottom = 1.0
-		mk.offset_left = -30; mk.offset_right = -4; mk.offset_top = -22; mk.offset_bottom = -2
+		mk.offset_left = -32; mk.offset_right = -5; mk.offset_top = -22; mk.offset_bottom = -3
 		mk.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		mk.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(mk)
@@ -711,34 +906,46 @@ func _cmd_bar() -> void:
 	for q in queue:
 		if qn >= 5: break
 		var qb := _cameo_btn({label = "", cameo = q.cameo, id = "q%d" % qn, tip = "%s - right-click cancels" % q.name, on_right = q.cancel, prog = q.p if qn == 0 else 0.0})
-		qb.custom_minimum_size = Vector2(44, 58)
+		qb.custom_minimum_size = Vector2(54, 58)
 		qb.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		for ch in qb.get_children():
-			if ch is TextureRect: ch.position = Vector2(2, 3); ch.size = Vector2(40, 48)
+			if ch is Panel:
+				ch.position = Vector2(2, 3); ch.size = Vector2(50, 48)
+				for sub_c in ch.get_children():
+					if sub_c is TextureRect: sub_c.position = Vector2(1, 1); sub_c.size = Vector2(48, 46)
 			elif ch is Label: ch.visible = false
 		queue_row.add_child(qb)
 		qn += 1
 
 func _portrait() -> void:
 	var p: Dictionary = B.portrait()
+	var has_sel := not p.is_empty()
+	port_idle_box.visible = not has_sel
+	port_pic.visible = has_sel
+	if not has_sel:
+		port_name.text = "COMMAND READY"
+		port_name.add_theme_color_override("font_color", Color("b6c8d4"))
+		port_hp.visible = false
+		port_ammo.visible = false
+		port_info.text = "H: HQ  |  B: Dozer  |  P: Gen"
+		return
+
 	var nm := str(p.get("name", "")).to_upper()
 	var info_s := str(p.get("info", ""))
-	port_name.text = nm
-	port_info.text = info_s
-
-	# Rank badge color accent on selection name
 	var lo := info_s.to_lower()
 	var nm_col: Color = UI.TEXT
-	if "heroic" in lo: nm_col = UI.GOLD_HI
-	elif "elite" in lo: nm_col = UI.GOLD
-	elif "veteran" in lo: nm_col = UI.CYAN
+	var chev := ""
+	if "heroic" in lo: nm_col = UI.GOLD_HI; chev = "*** "
+	elif "elite" in lo: nm_col = UI.GOLD; chev = "** "
+	elif "veteran" in lo: nm_col = UI.CYAN; chev = "* "
+	port_name.text = chev + nm
 	port_name.add_theme_color_override("font_color", nm_col)
+	port_info.text = info_s
 
 	port_hp.visible = p.has("hp")
 	if p.has("hp"):
 		var f := clampf(float(p.hp), 0.0, 1.0)
 		port_hp.value = f
-		# Crisp smooth green -> amber -> red ramp (>0.6 green, 0.3..0.6 amber, <0.3 red)
 		var hp_col: Color
 		if f > 0.6:
 			hp_col = Color("f0a828").lerp(Color("38d65a"), clampf((f - 0.6) / 0.15, 0.0, 1.0))
@@ -747,9 +954,16 @@ func _portrait() -> void:
 		else:
 			hp_col = Color("e83e32")
 		(port_hp.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = hp_col
+
+	port_ammo.visible = p.has("ammo")
+	if p.has("ammo"):
+		var af := clampf(float(p.ammo), 0.0, 1.0)
+		port_ammo.value = af
+		(port_ammo.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = Color("4da6ff") if af > 0.05 else Color("e83e32")
+
 	port_pic.texture = B.cameo(str(p.get("cameo", "")))
 
-# ---------------------------------------------------------------- ready powers column (docked above right wing)
+# ---------------------------------------------------------------- ready powers column (Zero Hour right rail with real icons)
 func _powers() -> void:
 	var ps: Array = B.power_list()
 	var sig := ""
@@ -762,21 +976,31 @@ func _powers() -> void:
 		var b := Button.new()
 		b.name = "Pow_" + str(p.key)
 		b.focus_mode = Control.FOCUS_NONE
-		b.custom_minimum_size = Vector2(74, 46)
+		b.custom_minimum_size = Vector2(84, 52)
 		var rdy: bool = float(p.ready) >= 1.0
 		b.tooltip_text = "%s%s\n%s\nClick, then RIGHT-click target (left-click cancels)" % [p.name, "" if rdy else " (%d%%)" % int(float(p.ready) * 100), str(p.get("desc", ""))]
 		var armed: bool = B.armed == "power:" + str(p.key)
-		b.add_theme_stylebox_override("normal", _steel(Color("3a2f12") if armed else (Color("142c36") if rdy else Color("0b1318")), UI.GOLD_HI if armed or rdy else STEEL_HI, 2 if rdy else 1, 2))
-		b.add_theme_stylebox_override("hover", _steel(Color("1e404e"), UI.GOLD_HI, 2, 2))
-		b.add_theme_stylebox_override("pressed", _steel(Color("3a2f12"), UI.GOLD_HI, 2, 2))
-		var l := UI.label(str(p.name), 11, UI.TEXT if rdy else UI.TEXT_DIM, "tight")
-		l.position = Vector2(4, 2); l.size = Vector2(66, 34)
+		b.add_theme_stylebox_override("normal", _bevel(Color("3c2f10") if armed else (Color("152e38") if rdy else Color("0c1419")), UI.GOLD_HI if armed or rdy else STEEL_HI, UI.GOLD_HI if armed or rdy else STEEL_TOP, 2))
+		b.add_theme_stylebox_override("hover", _bevel(Color("1f4250"), UI.GOLD_HI, UI.GOLD_HI, 2))
+		b.add_theme_stylebox_override("pressed", _bevel(Color("3c2f10"), UI.GOLD_HI, UI.GOLD_HI, 2))
+		var ic := _pow_icon(str(p.key) + " " + str(p.name))
+		if ic != null:
+			var tr := TextureRect.new()
+			tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tr.texture = ic
+			tr.position = Vector2(4, 4); tr.size = Vector2(26, 26)
+			tr.modulate = UI.GOLD_HI if rdy else Color(0.55, 0.65, 0.70)
+			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			b.add_child(tr)
+		var l := UI.label(str(p.name), 11, UI.GOLD_HI if armed else (UI.TEXT if rdy else UI.TEXT_DIM), "tight")
+		l.position = Vector2(32 if ic != null else 5, 3); l.size = Vector2(48 if ic != null else 74, 34)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.add_theme_constant_override("line_spacing", -4)
 		l.clip_text = true; l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(l)
 		var pg := _progress(UI.GOLD_HI if rdy else UI.CYAN)
-		pg.position = Vector2(3, 39); pg.size = Vector2(68, 4); pg.value = float(p.ready); pg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pg.position = Vector2(4, 43); pg.size = Vector2(76, 5); pg.value = float(p.ready); pg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(pg)
 		var key: String = p.key
 		b.pressed.connect(func(): B.arm_power(key); pow_sig = "")
@@ -847,20 +1071,24 @@ func _mini_bake() -> void:
 	var hmax := 1.0
 	if map.get("hgrid") != null:
 		for v in map.hgrid.a: hmax = maxf(hmax, float(v))
+	var th := str(map.get("theme", "desert"))
 	var gw := int(map.GW); var cell := float(map.CELL)
 	for y in h:
 		for x in w:
 			var wx := x / k; var wy := y / k
 			var g: float = B.sim.ground_h(wx, wy) / hmax
-			var c := Color(0.30, 0.31, 0.25).lerp(Color(0.52, 0.5, 0.4), g)
+			var c: Color
+			if th == "snow": c = Color(0.42, 0.47, 0.54).lerp(Color(0.68, 0.73, 0.80), g)
+			elif th == "green": c = Color(0.24, 0.34, 0.20).lerp(Color(0.40, 0.48, 0.30), g)
+			else: c = Color(0.36, 0.32, 0.24).lerp(Color(0.62, 0.54, 0.40), g)
 			var gi := int(wy / cell) * gw + int(wx / cell)
 			if gi < map.grid.size():
 				var ct := int(map.grid[gi])
-				if ct == 3: c = Color(0.2, 0.2, 0.19)
-				elif ct == 1 or ct == 4: c = Color(0.08, 0.2, 0.27)
-				elif ct == 2: c = Color(0.3, 0.36, 0.38)
-			if gi < map.wood.size() and int(map.wood[gi]) > 0: c = c.lerp(Color(0.16, 0.27, 0.15), 0.6)
-			if B.sim.nav.P_ROAD and B.sim.nav.on_road(wx, wy): c = c.lerp(Color(0.62, 0.6, 0.52), 0.55)
+				if ct == 3: c = c * 0.52
+				elif ct == 1 or ct == 4: c = Color(0.08, 0.24, 0.34)
+				elif ct == 2: c = Color(0.26, 0.39, 0.44)
+			if gi < map.wood.size() and int(map.wood[gi]) > 0: c = c.lerp(Color(0.16, 0.30, 0.14), 0.58)
+			if B.sim.nav.P_ROAD and B.sim.nav.on_road(wx, wy): c = c.lerp(Color(0.72, 0.67, 0.56), 0.55)
 			img.set_pixel(x, y, c)
 	mini_tex = ImageTexture.create_from_image(img)
 
@@ -871,23 +1099,31 @@ func _mini_draw() -> void:
 	var k := _mk().x; var o := _mo()
 	mini.draw_rect(Rect2(Vector2.ZERO, Vector2(MINI_W, MINI_H)), Color(0.02, 0.04, 0.05))
 	mini.draw_texture(mini_tex, o)
+	# Subtle tactical radar grid overlay
+	var gc := Color(0.45, 0.72, 0.78, 0.08)
+	for gx in 3:
+		var lx := MINI_W * float(gx + 1) / 4.0
+		mini.draw_line(Vector2(lx, 0), Vector2(lx, MINI_H), gc, 1.0)
+	for gy in 2:
+		var ly := MINI_H * float(gy + 1) / 3.0
+		mini.draw_line(Vector2(0, ly), Vector2(MINI_W, ly), gc, 1.0)
 	# supply area: yours green, enemy red where you have seen it (lines when the sim has supply roads, else the circles)
 	var sp: Array = B.supply_draw()
 	for s in sp:
 		if s.has("r"): mini.draw_arc(Vector2(s.x, s.y) * k + o, float(s.r) * k, 0, TAU, 20, s.col, 1.0)
 		else: _mini_line(s.pts, k, o, s.col, bool(s.get("cut", false)))
 	for f in sim.fields:
-		if f.amt > 0: mini.draw_rect(Rect2(Vector2(f.x, f.y) * k + o - Vector2(2, 2), Vector2(4, 4)), Color(0.95, 0.85, 0.4))
+		if f.amt > 0: mini.draw_rect(Rect2(Vector2(f.x, f.y) * k + o - Vector2(2, 2), Vector2(4, 4)), Color(0.98, 0.86, 0.36))
 	for oi in sim.oil:
 		if oi.dead: continue
-		mini.draw_circle(Vector2(oi.x, oi.y) * k + o, 2.5, B.team_col(int(oi.owner)))
+		mini.draw_circle(Vector2(oi.x, oi.y) * k + o, 2.8, B.team_col(int(oi.owner)))
 	for e in sim.ents:
 		if e.dead or not B.visible_ent(e): continue
 		var c: Color = B.team_col(e.team)
 		if B.bsel.has(e.id): c = Color(1, 1, 1)
 		var p := Vector2(e.x, e.y) * k + o
 		if e.is_b: mini.draw_rect(Rect2(p - Vector2(3, 3), Vector2(6, 6)), c)
-		else: mini.draw_rect(Rect2(p - Vector2(1.2, 1.2), Vector2(2.4, 2.4)), c)
+		else: mini.draw_rect(Rect2(p - Vector2(1.4, 1.4), Vector2(2.8, 2.8)), c)
 	# Animated expanding radar alert ripples + crisp center crosshair
 	if last_event != Vector2.INF and alerts > 0:
 		var ep: Vector2 = last_event * k + o
@@ -899,6 +1135,13 @@ func _mini_draw() -> void:
 		mini.draw_line(ep + Vector2(-5, 0), ep + Vector2(5, 0), ch_col, 1.2)
 		mini.draw_line(ep + Vector2(0, -5), ep + Vector2(0, 5), ch_col, 1.2)
 		mini.draw_circle(ep, 1.6, Color(1.0, 0.45, 0.18, 1.0))
+	# Zero Hour corner radar ticks
+	var tc := Color(UI.GOLD.r, UI.GOLD.g, UI.GOLD.b, 0.65)
+	var L := 8.0
+	for corner in [[Vector2(2, 2), Vector2(1, 1)], [Vector2(MINI_W - 2, 2), Vector2(-1, 1)], [Vector2(2, MINI_H - 2), Vector2(1, -1)], [Vector2(MINI_W - 2, MINI_H - 2), Vector2(-1, -1)]]:
+		var cp: Vector2 = corner[0]; var cd: Vector2 = corner[1]
+		mini.draw_line(cp, cp + Vector2(cd.x * L, 0), tc, 1.4)
+		mini.draw_line(cp, cp + Vector2(0, cd.y * L), tc, 1.4)
 	# camera view (a trapezoid that turns with Q)
 	var vs := mini.get_viewport().get_visible_rect().size
 	var pts: Array = []
@@ -906,7 +1149,7 @@ func _mini_draw() -> void:
 		var g: Vector2 = B._ground_at(s2)
 		if g == Vector2.INF: return
 		pts.append(g * k + o)
-	for i in 4: mini.draw_line(pts[i], pts[(i + 1) % 4], Color(1, 1, 1, 0.85), 1.0)
+	for i in 4: mini.draw_line(pts[i], pts[(i + 1) % 4], Color(1, 1, 1, 0.88), 1.2)
 
 func _mini_line(pts: Array, k: float, o: Vector2, col: Color, cut: bool) -> void:
 	for i in pts.size() - 1:

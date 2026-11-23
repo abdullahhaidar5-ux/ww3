@@ -102,9 +102,9 @@ func setup(map_: Dictionary, tables: Dictionary, env_ = null) -> void:
 	mm_crater = _pool(pl, N_CRATER, false, "res://shaders/fx_decal.gdshader", huge, 1, {tex = load("res://tex/fx_crater.png"), opacity = 0.95})
 	mm_scorch.visible_instance_count = 0; mm_crater.visible_instance_count = 0
 	_rubble_pool()
-	for i in 4: lights.append([_light(Color("#ffa860"), 320.0), 0.0, 1.0])
-	for i in 2: mlights.append([_light(Color("#ffb060"), 140.0), 0.0, 0.06])
-	for i in 3: wlights.append([_light(Color("#ff8a3a"), 170.0), 0.0, 1.0])
+	for i in 6: lights.append([_light(Color("#ffac58"), 380.0), 0.0, 1.0])
+	for i in 3: mlights.append([_light(Color("#ffb864"), 160.0), 0.0, 0.06])
+	for i in 3: wlights.append([_light(Color("#ff8a3a"), 190.0), 0.0, 1.0])
 	_fow_setup()
 
 func _pool(mesh: Mesh, n: int, custom: bool, shader: String, aabb: AABB, prio: int, params: Dictionary) -> MultiMesh:
@@ -173,12 +173,13 @@ func _seen(x: float, z: float, margin := 1.4) -> bool:
 ## rise = steady climb; f = drag (speed left after 1 s). flags: GRAV (falls at 420), BOUNCE, KEEP.
 func part(add: bool, p: Vector3, vel: Vector3, d: float, s: float, g: float, a: float, c: Color, c2 = null, rise := 0.0, f := 0.25, flags := 0) -> void:
 	if not add and (flags & (GRAV | KEEP)) == 0:
+		# Keep Hollywood Zero Hour / Rise of the Reds blast density rich without over-cluttering
 		if c.r - c.b > 0.09:
-			if randf() > 0.4: return
-			s *= 0.72; d *= 0.5; a *= 0.6
+			if randf() > 0.72: return
+			s *= 0.90; d *= 0.76; a *= 0.78
 		else:
-			if randf() > 0.6: return
-			s *= 0.8; d *= 0.65; a *= 0.75
+			if randf() > 0.84: return
+			s *= 0.94; d *= 0.85; a *= 0.86
 	var buf := ba if add else bm
 	var i: int
 	if add: i = ha; ha = (ha + 1) % NA; da = true
@@ -262,76 +263,77 @@ func boom(x: float, z: float, s: float, big: bool, h := 0.0) -> void:
 	if env != null:
 		if s > 14.0: env.shake = minf(18.0, env.shake + s / (5.0 if big else 13.0) * kd)
 		if big: env.flash = minf(0.2, env.flash + 0.1)
-	if s > 12.0: _flash_light(lights, P + Vector3(0, 20, 0), (7.0 if big else 3.2) * (env.fx_k if env != null else 1.0) * 1.6, 600.0 if big else 300.0, 0.8 if big else 0.35)
+	if s > 12.0: _flash_light(lights, P + Vector3(0, 22, 0), (8.5 if big else 4.0) * (env.fx_k if env != null else 1.0) * 1.6, 680.0 if big else 340.0, 0.9 if big else 0.4)
 	if not _seen(x, z): return
-	var n := mini(18, 4 + int(s / 5.0)); var wk := 0.45 if wet else 1.0
+	var n := mini(22, 5 + int(s / 4.2)); var wk := 0.45 if wet else 1.0
 	if wet: _splash(x, z, g, s, big)
 	if s <= 10.0 and not big:
-		for i in 9: partg(true, P + Vector3(0, 2, 0), _dir(R(80, 200), R(60, 180)), R(.25, .6), R(1, 1.8), 1.0, C_SPARK, g0, true)
-		part(true, P + Vector3(0, 2, 0), Vector3.ZERO, 0.06, s * 2.2, 0.0, 1.0, Color(3.2, 2.4, 1.4))
-	part(true, P + Vector3(0, s * 0.3, 0), Vector3.ZERO, 0.07 if big else 0.05, s * 0.75 * wk, 0.0, 0.7, Color(3.4, 2.9, 2.1))
-	for i in (9 if big else (2 if wet else 4)):
-		part(true, P + Vector3(R(-s, s) * 0.3, R(0, s * 0.4), R(-s, s) * 0.3), _dir(R(0, s * 1.2), R(0, s)), R(.3, .6), s * R(.16, .3), s * 0.9, 1.0, Color(2.6, 1.2, .3), Color(.6, .16, .04), R(8, 20))
-	for i in (3 if wet else mini(16, 5 + int(s / 4.0))):
-		var hk := R(.8, 1.15)
-		part(false, P + Vector3(R(-s, s) * 0.35, R(0, s * 0.5), R(-s, s) * 0.35), _dir(R(0, s * 1.5), R(4, s)), R(2, 3.4), s * R(.4, .7), s * 0.5, 0.62, Color(3.4 * hk, 1.5 * hk, .4 * hk), C_SMOKE if i % 2 else Color(.3, .29, .27), R(10, 24))
+		for i in 10: partg(true, P + Vector3(0, 2, 0), _dir(R(80, 220), R(60, 190)), R(.25, .62), R(1.1, 2.0), 1.0, C_SPARK, g0, true)
+		part(true, P + Vector3(0, 2, 0), Vector3.ZERO, 0.065, s * 2.5, 0.0, 1.0, Color(3.6, 2.7, 1.5))
+	part(true, P + Vector3(0, s * 0.3, 0), Vector3.ZERO, 0.085 if big else 0.06, s * 1.05 * wk, 0.0, 0.85, Color(3.8, 3.2, 2.2))
+	for i in (12 if big else (2 if wet else 6)):
+		part(true, P + Vector3(R(-s, s) * 0.3, R(0, s * 0.4), R(-s, s) * 0.3), _dir(R(0, s * 1.35), R(0, s * 1.1)), R(.32, .68), s * R(.20, .36), s * 1.05, 1.0, Color(3.0, 1.35, .32), Color(.65, .16, .04), R(10, 24))
+	for i in (3 if wet else mini(20, 6 + int(s / 3.5))):
+		var hk := R(.85, 1.2)
+		part(false, P + Vector3(R(-s, s) * 0.35, R(0, s * 0.5), R(-s, s) * 0.35), _dir(R(0, s * 1.6), R(4, s)), R(2.2, 3.6), s * R(.45, .78), s * 0.55, 0.68, Color(3.6 * hk, 1.6 * hk, .42 * hk), C_SMOKE if i % 2 else Color(.26, .25, .23), R(12, 26))
 	for i in (n / 4 if wet else n / 2):
-		part(true, P + Vector3(0, R(0, s * 0.3), 0), _dir(R(0, s * 2.0), R(0, s * 1.5)), R(.25, .5), s * R(.15, .34), 0.0, 1.0, C_FIRE if i % 2 else C_FIRE2)
+		part(true, P + Vector3(0, R(0, s * 0.3), 0), _dir(R(0, s * 2.2), R(0, s * 1.7)), R(.26, .55), s * R(.18, .38), 0.0, 1.0, C_FIRE if i % 2 else C_FIRE2)
 	for i in (n / 2 if wet else n):
-		part(false, P + Vector3(R(-s, s) * 0.4, R(0, s * 0.5), R(-s, s) * 0.4), _dir(R(0, s * 0.8), R(0, 10)), R(2.2, 3.8), s * R(.4, .7), s * 0.6, 0.5, Color(.74, .77, .8) if wet else (C_SMOKE if i % 3 else C_DARK), null, R(16, 34))
+		part(false, P + Vector3(R(-s, s) * 0.4, R(0, s * 0.5), R(-s, s) * 0.4), _dir(R(0, s * 0.85), R(0, 12)), R(2.4, 4.2), s * R(.44, .78), s * 0.65, 0.55, Color(.74, .77, .8) if wet else (C_SMOKE if i % 3 else C_DARK), null, R(18, 38))
 	if grd and s > 8.0:
-		for i in mini(16, 5 + int(s / 2.0)):
-			part(false, P, _dir(R(s * .5, s * 1.5), R(s * 3, s * 6)), R(.9, 1.5), s * R(.35, .6), 0.0, 0.75, SC[i % 2], null, g0, 0.25, GRAV)
-		for i in mini(24, 8 + int(s / 2.0)):
-			partg(false, P + Vector3(0, 2, 0), _dir(R(40, 140), R(90, 260)), R(1, 1.8), R(1.6, 3.2), 1.0, SC[2], g0, true)
+		for i in mini(18, 6 + int(s / 2.0)):
+			part(false, P, _dir(R(s * .5, s * 1.6), R(s * 3.2, s * 6.5)), R(.95, 1.6), s * R(.38, .66), 0.0, 0.78, SC[i % 2], null, g0, 0.25, GRAV)
+		for i in mini(26, 9 + int(s / 2.0)):
+			partg(false, P + Vector3(0, 2, 0), _dir(R(40, 155), R(90, 280)), R(1, 1.9), R(1.7, 3.4), 1.0, SC[2], g0, true)
 	if gr:
 		var dc: Color = Color(.62, .61, .58) if sf == "hard" else C_DUST
 		if wet: dc = Color(.86, .9, .95)
-		for i in mini(14, 6 + int(s / 4.0)):
-			var a := randf() * TAU; var v := s * R(2, 3.5)
-			part(false, P + Vector3(cos(a) * s * 0.3, 2, sin(a) * s * 0.3), Vector3(cos(a) * v, R(2, 10), sin(a) * v), R(1, 1.6), s * R(.35, .55), s * 0.5, 0.45, dc)
-	for i in (n * 2 if sf == "hard" else (n / 4 if wet else n)):
-		partg(true, P + Vector3(0, 2, 0), _dir(R(90, 260), R(60, 220)), R(.3, .7), 1.4, 1.0, C_SPARK, g0)
+		for i in mini(16, 7 + int(s / 3.8)):
+			var a := randf() * TAU; var v := s * R(2.2, 3.8)
+			part(false, P + Vector3(cos(a) * s * 0.3, 2, sin(a) * s * 0.3), Vector3(cos(a) * v, R(2, 11), sin(a) * v), R(1.1, 1.8), s * R(.38, .60), s * 0.55, 0.48, dc)
+	for i in (n * 2 if sf == "hard" else (n / 4 if wet else int(n * 1.2))):
+		partg(true, P + Vector3(0, 2, 0), _dir(R(100, 290), R(70, 250)), R(.35, .8), 1.6, 1.0, C_SPARK, g0)
 	if s > 10.0 and not wet:
-		for i in mini(12, int(s / 3.0)): partg(false, P + Vector3(0, 3, 0), _dir(R(50, 160), R(100, 240)), R(1.2, 2.2), R(1.4, 2.8), 1.0, C_DARK, g0, true)
+		for i in mini(14, int(s / 2.8)): partg(false, P + Vector3(0, 3, 0), _dir(R(50, 175), R(100, 260)), R(1.2, 2.3), R(1.5, 3.0), 1.0, C_DARK, g0, true)
 	if s >= 14.0 and not wet:
-		for i in 5: part(true, P + Vector3(R(-s, s) * 0.3, R(s * 0.2, s * 0.7), R(-s, s) * 0.3), _dir(R(0, s * 0.6), R(0, s * 0.5)), R(.55, .95), s * R(.3, .5), s * 0.4, 1.0, Color(2.4, .9, .22), Color(.35, .1, .03), R(10, 25))
+		for i in 7: part(true, P + Vector3(R(-s, s) * 0.3, R(s * 0.2, s * 0.7), R(-s, s) * 0.3), _dir(R(0, s * 0.7), R(0, s * 0.6)), R(.6, 1.05), s * R(.34, .56), s * 0.45, 1.0, Color(2.8, 1.05, .24), Color(.38, .1, .03), R(12, 28))
 	if grd and s >= 14.0:
 		var DC: Array = DUSTC.get(sf, DUSTC.desert)
-		for i in randi_range(4, 8):
-			part(false, P + Vector3(R(-s, s), R(2, s * 0.6), R(-s, s)), _dir(R(2, 14), R(1, 5)), R(6, 9), s * R(.9, 1.4), s * 0.25, 0.3 if sf == "snow" else 0.4, DC[i % 3], null, R(2, 6), 0.4, KEEP)
+		for i in randi_range(5, 9):
+			part(false, P + Vector3(R(-s, s), R(2, s * 0.6), R(-s, s)), _dir(R(2, 16), R(1, 6)), R(6.5, 9.5), s * R(.95, 1.5), s * 0.28, 0.32 if sf == "snow" else 0.42, DC[i % 3], null, R(2, 6), 0.4, KEEP)
 	if grd and s >= 18.0 and not big:
-		for i in 8: partg(false, P + Vector3(0, 3, 0), _dir(R(40, 150), R(120, 300)), R(1.4, 2.4), R(2.2, 4.2), 1.0, Color(.35, .35, .33) if sf == "hard" else Color(.24, .23, .2), g0, true)
-	if (grd and big) or (gr and not wet and s >= 20.0): _emit({k = "col", p = P, life = 16.0 if big else R(7, 10), big = big}, 12)
+		for i in 9: partg(false, P + Vector3(0, 3, 0), _dir(R(40, 160), R(120, 320)), R(1.4, 2.5), R(2.2, 4.4), 1.0, Color(.35, .35, .33) if sf == "hard" else Color(.24, .23, .2), g0, true)
+	if (grd and big) or (gr and not wet and s >= 20.0): _emit({k = "col", p = P, life = 18.0 if big else R(8, 11), big = big}, 14)
 	if big and not wet:
-		for i in 10: part(false, P + Vector3(0, s * 0.3, 0), _dir(R(s * 1.5, s * 3.5), R(s * 2, s * 4.5)), R(1.6, 2.6), s * R(.3, .5), s * 0.4, 0.8, C_DARK, null, g0, 0.25, GRAV)
-		for i in 14: partg(false, P + Vector3(0, 4, 0), _dir(R(60, 220), R(140, 340)), R(1.4, 2.6), R(2, 4), 1.0, C_DARK, g0, true)
+		for i in 12: part(false, P + Vector3(0, s * 0.3, 0), _dir(R(s * 1.5, s * 3.8), R(s * 2, s * 4.8)), R(1.6, 2.8), s * R(.32, .54), s * 0.45, 0.82, C_DARK, null, g0, 0.25, GRAV)
+		for i in 16: partg(false, P + Vector3(0, 4, 0), _dir(R(60, 240), R(140, 360)), R(1.4, 2.8), R(2.2, 4.4), 1.0, C_DARK, g0, true)
 	if gr and not wet:
-		scorch(x, z, s * 2.4)
-		if s >= 16.0: crater(x, z, s * 1.5)
-	if grd and s >= 14.0:
-		_ring(Vector3(x, g0, z), s * 0.5, s * (6.5 if big else 4.2), 0.75 if big else 0.45, Color("#d8ccb4"), 0.6 if big else 0.42, 0.72, 0)
-	if gr and not wet and (s >= 20.0 or big): _emit({k = "fire", p = Vector3(x, g0, z), life = 9.0 if big else R(4, 6.5), r = minf(30.0, s * 0.45), big = big}, 10)
-	if grd and (big or s >= 28.0): _megaboom(x, z, g0, s if big else s * 1.45, big)
+		scorch(x, z, s * 2.6)
+		if s >= 14.0: crater(x, z, s * 1.65)
+	if grd and s >= 12.0:
+		_ring(Vector3(x, g0, z), s * 0.45, s * (7.2 if big else 4.6), 0.78 if big else 0.48, Color("#e8d4ae"), 0.72 if big else 0.50, 0.74, 0)
+	if gr and not wet and (s >= 18.0 or big): _emit({k = "fire", p = Vector3(x, g0, z), life = 10.5 if big else R(4.5, 7.0), r = minf(32.0, s * 0.48), big = big}, 12)
+	if grd and (big or s >= 26.0): _megaboom(x, z, g0, s if big else s * 1.5, big)
 
 ## src/05b-missiles.js megaBoom: the big ones (super weapons, demolition, ammunition going up)
 func _megaboom(x: float, z: float, g0: float, S: float, big: bool) -> void:
 	var P := Vector3(x, g0, z)
 	if env != null:
-		var kd := maxf(0.0, 1.0 - cam_pos.distance_to(P) / (cam_dist * 2.3 + 600.0))
-		env.shake = minf(26.0, env.shake + S * 0.3 * kd); env.flash = minf(0.3, env.flash + 0.12)
-	part(true, P + Vector3(0, S * 0.5, 0), Vector3.ZERO, 0.1, S * 3.6, 0.0, 1.0, Color(4, 3.4, 2.4))
-	part(true, P + Vector3(0, S * 0.5, 0), Vector3.ZERO, 0.35, S * 2.0, S, 1.0, Color(3.2, 1.8, .6), Color(1.2, .35, .08))
-	_ring(P, S * 0.6, S * 5.2, 0.8, Color("#ffe6bb"), 1.0, 0.9, 1)
-	for i in 30:
-		var a := i / 30.0 * TAU + R(-.1, .1); var v := S * R(3.6, 4.8)
-		part(false, P + Vector3(cos(a) * S * 0.5, 3, sin(a) * S * 0.5), Vector3(cos(a) * v, R(4, 16), sin(a) * v), R(2.2, 3.4), S * R(.45, .7), S * 0.5, 0.55, C_DUST if i % 2 else Color(.74, .66, .52), null, 0.0, 0.25, KEEP)
-	for i in 13: part(true, P + Vector3(R(-S, S) * 0.4, R(S * 0.2, S), R(-S, S) * 0.4), _dir(R(0, S), R(S * 0.5, S * 1.6)), R(.7, 1.3), S * R(.3, .55), S * 0.5, 1.0, Color(2.6, 1.1, .28), Color(.4, .1, .03), R(12, 30))
-	for i in 9: part(false, P + Vector3(R(-S, S) * 0.4, R(S * 0.3, S), R(-S, S) * 0.4), _dir(R(0, S), R(S * 0.5, S * 1.4)), R(1.5, 2.6), S * R(.4, .65), S * 0.5, 0.8, C_DARK, null, R(14, 30), 0.25, KEEP)
-	for i in 22: partg(true, P + Vector3(0, 4, 0), _dir(R(80, 300), R(160, 420)), R(.9, 1.8), R(1.6, 2.6), 1.0, Color(2.6, 1.4, .5), g0, true)
-	for i in (8 if big else 5): partg(false, P + Vector3(0, 4, 0), _dir(R(60, 200), R(180, 380)), R(1.6, 2.8), R(3, 5.5), 1.0, Color(.24, .23, .2), g0, true)
-	_emit({k = "mush", p = P, life = 3.4, S = S}, 4)
-	scorch(x, z, S * 1.5 * 2.0); crater(x, z, S * 1.7)
+		var kd := maxf(0.0, 1.0 - cam_pos.distance_to(P) / (cam_dist * 2.4 + 650.0))
+		env.shake = minf(28.0, env.shake + S * 0.34 * kd); env.flash = minf(0.32, env.flash + 0.14)
+	part(true, P + Vector3(0, S * 0.5, 0), Vector3.ZERO, 0.12, S * 4.0, 0.0, 1.0, Color(4.5, 3.8, 2.6))
+	part(true, P + Vector3(0, S * 0.5, 0), Vector3.ZERO, 0.40, S * 2.4, S * 1.15, 1.0, Color(3.6, 2.0, .65), Color(1.3, .36, .08))
+	_ring(P, S * 0.6, S * 6.0, 0.85, Color("#ffe8bc"), 1.0, 0.88, 1)
+	_ring(P, S * 0.3, S * 4.2, 0.52, Color("#ffaa4c"), 0.85, 0.82, 0)
+	for i in 34:
+		var a := i / 34.0 * TAU + R(-.1, .1); var v := S * R(3.8, 5.2)
+		part(false, P + Vector3(cos(a) * S * 0.5, 3, sin(a) * S * 0.5), Vector3(cos(a) * v, R(4, 18), sin(a) * v), R(2.4, 3.8), S * R(.48, .76), S * 0.55, 0.58, C_DUST if i % 2 else Color(.74, .66, .52), null, 0.0, 0.25, KEEP)
+	for i in 16: part(true, P + Vector3(R(-S, S) * 0.4, R(S * 0.2, S), R(-S, S) * 0.4), _dir(R(0, S * 1.15), R(S * 0.55, S * 1.8)), R(.75, 1.4), S * R(.34, .60), S * 0.55, 1.0, Color(3.0, 1.25, .30), Color(.42, .1, .03), R(14, 34))
+	for i in 11: part(false, P + Vector3(R(-S, S) * 0.4, R(S * 0.3, S), R(-S, S) * 0.4), _dir(R(0, S), R(S * 0.5, S * 1.5)), R(1.7, 2.9), S * R(.44, .72), S * 0.55, 0.84, C_DARK, null, R(16, 34), 0.25, KEEP)
+	for i in 26: partg(true, P + Vector3(0, 4, 0), _dir(R(90, 330), R(170, 450)), R(.95, 1.9), R(1.8, 2.9), 1.0, Color(3.0, 1.6, .55), g0, true)
+	for i in (10 if big else 6): partg(false, P + Vector3(0, 4, 0), _dir(R(60, 220), R(180, 400)), R(1.6, 3.0), R(3.2, 5.8), 1.0, Color(.22, .21, .19), g0, true)
+	_emit({k = "mush", p = P, life = 3.8, S = S}, 4)
+	scorch(x, z, S * 3.2); crater(x, z, S * 1.85)
 
 func _splash(x: float, z: float, wl: float, s: float, big: bool) -> void:
 	var W := Color(.86, .9, .95); var P := Vector3(x, wl, z)

@@ -834,16 +834,38 @@ func _draw_world_fx(fr: Dictionary, alive: Dictionary) -> void:
 	if show_supply:
 		for s in sim.supply_points()[me]: rings.append([Vector3(s.x, sim.ground_h(s.x, s.y) + 1.5, s.y), s.z, Color(0.3, 1.0, 0.45, 0.9)])
 
-## LANE C: waypoints still to walk, the armed order's cursor ring
+## LANE C: waypoints still to walk, the armed order's cursor ring, placement footprint, rally path
 func _draw_orders_overlay(fr: Dictionary) -> void:
 	var per: Dictionary = fr.per; var rings: Array = fr.rings; var bars: Array = fr.bars
 	# waypoints still to walk, the armed order's cursor ring, supply area on the ground (L)
 	for id in wp:
 		if bsel.has(id):
-			for q2 in wp[id]: rings.append([Vector3(q2.x, sim.ground_h(q2.x, q2.y) + 1.0, q2.y), 7.0, Color(0.4, 0.9, 1.0)])
+			for q2 in wp[id]: rings.append([Vector3(q2.x, sim.ground_h(q2.x, q2.y) + 1.0, q2.y), 7.0, Color(0.4, 0.9, 1.0, 0.85)])
+	# Zero Hour dotted rally path from selected production building to its rally flag
+	var se := _sel_ents()
+	if se.size() == 1 and se[0].is_b and se[0].team == me and se[0].rally != null:
+		var b = se[0]
+		var bp := Vector2(float(b.x), float(b.y))
+		var rp := Vector2(float(b.rally.x), float(b.rally.y))
+		var dist := bp.distance_to(rp)
+		var steps := clampi(int(dist / 52.0), 1, 10)
+		for si in range(1, steps):
+			var q3 := bp.lerp(rp, float(si) / float(steps))
+			rings.append([Vector3(q3.x, sim.ground_h(q3.x, q3.y) + 1.2, q3.y), 3.2, Color(0.38, 1.0, 0.52, 0.55)])
+	# Zero Hour crisp ground placement footprint ring under ghost
+	if place_kind != "":
+		var pg := _ground_at(get_viewport().get_mouse_position())
+		if pg != Vector2.INF:
+			var ps: Dictionary = sim.bstats(my_fac, place_kind)
+			var pr: float = float(ps.get("size", 60.0)) * 0.68
+			var ok: bool = sim.valid_spot(me, place_kind, pg.x, pg.y) != 0
+			var pulse := 1.0 + sin(t * 7.0) * 0.03
+			var pc := Color(0.32, 1.0, 0.50, 0.92) if ok else Color(1.0, 0.28, 0.22, 0.92)
+			rings.append([Vector3(pg.x, sim.ground_h(pg.x, pg.y) + 1.6, pg.y), pr * pulse, pc])
+			rings.append([Vector3(pg.x, sim.ground_h(pg.x, pg.y) + 1.4, pg.y), pr * 0.78, Color(pc.r, pc.g, pc.b, 0.48)])
 	if armed != "":
 		var ag := _ground_at(get_viewport().get_mouse_position())
-		if ag != Vector2.INF: rings.append([Vector3(ag.x, sim.ground_h(ag.x, ag.y) + 2.0, ag.y), 26.0 if armed.begins_with("power") else 12.0, Color(1.0, 0.5, 0.2) if armed != "guard" else Color(0.4, 0.8, 1.0)])
+		if ag != Vector2.INF: rings.append([Vector3(ag.x, sim.ground_h(ag.x, ag.y) + 2.0, ag.y), 28.0 if armed.begins_with("power") else 14.0, Color(1.0, 0.5, 0.2, 0.92) if armed != "guard" else Color(0.4, 0.85, 1.0, 0.92)])
 
 func _draw_rings_bars(rings: Array, bars: Array) -> void:
 	_grow(ring_mmi, rings.size())
@@ -929,9 +951,13 @@ func _box_sel(a: Vector2, b: Vector2, add: bool) -> void:
 func _make_ghost() -> void:
 	ghost = MeshInstance3D.new()
 	ghost_mat = StandardMaterial3D.new()
-	ghost_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	ghost_mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 	ghost_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	ghost_mat.albedo_color = Color(0.3, 1.0, 0.4, 0.35)
+	ghost_mat.albedo_color = Color(0.14, 0.72, 0.34, 0.30)
+	ghost_mat.emission_enabled = true
+	ghost_mat.emission = Color(0.10, 0.56, 0.24)
+	ghost_mat.emission_energy_multiplier = 0.24
+	ghost_mat.roughness = 0.55
 	ghost.material_override = ghost_mat
 	ghost.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	ghost.visible = false
@@ -946,11 +972,12 @@ func _ghost_tick() -> void:
 	var kk := _bld_key(my_fac, place_kind, float(s.size))
 	var info := _dk_info(kk[0], kk[1])
 	ghost.mesh = info["mesh"]
-	ghost.position = Vector3(g.x, sim.ground_h(g.x, g.y), g.y)
+	ghost.position = Vector3(g.x, sim.ground_h(g.x, g.y) + 0.5, g.y)
 	ghost.rotation = Vector3(0, -sim.base_facing(me) + PI * 0.5, 0)
 	ghost.visible = true
 	var ok: bool = sim.valid_spot(me, place_kind, g.x, g.y) != 0
-	ghost_mat.albedo_color = Color(0.3, 1.0, 0.4, 0.4) if ok else Color(1.0, 0.25, 0.2, 0.4)
+	ghost_mat.albedo_color = Color(0.14, 0.72, 0.34, 0.30) if ok else Color(0.92, 0.20, 0.16, 0.34)
+	ghost_mat.emission = Color(0.10, 0.56, 0.24) if ok else Color(0.75, 0.14, 0.10)
 
 func _place_here(sp: Vector2, keep: bool) -> void:
 	var g := _ground_at(sp)
@@ -1108,6 +1135,8 @@ func _key(k: InputEventKey) -> void:
 	elif kc == KEY_H:
 		var hq = sim.hq_of(me)
 		if hq != null: cam_target = Vector2(hq.x, hq.y)
+	elif kc == KEY_B:
+		select_idle_dozer()
 	elif kc == KEY_F10 or kc == KEY_PAUSE: hud.open_pause()
 	elif kc == KEY_L: toggle_supply()
 	elif kind == "replay":
@@ -1142,6 +1171,37 @@ func _key(k: InputEventKey) -> void:
 			if group_tap[0] == n and now - float(group_tap[1]) < 0.4 and bsel.size():
 				var e0 = sim.by_id[bsel[0]]; cam_target = Vector2(e0.x, e0.y)
 			group_tap = [n, now]
+
+var _dozer_idx := 0
+func _my_dozers() -> Array:
+	var out: Array = []
+	if sim == null: return out
+	for e in sim.ents:
+		if not e.dead and e.team == me and not e.is_b and e.kind == "dozer":
+			out.append(e)
+	return out
+
+func idle_dozer_count() -> int:
+	var n := 0
+	for e in _my_dozers():
+		if not bool(e.get("building")) and e.order == null:
+			n += 1
+	return n
+
+## Zero Hour Idle Dozer Finder (B / DOZER button): cycles idle Construction Vehicles (or any dozer if all busy) and centers camera
+func select_idle_dozer() -> void:
+	var all_dz := _my_dozers()
+	if all_dz.is_empty():
+		_msg("No Construction Vehicle available")
+		return
+	var idle: Array = all_dz.filter(func(e): return not bool(e.get("building")) and e.order == null)
+	var pool: Array = idle if not idle.is_empty() else all_dz
+	_dozer_idx = _dozer_idx % pool.size()
+	var dz = pool[_dozer_idx]
+	_dozer_idx = (_dozer_idx + 1) % pool.size()
+	bsel = [dz.id]
+	cam_target = Vector2(float(dz.x), float(dz.y))
+	Audio.speak(0, ["dozer"])   # P5 HOOK
 
 func _arm(what: String) -> void:
 	if _sel_units().is_empty(): return
@@ -1405,13 +1465,11 @@ func supply_draw() -> Array:
 	return out
 
 func hint_text() -> String:
-	if place_kind != "": return "Left-click: place the building · Shift: keep placing · Right-click or Esc: cancel"
-	if armed.begins_with("power"): return "RIGHT-click the target to launch · left-click cancels"
-	if armed == "amove": return "Attack-move: right-click the ground or an enemy"
-	if armed == "guard": return "Guard: right-click a spot or one of your units"
-	if kind == "replay": return ""
-	if _sel_units().size(): return "Right-click: move / attack / enter · F attack-move · G guard · Ctrl force-fire · Alt waypoint · X stop · I dig in · right-drag: line"
-	return "Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Q rotate"
+	if place_kind != "": return "PLACE: Left-click ground  |  Shift: keep placing  |  Right-click / Esc: cancel"
+	if armed.begins_with("power"): return "LAUNCH POWER: RIGHT-click target  |  Left-click / Esc: cancel"
+	if armed == "amove": return "ATTACK-MOVE: Right-click ground or enemy  |  Left-click / Esc: cancel"
+	if armed == "guard": return "GUARD: Right-click position or unit  |  Left-click / Esc: cancel"
+	return ""
 
 # ---------------------------------------------------------------- command area content (hud.gd draws it)
 func cmd_items() -> Dictionary:
@@ -1434,7 +1492,7 @@ func cmd_items() -> Dictionary:
 			var kk: String = k
 			items.append({id = k, label = _short(s.name), price = "$%d" % int(s.cost), ok = req and (T.credits >= float(s.cost) or kind == "range"), cameo = "b|%s|%s" % [my_fac, k], on = place_kind == k,
 				tip = "%s\n%s%s" % [s.name, str(s.get("desc", "")), why], on_click = func(_sh): place_kind = kk; _msg("Left-click the ground to place the " + str(s.name))})
-		return {title = "Construction Vehicle", sub = "Pick a building, left-click the ground · Shift keeps placing · right-click cancels", items = items}
+		return {title = "Construction Vehicle", sub = "Left-click ground to build · Shift: queue · Right-click: cancel", items = items}
 	if se.size() == 1 and se[0].is_b and se[0].team == me:
 		var b = se[0]
 		if b.built < 1.0: return {title = str(b.s.name), sub = "Under construction %d%%" % int(b.built * 100), items = []}
@@ -1472,7 +1530,7 @@ func cmd_items() -> Dictionary:
 			var qs: Dictionary = sim.stats(my_fac, q.kind)
 			var qk: String = q.kind
 			queue.append({kind = q.kind, name = str(qs.get("name", q.kind)), cameo = "u|%s|%s" % [my_fac, q.kind], p = clampf(float(q.t) / maxf(0.01, sim.prod_time(T, qs)), 0, 1) if i == 0 else 0.0, cancel = func(): cmd({t = "cancel", kind = qk, bid = bid2})})
-		if PROD.has(b.kind): sub = "Its own queue: %d · left-click the ground: rally point" % b.q.size() if b.q.size() else "Click a unit to train it · left-click the ground: rally point"
+		if PROD.has(b.kind): sub = "Queue: %d · Click ground to set rally point" % b.q.size() if b.q.size() else "Click to train · Shift: x5 · Click ground: rally point"
 		return {title = str(b.s.name), sub = sub, items = items, queue = queue}
 	var units := _sel_units()
 	if units.size():
@@ -1490,7 +1548,7 @@ func cmd_items() -> Dictionary:
 			var kk2: String = k
 			items.append({id = "sel_" + k, label = _short(sim.stats(my_fac, k).get("name", k)), price = "", cameo = "u|%s|%s" % [my_fac, k], mark = str(counts2[k]), tip = "Click: keep only these selected", on_click = func(_sh): bsel = bsel.filter(func(id): return sim.by_id.has(id) and sim.by_id[id].kind == kk2)})
 		var nm := "%d units" % units.size() if units.size() > 1 else str(units[0].s.get("name", units[0].kind))
-		return {title = nm, sub = "", items = items}
+		return {title = nm, sub = "Right-click: move/attack · Right-drag: line · Ctrl: force-fire · Alt: waypoint", items = items}
 	if se.size():
 		var e0 = se[0]
 		return {title = ("Enemy · " if e0.team >= 0 and not sim.ally(me, e0.team) else "") + str(e0.s.get("name", e0.kind)), sub = "", items = []}
@@ -1499,32 +1557,37 @@ func cmd_items() -> Dictionary:
 	if hq_e != null:
 		var hid: int = hq_e.id
 		items.append({id = "q_hq", label = "Command Ctr", price = "H", cameo = "b|%s|hq" % my_fac, tip = "Select & center on Command Center (H)", on_click = func(_sh): bsel = [hid]; cam_target = Vector2(hq_e.x, hq_e.y)})
-	for k_b in [["dozer", "Dozer", false], ["barracks", "Barracks", true], ["factory", "War Factory", true], ["airfield", "Airfield", true]]:
+	for k_b in [["dozer", "Dozer", false, "B"], ["barracks", "Barracks", true, ""], ["factory", "War Factory", true, ""], ["airfield", "Airfield", true, ""]]:
 		var found = null
 		for e in sim.ents:
 			if not e.dead and e.team == me and e.kind == k_b[0] and (not k_b[2] or e.built >= 1.0): found = e; break
 		if found != null:
 			var fid: int = found.id; var fx: float = found.x; var fy: float = found.y
-			items.append({id = "q_" + k_b[0], label = k_b[1], price = "", cameo = ("%s|%s|%s" % ["b" if k_b[2] else "u", my_fac, k_b[0]]), tip = "Select %s (double-click to jump)" % k_b[1], on_click = func(_sh): bsel = [fid]; cam_target = Vector2(fx, fy)})
+			items.append({id = "q_" + k_b[0], label = k_b[1], price = k_b[3], cameo = ("%s|%s|%s" % ["b" if k_b[2] else "u", my_fac, k_b[0]]), tip = "Select %s and center camera" % k_b[1], on_click = func(_sh): bsel = [fid]; cam_target = Vector2(fx, fy)})
 	items.append({id = "q_army", label = "All Army", price = "Ctrl+A", cameo = "", tip = "Select all combat units (Ctrl+A)", on_click = func(_sh):
 		bsel = []
 		for e in sim.ents:
 			if not e.dead and e.team == me and not e.is_b and e.kind != "harv" and e.kind != "dozer" and not _dug_in(e): bsel.append(e.id)})
 	items.append({id = "q_sup", label = "Supply Lines", price = "L", cameo = "", on = show_supply, tip = "Toggle supply lines on the ground (L)", on_click = func(_sh): toggle_supply()})
 	items.append({id = "q_pow", label = "Gen. Powers", price = "P", cameo = "", tip = "Open Generals' Powers (P)", on_click = func(_sh): hud.open_powers()})
-	return {title = "Tactical Command", sub = "Select Dozer to build, a building to train, or units to command", items = items}
+	return {title = "Tactical Command", sub = "Select Dozer (B) to build · Building to train · Units to command", items = items}
 
 func portrait() -> Dictionary:
 	var se := _sel_ents()
 	if se.is_empty(): return {}
 	var e = se[0]
 	var fac: String = sim.teams[e.team].fac if e.team >= 0 else my_fac
-	var info := "%d / %d hp" % [int(e.hp), int(e.max)]
+	var info := "%d / %d HP" % [int(e.hp), int(e.max)]
+	var out := {name = str(e.s.get("name", e.kind)), hp = clampf(e.hp / maxf(1.0, e.max), 0, 1), cameo = ("b|%s|%s" if e.is_b else "u|%s|%s") % [fac, e.kind] if e.team >= 0 else ""}
 	if not e.is_b:
-		if e.amx > 0 and kind != "range": info += " · ammo %d%%" % int(100.0 * maxf(0, e.am) / e.amx)
-		if e.rank > 0: info += " · " + ["", "veteran", "elite", "heroic"][mini(3, e.rank)]
-	if se.size() > 1: info = "%d selected · %s" % [se.size(), info]
-	return {name = str(e.s.get("name", e.kind)), hp = clampf(e.hp / maxf(1.0, e.max), 0, 1), info = info, cameo = ("b|%s|%s" if e.is_b else "u|%s|%s") % [fac, e.kind] if e.team >= 0 else ""}
+		if e.amx > 0 and kind != "range":
+			var af := clampf(maxf(0.0, float(e.am)) / float(e.amx), 0.0, 1.0)
+			out["ammo"] = af
+			info += " · Ammo %d%%" % int(af * 100.0)
+		if e.rank > 0: info += " · " + ["", "Veteran", "Elite", "Heroic"][mini(3, e.rank)]
+	if se.size() > 1: info = "%d units · %s" % [se.size(), info]
+	out["info"] = info
+	return out
 
 # ---------------------------------------------------------------- cameos: X2 pre-rendered atlas first (instant, all 22 nations), 3D viewport fallback
 var _x2_atlas: Dictionary = {}

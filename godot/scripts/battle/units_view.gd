@@ -58,6 +58,9 @@ var _mm_root: Node3D = null
 var _sol_root: Node3D = null
 var _mmi: Dictionary = {}            # key -> MultiMeshInstance3D
 var _buf: Dictionary = {}            # key -> Array[Transform3D]
+var _ao_mi: MultiMeshInstance3D = null
+var _ao_xf: Array[Transform3D] = []
+var _ao_col: Array[Color] = []
 var _active_sol: Dictionary = {}     # slot_id (int) -> {node, ap, key, clip, used, last_frame}
 var _idle_sol: Dictionary = {}       # "fac|kind|look" -> Array[Dictionary]
 var _dying_soldiers: Array = []      # Array[{node, ap, key, clip, start_t, base_y}]
@@ -86,6 +89,26 @@ func setup(host: Node3D) -> void:
 	_sol_root = Node3D.new()
 	_sol_root.name = "SoldierPool"
 	_root.add_child(_sol_root)
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(2.0, 2.0)
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = pm
+	mm.instance_count = 128
+	mm.visible_instance_count = 0
+	var mi := MultiMeshInstance3D.new()
+	mi.name = "UnitContactAO"
+	mi.multimesh = mm
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/contact_ao.gdshader")
+	mat.render_priority = -1
+	mi.material_override = mat
+	mi.custom_aabb = HUGE_AABB
+	mi.extra_cull_margin = 16384.0
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_root.add_child(mi)
+	_ao_mi = mi
 
 
 func begin_frame(_B = null) -> void:
@@ -95,6 +118,8 @@ func begin_frame(_B = null) -> void:
 		_now_t = float(_B.t)
 	_frame_id += 1
 	_anim_count = 0
+	_ao_xf.clear()
+	_ao_col.clear()
 	for k in _buf.keys():
 		(_buf[k] as Array).clear()
 	for slot_id in _active_sol.keys():
@@ -321,6 +346,16 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 		if fx != null:
 			_emit_vehicle_fx(fx, e, kind_s, dom, p, ang, gy, alt_y, model_h, eid_i, now, cam_dist_sq)
 
+	# Grounded CoH3 contact AO shadow disc under ground units & infantry squads
+	if is_sq:
+		var sq_r: float = maxf(float(e.r) * 1.05, 13.0)
+		_ao_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(sq_r, 1.0, sq_r)), Vector3(p.x, gy + 0.24, p.y)))
+		_ao_col.append(Color(1.0, 1.0, 1.0, 0.24))
+	elif String(e.s_dom) != "air":
+		var vr: float = maxf(float(e.r) * 1.24, 11.0)
+		_ao_xf.append(Transform3D(Basis(Vector3.UP, -ang).scaled(Vector3(vr * 1.18, 1.0, vr * 0.90)), Vector3(p.x, gy + 0.26, p.y)))
+		_ao_col.append(Color(1.0, 1.0, 1.0, 0.42))
+
 	_append_overlays(B, fr, e, p, ang, gy, alt_y, model_h, col, issel, mine, vis)
 
 
@@ -343,6 +378,22 @@ func end_frame() -> void:
 		for i in n:
 			mm.set_instance_transform(i, arr[i] as Transform3D)
 		mm.visible_instance_count = n
+
+	if _ao_mi != null:
+		var ao_mm := _ao_mi.multimesh
+		var ao_n := _ao_xf.size()
+		if ao_n == 0:
+			ao_mm.visible_instance_count = 0
+		else:
+			if ao_mm.instance_count < ao_n:
+				var cap := maxi(64, ao_mm.instance_count)
+				while cap < ao_n:
+					cap *= 2
+				ao_mm.instance_count = cap
+			for i in ao_n:
+				ao_mm.set_instance_transform(i, _ao_xf[i])
+				ao_mm.set_instance_color(i, _ao_col[i])
+			ao_mm.visible_instance_count = ao_n
 
 	# Update dying soldiers: lie on ground for 3.8s, gently sink, then recycle to idle pool
 	var di := _dying_soldiers.size() - 1
@@ -381,6 +432,9 @@ func clear() -> void:
 	_root = null
 	_mm_root = null
 	_sol_root = null
+	_ao_mi = null
+	_ao_xf.clear()
+	_ao_col.clear()
 	_mmi.clear()
 	_buf.clear()
 	_active_sol.clear()

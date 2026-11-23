@@ -8,20 +8,20 @@
 extends RefCounted
 
 const WX := {
-	"day": {sun = "#ffeccc", si = 3.1, off = [-900, 860, -620], sky = "#a9c4ec", gnd = "#9c8058", hi = 1.7, fog = "#c4ae86", fn = 1800.0, ff = 6200.0, expo = 1.22, sr = 2.0, hor = [.86, .78, .64], zen = [.30, .50, .80], gr = [1, 1, 1], sat = 1.0, fx = 1.0, amb = [1, 1, 1]},
-	"golden": {sun = "#ffc283", si = 3.0, off = [-1150, 470, -520], sky = "#9fb2d4", gnd = "#7a5a3c", hi = 1.12, fog = "#c09a72", fn = 1700.0, ff = 6000.0, expo = 1.04, sr = 2.0, hor = [.98, .74, .48], zen = [.36, .48, .72], gr = [1.05, 1, .9], sat = 1.08, fx = 1.1, amb = [1.03, .95, .86]},
-	"overcast": {sun = "#e4e9ef", si = 1.15, off = [-450, 1150, -300], sky = "#b7bfc8", gnd = "#625d51", hi = 1.6, fog = "#a2a7a9", fn = 1300.0, ff = 5200.0, expo = .98, sr = 6.0, hor = [.7, .72, .74], zen = [.52, .56, .62], gr = [.97, .99, 1.03], sat = .82, fx = 1.15, amb = [.9, .92, .95]},
-	"dusk": {sun = "#ffa868", si = 2.5, off = [-1320, 290, -560], sky = "#6a7aa8", gnd = "#40352f", hi = .95, fog = "#6c5a68", fn = 1400.0, ff = 5400.0, expo = 1.08, sr = 3.0, hor = [.95, .5, .32], zen = [.13, .18, .36], gr = [1, .95, .98], sat = .92, fx = 2.1, amb = [.5, .48, .55]},
-	"night": {sun = "#9db4e8", si = .5, off = [-900, 700, -500], sky = "#1a2644", gnd = "#14161e", hi = .45, fog = "#0b1020", fn = 900.0, ff = 4200.0, expo = 1.2, sr = 4.0, hor = [.07, .09, .16], zen = [.01, .02, .06], gr = [.9, .96, 1.1], sat = .75, fx = 2.6, amb = [.45, .5, .7]},
+	"day": {sun = "#ffeed2", si = 2.22, off = [-960, 760, -560], sky = "#b2d0f4", gnd = "#a68e6e", hi = 1.36, fog = "#dfd0b8", fn = 1600.0, ff = 6600.0, expo = 1.04, sr = 2.6, hor = [.90, .83, .70], zen = [.26, .48, .80], gr = [1.0, 1.0, 1.0], sat = 1.04, fx = 1.0, amb = [1.0, 0.99, 0.96]},
+	"golden": {sun = "#ffc98c", si = 2.42, off = [-1180, 520, -540], sky = "#a6bce0", gnd = "#8c6e4e", hi = 1.22, fog = "#d2ae86", fn = 1500.0, ff = 6000.0, expo = 1.02, sr = 2.4, hor = [.98, .76, .52], zen = [.32, .46, .74], gr = [1.04, 1.0, .92], sat = 1.06, fx = 1.15, amb = [1.02, .96, .88]},
+	"overcast": {sun = "#e6ebf2", si = 1.18, off = [-450, 1150, -300], sky = "#c0c8d2", gnd = "#746e62", hi = 1.58, fog = "#a8aeb2", fn = 1300.0, ff = 5200.0, expo = 1.00, sr = 5.0, hor = [.72, .75, .78], zen = [.52, .56, .63], gr = [.97, .99, 1.03], sat = .86, fx = 1.15, amb = [.92, .94, .96]},
+	"dusk": {sun = "#ffa868", si = 2.20, off = [-1320, 340, -560], sky = "#7688b6", gnd = "#50423b", hi = 1.08, fog = "#7c6874", fn = 1400.0, ff = 5400.0, expo = 1.06, sr = 3.0, hor = [.95, .52, .34], zen = [.15, .20, .38], gr = [1.0, .95, .98], sat = .94, fx = 2.1, amb = [.58, .54, .60]},
+	"night": {sun = "#9db8ec", si = .65, off = [-900, 700, -500], sky = "#223258", gnd = "#1c202c", hi = .62, fog = "#0e1528", fn = 950.0, ff = 4400.0, expo = 1.24, sr = 4.0, hor = [.09, .12, .20], zen = [.02, .03, .08], gr = [.92, .97, 1.1], sat = .78, fx = 2.6, amb = [.52, .58, .76]},
 }
-## bright sunlit daytime default look (crisp daylight shadows, high readability)
-const LOOK_WX := {sun = "#fff3dc", si = 2.9, off = [-820, 1020, -580], sky = "#b6d0f2", gnd = "#8e7e68", hi = 1.65, fog = "#d8c4a6", fn = 1600.0, ff = 6200.0, expo = 1.15, sr = 2.4, hor = [.95, .84, .68], zen = [.34, .54, .84], gr = [1.02, 1.01, .98], sat = 1.04, fx = 1.0, amb = [1.02, 1.0, .96]}
-const LOOK := {v = 0.42, g = .004, sh = 0.75, k = 1.03, bl = 1.2, s = [.98, .99, 1.03], h = [1.03, 1.01, .97]}
-const TGRADE := {"desert": {tg = [1.04, 1.01, .92], s = 1.1}, "green": {tg = [1.01, 1.04, .98], s = 1.05}, "snow": {tg = [.96, 1.0, 1.05], s = .92}}
-const WFOG := {"rain": ["#7d868c", 500.0, 3200.0], "storm": ["#7d868c", 500.0, 3200.0], "fog": ["#b9bdbb", 150.0, 1500.0], "sandstorm": ["#b88a52", 30.0, 720.0],
+## CoH3-inspired bright sunlit desert cinematic default (warm sun, airy cool-blue shadow fill, readable terrain & units)
+const LOOK_WX := {sun = "#ffebd0", si = 2.25, off = [-980, 740, -580], sky = "#b6d4f6", gnd = "#a89272", hi = 1.38, fog = "#e0d0b4", fn = 1500.0, ff = 6400.0, expo = 1.04, sr = 2.6, hor = [.93, .84, .68], zen = [.25, .48, .80], gr = [1.02, 1.0, .96], sat = 1.05, fx = 1.05, amb = [1.02, .99, .94]}
+const LOOK := {v = 0.38, g = .005, sh = 0.58, k = 1.05, bl = 0.95, s = [.93, .97, 1.05], h = [1.03, 1.01, .95]}
+const TGRADE := {"desert": {tg = [1.02, 1.0, .94], s = 1.06}, "green": {tg = [.99, 1.02, .97], s = 1.04}, "snow": {tg = [.95, .99, 1.06], s = .92}}
+const WFOG := {"rain": ["#7d868c", 500.0, 3200.0], "storm": ["#7d868c", 500.0, 3200.0], "fog": ["#b9bdbb", 150.0, 1500.0], "sandstorm": ["#c49a64", 45.0, 780.0],
 	"blizzard": ["#dfe6ee", 150.0, 1700.0], "snow": ["#e3e9f0", 220.0, 2300.0]}
-## Balanced ACES exposure multiplier for crisp sunlit daytime visibility
-var expo_k := 0.92
+## Godot's ACES curve has a built-in exposure bias; calibrated so sunlit sand stays rich sandstone (~0.66-0.78) and explosions bloom cleanly
+var expo_k := 0.66
 const RAIN_N := 1400
 
 var host: Node3D
@@ -86,28 +86,29 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	env.fog_enabled = true
 	env.fog_mode = Environment.FOG_MODE_DEPTH
 	env.fog_density = 1.0
-	env.fog_depth_curve = 1.0
+	env.fog_depth_curve = 1.15
 	env.fog_sky_affect = 0.0
 	env.fog_sun_scatter = 0.0
 	env.fog_aerial_perspective = 0.0
 	env.glow_enabled = true
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
-	env.glow_hdr_threshold = 0.95
-	env.glow_hdr_scale = 1.0
-	env.glow_bloom = 0.0
-	env.glow_strength = 1.0
-	env.set_glow_level(0, 0.0); env.set_glow_level(1, 0.75); env.set_glow_level(2, 0.0); env.set_glow_level(3, 0.9); env.set_glow_level(4, 0.0)
+	env.glow_hdr_threshold = 1.15
+	env.glow_hdr_scale = 1.2
+	env.glow_bloom = 0.04
+	env.glow_strength = 0.92
+	env.set_glow_level(0, 0.0); env.set_glow_level(1, 0.65); env.set_glow_level(2, 0.35); env.set_glow_level(3, 0.7); env.set_glow_level(4, 0.0)
 	we = WorldEnvironment.new()
 	we.environment = env
 	host.add_child(we)
 	sun = DirectionalLight3D.new()
 	sun.shadow_enabled = true
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_split_1 = 0.25
 	sun.directional_shadow_max_distance = 1800.0
-	sun.directional_shadow_fade_start = 0.9
-	sun.shadow_bias = 0.08
-	sun.shadow_normal_bias = 1.4
-	sun.shadow_opacity = 0.62
+	sun.directional_shadow_fade_start = 0.85
+	sun.shadow_bias = 0.06
+	sun.shadow_normal_bias = 1.25
+	sun.shadow_opacity = 0.72
 	host.add_child(sun)
 	hemi = DirectionalLight3D.new()
 	hemi.shadow_enabled = false
@@ -146,28 +147,33 @@ func _apply() -> void:
 	if theme == "snow":
 		var dk := night > 0
 		sunc = sunc.lerp(_c("#f4f7ff"), 0.2 if dk else 0.6)
-		skyc = _c("#7486ad" if dk else "#c2d0e2"); gndc = _c("#6a7286" if dk else "#a3abb5")
-		fogc = _c("#d9c9bd" if tod == "golden" else ("#8f8296" if dk else "#cfd8e2"))
+		skyc = _c("#7486ad" if dk else "#c2d4ea"); gndc = _c("#6a7286" if dk else "#a8b2be")
+		fogc = _c("#d9c9bd" if tod == "golden" else ("#8f8296" if dk else "#d4dee8"))
 		hi *= 1.08
+	elif theme == "green":
+		sunc = sunc.lerp(_c("#fff6e4"), 0.4)
+		fogc = _c("#c4d2d6") if night == 0 else fogc
 	sun.light_color = sunc
 	base_si = w.si; base_hi = hi
 	var off := _v(w.off)
 	sun.look_at_from_position(off, Vector3.ZERO, Vector3.UP)
-	sun.shadow_blur = clampf(float(w.sr) * 0.5, 0.5, 3.0)
-	# hemisphere light = ground colour everywhere + (sky - ground) by how far a face looks up: ambient + a light from above
+	sun.shadow_blur = clampf(float(w.sr) * 0.55, 0.7, 3.0)
+	sun.shadow_opacity = 0.58 if night == 2 else (0.68 if theme == "snow" else 0.72)
+	# hemisphere light = rich cool sky fill + warm ground bounce so shadowed faces stay legible like CoH3
 	var sl := skyc.srgb_to_linear(); var gl := gndc.srgb_to_linear()
-	var mid := Color((sl.r + gl.r) * 0.5, (sl.g + gl.g) * 0.5, (sl.b + gl.b) * 0.5)
-	var up := Color(maxf(0.0, sl.r - gl.r) * 0.5, maxf(0.0, sl.g - gl.g) * 0.5, maxf(0.0, sl.b - gl.b) * 0.5)
+	var mid := Color((sl.r * 0.58 + gl.r * 0.42), (sl.g * 0.58 + gl.g * 0.42), (sl.b * 0.62 + gl.b * 0.38))
+	var up := Color(maxf(0.0, sl.r - gl.r) * 0.45, maxf(0.0, sl.g - gl.g) * 0.45, maxf(0.0, sl.b - gl.b) * 0.55)
 	env.ambient_light_color = mid.linear_to_srgb()
 	hemi.light_color = up.linear_to_srgb()
 	base_fog = [fogc, float(w.fn), float(w.ff)]
 	env.tonemap_exposure = float(w.expo) * expo_k
-	env.glow_intensity = 0.5 * float(LOOK.bl)
+	env.glow_intensity = 0.48 * float(LOOK.bl)
 	sky_mat.set_shader_parameter("hor", _v(w.hor)); sky_mat.set_shader_parameter("zen", _v(w.zen))
+	sky_mat.set_shader_parameter("sun_dir", off.normalized())
 	fx_amb = _v(w.amb); fx_k = float(w.get("fx", 1.0))
 	var T: Dictionary = TGRADE[theme]
 	var tg := _v(T.tg)
-	if tod == "dusk": tg *= Vector3(1.08, 0.92, 0.88)
+	if tod == "dusk": tg *= Vector3(1.06, 0.94, 0.90)
 	grade.set_shader_parameter("mul", _v(w.gr) * tg)
 	grade.set_shader_parameter("sat", float(w.sat) * float(T.s))
 	grade.set_shader_parameter("sharpen", LOOK.sh); grade.set_shader_parameter("vig", LOOK.v); grade.set_shader_parameter("grain", LOOK.g)

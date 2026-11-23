@@ -1,6 +1,7 @@
-// Milestone 3 Stream 1: AAA multi-texture PBR terrain shader (WebGL2 Compatibility safe).
-// Dual-scale macro-blended detail textures (zero tiling), per-pixel stratified cliff rock from world normal slope,
-// razor-smooth per-pixel anti-aliased roads from blurred road_tex, wet riverbanks from shore_tex, and storm wetness.
+// CoH3 / Zero Hour AAA multi-layer PBR terrain shader (WebGL2 Compatibility safe).
+// Features: non-tiling tri-scale detail textures, procedural wind-rippled dunes & dry clay/gravel patches,
+// stratified sedimentary cliff rock with crevice darkening, weathered military roads with dual tire ruts & gravel curbs,
+// damp shoreline sediment, and dynamic storm wetness.
 shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
 
@@ -12,7 +13,7 @@ uniform sampler2D shore_tex : filter_linear, repeat_disable;
 uniform vec2 map_size = vec2(4800.0, 3320.0);
 uniform vec2 road_size = vec2(0.0, 0.0);
 uniform int theme_id = 0; // 0 = desert, 1 = green, 2 = snow
-uniform float nrm_strength = 0.45;
+uniform float nrm_strength = 0.52;
 uniform float wetness = 0.0;
 
 varying vec3 v_wpos;
@@ -35,6 +36,10 @@ float vnoise(vec2 p) {
 	return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
+float fbm2(vec2 p) {
+	return vnoise(p) * 0.65 + vnoise(p * 2.13 + vec2(17.3, 9.2)) * 0.35;
+}
+
 vec3 srgb_to_linear(vec3 c) {
 	vec3 clamped = max(c, vec3(0.0));
 	return mix(clamped / 12.92, pow((clamped + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), clamped));
@@ -50,104 +55,142 @@ void fragment() {
 	vec2 rsize = (road_size.x > 0.5 && road_size.y > 0.5) ? road_size : max(map_size, vec2(1.0));
 	vec2 ruv = clamp(v_wpos.xz / rsize, vec2(0.0), vec2(1.0));
 
-	// Dual-scale non-integer detail sampling blended by smooth procedural macro noise (eliminates tiling)
+	// Tri-scale non-integer detail sampling blended by procedural geological macro noise (zero tiling)
+	vec2 uv_fine = v_wpos.xz / 145.0;
 	vec2 uv_a = v_wpos.xz / 340.0;
-	vec2 uv_b = v_wpos.xz / 970.0 + vec2(0.37, 0.61);
-	float macro_n = vnoise(v_wpos.xz * 0.0028);
-	float detail_blend = smoothstep(0.22, 0.78, macro_n);
+	vec2 uv_b = v_wpos.xz / 920.0 + vec2(0.37, 0.61);
+	float macro_n = fbm2(v_wpos.xz * 0.0024);
+	float patch_n = fbm2(v_wpos.xz * 0.0085 + vec2(4.2, -3.1));
+	float detail_blend = smoothstep(0.20, 0.80, macro_n);
 
 	vec3 det_rgb = mix(texture(detail_alb, uv_a).rgb, texture(detail_alb, uv_b).rgb, detail_blend);
-	// detail_alb is source_color (linearized); sqrt restores perceptual ~0.5 mid-point for balanced modulation
-	float det_lum = sqrt(clamp(dot(det_rgb, vec3(0.299, 0.587, 0.114)), 0.0, 1.0));
+	vec3 det_fine = texture(detail_alb, uv_fine).rgb;
+	float det_lum = sqrt(clamp(dot(mix(det_rgb, det_fine, 0.38), vec3(0.299, 0.587, 0.114)), 0.0, 1.0));
 
 	vec3 nrm_a = texture(detail_nrm, uv_a).rgb;
 	vec3 nrm_b = texture(detail_nrm, uv_b).rgb;
-	vec3 det_nrm = mix(nrm_a, nrm_b, detail_blend);
+	vec3 nrm_f = texture(detail_nrm, uv_fine).rgb;
+	vec3 det_nrm = normalize(mix(mix(nrm_a, nrm_b, detail_blend), nrm_f, 0.32));
 
-	// Base biome albedo from smooth vertex colors subtly modulated by dual-scale detail
-	float micro_mod = (theme_id == 2) ? mix(0.92, 1.07, det_lum) : mix(0.86, 1.14, det_lum);
-	vec3 col = COLOR.rgb * micro_mod;
-	if (theme_id == 1) {
-		col *= vec3(1.12, 1.15, 1.04);   // sunlit Mediterranean olive warmth
+	// Rich CoH3 / Zero Hour biome ground synthesis
+	vec3 col = COLOR.rgb;
+	float rough = 0.93;
+	float nrm_d = nrm_strength;
+
+	if (theme_id == 0) {
+		// Desert: rich sunlit CoH3 North African sandstone, terracotta gravel, wind-carved sand ripples & crisp micro-grit
+		vec3 sand_light = vec3(0.75, 0.65, 0.50);
+		vec3 clay_gravel = vec3(0.59, 0.49, 0.36);
+		vec3 scrub_earth = vec3(0.49, 0.43, 0.31);
+		float ripple_phase = (v_wpos.x * 0.13 + v_wpos.z * 0.075) + vnoise(v_wpos.xz * 0.018) * 5.6;
+		float ripples = sin(ripple_phase) * 0.5 + 0.5;
+		float grit = vnoise(v_wpos.xz * 0.24) * 0.6 + vnoise(v_wpos.xz * 0.68) * 0.4;
+		vec3 desert_var = mix(clay_gravel, sand_light, smoothstep(0.24, 0.78, macro_n));
+		desert_var = mix(desert_var, scrub_earth, smoothstep(0.62, 0.88, patch_n) * 0.46);
+		col = mix(col * vec3(0.94, 0.91, 0.86), desert_var, 0.66);
+		col *= mix(0.82, 1.15, det_lum) * mix(0.94, 1.05, ripples) * mix(0.94, 1.06, grit);
+		rough = mix(0.95, 0.86, smoothstep(0.50, 0.84, patch_n));
+		nrm_d = nrm_strength * mix(0.95, 1.28, ripples);
+	} else if (theme_id == 1) {
+		// Mediterranean / Green: sunlit olive grass, dry golden-tan hillside patches & earthy soil grit
+		vec3 meadow = vec3(0.41, 0.50, 0.28);
+		vec3 dry_grass = vec3(0.59, 0.54, 0.35);
+		vec3 dark_loam = vec3(0.30, 0.36, 0.21);
+		vec3 grn_var = mix(dark_loam, meadow, smoothstep(0.25, 0.72, macro_n));
+		grn_var = mix(grn_var, dry_grass, smoothstep(0.58, 0.88, patch_n) * 0.55);
+		col = mix(col * vec3(1.06, 1.08, 1.00), grn_var, 0.56);
+		col *= mix(0.84, 1.14, det_lum);
+		rough = 0.91;
+	} else {
+		// Snow: sunlit powder drifts + cool blue-grey wind-swept ice patches
+		vec3 snow_hi = vec3(0.85, 0.89, 0.94);
+		vec3 snow_drift = vec3(0.70, 0.76, 0.84);
+		col = mix(col, mix(snow_drift, snow_hi, smoothstep(0.3, 0.78, macro_n)), 0.48);
+		col *= mix(0.92, 1.06, det_lum);
+		rough = mix(0.76, 0.88, det_lum);
+		nrm_d = nrm_strength * 0.65;
 	}
-	float rough = (theme_id == 2) ? 0.80 : ((theme_id == 1) ? 0.92 : 0.94);
-	float nrm_d = (theme_id == 2) ? nrm_strength * 0.65 : nrm_strength;
 
-	// Per-pixel steep cliff rock with stratified world-space banding (edge0 < edge1 for WebGL2 spec safety)
+	// Per-pixel steep cliff rock with stratified world-space sedimentary layers & crevice AO
 	vec3 wn = normalize(v_wnrm);
-	float slope = 1.0 - smoothstep(0.68, 0.92, clamp(wn.y, 0.0, 1.0));
+	float slope = 1.0 - smoothstep(0.70, 0.93, clamp(wn.y, 0.0, 1.0));
 	if (slope > 0.001) {
 		float strata_warp = vnoise(v_wpos.xz * 0.012) * 14.0 + vnoise(v_wpos.xz * 0.035) * 4.5;
-		float strata_a = sin((v_wpos.y + strata_warp) * 0.28) * 0.5 + 0.5;
-		float strata_b = sin((v_wpos.y * 0.85 + strata_warp * 0.60)) * 0.5 + 0.5;
+		float strata_a = sin((v_wpos.y + strata_warp) * 0.32) * 0.5 + 0.5;
+		float strata_b = sin((v_wpos.y * 0.92 + strata_warp * 0.60)) * 0.5 + 0.5;
 		float strata = mix(strata_a, strata_b, 0.35);
+		float crack = smoothstep(0.18, 0.45, det_lum);
 
 		vec3 rock_lo;
 		vec3 rock_hi;
 		if (theme_id == 2) {
-			// Snow: dark slate cliff rock
-			rock_lo = vec3(0.24, 0.27, 0.32);
-			rock_hi = vec3(0.42, 0.45, 0.50);
+			rock_lo = vec3(0.28, 0.31, 0.36);
+			rock_hi = vec3(0.48, 0.51, 0.56);
 		} else if (theme_id == 1) {
-			// Green: grey limestone cliff rock
-			rock_lo = vec3(0.36, 0.37, 0.35);
-			rock_hi = vec3(0.55, 0.55, 0.51);
+			rock_lo = vec3(0.38, 0.38, 0.36);
+			rock_hi = vec3(0.58, 0.57, 0.52);
 		} else {
-			// Desert: warm stratified sandstone rock
-			rock_lo = vec3(0.42, 0.33, 0.24);
-			rock_hi = vec3(0.62, 0.50, 0.37);
+			// Sun-baked sandstone & ochre limestone cliffs
+			rock_lo = vec3(0.44, 0.36, 0.27);
+			rock_hi = vec3(0.66, 0.54, 0.41);
 		}
-		vec3 rock_col = mix(rock_lo, rock_hi, strata) * mix(0.82, 1.18, det_lum);
+		vec3 rock_col = mix(rock_lo, rock_hi, strata) * mix(0.78, 1.16, crack);
 		col = mix(col, rock_col, slope);
 		rough = mix(rough, 0.86, slope);
-		nrm_d = mix(nrm_d, nrm_strength * 1.65, slope);
+		nrm_d = mix(nrm_d, nrm_strength * 1.80, slope);
 		det_nrm = mix(det_nrm, nrm_a, slope * 0.65);
 	}
 
-	// Per-pixel anti-aliased roads from bilinearly filtered road_tex (zero vertex staircasing)
+	// Per-pixel crisp military roads: noise-broken sand shoulder + weathered sun-bleached asphalt/gravel roadbed + dual tire tracks
 	float r_raw = texture(road_tex, ruv).r;
-	float r_shoulder = smoothstep(0.12, 0.45, r_raw);
-	float r_surface = smoothstep(0.42, 0.72, r_raw);
-	if (r_shoulder > 0.001) {
-		float r_wear = vnoise(v_wpos.xz * 0.045) * 0.65 + vnoise(v_wpos.xz * 0.14) * 0.35;
+	if (r_raw > 0.04) {
+		float r_wear = vnoise(v_wpos.xz * 0.055) * 0.58 + vnoise(v_wpos.xz * 0.20) * 0.42;
+		float r_asph = vnoise(v_wpos.xz * 0.72);
+		float r_edge = r_raw + (r_wear - 0.5) * 0.16;
+		float r_shoulder = smoothstep(0.18, 0.40, r_edge);
+		float r_surface = smoothstep(0.42, 0.58, r_edge);
+		// Dual wheel-rut bands inside the carriageway (r_raw ~ 0.58..0.88)
+		float rut_band = smoothstep(0.52, 0.64, r_raw) * (1.0 - smoothstep(0.76, 0.90, r_raw));
+		// Subtle wind-blown sand drifts creeping over road margins
+		float edge_sand = (1.0 - smoothstep(0.56, 0.84, r_raw)) * smoothstep(0.42, 0.82, patch_n) * 0.45;
+
 		vec3 road_col;
 		vec3 shoulder_col;
 		if (theme_id == 2) {
-			// Snow: sunlit cleared gravel/stone road
-			road_col = vec3(0.68, 0.70, 0.73);
-			shoulder_col = vec3(0.81, 0.84, 0.88);
+			road_col = vec3(0.48, 0.50, 0.55);
+			shoulder_col = vec3(0.72, 0.75, 0.80);
 		} else if (theme_id == 1) {
-			// Green: sunlit compacted dirt & weathered gravel road
-			road_col = vec3(0.60, 0.54, 0.44);
-			shoulder_col = vec3(0.54, 0.51, 0.39);
+			road_col = vec3(0.44, 0.43, 0.40);
+			shoulder_col = vec3(0.54, 0.50, 0.40);
 		} else {
-			// Desert: sunlit ochre packed road
-			road_col = vec3(0.68, 0.60, 0.48);
-			shoulder_col = vec3(0.76, 0.67, 0.53);
+			// Sun-faded weathered grey-tan tarmac & compacted gravel road (CoH3 North Africa highway)
+			road_col = vec3(0.49, 0.47, 0.44);
+			shoulder_col = vec3(0.69, 0.61, 0.48);
 		}
-		road_col *= mix(0.92, 1.08, r_wear);
-		shoulder_col *= mix(0.94, 1.06, r_wear);
+		road_col *= mix(0.88, 1.11, r_wear) * mix(0.94, 1.06, r_asph) * mix(1.0, 0.86, rut_band * 0.75);
+		road_col = mix(road_col, col, edge_sand);
+		shoulder_col *= mix(0.91, 1.07, r_wear);
 
-		col = mix(col, shoulder_col, r_shoulder * 0.45);
-		col = mix(col, road_col, r_surface);
-		rough = mix(rough, 0.82, r_surface);
-		nrm_d = mix(nrm_d, 0.22, r_surface);
+		col = mix(col, shoulder_col, r_shoulder * 0.52);
+		col = mix(col, road_col, r_surface * 0.92);
+		rough = mix(rough, 0.78, r_surface);
+		nrm_d = mix(nrm_d, 0.34, r_surface);
 	}
 
-	// Damp darkened riverbanks from blurred shore_tex
+	// Damp darkened riverbanks & sediment transition from blurred shore_tex
 	float wet_shore = smoothstep(0.05, 0.55, texture(shore_tex, muv).r);
-	col *= mix(1.0, 0.74, wet_shore);
-	rough = mix(rough, 0.55, wet_shore);
+	col *= mix(1.0, 0.76, wet_shore);
+	rough = mix(rough, 0.50, wet_shore);
 
 	// Dynamic rain/storm wetness
 	float w_amt = clamp(wetness, 0.0, 1.0);
 	col *= mix(1.0, 0.78, w_amt);
-	rough = mix(rough, 0.42, w_amt);
+	rough = mix(rough, 0.38, w_amt);
 
 	ALBEDO = srgb_to_linear(col);
 	ROUGHNESS = rough;
 	METALLIC = 0.0;
-	SPECULAR = mix(0.35, 0.60, max(wet_shore * 0.6, w_amt));
+	SPECULAR = mix(0.28, 0.58, max(wet_shore * 0.6, w_amt));
 	NORMAL_MAP = det_nrm;
 	NORMAL_MAP_DEPTH = nrm_d;
 }
