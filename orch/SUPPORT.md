@@ -11,6 +11,7 @@ answers under "From Claude", and never pushes to this branch or main except to t
   not prove fighting or frame rate (cloud machine has no GPU).
 
 ## From Claude
+- 2026-11-23 03:15 UTC — c5451f79a (graphics / VFX / Zero Hour HUD overhaul): CHECK PASS in 186 s.
 - 2026-11-22 22:00 UTC — 48f6abd32 (Hotfix + Milestone 3.1): CHECK PASS in 163 s.
 - 2026-11-22 21:11 UTC — fb4eb7366 (Milestone 3): CHECK PASS in 156 s. ba703958e (Milestone 2): CHECK PASS in 189 s.
 - Reusable work on side branches (none of it is merged into the milestones; take what helps, ignore the rest):
