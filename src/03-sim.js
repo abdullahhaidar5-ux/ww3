@@ -746,23 +746,67 @@ function swTick(T){if(T.reb||T.dummy||T.out)return;const nm=T.F.name,lg=(m,k)=>{
   if(T._upl&&!T._swA){T._swA=1;if(T.charge<T.sup.charge)lg(`${nm} Strike Center is online: ${T.sup.name} in ${Math.round((T.sup.charge-T.charge)/60*10)/10} min. Destroy it!`,'r:msl');}
   else if(!T._upl&&T._swA){T._swA=0;T._swR=0;lg(`${nm} Strike Center destroyed.`,'g');}
   if(T._upl&&T.charge>=T.sup.charge&&!T._swR){T._swR=1;lg(`${nm} ${T.sup.name} is READY to fire!`,'r:msl');}else if(T.charge<T.sup.charge)T._swR=0;}
-function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!working(team,'uplink'))return false;
-  if(G.battle){G.sid=(G.sid|0)+1;}   /* Battle: the Strike Center itself is the price ($5000, built late) and the ~6 min timer is the limit; the one-salvo building cap and missile defence below still apply */
+function _fireSuperStyle(team,x,y,styleOverride){const T=G.teams[team],S=T.sup;
+  const up=G.ents.find(e=>e.team===team&&e.kind==='uplink'&&!e.dead&&e.built>=1)||hqOf(team);
+  const sx=up?up.x:x-600,sy=up?up.y:y-600;
+  const sty=styleOverride||S.style||(typeof SUP_STYLE!=='undefined'&&SUP_STYLE[T.fac])||'scud';
   const sid=G.sid|0;
-  // missile nations: every missile visibly launches from the strike building and arcs through the sky onto its target
-  // (same timing, damage and warning as before - only the visuals changed)
-  const up=G.ents.find(e=>e.team===team&&e.kind==='uplink'&&!e.dead&&e.built>=1),sty=(UPLINK[T.fac]||[])[1],arc=up&&sty&&sty!=='air';
-  for(let i=0;i<S.n;i++){const a=rnd(0,6.28),r=S.n>1?rnd(0,S.spread):0,tx=x+Math.cos(a)*r,ty=y+Math.sin(a)*r,t=3+i*.28;G.strikes.push({x:tx,y:ty,t,r:S.r,dmg:S.dmg,team,kind:'sup'});FXE('strike',[tx|0,ty|0,+t.toFixed(2),S.r|0,1,arc?1:0]);
-    if(arc)FXE('bmis',[(up.x+rnd(-14,14))|0,(up.y+rnd(-14,14))|0,tx|0,ty|0,+t.toFixed(2),i]);}
+  FXE('sup',[sty,sx|0,sy|0,x|0,y|0,T.fac]);
+  if(sty==='beam'){
+    // Generals Orbital Particle Cannon: uninterceptable sweeping ionized laser path + short vehicle EMP
+    const a0=rnd(0,6.28),n=Math.max(5,S.n||6);
+    for(let i=0;i<n;i++){const u=i/Math.max(1,n-1),ang=a0+u*2.8,rr=(S.r||82)*0.48*Math.sin(u*Math.PI);
+      const tx=x+Math.cos(ang)*rr,ty=y+Math.sin(ang)*rr,t=1.4+i*0.48;
+      G.strikes.push({x:tx,y:ty,t,r:S.r||82,dmg:S.dmg||370,team,kind:'sup',sid,noIcpt:1,empT:3.5});
+      FXE('strike',[tx|0,ty|0,+t.toFixed(2),(S.r||82)|0,1,0]);}
+  }else if(sty==='nuke'){
+    // Generals China Nuclear ICBM: colossal single warhead + 14 s lingering radioactive fallout zone
+    const r=Math.max(185,S.r||205),dmg=Math.max(980,S.dmg||1080),t=2.8;
+    G.strikes.push({x,y,t,r,dmg,team,kind:'sup',sid,nuke:1});
+    FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,1,1]);
+    FXE('bmis',[sx|0,sy|0,x|0,y|0,+t.toFixed(2),0]);
+    for(let k=1;k<=7;k++){G.strikes.push({x,y,t:t+k*2.0,r:r*0.85,dmg:65,team,kind:'fallout',noIcpt:1,fallout:1});}
+  }else if(sty==='storm'){
+    // Red Alert 2 Weather Control Lightning Storm: uninterceptable supercell with 9 EMP lightning bolts
+    const n=Math.max(8,S.n||9),sp=Math.max(150,S.spread||168);
+    for(let i=0;i<n;i++){const a=rnd(0,6.28),rr=Math.sqrt(rnd(0,1))*sp,tx=x+Math.cos(a)*rr,ty=y+Math.sin(a)*rr,t=1.3+i*0.44;
+      G.strikes.push({x:tx,y:ty,t,r:S.r||82,dmg:S.dmg||345,team,kind:'sup',sid,noIcpt:1,empT:6.0});
+      FXE('strike',[tx|0,ty|0,+t.toFixed(2),(S.r||82)|0,1,0]);}
+  }else if(sty==='carpet'){
+    // Rolling Fuel-Air Bunker-Buster Carpet Bombing Armada along base-to-target vector
+    const a=Math.atan2(y-sy,x-sx),c=Math.cos(a),s=Math.sin(a),n=Math.max(7,S.n||8);
+    FXE('plane',[(x-c*1100)|0,(y-s*1100)|0,x|0,y|0,team]);
+    for(let i=0;i<n;i++){const d=-175+(350*i/Math.max(1,n-1)),tx=x+c*d+rnd(-18,18),ty=y+s*d+rnd(-18,18),t=1.5+i*0.20;
+      G.strikes.push({x:tx,y:ty,t,r:S.r||82,dmg:S.dmg||430,team,kind:'sup',sid,bldBonus:1.35});
+      FXE('strike',[tx|0,ty|0,+t.toFixed(2),(S.r||82)|0,1,0]);}
+  }else{
+    // Generals GLA SCUD Storm / Saturation Ballistic Barrage + lingering chemical/fuel-air hazard pockets
+    const n=Math.max(9,S.n||11),sp=Math.max(165,S.spread||205);
+    for(let i=0;i<n;i++){const a=rnd(0,6.28),rr=Math.sqrt(rnd(0,1))*sp,tx=x+Math.cos(a)*rr,ty=y+Math.sin(a)*rr,t=2.4+i*0.24;
+      G.strikes.push({x:tx,y:ty,t,r:S.r||74,dmg:S.dmg||325,team,kind:'sup',sid});
+      FXE('strike',[tx|0,ty|0,+t.toFixed(2),(S.r||74)|0,1,1]);
+      FXE('bmis',[(sx+rnd(-18,18))|0,(sy+rnd(-18,18))|0,tx|0,ty|0,+t.toFixed(2),i]);}
+    for(let k=1;k<=5;k++){G.strikes.push({x:x+rnd(-sp*0.5,sp*0.5),y:y+rnd(-sp*0.5,sp*0.5),t:4.5+k*1.8,r:95,dmg:48,team,kind:'fallout',noIcpt:1,fallout:1});}
+  }
+  return up;}
+function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!working(team,'uplink'))return false;
+  if(G.battle){G.sid=(G.sid|0)+1;}
+  const up=_fireSuperStyle(team,x,y,null);
   if(G.battle&&up)for(const O of G.teams)if(!O.reb&&!ally(O.id,team))O.reveals.push({x:up.x,y:up.y,r:170,t:45});   // the launch site is exposed on the enemy's map for 45 s
   T.charge=0;log(team,`${S.name} launched.`,'g');for(const O of G.teams)if(O.id!==team)log(O.id,`Warning: enemy ${S.name} inbound. Move your units!`,'r:msl',x,y);return true;}
 function addStrike(x,y,t,r,dmg,team,kind){G.strikes.push({x,y,t,r,dmg,team,kind});FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,kind==='sup'?1:0],team);}
 function updStrikes(dt){for(const s of G.strikes){s.t-=dt;if(s.t<=0){s.done=true;
-    if(G.battle&&(s.kind==='sup'||s.kind==='bm')){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<MD_R){md++;if(d<nd){nd=d;nb=e;}}}
+    if(s.fallout){
+      for(const e of G.ents){if(e.dead||e.isB||e.team===s.team||ally(e.team,s.team))continue;if(Math.hypot(e.x-s.x,e.y-s.y)<=s.r){const k=(e.s&&e.s.cls==='inf')?1.35:0.55;applyDmg(e,s.dmg*k,'shell',s.team,null);}}
+      continue;
+    }
+    if(G.battle&&!s.noIcpt&&(s.kind==='sup'||s.kind==='bm')){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<MD_R){md++;if(d<nd){nd=d;nb=e;}}}
       if(s.kind==='bm')for(const e of G.ents)if(!e.isB&&!e.dead&&e.s&&!ally(e.team,s.team)&&e.team>=0&&(e.kind==='idome'||(e.s.cls==='aa'&&e.s.wpn==='flak'&&e.s.aa>=2))){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<(e.kind==='idome'?MD_R:MD_R*.6)){md+=e.kind==='idome'?2:1;if(d<nd){nd=d;nb=e;}}}   /* Iron-Dome-type batteries count double, flak AA once */
       if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-MD_P,md))){if(nb)FXE('icpt',[nb.x|0,nb.y|0,s.x|0,s.y|0]);FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<MD_R))log(T.id,'Missile defense intercepted an incoming missile.','g');continue;}
       }
-    G.curSid=s.kind==='sup'?s.sid|0:0;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?'super':s.kind==='bb'?'bb':'shell',s.kind);G.curSid=0;}}G.strikes=G.strikes.filter(s=>!s.done);}
+    G.curSid=s.kind==='sup'?s.sid|0:0;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?(s.bldBonus?'bb':'super'):s.kind==='bb'?'bb':'shell',s.kind);G.curSid=0;
+    if(s.empT>0&&typeof koSet==='function'){for(const e of G.ents){if(e.dead||e.team===s.team||ally(e.team,s.team)||Math.hypot(e.x-s.x,e.y-s.y)>s.r*1.15)continue;if(e.isB||isVeh(e.s)||e.s.dom==='air')koSet(e,s.empT,'emp');}}
+  }}G.strikes=G.strikes.filter(s=>!s.done);}
 
 /* ---------- general's powers ---------- */
 function hqOf(team){return G.ents.find(e=>e.team===team&&e.kind==='hq'&&!e.dead)||G.ents.find(e=>e.team===team&&e.isB&&!e.dead);}
@@ -1188,7 +1232,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   if(T.ai.t%3===1){const hq0=mine.find(e=>e.isB&&e.kind==='hq');for(const d of mine){if(d.kind!=='dozer'||!d.order||d.order.type!=='build')continue;const b=d.order.target;if(!b||b.dead)continue;let foe=null,fd=1e9;for(const e of G.ents){if(e.dead||e.isB||e.team===id||ally(e.team,id)||e.team<0||!e.s||e.s.noAttack)continue;const q=Math.hypot(e.x-d.x,e.y-d.y);if(q<fd){fd=q;foe=e;}}
     if(foe&&fd<260&&hq0&&Math.hypot(hq0.x-d.x,hq0.y-d.y)>200){d.dzFlee=G.t+8;d.order={type:'move',x:hq0.x,y:hq0.y};d.path=null;continue;}
     let g=0;for(const u of mine){if(g>=3)break;if(u.isB||u.kind==='dozer'||u.kind==='harv'||u.kind==='hacker'||u.s.noAttack||u.s.dom!=='ground'||u.order||u.target)continue;if(Math.hypot(u.x-b.x,u.y-b.y)<700){g++;if(Math.hypot(u.x-b.x,u.y-b.y)>150)setMove(u,b.x+((u.id%5)-2)*30,b.y+((u.id%3)-1)*40,'amove');}}}}
-  let ORD=aiPers(T).ord?[...aiPers(T).ord,...AIORDER]:AIORDER;if(G.battle)ORD=[...ORD.filter(k=>k!=='uplink'),...(T.ai.d>=2?['uplink']:[])];   /* Battle: only Hard and Brutal build the late $5000 Strike Center, after everything else */
+  let ORD=aiPers(T).ord?[...aiPers(T).ord,...AIORDER]:AIORDER;if(G.battle){ORD=ORD.filter(k=>k!=='uplink');if(T.ai.d>=1&&G.t>330)ORD.splice(Math.min(7,ORD.length),0,'uplink');}   /* Battle: Medium/Hard/Brutal build their faction superweapon once mid-game is underway so Generals-style superweapon battles actually unfold */
   while(ORD[T.ai.bi]&&(!bldAllowed(T.fac,ORD[T.ai.bi])||ORD[T.ai.bi]==='shipyard'))T.ai.bi++;
   /* a side the AI takes over mid-battle (host left, 07b ckpt) starts its build list at 0: steps it already owns are done, not saved up for again (it used to hoard for a second Barracks and never trained anyone) */
   while(ORD[T.ai.bi]&&STRUCT[ORD[T.ai.bi]]){const k=ORD[T.ai.bi];let had=0,before=0;for(const e of mine)if(e.isB&&e.kind===k)had++;for(let i=0;i<T.ai.bi;i++)if(ORD[i]===k)before++;if(had<=before)break;T.ai.bi++;}

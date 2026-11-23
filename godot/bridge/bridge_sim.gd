@@ -5,6 +5,7 @@
 extends RefCounted
 
 const Bridge = preload("res://bridge/sim_bridge.gd")
+const LookFx = preload("res://scripts/battle/look_fx.gd")
 const E = preload("res://sim/sim_ent.gd")
 
 ## Lightweight road/passability helper so HUD minimap baking and Test Range work identically on the JS sim.
@@ -398,7 +399,8 @@ func power_list(team: int) -> Array:
 	var out: Array = []
 	if int(T.get("charge_max", 0)) > 0:
 		var rdy := clampf(float(T.charge) / maxf(1.0, float(T.charge_max)), 0.0, 1.0)
-		out.append({key = "sup", name = "Strike", desc = "Strategic Strike", ready = rdy})
+		var sw := LookFx.superweapon_info(str(T.fac))
+		out.append({key = "sup", name = str(sw.get("name", "Strategic Strike")), desc = str(sw.get("desc", "Strategic Superweapon")), ready = rdy, is_sup = true})
 	for p in T.get("powers", []):
 		var k := str(p.get("k", ""))
 		var desc := str(T.F.gpow.get(k, {}).get("desc", ""))
@@ -434,17 +436,27 @@ func apply_order(o: Dictionary) -> bool:
 	var team := int(o.get("team", 0))
 	var j: Dictionary
 	match str(o.get("t", "")):
-		"move": j = {t = "go", ids = o.get("ids", []), x = float(o.x), y = float(o.y)}
-		"amove": j = {t = "go", mode = "amove", ids = o.get("ids", []), x = float(o.x), y = float(o.y)}
+		"move":
+			j = {t = "go", ids = o.get("ids", []), x = float(o.x), y = float(o.y)}
+			if int(o.get("q", 0)) != 0: j.q = 1
+		"amove":
+			j = {t = "go", mode = "amove", ids = o.get("ids", []), x = float(o.x), y = float(o.y)}
+			if int(o.get("q", 0)) != 0: j.q = 1
 		"line": j = {t = "line", ids = o.get("ids", []), x = float(o.x), y = float(o.y), x2 = float(o.x2), y2 = float(o.y2)}
 		"guard": j = {t = "def", ids = o.get("ids", []), x = float(o.x), y = float(o.y)}
 		"force": j = {t = "go", mode = "amove", ids = o.get("ids", []), x = float(o.x), y = float(o.y)}
 		"stop": j = {t = "stop", ids = o.get("ids", [])}
 		"digin": j = {t = "dig", ids = o.get("ids", [])}
+		"gar": j = {t = "gar", ids = o.get("ids", []), ci = int(o.get("ci", 0))}
+		"atkCiv": j = {t = "atkCiv", ids = o.get("ids", []), ci = int(o.get("ci", 0))}
+		"fld": j = {t = "fld", ids = o.get("ids", []), fi = int(o.get("fi", 0))}
+		"bldGo": j = {t = "bldGo", ids = o.get("ids", []), tid = int(o.get("tid", 0))}
 		"enter":
 			var tg_id := int(o.get("target", 0))
 			var tg_e = by_id.get(tg_id)
-			if tg_e != null and tg_e.is_b and (tg_e.kind == "tunnel" or tg_e.kind == "fort"):
+			if tg_e != null and tg_e.is_b and tg_e.team == team and tg_e.built < 1.0:
+				j = {t = "bldGo", ids = o.get("ids", []), tid = tg_id}
+			elif tg_e != null and tg_e.is_b and (tg_e.kind == "tunnel" or tg_e.kind == "fort"):
 				j = {t = "tun", ids = o.get("ids", []), tid = tg_id}
 			elif tg_e != null and not tg_e.is_b:
 				j = {t = "board", ids = o.get("ids", []), tid = tg_id}

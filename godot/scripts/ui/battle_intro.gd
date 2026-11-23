@@ -28,7 +28,7 @@ const TIPS := [
 	"Garrison buildings and dig in (I) to cut incoming rifle and shell fire dramatically.",
 	"Right-click issues move and attack orders; left-click deploys buildings and rally points.",
 	"Veteran units fire faster and hit harder — pull damaged elite squads back to repair.",
-	"Hold Q + drag (or tap Q) to rotate the battlefield camera; Home returns to north-up.",
+	"Hold Middle-Mouse or Q + drag (or PageUp / PageDown) to rotate and angle the camera up & down; Home resets.",
 ]
 const STEPS := [
 	"INITIALIZING THEATER SIMULATION",
@@ -339,8 +339,8 @@ func _draw_sparks() -> void:
 		sparks.draw_circle(Vector2(x, y), float(s[3]), Color(0.95, 0.72, 0.28, float(s[4]) * pulse))
 
 func _input(ev: InputEvent) -> void:
-	if ready_t >= 0.0 and t >= 1.4:
-		if (ev is InputEventMouseButton and ev.pressed) or (ev is InputEventKey and ev.pressed and ev.keycode in [KEY_SPACE, KEY_ENTER, KEY_ESCAPE]):
+	if ready_t >= 0.0 and t >= 0.35:
+		if (ev is InputEventMouseButton and ev.pressed) or (ev is InputEventKey and ev.pressed and ev.keycode in [KEY_SPACE, KEY_ENTER, KEY_ESCAPE]) or (ev is InputEventScreenTouch and ev.pressed):
 			skip_fast = true
 			get_viewport().set_input_as_handled()
 

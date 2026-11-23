@@ -38,7 +38,8 @@ function aiModern(id,T,mine,en){if(G.t<240)return;
 {const _sm=specialMult;specialMult=function(e,wpn,src){let m=_sm(e,wpn,src);
   if(src&&src.s&&src.s.tunAmb&&src.ambT>G.t)m*=SIG.tunAmbK;                       // RS Kornet team: first shots out of a tunnel hit double
   const s=e.s;if(!e.isB&&s){
-    if(s.aps&&wpn==='at'&&!(src&&src.s&&src.s.dom==='air')&&G.t>=(e.apsT||0)){e.apsT=G.t+s.aps;m*=.05;FXE('boom',[e.x|0,e.y|0,8,0]);}   // APS soaks one anti-tank hit per 8 s
+    if(s.aps&&wpn==='at'&&!(src&&src.s&&src.s.dom==='air')&&G.t>=(e.apsT||0)){e.apsT=G.t+s.aps;m*=.05;FXE('boom',[e.x|0,e.y|0,8,0]);}   // APS / Laser PD soaks one anti-tank hit per cooldown
+    if(s.chobham&&wpn==='shell')m*=.85;   // GB Challenger 2 Chobham composite armor resists heavy shells
     if(s.mass){let n=0;for(const v of G.ents)if(v!==e&&!v.dead&&!v.isB&&v.team===e.team&&v.s&&v.s.mass&&Math.hypot(v.x-e.x,v.y-e.y)<SIG.massR&&++n>=SIG.massN)break;if(n>=SIG.massN)m*=SIG.massK;}}
   return m;};}
 

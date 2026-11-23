@@ -16,6 +16,35 @@ const NR := 24            # rings
 const N_SCORCH := 320
 const N_CRATER := 160
 const N_RUBBLE := 48
+
+## Unique Generals / Red Alert inspired superweapon identity per playable nation (visual + audio + HUD identity)
+const SUP_PROFILES := {
+	"US": {style = "beam",   name = "Orbital Particle Cannon",   desc = "Sweeping sky-to-ground ionized orbital laser beam"},
+	"JP": {style = "beam",   name = "Helios Orbital Beam",       desc = "High-energy solar-ion precision beam from orbit"},
+	"KR": {style = "beam",   name = "Aegis Ion Lance",           desc = "Focused high-energy particle lance strike"},
+	"AE": {style = "beam",   name = "Solar Thermal Lance",       desc = "Concentrated orbital thermal beam sweep"},
+	"RU": {style = "nuke",   name = "Sarmat Nuclear Warhead",    desc = "Intercontinental nuclear detonation & fallout cloud"},
+	"CN": {style = "nuke",   name = "DF-41 Nuclear ICBM",        desc = "Heavy strategic nuclear missile with towering mushroom cloud"},
+	"KP": {style = "nuke",   name = "Hwasong Nuclear Strike",    desc = "High-yield nuclear warhead & thermal shockwave"},
+	"PK": {style = "nuke",   name = "Shaheen Nuclear Strike",    desc = "Strategic ballistic nuclear detonation"},
+	"IN": {style = "nuke",   name = "Agni Strategic Warhead",    desc = "High-yield strategic thermonuclear blast"},
+	"IR": {style = "scud",   name = "Fattah / SCUD Storm",       desc = "Saturation barrage of arcing hypersonic ballistic missiles"},
+	"RS": {style = "scud",   name = "Radwan Rocket Storm",       desc = "Massive multi-warhead heavy rocket saturation storm"},
+	"DW": {style = "scud",   name = "Toofan Ballistic Storm",    desc = "Long-range arcing ballistic missile salvo"},
+	"RV": {style = "scud",   name = "Quds Rocket Barrage",       desc = "Heavy saturation rocket storm across the target zone"},
+	"OB": {style = "scud",   name = "Saturation Rocket Storm",   desc = "Dense cascading barrage of heavy rockets"},
+	"GB": {style = "storm",  name = "Tempest Weather Storm",     desc = "Atmospheric ion storm hammering the zone with lightning"},
+	"DE": {style = "storm",  name = "Donner Lightning Storm",    desc = "Weather-control supercell unleashing massive lightning bolts"},
+	"FR": {style = "storm",  name = "Foudre Orbital Storm",      desc = "High-voltage atmospheric lightning barrage"},
+	"IL": {style = "carpet", name = "Bunker-Buster Air Armada",  desc = "Heavy jet formation dropping a rolling fuel-air carpet"},
+	"TR": {style = "carpet", name = "Tayfun & Drone Armada",     desc = "Rolling precision thermobaric carpet strike"},
+	"UA": {style = "carpet", name = "Neptune Strike Armada",     desc = "Low-altitude cruise & drone carpet devastation"},
+	"SA": {style = "carpet", name = "Desert Storm Air Armada",   desc = "Heavy strike armada laying a rolling bomb carpet"},
+	"EG": {style = "carpet", name = "Sinai Heavy Air Armada",    desc = "Rolling fuel-air carpet bombing run across enemy lines"},
+}
+
+static func superweapon_info(fac: String) -> Dictionary:
+	return SUP_PROFILES.get(fac, {style = "scud", name = "Strategic Missile Salvo", desc = "Heavy strategic barrage"})
 const C_SMOKE := Color(.42, .4, .37)
 const C_DARK := Color(.13, .12, .11)
 const C_DUST := Color(.66, .58, .44)
@@ -64,6 +93,12 @@ var mats: Array = []
 var lights: Array = []          # [OmniLight3D, energy now, life] explosion lights
 var mlights: Array = []         # muzzle lights
 var wlights: Array = []         # wreck fire lights
+var _beam_rig: Node3D = null    # reusable volumetric Orbital Particle Cannon beam rig
+var _beam_core: MeshInstance3D = null
+var _beam_sheath: MeshInstance3D = null
+var _beam_orb: MeshInstance3D = null
+var _beam_light: OmniLight3D = null
+var _sup_fac_hint: String = "IR" # current firing faction hint for automatic superweapon styling
 var proj: Array = []            # shells / missiles in flight (drawn with particles only, like the browser)
 var emit: Array = []            # smoke columns, ground fires, wreck fires, mushroom stems, flares, collapses
 var later: Array = []           # [time, Callable]
@@ -105,7 +140,55 @@ func setup(map_: Dictionary, tables: Dictionary, env_ = null) -> void:
 	for i in 6: lights.append([_light(Color("#ffac58"), 380.0), 0.0, 1.0])
 	for i in 3: mlights.append([_light(Color("#ffb864"), 160.0), 0.0, 0.06])
 	for i in 3: wlights.append([_light(Color("#ff8a3a"), 190.0), 0.0, 1.0])
+	_setup_beam_rig()
 	_fow_setup()
+
+func _setup_beam_rig() -> void:
+	_beam_rig = Node3D.new()
+	_beam_rig.name = "ParticleCannonBeam"
+	_beam_rig.visible = false
+	add_child(_beam_rig)
+	var h := 1400.0
+	# Inner blazing white-cyan laser core cylinder
+	var c1 := CylinderMesh.new()
+	c1.top_radius = 4.2; c1.bottom_radius = 5.4; c1.height = h; c1.radial_segments = 16
+	var m1 := StandardMaterial3D.new()
+	m1.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m1.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m1.albedo_color = Color(2.4, 3.4, 4.2, 0.96)
+	m1.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_beam_core = MeshInstance3D.new()
+	_beam_core.mesh = c1; _beam_core.material_override = m1
+	_beam_core.position = Vector3(0, h * 0.5, 0)
+	_beam_core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_beam_rig.add_child(_beam_core)
+	# Outer pulsing ionized blue plasma sheath
+	var c2 := CylinderMesh.new()
+	c2.top_radius = 12.0; c2.bottom_radius = 18.0; c2.height = h; c2.radial_segments = 18
+	var m2 := StandardMaterial3D.new()
+	m2.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m2.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m2.albedo_color = Color(0.28, 0.85, 2.2, 0.42)
+	m2.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_beam_sheath = MeshInstance3D.new()
+	_beam_sheath.mesh = c2; _beam_sheath.material_override = m2
+	_beam_sheath.position = Vector3(0, h * 0.5, 0)
+	_beam_sheath.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_beam_rig.add_child(_beam_sheath)
+	# Blinding ground plasma impact sphere
+	var sp := SphereMesh.new()
+	sp.radius = 22.0; sp.height = 36.0; sp.radial_segments = 16; sp.rings = 10
+	var m3 := StandardMaterial3D.new()
+	m3.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m3.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m3.albedo_color = Color(1.4, 2.8, 4.0, 0.90)
+	_beam_orb = MeshInstance3D.new()
+	_beam_orb.mesh = sp; _beam_orb.material_override = m3
+	_beam_orb.position = Vector3(0, 6.0, 0)
+	_beam_orb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_beam_rig.add_child(_beam_orb)
+	_beam_light = _light(Color("#55d4ff"), 950.0)
+	_beam_light.visible = false
 
 func _pool(mesh: Mesh, n: int, custom: bool, shader: String, aabb: AABB, prio: int, params: Dictionary) -> MultiMesh:
 	var mm := MultiMesh.new()
@@ -316,6 +399,107 @@ func boom(x: float, z: float, s: float, big: bool, h := 0.0) -> void:
 	if gr and not wet and (s >= 18.0 or big): _emit({k = "fire", p = Vector3(x, g0, z), life = 10.5 if big else R(4.5, 7.0), r = minf(32.0, s * 0.48), big = big}, 12)
 	if grd and (big or s >= 26.0): _megaboom(x, z, g0, s if big else s * 1.5, big)
 
+## Massive Nuclear / Thermobaric Detonation (blinding thermal flash + triple shockwave + 300m towering boiling mushroom cloud!)
+func nuke_strike(x: float, z: float, S: float = 58.0, delay: float = 0.48) -> void:
+	var g0 := gh(x, z)
+	var P := Vector3(x, g0, z)
+	# Blazing descending ICBM streak from upper sky right before impact -> colossal nuclear detonation!
+	var streak_t := maxf(0.0, delay - 0.48)
+	later.append([t + streak_t, func():
+		var sky_p := Vector3(x - 160.0, g0 + 980.0, z - 120.0)
+		for i in 8:
+			var q := sky_p.lerp(P, float(i) / 8.0)
+			tracer(q, sky_p.lerp(P, float(i + 1) / 8.0), Color(4.0, 3.0, 1.4), 0.45, i * 0.055)])
+	later.append([t + delay, func():
+		var g1 := gh(x, z)
+		var P1 := Vector3(x, g1, z)
+		if env != null:
+			var kd := maxf(0.35, 1.0 - cam_pos.distance_to(P1) / (cam_dist * 3.0 + 900.0))
+			env.shake = minf(34.0, env.shake + 28.0 * kd)
+			env.flash = minf(0.65, env.flash + 0.55)
+		_flash_light(lights, P1 + Vector3(0, 65.0, 0), 18.0, 1600.0, 2.2)
+		# Blinding nuclear fireball core
+		part(true, P1 + Vector3(0, S * 0.6, 0), Vector3.ZERO, 0.28, S * 5.8, 0.0, 1.0, Color(5.2, 4.6, 3.4))
+		part(true, P1 + Vector3(0, S * 0.7, 0), Vector3.ZERO, 0.85, S * 3.6, S * 1.6, 1.0, Color(4.2, 2.2, 0.55), Color(1.6, 0.35, 0.06))
+		# Triple expanding thermal + blast + dust shockwaves
+		_ring(P1, S * 0.8, S * 9.5, 1.25, Color("#fff2cc"), 1.0, 0.88, 1)
+		_ring(P1, S * 0.5, S * 7.2, 0.85, Color("#ff9838"), 0.95, 0.80, 0, 0.08)
+		_ring(P1, S * 0.4, S * 5.6, 1.45, Color("#d4bfa0"), 0.78, 0.72, 0, 0.16)
+		# Sweeping ground Mach stem dust wall
+		for i in 44:
+			var a := i / 44.0 * TAU + R(-0.08, 0.08); var v := S * R(4.8, 6.8)
+			part(false, P1 + Vector3(cos(a) * S * 0.6, 4.0, sin(a) * S * 0.6), Vector3(cos(a) * v, R(6, 28), sin(a) * v), R(3.4, 5.2), S * R(0.6, 0.95), S * 0.7, 0.68, C_DUST if i % 2 else Color(0.76, 0.64, 0.48), null, 2.0, 0.28, KEEP)
+		# Rising superheated fireballs + flying molten debris
+		for i in 24:
+			part(true, P1 + Vector3(R(-S, S) * 0.5, R(S * 0.2, S * 1.4), R(-S, S) * 0.5), _dir(R(0, S * 1.4), R(S * 0.8, S * 2.4)), R(1.1, 2.2), S * R(0.45, 0.82), S * 0.7, 1.0, Color(3.6, 1.45, 0.30), Color(0.55, 0.12, 0.03), R(22, 48))
+		for i in 34:
+			partg(true, P1 + Vector3(0, 6.0, 0), _dir(R(120, 420), R(200, 520)), R(1.3, 2.5), R(2.2, 3.8), 1.0, Color(3.6, 1.8, 0.55), g1, true)
+		_emit({k = "nuke_mush", p = P1, life = 11.0, S = S}, 4)
+		scorch(x, z, S * 4.6); crater(x, z, S * 2.4)])
+
+## C&C Generals Orbital Particle Cannon (sweeping sky-to-ground ionized blue-white laser pillar + plasma vortex!)
+func particle_cannon(x: float, z: float, dur: float = 3.8, rad: float = 85.0) -> void:
+	var g0 := gh(x, z)
+	_ring(Vector3(x, g0, z), rad * 1.15, rad * 0.18, 0.65, Color("#55d8ff"), 0.95, 0.92, 1)
+	later.append([t + 0.55, func():
+		_emit({k = "beam", p = Vector3(x, gh(x, z), z), life = dur, r = rad, sweep_a = randf() * TAU}, 2)])
+
+## C&C Generals SCUD Storm / Ballistic Missile Barrage (8-10 arcing fiery missiles + cascading chemical/fuel-air fireballs!)
+func scud_storm(sx: float, sz: float, tx: float, tz: float, count: int = 9, spread: float = 165.0) -> void:
+	for i in count:
+		var ang := randf() * TAU
+		var rr := sqrt(randf()) * spread
+		var ix := tx + cos(ang) * rr
+		var iz := tz + sin(ang) * rr
+		var flt := 2.4 + i * 0.28
+		later.append([t + i * 0.16, func():
+			_bmis(["bmis", sx + R(-22, 22), sz + R(-22, 22), ix, iz, 2.35, 1])
+			later.append([t + 2.35, func():
+				boom(ix, iz, 34.0, true)
+				# Extra glowing amber-emerald SCUD chemical/fuel-air cloud
+				var gy := gh(ix, iz)
+				for k in 10:
+					part(false, Vector3(ix + R(-24, 24), gy + R(4, 24), iz + R(-24, 24)), _dir(R(15, 55), R(8, 28)), R(3.2, 5.2), R(18, 30), 16.0, 0.58, Color(0.55, 0.68, 0.24), Color(0.24, 0.28, 0.18), R(14, 28), 0.35, KEEP)
+				_ring(Vector3(ix, gy, iz), 14.0, 145.0, 0.72, Color("#c8e858"), 0.78, 0.80, 0)])])
+
+## Red Alert 2 Weather Control / Lightning Storm (swirling dark supercell + 14 sky-to-ground jagged lightning bolts!)
+func lightning_storm(x: float, z: float, dur: float = 4.5, rad: float = 155.0) -> void:
+	_ring(Vector3(x, gh(x, z), z), rad, rad * 0.92, dur, Color("#66a8ff"), 0.65, 0.94, 1)
+	_emit({k = "storm", p = Vector3(x, gh(x, z), z), life = dur, r = rad}, 3)
+
+## Rolling Fuel-Air Carpet Bombing Armada (supersonic jet contrails + rolling line of 9 massive thermobaric blasts!)
+func carpet_bombing(sx: float, sz: float, tx: float, tz: float, count: int = 9) -> void:
+	var dir := Vector2(tx - sx, tz - sz)
+	if dir.length() < 10.0: dir = Vector2(1.0, 0.0)
+	else: dir = dir.normalized()
+	var side := Vector2(-dir.y, dir.x)
+	# 3 jet contrails streaking overhead
+	for ji in [-1, 0, 1]:
+		var off := side * float(ji) * 48.0
+		var a := Vector3(tx - dir.x * 650.0 + off.x, gh(tx, tz) + 175.0, tz - dir.y * 650.0 + off.y)
+		var b := Vector3(tx + dir.x * 650.0 + off.x, gh(tx, tz) + 175.0, tz + dir.y * 650.0 + off.y)
+		for s in 12:
+			var q := a.lerp(b, float(s) / 12.0)
+			later.append([t + s * 0.06, func():
+				part(false, q, Vector3.ZERO, R(3.0, 4.5), R(7, 11), 8.0, 0.62, Color(0.92, 0.94, 0.97), null, 1.5, 0.4, KEEP)])
+	# Rolling 340m fuel-air bomb carpet
+	for i in count:
+		var d := -170.0 + float(i) * (340.0 / maxf(1.0, float(count - 1)))
+		var bx := tx + dir.x * d + R(-22, 22)
+		var bz := tz + dir.y * d + R(-22, 22)
+		later.append([t + 0.55 + i * 0.17, func():
+			boom(bx, bz, 36.0, true)])
+
+## Dispatch the exact unique superweapon visual for any of the 22 nations!
+func fire_faction_superweapon(fac: String, sx: float, sz: float, tx: float, tz: float) -> void:
+	var st := String(superweapon_info(fac).get("style", "scud"))
+	match st:
+		"beam": particle_cannon(tx, tz, 3.8, 90.0)
+		"nuke": nuke_strike(tx, tz, 58.0)
+		"storm": lightning_storm(tx, tz, 4.5, 155.0)
+		"carpet": carpet_bombing(sx, sz, tx, tz, 9)
+		_: scud_storm(sx, sz, tx, tz, 9, 165.0)
+
 ## src/05b-missiles.js megaBoom: the big ones (super weapons, demolition, ammunition going up)
 func _megaboom(x: float, z: float, g0: float, S: float, big: bool) -> void:
 	var P := Vector3(x, g0, z)
@@ -391,6 +575,7 @@ func events(evs: Array) -> void:
 			"flare": _emit({k = "flare", p = Vector3(float(e[1]), gh(float(e[1]), float(e[2])), float(e[2])), r = float(e[3]), life = float(e[4]) if e.size() > 4 else 20.0}, 6)
 			"strike": _strike(e)
 			"bmis": _bmis(e)
+			"sup": _sup_event(e)
 			"plane":
 				var px := float(e[3]); var pz := float(e[4])
 				for i in 5: part(false, Vector3(px + R(-20, 20), gh(px, pz) + 150.0, pz + R(-20, 20)), _dir(R(0, 10), 0), R(2, 3.5), R(6, 10), 6.0, 0.6, Color(.9, .9, .88), null, 2.0, 0.4, KEEP)
@@ -481,25 +666,56 @@ func _salvo(e: Array) -> void:
 			part(true, b2, Vector3.ZERO, 0.08, 2.2, 0.0, 1.0, C_SPARK)])
 
 func _icpt(sx: float, sz: float, tx: float, tz: float) -> void:
-	var a := Vector3(sx, gh(sx, sz) + 12.0, sz); var b := Vector3(tx, gh(tx, tz) + 210.0, tz)
-	for i in 7: tracer(a, a.lerp(b, (i + 1) / 7.0), Color(2.6, 2.2, 1.4), 0.35, i * 0.07)
-	later.append([t + 0.5, func(): boom(tx, tz, 30.0, true, 210.0)])
+	var a := Vector3(sx, gh(sx, sz) + 12.0, sz); var b := Vector3(tx, gh(tx, tz) + 230.0, tz)
+	# Twin glowing SAM / Iron Dome sky-defense interceptor streaks + corkscrew contrails
+	for i in 9:
+		var q0 := a.lerp(b, float(i) / 9.0)
+		var q1 := a.lerp(b, float(i + 1) / 9.0)
+		tracer(q0, q1, Color(3.6, 2.8, 1.5), 0.42, i * 0.05)
+		later.append([t + i * 0.05, func():
+			part(false, q1, _dir(R(0, 8), R(0, 6)), R(2.2, 3.6), R(5, 8), 7.0, 0.58, Color(0.92, 0.93, 0.95), null, 2.0, 0.35, KEEP)])
+	later.append([t + 0.46, func():
+		boom(tx, tz, 34.0, true, 230.0)
+		_ring(b, 12.0, 120.0, 0.65, Color("#ffe8a0"), 0.92, 0.85, 1)])
 
 func _strike(e: Array) -> void:
 	var x := float(e[1]); var z := float(e[2]); var dur := maxf(0.3, float(e[3])); var r := float(e[4])
 	var c := Vector3(x, gh(x, z), z)
-	_ring(c, r, r, dur, Color("#ea3a2c"), 0.8, 0.94, 1)
-	_ring(c, r, r * 0.12, dur, Color("#ff6a3a"), 0.9, 0.9, 1)
+	_ring(c, r, r, dur, Color("#ea3a2c"), 0.85, 0.94, 1)
+	_ring(c, r, r * 0.12, dur, Color("#ff6a3a"), 0.92, 0.90, 1)
+
+## Authoritative faction superweapon event from ww3sim.js: ["sup", style, sx, sz, tx, tz, fac]
+func _sup_event(e: Array) -> void:
+	if e.size() < 6: return
+	var st := String(e[1])
+	var sx := float(e[2]); var sz := float(e[3]); var tx := float(e[4]); var tz := float(e[5])
+	match st:
+		"beam": particle_cannon(tx, tz, 4.0, 92.0)
+		"nuke": nuke_strike(tx, tz, 60.0, 2.75)
+		"storm": lightning_storm(tx, tz, 4.8, 168.0)
+		"carpet": carpet_bombing(sx, sz, tx, tz, 8)
+		"scud":
+			# ww3sim.js emits the arcing bmis missiles directly; layer SCUD emerald-amber chemical clouds & shockwaves at impact!
+			for i in 7:
+				var ang := randf() * TAU; var rr := sqrt(randf()) * 175.0
+				var ix := tx + cos(ang) * rr; var iz := tz + sin(ang) * rr
+				later.append([t + 2.5 + i * 0.28, func():
+					var gy := gh(ix, iz)
+					for k in 9:
+						part(false, Vector3(ix + R(-24, 24), gy + R(4, 24), iz + R(-24, 24)), _dir(R(15, 55), R(8, 28)), R(3.2, 5.2), R(18, 30), 16.0, 0.56, Color(0.55, 0.68, 0.24), Color(0.24, 0.28, 0.18), R(14, 28), 0.35, KEEP)
+					_ring(Vector3(ix, gy, iz), 14.0, 145.0, 0.72, Color("#c8e858"), 0.76, 0.80, 0)])
 
 func _bmis(e: Array) -> void:
-	var a := Vector3(float(e[1]), 0, float(e[2])); a.y = gh(a.x, a.z) + 8.0
+	var a := Vector3(float(e[1]), 0, float(e[2])); a.y = gh(a.x, a.z) + 10.0
 	var b := Vector3(float(e[3]), 0, float(e[4])); b.y = gh(b.x, b.z)
-	var T := clampf(float(e[5]) if e.size() > 5 else 2.0, 1.2, 3.0)
-	_emit({k = "bmis", p = a, a = a, b = b, life = T, peak = clampf(a.distance_to(b) * 0.4, 380.0, 1100.0), last = a}, 12)
-	part(true, a, Vector3.ZERO, 0.14, 30.0, 0.0, 1.0, Color(3.4, 2.6, 1.6))
-	for i in 22: part(false, a, _dir(R(20, 90), R(2, 12)), R(5.5, 9), R(14, 24), 8.0, 0.6, Color(.86, .85, .82), null, 2.0, 0.25, KEEP)
-	for i in 8: partg(true, a, _dir(R(60, 160), R(60, 200)), R(.4, .8), 1.4, 1.0, C_SPARK, a.y - 8.0)
-	_flash_light(lights, a + Vector3(0, 20, 0), 3.4 * 1.6, 320.0, 0.5)
+	var T := clampf(float(e[5]) if e.size() > 5 else 2.2, 1.2, 3.4)
+	_emit({k = "bmis", p = a, a = a, b = b, life = T, peak = clampf(a.distance_to(b) * 0.44, 420.0, 1180.0), last = a}, 16)
+	# Massive roaring launch ignition plume!
+	part(true, a, Vector3.ZERO, 0.24, 46.0, 18.0, 1.0, Color(4.2, 3.0, 1.4))
+	_ring(Vector3(a.x, a.y - 8.0, a.z), 10.0, 90.0, 0.65, Color("#e8d4b0"), 0.78, 0.76, 0)
+	for i in 28: part(false, a, _dir(R(25, 115), R(4, 20)), R(6.0, 10.0), R(16, 28), 10.0, 0.68, Color(.88, .86, .82), null, 3.0, 0.25, KEEP)
+	for i in 14: partg(true, a, _dir(R(70, 190), R(70, 240)), R(.5, 1.0), 2.0, 1.0, C_SPARK, a.y - 10.0)
+	_flash_light(lights, a + Vector3(0, 24, 0), 6.2, 420.0, 0.7)
 
 func _civ(i: int, dead: bool) -> void:
 	var civ: Array = map.get("civ", [])
@@ -685,17 +901,110 @@ func _emit_tick(dt: float) -> void:
 				var pos := A.lerp(B, u) + Vector3(0, sin(u * PI) * float(e.peak), 0)
 				var last: Vector3 = e.last
 				var dd := last.distance_to(pos)
-				var steps := int(dd / 13.0)
+				var steps := int(dd / 11.0)
 				for n in steps:
 					var q2 := last.lerp(pos, (n + 1.0) / steps)
-					part(false, q2, _dir(R(0, 6), R(-2, 4)), R(5.5, 8.5), R(5, 8), 5.0, 0.6, Color(.9, .9, .88), null, 1.0, 0.4, KEEP)
-					part(true, q2, Vector3.ZERO, 0.16, R(8, 11), 0.0, 1.0, Color(3, 1.6, .5))
+					part(false, q2, _dir(R(0, 8), R(-2, 5)), R(7.0, 11.0), R(7, 11), 6.5, 0.68, Color(.92, .91, .88), null, 1.5, 0.42, KEEP)
+					part(true, q2, Vector3.ZERO, 0.20, R(11, 16), 0.0, 1.0, Color(3.8, 1.9, .55))
 				if steps > 0: e.last = pos
-				part(true, pos, Vector3.ZERO, 0.05, 7.0 if u < 0.7 else 12.0, 0.0, 1.0, Color(3.2, 2.8, 1.8))
+				part(true, pos, Vector3.ZERO, 0.07, 12.0 if u < 0.7 else 18.0, 0.0, 1.0, Color(4.2, 3.4, 2.0))
+			"nuke_mush":
+				# Colossal 3-stage boiling Nuclear Mushroom Cloud (300m fiery stem + glowing torus ring + billowing fallout cap!)
+				var S2: float = e.S
+				var u2 := clampf(e.t / e.life, 0.0, 1.0)
+				var stem_h := S2 * 5.2 * minf(1.0, u2 * 2.2)
+				# Boiling incandescent stem rising skyward
+				for n in int(dt * 24.0 * (1.0 - u2 * 0.55) + randf()):
+					var sy := stem_h * R(0.05, 0.95)
+					var sr := S2 * lerpf(0.55, 0.28, sy / maxf(1.0, stem_h))
+					var ang_s := randf() * TAU
+					var sp := P + Vector3(cos(ang_s) * sr * R(0.2, 1.0), sy, sin(ang_s) * sr * R(0.2, 1.0))
+					if u2 < 0.55 and randf() < 0.45:
+						part(true, sp, Vector3(R(-8, 8), R(22, 48), R(-8, 8)), R(1.2, 2.4), S2 * R(0.45, 0.75), S2 * 0.22, 0.95, Color(3.4, 1.35, 0.28), Color(0.55, 0.14, 0.04), R(18, 36))
+					else:
+						part(false, sp, _dir(R(0, S2 * 0.28), R(16, 36)), R(5.0, 8.5), S2 * R(0.55, 0.92), S2 * 0.20, 0.68 * (1.0 - u2 * 0.4), C_DARK, C_SMOKE, R(16, 30), 0.42, KEEP)
+				# Towering incandescent mushroom torus cap at top of stem
+				if u2 > 0.16:
+					var cap_r := S2 * lerpf(0.7, 2.15, clampf((u2 - 0.16) * 1.4, 0.0, 1.0))
+					for n in int(dt * 28.0 * (1.0 - u2 * 0.35) + randf()):
+						var a_c := randf() * TAU
+						var cp := P + Vector3(cos(a_c) * cap_r * R(0.45, 1.05), stem_h + R(-S2 * 0.45, S2 * 0.55), sin(a_c) * cap_r * R(0.45, 1.05))
+						if u2 < 0.65 and randf() < 0.42:
+							part(true, cp, Vector3(cos(a_c) * 24.0, R(6, 22), sin(a_c) * 24.0), R(1.4, 2.6), S2 * R(0.65, 1.15), S2 * 0.18, 0.92, Color(3.6, 1.55, 0.35), Color(0.45, 0.12, 0.03), R(4, 14))
+						else:
+							part(false, cp, Vector3(cos(a_c) * R(10, 32), R(-4, 14), sin(a_c) * R(10, 32)), R(6.5, 10.5), S2 * R(0.85, 1.45), S2 * 0.18, 0.72 * (1.0 - u2 * 0.3), C_DARK if n % 3 else Color(0.36, 0.22, 0.14), C_SMOKE, R(3, 10), 0.42, KEEP)
+			"beam":
+				# Sweeping C&C Generals Orbital Particle Cannon Beam!
+				var u3 := clampf(e.t / e.life, 0.0, 1.0)
+				var env_w := minf(1.0, u3 * 8.0) * minf(1.0, (1.0 - u3) * 6.0)
+				var ang_b: float = float(e.sweep_a) + e.t * 1.35
+				var sweep_r: float = float(e.r) * 0.42 * sin(u3 * PI)
+				var bx := P.x + cos(ang_b) * sweep_r
+				var bz := P.z + sin(ang_b) * sweep_r
+				var by := gh(bx, bz)
+				var bp := Vector3(bx, by, bz)
+				if _beam_rig != null:
+					_beam_rig.visible = true
+					_beam_rig.position = bp
+					var pulse := 0.88 + 0.24 * sin(t * 36.0)
+					_beam_core.scale = Vector3(env_w * pulse, 1.0, env_w * pulse)
+					_beam_sheath.scale = Vector3(env_w * (1.0 + 0.18 * cos(t * 24.0)), 1.0, env_w * (1.0 + 0.18 * cos(t * 24.0)))
+					_beam_orb.scale = Vector3.ONE * (env_w * pulse * 1.15)
+				if _beam_light != null:
+					_beam_light.visible = true
+					_beam_light.position = bp + Vector3(0, 42.0, 0)
+					_beam_light.light_energy = 14.0 * env_w
+				if env != null:
+					env.shake = maxf(env.shake, 5.5 * env_w)
+				# Swirling blue plasma ground vortex, ionized sparks & periodic shockwaves
+				for n in int(dt * 42.0 + randf()):
+					part(true, bp + Vector3(R(-18, 18), R(2, 16), R(-18, 18)), _dir(R(45, 160), R(30, 150)), R(0.35, 0.85), R(3.0, 7.5), 4.0, 1.0, Color(1.2, 2.8, 4.2), Color(0.25, 0.65, 1.8), R(24, 65))
+				for n in int(dt * 16.0 + randf()):
+					part(false, bp + Vector3(R(-16, 16), 3.0, R(-16, 16)), _dir(R(35, 110), R(8, 28)), R(1.6, 2.8), R(10, 18), 12.0, 0.52, Color(0.32, 0.42, 0.52), C_SMOKE, R(12, 24), 0.35, KEEP)
+				e.acc += dt
+				if e.acc >= 0.28:
+					e.acc = 0.0
+					_ring(bp, 8.0, float(e.r) * 1.15, 0.55, Color("#66e0ff"), 0.88, 0.84, 1)
+					scorch(bx, bz, 36.0)
+			"storm":
+				# Red Alert 2 Weather Control Supercell Lightning Storm!
+				var rad_s: float = float(e.r)
+				# Swirling dark thunderhead cloud deck 260m overhead
+				for n in int(dt * 18.0 + randf()):
+					var a_st := randf() * TAU; var rr_st := sqrt(randf()) * rad_s
+					part(false, Vector3(P.x + cos(a_st) * rr_st, P.y + R(220, 290), P.z + sin(a_st) * rr_st), Vector3(-sin(a_st) * 38.0, R(-4, 6), cos(a_st) * 38.0), R(2.2, 3.6), R(38, 65), 14.0, 0.58, Color(0.10, 0.13, 0.20), Color(0.18, 0.22, 0.30), 0.0, 0.4, KEEP)
+				e.acc += dt
+				if e.acc >= 0.26:
+					e.acc = 0.0
+					var ab := randf() * TAU; var rb := sqrt(randf()) * rad_s * 0.92
+					var lx := P.x + cos(ab) * rb; var lz := P.z + sin(ab) * rb
+					var ly := gh(lx, lz)
+					var prev_v := Vector3(lx + R(-30, 30), ly + 275.0, lz + R(-30, 30))
+					# 7-segment jagged sky-to-ground electric bolt!
+					for seg in 7:
+						var f_s := float(seg + 1) / 7.0
+						var jit := (1.0 - f_s) * 28.0
+						var nxt_v := Vector3(lx + R(-jit, jit), lerpf(ly + 275.0, ly + 2.0, f_s), lz + R(-jit, jit))
+						tracer(prev_v, nxt_v, Color(1.8, 3.2, 5.0), 0.22)
+						prev_v = nxt_v
+					var lp := Vector3(lx, ly, lz)
+					_flash_light(lights, lp + Vector3(0, 48.0, 0), 12.0, 620.0, 0.24)
+					if env != null: env.flash = minf(0.35, env.flash + 0.12); env.shake = minf(20.0, env.shake + 6.5)
+					part(true, lp + Vector3(0, 10.0, 0), Vector3.ZERO, 0.14, 38.0, 0.0, 1.0, Color(2.2, 3.6, 5.0))
+					for spk in 16:
+						partg(true, lp + Vector3(0, 4.0, 0), _dir(R(80, 260), R(90, 260)), R(0.35, 0.8), R(1.8, 3.2), 1.0, Color(1.4, 2.8, 4.8), ly, true)
+					_ring(lp, 8.0, 88.0, 0.48, Color("#70d0ff"), 0.92, 0.82, 1)
+					scorch(lx, lz, 42.0)
 		i -= 1
 	for L in wlights:
 		var l: OmniLight3D = L[0]
 		l.light_energy = L[1]; l.visible = L[1] > 0.01
+	var beam_on := false
+	for ee in emit:
+		if String(ee.k) == "beam": beam_on = true; break
+	if not beam_on:
+		if _beam_rig != null: _beam_rig.visible = false
+		if _beam_light != null: _beam_light.visible = false
 
 func _proj_tick(dt: float) -> void:
 	var i := proj.size() - 1

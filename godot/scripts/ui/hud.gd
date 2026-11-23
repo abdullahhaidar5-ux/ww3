@@ -490,25 +490,27 @@ func _bar() -> void:
 
 	# Mobile Touch Tactical Strip (auto-shown on phones/tablets or ?mobile): thumb-first RTS controls!
 	if UI.is_mobile():
-		hint_lbl.offset_left = 378; hint_lbl.offset_right = 1100
+		hint_lbl.offset_left = 472; hint_lbl.offset_right = 1160
 		mob_bar = HBoxContainer.new()
 		mob_bar.name = "MobileBar"
 		mob_bar.anchor_top = 1.0; mob_bar.anchor_bottom = 1.0
-		mob_bar.offset_left = 8; mob_bar.offset_top = -BAR_H - 42; mob_bar.offset_right = 420; mob_bar.offset_bottom = -BAR_H - 4
-		mob_bar.add_theme_constant_override("separation", 6)
+		mob_bar.offset_left = 8; mob_bar.offset_top = -BAR_H - 42; mob_bar.offset_right = 468; mob_bar.offset_bottom = -BAR_H - 4
+		mob_bar.add_theme_constant_override("separation", 5)
 		root.add_child(mob_bar)
 		mob_box_btn = _tac_btn("BOX SEL", func():
 			B.touch_box_mode = not B.touch_box_mode
-			B._msg("Drag a box to select units" if B.touch_box_mode else "Pan mode"), "Toggle drag-box unit selection", 72.0, 34.0)
+			B._msg("Drag a box to select units" if B.touch_box_mode else "Pan mode"), "Toggle drag-box unit selection", 68.0, 34.0)
 		mob_bar.add_child(mob_box_btn)
-		mob_bar.add_child(_tac_btn("ATK-MV", func(): B._arm("amove"), "Tap target to Attack-Move", 68.0, 34.0))
+		mob_bar.add_child(_tac_btn("ATK-MV", func(): B._arm("amove"), "Tap target to Attack-Move", 64.0, 34.0))
 		mob_bar.add_child(_tac_btn("CLEAR", func():
 			B.place_kind = ""; B.armed = ""; B.touch_box_mode = false
 			if B.ghost != null: B.ghost.visible = false
-			B.bsel.clear(), "Deselect / cancel active order", 62.0, 34.0))
-		mob_bar.add_child(_tac_btn("Z+", func(): B._zoom(0.80), "Zoom in", 40.0, 34.0))
-		mob_bar.add_child(_tac_btn("Z-", func(): B._zoom(1.25), "Zoom out", 40.0, 34.0))
-		mob_bar.add_child(_tac_btn("N", func(): B.cam_yaw_t = 0.0, "Reset camera north-up", 36.0, 34.0))
+			B.bsel.clear(), "Deselect / cancel active order", 58.0, 34.0))
+		mob_bar.add_child(_tac_btn("Z+", func(): B._zoom(0.80), "Zoom in", 36.0, 34.0))
+		mob_bar.add_child(_tac_btn("Z-", func(): B._zoom(1.25), "Zoom out", 36.0, 34.0))
+		mob_bar.add_child(_tac_btn("UP", func(): B.tilt_cam(-9.0), "Angle camera upward (cinematic horizon)", 36.0, 34.0))
+		mob_bar.add_child(_tac_btn("DN", func(): B.tilt_cam(9.0), "Angle camera downward (tactical top-down)", 36.0, 34.0))
+		mob_bar.add_child(_tac_btn("N", func(): B.cam_yaw_t = 0.0; B.cam_pitch_off_t = 0.0, "Reset camera north-up & angle", 32.0, 34.0))
 
 func _toggle_collapse() -> void:
 	collapsed = not collapsed
@@ -1250,13 +1252,17 @@ func _mini_draw() -> void:
 		var cp: Vector2 = corner[0]; var cd: Vector2 = corner[1]
 		mini.draw_line(cp, cp + Vector2(cd.x * L, 0), tc, 1.4)
 		mini.draw_line(cp, cp + Vector2(0, cd.y * L), tc, 1.4)
-	# camera view (a trapezoid that turns with Q)
+	# camera view (a trapezoid that turns with Q and stays valid even when pitched up toward the horizon)
 	var vs := mini.get_viewport().get_visible_rect().size
 	var pts: Array = []
+	var mw := float(B.map.MAPW); var mh := float(B.map.MAPH)
 	for s2 in [Vector2(0, 0), Vector2(vs.x, 0), Vector2(vs.x, vs.y - BAR_H), Vector2(0, vs.y - BAR_H)]:
 		var g: Vector2 = B._ground_at(s2)
-		if g == Vector2.INF: return
-		pts.append(g * k + o)
+		if g == Vector2.INF:
+			var ro: Vector3 = B.cam.project_ray_origin(s2)
+			var rd: Vector3 = B.cam.project_ray_normal(s2)
+			g = Vector2(clampf(ro.x + rd.x * 2600.0, 0.0, mw), clampf(ro.z + rd.z * 2600.0, 0.0, mh))
+		pts.append(Vector2(clampf(g.x, 0.0, mw), clampf(g.y, 0.0, mh)) * k + o)
 	for i in 4: mini.draw_line(pts[i], pts[(i + 1) % 4], Color(1, 1, 1, 0.88), 1.2)
 
 func _mini_line(pts: Array, k: float, o: Vector2, col: Color, cut: bool) -> void:

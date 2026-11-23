@@ -1089,6 +1089,30 @@ func battle_leave() -> void:
 	if _web_au: JavaScriptBridge.eval("window.WW3Audio.stopLoops()", true)
 	for k in _loops.keys(): _loops[k].p.stop()
 
+## Distinct Hollywood audio signature per Generals / Red Alert superweapon class
+func superweapon_sfx(style: String, tx: float = 0.0, tz: float = 0.0) -> void:
+	if not _sfx_on(): return
+	if limit("sw_klaxon", 1, 2.5):
+		_play_synth_ui(_wav_klaxon, 0.78)
+		_note("synth", "sw_" + style)
+	if not ann("super"): ann("enemyStrike")
+	var sp := spatial(tx, tz)
+	if sp.is_empty(): sp = {v = 0.65, pan = 0.0, far = 0.2}
+	var lv := maxf(0.42, float(sp.get("v", 0.65)))
+	match style:
+		"beam":
+			_play_synth_2d(_wav_emp, sp, lv * 1.05, 0.72, "Sfx")
+			_play_synth_2d(_wav_sub, sp, lv * 0.90, 0.65, "Sfx")
+		"nuke":
+			_play_synth_2d(_wav_sub, sp, lv * 1.15, 0.58, "Sfx")
+		"storm":
+			_play_synth_2d(_wav_emp, sp, lv * 1.05, 1.12, "Sfx")
+		"carpet":
+			_play_synth_2d(_wav_jet, sp, lv * 1.0, 0.88, "Sfx")
+			_play_synth_2d(_wav_sub, sp, lv * 0.80, 0.82, "Sfx")
+		_:
+			_play_synth_2d(_wav_sub, sp, lv * 0.95, 0.76, "Sfx")
+
 ## Called once per sim tick. Reads the sim (never writes) and raises the same sound events the JS sim logs / FXEs:
 ## shots (muzzle size by weapon), shell and missile hits, deaths, "Our base is under attack!" (25 s) / "Our troops are under
 ## fire!" (14 s), "Unit lost.", building started / complete, unit ready, low power / power back, shouts, victory / defeat.
@@ -1182,6 +1206,8 @@ func observe(sim, me: int, fast: bool = false) -> void:
 					if not sp.is_empty() and sp.v >= 0.02:
 						_play_synth_2d(_wav_jet, sp, sp.v * 0.9, 0.92 + _rng.randf() * 0.16, "Sfx")
 						_note("synth", "plane")
+			elif kind_ev == "sup" and ev.size() >= 6:
+				superweapon_sfx(str(ev[1]), float(ev[4]), float(ev[5]))
 			elif kind_ev == "strike" or kind_ev == "bmis":
 				if limit("klaxon", 1, 3.5):
 					_play_synth_ui(_wav_klaxon, 0.72)

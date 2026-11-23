@@ -16,6 +16,7 @@ const Terrain = preload("res://scripts/battle/battle_terrain.gd")
 const BattleNet = preload("res://scripts/battle/battle_net.gd")
 const UnitsView = preload("res://scripts/battle/units_view.gd")   # LANE A: X1 3D models + animated soldiers
 const WorldView = preload("res://scripts/battle/world_view.gd")   # LANE B: P4c sky/lighting/GPU FX + X1 buildings
+const LookFx = preload("res://scripts/battle/look_fx.gd")
 const UI = preload("res://scripts/ui/ui_kit.gd")
 const Hud = preload("res://scripts/ui/hud.gd")
 const Missions = preload("res://scripts/ui/missions.gd")
@@ -80,12 +81,17 @@ var battle_weather := "clear"
 var crate_key := ""
 var auto_cam := false
 var demo_ui := ""
+var demo_sw := ""
+var demo_sw_done := false
 
 # player state (lane P6)
 var hud
 var armed := ""           # "" | "amove" | "guard" | "power:<key>" - the next right-click does it, left-click cancels
-var cam_yaw := 0.0        # Q rotates the battle camera (view only)
+var cam_yaw := 0.0        # Q / Middle-mouse rotates the battle camera (view only)
 var cam_yaw_t := 0.0
+var cam_pitch_off := 0.0  # Up/down camera tilt offset in degrees (-32 = low cinematic horizon .. +28 = steep top-down)
+var cam_pitch_off_t := 0.0
+var mmb_down := false
 var q_down := -1.0
 var q_moved := false
 var q_tap := -9.0
@@ -124,6 +130,7 @@ var _touch_moved := false
 var _touch_multi := false
 var _pinch_dist := 0.0
 var _pinch_ang := 0.0
+var _pinch_mid := Vector2.ZERO
 var _last_tap_t := -9.0
 var _last_tap_pos := Vector2.ZERO
 
@@ -171,6 +178,10 @@ func _ready() -> void:
 		elif a.begins_with("--shotf="): shot_at = int(a.substr(8))
 		elif a == "--cam=auto": auto_cam = true
 		elif a.begins_with("--demo-ui="): demo_ui = a.substr(10)
+		elif a.begins_with("--demo-sw="): demo_sw = a.substr(10)
+		elif a.begins_with("--pitch="):
+			cam_pitch_off = clampf(float(a.substr(8)), -32.0, 28.0)
+			cam_pitch_off_t = cam_pitch_off
 		elif a.begins_with("--kind="): L = {kind = a.substr(7), map = map_key, players = [{fac = my_fac, ai = false, tm = 1}, {fac = en_fac, ai = true, tm = 2}], diff = diff, seed = seed_v}
 		elif a.begins_with("--load="): L = {kind = "load", file = a.substr(7)}
 		elif a.begins_with("--replay="): L = {kind = "replay", file = a.substr(9)}
@@ -321,7 +332,7 @@ func _norm(o: Dictionary) -> Dictionary:
 
 func _start(players: Array, starts: Array) -> void:
 	# loading screen first, so the player sees his flag + a faction quote instead of a blank screen while the battle is built
-	if not headless_mode and intro == null and shot_path == "":
+	if not headless_mode and intro == null and shot_path == "" and selftest == null:
 		if OS.has_feature("web"):
 			JavaScriptBridge.eval("window.__ww3HideBoot&&window.__ww3HideBoot()", true)
 		var mf := my_fac; var ef := en_fac
@@ -777,6 +788,9 @@ func _process(dt: float) -> void:
 	_cameo_tick()
 	_ui_battle_tick()
 	_cursor_tick()
+	if demo_sw != "" and not demo_sw_done and world_view.fx != null and sim.t >= 0.05:
+		demo_sw_done = true
+		_demo_fire_sw(demo_sw)
 	if shot_path != "" and (shot_t < 0 or sim.t >= shot_t) and not loading:
 		if shot_frames == 0 and auto_cam: _cam_on_fight()
 		if shot_frames == 0 and demo_ui != "": _demo_ui()
@@ -989,13 +1003,46 @@ func _pick_sim(sp: Vector2):
 	var g := _ground_at(sp)
 	var best = null
 	var bd := 1e9
+	# Screen-space picking for flying air units works reliably even at low upward camera pitch!
+	var best_air = null
+	var bad := 28.0
 	for e in sim.ents:
 		if e.dead: continue
 		if not visible_ent(e): continue
+		if not e.is_b and e.s_dom == "air":
+			var ah := 60.0 if e.kind == "drone" else 75.0
+			var p3 := Vector3(e.x, sim.ground_h(e.x, e.y) + ah, e.y)
+			if not cam.is_position_behind(p3):
+				var sd := cam.unproject_position(p3).distance_to(sp)
+				if sd < bad:
+					bad = sd; best_air = e
+			continue
+		if g == Vector2.INF: continue
 		var rr: float = e.size * 0.6 if e.is_b else e.r * 2.2 + 10.0
 		var d := Vector2(e.x, e.y).distance_to(g)
 		if d < rr and d < bd:
 			bd = d; best = e
+	return best_air if best_air != null else best
+
+func _pick_civ(g: Vector2) -> int:
+	if g == Vector2.INF: return -1
+	var civs: Array = map.get("civ", [])
+	var best := -1; var bd := 28.0
+	for c in civs:
+		if not (c is Dictionary) or int(c.get("ruin", 0)) != 0: continue
+		var d := Vector2(float(c.x), float(c.y)).distance_to(g)
+		if d < bd: bd = d; best = int(c.get("i", -1))
+	return best
+
+func _pick_field(g: Vector2) -> int:
+	if g == Vector2.INF or sim == null: return -1
+	var best := -1; var bd := 1e9
+	for fi in sim.fields.size():
+		var f = sim.fields[fi]
+		if float(f.get("amt", 0)) <= 0.0: continue
+		var rr := float(f.get("r", 42.0)) + 26.0
+		var d := Vector2(float(f.x), float(f.y)).distance_to(g)
+		if d < rr and d < bd: bd = d; best = fi
 	return best
 
 func _sel_ents() -> Array:
@@ -1045,6 +1092,9 @@ func _ghost_tick() -> void:
 		if ghost: ghost.visible = false
 		return
 	var g := _ground_at(get_viewport().get_mouse_position())
+	if g == Vector2.INF:
+		ghost.visible = false
+		return
 	var s: Dictionary = sim.bstats(my_fac, place_kind)
 	var kk := _bld_key(my_fac, place_kind, float(s.size))
 	var info := _dk_info(kk[0], kk[1])
@@ -1058,6 +1108,7 @@ func _ghost_tick() -> void:
 
 func _place_here(sp: Vector2, keep: bool) -> void:
 	var g := _ground_at(sp)
+	if g == Vector2.INF: return
 	var dz := 0
 	for e in _sel_units():
 		if e.kind == "dozer": dz = e.id; break
@@ -1086,10 +1137,18 @@ func team_col(team: int) -> Color:
 	if team == me: return COL_ME
 	return COL_ALLY if sim.ally(me, team) else COL_EN
 
-# ---------------------------------------------------------------- camera: W A S D / arrows / edges scroll, wheel zooms, Q rotates
+# ---------------------------------------------------------------- camera: W A S D / arrows / edges scroll, wheel zooms, Q / MMB rotates & pitches up/down
+func tilt_cam(delta_deg: float) -> void:
+	cam_pitch_off_t = clampf(cam_pitch_off_t + delta_deg, -32.0, 28.0)
+
 func _cam_input(dt: float) -> void:
 	cam_yaw = lerp_angle(cam_yaw, cam_yaw_t, clampf(dt * 12.0, 0, 1))
+	cam_pitch_off = lerpf(cam_pitch_off, cam_pitch_off_t, clampf(dt * 12.0, 0, 1))
 	if hud != null and hud.window != null: return
+	if Input.is_physical_key_pressed(KEY_PAGEUP) or Input.is_physical_key_pressed(KEY_BRACKETLEFT):
+		cam_pitch_off_t = clampf(cam_pitch_off_t - 40.0 * dt, -32.0, 28.0)
+	if Input.is_physical_key_pressed(KEY_PAGEDOWN) or Input.is_physical_key_pressed(KEY_BRACKETRIGHT):
+		cam_pitch_off_t = clampf(cam_pitch_off_t + 40.0 * dt, -32.0, 28.0)
 	var v := Vector2.ZERO
 	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP): v.y -= 1
 	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN): v.y += 1
@@ -1097,7 +1156,7 @@ func _cam_input(dt: float) -> void:
 	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): v.x += 1
 	var mp := get_viewport().get_mouse_position()
 	var vs := get_viewport().get_visible_rect().size
-	if mouse_in and bool(UI.opt("edge_scroll")) and DisplayServer.window_is_focused() and mp.x >= 0 and mp.y >= 0 and q_down < 0:
+	if mouse_in and bool(UI.opt("edge_scroll")) and DisplayServer.window_is_focused() and mp.x >= 0 and mp.y >= 0 and q_down < 0 and not mmb_down:
 		if mp.x < 4: v.x -= 1
 		if mp.x > vs.x - 4: v.x += 1
 		if mp.y < 4: v.y -= 1
@@ -1114,7 +1173,8 @@ var cam_y := 0.0
 func _place_cam() -> void:
 	if sim != null:
 		cam_y = lerpf(cam_y, sim.ground_h(cam_target.x, cam_target.y), 0.1)
-	var pitch := deg_to_rad(lerpf(40.0, 58.0, clampf((cam_dist - 300.0) / 1300.0, 0.0, 1.0)))
+	var base_deg := lerpf(40.0, 58.0, clampf((cam_dist - 300.0) / 1300.0, 0.0, 1.0))
+	var pitch := deg_to_rad(clampf(base_deg + cam_pitch_off, 14.0, 78.0))
 	var tgt := Vector3(cam_target.x, cam_y, cam_target.y)
 	var shk := world_view.shake_offset() if started else Vector3.ZERO
 	cam.position = tgt + Vector3(sin(cam_yaw) * cos(pitch) * cam_dist, sin(pitch) * cam_dist, cos(cam_yaw) * cos(pitch) * cam_dist) + shk
@@ -1123,11 +1183,12 @@ func _place_cam() -> void:
 func _zoom(f: float) -> void:
 	cam_dist = clampf(cam_dist * f, 220.0, 2400.0)
 
-## Q: hold + mouse = rotate, tap = 45 degrees clockwise (Shift+Q the other way), double-tap / Home = north-up
+## Q: hold + mouse = rotate & pitch up/down, tap = 45 degrees clockwise (Shift+Q the other way), double-tap / Home = reset camera
 func _q_release(shift: bool) -> void:
 	var now := Time.get_ticks_msec() / 1000.0
 	if not q_moved and now - q_down < 0.3:
-		if now - q_tap < 0.35: cam_yaw_t = 0.0
+		if now - q_tap < 0.35:
+			cam_yaw_t = 0.0; cam_pitch_off_t = 0.0
 		else: cam_yaw_t = snappedf(cam_yaw_t + (PI / 4.0 if shift else -PI / 4.0), PI / 4.0)
 		q_tap = now
 	q_down = -1.0
@@ -1152,6 +1213,7 @@ func _handle_touch(ev: InputEvent) -> void:
 				var pts := _touches.values()
 				_pinch_dist = (pts[0] as Vector2).distance_to(pts[1] as Vector2)
 				_pinch_ang = (pts[1] as Vector2 - pts[0] as Vector2).angle()
+				_pinch_mid = ((pts[0] as Vector2) + (pts[1] as Vector2)) * 0.5
 		else:
 			var was_one := _touches.size() == 1 and not _touch_multi
 			var end_pos := st.position
@@ -1190,13 +1252,18 @@ func _handle_touch(ev: InputEvent) -> void:
 			var pts := _touches.values()
 			var d := (pts[0] as Vector2).distance_to(pts[1] as Vector2)
 			var a := (pts[1] as Vector2 - pts[0] as Vector2).angle()
+			var mid := ((pts[0] as Vector2) + (pts[1] as Vector2)) * 0.5
 			if _pinch_dist > 10.0 and d > 10.0:
 				_zoom(clampf(_pinch_dist / d, 0.85, 1.18))
 			var da := wrapf(a - _pinch_ang, -PI, PI)
 			if absf(da) > 0.015 and absf(da) < 0.6:
 				cam_yaw_t += da * 0.85
+			var dy := mid.y - _pinch_mid.y
+			if absf(dy) > 0.5 and absf(dy) < 80.0:
+				cam_pitch_off_t = clampf(cam_pitch_off_t + dy * 0.14, -32.0, 28.0)
 			_pinch_dist = d
 			_pinch_ang = a
+			_pinch_mid = mid
 
 ## Smart 1-finger tap: places buildings, fires powers, selects own units (double-tap = all of type), or orders selected units!
 func _touch_tap(pos: Vector2) -> void:
@@ -1248,9 +1315,11 @@ func _unhandled_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseMotion:
 		mouse_in = true
 		var mm := ev as InputEventMouseMotion
-		if q_down >= 0 and absf(mm.relative.x) > 0.0:
-			if absf(mm.relative.x) > 1.5: q_moved = true
+		if q_down >= 0 or mmb_down:
+			if q_down >= 0 and (absf(mm.relative.x) > 1.5 or absf(mm.relative.y) > 1.5): q_moved = true
 			cam_yaw_t -= mm.relative.x * 0.006; cam_yaw = cam_yaw_t
+			cam_pitch_off_t = clampf(cam_pitch_off_t + mm.relative.y * 0.17, -32.0, 28.0)
+			cam_pitch_off = cam_pitch_off_t
 		if dragging and mm.position.distance_to(drag_start) > 8 and place_kind == "":
 			box.visible = true
 			box.position = Vector2(minf(drag_start.x, mm.position.x), minf(drag_start.y, mm.position.y))
@@ -1263,6 +1332,9 @@ func _unhandled_input(ev: InputEvent) -> void:
 		var mb := ev as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed: _zoom(0.88)
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed: _zoom(1.13)
+		elif mb.button_index == MOUSE_BUTTON_MIDDLE:
+			mmb_down = mb.pressed
+			return
 		if ai_only or kind == "replay" or loading: return
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed and armed.begins_with("power"):
@@ -1316,7 +1388,8 @@ func _key(k: InputEventKey) -> void:
 	if hud.window != null:
 		if kc == KEY_P and hud.window_kind == "powers": hud.close_window()
 		return
-	if kc == KEY_HOME: cam_yaw_t = 0.0
+	if kc == KEY_HOME:
+		cam_yaw_t = 0.0; cam_pitch_off_t = 0.0
 	elif kc == KEY_H:
 		var hq = sim.hq_of(me)
 		if hq != null: cam_target = Vector2(hq.x, hq.y)
@@ -1340,7 +1413,14 @@ func _key(k: InputEventKey) -> void:
 	elif kc == KEY_F: _arm("amove")
 	elif kc == KEY_G: _arm("guard")
 	elif kc == KEY_I: order_dig_in()
-	elif kc == KEY_E: cmd({t = "ldr", n = 1 if k.shift_pressed else 0, ids = _sel_ids()})
+	elif kc == KEY_E:
+		var lu := _sel_units()
+		var lp := cam_target
+		if not lu.is_empty():
+			var s_p := Vector2.ZERO
+			for u in lu: s_p += Vector2(float(u.x), float(u.y))
+			lp = s_p / float(lu.size())
+		cmd({t = "ldr", n = 1 if k.shift_pressed else 0, ids = _sel_ids(), x = lp.x, y = lp.y})
 	elif kc == KEY_P: hud.open_powers()
 	elif kc == KEY_F5: save_game("Quick save", "quick")
 	elif kc == KEY_F9:
@@ -1474,21 +1554,35 @@ func order_at(g: Vector2, tg, ctrl: bool, alt: bool) -> void:
 	elif alt and units.any(func(e): return e.cargo > 0 and e.kind != "harv"):
 		cmd({t = "unload", ids = ids, x = g.x, y = g.y})             # ... or Alt + right-click a spot
 	elif alt:
-		for e in units:
-			if not wp.has(e.id): wp[e.id] = []
-			wp[e.id].append(g)
-			if wp[e.id].size() == 1 and e.order == null: pass
+		if use_bridge:
+			cmd({t = "amove" if fkey else "move", ids = ids, x = g.x, y = g.y, q = 1})
+		else:
+			for e in units:
+				if not wp.has(e.id): wp[e.id] = []
+				wp[e.id].append(g)
 		mark = Color(0.4, 0.9, 1.0)
 	elif tg != null and (tg.team == me or sim.ally(me, tg.team)) and not ids.has(tg.id) and (tg.is_b or tg.s_cls != "inf"):
-		cmd({t = "enter", ids = ids, target = tg.id, x = tg.x, y = tg.y})   # enter = select units + right-click own building / vehicle / tunnel
+		cmd({t = "enter", ids = ids, target = tg.id, x = tg.x, y = tg.y})   # enter / resume unfinished building / board transport
 		g = Vector2(tg.x, tg.y); mark = Color(0.4, 0.8, 1.0)
+	elif use_bridge and tg == null and _pick_field(g) >= 0 and units.any(func(e): return e.kind == "harv"):
+		var fi := _pick_field(g)
+		var harv_ids := units.filter(func(e): return e.kind == "harv").map(func(e): return e.id)
+		cmd({t = "fld", ids = harv_ids, fi = fi})
+		mark = Color(0.95, 0.85, 0.35)
+	elif use_bridge and tg == null and _pick_civ(g) >= 0 and not _sel_inf().is_empty():
+		var ci := _pick_civ(g)
+		cmd({t = "atkCiv" if ctrl else "gar", ids = _sel_inf().map(func(e): return e.id), ci = ci})
+		mark = Color(0.4, 0.85, 1.0)
 	else:
-		var n := units.size()
-		var cols := int(ceil(sqrt(n)))
-		for i in n:
-			var e = units[i]
-			var off := Vector2((i % cols) - (cols - 1) * 0.5, int(i / cols) - (cols - 1) * 0.5) * 30.0
-			cmd({t = "amove" if fkey else "move", ids = [e.id], x = g.x + off.x, y = g.y + off.y})
+		if use_bridge:
+			cmd({t = "amove" if fkey else "move", ids = ids, x = g.x, y = g.y})
+		else:
+			var n := units.size()
+			var cols := int(ceil(sqrt(n)))
+			for i in n:
+				var e = units[i]
+				var off := Vector2((i % cols) - (cols - 1) * 0.5, int(i / cols) - (cols - 1) * 0.5) * 30.0
+				cmd({t = "amove" if fkey else "move", ids = [e.id], x = g.x + off.x, y = g.y + off.y})
 		if fkey: mark = Color(1.0, 0.5, 0.3)
 		Audio.speak(2 if fkey else 1, units.map(func(e): return e.kind))   # P5 HOOK
 	_boom(Vector3(g.x, sim.ground_h(g.x, g.y) + 2, g.y), 9.0, mark, 0.4)
@@ -1602,7 +1696,8 @@ func gpow_list() -> Array:
 	var F: Dictionary = sim.teams[me].F
 	var out: Array = []
 	if F.get("natpow") != null: out.append({key = "natpow", name = F.natpow.name, desc = str(F.natpow.get("desc", "National power")), have = true, can = false})
-	if F.get("sup") != null: out.append({key = "sup", name = F.sup.name, desc = "Strike: needs the Strike Center", have = false, can = false})
+	var sw_i := LookFx.superweapon_info(my_fac)
+	out.append({key = "sup", name = str(sw_i.get("name", "Strategic Strike")), desc = str(sw_i.get("desc", "Needs the Strike Center")) + " (Strike Center)", have = false, can = false})
 	for k in F.get("gpow", {}):
 		var have: bool = sim_has("gpow") and sim.gpow_has(me, k)
 		out.append({key = k, name = F.gpow[k].name, desc = str(F.gpow[k].get("desc", "General's power")), have = have, can = gp_points() > 0 and not have})
@@ -1621,6 +1716,17 @@ func _launch_power(sp: Vector2) -> void:
 	armed = ""
 	if g == Vector2.INF: return
 	cmd({t = "power", kind = key, x = g.x, y = g.y})
+	if key == "sup":
+		var sw := LookFx.superweapon_info(my_fac)
+		hud.say("LAUNCHING: %s!" % str(sw.get("name", "SUPERWEAPON")).to_upper(), "w")
+		if world_view.fx != null:
+			world_view.fx._sup_fac_hint = my_fac
+			if not use_bridge:
+				var hq = sim.hq_of(me)
+				var sx := float(hq.x) if hq != null else g.x - 500.0
+				var sy := float(hq.y) if hq != null else g.y - 500.0
+				world_view.fx.fire_faction_superweapon(my_fac, sx, sy, g.x, g.y)
+				Audio.superweapon_sfx(str(sw.get("style", "scud")), g.x, g.y)
 	_boom(Vector3(g.x, sim.ground_h(g.x, g.y) + 3, g.y), 22.0, Color(1.0, 0.5, 0.2), 0.6)
 
 ## supply chip: units of yours that ran dry, else OK
@@ -2053,6 +2159,53 @@ func _range_panel() -> void:
 			sim.teams[1].ai = range_ai if range_ai_on else null
 		fb.text = "TARGET FIGHTS BACK: " + ("ON" if range_ai_on else "OFF"))
 	body_vb.add_child(fb)
+	body_vb.add_child(UI.hsep())
+	var my_sw := LookFx.superweapon_info(my_fac)
+	body_vb.add_child(UI.label("SUPERWEAPONS (FIRE AT TARGET)", 11, UI.GOLD_HI))
+	var sw_g := GridContainer.new()
+	sw_g.columns = 2
+	sw_g.add_theme_constant_override("h_separation", 4); sw_g.add_theme_constant_override("v_separation", 4)
+	body_vb.add_child(sw_g)
+	var sw_btns := [
+		["MY: " + str(my_sw.get("name", "SUPER")).substr(0, 12), str(my_sw.get("style", "scud"))],
+		["SCUD STORM", "scud"],
+		["NUKE STRIKE", "nuke"],
+		["PARTICLE CANNON", "beam"],
+		["LIGHTNING STORM", "storm"],
+		["CARPET ARMADA", "carpet"],
+	]
+	for sb_it in sw_btns:
+		var sty: String = sb_it[1]
+		var sbtn := UI.button(sb_it[0], func(): _range_superweapon(sty), 11, 134)
+		sbtn.name = "SW_" + sty
+		sw_g.add_child(sbtn)
+
+func _range_superweapon(style: String) -> void:
+	var p := cam_target + Vector2(cos(sim.base_facing(me)), sin(sim.base_facing(me))) * 280.0
+	if sim.has_method("range_cmd"):
+		sim.range_cmd({cmd = "super", team = me, x = p.x, y = p.y, style = style})
+		hud.say("SUPERWEAPON LAUNCHED: %s!" % style.to_upper(), "w")
+		return
+	_demo_fire_sw(style, p)
+
+func _demo_fire_sw(style: String, target_p: Vector2 = Vector2.INF) -> void:
+	if world_view.fx == null or sim == null: return
+	var tp := target_p if target_p != Vector2.INF else cam_target
+	var hq = sim.hq_of(me)
+	var sx := float(hq.x) if hq != null else tp.x - 520.0
+	var sy := float(hq.y) if hq != null else tp.y - 420.0
+	match style:
+		"beam": world_view.fx.particle_cannon(tp.x, tp.y, 4.0, 95.0)
+		"nuke": world_view.fx.nuke_strike(tp.x, tp.y, 64.0, 0.35)
+		"storm": world_view.fx.lightning_storm(tp.x, tp.y, 4.8, 170.0)
+		"carpet": world_view.fx.carpet_bombing(sx, sy, tp.x, tp.y, 9)
+		_: world_view.fx.scud_storm(sx, sy, tp.x, tp.y, 10, 175.0)
+	Audio.superweapon_sfx(style, tp.x, tp.y)
+	if not use_bridge:
+		for e in sim.ents:
+			if not e.dead and e.team != me and Vector2(e.x, e.y).distance_to(tp) < 210.0:
+				e.hp = maxf(0.0, e.hp - 650.0)
+				if e.hp <= 0.0: sim.kill(e, me, null)
 
 func _range_spawn(team: int, k: String, n: int, ahead: float = 0.0) -> void:
 	if sim.stats(sim.teams[team].fac, k).is_empty(): return

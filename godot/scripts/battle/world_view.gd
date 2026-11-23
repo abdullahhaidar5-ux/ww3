@@ -39,6 +39,8 @@ const C_BLD_EMBER2 := Color(1.0, 0.35, 0.08)
 static var _meta_cache: Dictionary = {} # "fac|kind" -> {ok, pack, pxf, h, scale}
 static var _box_cache: Dictionary = {}  # int_size -> Mesh
 static var _civ_mesh_cache: Dictionary = {} # "theme|variant" -> ArrayMesh
+static var _flag_pole_mesh: Mesh = null
+static var _flag_mesh_cache: Dictionary = {} # fac -> ArrayMesh with waving flag shader + real PNG flag texture
 
 var env = null          # LookEnv instance
 var fx = null           # LookFx Node3D instance
@@ -291,8 +293,84 @@ func draw_bld(B, fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Col
 	_ao_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(ao_r, 1.0, ao_r)), Vector3(p.x, gy + 0.36, p.y)))
 	_ao_col.append(Color(1.0, 1.0, 1.0, 0.38 * maxf(0.25, built)))
 
+	# Heroic waving 3D faction flag (Hezbollah, Iran, US, Russia, etc.) flying over HQ, Barracks, War Factory & Strike Center!
+	if built >= 0.95 and (kind_s == "hq" or kind_s == "barracks" or kind_s == "factory" or kind_s == "uplink"):
+		var fscale := 1.15 if (kind_s == "hq" or kind_s == "uplink") else 0.88
+		var off_r := maxf(float(e.r) * 0.78, 22.0)
+		_push_faction_flag(fac, Vector3(p.x + off_r, gy, p.y - off_r * 0.45), fscale, now, eid_f)
+
 	_emit_bld_damage_fx(B, e, p, gy, h, now)
 	_append_bld_overlays(B, fr, e, p, gy, h, col, issel, mine)
+
+
+static func _get_flag_pole_mesh() -> Mesh:
+	if _flag_pole_mesh != null:
+		return _flag_pole_mesh
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# Brushed steel mast + golden finial sphere + concrete plinth
+	_civ_box(st, Vector3(0.0, 1.2, 0.0), Vector3(3.6, 2.4, 3.6), Color(0.38, 0.37, 0.35))
+	_civ_box(st, Vector3(0.0, 26.0, 0.0), Vector3(1.1, 50.0, 1.1), Color(0.72, 0.74, 0.76))
+	_civ_box(st, Vector3(0.0, 51.6, 0.0), Vector3(2.2, 2.2, 2.2), Color(0.92, 0.76, 0.28))
+	var m := st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.45
+	mat.metallic = 0.55
+	m.surface_set_material(0, mat)
+	_flag_pole_mesh = m
+	return _flag_pole_mesh
+
+
+static func _get_faction_flag_mesh(fac: String) -> Mesh:
+	var fk := fac.to_upper()
+	if _flag_mesh_cache.has(fk):
+		return _flag_mesh_cache[fk]
+	var fp := "res://ui/icons/flags/%s.png" % fk
+	if not ResourceLoader.exists(fp):
+		_flag_mesh_cache[fk] = null
+		return null
+	var tex: Texture2D = load(fp)
+	if tex == null:
+		_flag_mesh_cache[fk] = null
+		return null
+	# 10x4 subdivided waving cloth rectangle anchored at x=0 (pole) spanning x=[0..27], y=[33..50]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var nx := 10; var ny := 4
+	var w := 27.0; var h := 17.5; var y0 := 33.2
+	for ix in nx:
+		var u0 := float(ix) / float(nx); var u1 := float(ix + 1) / float(nx)
+		var x0 := u0 * w; var x1 := u1 * w
+		for iy in ny:
+			var v0 := float(iy) / float(ny); var v1 := float(iy + 1) / float(ny)
+			var yy0 := y0 + (1.0 - v0) * h; var yy1 := y0 + (1.0 - v1) * h
+			st.set_normal(Vector3(0, 0, 1))
+			st.set_uv(Vector2(u0, v0)); st.add_vertex(Vector3(x0, yy0, 0.0))
+			st.set_uv(Vector2(u1, v0)); st.add_vertex(Vector3(x1, yy0, 0.0))
+			st.set_uv(Vector2(u0, v1)); st.add_vertex(Vector3(x0, yy1, 0.0))
+			st.set_uv(Vector2(u1, v0)); st.add_vertex(Vector3(x1, yy0, 0.0))
+			st.set_uv(Vector2(u1, v1)); st.add_vertex(Vector3(x1, yy1, 0.0))
+			st.set_uv(Vector2(u0, v1)); st.add_vertex(Vector3(x0, yy1, 0.0))
+	var m := st.commit()
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/flag_wave.gdshader")
+	mat.set_shader_parameter("flag_tex", tex)
+	m.surface_set_material(0, mat)
+	_flag_mesh_cache[fk] = m
+	return m
+
+
+func _push_faction_flag(fac: String, pos: Vector3, sc: float, now: float, phase: float) -> void:
+	var fm := _get_faction_flag_mesh(fac)
+	if fm == null:
+		return
+	var pole_xf := Transform3D(Basis.IDENTITY.scaled(Vector3(sc, sc, sc)), pos)
+	_push_mm("flag|pole", _get_flag_pole_mesh(), pole_xf)
+	var wind_yaw := 0.35 + sin(now * 0.45 + phase) * 0.16
+	var flag_xf := Transform3D(Basis(Vector3.UP, wind_yaw).scaled(Vector3(sc, sc, sc)), pos)
+	_push_mm("flag|tex|" + fac.to_upper(), fm, flag_xf)
 
 
 func draw_map_objects(B, fr: Dictionary) -> void:
@@ -346,6 +424,8 @@ func draw_map_objects(B, fr: Dictionary) -> void:
 			oc = B.COL_ME
 		elif int(o.owner) >= 0:
 			oc = B.COL_ALLY if B.sim.ally(int(B.me), int(o.owner)) else B.COL_EN
+		if int(o.owner) >= 0 and int(o.owner) < B.sim.teams.size():
+			_push_faction_flag(str(B.sim.teams[int(o.owner)].fac), Vector3(ox + 22.0, oy, oz - 14.0), 0.92, now, ox * 0.03)
 		rings.append([Vector3(ox, oy + 1.0, oz), 34.0, oc])
 
 	# Supply piles: keep existing crate visuals (delegated to battle.gd's crate MultiMesh when available)

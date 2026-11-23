@@ -266,7 +266,7 @@ func _camera() -> void:
 	cam = Camera3D.new()
 	cam.fov = 40.0
 	cam.near = 5.0
-	cam.far = 9000.0
+	cam.far = 16000.0
 	add_child(cam)
 	_place_cam()
 
