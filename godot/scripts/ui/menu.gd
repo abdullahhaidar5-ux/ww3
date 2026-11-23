@@ -8,6 +8,7 @@ extends Control
 
 const UI = preload("res://scripts/ui/ui_kit.gd")
 const Missions = preload("res://scripts/ui/missions.gd")
+const LookFx = preload("res://scripts/battle/look_fx.gd")
 const BattleIntro = preload("res://scripts/ui/battle_intro.gd")
 const COL_X := 1026.0 / 1536.0     # the column starts at 1026 of 1536, like the browser menu
 const TITLES := {"title": "", "single": "Play", "c-map": "Battle", "c-nation": "Battle", "c-players": "Battle", "c-opts": "Battle", "online": "Multiplayer",
@@ -410,13 +411,35 @@ func _nat_detail(k: String) -> String:
 	elif F.get("special") != null and typeof(F.get("units")) == TYPE_DICTIONARY and F.units.has(F.special):
 		sp_name = str(F.units[F.special].get("name", ""))
 	if sp_name != "": lines.append("Special: %s" % sp_name)
-	var strike_name := ""
-	var st_d = N.get("strike")
-	if typeof(st_d) == TYPE_DICTIONARY:
-		strike_name = str(st_d.get("name", ""))
-	elif typeof(F.get("sup")) == TYPE_DICTIONARY:
-		strike_name = str(F.sup.get("name", ""))
-	if strike_name != "": lines.append("Strike: %s" % strike_name)
+	var sw_d := LookFx.superweapon_info(k)
+	if not sw_d.is_empty():
+		lines.append("Superweapon: %s — %s" % [str(sw_d.get("name", "")), str(sw_d.get("desc", ""))])
+	const SIG_BRIEF := {
+		"US": "M1A2 Abrams Laser Point-Defense · Fewer-but-Stronger Elite Force",
+		"GB": "Challenger 2 Chobham Composite Armor · SAS Commandos",
+		"FR": "Leclerc Autoloader Cavalry MBT · CAESAR Mobile Artillery",
+		"DE": "Leopard 2A8 Active Protection System (APS)",
+		"IL": "Merkava Mk4M (APS) · Mobile Iron Dome Interceptor",
+		"UA": "FPV Drone Teams (Barracks) · Agile Precision Strikes",
+		"RU": "Mass Armor Platoon Bonus · TOS-1A Solntsepek Thermobarics",
+		"CN": "Type 99A Heavy Overlord Mass Armor · Commissar Aura",
+		"KP": "KN-25 240mm 12-Rocket Battery · Cyber Hacker Raids",
+		"IN": "BrahMos Supersonic Battery · Armored Combat Medics",
+		"JP": "Type 10 Agile Hydro-Pneumatic MBT · Precision Tech",
+		"KR": "K9 Thunder Counter-Battery Artillery · CBR Radar",
+		"PK": "Al-Khalid High-Speed Flanker Armor · Ambush Infantry",
+		"SA": "Gulf Integrated Air Defense (IADS) · F-15SA Heavy Air",
+		"AE": "Gulf Integrated Air Defense (IADS) · High-Speed Strike Drones",
+		"TR": "Bayraktar TB2 MALE Loitering Drone · Altay Armor",
+		"EG": "M1A1 Nile Massed Armor Division · Saka Commandos",
+		"IR": "Zolfaghar IRBM Launcher · Shahed Swarm · Cheap Fortifications",
+		"RS": "Kornet Double-Damage Tunnel Ambush · Radwan Guerrillas",
+		"DW": "Toofan High-Speed Desert Raiders · Long-Range Rockets",
+		"RV": "Hidden Firing Posts · Hashd Heavy Mortars",
+		"OB": "Tunnel Network Ambushers · Al-Yassin Urban AT Teams",
+	}
+	if SIG_BRIEF.has(k):
+		lines.append("Signature: " + str(SIG_BRIEF[k]))
 	var pow_name := ""
 	var pow_desc := ""
 	var np_d = N.get("national_power")

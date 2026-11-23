@@ -142,24 +142,83 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	g.material_override = mat
 	g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	host.add_child(g)
-	# skirt plane far around the map so the horizon is not empty
+	# Textured distant terrain expanse + 360° sculpted mountain horizon ring so low-angle upward camera looks cinematic!
 	var pm := PlaneMesh.new()
-	pm.size = Vector2(float(map.MAPW) + 6000, float(map.MAPH) + 6000)
+	pm.size = Vector2(float(map.MAPW) + 12000.0, float(map.MAPH) + 12000.0)
 	var sk := MeshInstance3D.new()
 	sk.mesh = pm
-	sk.position = Vector3(float(map.MAPW) * 0.5, hmin - 40.0, float(map.MAPH) * 0.5)
+	sk.position = Vector3(float(map.MAPW) * 0.5, hmin - 28.0, float(map.MAPH) * 0.5)
 	var sm := StandardMaterial3D.new()
-	sm.albedo_color = c_lo
-	sm.roughness = 1.0
+	sm.albedo_color = c_mid * 0.82
+	if ResourceLoader.exists(alb_p):
+		sm.albedo_texture = load(alb_p)
+		sm.uv1_scale = Vector3(28.0, 28.0, 1.0)
+	sm.roughness = 0.96
 	sk.material_override = sm
 	sk.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	host.add_child(sk)
+	_horizon_mountains(host, map, hmin, c_mtn, c_hi, th)
 	_water(host, sim, map)
 	_bridges(host, map)
 	if tree_mesh.is_valid(): _trees(host, sim, map, tree_mesh)
 	_env_props(host, map)
 
 ## Multi-pass separable [1, 2, 1] / 4 Gaussian blur producing a silky L8 ImageTexture for anti-aliased roads & shores
+static func _horizon_mountains(host: Node3D, map: Dictionary, hmin: float, c_mtn: Color, c_hi: Color, th: String) -> void:
+	var cx := float(map.MAPW) * 0.5
+	var cz := float(map.MAPH) * 0.5
+	var rx0 := float(map.MAPW) * 0.64 + 850.0
+	var rz0 := float(map.MAPH) * 0.64 + 850.0
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var segs := 144
+	var base_y := hmin - 32.0
+	var peak_col := Color(0.82, 0.86, 0.92) if th == "snow" else c_hi.lerp(c_mtn, 0.65)
+	var foot_col := c_mtn * 0.70
+	var inner_pts: Array = []
+	var ridge_pts: Array = []
+	var outer_pts: Array = []
+	for i in segs + 1:
+		var a := float(i) / float(segs) * TAU
+		var ca := cos(a); var sa := sin(a)
+		var n1 := absf(sin(a * 7.0 + 0.4)) * 0.48 + absf(cos(a * 17.0 - 1.1)) * 0.30 + absf(sin(a * 31.0 + 2.3)) * 0.22
+		var pk_h := 38.0 + n1 * 135.0
+		inner_pts.append(Vector3(cx + ca * (rx0 - 360.0), base_y, cz + sa * (rz0 - 360.0)))
+		ridge_pts.append(Vector3(cx + ca * rx0, base_y + pk_h, cz + sa * rz0))
+		outer_pts.append(Vector3(cx + ca * (rx0 + 620.0), base_y - 18.0, cz + sa * (rz0 + 620.0)))
+	for i in segs:
+		var i0: Vector3 = inner_pts[i]; var i1: Vector3 = inner_pts[i + 1]
+		var r0: Vector3 = ridge_pts[i]; var r1: Vector3 = ridge_pts[i + 1]
+		var o0: Vector3 = outer_pts[i]; var o1: Vector3 = outer_pts[i + 1]
+		st.set_color(foot_col); st.set_uv(Vector2(float(i) * 0.5, 0.0)); st.add_vertex(i0)
+		st.set_color(peak_col); st.set_uv(Vector2(float(i) * 0.5, 1.0)); st.add_vertex(r0)
+		st.set_color(foot_col); st.set_uv(Vector2(float(i + 1) * 0.5, 0.0)); st.add_vertex(i1)
+		st.set_color(foot_col); st.set_uv(Vector2(float(i + 1) * 0.5, 0.0)); st.add_vertex(i1)
+		st.set_color(peak_col); st.set_uv(Vector2(float(i) * 0.5, 1.0)); st.add_vertex(r0)
+		st.set_color(peak_col); st.set_uv(Vector2(float(i + 1) * 0.5, 1.0)); st.add_vertex(r1)
+		st.set_color(peak_col); st.set_uv(Vector2(float(i) * 0.5, 1.0)); st.add_vertex(r0)
+		st.set_color(foot_col); st.set_uv(Vector2(float(i) * 0.5, 0.0)); st.add_vertex(o0)
+		st.set_color(peak_col); st.set_uv(Vector2(float(i + 1) * 0.5, 1.0)); st.add_vertex(r1)
+		st.set_color(peak_col); st.set_uv(Vector2(float(i + 1) * 0.5, 1.0)); st.add_vertex(r1)
+		st.set_color(foot_col); st.set_uv(Vector2(float(i) * 0.5, 0.0)); st.add_vertex(o0)
+		st.set_color(foot_col); st.set_uv(Vector2(float(i + 1) * 0.5, 0.0)); st.add_vertex(o1)
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.name = "HorizonMountains"
+	mi.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	if ResourceLoader.exists("res://tex/rock_alb.png"):
+		mat.albedo_texture = load("res://tex/rock_alb.png")
+		mat.uv1_scale = Vector3(4.0, 2.0, 1.0)
+	mat.roughness = 0.96
+	mat.metallic = 0.0
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.extra_cull_margin = 16384.0
+	host.add_child(mi)
+
 static func _blur_l8(src: PackedByteArray, w: int, h: int, passes: int = 1) -> ImageTexture:
 	if w <= 0 or h <= 0 or src.size() < w * h:
 		var empty_img := Image.create_from_data(1, 1, false, Image.FORMAT_L8, PackedByteArray([0]))

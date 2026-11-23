@@ -8,9 +8,12 @@ extends Node
 
 const UI = preload("res://scripts/ui/ui_kit.gd")
 const Missions = preload("res://scripts/ui/missions.gd")
-const BAR_H := 182.0
+const BAR_H := 184.0
+const MOB_BAR_H := 114.0
 const MINI_W := 214.0
 const MINI_H := 156.0
+const MOB_MINI_W := 96.0
+const MOB_MINI_H := 94.0
 const STEEL := Color("11191d")
 const STEEL_DARK := Color("0a1014")
 const STEEL_HI := Color("3b5560")
@@ -21,7 +24,14 @@ const SLOT_BG := Color("142127")
 const SLOT_EMPTY := Color("091015")
 const SLOT_EMPTY_EDGE := Color("1f323b")
 const GREEN_BTN := Color("1b6a38")
-const COLS := 6
+const COLS := 7
+
+const FAC_ACCENT := {
+	"IR": Color("3cb868"), "RS": Color("e8c428"), "DW": Color("d4403a"), "RV": Color("42b462"), "OB": Color("32a858"),
+	"US": Color("4a92e0"), "GB": Color("4c84d4"), "FR": Color("4e88dc"), "DE": Color("d6a83a"), "IL": Color("4aa4ea"), "UA": Color("f0c438"),
+	"RU": Color("d84840"), "CN": Color("e64836"), "KP": Color("d44642"), "IN": Color("e89438"), "JP": Color("e25458"), "KR": Color("549ce0"),
+	"PK": Color("36a65c"), "SA": Color("3cb264"), "AE": Color("54b8c8"), "TR": Color("e04c48"), "EG": Color("d8a440"),
+}
 
 var B                         # battle.gd
 var layer: CanvasLayer
@@ -92,15 +102,33 @@ var last_event := Vector2.INF
 var load_lbl: Label
 var replay_lbl: Label
 var collapsed := false
-var mob_bar: HBoxContainer = null
+var is_mob := false
+var bar_h := BAR_H
+var mini_w := MINI_W
+var mini_h := MINI_H
+var bar_trim: ColorRect = null
+var mob_bar: Control = null
+var mob_top_bar: HBoxContainer = null
 var mob_box_btn: Button = null
+var mob_atk_btn: Button = null
+var mob_gen_btn: Button = null
 var _mob_box_lit := false
+var _mob_atk_lit := false
+var cmd_scroll: ScrollContainer = null
+var cmd_mob_row: HBoxContainer = null
+
+func bar_height() -> float:
+	return bar_h
 
 func _init(battle) -> void:
 	B = battle
 
 func build(l: CanvasLayer) -> void:
 	layer = l
+	is_mob = UI.is_mobile() or get_viewport().get_visible_rect().size.x < 1040.0
+	bar_h = MOB_BAR_H if is_mob else BAR_H
+	mini_w = MOB_MINI_W if is_mob else MINI_W
+	mini_h = MOB_MINI_H if is_mob else MINI_H
 	root = Control.new()
 	root.name = "Hud"
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -203,50 +231,53 @@ func _pow_icon(key: String) -> Texture2D:
 	_pow_icons[key] = tex
 	return tex
 
-# ---------------------------------------------------------------- bottom Zero Hour metallic control bar
+# ---------------------------------------------------------------- bottom Zero Hour metallic control bar (Desktop + Responsive Mobile)
 func _bar() -> void:
 	bar = Panel.new()
 	bar.name = "Bar"
 	bar.anchor_top = 1.0; bar.anchor_bottom = 1.0; bar.anchor_right = 1.0
-	bar.offset_top = -BAR_H
+	bar.offset_top = -bar_h
 	var sb := _steel(STEEL, STEEL_TOP, 0, 0)
 	sb.border_width_top = 2
 	bar.add_theme_stylebox_override("panel", sb)
 	root.add_child(bar)
 
-	# Subtle brass-gold top trim accent line across the Zero Hour console
-	var trim := ColorRect.new()
-	trim.color = Color(BRASS.r, BRASS.g, BRASS.b, 0.55)
-	trim.anchor_right = 1.0
-	trim.offset_top = 2; trim.offset_bottom = 3
-	trim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bar.add_child(trim)
+	# Faction-tinted metallic trim accent line across the Zero Hour console
+	bar_trim = ColorRect.new()
+	bar_trim.color = Color(BRASS.r, BRASS.g, BRASS.b, 0.72)
+	bar_trim.anchor_right = 1.0
+	bar_trim.offset_top = 2; bar_trim.offset_bottom = 4
+	bar_trim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.add_child(bar_trim)
 
-	# ---- LEFT WING: Heavy Beveled Radar Minimap + 5 Zero Hour Tactical Keys (MENU, DOZER, SUP, ALERT, GEN+XP)
+	# ---- LEFT WING: Heavy Beveled Radar Minimap
 	var mf := Panel.new()
-	mf.position = Vector2(8, 10); mf.size = Vector2(MINI_W + 6, MINI_H + 6)
+	mf.position = Vector2(6 if is_mob else 8, 8 if is_mob else 10)
+	mf.size = Vector2(mini_w + 6, mini_h + 6)
 	var mfs := _steel(WELL, Color("4d707f"), 2, 2)
 	mf.add_theme_stylebox_override("panel", mfs)
 	bar.add_child(mf)
 	mini = Control.new()
 	mini.name = "Minimap"
-	mini.position = Vector2(3, 3); mini.size = Vector2(MINI_W, MINI_H)
+	mini.position = Vector2(3, 3); mini.size = Vector2(mini_w, mini_h)
 	mini.clip_contents = true
 	mini.draw.connect(_mini_draw)
 	mini.gui_input.connect(_mini_input)
 	mf.add_child(mini)
 
-	# 5 flush military steel keys right beside radar: MENU, DOZER, SUP, ALERT, GEN (with live Rank/XP)
+	# 5 flush military steel keys right beside radar (Desktop only — Mobile puts them in ergonomic right thumb rail & top strip)
 	var bx := 234.0; var bw := 62.0
 	var mb := _tac_btn("MENU", func(): open_pause(), "Menu / Options / Sound (Esc)", bw, 28.0)
 	mb.name = "MenuBtn"
 	mb.position = Vector2(bx, 10); mb.size = Vector2(bw, 28)
+	mb.visible = not is_mob
 	bar.add_child(mb)
 
 	dozer_btn = _tac_btn("", func():
 		if B.has_method("select_idle_dozer"): B.select_idle_dozer(), "Jump to idle Construction Vehicle (B)", bw, 28.0)
 	dozer_btn.name = "DozerBtn"
-	dozer_btn.position = Vector2(bx, 41); dozer_btn.size = Vector2(bw, 28)
+	dozer_btn.position = Vector2(bx, 42); dozer_btn.size = Vector2(bw, 28)
+	dozer_btn.visible = not is_mob
 	dozer_lbl = UI.label("DOZER", 11, UI.TEXT, "bold")
 	dozer_lbl.position = Vector2(0, 5); dozer_lbl.size = Vector2(bw, 18)
 	dozer_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -256,7 +287,8 @@ func _bar() -> void:
 
 	sup_btn = _tac_btn("SUPPLY", func(): B.toggle_supply(), "Toggle supply lines on the ground (L)", bw, 28.0)
 	sup_btn.name = "SupBtn"
-	sup_btn.position = Vector2(bx, 72); sup_btn.size = Vector2(bw, 28)
+	sup_btn.position = Vector2(bx, 74); sup_btn.size = Vector2(bw, 28)
+	sup_btn.visible = not is_mob
 	bar.add_child(sup_btn)
 
 	alert_btn = _tac_btn("", func():
@@ -264,7 +296,8 @@ func _bar() -> void:
 			B.cam_target = last_event
 			alerts = 0, "Jump to last tactical alert (Space)", bw, 28.0)
 	alert_btn.name = "AlertBtn"
-	alert_btn.position = Vector2(bx, 103); alert_btn.size = Vector2(bw, 28)
+	alert_btn.position = Vector2(bx, 106); alert_btn.size = Vector2(bw, 28)
+	alert_btn.visible = not is_mob
 	chip_alert = UI.label("ALT 0", 11, UI.TEXT_DIM, "bold")
 	chip_alert.position = Vector2(0, 5); chip_alert.size = Vector2(bw, 18)
 	chip_alert.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -272,65 +305,72 @@ func _bar() -> void:
 	alert_btn.add_child(chip_alert)
 	bar.add_child(alert_btn)
 
-	star_btn = _tac_btn("", func(): open_powers(), "Generals' Promotions & Powers (P)", bw, 38.0)
+	star_btn = _tac_btn("", func(): open_powers(), "Generals' Promotions & Powers (P)", bw, 36.0)
 	star_btn.name = "StarBtn"
-	star_btn.position = Vector2(bx, 134); star_btn.size = Vector2(bw, 38)
+	star_btn.position = Vector2(bx, 137); star_btn.size = Vector2(bw, 36)
+	star_btn.visible = not is_mob
 	star_rank = UI.label("GEN R1", 11, UI.GOLD_HI, "bold")
 	star_rank.position = Vector2(0, 4); star_rank.size = Vector2(bw, 16)
 	star_rank.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	star_rank.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	star_btn.add_child(star_rank)
 	star_xp = _progress(UI.GOLD_HI)
-	star_xp.position = Vector2(5, 25); star_xp.size = Vector2(bw - 10, 6)
+	star_xp.position = Vector2(5, 26); star_xp.size = Vector2(bw - 10, 6)
 	star_xp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	star_btn.add_child(star_xp)
 	bar.add_child(star_btn)
 
-	# ---- CENTER WING: Integrated Zero Hour Telemetry Bezel + Framed 2x6 Zero Hour Cameo Deck
+	# ---- CENTER WING: Integrated Zero Hour Telemetry Bezel + Framed Uncropped Cameo Deck
 	var ca := Panel.new()
 	ca.name = "Cmd"
 	ca.anchor_right = 1.0
-	ca.offset_left = 302; ca.offset_right = -226; ca.offset_top = 10; ca.offset_bottom = 172
+	ca.offset_left = 114 if is_mob else 302
+	ca.offset_right = -24 if is_mob else -226
+	ca.offset_top = 8 if is_mob else 10
+	ca.offset_bottom = int(bar_h) - 6 if is_mob else 174
 	ca.add_theme_stylebox_override("panel", _steel(STEEL_DARK, STEEL_HI, 2, 2))
 	bar.add_child(ca)
 
 	var cv := VBoxContainer.new()
 	cv.set_anchors_preset(Control.PRESET_FULL_RECT)
 	cv.offset_left = 2; cv.offset_top = 2; cv.offset_right = -2; cv.offset_bottom = -2
-	cv.add_theme_constant_override("separation", 3)
+	cv.add_theme_constant_override("separation", 2 if is_mob else 3)
 	ca.add_child(cv)
 
-	# Integrated Top Telemetry Bezel (height = 30px)
+	# Integrated Top Telemetry Bezel
 	var hdr := PanelContainer.new()
 	hdr.name = "Plate"
-	hdr.custom_minimum_size.y = 30
+	hdr.custom_minimum_size.y = 24 if is_mob else 30
 	var hs := _steel(Color("0b141a"), STEEL_HI, 0, 0)
 	hs.border_width_bottom = 1
-	hs.content_margin_left = 8; hs.content_margin_right = 8; hs.content_margin_top = 2; hs.content_margin_bottom = 2
+	hs.content_margin_left = 6 if is_mob else 8; hs.content_margin_right = 6 if is_mob else 8; hs.content_margin_top = 1; hs.content_margin_bottom = 1
 	hdr.add_theme_stylebox_override("panel", hs)
 	cv.add_child(hdr)
 
 	var th := HBoxContainer.new()
-	th.add_theme_constant_override("separation", 8)
+	th.add_theme_constant_override("separation", 6 if is_mob else 8)
 	th.alignment = BoxContainer.ALIGNMENT_CENTER
 	hdr.add_child(th)
 
 	cmd_flag = Control.new()
-	cmd_flag.custom_minimum_size = Vector2(26, 16)
+	cmd_flag.custom_minimum_size = Vector2(22 if is_mob else 26, 14 if is_mob else 16)
 	cmd_flag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	cmd_flag.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	th.add_child(cmd_flag)
 
-	cmd_title = UI.label("TACTICAL COMMAND", 15, UI.GOLD_HI, "bold")
+	cmd_title = UI.label("TACTICAL COMMAND", 13 if is_mob else 15, UI.GOLD_HI, "bold")
 	cmd_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	cmd_title.clip_text = is_mob
+	if is_mob: cmd_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cmd_sub = UI.label("", 11, Color("8baab4"))
 	cmd_sub.clip_text = true
 	cmd_sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cmd_sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	cmd_sub.visible = not is_mob
 	th.add_child(cmd_title)
 	th.add_child(cmd_sub)
 
-	plate_money = UI.label("$0", 18, UI.GOLD_HI, "bold")
+	plate_money = UI.label("$0", 15 if is_mob else 18, UI.GOLD_HI, "bold")
 	plate_money.name = "Money"
 	plate_money.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	chip_money = plate_money
@@ -339,50 +379,68 @@ func _bar() -> void:
 
 	chip_sup = UI.label("SUPPLY OK", 12, UI.GREEN, "tight")
 	chip_sup.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	th.add_child(_vdiv())
+	chip_sup.visible = not is_mob
+	if not is_mob: th.add_child(_vdiv())
 	th.add_child(chip_sup)
 
-	plate_pop = UI.label("0/0", 12, UI.TEXT, "tight")
+	plate_pop = UI.label("0/0", 11 if is_mob else 12, UI.TEXT, "tight")
 	plate_pop.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	th.add_child(_vdiv())
 	th.add_child(plate_pop)
 
-	plate_pw = UI.label("PWR 0/0", 12, UI.TEXT, "tight")
+	plate_pw = UI.label("PWR 0/0", 11 if is_mob else 12, UI.TEXT, "tight")
 	plate_pw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	pw_bar = _progress(Color("38d65a"))
-	pw_bar.custom_minimum_size = Vector2(44, 7)
+	pw_bar.custom_minimum_size = Vector2(30 if is_mob else 44, 6 if is_mob else 7)
 	pw_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	th.add_child(_vdiv())
 	th.add_child(plate_pw)
 	th.add_child(pw_bar)
 
-	plate_time = UI.label("0:00", 12, Color("9cb4bc"), "mono")
+	plate_time = UI.label("0:00", 11 if is_mob else 12, Color("9cb4bc"), "mono")
 	plate_time.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	th.add_child(_vdiv())
+	if not is_mob: th.add_child(_vdiv())
+	plate_time.visible = not is_mob
 	th.add_child(plate_time)
 
-	# 2-Row Framed Zero Hour Cameo Grid + docked Production Queue strip
+	# Cameo Grid (Desktop: 2x7 framed Zero Hour grid; Mobile: sleek 1-row touch-scrollable large thumb cards!)
 	var grid_pad := MarginContainer.new()
 	grid_pad.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	grid_pad.add_theme_constant_override("margin_left", 4)
-	grid_pad.add_theme_constant_override("margin_right", 4)
-	grid_pad.add_theme_constant_override("margin_bottom", 3)
+	grid_pad.add_theme_constant_override("margin_left", 3 if is_mob else 4)
+	grid_pad.add_theme_constant_override("margin_right", 3 if is_mob else 4)
+	grid_pad.add_theme_constant_override("margin_bottom", 2 if is_mob else 3)
 	cv.add_child(grid_pad)
 
 	var hb2 := HBoxContainer.new()
-	hb2.add_theme_constant_override("separation", 6)
+	hb2.add_theme_constant_override("separation", 4 if is_mob else 6)
 	hb2.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hb2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid_pad.add_child(hb2)
 
-	cmd_grid = GridContainer.new()
-	cmd_grid.name = "Grid"
-	cmd_grid.columns = COLS
-	cmd_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cmd_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	cmd_grid.add_theme_constant_override("h_separation", 4)
-	cmd_grid.add_theme_constant_override("v_separation", 4)
-	hb2.add_child(cmd_grid)
+	if is_mob:
+		cmd_scroll = ScrollContainer.new()
+		cmd_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cmd_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		cmd_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		cmd_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		hb2.add_child(cmd_scroll)
+		cmd_mob_row = HBoxContainer.new()
+		cmd_mob_row.name = "Grid"
+		cmd_mob_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		cmd_mob_row.add_theme_constant_override("separation", 5)
+		cmd_scroll.add_child(cmd_mob_row)
+		cmd_grid = GridContainer.new()
+		cmd_grid.visible = false
+		hb2.add_child(cmd_grid)
+	else:
+		cmd_grid = GridContainer.new()
+		cmd_grid.name = "Grid"
+		cmd_grid.columns = COLS
+		cmd_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cmd_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		cmd_grid.add_theme_constant_override("h_separation", 4)
+		cmd_grid.add_theme_constant_override("v_separation", 4)
+		hb2.add_child(cmd_grid)
 
 	queue_row = HBoxContainer.new()
 	queue_row.name = "Queue"
@@ -391,28 +449,29 @@ func _bar() -> void:
 	queue_row.visible = false
 	hb2.add_child(queue_row)
 
-	# ---- RIGHT WING: Zero Hour Unit/Faction Portrait Card + Vertical Segmented Power Gauge
+	# ---- RIGHT WING: Zero Hour Unit/Faction Portrait Card (Desktop only — hidden on mobile so command cards have 100% width!)
 	var pf := Panel.new()
 	pf.name = "Portrait"
 	pf.anchor_left = 1.0; pf.anchor_right = 1.0
-	pf.offset_left = -218; pf.offset_right = -36; pf.offset_top = 10; pf.offset_bottom = 172
+	pf.offset_left = -218; pf.offset_right = -36; pf.offset_top = 10; pf.offset_bottom = 174
 	pf.add_theme_stylebox_override("panel", _steel(STEEL_DARK, STEEL_HI, 2, 2))
+	pf.visible = not is_mob
 	bar.add_child(pf)
 
 	var pwell := Panel.new()
-	pwell.position = Vector2(6, 6); pwell.size = Vector2(170, 92)
+	pwell.position = Vector2(6, 6); pwell.size = Vector2(170, 98)
 	pwell.add_theme_stylebox_override("panel", _steel(WELL, Color("29414b"), 1, 2))
 	pf.add_child(pwell)
 
 	port_pic = TextureRect.new()
 	port_pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	port_pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	port_pic.position = Vector2(3, 3); port_pic.size = Vector2(164, 86)
+	port_pic.position = Vector2(3, 3); port_pic.size = Vector2(164, 92)
 	pwell.add_child(port_pic)
 
-	# Idle faction command card shown inside Portrait well whenever nothing is selected (never an empty black void)
+	# Idle faction command card shown inside Portrait well whenever nothing is selected
 	port_idle_box = VBoxContainer.new()
-	port_idle_box.position = Vector2(8, 8); port_idle_box.size = Vector2(154, 78)
+	port_idle_box.position = Vector2(8, 8); port_idle_box.size = Vector2(154, 82)
 	port_idle_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	port_idle_box.add_theme_constant_override("separation", 4)
 	port_idle_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -434,27 +493,30 @@ func _bar() -> void:
 	port_idle_box.add_child(port_idle_xp)
 
 	port_name = UI.label("", 14, UI.TEXT, "bold")
-	port_name.position = Vector2(8, 100); port_name.size = Vector2(166, 19); port_name.clip_text = true
+	port_name.position = Vector2(8, 106); port_name.size = Vector2(166, 19); port_name.clip_text = true
 	pf.add_child(port_name)
 
 	port_hp = _progress(Color("38d65a"))
-	port_hp.position = Vector2(8, 121); port_hp.size = Vector2(166, 7)
+	port_hp.position = Vector2(8, 127); port_hp.size = Vector2(166, 7)
 	pf.add_child(port_hp)
 
 	port_ammo = _progress(Color("4da6ff"))
-	port_ammo.position = Vector2(8, 130); port_ammo.size = Vector2(166, 4)
+	port_ammo.position = Vector2(8, 136); port_ammo.size = Vector2(166, 4)
 	port_ammo.visible = false
 	pf.add_child(port_ammo)
 
 	port_info = UI.label("", 11, Color("bcced9"))
-	port_info.position = Vector2(8, 136); port_info.size = Vector2(166, 22); port_info.clip_text = true
+	port_info.position = Vector2(8, 142); port_info.size = Vector2(166, 22); port_info.clip_text = true
 	pf.add_child(port_info)
 
-	# Classic Zero Hour Vertical Segmented Power Gauge (20 x 158)
+	# Classic Zero Hour Vertical Segmented Power Gauge
 	pw_meter = _progress(Color("38d65a"))
 	pw_meter.fill_mode = ProgressBar.FILL_BOTTOM_TO_TOP
 	pw_meter.anchor_left = 1.0; pw_meter.anchor_right = 1.0
-	pw_meter.offset_left = -28; pw_meter.offset_right = -8; pw_meter.offset_top = 12; pw_meter.offset_bottom = 170
+	pw_meter.offset_left = -18 if is_mob else -28
+	pw_meter.offset_right = -6 if is_mob else -8
+	pw_meter.offset_top = 8 if is_mob else 12
+	pw_meter.offset_bottom = int(bar_h) - 6 if is_mob else 172
 	pw_meter.tooltip_text = "Power: made / used"
 	bar.add_child(pw_meter)
 
@@ -464,65 +526,101 @@ func _bar() -> void:
 	pw_ticks.draw.connect(_draw_pw_ticks)
 	pw_meter.add_child(pw_ticks)
 
-	# ---- CLEAN DOCKED BAR TABS & CONTEXT HINT (shown only during active placement / armed orders)
+	# ---- CLEAN DOCKED BAR TABS & CONTEXT HINT (zero overlap on desktop OR mobile!)
 	hint_lbl = UI.label("", 12, Color(0.95, 0.94, 0.84, 0.96), "bold")
-	hint_lbl.anchor_top = 1.0; hint_lbl.anchor_bottom = 1.0
-	hint_lbl.offset_left = 8; hint_lbl.offset_top = -BAR_H - 24; hint_lbl.offset_right = 760; hint_lbl.offset_bottom = -BAR_H - 2
+	if is_mob:
+		hint_lbl.anchor_left = 0.5; hint_lbl.anchor_right = 0.5; hint_lbl.anchor_top = 0.0; hint_lbl.anchor_bottom = 0.0
+		hint_lbl.offset_left = -220; hint_lbl.offset_right = 220; hint_lbl.offset_top = 6; hint_lbl.offset_bottom = 28
+		hint_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	else:
+		hint_lbl.anchor_top = 1.0; hint_lbl.anchor_bottom = 1.0
+		hint_lbl.offset_left = 8; hint_lbl.offset_top = -bar_h - 24; hint_lbl.offset_right = 760; hint_lbl.offset_bottom = -bar_h - 2
 	hint_lbl.clip_text = true
-	var hsb := _steel(Color(0.05, 0.09, 0.12, 0.88), UI.GOLD_DIM, 1, 2)
+	var hsb := _steel(Color(0.05, 0.09, 0.12, 0.90), UI.GOLD_DIM, 1, 2)
 	hsb.border_width_left = 3
 	hsb.content_margin_left = 9; hsb.content_margin_right = 9
 	hint_lbl.add_theme_stylebox_override("normal", hsb)
 	hint_lbl.visible = false
 	root.add_child(hint_lbl)
 
-	pause_btn = _tab_btn("II", func(): toggle_pause(), "Pause / Resume (Pause)")
-	pause_btn.name = "PauseBtn"
-	pause_btn.anchor_left = 1.0; pause_btn.anchor_right = 1.0; pause_btn.anchor_top = 1.0; pause_btn.anchor_bottom = 1.0
-	pause_btn.offset_left = -92; pause_btn.offset_right = -56; pause_btn.offset_top = -BAR_H - 22; pause_btn.offset_bottom = -BAR_H
-	root.add_child(pause_btn)
+	if is_mob:
+		# Mobile Top-Right Compact Controls (MENU, II, HIDE) — cleanly out of the way of bottom tray & hints!
+		mob_top_bar = HBoxContainer.new()
+		mob_top_bar.name = "MobileTopBar"
+		mob_top_bar.anchor_left = 1.0; mob_top_bar.anchor_right = 1.0
+		mob_top_bar.offset_left = -168; mob_top_bar.offset_right = -6; mob_top_bar.offset_top = 6; mob_top_bar.offset_bottom = 36
+		mob_top_bar.alignment = BoxContainer.ALIGNMENT_END
+		mob_top_bar.add_theme_constant_override("separation", 4)
+		root.add_child(mob_top_bar)
+		mob_top_bar.add_child(_tac_btn("MENU", func(): open_pause(), "Menu / Options", 54.0, 28.0))
+		pause_btn = _tac_btn("II", func(): toggle_pause(), "Pause / Resume", 36.0, 28.0)
+		pause_btn.name = "PauseBtn"
+		mob_top_bar.add_child(pause_btn)
+		hide_btn = _tac_btn("HIDE", func(): _toggle_collapse(), "Hide / show command bar", 48.0, 28.0)
+		hide_btn.name = "HideBtn"
+		mob_top_bar.add_child(hide_btn)
 
-	hide_btn = _tab_btn("HIDE", func(): _toggle_collapse(), "Hide / show command bar")
-	hide_btn.name = "HideBtn"
-	hide_btn.anchor_left = 1.0; hide_btn.anchor_right = 1.0; hide_btn.anchor_top = 1.0; hide_btn.anchor_bottom = 1.0
-	hide_btn.offset_left = -54; hide_btn.offset_right = -8; hide_btn.offset_top = -BAR_H - 22; hide_btn.offset_bottom = -BAR_H
-	root.add_child(hide_btn)
+		# Mobile Ergonomic Right-Edge Vertical Thumb Rail (never covers center battlefield!)
+		var rail := VBoxContainer.new()
+		rail.name = "MobileBar"
+		rail.anchor_left = 1.0; rail.anchor_right = 1.0; rail.anchor_top = 1.0; rail.anchor_bottom = 1.0
+		rail.offset_left = -74; rail.offset_right = -6
+		rail.offset_top = -bar_h - 210; rail.offset_bottom = -bar_h - 6
+		rail.alignment = BoxContainer.ALIGNMENT_END
+		rail.add_theme_constant_override("separation", 4)
+		root.add_child(rail)
+		mob_bar = rail
 
-	# Mobile Touch Tactical Strip (auto-shown on phones/tablets or ?mobile): thumb-first RTS controls!
-	if UI.is_mobile():
-		hint_lbl.offset_left = 472; hint_lbl.offset_right = 1160
-		mob_bar = HBoxContainer.new()
-		mob_bar.name = "MobileBar"
-		mob_bar.anchor_top = 1.0; mob_bar.anchor_bottom = 1.0
-		mob_bar.offset_left = 8; mob_bar.offset_top = -BAR_H - 42; mob_bar.offset_right = 468; mob_bar.offset_bottom = -BAR_H - 4
-		mob_bar.add_theme_constant_override("separation", 5)
-		root.add_child(mob_bar)
-		mob_box_btn = _tac_btn("BOX SEL", func():
+		rail.add_child(_tac_btn("DOZER", func():
+			if B.has_method("select_idle_dozer"): B.select_idle_dozer(), "Jump to Construction Vehicle & build", 68.0, 30.0))
+		mob_box_btn = _tac_btn("BOX", func():
 			B.touch_box_mode = not B.touch_box_mode
-			B._msg("Drag a box to select units" if B.touch_box_mode else "Pan mode"), "Toggle drag-box unit selection", 68.0, 34.0)
-		mob_bar.add_child(mob_box_btn)
-		mob_bar.add_child(_tac_btn("ATK-MV", func(): B._arm("amove"), "Tap target to Attack-Move", 64.0, 34.0))
-		mob_bar.add_child(_tac_btn("CLEAR", func():
+			B._msg("Drag a box to select units (or hold finger 0.3s)" if B.touch_box_mode else "Pan mode"), "Toggle drag-box selection", 68.0, 30.0)
+		rail.add_child(mob_box_btn)
+		mob_atk_btn = _tac_btn("ATK-MV", func(): B._arm("amove"), "Tap destination to Attack-Move", 68.0, 30.0)
+		rail.add_child(mob_atk_btn)
+		mob_gen_btn = _tac_btn("GEN", func(): open_powers(), "Generals' Powers", 68.0, 30.0)
+		rail.add_child(mob_gen_btn)
+		var tilt_row := HBoxContainer.new()
+		tilt_row.add_theme_constant_override("separation", 4)
+		tilt_row.add_child(_tac_btn("UP", func(): B.tilt_cam(-9.0), "Angle camera up (horizon)", 32.0, 28.0))
+		tilt_row.add_child(_tac_btn("DN", func(): B.tilt_cam(9.0), "Angle camera down (top-down)", 32.0, 28.0))
+		rail.add_child(tilt_row)
+		var util_row := HBoxContainer.new()
+		util_row.add_theme_constant_override("separation", 4)
+		util_row.add_child(_tac_btn("N", func(): B.cam_yaw_t = 0.0; B.cam_pitch_off_t = 0.0, "Reset camera angle", 32.0, 28.0))
+		util_row.add_child(_tac_btn("CLR", func():
 			B.place_kind = ""; B.armed = ""; B.touch_box_mode = false
 			if B.ghost != null: B.ghost.visible = false
-			B.bsel.clear(), "Deselect / cancel active order", 58.0, 34.0))
-		mob_bar.add_child(_tac_btn("Z+", func(): B._zoom(0.80), "Zoom in", 36.0, 34.0))
-		mob_bar.add_child(_tac_btn("Z-", func(): B._zoom(1.25), "Zoom out", 36.0, 34.0))
-		mob_bar.add_child(_tac_btn("UP", func(): B.tilt_cam(-9.0), "Angle camera upward (cinematic horizon)", 36.0, 34.0))
-		mob_bar.add_child(_tac_btn("DN", func(): B.tilt_cam(9.0), "Angle camera downward (tactical top-down)", 36.0, 34.0))
-		mob_bar.add_child(_tac_btn("N", func(): B.cam_yaw_t = 0.0; B.cam_pitch_off_t = 0.0, "Reset camera north-up & angle", 32.0, 34.0))
+			B.bsel.clear(), "Cancel / Deselect", 32.0, 28.0))
+		rail.add_child(util_row)
+	else:
+		pause_btn = _tab_btn("II", func(): toggle_pause(), "Pause / Resume (Pause)")
+		pause_btn.name = "PauseBtn"
+		pause_btn.anchor_left = 1.0; pause_btn.anchor_right = 1.0; pause_btn.anchor_top = 1.0; pause_btn.anchor_bottom = 1.0
+		pause_btn.offset_left = -92; pause_btn.offset_right = -56; pause_btn.offset_top = -bar_h - 22; pause_btn.offset_bottom = -bar_h
+		root.add_child(pause_btn)
+
+		hide_btn = _tab_btn("HIDE", func(): _toggle_collapse(), "Hide / show command bar")
+		hide_btn.name = "HideBtn"
+		hide_btn.anchor_left = 1.0; hide_btn.anchor_right = 1.0; hide_btn.anchor_top = 1.0; hide_btn.anchor_bottom = 1.0
+		hide_btn.offset_left = -54; hide_btn.offset_right = -8; hide_btn.offset_top = -bar_h - 22; hide_btn.offset_bottom = -bar_h
+		root.add_child(hide_btn)
 
 func _toggle_collapse() -> void:
 	collapsed = not collapsed
 	bar.visible = not collapsed
 	hide_btn.text = "SHOW" if collapsed else "HIDE"
-	var y_bot := 0.0 if collapsed else -BAR_H
-	hide_btn.offset_top = y_bot - 22.0; hide_btn.offset_bottom = y_bot
-	pause_btn.offset_top = y_bot - 22.0; pause_btn.offset_bottom = y_bot
-	hint_lbl.offset_top = y_bot - 24.0; hint_lbl.offset_bottom = y_bot - 2.0
-	if mob_bar != null:
-		mob_bar.offset_top = y_bot - 42.0; mob_bar.offset_bottom = y_bot - 4.0
-	powers_col.offset_bottom = y_bot - 28.0; powers_col.offset_top = y_bot - 380.0
+	var y_bot := 0.0 if collapsed else -bar_h
+	if not is_mob:
+		hide_btn.offset_top = y_bot - 22.0; hide_btn.offset_bottom = y_bot
+		pause_btn.offset_top = y_bot - 22.0; pause_btn.offset_bottom = y_bot
+		hint_lbl.offset_top = y_bot - 24.0; hint_lbl.offset_bottom = y_bot - 2.0
+		powers_col.offset_bottom = y_bot - 28.0; powers_col.offset_top = y_bot - 380.0
+	else:
+		if mob_bar != null:
+			mob_bar.offset_top = y_bot - 210.0; mob_bar.offset_bottom = y_bot - 6.0
+		powers_col.offset_bottom = y_bot - 6.0; powers_col.offset_top = y_bot - 220.0
 
 func _draw_pw_ticks() -> void:
 	var sz := pw_ticks.size
@@ -609,13 +707,19 @@ func _top() -> void:
 	root.add_child(replay_lbl)
 
 func _side() -> void:
-	# Ready Generals' powers / Strike rail: docked vertically above the right wing of the bottom bar
+	# Ready Generals' powers / Superweapon rail: left edge on mobile (so it never clashes with right thumb rail), right wing on desktop
 	powers_col = VBoxContainer.new()
 	powers_col.name = "Powers"
-	powers_col.anchor_left = 1.0; powers_col.anchor_right = 1.0
-	powers_col.anchor_top = 1.0; powers_col.anchor_bottom = 1.0
-	powers_col.offset_left = -92; powers_col.offset_right = -8
-	powers_col.offset_top = -BAR_H - 380; powers_col.offset_bottom = -BAR_H - 28
+	if is_mob:
+		powers_col.anchor_left = 0.0; powers_col.anchor_right = 0.0
+		powers_col.anchor_top = 1.0; powers_col.anchor_bottom = 1.0
+		powers_col.offset_left = 6; powers_col.offset_right = 90
+		powers_col.offset_top = -bar_h - 220; powers_col.offset_bottom = -bar_h - 6
+	else:
+		powers_col.anchor_left = 1.0; powers_col.anchor_right = 1.0
+		powers_col.anchor_top = 1.0; powers_col.anchor_bottom = 1.0
+		powers_col.offset_left = -96; powers_col.offset_right = -8
+		powers_col.offset_top = -bar_h - 380; powers_col.offset_bottom = -bar_h - 28
 	powers_col.alignment = BoxContainer.ALIGNMENT_END
 	powers_col.add_theme_constant_override("separation", 5)
 	powers_col.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -653,7 +757,10 @@ func alert(p: Vector2) -> void:
 func _sync_flags(fac: String) -> void:
 	if fac == _flag_fac or fac == "": return
 	_flag_fac = fac
-	for host_c in [[cmd_flag, 26.0, 16.0], [port_idle_flag, 34.0, 21.0]]:
+	if bar_trim != null:
+		var fc: Color = FAC_ACCENT.get(fac, BRASS)
+		bar_trim.color = Color(fc.r, fc.g, fc.b, 0.82)
+	for host_c in [[cmd_flag, 22.0 if is_mob else 26.0, 14.0 if is_mob else 16.0], [port_idle_flag, 34.0, 21.0]]:
 		var c: Control = host_c[0]
 		for ch in c.get_children(): ch.queue_free()
 		var fl: Control = Missions.flag(fac, float(host_c[1]), float(host_c[2]))
@@ -748,6 +855,16 @@ func tick(dt: float) -> void:
 			_mob_box_lit = mb_now
 			if mb_now: _style_tac(mob_box_btn, Color("44330e"), UI.GOLD_HI, UI.GOLD_HI)
 			else: _style_tac(mob_box_btn, Color("15232b"), STEEL_HI, UI.TEXT)
+	if mob_atk_btn != null:
+		var ma_now: bool = B.armed == "amove"
+		if ma_now != _mob_atk_lit:
+			_mob_atk_lit = ma_now
+			if ma_now: _style_tac(mob_atk_btn, Color("4a1c14"), Color("ff7a48"), Color("ffd4b0"))
+			else: _style_tac(mob_atk_btn, Color("15232b"), STEEL_HI, UI.TEXT)
+	if mob_gen_btn != null:
+		mob_gen_btn.text = "GEN +%d" % gp_pts if gp_pts > 0 else "GEN"
+		if gp_now: _style_tac(mob_gen_btn, Color("44330e"), UI.GOLD_HI, UI.GOLD_HI)
+		else: _style_tac(mob_gen_btn, Color("15232b"), STEEL_HI, UI.TEXT)
 
 	pause_btn.text = "|>" if B.paused else "II"
 
@@ -847,13 +964,13 @@ static func _get_tac_bg() -> GradientTexture2D:
 		_tac_bg_tex.gradient = gr
 	return _tac_bg_tex
 
-## Authentic C&C Generals: Zero Hour full-bleed 3D cameo button with beveled steel frame, gradient scrim, gold price pill & hotkey badge
+## Authentic C&C Generals: Zero Hour UNCROPPED 3D cameo button with beveled studio frame, solid nameplate strip, gold price pill & hotkey badge
 func _cameo_btn(it: Dictionary) -> Button:
 	var b := Button.new()
 	b.name = "Cmd_" + str(it.get("id", it.label))
 	b.focus_mode = Control.FOCUS_NONE
-	b.custom_minimum_size = Vector2(96, 58)
-	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.custom_minimum_size = Vector2(88, 72) if is_mob else Vector2(92, 58)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN if is_mob else Control.SIZE_EXPAND_FILL
 	b.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	b.disabled = not bool(it.get("ok", true))
 	b.tooltip_text = str(it.get("tip", ""))
@@ -868,51 +985,44 @@ func _cameo_btn(it: Dictionary) -> Button:
 	b.add_theme_stylebox_override("pressed", p_sb)
 	b.add_theme_stylebox_override("disabled", d_sb)
 
+	var lbl_s := str(it.label)
+	var art_bot := -18.0 if lbl_s != "" else -2.0
+
 	var tex = B.cameo(str(it.get("cameo", "")))
 	var is_svg_icon := false
 	if tex == null:
 		tex = _cmd_icon(str(it.get("id", "")))
 		is_svg_icon = tex != null
 
+	# Sleek studio backdrop behind every cameo so aspect-preserved art fills the frame harmoniously
+	var bg := TextureRect.new()
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.offset_left = 2; bg.offset_top = 2; bg.offset_right = -2; bg.offset_bottom = art_bot
+	bg.texture = _get_tac_bg()
+	bg.modulate = Color(1.12, 0.98, 0.68) if is_on else (Color(0.50, 0.54, 0.58) if b.disabled else Color(0.85, 0.90, 0.96))
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(bg)
+
 	if tex != null and not is_svg_icon:
-		# Full-bleed 3D rendered Generals cameo portrait filling the entire metallic card!
+		# ZERO-CROP centered 3D Generals cameo portrait — 100% of every building, tank, jet & soldier stays crisp and visible!
 		var tr := TextureRect.new()
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.set_anchors_preset(Control.PRESET_FULL_RECT)
-		tr.offset_left = 2; tr.offset_top = 2; tr.offset_right = -2; tr.offset_bottom = -2
+		tr.offset_left = 3; tr.offset_top = 2; tr.offset_right = -3; tr.offset_bottom = art_bot
 		tr.texture = tex
-		if b.disabled: tr.modulate = Color(0.38, 0.40, 0.43)
-		elif is_on: tr.modulate = Color(1.12, 1.06, 0.92)
+		if b.disabled: tr.modulate = Color(0.42, 0.44, 0.48)
+		elif is_on: tr.modulate = Color(1.14, 1.08, 0.94)
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(tr)
-
-		# Sleek top/bottom scrim so unit title & cost pill pop crisply over the 3D render
-		var sc := TextureRect.new()
-		sc.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		sc.stretch_mode = TextureRect.STRETCH_SCALE
-		sc.set_anchors_preset(Control.PRESET_FULL_RECT)
-		sc.offset_left = 2; sc.offset_top = 2; sc.offset_right = -2; sc.offset_bottom = -2
-		sc.texture = _get_scrim()
-		sc.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(sc)
 	elif tex != null and is_svg_icon:
-		# 3D-lit beveled tactical studio backdrop + embossed metallic emblem with drop shadow
-		var bg := TextureRect.new()
-		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		bg.stretch_mode = TextureRect.STRETCH_SCALE
-		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-		bg.offset_left = 2; bg.offset_top = 2; bg.offset_right = -2; bg.offset_bottom = -2
-		bg.texture = _get_tac_bg()
-		bg.modulate = Color(1.15, 1.0, 0.65) if is_on else (Color(0.55, 0.58, 0.62) if b.disabled else Color.WHITE)
-		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		b.add_child(bg)
-
 		var sh := TextureRect.new()
 		sh.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		sh.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		sh.anchor_left = 0.5; sh.anchor_right = 0.5; sh.anchor_top = 0.0; sh.anchor_bottom = 0.0
-		sh.offset_left = -14; sh.offset_right = 18; sh.offset_top = 7; sh.offset_bottom = 37
+		sh.offset_left = -13; sh.offset_right = 17; sh.offset_top = 7; sh.offset_bottom = 35
 		sh.texture = tex
 		sh.modulate = Color(0.0, 0.0, 0.0, 0.65)
 		sh.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -922,23 +1032,34 @@ func _cameo_btn(it: Dictionary) -> Button:
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		tr.anchor_left = 0.5; tr.anchor_right = 0.5; tr.anchor_top = 0.0; tr.anchor_bottom = 0.0
-		tr.offset_left = -16; tr.offset_right = 16; tr.offset_top = 5; tr.offset_bottom = 35
+		tr.offset_left = -15; tr.offset_right = 15; tr.offset_top = 5; tr.offset_bottom = 33
 		tr.texture = tex
 		tr.modulate = UI.GOLD_HI if is_on else (Color("e2f0f6") if not b.disabled else Color(0.42, 0.44, 0.46))
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(tr)
 
-	# Crisp bottom title label across the scrim
-	var lbl_s := str(it.label)
+	# Dedicated solid dark gunmetal nameplate strip at bottom (NEVER obscures the vehicle/building artwork!)
 	if lbl_s != "":
-		var nm := UI.label(lbl_s, 12, UI.GOLD_HI if is_on else (Color(0.96, 0.97, 0.96) if not b.disabled else Color(0.56, 0.60, 0.60)), "bold")
+		var plate := ColorRect.new()
+		plate.color = Color("1f1808") if is_on else Color("070e13")
+		plate.anchor_left = 0.0; plate.anchor_right = 1.0; plate.anchor_top = 1.0; plate.anchor_bottom = 1.0
+		plate.offset_left = 2; plate.offset_right = -2; plate.offset_top = -18; plate.offset_bottom = -2
+		plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(plate)
+
+		var div := ColorRect.new()
+		div.color = Color(UI.GOLD.r, UI.GOLD.g, UI.GOLD.b, 0.55) if is_on else Color(STEEL_HI.r, STEEL_HI.g, STEEL_HI.b, 0.55)
+		div.anchor_left = 0.0; div.anchor_right = 1.0; div.anchor_top = 1.0; div.anchor_bottom = 1.0
+		div.offset_left = 2; div.offset_right = -2; div.offset_top = -18; div.offset_bottom = -17
+		div.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(div)
+
+		var nm := UI.label(lbl_s, 11, UI.GOLD_HI if is_on else (Color(0.95, 0.97, 0.96) if not b.disabled else Color(0.56, 0.60, 0.62)), "bold")
 		nm.anchor_left = 0.0; nm.anchor_right = 1.0; nm.anchor_top = 1.0; nm.anchor_bottom = 1.0
-		nm.offset_left = 4; nm.offset_right = -4; nm.offset_top = -19; nm.offset_bottom = -2
+		nm.offset_left = 3; nm.offset_right = -3; nm.offset_top = -18; nm.offset_bottom = -1
 		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		nm.clip_text = true
 		nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		nm.add_theme_constant_override("outline_size", 3)
-		nm.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.92))
 		nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(nm)
 
@@ -1006,15 +1127,20 @@ func _cmd_bar() -> void:
 	cmd_title.text = title_s if title_s != "" else "TACTICAL COMMAND"
 	cmd_sub.text = str(d.get("sub", ""))
 
-	var cols := 7 if items.size() > COLS * 2 else COLS
-	var slots := cols * 2
-	cmd_grid.columns = cols
-	for c in cmd_grid.get_children(): c.free()
-	var shown := mini(items.size(), slots)
-	for i in shown:
-		cmd_grid.add_child(_cameo_btn(items[i]))
-	for i in range(shown, slots):
-		cmd_grid.add_child(_empty_slot())
+	if is_mob and cmd_mob_row != null:
+		for c in cmd_mob_row.get_children(): c.free()
+		for it in items:
+			cmd_mob_row.add_child(_cameo_btn(it))
+	else:
+		var cols := 8 if items.size() > COLS * 2 else COLS
+		var slots := cols * 2
+		cmd_grid.columns = cols
+		for c in cmd_grid.get_children(): c.free()
+		var shown := mini(items.size(), slots)
+		for i in shown:
+			cmd_grid.add_child(_cameo_btn(items[i]))
+		for i in range(shown, slots):
+			cmd_grid.add_child(_empty_slot())
 
 	for c in queue_row.get_children(): c.free()
 	queue_row.visible = not queue.is_empty()
@@ -1166,12 +1292,12 @@ func _mission() -> void:
 # ---------------------------------------------------------------- minimap (green yours, red enemy, gray neutral, supply area)
 func _mk() -> Vector2:
 	var mw := float(B.map.MAPW); var mh := float(B.map.MAPH)
-	var k := minf(MINI_W / mw, MINI_H / mh)
+	var k := minf(mini_w / mw, mini_h / mh)
 	return Vector2(k, k)
 
 func _mo() -> Vector2:
 	var k := _mk().x
-	return Vector2((MINI_W - float(B.map.MAPW) * k) * 0.5, (MINI_H - float(B.map.MAPH) * k) * 0.5)
+	return Vector2((mini_w - float(B.map.MAPW) * k) * 0.5, (mini_h - float(B.map.MAPH) * k) * 0.5)
 
 func _mini_bake() -> void:
 	var map: Dictionary = B.map
@@ -1207,16 +1333,16 @@ func _mini_draw() -> void:
 	if mini_tex == null: _mini_bake()
 	var sim = B.sim
 	var k := _mk().x; var o := _mo()
-	mini.draw_rect(Rect2(Vector2.ZERO, Vector2(MINI_W, MINI_H)), Color(0.02, 0.04, 0.05))
+	mini.draw_rect(Rect2(Vector2.ZERO, Vector2(mini_w, mini_h)), Color(0.02, 0.04, 0.05))
 	mini.draw_texture(mini_tex, o)
 	# Subtle tactical radar grid overlay
 	var gc := Color(0.45, 0.72, 0.78, 0.08)
 	for gx in 3:
-		var lx := MINI_W * float(gx + 1) / 4.0
-		mini.draw_line(Vector2(lx, 0), Vector2(lx, MINI_H), gc, 1.0)
+		var lx := mini_w * float(gx + 1) / 4.0
+		mini.draw_line(Vector2(lx, 0), Vector2(lx, mini_h), gc, 1.0)
 	for gy in 2:
-		var ly := MINI_H * float(gy + 1) / 3.0
-		mini.draw_line(Vector2(0, ly), Vector2(MINI_W, ly), gc, 1.0)
+		var ly := mini_h * float(gy + 1) / 3.0
+		mini.draw_line(Vector2(0, ly), Vector2(mini_w, ly), gc, 1.0)
 	# supply area: yours green, enemy red where you have seen it (lines when the sim has supply roads, else the circles)
 	var sp: Array = B.supply_draw()
 	for s in sp:
@@ -1248,7 +1374,7 @@ func _mini_draw() -> void:
 	# Zero Hour corner radar ticks
 	var tc := Color(UI.GOLD.r, UI.GOLD.g, UI.GOLD.b, 0.65)
 	var L := 8.0
-	for corner in [[Vector2(2, 2), Vector2(1, 1)], [Vector2(MINI_W - 2, 2), Vector2(-1, 1)], [Vector2(2, MINI_H - 2), Vector2(1, -1)], [Vector2(MINI_W - 2, MINI_H - 2), Vector2(-1, -1)]]:
+	for corner in [[Vector2(2, 2), Vector2(1, 1)], [Vector2(mini_w - 2, 2), Vector2(-1, 1)], [Vector2(2, mini_h - 2), Vector2(1, -1)], [Vector2(mini_w - 2, mini_h - 2), Vector2(-1, -1)]]:
 		var cp: Vector2 = corner[0]; var cd: Vector2 = corner[1]
 		mini.draw_line(cp, cp + Vector2(cd.x * L, 0), tc, 1.4)
 		mini.draw_line(cp, cp + Vector2(0, cd.y * L), tc, 1.4)
@@ -1256,7 +1382,7 @@ func _mini_draw() -> void:
 	var vs := mini.get_viewport().get_visible_rect().size
 	var pts: Array = []
 	var mw := float(B.map.MAPW); var mh := float(B.map.MAPH)
-	for s2 in [Vector2(0, 0), Vector2(vs.x, 0), Vector2(vs.x, vs.y - BAR_H), Vector2(0, vs.y - BAR_H)]:
+	for s2 in [Vector2(0, 0), Vector2(vs.x, 0), Vector2(vs.x, vs.y - bar_h), Vector2(0, vs.y - bar_h)]:
 		var g: Vector2 = B._ground_at(s2)
 		if g == Vector2.INF:
 			var ro: Vector3 = B.cam.project_ray_origin(s2)
@@ -1275,12 +1401,20 @@ func mini_to_world(p: Vector2) -> Vector2:
 	return (p - _mo()) / _mk().x
 
 func _mini_input(ev: InputEvent) -> void:
-	if not (ev is InputEventMouseButton or ev is InputEventMouseMotion) or B.sim == null: return
+	if B.sim == null: return
+	if ev is InputEventScreenTouch or ev is InputEventScreenDrag:
+		var w_t := mini_to_world(ev.position)
+		B.cam_target = w_t
+		mini.accept_event()
+		return
+	if not (ev is InputEventMouseButton or ev is InputEventMouseMotion): return
 	var w := mini_to_world(ev.position)
 	if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_RIGHT:
 		B.order_at_world(w, ev.ctrl_pressed, ev.alt_pressed)
+		mini.accept_event()
 	elif (ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT) or (ev is InputEventMouseMotion and ev.button_mask & MOUSE_BUTTON_MASK_LEFT):
 		B.cam_target = w
+		mini.accept_event()
 
 # ---------------------------------------------------------------- windows (one at a time; Esc closes)
 func close_window() -> void:

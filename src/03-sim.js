@@ -63,7 +63,7 @@ function aiCls(s){return s.dom==='air'?'air':isInf(s)?'inf':s.dom==='ground'&&(s
 // d = difficulty 0-2, plus 10 x personality code (so the existing difficulty channel carries it to clients' hosts and the server).
 function mkAI(d){d|=0;let p=d>=10?Math.floor(d/10):0;d=Math.max(0,Math.min(DIFF.length-1,d%10));if(p===9)p=1+Math.floor(Math.random()*(PERS.length-1));if(!PERS[p])p=0;const D=DIFF[d];return{bi:0,wave:Math.max(4,Math.round(D.wave*((G&&G.bs)||BATTLE)*(PERS[p].wave||1))),inc:D.inc,t:0,d,p};}
 const setup={p:'IR',a:'US',d:1,n:1,bs:BATTLE};
-function swSup(fac){const S=FACTIONS[fac].sup;return swBattle()?Object.assign({},S,{charge:SW_CHARGE,name:SW_NAME[fac]||S.name}):S;}
+function swSup(fac){const S=FACTIONS[fac].sup;return swBattle()?Object.assign({},S,{charge:Math.max(150,Math.min(220,S.charge||SW_CHARGE))}):S;}
 function mkTeam(id,fac,ai){const F=FACTIONS[fac];return{id,fac,F,sup:swSup(fac),credits:3000,charge:0,tun:[],rq:{},upg:{},rally:null,
   color:F.color,dark:shade(F.color,.45),built:0,lost:0,kills:0,gxp:0,rank:1,spent:0,pw:{},gdoc:'',gperk:{},reveals:[],ai:ai?mkAI(setup.d):null,st:stNew()};}
 // Alliances: players on the same team never fight, share vision and win together.
@@ -1232,7 +1232,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   if(T.ai.t%3===1){const hq0=mine.find(e=>e.isB&&e.kind==='hq');for(const d of mine){if(d.kind!=='dozer'||!d.order||d.order.type!=='build')continue;const b=d.order.target;if(!b||b.dead)continue;let foe=null,fd=1e9;for(const e of G.ents){if(e.dead||e.isB||e.team===id||ally(e.team,id)||e.team<0||!e.s||e.s.noAttack)continue;const q=Math.hypot(e.x-d.x,e.y-d.y);if(q<fd){fd=q;foe=e;}}
     if(foe&&fd<260&&hq0&&Math.hypot(hq0.x-d.x,hq0.y-d.y)>200){d.dzFlee=G.t+8;d.order={type:'move',x:hq0.x,y:hq0.y};d.path=null;continue;}
     let g=0;for(const u of mine){if(g>=3)break;if(u.isB||u.kind==='dozer'||u.kind==='harv'||u.kind==='hacker'||u.s.noAttack||u.s.dom!=='ground'||u.order||u.target)continue;if(Math.hypot(u.x-b.x,u.y-b.y)<700){g++;if(Math.hypot(u.x-b.x,u.y-b.y)>150)setMove(u,b.x+((u.id%5)-2)*30,b.y+((u.id%3)-1)*40,'amove');}}}}
-  let ORD=aiPers(T).ord?[...aiPers(T).ord,...AIORDER]:AIORDER;if(G.battle){ORD=ORD.filter(k=>k!=='uplink');if(T.ai.d>=1&&G.t>330)ORD.splice(Math.min(7,ORD.length),0,'uplink');}   /* Battle: Medium/Hard/Brutal build their faction superweapon once mid-game is underway so Generals-style superweapon battles actually unfold */
+  let ORD=aiPers(T).ord?[...aiPers(T).ord,...AIORDER]:AIORDER;if(G.battle){ORD=ORD.filter(k=>k!=='uplink');if(T.ai.d>=1&&G.t>260)ORD.splice(Math.min(6,ORD.length),0,'uplink');}   /* Battle: Medium/Hard/Brutal build their faction superweapon once mid-game is underway so Generals-style superweapon battles actually unfold */
   while(ORD[T.ai.bi]&&(!bldAllowed(T.fac,ORD[T.ai.bi])||ORD[T.ai.bi]==='shipyard'))T.ai.bi++;
   /* a side the AI takes over mid-battle (host left, 07b ckpt) starts its build list at 0: steps it already owns are done, not saved up for again (it used to hoard for a second Barracks and never trained anyone) */
   while(ORD[T.ai.bi]&&STRUCT[ORD[T.ai.bi]]){const k=ORD[T.ai.bi];let had=0,before=0;for(const e of mine)if(e.isB&&e.kind===k)had++;for(let i=0;i<T.ai.bi;i++)if(ORD[i]===k)before++;if(had<=before)break;T.ai.bi++;}
@@ -1255,7 +1255,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   // army is thin. A poor AI used to hoard for its Strike Center/airfield/expansion with an empty field and get wiped
   // out; now it keeps fielding troops until it has a real army, and builds the extras from the surplus.
   const armyN=mine.filter(e=>!e.isB&&!e.s.noAttack&&e.s.dom!=='naval'&&!['harv','hacker','dozer'].includes(e.kind)).length,thin=armyN<Math.max(6,Math.round(T.ai.wave*.5));
-  const reserve=Math.max((nk&&reqMet(id,nk)&&(!thin||nk==='barracks'||nk==='factory'))?bstats(T.fac,nk).cost*(T.ai.bi<6?1:.6):0,T.ai.saveHq&&!thin?bstats(T.fac,'hq').cost*.8:0,T.ai.nvW&&!thin?bstats(T.fac,'shipyard').cost*.8:0);
+  const reserve=Math.max((nk&&reqMet(id,nk)&&(!thin||nk==='barracks'||nk==='factory'))?bstats(T.fac,nk).cost*(nk==='uplink'?1.0:(T.ai.bi<6?1:.6)):0,T.ai.saveHq&&!thin?bstats(T.fac,'hq').cost*.8:0,T.ai.nvW&&!thin?bstats(T.fac,'shipyard').cost*.8:0);
   const DC=DOCT[T.fac]||{},R=roster(T.fac),enemyAir=G.ents.filter(e=>e.team===en&&!e.isB&&e.s.dom==='air').length;
   // Combined arms: the barracks used to spend every dollar first (riflemen are always affordable), so the AI fielded
   // almost nothing but infantry and nations whose strength is armour (Merkava, Leclerc, Abrams) never used it. Once the

@@ -17,10 +17,10 @@ float hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453)
 void fragment() {
 	vec2 px = SCREEN_PIXEL_SIZE;
 	vec3 c = texture(scr, SCREEN_UV).rgb;
-	// Subtle clarity unsharp mask clamped to avoid halos around bright edges
+	// Crisp micro-clarity unsharp mask clamped to keep edges razor-sharp without bright halos
 	vec3 n = texture(scr, SCREEN_UV + vec2(px.x, 0.0)).rgb + texture(scr, SCREEN_UV - vec2(px.x, 0.0)).rgb
 		+ texture(scr, SCREEN_UV + vec2(0.0, px.y)).rgb + texture(scr, SCREEN_UV - vec2(0.0, px.y)).rgb;
-	vec3 detail = clamp((c - n * 0.25) * 0.28 * sharpen, vec3(-0.08), vec3(0.08));
+	vec3 detail = clamp((c - n * 0.25) * 0.42 * sharpen, vec3(-0.095), vec3(0.095));
 	c = clamp(c + detail, vec3(0.0), vec3(1.0));
 
 	// Linear-space color balance & saturation

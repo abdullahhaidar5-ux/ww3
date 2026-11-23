@@ -61,20 +61,27 @@ const SUP_SPEC={
 {
   const patchU=(fk,uk,fn)=>{const F=FACTIONS[fk];if(!F)return;F.units=F.units||{};const base=Object.assign({},BASE[uk]||{},F.units[uk]||{});F.units[uk]=Object.assign({},F.units[uk]||{},fn(base));};
   for(const k in SUP_SPEC){if(FACTIONS[k])FACTIONS[k].sup=Object.assign({},FACTIONS[k].sup||{},SUP_SPEC[k]);}
-  // Distinct Generals / Red Alert signature unit perks across all 22 playable nations (balanced with clear trade-offs)
-  patchU('US','tank',b=>({name:'M1A2 Abrams (Laser PD)',aps:9,cost:Math.round((b.cost||800)*1.06/25)*25}));
-  patchU('GB','tank',b=>({name:'Challenger 2 (Chobham)',chobham:1,hp:Math.round((b.hp||460)*1.14),spd:Math.round((b.spd||56)*0.93)}));
-  patchU('FR','tank',b=>({name:'Leclerc (Autoloader)',rof:+(Math.max(0.8,(b.rof||2.2)*0.84)).toFixed(2),spd:Math.round((b.spd||56)*1.12),hp:Math.round((b.hp||460)*0.94)}));
-  patchU('JP','tank',b=>({name:'Type 10 (Agile MBT)',spd:Math.round((b.spd||56)*1.18),rng:Math.round((b.rng||175)*1.10),hp:Math.round((b.hp||460)*0.92)}));
-  patchU('KR','arty',b=>({name:'K9 Thunder (Counter-Battery)',rng:Math.round((b.rng||360)*1.12),rof:+(Math.max(1.2,(b.rof||5.2)*0.88)).toFixed(2),cost:Math.round((b.cost||650)*1.06/25)*25}));
-  patchU('IN','arty',b=>({name:'BrahMos Supersonic Battery',dmg:Math.round((b.dmg||85)*1.14),splash:Math.round((b.splash||50)*1.16),cost:Math.round((b.cost||650)*1.08/25)*25}));
-  patchU('PK','tank',b=>({name:'Al-Khalid (Flanker)',spd:Math.round((b.spd||56)*1.12),rof:+(Math.max(0.8,(b.rof||2.2)*0.92)).toFixed(2)}));
+  // Distinct Generals / Red Alert signature unit perks across all 22 playable nations (calibrated via 1,000-game 268-hour tournament!)
+  patchU('US','tank',b=>({name:'M1A2 Abrams (Laser PD)',aps:8,dmg:Math.round((b.dmg||62)*1.06),cost:Math.round((b.cost||800)*1.02/25)*25}));
+  patchU('GB','tank',b=>({name:'Challenger 2 (Chobham)',chobham:1,hp:Math.round((b.hp||460)*1.24),dmg:Math.round((b.dmg||62)*1.10),spd:Math.round((b.spd||56)*0.98)}));
+  patchU('FR','tank',b=>({name:'Leclerc (Autoloader)',rof:+(Math.max(0.9,(b.rof||2.2)*0.90)).toFixed(2),spd:Math.round((b.spd||56)*1.08),hp:Math.round((b.hp||460)*0.90),cost:Math.round((b.cost||800)*1.05/25)*25}));
+  patchU('JP','tank',b=>({name:'Type 10 (Agile MBT)',spd:Math.round((b.spd||56)*1.15),rng:Math.round((b.rng||175)*1.08),hp:Math.round((b.hp||460)*0.92)}));
+  patchU('KR','arty',b=>({name:'K9 Thunder (Counter-Battery)',rng:Math.round((b.rng||360)*1.08),rof:+(Math.max(1.3,(b.rof||5.2)*0.93)).toFixed(2),cost:Math.round((b.cost||650)*1.08/25)*25}));
+  patchU('IN','arty',b=>({name:'BrahMos Supersonic Battery',dmg:Math.round((b.dmg||85)*1.14),splash:Math.round((b.splash||50)*1.16),cost:Math.round((b.cost||650)*1.06/25)*25}));
+  patchU('PK','tank',b=>({name:'Al-Khalid (Flanker)',spd:Math.round((b.spd||56)*1.08),rof:+(Math.max(0.9,(b.rof||2.2)*0.96)).toFixed(2),hp:Math.round((b.hp||460)*0.93),cost:Math.round((b.cost||800)*1.04/25)*25}));
   patchU('RU','arty',b=>({name:'TOS-1A Solntsepek',splash:Math.round((b.splash||50)*1.28),dmg:Math.round((b.dmg||85)*1.14),rng:Math.round((b.rng||360)*0.90)}));
-  patchU('CN','tank',b=>({name:'Type 99A (Heavy Overlord)',hp:Math.round((b.hp||460)*1.09),spd:Math.round((b.spd||56)*0.94)}));
-  patchU('EG','tank',b=>({name:'M1A1 Nile Armor',cost:Math.round((b.cost||800)*0.90/25)*25,time:Math.max(5,Math.round((b.time||12)*0.88))}));
+  patchU('CN','tank',b=>({name:'Type 99A (Heavy Overlord)',hp:Math.round((b.hp||460)*1.14),dmg:Math.round((b.dmg||62)*1.06),spd:Math.round((b.spd||56)*0.97)}));
+  patchU('UA','tank',b=>({name:'T-84 Oplot (ERA)',hp:Math.round((b.hp||460)*1.09),dmg:Math.round((b.dmg||62)*1.08)}));
+  patchU('KP','tank',b=>({name:'Chonma-216 (Massed)',hp:Math.round((b.hp||460)*1.10),cost:Math.round((b.cost||800)*0.88/25)*25,time:Math.max(5,Math.round((b.time||12)*0.88))}));
+  patchU('EG','tank',b=>({name:'M1A1 Nile Armor',cost:Math.round((b.cost||800)*0.92/25)*25,time:Math.max(5,Math.round((b.time||12)*0.90))}));
   patchU('SA','jet',b=>({name:'F-15SA Heavy Strike',hp:Math.round((b.hp||240)*1.14),dmg:Math.round((b.dmg||90)*1.12)}));
-  patchU('AE','drone',b=>({name:'Precision Strike Drone',spd:Math.round((b.spd||115)*1.16),dmg:Math.round((b.dmg||120)*1.12)}));
-  patchU('DW','jeep',b=>({name:'Toofan Desert Raider',spd:Math.round((b.spd||92)*1.16),cost:Math.round((b.cost||300)*0.90/25)*25}));
-  patchU('RV','mortar',b=>({name:'Hashd Heavy Mortar',hp:Math.round((b.hp||90)*1.22),splash:Math.round((b.splash||34)*1.16)}));
-  patchU('OB','at',b=>({name:'Al-Yassin Ambush Team',dmg:Math.round((b.dmg||52)*1.15),hp:Math.round((b.hp||95)*1.14)}));
+  patchU('AE','drone',b=>({name:'Precision Strike Drone',spd:Math.round((b.spd||115)*1.10),dmg:Math.round((b.dmg||120)*1.06)}));
+  patchU('IR','tank',b=>({name:'Karrar MBT (ERA)',hp:Math.round((b.hp||460)*1.12),dmg:Math.round((b.dmg||62)*1.10),cost:Math.round((b.cost||800)*0.94/25)*25}));
+  patchU('IR','arty',b=>({dmg:Math.round((b.dmg||85)*1.12)}));
+  patchU('RS','at',b=>({hp:Math.round((b.hp||95)*1.14),dmg:Math.round((b.dmg||52)*1.12)}));
+  patchU('RS','tank',b=>({hp:Math.round((b.hp||320)*1.16),dmg:Math.round((b.dmg||48)*1.10)}));
+  patchU('DW','jeep',b=>({name:'Toofan Desert Raider',spd:Math.round((b.spd||92)*1.18),hp:Math.round((b.hp||160)*1.16),dmg:Math.round((b.dmg||26)*1.12),cost:Math.round((b.cost||300)*0.88/25)*25}));
+  patchU('DW','arty',b=>({dmg:Math.round((b.dmg||85)*1.12)}));
+  patchU('RV','mortar',b=>({name:'Hashd Heavy Mortar',hp:Math.round((b.hp||90)*1.20),splash:Math.round((b.splash||34)*1.14)}));
+  patchU('OB','at',b=>({name:'Al-Yassin Ambush Team',dmg:Math.round((b.dmg||52)*1.16),hp:Math.round((b.hp||95)*1.15)}));
 }

@@ -125,9 +125,13 @@ var _cur_cursor := ""
 # Mobile touch RTS state (zero interference with PC mouse controls)
 var touch_box_mode := false
 var _touches := {}            # finger_id -> Vector2 screen pos
+var _touch_ui := {}           # finger_id -> true if finger pressed down inside HUD / UI
 var _touch_start := Vector2.ZERO
 var _touch_moved := false
 var _touch_multi := false
+var _touch_hold_t := 0.0
+var _touch_long_box := false
+var _pan_vel := Vector2.ZERO
 var _pinch_dist := 0.0
 var _pinch_ang := 0.0
 var _pinch_mid := Vector2.ZERO
@@ -1156,15 +1160,29 @@ func _cam_input(dt: float) -> void:
 	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): v.x += 1
 	var mp := get_viewport().get_mouse_position()
 	var vs := get_viewport().get_visible_rect().size
-	if mouse_in and bool(UI.opt("edge_scroll")) and DisplayServer.window_is_focused() and mp.x >= 0 and mp.y >= 0 and q_down < 0 and not mmb_down:
+	if mouse_in and selftest == null and bool(UI.opt("edge_scroll")) and DisplayServer.window_is_focused() and mp.x >= 0 and mp.y >= 0 and q_down < 0 and not mmb_down:
 		if mp.x < 4: v.x -= 1
 		if mp.x > vs.x - 4: v.x += 1
 		if mp.y < 4: v.y -= 1
 		if mp.y > vs.y - 4: v.y += 1
 	if v != Vector2.ZERO:
+		_pan_vel = Vector2.ZERO
 		v = v.normalized() * dt * (500.0 + cam_dist * 0.9) * float(UI.opt("scroll_speed"))
 		# screen-right and screen-down on the ground for the current rotation
 		cam_target += Vector2(cos(cam_yaw), -sin(cam_yaw)) * v.x + Vector2(sin(cam_yaw), cos(cam_yaw)) * v.y
+	elif _pan_vel.length_squared() > 1.0 and _touches.is_empty():
+		cam_target += _pan_vel * dt
+		_pan_vel = _pan_vel.lerp(Vector2.ZERO, clampf(dt * 11.0, 0.0, 1.0))
+	# Mobile 1-finger long-press (0.28s stationary) automatically activates green drag-box selection!
+	if _touches.size() == 1 and not _touch_moved and not _touch_multi and not _touch_long_box and place_kind == "" and not armed.begins_with("power"):
+		_touch_hold_t += dt
+		if _touch_hold_t >= 0.28:
+			_touch_long_box = true
+			drag_start = _touch_start
+			box.visible = true
+			box.position = drag_start - Vector2(18, 18)
+			box.size = Vector2(36, 36)
+			_msg("Drag box to select units")
 	var mw: float = float(map.get("MAPW", 4800)); var mh: float = float(map.get("MAPH", 3320))
 	cam_target.x = clampf(cam_target.x, 0, mw)
 	cam_target.y = clampf(cam_target.y, 0, mh)
@@ -1194,61 +1212,88 @@ func _q_release(shift: bool) -> void:
 	q_down = -1.0
 
 # ---------------------------------------------------------------- input (PC mouse/keyboard + native Mobile Touch RTS)
+func _touch_on_ui(pos: Vector2) -> bool:
+	if hud == null: return false
+	if hud.window != null: return true
+	for c in [hud.bar, hud.mob_bar, hud.mob_top_bar, hud.powers_col, range_panel]:
+		if c != null and c.visible and c.get_global_rect().has_point(pos):
+			return true
+	return false
+
 func _handle_touch(ev: InputEvent) -> void:
 	if hud != null and hud.window != null: return
 	if ev is InputEventScreenTouch:
 		var st := ev as InputEventScreenTouch
 		if st.pressed:
+			if _touch_on_ui(st.position):
+				_touch_ui[st.index] = true
+				return
+			_touch_ui.erase(st.index)
 			_touches[st.index] = st.position
+			_pan_vel = Vector2.ZERO
 			if _touches.size() == 1:
 				_touch_start = st.position
 				_touch_moved = false
 				_touch_multi = false
+				_touch_hold_t = 0.0
+				_touch_long_box = false
 				if touch_box_mode and place_kind == "":
 					drag_start = st.position
 			elif _touches.size() == 2:
 				_touch_multi = true
 				_touch_moved = true
+				_touch_long_box = false
 				box.visible = false
 				var pts := _touches.values()
 				_pinch_dist = (pts[0] as Vector2).distance_to(pts[1] as Vector2)
 				_pinch_ang = (pts[1] as Vector2 - pts[0] as Vector2).angle()
 				_pinch_mid = ((pts[0] as Vector2) + (pts[1] as Vector2)) * 0.5
 		else:
+			if _touch_ui.has(st.index):
+				_touch_ui.erase(st.index)
+				return
 			var was_one := _touches.size() == 1 and not _touch_multi
 			var end_pos := st.position
 			_touches.erase(st.index)
 			if _touches.is_empty():
-				if touch_box_mode and box.visible:
+				if (touch_box_mode or _touch_long_box) and box.visible:
 					box.visible = false
-					if end_pos.distance_to(drag_start) > 14.0:
+					if end_pos.distance_to(drag_start) > 12.0:
 						_box_sel(drag_start, end_pos, false)
 						Audio.speak(0, _sel_units().map(func(e): return e.kind))
 					touch_box_mode = false
+					_touch_long_box = false
 					return
+				_touch_long_box = false
 				if was_one and not _touch_moved:
 					_touch_tap(end_pos)
 	elif ev is InputEventScreenDrag:
 		var sd := ev as InputEventScreenDrag
+		if _touch_ui.has(sd.index): return
+		if not _touches.has(sd.index): return
 		_touches[sd.index] = sd.position
 		if _touches.size() == 1 and not _touch_multi:
 			if sd.position.distance_to(_touch_start) > 14.0:
 				_touch_moved = true
-			if touch_box_mode and place_kind == "":
-				if _touch_moved:
+			if (touch_box_mode or _touch_long_box) and place_kind == "":
+				if _touch_moved or _touch_long_box:
 					box.visible = true
 					box.position = Vector2(minf(drag_start.x, sd.position.x), minf(drag_start.y, sd.position.y))
 					box.size = (sd.position - drag_start).abs()
 			elif _touch_moved:
-				# Smooth 1-finger battlefield pan scaled to camera altitude and rotation
-				var pan_k := cam_dist * 0.00145
+				# Smooth 1-finger battlefield pan with light velocity glide
+				var pan_k := cam_dist * 0.00155
 				var dv := -sd.relative * pan_k
-				cam_target += Vector2(cos(cam_yaw), -sin(cam_yaw)) * dv.x + Vector2(sin(cam_yaw), cos(cam_yaw)) * dv.y
+				var delta_w := Vector2(cos(cam_yaw), -sin(cam_yaw)) * dv.x + Vector2(sin(cam_yaw), cos(cam_yaw)) * dv.y
+				cam_target += delta_w
+				var dt_f := maxf(0.008, get_process_delta_time())
+				_pan_vel = _pan_vel.lerp(delta_w / dt_f, 0.45)
 				var mw: float = float(map.get("MAPW", 4800)); var mh: float = float(map.get("MAPH", 3320))
 				cam_target.x = clampf(cam_target.x, 0.0, mw)
 				cam_target.y = clampf(cam_target.y, 0.0, mh)
 		elif _touches.size() >= 2:
 			_touch_multi = true
+			_pan_vel = Vector2.ZERO
 			var pts := _touches.values()
 			var d := (pts[0] as Vector2).distance_to(pts[1] as Vector2)
 			var a := (pts[1] as Vector2 - pts[0] as Vector2).angle()
@@ -1586,6 +1631,8 @@ func order_at(g: Vector2, tg, ctrl: bool, alt: bool) -> void:
 		if fkey: mark = Color(1.0, 0.5, 0.3)
 		Audio.speak(2 if fkey else 1, units.map(func(e): return e.kind))   # P5 HOOK
 	_boom(Vector3(g.x, sim.ground_h(g.x, g.y) + 2, g.y), 9.0, mark, 0.4)
+	if world_view.fx != null:
+		world_view.fx._ring(Vector3(g.x, sim.ground_h(g.x, g.y) + 0.8, g.y), 6.0, 28.0, 0.42, mark, 0.92, 0.85, 1)
 	_after_order()
 
 ## right-drag: the selected infantry form a line between the two points
@@ -1756,10 +1803,15 @@ func supply_draw() -> Array:
 	return out
 
 func hint_text() -> String:
-	if place_kind != "": return "PLACE: Left-click ground  |  Shift: keep placing  |  Right-click / Esc: cancel"
-	if armed.begins_with("power"): return "LAUNCH POWER: RIGHT-click target  |  Left-click / Esc: cancel"
-	if armed == "amove": return "ATTACK-MOVE: Right-click ground or enemy  |  Left-click / Esc: cancel"
-	if armed == "guard": return "GUARD: Right-click position or unit  |  Left-click / Esc: cancel"
+	var mob: bool = hud != null and bool(hud.is_mob)
+	if place_kind != "":
+		return "TAP GROUND TO PLACE  |  TAP CLR TO CANCEL" if mob else "PLACE: Left-click ground  |  Shift: keep placing  |  Right-click / Esc: cancel"
+	if armed.begins_with("power"):
+		return "TAP TARGET TO LAUNCH  |  TAP CLR TO CANCEL" if mob else "LAUNCH POWER: RIGHT-click target  |  Left-click / Esc: cancel"
+	if armed == "amove":
+		return "ATTACK-MOVE: Tap target  |  Tap CLR to cancel" if mob else "ATTACK-MOVE: Right-click ground or enemy  |  Left-click / Esc: cancel"
+	if armed == "guard":
+		return "GUARD: Tap position or unit  |  Tap CLR to cancel" if mob else "GUARD: Right-click position or unit  |  Left-click / Esc: cancel"
 	return ""
 
 # ---------------------------------------------------------------- command area content (hud.gd draws it)
@@ -1892,6 +1944,11 @@ func _x2_cameo(key: String):
 			var j = JSON.parse_string(f.get_as_text())
 			if j is Dictionary and j.has("icons"): _x2_atlas = j.icons
 	var ak := key.replace("|", "/")
+	# Remap legacy placeholder atlas tiles to crisp 3D-rendered cameos of the same nation
+	if ak.ends_with("/hero"): ak = ak.substr(0, ak.length() - 4) + "champ"
+	elif ak.ends_with("/fpvt"): ak = ak.substr(0, ak.length() - 4) + "drone"
+	elif ak.ends_with("/krb"): ak = ak.substr(0, ak.length() - 3) + "arty"
+	elif ak.ends_with("/garrison"): ak = ak.substr(0, ak.length() - 8) + "fort"
 	var row = _x2_atlas.get(ak)
 	if row == null or not (row is Dictionary): return null
 	var fp := "res://ui/icons/" + str(row.get("file", ""))
@@ -2030,7 +2087,8 @@ func _cursor_tick() -> void:
 		_set_cursor("arrow"); return
 	var mp := get_viewport().get_mouse_position()
 	var vs := get_viewport().get_visible_rect().size
-	if mp.y >= vs.y - Hud.BAR_H:
+	var bh: float = hud.bar_height() if hud != null else Hud.BAR_H
+	if mp.y >= vs.y - bh:
 		_set_cursor("arrow"); return
 	if range_panel != null and range_panel.visible and range_panel.get_global_rect().has_point(mp):
 		_set_cursor("arrow"); return
