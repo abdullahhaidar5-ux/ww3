@@ -101,33 +101,24 @@ func setup(host: Node3D, sim, map: Dictionary, opts: Dictionary = {}) -> void:
 
 
 func _setup_base_pads(th: String) -> void:
-	# Grounded C&C Generals concrete/gravel military compound apron under every base building
+	# Grounded C&C Generals weathered poured-concrete military compound apron under every base building
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var c_edge := Color(0.32, 0.31, 0.28)
-	var c_slab := Color(0.46, 0.44, 0.40)
-	var c_trim := Color(0.58, 0.52, 0.34)
+	var c_edge := Color(0.45, 0.42, 0.36)
+	var c_slab := Color(0.56, 0.54, 0.49)
+	var c_trim := Color(0.76, 0.63, 0.26)
 	if th == "snow":
-		c_edge = Color(0.36, 0.39, 0.44); c_slab = Color(0.50, 0.53, 0.57)
+		c_edge = Color(0.48, 0.52, 0.58); c_slab = Color(0.60, 0.64, 0.69)
 	elif th == "green":
-		c_edge = Color(0.28, 0.30, 0.26); c_slab = Color(0.40, 0.40, 0.38)
-	# Outer compacted bevel skirt + inner poured military concrete pad + corner hazard stripes
+		c_edge = Color(0.40, 0.42, 0.38); c_slab = Color(0.52, 0.53, 0.49)
+	# Outer compacted bevel skirt + inner weathered poured concrete motorpool pad + corner hazard pads
 	_civ_box(st, Vector3(0.0, 0.14, 0.0), Vector3(2.35, 0.28, 2.35), c_edge)
 	_civ_box(st, Vector3(0.0, 0.26, 0.0), Vector3(2.08, 0.24, 2.08), c_slab)
 	for sx in [-0.94, 0.94]:
 		for sz in [-0.94, 0.94]:
 			_civ_box(st, Vector3(sx, 0.39, sz), Vector3(0.24, 0.04, 0.24), c_trim)
 	var m := st.commit()
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.vertex_color_is_srgb = true
-	mat.albedo_color = Color.WHITE
-	mat.roughness = 0.88
-	mat.metallic = 0.04
-	if ResourceLoader.exists("res://tex/road_nrm.png"):
-		mat.normal_enabled = true
-		mat.normal_texture = load("res://tex/road_nrm.png")
-		mat.normal_scale = 0.45
+	var mat := _make_pbr_mat(0.86, 0.04)
 	m.surface_set_material(0, mat)
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -989,26 +980,9 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 			_civ_box(st_win, Vector3(0.0, 5.8, 13.28), Vector3(5.0, 8.2, 0.45), c_door)
 
 	var am := ArrayMesh.new()
-	var mat_wall := StandardMaterial3D.new()
-	mat_wall.vertex_color_use_as_albedo = true
-	mat_wall.vertex_color_is_srgb = true
-	mat_wall.albedo_color = Color.WHITE
-	mat_wall.roughness = 0.92
-	mat_wall.metallic = 0.03
-
-	var mat_roof := StandardMaterial3D.new()
-	mat_roof.vertex_color_use_as_albedo = true
-	mat_roof.vertex_color_is_srgb = true
-	mat_roof.albedo_color = Color.WHITE
-	mat_roof.roughness = 0.78
-	mat_roof.metallic = 0.10
-
-	var mat_win := StandardMaterial3D.new()
-	mat_win.vertex_color_use_as_albedo = true
-	mat_win.vertex_color_is_srgb = true
-	mat_win.albedo_color = Color.WHITE
-	mat_win.roughness = 0.24
-	mat_win.metallic = 0.35
+	var mat_wall := _make_pbr_mat(0.90, 0.03)
+	var mat_roof := _make_pbr_mat(0.80, 0.08)
+	var mat_win := _make_pbr_mat(0.16, 0.24)
 
 	st_wall.commit(am)
 	am.surface_set_material(am.get_surface_count() - 1, mat_wall)
@@ -1020,6 +994,28 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 
 	_civ_mesh_cache[key] = am
 	return am
+
+
+static func _make_pbr_mat(rough: float, metal: float) -> Material:
+	if ResourceLoader.exists("res://shaders/military_pbr.gdshader") and ResourceLoader.exists("res://tex/armor_nrm.png"):
+		var sm := ShaderMaterial.new()
+		sm.shader = load("res://shaders/military_pbr.gdshader")
+		sm.set_shader_parameter("albedo_col", Color.WHITE)
+		sm.set_shader_parameter("has_albedo_tex", false)
+		sm.set_shader_parameter("use_vertex_color", true)
+		sm.set_shader_parameter("has_src_nrm", false)
+		sm.set_shader_parameter("detail_nrm", load("res://tex/armor_nrm.png"))
+		sm.set_shader_parameter("base_roughness", rough)
+		sm.set_shader_parameter("base_metallic", metal)
+		sm.set_shader_parameter("mat_mode", 1)
+		return sm
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.albedo_color = Color.WHITE
+	mat.roughness = rough
+	mat.metallic = metal
+	return mat
 
 
 static func _civ_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, n: Vector3, col: Color) -> void:

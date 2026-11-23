@@ -77,7 +77,8 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	sky_mat = ShaderMaterial.new()
 	sky_mat.shader = load("res://shaders/sky_dome.gdshader")
 	sky.sky_material = sky_mat
-	sky.radiance_size = Sky.RADIANCE_SIZE_32
+	var is_mob := preload("res://scripts/ui/ui_kit.gd").is_mobile()
+	sky.radiance_size = Sky.RADIANCE_SIZE_32 if is_mob else Sky.RADIANCE_SIZE_64
 	sky.process_mode = Sky.PROCESS_MODE_INCREMENTAL
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
@@ -92,7 +93,6 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	env.fog_sky_affect = 0.0
 	env.fog_sun_scatter = 0.0
 	env.fog_aerial_perspective = 0.0
-	var is_mob := preload("res://scripts/ui/ui_kit.gd").is_mobile()
 	env.glow_enabled = not is_mob
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
 	env.glow_hdr_threshold = 1.02
@@ -106,11 +106,11 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	sun = DirectionalLight3D.new()
 	sun.shadow_enabled = true
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_mob else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-	sun.directional_shadow_split_1 = 0.25
-	sun.directional_shadow_max_distance = 1200.0 if is_mob else 1800.0
-	sun.directional_shadow_fade_start = 0.85
-	sun.shadow_bias = 0.06
-	sun.shadow_normal_bias = 1.25
+	sun.directional_shadow_split_1 = 0.22
+	sun.directional_shadow_max_distance = 1150.0 if is_mob else 1750.0
+	sun.directional_shadow_fade_start = 0.84
+	sun.shadow_bias = 0.065
+	sun.shadow_normal_bias = 1.55
 	sun.shadow_opacity = 0.72
 	host.add_child(sun)
 	hemi = DirectionalLight3D.new()
