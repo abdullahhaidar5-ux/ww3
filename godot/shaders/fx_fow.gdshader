@@ -6,8 +6,8 @@ uniform sampler2D depth_tex : hint_depth_texture, filter_nearest, repeat_disable
 uniform sampler2D fog_tex : filter_linear, repeat_disable;
 uniform vec2 map_size = vec2(4800.0, 3320.0);
 uniform vec2 texel = vec2(0.008, 0.012);
-uniform float seen_k = 0.64;     // brightness of ground seen before
-uniform float dark_k = 0.42;     // never seen
+uniform float seen_k = 0.78;     // brightness of ground seen before
+uniform float dark_k = 0.62;     // never seen
 void vertex() { POSITION = vec4(VERTEX.xy * 2.0, 0.0, 1.0); }
 void fragment() {
 	float d = texture(depth_tex, SCREEN_UV).r;
@@ -20,6 +20,6 @@ void fragment() {
 		+ texture(fog_tex, uv + texel * vec2(1.0, -1.0)).r + texture(fog_tex, uv + texel * vec2(-1.0, 1.0)).r) * 0.15;
 	float k = mix(dark_k, seen_k, smoothstep(0.0, 0.5, f));
 	k = mix(k, 1.0, smoothstep(0.5, 0.95, f));
-	ALBEDO = vec3(0.02, 0.03, 0.05);
-	ALPHA = clamp(1.0 - k, 0.0, 0.62);
+	ALBEDO = vec3(0.05, 0.07, 0.10);
+	ALPHA = clamp(1.0 - k, 0.0, 0.42);
 }

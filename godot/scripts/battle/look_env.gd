@@ -14,14 +14,14 @@ const WX := {
 	"dusk": {sun = "#ffa868", si = 2.5, off = [-1320, 290, -560], sky = "#6a7aa8", gnd = "#40352f", hi = .95, fog = "#6c5a68", fn = 1400.0, ff = 5400.0, expo = 1.08, sr = 3.0, hor = [.95, .5, .32], zen = [.13, .18, .36], gr = [1, .95, .98], sat = .92, fx = 2.1, amb = [.5, .48, .55]},
 	"night": {sun = "#9db4e8", si = .5, off = [-900, 700, -500], sky = "#1a2644", gnd = "#14161e", hi = .45, fog = "#0b1020", fn = 900.0, ff = 4200.0, expo = 1.2, sr = 4.0, hor = [.07, .09, .16], zen = [.01, .02, .06], gr = [.9, .96, 1.1], sat = .75, fx = 2.6, amb = [.45, .5, .7]},
 }
-## the browser's default look ("Cinematic", ?look=b): replaces the daytime light, and sets the post numbers
-const LOOK_WX := {sun = "#ffc48e", si = 3.0, off = [-1250, 430, -560], sky = "#8fa3c8", gnd = "#54443a", hi = .9, fog = "#cfa47a", fn = 1000.0, ff = 4800.0, expo = 1.04, sr = 3.0, hor = [.98, .68, .42], zen = [.28, .40, .66], gr = [1.04, 1, .92], sat = 1.0, amb = [1.02, .96, .88]}
-const LOOK := {v = 1.6, g = .012, sh = 1.2, k = 1.1, bl = 1.7, s = [.94, .97, 1.05], h = [1.05, 1.01, .92]}
-const TGRADE := {"desert": {tg = [1.06, 1, .86], s = 1.2}, "green": {tg = [.99, 1.01, .98], s = .98}, "snow": {tg = [.93, .99, 1.09], s = .86}}
+## bright sunlit daytime default look (crisp daylight shadows, high readability)
+const LOOK_WX := {sun = "#fff3dc", si = 2.9, off = [-820, 1020, -580], sky = "#b6d0f2", gnd = "#8e7e68", hi = 1.65, fog = "#d8c4a6", fn = 1600.0, ff = 6200.0, expo = 1.15, sr = 2.4, hor = [.95, .84, .68], zen = [.34, .54, .84], gr = [1.02, 1.01, .98], sat = 1.04, fx = 1.0, amb = [1.02, 1.0, .96]}
+const LOOK := {v = 0.42, g = .004, sh = 0.75, k = 1.03, bl = 1.2, s = [.98, .99, 1.03], h = [1.03, 1.01, .97]}
+const TGRADE := {"desert": {tg = [1.04, 1.01, .92], s = 1.1}, "green": {tg = [1.01, 1.04, .98], s = 1.05}, "snow": {tg = [.96, 1.0, 1.05], s = .92}}
 const WFOG := {"rain": ["#7d868c", 500.0, 3200.0], "storm": ["#7d868c", 500.0, 3200.0], "fog": ["#b9bdbb", 150.0, 1500.0], "sandstorm": ["#b88a52", 30.0, 720.0],
 	"blizzard": ["#dfe6ee", 150.0, 1700.0], "snow": ["#e3e9f0", 220.0, 2300.0]}
-## Godot's ACES curve has a 1.8 exposure bias built in and the browser's (Narkowicz x 0.6) does not
-var expo_k := 0.62
+## Balanced ACES exposure multiplier for crisp sunlit daytime visibility
+var expo_k := 0.92
 const RAIN_N := 1400
 
 var host: Node3D
@@ -107,7 +107,7 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	sun.directional_shadow_fade_start = 0.9
 	sun.shadow_bias = 0.08
 	sun.shadow_normal_bias = 1.4
-	sun.shadow_opacity = 1.0
+	sun.shadow_opacity = 0.62
 	host.add_child(sun)
 	hemi = DirectionalLight3D.new()
 	hemi.shadow_enabled = false

@@ -25,14 +25,13 @@ void fragment() {
 	cl = mix(cl * vec3(0.95, 0.98, 1.04), cl, smoothstep(0.05, 0.45, l));
 	cl = mix(cl, cl * vec3(1.02, 1.0, 0.95), 0.6);
 	c = pow(clamp(cl, 0.0, 1.0), vec3(1.0 / 2.2));
-	c = (c - 0.5) * 1.1 + 0.5;
-	c += vec3(0.012, 0.004, -0.012) * (1.0 - l) + vec3(0.03, 0.012, -0.02) * l;
+	c += vec3(0.015, 0.010, 0.004) * (1.0 - l) + vec3(0.02, 0.012, -0.008) * l;
 	vec2 q = SCREEN_UV - 0.5;
-	c *= 1.0 - dot(q, q) * 0.75 * vig;
+	c *= 1.0 - dot(q, q) * 0.32 * vig;
 	float lk = dot(c, vec3(0.299, 0.587, 0.114));
 	c = (c - 0.5) * contrast + 0.5;
 	c *= mix(lk_s, lk_h, smoothstep(0.1, 0.8, lk));
-	c += (hh(SCREEN_UV / px + TIME * 61.0) - 0.5) * (0.022 + grain);
+	c += (hh(SCREEN_UV / px + TIME * 61.0) - 0.5) * (0.006 + grain);
 	c = mix(c, vec3(1.0, 0.925, 0.82), clamp(flash * 0.45, 0.0, 1.0));
 	COLOR = vec4(c, 1.0);
 }
