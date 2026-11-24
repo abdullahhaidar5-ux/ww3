@@ -642,9 +642,13 @@ func _nat_picker(vb: VBoxContainer, cur_fac: String, cb: Callable) -> void:
 	UI.input_style(find)
 	find.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vb.add_child(find)
-	var det := UI.para(_nat_detail(cur_fac), 12, UI.TEXT_DIM, 470)
-	var det_h := UI.label(UI.nat_name(cur_fac).to_upper(), 24, UI.TEXT, "bold")
-	var inner := _scroll(vb, 8)
+	var det := UI.para(_nat_detail(cur_fac), 11, UI.TEXT_DIM, 456)
+	var det_h := UI.label(UI.nat_name(cur_fac).to_upper(), 20, UI.TEXT, "bold")
+	var inner := _scroll(vb, 6)
+	var list_sc := inner.get_parent() as ScrollContainer
+	if list_sc != null:
+		list_sc.custom_minimum_size.y = 210.0
+		list_sc.size_flags_stretch_ratio = 2.2
 	var grid := GridContainer.new()
 	grid.name = "Nations"
 	grid.columns = 2
@@ -659,14 +663,22 @@ func _nat_picker(vb: VBoxContainer, cur_fac: String, cb: Callable) -> void:
 			grid.add_child(_nat_tile(kk, kk == cur_fac, func(): cb.call(kk), func(): det_h.text = UI.nat_name(kk).to_upper(); det.text = _nat_detail(kk)))
 	fill.call(nat_q)
 	find.text_changed.connect(func(q): nat_q = q; fill.call(q))
-	var dp := UI.panel(12)
+	var dp := UI.panel(10)
 	dp.name = "Detail"
+	dp.custom_minimum_size.y = 128.0
+	var dsc := ScrollContainer.new()
+	dsc.custom_minimum_size.y = 112.0
+	dsc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	dsc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dsc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var dv := VBoxContainer.new()
+	dv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dv.add_theme_constant_override("separation", 3)
 	dv.add_child(det_h); dv.add_child(det)
-	dp.add_child(dv)
-	dp.custom_minimum_size.y = 150
+	dsc.add_child(dv)
+	dp.add_child(dsc)
 	vb.add_child(dp)
-	vb.add_child(UI.spacer(88))
+	vb.add_child(UI.spacer(60))
 
 func _s_c_nation(vb: VBoxContainer) -> void:
 	_head(vb, "Choose your nation", "Hover a nation to see its morale style and strike. Click to choose.")

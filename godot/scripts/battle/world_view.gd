@@ -307,6 +307,29 @@ func draw_bld(B, fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Col
 	_append_bld_overlays(B, fr, e, p, gy, h, col, issel, mine)
 
 
+static var _fuel_drum_mesh: Mesh = null
+static func _get_fuel_drum_mesh() -> Mesh:
+	if _fuel_drum_mesh != null:
+		return _fuel_drum_mesh
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 2.6; cyl.bottom_radius = 2.6; cyl.height = 7.6; cyl.radial_segments = 12
+	var arr := cyl.get_mesh_arrays()
+	var vs: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]; var ns: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]; var ix: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+	var col := Color(0.32, 0.38, 0.25)
+	for q in ix:
+		var v := vs[q] + Vector3(0.0, 3.8, 0.0)
+		var band := 0.80 if (absf(v.y - 2.4) < 0.45 or absf(v.y - 5.2) < 0.45) else 1.0
+		st.set_color(col * band); st.set_normal(ns[q]); st.add_vertex(v)
+	var m := st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true; mat.vertex_color_is_srgb = true
+	mat.roughness = 0.52; mat.metallic = 0.36
+	m.surface_set_material(0, mat)
+	_fuel_drum_mesh = m
+	return _fuel_drum_mesh
+
 static func _get_flag_pole_mesh() -> Mesh:
 	if _flag_pole_mesh != null:
 		return _flag_pole_mesh
@@ -435,22 +458,46 @@ func draw_map_objects(B, fr: Dictionary) -> void:
 			_push_faction_flag(str(B.sim.teams[int(o.owner)].fac), Vector3(ox + 22.0, oy, oz - 14.0), 0.92, now, ox * 0.03)
 		rings.append([Vector3(ox, oy + 1.0, oz), 34.0, oc])
 
-	# Supply piles: keep existing crate visuals (delegated to battle.gd's crate MultiMesh when available)
+	# Supply depots: grounded military logistics pad + contact AO + tight 2-tier stacked PBR crate clusters + fuel drums!
 	var use_host_crate: bool = B is Object and B.has_method("_dk_info") and fr.has("per")
+	var drum_m := _get_fuel_drum_mesh()
 	if use_host_crate:
-		B._dk_info("crate", ["crate", "xz", 16.0])
+		B._dk_info("crate", ["crate", "xz", 23.0])
 		var per: Dictionary = fr["per"]
 		if not per.has("crate"):
 			per["crate"] = []
 		var crate_arr: Array = per["crate"]
 		for f in B.sim.fields:
-			var n := clampi(int(ceil(float(f.amt) / 800.0)), 0, 16)
-			for i in n:
-				var ang2 := float(i) * 2.399
-				var rr := 10.0 + sqrt(float(i)) * 11.0
-				var cx: float = float(f.x) + cos(ang2) * rr
-				var cz: float = float(f.y) + sin(ang2) * rr
-				crate_arr.append(Transform3D(Basis(Vector3.UP, ang2), Vector3(cx, float(B.sim.ground_h(cx, cz)) + (8.0 if i % 5 == 4 else 0.0), cz)))
+			var n := clampi(int(ceil(float(f.amt) / 1000.0)), 0, 12)
+			if n <= 0: continue
+			var fx0: float = float(f.x); var fz0: float = float(f.y)
+			var fy0: float = float(B.sim.ground_h(fx0, fz0))
+			# Grounded logistics gravel/concrete pad + soft contact AO shadow under the supply dump
+			_pad_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(38.0, 1.0, 38.0)), Vector3(fx0, fy0 + 0.02, fz0)))
+			var gn := _ground_normal(B.sim, fx0, fz0, 14.0)
+			_ao_xf.append(Transform3D(_slope_basis(gn, 0.0, 50.0, 50.0), Vector3(fx0, fy0, fz0) + gn * 0.45))
+			_ao_col.append(Color(1.0, 1.0, 1.0, 0.46))
+			# Neat 2-tier stacked military supply depot layout (base tier 0..7 + upper stacked crates 8..11)
+			const SLOTS := [
+				Vector3(-18, 0, -12), Vector3(-2, 0, -14), Vector3(14, 0, -10),
+				Vector3(-16, 0, 4),   Vector3(0, 0, 2),    Vector3(16, 0, 6),
+				Vector3(-10, 0, 18),  Vector3(8, 0, 18),
+				Vector3(-10, 9.2, -13), Vector3(8, 9.2, -11), Vector3(-8, 9.2, 3), Vector3(9, 9.2, 5),
+			]
+			var base_yaw := fmod(fx0 * 0.017 + fz0 * 0.013, TAU)
+			var cb := Basis(Vector3.UP, base_yaw)
+			for i in mini(n, SLOTS.size()):
+				var off: Vector3 = cb * SLOTS[i]
+				var cx: float = fx0 + off.x; var cz: float = fz0 + off.z
+				var cy: float = float(B.sim.ground_h(cx, cz)) + off.y
+				var jit := ((i % 3) - 1) * 0.14
+				crate_arr.append(Transform3D(Basis(Vector3.UP, base_yaw + jit), Vector3(cx, cy, cz)))
+			# Steel 55-gallon military fuel drums flanking the depot corner
+			if drum_m != null:
+				for di in 3:
+					var doff: Vector3 = cb * Vector3(-25.0 + float(di) * 5.2, 0.0, 15.0 + float(di % 2) * 4.5)
+					var dx: float = fx0 + doff.x; var dz: float = fz0 + doff.z
+					_push_mm("m|fueldrum|", drum_m, Transform3D(Basis(Vector3.UP, base_yaw + float(di)), Vector3(dx, float(B.sim.ground_h(dx, dz)), dz)))
 	else:
 		if not _box_cache.has(14):
 			_box_cache[14] = Look.box_mesh(14.0, Color(0.85, 0.75, 0.55))
