@@ -357,8 +357,13 @@ static func soldier(nation: String, kind: String, look: String = "", hi: bool = 
 			_shape[String(d["file"])] = [mi.mesh, Transform3D.IDENTITY]
 			mesh = painted(String(d["file"]), d.get("pal", null))
 		mi.mesh = mesh
+		var is_cleric_ldr := (kind == "cleric" and (look == "ldr" or look == ""))
 		for s in mesh.get_surface_count():
-			mi.set_surface_override_material(s, material(mesh.surface_get_material(s), {"c": [1, 1, 1], "r": 0.85}, true, nation, 2))
+			var md_s := {"c": [0.95, 0.93, 0.88], "r": 0.92} if is_cleric_ldr else {"c": [1, 1, 1], "r": 0.85}
+			var smat := material(mesh.surface_get_material(s), md_s, true, nation, 2)
+			if is_cleric_ldr and smat is ShaderMaterial:
+				(smat as ShaderMaterial).set_shader_parameter("dust_enable", 0.12)
+			mi.set_surface_override_material(s, smat)
 	var af := String(d.get("animFile", "")) if d.get("animFile", null) != null else ""
 	var lib := anim_library_for(inst, af)
 	if lib != null:
@@ -418,11 +423,13 @@ static func anim_library_for(inst: Node3D, file: String) -> AnimationLibrary:
 		var a: Animation = src_lib.get_animation(aname)
 		if a == null or a.get_track_count() == 0: continue
 		var dup: Animation = a.duplicate(true) as Animation
-		for ti in dup.get_track_count():
+		for ti in range(dup.get_track_count() - 1, -1, -1):
 			var tp := dup.track_get_path(ti)
-			var sub := tp.get_concatenated_subnames()
-			if String(sub) != "":
-				dup.track_set_path(ti, NodePath(sk_rel + ":" + String(sub)))
+			var sub := String(tp.get_concatenated_subnames())
+			if sub != "":
+				dup.track_set_path(ti, NodePath(sk_rel + ":" + sub))
+			elif inst.get_node_or_null(tp) == null:
+				dup.remove_track(ti)
 		if String(aname) in ["idle", "walk", "run"]:
 			dup.loop_mode = Animation.LOOP_LINEAR
 		out.add_animation(aname, dup)
@@ -467,11 +474,40 @@ static func merged(nation: String, kind: String) -> Dictionary:
 		out[p] = am
 	return out
 
+## High-detail 4,562-tri photo-scanned JD550G tracked military bulldozer upgrade (replaces 1,788-tri flat box dozer)
+static func _build_hi_dozer_mesh(nation: String) -> ArrayMesh:
+	var fp := DIR + "m_jd550_hi.glb"
+	if not ResourceLoader.exists(fp): return null
+	var sh := shape("m_jd550_hi.glb")
+	if sh.is_empty(): return null
+	var src_m: Mesh = sh[0]
+	var src_t: Transform3D = sh[1]
+	# Scale 52x & rotate +90° around Y so longest axis (+Z blade) aligns with unit FRONT (+X), resting cleanly on Y=0
+	var fix_t := Transform3D(Basis(Vector3.UP, PI * 0.5).scaled(Vector3(52.0, 52.0, 52.0)), Vector3(0.0, -0.45, 0.0)) * src_t
+	var tint: Color = ARMOR_PAINT.get(nation, Color(0.84, 0.80, 0.68)).lerp(Color(0.95, 0.93, 0.86), 0.58)
+	var out := ArrayMesh.new()
+	for s in src_m.get_surface_count():
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		st.append_from(src_m, s, fix_t)
+		st.commit(out)
+		var md := {"c": [tint.r, tint.g, tint.b], "r": 0.60, "mt": 0.16, "look": "metal"}
+		var mat := material(src_m.surface_get_material(s), md, false, nation, 0, "")
+		out.surface_set_material(out.get_surface_count() - 1, mat)
+	return out
+
 static var _pack_cache: Dictionary = {}
 ## cached MultiMesh package for one (nation, kind): {parts: {part -> ArrayMesh}, pxf: {part -> Transform3D}, scale: float, h: float, is_squad: bool, squad: Array}
 static func merged_pack(nation: String, kind: String) -> Dictionary:
 	var key := nation + "|" + kind
 	if _pack_cache.has(key): return _pack_cache[key]
+	if kind == "dozer":
+		var hdm := _build_hi_dozer_mesh(nation)
+		if hdm != null:
+			var bb_d: AABB = hdm.get_aabb()
+			var dpack := {parts = {"": hdm}, pxf = {"": Transform3D.IDENTITY}, scale = 1.0, h = maxf(12.0, bb_d.size.y), is_squad = false, squad = []}
+			_pack_cache[key] = dpack
+			return dpack
 	var e := entry(nation, kind)
 	if e.is_empty() or e.has("err"):
 		_pack_cache[key] = {}

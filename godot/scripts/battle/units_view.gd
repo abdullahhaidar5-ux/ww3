@@ -278,9 +278,10 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 					node.visible = true
 					# Natural slight forward lean when sprinting + crisp footwork matched to real ground velocity
 					var lean := clampf((own_spd - 10.0) / 30.0, 0.0, 1.0) * 0.11 if i_clip == "run" else 0.0
+					var scl := sc * (1.12 if (kind_s == "cleric" and look == "ldr") else 1.0)
 					node.position = Vector3(q.x, qy, q.y)
 					node.rotation = Vector3(lean, i_yaw, 0.0)
-					node.scale = Vector3(sc, sc, sc)
+					node.scale = Vector3(scl, scl, scl)
 					var s_clip := i_clip
 					if combat_stance and own_spd <= 1.8:
 						var phase: int = int(floor((now + float(eid_i * 7 + i * 3) * 0.37) / 1.4)) % 3
