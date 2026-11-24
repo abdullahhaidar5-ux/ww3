@@ -59,6 +59,8 @@ var _fog_next: float = 0.0
 var _last_lgv: int = -1
 var _lines_cache: Dictionary = {}
 var _shake_phase: float = 0.0
+var _terrain_mat: ShaderMaterial = null
+var _last_wet: float = -1.0
 
 
 func setup(host: Node3D, sim, map: Dictionary, opts: Dictionary = {}) -> void:
@@ -197,10 +199,15 @@ func tick(dt: float, cam: Camera3D, show_supply: bool) -> void:
 	_shake_phase += dt * 47.0
 	if env != null:
 		env.tick(dt, cam)
-		if _host != null:
-			var tm := _host.get_node_or_null("TerrainMesh")
-			if tm is MeshInstance3D and (tm as MeshInstance3D).material_override is ShaderMaterial:
-				((tm as MeshInstance3D).material_override as ShaderMaterial).set_shader_parameter("wetness", float(env.wet))
+		var wet_now := float(env.wet)
+		if absf(wet_now - _last_wet) > 0.005:
+			_last_wet = wet_now
+			if _terrain_mat == null and _host != null:
+				var tm := _host.get_node_or_null("TerrainMesh")
+				if tm is MeshInstance3D and (tm as MeshInstance3D).material_override is ShaderMaterial:
+					_terrain_mat = (tm as MeshInstance3D).material_override as ShaderMaterial
+			if _terrain_mat != null:
+				_terrain_mat.set_shader_parameter("wetness", wet_now)
 	if fx != null:
 		fx.tick(dt, cam)
 		fx.show_lines(show_supply)
@@ -258,7 +265,7 @@ func draw_bld(B, fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Col
 	var eid_f: float = float(e.id)
 	var aim_ang: float = float(e.tang) if absf(float(e.tang)) > 0.0001 else float(e.ang)
 
-	var has_hero_flag: bool = kind_s == "hq" or kind_s == "barracks" or kind_s == "factory" or kind_s == "uplink"
+	var has_hero_flag: bool = kind_s in ["hq", "barracks", "factory", "uplink", "airfield", "depot", "radar", "tech", "fort", "super", "shipyard"]
 	var root_xf := Transform3D(Basis.IDENTITY.scaled(Vector3(sc, sc, sc)), Vector3(p.x, gy - sink, p.y))
 	for pk in parts.keys():
 		var pks := String(pk)

@@ -28,7 +28,7 @@ const TIPS := [
 	"Garrison buildings and dig in (I) to cut incoming rifle and shell fire dramatically.",
 	"Right-click issues move and attack orders; left-click deploys buildings and rally points.",
 	"Veteran units fire faster and hit harder — pull damaged elite squads back to repair.",
-	"Hold Middle-Mouse or Q + drag (or PageUp / PageDown) to rotate and angle the camera up & down; Home resets.",
+	"Hold Shift + Mouse Wheel (or Middle-Mouse / Q + drag, PageUp / PageDown) to tilt & orbit the camera; Home resets.",
 ]
 const STEPS := [
 	"INITIALIZING THEATER SIMULATION",
@@ -281,11 +281,14 @@ func _build(my_fac: String, en_fac: String, map_key: String, map_name: String, k
 	var q_text_w := maxf(240.0, card_w - 60.0)
 	var q_orig := str(q.get("original", ""))
 	if q_orig != "":
-		var ol := UI.label(q_orig, 17 if compact else 20, Color(0.92, 0.78, 0.44, 0.90))
-		ol.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		ol.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		ol.custom_minimum_size.x = q_text_w
-		qv.add_child(ol)
+		var qf := UI.font("quote_orig")
+		if UI.font_supports_text(qf, q_orig):
+			var ol := UI.label(q_orig, 18 if compact else 22, Color(0.92, 0.78, 0.44, 0.92), "quote_orig")
+			ol.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			ol.text_direction = Control.TEXT_DIRECTION_AUTO
+			ol.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			ol.custom_minimum_size.x = q_text_w
+			qv.add_child(ol)
 
 	var ql := UI.label("\u201C" + str(q.get("text", "")) + "\u201D", 20 if compact else 26, Color(0.96, 0.94, 0.88), "display")
 	ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

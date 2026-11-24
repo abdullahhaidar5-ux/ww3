@@ -742,7 +742,7 @@ const POWERS={
   bounty:{name:'Cash Bounty',desc:'Earn 15% of the cost of every enemy you destroy',passive:true},
   recon:{name:'Recon Sweep',desc:'Reveal an area for 25 seconds',cd:90,r:450},
   para:{name:'Paradrop',desc:'Drop 5 infantry anywhere on land',cd:150},
-  barrage:{name:'Artillery Barrage',desc:'10 shells over a wide area',cd:170,r:180},
+  barrage:{name:'Artillery Barrage',desc:'Off-map saturation barrage: rains 10-14 arcing rockets/shells across a wide target zone to smash enemy armor, infantry & fortifications',cd:170,r:180},
   repair:{name:'Emergency Repair',desc:'Restore 60% health to your forces in an area',cd:120,r:230},
   flare:{name:'Illumination Flares',desc:'Light up an area for about 30 seconds so everybody can see in it, friend and foe. Made for night battles',cd:60,r:300},
   mil:{name:'Proxy Militia',desc:'Call in local fighters at a spot you pick, near your supply area: riflemen and an RPG team (plus an armed technical at higher levels) arrive under your command',cd:240,r:110},

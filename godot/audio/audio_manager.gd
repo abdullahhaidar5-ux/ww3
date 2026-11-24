@@ -37,6 +37,9 @@ var vol := {"master": 100, "music": 78, "voices": 100, "effects": 100, "announce
 var T: Dictionary = {}                 # audio_tables.json
 var web := false
 var _web_au := false                   # true when godot/web/ww3audio.js (WebAudio engine) is loaded
+var _wa = null                         # direct JavaScriptObject handle to window.WW3Audio (zero eval() overhead!)
+var _preloaded_facs: Dictionary = {}   # fac -> true (avoid spamming preload on every unit click)
+var _last_vol_push: Vector2 = Vector2(-1.0, -1.0)
 var unlocked := true                   # web: false until the first click / key (browser autoplay rule)
 var test_clock := -1.0                 # >= 0: tests drive the clock (seconds) instead of real time
 var keep_log := false
@@ -136,38 +139,46 @@ func _ready() -> void:
 	var f := FileAccess.open("res://audio/audio_tables.json", FileAccess.READ)
 	if f != null: T = JSON.parse_string(f.get_as_text())
 	_load_cfg()
-	_buses()
-	for i in SFX_CAP:
-		var p := AudioStreamPlayer2D.new()
-		p.max_distance = 1000000.0; p.attenuation = 1.0; p.panning_strength = 1.0; p.bus = "Sfx"
-		add_child(p); _sfx.append(p); _sfx_end.append(0.0)
-	for i in SYNTH_CAP:
-		var sp2 := AudioStreamPlayer2D.new()
-		sp2.max_distance = 1000000.0; sp2.attenuation = 1.0; sp2.panning_strength = 1.0; sp2.bus = "Sfx"
-		add_child(sp2); _synth_2d.append(sp2); _synth_2d_end.append(0.0)
-	for i in 3: _synth_ui.append(_mk("UI"))
-	_synth_vox = _mk("Voice")
-	_vox = _mk("Voice"); _annp = _mk("Voice"); _uip = _mk("UI")
-	_shoutp = AudioStreamPlayer2D.new(); _shoutp.max_distance = 1000000.0; _shoutp.bus = "Voice"; add_child(_shoutp)
-	_uip.stream = _tick_wav()
-	_wav_sub = _sub_boom_wav()
-	_wav_cannon = _cannon_wav()
-	_wav_nuke = _nuke_wav()
-	_wav_beam = _beam_wav()
-	_wav_scud = _scud_wav()
-	_wav_chirp = _radio_chirp_wav()
-	_wav_klaxon = _klaxon_wav()
-	_wav_promo = _promo_wav()
-	_wav_emp = _emp_wav()
-	_wav_jet = _jet_whoosh_wav()
-	_wav_built = _built_chime_wav()
 	if web:
-		_web_au = bool(JavaScriptBridge.eval("Boolean(window.WW3Audio)", true))
-		if not _web_au: _web_decks()
-		else: unlocked = bool(JavaScriptBridge.eval("window.WW3Audio.isUnlocked()", true))
+		_wa = JavaScriptBridge.get_interface("WW3Audio")
+		_web_au = _wa != null
+		if _web_au:
+			unlocked = bool(_wa.isUnlocked())
+			# Mute Godot's single-threaded Web AudioWorklet when WW3Audio owns playback so it does zero competing DSP!
+			AudioServer.set_bus_mute(0, true)
+		else:
+			_buses()
+			_web_decks()
 	else:
-		for i in 2:
-			var d := _mk("Music"); _decks.append({p = d, on = false, id = "", pool = "", g = 0.0, to = 0.0, rate = 0.0, started = false, adv = false})
+		_buses()
+	if not _web_au:
+		for i in SFX_CAP:
+			var p := AudioStreamPlayer2D.new()
+			p.max_distance = 1000000.0; p.attenuation = 1.0; p.panning_strength = 1.0; p.bus = "Sfx"
+			add_child(p); _sfx.append(p); _sfx_end.append(0.0)
+		for i in SYNTH_CAP:
+			var sp2 := AudioStreamPlayer2D.new()
+			sp2.max_distance = 1000000.0; sp2.attenuation = 1.0; sp2.panning_strength = 1.0; sp2.bus = "Sfx"
+			add_child(sp2); _synth_2d.append(sp2); _synth_2d_end.append(0.0)
+		for i in 3: _synth_ui.append(_mk("UI"))
+		_synth_vox = _mk("Voice")
+		_vox = _mk("Voice"); _annp = _mk("Voice"); _uip = _mk("UI")
+		_shoutp = AudioStreamPlayer2D.new(); _shoutp.max_distance = 1000000.0; _shoutp.bus = "Voice"; add_child(_shoutp)
+		_uip.stream = _tick_wav()
+		_wav_sub = _sub_boom_wav()
+		_wav_cannon = _cannon_wav()
+		_wav_nuke = _nuke_wav()
+		_wav_beam = _beam_wav()
+		_wav_scud = _scud_wav()
+		_wav_chirp = _radio_chirp_wav()
+		_wav_klaxon = _klaxon_wav()
+		_wav_promo = _promo_wav()
+		_wav_emp = _emp_wav()
+		_wav_jet = _jet_whoosh_wav()
+		_wav_built = _built_chime_wav()
+		if not web:
+			for i in 2:
+				var d := _mk("Music"); _decks.append({p = d, on = false, id = "", pool = "", g = 0.0, to = 0.0, rate = 0.0, started = false, adv = false})
 	get_tree().node_added.connect(_node_added)
 	_apply_vol()
 	if DisplayServer.get_name() != "headless": menu.call_deferred()      # menu music until a battle starts (web: after the first click)
@@ -237,11 +248,12 @@ func _set_bus(n: String, lin: float) -> void:
 func _mus_base() -> float: return 0.34 * (float(vol.music) / 70.0)      # $75 AAA epic orchestral score level
 
 func _apply_vol() -> void:
-	_set_bus("Master", float(vol.master) / 100.0)
-	_set_bus("Sfx", float(vol.effects) / 100.0 * _sfx_k)
-	_set_bus("UI", minf(1.0, float(vol.effects) / 100.0))
-	_set_bus("Music", _mus_base() * _mus_k)
-	_set_bus("Voice", 0.92)
+	if not _web_au:
+		_set_bus("Master", float(vol.master) / 100.0)
+		_set_bus("Sfx", float(vol.effects) / 100.0 * _sfx_k)
+		_set_bus("UI", minf(1.0, float(vol.effects) / 100.0))
+		_set_bus("Music", _mus_base() * _mus_k)
+		_set_bus("Voice", 0.92)
 	if web: _web_vol()
 
 # ------------------------------------------------------------------------------------------------ settings
@@ -344,7 +356,7 @@ func _is_valid_mp3(by: PackedByteArray) -> bool:
 ## get a sound file as an AudioStreamMP3 (cached); cb(stream or null)
 func _load(rel: String, cb: Callable = Callable()) -> void:
 	if _web_au:
-		JavaScriptBridge.eval("window.WW3Audio.preload(%s)" % JSON.stringify(rel), true)
+		_wa.preload(rel)
 		return
 	var s = _streams.get(rel)
 	if s is AudioStream:
@@ -384,17 +396,17 @@ func _try(rel: String, bases: Array, i: int) -> void:
 
 func _web_has(rel: String) -> bool:
 	if not _web_au: return false
-	var ok := bool(JavaScriptBridge.eval("window.WW3Audio.has(%s)" % JSON.stringify(rel), true))
-	if not ok: JavaScriptBridge.eval("window.WW3Audio.preload(%s)" % JSON.stringify(rel), true)
+	var ok := bool(_wa.has(rel))
+	if not ok: _wa.preload(rel)
 	return ok
 
-func _web_slice(rel: String, off: float, dur: float, lin: float, rate: float, pan: float, bus: String, slot: String = "") -> bool:
-	return bool(JavaScriptBridge.eval("window.WW3Audio.playSlice(%s,%f,%f,%f,%f,%f,%s,%s)" % [
-		JSON.stringify(rel), off, dur, lin, rate, pan, JSON.stringify(bus), JSON.stringify(slot)], true))
+func _web_slice(rel: String, off: float, dur: float, lin: float, rate: float, pan: float, bus: String, slot: String = "", delay_sec: float = 0.0) -> bool:
+	if not _web_au: return false
+	return bool(_wa.playSlice(rel, off, dur, lin, rate, pan, bus, slot, delay_sec))
 
 func _web_synth(nm: String, lin: float, rate: float, pan: float, bus: String) -> void:
-	JavaScriptBridge.eval("window.WW3Audio.playSynth(%s,%f,%f,%f,%s)" % [
-		JSON.stringify(nm), lin, rate, pan, JSON.stringify(bus)], true)
+	if not _web_au: return
+	_wa.playSynth(nm, lin, rate, pan, bus)
 
 func _got(rel: String, by: PackedByteArray) -> void:
 	var st := AudioStreamMP3.new(); st.data = by
@@ -414,8 +426,11 @@ func _stream(rel: String):
 
 ## warm up everything a battle of this nation needs (JS voLoad / voRLoad / vohLoad / vosLoad / annWarm / sfxEnsure)
 func preload_nation(fac: String) -> void:
+	if _preloaded_facs.has(fac): return
+	_preloaded_facs[fac] = true
 	for suf in ["", "_r", "_h", "_s"]: _load("vo/%s%s.mp3" % [fac, suf])
 	_load("vo/ann_%s.mp3" % ann_lang(fac)); _load("sfx/sfx.mp3")
+	for lp in ["tank", "truck", "heli", "jet", "wind", "rumble"]: _load("sfx/%s.mp3" % lp)
 
 # ------------------------------------------------------------------------------------------------ playing a piece of a sheet
 func _slice(p, st: AudioStream, off: float, d: float, lin: float, rate: float = 1.0) -> void:
@@ -470,21 +485,21 @@ func shot(x: float, y: float, s: float) -> void:
 	var sp := spatial(x, y)
 	if sp.is_empty() or sp.v < 0.02:
 		far_h = minf(8.0, far_h + (0.5 if s > 8 else 0.1)); return
-	if not limit("all", 14, 0.15): return
+	if not limit("all", 12, 0.15): return
 	if not _sfx_ready(): return
 	if s <= 5:
-		if not limit("gun", 6): return
-		var n := 1 + _rng.randi_range(0, 2)
-		for i in n: _clip("mg" if (n > 2 and _rng.randf() < 0.5) else "rifle", sp, 0.9, 1.0, i * 0.075 + sp.far * 0.12)
+		if not limit("gun", 5, 0.14): return
+		var n := 1 + (_rng.randi() % 2)
+		for i in n: _clip("mg" if (n > 1 and _rng.randf() < 0.45) else "rifle", sp, 0.85, 1.0, i * 0.085 + sp.far * 0.10)
 	elif s <= 8:
-		if not limit("msl", 3): return
-		_clip("rocket", sp, 0.8, 1.0, sp.far * 0.15)
+		if not limit("msl", 3, 0.14): return
+		_clip("rocket", sp, 0.85, 1.0, sp.far * 0.14)
 	else:
-		if not limit("can", 3): return
-		_clip("cannon", sp, 1.15, 0.88 if s > 14 else 1.0, sp.far * 0.2)
+		if not limit("can", 3, 0.14): return
+		_clip("cannon", sp, 1.15, 0.88 if s > 14 else 1.0, sp.far * 0.18)
 		if s >= 11.0 and limit("sub_can", 3, 0.14):
 			var cg: float = float(sp.v) * clampf(0.42 + (s - 11.0) * 0.05, 0.42, 0.78)
-			_play_synth_2d(_wav_cannon, sp, cg, 0.94 + _rng.randf() * 0.12, "Sfx")
+			_play_synth_2d_named("cannon", _wav_cannon, sp, cg, 0.94 + _rng.randf() * 0.12, "Sfx")
 
 ## an explosion; s = size, big = building / heavy blast. Feeds the music's heat even with effects off (JS sfxBoom).
 func boom(x: float, y: float, s: float, big: bool) -> void:
@@ -497,10 +512,10 @@ func boom(x: float, y: float, s: float, big: bool) -> void:
 	if not limit("boom", 3 if big else 4, 0.15): return
 	var k := minf(1.0, 0.3 + s / 40.0) * (1.3 if big else 1.0)
 	if _sfx_ready():
-		_clip("boomL" if (big or s > 26) else "boomS", sp, (1.1 if big else 0.9) * minf(1.2, 0.6 + k), 0.94 if big else 1.0, sp.far * 0.3)
+		_clip("boomL" if (big or s > 26) else "boomS", sp, (1.1 if big else 0.9) * minf(1.2, 0.6 + k), 0.94 if big else 1.0, sp.far * 0.25)
 	if (big or s >= 18.0) and limit("sub", 3, 0.14):
 		var sub_g: float = float(sp.v) * clampf(0.45 + s / 50.0, 0.45, 1.15) * (1.2 if big else 0.9)
-		_play_synth_2d(_wav_sub, sp, sub_g, (0.86 if big else 1.0) * (0.94 + _rng.randf() * 0.12), "Sfx")
+		_play_synth_2d_named("sub", _wav_sub, sp, sub_g, (0.86 if big else 1.0) * (0.94 + _rng.randf() * 0.12), "Sfx")
 	heat = minf(1.0, heat + (0.25 if big else 0.06))
 
 func _clip(cat: String, sp: Dictionary, g: float, rate: float, delay: float) -> void:
@@ -798,16 +813,16 @@ func _synth_name(wav: AudioStreamWAV) -> String:
 	if wav == _wav_chirp: return "chirp"
 	return ""
 
-func _play_synth_2d(wav: AudioStreamWAV, sp: Dictionary, lin: float, rate: float = 1.0, bus: String = "") -> void:
-	if not _sfx_on() or wav == null or sp.is_empty(): return
+func _play_synth_2d_named(sn: String, wav: AudioStreamWAV, sp: Dictionary, lin: float, rate: float = 1.0, bus: String = "") -> void:
+	if not _sfx_on() or sp.is_empty(): return
 	var bus_n := bus
 	if bus_n == "":
 		var far: float = float(sp.get("far", 0.0))
 		bus_n = "Sfx" if far < 0.3 else ("SfxMid" if far < 0.62 else "SfxFar")
 	if _web_au:
-		var sn := _synth_name(wav)
 		if sn != "": _web_synth(sn, lin, rate, float(sp.get("pan", 0.0)), bus_n)
 		return
+	if wav == null: return
 	var t := now()
 	var idx := -1
 	for i in SYNTH_CAP:
@@ -824,13 +839,15 @@ func _play_synth_2d(wav: AudioStreamWAV, sp: Dictionary, lin: float, rate: float
 	p.play()
 	_synth_2d_end[idx] = t + wav.get_length() / p.pitch_scale
 
-func _play_synth_ui(wav: AudioStreamWAV, lin: float = 0.72, rate: float = 1.0) -> void:
-	if not _sfx_on() or wav == null: return
+func _play_synth_2d(wav: AudioStreamWAV, sp: Dictionary, lin: float, rate: float = 1.0, bus: String = "") -> void:
+	_play_synth_2d_named(_synth_name(wav), wav, sp, lin, rate, bus)
+
+func _play_synth_ui_named(sn: String, wav: AudioStreamWAV, lin: float = 0.72, rate: float = 1.0) -> void:
+	if not _sfx_on(): return
 	if _web_au:
-		var sn := _synth_name(wav)
 		if sn != "": _web_synth(sn, lin, rate, 0.0, "UI")
 		return
-	if _synth_ui.is_empty(): return
+	if wav == null or _synth_ui.is_empty(): return
 	var p: AudioStreamPlayer = _synth_ui[_synth_ui_i % _synth_ui.size()]
 	_synth_ui_i += 1
 	p.stream = wav
@@ -838,15 +855,18 @@ func _play_synth_ui(wav: AudioStreamWAV, lin: float = 0.72, rate: float = 1.0) -
 	p.volume_db = linear_to_db(maxf(lin, 0.0001))
 	p.play()
 
+func _play_synth_ui(wav: AudioStreamWAV, lin: float = 0.72, rate: float = 1.0) -> void:
+	_play_synth_ui_named(_synth_name(wav), wav, lin, rate)
+
 func _play_chirp() -> void:
 	if not _voice_on(): return
 	if _web_au:
-		_web_synth("chirp", _vo_vol() * 0.34, 0.96 + _rng.randf() * 0.08, 0.0, "Voice")
+		_web_synth("chirp", _vo_vol() * 0.15, 0.97 + _rng.randf() * 0.06, 0.0, "Voice")
 		return
 	if _wav_chirp == null or _synth_vox == null: return
 	_synth_vox.stream = _wav_chirp
-	_synth_vox.pitch_scale = 0.96 + _rng.randf() * 0.08
-	_synth_vox.volume_db = linear_to_db(maxf(_vo_vol() * 0.32, 0.0001))
+	_synth_vox.pitch_scale = 0.97 + _rng.randf() * 0.06
+	_synth_vox.volume_db = linear_to_db(maxf(_vo_vol() * 0.16, 0.0001))
 	_synth_vox.play()
 
 # ------------------------------------------------------------------------------------------------ voices (JS speak / voRPlay / voPlay / heroSpeak / duck)
@@ -928,10 +948,11 @@ func _voh(fac: String, key: String, over: bool) -> bool:
 func _say(p: AudioStreamPlayer, st, od: Array, ev: String, clip: String, rel: String = "") -> void:
 	_play_chirp()
 	var d := float(od[1])
-	if _web_au: _web_slice(rel, float(od[0]), d, _vo_vol(), 1.0, 0.0, "Voice", "vox")
+	# Schedule voice 30ms after the subtle radio PTT key-click so syllable #1 is crystal clear and never masked
+	if _web_au: _web_slice(rel, float(od[0]), d, _vo_vol(), 1.0, 0.0, "Voice", "vox", 0.030)
 	else: _slice(p, st, float(od[0]), d, _vo_vol())
-	_vo_end = now() + 0.02 + d
-	_mus_duck_until = now() + d + 0.1                              # music to 45 % while a unit talks
+	_vo_end = now() + 0.05 + d
+	_mus_duck_until = now() + d + 0.12                              # music to 45 % while a unit talks
 	_note(ev, clip)
 	_beep()
 
@@ -1064,7 +1085,7 @@ func _st_play(pool: String, fade: float = ST_FADE) -> void:
 
 func _st_halt() -> void:
 	st_mode = ""; st_pool = ""; st_id = ""
-	if _web_au: JavaScriptBridge.eval("window.WW3Audio.stopMusic(0.8)", true)
+	if _web_au: _wa.stopMusic(0.8)
 	elif web: JavaScriptBridge.eval("window.__ww3m&&window.__ww3m.stop(0.8)")
 	for d in _decks:
 		if d.on: d.on = false; d.to = 0.0; d.rate = maxf(d.g, 0.01) / 0.8
@@ -1082,13 +1103,13 @@ func _st_next(pool: String) -> void:
 func _st_tick() -> void:
 	heat = maxf(0.0, heat - 0.006)
 	if _web_au:
-		JavaScriptBridge.eval("window.WW3Audio.setBattleState(%s,%f)" % ["true" if st_mode == "battle" else "false", heat], true)
+		_wa.setBattleState(st_mode == "battle", heat)
 	if st_mode == "": return
 	if not unlocked:
 		# Never call stopMusic before user gesture unlock — that would clear the pre-queued menu track!
 		return
 	if int(vol.music) <= 0 or int(vol.master) <= 0:
-		if _web_au: JavaScriptBridge.eval("window.WW3Audio.stopMusic(0.3)", true)
+		if _web_au: _wa.stopMusic(0.3)
 		elif web: JavaScriptBridge.eval("window.__ww3m&&window.__ww3m.stop(0.3)")
 		for d in _decks:
 			if d.on: d.on = false; d.to = 0.0; d.rate = maxf(d.g, 0.01) / 0.3
@@ -1101,7 +1122,7 @@ func _st_tick() -> void:
 		if want != st_pool and now() - _st_since >= float(ST_DWELL[st_pool]):
 			_st_play(want); return
 	if web:
-		var r = JavaScriptBridge.eval("window.WW3Audio?window.WW3Audio.musicLeft():(window.__ww3m?window.__ww3m.left():-1)", true)
+		var r = _wa.musicLeft() if _web_au else JavaScriptBridge.eval("window.__ww3m?window.__ww3m.left():-1", true)
 		if r != null and float(r) >= 0.0 and float(r) < ST_FADE + 0.25: _st_next(st_pool)
 		return
 	if _st_cur < 0: return
@@ -1132,16 +1153,15 @@ id:function(){return cur<0?'':D[cur].src;}};})();""", true)
 
 func _web_play(id: String, fade: float) -> void:
 	if _web_au:
-		JavaScriptBridge.eval("window.WW3Audio.playMusic(%s,%f)" % [JSON.stringify("mus/st/" + id + ".mp3"), fade], true)
+		_wa.playMusic("mus/st/" + id + ".mp3", fade)
 		return
 	var b: String = _base_ok if _base_ok.begins_with("http") else str(_bases()[0])
 	JavaScriptBridge.eval("window.__ww3m.play(%s,%f)" % [JSON.stringify(b + "mus/st/" + id + ".mp3"), fade])
 
 func _web_vol() -> void:
 	if _web_au:
-		JavaScriptBridge.eval("window.WW3Audio.setVol(%f,%f,%f,%f,%f,%f,%f)" % [
-			float(vol.master) / 100.0, float(vol.music) / 100.0, float(vol.voices) / 100.0,
-			float(vol.effects) / 100.0, float(vol.announcer) / 100.0, _mus_k, _sfx_k], true)
+		_wa.setVol(float(vol.master) / 100.0, float(vol.music) / 100.0, float(vol.voices) / 100.0,
+			float(vol.effects) / 100.0, float(vol.announcer) / 100.0, _mus_k, _sfx_k)
 		return
 	JavaScriptBridge.eval("window.__ww3m&&window.__ww3m.vol(%f)" % clampf(_mus_base() * _mus_k * ST_GAIN * 0.68 * float(vol.master) / 100.0, 0.0, 1.0))
 
@@ -1155,7 +1175,7 @@ func battle_start(sim, me: int) -> void:
 	preload_nation(_fac)
 	_st_fac = _fac; st_mode = "battle"; _st_play(_battle_pool())
 	if _web_au:
-		JavaScriptBridge.eval("window.WW3Audio.setFaction(%s)" % JSON.stringify(_fac), true)
+		_wa.setFaction(_fac)
 		_web_synth("fanfare", 0.78, 1.0, 0.0, "Music")
 	_note("battle", "start " + _fac)
 
@@ -1168,14 +1188,14 @@ func battle_end(won: bool) -> void:
 
 func battle_leave() -> void:
 	_sim = null; _over = false
-	if _web_au: JavaScriptBridge.eval("window.WW3Audio.stopLoops()", true)
+	if _web_au: _wa.stopLoops()
 	for k in _loops.keys(): _loops[k].p.stop()
 
 ## Distinct Hollywood audio signature per Generals / Red Alert superweapon class
 func superweapon_sfx(style: String, tx: float = 0.0, tz: float = 0.0) -> void:
 	if not _sfx_on(): return
 	if limit("sw_klaxon", 1, 2.5):
-		_play_synth_ui(_wav_klaxon, 0.78)
+		_play_synth_ui_named("klaxon", _wav_klaxon, 0.78)
 		_note("synth", "sw_" + style)
 	if not ann("super"): ann("enemyStrike")
 	var sp := spatial(tx, tz)
@@ -1183,19 +1203,19 @@ func superweapon_sfx(style: String, tx: float = 0.0, tz: float = 0.0) -> void:
 	var lv := maxf(0.42, float(sp.get("v", 0.65)))
 	match style:
 		"beam":
-			_play_synth_2d(_wav_beam, sp, lv * 1.12, 1.0, "Sfx")
-			_play_synth_2d(_wav_sub, sp, lv * 0.95, 0.65, "Sfx")
+			_play_synth_2d_named("beam", _wav_beam, sp, lv * 1.12, 1.0, "Sfx")
+			_play_synth_2d_named("sub", _wav_sub, sp, lv * 0.95, 0.65, "Sfx")
 		"nuke":
-			_play_synth_2d(_wav_nuke, sp, lv * 1.20, 0.92, "Sfx")
+			_play_synth_2d_named("nuke", _wav_nuke, sp, lv * 1.20, 0.92, "Sfx")
 		"storm":
-			_play_synth_2d(_wav_emp, sp, lv * 1.12, 1.08, "Sfx")
-			_play_synth_2d(_wav_nuke, sp, lv * 0.82, 1.18, "Sfx")
+			_play_synth_2d_named("emp", _wav_emp, sp, lv * 1.12, 1.08, "Sfx")
+			_play_synth_2d_named("nuke", _wav_nuke, sp, lv * 0.82, 1.18, "Sfx")
 		"carpet":
-			_play_synth_2d(_wav_jet, sp, lv * 1.08, 0.88, "Sfx")
-			_play_synth_2d(_wav_sub, sp, lv * 0.96, 0.78, "Sfx")
+			_play_synth_2d_named("jet", _wav_jet, sp, lv * 1.08, 0.88, "Sfx")
+			_play_synth_2d_named("sub", _wav_sub, sp, lv * 0.96, 0.78, "Sfx")
 		_:
-			_play_synth_2d(_wav_scud, sp, lv * 1.10, 1.0, "Sfx")
-			_play_synth_2d(_wav_sub, sp, lv * 0.95, 0.76, "Sfx")
+			_play_synth_2d_named("scud", _wav_scud, sp, lv * 1.10, 1.0, "Sfx")
+			_play_synth_2d_named("sub", _wav_sub, sp, lv * 0.95, 0.76, "Sfx")
 
 ## Called once per sim tick. Reads the sim (never writes) and raises the same sound events the JS sim logs / FXEs:
 ## shots (muzzle size by weapon), shell and missile hits, deaths, "Our base is under attack!" (25 s) / "Our troops are under
@@ -1206,6 +1226,7 @@ func observe(sim, me: int, fast: bool = false) -> void:
 	var t: float = sim.t
 	var first := not _obs_started
 	_obs_started = true
+	var has_bridge_evs: bool = sim.has_method("peek_events")
 	var alive: Dictionary = {}
 	for e in sim.ents:
 		if e.dead: continue
@@ -1221,14 +1242,16 @@ func observe(sim, me: int, fast: bool = false) -> void:
 			continue
 		o[0] = e.x; o[1] = e.y
 		if e.is_b and float(o[5]) < 1.0 and e.built >= 1.0 and mine:
-			if limit("built", 2, 0.5): _play_synth_ui(_wav_built, 0.58)
+			if limit("built", 2, 0.5): _play_synth_ui_named("built", _wav_built, 0.58)
 			speak(7); ann("complete")                                  # JS log(.., ' ready.', 'v7') + 'ann:complete'
 		o[5] = e.built
 		if e.last_fire > float(o[7]):
 			o[7] = e.last_fire
 			if mine or _vis(e, me):
 				var w: String = e.s_wpn
-				shot(e.x, e.y, 5.0 if (w == "gun" or w == "snipe") else (8.0 if (w == "at" or w == "missile") else (7.0 if w == "flak" else 13.0)))
+				# On the JS bridge, authoritative "muz" events drive weapon fire SFX — don't double-fire shots!
+				if not has_bridge_evs:
+					shot(e.x, e.y, 5.0 if (w == "gun" or w == "snipe") else (8.0 if (w == "at" or w == "missile") else (7.0 if w == "flak" else 13.0)))
 				if e.is_inf and w == "at": _shout(e, "rpg", t)
 				elif e.is_inf and e.target != null and not e.target.is_b and e.target.s_armor == "heavy": _shout(e, "tank", t)
 				elif e.is_inf and t - float(_sh_team.get(str(e.team) + "c", -99.0)) > 30.0: _shout(e, "contact", t)
@@ -1244,19 +1267,21 @@ func observe(sim, me: int, fast: bool = false) -> void:
 				elif t - _fire_warn > 14.0:
 					_fire_warn = t
 					ann("unitsAtk"); speak(5)
-	# shells / missiles that landed
-	for pj in _proj_prev:
-		if pj.done and pj.splash > 0: boom(pj.tx, pj.ty, maxf(9.0, float(pj.splash) * 0.42), false)
-		elif pj.done: boom(pj.tx, pj.ty, 9.0 if (pj.wpn == "at" or pj.wpn == "missile") else 7.0, false)
-	_proj_prev = sim.proj.duplicate()
+	# shells / missiles that landed (only in --gdsim; bridge emits authoritative "boom" events)
+	if not has_bridge_evs:
+		for pj in _proj_prev:
+			if pj.done and pj.splash > 0: boom(pj.tx, pj.ty, maxf(9.0, float(pj.splash) * 0.42), false)
+			elif pj.done: boom(pj.tx, pj.ty, 9.0 if (pj.wpn == "at" or pj.wpn == "missile") else 7.0, false)
+		_proj_prev = sim.proj.duplicate()
 	# deaths
 	for id in _seen.keys():
 		if alive.has(id): continue
 		var o: Array = _seen[id]
 		_seen.erase(id)
 		if first: continue
-		if o[2]: boom(o[0], o[1], float(o[8]) * 0.5, true)
-		elif not o[10]: boom(o[0], o[1], 18.0, false)
+		if not has_bridge_evs:
+			if o[2]: boom(o[0], o[1], float(o[8]) * 0.5, true)
+			elif not o[10]: boom(o[0], o[1], 18.0, false)
 		if int(o[4]) == me:
 			if o[2]: ann("bldLost")
 			else:
@@ -1270,7 +1295,7 @@ func observe(sim, me: int, fast: bool = false) -> void:
 		_pw_low = pl
 		if not first: ann("lowPower" if pl else "powerBack")
 	# JS sim bridge events (KAIZEN 8: read before battle.gd drains take_events())
-	if sim.has_method("peek_events"):
+	if has_bridge_evs:
 		for ev in sim.peek_events():
 			if not (ev is Array) or ev.is_empty(): continue
 			var kind_ev := str(ev[0])
@@ -1288,13 +1313,13 @@ func observe(sim, me: int, fast: bool = false) -> void:
 					var sp := spatial(px, py)
 					if sp.is_empty() and ev.size() >= 5: sp = spatial((float(ev[1]) + px) * 0.5, (float(ev[2]) + py) * 0.5)
 					if not sp.is_empty() and sp.v >= 0.02:
-						_play_synth_2d(_wav_jet, sp, sp.v * 0.9, 0.92 + _rng.randf() * 0.16, "Sfx")
+						_play_synth_2d_named("jet", _wav_jet, sp, sp.v * 0.9, 0.92 + _rng.randf() * 0.16, "Sfx")
 						_note("synth", "plane")
 			elif kind_ev == "sup" and ev.size() >= 6:
 				superweapon_sfx(str(ev[1]), float(ev[4]), float(ev[5]))
 			elif kind_ev == "strike" or kind_ev == "bmis":
 				if limit("klaxon", 1, 3.5):
-					_play_synth_ui(_wav_klaxon, 0.72)
+					_play_synth_ui_named("klaxon", _wav_klaxon, 0.72)
 					_note("synth", "klaxon")
 				if not ann("super"): ann("enemyStrike")
 				var sx := float(ev[3]) if (kind_ev == "bmis" and ev.size() >= 5) else (float(ev[1]) if ev.size() >= 3 else 0.0)
@@ -1302,18 +1327,18 @@ func observe(sim, me: int, fast: bool = false) -> void:
 				if ev.size() >= 3 and limit("sub_strike", 2, 0.35):
 					var sp := spatial(sx, sy)
 					if not sp.is_empty() and sp.v >= 0.12:
-						_play_synth_2d(_wav_sub, sp, sp.v * 0.85, 0.78, "Sfx")
+						_play_synth_2d_named("sub", _wav_sub, sp, sp.v * 0.85, 0.78, "Sfx")
 			elif kind_ev == "emp" and ev.size() >= 3:
 				if limit("emp", 2, 0.5):
 					var sp := spatial(float(ev[1]), float(ev[2]))
 					if not sp.is_empty() and sp.v >= 0.02:
-						_play_synth_2d(_wav_emp, sp, maxf(0.35, sp.v * 0.95), 0.96 + _rng.randf() * 0.08, "Sfx")
+						_play_synth_2d_named("emp", _wav_emp, sp, maxf(0.35, sp.v * 0.95), 0.96 + _rng.randf() * 0.08, "Sfx")
 						_note("synth", "emp")
 			elif kind_ev == "rank" and ev.size() >= 2:
 				var rid := int(ev[1])
 				var rank_mine: bool = (int(_seen[rid][4]) == me) if _seen.has(rid) else (ev.size() == 2 and rid == me)
 				if rank_mine and limit("promo", 1, 1.2):
-					_play_synth_ui(_wav_promo, 0.72)
+					_play_synth_ui_named("promo", _wav_promo, 0.72)
 					_note("synth", "promo")
 					ann("rank")
 			elif kind_ev == "ready" and ev.size() >= 2 and int(ev[1]) == me:
@@ -1323,7 +1348,7 @@ func observe(sim, me: int, fast: bool = false) -> void:
 					ann("superReady")
 			elif kind_ev == "built" and ev.size() >= 2 and int(ev[1]) == me:
 				if limit("built", 2, 0.5):
-					_play_synth_ui(_wav_built, 0.58)
+					_play_synth_ui_named("built", _wav_built, 0.58)
 					_note("synth", "built")
 				speak(7); ann("complete")
 	if _demo and t - _demo_t > 6.0:
@@ -1359,26 +1384,28 @@ func _env() -> void:
 		for e in _sim.ents:
 			if e.dead or e.is_b or not (e.team == _me or _vis(e, _me)): continue
 			var cl: String = e.s_cls
-			if cl != "heli" and cl != "jet" and not (e.s_dom == "ground" and e.s_armor == "heavy"): continue
+			var dom: String = e.s_dom
+			if cl != "heli" and cl != "jet" and dom != "ground": continue
+			if cl == "inf": continue
 			var d: float = Vector2(e.x - _cam_t.x, e.y - _cam_t.y).length()
 			if d > R: continue
 			var w: float = pow(1.0 - d / R, 1.5)
 			if cl == "heli": he += w
 			elif cl == "jet": je += w
-			elif _sim.t - e.mv < 0.5:
+			elif absf(float(e.v)) > 2.5 or (_sim.t - e.mv < 0.5 and e.mv > 0.0):
 				if cl == "tank" or cl == "arty" or cl == "aa": tk += w
 				else: tr += w
-	_loop("tank", minf(1.0, tk * 0.3) * 0.55 if on else 0.0)
-	_loop("truck", minf(1.0, tr * 0.3) * 0.4 if on else 0.0)
-	_loop("heli", minf(1.0, he * 0.3) * 0.6 if on else 0.0)
-	_loop("jet", minf(1.0, je * 0.3) * 0.5 if on else 0.0)
+	_loop("tank", minf(1.0, tk * 0.28) * 0.48 if on else 0.0)
+	_loop("truck", minf(1.0, tr * 0.28) * 0.36 if on else 0.0)
+	_loop("heli", minf(1.0, he * 0.28) * 0.52 if on else 0.0)
+	_loop("jet", minf(1.0, je * 0.28) * 0.46 if on else 0.0)
 	var wind := 0.2 if _theme == "snow" else (0.08 if _theme == "green" else 0.12)
 	_loop("wind", wind * 0.5 if on else 0.0)
 	_loop("rumble", (0.05 + minf(0.45, heat * 0.45)) * 0.5 if on else 0.0)
 
 func _loop(k: String, g: float) -> void:
 	if _web_au:
-		JavaScriptBridge.eval("window.WW3Audio.setLoop(%s,%s,%f)" % [JSON.stringify(k), JSON.stringify("sfx/%s.mp3" % k), g], true)
+		_wa.setLoop(k, "sfx/%s.mp3" % k, g)
 		return
 	var L = _loops.get(k)
 	if L == null:
@@ -1432,26 +1459,27 @@ func _input(ev: InputEvent) -> void:
 func _process(dt: float) -> void:
 	_clk += dt
 	if _web_au and not unlocked:
-		if bool(JavaScriptBridge.eval("window.WW3Audio.isUnlocked()", true)):
+		if bool(_wa.isUnlocked()):
 			unlocked = true
 			_note("unlock", "dom gesture")
 			_st_t = 1.0
-	_stop_slices()
+	if not _web_au: _stop_slices()
 	_run_queue()
 	var t := now()
 	# ducking (JS duck() + the music dip while a line plays), smoothed
 	var mk := (0.45 if t < _mus_duck_until else 1.0) * (0.55 if t < _duck_until else 1.0)
 	var sk := (0.72 - 0.26 * minf(1.0, heat)) if t < _duck_until else 1.0
 	var a := minf(1.0, dt / (0.05 if mk < _mus_k else 0.3))
-	var ch := absf(mk - _mus_k) > 0.002 or absf(sk - _sfx_k) > 0.002
 	_mus_k = lerpf(_mus_k, mk, a); _sfx_k = lerpf(_sfx_k, sk, a)
-	if ch: _apply_vol()
-	_decks_step(dt)
+	if absf(_mus_k - _last_vol_push.x) > 0.015 or absf(_sfx_k - _last_vol_push.y) > 0.015:
+		_last_vol_push = Vector2(_mus_k, _sfx_k)
+		_apply_vol()
+	if not _web_au: _decks_step(dt)
 	_st_t += dt
 	if _st_t >= 0.25:
 		_st_t = 0.0; _st_tick()
 	_env_t += dt
-	if _env_t >= 0.15:
+	if _env_t >= 0.20:
 		_env_t = 0.0; _env()
 	_far_t += dt
 	if _far_t >= 0.45:

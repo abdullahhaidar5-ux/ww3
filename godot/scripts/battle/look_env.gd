@@ -14,15 +14,15 @@ const WX := {
 	"dusk": {sun = "#ffa868", si = 2.20, off = [-1320, 340, -560], sky = "#7688b6", gnd = "#50423b", hi = 1.08, fog = "#7c6874", fn = 1400.0, ff = 5400.0, expo = 1.06, sr = 3.0, hor = [.95, .52, .34], zen = [.15, .20, .38], gr = [1.0, .95, .98], sat = .94, fx = 2.1, amb = [.58, .54, .60]},
 	"night": {sun = "#9db8ec", si = .65, off = [-900, 700, -500], sky = "#223258", gnd = "#1c202c", hi = .62, fog = "#0e1528", fn = 950.0, ff = 4400.0, expo = 1.24, sr = 4.0, hor = [.09, .12, .20], zen = [.02, .03, .08], gr = [.92, .97, 1.1], sat = .78, fx = 2.6, amb = [.52, .58, .76]},
 }
-## Cinematic Military RTS daylight: crisp oblique sun (~36 deg diagonal sculptural shadows) + cool navy-slate sky ambient
-const LOOK_WX := {sun = "#fff0d6", si = 2.65, off = [-1280, 560, -680], sky = "#8cb8ee", gnd = "#80725e", hi = 1.28, fog = "#d8d1c3", fn = 1750.0, ff = 6600.0, expo = 1.05, sr = 1.8, hor = [.88, .84, .76], zen = [.12, .36, .80], gr = [1.0, 1.0, 1.0], sat = 1.06, fx = 1.22, amb = [1.0, .98, .94]}
-const LOOK := {v = 0.28, g = .002, sh = 0.32, k = 1.10, bl = 1.14, s = [.89, .95, 1.07], h = [1.05, 1.01, .94]}
-const TGRADE := {"desert": {tg = [.99, .99, 1.01], s = 0.98}, "green": {tg = [.99, 1.00, .99], s = 0.98}, "snow": {tg = [.96, .99, 1.04], s = 1.00}}
+## Hyper-Realistic Military RTS daylight (Zero Hour ROTR / CoH3 / Broken Arrow): crisp sunlit armor & soldiers, sculpted shadows
+const LOOK_WX := {sun = "#fff3de", si = 2.45, off = [-1240, 620, -640], sky = "#9ec0e8", gnd = "#8c7e6a", hi = 1.24, fog = "#dcd6ca", fn = 1850.0, ff = 6800.0, expo = 1.06, sr = 1.6, hor = [.89, .86, .80], zen = [.18, .40, .76], gr = [1.0, 1.0, 1.0], sat = 1.06, fx = 1.22, amb = [1.0, .99, .96]}
+const LOOK := {v = 0.24, g = .002, sh = 0.0, k = 1.07, bl = 1.12, s = [.95, .97, 1.02], h = [1.03, 1.01, .97]}
+const TGRADE := {"desert": {tg = [1.0, 0.99, 0.98], s = 1.04}, "green": {tg = [0.99, 1.01, 0.99], s = 1.05}, "snow": {tg = [1.0, 1.0, 1.0], s = 1.00}}
 const WFOG := {"rain": ["#7d868c", 500.0, 3200.0], "storm": ["#7d868c", 500.0, 3200.0], "fog": ["#b9bdbb", 150.0, 1500.0], "sandstorm": ["#c49a64", 45.0, 780.0],
 	"blizzard": ["#dfe6ee", 150.0, 1700.0], "snow": ["#e3e9f0", 220.0, 2300.0]}
-## Godot's ACES curve has a built-in exposure bias; calibrated so sunlit sand stays rich sandstone (~0.66-0.78) and explosions bloom cleanly
-var expo_k := 0.66
-## snow reflects ~2x the light of sand: without its own exposure the whole snow map clips to flat white
+## Calibrated ACES exposure so units, tanks, soldiers, sand & snow stay crisp, sunlit and richly legible (never dark/muddy!)
+var expo_k := 0.80
+## snow is brighter than sand: gentle exposure trim keeps snow crisp white without crushing soldier/tank readability
 var theme_k := 1.0
 const RAIN_N := 1400
 
@@ -83,15 +83,19 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	sky_mat.shader = load("res://shaders/sky_dome.gdshader")
 	sky.sky_material = sky_mat
 	var is_mob := preload("res://scripts/ui/ui_kit.gd").is_mobile()
-	sky.radiance_size = Sky.RADIANCE_SIZE_32 if is_mob else Sky.RADIANCE_SIZE_64
-	sky.process_mode = Sky.PROCESS_MODE_INCREMENTAL
+	sky.radiance_size = Sky.RADIANCE_SIZE_32
+	sky.process_mode = Sky.PROCESS_MODE_QUALITY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_sky_contribution = 0.52
-	env.ambient_light_energy = 1.22
+	env.ambient_light_sky_contribution = 0.44
+	env.ambient_light_energy = 1.12
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_white = 6.0
+	env.adjustment_enabled = true
+	env.adjustment_brightness = 1.02
+	env.adjustment_contrast = 1.07
+	env.adjustment_saturation = 1.06
 	env.fog_enabled = true
 	env.fog_mode = Environment.FOG_MODE_DEPTH
 	env.fog_density = 1.0
@@ -101,25 +105,24 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	env.fog_aerial_perspective = 0.0
 	env.glow_enabled = not is_mob
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
-	env.glow_hdr_threshold = 0.96
-	env.glow_hdr_scale = 1.42
-	env.glow_bloom = 0.08
-	env.glow_strength = 1.12
-	env.set_glow_level(0, 0.0); env.set_glow_level(1, 0.72); env.set_glow_level(2, 0.42); env.set_glow_level(3, 0.76); env.set_glow_level(4, 0.0)
+	env.glow_hdr_threshold = 1.05
+	env.glow_hdr_scale = 1.35
+	env.glow_bloom = 0.06
+	env.glow_strength = 1.08
+	env.set_glow_level(0, 0.0); env.set_glow_level(1, 0.70); env.set_glow_level(2, 0.48); env.set_glow_level(3, 0.0); env.set_glow_level(4, 0.0)
 	we = WorldEnvironment.new()
 	we.environment = env
 	host.add_child(we)
 	sun = DirectionalLight3D.new()
 	sun.shadow_enabled = true
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_mob else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-	sun.directional_shadow_split_1 = 0.12
-	sun.directional_shadow_split_2 = 0.28
-	sun.directional_shadow_split_3 = 0.56
-	sun.directional_shadow_max_distance = 1050.0 if is_mob else 1750.0
+	# 2-split cascades cut shadow draw calls in HALF on WebGL2 while giving SHARPER near-camera unit/building shadows!
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_mob else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_split_1 = 0.25
+	sun.directional_shadow_max_distance = 1000.0 if is_mob else 1650.0
 	sun.directional_shadow_fade_start = 0.86
-	sun.shadow_bias = 0.035
-	sun.shadow_normal_bias = 0.62
-	sun.shadow_opacity = 0.78
+	sun.shadow_bias = 0.032
+	sun.shadow_normal_bias = 0.56
+	sun.shadow_opacity = 0.72
 	host.add_child(sun)
 	hemi = DirectionalLight3D.new()
 	hemi.shadow_enabled = false
@@ -157,11 +160,11 @@ func _apply() -> void:
 	theme_k = 1.0
 	if theme == "snow":
 		var dk := night > 0
-		sunc = sunc.lerp(_c("#f4f7ff"), 0.2 if dk else 0.6)
-		skyc = _c("#7486ad" if dk else "#b4c6de"); gndc = _c("#5e6676" if dk else "#8e98a6")
-		fogc = _c("#d9c9bd" if tod == "golden" else ("#8f8296" if dk else "#c6d0dc"))
-		hi *= 0.82
-		theme_k = 0.9 if dk else 0.74
+		sunc = sunc.lerp(_c("#fff9f0"), 0.2 if dk else 0.55)
+		skyc = _c("#8492a8" if dk else "#c8d0dc"); gndc = _c("#686e78" if dk else "#a6acb4")
+		fogc = _c("#d9c9bd" if tod == "golden" else ("#8f8296" if dk else "#cfd6de"))
+		hi *= 0.92
+		theme_k = 0.92 if dk else 0.86
 	elif theme == "green":
 		sunc = sunc.lerp(_c("#fff6e4"), 0.4)
 		fogc = _c("#c4d2d6") if night == 0 else fogc
@@ -169,14 +172,14 @@ func _apply() -> void:
 	base_si = w.si; base_hi = hi
 	var off := _v(w.off)
 	sun.look_at_from_position(off, Vector3.ZERO, Vector3.UP)
-	sun.shadow_blur = clampf(float(w.sr) * 0.45, 0.55, 2.4)
-	sun.shadow_opacity = 0.58 if night == 2 else (0.64 if theme == "snow" else 0.70)
-	# Cool opposite-side sky rim fill + sky-driven ambient bounce (NO top-down hotspot washing out vertical walls!)
-	var hemi_off := Vector3(-off.x, maxf(off.y * 0.90, 520.0), -off.z)
+	sun.shadow_blur = clampf(float(w.sr) * 0.42, 0.50, 2.0)
+	sun.shadow_opacity = 0.56 if night == 2 else (0.58 if theme == "snow" else 0.68)
+	# Balanced opposite-side sky rim fill + neutral sky/ground ambient bounce (keeps snow crisp white & units bright/readable!)
+	var hemi_off := Vector3(-off.x, maxf(off.y * 0.92, 540.0), -off.z)
 	hemi.look_at_from_position(hemi_off, Vector3.ZERO, Vector3.UP)
 	var sl := skyc.srgb_to_linear(); var gl := gndc.srgb_to_linear()
-	var mid := Color(sl.r * 0.62 + gl.r * 0.38, sl.g * 0.64 + gl.g * 0.36, sl.b * 0.72 + gl.b * 0.28)
-	var rim := Color(sl.r * 0.78, sl.g * 0.86, minf(1.0, sl.b * 1.05))
+	var mid := Color(sl.r * 0.56 + gl.r * 0.44, sl.g * 0.58 + gl.g * 0.42, sl.b * 0.62 + gl.b * 0.38)
+	var rim := Color(sl.r * 0.84, sl.g * 0.88, minf(1.0, sl.b * 0.94))
 	env.ambient_light_color = mid.linear_to_srgb()
 	hemi.light_color = rim.linear_to_srgb()
 	base_fog = [fogc, float(w.fn), float(w.ff)]
@@ -204,12 +207,10 @@ func _apply() -> void:
 	_sync_water()
 	fx_amb = _v(w.amb); fx_k = float(w.get("fx", 1.0))
 	var T: Dictionary = TGRADE[theme]
-	var tg := _v(T.tg)
-	if tod == "dusk": tg *= Vector3(1.06, 0.94, 0.90)
-	grade.set_shader_parameter("mul", _v(w.gr) * tg)
-	grade.set_shader_parameter("sat", float(w.sat) * float(T.s))
-	grade.set_shader_parameter("sharpen", LOOK.sh); grade.set_shader_parameter("vig", LOOK.v); grade.set_shader_parameter("grain", LOOK.g)
-	grade.set_shader_parameter("contrast", LOOK.k); grade.set_shader_parameter("lk_s", _v(LOOK.s)); grade.set_shader_parameter("lk_h", _v(LOOK.h))
+	env.adjustment_contrast = float(LOOK.k)
+	env.adjustment_saturation = float(w.sat) * float(T.s)
+	env.adjustment_brightness = 1.02 if night == 0 else 1.04
+	grade.set_shader_parameter("vig", LOOK.v)
 	_light(0.0, 0.0)
 
 func _sync_water() -> void:

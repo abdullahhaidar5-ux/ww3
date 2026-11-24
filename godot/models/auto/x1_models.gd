@@ -166,7 +166,7 @@ static func material(src: Material, m: Dictionary, vertex_colours: bool, nation:
 	var cg := float(c_arr[1])
 	var cb := float(c_arr[2])
 	var c_max := maxf(cr, maxf(cg, cb))
-	var cap := 0.96 if has_tex else 0.72
+	var cap := 0.96 if has_tex else (0.86 if (mat_mode == 0 or mat_mode == 2 or mat_mode == 3) else 0.78)
 	if c_max > cap and c_max > 0.0001:
 		var c_sc := cap / c_max
 		cr *= c_sc
@@ -178,11 +178,11 @@ static func material(src: Material, m: Dictionary, vertex_colours: bool, nation:
 		var cmx := maxf(cr, maxf(cg, cb))
 		var cmn := minf(cr, minf(cg, cb))
 		var sat := (cmx - cmn) / maxf(cmx, 0.001)
-		if lum > 0.34 and sat > 0.28 and cr >= cb * 1.20:
-			var desat := clampf((sat - 0.28) * 0.45, 0.0, 0.26)
-			cr = lerpf(cr, lum, desat) * 0.90
-			cg = lerpf(cg, lum, desat) * 0.90
-			cb = lerpf(cb, lum, desat) * 0.92
+		if lum > 0.36 and sat > 0.30 and cr >= cb * 1.20:
+			var desat := clampf((sat - 0.30) * 0.36, 0.0, 0.20)
+			cr = lerpf(cr, lum, desat) * 0.96
+			cg = lerpf(cg, lum, desat) * 0.96
+			cb = lerpf(cb, lum, desat) * 0.97
 	var col := Color(cr, cg, cb).linear_to_srgb()
 	if drop_tex:
 		alb_tex = _armor_alb

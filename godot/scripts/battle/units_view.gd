@@ -17,12 +17,12 @@ extends RefCounted
 const X1 = preload("res://models/auto/x1_models.gd")
 const Look = preload("res://scripts/battle/battle_look.gd")
 
-const MAX_ANIM_SOLDIERS := 120
-const MAX_SOLDIER_POOL := 240
-const MAX_DYING_SOLDIERS := 24
+const MAX_ANIM_SOLDIERS := 64
+const MAX_SOLDIER_POOL := 160
+const MAX_DYING_SOLDIERS := 20
 const DYING_HOLD_TIME := 3.8
 const DYING_SINK_TIME := 1.0
-const ANIM_DIST_SQ := 950.0 * 950.0
+const ANIM_DIST_SQ := 850.0 * 850.0
 const DUST_DIST_SQ := 1100.0 * 1100.0
 const DMG_FX_DIST_SQ := 1800.0 * 1800.0
 const HUGE_AABB := AABB(Vector3(-1e5, -1e4, -1e5), Vector3(2e5, 4e4, 2e5))
@@ -419,7 +419,8 @@ func end_frame() -> void:
 		var n: int = arr.size()
 		var mm := mi.multimesh
 		if n == 0:
-			mm.visible_instance_count = 0
+			if mm.visible_instance_count != 0:
+				mm.visible_instance_count = 0
 			continue
 		if mm.instance_count < n:
 			var cap := maxi(16, mm.instance_count)
@@ -591,20 +592,27 @@ func _veh_motion(B, e, eid_i: int, p: Vector2, ang: float, dom: String, kind_s: 
 		return out
 	if dom == "naval":
 		return out
-	# ground: slope under the hull (front/back, left/right) + accel squat / brake dive + turn roll
-	var L: float = clampf(float(e.r) * 1.05, 7.0, 26.0)
-	var Wd: float = L * 0.62
-	var fwd := Vector2(cos(yaw), sin(yaw))
-	var side := Vector2(-fwd.y, fwd.x)
-	var gh = B.sim
-	var hf: float = float(gh.ground_h(p.x + fwd.x * L, p.y + fwd.y * L))
-	var hb: float = float(gh.ground_h(p.x - fwd.x * L, p.y - fwd.y * L))
-	var hs: float = float(gh.ground_h(p.x + side.x * Wd, p.y + side.y * Wd))
-	var hn: float = float(gh.ground_h(p.x - side.x * Wd, p.y - side.y * Wd))
+	# ground: slope under the hull (cached when stationary to skip 4 height samples/unit/frame!)
+	var slope_p: float = float(st.get("sp", 0.0))
+	var slope_r: float = float(st.get("sr", 0.0))
+	if not st.has("sp") or spd > 0.6 or absf(yaw_rate) > 0.08:
+		var L: float = clampf(float(e.r) * 1.05, 7.0, 26.0)
+		var Wd: float = L * 0.62
+		var fwd := Vector2(cos(yaw), sin(yaw))
+		var side := Vector2(-fwd.y, fwd.x)
+		var gh = B.sim
+		var hf: float = float(gh.ground_h(p.x + fwd.x * L, p.y + fwd.y * L))
+		var hb: float = float(gh.ground_h(p.x - fwd.x * L, p.y - fwd.y * L))
+		var hs: float = float(gh.ground_h(p.x + side.x * Wd, p.y + side.y * Wd))
+		var hn: float = float(gh.ground_h(p.x - side.x * Wd, p.y - side.y * Wd))
+		slope_p = atan2(hf - hb, 2.0 * L)
+		slope_r = -atan2(hs - hn, 2.0 * Wd)
+		st["sp"] = slope_p
+		st["sr"] = slope_r
 	var lim := deg_to_rad(2.2 if heavy else (3.8 if tracked else 5.0))
 	var k_acc := 0.0011 if tracked else 0.0016
-	var pitch_t: float = atan2(hf - hb, 2.0 * L) + clampf(float(st["acc"]) * k_acc, -lim, lim)
-	var roll_t: float = -atan2(hs - hn, 2.0 * Wd) + clampf(yaw_rate * spd * (0.0009 if tracked else 0.0016), -lim, lim)
+	var pitch_t: float = slope_p + clampf(float(st["acc"]) * k_acc, -lim, lim)
+	var roll_t: float = slope_r + clampf(yaw_rate * spd * (0.0009 if tracked else 0.0016), -lim, lim)
 	# damped spring: tracked ~2 Hz zeta 0.5 (one rock on a stop), wheeled softer and bouncier
 	var w := TAU * (2.0 if tracked else 1.6)
 	var zeta := 0.5 if tracked else 0.28

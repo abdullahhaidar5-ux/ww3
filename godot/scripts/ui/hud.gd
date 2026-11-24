@@ -40,6 +40,11 @@ var bar: Panel
 var mini: Control
 var mini_tex: ImageTexture
 var mini_t := 0.0
+var _hud_t := 0.0
+var _last_pw_state := -1
+var _last_sup_txt := ""
+var _last_alert_n := -1
+var _last_dz_n := -1
 var cmd_grid: GridContainer
 var cmd_title: Label
 var cmd_sub: Label
@@ -963,6 +968,20 @@ func _sync_flags(fac: String) -> void:
 func tick(dt: float) -> void:
 	root.visible = B.started
 	if not B.started or B.sim == null: return
+	mini_t -= dt
+	if mini_t <= 0.0:
+		mini_t = 0.09 if alerts > 0 else 0.16
+		mini.queue_redraw()
+	var now := Time.get_ticks_msec()
+	for l in feed.get_children():
+		var age := (now - int(l.get_meta("t"))) / 1000.0
+		l.modulate.a = clampf(9.0 - age, 0.0, 1.0)
+		if age > 9.0: l.queue_free()
+	# Throttle heavy telemetry / command-bar / entity scans to ~12 Hz (cuts per-frame UI CPU cost by 80%!)
+	_hud_t -= dt
+	if _hud_t > 0.0 and cmd_sig != "":
+		return
+	_hud_t = 0.08
 	var sim = B.sim
 	var T: Dictionary = sim.teams[B.me]
 	_sync_flags(str(B.my_fac))
@@ -970,13 +989,19 @@ func tick(dt: float) -> void:
 	var pw: Vector2 = sim.pwr_of(B.me)
 	var low := pw.y > pw.x
 	var tight := not low and pw.x > 0.0 and (pw.x - pw.y) <= maxf(2.0, pw.x * 0.12)
-	plate_pw.text = "%d/%d" % [int(pw.y), int(pw.x)]
-	var p_col := Color("e84038") if low else (Color("e8b238") if tight else Color("38d65a"))
-	plate_pw.add_theme_color_override("font_color", Color("ff6c5c") if low else (Color("f4c454") if tight else UI.TEXT))
-	if tel_pw_icon != null: tel_pw_icon.modulate = p_col
+	var pw_txt := "%d/%d" % [int(pw.y), int(pw.x)]
+	if plate_pw.text != pw_txt: plate_pw.text = pw_txt
+	var pw_st := 2 if low else (1 if tight else 0)
+	if pw_st != _last_pw_state:
+		_last_pw_state = pw_st
+		var p_col := Color("e84038") if low else (Color("e8b238") if tight else Color("38d65a"))
+		plate_pw.add_theme_color_override("font_color", Color("ff6c5c") if low else (Color("f4c454") if tight else UI.TEXT))
+		if tel_pw_icon != null: tel_pw_icon.modulate = p_col
+		if pw_bar != null:
+			(pw_bar.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = p_col
+		(pw_meter.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = p_col
 	if pw_bar != null:
 		pw_bar.value = clampf(pw.y / maxf(1.0, pw.x), 0, 1)
-		(pw_bar.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = p_col
 	if low:
 		pw_meter.value = clampf(pw.x / maxf(1.0, pw.y) * 0.45, 0.14, 0.45)
 	elif pw.x <= 0.0:
@@ -984,31 +1009,38 @@ func tick(dt: float) -> void:
 	else:
 		var surplus := clampf((pw.x - pw.y) / maxf(1.0, pw.x), 0.0, 1.0)
 		pw_meter.value = 0.56 + surplus * 0.44
-	(pw_meter.get_theme_stylebox("fill") as StyleBoxFlat).bg_color = p_col
 
 	var money := "INF" if B.kind == "range" else "$" + _commas(int(T.credits))
-	plate_money.text = money
-	plate_pop.text = "%d/%d" % [sim.pop_used(B.me, false), sim.pop_cap()]
-	plate_time.text = UI.fmt_time(float(sim.t))
+	if plate_money.text != money: plate_money.text = money
+	var pop_txt := "%d/%d" % [sim.pop_used(B.me, false), sim.pop_cap()]
+	if plate_pop.text != pop_txt: plate_pop.text = pop_txt
+	var t_txt := UI.fmt_time(float(sim.t))
+	if plate_time.text != t_txt: plate_time.text = t_txt
 
 	var sup = B.supply_state()
 	var sup_txt := str(sup[0])
 	if sup_txt == "Supply lines OK": sup_txt = "SUPPLY OK"
-	chip_sup.text = sup_txt
-	chip_sup.add_theme_color_override("font_color", sup[1])
-	if tel_sup_icon != null: tel_sup_icon.modulate = sup[1]
+	if sup_txt != _last_sup_txt:
+		_last_sup_txt = sup_txt
+		chip_sup.text = sup_txt
+		chip_sup.add_theme_color_override("font_color", sup[1])
+		if tel_sup_icon != null: tel_sup_icon.modulate = sup[1]
 
-	chip_alert.text = "ALT %d" % alerts if alerts > 0 else "ALERTS"
-	var al_txt_col: Color = Color("ffd88a") if alerts > 0 else Color("9db2be")
-	chip_alert.add_theme_color_override("font_color", al_txt_col)
-	alert_btn.set_meta("lbl_col", al_txt_col)
+	if alerts != _last_alert_n:
+		_last_alert_n = alerts
+		chip_alert.text = "ALT %d" % alerts if alerts > 0 else "ALERTS"
+		var al_txt_col: Color = Color("ffd88a") if alerts > 0 else Color("9db2be")
+		chip_alert.add_theme_color_override("font_color", al_txt_col)
+		alert_btn.set_meta("lbl_col", al_txt_col)
 
 	# Idle Dozer status button (iconic Zero Hour macro helper)
 	var idle_dz: int = B.idle_dozer_count() if B.has_method("idle_dozer_count") else 0
-	dozer_lbl.text = "DOZER"
-	if dozer_badge != null:
-		dozer_badge.visible = idle_dz > 0
-		if idle_dz > 0: dozer_badge.text = str(idle_dz)
+	if idle_dz != _last_dz_n:
+		_last_dz_n = idle_dz
+		dozer_lbl.text = "DOZER"
+		if dozer_badge != null:
+			dozer_badge.visible = idle_dz > 0
+			if idle_dz > 0: dozer_badge.text = str(idle_dz)
 	var dz_now := idle_dz > 0
 	if dz_now != _dz_lit:
 		_dz_lit = dz_now
@@ -1022,7 +1054,7 @@ func tick(dt: float) -> void:
 			if dozer_icon != null: dozer_icon.modulate = Color("829ca8")
 			dozer_btn.set_meta("icon_col", Color("829ca8"))
 			dozer_btn.set_meta("lbl_col", UI.TEXT_DIM)
-	dozer_lbl.add_theme_color_override("font_color", Color("c8f4ff") if dz_now else UI.TEXT_DIM)
+		dozer_lbl.add_theme_color_override("font_color", Color("c8f4ff") if dz_now else UI.TEXT_DIM)
 
 	# General's Rank & XP live meter on GEN button
 	var rk := int(T.get("rank", 1))
@@ -1109,20 +1141,9 @@ func tick(dt: float) -> void:
 	else:
 		replay_lbl.text = ""
 
-	mini_t -= dt
-	if mini_t <= 0.0:
-		mini_t = 0.08 if alerts > 0 else 0.15
-		mini.queue_redraw()
-
 	var ht: String = B.hint_text()
-	hint_lbl.text = ht
+	if hint_lbl.text != ht: hint_lbl.text = ht
 	hint_lbl.visible = ht != ""
-
-	var now := Time.get_ticks_msec()
-	for l in feed.get_children():
-		var age := (now - int(l.get_meta("t"))) / 1000.0
-		l.modulate.a = clampf(9.0 - age, 0.0, 1.0)
-		if age > 9.0: l.queue_free()
 
 	_cmd_bar()
 	_portrait()

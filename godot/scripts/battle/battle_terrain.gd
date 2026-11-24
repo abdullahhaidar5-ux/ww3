@@ -3,9 +3,9 @@
 ## trees as one MultiMesh per tree model. Positions = the sim's design units (same as the browser game).
 extends RefCounted
 
-const MAX_VERTS_DESKTOP := 110000.0   # crisp cliffs, hills & wadis on desktop
-const MAX_VERTS_MOBILE := 55000.0     # lightweight terrain density on mobile WebGL2
-const MAX_TREES := 3500      # cap total tree instances for smooth WebGL2 Compatibility performance (halved on mobile)
+const MAX_VERTS_DESKTOP := 68000.0    # crisp cliffs, hills & wadis at locked 60 FPS on WebGL2
+const MAX_VERTS_MOBILE := 42000.0     # lightweight terrain density on mobile WebGL2
+const MAX_TREES := 2200      # dense forests while keeping WebGL2 shadow pass blazingly fast
 const UI_KIT = preload("res://scripts/ui/ui_kit.gd")
 
 ## ground height at a map point, straight from the bridge's height field (bilinear, same as the JS groundH)
@@ -52,10 +52,10 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	var c_hi := Color(0.67, 0.59, 0.47)
 	var c_mtn := Color(0.55, 0.47, 0.38)
 	if th == "snow":
-		c_lo = Color(0.82, 0.86, 0.92)
-		c_mid = Color(0.76, 0.81, 0.88)
-		c_hi = Color(0.71, 0.76, 0.84)
-		c_mtn = Color(0.42, 0.46, 0.52)
+		c_lo = Color(0.88, 0.89, 0.91)
+		c_mid = Color(0.82, 0.84, 0.87)
+		c_hi = Color(0.76, 0.78, 0.82)
+		c_mtn = Color(0.44, 0.46, 0.49)
 	elif th != "desert":
 		c_lo = Color(0.45, 0.53, 0.33)
 		c_mid = Color(0.40, 0.48, 0.29)
@@ -142,10 +142,11 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	mat.set_shader_parameter("map_size", Vector2(float(GW) * CELL, float(GH) * CELL))
 	mat.set_shader_parameter("road_size", Vector2(float(rw) * rC, float(rh) * rC) if (rw > 0 and rh > 0) else Vector2(float(GW) * CELL, float(GH) * CELL))
 	mat.set_shader_parameter("theme_id", theme_id)
-	mat.set_shader_parameter("nrm_strength", 0.58 if th == "snow" else 0.96)
+	mat.set_shader_parameter("nrm_strength", 0.24 if th == "snow" else 0.76)
 	mat.set_shader_parameter("wetness", 0.0)
 	g.material_override = mat
-	g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	# Terrain receives all unit/building/tree shadows; disabling terrain self-shadow casting saves 200k+ shadow verts/frame on WebGL2!
+	g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	host.add_child(g)
 	# Textured distant terrain expanse + 360° sculpted mountain horizon ring so low-angle upward camera looks cinematic!
 	var pm := PlaneMesh.new()
@@ -840,7 +841,7 @@ static func _env_props(host: Node3D, map: Dictionary) -> void:
 		mm.instance_count = arr.size()
 		for i in arr.size(): mm.set_instance_transform(i, arr[i])
 		m.multimesh = mm
-		m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		host.add_child(m)
 	if not scrubs.is_empty():
 		var sm := MultiMeshInstance3D.new()
@@ -862,7 +863,7 @@ static func _env_props(host: Node3D, map: Dictionary) -> void:
 		bmm.instance_count = barriers.size()
 		for i in barriers.size(): bmm.set_instance_transform(i, barriers[i])
 		bm.multimesh = bmm
-		bm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		bm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		host.add_child(bm)
 	if not poles.is_empty():
 		var pm2 := MultiMeshInstance3D.new()
@@ -873,7 +874,7 @@ static func _env_props(host: Node3D, map: Dictionary) -> void:
 		pmm.instance_count = poles.size()
 		for i in poles.size(): pmm.set_instance_transform(i, poles[i])
 		pm2.multimesh = pmm
-		pm2.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		pm2.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		host.add_child(pm2)
 
 ## woods: exact JS tree placement from map.trees ([x, y, scale], capped at MAX_TREES) when present,

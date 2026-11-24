@@ -75,11 +75,9 @@ void vertex() {
 	vec3 ax = sx / lx;
 	vec3 ay = sy / ly;
 	vec3 az = sz / lz;
-	// True world-unit local coordinates (immune to GLB internal scale!)
 	v_obj_pos = vec3(dot(rel_w, ax), dot(rel_w, ay), dot(rel_w, az));
 	v_obj_nrm = normalize(NORMAL);
 	v_rel_y = max(0.0, rel_w.y);
-	// Pick dominant object-locked planar tangent axis and transform into view space
 	vec3 an_v = abs(v_obj_nrm);
 	vec3 w_tu = (an_v.y > an_v.x && an_v.y > an_v.z) ? ax : ((an_v.x > an_v.z) ? az : ax);
 	v_view_tu = normalize((VIEW_MATRIX * vec4(w_tu, 0.0)).xyz);
@@ -102,13 +100,11 @@ void fragment() {
 	vec3 obj_n = normalize(v_obj_nrm);
 	vec3 an = abs(obj_n);
 	float up_fac = clamp((FRONT_FACING ? 1.0 : -1.0) * obj_n.y, 0.0, 1.0);
-	// Dominant planar projection (1 texture tap -> locked 60 FPS on WebGL2 + Mobile!)
 	vec2 tri_uv = (an.y > an.x && an.y > an.z) ? v_obj_pos.xz : ((an.x > an.z) ? v_obj_pos.zy : v_obj_pos.xy);
 	float detail_freq = (mat_mode == 1) ? 0.072 : ((mat_mode == 2) ? 0.28 : ((mat_mode == 3) ? 0.14 : 0.125));
 	vec3 dn = texture(detail_nrm, tri_uv * detail_freq).rgb;
 	vec3 combined_n = has_src_nrm ? mix(texture(src_nrm, uv).rgb, dn, 0.44) : dn;
 
-	// Physical world-scale macro & micro weathering (locked rigidly to vehicle/building axes — zero swimming!)
 	float w_macro = vnoise(tri_uv * (mat_mode == 1 ? 0.11 : (mat_mode == 3 ? 0.16 : 0.22)));
 	float w_fine = vnoise(tri_uv * (mat_mode == 1 ? 0.58 : (mat_mode == 3 ? 0.85 : 1.05)));
 	float wear = w_macro * 0.62 + w_fine * 0.38;
@@ -119,22 +115,18 @@ void fragment() {
 	float ao = 1.0;
 
 	if (mat_mode == 1) {
-		// ---- BUILDINGS, FORTIFICATIONS, BASE PADS & CIVILIAN STRUCTURES ----
 		bool is_glass = (base_roughness < 0.36) || (alb.b > alb.r * 1.18 && luma < 0.30);
 		if (is_glass) {
-			// Crisp dark reflective tinted architectural glass panes (no cartoon bright blue)
 			alb = mix(alb * 0.42, vec3(0.03, 0.048, 0.068), 0.46);
 			rough = 0.07 + w_fine * 0.05;
 			metal = 0.28;
 			float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
 			alb += vec3(0.11, 0.14, 0.18) * fres;
 		} else {
-			// Anti-plastic white calibration: tone clipped bright white blocks into weathered concrete/stucco
 			if (luma > 0.50) {
 				float excess = smoothstep(0.50, 0.90, luma);
 				alb *= mix(1.0, 0.74, excess);
 			}
-			// Sharp cast-concrete panel seams & architectural vertical rain-runoff weathering
 			float seam_x = smoothstep(0.955, 0.996, abs(sin(tri_uv.x * 0.28)));
 			float seam_y = smoothstep(0.955, 0.996, abs(sin(tri_uv.y * 0.36)));
 			float seam = max(seam_x, seam_y) * (1.0 - an.y * 0.80);
@@ -142,7 +134,6 @@ void fragment() {
 			float damp_stain = vnoise(vec2(tri_uv.x * 0.15, tri_uv.y * 0.04));
 			alb *= (0.89 + wear * 0.18) * (1.0 - seam * 0.18);
 			alb *= mix(0.87, 1.03, rain_streak * 0.65 + damp_stain * 0.35);
-			// Gritty rooftop gravel/tar/AC weathering vs architectural concrete/stucco walls
 			if (up_fac > 0.68) {
 				float gravel = vnoise(tri_uv * 1.45);
 				alb *= 0.86 + gravel * 0.16 + w_macro * 0.06;
@@ -150,7 +141,6 @@ void fragment() {
 			} else {
 				rough = clamp(rough + (wear - 0.5) * 0.22 + seam * 0.08, 0.50, 0.95);
 			}
-			// Ground dust splash & strong foundation contact AO (0.65 -> 1.0 over 0..8.5u)
 			float dirt = (1.0 - smoothstep(0.0, 8.5, v_rel_y)) * dust_enable;
 			alb = mix(alb, alb * vec3(0.76, 0.71, 0.62), dirt * 0.44);
 			ao = mix(0.65, 1.0, smoothstep(0.0, 8.5, v_rel_y));
@@ -159,24 +149,17 @@ void fragment() {
 			NORMAL = apply_micro_normal(NORMAL, v_view_tu, combined_n, bump_s);
 		}
 	} else if (mat_mode == 2) {
-		// ---- INFANTRY / SOLDIERS: tactical fabric weave, kevlar/gear contrast & boot dust ----
-		if (luma > 0.44) {
-			alb *= mix(1.0, 0.74, smoothstep(0.44, 0.88, luma));
+		if (luma > 0.72) {
+			alb *= mix(1.0, 0.86, smoothstep(0.72, 0.98, luma));
 		}
-		// Enhance helmet, tactical vest & rifle contrast against uniform fatigues
-		float gear_dark = 1.0 - smoothstep(0.08, 0.28, luma);
-		alb *= mix(0.92 + w_fine * 0.16, 0.84 + w_fine * 0.12, gear_dark * 0.45);
-		float boot_dust = (1.0 - smoothstep(0.0, 3.8, v_rel_y)) * dust_enable;
-		alb = mix(alb, alb * vec3(0.76, 0.70, 0.60), boot_dust * 0.38);
-		ao = mix(0.74, 1.0, smoothstep(0.0, 4.0, v_rel_y));
-		float fres_s = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.4);
-		float vest_sheen = up_fac * 0.35 + fres_s * 0.45;
-		rough = clamp(0.84 - vest_sheen * 0.14 + (w_fine - 0.5) * 0.14, 0.60, 0.95);
-		metal = clamp(min(metal, 0.12) + gear_dark * 0.08, 0.02, 0.18);
-		// ALWAYS apply micro-normal relief so every infantry squad gets crisp fabric/kevlar/gear detail
-		NORMAL = apply_micro_normal(NORMAL, v_view_tu, combined_n, has_src_nrm ? 0.58 : 0.40);
+		alb *= 1.08 * (0.94 + w_fine * 0.12);
+		float boot_dust = (1.0 - smoothstep(0.0, 3.2, v_rel_y)) * dust_enable;
+		alb = mix(alb, alb * vec3(0.84, 0.79, 0.71), boot_dust * 0.28);
+		ao = mix(0.85, 1.0, smoothstep(0.0, 3.8, v_rel_y));
+		rough = clamp(0.86 + (w_fine - 0.5) * 0.12, 0.76, 0.96);
+		metal = 0.03;
+		NORMAL = apply_micro_normal(NORMAL, v_view_tu, combined_n, has_src_nrm ? 0.44 : 0.28);
 	} else if (mat_mode == 3) {
-		// ---- AIRCRAFT (JETS, HELIS, AIRLIFTS, DRONES): riveted aerospace skin, stealth RAM & glossy canopy ----
 		bool is_cockpit = (base_roughness < 0.34) || (alb.b > alb.r * 1.22 && luma < 0.26);
 		if (is_cockpit) {
 			alb = mix(alb * 0.45, vec3(0.04, 0.055, 0.075), 0.42);
@@ -185,63 +168,55 @@ void fragment() {
 			float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 2.6);
 			alb += vec3(0.18, 0.20, 0.22) * fres;
 		} else {
-			if (luma > 0.56) {
-				alb *= mix(1.0, 0.80, smoothstep(0.56, 0.94, luma));
+			if (luma > 0.68) {
+				alb *= mix(1.0, 0.86, smoothstep(0.68, 0.96, luma));
 			}
-			// Crisp riveted aerospace aluminum / radar-absorbent stealth matte panel seams
 			float p_x = smoothstep(0.955, 0.996, abs(sin(tri_uv.x * 0.58)));
 			float p_y = smoothstep(0.955, 0.996, abs(sin(tri_uv.y * 0.58)));
 			float panel_seam = max(p_x, p_y);
 			float rivet = smoothstep(0.92, 0.99, abs(sin(tri_uv.x * 3.2)) * abs(sin(tri_uv.y * 3.2))) * panel_seam;
-			// Airflow oil & exhaust soot streaking along fuselage (ZERO brown ground mud!)
 			float streak = vnoise(vec2(v_obj_pos.x * 0.08, (v_obj_pos.y + v_obj_pos.z) * 0.42));
-			float soot = smoothstep(0.42, 0.85, streak) * (1.0 - up_fac * 0.35);
-			alb *= (0.94 + wear * 0.12) * (1.0 - panel_seam * 0.14 - rivet * 0.08);
-			alb = mix(alb, alb * vec3(0.76, 0.75, 0.73), soot * 0.28);
-			// Crisp specular edge highlight on leading edges, intakes & dorsal spine
+			float soot = smoothstep(0.45, 0.86, streak) * (1.0 - up_fac * 0.35);
+			alb *= (0.98 + wear * 0.12) * (1.0 - panel_seam * 0.15 - rivet * 0.08);
+			alb = mix(alb, alb * vec3(0.78, 0.77, 0.75), soot * 0.22);
 			float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 2.8);
-			float edge_hi = clamp(up_fac * 0.45 + fres * 0.85, 0.0, 1.0) * smoothstep(0.28, 0.82, wear);
-			alb += (alb * 0.16 + vec3(0.025)) * edge_hi;
-			rough = clamp(mix(clamp(base_roughness, 0.42, 0.68), 0.26, edge_hi * 0.55) + soot * 0.12 + (wear - 0.5) * 0.14, 0.24, 0.78);
-			metal = clamp(max(base_metallic, 0.14) + edge_hi * 0.22 - soot * 0.08, 0.10, 0.44);
-			ao = mix(0.86, 1.0, smoothstep(0.0, 3.5, v_rel_y));
-			float bump_s = has_src_nrm ? 0.66 : (has_albedo_tex ? 0.34 : 0.50);
+			float edge_hi = clamp(up_fac * 0.48 + fres * 0.82, 0.0, 1.0) * smoothstep(0.26, 0.80, wear);
+			alb += (alb * 0.18 + vec3(0.03)) * edge_hi;
+			rough = clamp(mix(clamp(base_roughness, 0.40, 0.64), 0.24, edge_hi * 0.58) + soot * 0.10 + (wear - 0.5) * 0.12, 0.22, 0.74);
+			metal = clamp(max(base_metallic, 0.18) + edge_hi * 0.26 - soot * 0.06, 0.14, 0.50);
+			ao = mix(0.88, 1.0, smoothstep(0.0, 3.5, v_rel_y));
+			float bump_s = has_src_nrm ? 0.62 : (has_albedo_tex ? 0.32 : 0.46);
 			NORMAL = apply_micro_normal(NORMAL, v_view_tu, combined_n, bump_s);
 		}
 	} else {
-		// ---- TANKS, ARMORED VEHICLES & DOZERS: authentic CARC matte paint, welded RHA steel & edge sheen ----
 		bool is_cockpit = (base_roughness < 0.34) || (alb.b > alb.r * 1.25 && luma < 0.24);
 		if (is_cockpit) {
 			alb = mix(alb * 0.45, vec3(0.03, 0.05, 0.07), 0.40);
 			rough = 0.07 + w_fine * 0.04;
-			metal = 0.28;
+			metal = 0.30;
 			float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 2.8);
-			alb += vec3(0.14, 0.19, 0.24) * fres;
+			alb += vec3(0.16, 0.21, 0.26) * fres;
 		} else {
-			if (luma > 0.52) {
-				alb *= mix(1.0, 0.78, smoothstep(0.52, 0.92, luma));
+			if (luma > 0.68) {
+				alb *= mix(1.0, 0.86, smoothstep(0.68, 0.96, luma));
 			}
-			// Welded RHA armor plate seams, rivet lines & subtle exhaust soot/grime variation
-			float seam_u = smoothstep(0.955, 0.996, abs(sin(tri_uv.x * 0.46)));
-			float seam_v = smoothstep(0.955, 0.996, abs(sin(tri_uv.y * 0.46)));
+			float seam_u = smoothstep(0.955, 0.996, abs(sin(tri_uv.x * 0.48)));
+			float seam_v = smoothstep(0.955, 0.996, abs(sin(tri_uv.y * 0.48)));
 			float panel = max(seam_u, seam_v);
 			float rivet = smoothstep(0.93, 0.992, abs(sin(tri_uv.x * 2.8)) * abs(sin(tri_uv.y * 2.8))) * panel;
 			float grime = vnoise(vec2(tri_uv.x * 0.36, tri_uv.y * 0.18));
-			alb *= (0.92 + wear * 0.15) * (1.0 - panel * 0.13 - rivet * 0.09);
-			alb *= mix(0.90, 1.02, grime);
-			// Grounded lower-hull/track dust & undercarriage AO (gated by dust_enable so turrets/barrels stay clean!)
-			float low_dust = (1.0 - smoothstep(0.0, 4.8, v_rel_y)) * dust_enable;
-			alb = mix(alb, mix(alb * 0.84, vec3(0.42, 0.37, 0.28), 0.30), low_dust * 0.48);
-			ao = mix(mix(0.88, 0.72, dust_enable), 1.0, smoothstep(0.0, 4.8, v_rel_y));
-			// Tight metallic worn-steel specular edge highlight on upward bevels, hatches, ERA & barrels
-			float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.1);
-			float edge_wear = clamp(up_fac * 0.46 + fres * 0.84, 0.0, 1.0) * smoothstep(0.30, 0.82, wear);
-			alb += (alb * 0.16 + vec3(0.028)) * edge_wear;
-			// Authentic CARC matte military paint (0.56-0.78) with tight worn-steel bevel highlights
-			float carc_r = clamp(base_roughness, 0.56, 0.78);
-			rough = clamp(mix(carc_r, 0.30, edge_wear * 0.60) + low_dust * 0.16 + (wear - 0.5) * 0.16, 0.28, 0.92);
-			metal = clamp(clamp(base_metallic, 0.08, 0.22) + edge_wear * 0.24 - low_dust * 0.10, 0.04, 0.42);
-			float bump_s = has_src_nrm ? 0.74 : (has_albedo_tex ? 0.42 : 0.60);
+			alb *= (0.98 + wear * 0.14) * (1.0 - panel * 0.14 - rivet * 0.09);
+			alb *= mix(0.93, 1.03, grime);
+			float low_dust = (1.0 - smoothstep(0.0, 4.2, v_rel_y)) * dust_enable;
+			alb = mix(alb, mix(alb * 0.88, vec3(0.46, 0.41, 0.32), 0.24), low_dust * 0.38);
+			ao = mix(mix(0.90, 0.78, dust_enable), 1.0, smoothstep(0.0, 4.4, v_rel_y));
+			float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
+			float edge_wear = clamp(up_fac * 0.50 + fres * 0.82, 0.0, 1.0) * smoothstep(0.28, 0.80, wear);
+			alb += (alb * 0.20 + vec3(0.032)) * edge_wear;
+			float carc_r = clamp(base_roughness, 0.50, 0.72);
+			rough = clamp(mix(carc_r, 0.26, edge_wear * 0.62) + low_dust * 0.14 + (wear - 0.5) * 0.14, 0.24, 0.88);
+			metal = clamp(clamp(base_metallic, 0.12, 0.28) + edge_wear * 0.28 - low_dust * 0.08, 0.06, 0.48);
+			float bump_s = has_src_nrm ? 0.68 : (has_albedo_tex ? 0.38 : 0.54);
 			NORMAL = apply_micro_normal(NORMAL, v_view_tu, combined_n, bump_s);
 		}
 	}
@@ -249,7 +224,7 @@ void fragment() {
 	ALBEDO = alb;
 	ROUGHNESS = rough;
 	METALLIC = metal;
-	SPECULAR = (mat_mode == 1) ? 0.46 : ((mat_mode == 2) ? 0.28 : ((mat_mode == 3) ? 0.62 : 0.58));
+	SPECULAR = (mat_mode == 1) ? 0.44 : ((mat_mode == 2) ? 0.14 : ((mat_mode == 3) ? 0.64 : 0.60));
 	AO = ao;
 	if (emission_energy > 0.001) {
 		EMISSION = emission_col * emission_energy;

@@ -37,20 +37,50 @@ static func icon(name: String) -> Texture2D:
 	return t
 
 static var _fonts := {}
-## "display" (Saira Condensed SemiBold, wide tracking), "bold" (Saira Condensed Bold), "mono" (IBM Plex Mono)
+static var _fb_fonts: Array[Font] = []
+static var _fb_init := false
+
+static func _fallbacks() -> Array[Font]:
+	if _fb_init: return _fb_fonts
+	_fb_init = true
+	if ResourceLoader.exists("res://ui/NotoSansArabic-SemiBold.ttf"):
+		var ar: Font = load("res://ui/NotoSansArabic-SemiBold.ttf")
+		if ar != null:
+			_fb_fonts.append(ar)
+	if not OS.has_feature("web") and DisplayServer.get_name() != "headless":
+		var sf := SystemFont.new()
+		sf.font_names = PackedStringArray(["Segoe UI", "Tahoma", "Arial", "Noto Sans", "Noto Sans CJK SC", "DejaVu Sans"])
+		sf.multichannel_signed_distance_field = false
+		_fb_fonts.append(sf)
+	return _fb_fonts
+
+## "display" (Saira Condensed SemiBold, wide tracking), "bold" (Saira Condensed Bold), "mono" (IBM Plex Mono), "quote_orig" (0-tracking Unicode/Arabic-safe)
 static func font(kind: String = "display") -> Font:
 	if _fonts.has(kind): return _fonts[kind]
-	var file: String = {"display": "res://ui/SairaCondensed-SemiBold.ttf", "bold": "res://ui/SairaCondensed-Bold.ttf", "mono": "res://ui/IBMPlexMono-Regular.ttf", "tight": "res://ui/SairaCondensed-SemiBold.ttf"}[kind]
-	var f: Font = null
-	if ResourceLoader.exists(file): f = load(file)
-	if f != null and kind != "mono" and kind != "tight":
-		var fv := FontVariation.new()
-		fv.base_font = f
+	var map := {"display": "res://ui/SairaCondensed-SemiBold.ttf", "bold": "res://ui/SairaCondensed-Bold.ttf", "mono": "res://ui/IBMPlexMono-Regular.ttf", "tight": "res://ui/SairaCondensed-SemiBold.ttf", "quote_orig": "res://ui/SairaCondensed-SemiBold.ttf"}
+	var file: String = map.get(kind, "res://ui/SairaCondensed-SemiBold.ttf")
+	var base: Font = null
+	if ResourceLoader.exists(file): base = load(file)
+	if base == null: base = ThemeDB.fallback_font
+	var fv := FontVariation.new()
+	fv.base_font = base
+	if kind != "mono" and kind != "tight" and kind != "quote_orig":
 		fv.spacing_glyph = 2
-		f = fv
-	if f == null: f = ThemeDB.fallback_font
-	_fonts[kind] = f
-	return f
+	var fbs := _fallbacks()
+	if not fbs.is_empty():
+		fv.fallbacks = fbs
+	_fonts[kind] = fv
+	return fv
+
+static func font_supports_text(f: Font, txt: String) -> bool:
+	if f == null or txt == "": return false
+	for i in txt.length():
+		var cp := txt.unicode_at(i)
+		if cp <= 0x20 or cp == 0x200C or cp == 0x200D or cp == 0xFEFF:
+			continue
+		if not f.has_char(cp):
+			return false
+	return true
 
 # the 22 playable nations in the picker's order (CLAUDE.md "Factions"); the picker shows the ones data/rules.json has
 const PLAYABLE := ["IR", "RS", "DW", "RV", "OB", "US", "GB", "FR", "DE", "IL", "UA", "RU", "CN", "KP", "IN", "JP", "KR", "PK", "SA", "AE", "TR", "EG"]

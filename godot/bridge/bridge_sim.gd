@@ -81,6 +81,14 @@ var _pt: Dictionary = {}
 var _facs: Array = []
 var _lines_cache: Dictionary = {}
 var _lines_lgv: int = -1
+var _sync_prev_us: int = 0
+var _sync_cur_us: int = 0
+var _sync_dt: float = 1.0 / 30.0
+
+func interp_alpha() -> float:
+	if _sync_cur_us <= 0: return 1.0
+	var el := float(Time.get_ticks_usec() - _sync_cur_us) * 1e-6
+	return clampf(el / maxf(_sync_dt, 0.016), 0.0, 1.04)
 
 func available() -> bool:
 	return br.available()
@@ -169,6 +177,13 @@ func _build_roster(ru: Dictionary) -> Dictionary:
 	return ros
 
 func _sync() -> void:
+	var now_us := Time.get_ticks_usec()
+	if _sync_cur_us > 0:
+		var dt_s := float(now_us - _sync_cur_us) * 1e-6
+		if dt_s > 0.004:
+			_sync_dt = lerpf(_sync_dt, clampf(dt_s, 0.016, 0.10), 0.35)
+	_sync_prev_us = _sync_cur_us
+	_sync_cur_us = now_us
 	t = br.t; over = br.over; winner = br.winner
 	# teams
 	var NT := br.teams.size()
@@ -232,8 +247,10 @@ func _sync() -> void:
 				var row: Dictionary = oil[oi]
 				row.owner = tm; row.dead = (fl & Bridge.F_BUILT) == 0; row.max = a[o + 17]; row.hp = a[o + 8] * row.max
 			continue
+		var is_new := false
 		var e: E = by_id.get(id)
 		if e == null:
+			is_new = true
 			e = E.new(); e.id = id; e.kind = str(kinds[int(a[o + 1])]); e.is_b = (fl & Bridge.F_BUILDING) != 0; e.team = tm
 			var st = stats(str(teams[tm].fac), e.kind) if (tm >= 0 and tm < NT and not e.is_b) else (bstats(str(teams[tm].fac), e.kind) if (tm >= 0 and tm < NT) else {})
 			e.s = st if st != null else {}
@@ -244,12 +261,18 @@ func _sync() -> void:
 		live[id] = true
 		e.team = tm
 		var prev_hp := e.hp
-		e.x = a[o + 3]; e.y = a[o + 4]; e.ang = a[o + 6]; e.va = e.ang; e.tang = a[o + 7]
+		var nx := a[o + 3]; var ny := a[o + 4]; var nang := a[o + 6]
+		if is_new:
+			e.px = nx; e.py = ny; e.va = nang
+		else:
+			e.px = e.x; e.py = e.y; e.va = e.ang
+		e.x = nx; e.y = ny; e.ang = nang; e.tang = a[o + 7]
 		e.max = a[o + 17]; e.hp = a[o + 8] * e.max
 		if prev_hp > 0.0 and e.hp < prev_hp - 0.5: e.last_hit = t
 		e.rank = int(a[o + 11]); e.size = a[o + 15]; e.r = e.size / 2.0 if e.is_b else e.size
 		e.built = a[o + 13] if e.is_b else 1.0
 		e.v = 0.0 if e.is_b else a[o + 13] * e.s_spd
+		if not e.is_b and absf(e.v) > 2.0: e.mv = t
 		e.am = a[o + 10]; e.amx = 1.0 if a[o + 10] >= 0 else 0.0
 		e.rout = t + 1.0 if (fl & Bridge.F_ROUT) else 0.0
 		e.sup = 1 if (fl & Bridge.F_SUPPLIED) else 0

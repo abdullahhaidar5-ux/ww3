@@ -171,7 +171,7 @@ function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
     case 'ping':case 'heal':case 'smoke':case 'halo':return own|visAt(v[1],v[2],+v[3]||0);
     case 'vig':return own;
     case 'strike':return v[5]?255:own|visAt(v[1],v[2],(+v[4]||0)+40);      // superweapon-class warnings are global (alarm + "inbound" log)
-    case 'bmis':return visAt(v[1],v[2],120);                                 // only where the launch is seen: never hands out the silo's position
+    case 'bmis':return visAt(v[1],v[2],160)|visAt(v[3],v[4],240);          // visible both at launch and streaking down onto a visible target
     case 'plane':{const sx=v[1],sy=v[2],tx=v[3],ty=v[4],L=Math.hypot(tx-sx,ty-sy)||1,E=L*6/2.6,n=Math.min(24,Math.ceil(E/200));let m=AM[v[5]]|0;
       for(let i=0;i<=n;i++){const u=i/n*E/L;m|=visAt(sx+(tx-sx)*u,sy+(ty-sy)*u,150);}return m;}   // its whole flight path
     case 'toss':{const e=G.byId.get(v[1]);if(!e||e.dead||!e.vs)return 0;let m=AM[e.team]|0;for(let k=0;k<e.vs.length;k++)if(e.vs[k])m|=1<<k;return m;}
