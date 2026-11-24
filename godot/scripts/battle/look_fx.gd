@@ -372,9 +372,9 @@ func boom(x: float, z: float, s: float, big: bool, h := 0.0) -> void:
 	if gr:
 		var dc: Color = Color(.62, .61, .58) if sf == "hard" else C_DUST
 		if wet: dc = Color(.86, .9, .95)
-		for i in mini(16, 7 + int(s / 3.8)):
-			var a := randf() * TAU; var v := s * R(2.2, 3.8)
-			part(false, P + Vector3(cos(a) * s * 0.3, 2, sin(a) * s * 0.3), Vector3(cos(a) * v, R(2, 11), sin(a) * v), R(1.1, 1.8), s * R(.38, .60), s * 0.55, 0.48, dc)
+		for i in mini(18, 8 + int(s / 3.4)):
+			var a := randf() * TAU; var v := s * R(2.4, 4.2)
+			part(false, P + Vector3(cos(a) * s * 0.28, 2.2, sin(a) * s * 0.28), Vector3(cos(a) * v, R(3, 14), sin(a) * v), R(1.3, 2.2), s * R(.42, .68), s * 0.62, 0.54, dc)
 	for i in (n * 2 if sf == "hard" else (n / 4 if wet else int(n * 1.2))):
 		partg(true, P + Vector3(0, 2, 0), _dir(R(100, 290), R(70, 250)), R(.35, .8), 1.6, 1.0, C_SPARK, g0)
 	if s > 10.0 and not wet:
@@ -387,7 +387,7 @@ func boom(x: float, z: float, s: float, big: bool, h := 0.0) -> void:
 			part(false, P + Vector3(R(-s, s), R(2, s * 0.6), R(-s, s)), _dir(R(2, 16), R(1, 6)), R(6.5, 9.5), s * R(.95, 1.5), s * 0.28, 0.32 if sf == "snow" else 0.42, DC[i % 3], null, R(2, 6), 0.4, KEEP)
 	if grd and s >= 18.0 and not big:
 		for i in 9: partg(false, P + Vector3(0, 3, 0), _dir(R(40, 160), R(120, 320)), R(1.4, 2.5), R(2.2, 4.4), 1.0, Color(.35, .35, .33) if sf == "hard" else Color(.24, .23, .2), g0, true)
-	if (grd and big) or (gr and not wet and s >= 20.0): _emit({k = "col", p = P, life = 18.0 if big else R(8, 11), big = big}, 14)
+	if (grd and big) or (gr and not wet and s >= 16.0): _emit({k = "col", p = P, life = 22.0 if big else R(10.0, 14.0), big = big}, 14)
 	if big and not wet:
 		for i in 12: part(false, P + Vector3(0, s * 0.3, 0), _dir(R(s * 1.5, s * 3.8), R(s * 2, s * 4.8)), R(1.6, 2.8), s * R(.32, .54), s * 0.45, 0.82, C_DARK, null, g0, 0.25, GRAV)
 		for i in 16: partg(false, P + Vector3(0, 4, 0), _dir(R(60, 240), R(140, 360)), R(1.4, 2.8), R(2.2, 4.4), 1.0, C_DARK, g0, true)
@@ -600,7 +600,7 @@ func _tr(e: Array) -> void:
 	var flak := e.size() > 7 and int(e[7]) != 0
 	var a := Vector3(x1, gh(x1, z1) + float(e[3]), z1); var b := Vector3(x2, gh(x2, z2) + float(e[6]), z2)
 	if not _seen(x1, z1) and not _seen(x2, z2): return
-	tracer(a, b, Color(4.4, 2.2, .65) if flak else Color(4.2, 2.6, .95), 0.14 if flak else 0.11)
+	tracer(a, b, Color(4.6, 2.1, .58) if flak else Color(4.3, 2.5, .88), 0.14 if flak else 0.11)
 	if randf() < 0.45: _flash_light(mlights, a, (2.2 if flak else 1.4) * 1.4, 110.0, 0.07)
 	if flak:
 		# "We will defend this airspace!" dramatic AA flak airburst cloud + glowing shrapnel flash
@@ -618,28 +618,33 @@ func _tr(e: Array) -> void:
 func _muz(x: float, z: float, h: float, ang: float, s: float) -> void:
 	if not _seen(x, z): return
 	var g := gh(x, z); var ca := cos(ang); var sa := sin(ang)
-	var P := Vector3(x, g + h, z); var F := Vector3(ca, 0, sa)
+	var P := Vector3(x, g + h, z); var F := Vector3(ca, 0, sa); var S_ax := Vector3(-sa, 0, ca)
 	if s >= 13.0:
-		for i in 10:
-			var b := ang + R(-1.3, 1.3); var v := R(30, 90)
-			part(false, P + F * 4.0 + Vector3(0, R(-1, 2), 0), Vector3(cos(b) * v + ca * 40.0, R(4, 18), sin(b) * v + sa * 40.0), R(1.8, 2.8), R(8, 13), 16.0, 0.62, C_SMOKE if i % 3 else Color(.62, .6, .56), Color(.55, .53, .5), R(6, 14))
+		# Directional propellant smoke jet along barrel axis + muzzle brake side vents
+		for i in 9:
+			var b := ang + R(-0.75, 0.75); var v := R(42, 115)
+			part(false, P + F * R(4.0, 10.0) + Vector3(0, R(-1, 2), 0), Vector3(cos(b) * v + ca * 55.0, R(4, 16), sin(b) * v + sa * 55.0), R(1.8, 2.9), R(7.5, 12.5), 16.0, 0.62, C_SMOKE if i % 3 else Color(.56, .54, .50), Color(.48, .47, .45), R(7, 15))
+		# Grounded radial artillery/tank muzzle blast dust kick-up beneath the barrel
 		for i in 12:
-			var b2 := randf() * TAU; var v2 := R(40, 80)
-			part(false, Vector3(x + cos(b2) * 6.0, g + 1.5, z + sin(b2) * 6.0), Vector3(cos(b2) * v2, R(2, 8), sin(b2) * v2), R(.8, 1.3), R(5, 8), 10.0, 0.35, DUSTC.get(surf(x, z), DUSTC.desert)[i % 3])
-		part(true, P + F * 8.0, Vector3.ZERO, 0.09, s * 2.2, 0.0, 1.0, Color(4.2, 2.3, .72))
-		part(true, P, Vector3.ZERO, 0.075, s * 1.8, 0.0, 1.0, Color(4.4, 3.1, 1.5))
-		part(true, P + F * s * 0.85, Vector3.ZERO, 0.06, s * 1.35, 0.0, 1.0, Color(3.4, 1.8, .55))
-		_ring(Vector3(x, g + 1.0, z), 6.0, s * 2.8, 0.32, Color("#dfd0b2"), 0.42, 0.76, 0)
-		for sd in [-1.0, 1.0]: part(true, P + Vector3(-sa, 0, ca) * sd * s * 0.45, Vector3.ZERO, 0.045, s * 0.6, 0.0, 1.0, Color(2.8, 1.5, .5))
+			var b2 := randf() * TAU; var v2 := R(45, 92)
+			part(false, Vector3(x + cos(b2) * 6.5, g + 1.5, z + sin(b2) * 6.5), Vector3(cos(b2) * v2, R(2, 9), sin(b2) * v2), R(.9, 1.5), R(5.5, 9.0), 11.0, 0.42, DUSTC.get(surf(x, z), DUSTC.desert)[i % 3])
+		# Snappy directional orange-white HDR cannon blast cone along barrel axis
+		part(true, P, Vector3.ZERO, 0.065, s * 1.75, 0.0, 1.0, Color(5.0, 3.8, 1.9))
+		part(true, P + F * (s * 0.55), F * 35.0, 0.085, s * 2.15, 0.0, 1.0, Color(4.6, 2.5, .78))
+		part(true, P + F * (s * 1.25), F * 55.0, 0.065, s * 1.45, 0.0, 1.0, Color(3.6, 1.7, .48))
+		part(true, P + F * (s * 1.85), F * 65.0, 0.050, s * 0.85, 0.0, 0.95, Color(2.8, 1.15, .30))
+		_ring(Vector3(x, g + 1.0, z), 6.0, s * 3.1, 0.34, Color("#e2d2b0"), 0.48, 0.76, 0)
+		for sd in [-1.0, 1.0]:
+			part(true, P + F * (s * 0.15) + S_ax * sd * s * 0.52, S_ax * sd * 45.0, 0.052, s * 0.75, 0.0, 1.0, Color(3.4, 1.8, .58))
 	else:
-		var L := s * R(.55, .85)
-		part(true, P, Vector3.ZERO, 0.045, s * 1.15, 0.0, 1.0, Color(3, 2.3, 1.2))
-		part(true, P + F * L, Vector3.ZERO, 0.04, s * 0.8, 0.0, 1.0, Color(2.8, 1.5, .5))
-		part(true, P + F * L * 1.9, Vector3.ZERO, 0.035, s * 0.5, 0.0, 1.0, Color(2.2, 1, .3))
-		if s <= 6.0 and randf() < 0.5: part(false, P + F * 3.0, F * R(4, 12) + Vector3(0, R(3, 8), 0), R(.35, .6), R(2, 3), 7.0, 0.32, Color(.6, .59, .56), null, 0.0, 0.25, KEEP)
+		var L := s * R(.60, .90)
+		part(true, P, Vector3.ZERO, 0.042, s * 1.2, 0.0, 1.0, Color(3.8, 2.9, 1.5))
+		part(true, P + F * L, F * 28.0, 0.040, s * 0.85, 0.0, 1.0, Color(3.2, 1.75, .55))
+		part(true, P + F * L * 1.95, F * 38.0, 0.034, s * 0.52, 0.0, 1.0, Color(2.4, 1.05, .30))
+		if s <= 6.0 and randf() < 0.5: part(false, P + F * 3.0, F * R(6, 16) + Vector3(0, R(3, 8), 0), R(.35, .6), R(2, 3), 7.0, 0.32, Color(.58, .57, .54), null, 0.0, 0.25, KEEP)
 	if s > 9.0:
-		_flash_light(mlights, P, (3.0 if s >= 13.0 else 2.2) * 1.4, 200.0 if s >= 13.0 else 150.0, 0.06)
-		for i in 3: part(false, P + F * 5.0, F * R(10, 30) + Vector3(0, R(4, 10), 0), R(.5, .9), R(4, 7), 12.0, 0.5, C_SMOKE)
+		_flash_light(mlights, P, (3.2 if s >= 13.0 else 2.2) * 1.4, 210.0 if s >= 13.0 else 155.0, 0.06)
+		for i in 3: part(false, P + F * 5.0, F * R(14, 38) + Vector3(0, R(4, 10), 0), R(.55, .95), R(4, 7), 12.0, 0.5, C_SMOKE)
 
 func _wname(w) -> String:
 	if w is String: return w
@@ -849,30 +854,32 @@ func _emit_tick(dt: float) -> void:
 		var vis := _seen(P.x, P.z)
 		match String(e.k):
 			"col":
-				e.acc += dt * (9.0 if e.big else 5.0) * (0.35 + 0.65 * lf)
+				# Signature Systemic War / Sudden Strike 5 tall drifting dark grey-black battle smoke column
+				e.acc += dt * (7.5 if e.big else 4.2) * (0.35 + 0.65 * lf)
 				while e.acc >= 1.0:
 					e.acc -= 1.0
-					if vis: part(false, P + Vector3(R(-6, 6), R(4, 12), R(-6, 6)), _dir(R(0, 8), R(4, 10)), R(5, 7.5), R(12, 18), R(12, 18), 0.5 * lf + 0.15, C_DARK, C_SMOKE, R(28, 42), 0.4, KEEP)
+					if vis: part(false, P + Vector3(R(-6, 6), R(4, 12), R(-6, 6)), _dir(R(0, 7), R(6, 12)), R(6.5, 9.5), R(13, 20), R(14, 20), 0.58 * lf + 0.16, Color(.09, .09, .09), Color(.32, .31, .30), R(36, 54), 0.42, KEEP)
 			"fire":
-				e.acc += dt * (16.0 if e.big else 9.0) * (0.4 + 0.6 * lf)
+				e.acc += dt * (14.0 if e.big else 8.5) * (0.4 + 0.6 * lf)
 				while e.acc >= 1.0:
 					e.acc -= 1.0
 					if not vis: continue
 					var a := randf() * TAU; var q: float = sqrt(randf()) * float(e.r)
 					var fp := Vector3(P.x + cos(a) * q, 0, P.z + sin(a) * q); fp.y = gh(fp.x, fp.z) + 2.0
-					if randf() < 0.75: part(true, fp, Vector3(R(-4, 4), R(8, 22), R(-4, 4)), R(.35, .7), R(5, 9), -4.0, 1.0, Color(2.6, 1.2, .3), Color(.8, .2, .05), R(14, 30))
-					else: part(false, fp + Vector3(0, 6, 0), Vector3(R(-4, 4), R(6, 14), R(-4, 4)), R(2, 4.5), R(8, 13), 8.0, 0.45, C_DARK, C_SMOKE, R(20, 34), 0.4, KEEP)
+					if randf() < 0.72: part(true, fp, Vector3(R(-4, 4), R(8, 22), R(-4, 4)), R(.35, .7), R(5.5, 9.5), -4.0, 1.0, Color(3.2, 1.45, .34), Color(.85, .18, .04), R(14, 30))
+					else: part(false, fp + Vector3(0, 6, 0), Vector3(R(-4, 4), R(7, 15), R(-4, 4)), R(3.8, 6.2), R(9, 15), 11.0, 0.54, Color(.10, .10, .10), Color(.32, .31, .30), R(28, 44), 0.42, KEEP)
 			"wreck":
 				var big: bool = e.big
-				var burn: float = float(e.get("burn", 30.0 if big else 24.0))
+				var burn: float = float(e.get("burn", 32.0 if big else 26.0))
 				var fade := clampf(lf * 2.0, 0.0, 1.0)
 				e.acc += dt
 				if vis:
-					if randf() < dt * (7.0 if big else 4.5): part(false, P + Vector3(R(-4, 4), R(6, 12), R(-4, 4)), Vector3(R(-3, 3), 4, R(-3, 3)), R(5, 7), R(7, 11), R(9, 12), 0.4 * fade + 0.08, C_DARK, Color(.44, .42, .39), R(34, 48), 0.4, KEEP)
+					# Tall, thick drifting oil-black smoke column rising from burning tank wrecks & destroyed structures
+					if randf() < dt * (6.2 if big else 4.2): part(false, P + Vector3(R(-4, 4), R(6, 12), R(-4, 4)), Vector3(R(-3, 3), 6, R(-3, 3)), R(6.5, 9.5), R(8.5, 13.5), R(11, 15), 0.56 * fade + 0.14, Color(.08, .08, .08), Color(.28, .27, .26), R(38, 56), 0.42, KEEP)
 					if e.t < burn:
-						for n in int(dt * (14.0 if big else 10.0) + randf()): part(true, P + Vector3(R(-7, 7), R(2, 9), R(-7, 7)), Vector3(R(-3, 3), R(8, 20), R(-3, 3)), R(.35, .7), R(4, 8), -3.0, 1.0, Color(2.6, 1.2, .3), Color(.8, .2, .05), R(12, 26))
+						for n in int(dt * (12.0 if big else 9.0) + randf()): part(true, P + Vector3(R(-7, 7), R(2, 9), R(-7, 7)), Vector3(R(-3, 3), R(9, 22), R(-3, 3)), R(.35, .7), R(4.5, 8.5), -3.0, 1.0, Color(3.2, 1.45, .34), Color(.85, .18, .04), R(14, 28))
 						if randf() < dt * 2.0: partg(true, P + Vector3(0, 6, 0), _dir(R(20, 70), R(60, 160)), R(.4, .9), 1.0, 1.0, C_SPARK, P.y)
-						if randf() < dt * 3.0: part(true, P + Vector3(0, 3, 0), Vector3.ZERO, 0.5, 30.0 if big else 20.0, 0.0, 0.5 if (env != null and env.night == 2) else 0.16, Color(1.5, .55, .14))
+						if randf() < dt * 3.0: part(true, P + Vector3(0, 3, 0), Vector3.ZERO, 0.5, 32.0 if big else 22.0, 0.0, 0.52 if (env != null and env.night == 2) else 0.18, Color(1.7, .62, .16))
 				if e.t < burn and wl < wlights.size() and cam_pos.distance_to(P) < cam_dist * 2.5:
 					var L: Array = wlights[wl]; wl += 1
 					(L[0] as OmniLight3D).position = P + Vector3(0, 14, 0)
@@ -1063,17 +1070,18 @@ func _ents(ent: PackedFloat32Array) -> void:
 				var sz := ent[o + 15]
 				for pi in pts:
 					var fp := Vector3(x + sin(ent_i * 1.7 + pi * 2.1) * sz * 0.3, y + sz * 0.35, z + cos(ent_i * 2.3 + pi * 1.3) * sz * 0.3)
-					for k in int(share / 30.0 * 16.0 + randf()): part(true, fp + Vector3(R(-5, 5), R(0, 6), R(-5, 5)), Vector3(R(-3, 3), R(8, 20), R(-3, 3)), R(.35, .7), R(7, 13), -4.0, 1.0, Color(2.6, 1.2, .3), Color(.8, .2, .05), R(14, 28))
-					for k in int(share / 30.0 * 5.0 + randf()): part(false, fp + Vector3(0, 8, 0), Vector3(R(-4, 4), 6, R(-4, 4)), R(2.8, 3.8), R(7, 11), 9.0, 0.5, C_DARK, C_SMOKE, R(26, 40), 0.4, KEEP)
+					for k in int(share / 30.0 * 14.0 + randf()): part(true, fp + Vector3(R(-5, 5), R(0, 6), R(-5, 5)), Vector3(R(-3, 3), R(9, 22), R(-3, 3)), R(.35, .7), R(7, 13), -4.0, 1.0, Color(3.2, 1.45, .34), Color(.85, .18, .04), R(15, 30))
+					for k in int(share / 30.0 * 4.2 + randf()): part(false, fp + Vector3(0, 8, 0), Vector3(R(-4, 4), 7, R(-4, 4)), R(5.2, 7.8), R(9, 14), 12.0, 0.58, Color(.09, .09, .09), Color(.30, .29, .28), R(34, 52), 0.42, KEEP)
 			continue
 		var cls := _kind_class(int(ent[o + 1]))
 		if cls == "inf": continue
 		if hp < 0.75:
-			var rate := 7.0 if hp < 0.25 else (2.6 if hp < 0.5 else 0.8)
-			if cls == "air" or cls == "drone": rate = 24.0 if hp < 0.25 else (13.0 if hp < 0.5 else 4.0)
+			var rate := 5.6 if hp < 0.25 else (2.4 if hp < 0.5 else 0.8)
+			if cls == "air" or cls == "drone": rate = 20.0 if hp < 0.25 else (11.0 if hp < 0.5 else 4.0)
 			for k in int(share / 30.0 * rate + randf()):
-				part(false, Vector3(x + R(-3, 3), y + R(6, 10), z + R(-3, 3)), Vector3(R(-3, 3), 4, R(-3, 3)), R(1.4, 2.6), R(3, 5) if hp < 0.5 else R(1.8, 2.8), 6.0, 0.5, C_DARK if hp < 0.5 else C_SMOKE, C_SMOKE, R(16, 28), 0.4, KEEP)
-				if hp < 0.25 and randf() < 0.55: part(true, Vector3(x + R(-3, 3), y + R(5, 9), z + R(-3, 3)), Vector3(0, R(6, 14), 0), R(.3, .6), R(3, 5), -2.0, 1.0, Color(2.6, 1.2, .3), Color(.8, .2, .05), R(10, 20))
+				var heavy_dmg := hp < 0.5
+				part(false, Vector3(x + R(-3, 3), y + R(6, 10), z + R(-3, 3)), Vector3(R(-3, 3), 5.5, R(-3, 3)), R(3.6, 5.8) if heavy_dmg else R(2.2, 3.6), R(4.8, 7.8) if heavy_dmg else R(2.6, 4.2), 9.0 if heavy_dmg else 6.5, 0.60 if heavy_dmg else 0.44, Color(.09, .09, .09) if heavy_dmg else C_SMOKE, Color(.28, .27, .26), R(28, 44) if heavy_dmg else R(20, 32), 0.42, KEEP)
+				if hp < 0.25 and randf() < 0.58: part(true, Vector3(x + R(-3, 3), y + R(5, 9), z + R(-3, 3)), Vector3(0, R(7, 16), 0), R(.32, .62), R(3.5, 6.0), -2.0, 1.0, Color(3.2, 1.45, .34), Color(.85, .18, .04), R(12, 22))
 		if cls == "veh" and not raining and dust < 28:
 			var spd := ent[o + 13]
 			if spd >= 0.3 and surf(x, z) != "water":

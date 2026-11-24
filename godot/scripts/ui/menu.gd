@@ -91,21 +91,60 @@ func _chrome() -> void:
 		pic.anchor_right = 1.0; pic.anchor_bottom = 1.0
 		pic.clip_contents = true
 		add_child(pic)
-	var shade := ColorRect.new()
+	# Soft cinematic edge vignette so the world picture feels dramatic while buttons pop cleanly
+	var vig := TextureRect.new()
+	vig.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vig.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vig.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	vig.stretch_mode = TextureRect.STRETCH_SCALE
+	var vgt := GradientTexture2D.new()
+	vgt.width = 64; vgt.height = 64
+	vgt.fill = GradientTexture2D.FILL_LINEAR
+	vgt.fill_from = Vector2(0.0, 0.5); vgt.fill_to = Vector2(1.0, 0.5)
+	var vgr := Gradient.new()
+	vgr.set_color(0, Color(0.01, 0.02, 0.03, 0.36))
+	vgr.add_point(0.55, Color(0.01, 0.02, 0.03, 0.08))
+	vgr.set_color(vgr.get_point_count() - 1, Color(0.01, 0.02, 0.03, 0.38))
+	vgt.gradient = vgr
+	vig.texture = vgt
+	add_child(vig)
+
+	# Sleek translucent dark-navy tactical glass column (world artwork breathes through!)
+	var shade := TextureRect.new()
 	shade.name = "Shade"
-	shade.color = Color(0.02, 0.03, 0.04, 0.985)
+	shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shade.stretch_mode = TextureRect.STRETCH_SCALE
 	shade.anchor_left = 1.0; shade.anchor_right = 1.0; shade.anchor_bottom = 1.0
-	shade.offset_left = -560.0
+	shade.offset_left = -564.0
+	var sgt := GradientTexture2D.new()
+	sgt.width = 64; sgt.height = 16
+	sgt.fill = GradientTexture2D.FILL_LINEAR
+	sgt.fill_from = Vector2(0.0, 0.0); sgt.fill_to = Vector2(1.0, 0.0)
+	var sgr := Gradient.new()
+	sgr.set_color(0, Color(0.018, 0.032, 0.048, 0.78))
+	sgr.add_point(0.35, Color(0.016, 0.028, 0.042, 0.84))
+	sgr.set_color(sgr.get_point_count() - 1, Color(0.012, 0.022, 0.034, 0.88))
+	sgt.gradient = sgr
+	shade.texture = sgt
 	add_child(shade)
+
 	var line := ColorRect.new()
 	line.name = "Divider"
-	line.color = Color(UI.CYAN.r, UI.CYAN.g, UI.CYAN.b, 0.55)
+	line.color = Color(UI.CYAN.r, UI.CYAN.g, UI.CYAN.b, 0.65)
 	line.anchor_left = 1.0; line.anchor_right = 1.0; line.anchor_bottom = 1.0
-	line.offset_left = -560.0; line.offset_right = -558.0
+	line.offset_left = -564.0; line.offset_right = -562.0
 	add_child(line)
+
+	var line_gl := ColorRect.new()
+	line_gl.color = Color(UI.GOLD.r, UI.GOLD.g, UI.GOLD.b, 0.22)
+	line_gl.anchor_left = 1.0; line_gl.anchor_right = 1.0; line_gl.anchor_bottom = 1.0
+	line_gl.offset_left = -562.0; line_gl.offset_right = -561.0
+	line_gl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(line_gl)
+
 	col = Control.new()
 	col.anchor_left = 1.0; col.anchor_right = 1.0; col.anchor_bottom = 1.0
-	col.offset_left = -534.0; col.offset_right = -24.0; col.offset_top = 0
+	col.offset_left = -536.0; col.offset_right = -24.0; col.offset_top = 0
 	col.clip_contents = true
 	add_child(col)
 	crumb = HBoxContainer.new()
@@ -123,7 +162,7 @@ func _chrome() -> void:
 	back_btn.anchor_top = 1.0; back_btn.anchor_bottom = 1.0
 	back_btn.offset_left = 46; back_btn.offset_top = -82; back_btn.offset_right = 158; back_btn.offset_bottom = -34
 	add_child(back_btn)
-	var ver := UI.label("WORLD WAR 3", 12, Color("5d6b64"))
+	var ver := UI.label("WORLD WAR 3", 12, Color("6d827a"))
 	ver.name = "Ver"
 	ver.anchor_left = 1.0; ver.anchor_right = 1.0; ver.anchor_top = 1.0; ver.anchor_bottom = 1.0
 	ver.offset_left = -108; ver.offset_top = -28
@@ -245,7 +284,9 @@ func _scroll(vb: VBoxContainer, bottom_gap: float = 96.0) -> VBoxContainer:
 # ---------------------------------------------------------------- title
 func _s_title(vb: VBoxContainer) -> void:
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER
-	vb.add_theme_constant_override("separation", 9)
+	vb.add_theme_constant_override("separation", 8)
+	var badge := UI.label("THEATER COMMAND  //  MODERN WARFARE RTS", 11, UI.CYAN, "mono")
+	vb.add_child(badge)
 	var logo := HBoxContainer.new()
 	logo.add_theme_constant_override("separation", 12)
 	var l1 := UI.label("WORLD WAR", 86, UI.TEXT, "bold")
@@ -263,32 +304,32 @@ func _s_title(vb: VBoxContainer) -> void:
 	vb.add_child(UI.para("Real-time modern warfare: build your base, hold your supply lines, win the battle."))
 	vb.add_child(UI.spacer(4))
 	vb.add_child(UI.hsep())
-	vb.add_child(UI.spacer(8))
+	vb.add_child(UI.spacer(6))
 	var saves := UI.list_files("saves")
 	if saves.size():
 		var s: Dictionary = saves[0]
-		var c := UI.menu_item("Continue", func(): _launch({kind = "load", file = s.path}), 22, "%s · %s · %s" % [UI.nat_name(s.fac), s.name, UI.fmt_time(s.t)])
+		var c := UI.menu_item("Continue", func(): _launch({kind = "load", file = s.path}), 22, "%s · %s · %s" % [UI.nat_name(s.fac), s.name, UI.fmt_time(s.t)], 480.0, "play")
 		c.tooltip_text = "Pick up where you left off: your latest Battle"
 		vb.add_child(c)
-	for it in [["Play", "single", "Battle against the computer, missions and the tutorial"], ["Multiplayer", "online", "Play online with friends: start or join a Battle"], ["Test range", "t-range", "Pick your nation and a target nation, then try any unit with unlimited money"]]:
-		var b := UI.menu_item(it[0], go.bind(it[1]), 22)
+	for it in [["Play", "single", "Battle against the computer, missions and the tutorial", "swords"], ["Multiplayer", "online", "Play online with friends: start or join a Battle", "radar"], ["Test range", "t-range", "Pick your nation and a target nation, then try any unit with unlimited money", "target"]]:
+		var b := UI.menu_item(it[0], go.bind(it[1]), 22, "", 480.0, it[3])
 		b.tooltip_text = it[2]
 		vb.add_child(b)
-	vb.add_child(UI.spacer(10))
-	for it in [["Settings", "settings", "Graphics, sound and mouse"], ["Extras", "extras", "Replays, encyclopedia, medals and more"], ["Credits", "credits", ""]]:
-		var b := UI.menu_item(it[0], go.bind(it[1]), 17)
+	vb.add_child(UI.spacer(8))
+	for it in [["Settings", "settings", "Graphics, sound and mouse", "gear"], ["Extras", "extras", "Replays, encyclopedia, medals and more", "star"], ["Credits", "credits", "", "eye"]]:
+		var b := UI.menu_item(it[0], go.bind(it[1]), 17, "", 480.0, it[3])
 		b.tooltip_text = it[2]
 		vb.add_child(b)
-	vb.add_child(UI.spacer(40))
+	vb.add_child(UI.spacer(36))
 
 # ---------------------------------------------------------------- Play
 func _s_single(vb: VBoxContainer) -> void:
 	_head(vb, "Play", "Battle against the computer, the story missions, or learn the game.")
-	vb.add_child(UI.menu_item("Battle", go.bind("c-map"), 22, "Command Center, supply trucks and supply lines, tech up, destroy every enemy building"))
+	vb.add_child(UI.menu_item("Battle", go.bind("c-map"), 22, "Command Center, supply trucks and supply lines, tech up, destroy every enemy building", 480.0, "tank"))
 	vb.add_child(UI.spacer(10))
-	vb.add_child(UI.menu_item("Missions", go.bind("missions"), 17, "The story missions"))
-	vb.add_child(UI.menu_item("Tutorial", func(): _launch({kind = "tutorial"}), 17, "First time? A guided 10-minute Battle, supply lines included"))
-	vb.add_child(UI.menu_item("Load game", go.bind("load"), 17, "Load a saved battle"))
+	vb.add_child(UI.menu_item("Missions", go.bind("missions"), 17, "The story missions", 480.0, "flag"))
+	vb.add_child(UI.menu_item("Tutorial", func(): _launch({kind = "tutorial"}), 17, "First time? A guided 10-minute Battle, supply lines included", 480.0, "help"))
+	vb.add_child(UI.menu_item("Load game", go.bind("load"), 17, "Load a saved battle", 480.0, "ckpt"))
 
 # ---------------------------------------------------------------- Battle 1: map
 func _map_thumb(m: Dictionary, w: float) -> TextureRect:
@@ -317,16 +358,82 @@ func _s_c_map(vb: VBoxContainer) -> void:
 		var desc := str(m.get("desc", ""))
 		b.tooltip_text = "%s\n%s" % [str(m.name), desc] if desc != "" else str(m.name)
 		var on: bool = st.map == m.key
-		b.add_theme_stylebox_override("normal", UI.box(Color("2a2412") if on else Color(0.055, 0.075, 0.067, 0.8), UI.GOLD if on else UI.LINE, 1, 0))
-		b.add_theme_stylebox_override("hover", UI.box(Color(0.08, 0.1, 0.1, 0.9), UI.TEXT, 1, 0))
-		b.add_theme_stylebox_override("pressed", UI.box(Color("2a2412"), UI.GOLD, 1, 0))
+		var n_sb := UI.box(Color("262010") if on else Color(0.055, 0.085, 0.105, 0.90), UI.GOLD if on else Color("2a3e4b"), 1, 0, 8)
+		var h_sb := UI.box(Color("162630"), UI.GOLD_HI, 1, 0, 8)
+		var p_sb := UI.box(Color("342a12"), UI.GOLD_HI, 1, 0, 8)
+		b.add_theme_stylebox_override("normal", n_sb)
+		b.add_theme_stylebox_override("hover", h_sb)
+		b.add_theme_stylebox_override("pressed", p_sb)
+		b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
 		var v := VBoxContainer.new()
 		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		v.position = Vector2(1, 1)
 		v.size = Vector2(226, 226)
 		v.add_theme_constant_override("separation", 0)
 		b.add_child(v)
-		v.add_child(_map_thumb(m, 226))
+
+		var thumb_host := Control.new()
+		thumb_host.custom_minimum_size = Vector2(226, 226.0 * 22.0 / 32.0)
+		thumb_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.add_child(thumb_host)
+
+		var thumb := _map_thumb(m, 226)
+		thumb.set_anchors_preset(Control.PRESET_FULL_RECT)
+		thumb_host.add_child(thumb)
+
+		# Sleek player-count badge overlay (top-right of map preview)
+		var p_pill := PanelContainer.new()
+		p_pill.anchor_left = 1.0; p_pill.anchor_right = 1.0
+		p_pill.offset_left = -52; p_pill.offset_right = -6; p_pill.offset_top = 6; p_pill.offset_bottom = 24
+		p_pill.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		p_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var pp_sb := StyleBoxFlat.new()
+		pp_sb.bg_color = Color(0.03, 0.06, 0.08, 0.88)
+		pp_sb.border_color = UI.GOLD if on else Color(UI.CYAN.r, UI.CYAN.g, UI.CYAN.b, 0.65)
+		pp_sb.set_border_width_all(1); pp_sb.set_corner_radius_all(3)
+		pp_sb.content_margin_left = 5; pp_sb.content_margin_right = 5; pp_sb.content_margin_top = 1; pp_sb.content_margin_bottom = 1
+		p_pill.add_theme_stylebox_override("panel", pp_sb)
+		var p_hb := HBoxContainer.new()
+		p_hb.add_theme_constant_override("separation", 3)
+		p_hb.alignment = BoxContainer.ALIGNMENT_CENTER
+		p_hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		p_pill.add_child(p_hb)
+		var p_ic := TextureRect.new()
+		p_ic.texture = UI.icon("troops")
+		p_ic.custom_minimum_size = Vector2(10, 10)
+		p_ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		p_ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		p_ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		p_ic.modulate = UI.GOLD_HI if on else UI.CYAN
+		p_ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		p_hb.add_child(p_ic)
+		var p_lb := UI.label("%dP" % int(m.n), 10, UI.GOLD_HI if on else Color("d8eef5"), "bold")
+		p_lb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		p_hb.add_child(p_lb)
+		thumb_host.add_child(p_pill)
+
+		if bool(m.get("battle_map", false)):
+			var bm_pill := PanelContainer.new()
+			bm_pill.position = Vector2(6, 6)
+			bm_pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var bm_sb := StyleBoxFlat.new()
+			bm_sb.bg_color = Color(0.24, 0.18, 0.04, 0.88)
+			bm_sb.border_color = UI.GOLD
+			bm_sb.set_border_width_all(1); bm_sb.set_corner_radius_all(2)
+			bm_sb.content_margin_left = 5; bm_sb.content_margin_right = 5; bm_sb.content_margin_top = 1; bm_sb.content_margin_bottom = 1
+			bm_pill.add_theme_stylebox_override("panel", bm_sb)
+			var bm_lb := UI.label("BATTLE", 9, UI.GOLD_HI, "bold")
+			bm_lb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			bm_pill.add_child(bm_lb)
+			thumb_host.add_child(bm_pill)
+
+		var div := ColorRect.new()
+		div.color = Color(UI.GOLD.r, UI.GOLD.g, UI.GOLD.b, 0.60) if on else Color(UI.CYAN.r, UI.CYAN.g, UI.CYAN.b, 0.35)
+		div.custom_minimum_size = Vector2(0, 1)
+		div.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		v.add_child(div)
+
 		var mc := MarginContainer.new()
 		mc.add_theme_constant_override("margin_left", 10); mc.add_theme_constant_override("margin_right", 10); mc.add_theme_constant_override("margin_top", 5)
 		mc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -335,7 +442,7 @@ func _s_c_map(vb: VBoxContainer) -> void:
 		tv.add_theme_constant_override("separation", 1)
 		tv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tv.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var nl := UI.label(str(m.name).to_upper(), 18, UI.TEXT, "bold")
+		var nl := UI.label(str(m.name).to_upper(), 18, UI.GOLD_HI if on else UI.TEXT, "bold")
 		nl.clip_text = true
 		nl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		nl.custom_minimum_size.x = 206
@@ -352,6 +459,16 @@ func _s_c_map(vb: VBoxContainer) -> void:
 		fl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tv.add_child(fl)
 		mc.add_child(tv); v.add_child(mc)
+
+		UI.add_rim(b, UI.GOLD_SPEC if on else UI.SPECULAR, Color(0, 0, 0, 0), 7.0)
+		var rim_n: ColorRect = b.get_node_or_null("Rim")
+		b.mouse_entered.connect(func():
+			thumb.modulate = Color(1.12, 1.10, 1.04)
+			if rim_n != null: rim_n.color = UI.GOLD_SPEC)
+		b.mouse_exited.connect(func():
+			thumb.modulate = Color(1, 1, 1)
+			if rim_n != null: rim_n.color = UI.GOLD_SPEC if on else UI.SPECULAR)
+
 		var key: String = m.key
 		b.pressed.connect(func(): st.map = key; UI.set_opt("last_map", key); _seats_sync(); go("c-nation"))
 		grid.add_child(b)
@@ -361,33 +478,91 @@ func _s_c_map(vb: VBoxContainer) -> void:
 		st.map = ms[randi() % ms.size()].key; UI.set_opt("last_map", st.map); _seats_sync(); go("c-nation"), 16), UI.button("Next: Nation →", go.bind("c-nation"), 18, 0, true)])
 
 # ---------------------------------------------------------------- Battle 2: nation
+func _nat_tag(k: String) -> String:
+	var N: Dictionary = UI.nat_data(k)
+	var doct := str(N.get("doctrine_name", ""))
+	if doct != "": return doct
+	var F: Dictionary = UI.rules().get("factions", {}).get(k, {})
+	if typeof(F.get("doct")) == TYPE_DICTIONARY and str(F.doct.get("name", "")) != "":
+		return str(F.doct.get("name", ""))
+	var ms := str(N.get("morale_style", F.get("morale", "")))
+	return str(UI.MORALE_NAME.get(ms, "")).split(" - ")[0]
+
 func _nat_tile(k: String, on: bool, cb: Callable, hover: Callable = Callable()) -> Button:
 	var b := Button.new()
 	b.name = "Nat_" + k
 	b.focus_mode = Control.FOCUS_NONE
-	b.custom_minimum_size = Vector2(218, 44)
+	b.custom_minimum_size = Vector2(218, 48)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	b.clip_text = true
-	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.text = "           " + UI.nat_name(k).to_upper()
-	b.add_theme_font_override("font", UI.font("display"))
-	b.add_theme_font_size_override("font_size", 16)
-	b.add_theme_color_override("font_color", UI.GOLD_HI if on else UI.TEXT)
-	b.add_theme_color_override("font_hover_color", Color(1, 1, 1))
-	var n := UI.box(Color("3a3113") if on else UI.PLATE, UI.GOLD if on else UI.CYAN, 1, 8, 9, UI.GOLD if on else UI.CYAN)
-	n.border_width_top = 1; n.border_width_right = 1; n.border_width_bottom = 1
-	if not on: n.border_color = Color("2b3c46")
-	var h := UI.box(UI.PLATE_HI, UI.GOLD, 1, 8, 9, UI.GOLD)
+	b.text = ""
+	var n := UI.box(Color("362c12") if on else UI.PLATE, UI.GOLD if on else Color("283b47"), 1, 0, 8)
+	var h := UI.box(UI.PLATE_HI, Color("567486"), 1, 0, 8)
+	var p := UI.box(Color("3f3314"), UI.GOLD_HI, 1, 0, 8)
 	b.add_theme_stylebox_override("normal", n)
 	b.add_theme_stylebox_override("hover", h)
-	b.add_theme_stylebox_override("pressed", h)
+	b.add_theme_stylebox_override("pressed", p)
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	var fl := Missions.flag(k, 40.0, 24.0)
-	fl.position = Vector2(8, 10)
-	b.add_child(fl)
+	UI.add_rim(b, UI.GOLD_SPEC if on else UI.SPECULAR, UI.GOLD_HI if on else UI.CYAN, 7.0)
+	var bar_n: ColorRect = b.get_node_or_null("Bar")
+	var rim_n: ColorRect = b.get_node_or_null("Rim")
+
+	var mc := MarginContainer.new()
+	mc.set_anchors_preset(Control.PRESET_FULL_RECT)
+	mc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mc.add_theme_constant_override("margin_left", 9); mc.add_theme_constant_override("margin_right", 8)
+	mc.add_theme_constant_override("margin_top", 5); mc.add_theme_constant_override("margin_bottom", 5)
+	b.add_child(mc)
+
+	var hb := HBoxContainer.new()
+	hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	hb.add_theme_constant_override("separation", 9)
+	hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mc.add_child(hb)
+
+	var f_frame := PanelContainer.new()
+	f_frame.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	f_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fsb := StyleBoxFlat.new()
+	fsb.bg_color = Color("060b0f")
+	fsb.border_color = UI.GOLD if on else Color("344b57")
+	fsb.set_border_width_all(1); fsb.set_content_margin_all(1)
+	f_frame.add_theme_stylebox_override("panel", fsb)
+	var fl := Missions.flag(k, 38.0, 23.0)
+	fl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	f_frame.add_child(fl)
+	hb.add_child(f_frame)
+
+	var tv := VBoxContainer.new()
+	tv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tv.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tv.add_theme_constant_override("separation", 0)
+	tv.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hb.add_child(tv)
+
+	var nm := UI.label(UI.nat_name(k).to_upper(), 15, UI.GOLD_HI if on else UI.TEXT, "display")
+	nm.clip_text = true
+	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tv.add_child(nm)
+
+	var tag := _nat_tag(k)
+	if tag != "":
+		var tl := UI.label(tag, 10, Color("d4b45a") if on else Color("7c9aa8"), "mono")
+		tl.clip_text = true
+		tl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tv.add_child(tl)
+
+	b.mouse_entered.connect(func():
+		nm.add_theme_color_override("font_color", Color(1, 1, 1))
+		if bar_n != null: bar_n.color = UI.GOLD_HI
+		if rim_n != null: rim_n.color = UI.GOLD_SPEC
+		if hover.is_valid(): hover.call())
+	b.mouse_exited.connect(func():
+		nm.add_theme_color_override("font_color", UI.GOLD_HI if on else UI.TEXT)
+		if bar_n != null: bar_n.color = UI.GOLD_HI if on else UI.CYAN
+		if rim_n != null: rim_n.color = UI.GOLD_SPEC if on else UI.SPECULAR)
 	b.pressed.connect(cb)
-	if hover.is_valid(): b.mouse_entered.connect(hover)
 	return b
 
 func _nat_detail(k: String) -> String:
@@ -464,10 +639,7 @@ func _nat_picker(vb: VBoxContainer, cur_fac: String, cb: Callable) -> void:
 	find.name = "Find"
 	find.placeholder_text = "Find a nation…"
 	find.text = nat_q
-	find.add_theme_font_override("font", UI.font("mono"))
-	find.add_theme_font_size_override("font_size", 13)
-	find.add_theme_stylebox_override("normal", UI.box(Color("0b1116"), Color("2b3c46"), 1, 10))
-	find.add_theme_stylebox_override("focus", UI.box(Color("0b1116"), UI.GOLD, 1, 10))
+	UI.input_style(find)
 	find.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vb.add_child(find)
 	var det := UI.para(_nat_detail(cur_fac), 12, UI.TEXT_DIM, 470)
@@ -568,12 +740,24 @@ func _s_c_players(vb: VBoxContainer) -> void:
 	for i in st.seats.size():
 		var s: Dictionary = st.seats[i]
 		var p := PanelContainer.new()
-		var psb := UI.box(Color(0.055, 0.085, 0.105, 0.9), Color("2b3c46"), 1, 10, 9, UI.SEAT_COL[i % UI.SEAT_COL.size()])
-		psb.border_width_top = 1; psb.border_width_right = 1; psb.border_width_bottom = 1
+		var seat_c: Color = UI.SEAT_COL[i % UI.SEAT_COL.size()]
+		var psb := UI.box(Color(0.055, 0.088, 0.112, 0.92), Color("283c48"), 1, 10, 9)
 		p.add_theme_stylebox_override("panel", psb)
 		var pv := VBoxContainer.new()
+		pv.add_theme_constant_override("separation", 4)
 		p.add_child(pv)
-		pv.add_child(UI.label(("YOU · " if i == 0 else "AI %d · " % i) + UI.nat_name(s.fac).to_upper(), 17, UI.TEXT, "display"))
+		var hdr_r := HBoxContainer.new()
+		hdr_r.add_theme_constant_override("separation", 6)
+		var sw := ColorRect.new()
+		sw.color = seat_c
+		sw.custom_minimum_size = Vector2(4, 18)
+		sw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		hdr_r.add_child(sw)
+		var fl_s := Missions.flag(str(s.fac), 24.0, 15.0)
+		fl_s.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		hdr_r.add_child(fl_s)
+		hdr_r.add_child(UI.label(("YOU · " if i == 0 else "AI %d · " % i) + UI.nat_name(s.fac).to_upper(), 17, UI.TEXT, "display"))
+		pv.add_child(hdr_r)
 		var r := HBoxContainer.new()
 		r.add_theme_constant_override("separation", 6)
 		pv.add_child(r)
@@ -674,8 +858,7 @@ func _s_online(vb: VBoxContainer) -> void:
 	nm.name = "Name"
 	nm.text = str(UI.opt("player_name")); nm.max_length = 16
 	nm.custom_minimum_size.x = 200
-	nm.add_theme_font_override("font", UI.font("mono")); nm.add_theme_font_size_override("font_size", 14)
-	nm.add_theme_stylebox_override("normal", UI.box(Color("0b1116"), Color("2b3c46"), 1, 10))
+	UI.input_style(nm)
 	nm.text_changed.connect(func(t): UI.set_opt("player_name", t))
 	_row(vb, "Your name", nm)
 	var nats := UI.nations()
@@ -697,8 +880,7 @@ func _s_online(vb: VBoxContainer) -> void:
 	code.name = "Code"
 	code.placeholder_text = "Game code or invite link"
 	code.custom_minimum_size.x = 250
-	code.add_theme_font_override("font", UI.font("mono")); code.add_theme_font_size_override("font_size", 14)
-	code.add_theme_stylebox_override("normal", UI.box(Color("0b1116"), Color("2b3c46"), 1, 10))
+	UI.input_style(code)
 	var jh := HBoxContainer.new()
 	jh.add_theme_constant_override("separation", 8)
 	jh.add_child(code)
@@ -809,8 +991,8 @@ func _s_battles(vb: VBoxContainer) -> void:
 # ---------------------------------------------------------------- Extras
 func _s_extras(vb: VBoxContainer) -> void:
 	_head(vb, "Extras", "Practice, review and reference.")
-	for it in [["Watch a replay", "replays"], ["My battles", "battles"], ["Encyclopedia", "ency"], ["Medals", "medals"]]:
-		vb.add_child(UI.menu_item(it[0], go.bind(it[1]), 20))
+	for it in [["Watch a replay", "replays", "play"], ["My battles", "battles", "swords"], ["Encyclopedia", "ency", "scope"], ["Medals", "medals", "star"]]:
+		vb.add_child(UI.menu_item(it[0], go.bind(it[1]), 20, "", 480.0, it[2]))
 
 func _s_medals(vb: VBoxContainer) -> void:
 	_head(vb, "Medals", "Earned in Battle, missions and the Tutorial.")
@@ -820,14 +1002,25 @@ func _s_medals(vb: VBoxContainer) -> void:
 		var have := float(r.get_value("r", m[3], 0.0))
 		var got: bool = have >= float(m[4])
 		var p := PanelContainer.new()
-		var sb := UI.box(Color("2a2412") if got else Color(0.05, 0.07, 0.085, 0.9), UI.GOLD if got else Color("2b3c46"), 1, 12, 9, UI.GOLD if got else Color("3a4a52"))
-		sb.border_width_top = 1; sb.border_width_right = 1; sb.border_width_bottom = 1
+		var sb := UI.box(Color("28210f") if got else Color(0.05, 0.075, 0.095, 0.92), UI.GOLD if got else Color("283b47"), 1, 12, 9)
 		p.add_theme_stylebox_override("panel", sb)
+		var hb := HBoxContainer.new()
+		hb.add_theme_constant_override("separation", 10)
+		p.add_child(hb)
+		var st_ic := TextureRect.new()
+		st_ic.texture = UI.icon("star")
+		st_ic.custom_minimum_size = Vector2(20, 20)
+		st_ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		st_ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		st_ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		st_ic.modulate = UI.GOLD_HI if got else Color(0.32, 0.40, 0.45)
+		hb.add_child(st_ic)
 		var v := VBoxContainer.new()
-		v.add_theme_constant_override("separation", 0)
-		v.add_child(UI.label(("★ " if got else "☆ ") + str(m[1]).to_upper(), 18, UI.GOLD_HI if got else UI.TEXT_DIM, "display"))
+		v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		v.add_theme_constant_override("separation", 1)
+		v.add_child(UI.label(str(m[1]).to_upper(), 18, UI.GOLD_HI if got else UI.TEXT_DIM, "display"))
 		v.add_child(UI.label("%s%s" % [m[2], "" if got or int(m[4]) <= 1 else "   (%d / %d)" % [int(have), int(m[4])]], 12, UI.TEXT_DIM))
-		p.add_child(v)
+		hb.add_child(v)
 		inner.add_child(p)
 
 ## Encyclopedia: every nation's units and buildings straight from data/rules.json (the same numbers the battle uses)
@@ -878,24 +1071,35 @@ func _s_ency(vb: VBoxContainer) -> void:
 			inner.add_child(UI.label("$%d · at the %s · %s" % [int(u.get("cost", 0)), str(F.blds.get(str(u.get("at", "")), {}).get("name", u.get("at", ""))), str(u.get("desc", ""))], 12, UI.TEXT_DIM))
 
 # ---------------------------------------------------------------- Settings
-func _slider(key: String, lo: float, hi: float) -> HSlider:
+func _slider(key: String, lo: float, hi: float) -> Control:
+	var hb := HBoxContainer.new()
+	hb.add_theme_constant_override("separation", 10)
+	hb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var s := HSlider.new()
 	s.name = "S_" + key
 	s.min_value = lo; s.max_value = hi; s.step = 0.05
 	s.value = float(UI.opt(key))
-	s.custom_minimum_size = Vector2(230, 22)
-	s.focus_mode = Control.FOCUS_NONE
-	s.value_changed.connect(func(v): UI.set_opt(key, v))
-	return s
+	s.custom_minimum_size = Vector2(220, 22)
+	s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	s.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	UI.slider_style(s)
+	var val_l := UI.label(("%.1fx" % s.value) if key == "scroll_speed" else ("%d%%" % int(roundf(s.value * 100.0))), 12, UI.GOLD_HI, "mono")
+	val_l.custom_minimum_size.x = 42
+	val_l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	val_l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	s.value_changed.connect(func(v):
+		UI.set_opt(key, v)
+		val_l.text = ("%.1fx" % float(v)) if key == "scroll_speed" else ("%d%%" % int(roundf(float(v) * 100.0))))
+	hb.add_child(s)
+	hb.add_child(val_l)
+	return hb
 
 func _check(key: String, txt: String) -> CheckButton:
 	var c := CheckButton.new()
 	c.name = "C_" + key
 	c.text = txt
 	c.button_pressed = bool(UI.opt(key))
-	c.focus_mode = Control.FOCUS_NONE
-	c.add_theme_font_override("font", UI.font("mono")); c.add_theme_font_size_override("font_size", 13)
-	c.add_theme_color_override("font_color", UI.TEXT)
+	UI.check_style(c)
 	c.toggled.connect(func(v): UI.set_opt(key, v))
 	return c
 

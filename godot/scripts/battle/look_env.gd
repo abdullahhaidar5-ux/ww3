@@ -14,9 +14,9 @@ const WX := {
 	"dusk": {sun = "#ffa868", si = 2.20, off = [-1320, 340, -560], sky = "#7688b6", gnd = "#50423b", hi = 1.08, fog = "#7c6874", fn = 1400.0, ff = 5400.0, expo = 1.06, sr = 3.0, hor = [.95, .52, .34], zen = [.15, .20, .38], gr = [1.0, .95, .98], sat = .94, fx = 2.1, amb = [.58, .54, .60]},
 	"night": {sun = "#9db8ec", si = .65, off = [-900, 700, -500], sky = "#223258", gnd = "#1c202c", hi = .62, fog = "#0e1528", fn = 950.0, ff = 4400.0, expo = 1.24, sr = 4.0, hor = [.09, .12, .20], zen = [.02, .03, .08], gr = [.92, .97, 1.1], sat = .78, fx = 2.6, amb = [.52, .58, .76]},
 }
-## Blockbuster Cinema / Zero Hour Enhanced heroic daylight: warm golden sun + deep azure sky + sculptural shadows
-const LOOK_WX := {sun = "#fff0d6", si = 2.60, off = [-1160, 620, -640], sky = "#96c2f8", gnd = "#8c7c66", hi = 1.28, fog = "#dcd4c4", fn = 1750.0, ff = 6600.0, expo = 1.05, sr = 2.0, hor = [.88, .84, .76], zen = [.12, .36, .80], gr = [1.0, 1.0, 1.0], sat = 1.07, fx = 1.22, amb = [1.0, .98, .94]}
-const LOOK := {v = 0.30, g = .002, sh = 0.84, k = 1.12, bl = 1.16, s = [.91, .96, 1.06], h = [1.05, 1.01, .94]}
+## Cinematic Military RTS daylight: crisp oblique sun (~36 deg diagonal sculptural shadows) + cool navy-slate sky ambient
+const LOOK_WX := {sun = "#fff0d6", si = 2.65, off = [-1280, 560, -680], sky = "#8cb8ee", gnd = "#80725e", hi = 1.28, fog = "#d8d1c3", fn = 1750.0, ff = 6600.0, expo = 1.05, sr = 1.8, hor = [.88, .84, .76], zen = [.12, .36, .80], gr = [1.0, 1.0, 1.0], sat = 1.06, fx = 1.22, amb = [1.0, .98, .94]}
+const LOOK := {v = 0.28, g = .002, sh = 0.32, k = 1.10, bl = 1.14, s = [.89, .95, 1.07], h = [1.05, 1.01, .94]}
 const TGRADE := {"desert": {tg = [.99, .99, 1.01], s = 0.98}, "green": {tg = [.99, 1.00, .99], s = 0.98}, "snow": {tg = [.96, .99, 1.04], s = 1.00}}
 const WFOG := {"rain": ["#7d868c", 500.0, 3200.0], "storm": ["#7d868c", 500.0, 3200.0], "fog": ["#b9bdbb", 150.0, 1500.0], "sandstorm": ["#c49a64", 45.0, 780.0],
 	"blizzard": ["#dfe6ee", 150.0, 1700.0], "snow": ["#e3e9f0", 220.0, 2300.0]}
@@ -54,6 +54,11 @@ var rain: MultiMeshInstance3D
 var rain_d := PackedFloat32Array()
 var fx = null                      # look_fx (sandstorm / snow use its particle pool)
 var height_fn: Callable            # ground height at (x, z)
+var _water_sun_dir := Vector3(-0.82, 0.36, -0.44)
+var _water_hor := Color(0.88, 0.84, 0.76)
+var _water_zen := Color(0.12, 0.36, 0.80)
+var _water_sun_col := Color(1.0, 0.94, 0.84)
+var _water_synced := false
 
 static func setup(host_: Node3D, map_: Dictionary, opts: Dictionary = {}):
 	var e = new()
@@ -81,8 +86,9 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	sky.radiance_size = Sky.RADIANCE_SIZE_32 if is_mob else Sky.RADIANCE_SIZE_64
 	sky.process_mode = Sky.PROCESS_MODE_INCREMENTAL
 	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_sky_contribution = 0.0
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_sky_contribution = 0.52
+	env.ambient_light_energy = 1.22
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_white = 6.0
@@ -90,8 +96,8 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	env.fog_mode = Environment.FOG_MODE_DEPTH
 	env.fog_density = 1.0
 	env.fog_depth_curve = 1.15
-	env.fog_sky_affect = 0.0
-	env.fog_sun_scatter = 0.0
+	env.fog_sky_affect = 0.35
+	env.fog_sun_scatter = 0.20
 	env.fog_aerial_perspective = 0.0
 	env.glow_enabled = not is_mob
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
@@ -105,18 +111,19 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	host.add_child(we)
 	sun = DirectionalLight3D.new()
 	sun.shadow_enabled = true
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_mob else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-	sun.directional_shadow_split_1 = 0.22
-	sun.directional_shadow_max_distance = 1150.0 if is_mob else 1750.0
-	sun.directional_shadow_fade_start = 0.84
-	sun.shadow_bias = 0.065
-	sun.shadow_normal_bias = 1.55
-	sun.shadow_opacity = 0.72
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_mob else DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+	sun.directional_shadow_split_1 = 0.12
+	sun.directional_shadow_split_2 = 0.28
+	sun.directional_shadow_split_3 = 0.56
+	sun.directional_shadow_max_distance = 1050.0 if is_mob else 1750.0
+	sun.directional_shadow_fade_start = 0.86
+	sun.shadow_bias = 0.035
+	sun.shadow_normal_bias = 0.62
+	sun.shadow_opacity = 0.78
 	host.add_child(sun)
 	hemi = DirectionalLight3D.new()
 	hemi.shadow_enabled = false
 	hemi.light_specular = 0.0
-	hemi.rotation_degrees = Vector3(-90, 0, 0)
 	host.add_child(hemi)
 	grade_layer = CanvasLayer.new()
 	grade_layer.layer = -100
@@ -162,19 +169,39 @@ func _apply() -> void:
 	base_si = w.si; base_hi = hi
 	var off := _v(w.off)
 	sun.look_at_from_position(off, Vector3.ZERO, Vector3.UP)
-	sun.shadow_blur = clampf(float(w.sr) * 0.55, 0.7, 3.0)
-	sun.shadow_opacity = 0.58 if night == 2 else (0.68 if theme == "snow" else 0.72)
-	# hemisphere light = rich cool sky fill + warm ground bounce so shadowed faces stay legible like CoH3
+	sun.shadow_blur = clampf(float(w.sr) * 0.45, 0.55, 2.4)
+	sun.shadow_opacity = 0.58 if night == 2 else (0.64 if theme == "snow" else 0.70)
+	# Cool opposite-side sky rim fill + sky-driven ambient bounce (NO top-down hotspot washing out vertical walls!)
+	var hemi_off := Vector3(-off.x, maxf(off.y * 0.90, 520.0), -off.z)
+	hemi.look_at_from_position(hemi_off, Vector3.ZERO, Vector3.UP)
 	var sl := skyc.srgb_to_linear(); var gl := gndc.srgb_to_linear()
-	var mid := Color((sl.r * 0.58 + gl.r * 0.42), (sl.g * 0.58 + gl.g * 0.42), (sl.b * 0.62 + gl.b * 0.38))
-	var up := Color(maxf(0.0, sl.r - gl.r) * 0.45, maxf(0.0, sl.g - gl.g) * 0.45, maxf(0.0, sl.b - gl.b) * 0.55)
+	var mid := Color(sl.r * 0.62 + gl.r * 0.38, sl.g * 0.64 + gl.g * 0.36, sl.b * 0.72 + gl.b * 0.28)
+	var rim := Color(sl.r * 0.78, sl.g * 0.86, minf(1.0, sl.b * 1.05))
 	env.ambient_light_color = mid.linear_to_srgb()
-	hemi.light_color = up.linear_to_srgb()
+	hemi.light_color = rim.linear_to_srgb()
 	base_fog = [fogc, float(w.fn), float(w.ff)]
+	var no_scatter := (tod == "night") or (weather == "storm") or (weather == "rain") or (weather == "fog") or (tod == "overcast")
+	env.fog_sun_scatter = 0.0 if no_scatter else 0.20
+	env.fog_sky_affect = 0.35
 	env.tonemap_exposure = float(w.expo) * expo_k * theme_k
 	env.glow_intensity = 0.48 * float(LOOK.bl)
-	sky_mat.set_shader_parameter("hor", _v(w.hor)); sky_mat.set_shader_parameter("zen", _v(w.zen))
-	sky_mat.set_shader_parameter("sun_dir", off.normalized())
+	var hor_v := _v(w.hor)
+	var zen_v := _v(w.zen)
+	var sun_n := off.normalized()
+	var ov := 0.0
+	if weather == "rain" or weather == "storm" or weather == "blizzard":
+		ov = 0.90
+	elif tod == "overcast" or weather == "fog" or weather == "snow" or weather == "sandstorm":
+		ov = 0.65
+	sky_mat.set_shader_parameter("hor", hor_v); sky_mat.set_shader_parameter("zen", zen_v)
+	sky_mat.set_shader_parameter("sun_dir", sun_n)
+	sky_mat.set_shader_parameter("overcast", ov)
+	_water_sun_dir = sun_n
+	_water_hor = Color(hor_v.x, hor_v.y, hor_v.z)
+	_water_zen = Color(zen_v.x, zen_v.y, zen_v.z)
+	_water_sun_col = sunc
+	_water_synced = false
+	_sync_water()
 	fx_amb = _v(w.amb); fx_k = float(w.get("fx", 1.0))
 	var T: Dictionary = TGRADE[theme]
 	var tg := _v(T.tg)
@@ -185,13 +212,28 @@ func _apply() -> void:
 	grade.set_shader_parameter("contrast", LOOK.k); grade.set_shader_parameter("lk_s", _v(LOOK.s)); grade.set_shader_parameter("lk_h", _v(LOOK.h))
 	_light(0.0, 0.0)
 
+func _sync_water() -> void:
+	if host == null: return
+	var wn := host.get_node_or_null("WaterMesh")
+	if wn is MeshInstance3D:
+		var wmat: Material = (wn as MeshInstance3D).material_override
+		if wmat is ShaderMaterial:
+			var sm := wmat as ShaderMaterial
+			sm.set_shader_parameter("sun_dir", _water_sun_dir)
+			sm.set_shader_parameter("sky_horizon", _water_hor)
+			sm.set_shader_parameter("sky_zenith", _water_zen)
+			sm.set_shader_parameter("sun_color", _water_sun_col)
+			_water_synced = true
+
 func _light(dim: float, L: float) -> void:
 	sun.light_energy = base_si * (1.0 - dim) + base_si * L * 2.2
-	var hk := base_hi * (1.0 - dim * 0.6) + base_hi * L * 1.6
-	env.ambient_light_energy = hk
-	hemi.light_energy = hk
+	var hk := base_hi * (1.0 - dim * 0.55) + base_hi * L * 1.5
+	env.ambient_light_energy = 1.22 * (hk / 1.28)
+	hemi.light_energy = 0.62 * hk
 
 func tick(dt: float, cam: Camera3D) -> void:
+	if not _water_synced:
+		_sync_water()
 	# weather blends in / out (weatherFX)
 	wm = minf(1.0, wm + dt * 0.35) if weather != "clear" else maxf(0.0, wm - dt * 0.5)
 	var fogc: Color = base_fog[0]; var fn: float = base_fog[1]; var ff: float = base_fog[2]
@@ -210,10 +252,10 @@ func tick(dt: float, cam: Camera3D) -> void:
 	_light((wm * 0.12 if raining else 0.0) + sm * 0.3, L)
 	if L > 0.02: fogc = fogc.lerp(_c("#d8e2ff"), minf(0.7, L * 0.6))
 	env.fog_light_color = fogc; env.fog_depth_begin = fn; env.fog_depth_end = ff
-	# the shadow box follows the zoom (the browser's +-900 box at the default zoom)
+	# tight camera-height-scaled shadow frustum for razor-sharp anchored ground shadows
 	if cam != null:
 		var hgt := maxf(200.0, cam.global_position.y)
-		sun.directional_shadow_max_distance = clampf(hgt * 2.6, 900.0, 3600.0)
+		sun.directional_shadow_max_distance = clampf(hgt * 1.85, 720.0, 2350.0)
 	flash = maxf(0.0, flash - dt * 1.6)
 	shake *= exp(-7.0 * dt)
 	grade.set_shader_parameter("flash", flash)

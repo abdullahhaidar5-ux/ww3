@@ -3,7 +3,8 @@
 ## trees as one MultiMesh per tree model. Positions = the sim's design units (same as the browser game).
 extends RefCounted
 
-const MAX_VERTS := 60000.0   # the mesh is built in GDScript: big maps (hgrid 1090x750) take every 4th height sample, small ones every 2nd
+const MAX_VERTS_DESKTOP := 110000.0   # crisp cliffs, hills & wadis on desktop
+const MAX_VERTS_MOBILE := 55000.0     # lightweight terrain density on mobile WebGL2
 const MAX_TREES := 3500      # cap total tree instances for smooth WebGL2 Compatibility performance (halved on mobile)
 const UI_KIT = preload("res://scripts/ui/ui_kit.gd")
 
@@ -16,6 +17,9 @@ static func height_at(map: Dictionary, x: float, z: float) -> float:
 	var k := j * w + i
 	var a = H.a
 	return lerpf(lerpf(a[k], a[k + 1], u), lerpf(a[k + w], a[k + w + 1], u), v)
+
+static func normal_at(map: Dictionary, x: float, z: float) -> Vector3:
+	return Vector3(height_at(map, x - 8.0, z) - height_at(map, x + 8.0, z), 16.0, height_at(map, x, z - 8.0) - height_at(map, x, z + 8.0)).normalized()
 
 ## P4c HOOK: lane P4d exports each map's whole static scene from the browser game (ground with its real textures,
 ## roads, water, bridges, cliffs, trees, props) to res://models/auto/maps/<map>.glb. When that file is there it IS the
@@ -37,7 +41,8 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	var rh := (rd.size() / rw) if rw > 0 else 0
 	var GW := int(map.GW); var GH := int(map.GH); var CELL := float(map.CELL)
 	var grid := PackedByteArray(map.grid)
-	var STEP := maxi(2, ceili(sqrt(hw * hh / MAX_VERTS)))
+	var max_verts := MAX_VERTS_MOBILE if UI_KIT.is_mobile() else MAX_VERTS_DESKTOP
+	var STEP := maxi(2, ceili(sqrt(hw * hh / max_verts)))
 	# multi-tone biome palettes: natural CoH3 / Broken Arrow realism (never neon orange or plastic green)
 	var th_raw := str(map.get("theme", "desert"))
 	var th := th_raw if th_raw in ["desert", "green", "snow"] else "desert"
@@ -140,7 +145,7 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	mat.set_shader_parameter("nrm_strength", 0.58 if th == "snow" else 0.96)
 	mat.set_shader_parameter("wetness", 0.0)
 	g.material_override = mat
-	g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	host.add_child(g)
 	# Textured distant terrain expanse + 360° sculpted mountain horizon ring so low-angle upward camera looks cinematic!
 	var pm := PlaneMesh.new()
@@ -245,34 +250,64 @@ static func _blur_l8(src: PackedByteArray, w: int, h: int, passes: int = 1) -> I
 	var img := Image.create_from_data(w, h, false, Image.FORMAT_L8, out)
 	return ImageTexture.create_from_image(img)
 
-## water cells (grid 1 = water, 2 = ford / shallows): one quad per cell just above the ground, animated PBR water shader
+## water cells (grid 1 = water, 2 = ford / shallows): clean non-overlapping continuous quads at `level` with smooth shoreline alpha
 static func _water(host: Node3D, sim, map: Dictionary) -> void:
 	var grid := PackedByteArray(map.grid)
-	var GW := int(map.GW); var CELL := float(map.CELL)
+	var GW := int(map.GW); var GH := int(map.GH); var CELL := float(map.CELL)
+	if GW <= 0 or GH <= 0 or grid.size() < GW * GH: return
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var n := 0
-	# one water level: a little under the banks (land cells next to water)
+	# Single clean water plane level: slightly below adjacent land banks (fallback to water bed if no banks)
 	var bank := 0.0; var nb := 0
+	var wsum := 0.0; var nw := 0
 	for i in grid.size():
-		if int(grid[i]) != 1: continue
-		for o in [-1, 1, -GW, GW]:
-			var j: int = i + o
-			if j >= 0 and j < grid.size() and int(grid[j]) == 0:
-				bank += height_at(map, (j % GW) * CELL + CELL * 0.5, (j / GW) * CELL + CELL * 0.5); nb += 1
-	var level := bank / maxf(1, nb) - 4.0
-	for i in grid.size():
-		var g := int(grid[i])
-		if g != 1 and g != 2: continue
-		var x := (i % GW) * CELL; var z := (i / GW) * CELL
-		var ch := height_at(map, x + CELL * 0.5, z + CELL * 0.5) + 1.0
-		var y: float = maxf(level, ch) if g == 1 else maxf(level - 0.15, ch)
-		# alpha encodes shallowness for water_pbr.gdshader (a < 0.75 enables animated ford foam shimmer)
-		var wc := Color(0.08, 0.25, 0.34, 1.0) if g == 1 else Color(0.24, 0.41, 0.44, 0.55)
-		var e := 2.0
-		for v in [Vector3(x - e, y, z - e), Vector3(x + CELL + e, y, z - e), Vector3(x - e, y, z + CELL + e), Vector3(x + CELL + e, y, z - e), Vector3(x + CELL + e, y, z + CELL + e), Vector3(x - e, y, z + CELL + e)]:
-			st.set_color(wc); st.set_normal(Vector3.UP); st.add_vertex(v)
-		n += 1
+		var gi := int(grid[i])
+		if gi != 1: continue
+		wsum += height_at(map, (i % GW) * CELL + CELL * 0.5, (i / GW) * CELL + CELL * 0.5); nw += 1
+		var cx := i % GW; var cz := i / GW
+		for d: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var nx_c: int = cx + d.x; var nz_c: int = cz + d.y
+			if nx_c >= 0 and nx_c < GW and nz_c >= 0 and nz_c < GH and int(grid[nz_c * GW + nx_c]) == 0:
+				bank += height_at(map, nx_c * CELL + CELL * 0.5, nz_c * CELL + CELL * 0.5); nb += 1
+	var level := (bank / float(nb) - 4.0) if nb > 0 else (wsum / maxf(1.0, float(nw)) + 2.0)
+	# Corner depth alpha helper: smoothly blends 1.0 (deep interior) -> 0.45 (ford) -> 0.0 (land shoreline) with zero quad overlap!
+	var corner_alpha := func(vx: int, vz: int) -> float:
+		var acc := 0.0
+		var cnt := 0
+		for dz: int in [-1, 0]:
+			for dx: int in [-1, 0]:
+				var gx: int = vx + dx; var gz: int = vz + dz
+				if gx < 0 or gx >= GW or gz < 0 or gz >= GH: continue
+				var cg := int(grid[gz * GW + gx])
+				acc += 1.0 if cg == 1 else (0.45 if cg == 2 else 0.0)
+				cnt += 1
+		return acc / maxf(1.0, float(cnt))
+	for cz in GH:
+		for cx in GW:
+			var g := int(grid[cz * GW + cx])
+			if g != 1 and g != 2: continue
+			var x0 := float(cx) * CELL; var x1 := float(cx + 1) * CELL
+			var z0 := float(cz) * CELL; var z1 := float(cz + 1) * CELL
+			var a00: float = corner_alpha.call(cx, cz)
+			var a10: float = corner_alpha.call(cx + 1, cz)
+			var a01: float = corner_alpha.call(cx, cz + 1)
+			var a11: float = corner_alpha.call(cx + 1, cz + 1)
+			var c00 := Color(0.08, 0.22, 0.30, a00)
+			var c10 := Color(0.08, 0.22, 0.30, a10)
+			var c01 := Color(0.08, 0.22, 0.30, a01)
+			var c11 := Color(0.08, 0.22, 0.30, a11)
+			var p00 := Vector3(x0, level, z0)
+			var p10 := Vector3(x1, level, z0)
+			var p01 := Vector3(x0, level, z1)
+			var p11 := Vector3(x1, level, z1)
+			st.set_color(c00); st.set_normal(Vector3.UP); st.add_vertex(p00)
+			st.set_color(c10); st.set_normal(Vector3.UP); st.add_vertex(p10)
+			st.set_color(c01); st.set_normal(Vector3.UP); st.add_vertex(p01)
+			st.set_color(c10); st.set_normal(Vector3.UP); st.add_vertex(p10)
+			st.set_color(c11); st.set_normal(Vector3.UP); st.add_vertex(p11)
+			st.set_color(c01); st.set_normal(Vector3.UP); st.add_vertex(p01)
+			n += 1
 	if n == 0: return
 	var th_raw := str(map.get("theme", "desert"))
 	var th := th_raw if th_raw in ["desert", "green", "snow"] else "desert"
@@ -281,12 +316,17 @@ static func _water(host: Node3D, sim, map: Dictionary) -> void:
 	w.mesh = st.commit()
 	var m := ShaderMaterial.new()
 	m.shader = load("res://shaders/water_pbr.gdshader")
-	var sky_hor := Color(0.92, 0.84, 0.68)
+	var sky_hor := Color(0.88, 0.84, 0.76)
+	var sky_zen := Color(0.12, 0.36, 0.80)
 	if th == "snow":
 		sky_hor = Color(0.78, 0.85, 0.94)
+		sky_zen = Color(0.20, 0.36, 0.68)
 	elif th == "green":
-		sky_hor = Color(0.76, 0.84, 0.90)
+		sky_hor = Color(0.78, 0.84, 0.88)
+		sky_zen = Color(0.14, 0.38, 0.78)
 	m.set_shader_parameter("sky_horizon", sky_hor)
+	m.set_shader_parameter("sky_zenith", sky_zen)
+	m.set_shader_parameter("sun_color", Color(1.0, 0.94, 0.84))
 	w.material_override = m
 	w.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	host.add_child(w)
@@ -305,11 +345,7 @@ static func _bridges(host: Node3D, map: Dictionary) -> void:
 	root.name = "Bridges"
 	host.add_child(root)
 
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.albedo_color = Color.WHITE
-	mat.roughness = 0.78
-	mat.metallic = 0.15
+	var mat := _prop_pbr_mat(0.80, 0.12, "res://tex/rock_nrm.png", 0.28, 16.0)
 
 	var c_deck := Color(0.58, 0.56, 0.52)
 	var c_asphalt := Color(0.28, 0.29, 0.31)
@@ -487,6 +523,27 @@ static func _matte_vcol_mat(rough := 0.94, ds := false) -> StandardMaterial3D:
 	if ds: mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return mat
 
+static var _prop_pbr_cache: Dictionary = {}
+static func _prop_pbr_mat(rough := 0.86, metal := 0.06, nrm_path := "res://tex/rock_nrm.png", dust := 0.75, model_h := 12.0) -> ShaderMaterial:
+	var key := "%.2f|%.2f|%s|%.2f|%.1f" % [rough, metal, nrm_path, dust, model_h]
+	if _prop_pbr_cache.has(key):
+		return _prop_pbr_cache[key] as ShaderMaterial
+	var sm := ShaderMaterial.new()
+	sm.shader = load("res://shaders/military_pbr.gdshader")
+	sm.set_shader_parameter("albedo_col", Color.WHITE)
+	sm.set_shader_parameter("has_albedo_tex", false)
+	sm.set_shader_parameter("use_vertex_color", true)
+	sm.set_shader_parameter("has_src_nrm", false)
+	var nrm_res: Resource = load(nrm_path) if ResourceLoader.exists(nrm_path) else load("res://tex/n1.png")
+	sm.set_shader_parameter("detail_nrm", nrm_res)
+	sm.set_shader_parameter("base_roughness", rough)
+	sm.set_shader_parameter("base_metallic", metal)
+	sm.set_shader_parameter("mat_mode", 1)
+	sm.set_shader_parameter("dust_enable", dust)
+	sm.set_shader_parameter("model_h", model_h)
+	_prop_pbr_cache[key] = sm
+	return sm
+
 static var _foliage_mat: ShaderMaterial = null
 static func _get_foliage_mat() -> ShaderMaterial:
 	if _foliage_mat != null: return _foliage_mat
@@ -622,7 +679,7 @@ static func _build_boulder(th: String, variant: int) -> ArrayMesh:
 		_add_cluster(st, Vector3(0, 1.2, 0), 4.6, 2.2, 3.9, c_rock * 0.92, 505)
 		_add_cluster(st, Vector3(2.8, 0.6, -1.6), 2.4, 1.3, 2.2, c_rock * 0.82, 506)
 	var mesh := st.commit()
-	mesh.surface_set_material(0, _matte_vcol_mat(0.95, false))
+	mesh.surface_set_material(0, _prop_pbr_mat(0.90, 0.02, "res://tex/rock_nrm.png", 0.72, 6.0))
 	_rock_cache[key] = mesh
 	return mesh
 
@@ -670,7 +727,7 @@ static func _build_barrier() -> ArrayMesh:
 	_add_box(st, Vector3(0, 5.0, 0), Vector3(12.2, 1.4, 1.7), c_top)
 	_add_box(st, Vector3(0, 5.8, 0), Vector3(4.2, 0.3, 1.8), c_stripe)
 	var m := st.commit()
-	m.surface_set_material(0, _matte_vcol_mat(0.90, false))
+	m.surface_set_material(0, _prop_pbr_mat(0.84, 0.04, "res://tex/rock_nrm.png", 0.78, 6.0))
 	_barrier_mesh = m
 	return m
 
@@ -686,7 +743,7 @@ static func _build_pole() -> ArrayMesh:
 	for ix in [-3.6, 0.0, 3.6]:
 		_add_box(st, Vector3(ix, 26.2, 0), Vector3(0.6, 0.9, 0.6), Color(0.75, 0.78, 0.80))
 	var m := st.commit()
-	m.surface_set_material(0, _matte_vcol_mat(0.86, false))
+	m.surface_set_material(0, _prop_pbr_mat(0.76, 0.16, "res://tex/armor_nrm.png", 0.60, 28.0))
 	_pole_mesh = m
 	return m
 
@@ -897,8 +954,15 @@ static func _trees(host: Node3D, sim, map: Dictionary, _tree_mesh: Callable) -> 
 		for i in per[t].size():
 			var xf: Transform3D = per[t][i]
 			mm.set_instance_transform(i, xf)
+			var gx_p := xf.origin.x
+			var gz_p := xf.origin.z
+			var gy_p := height_at(map, gx_p, gz_p)
+			var gnorm := normal_at(map, gx_p, gz_p)
+			var bx := Vector3(1.0, 0.0, 0.0)
+			bx = (bx - gnorm * bx.dot(gnorm)).normalized()
+			var bz := bx.cross(gnorm).normalized()
 			var ar := 15.0 * xf.basis.x.length()
-			tree_ao.append(Transform3D(Basis.IDENTITY.scaled(Vector3(ar, 1.0, ar)), Vector3(xf.origin.x, xf.origin.y + 1.05, xf.origin.z)))
+			tree_ao.append(Transform3D(Basis(bx * ar, gnorm, bz * ar), Vector3(gx_p, gy_p, gz_p) + gnorm * 0.45))
 		m.multimesh = mm
 		m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		host.add_child(m)

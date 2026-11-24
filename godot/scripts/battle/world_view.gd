@@ -111,12 +111,12 @@ func _setup_base_pads(th: String) -> void:
 		c_edge = Color(0.48, 0.52, 0.58); c_slab = Color(0.60, 0.64, 0.69)
 	elif th == "green":
 		c_edge = Color(0.40, 0.42, 0.38); c_slab = Color(0.52, 0.53, 0.49)
-	# Outer compacted bevel skirt + inner weathered poured concrete motorpool pad + corner hazard pads
-	_civ_box(st, Vector3(0.0, 0.14, 0.0), Vector3(2.35, 0.28, 2.35), c_edge)
-	_civ_box(st, Vector3(0.0, 0.26, 0.0), Vector3(2.08, 0.24, 2.08), c_slab)
+	# Deepened compacted concrete bevel skirt (height 1.6 extending below ground pivot so downhill corners never float on slopes) + inner motorpool slab + corner hazard pads
+	_civ_box(st, Vector3(0.0, -0.56, 0.0), Vector3(2.36, 1.60, 2.36), c_edge)
+	_civ_box(st, Vector3(0.0, 0.04, 0.0), Vector3(2.08, 0.56, 2.08), c_slab)
 	for sx in [-0.94, 0.94]:
 		for sz in [-0.94, 0.94]:
-			_civ_box(st, Vector3(sx, 0.39, sz), Vector3(0.24, 0.04, 0.24), c_trim)
+			_civ_box(st, Vector3(sx, 0.33, sz), Vector3(0.24, 0.04, 0.24), c_trim)
 	var m := st.commit()
 	var mat := _make_pbr_mat(0.86, 0.04)
 	m.surface_set_material(0, mat)
@@ -258,9 +258,13 @@ func draw_bld(B, fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Col
 	var eid_f: float = float(e.id)
 	var aim_ang: float = float(e.tang) if absf(float(e.tang)) > 0.0001 else float(e.ang)
 
+	var has_hero_flag: bool = kind_s == "hq" or kind_s == "barracks" or kind_s == "factory" or kind_s == "uplink"
 	var root_xf := Transform3D(Basis.IDENTITY.scaled(Vector3(sc, sc, sc)), Vector3(p.x, gy - sink, p.y))
 	for pk in parts.keys():
 		var pks := String(pk)
+		# Skip static baked flag on buildings that fly the animated 3D waving flag_wave.gdshader pole
+		if pks == "flag" and has_hero_flag:
+			continue
 		var pt: Transform3D = pxf.get(pks, Transform3D.IDENTITY)
 		var part_xf: Transform3D
 		match pks:
@@ -277,15 +281,17 @@ func draw_bld(B, fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Col
 				part_xf = root_xf * pt
 		_push_mm("b|" + fac + "|" + kind_s + "|" + pks, parts[pk] as Mesh, part_xf)
 
-	# Grounded CoH3/Zero Hour concrete military compound pad + contact AO shadow disc beneath building footprint
+	# Grounded concrete military compound pad + slope-aligned contact AO shadow disc beneath building footprint
 	var pad_r: float = maxf(float(e.r) * 0.96, 18.0)
-	_pad_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(pad_r, 1.0, pad_r)), Vector3(p.x, gy + 0.04, p.y)))
-	var ao_r: float = maxf(float(e.r) * 1.24, 22.0)
-	_ao_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(ao_r, 1.0, ao_r)), Vector3(p.x, gy + 0.36, p.y)))
-	_ao_col.append(Color(1.0, 1.0, 1.0, 0.38 * maxf(0.25, built)))
+	_pad_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(pad_r, 1.0, pad_r)), Vector3(p.x, gy + 0.02, p.y)))
+	var ao_r: float = maxf(float(e.r) * 1.26, 22.0)
+	var gnorm := _ground_normal(B.sim, p.x, p.y, clampf(ao_r * 0.45, 8.0, 24.0))
+	var ao_b := _slope_basis(gnorm, 0.0, ao_r, ao_r)
+	_ao_xf.append(Transform3D(ao_b, Vector3(p.x, gy, p.y) + gnorm * 0.50))
+	_ao_col.append(Color(1.0, 1.0, 1.0, 0.54 * maxf(0.25, built)))
 
 	# Heroic waving 3D faction flag (Hezbollah, Iran, US, Russia, etc.) flying over HQ, Barracks, War Factory & Strike Center!
-	if built >= 0.95 and (kind_s == "hq" or kind_s == "barracks" or kind_s == "factory" or kind_s == "uplink"):
+	if built >= 0.95 and has_hero_flag:
 		var fscale := 1.15 if (kind_s == "hq" or kind_s == "uplink") else 0.88
 		var off_r := maxf(float(e.r) * 0.78, 22.0)
 		_push_faction_flag(fac, Vector3(p.x + off_r, gy, p.y - off_r * 0.45), fscale, now, eid_f)
@@ -385,9 +391,12 @@ func draw_map_objects(B, fr: Dictionary) -> void:
 			var parts: Dictionary = pack.get("parts", {})
 			var pxf: Dictionary = meta["pxf"]
 			var owned: bool = int(o.owner) >= 0
+			var has_cap_flag: bool = owned and int(o.owner) < B.sim.teams.size()
 			var root_xf := Transform3D(Basis.IDENTITY.scaled(Vector3(sc, sc, sc)), Vector3(ox, oy, oz))
 			for pk in parts.keys():
 				var pks := String(pk)
+				if pks == "flag" and has_cap_flag:
+					continue
 				var pt: Transform3D = pxf.get(pks, Transform3D.IDENTITY)
 				var part_xf: Transform3D
 				if key == "derrick" and pks == "arm":
@@ -556,6 +565,27 @@ func clear() -> void:
 
 
 # ------------------------------------------------------------------ internals
+static func _ground_normal(sim, x: float, z: float, eps: float) -> Vector3:
+	if sim == null or not sim.has_method("ground_h"):
+		return Vector3.UP
+	var hx0: float = float(sim.ground_h(x - eps, z))
+	var hx1: float = float(sim.ground_h(x + eps, z))
+	var hz0: float = float(sim.ground_h(x, z - eps))
+	var hz1: float = float(sim.ground_h(x, z + eps))
+	return Vector3(hx0 - hx1, 2.0 * eps, hz0 - hz1).normalized()
+
+
+static func _slope_basis(gnorm: Vector3, yaw: float, sx: float, sz: float) -> Basis:
+	var n := gnorm.normalized()
+	var x_raw := Vector3(cos(yaw), 0.0, sin(yaw))
+	var z_axis := x_raw.cross(n)
+	if z_axis.length_squared() < 0.0001:
+		z_axis = Vector3(0.0, 0.0, 1.0).cross(n)
+	z_axis = z_axis.normalized()
+	var x_axis := n.cross(z_axis).normalized()
+	return Basis(x_axis * sx, n, z_axis * sz)
+
+
 func _emit_bld_damage_fx(B, e, p: Vector2, gy: float, h: float, now: float) -> void:
 	if fx == null or float(e.built) < 1.0 or float(e.max) <= 0.0:
 		return
@@ -890,7 +920,7 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 				for wz in [-7.0, 7.0]:
 					_civ_box(st_win, Vector3(15.15, row_y, wz), Vector3(0.4, 4.6, 4.2), c_win)
 					_civ_box(st_win, Vector3(-15.15, row_y, wz), Vector3(0.4, 4.6, 4.2), c_win)
-			_civ_box(st_win, Vector3(0.0, 7.2, 14.18), Vector3(5.2, 8.8, 0.45), c_door)
+			_civ_box(st_roof, Vector3(0.0, 7.2, 14.18), Vector3(5.2, 8.8, 0.45), c_door)
 		else:
 			# Stepped ochre terrace compound with dusty yard pad, side annex & roof shade pergola
 			var c_yard := Color(0.48, 0.42, 0.32)
@@ -926,7 +956,7 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 					_civ_box(st_win, Vector3(-16.15, row_y, wz), Vector3(0.4, 4.6, 4.2), c_win)
 			_civ_box(st_win, Vector3(11.0, 10.0, 12.15), Vector3(4.2, 4.6, 0.4), c_win)
 			_civ_box(st_win, Vector3(17.15, 10.0, 1.0), Vector3(0.4, 4.6, 4.6), c_win)
-			_civ_box(st_win, Vector3(-5.0, 6.8, 13.18), Vector3(4.8, 8.2, 0.45), c_door)
+			_civ_box(st_roof, Vector3(-5.0, 6.8, 13.18), Vector3(4.8, 8.2, 0.45), c_door)
 	else:
 		# Temperate ("green") or Winter ("snow") pitched-roof stone/plaster village houses with grounded stone yard & perimeter wall
 		var is_snow := th == "snow"
@@ -955,7 +985,7 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 				for wz in [-6.5, 6.5]:
 					_civ_box(st_win, Vector3(15.15, row_y, wz), Vector3(0.4, 4.2, 3.8), c_win)
 					_civ_box(st_win, Vector3(-15.15, row_y, wz), Vector3(0.4, 4.2, 3.8), c_win)
-			_civ_box(st_win, Vector3(0.0, 6.8, 13.18), Vector3(4.8, 8.0, 0.45), c_door)
+			_civ_box(st_roof, Vector3(0.0, 6.8, 13.18), Vector3(4.8, 8.0, 0.45), c_door)
 		else:
 			var c_base := Color(0.42, 0.44, 0.46) if is_snow else Color(0.44, 0.42, 0.39)
 			var c_upper := Color(0.60, 0.60, 0.60) if is_snow else Color(0.64, 0.60, 0.52)
@@ -977,7 +1007,7 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 				for wz in [-6.5, 6.5]:
 					_civ_box(st_win, Vector3(17.25, row_y, wz), Vector3(0.4, 4.4, 4.0), c_win)
 					_civ_box(st_win, Vector3(-17.25, row_y, wz), Vector3(0.4, 4.4, 4.0), c_win)
-			_civ_box(st_win, Vector3(0.0, 5.8, 13.28), Vector3(5.0, 8.2, 0.45), c_door)
+			_civ_box(st_roof, Vector3(0.0, 5.8, 13.28), Vector3(5.0, 8.2, 0.45), c_door)
 
 	var am := ArrayMesh.new()
 	var mat_wall := _make_pbr_mat(0.90, 0.03)

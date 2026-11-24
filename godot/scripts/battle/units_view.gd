@@ -392,15 +392,20 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 		if fx != null:
 			_emit_vehicle_fx(fx, e, kind_s, dom, p, vyaw, gy, alt_y, model_h, eid_i, now, cam_dist_sq)
 
-	# Grounded CoH3 contact AO shadow disc under ground units & infantry squads
+	# Grounded slope-aligned contact AO shadow disc under ground units & infantry squads
 	if is_sq:
-		var sq_r: float = maxf(float(e.r) * 1.05, 13.0)
-		_ao_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(sq_r, 1.0, sq_r)), Vector3(p.x, gy + 0.24, p.y)))
-		_ao_col.append(Color(1.0, 1.0, 1.0, 0.24))
+		var sq_r: float = maxf(float(e.r) * 1.08, 13.5)
+		var gnorm := _ground_normal(B.sim, p.x, p.y, clampf(sq_r * 0.45, 5.0, 14.0))
+		var ao_b := _slope_basis(gnorm, 0.0, sq_r, sq_r)
+		_ao_xf.append(Transform3D(ao_b, Vector3(p.x, gy, p.y) + gnorm * 0.50))
+		_ao_col.append(Color(1.0, 1.0, 1.0, 0.34))
 	elif String(e.s_dom) != "air":
-		var vr: float = maxf(float(e.r) * 1.24, 11.0)
-		_ao_xf.append(Transform3D(Basis(Vector3.UP, -vis_ang).scaled(Vector3(vr * 1.18, 1.0, vr * 0.90)), Vector3(p.x, gy + 0.26, p.y)))
-		_ao_col.append(Color(1.0, 1.0, 1.0, 0.42))
+		var vr: float = maxf(float(e.r) * 1.26, 11.5)
+		var is_naval: bool = String(e.s_dom) == "naval"
+		var gnorm := Vector3.UP if is_naval else _ground_normal(B.sim, p.x, p.y, clampf(vr * 0.45, 6.0, 18.0))
+		var ao_b := _slope_basis(gnorm, vis_ang, vr * 1.20, vr * 0.92)
+		_ao_xf.append(Transform3D(ao_b, Vector3(p.x, gy, p.y) + gnorm * 0.50))
+		_ao_col.append(Color(1.0, 1.0, 1.0, 0.28 if is_naval else 0.58))
 
 	_append_overlays(B, fr, e, p, ang, gy, alt_y, model_h, col, issel, mine, vis)
 
@@ -504,6 +509,27 @@ func clear() -> void:
 
 
 # ------------------------------------------------------------------ internals
+static func _ground_normal(sim, x: float, z: float, eps: float) -> Vector3:
+	if sim == null or not sim.has_method("ground_h"):
+		return Vector3.UP
+	var hx0: float = float(sim.ground_h(x - eps, z))
+	var hx1: float = float(sim.ground_h(x + eps, z))
+	var hz0: float = float(sim.ground_h(x, z - eps))
+	var hz1: float = float(sim.ground_h(x, z + eps))
+	return Vector3(hx0 - hx1, 2.0 * eps, hz0 - hz1).normalized()
+
+
+static func _slope_basis(gnorm: Vector3, yaw: float, sx: float, sz: float) -> Basis:
+	var n := gnorm.normalized()
+	var x_raw := Vector3(cos(yaw), 0.0, sin(yaw))
+	var z_axis := x_raw.cross(n)
+	if z_axis.length_squared() < 0.0001:
+		z_axis = Vector3(0.0, 0.0, 1.0).cross(n)
+	z_axis = z_axis.normalized()
+	var x_axis := n.cross(z_axis).normalized()
+	return Basis(x_axis * sx, n, z_axis * sz)
+
+
 static func _ang_step(cur: float, target: float, max_step: float) -> float:
 	return cur + clampf(wrapf(target - cur, -PI, PI), -max_step, max_step)
 

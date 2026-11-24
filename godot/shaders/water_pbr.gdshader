@@ -1,16 +1,18 @@
-// Epic Animated Reflective PBR Water Shader (WebGL2 Compatibility safe).
-// Features: multi-directional capillary wave harmonics, crisp Fresnel sky reflections, sparkling golden sun-glint
-// highlights across wave crests, deep sapphire-to-turquoise bathymetry tint, and organic shoreline/ford foam lace.
+// Realistic Tactical PBR Dielectric Water Shader (WebGL2 Compatibility safe, zero depth-texture reads).
+// Features: dark steel-blue / slate-teal bathymetry, multi-directional capillary ripples, dynamic time-of-day
+// zenith-to-horizon Fresnel reflections, crisp oblique sun-glint shimmer, and smooth shoreline alpha fade.
 shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, cull_disabled, diffuse_burley, specular_schlick_ggx;
 
 uniform vec3 sky_horizon : source_color = vec3(0.86, 0.82, 0.72);
-uniform vec3 deep_color : source_color = vec3(0.04, 0.14, 0.24);
-uniform vec3 shallow_color : source_color = vec3(0.14, 0.36, 0.40);
-uniform vec3 sun_dir = vec3(-0.75, 0.48, -0.44);
+uniform vec3 sky_zenith : source_color = vec3(0.14, 0.34, 0.72);
+uniform vec3 sun_color : source_color = vec3(1.0, 0.92, 0.78);
+uniform vec3 deep_color : source_color = vec3(0.03, 0.09, 0.15);
+uniform vec3 shallow_color : source_color = vec3(0.09, 0.22, 0.26);
+uniform vec3 sun_dir = vec3(-0.82, 0.36, -0.44);
 uniform float wave_speed = 1.05;
 uniform float wave_scale = 0.054;
-uniform float ripple_strength = 0.25;
+uniform float ripple_strength = 0.24;
 
 varying vec3 v_wpos;
 
@@ -45,36 +47,43 @@ void fragment() {
 	vec3 w_nrm = normalize(vec3(-nx, 1.0, -nz));
 	vec3 v_nrm = normalize((VIEW_MATRIX * vec4(w_nrm, 0.0)).xyz);
 
+	// Physically accurate dielectric Fresnel blending sky_zenith (overhead) to sky_horizon (grazing)
 	float ndotv = clamp(dot(v_nrm, normalize(VIEW)), 0.0, 1.0);
-	float fresnel = pow(max(1.0 - ndotv, 0.0001), 3.4);
-	float refl = clamp(0.12 + fresnel * 0.84, 0.0, 0.92);
+	float fresnel = pow(max(1.0 - ndotv, 0.0001), 4.0);
+	float refl = clamp(0.07 + fresnel * 0.84, 0.0, 0.91);
+	vec3 sky_refl = mix(sky_zenith * 0.72, sky_horizon * 0.90, clamp(pow(1.0 - ndotv, 1.5), 0.0, 1.0));
 
 	float wave_h = sin(ph1a) * 0.45 + sin(ph2a) * 0.35 + sin(ph3) * 0.20;
-	float shallow_k = clamp((1.0 - COLOR.a) * 1.85, 0.0, 1.0);
+	float shallow_k = clamp((1.0 - COLOR.a) * 1.55, 0.0, 1.0);
 	vec3 water_tint = mix(deep_color, shallow_color, shallow_k);
-	water_tint *= (1.0 + wave_h * 0.11);
+	water_tint *= (1.0 + wave_h * 0.10);
 
-	vec3 col = mix(water_tint, sky_horizon * 0.84, refl * 0.72);
+	vec3 col = mix(water_tint, sky_refl, refl * 0.74);
 
-	// Sparkling golden sun-glint specular shimmer across moving wave crests
-	vec3 v_sun = normalize((VIEW_MATRIX * vec4(normalize(sun_dir), 0.0)).xyz);
+	// Dynamic time-of-day oblique solar glint across moving capillary wave crests
+	vec3 s_wdir = normalize(sun_dir);
+	vec3 v_sun = normalize((VIEW_MATRIX * vec4(s_wdir, 0.0)).xyz);
 	vec3 h_vec = normalize(v_sun + normalize(VIEW));
-	float glint = pow(max(dot(v_nrm, h_vec), 0.0), 110.0);
-	col += vec3(1.15, 0.98, 0.74) * glint * 0.85;
+	float ndoth = max(dot(v_nrm, h_vec), 0.0);
+	float sun_up = smoothstep(-0.02, 0.16, s_wdir.y);
+	float glint = (pow(ndoth, 145.0) * 1.10 + pow(ndoth, 34.0) * 0.12) * sun_up;
+	col += sun_color * glint;
 
-	// Organic animated foam lace on shallow fords & wave crests
+	// Organic animated foam lace on shallow fords & shorelines
 	float foam = 0.0;
-	if (COLOR.a < 0.80) {
-		float ford_k = clamp((0.80 - COLOR.a) / 0.28, 0.32, 1.0);
+	if (COLOR.a < 0.76) {
+		float ford_k = clamp((0.76 - COLOR.a) / 0.38, 0.22, 1.0);
 		float lace = sin(p.x * 3.4 + p.y * 2.5 + t * 2.1) * cos(p.x * 2.1 - p.y * 3.5 - t * 1.6);
-		float crest = smoothstep(0.18, 0.78, lace * 0.5 + 0.5 + wave_h * 0.32);
-		foam = ford_k * crest * 0.54;
-		col = mix(col, vec3(0.88, 0.93, 0.96), foam);
+		float crest = smoothstep(0.24, 0.80, lace * 0.5 + 0.5 + wave_h * 0.30);
+		foam = ford_k * crest * 0.46;
+		vec3 foam_col = mix(vec3(0.76, 0.82, 0.86), sky_horizon, 0.25);
+		col = mix(col, foam_col, foam);
 	}
 
 	NORMAL = v_nrm;
 	ALBEDO = col;
-	ROUGHNESS = mix(0.06, 0.38, foam);
-	METALLIC = mix(0.32, 0.04, foam);
-	SPECULAR = 0.88;
+	ALPHA = clamp(0.45 + COLOR.a * 0.52, 0.45, 0.97);
+	ROUGHNESS = mix(0.07, 0.42, foam);
+	METALLIC = 0.0;
+	SPECULAR = mix(0.74, 0.24, foam);
 }
