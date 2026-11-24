@@ -1752,11 +1752,13 @@ let P_H=false;
 function boccSig(){let h=0;for(const b of G.ents)if(b.isB&&!b.dead)h=(Math.imul(h,31)+b.id)|0;return h;}
 /* redfixE: once per sim step the set of standing buildings is compared too - a building that left the battle without kill() (e.g. an emptied house) used
    to leave its cells blocked until the next build/kill, so a loaded save (fresh map) routed differently from the original */
-function bocc(){if(G.boccU!==G.upN){G.boccU=G.upN;const s=boccSig();if(s!==G.boccS){G.boccS=s;G.bdirty=true;}}if(!G.bocc||G.bdirty){G.bdirty=false;G.boccV=(G.boccV|0)+1;const o=G.bocc||(G.bocc=new Uint8Array(GW*GH));o.fill(0);for(const b of G.ents){if(!b.isB||b.dead)continue;const h=b.size/2-CELL*.25;
-  let x0=Math.ceil((b.x-h)/CELL-.5),x1=Math.floor((b.x+h)/CELL-.5),y0=Math.ceil((b.y-h)/CELL-.5),y1=Math.floor((b.y+h)/CELL-.5);if(x0>x1)x0=x1=Math.floor(b.x/CELL);if(y0>y1)y0=y1=Math.floor(b.y/CELL);/* a small building (a held ruin, a dugout) still blocks its own tile: routes went straight through it and units leaned on it */for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)if(cx>=0&&cy>=0&&cx<GW&&cy<GH)o[cy*GW+cx]=1;}}return G.bocc;}
+function bocc(){if(G.boccU!==G.upN){G.boccU=G.upN;const s=boccSig();if(s!==G.boccS){G.boccS=s;G.bdirty=true;}}if(!G.bocc||G.bdirty){G.bdirty=false;G.boccV=(G.boccV|0)+1;const o=G.bocc||(G.bocc=new Uint8Array(GW*GH));o.fill(0);for(const b of G.ents){if(!b.isB||b.dead)continue;const h=b.size/2+4;
+  let x0=Math.floor((b.x-h)/CELL),x1=Math.floor((b.x+h)/CELL),y0=Math.floor((b.y-h)/CELL),y1=Math.floor((b.y+h)/CELL);for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)if(cx>=0&&cy>=0&&cx<GW&&cy<GH)o[cy*GW+cx]=1;}}return G.bocc;}
 function passC(dom,cx,cy){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;const i=cy*GW+cx,v=G.grid[i];if(dom==='naval')return v===1||v===2||v===4;if(v!==0&&v!==2)return false;if(P_H&&G.rub&&G.rub[i])return false;return !(P_B&&G.bocc&&G.bocc[i]);}
 function passXY(dom,x,y){return dom==='air'||passC(dom,Math.floor(x/CELL),Math.floor(y/CELL));}
 function los(dom,x0,y0,x1,y1){if(dom==='air')return true;const n=Math.ceil(Math.hypot(x1-x0,y1-y0)/16);for(let i=1;i<=n;i++){const t=i/n;if(!passXY(dom,x0+(x1-x0)*t,y0+(y1-y0)*t))return false;}return true;}
+// Clearance-aware line of sight: tests center ray + parallel shoulder rays (+/-rad) so string-pulled paths curve cleanly around corners instead of scraping walls/buildings
+function losClear(dom,x0,y0,x1,y1,rad){if(dom==='air')return true;const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy);if(L<1)return true;const r=rad||10,nx=-dy/L*r,ny=dx/L*r,n=Math.ceil(L/18);for(let i=1;i<=n;i++){const t=i/n,px=x0+dx*t,py=y0+dy*t;if(!passXY(dom,px,py))return false;if(i<n&&(!passXY(dom,px+nx,py+ny)||!passXY(dom,px-nx,py-ny)))return false;}return true;}
 function nearestPass(dom,cx,cy){if(passC(dom,cx,cy))return[cx,cy];for(let r=1;r<16;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;if(passC(dom,cx+dx,cy+dy))return[cx+dx,cy+dy];}return null;}
 function nearestPassXY(dom,x,y){const c=nearestPass(dom,Math.floor(x/CELL),Math.floor(y/CELL));if(!c)return null;if(passXY(dom,x,y))return[x,y];return[c[0]*CELL+CELL/2,c[1]*CELL+CELL/2];}
 let PN=GW*GH,P_g=new Float32Array(PN),P_came=new Int32Array(PN),P_mark=new Uint32Array(PN),P_closed=new Uint32Array(PN);let P_stamp=1;
@@ -1799,17 +1801,17 @@ function findPath(dom,sx,sy,tx,ty){
   const push=(f,i)=>{let k=HN++;while(k>0){const p=(k-1)>>1;if(HF[p]<=f)break;HF[k]=HF[p];HI[k]=HI[p];k=p;}HF[k]=f;HI[k]=i;};
   const pop=()=>{const top=HI[0];HN--;if(HN>0){const f=HF[HN],v=HI[HN];let k=0;for(;;){const l=2*k+1,r=l+1;let m=-1,mf=f;if(l<HN&&HF[l]<mf){m=l;mf=HF[l];}if(r<HN&&HF[r]<mf){m=r;}if(m<0)break;HF[k]=HF[m];HI[k]=HI[m];k=m;}HF[k]=f;HI[k]=v;}return top;};
   const hfn=(cx,cy)=>{const dx=Math.abs(cx-gx),dy=Math.abs(cy-gy);return dx+dy-.586*Math.min(dx,dy);};
-  const WC=dom==='ground'?wallCost():null;const RM=P_ROAD&&dom==='ground'&&G.roadMask?G.roadMask:null;let bestN=start,bestH=hfn(s0[0],s0[1]);
+  const WC=dom==='ground'?wallCost():null;const RM=dom==='ground'&&G.roadMask?G.roadMask:null,rdMul=P_ROAD?.7:.86;let bestN=start,bestH=hfn(s0[0],s0[1]);
   P_mark[start]=st;P_g[start]=0;P_came[start]=-1;push(hfn(s0[0],s0[1]),start);let it=0,found=false;
   while(HN>0&&it++<Math.max(9000,PN*.45)&&HN<PN*4-8){const cur=pop();if(P_closed[cur]===st)continue;P_closed[cur]=st;if(cur===goal){found=true;break;}
     const cx=cur%GW,cy=(cur/GW)|0;{const hh=hfn(cx,cy);if(hh<bestH){bestH=hh;bestN=cur;}}
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(!passC(dom,nx,ny))continue;if(dx&&dy&&(!passC(dom,cx+dx,cy)||!passC(dom,cx,cy+dy)))continue;
-      const ni=ny*GW+nx;if(P_closed[ni]===st)continue;const ng=P_g[cur]+(dx&&dy?1.414:1)*(WC?1+WC[ni]:1)*(RM&&RM.d[((ny*CELL+CELL/2)/RM.C|0)*RM.w+((nx*CELL+CELL/2)/RM.C|0)]?.7:1);if(P_mark[ni]!==st||ng<P_g[ni]){P_mark[ni]=st;P_g[ni]=ng;P_came[ni]=cur;push(ng+hfn(nx,ny),ni);}}}
+      const ni=ny*GW+nx;if(P_closed[ni]===st)continue;const ng=P_g[cur]+(dx&&dy?1.414:1)*(WC?1+WC[ni]:1)*(RM&&RM.d[((ny*CELL+CELL/2)/RM.C|0)*RM.w+((nx*CELL+CELL/2)/RM.C|0)]?rdMul:1);if(P_mark[ni]!==st||ng<P_g[ni]){P_mark[ni]=st;P_g[ni]=ng;P_came[ni]=cur;push(ng+hfn(nx,ny),ni);}}}
   if(typeof G!=='undefined'&&G)G.pfN=(G.pfN||0)+it;   // route-search work done this step (the budget in 03-sim counts it)
   let end=goal;if(!found){if(bestN===start||bestH>hfn(s0[0],s0[1])-2)return null;end=bestN;}
   const cells=[];for(let c=end;c!==-1;c=P_came[c])cells.push(c);cells.reverse();
   const pts=cells.map(c=>[(c%GW)*CELL+CELL/2,((c/GW)|0)*CELL+CELL/2]);if(found&&!unreach&&passXY(dom,tx,ty))pts[pts.length-1]=[tx,ty];
-  const out=[];let ax=sx,ay=sy,i=0;while(i<pts.length){let j=pts.length-1;while(j>i&&!los(dom,ax,ay,pts[j][0],pts[j][1]))j--;out.push(pts[j]);ax=pts[j][0];ay=pts[j][1];i=j+1;}
+  const out=[];let ax=sx,ay=sy,i=0;while(i<pts.length){let j=pts.length-1;while(j>i&&!losClear(dom,ax,ay,pts[j][0],pts[j][1],10))j--;out.push(pts[j]);ax=pts[j][0];ay=pts[j][1];i=j+1;}
   return out;
 }
 
@@ -2596,7 +2598,7 @@ function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],
 // Fields units and buildings pick up as the battle runs, declared (as undefined: same meaning as missing) when each is
 // made, so every unit has the same shape. Units growing fields in different orders gave the engine dozens of shapes,
 // and each new one threw away the compiled code of the hot loops (~80 times a game-minute): 10-30 ms hitches.
-const U_LATE='gr,habT,insT,ordT,hambT,apsT,rlyT,am,amx,sup,amW,fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,mz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,cbpT,fl,low,_dv,_dvT,_dvTg,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,flT,_fc,cvRes,amb,spT,landed,wxw,toT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,_dv,_dvT,dead'.split(',');
+const U_LATE='gr,habT,insT,ordT,hambT,apsT,rlyT,am,amx,sup,amW,fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,mz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,cbpT,fl,low,_dv,_dvT,_dvTg,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,flT,_fc,cvRes,amb,spT,landed,wxw,toT,avO,avT,hitBy,hitX,hitY,hitSp,evT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,_dv,_dvT,dead'.split(',');
 function addUnit(team,kind,x,y){const T=G.teams[team],s0=stats(T.fac,kind),sm=kind===T.F.special?specMult(T):1,s=sm>1?Object.assign({},s0,{hp:Math.round(s0.hp*sm),dmg:s0.dmg*sm,name:s0.name+(sm>=1.4?' (Elite)':' (Veteran)')}):s0;const a=baseFacing(team);
   const u={id:G.nid++,isB:false,team,kind,s,x,y,ang:a,va:a,tang:a,hp:s.hp,max:s.hp,r:s.r,cd:0,order:null,target:null,lastHit:-99,lastFire:-99,state:'go',cargo:0,xp:0,rank:0,ammo:s.ammo||0,vs:new Array(G.teams.length).fill(false)};
   for(const k of U_LATE)u[k]=undefined;
@@ -2764,6 +2766,8 @@ function dzNext(u){while(u.bq&&u.bq.length){const b=G.byId.get(u.bq.shift());if(
 // dozers that are actually working on a foundation (parked next to it with a build order on it)
 function bldWorkers(b){let n=0;for(const u of G.ents)if(u.kind==='dozer'&&u.team===b.team&&!u.dead&&u.order&&u.order.type==='build'&&u.order.target===b&&Math.hypot(u.x-b.x,u.y-b.y)<b.size/2+48)n++;return n;}
 function updDozer(u,dt){u.building=false;const o=u.order;
+  // Intelligent survival: if under fire without an explicit manual move, pull back toward base!
+  if(G.t-u.lastHit<2.2&&!(o&&o.type==='move'&&!o.auto)&&G.t>(u.evT||0)&&evadeFire(u,340))return;
   if(o&&o.type==='build'){const b=o.target;if(b.dead||b.built>=1){u.order=null;dzNext(u);return;}const d=Math.hypot(b.x-u.x,b.y-u.y);
     if(d>b.size/2+30){navTo(u,b.x,b.y,dt);return;}u.building=true;u.ang=Math.atan2(b.y-u.y,b.x-u.x);u.lastFire=G.t;return;}
   if(o&&o.type==='wall'&&dozeWall(u,dt))return;
@@ -2771,7 +2775,7 @@ function updDozer(u,dt){u.building=false;const o=u.order;
   if(o&&o.type==='road'&&dozeRoad(u,dt))return;
   if(o&&o.type==='lgj'&&lgDoze(u,dt))return;
   if(o&&o.type==='fix'){const v=o.target;if(!v||v.dead||!v.crit){u.order=null;return;}if(Math.hypot(v.x-u.x,v.y-u.y)>v.r+u.r+24){navTo(u,v.x,v.y,dt);return;}u.building=true;u.ang=Math.atan2(v.y-u.y,v.x-u.x);u.lastFire=G.t;critFix(v,dt);return;}
-  if(o&&o.type==='move'){if(Math.hypot(o.x-u.x,o.y-u.y)<14||stalled(u,o))u.order=null;else{navTo(u,o.x,o.y,dt,true);return;}}
+  if(o&&o.type==='move'){if(Math.hypot(o.x-u.x,o.y-u.y)<14||stalled(u,o)){u.order=null;u.retreat=0;}else{navTo(u,o.x,o.y,dt,true);return;}}
   // idle: fix a hurt vehicle nearby, then finish a nearby foundation, otherwise patch up damaged buildings close by
   u.fxT=(u.fxT||0)-dt;if(u.fxT<=0){u.fxT=1;const v=critNear(u,300);if(v){u.order={type:'fix',target:v};return;}if(rubIdle(u))return;}
   const near=G.ents.find(b=>b.isB&&b.team===u.team&&!b.dead&&b.built<1&&b.nd&&Math.hypot(b.x-u.x,b.y-u.y)<320);if(near){u.order={type:'build',target:near};return;}
@@ -2803,20 +2807,76 @@ function roadK(u,whl,foot){const rm=G.roadMask;if(!rm||!rm.d[((u.y/rm.C)|0)*rm.w
 function stepTo(u,x,y,dt,fin){if(u.s.dom==='air'&&isFW(u)){const t=u.target;let gx=x,gy=y;
     if(t&&!t.dead&&t.x===x&&t.y===y){const dd=Math.hypot(t.x-u.x,t.y-u.y);if(dd>420){const a=Math.atan2(t.y-u.y,t.x-u.x)+Math.PI/2,off=((u.id%5)-2)*Math.min(90,(dd-260)*.35);gx=t.x+Math.cos(a)*off;gy=t.y+Math.sin(a)*off;}}
     flyFW(u,gx,gy,dt,!!(t&&!t.dead&&Math.hypot(t.x-u.x,t.y-u.y)<260));return;}
-  const want=Math.atan2(y-u.y,x-u.x)+((u.avT||0)>G.t&&Math.hypot(x-u.x,y-u.y)>60?u.avO||0:0),M=MOVE[u.s.cls]||[4,80],d=u.s.dom,dist2=Math.hypot(x-u.x,y-u.y);
-  if(u.hd==null||(M[0]>=8&&G.t-(u.vt??-9)>.3))u.hd=u.ang;if(u.v==null)u.v=0;const err0=angDiff(u.hd,want);const whl=d==='ground'&&M[0]<8&&isWheeled(u);
-  let tr=M[0]*dt;if(whl){tr*=Math.min(1.25,.25+u.v/Math.max(20,u.s.spd*.45));if(u.v<6&&Math.abs(err0)>.6)u.v=Math.max(u.v,7);}
-  const err=err0;u.hd+=Math.max(-tr,Math.min(tr,err));
-  const ae=Math.abs(angDiff(u.hd,want)),foot=M[0]>=8;let f=foot?(ae<1.2?1:.35):Math.max(.12,Math.cos(Math.min(ae,1.45)));
-  if(whl)f=Math.max(.35,Math.cos(Math.min(ae,1.2)));let sl=1;if(d==='ground'){const ca=Math.cos(u.hd),sa=Math.sin(u.hd),g0=groundH(u.x,u.y),g1=groundH(u.x+ca*14,u.y+sa*14),gr=(g1-g0)/14;sl=Math.max(.45,Math.min(1.15,1-gr*(M[0]>=8?.9:1.6)));}
-  const wx=wxNow();const UP=G.teams[u.team].upg;let top=u.s.spd*f*sl*(u.drg?.6:1)*(G.fln&&d==='ground'?floodSlow(u):1)*(G.bfFN&&d==='ground'?fireSlow(u):1)*(G.rubN&&d==='ground'?rubSlow(u):1)*(d==='ground'&&G.wood?woodSlow(u):1)*upgK(G.teams[u.team],u.kind,'spd')*(d==='ground'?wx.spd*roadK(u,whl,foot)*ssnK(u,whl,foot):d==='air'?(.75+.25*wx.air):1)*((u.supp||0)>.5?.6:1)*(u.crit?critSpd(u):1)*(u.dgS||1)*(isVeh(u.s)&&auraNear(u,'raid')?1.2:1)*((G.teams[u.team].raidT||0)>G.t&&u.s.armor==='heavy'?1.35:1)*(G.smokes&&G.smokes.some(S=>S.t>G.t&&S.team===u.team&&Math.hypot(u.x-S.x,u.y-S.y)<S.r)?1.25:1)*(d==='ground'&&u.s.armor!=='heavy'&&G.t-(u.lastFire||-9)<3&&(DOCT[G.teams[u.team].fac]||{}).hitrun?1.25:1);if(u.order&&u.order.cap)top=Math.min(top,u.order.cap*f);if(fin){const brake=M[1]*1.4;top=Math.min(top,Math.sqrt(2*brake*Math.max(0,dist2-2))+4);}
-  if(u.retreat)top*=1.15;if(u.insT>G.t)top*=1.15;
-  if(d==='ground'&&!foot&&G.hash&&u.v>4){const la=u.r*2+12,px=u.x+Math.cos(u.hd)*la,py=u.y+Math.sin(u.hd)*la;for(const o of nearby(px,py,34,AV_N)){if(o===u||o.dead||o.isB||!o.s||o.s.dom!=='ground'||(!o.order&&o.team===u.team&&u.order))continue;/* a comrade standing still is shoved aside (separate), not driven around */const dx=o.x-px,dy=o.y-py;if(dx*dx+dy*dy>(o.r+u.r*.8)*(o.r+u.r*.8))continue;
-    if((o.v||0)>4&&Math.abs(angDiff(u.hd,o.ang||0))<.6)top=Math.min(top,Math.max(8,(o.v||0)*.95));else if(massOf(o)>=massOf(u)*.5){const ah=angDiff(u.hd,Math.atan2(o.y-u.y,o.x-u.x));u.hd-=Math.sign(ah||1)*Math.min(1.8*dt,.12);top*=.75;/* a vehicle in the way (a dozer at work, a parked truck): steer clearly around it for a moment instead of leaning on it */if((o.v||0)<=4){u.avO=-Math.sign(ah||1)*.85;u.avT=G.t+.8;}}break;}}
+  const M=MOVE[u.s.cls]||[4,80],d=u.s.dom,dist2=Math.hypot(x-u.x,y-u.y),foot=M[0]>=8;
+  let want=Math.atan2(y-u.y,x-u.x);
+  if((u.avT||0)>G.t&&dist2>36)want+=u.avO||0;
+  // Helper: check if a ground probe hits terrain OR any standing building's real collision box (+padding)
+  const bldClear=(qx,qy)=>{
+    if(!passXY(d,qx,qy))return false;
+    if(G.bg){const BC=160,BW=Math.ceil(MAPW/BC)+2,L=G.bg.get(Math.floor(qx/BC)+1+(Math.floor(qy/BC)+1)*BW);
+      if(L)for(let i=0;i<L.length;i++){const b=L[i];if(b.dead)continue;const h=b.size/2+u.r+4;if(Math.abs(qx-b.x)<h&&Math.abs(qy-b.y)<h)return false;}}
+    return true;
+  };
+  // Proactive multi-ray terrain & building whisker avoidance (for BOTH vehicles and infantry!)
+  let obsSlow=1;
+  if(d==='ground'&&dist2>18){
+    const pb=P_B;bocc();P_B=true;
+    const probe=u.r+Math.min(36,Math.max(12,(u.v||u.s.spd*.5)*.45));
+    const fx=u.x+Math.cos(want)*probe,fy=u.y+Math.sin(want)*probe;
+    if(!bldClear(fx,fy)){
+      const bias=(u.id&1)?1:-1;let steered=false;
+      for(const da of [.58*bias,-.58*bias,1.08*bias,-1.08*bias,1.55*bias,-1.55*bias]){
+        const ca=Math.cos(want+da),sa=Math.sin(want+da);
+        if(bldClear(u.x+ca*probe*1.1,u.y+sa*probe*1.1)&&bldClear(u.x+ca*probe*.55,u.y+sa*probe*.55)){
+          want+=da;u.avO=da*.65;u.avT=G.t+.32;obsSlow=.85;steered=true;break;}}
+      if(!steered)obsSlow=.55;
+    }
+    P_B=pb;
+  }
+  // Proactive multi-neighbor crowd & oncoming-traffic avoidance (vehicles AND infantry weave smoothly instead of bumping!)
+  let trafficCap=Infinity;
+  if(d==='ground'&&G.hash&&dist2>14){
+    const la=foot?(u.r*2+14):(u.r*2.4+18),ca=Math.cos(want),sa=Math.sin(want);
+    const px=u.x+ca*la*.7,py=u.y+sa*la*.7;
+    let latSteer=0,hits=0;
+    for(const o of nearby(px,py,la+22,AV_N)){
+      if(o===u||o.dead||o.isB||!o.s||o.s.dom!=='ground')continue;
+      if(!o.order&&o.team===u.team&&u.order&&!foot&&massOf(o)<massOf(u)*.5)continue;
+      const rx=o.x-u.x,ry=o.y-u.y,dd=Math.hypot(rx,ry)||.01,minSep=u.r+o.r+(foot?5:10);
+      if(dd>la+o.r)continue;
+      const fwd=(rx*ca+ry*sa)/dd;if(fwd<.25)continue; // only ahead in forward cone
+      const side=(rx*(-sa)+ry*ca)/dd; // +left, -right of travel
+      const weight=Math.max(0,1-dd/(la+o.r+.1))*fwd;
+      if(Math.abs(side)*dd<minSep){
+        const sameDir=(o.v||0)>4&&Math.abs(angDiff(want,o.ang||0))<.65;
+        const oncoming=(o.v||0)>4&&Math.abs(angDiff(want,o.ang||0))>2.1;
+        if(sameDir&&!foot&&massOf(o)>=massOf(u)*.5&&dd<minSep*1.15){
+          trafficCap=Math.min(trafficCap,Math.max(10,(o.v||0)*.96));
+          latSteer+=(side>=0?-1:1)*weight*.55;
+        }else if(oncoming){
+          // Right-of-way rule: both oncoming units smoothly slip to their own right!
+          latSteer-=weight*1.15;
+        }else{
+          const dir=Math.abs(side)>.12?(side>0?-1:1):((u.id&1)?1:-1);
+          latSteer+=dir*weight*(foot?.85:1.25);
+          if((o.v||0)<=4&&!foot&&dd<minSep*1.1){u.avO=dir*.75;u.avT=Math.max(u.avT||0,G.t+.45);}
+        }
+        hits++;if(hits>=4)break;
+      }
+    }
+    if(latSteer)want+=Math.max(-1.05,Math.min(1.05,latSteer));
+  }
+  if(u.hd==null||(foot&&G.t-(u.vt??-9)>.3))u.hd=u.ang;if(u.v==null)u.v=0;const err0=angDiff(u.hd,want);const whl=d==='ground'&&!foot&&isWheeled(u);
+  let tr=M[0]*dt*(u.retreat?1.55:1);if(whl){tr*=Math.min(1.3,.32+u.v/Math.max(20,u.s.spd*.45));if(u.v<7&&Math.abs(err0)>.55)u.v=Math.max(u.v,8);}
+  const err=Math.abs(err0)<.015?err0:err0;u.hd+=Math.max(-tr,Math.min(tr,err));
+  const ae=Math.abs(angDiff(u.hd,want));let f=foot?(ae<1.25?1:.45):(ae>1.8?.05:Math.max(.26,Math.cos(Math.min(ae,1.38))));
+  if(whl)f=Math.max(.38,Math.cos(Math.min(ae,1.22)));let sl=1;if(d==='ground'){const ca=Math.cos(u.hd),sa=Math.sin(u.hd),g0=groundH(u.x,u.y),g1=groundH(u.x+ca*14,u.y+sa*14),gr=(g1-g0)/14;sl=Math.max(.45,Math.min(1.15,1-gr*(foot?.9:1.6)));}
+  const wx=wxNow();const UP=G.teams[u.team].upg;let top=u.s.spd*f*sl*obsSlow*(u.drg?.6:1)*(G.fln&&d==='ground'?floodSlow(u):1)*(G.bfFN&&d==='ground'?fireSlow(u):1)*(G.rubN&&d==='ground'?rubSlow(u):1)*(d==='ground'&&G.wood?woodSlow(u):1)*upgK(G.teams[u.team],u.kind,'spd')*(d==='ground'?wx.spd*roadK(u,whl,foot)*ssnK(u,whl,foot):d==='air'?(.75+.25*wx.air):1)*((u.supp||0)>.5?.6:1)*(u.crit?critSpd(u):1)*(u.dgS||1)*(isVeh(u.s)&&auraNear(u,'raid')?1.2:1)*((G.teams[u.team].raidT||0)>G.t&&u.s.armor==='heavy'?1.35:1)*(G.smokes&&G.smokes.some(S=>S.t>G.t&&S.team===u.team&&Math.hypot(u.x-S.x,u.y-S.y)<S.r)?1.25:1)*(d==='ground'&&u.s.armor!=='heavy'&&G.t-(u.lastFire||-9)<3&&(DOCT[G.teams[u.team].fac]||{}).hitrun?1.25:1);if(u.order&&u.order.cap)top=Math.min(top,u.order.cap*f);if(trafficCap<top)top=trafficCap;if(fin){const brake=M[1]*1.4;top=Math.min(top,Math.sqrt(2*brake*Math.max(0,dist2-2))+4);}
+  if(u.retreat)top*=1.18;if(u.insT>G.t)top*=1.15;
   const acc=(u.v<top?M[1]:M[1]*2.2)*dt;u.v+=Math.max(-acc,Math.min(acc,top-u.v));u.vt=G.t;
   const st=Math.min(u.v*dt,dist2+.5);const nx=u.x+Math.cos(u.hd)*st,ny=u.y+Math.sin(u.hd)*st;u.ang=u.hd;
   {const ph=P_H;P_H=!!(G.rubN&&d==='ground'&&rubHeavy(u)&&!rubAt(u.x,u.y));   // a heavy vehicle can't climb onto rubble (one already on it may drive off)
-  if(passXY(d,nx,ny)){u.x=nx;u.y=ny;}else if(passXY(d,nx,u.y)){u.x=nx;u.v*=.97;}else if(passXY(d,u.x,ny)){u.y=ny;u.v*=.97;}else{u.v*=.3;u.hd+=.6*dt*Math.sign(err||1);}P_H=ph;}
+  if(passXY(d,nx,ny)){u.x=nx;u.y=ny;}else if(passXY(d,nx,u.y)){u.x=nx;u.v*=.94;}else if(passXY(d,u.x,ny)){u.y=ny;u.v*=.94;}else{u.v*=.35;u.hd+=1.2*dt*Math.sign(err||((u.id&1)?1:-1));}P_H=ph;}
   if(st>.01)u.mv=G.t;}
 // A move that stops making progress ends instead of pushing forever: close to the spot (crowded by other units or a
 // building) it counts as arrived; further away the unit re-plans its route, then gives up after a while.
@@ -2827,7 +2887,7 @@ function touchGoalB(u,o){if(u.s.dom!=='ground')return false;bocc();if(o.gb===und
   const b=o.gb&&G.byId.get(o.gb);if(!b||b.dead)return false;return Math.max(Math.abs(u.x-b.x),Math.abs(u.y-b.y))-b.size/2<u.r+30;}
 function stalled(u,o){const d=Math.hypot(o.x-u.x,o.y-u.y);if(u.so!==o){u.so=o;u.sbD=d;u.sbT=G.t;u.srp=0;return false;}
   if(d<u.sbD-4){u.sbD=d;u.sbT=G.t;return false;}const w=G.t-u.sbT;if(d<70&&w>2.5)return true;if(w>2.5&&d<400&&touchGoalB(u,o))return true;if(w>7&&!u.srp){u.srp=1;u.path=null;}if(w>16){u.srp=0;return true;}return false;}
-function smoothP(d,x0,y0,P){if(!P||P.length<3)return P;const out=[];let cx=x0,cy=y0,i=0;while(i<P.length){let j=Math.min(P.length-1,i+14);while(j>i&&!los(d,cx,cy,P[j][0],P[j][1]))j--;out.push(P[j]);cx=P[j][0];cy=P[j][1];i=j+1;}return out;}
+function smoothP(d,x0,y0,P){if(!P||P.length<3)return P;const out=[];let cx=x0,cy=y0,i=0;while(i<P.length){let j=Math.min(P.length-1,i+16);while(j>i&&!losClear(d,cx,cy,P[j][0],P[j][1],10))j--;out.push(P[j]);cx=P[j][0];cy=P[j][1];i=j+1;}return out;}
 // group moves: one shared route for the whole group instead of one search per unit; each unit joins it and peels
 // off to its own formation slot at the end
 /* ---------- Flow fields ----------
@@ -2859,12 +2919,12 @@ function ffStep(u,x,y){const dd=Math.hypot(x-u.x,y-u.y);P_B=true;try{
     if(u.ffw&&G.t<u.ffwT&&Math.hypot(u.ffw[0]-u.x,u.ffw[1]-u.y)>22)return [u.ffw[0],u.ffw[1],false];
     const F=ffGet(u.ffx,u.ffy);if(F===false){u.ffx=null;return null;}if(!F)return u.ffw?[u.ffw[0],u.ffw[1],false]:null;
     let cx=Math.floor(u.x/CELL),cy=Math.floor(u.y/CELL);if(!(F.d[cy*GW+cx]<Infinity)){const q=nearestPass('ground',cx,cy);if(!q||!(F.d[q[1]*GW+q[0]]<Infinity)){u.ffx=null;return null;}cx=q[0];cy=q[1];}
-    const steps=[];for(let k=0;k<10;k++){const ci=cy*GW+cx;let best=-1,bd=F.d[ci];
+    const steps=[];for(let k=0;k<12;k++){const ci=cy*GW+cx;let best=-1,bd=F.d[ci];
       for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const ni=ny*GW+nx;if(!(F.d[ni]<bd))continue;if(dx&&dy&&(!passC('ground',cx+dx,cy)||!passC('ground',cx,cy+dy)))continue;bd=F.d[ni];best=ni;}
       if(best<0)break;cx=best%GW;cy=(best/GW)|0;steps.push([cx*CELL+CELL/2,cy*CELL+CELL/2]);if(bd===0)break;}
     if(!steps.length){u.ffw=null;return [x,y,true];}
-    let w=steps[0];for(let j=steps.length-1;j>0;j--)if(los('ground',u.x,u.y,steps[j][0],steps[j][1])){w=steps[j];break;}
-    u.ffw=w;u.ffwT=G.t+.6;return [w[0],w[1],false];}finally{P_B=false;}}
+    let w=steps[0];for(let j=steps.length-1;j>0;j--)if(losClear('ground',u.x,u.y,steps[j][0],steps[j][1],8)){w=steps[j];break;}
+    u.ffw=w;u.ffwT=G.t+.5;return [w[0],w[1],false];}finally{P_B=false;}}
 function sharePath(us,x,y){const G0=us.filter(u=>u.s.dom==='ground'&&u.order&&!u.dead&&!(G.rubN&&rubHeavy(u)));if(G0.length<4)return;
   if(G0.length>=6){for(const u of G0){u.ffx=x;u.ffy=y;u.ffP=null;u.ffw=null;}return;}let cx=0,cy=0;for(const u of G0){cx+=u.x;cy+=u.y;}cx/=G0.length;cy/=G0.length;
   if(los('ground',cx,cy,x,y))return;let P;bocc();P_B=true;try{P=findPath('ground',cx,cy,x,y);}finally{P_B=false;}if(!P||P.length<2)return;P=smoothP('ground',cx,cy,P);
@@ -2877,20 +2937,42 @@ function sharePath(us,x,y){const G0=us.filter(u=>u.s.dom==='ground'&&u.order&&!u
 const PF_RATE=120,PF_BURST=12,PF_MS=4,PF_N=12000;
 function navTo(u,x,y,dt,fin){if(G.rubN&&rubHeavy(u)){u.ffx=null;P_H=true;try{navTo0(u,x,y,dt,fin);}finally{P_H=false;}}else navTo0(u,x,y,dt,fin);}
 function losB(d,x0,y0,x1,y1){if(d!=='ground')return los(d,x0,y0,x1,y1);const pb=P_B;bocc();P_B=true;try{return los(d,x0,y0,x1,y1);}finally{P_B=pb;}}
+function losClearB(d,x0,y0,x1,y1,rad){if(d!=='ground')return losClear(d,x0,y0,x1,y1,rad);const pb=P_B;bocc();P_B=true;try{return losClear(d,x0,y0,x1,y1,rad);}finally{P_B=pb;}}
 function navTo0(u,x,y,dt,fin){const d=u.s.dom;if(d==='air'){stepTo(u,x,y,dt,fin);return;}
   if(d==='ground'&&u.ffx!=null){if(Math.hypot(u.ffx-x,u.ffy-y)>450||Math.hypot(x-u.x,y-u.y)<600)u.ffx=null;else{const r=ffStep(u,x,y);if(r){stepTo(u,r[0],r[1],dt,r[2]&&fin);return;}}}
-  const goalMoved=!u.path||Math.hypot(u.pgx-x,u.pgy-y)>60;
-  if(goalMoved||G.t>u.prt){
-    if(losB(d,u.x,u.y,x,y)){u.path=[[x,y]];u.pgx=x;u.pgy=y;u.prt=G.t+2.5+Math.random();}   // a straight line counts only when no building stands on it (vehicles used to drive into a building and lean on it)
+  const goalMoved=!u.path||!u.path.length||Math.hypot(u.pgx-x,u.pgy-y)>60;
+  // Smooth periodic refresh: only re-run A* if goal moved or our active segment is blocked (no periodic 2.5s path twitch!)
+  const needPlan=goalMoved||(G.t>u.prt&&!losB(d,u.x,u.y,u.path[0][0],u.path[0][1]));
+  if(G.t>u.prt&&!needPlan)u.prt=G.t+2.5+Math.random();
+  if(needPlan){
+    if(losClearB(d,u.x,u.y,x,y,10)){u.path=[[x,y]];u.pgx=x;u.pgy=y;u.prt=G.t+2.5+Math.random();}
     else if((G.pfTok||0)>=1&&(G.pfMs||0)<PF_MS&&(G.pfN||0)<PF_N){G.pfTok-=1;const t0=performance.now();if(d==='ground'){bocc();P_B=true;}try{P_ROAD=u.kind==='harv';u.path=smoothP(d,u.x,u.y,findPath(d,u.x,u.y,x,y))||[[x,y]];}finally{P_ROAD=false;P_B=false;}G.pfMs=(G.pfMs||0)+performance.now()-t0;u.pgx=x;u.pgy=y;u.prt=G.t+2.5+Math.random();}
     else if(goalMoved){u.v=(u.v||0)*.85;return;}}
-  const sk=(MOVE[u.s.cls]||[4])[0]>=8?12:26;while(u.path.length>1&&Math.hypot(u.path[0][0]-u.x,u.path[0][1]-u.y)<sk)u.path.shift();
-  // unstick: no progress toward the next waypoint for 2.5s (jammed on a corner or in a crowd) -> sidestep, then re-plan
-  {const wp=u.path[0],dd=Math.hypot(wp[0]-u.x,wp[1]-u.y);if(u.npW!==wp){u.npW=wp;u.npD=dd;u.npT=G.t;}else if(dd<u.npD-3){u.npD=dd;u.npT=G.t;}
-   else if(G.t-u.npT>2.5&&dd>20){u.npT=G.t;const base=Math.atan2(wp[1]-u.y,wp[0]-u.x),sg=(u.id+(G.t|0))%2?1:-1;let ok=null;
-     for(const [da,r] of [[1.57*sg,45],[-1.57*sg,45],[2.3*sg,60],[-2.3*sg,60],[1.57*sg,80]]){const x2=u.x+Math.cos(base+da)*r,y2=u.y+Math.sin(base+da)*r;if(passXY(d,x2,y2)&&los(d,u.x,u.y,x2,y2)){ok=[x2,y2];break;}}
-     if(ok){u.path.unshift(ok);u.npW=ok;u.npD=1e9;}u.prt=Math.min(u.prt,G.t+1.2);}}
-  stepTo(u,u.path[0][0],u.path[0][1],dt,u.path.length===1&&fin);}
+  const foot=(MOVE[u.s.cls]||[4])[0]>=8,sk=foot?16:32,look=foot?40:76;
+  // Early corner transition when next waypoint is already clearly visible
+  while(u.path.length>1){
+    const d0=Math.hypot(u.path[0][0]-u.x,u.path[0][1]-u.y);
+    if(d0<sk||(d0<look*.72&&losClearB(d,u.x,u.y,u.path[1][0],u.path[1][1],foot?6:10)))u.path.shift();
+    else break;
+  }
+  // Fast smart unstick (1.1s): sidestep cleanly around buildings/crowds instead of grinding for 2.5s
+  {const wp=u.path[0],dd=Math.hypot(wp[0]-u.x,wp[1]-u.y);if(u.npW!==wp){u.npW=wp;u.npD=dd;u.npT=G.t;}else if(dd<u.npD-2.5){u.npD=dd;u.npT=G.t;}
+   else if(G.t-u.npT>1.1&&dd>18){u.npT=G.t;const base=Math.atan2(wp[1]-u.y,wp[0]-u.x),sg=(u.id+(G.t|0))%2?1:-1;let ok=null;
+     const pb=P_B;if(d==='ground'){bocc();P_B=true;}
+     for(const [da,r] of [[1.15*sg,42],[-1.15*sg,42],[1.65*sg,55],[-1.65*sg,55],[2.3*sg,65],[-2.3*sg,65]]){const x2=u.x+Math.cos(base+da)*r,y2=u.y+Math.sin(base+da)*r;if(passXY(d,x2,y2)&&los(d,u.x,u.y,x2,y2)){ok=[x2,y2];break;}}
+     P_B=pb;
+     if(ok){u.path.unshift(ok);u.npW=ok;u.npD=1e9;}u.prt=Math.min(u.prt,G.t+.4);}}
+  // Look-ahead Pure-Pursuit corner carrot: smoothly arcs around turns with zero speed drop!
+  let sx=u.path[0][0],sy=u.path[0][1];
+  if(u.path.length>1){
+    const d0=Math.hypot(sx-u.x,sy-u.y);
+    if(d0<look){
+      const blend=(1-d0/look)*.55,nx=u.path[1][0],ny=u.path[1][1];
+      const cx=sx+(nx-sx)*blend,cy=sy+(ny-sy)*blend;
+      if(losB(d,u.x,u.y,cx,cy)){sx=cx;sy=cy;}
+    }
+  }
+  stepTo(u,sx,sy,dt,u.path.length===1&&fin);}
 // Formations: a group moving together lines up facing its destination - armour in front, infantry behind it, support
 // (AA, artillery, builders) at the back. Squads (a.fm) also travel at the pace of their slowest member so they arrive together.
 const FROW={tank:0,hero:1,inf:1,at:1,hacker:2,aa:2,drone:2,arty:3,harv:4,dozer:4,boat:0,ship:0,heli:0,jet:0};
@@ -3012,7 +3094,7 @@ function specialMult(e,wpn,src){let m=1;if(src&&src.ambT>G.t)m*=1.5;if(src&&src.
   if(e.mark>G.t)m*=1.25;if((wpn==='shell'||wpn==='missile'||wpn==='bomb'||wpn==='super'||src&&src.s&&src.s.rocket)&&auraProtect(e,'dome')){m*=.45;if(G.t-(e.domeT||-9)>1.2){e.domeT=G.t;FXE('boom',[(e.x+rnd(-20,20))|0,(e.y+rnd(-20,20))|0,6,0]);}}
   if(!e.isB&&e.low&&e.s.dom==='air'&&(wpn==='gun'||wpn==='flak'))m*=1.35;   /* low flyers are exposed to guns and MANPADS */
   if(src&&!src.isB&&(src.s.dom==='air'||src.kind==='drone'||wpn==='missile')&&auraProtect(e,'jam'))m*=.5;m*=navalMult(e,src);m*=ldTaken(e,wpn,src);return m;}
-function applyDmg(e,d,wpn,team,src,splash){if(e.dead)return;if(e.kind==='fort'){if(wpn!=='bb')return;e.hp-=e.max*.55;e.lastHit=G.t;if(e.hp<=0)kill(e,team,src);return;}if(e.civ&&e.kind==='civb'){const m=VS[wpn]&&VS[wpn].bld;if(m)damageCiv(e.civ,d*m,team);return;}if(e.oil){const m=VS[wpn]&&VS[wpn].bld;if(m)damageOil(e.oil,d*m,team);return;}if(e.dam&&e.kind==='dam'){const m=VS[wpn]&&VS[wpn].bld;if(m)damDamage(e.dam,d*m,team);return;}if(e.isB&&team!=null&&!ally(team,e.team)){const V=G.teams[e.team];if(G.t-(V.atkWarn??-99)>25){V.atkWarn=G.t;log(e.team,'Our base is under attack!','r:base',e.x,e.y);}}else if(!e.isB&&e.s&&!e.civ&&team!=null&&e.team!=null&&!ally(team,e.team)&&G.teams[e.team]){const V=G.teams[e.team];if(G.t-(V.fireWarn??-99)>14){V.fireWarn=G.t;log(e.team,'Our troops are under fire!','v5',e.x,e.y);}}const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor);const m=VS[wpn][ar];if(!m)return;const tc=tactic(e,wpn,src,splash);const dd=d*m*dmgIn(e,wpn)*tc.m*specialMult(e,wpn,src)*(e.cv&&e.cv.esc?.55:1);if(src&&!src.isB&&src.s.mark&&!e.isB)e.mark=G.t+6;e.hp-=dd;e.lastHit=G.t;if(!e.isB&&e.hp>0&&e.s&&e.s.armor==='heavy'&&e.s.dom==='ground')critRoll(e,dd,wpn,src,splash);
+function applyDmg(e,d,wpn,team,src,splash){if(e.dead)return;if(e.kind==='fort'){if(wpn!=='bb')return;e.hp-=e.max*.55;e.lastHit=G.t;if(e.hp<=0)kill(e,team,src);return;}if(e.civ&&e.kind==='civb'){const m=VS[wpn]&&VS[wpn].bld;if(m)damageCiv(e.civ,d*m,team);return;}if(e.oil){const m=VS[wpn]&&VS[wpn].bld;if(m)damageOil(e.oil,d*m,team);return;}if(e.dam&&e.kind==='dam'){const m=VS[wpn]&&VS[wpn].bld;if(m)damDamage(e.dam,d*m,team);return;}if(e.isB&&team!=null&&!ally(team,e.team)){const V=G.teams[e.team];if(G.t-(V.atkWarn??-99)>25){V.atkWarn=G.t;log(e.team,'Our base is under attack!','r:base',e.x,e.y);}}else if(!e.isB&&e.s&&!e.civ&&team!=null&&e.team!=null&&!ally(team,e.team)&&G.teams[e.team]){const V=G.teams[e.team];if(G.t-(V.fireWarn??-99)>14){V.fireWarn=G.t;log(e.team,'Our troops are under fire!','v5',e.x,e.y);}}const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor);const m=VS[wpn][ar];if(!m)return;const tc=tactic(e,wpn,src,splash);const dd=d*m*dmgIn(e,wpn)*tc.m*specialMult(e,wpn,src)*(e.cv&&e.cv.esc?.55:1);if(src&&!src.isB&&src.s.mark&&!e.isB)e.mark=G.t+6;e.hp-=dd;e.lastHit=G.t;if(!e.isB&&src&&!src.dead&&team!=null&&!ally(team,e.team)){e.hitBy=src;e.hitX=src.x;e.hitY=src.y;e.hitSp=splash?1:0;}if(!e.isB&&e.hp>0&&e.s&&e.s.armor==='heavy'&&e.s.dom==='ground')critRoll(e,dd,wpn,src,splash);
   if(!e.isB&&canRout(e)){e.fear=(e.fear||0)+dd/e.max*(isInf(e.s)?1.25:.7)*(coverAt(e.x,e.y)&&isInf(e.s)?.7:1)*(auraNear(e,'morale')?.5:1)+(splash?.05:.02);}
   if(!e.isB&&isInf(e.s)&&!auraNear(e,'morale')&&!auraNear(e,'rof')&&!(e.insT>G.t)){const bk=team!=null&&G.teams[team]&&(DOCT[G.teams[team].fac]||{}).barrage&&(wpn==='shell'||wpn==='rocket'||splash)?1.5:1;e.supp=Math.min(1,(e.supp||0)+(dd/e.max*1.4+(wpn==='gun'||wpn==='tower'?.06:.12))*bk*(G.rubN&&rubAt(e.x,e.y)?.6:1)*((wpn==='shell'||wpn==='rocket'||splash)?(msOf(G.teams[e.team].fac).art||1):1));if(bk>1&&canRout(e))e.fear=(e.fear||0)+.04;}
   if(tc.tag&&tc.m>1.05&&G.t-(e.tagT||-9)>1.6&&(tc.tag==='REAR HIT'||tc.tag==='SIDE HIT'||tc.tag==='HIGH GROUND')){e.tagT=G.t;FXE('txt',[e.x|0,e.y|0,tc.tag,team,e.team]);}
@@ -3139,9 +3221,46 @@ function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.s.dom==='air'&&G.wx&&(G
 const AE_N=[],AV_N=[];function hqCached(team){const C=G.hqC||(G.hqC={});const c=C[team];if(c&&G.t-c.t<1&&!(c.h&&c.h.dead))return c.h;const h=G.ents.find(e=>e.team===team&&e.kind==='hq'&&!e.dead)||null;C[team]={t:G.t,h};return h;}
 function effOn(s,e){if(!s.wpn)return 0;const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor);return (VS[s.wpn]||{})[ar]||0;}
 function friendsUnderFire(u){for(const o of nearby(u.x,u.y,320,AE_N)){if(o.dead||o.isB||o===u||o.team!==u.team)continue;if(o.lastHit>G.t-2.5&&Math.hypot(o.x-u.x,o.y-u.y)<320)return true;}return false;}
+// Find a passable escape destination away from danger (checks buildings, cliffs & water so units never back into walls!)
+function safeEscapeXY(u,awayAng,dist){
+  const d=u.s.dom;if(d==='air')return[Math.max(40,Math.min(MAPW-40,u.x+Math.cos(awayAng)*dist)),Math.max(40,Math.min(MAPH-40,u.y+Math.sin(awayAng)*dist))];
+  const pb=P_B;if(d==='ground'){bocc();P_B=true;}
+  let best=null;
+  const bias=(u.id&1)?1:-1;
+  for(const da of [0,.5*bias,-.5*bias,1.0*bias,-1.0*bias,1.5*bias,-1.5*bias]){
+    const tx=Math.max(40,Math.min(MAPW-40,u.x+Math.cos(awayAng+da)*dist));
+    const ty=Math.max(40,Math.min(MAPH-40,u.y+Math.sin(awayAng+da)*dist));
+    if(passXY(d,tx,ty)&&los(d,u.x,u.y,tx,ty)){best=[tx,ty];break;}
+  }
+  if(!best){
+    for(const da of [0,.7*bias,-.7*bias,1.4*bias,-1.4*bias]){
+      const tx=Math.max(40,Math.min(MAPW-40,u.x+Math.cos(awayAng+da)*dist*.6));
+      const ty=Math.max(40,Math.min(MAPH-40,u.y+Math.sin(awayAng+da)*dist*.6));
+      if(passXY(d,tx,ty)){best=[tx,ty];break;}
+    }
+  }
+  P_B=pb;return best;
+}
+// Tactical pullback / evasion toward home base & away from the attacker's fire direction
+function evadeFire(u,distWant){
+  const home=G.ents.filter(b=>b.isB&&b.team===u.team&&!b.dead).sort((p,q)=>dist(p,u)-dist(q,u))[0];
+  let ax=0,ay=0;
+  if(u.hitX!=null&&u.hitY!=null){const dx=u.x-u.hitX,dy=u.y-u.hitY,L=Math.hypot(dx,dy)||1;ax+=dx/L;ay+=dy/L;}
+  if(home&&dist(home,u)>180){const dx=home.x-u.x,dy=home.y-u.y,L=Math.hypot(dx,dy)||1;ax+=dx/L*1.35;ay+=dy/L*1.35;}
+  if(Math.hypot(ax,ay)<.01){const b=BASES[u.team]||BASES[0];ax=b[0]-u.x;ay=b[1]-u.y;}
+  const ang=Math.atan2(ay,ax);
+  const esc=safeEscapeXY(u,ang,distWant||260);
+  if(!esc)return false;
+  u.evT=G.t+6;u.retreat=1;setMove(u,esc[0],esc[1],'move');u.order.auto=1;u.order.hold=1;return true;
+}
 function autoEngage(u,o,T){const s=u.s;if(s.noAttack||u.rout>G.t||u.retreat)return;if(u.amb&&!(T&&T.ai))u.amb=undefined;/* a player took back their side: no AI posts left */if(u.amb&&!o){const e=nearestEnemy(u,rngOf(u)+10);if(e){u.target=e;if(!u.guard)u.guard={x:u.x,y:u.y};}return;}/* lying in ambush: hold still, fire only at what is in range */if(u.stlT&&!(u.lastHit>G.t-1.5)&&!(o&&o.type==='amove'))return;const base=s.aggro*upgK(T,u.kind,'rng'),hit=u.lastHit>G.t-1.5,odds=u.odds||0;
+  // Intelligent return fire: if recently hit by a visible attacker we can hurt, lock onto them!
+  if(hit&&u.hitBy&&!u.hitBy.dead&&!ally(u.hitBy.team,u.team)&&canTarget(s,u.hitBy)&&seenBy(u.team,u.hitBy)&&effOn(s,u.hitBy)>=.35&&!(o&&o.type==='move'&&o.hold)){
+    const hd=Math.hypot(u.hitBy.x-u.x,u.hitBy.y-u.y)-(u.hitBy.r||0);
+    if(hd<=rngOf(u)+(o&&o.type==='move'?10:120)&&!(u.st>=2&&hd>rngOf(u))){u.target=u.hitBy;if(!o&&!u.guard)u.guard={x:u.x,y:u.y};return;}
+  }
   if(u.st>=2&&!o){const rg=rngOf(u),e=nearestEnemy(u,u.st===3&&!hit?rg*.6:rg);if(e)u.target=e;return;}/* Hold: shoot what is in range. Guerrilla: hold fire until they are close (or we were hit), then fire */
-  if(o&&o.type==='move'){if(o.hold||isVeh(s)&&u.hp<u.max*.3)return;
+  if(o&&o.type==='move'){if(o.hold||isVeh(s)&&u.hp<u.max*.35)return;
     // ambushed and clearly stronger: return fire at whoever is shooting
     if(hit&&odds<=.9){const e=nearestEnemy(u,rngOf(u));if(e&&effOn(s,e)>=.4)u.target=e;return;}
     // enemies in the unit's path: stop and shoot when it can hurt them and isn't outmatched - but not when it is
@@ -3149,57 +3268,87 @@ function autoEngage(u,o,T){const s=u.s;if(s.noAttack||u.rout>G.t||u.retreat)retu
     if(odds>1.5)return;const hq=hqCached(u.team);if(hq&&Math.hypot(o.x-hq.x,o.y-hq.y)<Math.hypot(u.x-hq.x,u.y-hq.y)-200)return;
     const e=nearestEnemy(u,rngOf(u)+10,null,.5);if(!e||e.isB)return;if(massOf(u)>=10&&massOf(e)<2&&Math.hypot(e.x-u.x,e.y-u.y)<160)return;/* tanks just run infantry over */const ah=Math.atan2(o.y-u.y,o.x-u.x),ae=Math.atan2(e.y-u.y,e.x-u.x);
     if(Math.abs(angDiff(ah,ae))<1.05||hit)u.target=e;return;}
-  const help=!o&&friendsUnderFire(u),R=base+(o||u.st===1?60:0)+(help?160:0);let e=nearestEnemy(u,R);if(!e)return;
+  const help=!o&&friendsUnderFire(u),R=base+(o||u.st===1?60:0)+(help?180:0);let e=nearestEnemy(u,R);if(!e)return;
   if(effOn(s,e)<.35&&!(e.isB&&s.wpn!=='gun')){const alt=nearestEnemy(u,R,null,.35);if(alt)e=alt;else if(!hit&&!(o&&o.type==='amove')&&Math.hypot(e.x-u.x,e.y-u.y)-(e.r||0)>rngOf(u)+10)return;}
   // (a weak match is still fought on attack-move, or when it is already within range - patrol boats duel, riflemen
   // shoot at a technical driving past - but idle units do not charge armour they can barely scratch)
   const d=Math.hypot(e.x-u.x,e.y-u.y)-(e.r||0);if(!o&&u.st!==1&&odds>2.6&&d>rngOf(u)+10)return; // outnumbered: hold and fire, don't charge
   u.target=e;if(!o&&!u.guard)u.guard={x:u.x,y:u.y};}
 // Unit intelligence (applies whenever the player hasn't given a direct move order):
-// - re-picks the best target every second (switches to a much better one in range)
-// - dodges incoming artillery and missile strikes
-// - badly damaged units pull back out of the fight toward home
-// - infantry under fire look for cover in nearby woods
-// - units that outrange their target keep their distance (kiting)
-// - vehicles turn their thick front armour toward whoever is shooting at them
-// hard AI: focus fire - the usual smart pick (weapon vs armour, threats, damaged first), tie-broken toward what squad-mates already shoot
-// (it used to pick whatever had the least health left, even a tank its rifles couldn't hurt: Hard lost to Normal 39/61)
+// - re-picks the best target (switches to a much better one in range)
+// - dodges incoming artillery, SCUD and missile strikes cleanly around obstacles
+// - pulls back when badly damaged OR when taking fire from an attacker it cannot shoot back at
+// - infantry under fire scatter against splash and seek nearby woods or safe building corners
+// - units that outrange their target kite smoothly along passable escape vectors
+// - vehicles angle their thick front armour toward whoever is shooting at them
 function weakestEnemy(u,R){const e=nearestEnemy(u,R,null,0,1);if(e&&!e.isB)e._fc=G.t;return e;}
 function unitBrain(u,dt,o){const s=u.s;if(o&&o.type==='move'&&!o.auto)return false;u.bt=(u.bt||0)-dt;
-  if(u.bt<=0){u.bt=.9+Math.random()*.3;
-    if(s.dom!=='air'){for(const st of G.strikes){if(st.t<.4||st.team===u.team||ally(st.team,u.team))continue;const dd=Math.hypot(u.x-st.x,u.y-st.y);if(dd<st.r+26){const a=Math.atan2(u.y-st.y,u.x-st.x)||Math.random()*6.28,k=st.r+60-dd;setMove(u,u.x+Math.cos(a)*k,u.y+Math.sin(a)*k,'move');u.order.auto=1;return true;}}}
-    const RAI=G.teams[u.team].ai,RD=RAI?DIFF[RAI.d??1].retreat:1,RH=RD>2?(isVeh(s)?.5:.38):RD>1?(isVeh(s)?.4:.3):.25;
-    if(u.hp<u.max*RH&&!u.rt&&s.dom!=='air'&&G.t-u.lastHit<3&&u.target&&!(RAI&&!RD)&&msOf(G.teams[u.team].fac).rout!==0){/* Zealous (rout:0) never pull back - Abdullah 2026-11-07 22:5x */if(G.teams[u.team].ai&&u.kind!=='harv'&&u.kind!=='dozer'){const tn=G.ents.filter(b=>b.isB&&b.team===u.team&&b.kind==='tunnel'&&!b.dead&&b.built>=1&&dist(b,u)<750).sort((p,q)=>dist(p,u)-dist(q,u))[0];if(tn&&G.teams[u.team].tun.length<tunCap(u.team)){u.rt=G.t;u.order={type:'enter',target:tn,auto:1};u.target=null;u.path=null;return true;}}const home=G.ents.filter(b=>b.isB&&b.team===u.team&&!b.dead).sort((p,q)=>dist(p,u)-dist(q,u))[0];if(home&&dist(home,u)>260){u.rt=G.t;const a=Math.atan2(home.y-u.y,home.x-u.x),k=RD>1?Math.min(480,dist(home,u)-200):260;setMove(u,u.x+Math.cos(a)*k,u.y+Math.sin(a)*k,'move');u.order.auto=1;if(RAI)aiStat(RAI,'retreat');log(u.team,`${s.name} is badly damaged and pulling back.`);return true;}}
-    if(u.rt&&G.t-u.rt>12)u.rt=0;
+  const recentHit=G.t-u.lastHit<2.5;
+  if(u.bt<=0){u.bt=(recentHit||(G.strikes&&G.strikes.length))?(.35+Math.random()*.15):(.85+Math.random()*.25);
+    // 1. Incoming artillery / SCUD / missile / nuke strike dodge (using obstacle-aware safeEscapeXY!)
+    if(s.dom!=='air'&&G.strikes&&G.strikes.length){for(const st of G.strikes){if(st.t<.3||st.team===u.team||ally(st.team,u.team))continue;const dd=Math.hypot(u.x-st.x,u.y-st.y);if(dd<st.r+36){const a=Math.atan2(u.y-st.y,u.x-st.x)||((u.id&1)?1:-1),k=st.r+75-dd;const esc=safeEscapeXY(u,a,k);if(esc){setMove(u,esc[0],esc[1],'move');u.order.auto=1;u.order.hold=1;u.retreat=1;return true;}}}}
+    const RAI=G.teams[u.team].ai,RD=RAI?DIFF[RAI.d??1].retreat:2,zealous=msOf(G.teams[u.team].fac).rout===0;
+    const RH=zealous?(isVeh(s)?.22:.18):(RD>2?(isVeh(s)?.48:.38):RD>1?(isVeh(s)?.38:.30):.26);
+    // 2. Taking fire from an out-of-range / uncounterable attacker (e.g. artillery, aircraft without AA, riflemen vs heavy armor) -> pull back out of fire!
+    if(recentHit&&!u.rt&&s.dom!=='air'&&u.st!==2&&!(RAI&&!RD)){
+      const badMatch=!u.target||u.target.dead||(effOn(s,u.target)<.22)||(!seenBy(u.team,u.target));
+      const outRanged=u.hitBy&&!u.hitBy.dead&&(!canTarget(s,u.hitBy)||effOn(s,u.hitBy)<.22||(Math.hypot(u.hitBy.x-u.x,u.hitBy.y-u.y)-(u.hitBy.r||0)>rngOf(u)+90));
+      if((badMatch&&outRanged&&u.hp<u.max*.88)||(u.hp<u.max*RH&&(!zealous||outRanged||u.hp<u.max*.2))){
+        if(G.teams[u.team].ai&&u.kind!=='harv'&&u.kind!=='dozer'){const tn=G.ents.filter(b=>b.isB&&b.team===u.team&&b.kind==='tunnel'&&!b.dead&&b.built>=1&&dist(b,u)<750).sort((p,q)=>dist(p,u)-dist(q,u))[0];if(tn&&G.teams[u.team].tun.length<tunCap(u.team)){u.rt=G.t;u.retreat=1;u.order={type:'enter',target:tn,auto:1};u.target=null;u.path=null;return true;}}
+        if(evadeFire(u,RD>1?310:250)){u.rt=G.t;if(RAI)aiStat(RAI,'retreat');if(u.hp<u.max*RH)log(u.team,`${s.name} is badly damaged and pulling back.`);return true;}
+      }
+    }
+    if(u.rt&&G.t-u.rt>9)u.rt=0;
+    // 3. Anti-splash scatter: infantry hit by artillery/explosive splash spread apart so one shell doesn't wipe the squad!
+    if(isInf(s)&&recentHit&&u.hitSp&&(!o||o.type==='amove')&&G.t-(u.cvT||-9)>4){
+      let cx=0,cy=0,cnt=0;
+      for(const f of nearby(u.x,u.y,44,CV_U)){if(f===u||f.dead||f.isB||f.team!==u.team||!isInf(f.s))continue;cx+=f.x;cy+=f.y;cnt++;}
+      if(cnt>=2){
+        u.cvT=G.t;const a=Math.atan2(u.y-cy/cnt,u.x-cx/cnt)+((u.id&1)?.35:-.35);
+        const esc=safeEscapeXY(u,a,62);
+        if(esc){setMove(u,esc[0],esc[1],'move');u.order.auto=1;if(!o)u.guard={x:esc[0],y:esc[1]};return true;}
+      }
+    }
     const CAI=RAI&&DIFF[RAI.d??1].cover&&o&&o.type==='amove'&&!o.nv&&u.target&&!u.target.dead&&Math.hypot(u.target.x-u.x,u.target.y-u.y)-u.target.r<=rngOf(u)+10;/* already trading fire: a short hop into cover */
-    // Hard AI infantry holding ground (no order) or trading fire prefer rubble: they hop from light cover into a fallen block nearby
+    // 4. Infantry cover-seeking under fire (BOTH player and AI infantry seek woods, rubble, or safe lee side of buildings!)
     const HR=!!(G.rubN&&isInf(s)&&RAI&&DIFF[RAI.d??1].cover&&(!o||CAI)&&!rubAt(u.x,u.y)),RO=HR&&coverAt(u.x,u.y);
-    if(isInf(s)&&(!o||CAI)&&G.t-u.lastHit<1.5&&(!coverAt(u.x,u.y)||HR)&&G.cover&&G.t-(u.cvT||-9)>(CAI?9:u.st===3?3:6)){u.cvT=G.t;let best=null,bd=1e9;const cx=Math.floor(u.x/CELL),cy=Math.floor(u.y/CELL);for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const X=cx+i,Y=cy+j;if(X<0||Y<0||X>=GW||Y>=GH||!G.cover[Y*GW+X])continue;const rb=HR&&G.rub[Y*GW+X];if(RO&&!rb)continue;const x=X*CELL+CELL/2,y=Y*CELL+CELL/2;if(!rb&&!coverAt(x,y))continue;const d=Math.hypot(x-u.x,y-u.y)*(rb?.6:1);if(d<bd&&d<(CAI?90:130)){bd=d;best=[x,y];}}
-      // Hard AI: the near side of a friendly or neutral building (or wall) counts too - a house corner, a bunker, sandbags
-      if(CAI&&!RO)for(const b of nearby(u.x,u.y,230,CV_U)){if(!b.isB||b.dead||(b.team>=0&&!ally(b.team,u.team)))continue;const a=Math.atan2(u.y-b.y,u.x-b.x),r=b.size/2+20,x=b.x+Math.cos(a)*r,y=b.y+Math.sin(a)*r;const d=Math.hypot(x-u.x,y-u.y);if(d<bd&&d<90&&passXY('ground',x,y)&&coverAt(x,y)){bd=d;best=[x,y];}}
+    if(isInf(s)&&(!o||CAI)&&G.t-u.lastHit<1.8&&(!coverAt(u.x,u.y)||HR)&&G.cover&&G.t-(u.cvT||-9)>(CAI?8:u.st===3?3:5)){u.cvT=G.t;let best=null,bd=1e9;const cx=Math.floor(u.x/CELL),cy=Math.floor(u.y/CELL);for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const X=cx+i,Y=cy+j;if(X<0||Y<0||X>=GW||Y>=GH||!G.cover[Y*GW+X])continue;const rb=HR&&G.rub[Y*GW+X];if(RO&&!rb)continue;const x=X*CELL+CELL/2,y=Y*CELL+CELL/2;if(!rb&&!coverAt(x,y))continue;const d=Math.hypot(x-u.x,y-u.y)*(rb?.6:1);if(d<bd&&d<(CAI?95:145)){bd=d;best=[x,y];}}
+      // Safe lee side of a friendly/neutral building (works for both player and AI infantry!)
+      if(!RO)for(const b of nearby(u.x,u.y,220,CV_U)){if(!b.isB||b.dead||(b.team>=0&&!ally(b.team,u.team)))continue;const a=u.hitX!=null?Math.atan2(b.y-u.hitY,b.x-u.hitX):Math.atan2(u.y-b.y,u.x-b.x),r=b.size/2+20,x=b.x+Math.cos(a)*r,y=b.y+Math.sin(a)*r;const d=Math.hypot(x-u.x,y-u.y);if(d<bd&&d<110&&passXY('ground',x,y)&&losB('ground',u.x,u.y,x,y)){bd=d;best=[x,y];}}
       if(best&&CAI){const fx=o.x-u.x,fy=o.y-u.y;if((best[0]-u.x)*fx+(best[1]-u.y)*fy<-.3*Math.hypot(fx,fy)*Math.hypot(best[0]-u.x,best[1]-u.y))best=null;/* never fall back to find cover */}
       if(best&&CAI){const res={x:o.x,y:o.y};setMove(u,best[0],best[1],'move');u.order.auto=1;u.cvRes=res;aiStat(RAI,'cover');return true;}
       if(best){setMove(u,best[0],best[1],'move');u.order.auto=1;u.guard={x:best[0],y:best[1]};return true;}}
-    // Hard AI infantry that stopped in cover carry on with the attack once nothing is left to shoot from there
     if(u.cvRes&&!o&&!u.target&&G.t-u.cvT>3){const r=u.cvRes;u.cvRes=undefined;setMove(u,r.x,r.y,'amove');return true;}
     if(u.target&&(!o||o.type==='amove')){const AI=G.teams[u.team].ai;const b=AI&&DIFF[AI.d??1].focus?weakestEnemy(u,rngOf(u)+20):nearestEnemy(u,rngOf(u)+20);if(b&&b!==u.target)u.target=b;}}
   const t=u.target;if(!t||t.dead)return false;const d=Math.hypot(t.x-u.x,t.y-u.y)-t.r,R=rngOf(u);
-  if(!t.isB&&t.s&&t.s.rng&&s.dom==='ground'&&!s.minr&&R>t.s.rng*1.3&&d<Math.min(R*.6,t.s.rng+30)&&canTarget(t.s,u)){const a=Math.atan2(u.y-t.y,u.x-t.x);stepTo(u,u.x+Math.cos(a)*60,u.y+Math.sin(a)*60,dt);if(u.cd<=0&&Math.abs(angDiff(u.tang,Math.atan2(t.y-u.y,t.x-u.x)))<.35){fire(u,t,s.dmg*dmgOut(u),s.wpn,s.splash||0);u.cd=s.rof*rofMult(u);}return true;}
-  if((isVeh(s)||s.dom==='naval')&&d<=R&&G.t-(u.mv||-9)>.4){const want=Math.atan2(t.y-u.y,t.x-u.x),M=MOVE[s.cls]||[2,40];const e=angDiff(u.hd??u.ang,want);if(Math.abs(e)>.35){u.hd=(u.hd??u.ang)+Math.max(-M[0]*.5*dt,Math.min(M[0]*.5*dt,e));u.ang=u.hd;}}
+  // 5. Passability-aware smart kiting: ranged units back away around obstacles while continuing to fire!
+  if(!t.isB&&t.s&&t.s.rng&&s.dom==='ground'&&!s.minr&&R>t.s.rng*1.25&&d<Math.min(R*.65,t.s.rng+45)&&canTarget(t.s,u)&&u.st!==2){
+    const a=Math.atan2(u.y-t.y,u.x-t.x);const esc=safeEscapeXY(u,a,70);
+    if(esc)stepTo(u,esc[0],esc[1],dt);
+    if(u.cd<=0&&Math.abs(angDiff(u.tang,Math.atan2(t.y-u.y,t.x-u.x)))<.35){fire(u,t,s.dmg*dmgOut(u),s.wpn,s.splash||0);u.cd=s.rof*rofMult(u);}return true;}
+  // 6. Front armor angling toward highest threat (attacker or target)
+  const threat=(recentHit&&u.hitBy&&!u.hitBy.dead)?u.hitBy:t;
+  if((isVeh(s)||s.dom==='naval')&&d<=R&&G.t-(u.mv||-9)>.35){const want=Math.atan2(threat.y-u.y,threat.x-u.x),M=MOVE[s.cls]||[2,40];const e=angDiff(u.hd??u.ang,want);if(Math.abs(e)>.3){u.hd=(u.hd??u.ang)+Math.max(-M[0]*.65*dt,Math.min(M[0]*.65*dt,e));u.ang=u.hd;}}
   return false;}
 function angDiff(a,b){return((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;}
 function updHarv(u,dt){const T=G.teams[u.team];
-  if(u.order){if(Math.hypot(u.order.x-u.x,u.order.y-u.y)<10)u.order=null;else{navTo(u,u.order.x,u.order.y,dt);return;}}
+  // Intelligent survival: supply trucks under fire pull back toward HQ/depot instead of sitting and dying!
+  if(G.t-u.lastHit<2.2&&!(u.order&&!u.order.auto)&&G.t>(u.evT||0)){
+    if(u.cargo>0){u.state='ret';u.evT=G.t+5;u.retreat=1;}
+    else if(evadeFire(u,360))return;
+  }
+  if(u.order){if(Math.hypot(u.order.x-u.x,u.order.y-u.y)<12||stalled(u,u.order)){u.order=null;u.retreat=0;}else{navTo(u,u.order.x,u.order.y,dt,true);return;}}
   if(u.state==='ret'){let best=u.drop&&!u.drop.dead&&G.t<(u.dropT||0)?u.drop:null,bd=best?dist(best,u):1e9;if(!best){for(const e of G.ents)if(e.isB&&e.team===u.team&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead){const d=dist(e,u);if(d<bd){bd=d;best=e;}}u.drop=best;u.dropT=G.t+1.5;}
-    if(!best)return;if(Math.hypot(Math.max(0,Math.abs(best.x-u.x)-best.size/2),Math.max(0,Math.abs(best.y-u.y)-best.size/2))<26){/* unload by distance to the building's EDGE (it is square): a truck that reached a corner used to stay 'returning' forever (mapfix2) */{const g=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T)),s=stOf(T);s.sc=(s.sc|0)+g;}T.credits+=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T));u.cargo=0;u.state='go';}else navTo(u,best.x,best.y,dt);return;}
+    if(!best)return;if(Math.hypot(Math.max(0,Math.abs(best.x-u.x)-best.size/2),Math.max(0,Math.abs(best.y-u.y)-best.size/2))<26){/* unload by distance to the building's EDGE (it is square): a truck that reached a corner used to stay 'returning' forever (mapfix2) */{const g=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T)),s=stOf(T);s.sc=(s.sc|0)+g;}T.credits+=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T));u.cargo=0;u.state='go';u.retreat=0;}else navTo(u,best.x,best.y,dt);return;}
   if(!u.field||u.field.amt<=0){if(G.t<(u.fldT||0))return;u.fldT=G.t+1.5;const drops=G.ents.filter(e=>e.isB&&e.team===u.team&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead);let best=null,bd=1e9;const gr=regions('ground'),rg=gr[Math.floor(u.y/CELL)*GW+Math.floor(u.x/CELL)];let bdd=0;for(const f of G.fields)if(f.amt>0){{const fr=gr[Math.floor(f.y/CELL)*GW+Math.floor(f.x/CELL)];if(rg&&fr&&fr!==rg)continue;}/* never a field this truck can't drive to */let dd=1e9;for(const b of drops)dd=Math.min(dd,dist(b,f));let foe=0;if(T.ai)for(const b of nearby(f.x,f.y,700,HV_N))if(b.isB&&!b.dead&&b.team>=0&&!ally(b.team,u.team)){foe=1500;break;}/* AI trucks keep out of enemy bases while any other field is left */const d=dist(f,u)*.6+(drops.length?dd:0)+(los('ground',u.x,u.y,f.x,f.y)?0:900)+foe;if(d<bd){bd=d;best=f;bdd=dd;}}u.field=best;if(!best)return;if(T.ai&&bdd>900&&bdd<1e9)T.ai.depF=best;}
   const f=u.field;if(u.state==='go'){if(dist(f,u)<f.r+6){u.state='gather';u.gt=0;}else navTo(u,f.x,f.y,dt);}
   else if(u.state==='gather'){u.gt+=dt;if(u.gt>=3){const take=Math.min(Math.round(160*upgT(T,'harv')*(T.F.mods.harv||1)),f.amt);f.amt-=take;u.cargo=take;u.state='ret';}}}
 function updHacker(u,dt){const T=G.teams[u.team],o=u.order;u.hacking=false;
+  if(G.t-u.lastHit<2.2&&!(o&&o.type==='move'&&!o.auto)&&G.t>(u.evT||0)&&evadeFire(u,280))return;
   if(o&&o.type==='hack'){const t=o.target;if(t.dead||!seenBy(u.team,t)){u.order=null;return;}const d=Math.hypot(t.x-u.x,t.y-u.y)-t.r;
     if(d>u.s.rng){navTo(u,t.x,t.y,dt);u.hk=0;return;}u.ang=Math.atan2(t.y-u.y,t.x-u.x);u.hk=(u.hk||0)+dt;u.hacking=true;u.lastFire=G.t;
     if(u.hk>=4){koSet(t,20,'hack');u.order=null;u.hk=0;log(u.team,`${t.s.name} disabled for 20 seconds.`,'g');log(t.team,`Warning: your ${t.s.name} has been hacked!`,'w');FXE('hack',[t.x|0,t.y|0]);}return;}
-  if(o&&o.type==='move'){if(Math.hypot(o.x-u.x,o.y-u.y)<10||stalled(u,o))u.order=null;else{navTo(u,o.x,o.y,dt);u.still=0;return;}}
+  if(o&&o.type==='move'){if(Math.hypot(o.x-u.x,o.y-u.y)<10||stalled(u,o)){u.order=null;u.retreat=0;}else{navTo(u,o.x,o.y,dt);u.still=0;return;}}
   u.still=(u.still||0)+dt;if(u.still>2){u.hacking=true;u.inc=(u.inc||0)+dt;if(u.inc>=1.5){u.inc=0;T.credits+=6;}}}
 function updDemo(u,dt){const o=u.order,t=o.target;if(t.dead){u.order=null;u.planting=false;return;}const d=Math.hypot(t.x-u.x,t.y-u.y)-t.size/2;
   // close enough to plant once at the wall (buildings push units out to about their edge + the unit's own radius)

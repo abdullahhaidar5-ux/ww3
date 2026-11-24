@@ -22,14 +22,15 @@
   let masterGain, limiter, battleGain, battleComp;
   let sfxGain, sfxMidLPF, sfxFarLPF, sfxRevSend, sfxRevNode;
   let voiceGain, voiceEQ, voiceComp;
-  let musicGain, musicLowShelf, musicHighShelf, scoreBus, scoreRev, scoreRevSend;
+  let musicGain, musicLowShelf, musicMidPeak, musicHighShelf, musicComp, musicRevSend, scoreBus, scoreRev, scoreRevSend;
   let uiGain;
 
   // Volumes (0..1) + ducking + battle state
-  const vol = { master: 1.0, music: 0.78, voices: 1.0, effects: 1.0, announcer: 0.85 };
+  const vol = { master: 1.0, music: 0.84, voices: 1.0, effects: 1.0, announcer: 0.85 };
   let musDuck = 1.0, sfxDuck = 1.0;
   let battleHeat = 0.0;
   let inBattle = false;
+  let lastFanfareAt = -999;
   let curFac = 'IR';
 
   // Buffers: rel -> AudioBuffer | 'loading' | 'fail'
@@ -53,7 +54,7 @@
   let curDeck = -1;
   const dg = [0, 0], dto = [0, 0], drt = [0, 0];
   const deckRel = ['', ''];
-  let waMusSrc = null, waMusGain = null, waMusRel = '', waMusStart = 0, waMusDur = 0;
+  let waMusSrc = null, waMusGain = null, waMusRel = '', waMusStart = 0, waMusDur = 0, musicReqId = 0;
   let wantTrack = { rel: 'mus/st/menu-02.mp3', fade: 1.6 };
   let prewarmedSfx = false;
 
@@ -180,7 +181,7 @@
   }
 
   function musicMasterVol() {
-    return Math.max(0, Math.min(0.95, 0.58 * (vol.music / 0.70) * musDuck * vol.master));
+    return Math.max(0, Math.min(1.0, 0.76 * (vol.music / 0.75) * musDuck * vol.master));
   }
 
   function initCtx() {
@@ -207,44 +208,63 @@
     masterGain.connect(limiter);
     limiter.connect(ctx.destination);
 
-    // Cinematic Music Bus (+epic sub-bass warmth & crisp orchestral concert air)
+    // Cinematic Music Mastering Chain (sub-bass rumble + brass mid-punch + orchestral air + glue compression + concert hall width!)
     musicGain = ctx.createGain();
     musicLowShelf = ctx.createBiquadFilter();
     musicLowShelf.type = 'lowshelf';
-    musicLowShelf.frequency.value = 92;
-    musicLowShelf.gain.value = 4.6;
+    musicLowShelf.frequency.value = 86;
+    musicLowShelf.gain.value = 5.6;
+    musicMidPeak = ctx.createBiquadFilter();
+    musicMidPeak.type = 'peaking';
+    musicMidPeak.frequency.value = 1350;
+    musicMidPeak.Q.value = 0.85;
+    musicMidPeak.gain.value = 2.2;
     musicHighShelf = ctx.createBiquadFilter();
     musicHighShelf.type = 'highshelf';
-    musicHighShelf.frequency.value = 6800;
-    musicHighShelf.gain.value = 2.6;
+    musicHighShelf.frequency.value = 7000;
+    musicHighShelf.gain.value = 3.2;
+    musicComp = ctx.createDynamicsCompressor();
+    musicComp.threshold.value = -13.5;
+    musicComp.knee.value = 8.0;
+    musicComp.ratio.value = 3.2;
+    musicComp.attack.value = 0.012;
+    musicComp.release.value = 0.22;
     musicGain.connect(musicLowShelf);
-    musicLowShelf.connect(musicHighShelf);
-    musicHighShelf.connect(masterGain);
+    musicLowShelf.connect(musicMidPeak);
+    musicMidPeak.connect(musicHighShelf);
+    musicHighShelf.connect(musicComp);
+    musicComp.connect(masterGain);
 
-    // Faction Score Bus + Lush 2.6s Concert Hall / Cathedral Reverb (makes strings, brass & war drums sound HUGE)
+    // Faction Score Bus + Lush 2.8s Concert Hall / Cathedral Reverb (makes strings, brass, choir & war drums sound MASSIVE!)
     scoreBus = ctx.createGain();
-    scoreBus.gain.value = 0.78;
+    scoreBus.gain.value = 0.86;
     scoreBus.connect(musicGain);
     try {
-      const rLen = Math.floor(ctx.sampleRate * 2.6);
+      const rLen = Math.floor(ctx.sampleRate * 2.8);
       const rIr = ctx.createBuffer(2, rLen, ctx.sampleRate);
       for (let ch = 0; ch < 2; ch++) {
         const d = rIr.getChannelData(ch);
         let lp = 0;
         for (let i = 0; i < rLen; i++) {
           const t = i / rLen;
-          const n = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.05);
-          lp += 0.14 * (n - lp);
-          d[i] = lp * 0.56;
+          const pre = i < ctx.sampleRate * 0.022 ? 0.15 : 1.0;
+          const n = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.95) * pre;
+          lp += 0.13 * (n - lp);
+          d[i] = lp * 0.58;
         }
       }
       scoreRev = ctx.createConvolver();
       scoreRev.buffer = rIr;
       scoreRevSend = ctx.createGain();
-      scoreRevSend.gain.value = 0.48;
+      scoreRevSend.gain.value = 0.52;
       scoreBus.connect(scoreRevSend);
       scoreRevSend.connect(scoreRev);
-      scoreRev.connect(musicGain);
+      scoreRev.connect(musicComp);
+      // Subtle stereo concert-hall width on recorded MP3 soundtrack tracks (zero feedback: exits into musicComp!)
+      musicRevSend = ctx.createGain();
+      musicRevSend.gain.value = 0.16;
+      musicHighShelf.connect(musicRevSend);
+      musicRevSend.connect(scoreRev);
     } catch (_) {}
 
     // Battle sub-bus
@@ -587,29 +607,40 @@
     });
   }
 
-  // ---- Lush Real-Time Orchestral Voice Helpers (Strings Ensemble + Cinema BRAAAM + Staccato Ostinato + Brass/Ney Solo)
+  // ---- Lush Real-Time Orchestral Voice Helpers (Wide Stereo Strings + Choir + Cinema BRAAAM + Staccato Ostinato + Epic French Horn)
   function playBrassBraaam(rootFreq, durSec, gainVal) {
     if (!ctx || !scoreBus || !rootFreq || gainVal < 0.005) return;
     const now = ctx.currentTime;
     const lpf = ctx.createBiquadFilter();
     lpf.type = 'lowpass';
-    lpf.frequency.setValueAtTime(220, now);
-    lpf.frequency.exponentialRampToValueAtTime(1450, now + Math.min(0.24, durSec * 0.18));
-    lpf.frequency.exponentialRampToValueAtTime(340, now + durSec);
-    lpf.Q.value = 1.6;
+    lpf.frequency.setValueAtTime(190, now);
+    lpf.frequency.exponentialRampToValueAtTime(1850, now + Math.min(0.28, durSec * 0.20));
+    lpf.frequency.exponentialRampToValueAtTime(320, now + durSec);
+    lpf.Q.value = 1.8;
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(gainVal, now + 0.065);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gainVal * 0.52), now + durSec * 0.65);
-    g.gain.linearRampToValueAtTime(0.0001, now + durSec + 0.14);
+    g.gain.linearRampToValueAtTime(gainVal, now + 0.055);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gainVal * 0.58), now + durSec * 0.68);
+    g.gain.linearRampToValueAtTime(0.0001, now + durSec + 0.18);
     lpf.connect(g); g.connect(scoreBus);
-    const layers = [[rootFreq * 0.5, 'sine', 0.52, 0], [rootFreq, 'sawtooth', 0.30, -6], [rootFreq, 'sawtooth', 0.30, 6], [rootFreq * 1.5, 'sawtooth', 0.18, 3]];
-    for (const [f, tp, a, dt] of layers) {
+    const layers = [
+      [rootFreq * 0.5, 'sine', 0.58, 0, 0],
+      [rootFreq, 'sawtooth', 0.30, -8, -0.35],
+      [rootFreq, 'sawtooth', 0.30, 8, 0.35],
+      [rootFreq * 1.5, 'sawtooth', 0.20, 4, -0.20],
+      [rootFreq * 2.0, 'sawtooth', 0.14, -5, 0.25]
+    ];
+    for (const [f, tp, a, dt, pan] of layers) {
       const osc = ctx.createOscillator();
       osc.type = tp; osc.frequency.value = f; osc.detune.value = dt;
       const og = ctx.createGain(); og.gain.value = a;
-      osc.connect(og); og.connect(lpf);
-      osc.start(now); osc.stop(now + durSec + 0.18);
+      if (pan && ctx.createStereoPanner) {
+        const pn = ctx.createStereoPanner(); pn.pan.value = pan;
+        osc.connect(og); og.connect(pn); pn.connect(lpf);
+      } else {
+        osc.connect(og); og.connect(lpf);
+      }
+      osc.start(now); osc.stop(now + durSec + 0.22);
     }
   }
 
@@ -618,49 +649,76 @@
     const now = ctx.currentTime;
     const lpf = ctx.createBiquadFilter();
     lpf.type = 'lowpass';
-    lpf.frequency.setValueAtTime(1650, now);
-    lpf.frequency.exponentialRampToValueAtTime(480, now + durSec);
+    lpf.frequency.setValueAtTime(1950, now);
+    lpf.frequency.exponentialRampToValueAtTime(520, now + durSec);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(gainVal, now + 0.014);
+    g.gain.linearRampToValueAtTime(gainVal, now + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, now + durSec);
     lpf.connect(g); g.connect(scoreBus);
-    for (const dt of [-4.5, 4.5]) {
+    for (const [dt, pan] of [[-6, -0.32], [6, 0.32]]) {
       const osc = ctx.createOscillator();
       osc.type = 'sawtooth'; osc.frequency.value = freq; osc.detune.value = dt;
-      const og = ctx.createGain(); og.gain.value = 0.42;
-      osc.connect(og); og.connect(lpf);
+      const og = ctx.createGain(); og.gain.value = 0.44;
+      if (ctx.createStereoPanner) {
+        const pn = ctx.createStereoPanner(); pn.pan.value = pan;
+        osc.connect(og); og.connect(pn); pn.connect(lpf);
+      } else {
+        osc.connect(og); og.connect(lpf);
+      }
       osc.start(now); osc.stop(now + durSec + 0.03);
     }
   }
+
   function playStringChord(freqs, durSec, gainVal) {
     if (!ctx || !scoreBus || gainVal < 0.005) return;
     const now = ctx.currentTime;
     const lpf = ctx.createBiquadFilter();
     lpf.type = 'lowpass';
-    lpf.frequency.setValueAtTime(620, now);
-    lpf.frequency.linearRampToValueAtTime(1450, now + durSec * 0.45);
-    lpf.frequency.linearRampToValueAtTime(720, now + durSec);
+    lpf.frequency.setValueAtTime(640, now);
+    lpf.frequency.linearRampToValueAtTime(1950, now + durSec * 0.48);
+    lpf.frequency.linearRampToValueAtTime(760, now + durSec);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
     g.gain.linearRampToValueAtTime(gainVal, now + Math.min(0.65, durSec * 0.28));
-    g.gain.setValueAtTime(gainVal * 0.92, now + durSec * 0.72);
-    g.gain.linearRampToValueAtTime(0.0001, now + durSec + 0.15);
+    g.gain.setValueAtTime(gainVal * 0.94, now + durSec * 0.72);
+    g.gain.linearRampToValueAtTime(0.0001, now + durSec + 0.20);
     lpf.connect(g);
     g.connect(scoreBus);
-    for (const f of freqs) {
-      for (const det of [-5.5, 5.5]) {
+    for (let idx = 0; idx < freqs.length; idx++) {
+      const f = freqs[idx];
+      const basePan = ((idx % 2) ? 0.45 : -0.45);
+      for (const [det, panOff] of [[-7.5, -0.22], [7.5, 0.22]]) {
         const osc = ctx.createOscillator();
         osc.type = 'sawtooth';
         osc.frequency.value = f;
         osc.detune.value = det;
         const og = ctx.createGain();
-        og.gain.value = 0.22 / freqs.length;
-        osc.connect(og);
-        og.connect(lpf);
+        og.gain.value = 0.24 / freqs.length;
+        if (ctx.createStereoPanner) {
+          const pn = ctx.createStereoPanner();
+          pn.pan.value = Math.max(-0.85, Math.min(0.85, basePan + panOff));
+          osc.connect(og); og.connect(pn); pn.connect(lpf);
+        } else {
+          osc.connect(og); og.connect(lpf);
+        }
         osc.start(now);
-        osc.stop(now + durSec + 0.18);
+        osc.stop(now + durSec + 0.24);
       }
+    }
+    // Ethereal Epic Choir Formant Shimmer (octave above top chord voice)
+    const topF = freqs[freqs.length - 1] * 2.0;
+    const bpf = ctx.createBiquadFilter();
+    bpf.type = 'bandpass'; bpf.frequency.value = 920; bpf.Q.value = 2.4;
+    const cg = ctx.createGain();
+    cg.gain.setValueAtTime(0.0001, now);
+    cg.gain.linearRampToValueAtTime(gainVal * 0.22, now + Math.min(0.85, durSec * 0.35));
+    cg.gain.linearRampToValueAtTime(0.0001, now + durSec + 0.22);
+    bpf.connect(cg); cg.connect(scoreBus);
+    for (const det of [-9, 0, 9]) {
+      const co = ctx.createOscillator();
+      co.type = 'sawtooth'; co.frequency.value = topF; co.detune.value = det;
+      co.connect(bpf); co.start(now); co.stop(now + durSec + 0.25);
     }
   }
 
@@ -669,44 +727,46 @@
     const now = ctx.currentTime;
     const lpf = ctx.createBiquadFilter();
     lpf.type = 'lowpass';
-    lpf.frequency.setValueAtTime(1150, now);
-    lpf.frequency.linearRampToValueAtTime(2200, now + durSec * 0.35);
-    lpf.frequency.linearRampToValueAtTime(980, now + durSec);
-    lpf.Q.value = 1.2;
+    lpf.frequency.setValueAtTime(950, now);
+    lpf.frequency.exponentialRampToValueAtTime(2850, now + Math.min(0.28, durSec * 0.32));
+    lpf.frequency.exponentialRampToValueAtTime(1100, now + durSec);
+    lpf.Q.value = 1.45;
 
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.linearRampToValueAtTime(gainVal, now + 0.09);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gainVal * 0.65), now + durSec * 0.75);
-    g.gain.linearRampToValueAtTime(0.0001, now + durSec + 0.12);
+    g.gain.linearRampToValueAtTime(gainVal, now + 0.08);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gainVal * 0.68), now + durSec * 0.76);
+    g.gain.linearRampToValueAtTime(0.0001, now + durSec + 0.16);
 
-    // Subtle orchestral French horn vibrato
+    // Expressive orchestral French horn + soaring violin section vibrato
     const lfo = ctx.createOscillator();
     const lfoG = ctx.createGain();
-    lfo.frequency.value = 4.6;
-    lfoG.gain.value = freq * 0.007;
+    lfo.frequency.value = 4.9;
+    lfoG.gain.value = freq * 0.0075;
     lfo.connect(lfoG);
 
-    const osc1 = ctx.createOscillator();
-    osc1.type = 'triangle';
-    osc1.frequency.setValueAtTime(freq, now);
-    lfoG.connect(osc1.frequency);
-
-    const osc2 = ctx.createOscillator();
-    osc2.type = 'triangle';
-    osc2.frequency.value = freq * 0.5;
-    const og2 = ctx.createGain();
-    og2.gain.value = 0.48;
-
-    osc1.connect(lpf);
-    osc2.connect(og2);
-    og2.connect(lpf);
-    lpf.connect(g);
-    g.connect(scoreBus);
-
-    lfo.start(now); osc1.start(now); osc2.start(now);
-    const endT = now + durSec + 0.15;
-    lfo.stop(endT); osc1.stop(endT); osc2.stop(endT);
+    const endT = now + durSec + 0.20;
+    const voices = [
+      [freq, 'sawtooth', 0.34, -5.5, -0.25],
+      [freq, 'sawtooth', 0.34,  5.5,  0.25],
+      [freq * 0.5, 'sawtooth', 0.44, 0, 0],
+      [freq * 2.0, 'triangle', 0.16, 3.5, 0.15]
+    ];
+    for (const [vf, vtp, va, vdt, vpan] of voices) {
+      const osc = ctx.createOscillator();
+      osc.type = vtp; osc.frequency.setValueAtTime(vf, now); osc.detune.value = vdt;
+      if (vf === freq) lfoG.connect(osc.frequency);
+      const og = ctx.createGain(); og.gain.value = va;
+      if (vpan && ctx.createStereoPanner) {
+        const pn = ctx.createStereoPanner(); pn.pan.value = vpan;
+        osc.connect(og); og.connect(pn); pn.connect(lpf);
+      } else {
+        osc.connect(og); og.connect(lpf);
+      }
+      osc.start(now); osc.stop(endT);
+    }
+    lpf.connect(g); g.connect(scoreBus);
+    lfo.start(now); lfo.stop(endT);
   }
 
   function applyVol() {
@@ -740,9 +800,28 @@
     }
 
     if (!unlocked || !ctx || ctx.state !== 'running' || vol.music < 0.04 || vol.master < 0.04) return;
-    // When real recorded orchestral MP3 soundtrack is playing, let it shine pure and unpolluted!
+    // When real recorded orchestral MP3 soundtrack is playing through the mastered WebAudio chain,
+    // keep the melody pure and add ONLY subtle epic war-drum tension pulses during peak combat heat!
     if (isMp3MusicActivelyPlaying()) {
-      scoreAccum = 0;
+      if (inBattle && battleHeat > 0.45 && synths.wardrum) {
+        scoreAccum += 0.05;
+        if (scoreAccum >= 0.46) {
+          scoreAccum -= 0.46;
+          const pulse = scoreStep % 8;
+          if (pulse === 0 || pulse === 3 || pulse === 6) {
+            const src = ctx.createBufferSource();
+            src.buffer = synths.wardrum;
+            src.playbackRate.value = pulse === 0 ? 0.84 : 1.05;
+            const g = ctx.createGain();
+            g.gain.value = (pulse === 0 ? 0.24 : 0.15) * Math.min(1, (battleHeat - 0.35) * 1.4);
+            src.connect(g); g.connect(scoreBus);
+            try { src.start(ctx.currentTime); } catch (_) {}
+          }
+          scoreStep++;
+        }
+      } else {
+        scoreAccum = 0;
+      }
       return;
     }
     const style = factionStyle(curFac);
@@ -1147,8 +1226,13 @@
       scoreStep = 0;
     },
     setBattleState: (active, heatVal) => {
+      const wasBattle = inBattle;
       inBattle = Boolean(active);
       battleHeat = Math.max(0, Math.min(1, Number(heatVal) || 0));
+      if (inBattle && !wasBattle && unlocked && ctx && ctx.currentTime - lastFanfareAt > 15) {
+        lastFanfareAt = ctx.currentTime;
+        playSynth('fanfare', 0.72, 1.0, 0, 'Music');
+      }
     },
     setVol: (master, music, voices, effects, announcer, mk, sk) => {
       vol.master = master; vol.music = music; vol.voices = voices;
@@ -1162,21 +1246,54 @@
         wantTrack = { rel, fade };
         return;
       }
-      if (curDeck >= 0 && deckRel[curDeck] === rel && dto[curDeck] > 0 && !decks[curDeck].paused) {
+      if ((waMusSrc && waMusRel === rel) || (curDeck >= 0 && deckRel[curDeck] === rel && dto[curDeck] > 0 && !decks[curDeck].paused)) {
         return;
       }
-      stopWaMusic(fade);
-      const old = curDeck;
-      curDeck = curDeck === 0 ? 1 : 0;
-      dg[curDeck] = 0.05; dto[curDeck] = 1; drt[curDeck] = 1 / Math.max(0.05, fade || 2.0);
-      startDeckWithFallback(curDeck, rel, fade, bases, 0);
-      if (old >= 0) {
-        dto[old] = 0;
-        drt[old] = Math.max(0.01, dg[old]) / Math.max(0.05, fade || 2.0);
-      }
+      const reqId = ++musicReqId;
+      // Prefer WebAudio mastered playback FIRST so recorded MP3 soundtracks pass through the cinema EQ,
+      // sub-bass warmth, concert-hall reverb & glue compressor! Fall back seamlessly to <audio> deck if needed.
+      loadBuf(rel).then(buf => {
+        if (reqId !== musicReqId) return;
+        if (buf instanceof AudioBuffer) {
+          stopWaMusic(fade);
+          for (let i = 0; i < 2; i++) {
+            dto[i] = 0; dg[i] = 0;
+            try { decks[i].pause(); } catch (_) {}
+          }
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          src.loop = false;
+          const g = ctx.createGain();
+          const now = ctx.currentTime;
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(1.0, now + Math.max(0.20, fade || 1.5));
+          src.connect(g);
+          g.connect(musicGain);
+          try {
+            src.start(now);
+            waMusSrc = src; waMusGain = g; waMusRel = rel;
+            waMusStart = now; waMusDur = buf.duration;
+          } catch (e) {
+            lastErr = 'waMus:' + (e && e.message ? e.message : String(e));
+            const old = curDeck;
+            curDeck = curDeck === 0 ? 1 : 0;
+            dg[curDeck] = 0.05; dto[curDeck] = 1; drt[curDeck] = 1 / Math.max(0.05, fade || 2.0);
+            startDeckWithFallback(curDeck, rel, fade, bases, 0);
+            if (old >= 0) { dto[old] = 0; drt[old] = Math.max(0.01, dg[old]) / Math.max(0.05, fade || 2.0); }
+          }
+        } else {
+          stopWaMusic(fade);
+          const old = curDeck;
+          curDeck = curDeck === 0 ? 1 : 0;
+          dg[curDeck] = 0.05; dto[curDeck] = 1; drt[curDeck] = 1 / Math.max(0.05, fade || 2.0);
+          startDeckWithFallback(curDeck, rel, fade, bases, 0);
+          if (old >= 0) { dto[old] = 0; drt[old] = Math.max(0.01, dg[old]) / Math.max(0.05, fade || 2.0); }
+        }
+      });
     },
     stopMusic: fade => {
       if (!unlocked) return;
+      musicReqId++;
       wantTrack = null;
       stopWaMusic(fade);
       const f = Math.max(0.05, fade || 0.5);
