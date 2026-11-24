@@ -62,20 +62,22 @@ void fragment() {
 	float wadi_n = fbm2(v_wpos.xz * 0.0028 + vec2(-8.4, 5.7));
 	float detail_blend = smoothstep(0.18, 0.82, macro_n);
 
-	// Tri-scale multi-angle rotated UVs so tiling AND directional corduroy stripes are completely eliminated!
-	vec2 uv_fine = v_wpos.xz / 145.0;
-	vec2 uv_med = vec2(v_wpos.x * 0.799 - v_wpos.z * 0.602, v_wpos.x * 0.602 + v_wpos.z * 0.799) / 310.0 + vec2(0.23, 0.17);
-	vec2 uv_far = vec2(v_wpos.x * 0.292 - v_wpos.z * 0.956, v_wpos.x * 0.956 + v_wpos.z * 0.292) / 760.0 + vec2(0.41, 0.63);
+	// Quad-scale multi-angle rotated UVs: razor-sharp close micro-grit (46u) + mid + far geological breakup (zero tiling or smooth blur!)
+	vec2 uv_micro = vec2(v_wpos.x * 0.927 + v_wpos.z * 0.375, -v_wpos.x * 0.375 + v_wpos.z * 0.927) / 48.0;
+	vec2 uv_fine = v_wpos.xz / 130.0;
+	vec2 uv_med = vec2(v_wpos.x * 0.799 - v_wpos.z * 0.602, v_wpos.x * 0.602 + v_wpos.z * 0.799) / 290.0 + vec2(0.23, 0.17);
+	vec2 uv_far = vec2(v_wpos.x * 0.292 - v_wpos.z * 0.956, v_wpos.x * 0.956 + v_wpos.z * 0.292) / 720.0 + vec2(0.41, 0.63);
 
+	vec3 b_micro = texture(biome_alb, uv_micro).rgb;
 	vec3 b_fine = texture(biome_alb, uv_fine).rgb;
 	vec3 b_med = texture(biome_alb, uv_med).rgb;
 	vec3 b_far = texture(biome_alb, uv_far).rgb;
-	vec3 base_lin = mix(mix(b_med, b_far, detail_blend * 0.50), b_fine, 0.38);
+	vec3 base_lin = mix(mix(b_med, b_far, detail_blend * 0.42), mix(b_fine, b_micro, 0.46), 0.56);
 
+	vec3 n_micro = texture(biome_nrm, uv_micro).rgb;
 	vec3 n_fine = texture(biome_nrm, uv_fine).rgb;
 	vec3 n_med = texture(biome_nrm, uv_med).rgb;
-	vec3 n_far = texture(biome_nrm, uv_far).rgb;
-	vec3 det_nrm = normalize(mix(mix(n_med, n_far, detail_blend * 0.45), n_fine, 0.36));
+	vec3 det_nrm = normalize(mix(n_med, mix(n_fine, n_micro, 0.48), 0.60));
 
 	// Baked concavity/valley AO stored in vertex COLOR.a
 	float cavity_ao = clamp(mix(1.0, COLOR.a, 1.15), 0.78, 1.08);
@@ -87,17 +89,23 @@ void fragment() {
 	float spec = 0.18;
 
 	if (theme_id == 0) {
-		// Desert (Photographic CC0 sandy_gravel_02 scan): crisp pebbles, arid hardpack & dry gravel wadis
-		vec3 sand_hi = s2l(vec3(0.76, 0.68, 0.56));
-		vec3 hardpack = s2l(vec3(0.60, 0.52, 0.42));
-		vec3 scrub_earth = s2l(vec3(0.45, 0.39, 0.30));
-		vec3 macro_c = mix(hardpack, sand_hi, smoothstep(0.20, 0.80, macro_n));
-		macro_c = mix(macro_c, scrub_earth, smoothstep(0.54, 0.86, meso_n) * 0.42);
-		float wadi = smoothstep(0.60, 0.76, wadi_n) * (1.0 - smoothstep(0.76, 0.92, wadi_n));
-		macro_c = mix(macro_c, scrub_earth * 0.88, wadi * 0.38);
-		alb = mix(macro_c, base_lin * mix(vec3(0.92, 0.90, 0.86), vec3(1.22, 1.16, 1.06), smoothstep(0.20, 0.82, macro_n)), 0.78);
-		rough = mix(0.95, 0.84, smoothstep(0.40, 0.84, meso_n));
-		nrm_d = 0.78;
+		// Desert (Photographic CC0 sandy_gravel_02 + stony rock patches): natural arid Levant/Iraq ochre, rocky dirt & gravel wadis (never flat peach!)
+		vec3 sand_hi = s2l(vec3(0.68, 0.62, 0.50));
+		vec3 hardpack = s2l(vec3(0.54, 0.48, 0.38));
+		vec3 scrub_earth = s2l(vec3(0.39, 0.35, 0.27));
+		vec3 rock_patch = texture(rock_alb, uv_fine * 1.15).rgb;
+		float rocky_ground = smoothstep(0.50, 0.80, meso_n) * 0.52;
+		vec3 macro_c = mix(hardpack, sand_hi, smoothstep(0.18, 0.80, macro_n));
+		macro_c = mix(macro_c, scrub_earth, rocky_ground * 0.72);
+		float wadi = smoothstep(0.58, 0.75, wadi_n) * (1.0 - smoothstep(0.75, 0.92, wadi_n));
+		macro_c = mix(macro_c, scrub_earth * 0.82, wadi * 0.48);
+		// Desaturate slight orange warmth from sandy_gravel_02 into realistic dry dusty Levant earth & mix real rocky gravel patches
+		float blum = dot(base_lin, vec3(0.299, 0.587, 0.114));
+		vec3 dry_sand = mix(vec3(blum), base_lin, 0.62) * vec3(1.06, 1.02, 0.92);
+		vec3 ground_tex = mix(dry_sand, rock_patch * vec3(1.12, 1.06, 0.96), rocky_ground * 0.65);
+		alb = mix(macro_c, ground_tex * mix(vec3(0.84), vec3(1.18), smoothstep(0.18, 0.82, macro_n)), 0.82);
+		rough = mix(0.96, 0.84, smoothstep(0.36, 0.82, meso_n));
+		nrm_d = 0.92;
 	} else if (theme_id == 1) {
 		// European / Mediterranean Green (Photographic CC0 aerial_grass_rock scan): real grass, soil & rock grit
 		vec3 meadow = s2l(vec3(0.42, 0.48, 0.29));
@@ -191,39 +199,42 @@ void fragment() {
 			center_dash = smoothstep(0.86, 0.93, r_raw) * dash * (0.58 + 0.42 * r_noise);
 		}
 
-		vec2 rd_uv = v_wpos.xz / 95.0;
-		vec3 rd_lin = texture(road_alb, rd_uv).rgb;
+		vec2 rd_uv = v_wpos.xz / 76.0;
+		vec3 rd_raw = texture(road_alb, rd_uv).rgb;
+		// Neutralize cool slate-violet tint in asphalt photo into authentic dry weathered charcoal tarmac!
+		float rd_lum = dot(rd_raw, vec3(0.299, 0.587, 0.114));
+		vec3 rd_lin = mix(vec3(rd_lum), rd_raw, 0.16);
 		vec3 rd_nrm = texture(road_nrm, rd_uv).rgb;
 		float edge_stripe = smoothstep(0.49, 0.53, r_raw) * (1.0 - smoothstep(0.54, 0.58, r_raw));
 
 		vec3 road_pal;
 		vec3 shoulder_pal;
 		if (theme_id == 2) {
-			road_pal = s2l(vec3(0.28, 0.29, 0.31));      // crisp photographic ploughed winter asphalt with real cracks & tire marks
-			shoulder_pal = s2l(vec3(0.58, 0.57, 0.55));  // slushy grit & snowbank road shoulder
+			road_pal = s2l(vec3(0.24, 0.25, 0.26));      // neutral dark ploughed winter asphalt (zero purple sheen!)
+			shoulder_pal = s2l(vec3(0.54, 0.54, 0.53));
 		} else if (theme_id == 1) {
-			road_pal = s2l(vec3(0.34, 0.35, 0.36));
-			shoulder_pal = s2l(vec3(0.44, 0.40, 0.32));
+			road_pal = s2l(vec3(0.29, 0.30, 0.29));
+			shoulder_pal = s2l(vec3(0.42, 0.39, 0.31));
 		} else {
-			road_pal = s2l(vec3(0.38, 0.36, 0.33));
-			shoulder_pal = s2l(vec3(0.56, 0.50, 0.40));
+			road_pal = s2l(vec3(0.32, 0.31, 0.29));      // warm sun-baked dusty desert tarmac
+			shoulder_pal = s2l(vec3(0.52, 0.47, 0.38));
 		}
 
-		vec3 lane_paint = s2l(vec3(0.84, 0.78, 0.54));
-		vec3 edge_paint = s2l(vec3(0.74, 0.75, 0.74));
-		vec3 road_c = mix(road_pal, rd_lin * (theme_id == 2 ? 0.62 : 0.78), 0.76) * mix(1.0, 0.80, tire_band * 0.72) * mix(1.0, 1.07, crown_hi * 0.45);
-		road_c = mix(road_c, lane_paint, center_dash * 0.76);
-		road_c = mix(road_c, edge_paint, edge_stripe * 0.48 * (0.65 + 0.35 * r_noise));
-		road_c = mix(road_c, alb, edge_dust);
-		vec3 sh_c = mix(alb, shoulder_pal * (0.88 + 0.22 * r_noise), 0.76);
+		vec3 lane_paint = s2l(vec3(0.84, 0.76, 0.48));
+		vec3 edge_paint = s2l(vec3(0.74, 0.73, 0.69));
+		vec3 road_c = mix(road_pal, rd_lin * (theme_id == 2 ? 0.56 : 0.68), 0.78) * mix(1.0, 0.80, tire_band * 0.72) * mix(1.0, 1.07, crown_hi * 0.45);
+		road_c = mix(road_c, lane_paint, center_dash * 0.78);
+		road_c = mix(road_c, edge_paint, edge_stripe * 0.45 * (0.65 + 0.35 * r_noise));
+		road_c = mix(road_c, alb, edge_dust * 1.25);
+		vec3 sh_c = mix(alb, shoulder_pal * (0.86 + 0.24 * r_noise), 0.78);
 
-		alb = mix(alb, sh_c, r_shoulder * 0.82);
+		alb = mix(alb, sh_c, r_shoulder * 0.84);
 		alb = mix(alb, road_c, r_surface * 0.97);
-		alb *= mix(1.0, 0.82, r_curb * 0.72);
-		det_nrm = normalize(mix(det_nrm, rd_nrm, r_surface * 0.86));
-		rough = mix(rough, mix(0.74, 0.56, tire_band * 0.7), r_surface);
-		spec = mix(spec, 0.44, r_surface);
-		nrm_d = mix(nrm_d, 0.68, r_surface);
+		alb *= mix(1.0, 0.84, r_curb * 0.70);
+		det_nrm = normalize(mix(det_nrm, rd_nrm, r_surface * 0.88));
+		rough = mix(rough, mix(0.84, 0.68, tire_band * 0.65), r_surface);
+		spec = mix(spec, 0.22, r_surface);
+		nrm_d = mix(nrm_d, 0.76, r_surface);
 	}
 
 	// Damp darkened riverbanks & wet mud shoreline

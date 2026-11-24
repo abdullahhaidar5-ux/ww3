@@ -110,15 +110,31 @@ func _setup(host_: Node3D, map_: Dictionary, opts: Dictionary) -> void:
 	env.glow_bloom = 0.06
 	env.glow_strength = 1.08
 	env.set_glow_level(0, 0.0); env.set_glow_level(1, 0.70); env.set_glow_level(2, 0.48); env.set_glow_level(3, 0.0); env.set_glow_level(4, 0.0)
+	# Automatically unlock real SSAO + SSIL bounce + 4-split high-res shadows on native Desktop Vulkan Forward+!
+	var is_fwd := RenderingServer.get_current_rendering_method() == "forward_plus"
+	if is_fwd:
+		sky.radiance_size = Sky.RADIANCE_SIZE_128
+		env.ssao_enabled = true
+		env.ssao_radius = 16.0
+		env.ssao_intensity = 2.4
+		env.ssao_power = 1.6
+		env.ssao_detail = 0.65
+		env.ssao_horizon = 0.08
+		env.ssil_enabled = true
+		env.ssil_radius = 28.0
+		env.ssil_intensity = 0.85
+		env.fog_aerial_perspective = 0.28
 	we = WorldEnvironment.new()
 	we.environment = env
 	host.add_child(we)
 	sun = DirectionalLight3D.new()
 	sun.shadow_enabled = true
-	# 2-split cascades cut shadow draw calls in HALF on WebGL2 while giving SHARPER near-camera unit/building shadows!
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_mob else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-	sun.directional_shadow_split_1 = 0.25
-	sun.directional_shadow_max_distance = 1000.0 if is_mob else 1650.0
+	# Forward+ Desktop gets full 4-split cascades; WebGL2 uses fast 2-split cascades
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL if is_mob else (DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS if is_fwd else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS)
+	sun.directional_shadow_split_1 = 0.14 if is_fwd else 0.25
+	sun.directional_shadow_split_2 = 0.34
+	sun.directional_shadow_split_3 = 0.64
+	sun.directional_shadow_max_distance = 1000.0 if is_mob else (2600.0 if is_fwd else 1650.0)
 	sun.directional_shadow_fade_start = 0.86
 	sun.shadow_bias = 0.032
 	sun.shadow_normal_bias = 0.56
