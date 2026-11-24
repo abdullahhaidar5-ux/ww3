@@ -757,7 +757,7 @@ const POWERS={
   bounty:{name:'Cash Bounty',desc:'Earn 15% of the cost of every enemy you destroy',passive:true},
   recon:{name:'Recon Sweep',desc:'Reveal an area for 25 seconds',cd:90,r:450},
   para:{name:'Paradrop',desc:'Drop 5 infantry anywhere on land',cd:150},
-  barrage:{name:'Artillery Barrage',desc:'10 shells over a wide area',cd:170,r:180},
+  barrage:{name:'Artillery Barrage',desc:'Off-map saturation barrage: rains 10-14 arcing rockets/shells across a wide target zone to smash enemy armor, infantry & fortifications',cd:170,r:180},
   repair:{name:'Emergency Repair',desc:'Restore 60% health to your forces in an area',cd:120,r:230},
   flare:{name:'Illumination Flares',desc:'Light up an area for about 30 seconds so everybody can see in it, friend and foe. Made for night battles',cd:60,r:300},
   mil:{name:'Proxy Militia',desc:'Call in local fighters at a spot you pick, near your supply area: riflemen and an RPG team (plus an armed technical at higher levels) arrive under your command',cd:240,r:110},
@@ -3311,14 +3311,14 @@ function natPower(team,P,x,y){const T=G.teams[team],hq=hqOf(team),en=e=>!e.dead&
     case 'intel':{for(const O of G.teams)if(!ally(O.id,team))for(const b of G.ents)if(b.isB&&b.team===O.id&&!b.dead)T.reveals.push({x:b.x,y:b.y,r:90,t:20+5*P.lv});for(const e of G.ents)if(en(e)&&!e.isB&&Math.hypot(e.x-x,e.y-y)<P.r)e.mark=G.t+25;FXE('ping',[x|0,y|0,P.r],team);return true;}
     case 'supply':{T.credits+=Math.round(1200*P.M);for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*.4);FXE('heal',[x|0,y|0,P.r],team);return true;}
     case 'partisans':{const p=nearestPassXY('ground',x,y);if(!p)return false;for(let i=0;i<P.n+3*(P.lv-1);i++){const q=nearestPassXY('ground',p[0]+rnd(-50,50),p[1]+rnd(-50,50))||p;const u=addUnit(team,i%3===2?'at':'inf',q[0],q[1]);u.guard={x:q[0],y:q[1]};}return true;}
-    case 'thermo':{addStrike(x,y,3,P.r,900*P.M,team,'sup');return true;}
+    case 'thermo':{const sx=hq?hq.x:x-600,sy=hq?hq.y:y-600;addStrike(x,y,3,P.r,900*P.M,team,'sup');FXE('bmis',[sx|0,sy|0,x|0,y|0,3.0,0]);return true;}
     case 'cash':{T.credits+=Math.round(2000*P.M);return true;}
     case 'mercs':{if(!hq)return false;for(const k of ['tank','tank','aa','aa','tank','arty','tank','aa'].slice(0,4+2*(P.lv-1))){const q=nearestPassXY('ground',hq.x+rnd(-140,140),hq.y+rnd(-140,140))||[hq.x,hq.y];addUnit(team,k,q[0],q[1]);}return true;}
-    case 'emp':{addStrike(x,y,2.2,90,420,team,'sup');G.timers.push({t:2.3,fn:()=>{for(const e of G.ents){if(!en(e)||Math.hypot(e.x-x,e.y-y)>P.r)continue;if(e.isB)koSet(e,10*P.M,'emp');else if(isVeh(e.s)||e.s.dom!=='ground')koSet(e,10*P.M,'emp');}FXE('heal',[x|0,y|0,P.r],team);}});return true;}
+    case 'emp':{const sx=hq?hq.x:x-600,sy=hq?hq.y:y-600;addStrike(x,y,2.2,90,420,team,'sup');FXE('bmis',[sx|0,sy|0,x|0,y|0,2.2,0]);G.timers.push({t:2.3,fn:()=>{for(const e of G.ents){if(!en(e)||Math.hypot(e.x-x,e.y-y)>P.r)continue;if(e.isB)koSet(e,10*P.M,'emp');else if(isVeh(e.s)||e.s.dom!=='ground')koSet(e,10*P.M,'emp');}FXE('heal',[x|0,y|0,P.r],team);}});return true;}
     case 'shield':{(G.shields=G.shields||[]).push({team,x,y,r:P.r,t:G.t+20*P.M});FXE('heal',[x|0,y|0,P.r],team);return true;}
     case 'cyber':{for(const e of G.ents)if(en(e)&&e.isB&&Math.hypot(e.x-x,e.y-y)<P.r)koSet(e,18*P.M,'cyber');T.reveals.push({x,y,r:P.r,t:18*P.M});FXE('ping',[x|0,y|0,P.r],team);return true;}
     case 'wave':{if(!hq)return false;for(let i=0;i<Math.round(P.n*P.M);i++){const q=nearestPassXY('ground',hq.x+rnd(-120,120),hq.y+rnd(-120,120))||[hq.x,hq.y];const u=addUnit(team,'inf',q[0],q[1]);setMove(u,x+rnd(-80,80),y+rnd(-80,80),'amove');}return true;}
-    case 'precise':{for(let i=0;i<Math.round(8*P.M);i++){const a=rnd(0,6.28),r=rnd(0,P.r);addStrike(x+Math.cos(a)*r,y+Math.sin(a)*r,1.4+i*.25,55,260,team,'bar');}return true;}
+    case 'precise':{const sx=hq?hq.x:x-600,sy=hq?hq.y:y-600;for(let i=0;i<Math.round(8*P.M);i++){const a=rnd(0,6.28),r=rnd(0,P.r),tx=x+Math.cos(a)*r,ty=y+Math.sin(a)*r,ft=1.4+i*.25;addStrike(tx,ty,ft,55,260,team,'bar');FXE('bmis',[(sx+rnd(-16,16))|0,(sy+rnd(-16,16))|0,tx|0,ty|0,+ft.toFixed(2),i]);}return true;}
     case 'smoke':{(G.smokes=G.smokes||[]).push({team,x,y,r:P.r,t:G.t+20*P.M});FXE('smoke',[x|0,y|0,P.r],team);return true;}
     case 'fervor':{T.fervor=G.t+25*P.M;T.fervK=1.1+.05*P.lv;return true;}
     case 'labbayk':{T.fervor=G.t+25*P.M;T.fervK=1.15+.05*P.lv;T.fervInf=1;for(const e of G.ents)if(e.team===team&&!e.isB&&isInf(e.s))e.hp=Math.min(e.max,e.hp+e.max*.5);return true;}
@@ -3369,8 +3369,8 @@ function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T
   const dur=powLvVal(key,'dur',L,25+10*(L-1))*(P.tm||1);if(P.fx)gpowFx(team,P,x,y,dur);
   if(key==='recon'){T.reveals.push({x,y,r:P.r,t:dur});FXE('ping',[x|0,y|0,P.r],team);}
   else if(key==='flare'){const d=Math.round(30*(1+.15*(L-1)));for(const O of G.teams)O.reveals.push({x,y,r:P.r,t:d});(G.flares=G.flares||[]).push({x,y,r:P.r,t:G.t+d});FXE('flare',[x|0,y|0,P.r|0,d]);log(team,'Illumination flares lit the field.','g');}
-  else if(key==='barrage'){const nS=Math.max(3,Math.round(powLvVal('barrage','n',L,10)*(P.nm||1)));for(let i=0;i<nS;i++){const a=rnd(0,6.28),r=rnd(0,P.r);addStrike(x+Math.cos(a)*r,y+Math.sin(a)*r,1.5+i*.3*Math.min(1,10/nS*1.2),60,Math.round(230*(P.dm||1)),team,'bar');}for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+300))log(O.id,'Warning: incoming artillery barrage!','w');}
-  else if(key==='bb'){T.credits-=P.cash;addStrike(x,y,3,P.r,powLvVal('bb','dmg',L,1500),team,'bb');addStrike(x,y,4.2,P.r,powLvVal('bb','dmg',L,1500),team,'bb');for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+200))log(O.id,'Warning: incoming Bunker Buster!','w');}
+  else if(key==='barrage'){const hq=hqOf(team),sx=hq?hq.x:x-650,sy=hq?hq.y:y-650,nS=Math.max(3,Math.round(powLvVal('barrage','n',L,10)*(P.nm||1)));for(let i=0;i<nS;i++){const a=rnd(0,6.28),r=rnd(0,P.r),tx=x+Math.cos(a)*r,ty=y+Math.sin(a)*r,ft=1.5+i*.3*Math.min(1,10/nS*1.2);addStrike(tx,ty,ft,60,Math.round(230*(P.dm||1)),team,'bar');FXE('bmis',[(sx+rnd(-22,22))|0,(sy+rnd(-22,22))|0,tx|0,ty|0,+ft.toFixed(2),i]);}for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+300))log(O.id,'Warning: incoming artillery barrage!','w');}
+  else if(key==='bb'){const hq=hqOf(team),sx=hq?hq.x:x-650,sy=hq?hq.y:y-650;T.credits-=P.cash;addStrike(x,y,3,P.r,powLvVal('bb','dmg',L,1500),team,'bb');FXE('bmis',[sx|0,sy|0,x|0,y|0,3.0,0]);addStrike(x,y,4.2,P.r,powLvVal('bb','dmg',L,1500),team,'bb');FXE('bmis',[(sx+18)|0,(sy-14)|0,x|0,y|0,4.2,1]);for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+200))log(O.id,'Warning: incoming Bunker Buster!','w');}
   else if(key==='mil'){let sp=(x||y)?[x,y]:militiaSpot(team);if(!sp)return false;sp=supSnap(team,sp[0],sp[1]);if(!sp)return false;
     const mk=(k,n)=>{for(let i=0;i<n;i++){const q=nearestPassXY('ground',sp[0]+rnd(-55,55),sp[1]+rnd(-55,55))||sp;addUnit(team,k,q[0],q[1]);}};mk('inf',powLvVal('mil','n',L,4));mk('at',powLvVal('mil','at',L,1));mk('jeep',powLvVal('mil','jeep',L,0));
     FXE('ping',[sp[0]|0,sp[1]|0,90],team);log(team,`${P0.name} have arrived.`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} called in a militia.`,'w');}
@@ -5464,7 +5464,7 @@ function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
     case 'ping':case 'heal':case 'smoke':case 'halo':return own|visAt(v[1],v[2],+v[3]||0);
     case 'vig':return own;
     case 'strike':return v[5]?255:own|visAt(v[1],v[2],(+v[4]||0)+40);      // superweapon-class warnings are global (alarm + "inbound" log)
-    case 'bmis':return visAt(v[1],v[2],120);                                 // only where the launch is seen: never hands out the silo's position
+    case 'bmis':return visAt(v[1],v[2],160)|visAt(v[3],v[4],240);          // visible both at launch and streaking down onto a visible target
     case 'plane':{const sx=v[1],sy=v[2],tx=v[3],ty=v[4],L=Math.hypot(tx-sx,ty-sy)||1,E=L*6/2.6,n=Math.min(24,Math.ceil(E/200));let m=AM[v[5]]|0;
       for(let i=0;i<=n;i++){const u=i/n*E/L;m|=visAt(sx+(tx-sx)*u,sy+(ty-sy)*u,150);}return m;}   // its whole flight path
     case 'toss':{const e=G.byId.get(v[1]);if(!e||e.dead||!e.vs)return 0;let m=AM[e.team]|0;for(let k=0;k<e.vs.length;k++)if(e.vs[k])m|=1<<k;return m;}

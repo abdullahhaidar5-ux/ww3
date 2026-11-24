@@ -38,7 +38,7 @@
   const loops = Object.create(null);
   const activeVoice = { vox: null, ann: null, shout: null };
   let sfxActive = 0;
-  const SFX_CAP = 36;
+  const SFX_CAP = 44;
 
   // Procedural buffers
   const synths = Object.create(null);
@@ -186,10 +186,15 @@
   function initCtx() {
     if (ctx || !AC) return;
     try {
-      ctx = new AC();
-    } catch (e) {
-      lastErr = 'AC:' + (e && e.message ? e.message : String(e));
-      return;
+      // 'playback' latencyHint gives WebAudio a jitter-free audio buffer under heavy WebGL2 load (zero crackling/chopping!)
+      ctx = new AC({ latencyHint: 'playback' });
+    } catch (_) {
+      try {
+        ctx = new AC();
+      } catch (e) {
+        lastErr = 'AC:' + (e && e.message ? e.message : String(e));
+        return;
+      }
     }
 
     masterGain = ctx.createGain();
@@ -290,19 +295,24 @@
       sfxRevNode.connect(battleGain);
     } catch (_) {}
 
-    // Voice bus
+    // Voice bus (clean high-pass + vocal presence + gentle broadcast compression — crisp, zero muddiness)
     voiceGain = ctx.createGain();
+    const voiceHPF = ctx.createBiquadFilter();
+    voiceHPF.type = 'highpass';
+    voiceHPF.frequency.value = 125;
+    voiceHPF.Q.value = 0.7;
     voiceEQ = ctx.createBiquadFilter();
     voiceEQ.type = 'peaking';
     voiceEQ.frequency.value = 2500;
-    voiceEQ.Q.value = 1.1;
-    voiceEQ.gain.value = 3.2;
+    voiceEQ.Q.value = 1.0;
+    voiceEQ.gain.value = 2.6;
     voiceComp = ctx.createDynamicsCompressor();
-    voiceComp.threshold.value = -13.5;
-    voiceComp.ratio.value = 3.5;
-    voiceComp.attack.value = 0.003;
-    voiceComp.release.value = 0.12;
-    voiceGain.connect(voiceEQ);
+    voiceComp.threshold.value = -14.0;
+    voiceComp.ratio.value = 3.2;
+    voiceComp.attack.value = 0.004;
+    voiceComp.release.value = 0.14;
+    voiceGain.connect(voiceHPF);
+    voiceHPF.connect(voiceEQ);
     voiceEQ.connect(voiceComp);
     voiceComp.connect(masterGain);
 
@@ -956,14 +966,15 @@
     return tryOne(0);
   }
 
-  function playSlice(rel, off, dur, gainLin, rate, pan, busName, slotName) {
+  function playSlice(rel, off, dur, gainLin, rate, pan, busName, slotName, delaySec) {
     if (!unlocked || !ctx) return false;
     const buf = bufs[rel];
     if (!(buf instanceof AudioBuffer)) {
       loadBuf(rel);
       return false;
     }
-    if (busName.startsWith('Sfx') && sfxActive >= SFX_CAP) return false;
+    const isSfx = busName.startsWith('Sfx');
+    if (isSfx && sfxActive >= SFX_CAP) return false;
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
     const src = ctx.createBufferSource();
@@ -972,13 +983,27 @@
     src.playbackRate.value = r;
 
     const g = ctx.createGain();
-    const now = ctx.currentTime;
-    const playDur = Math.max(0.03, Math.min(dur / r, Math.max(0.05, (buf.duration - off) / r)));
+    const delay = Math.max(0, Number(delaySec) || 0);
+    const startAt = ctx.currentTime + delay;
+    const isVoice = busName === 'Voice';
+    // Voice sprite sheets have 120ms silence padding between lines: add a gentle 35ms tail safety margin so MP3 decoder priming never clips the final syllable!
+    const safeOff = Math.max(0, off);
+    const reqDur = isVoice ? (dur + 0.035) : dur;
+    const availDur = Math.max(0.03, buf.duration - safeOff);
+    const sliceDur = Math.max(0.03, Math.min(reqDur, availDur));
+    const playDur = sliceDur / r;
     const lv = Math.max(0.0001, gainLin);
-    g.gain.setValueAtTime(lv, now);
-    if (playDur > 0.06) {
-      g.gain.setValueAtTime(lv, now + playDur - 0.045);
-      g.gain.linearRampToValueAtTime(0.0001, now + playDur);
+
+    // Sample-accurate anti-click attack & release envelope (zero popping or choppy edges!)
+    const fadeIn = isVoice ? Math.min(0.014, playDur * 0.12) : Math.min(0.005, playDur * 0.10);
+    const fadeOut = isVoice ? Math.min(0.055, playDur * 0.25) : Math.min(0.045, playDur * 0.28);
+    g.gain.setValueAtTime(0.0001, startAt);
+    g.gain.linearRampToValueAtTime(lv, startAt + fadeIn);
+    if (playDur > fadeIn + fadeOut + 0.01) {
+      g.gain.setValueAtTime(lv, startAt + playDur - fadeOut);
+      g.gain.linearRampToValueAtTime(0.0001, startAt + playDur);
+    } else {
+      g.gain.linearRampToValueAtTime(0.0001, startAt + playDur);
     }
 
     let dest = sfxGain;
@@ -990,30 +1015,41 @@
 
     if (typeof pan === 'number' && Math.abs(pan) > 0.01 && ctx.createStereoPanner) {
       const pn = ctx.createStereoPanner();
-      pn.pan.value = Math.max(-0.95, Math.min(0.95, pan));
+      pn.pan.value = Math.max(-0.92, Math.min(0.92, pan));
       src.connect(g); g.connect(pn); pn.connect(dest);
     } else {
       src.connect(g); g.connect(dest);
     }
 
+    // Smooth 35ms crossfade-out of previous voice in the same slot (never hard-cut mid-syllable with a pop!)
     if (slotName && activeVoice[slotName]) {
-      try { activeVoice[slotName].stop(); } catch (_) {}
+      const prev = activeVoice[slotName];
+      try {
+        const tCut = ctx.currentTime;
+        if (prev.gain) {
+          prev.gain.gain.cancelScheduledValues(tCut);
+          prev.gain.gain.setTargetAtTime(0.0001, tCut, 0.012);
+        }
+        if (prev.src) prev.src.stop(tCut + 0.045);
+      } catch (_) {}
       activeVoice[slotName] = null;
     }
-    if (slotName) activeVoice[slotName] = src;
+    const entry = { src, gain: g };
+    if (slotName) activeVoice[slotName] = entry;
 
-    if (busName.startsWith('Sfx')) {
+    if (isSfx) {
       sfxActive++;
       src.onended = () => { sfxActive = Math.max(0, sfxActive - 1); };
     } else if (slotName) {
-      src.onended = () => { if (activeVoice[slotName] === src) activeVoice[slotName] = null; };
+      src.onended = () => { if (activeVoice[slotName] === entry) activeVoice[slotName] = null; };
     }
 
     try {
-      src.start(now, Math.max(0, off), Math.max(0.03, dur));
+      src.start(startAt, safeOff, sliceDur);
       return true;
     } catch (_) {
-      if (busName.startsWith('Sfx')) sfxActive = Math.max(0, sfxActive - 1);
+      if (isSfx) sfxActive = Math.max(0, sfxActive - 1);
+      if (slotName && activeVoice[slotName] === entry) activeVoice[slotName] = null;
       return false;
     }
   }
@@ -1046,22 +1082,33 @@
 
   function setLoop(key, rel, gainLin) {
     if (!unlocked || !ctx) return;
+    const now = ctx.currentTime;
     let L = loops[key];
     if (!L) {
-      if (gainLin < 0.01) return;
+      if (gainLin < 0.008) return;
       const buf = bufs[rel];
       if (!(buf instanceof AudioBuffer)) { loadBuf(rel); return; }
       const g = ctx.createGain();
-      g.gain.value = 0.0001;
+      g.gain.setValueAtTime(0.0001, now);
       g.connect(sfxGain);
-      L = { src: null, gain: g, gVal: 0, rel };
+      L = { src: null, gain: g, gVal: 0, rel, silentSince: 0 };
       loops[key] = L;
     }
-    L.gVal += (gainLin - L.gVal) * 0.25;
-    if (L.gVal < 0.004) {
-      if (L.src) { try { L.src.stop(); } catch (_) {} L.src = null; }
+    L.gVal += (gainLin - L.gVal) * 0.22;
+    if (L.gVal < 0.003) {
+      if (L.src) {
+        L.gain.gain.setTargetAtTime(0.0001, now, 0.10);
+        if (!L.silentSince) L.silentSince = now;
+        // Grace period so engines fade silently to zero instead of hard-stopping/clicking
+        if (now - L.silentSince > 0.55) {
+          try { L.src.stop(); } catch (_) {}
+          L.src = null;
+          L.silentSince = 0;
+        }
+      }
       return;
     }
+    L.silentSince = 0;
     if (!L.src) {
       const buf = bufs[rel];
       if (!(buf instanceof AudioBuffer)) return;
@@ -1069,10 +1116,11 @@
       src.buffer = buf;
       src.loop = true;
       src.connect(L.gain);
-      try { src.start(ctx.currentTime, Math.random() * Math.min(2.0, buf.duration * 0.5)); } catch (_) {}
+      L.gain.gain.setValueAtTime(0.0001, now);
+      try { src.start(now, Math.random() * Math.min(2.0, buf.duration * 0.5)); } catch (_) {}
       L.src = src;
     }
-    L.gain.gain.setTargetAtTime(L.gVal, ctx.currentTime, 0.05);
+    L.gain.gain.setTargetAtTime(Math.max(0.0001, L.gVal), now, 0.12);
   }
 
   function stopLoops() {
