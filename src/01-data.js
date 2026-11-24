@@ -128,7 +128,7 @@ const UPLINK={US:['Tomahawk Launch Center','vls'],TR:['Tayfun Missile Base','tel
   CU:['Revolutionary Missile Battery','rock'],RS:['Mountain Rocket Silo','city'],DW:['Long-Range Rocket Yard','rock']};
 /* Battle superweapon (Abdullah 2026-11-13 21:28 "Yes, realistic ones"): ONE Strike Center per nation (the existing 'uplink' building, one system), built late (needs an Airfield), $5000, ~6 minute timer.
    Conventional only - cruise/ballistic missile salvo, carpet-bombing run, heavy rocket barrage, thermobaric strike: weapons of mass destruction do not exist in this game. The salvo count/damage/radius stay each nation's own numbers (equal strength). */
-const SW_CHARGE=360,SW_COST=5000,SW_REQ='airfield';
+const SW_CHARGE=185,SW_COST=2800,SW_REQ='factory';
 const SW_NAME={US:'Tomahawk Cruise-Missile Salvo',GB:'Storm Shadow Cruise-Missile Salvo',FR:'SCALP Cruise-Missile Salvo',DE:'Taurus Cruise-Missile Salvo',IL:'Carpet-Bombing Run',UA:'Neptune Cruise-Missile Salvo',RU:'Thermobaric Strike',CN:'Rocket Force Ballistic Strike',KP:'Hwasong Ballistic Strike',IN:'BrahMos Cruise-Missile Salvo',JP:'Type 12 Cruise-Missile Salvo',KR:'Hyunmoo Ballistic Strike',PK:'Shaheen Ballistic Strike',SA:'Ballistic Missile Strike',AE:'Precision Missile Salvo',TR:'Tayfun Ballistic Strike',EG:'Carpet-Bombing Run',IR:'Heavy Rocket Barrage',RS:'Heavy Rocket Barrage',DW:'Heavy Rocket Barrage',RV:'Heavy Rocket Barrage',OB:'Heavy Rocket Barrage'};
 const ECON={US:'Arms Export Office',TR:'Grand Bazaar',IL:'Tech Startup Hub',EU:'Trade Commission',UA:'Grain Export Terminal',RU:'Gas Pipeline Station',IR:'Saffron Bazaar',
   SA:'Oil Ministry Office',AE:'Free Trade Zone',PK:'Textile Mill',IN:'IT Services Park',CN:'Export Factory',KP:'Overseas Labor Bureau',KR:'Electronics Plant',EG:'Suez Canal Toll House',
@@ -742,7 +742,7 @@ const POWERS={
   bounty:{name:'Cash Bounty',desc:'Earn 15% of the cost of every enemy you destroy',passive:true},
   recon:{name:'Recon Sweep',desc:'Reveal an area for 25 seconds',cd:90,r:450},
   para:{name:'Paradrop',desc:'Drop 5 infantry anywhere on land',cd:150},
-  barrage:{name:'Artillery Barrage',desc:'10 shells over a wide area',cd:170,r:180},
+  barrage:{name:'Artillery Barrage',desc:'Off-map saturation barrage: rains 10-14 arcing rockets/shells across a wide target zone to smash enemy armor, infantry & fortifications',cd:170,r:180},
   repair:{name:'Emergency Repair',desc:'Restore 60% health to your forces in an area',cd:120,r:230},
   flare:{name:'Illumination Flares',desc:'Light up an area for about 30 seconds so everybody can see in it, friend and foe. Made for night battles',cd:60,r:300},
   mil:{name:'Proxy Militia',desc:'Call in local fighters at a spot you pick, near your supply area: riflemen and an RPG team (plus an armed technical at higher levels) arrive under your command',cd:240,r:110},

@@ -218,6 +218,11 @@ function BRIDGE(W) {
           for (const e of G.ents) if (!e.dead && e.team === tm) { e.hp = e.max; if (e.amx > 0) e.am = e.amx; }
         } else if (o.cmd === 'money') {
           const T = G.teams[tm]; if (T) T.credits += (+o.amt || 0);
+        } else if (o.cmd === 'super') {
+          if (typeof _fireSuperStyle === 'function') {
+            G.sid = (G.sid | 0) + 1;
+            _fireSuperStyle(tm, +o.x || 0, +o.y || 0, o.style ? String(o.style) : null);
+          }
         }
       });
       fill();

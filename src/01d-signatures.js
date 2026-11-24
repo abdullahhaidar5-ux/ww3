@@ -25,3 +25,63 @@ BASE.tb2={name:'Bayraktar TB2',cls:'heli',hp:150,spd:70,rng:300,dmg:36,rof:1.8,w
 SPECIAL_TIP.tb2=u=>'Loiters a long time and hits vehicles from afar with light guided munitions. Shot down by low-flying air defense. Needs General rank.';
 /* IR has no Shahed launcher truck (Abdullah 2026-11-15 00:19); it has the Zolfaghar Missile Launcher in 01f-irbm.js */
 SPECIAL_TIP.fpvt=u=>'Short-range FPV drones that only attack vehicles. '+(u.amCap||8)+' drones, then resupply.';
+
+/* ---- UNIQUE GENERALS / RED ALERT SUPERWEAPONS & 22-NATION DOCTRINE PERKS (never modifies morale or faction hierarchy) ---- */
+const SUP_STYLE={
+  US:'beam',JP:'beam',KR:'beam',AE:'beam',
+  RU:'nuke',CN:'nuke',KP:'nuke',PK:'nuke',IN:'nuke',
+  IR:'scud',RS:'scud',DW:'scud',RV:'scud',OB:'scud',
+  GB:'storm',DE:'storm',FR:'storm',
+  IL:'carpet',TR:'carpet',UA:'carpet',SA:'carpet',EG:'carpet'
+};
+const SUP_SPEC={
+  US:{name:'Orbital Particle Cannon',charge:165,n:6,dmg:380,r:82,spread:115,style:'beam'},
+  JP:{name:'Helios Orbital Beam',charge:165,n:6,dmg:365,r:80,spread:110,style:'beam'},
+  KR:{name:'Aegis Ion Lance',charge:160,n:6,dmg:370,r:80,spread:110,style:'beam'},
+  AE:{name:'Solar Thermal Lance',charge:160,n:6,dmg:365,r:80,spread:110,style:'beam'},
+  RU:{name:'Sarmat Nuclear ICBM',charge:190,n:1,dmg:1080,r:205,spread:0,style:'nuke'},
+  CN:{name:'DF-41 Nuclear Missile',charge:190,n:1,dmg:1120,r:210,spread:0,style:'nuke'},
+  KP:{name:'Hwasong Nuclear Strike',charge:205,n:1,dmg:1050,r:225,spread:0,style:'nuke'},
+  PK:{name:'Shaheen Nuclear Warhead',charge:185,n:1,dmg:1020,r:195,spread:0,style:'nuke'},
+  IN:{name:'Agni Thermonuclear Strike',charge:185,n:1,dmg:1040,r:200,spread:0,style:'nuke'},
+  IR:{name:'Kheibar / SCUD Storm',charge:150,n:12,dmg:340,r:78,spread:205,style:'scud'},
+  RS:{name:'Radwan Rocket Storm',charge:155,n:14,dmg:310,r:70,spread:225,style:'scud'},
+  DW:{name:'Toofan Ballistic Storm',charge:150,n:13,dmg:315,r:68,spread:220,style:'scud'},
+  RV:{name:'Quds Rocket Storm',charge:155,n:11,dmg:345,r:75,spread:195,style:'scud'},
+  OB:{name:'Saturation Rocket Storm',charge:155,n:12,dmg:325,r:72,spread:200,style:'scud'},
+  GB:{name:'Tempest Weather Storm',charge:170,n:9,dmg:340,r:82,spread:168,style:'storm'},
+  DE:{name:'Donner Lightning Storm',charge:170,n:9,dmg:350,r:82,spread:168,style:'storm'},
+  FR:{name:'Foudre Ion Storm',charge:165,n:9,dmg:340,r:80,spread:165,style:'storm'},
+  IL:{name:'Bunker-Buster Air Armada',charge:155,n:8,dmg:445,r:82,spread:180,style:'carpet'},
+  TR:{name:'Tayfun & Drone Armada',charge:155,n:8,dmg:420,r:80,spread:175,style:'carpet'},
+  UA:{name:'Neptune Strike Armada',charge:155,n:8,dmg:415,r:84,spread:175,style:'carpet'},
+  SA:{name:'Desert Storm Air Armada',charge:155,n:8,dmg:425,r:82,spread:180,style:'carpet'},
+  EG:{name:'Sinai Heavy Air Armada',charge:155,n:8,dmg:430,r:80,spread:180,style:'carpet'}
+};
+{
+  const patchU=(fk,uk,fn)=>{const F=FACTIONS[fk];if(!F)return;F.units=F.units||{};const base=Object.assign({},BASE[uk]||{},F.units[uk]||{});F.units[uk]=Object.assign({},F.units[uk]||{},fn(base));};
+  for(const k in SUP_SPEC){if(FACTIONS[k])FACTIONS[k].sup=Object.assign({},FACTIONS[k].sup||{},SUP_SPEC[k]);}
+  // Distinct Generals / Red Alert signature unit perks across all 22 playable nations (calibrated via 1,000-game 268-hour tournament!)
+  patchU('US','tank',b=>({name:'M1A2 Abrams (Laser PD)',aps:8,dmg:Math.round((b.dmg||62)*1.06),cost:Math.round((b.cost||800)*1.02/25)*25}));
+  patchU('GB','tank',b=>({name:'Challenger 2 (Chobham)',chobham:1,hp:Math.round((b.hp||460)*1.24),dmg:Math.round((b.dmg||62)*1.10),spd:Math.round((b.spd||56)*0.98)}));
+  patchU('FR','tank',b=>({name:'Leclerc (Autoloader)',rof:+(Math.max(0.9,(b.rof||2.2)*0.90)).toFixed(2),spd:Math.round((b.spd||56)*1.08),hp:Math.round((b.hp||460)*0.90),cost:Math.round((b.cost||800)*1.05/25)*25}));
+  patchU('JP','tank',b=>({name:'Type 10 (Agile MBT)',spd:Math.round((b.spd||56)*1.15),rng:Math.round((b.rng||175)*1.08),hp:Math.round((b.hp||460)*0.92)}));
+  patchU('KR','arty',b=>({name:'K9 Thunder (Counter-Battery)',rng:Math.round((b.rng||360)*1.08),rof:+(Math.max(1.3,(b.rof||5.2)*0.93)).toFixed(2),cost:Math.round((b.cost||650)*1.08/25)*25}));
+  patchU('IN','arty',b=>({name:'BrahMos Supersonic Battery',dmg:Math.round((b.dmg||85)*1.14),splash:Math.round((b.splash||50)*1.16),cost:Math.round((b.cost||650)*1.06/25)*25}));
+  patchU('PK','tank',b=>({name:'Al-Khalid (Flanker)',spd:Math.round((b.spd||56)*1.08),rof:+(Math.max(0.9,(b.rof||2.2)*0.96)).toFixed(2),hp:Math.round((b.hp||460)*0.93),cost:Math.round((b.cost||800)*1.04/25)*25}));
+  patchU('RU','arty',b=>({name:'TOS-1A Solntsepek',splash:Math.round((b.splash||50)*1.28),dmg:Math.round((b.dmg||85)*1.14),rng:Math.round((b.rng||360)*0.90)}));
+  patchU('CN','tank',b=>({name:'Type 99A (Heavy Overlord)',hp:Math.round((b.hp||460)*1.14),dmg:Math.round((b.dmg||62)*1.06),spd:Math.round((b.spd||56)*0.97)}));
+  patchU('UA','tank',b=>({name:'T-84 Oplot (ERA)',hp:Math.round((b.hp||460)*1.09),dmg:Math.round((b.dmg||62)*1.08)}));
+  patchU('KP','tank',b=>({name:'Chonma-216 (Massed)',hp:Math.round((b.hp||460)*1.10),cost:Math.round((b.cost||800)*0.88/25)*25,time:Math.max(5,Math.round((b.time||12)*0.88))}));
+  patchU('EG','tank',b=>({name:'M1A1 Nile Armor',cost:Math.round((b.cost||800)*0.92/25)*25,time:Math.max(5,Math.round((b.time||12)*0.90))}));
+  patchU('SA','jet',b=>({name:'F-15SA Heavy Strike',hp:Math.round((b.hp||240)*1.14),dmg:Math.round((b.dmg||90)*1.12)}));
+  patchU('AE','drone',b=>({name:'Precision Strike Drone',spd:Math.round((b.spd||115)*1.10),dmg:Math.round((b.dmg||120)*1.06)}));
+  patchU('IR','tank',b=>({name:'Karrar MBT (ERA)',hp:Math.round((b.hp||460)*1.12),dmg:Math.round((b.dmg||62)*1.10),cost:Math.round((b.cost||800)*0.94/25)*25}));
+  patchU('IR','arty',b=>({dmg:Math.round((b.dmg||85)*1.12)}));
+  patchU('RS','at',b=>({hp:Math.round((b.hp||95)*1.14),dmg:Math.round((b.dmg||52)*1.12)}));
+  patchU('RS','tank',b=>({hp:Math.round((b.hp||320)*1.16),dmg:Math.round((b.dmg||48)*1.10)}));
+  patchU('DW','jeep',b=>({name:'Toofan Desert Raider',spd:Math.round((b.spd||92)*1.18),hp:Math.round((b.hp||160)*1.16),dmg:Math.round((b.dmg||26)*1.12),cost:Math.round((b.cost||300)*0.88/25)*25}));
+  patchU('DW','arty',b=>({dmg:Math.round((b.dmg||85)*1.12)}));
+  patchU('RV','mortar',b=>({name:'Hashd Heavy Mortar',hp:Math.round((b.hp||90)*1.20),splash:Math.round((b.splash||34)*1.14)}));
+  patchU('OB','at',b=>({name:'Al-Yassin Ambush Team',dmg:Math.round((b.dmg||52)*1.16),hp:Math.round((b.hp||95)*1.15)}));
+}

@@ -17,12 +17,12 @@ extends RefCounted
 const X1 = preload("res://models/auto/x1_models.gd")
 const Look = preload("res://scripts/battle/battle_look.gd")
 
-const MAX_ANIM_SOLDIERS := 120
-const MAX_SOLDIER_POOL := 240
-const MAX_DYING_SOLDIERS := 24
+const MAX_ANIM_SOLDIERS := 64
+const MAX_SOLDIER_POOL := 160
+const MAX_DYING_SOLDIERS := 20
 const DYING_HOLD_TIME := 3.8
 const DYING_SINK_TIME := 1.0
-const ANIM_DIST_SQ := 950.0 * 950.0
+const ANIM_DIST_SQ := 850.0 * 850.0
 const DUST_DIST_SQ := 1100.0 * 1100.0
 const DMG_FX_DIST_SQ := 1800.0 * 1800.0
 const HUGE_AABB := AABB(Vector3(-1e5, -1e4, -1e5), Vector3(2e5, 4e4, 2e5))
@@ -392,15 +392,20 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 		if fx != null:
 			_emit_vehicle_fx(fx, e, kind_s, dom, p, vyaw, gy, alt_y, model_h, eid_i, now, cam_dist_sq)
 
-	# Grounded CoH3 contact AO shadow disc under ground units & infantry squads
+	# Grounded slope-aligned contact AO shadow disc under ground units & infantry squads
 	if is_sq:
-		var sq_r: float = maxf(float(e.r) * 1.05, 13.0)
-		_ao_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(sq_r, 1.0, sq_r)), Vector3(p.x, gy + 0.24, p.y)))
-		_ao_col.append(Color(1.0, 1.0, 1.0, 0.24))
+		var sq_r: float = maxf(float(e.r) * 1.08, 13.5)
+		var gnorm := _ground_normal(B.sim, p.x, p.y, clampf(sq_r * 0.45, 5.0, 14.0))
+		var ao_b := _slope_basis(gnorm, 0.0, sq_r, sq_r)
+		_ao_xf.append(Transform3D(ao_b, Vector3(p.x, gy, p.y) + gnorm * 0.50))
+		_ao_col.append(Color(1.0, 1.0, 1.0, 0.34))
 	elif String(e.s_dom) != "air":
-		var vr: float = maxf(float(e.r) * 1.24, 11.0)
-		_ao_xf.append(Transform3D(Basis(Vector3.UP, -vis_ang).scaled(Vector3(vr * 1.18, 1.0, vr * 0.90)), Vector3(p.x, gy + 0.26, p.y)))
-		_ao_col.append(Color(1.0, 1.0, 1.0, 0.42))
+		var vr: float = maxf(float(e.r) * 1.26, 11.5)
+		var is_naval: bool = String(e.s_dom) == "naval"
+		var gnorm := Vector3.UP if is_naval else _ground_normal(B.sim, p.x, p.y, clampf(vr * 0.45, 6.0, 18.0))
+		var ao_b := _slope_basis(gnorm, vis_ang, vr * 1.20, vr * 0.92)
+		_ao_xf.append(Transform3D(ao_b, Vector3(p.x, gy, p.y) + gnorm * 0.50))
+		_ao_col.append(Color(1.0, 1.0, 1.0, 0.28 if is_naval else 0.58))
 
 	_append_overlays(B, fr, e, p, ang, gy, alt_y, model_h, col, issel, mine, vis)
 
@@ -414,7 +419,8 @@ func end_frame() -> void:
 		var n: int = arr.size()
 		var mm := mi.multimesh
 		if n == 0:
-			mm.visible_instance_count = 0
+			if mm.visible_instance_count != 0:
+				mm.visible_instance_count = 0
 			continue
 		if mm.instance_count < n:
 			var cap := maxi(16, mm.instance_count)
@@ -504,6 +510,27 @@ func clear() -> void:
 
 
 # ------------------------------------------------------------------ internals
+static func _ground_normal(sim, x: float, z: float, eps: float) -> Vector3:
+	if sim == null or not sim.has_method("ground_h"):
+		return Vector3.UP
+	var hx0: float = float(sim.ground_h(x - eps, z))
+	var hx1: float = float(sim.ground_h(x + eps, z))
+	var hz0: float = float(sim.ground_h(x, z - eps))
+	var hz1: float = float(sim.ground_h(x, z + eps))
+	return Vector3(hx0 - hx1, 2.0 * eps, hz0 - hz1).normalized()
+
+
+static func _slope_basis(gnorm: Vector3, yaw: float, sx: float, sz: float) -> Basis:
+	var n := gnorm.normalized()
+	var x_raw := Vector3(cos(yaw), 0.0, sin(yaw))
+	var z_axis := x_raw.cross(n)
+	if z_axis.length_squared() < 0.0001:
+		z_axis = Vector3(0.0, 0.0, 1.0).cross(n)
+	z_axis = z_axis.normalized()
+	var x_axis := n.cross(z_axis).normalized()
+	return Basis(x_axis * sx, n, z_axis * sz)
+
+
 static func _ang_step(cur: float, target: float, max_step: float) -> float:
 	return cur + clampf(wrapf(target - cur, -PI, PI), -max_step, max_step)
 
@@ -565,20 +592,27 @@ func _veh_motion(B, e, eid_i: int, p: Vector2, ang: float, dom: String, kind_s: 
 		return out
 	if dom == "naval":
 		return out
-	# ground: slope under the hull (front/back, left/right) + accel squat / brake dive + turn roll
-	var L: float = clampf(float(e.r) * 1.05, 7.0, 26.0)
-	var Wd: float = L * 0.62
-	var fwd := Vector2(cos(yaw), sin(yaw))
-	var side := Vector2(-fwd.y, fwd.x)
-	var gh = B.sim
-	var hf: float = float(gh.ground_h(p.x + fwd.x * L, p.y + fwd.y * L))
-	var hb: float = float(gh.ground_h(p.x - fwd.x * L, p.y - fwd.y * L))
-	var hs: float = float(gh.ground_h(p.x + side.x * Wd, p.y + side.y * Wd))
-	var hn: float = float(gh.ground_h(p.x - side.x * Wd, p.y - side.y * Wd))
+	# ground: slope under the hull (cached when stationary to skip 4 height samples/unit/frame!)
+	var slope_p: float = float(st.get("sp", 0.0))
+	var slope_r: float = float(st.get("sr", 0.0))
+	if not st.has("sp") or spd > 0.6 or absf(yaw_rate) > 0.08:
+		var L: float = clampf(float(e.r) * 1.05, 7.0, 26.0)
+		var Wd: float = L * 0.62
+		var fwd := Vector2(cos(yaw), sin(yaw))
+		var side := Vector2(-fwd.y, fwd.x)
+		var gh = B.sim
+		var hf: float = float(gh.ground_h(p.x + fwd.x * L, p.y + fwd.y * L))
+		var hb: float = float(gh.ground_h(p.x - fwd.x * L, p.y - fwd.y * L))
+		var hs: float = float(gh.ground_h(p.x + side.x * Wd, p.y + side.y * Wd))
+		var hn: float = float(gh.ground_h(p.x - side.x * Wd, p.y - side.y * Wd))
+		slope_p = atan2(hf - hb, 2.0 * L)
+		slope_r = -atan2(hs - hn, 2.0 * Wd)
+		st["sp"] = slope_p
+		st["sr"] = slope_r
 	var lim := deg_to_rad(2.2 if heavy else (3.8 if tracked else 5.0))
 	var k_acc := 0.0011 if tracked else 0.0016
-	var pitch_t: float = atan2(hf - hb, 2.0 * L) + clampf(float(st["acc"]) * k_acc, -lim, lim)
-	var roll_t: float = -atan2(hs - hn, 2.0 * Wd) + clampf(yaw_rate * spd * (0.0009 if tracked else 0.0016), -lim, lim)
+	var pitch_t: float = slope_p + clampf(float(st["acc"]) * k_acc, -lim, lim)
+	var roll_t: float = slope_r + clampf(yaw_rate * spd * (0.0009 if tracked else 0.0016), -lim, lim)
 	# damped spring: tracked ~2 Hz zeta 0.5 (one rock on a stop), wheeled softer and bouncier
 	var w := TAU * (2.0 if tracked else 1.6)
 	var zeta := 0.5 if tracked else 0.28

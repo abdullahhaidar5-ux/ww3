@@ -15,7 +15,39 @@ const NT := 800           # tracers
 const NR := 24            # rings
 const N_SCORCH := 320
 const N_CRATER := 160
+const N_TRACKS := 480       # persistent armored tank / vehicle tread tracks on snow, sand & mud
 const N_RUBBLE := 48
+const N_MSL := 192          # 3D tactical missiles / ATGMs / SAMs / MLRS rockets / bombs in flight
+const N_BMIS := 32          # 3D strategic ballistic missiles / SCUDs / ICBMs in flight
+
+## Unique Generals / Red Alert inspired superweapon identity per playable nation (visual + audio + HUD identity)
+const SUP_PROFILES := {
+	"US": {style = "beam",   name = "Orbital Particle Cannon",   desc = "Sweeping sky-to-ground ionized orbital laser beam"},
+	"JP": {style = "beam",   name = "Helios Orbital Beam",       desc = "High-energy solar-ion precision beam from orbit"},
+	"KR": {style = "beam",   name = "Aegis Ion Lance",           desc = "Focused high-energy particle lance strike"},
+	"AE": {style = "beam",   name = "Solar Thermal Lance",       desc = "Concentrated orbital thermal beam sweep"},
+	"RU": {style = "nuke",   name = "Sarmat Nuclear Warhead",    desc = "Intercontinental nuclear detonation & fallout cloud"},
+	"CN": {style = "nuke",   name = "DF-41 Nuclear ICBM",        desc = "Heavy strategic nuclear missile with towering mushroom cloud"},
+	"KP": {style = "nuke",   name = "Hwasong Nuclear Strike",    desc = "High-yield nuclear warhead & thermal shockwave"},
+	"PK": {style = "nuke",   name = "Shaheen Nuclear Strike",    desc = "Strategic ballistic nuclear detonation"},
+	"IN": {style = "nuke",   name = "Agni Strategic Warhead",    desc = "High-yield strategic thermonuclear blast"},
+	"IR": {style = "scud",   name = "Fattah / SCUD Storm",       desc = "Saturation barrage of arcing hypersonic ballistic missiles"},
+	"RS": {style = "scud",   name = "Radwan Rocket Storm",       desc = "Massive multi-warhead heavy rocket saturation storm"},
+	"DW": {style = "scud",   name = "Toofan Ballistic Storm",    desc = "Long-range arcing ballistic missile salvo"},
+	"RV": {style = "scud",   name = "Quds Rocket Barrage",       desc = "Heavy saturation rocket storm across the target zone"},
+	"OB": {style = "scud",   name = "Saturation Rocket Storm",   desc = "Dense cascading barrage of heavy rockets"},
+	"GB": {style = "storm",  name = "Tempest Weather Storm",     desc = "Atmospheric ion storm hammering the zone with lightning"},
+	"DE": {style = "storm",  name = "Donner Lightning Storm",    desc = "Weather-control supercell unleashing massive lightning bolts"},
+	"FR": {style = "storm",  name = "Foudre Orbital Storm",      desc = "High-voltage atmospheric lightning barrage"},
+	"IL": {style = "carpet", name = "Bunker-Buster Air Armada",  desc = "Heavy jet formation dropping a rolling fuel-air carpet"},
+	"TR": {style = "carpet", name = "Tayfun & Drone Armada",     desc = "Rolling precision thermobaric carpet strike"},
+	"UA": {style = "carpet", name = "Neptune Strike Armada",     desc = "Low-altitude cruise & drone carpet devastation"},
+	"SA": {style = "carpet", name = "Desert Storm Air Armada",   desc = "Heavy strike armada laying a rolling bomb carpet"},
+	"EG": {style = "carpet", name = "Sinai Heavy Air Armada",    desc = "Rolling fuel-air carpet bombing run across enemy lines"},
+}
+
+static func superweapon_info(fac: String) -> Dictionary:
+	return SUP_PROFILES.get(fac, {style = "scud", name = "Strategic Missile Salvo", desc = "Heavy strategic barrage"})
 const C_SMOKE := Color(.42, .4, .37)
 const C_DARK := Color(.13, .12, .11)
 const C_DUST := Color(.66, .58, .44)
@@ -58,12 +90,21 @@ var bm := PackedFloat32Array(); var ba := PackedFloat32Array(); var bt := Packed
 var hm := 0; var ha := 0; var ht := 0; var hr := 0
 var dm := false; var da := false; var dt_ := false; var dr := false
 var mm_m: MultiMesh; var mm_a: MultiMesh; var mm_t: MultiMesh; var mm_r: MultiMesh
-var mm_scorch: MultiMesh; var mm_crater: MultiMesh; var mm_rubble: MultiMesh
-var n_scorch := 0; var n_crater := 0; var n_rubble := 0
+var mm_scorch: MultiMesh; var mm_crater: MultiMesh; var mm_tracks: MultiMesh; var mm_rubble: MultiMesh
+var mm_msl: MultiMesh; var mm_bmis: MultiMesh
+var _msl_xf: Array[Transform3D] = []
+var _bmis_xf: Array[Transform3D] = []
+var n_scorch := 0; var n_crater := 0; var n_tracks := 0; var n_rubble := 0
 var mats: Array = []
 var lights: Array = []          # [OmniLight3D, energy now, life] explosion lights
 var mlights: Array = []         # muzzle lights
 var wlights: Array = []         # wreck fire lights
+var _beam_rig: Node3D = null    # reusable volumetric Orbital Particle Cannon beam rig
+var _beam_core: MeshInstance3D = null
+var _beam_sheath: MeshInstance3D = null
+var _beam_orb: MeshInstance3D = null
+var _beam_light: OmniLight3D = null
+var _sup_fac_hint: String = "IR" # current firing faction hint for automatic superweapon styling
 var proj: Array = []            # shells / missiles in flight (drawn with particles only, like the browser)
 var emit: Array = []            # smoke columns, ground fires, wreck fires, mushroom stems, flares, collapses
 var later: Array = []           # [time, Callable]
@@ -100,12 +141,62 @@ func setup(map_: Dictionary, tables: Dictionary, env_ = null) -> void:
 	var pl := PlaneMesh.new(); pl.size = Vector2(1, 1)
 	mm_scorch = _pool(pl, N_SCORCH, false, "res://shaders/fx_decal.gdshader", huge, 0, {tex = load("res://tex/fx_scorch.png"), opacity = 1.0})
 	mm_crater = _pool(pl, N_CRATER, false, "res://shaders/fx_decal.gdshader", huge, 1, {tex = load("res://tex/fx_crater.png"), opacity = 0.95})
-	mm_scorch.visible_instance_count = 0; mm_crater.visible_instance_count = 0
+	mm_tracks = _pool(pl, N_TRACKS, false, "res://shaders/fx_decal.gdshader", huge, 0, {tex = load("res://tex/fx_tracks.png"), opacity = 0.56})
+	mm_scorch.visible_instance_count = 0; mm_crater.visible_instance_count = 0; mm_tracks.visible_instance_count = 0
 	_rubble_pool()
-	for i in 6: lights.append([_light(Color("#ffac58"), 380.0), 0.0, 1.0])
-	for i in 3: mlights.append([_light(Color("#ffb864"), 160.0), 0.0, 0.06])
-	for i in 3: wlights.append([_light(Color("#ff8a3a"), 190.0), 0.0, 1.0])
+	_missile_pools(huge)
+	for i in 6: lights.append([_light(Color("#ffac58"), 480.0), 0.0, 1.0])
+	for i in 3: mlights.append([_light(Color("#ffc068"), 190.0), 0.0, 0.07])
+	for i in 3: wlights.append([_light(Color("#ff8430"), 230.0), 0.0, 1.0])
+	_setup_beam_rig()
 	_fow_setup()
+
+func _setup_beam_rig() -> void:
+	_beam_rig = Node3D.new()
+	_beam_rig.name = "ParticleCannonBeam"
+	_beam_rig.visible = false
+	add_child(_beam_rig)
+	var h := 1400.0
+	# Inner blazing white-cyan laser core cylinder
+	var c1 := CylinderMesh.new()
+	c1.top_radius = 5.2; c1.bottom_radius = 6.8; c1.height = h; c1.radial_segments = 16
+	var m1 := StandardMaterial3D.new()
+	m1.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m1.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m1.albedo_color = Color(2.8, 3.8, 4.6, 0.98)
+	m1.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_beam_core = MeshInstance3D.new()
+	_beam_core.mesh = c1; _beam_core.material_override = m1
+	_beam_core.position = Vector3(0, h * 0.5, 0)
+	_beam_core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_beam_rig.add_child(_beam_core)
+	# Outer pulsing ionized blue plasma sheath
+	var c2 := CylinderMesh.new()
+	c2.top_radius = 15.0; c2.bottom_radius = 22.0; c2.height = h; c2.radial_segments = 18
+	var m2 := StandardMaterial3D.new()
+	m2.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m2.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m2.albedo_color = Color(0.32, 0.92, 2.5, 0.48)
+	m2.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_beam_sheath = MeshInstance3D.new()
+	_beam_sheath.mesh = c2; _beam_sheath.material_override = m2
+	_beam_sheath.position = Vector3(0, h * 0.5, 0)
+	_beam_sheath.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_beam_rig.add_child(_beam_sheath)
+	# Blinding ground plasma impact sphere
+	var sp := SphereMesh.new()
+	sp.radius = 22.0; sp.height = 36.0; sp.radial_segments = 16; sp.rings = 10
+	var m3 := StandardMaterial3D.new()
+	m3.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m3.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m3.albedo_color = Color(1.4, 2.8, 4.0, 0.90)
+	_beam_orb = MeshInstance3D.new()
+	_beam_orb.mesh = sp; _beam_orb.material_override = m3
+	_beam_orb.position = Vector3(0, 6.0, 0)
+	_beam_orb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_beam_rig.add_child(_beam_orb)
+	_beam_light = _light(Color("#55d4ff"), 950.0)
+	_beam_light.visible = false
 
 func _pool(mesh: Mesh, n: int, custom: bool, shader: String, aabb: AABB, prio: int, params: Dictionary) -> MultiMesh:
 	var mm := MultiMesh.new()
@@ -234,6 +325,19 @@ func crater(x: float, z: float, size: float) -> void:
 	_decal(mm_crater, n_crater % N_CRATER, x, z, size); n_crater += 1
 	mm_crater.visible_instance_count = mini(n_crater, N_CRATER)
 
+func track(x: float, z: float, ang: float, width: float, length: float) -> void:
+	if mm_tracks == null: return
+	var n := gnorm(x, z)
+	var fwd := Vector3(cos(ang), 0.0, sin(ang))
+	fwd = (fwd - n * fwd.dot(n)).normalized()
+	var right := fwd.cross(n).normalized()
+	var idx := n_tracks % N_TRACKS
+	mm_tracks.set_instance_transform(idx, Transform3D(Basis(right * width, n, fwd * length), Vector3(x, gh(x, z) + 0.55, z)))
+	var tc := Color(0.56, 0.60, 0.66, 0.72) if theme == "snow" else (Color(0.55, 0.45, 0.34, 0.62) if theme == "desert" else Color(0.36, 0.30, 0.22, 0.68))
+	mm_tracks.set_instance_color(idx, tc)
+	n_tracks += 1
+	mm_tracks.visible_instance_count = mini(n_tracks, N_TRACKS)
+
 func _flash_light(pool: Array, p: Vector3, energy: float, rng: float, life: float) -> void:
 	var best = null; var be := 1e9
 	for L in pool:
@@ -270,10 +374,10 @@ func boom(x: float, z: float, s: float, big: bool, h := 0.0) -> void:
 	if s <= 10.0 and not big:
 		for i in 12: partg(true, P + Vector3(0, 2, 0), _dir(R(80, 240), R(70, 210)), R(.28, .68), R(1.2, 2.2), 1.0, C_SPARK, g0, true)
 		part(true, P + Vector3(0, 2, 0), Vector3.ZERO, 0.075, s * 3.0, 0.0, 1.0, Color(4.0, 2.9, 1.6))
-	# Zero Hour Enhanced blinding multi-stage blast core & billowing fireballs
-	part(true, P + Vector3(0, s * 0.35, 0), Vector3.ZERO, 0.11 if big else 0.075, s * 1.45 * wk, 0.0, 0.95, Color(4.4, 3.6, 2.4))
-	for i in (16 if big else (2 if wet else 8)):
-		part(true, P + Vector3(R(-s, s) * 0.32, R(0, s * 0.45), R(-s, s) * 0.32), _dir(R(0, s * 1.5), R(0, s * 1.3)), R(.38, .82), s * R(.25, .44), s * 1.25, 1.0, Color(3.4, 1.45, .34), Color(.62, .14, .03), R(14, 30))
+	# Epic Hollywood blinding multi-stage blast core & billowing incandescent fireballs
+	part(true, P + Vector3(0, s * 0.35, 0), Vector3.ZERO, 0.13 if big else 0.09, s * 1.68 * wk, 0.0, 0.98, Color(5.2, 4.1, 2.4))
+	for i in (18 if big else (2 if wet else 10)):
+		part(true, P + Vector3(R(-s, s) * 0.32, R(0, s * 0.45), R(-s, s) * 0.32), _dir(R(0, s * 1.6), R(0, s * 1.4)), R(.42, .88), s * R(.28, .48), s * 1.35, 1.0, Color(3.8, 1.65, .36), Color(.68, .16, .03), R(16, 34))
 	for i in (4 if wet else mini(24, 8 + int(s / 3.2))):
 		var hk := R(.88, 1.25)
 		part(false, P + Vector3(R(-s, s) * 0.38, R(0, s * 0.55), R(-s, s) * 0.38), _dir(R(0, s * 1.7), R(5, s * 1.1)), R(2.8, 4.6), s * R(.52, .90), s * 0.65, 0.76, Color(3.8 * hk, 1.65 * hk, .42 * hk), C_DARK if i % 2 else Color(.22, .21, .20), R(16, 32))
@@ -289,9 +393,9 @@ func boom(x: float, z: float, s: float, big: bool, h := 0.0) -> void:
 	if gr:
 		var dc: Color = Color(.62, .61, .58) if sf == "hard" else C_DUST
 		if wet: dc = Color(.86, .9, .95)
-		for i in mini(16, 7 + int(s / 3.8)):
-			var a := randf() * TAU; var v := s * R(2.2, 3.8)
-			part(false, P + Vector3(cos(a) * s * 0.3, 2, sin(a) * s * 0.3), Vector3(cos(a) * v, R(2, 11), sin(a) * v), R(1.1, 1.8), s * R(.38, .60), s * 0.55, 0.48, dc)
+		for i in mini(18, 8 + int(s / 3.4)):
+			var a := randf() * TAU; var v := s * R(2.4, 4.2)
+			part(false, P + Vector3(cos(a) * s * 0.28, 2.2, sin(a) * s * 0.28), Vector3(cos(a) * v, R(3, 14), sin(a) * v), R(1.3, 2.2), s * R(.42, .68), s * 0.62, 0.54, dc)
 	for i in (n * 2 if sf == "hard" else (n / 4 if wet else int(n * 1.2))):
 		partg(true, P + Vector3(0, 2, 0), _dir(R(100, 290), R(70, 250)), R(.35, .8), 1.6, 1.0, C_SPARK, g0)
 	if s > 10.0 and not wet:
@@ -304,7 +408,7 @@ func boom(x: float, z: float, s: float, big: bool, h := 0.0) -> void:
 			part(false, P + Vector3(R(-s, s), R(2, s * 0.6), R(-s, s)), _dir(R(2, 16), R(1, 6)), R(6.5, 9.5), s * R(.95, 1.5), s * 0.28, 0.32 if sf == "snow" else 0.42, DC[i % 3], null, R(2, 6), 0.4, KEEP)
 	if grd and s >= 18.0 and not big:
 		for i in 9: partg(false, P + Vector3(0, 3, 0), _dir(R(40, 160), R(120, 320)), R(1.4, 2.5), R(2.2, 4.4), 1.0, Color(.35, .35, .33) if sf == "hard" else Color(.24, .23, .2), g0, true)
-	if (grd and big) or (gr and not wet and s >= 20.0): _emit({k = "col", p = P, life = 18.0 if big else R(8, 11), big = big}, 14)
+	if (grd and big) or (gr and not wet and s >= 16.0): _emit({k = "col", p = P, life = 22.0 if big else R(10.0, 14.0), big = big}, 14)
 	if big and not wet:
 		for i in 12: part(false, P + Vector3(0, s * 0.3, 0), _dir(R(s * 1.5, s * 3.8), R(s * 2, s * 4.8)), R(1.6, 2.8), s * R(.32, .54), s * 0.45, 0.82, C_DARK, null, g0, 0.25, GRAV)
 		for i in 16: partg(false, P + Vector3(0, 4, 0), _dir(R(60, 240), R(140, 360)), R(1.4, 2.8), R(2.2, 4.4), 1.0, C_DARK, g0, true)
@@ -315,6 +419,108 @@ func boom(x: float, z: float, s: float, big: bool, h := 0.0) -> void:
 		_ring(Vector3(x, g0, z), s * 0.45, s * (7.2 if big else 4.6), 0.78 if big else 0.48, Color("#e8d4ae"), 0.72 if big else 0.50, 0.74, 0)
 	if gr and not wet and (s >= 18.0 or big): _emit({k = "fire", p = Vector3(x, g0, z), life = 10.5 if big else R(4.5, 7.0), r = minf(32.0, s * 0.48), big = big}, 12)
 	if grd and (big or s >= 26.0): _megaboom(x, z, g0, s if big else s * 1.5, big)
+
+## Massive Nuclear / Thermobaric Detonation (blinding thermal flash + triple shockwave + 300m towering boiling mushroom cloud!)
+func nuke_strike(x: float, z: float, S: float = 58.0, delay: float = 0.48) -> void:
+	var g0 := gh(x, z)
+	var P := Vector3(x, g0, z)
+	# Blazing descending 3D ICBM plunging from upper sky right before impact -> colossal nuclear detonation!
+	var streak_t := maxf(0.0, delay - 0.56)
+	later.append([t + streak_t, func():
+		var sky_p := Vector3(x - 180.0, g0 + 980.0, z - 135.0)
+		_emit({k = "bmis", p = sky_p, a = sky_p, b = P, life = 0.56, peak = 0.0, last = sky_p, sc = 1.45}, 16)
+		for i in 8:
+			var q := sky_p.lerp(P, float(i) / 8.0)
+			tracer(q, sky_p.lerp(P, float(i + 1) / 8.0), Color(4.0, 3.0, 1.4), 0.45, i * 0.055)])
+	later.append([t + delay, func():
+		var g1 := gh(x, z)
+		var P1 := Vector3(x, g1, z)
+		if env != null:
+			var kd := maxf(0.35, 1.0 - cam_pos.distance_to(P1) / (cam_dist * 3.0 + 900.0))
+			env.shake = minf(34.0, env.shake + 28.0 * kd)
+			env.flash = minf(0.65, env.flash + 0.55)
+		_flash_light(lights, P1 + Vector3(0, 65.0, 0), 18.0, 1600.0, 2.2)
+		# Blinding nuclear fireball core
+		part(true, P1 + Vector3(0, S * 0.6, 0), Vector3.ZERO, 0.28, S * 5.8, 0.0, 1.0, Color(5.2, 4.6, 3.4))
+		part(true, P1 + Vector3(0, S * 0.7, 0), Vector3.ZERO, 0.85, S * 3.6, S * 1.6, 1.0, Color(4.2, 2.2, 0.55), Color(1.6, 0.35, 0.06))
+		# Triple expanding thermal + blast + dust shockwaves
+		_ring(P1, S * 0.8, S * 9.5, 1.25, Color("#fff2cc"), 1.0, 0.88, 1)
+		_ring(P1, S * 0.5, S * 7.2, 0.85, Color("#ff9838"), 0.95, 0.80, 0, 0.08)
+		_ring(P1, S * 0.4, S * 5.6, 1.45, Color("#d4bfa0"), 0.78, 0.72, 0, 0.16)
+		# Sweeping ground Mach stem dust wall
+		for i in 44:
+			var a := i / 44.0 * TAU + R(-0.08, 0.08); var v := S * R(4.8, 6.8)
+			part(false, P1 + Vector3(cos(a) * S * 0.6, 4.0, sin(a) * S * 0.6), Vector3(cos(a) * v, R(6, 28), sin(a) * v), R(3.4, 5.2), S * R(0.6, 0.95), S * 0.7, 0.68, C_DUST if i % 2 else Color(0.76, 0.64, 0.48), null, 2.0, 0.28, KEEP)
+		# Rising superheated fireballs + flying molten debris
+		for i in 24:
+			part(true, P1 + Vector3(R(-S, S) * 0.5, R(S * 0.2, S * 1.4), R(-S, S) * 0.5), _dir(R(0, S * 1.4), R(S * 0.8, S * 2.4)), R(1.1, 2.2), S * R(0.45, 0.82), S * 0.7, 1.0, Color(3.6, 1.45, 0.30), Color(0.55, 0.12, 0.03), R(22, 48))
+		for i in 34:
+			partg(true, P1 + Vector3(0, 6.0, 0), _dir(R(120, 420), R(200, 520)), R(1.3, 2.5), R(2.2, 3.8), 1.0, Color(3.6, 1.8, 0.55), g1, true)
+		_emit({k = "nuke_mush", p = P1, life = 11.0, S = S}, 4)
+		scorch(x, z, S * 4.6); crater(x, z, S * 2.4)])
+
+## C&C Generals Orbital Particle Cannon (sweeping sky-to-ground ionized blue-white laser pillar + plasma vortex!)
+func particle_cannon(x: float, z: float, dur: float = 3.8, rad: float = 85.0) -> void:
+	var g0 := gh(x, z)
+	_ring(Vector3(x, g0, z), rad * 1.15, rad * 0.18, 0.65, Color("#55d8ff"), 0.95, 0.92, 1)
+	later.append([t + 0.55, func():
+		_emit({k = "beam", p = Vector3(x, gh(x, z), z), life = dur, r = rad, sweep_a = randf() * TAU}, 2)])
+
+## C&C Generals SCUD Storm / Ballistic Missile Barrage (8-10 arcing fiery missiles + cascading chemical/fuel-air fireballs!)
+func scud_storm(sx: float, sz: float, tx: float, tz: float, count: int = 9, spread: float = 165.0) -> void:
+	for i in count:
+		var ang := randf() * TAU
+		var rr := sqrt(randf()) * spread
+		var ix := tx + cos(ang) * rr
+		var iz := tz + sin(ang) * rr
+		var flt := 2.4 + i * 0.28
+		later.append([t + i * 0.16, func():
+			_bmis(["bmis", sx + R(-22, 22), sz + R(-22, 22), ix, iz, 2.35, 1])
+			later.append([t + 2.35, func():
+				boom(ix, iz, 34.0, true)
+				# Extra glowing amber-emerald SCUD chemical/fuel-air cloud
+				var gy := gh(ix, iz)
+				for k in 10:
+					part(false, Vector3(ix + R(-24, 24), gy + R(4, 24), iz + R(-24, 24)), _dir(R(15, 55), R(8, 28)), R(3.2, 5.2), R(18, 30), 16.0, 0.58, Color(0.55, 0.68, 0.24), Color(0.24, 0.28, 0.18), R(14, 28), 0.35, KEEP)
+				_ring(Vector3(ix, gy, iz), 14.0, 145.0, 0.72, Color("#c8e858"), 0.78, 0.80, 0)])])
+
+## Red Alert 2 Weather Control / Lightning Storm (swirling dark supercell + 14 sky-to-ground jagged lightning bolts!)
+func lightning_storm(x: float, z: float, dur: float = 4.5, rad: float = 155.0) -> void:
+	_ring(Vector3(x, gh(x, z), z), rad, rad * 0.92, dur, Color("#66a8ff"), 0.65, 0.94, 1)
+	_emit({k = "storm", p = Vector3(x, gh(x, z), z), life = dur, r = rad}, 3)
+
+## Rolling Fuel-Air Carpet Bombing Armada (supersonic jet contrails + rolling line of 9 massive thermobaric blasts!)
+func carpet_bombing(sx: float, sz: float, tx: float, tz: float, count: int = 9) -> void:
+	var dir := Vector2(tx - sx, tz - sz)
+	if dir.length() < 10.0: dir = Vector2(1.0, 0.0)
+	else: dir = dir.normalized()
+	var side := Vector2(-dir.y, dir.x)
+	# 3 jet contrails streaking overhead
+	for ji in [-1, 0, 1]:
+		var off := side * float(ji) * 48.0
+		var a := Vector3(tx - dir.x * 650.0 + off.x, gh(tx, tz) + 175.0, tz - dir.y * 650.0 + off.y)
+		var b := Vector3(tx + dir.x * 650.0 + off.x, gh(tx, tz) + 175.0, tz + dir.y * 650.0 + off.y)
+		for s in 12:
+			var q := a.lerp(b, float(s) / 12.0)
+			later.append([t + s * 0.06, func():
+				part(false, q, Vector3.ZERO, R(3.0, 4.5), R(7, 11), 8.0, 0.62, Color(0.92, 0.94, 0.97), null, 1.5, 0.4, KEEP)])
+	# Rolling 340m fuel-air bomb carpet
+	for i in count:
+		var d := -170.0 + float(i) * (340.0 / maxf(1.0, float(count - 1)))
+		var bx := tx + dir.x * d + R(-22, 22)
+		var bz := tz + dir.y * d + R(-22, 22)
+		later.append([t + 0.55 + i * 0.17, func():
+			boom(bx, bz, 36.0, true)])
+
+## Dispatch the exact unique superweapon visual for any of the 22 nations!
+func fire_faction_superweapon(fac: String, sx: float, sz: float, tx: float, tz: float) -> void:
+	var st := String(superweapon_info(fac).get("style", "scud"))
+	match st:
+		"beam": particle_cannon(tx, tz, 3.8, 90.0)
+		"nuke": nuke_strike(tx, tz, 58.0)
+		"storm": lightning_storm(tx, tz, 4.5, 155.0)
+		"carpet": carpet_bombing(sx, sz, tx, tz, 9)
+		_: scud_storm(sx, sz, tx, tz, 9, 165.0)
 
 ## src/05b-missiles.js megaBoom: the big ones (super weapons, demolition, ammunition going up)
 func _megaboom(x: float, z: float, g0: float, S: float, big: bool) -> void:
@@ -391,6 +597,7 @@ func events(evs: Array) -> void:
 			"flare": _emit({k = "flare", p = Vector3(float(e[1]), gh(float(e[1]), float(e[2])), float(e[2])), r = float(e[3]), life = float(e[4]) if e.size() > 4 else 20.0}, 6)
 			"strike": _strike(e)
 			"bmis": _bmis(e)
+			"sup": _sup_event(e)
 			"plane":
 				var px := float(e[3]); var pz := float(e[4])
 				for i in 5: part(false, Vector3(px + R(-20, 20), gh(px, pz) + 150.0, pz + R(-20, 20)), _dir(R(0, 10), 0), R(2, 3.5), R(6, 10), 6.0, 0.6, Color(.9, .9, .88), null, 2.0, 0.4, KEEP)
@@ -415,7 +622,7 @@ func _tr(e: Array) -> void:
 	var flak := e.size() > 7 and int(e[7]) != 0
 	var a := Vector3(x1, gh(x1, z1) + float(e[3]), z1); var b := Vector3(x2, gh(x2, z2) + float(e[6]), z2)
 	if not _seen(x1, z1) and not _seen(x2, z2): return
-	tracer(a, b, Color(3.8, 1.9, .55) if flak else Color(3.6, 2.3, .85), 0.13 if flak else 0.10)
+	tracer(a, b, Color(4.6, 2.1, .58) if flak else Color(4.3, 2.5, .88), 0.14 if flak else 0.11)
 	if randf() < 0.45: _flash_light(mlights, a, (2.2 if flak else 1.4) * 1.4, 110.0, 0.07)
 	if flak:
 		# "We will defend this airspace!" dramatic AA flak airburst cloud + glowing shrapnel flash
@@ -433,27 +640,33 @@ func _tr(e: Array) -> void:
 func _muz(x: float, z: float, h: float, ang: float, s: float) -> void:
 	if not _seen(x, z): return
 	var g := gh(x, z); var ca := cos(ang); var sa := sin(ang)
-	var P := Vector3(x, g + h, z); var F := Vector3(ca, 0, sa)
+	var P := Vector3(x, g + h, z); var F := Vector3(ca, 0, sa); var S_ax := Vector3(-sa, 0, ca)
 	if s >= 13.0:
-		for i in 10:
-			var b := ang + R(-1.3, 1.3); var v := R(30, 90)
-			part(false, P + F * 4.0 + Vector3(0, R(-1, 2), 0), Vector3(cos(b) * v + ca * 40.0, R(4, 18), sin(b) * v + sa * 40.0), R(1.8, 2.8), R(8, 13), 16.0, 0.62, C_SMOKE if i % 3 else Color(.62, .6, .56), Color(.55, .53, .5), R(6, 14))
+		# Directional propellant smoke jet along barrel axis + muzzle brake side vents
+		for i in 9:
+			var b := ang + R(-0.75, 0.75); var v := R(42, 115)
+			part(false, P + F * R(4.0, 10.0) + Vector3(0, R(-1, 2), 0), Vector3(cos(b) * v + ca * 55.0, R(4, 16), sin(b) * v + sa * 55.0), R(1.8, 2.9), R(7.5, 12.5), 16.0, 0.62, C_SMOKE if i % 3 else Color(.56, .54, .50), Color(.48, .47, .45), R(7, 15))
+		# Grounded radial artillery/tank muzzle blast dust kick-up beneath the barrel
 		for i in 12:
-			var b2 := randf() * TAU; var v2 := R(40, 80)
-			part(false, Vector3(x + cos(b2) * 6.0, g + 1.5, z + sin(b2) * 6.0), Vector3(cos(b2) * v2, R(2, 8), sin(b2) * v2), R(.8, 1.3), R(5, 8), 10.0, 0.35, DUSTC.get(surf(x, z), DUSTC.desert)[i % 3])
-		part(true, P + F * 8.0, Vector3.ZERO, 0.08, s * 1.9, 0.0, 1.0, Color(3.2, 1.8, .6))
-		part(true, P, Vector3.ZERO, 0.06, s * 1.5, 0.0, 1.0, Color(3.2, 2.4, 1.2))
-		part(true, P + F * s * 0.8, Vector3.ZERO, 0.05, s * 1.15, 0.0, 1.0, Color(2.8, 1.5, .5))
-		for sd in [-1.0, 1.0]: part(true, P + Vector3(-sa, 0, ca) * sd * s * 0.45, Vector3.ZERO, 0.045, s * 0.6, 0.0, 1.0, Color(2.8, 1.5, .5))
+			var b2 := randf() * TAU; var v2 := R(45, 92)
+			part(false, Vector3(x + cos(b2) * 6.5, g + 1.5, z + sin(b2) * 6.5), Vector3(cos(b2) * v2, R(2, 9), sin(b2) * v2), R(.9, 1.5), R(5.5, 9.0), 11.0, 0.42, DUSTC.get(surf(x, z), DUSTC.desert)[i % 3])
+		# Snappy directional orange-white HDR cannon blast cone along barrel axis
+		part(true, P, Vector3.ZERO, 0.065, s * 1.75, 0.0, 1.0, Color(5.0, 3.8, 1.9))
+		part(true, P + F * (s * 0.55), F * 35.0, 0.085, s * 2.15, 0.0, 1.0, Color(4.6, 2.5, .78))
+		part(true, P + F * (s * 1.25), F * 55.0, 0.065, s * 1.45, 0.0, 1.0, Color(3.6, 1.7, .48))
+		part(true, P + F * (s * 1.85), F * 65.0, 0.050, s * 0.85, 0.0, 0.95, Color(2.8, 1.15, .30))
+		_ring(Vector3(x, g + 1.0, z), 6.0, s * 3.1, 0.34, Color("#e2d2b0"), 0.48, 0.76, 0)
+		for sd in [-1.0, 1.0]:
+			part(true, P + F * (s * 0.15) + S_ax * sd * s * 0.52, S_ax * sd * 45.0, 0.052, s * 0.75, 0.0, 1.0, Color(3.4, 1.8, .58))
 	else:
-		var L := s * R(.55, .85)
-		part(true, P, Vector3.ZERO, 0.045, s * 1.15, 0.0, 1.0, Color(3, 2.3, 1.2))
-		part(true, P + F * L, Vector3.ZERO, 0.04, s * 0.8, 0.0, 1.0, Color(2.8, 1.5, .5))
-		part(true, P + F * L * 1.9, Vector3.ZERO, 0.035, s * 0.5, 0.0, 1.0, Color(2.2, 1, .3))
-		if s <= 6.0 and randf() < 0.5: part(false, P + F * 3.0, F * R(4, 12) + Vector3(0, R(3, 8), 0), R(.35, .6), R(2, 3), 7.0, 0.32, Color(.6, .59, .56), null, 0.0, 0.25, KEEP)
+		var L := s * R(.60, .90)
+		part(true, P, Vector3.ZERO, 0.042, s * 1.2, 0.0, 1.0, Color(3.8, 2.9, 1.5))
+		part(true, P + F * L, F * 28.0, 0.040, s * 0.85, 0.0, 1.0, Color(3.2, 1.75, .55))
+		part(true, P + F * L * 1.95, F * 38.0, 0.034, s * 0.52, 0.0, 1.0, Color(2.4, 1.05, .30))
+		if s <= 6.0 and randf() < 0.5: part(false, P + F * 3.0, F * R(6, 16) + Vector3(0, R(3, 8), 0), R(.35, .6), R(2, 3), 7.0, 0.32, Color(.58, .57, .54), null, 0.0, 0.25, KEEP)
 	if s > 9.0:
-		_flash_light(mlights, P, (3.0 if s >= 13.0 else 2.2) * 1.4, 200.0 if s >= 13.0 else 150.0, 0.06)
-		for i in 3: part(false, P + F * 5.0, F * R(10, 30) + Vector3(0, R(4, 10), 0), R(.5, .9), R(4, 7), 12.0, 0.5, C_SMOKE)
+		_flash_light(mlights, P, (3.2 if s >= 13.0 else 2.2) * 1.4, 210.0 if s >= 13.0 else 155.0, 0.06)
+		for i in 3: part(false, P + F * 5.0, F * R(14, 38) + Vector3(0, R(4, 10), 0), R(.55, .95), R(4, 7), 12.0, 0.5, C_SMOKE)
 
 func _wname(w) -> String:
 	if w is String: return w
@@ -481,25 +694,55 @@ func _salvo(e: Array) -> void:
 			part(true, b2, Vector3.ZERO, 0.08, 2.2, 0.0, 1.0, C_SPARK)])
 
 func _icpt(sx: float, sz: float, tx: float, tz: float) -> void:
-	var a := Vector3(sx, gh(sx, sz) + 12.0, sz); var b := Vector3(tx, gh(tx, tz) + 210.0, tz)
-	for i in 7: tracer(a, a.lerp(b, (i + 1) / 7.0), Color(2.6, 2.2, 1.4), 0.35, i * 0.07)
-	later.append([t + 0.5, func(): boom(tx, tz, 30.0, true, 210.0)])
+	var a := Vector3(sx, gh(sx, sz) + 12.0, sz); var b := Vector3(tx, gh(tx, tz) + 230.0, tz)
+	# Twin real 3D SAM / Iron Dome sky-defense interceptor missiles streaking upward with contrails
+	var dist := maxf(20.0, a.distance_to(b))
+	var spd := dist / 0.46
+	for k in 2:
+		var off := Vector3((float(k) - 0.5) * 14.0, 0.0, (0.5 - float(k)) * 10.0)
+		proj.append({a = a + off, b = b + off * 0.35, spd = spd, w = "missile", rk = true, len = dist, p = -18.0 * float(k), last = a + off, end = 0.0, sc = 1.55, flat = true})
+	later.append([t + 0.46, func():
+		boom(tx, tz, 34.0, true, 230.0)
+		_ring(b, 12.0, 120.0, 0.65, Color("#ffe8a0"), 0.92, 0.85, 1)])
 
 func _strike(e: Array) -> void:
 	var x := float(e[1]); var z := float(e[2]); var dur := maxf(0.3, float(e[3])); var r := float(e[4])
 	var c := Vector3(x, gh(x, z), z)
-	_ring(c, r, r, dur, Color("#ea3a2c"), 0.8, 0.94, 1)
-	_ring(c, r, r * 0.12, dur, Color("#ff6a3a"), 0.9, 0.9, 1)
+	_ring(c, r, r, dur, Color("#ea3a2c"), 0.85, 0.94, 1)
+	_ring(c, r, r * 0.12, dur, Color("#ff6a3a"), 0.92, 0.90, 1)
+
+## Authoritative faction superweapon event from ww3sim.js: ["sup", style, sx, sz, tx, tz, fac]
+func _sup_event(e: Array) -> void:
+	if e.size() < 6: return
+	var st := String(e[1])
+	var sx := float(e[2]); var sz := float(e[3]); var tx := float(e[4]); var tz := float(e[5])
+	match st:
+		"beam": particle_cannon(tx, tz, 4.0, 92.0)
+		"nuke": nuke_strike(tx, tz, 60.0, 2.75)
+		"storm": lightning_storm(tx, tz, 4.8, 168.0)
+		"carpet": carpet_bombing(sx, sz, tx, tz, 8)
+		"scud":
+			# ww3sim.js emits the arcing bmis missiles directly; layer SCUD emerald-amber chemical clouds & shockwaves at impact!
+			for i in 7:
+				var ang := randf() * TAU; var rr := sqrt(randf()) * 175.0
+				var ix := tx + cos(ang) * rr; var iz := tz + sin(ang) * rr
+				later.append([t + 2.5 + i * 0.28, func():
+					var gy := gh(ix, iz)
+					for k in 9:
+						part(false, Vector3(ix + R(-24, 24), gy + R(4, 24), iz + R(-24, 24)), _dir(R(15, 55), R(8, 28)), R(3.2, 5.2), R(18, 30), 16.0, 0.56, Color(0.55, 0.68, 0.24), Color(0.24, 0.28, 0.18), R(14, 28), 0.35, KEEP)
+					_ring(Vector3(ix, gy, iz), 14.0, 145.0, 0.72, Color("#c8e858"), 0.76, 0.80, 0)])
 
 func _bmis(e: Array) -> void:
-	var a := Vector3(float(e[1]), 0, float(e[2])); a.y = gh(a.x, a.z) + 8.0
+	var a := Vector3(float(e[1]), 0, float(e[2])); a.y = gh(a.x, a.z) + 10.0
 	var b := Vector3(float(e[3]), 0, float(e[4])); b.y = gh(b.x, b.z)
-	var T := clampf(float(e[5]) if e.size() > 5 else 2.0, 1.2, 3.0)
-	_emit({k = "bmis", p = a, a = a, b = b, life = T, peak = clampf(a.distance_to(b) * 0.4, 380.0, 1100.0), last = a}, 12)
-	part(true, a, Vector3.ZERO, 0.14, 30.0, 0.0, 1.0, Color(3.4, 2.6, 1.6))
-	for i in 22: part(false, a, _dir(R(20, 90), R(2, 12)), R(5.5, 9), R(14, 24), 8.0, 0.6, Color(.86, .85, .82), null, 2.0, 0.25, KEEP)
-	for i in 8: partg(true, a, _dir(R(60, 160), R(60, 200)), R(.4, .8), 1.4, 1.0, C_SPARK, a.y - 8.0)
-	_flash_light(lights, a + Vector3(0, 20, 0), 3.4 * 1.6, 320.0, 0.5)
+	var T := clampf(float(e[5]) if e.size() > 5 else 2.2, 1.2, 3.4)
+	_emit({k = "bmis", p = a, a = a, b = b, life = T, peak = clampf(a.distance_to(b) * 0.44, 420.0, 1180.0), last = a}, 16)
+	# Massive roaring launch ignition plume!
+	part(true, a, Vector3.ZERO, 0.24, 46.0, 18.0, 1.0, Color(4.2, 3.0, 1.4))
+	_ring(Vector3(a.x, a.y - 8.0, a.z), 10.0, 90.0, 0.65, Color("#e8d4b0"), 0.78, 0.76, 0)
+	for i in 28: part(false, a, _dir(R(25, 115), R(4, 20)), R(6.0, 10.0), R(16, 28), 10.0, 0.68, Color(.88, .86, .82), null, 3.0, 0.25, KEEP)
+	for i in 14: partg(true, a, _dir(R(70, 190), R(70, 240)), R(.5, 1.0), 2.0, 1.0, C_SPARK, a.y - 10.0)
+	_flash_light(lights, a + Vector3(0, 24, 0), 6.2, 420.0, 0.7)
 
 func _civ(i: int, dead: bool) -> void:
 	var civ: Array = map.get("civ", [])
@@ -607,6 +850,121 @@ func rubble(x: float, z: float, size: float) -> void:
 	scorch(x, z, size * 0.7 * 2.0)
 	_emit({k = "wreck", p = Vector3(x, gh(x, z), z), life = 40.0, big = true, burn = 30.0}, 30)
 
+# ------------------------------------------------------------------ 3D flying missiles (tactical rockets + ballistic SCUD/ICBM)
+static func _missile_basis(dir: Vector3, sc: float) -> Basis:
+	var f := dir.normalized() if dir.length_squared() > 0.0001 else Vector3.FORWARD
+	var up := Vector3.UP if absf(f.y) < 0.96 else Vector3.RIGHT
+	var r := up.cross(f).normalized()
+	var u := f.cross(r).normalized()
+	return Basis(r * sc, u * sc, f * sc)
+
+static func _add_cone_seg(st: SurfaceTool, z0: float, r0: float, z1: float, r1: float, segs: int, col: Color) -> void:
+	for i in segs:
+		var a0 := float(i) / float(segs) * TAU
+		var a1 := float(i + 1) / float(segs) * TAU
+		var c0 := cos(a0); var s0 := sin(a0); var c1 := cos(a1); var s1 := sin(a1)
+		var p00 := Vector3(c0 * r0, s0 * r0, z0); var p10 := Vector3(c1 * r0, s1 * r0, z0)
+		var p01 := Vector3(c0 * r1, s0 * r1, z1); var p11 := Vector3(c1 * r1, s1 * r1, z1)
+		var dz := maxf(0.001, z1 - z0); var dr := r0 - r1
+		var n0 := Vector3(c0 * dz, s0 * dz, dr).normalized()
+		var n1 := Vector3(c1 * dz, s1 * dz, dr).normalized()
+		if r0 > 0.001:
+			st.set_color(col); st.set_normal(n0); st.add_vertex(p00)
+			st.set_color(col); st.set_normal(n0); st.add_vertex(p01)
+			st.set_color(col); st.set_normal(n1); st.add_vertex(p10)
+		if r1 > 0.001:
+			st.set_color(col); st.set_normal(n1); st.add_vertex(p10)
+			st.set_color(col); st.set_normal(n0); st.add_vertex(p01)
+			st.set_color(col); st.set_normal(n1); st.add_vertex(p11)
+
+static func _add_fin(st: SurfaceTool, ang: float, z_back: float, z_front: float, r_in: float, r_out: float, thick: float, col: Color) -> void:
+	var ca := cos(ang); var sa := sin(ang)
+	var rad := Vector3(ca, sa, 0.0); var tan_v := Vector3(-sa, ca, 0.0) * (thick * 0.5)
+	var b0 := rad * r_in + Vector3(0, 0, z_back); var b1 := rad * r_out + Vector3(0, 0, z_back)
+	var f0 := rad * r_in + Vector3(0, 0, z_front); var f1 := rad * r_out + Vector3(0, 0, lerpf(z_back, z_front, 0.58))
+	for s_i in 2:
+		var side: float = -1.0 if s_i == 0 else 1.0
+		var off: Vector3 = tan_v * side
+		var n: Vector3 = Vector3(-sa, ca, 0.0) * side
+		var q0: Vector3 = b0 + off; var q1: Vector3 = b1 + off; var q2: Vector3 = f1 + off; var q3: Vector3 = f0 + off
+		if side > 0.0:
+			st.set_color(col); st.set_normal(n); st.add_vertex(q0); st.set_color(col); st.set_normal(n); st.add_vertex(q1); st.set_color(col); st.set_normal(n); st.add_vertex(q2)
+			st.set_color(col); st.set_normal(n); st.add_vertex(q0); st.set_color(col); st.set_normal(n); st.add_vertex(q2); st.set_color(col); st.set_normal(n); st.add_vertex(q3)
+		else:
+			st.set_color(col); st.set_normal(n); st.add_vertex(q0); st.set_color(col); st.set_normal(n); st.add_vertex(q2); st.set_color(col); st.set_normal(n); st.add_vertex(q1)
+			st.set_color(col); st.set_normal(n); st.add_vertex(q0); st.set_color(col); st.set_normal(n); st.add_vertex(q3); st.set_color(col); st.set_normal(n); st.add_vertex(q2)
+
+static func _build_missile_mesh(body_r: float, body_l: float, nose_l: float, fin_r: float, flame_l: float, body_col: Color, nose_col: Color) -> ArrayMesh:
+	var half := body_l * 0.5
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var dark_band := Color(0.20, 0.21, 0.23)
+	var fin_col := Color(0.26, 0.28, 0.30)
+	# Rear nozzle shroud -> rear fuselage -> dark guidance band -> forward fuselage -> sharp crimson warhead nosecone
+	_add_cone_seg(st, -half - body_r * 0.7, body_r * 0.72, -half, body_r, 8, dark_band)
+	_add_cone_seg(st, -half, body_r, half * 0.15, body_r, 8, body_col)
+	_add_cone_seg(st, half * 0.15, body_r * 1.02, half * 0.42, body_r * 1.02, 8, dark_band)
+	_add_cone_seg(st, half * 0.42, body_r, half, body_r, 8, body_col)
+	_add_cone_seg(st, half, body_r, half + nose_l * 0.55, body_r * 0.55, 8, nose_col)
+	_add_cone_seg(st, half + nose_l * 0.55, body_r * 0.55, half + nose_l, 0.0, 8, nose_col)
+	# 4 swept tail stabilizer fins + 4 forward control canards
+	for fi in 4:
+		var ang := float(fi) * PI * 0.5 + PI * 0.25
+		_add_fin(st, ang, -half - body_r * 0.35, -half + body_l * 0.28, body_r * 0.85, fin_r, body_r * 0.28, fin_col)
+		_add_fin(st, ang, half * 0.45, half * 0.82, body_r * 0.85, fin_r * 0.62, body_r * 0.22, dark_band)
+	var mesh := st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.38
+	mat.metallic = 0.32
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mesh.surface_set_material(0, mat)
+	# Surface 1: incandescent 3D rocket motor exhaust plume cone attached cleanly to the tail nozzle
+	if flame_l > 0.1:
+		var fst := SurfaceTool.new()
+		fst.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var nz := -half - body_r * 0.6
+		_add_cone_seg(fst, nz - flame_l, 0.0, nz - flame_l * 0.25, body_r * 0.88, 6, Color(1.0, 0.58, 0.16))
+		_add_cone_seg(fst, nz - flame_l * 0.25, body_r * 0.88, nz, body_r * 0.55, 6, Color(1.0, 0.92, 0.62))
+		fst.commit(mesh)
+		var fmat := StandardMaterial3D.new()
+		fmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		fmat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		fmat.vertex_color_use_as_albedo = true
+		fmat.albedo_color = Color(3.6, 2.2, 0.9, 0.95)
+		fmat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		mesh.surface_set_material(1, fmat)
+	return mesh
+
+func _missile_pools(huge: AABB) -> void:
+	# Tactical 3D missile/rocket (ATGM, SAM, MLRS, heli rocket, cruise missile)
+	var m_tac := _build_missile_mesh(0.95, 10.5, 4.2, 2.75, 6.2, Color(0.84, 0.86, 0.82), Color(0.86, 0.24, 0.14))
+	mm_msl = MultiMesh.new()
+	mm_msl.transform_format = MultiMesh.TRANSFORM_3D
+	mm_msl.mesh = m_tac
+	mm_msl.instance_count = N_MSL
+	mm_msl.visible_instance_count = 0
+	var mi1 := MultiMeshInstance3D.new()
+	mi1.multimesh = mm_msl
+	mi1.custom_aabb = huge
+	mi1.extra_cull_margin = 16384.0
+	mi1.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi1)
+	# Strategic 3D ballistic missile / SCUD / Fattah / DF-41 / ICBM
+	var m_bal := _build_missile_mesh(2.35, 26.0, 10.5, 6.4, 17.0, Color(0.86, 0.87, 0.83), Color(0.88, 0.20, 0.12))
+	mm_bmis = MultiMesh.new()
+	mm_bmis.transform_format = MultiMesh.TRANSFORM_3D
+	mm_bmis.mesh = m_bal
+	mm_bmis.instance_count = N_BMIS
+	mm_bmis.visible_instance_count = 0
+	var mi2 := MultiMeshInstance3D.new()
+	mi2.multimesh = mm_bmis
+	mi2.custom_aabb = huge
+	mi2.extra_cull_margin = 16384.0
+	mi2.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi2)
+
 # ------------------------------------------------------------------ things that keep going
 func _emit(d: Dictionary, cap: int) -> void:
 	var n := 0; var oldest := -1
@@ -632,30 +990,32 @@ func _emit_tick(dt: float) -> void:
 		var vis := _seen(P.x, P.z)
 		match String(e.k):
 			"col":
-				e.acc += dt * (9.0 if e.big else 5.0) * (0.35 + 0.65 * lf)
+				# Signature Systemic War / Sudden Strike 5 tall drifting dark grey-black battle smoke column
+				e.acc += dt * (7.5 if e.big else 4.2) * (0.35 + 0.65 * lf)
 				while e.acc >= 1.0:
 					e.acc -= 1.0
-					if vis: part(false, P + Vector3(R(-6, 6), R(4, 12), R(-6, 6)), _dir(R(0, 8), R(4, 10)), R(5, 7.5), R(12, 18), R(12, 18), 0.5 * lf + 0.15, C_DARK, C_SMOKE, R(28, 42), 0.4, KEEP)
+					if vis: part(false, P + Vector3(R(-6, 6), R(4, 12), R(-6, 6)), _dir(R(0, 7), R(6, 12)), R(6.5, 9.5), R(13, 20), R(14, 20), 0.58 * lf + 0.16, Color(.09, .09, .09), Color(.32, .31, .30), R(36, 54), 0.42, KEEP)
 			"fire":
-				e.acc += dt * (16.0 if e.big else 9.0) * (0.4 + 0.6 * lf)
+				e.acc += dt * (14.0 if e.big else 8.5) * (0.4 + 0.6 * lf)
 				while e.acc >= 1.0:
 					e.acc -= 1.0
 					if not vis: continue
 					var a := randf() * TAU; var q: float = sqrt(randf()) * float(e.r)
 					var fp := Vector3(P.x + cos(a) * q, 0, P.z + sin(a) * q); fp.y = gh(fp.x, fp.z) + 2.0
-					if randf() < 0.75: part(true, fp, Vector3(R(-4, 4), R(8, 22), R(-4, 4)), R(.35, .7), R(5, 9), -4.0, 1.0, Color(2.6, 1.2, .3), Color(.8, .2, .05), R(14, 30))
-					else: part(false, fp + Vector3(0, 6, 0), Vector3(R(-4, 4), R(6, 14), R(-4, 4)), R(2, 4.5), R(8, 13), 8.0, 0.45, C_DARK, C_SMOKE, R(20, 34), 0.4, KEEP)
+					if randf() < 0.72: part(true, fp, Vector3(R(-4, 4), R(8, 22), R(-4, 4)), R(.35, .7), R(5.5, 9.5), -4.0, 1.0, Color(3.2, 1.45, .34), Color(.85, .18, .04), R(14, 30))
+					else: part(false, fp + Vector3(0, 6, 0), Vector3(R(-4, 4), R(7, 15), R(-4, 4)), R(3.8, 6.2), R(9, 15), 11.0, 0.54, Color(.10, .10, .10), Color(.32, .31, .30), R(28, 44), 0.42, KEEP)
 			"wreck":
 				var big: bool = e.big
-				var burn: float = float(e.get("burn", 30.0 if big else 24.0))
+				var burn: float = float(e.get("burn", 32.0 if big else 26.0))
 				var fade := clampf(lf * 2.0, 0.0, 1.0)
 				e.acc += dt
 				if vis:
-					if randf() < dt * (7.0 if big else 4.5): part(false, P + Vector3(R(-4, 4), R(6, 12), R(-4, 4)), Vector3(R(-3, 3), 4, R(-3, 3)), R(5, 7), R(7, 11), R(9, 12), 0.4 * fade + 0.08, C_DARK, Color(.44, .42, .39), R(34, 48), 0.4, KEEP)
+					# Tall, thick drifting oil-black smoke column rising from burning tank wrecks & destroyed structures
+					if randf() < dt * (6.2 if big else 4.2): part(false, P + Vector3(R(-4, 4), R(6, 12), R(-4, 4)), Vector3(R(-3, 3), 6, R(-3, 3)), R(6.5, 9.5), R(8.5, 13.5), R(11, 15), 0.56 * fade + 0.14, Color(.08, .08, .08), Color(.28, .27, .26), R(38, 56), 0.42, KEEP)
 					if e.t < burn:
-						for n in int(dt * (14.0 if big else 10.0) + randf()): part(true, P + Vector3(R(-7, 7), R(2, 9), R(-7, 7)), Vector3(R(-3, 3), R(8, 20), R(-3, 3)), R(.35, .7), R(4, 8), -3.0, 1.0, Color(2.6, 1.2, .3), Color(.8, .2, .05), R(12, 26))
+						for n in int(dt * (12.0 if big else 9.0) + randf()): part(true, P + Vector3(R(-7, 7), R(2, 9), R(-7, 7)), Vector3(R(-3, 3), R(9, 22), R(-3, 3)), R(.35, .7), R(4.5, 8.5), -3.0, 1.0, Color(3.2, 1.45, .34), Color(.85, .18, .04), R(14, 28))
 						if randf() < dt * 2.0: partg(true, P + Vector3(0, 6, 0), _dir(R(20, 70), R(60, 160)), R(.4, .9), 1.0, 1.0, C_SPARK, P.y)
-						if randf() < dt * 3.0: part(true, P + Vector3(0, 3, 0), Vector3.ZERO, 0.5, 30.0 if big else 20.0, 0.0, 0.5 if (env != null and env.night == 2) else 0.16, Color(1.5, .55, .14))
+						if randf() < dt * 3.0: part(true, P + Vector3(0, 3, 0), Vector3.ZERO, 0.5, 32.0 if big else 22.0, 0.0, 0.52 if (env != null and env.night == 2) else 0.18, Color(1.7, .62, .16))
 				if e.t < burn and wl < wlights.size() and cam_pos.distance_to(P) < cam_dist * 2.5:
 					var L: Array = wlights[wl]; wl += 1
 					(L[0] as OmniLight3D).position = P + Vector3(0, 14, 0)
@@ -682,20 +1042,120 @@ func _emit_tick(dt: float) -> void:
 			"bmis":
 				var u := clampf(e.t / e.life, 0.0, 1.0)
 				var A: Vector3 = e.a; var B: Vector3 = e.b
-				var pos := A.lerp(B, u) + Vector3(0, sin(u * PI) * float(e.peak), 0)
+				var pk: float = float(e.peak)
+				var pos := A.lerp(B, u) + Vector3(0, sin(u * PI) * pk, 0)
+				var tang := (B - A) + Vector3(0.0, cos(u * PI) * PI * pk, 0.0)
+				var fdir := tang.normalized() if tang.length_squared() > 0.001 else Vector3.UP
+				var bsc: float = float(e.get("sc", 1.15))
+				if _bmis_xf.size() < N_BMIS:
+					_bmis_xf.append(Transform3D(_missile_basis(fdir, bsc), pos))
+				var tail := pos - fdir * (14.5 * bsc)
 				var last: Vector3 = e.last
-				var dd := last.distance_to(pos)
-				var steps := int(dd / 13.0)
+				var dd := last.distance_to(tail)
+				var steps := mini(10, int(dd / 11.0))
 				for n in steps:
-					var q2 := last.lerp(pos, (n + 1.0) / steps)
-					part(false, q2, _dir(R(0, 6), R(-2, 4)), R(5.5, 8.5), R(5, 8), 5.0, 0.6, Color(.9, .9, .88), null, 1.0, 0.4, KEEP)
-					part(true, q2, Vector3.ZERO, 0.16, R(8, 11), 0.0, 1.0, Color(3, 1.6, .5))
-				if steps > 0: e.last = pos
-				part(true, pos, Vector3.ZERO, 0.05, 7.0 if u < 0.7 else 12.0, 0.0, 1.0, Color(3.2, 2.8, 1.8))
+					var q2 := last.lerp(tail, (n + 1.0) / float(steps))
+					part(false, q2, _dir(R(0, 8), R(-2, 5)), R(7.0, 11.0), R(8, 13), 7.5, 0.72, Color(.93, .92, .89), null, 1.5, 0.42, KEEP)
+					part(true, q2, Vector3.ZERO, 0.22, R(12, 18), 0.0, 1.0, Color(4.0, 2.0, .55))
+				if steps > 0: e.last = tail
+				part(true, tail, Vector3.ZERO, 0.08, 16.0 if u < 0.7 else 22.0, 0.0, 1.0, Color(4.6, 3.6, 2.0))
+			"nuke_mush":
+				# Colossal 3-stage boiling Nuclear Mushroom Cloud (300m fiery stem + glowing torus ring + billowing fallout cap!)
+				var S2: float = e.S
+				var u2 := clampf(e.t / e.life, 0.0, 1.0)
+				var stem_h := S2 * 5.2 * minf(1.0, u2 * 2.2)
+				# Boiling incandescent stem rising skyward
+				for n in int(dt * 24.0 * (1.0 - u2 * 0.55) + randf()):
+					var sy := stem_h * R(0.05, 0.95)
+					var sr := S2 * lerpf(0.55, 0.28, sy / maxf(1.0, stem_h))
+					var ang_s := randf() * TAU
+					var sp := P + Vector3(cos(ang_s) * sr * R(0.2, 1.0), sy, sin(ang_s) * sr * R(0.2, 1.0))
+					if u2 < 0.55 and randf() < 0.45:
+						part(true, sp, Vector3(R(-8, 8), R(22, 48), R(-8, 8)), R(1.2, 2.4), S2 * R(0.45, 0.75), S2 * 0.22, 0.95, Color(3.4, 1.35, 0.28), Color(0.55, 0.14, 0.04), R(18, 36))
+					else:
+						part(false, sp, _dir(R(0, S2 * 0.28), R(16, 36)), R(5.0, 8.5), S2 * R(0.55, 0.92), S2 * 0.20, 0.68 * (1.0 - u2 * 0.4), C_DARK, C_SMOKE, R(16, 30), 0.42, KEEP)
+				# Towering incandescent mushroom torus cap at top of stem
+				if u2 > 0.16:
+					var cap_r := S2 * lerpf(0.7, 2.15, clampf((u2 - 0.16) * 1.4, 0.0, 1.0))
+					for n in int(dt * 28.0 * (1.0 - u2 * 0.35) + randf()):
+						var a_c := randf() * TAU
+						var cp := P + Vector3(cos(a_c) * cap_r * R(0.45, 1.05), stem_h + R(-S2 * 0.45, S2 * 0.55), sin(a_c) * cap_r * R(0.45, 1.05))
+						if u2 < 0.65 and randf() < 0.42:
+							part(true, cp, Vector3(cos(a_c) * 24.0, R(6, 22), sin(a_c) * 24.0), R(1.4, 2.6), S2 * R(0.65, 1.15), S2 * 0.18, 0.92, Color(3.6, 1.55, 0.35), Color(0.45, 0.12, 0.03), R(4, 14))
+						else:
+							part(false, cp, Vector3(cos(a_c) * R(10, 32), R(-4, 14), sin(a_c) * R(10, 32)), R(6.5, 10.5), S2 * R(0.85, 1.45), S2 * 0.18, 0.72 * (1.0 - u2 * 0.3), C_DARK if n % 3 else Color(0.36, 0.22, 0.14), C_SMOKE, R(3, 10), 0.42, KEEP)
+			"beam":
+				# Sweeping C&C Generals Orbital Particle Cannon Beam!
+				var u3 := clampf(e.t / e.life, 0.0, 1.0)
+				var env_w := minf(1.0, u3 * 8.0) * minf(1.0, (1.0 - u3) * 6.0)
+				var ang_b: float = float(e.sweep_a) + e.t * 1.35
+				var sweep_r: float = float(e.r) * 0.42 * sin(u3 * PI)
+				var bx := P.x + cos(ang_b) * sweep_r
+				var bz := P.z + sin(ang_b) * sweep_r
+				var by := gh(bx, bz)
+				var bp := Vector3(bx, by, bz)
+				if _beam_rig != null:
+					_beam_rig.visible = true
+					_beam_rig.position = bp
+					var pulse := 0.88 + 0.24 * sin(t * 36.0)
+					_beam_core.scale = Vector3(env_w * pulse, 1.0, env_w * pulse)
+					_beam_sheath.scale = Vector3(env_w * (1.0 + 0.18 * cos(t * 24.0)), 1.0, env_w * (1.0 + 0.18 * cos(t * 24.0)))
+					_beam_orb.scale = Vector3.ONE * (env_w * pulse * 1.15)
+				if _beam_light != null:
+					_beam_light.visible = true
+					_beam_light.position = bp + Vector3(0, 42.0, 0)
+					_beam_light.light_energy = 14.0 * env_w
+				if env != null:
+					env.shake = maxf(env.shake, 5.5 * env_w)
+				# Swirling blue plasma ground vortex, ionized sparks & periodic shockwaves
+				for n in int(dt * 42.0 + randf()):
+					part(true, bp + Vector3(R(-18, 18), R(2, 16), R(-18, 18)), _dir(R(45, 160), R(30, 150)), R(0.35, 0.85), R(3.0, 7.5), 4.0, 1.0, Color(1.2, 2.8, 4.2), Color(0.25, 0.65, 1.8), R(24, 65))
+				for n in int(dt * 16.0 + randf()):
+					part(false, bp + Vector3(R(-16, 16), 3.0, R(-16, 16)), _dir(R(35, 110), R(8, 28)), R(1.6, 2.8), R(10, 18), 12.0, 0.52, Color(0.32, 0.42, 0.52), C_SMOKE, R(12, 24), 0.35, KEEP)
+				e.acc += dt
+				if e.acc >= 0.28:
+					e.acc = 0.0
+					_ring(bp, 8.0, float(e.r) * 1.15, 0.55, Color("#66e0ff"), 0.88, 0.84, 1)
+					scorch(bx, bz, 36.0)
+			"storm":
+				# Red Alert 2 Weather Control Supercell Lightning Storm!
+				var rad_s: float = float(e.r)
+				# Swirling dark thunderhead cloud deck 260m overhead
+				for n in int(dt * 18.0 + randf()):
+					var a_st := randf() * TAU; var rr_st := sqrt(randf()) * rad_s
+					part(false, Vector3(P.x + cos(a_st) * rr_st, P.y + R(220, 290), P.z + sin(a_st) * rr_st), Vector3(-sin(a_st) * 38.0, R(-4, 6), cos(a_st) * 38.0), R(2.2, 3.6), R(38, 65), 14.0, 0.58, Color(0.10, 0.13, 0.20), Color(0.18, 0.22, 0.30), 0.0, 0.4, KEEP)
+				e.acc += dt
+				if e.acc >= 0.26:
+					e.acc = 0.0
+					var ab := randf() * TAU; var rb := sqrt(randf()) * rad_s * 0.92
+					var lx := P.x + cos(ab) * rb; var lz := P.z + sin(ab) * rb
+					var ly := gh(lx, lz)
+					var prev_v := Vector3(lx + R(-30, 30), ly + 275.0, lz + R(-30, 30))
+					# 7-segment jagged sky-to-ground electric bolt!
+					for seg in 7:
+						var f_s := float(seg + 1) / 7.0
+						var jit := (1.0 - f_s) * 28.0
+						var nxt_v := Vector3(lx + R(-jit, jit), lerpf(ly + 275.0, ly + 2.0, f_s), lz + R(-jit, jit))
+						tracer(prev_v, nxt_v, Color(1.8, 3.2, 5.0), 0.22)
+						prev_v = nxt_v
+					var lp := Vector3(lx, ly, lz)
+					_flash_light(lights, lp + Vector3(0, 48.0, 0), 12.0, 620.0, 0.24)
+					if env != null: env.flash = minf(0.35, env.flash + 0.12); env.shake = minf(20.0, env.shake + 6.5)
+					part(true, lp + Vector3(0, 10.0, 0), Vector3.ZERO, 0.14, 38.0, 0.0, 1.0, Color(2.2, 3.6, 5.0))
+					for spk in 16:
+						partg(true, lp + Vector3(0, 4.0, 0), _dir(R(80, 260), R(90, 260)), R(0.35, 0.8), R(1.8, 3.2), 1.0, Color(1.4, 2.8, 4.8), ly, true)
+					_ring(lp, 8.0, 88.0, 0.48, Color("#70d0ff"), 0.92, 0.82, 1)
+					scorch(lx, lz, 42.0)
 		i -= 1
 	for L in wlights:
 		var l: OmniLight3D = L[0]
 		l.light_energy = L[1]; l.visible = L[1] > 0.01
+	var beam_on := false
+	for ee in emit:
+		if String(ee.k) == "beam": beam_on = true; break
+	if not beam_on:
+		if _beam_rig != null: _beam_rig.visible = false
+		if _beam_light != null: _beam_light.visible = false
 
 func _proj_tick(dt: float) -> void:
 	var i := proj.size() - 1
@@ -708,17 +1168,44 @@ func _proj_tick(dt: float) -> void:
 		var A: Vector3 = p.a; var B: Vector3 = p.b
 		var pos := A.lerp(B, k)
 		var w: String = p.w
-		if w == "shell": pos.y += sin(k * PI) * p.len * 0.22
-		if _seen(pos.x, pos.z):
-			if w == "at" or w == "missile" or p.rk:
-				if randf() < 0.5: part(true, pos, Vector3.ZERO, 0.04, 2.6, 0.0, 0.7, C_FIRE)
-				for n in 2: part(false, (p.last as Vector3).lerp(pos, randf()), _dir(R(0, 5), R(0, 4)), R(1.6, 2.6), R(3, 5), 9.0, 0.55, Color(.88, .87, .84), null, 1.0, 0.3, KEEP)
+		var is_msl: bool = (w == "at" or w == "missile" or p.rk)
+		var arc_h := 0.0
+		if w == "shell":
+			arc_h = p.len * 0.22
+			pos.y += sin(k * PI) * arc_h
+		elif is_msl and not bool(p.get("flat", false)):
+			# Graceful tactical loft arc for MLRS / SAM / cruise missiles vs flat skimming ATGM/RPG
+			if w == "missile" or p.rk:
+				if absf(B.y - A.y) < 42.0:
+					arc_h = clampf(p.len * 0.11, 8.0, 78.0)
+					pos.y += sin(k * PI) * arc_h
+			else:
+				arc_h = clampf(p.len * 0.025, 1.5, 9.0)
+				pos.y += sin(k * PI) * arc_h
+		var dir := pos - (p.last as Vector3)
+		if dir.length_squared() < 0.01:
+			dir = (B - A) + Vector3(0.0, cos(k * PI) * PI * arc_h, 0.0)
+		var fdir := dir.normalized() if dir.length_squared() > 0.0001 else Vector3.FORWARD
+		if _seen(pos.x, pos.z, 1.8):
+			if is_msl:
+				var msc: float = float(p.get("sc", 1.48 if (w == "missile" or p.rk) else 1.18))
+				if _msl_xf.size() < N_MSL:
+					_msl_xf.append(Transform3D(_missile_basis(fdir, msc), pos))
+				var tail := pos - fdir * (6.2 * msc)
+				part(true, tail, Vector3.ZERO, 0.055, 4.4 * msc, 0.0, 0.95, Color(4.4, 2.3, 0.65))
+				var seg_last: Vector3 = (p.last as Vector3) - fdir * (4.0 * msc)
+				for n in 2:
+					part(false, seg_last.lerp(tail, (float(n) + 0.5) * 0.5), _dir(R(0, 5), R(0, 4)), R(2.0, 3.2), R(3.6, 5.8), 9.5, 0.62, Color(.92, .91, .88), null, 1.2, 0.34, KEEP)
 			elif w == "shell":
-				part(true, pos, Vector3.ZERO, 0.04, 3.0, 0.0, 1.0, C_FIRE)
-				if randf() < 0.6: part(false, pos, Vector3.ZERO, R(.8, 1.3), R(1.6, 2.4), 3.5, 0.32, Color(.7, .68, .65), null, 0.0, 0.25, KEEP)
+				part(true, pos, Vector3.ZERO, 0.05, 3.6, 0.0, 1.0, Color(4.4, 2.4, 0.75))
+				tracer(p.last, pos, Color(4.0, 2.2, 0.75), 0.13)
+				if randf() < 0.75: part(false, pos, Vector3.ZERO, R(.9, 1.5), R(2.0, 3.0), 4.0, 0.38, Color(.76, .74, .70), null, 0.0, 0.25, KEEP)
 			elif w == "torp":
 				if randf() < 0.7: part(false, Vector3(pos.x, gh(pos.x, pos.z) + 1.5, pos.z), Vector3.ZERO, R(.9, 1.5), R(3, 5), 2.0, 0.6, Color(.92, .96, 1), null, 0.0, 0.25, KEEP)
-			elif w == "bomb": part(false, pos, Vector3.ZERO, 0.04, 3.0, 0.0, 1.0, C_DARK, null, 0.0, 0.25, KEEP)
+			elif w == "bomb":
+				if _msl_xf.size() < N_MSL:
+					_msl_xf.append(Transform3D(_missile_basis(fdir, 1.25), pos))
+				part(false, pos, Vector3.ZERO, 0.16, 3.2, 0.0, 0.55, C_DARK, null, 0.0, 0.25, KEEP)
 			else:
 				part(true, pos, Vector3.ZERO, 0.04, 2.6, 0.0, 1.0, C_FIRE2)
 				tracer(p.last, pos, Color(1.6, 1.2, .7), 0.07)
@@ -753,26 +1240,33 @@ func _ents(ent: PackedFloat32Array) -> void:
 				var sz := ent[o + 15]
 				for pi in pts:
 					var fp := Vector3(x + sin(ent_i * 1.7 + pi * 2.1) * sz * 0.3, y + sz * 0.35, z + cos(ent_i * 2.3 + pi * 1.3) * sz * 0.3)
-					for k in int(share / 30.0 * 16.0 + randf()): part(true, fp + Vector3(R(-5, 5), R(0, 6), R(-5, 5)), Vector3(R(-3, 3), R(8, 20), R(-3, 3)), R(.35, .7), R(7, 13), -4.0, 1.0, Color(2.6, 1.2, .3), Color(.8, .2, .05), R(14, 28))
-					for k in int(share / 30.0 * 5.0 + randf()): part(false, fp + Vector3(0, 8, 0), Vector3(R(-4, 4), 6, R(-4, 4)), R(2.8, 3.8), R(7, 11), 9.0, 0.5, C_DARK, C_SMOKE, R(26, 40), 0.4, KEEP)
+					for k in int(share / 30.0 * 14.0 + randf()): part(true, fp + Vector3(R(-5, 5), R(0, 6), R(-5, 5)), Vector3(R(-3, 3), R(9, 22), R(-3, 3)), R(.35, .7), R(7, 13), -4.0, 1.0, Color(3.2, 1.45, .34), Color(.85, .18, .04), R(15, 30))
+					for k in int(share / 30.0 * 4.2 + randf()): part(false, fp + Vector3(0, 8, 0), Vector3(R(-4, 4), 7, R(-4, 4)), R(5.2, 7.8), R(9, 14), 12.0, 0.58, Color(.09, .09, .09), Color(.30, .29, .28), R(34, 52), 0.42, KEEP)
 			continue
 		var cls := _kind_class(int(ent[o + 1]))
 		if cls == "inf": continue
 		if hp < 0.75:
-			var rate := 7.0 if hp < 0.25 else (2.6 if hp < 0.5 else 0.8)
-			if cls == "air" or cls == "drone": rate = 24.0 if hp < 0.25 else (13.0 if hp < 0.5 else 4.0)
+			var rate := 5.6 if hp < 0.25 else (2.4 if hp < 0.5 else 0.8)
+			if cls == "air" or cls == "drone": rate = 20.0 if hp < 0.25 else (11.0 if hp < 0.5 else 4.0)
 			for k in int(share / 30.0 * rate + randf()):
-				part(false, Vector3(x + R(-3, 3), y + R(6, 10), z + R(-3, 3)), Vector3(R(-3, 3), 4, R(-3, 3)), R(1.4, 2.6), R(3, 5) if hp < 0.5 else R(1.8, 2.8), 6.0, 0.5, C_DARK if hp < 0.5 else C_SMOKE, C_SMOKE, R(16, 28), 0.4, KEEP)
-				if hp < 0.25 and randf() < 0.55: part(true, Vector3(x + R(-3, 3), y + R(5, 9), z + R(-3, 3)), Vector3(0, R(6, 14), 0), R(.3, .6), R(3, 5), -2.0, 1.0, Color(2.6, 1.2, .3), Color(.8, .2, .05), R(10, 20))
-		if cls == "veh" and not raining and dust < 28:
+				var heavy_dmg := hp < 0.5
+				part(false, Vector3(x + R(-3, 3), y + R(6, 10), z + R(-3, 3)), Vector3(R(-3, 3), 5.5, R(-3, 3)), R(3.6, 5.8) if heavy_dmg else R(2.2, 3.6), R(4.8, 7.8) if heavy_dmg else R(2.6, 4.2), 9.0 if heavy_dmg else 6.5, 0.60 if heavy_dmg else 0.44, Color(.09, .09, .09) if heavy_dmg else C_SMOKE, Color(.28, .27, .26), R(28, 44) if heavy_dmg else R(20, 32), 0.42, KEEP)
+				if hp < 0.25 and randf() < 0.58: part(true, Vector3(x + R(-3, 3), y + R(5, 9), z + R(-3, 3)), Vector3(0, R(7, 16), 0), R(.32, .62), R(3.5, 6.0), -2.0, 1.0, Color(3.2, 1.45, .34), Color(.85, .18, .04), R(12, 22))
+		if cls == "veh" and dust < 28:
 			var spd := ent[o + 13]
-			if spd >= 0.3 and surf(x, z) != "water":
-				var k2 := clampf((spd - 0.3) / 0.45, 0.0, 1.0)
+			var sf_v := surf(x, z)
+			if spd >= 0.3 and sf_v != "water":
 				var ang := ent[o + 6]
-				var DC: Array = DUSTC.get(surf(x, z), DUSTC.desert)
-				for k in int(share / 30.0 * 16.0 * amp * k2 + randf()):
-					dust += 1
-					part(false, Vector3(x - cos(ang) * 10.0 + R(-5, 5), y + R(1, 4), z - sin(ang) * 10.0 + R(-5, 5)), Vector3(R(-6, 6), R(2, 7), R(-6, 6)), R(2.2, 3.4), R(7, 10), R(9, 14), 0.26 if theme == "snow" else 0.46, DC[k % 3], null, R(1, 4), 0.4, KEEP)
+				# Stamp persistent dual armored tread marks on snow, sand & mud (CoH3 lived-in battlefield!)
+				if sf_v != "hard" and randf() < 0.55:
+					var tw := clampf(ent[o + 15] * 1.15, 11.0, 22.0)
+					track(x - cos(ang) * 7.0, z - sin(ang) * 7.0, ang, tw, tw * 1.35)
+				if not raining:
+					var k2 := clampf((spd - 0.3) / 0.45, 0.0, 1.0)
+					var DC: Array = DUSTC.get(sf_v, DUSTC.desert)
+					for k in int(share / 30.0 * 16.0 * amp * k2 + randf()):
+						dust += 1
+						part(false, Vector3(x - cos(ang) * 10.0 + R(-5, 5), y + R(1, 4), z - sin(ang) * 10.0 + R(-5, 5)), Vector3(R(-6, 6), R(2, 7), R(-6, 6)), R(2.2, 3.4), R(7, 10), R(9, 14), 0.26 if theme == "snow" else 0.46, DC[k % 3], null, R(1, 4), 0.4, KEEP)
 
 # ------------------------------------------------------------------ per frame
 func tick(dt: float, cam: Camera3D) -> void:
@@ -790,8 +1284,22 @@ func tick(dt: float, cam: Camera3D) -> void:
 			later.remove_at(li)
 			f.call()
 		li -= 1
+	_msl_xf.clear()
+	_bmis_xf.clear()
 	_proj_tick(dt)
 	_emit_tick(dt)
+	if mm_msl != null:
+		var mn := _msl_xf.size()
+		if mn > 0 or mm_msl.visible_instance_count != 0:
+			mm_msl.visible_instance_count = mn
+			for mi_i in mn:
+				mm_msl.set_instance_transform(mi_i, _msl_xf[mi_i])
+	if mm_bmis != null:
+		var bn := _bmis_xf.size()
+		if bn > 0 or mm_bmis.visible_instance_count != 0:
+			mm_bmis.visible_instance_count = bn
+			for bi_i in bn:
+				mm_bmis.set_instance_transform(bi_i, _bmis_xf[bi_i])
 	for pool in [lights, mlights]:
 		for L in pool:
 			if L[1] <= 0.0: continue
@@ -807,7 +1315,7 @@ func tick(dt: float, cam: Camera3D) -> void:
 	for m in mats:
 		(m as ShaderMaterial).set_shader_parameter("fx_time", t)
 	(mats[0] as ShaderMaterial).set_shader_parameter("amb", amb)
-	(mats[4] as ShaderMaterial).set_shader_parameter("light", amb); (mats[5] as ShaderMaterial).set_shader_parameter("light", amb)
+	(mats[4] as ShaderMaterial).set_shader_parameter("light", amb); (mats[5] as ShaderMaterial).set_shader_parameter("light", amb); (mats[6] as ShaderMaterial).set_shader_parameter("light", amb)
 
 # ------------------------------------------------------------------ fog of war
 func _fow_setup() -> void:

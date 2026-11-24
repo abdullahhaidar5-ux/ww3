@@ -39,6 +39,8 @@ const C_BLD_EMBER2 := Color(1.0, 0.35, 0.08)
 static var _meta_cache: Dictionary = {} # "fac|kind" -> {ok, pack, pxf, h, scale}
 static var _box_cache: Dictionary = {}  # int_size -> Mesh
 static var _civ_mesh_cache: Dictionary = {} # "theme|variant" -> ArrayMesh
+static var _flag_pole_mesh: Mesh = null
+static var _flag_mesh_cache: Dictionary = {} # fac -> ArrayMesh with waving flag shader + real PNG flag texture
 
 var env = null          # LookEnv instance
 var fx = null           # LookFx Node3D instance
@@ -57,6 +59,8 @@ var _fog_next: float = 0.0
 var _last_lgv: int = -1
 var _lines_cache: Dictionary = {}
 var _shake_phase: float = 0.0
+var _terrain_mat: ShaderMaterial = null
+var _last_wet: float = -1.0
 
 
 func setup(host: Node3D, sim, map: Dictionary, opts: Dictionary = {}) -> void:
@@ -99,33 +103,24 @@ func setup(host: Node3D, sim, map: Dictionary, opts: Dictionary = {}) -> void:
 
 
 func _setup_base_pads(th: String) -> void:
-	# Grounded C&C Generals concrete/gravel military compound apron under every base building
+	# Grounded C&C Generals weathered poured-concrete military compound apron under every base building
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var c_edge := Color(0.32, 0.31, 0.28)
-	var c_slab := Color(0.46, 0.44, 0.40)
-	var c_trim := Color(0.58, 0.52, 0.34)
+	var c_edge := Color(0.45, 0.42, 0.36)
+	var c_slab := Color(0.56, 0.54, 0.49)
+	var c_trim := Color(0.76, 0.63, 0.26)
 	if th == "snow":
-		c_edge = Color(0.36, 0.39, 0.44); c_slab = Color(0.50, 0.53, 0.57)
+		c_edge = Color(0.48, 0.52, 0.58); c_slab = Color(0.60, 0.64, 0.69)
 	elif th == "green":
-		c_edge = Color(0.28, 0.30, 0.26); c_slab = Color(0.40, 0.40, 0.38)
-	# Outer compacted bevel skirt + inner poured military concrete pad + corner hazard stripes
-	_civ_box(st, Vector3(0.0, 0.14, 0.0), Vector3(2.35, 0.28, 2.35), c_edge)
-	_civ_box(st, Vector3(0.0, 0.26, 0.0), Vector3(2.08, 0.24, 2.08), c_slab)
+		c_edge = Color(0.40, 0.42, 0.38); c_slab = Color(0.52, 0.53, 0.49)
+	# Deepened compacted concrete bevel skirt (height 1.6 extending below ground pivot so downhill corners never float on slopes) + inner motorpool slab + corner hazard pads
+	_civ_box(st, Vector3(0.0, -0.56, 0.0), Vector3(2.36, 1.60, 2.36), c_edge)
+	_civ_box(st, Vector3(0.0, 0.04, 0.0), Vector3(2.08, 0.56, 2.08), c_slab)
 	for sx in [-0.94, 0.94]:
 		for sz in [-0.94, 0.94]:
-			_civ_box(st, Vector3(sx, 0.39, sz), Vector3(0.24, 0.04, 0.24), c_trim)
+			_civ_box(st, Vector3(sx, 0.33, sz), Vector3(0.24, 0.04, 0.24), c_trim)
 	var m := st.commit()
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.vertex_color_is_srgb = true
-	mat.albedo_color = Color.WHITE
-	mat.roughness = 0.88
-	mat.metallic = 0.04
-	if ResourceLoader.exists("res://tex/road_nrm.png"):
-		mat.normal_enabled = true
-		mat.normal_texture = load("res://tex/road_nrm.png")
-		mat.normal_scale = 0.45
+	var mat := _make_pbr_mat(0.86, 0.04)
 	m.surface_set_material(0, mat)
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -204,10 +199,15 @@ func tick(dt: float, cam: Camera3D, show_supply: bool) -> void:
 	_shake_phase += dt * 47.0
 	if env != null:
 		env.tick(dt, cam)
-		if _host != null:
-			var tm := _host.get_node_or_null("TerrainMesh")
-			if tm is MeshInstance3D and (tm as MeshInstance3D).material_override is ShaderMaterial:
-				((tm as MeshInstance3D).material_override as ShaderMaterial).set_shader_parameter("wetness", float(env.wet))
+		var wet_now := float(env.wet)
+		if absf(wet_now - _last_wet) > 0.005:
+			_last_wet = wet_now
+			if _terrain_mat == null and _host != null:
+				var tm := _host.get_node_or_null("TerrainMesh")
+				if tm is MeshInstance3D and (tm as MeshInstance3D).material_override is ShaderMaterial:
+					_terrain_mat = (tm as MeshInstance3D).material_override as ShaderMaterial
+			if _terrain_mat != null:
+				_terrain_mat.set_shader_parameter("wetness", wet_now)
 	if fx != null:
 		fx.tick(dt, cam)
 		fx.show_lines(show_supply)
@@ -265,9 +265,13 @@ func draw_bld(B, fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Col
 	var eid_f: float = float(e.id)
 	var aim_ang: float = float(e.tang) if absf(float(e.tang)) > 0.0001 else float(e.ang)
 
+	var has_hero_flag: bool = kind_s in ["hq", "barracks", "factory", "uplink", "airfield", "depot", "radar", "tech", "fort", "super", "shipyard"]
 	var root_xf := Transform3D(Basis.IDENTITY.scaled(Vector3(sc, sc, sc)), Vector3(p.x, gy - sink, p.y))
 	for pk in parts.keys():
 		var pks := String(pk)
+		# Skip static baked flag on buildings that fly the animated 3D waving flag_wave.gdshader pole
+		if pks == "flag" and has_hero_flag:
+			continue
 		var pt: Transform3D = pxf.get(pks, Transform3D.IDENTITY)
 		var part_xf: Transform3D
 		match pks:
@@ -284,15 +288,93 @@ func draw_bld(B, fr: Dictionary, e, fac: String, p: Vector2, gy: float, col: Col
 				part_xf = root_xf * pt
 		_push_mm("b|" + fac + "|" + kind_s + "|" + pks, parts[pk] as Mesh, part_xf)
 
-	# Grounded CoH3/Zero Hour concrete military compound pad + contact AO shadow disc beneath building footprint
+	# Grounded concrete military compound pad + slope-aligned contact AO shadow disc beneath building footprint
 	var pad_r: float = maxf(float(e.r) * 0.96, 18.0)
-	_pad_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(pad_r, 1.0, pad_r)), Vector3(p.x, gy + 0.04, p.y)))
-	var ao_r: float = maxf(float(e.r) * 1.24, 22.0)
-	_ao_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(ao_r, 1.0, ao_r)), Vector3(p.x, gy + 0.36, p.y)))
-	_ao_col.append(Color(1.0, 1.0, 1.0, 0.38 * maxf(0.25, built)))
+	_pad_xf.append(Transform3D(Basis.IDENTITY.scaled(Vector3(pad_r, 1.0, pad_r)), Vector3(p.x, gy + 0.02, p.y)))
+	var ao_r: float = maxf(float(e.r) * 1.26, 22.0)
+	var gnorm := _ground_normal(B.sim, p.x, p.y, clampf(ao_r * 0.45, 8.0, 24.0))
+	var ao_b := _slope_basis(gnorm, 0.0, ao_r, ao_r)
+	_ao_xf.append(Transform3D(ao_b, Vector3(p.x, gy, p.y) + gnorm * 0.50))
+	_ao_col.append(Color(1.0, 1.0, 1.0, 0.54 * maxf(0.25, built)))
+
+	# Heroic waving 3D faction flag (Hezbollah, Iran, US, Russia, etc.) flying over HQ, Barracks, War Factory & Strike Center!
+	if built >= 0.95 and has_hero_flag:
+		var fscale := 1.15 if (kind_s == "hq" or kind_s == "uplink") else 0.88
+		var off_r := maxf(float(e.r) * 0.78, 22.0)
+		_push_faction_flag(fac, Vector3(p.x + off_r, gy, p.y - off_r * 0.45), fscale, now, eid_f)
 
 	_emit_bld_damage_fx(B, e, p, gy, h, now)
 	_append_bld_overlays(B, fr, e, p, gy, h, col, issel, mine)
+
+
+static func _get_flag_pole_mesh() -> Mesh:
+	if _flag_pole_mesh != null:
+		return _flag_pole_mesh
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# Brushed steel mast + golden finial sphere + concrete plinth
+	_civ_box(st, Vector3(0.0, 1.2, 0.0), Vector3(3.6, 2.4, 3.6), Color(0.38, 0.37, 0.35))
+	_civ_box(st, Vector3(0.0, 26.0, 0.0), Vector3(1.1, 50.0, 1.1), Color(0.72, 0.74, 0.76))
+	_civ_box(st, Vector3(0.0, 51.6, 0.0), Vector3(2.2, 2.2, 2.2), Color(0.92, 0.76, 0.28))
+	var m := st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.roughness = 0.45
+	mat.metallic = 0.55
+	m.surface_set_material(0, mat)
+	_flag_pole_mesh = m
+	return _flag_pole_mesh
+
+
+static func _get_faction_flag_mesh(fac: String) -> Mesh:
+	var fk := fac.to_upper()
+	if _flag_mesh_cache.has(fk):
+		return _flag_mesh_cache[fk]
+	var fp := "res://ui/icons/flags/%s.png" % fk
+	if not ResourceLoader.exists(fp):
+		_flag_mesh_cache[fk] = null
+		return null
+	var tex: Texture2D = load(fp)
+	if tex == null:
+		_flag_mesh_cache[fk] = null
+		return null
+	# 10x4 subdivided waving cloth rectangle anchored at x=0 (pole) spanning x=[0..27], y=[33..50]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var nx := 10; var ny := 4
+	var w := 27.0; var h := 17.5; var y0 := 33.2
+	for ix in nx:
+		var u0 := float(ix) / float(nx); var u1 := float(ix + 1) / float(nx)
+		var x0 := u0 * w; var x1 := u1 * w
+		for iy in ny:
+			var v0 := float(iy) / float(ny); var v1 := float(iy + 1) / float(ny)
+			var yy0 := y0 + (1.0 - v0) * h; var yy1 := y0 + (1.0 - v1) * h
+			st.set_normal(Vector3(0, 0, 1))
+			st.set_uv(Vector2(u0, v0)); st.add_vertex(Vector3(x0, yy0, 0.0))
+			st.set_uv(Vector2(u1, v0)); st.add_vertex(Vector3(x1, yy0, 0.0))
+			st.set_uv(Vector2(u0, v1)); st.add_vertex(Vector3(x0, yy1, 0.0))
+			st.set_uv(Vector2(u1, v0)); st.add_vertex(Vector3(x1, yy0, 0.0))
+			st.set_uv(Vector2(u1, v1)); st.add_vertex(Vector3(x1, yy1, 0.0))
+			st.set_uv(Vector2(u0, v1)); st.add_vertex(Vector3(x0, yy1, 0.0))
+	var m := st.commit()
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/flag_wave.gdshader")
+	mat.set_shader_parameter("flag_tex", tex)
+	m.surface_set_material(0, mat)
+	_flag_mesh_cache[fk] = m
+	return m
+
+
+func _push_faction_flag(fac: String, pos: Vector3, sc: float, now: float, phase: float) -> void:
+	var fm := _get_faction_flag_mesh(fac)
+	if fm == null:
+		return
+	var pole_xf := Transform3D(Basis.IDENTITY.scaled(Vector3(sc, sc, sc)), pos)
+	_push_mm("flag|pole", _get_flag_pole_mesh(), pole_xf)
+	var wind_yaw := 0.35 + sin(now * 0.45 + phase) * 0.16
+	var flag_xf := Transform3D(Basis(Vector3.UP, wind_yaw).scaled(Vector3(sc, sc, sc)), pos)
+	_push_mm("flag|tex|" + fac.to_upper(), fm, flag_xf)
 
 
 func draw_map_objects(B, fr: Dictionary) -> void:
@@ -316,9 +398,12 @@ func draw_map_objects(B, fr: Dictionary) -> void:
 			var parts: Dictionary = pack.get("parts", {})
 			var pxf: Dictionary = meta["pxf"]
 			var owned: bool = int(o.owner) >= 0
+			var has_cap_flag: bool = owned and int(o.owner) < B.sim.teams.size()
 			var root_xf := Transform3D(Basis.IDENTITY.scaled(Vector3(sc, sc, sc)), Vector3(ox, oy, oz))
 			for pk in parts.keys():
 				var pks := String(pk)
+				if pks == "flag" and has_cap_flag:
+					continue
 				var pt: Transform3D = pxf.get(pks, Transform3D.IDENTITY)
 				var part_xf: Transform3D
 				if key == "derrick" and pks == "arm":
@@ -346,6 +431,8 @@ func draw_map_objects(B, fr: Dictionary) -> void:
 			oc = B.COL_ME
 		elif int(o.owner) >= 0:
 			oc = B.COL_ALLY if B.sim.ally(int(B.me), int(o.owner)) else B.COL_EN
+		if int(o.owner) >= 0 and int(o.owner) < B.sim.teams.size():
+			_push_faction_flag(str(B.sim.teams[int(o.owner)].fac), Vector3(ox + 22.0, oy, oz - 14.0), 0.92, now, ox * 0.03)
 		rings.append([Vector3(ox, oy + 1.0, oz), 34.0, oc])
 
 	# Supply piles: keep existing crate visuals (delegated to battle.gd's crate MultiMesh when available)
@@ -485,6 +572,27 @@ func clear() -> void:
 
 
 # ------------------------------------------------------------------ internals
+static func _ground_normal(sim, x: float, z: float, eps: float) -> Vector3:
+	if sim == null or not sim.has_method("ground_h"):
+		return Vector3.UP
+	var hx0: float = float(sim.ground_h(x - eps, z))
+	var hx1: float = float(sim.ground_h(x + eps, z))
+	var hz0: float = float(sim.ground_h(x, z - eps))
+	var hz1: float = float(sim.ground_h(x, z + eps))
+	return Vector3(hx0 - hx1, 2.0 * eps, hz0 - hz1).normalized()
+
+
+static func _slope_basis(gnorm: Vector3, yaw: float, sx: float, sz: float) -> Basis:
+	var n := gnorm.normalized()
+	var x_raw := Vector3(cos(yaw), 0.0, sin(yaw))
+	var z_axis := x_raw.cross(n)
+	if z_axis.length_squared() < 0.0001:
+		z_axis = Vector3(0.0, 0.0, 1.0).cross(n)
+	z_axis = z_axis.normalized()
+	var x_axis := n.cross(z_axis).normalized()
+	return Basis(x_axis * sx, n, z_axis * sz)
+
+
 func _emit_bld_damage_fx(B, e, p: Vector2, gy: float, h: float, now: float) -> void:
 	if fx == null or float(e.built) < 1.0 or float(e.max) <= 0.0:
 		return
@@ -819,7 +927,7 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 				for wz in [-7.0, 7.0]:
 					_civ_box(st_win, Vector3(15.15, row_y, wz), Vector3(0.4, 4.6, 4.2), c_win)
 					_civ_box(st_win, Vector3(-15.15, row_y, wz), Vector3(0.4, 4.6, 4.2), c_win)
-			_civ_box(st_win, Vector3(0.0, 7.2, 14.18), Vector3(5.2, 8.8, 0.45), c_door)
+			_civ_box(st_roof, Vector3(0.0, 7.2, 14.18), Vector3(5.2, 8.8, 0.45), c_door)
 		else:
 			# Stepped ochre terrace compound with dusty yard pad, side annex & roof shade pergola
 			var c_yard := Color(0.48, 0.42, 0.32)
@@ -855,7 +963,7 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 					_civ_box(st_win, Vector3(-16.15, row_y, wz), Vector3(0.4, 4.6, 4.2), c_win)
 			_civ_box(st_win, Vector3(11.0, 10.0, 12.15), Vector3(4.2, 4.6, 0.4), c_win)
 			_civ_box(st_win, Vector3(17.15, 10.0, 1.0), Vector3(0.4, 4.6, 4.6), c_win)
-			_civ_box(st_win, Vector3(-5.0, 6.8, 13.18), Vector3(4.8, 8.2, 0.45), c_door)
+			_civ_box(st_roof, Vector3(-5.0, 6.8, 13.18), Vector3(4.8, 8.2, 0.45), c_door)
 	else:
 		# Temperate ("green") or Winter ("snow") pitched-roof stone/plaster village houses with grounded stone yard & perimeter wall
 		var is_snow := th == "snow"
@@ -884,7 +992,7 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 				for wz in [-6.5, 6.5]:
 					_civ_box(st_win, Vector3(15.15, row_y, wz), Vector3(0.4, 4.2, 3.8), c_win)
 					_civ_box(st_win, Vector3(-15.15, row_y, wz), Vector3(0.4, 4.2, 3.8), c_win)
-			_civ_box(st_win, Vector3(0.0, 6.8, 13.18), Vector3(4.8, 8.0, 0.45), c_door)
+			_civ_box(st_roof, Vector3(0.0, 6.8, 13.18), Vector3(4.8, 8.0, 0.45), c_door)
 		else:
 			var c_base := Color(0.42, 0.44, 0.46) if is_snow else Color(0.44, 0.42, 0.39)
 			var c_upper := Color(0.60, 0.60, 0.60) if is_snow else Color(0.64, 0.60, 0.52)
@@ -906,29 +1014,12 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 				for wz in [-6.5, 6.5]:
 					_civ_box(st_win, Vector3(17.25, row_y, wz), Vector3(0.4, 4.4, 4.0), c_win)
 					_civ_box(st_win, Vector3(-17.25, row_y, wz), Vector3(0.4, 4.4, 4.0), c_win)
-			_civ_box(st_win, Vector3(0.0, 5.8, 13.28), Vector3(5.0, 8.2, 0.45), c_door)
+			_civ_box(st_roof, Vector3(0.0, 5.8, 13.28), Vector3(5.0, 8.2, 0.45), c_door)
 
 	var am := ArrayMesh.new()
-	var mat_wall := StandardMaterial3D.new()
-	mat_wall.vertex_color_use_as_albedo = true
-	mat_wall.vertex_color_is_srgb = true
-	mat_wall.albedo_color = Color.WHITE
-	mat_wall.roughness = 0.92
-	mat_wall.metallic = 0.03
-
-	var mat_roof := StandardMaterial3D.new()
-	mat_roof.vertex_color_use_as_albedo = true
-	mat_roof.vertex_color_is_srgb = true
-	mat_roof.albedo_color = Color.WHITE
-	mat_roof.roughness = 0.78
-	mat_roof.metallic = 0.10
-
-	var mat_win := StandardMaterial3D.new()
-	mat_win.vertex_color_use_as_albedo = true
-	mat_win.vertex_color_is_srgb = true
-	mat_win.albedo_color = Color.WHITE
-	mat_win.roughness = 0.24
-	mat_win.metallic = 0.35
+	var mat_wall := _make_pbr_mat(0.90, 0.03)
+	var mat_roof := _make_pbr_mat(0.80, 0.08)
+	var mat_win := _make_pbr_mat(0.16, 0.24)
 
 	st_wall.commit(am)
 	am.surface_set_material(am.get_surface_count() - 1, mat_wall)
@@ -940,6 +1031,28 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 
 	_civ_mesh_cache[key] = am
 	return am
+
+
+static func _make_pbr_mat(rough: float, metal: float) -> Material:
+	if ResourceLoader.exists("res://shaders/military_pbr.gdshader") and ResourceLoader.exists("res://tex/armor_pbr_nrm.jpg"):
+		var sm := ShaderMaterial.new()
+		sm.shader = load("res://shaders/military_pbr.gdshader")
+		sm.set_shader_parameter("albedo_col", Color.WHITE)
+		sm.set_shader_parameter("has_albedo_tex", false)
+		sm.set_shader_parameter("use_vertex_color", true)
+		sm.set_shader_parameter("has_src_nrm", false)
+		sm.set_shader_parameter("detail_nrm", load("res://tex/armor_pbr_nrm.jpg"))
+		sm.set_shader_parameter("base_roughness", rough)
+		sm.set_shader_parameter("base_metallic", metal)
+		sm.set_shader_parameter("mat_mode", 1)
+		return sm
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.vertex_color_is_srgb = true
+	mat.albedo_color = Color.WHITE
+	mat.roughness = rough
+	mat.metallic = metal
+	return mat
 
 
 static func _civ_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, n: Vector3, col: Color) -> void:

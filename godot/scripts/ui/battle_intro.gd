@@ -28,7 +28,7 @@ const TIPS := [
 	"Garrison buildings and dig in (I) to cut incoming rifle and shell fire dramatically.",
 	"Right-click issues move and attack orders; left-click deploys buildings and rally points.",
 	"Veteran units fire faster and hit harder — pull damaged elite squads back to repair.",
-	"Hold Q + drag (or tap Q) to rotate the battlefield camera; Home returns to north-up.",
+	"Hold Shift + Mouse Wheel (or Middle-Mouse / Q + drag, PageUp / PageDown) to tilt & orbit the camera; Home resets.",
 ]
 const STEPS := [
 	"INITIALIZING THEATER SIMULATION",
@@ -176,31 +176,53 @@ func _build(my_fac: String, en_fac: String, map_key: String, map_name: String, k
 	var br_lbl := UI.label("WORLD WAR 3  ·  THEATER COMMAND", 13, Color(0.60, 0.72, 0.78), "mono")
 	top_bar.add_child(br_lbl)
 
+	var vp := get_viewport()
+	var vp_w := vp.get_visible_rect().size.x if vp != null else 1280.0
+	var compact := vp_w > 0.0 and vp_w < 960.0
+	bar_w = clampf(vp_w - 64.0, 280.0, 680.0) if vp_w > 0.0 else 680.0
+	var card_w := clampf(vp_w - 48.0, 300.0, 920.0) if vp_w > 0.0 else 920.0
+
 	# Center epic dossier stack
 	var col := VBoxContainer.new()
 	col.set_anchors_preset(Control.PRESET_FULL_RECT)
-	col.offset_top = 64; col.offset_bottom = -96
+	col.offset_top = 56 if compact else 64
+	col.offset_bottom = -96
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 14)
+	col.add_theme_constant_override("separation", 10 if compact else 14)
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(col)
 
-	# Matchup Row: [FLAG]  YOUR NATION   VS   ENEMY NATION  [FLAG]
+	# Matchup Row: [FLAG]  YOUR NATION   [SWORDS] VS   ENEMY NATION  [FLAG]
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 24)
+	row.add_theme_constant_override("separation", 12 if compact else 22)
 	col.add_child(row)
-	row.add_child(_flag_box(my_fac, UI.GOLD_HI))
-	var mn := UI.title(UI.nat_name(my_fac).to_upper(), 44, Color(0.96, 0.95, 0.90))
+	var fl_sz := Vector2(80, 48) if compact else Vector2(132, 80)
+	var tit_sz := 26 if compact else 44
+	row.add_child(_flag_box(my_fac, UI.GOLD_HI, fl_sz))
+	var mn := UI.title(UI.nat_name(my_fac).to_upper(), tit_sz, Color(0.96, 0.95, 0.90))
 	mn.add_theme_constant_override("outline_size", 4); mn.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	row.add_child(mn)
 	if en_fac != "":
-		var vs := UI.label("VS", 28, UI.GOLD_HI, "bold")
-		row.add_child(vs)
-		var en := UI.title(UI.nat_name(en_fac).to_upper(), 44, Color(0.92, 0.44, 0.36))
+		var vs_box := VBoxContainer.new()
+		vs_box.alignment = BoxContainer.ALIGNMENT_CENTER
+		vs_box.add_theme_constant_override("separation", 0)
+		var sw_ic := TextureRect.new()
+		sw_ic.texture = UI.icon("swords")
+		sw_ic.custom_minimum_size = Vector2(18 if compact else 24, 18 if compact else 24)
+		sw_ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		sw_ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		sw_ic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		sw_ic.modulate = UI.GOLD_HI
+		vs_box.add_child(sw_ic)
+		var vs := UI.label("VS", 18 if compact else 24, UI.GOLD_HI, "bold")
+		vs.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vs_box.add_child(vs)
+		row.add_child(vs_box)
+		var en := UI.title(UI.nat_name(en_fac).to_upper(), tit_sz, Color(0.92, 0.44, 0.36))
 		en.add_theme_constant_override("outline_size", 4); en.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 		row.add_child(en)
-		row.add_child(_flag_box(en_fac, Color(0.82, 0.34, 0.28)))
+		row.add_child(_flag_box(en_fac, Color(0.82, 0.34, 0.28), fl_sz))
 
 	# Map Dossier Strip (Map Thumbnail + Battlefield Name + Doctrine)
 	var m_row := HBoxContainer.new()
@@ -214,10 +236,11 @@ func _build(my_fac: String, en_fac: String, map_key: String, map_name: String, k
 			var msb := StyleBoxFlat.new()
 			msb.bg_color = Color(0.04, 0.06, 0.08, 0.95); msb.border_color = Color(0.45, 0.62, 0.70, 0.85)
 			msb.set_border_width_all(1); msb.set_content_margin_all(2)
+			msb.shadow_color = Color(0, 0, 0, 0.5); msb.shadow_size = 6
 			m_frame.add_theme_stylebox_override("panel", msb)
 			var mtr := TextureRect.new()
 			mtr.texture = m_thumb
-			mtr.custom_minimum_size = Vector2(104, 72)
+			mtr.custom_minimum_size = Vector2(88, 60) if compact else Vector2(104, 72)
 			mtr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			mtr.stretch_mode = TextureRect.STRETCH_SCALE
 			m_frame.add_child(mtr)
@@ -226,51 +249,56 @@ func _build(my_fac: String, en_fac: String, map_key: String, map_name: String, k
 	mv.alignment = BoxContainer.ALIGNMENT_CENTER
 	mv.add_theme_constant_override("separation", 2)
 	if map_name != "":
-		mv.add_child(UI.label("THEATER:  " + map_name.to_upper(), 18, UI.CYAN, "bold"))
+		mv.add_child(UI.label("THEATER:  " + map_name.to_upper(), 16 if compact else 18, UI.CYAN, "bold"))
 	var nd: Dictionary = UI.nat_data(my_fac)
 	var doct := str(nd.get("doctrine_name", ""))
 	if doct != "":
-		mv.add_child(UI.label("DOCTRINE:  " + doct.to_upper(), 13, Color(0.76, 0.82, 0.84), "mono"))
+		mv.add_child(UI.label("DOCTRINE:  " + doct.to_upper(), 12 if compact else 13, Color(0.76, 0.82, 0.84), "mono"))
 	m_row.add_child(mv)
 
-	col.add_child(UI.spacer(12))
+	col.add_child(UI.spacer(6 if compact else 12))
 
 	# Framed Faction Quote Dossier Card (Original Native Script + English Translation + Historical Source)
 	var q: Dictionary = _pick_quote(my_fac)
 	var q_card := PanelContainer.new()
 	q_card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	q_card.custom_minimum_size.x = 920
+	q_card.custom_minimum_size.x = card_w
 	var qsb := StyleBoxFlat.new()
-	qsb.bg_color = Color(0.035, 0.055, 0.070, 0.82)
-	qsb.border_color = Color(0.78, 0.62, 0.24, 0.78)
+	qsb.bg_color = Color(0.032, 0.052, 0.068, 0.84)
+	qsb.border_color = Color(0.78, 0.62, 0.24, 0.82)
 	qsb.border_width_left = 4; qsb.border_width_right = 4
-	qsb.border_width_top = 1; qsb.border_width_bottom = 1
-	qsb.set_content_margin_all(20)
+	qsb.border_width_top = 1; qsb.border_width_bottom = 2
+	qsb.set_content_margin_all(14 if compact else 20)
+	qsb.shadow_color = Color(0, 0, 0, 0.55); qsb.shadow_size = 12; qsb.shadow_offset = Vector2(0, 4)
 	q_card.add_theme_stylebox_override("panel", qsb)
 	col.add_child(q_card)
 
 	var qv := VBoxContainer.new()
 	qv.alignment = BoxContainer.ALIGNMENT_CENTER
-	qv.add_theme_constant_override("separation", 8)
+	qv.add_theme_constant_override("separation", 6 if compact else 8)
 	q_card.add_child(qv)
 
+	var q_text_w := maxf(240.0, card_w - 60.0)
 	var q_orig := str(q.get("original", ""))
 	if q_orig != "":
-		var ol := UI.label(q_orig, 20, Color(0.92, 0.78, 0.44, 0.90))
-		ol.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		ol.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		ol.custom_minimum_size.x = 860
-		qv.add_child(ol)
+		var qf := UI.font("quote_orig")
+		if UI.font_supports_text(qf, q_orig):
+			var ol := UI.label(q_orig, 18 if compact else 22, Color(0.92, 0.78, 0.44, 0.92), "quote_orig")
+			ol.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			ol.text_direction = Control.TEXT_DIRECTION_AUTO
+			ol.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			ol.custom_minimum_size.x = q_text_w
+			qv.add_child(ol)
 
-	var ql := UI.label("\u201C" + str(q.get("text", "")) + "\u201D", 26, Color(0.96, 0.94, 0.88), "display")
+	var ql := UI.label("\u201C" + str(q.get("text", "")) + "\u201D", 20 if compact else 26, Color(0.96, 0.94, 0.88), "display")
 	ql.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ql.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	ql.custom_minimum_size.x = 860
+	ql.custom_minimum_size.x = q_text_w
 	qv.add_child(ql)
 
 	var q_by := str(q.get("by", ""))
 	if q_by != "":
-		var al := UI.label("\u2014  " + q_by.to_upper(), 14, UI.GOLD_HI, "bold")
+		var al := UI.label("\u2014  " + q_by.to_upper(), 13 if compact else 14, UI.GOLD_HI, "bold")
 		al.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		qv.add_child(al)
 
@@ -293,20 +321,24 @@ func _build(my_fac: String, en_fac: String, map_key: String, map_name: String, k
 	bot.add_child(bh)
 
 	var bc := Panel.new()
-	bc.custom_minimum_size = Vector2(bar_w, 10)
+	bc.custom_minimum_size = Vector2(bar_w, 11)
 	var bsb := StyleBoxFlat.new()
-	bsb.bg_color = Color(0.04, 0.07, 0.09, 0.95); bsb.border_color = Color(0.38, 0.52, 0.58, 0.8)
-	bsb.set_border_width_all(1); bsb.set_corner_radius_all(2)
+	bsb.bg_color = Color(0.035, 0.065, 0.088, 0.96); bsb.border_color = Color(0.38, 0.54, 0.62, 0.85)
+	bsb.set_border_width_all(1); bsb.border_width_bottom = 2; bsb.set_corner_radius_all(2)
+	bsb.shadow_color = Color(0, 0, 0, 0.45); bsb.shadow_size = 6
 	bc.add_theme_stylebox_override("panel", bsb)
+	UI.add_rim(bc, Color(0.68, 0.86, 0.94, 0.25))
 	bot.add_child(bc)
 
 	bar = ColorRect.new(); bar.color = Color(0.86, 0.68, 0.24); bar.position = Vector2(1, 1); bar.size = Vector2(bar_w * 0.04, 8); bc.add_child(bar)
-	bar_glow = ColorRect.new(); bar_glow.color = Color(1.0, 0.94, 0.72, 0.85); bar_glow.position = Vector2(bar_w * 0.04 - 6, 1); bar_glow.size = Vector2(8, 8); bc.add_child(bar_glow)
+	bar_glow = ColorRect.new(); bar_glow.color = Color(1.0, 0.94, 0.72, 0.88); bar_glow.position = Vector2(bar_w * 0.04 - 6, 1); bar_glow.size = Vector2(8, 8); bc.add_child(bar_glow)
 
 	var tip_row := HBoxContainer.new()
 	tip_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	var tip := UI.label("TACTICAL BRIEF:  " + String(TIPS[randi() % TIPS.size()]), 12, Color(0.62, 0.72, 0.76), "mono")
+	var tip := UI.label("TACTICAL BRIEF:  " + String(TIPS[randi() % TIPS.size()]), 11 if compact else 12, Color(0.64, 0.74, 0.78), "mono")
 	tip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tip.clip_text = true
+	tip.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	tip_row.add_child(tip)
 	hint_skip = UI.label("", 12, UI.GOLD_HI, "bold")
 	tip_row.add_child(hint_skip)
@@ -314,17 +346,17 @@ func _build(my_fac: String, en_fac: String, map_key: String, map_name: String, k
 
 	root.modulate = Color(1, 1, 1, 0.01)
 
-func _flag_box(k: String, edge: Color) -> PanelContainer:
+func _flag_box(k: String, edge: Color, sz: Vector2 = Vector2(132, 80)) -> PanelContainer:
 	var pn := PanelContainer.new()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.04, 0.06, 0.08); sb.border_color = edge
 	sb.set_border_width_all(2); sb.set_content_margin_all(2)
-	sb.shadow_color = Color(0, 0, 0, 0.6); sb.shadow_size = 8
+	sb.shadow_color = Color(0, 0, 0, 0.65); sb.shadow_size = 10
 	pn.add_theme_stylebox_override("panel", sb)
 	pn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var tr := TextureRect.new()
 	tr.texture = _flag(k)
-	tr.custom_minimum_size = Vector2(132, 80)
+	tr.custom_minimum_size = sz
 	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	tr.stretch_mode = TextureRect.STRETCH_SCALE
 	pn.add_child(tr)
@@ -339,8 +371,8 @@ func _draw_sparks() -> void:
 		sparks.draw_circle(Vector2(x, y), float(s[3]), Color(0.95, 0.72, 0.28, float(s[4]) * pulse))
 
 func _input(ev: InputEvent) -> void:
-	if ready_t >= 0.0 and t >= 1.4:
-		if (ev is InputEventMouseButton and ev.pressed) or (ev is InputEventKey and ev.pressed and ev.keycode in [KEY_SPACE, KEY_ENTER, KEY_ESCAPE]):
+	if ready_t >= 0.0 and t >= 0.35:
+		if (ev is InputEventMouseButton and ev.pressed) or (ev is InputEventKey and ev.pressed and ev.keycode in [KEY_SPACE, KEY_ENTER, KEY_ESCAPE]) or (ev is InputEventScreenTouch and ev.pressed):
 			skip_fast = true
 			get_viewport().set_input_as_handled()
 
@@ -364,7 +396,8 @@ func _process(dt: float) -> void:
 	var si := mini(int(prog * STEPS.size()), STEPS.size() - 1)
 	if ready_t >= 0.0 and prog > 0.97:
 		status_lbl.text = "COMMAND LINK ACTIVE"
-		hint_skip.text = "CLICK TO DEPLOY"
+		hint_skip.text = "▸ CLICK TO DEPLOY"
+		hint_skip.modulate.a = 0.65 + 0.35 * sin(t * 6.0)
 	elif stage_override != "":
 		status_lbl.text = stage_override.to_upper() + ".".repeat(1 + int(t * 2.5) % 3)
 	else:
