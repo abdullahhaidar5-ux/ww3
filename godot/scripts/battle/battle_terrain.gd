@@ -129,20 +129,20 @@ static func build(host: Node3D, sim, map: Dictionary, tree_mesh: Callable) -> vo
 	g.mesh = mesh
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://shaders/terrain_pbr.gdshader")
-	var alb_p := "res://tex/%s_alb.png" % th
-	var nrm_p := "res://tex/%s_nrm.png" % th
+	var alb_p := "res://tex/%s_pbr_alb.jpg" % th
+	var nrm_p := "res://tex/%s_pbr_nrm.jpg" % th
 	mat.set_shader_parameter("biome_alb", load(alb_p) if ResourceLoader.exists(alb_p) else load("res://tex/a1.png"))
 	mat.set_shader_parameter("biome_nrm", load(nrm_p) if ResourceLoader.exists(nrm_p) else load("res://tex/n1.png"))
-	mat.set_shader_parameter("rock_alb", load("res://tex/rock_alb.png") if ResourceLoader.exists("res://tex/rock_alb.png") else load("res://tex/a1.png"))
-	mat.set_shader_parameter("rock_nrm", load("res://tex/rock_nrm.png") if ResourceLoader.exists("res://tex/rock_nrm.png") else load("res://tex/n1.png"))
-	mat.set_shader_parameter("road_alb", load("res://tex/road_alb.png") if ResourceLoader.exists("res://tex/road_alb.png") else load("res://tex/a1.png"))
-	mat.set_shader_parameter("road_nrm", load("res://tex/road_nrm.png") if ResourceLoader.exists("res://tex/road_nrm.png") else load("res://tex/n1.png"))
+	mat.set_shader_parameter("rock_alb", load("res://tex/rock_pbr_alb.jpg") if ResourceLoader.exists("res://tex/rock_pbr_alb.jpg") else load("res://tex/a1.png"))
+	mat.set_shader_parameter("rock_nrm", load("res://tex/rock_pbr_nrm.jpg") if ResourceLoader.exists("res://tex/rock_pbr_nrm.jpg") else load("res://tex/n1.png"))
+	mat.set_shader_parameter("road_alb", load("res://tex/road_pbr_alb.jpg") if ResourceLoader.exists("res://tex/road_pbr_alb.jpg") else load("res://tex/a1.png"))
+	mat.set_shader_parameter("road_nrm", load("res://tex/road_pbr_nrm.jpg") if ResourceLoader.exists("res://tex/road_pbr_nrm.jpg") else load("res://tex/n1.png"))
 	mat.set_shader_parameter("road_tex", road_tex)
 	mat.set_shader_parameter("shore_tex", shore_tex)
 	mat.set_shader_parameter("map_size", Vector2(float(GW) * CELL, float(GH) * CELL))
 	mat.set_shader_parameter("road_size", Vector2(float(rw) * rC, float(rh) * rC) if (rw > 0 and rh > 0) else Vector2(float(GW) * CELL, float(GH) * CELL))
 	mat.set_shader_parameter("theme_id", theme_id)
-	mat.set_shader_parameter("nrm_strength", 0.24 if th == "snow" else 0.76)
+	mat.set_shader_parameter("nrm_strength", 0.56 if th == "snow" else 0.86)
 	mat.set_shader_parameter("wetness", 0.0)
 	g.material_override = mat
 	# Terrain receives all unit/building/tree shadows; disabling terrain self-shadow casting saves 200k+ shadow verts/frame on WebGL2!
@@ -215,8 +215,8 @@ static func _horizon_mountains(host: Node3D, map: Dictionary, hmin: float, c_mtn
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
 	mat.vertex_color_is_srgb = true
-	if ResourceLoader.exists("res://tex/rock_alb.png"):
-		mat.albedo_texture = load("res://tex/rock_alb.png")
+	if ResourceLoader.exists("res://tex/rock_pbr_alb.jpg"):
+		mat.albedo_texture = load("res://tex/rock_pbr_alb.jpg")
 		mat.uv1_scale = Vector3(4.0, 2.0, 1.0)
 	mat.roughness = 0.96
 	mat.metallic = 0.0
@@ -346,7 +346,7 @@ static func _bridges(host: Node3D, map: Dictionary) -> void:
 	root.name = "Bridges"
 	host.add_child(root)
 
-	var mat := _prop_pbr_mat(0.80, 0.12, "res://tex/rock_nrm.png", 0.28, 16.0)
+	var mat := _prop_pbr_mat(0.80, 0.12, "res://tex/rock_pbr_nrm.jpg", 0.28, 16.0)
 
 	var c_deck := Color(0.58, 0.56, 0.52)
 	var c_asphalt := Color(0.28, 0.29, 0.31)
@@ -525,7 +525,7 @@ static func _matte_vcol_mat(rough := 0.94, ds := false) -> StandardMaterial3D:
 	return mat
 
 static var _prop_pbr_cache: Dictionary = {}
-static func _prop_pbr_mat(rough := 0.86, metal := 0.06, nrm_path := "res://tex/rock_nrm.png", dust := 0.75, model_h := 12.0) -> ShaderMaterial:
+static func _prop_pbr_mat(rough := 0.86, metal := 0.06, nrm_path := "res://tex/rock_pbr_nrm.jpg", dust := 0.75, model_h := 12.0) -> ShaderMaterial:
 	var key := "%.2f|%.2f|%s|%.2f|%.1f" % [rough, metal, nrm_path, dust, model_h]
 	if _prop_pbr_cache.has(key):
 		return _prop_pbr_cache[key] as ShaderMaterial
@@ -545,119 +545,178 @@ static func _prop_pbr_mat(rough := 0.86, metal := 0.06, nrm_path := "res://tex/r
 	_prop_pbr_cache[key] = sm
 	return sm
 
-static var _foliage_mat: ShaderMaterial = null
-static func _get_foliage_mat() -> ShaderMaterial:
-	if _foliage_mat != null: return _foliage_mat
+static var _foliage_mats: Dictionary = {}
+static func _get_foliage_mat(tex_path: String = "") -> ShaderMaterial:
+	if _foliage_mats.has(tex_path):
+		return _foliage_mats[tex_path] as ShaderMaterial
 	var sm := ShaderMaterial.new()
 	sm.shader = load("res://shaders/foliage_sway.gdshader")
-	_foliage_mat = sm
+	if tex_path != "" and ResourceLoader.exists(tex_path):
+		sm.set_shader_parameter("leaf_tex", load(tex_path))
+		sm.set_shader_parameter("use_leaf_tex", true)
+	else:
+		sm.set_shader_parameter("use_leaf_tex", false)
+	_foliage_mats[tex_path] = sm
 	return sm
 
-## Procedural $75 AAA CoH3 / Zero Hour Enhanced realistic biome tree meshes with organic multi-cluster foliage & wind sway
+## Curved 2-segment arched bough/frond card with clean UVs (stem at v=1 -> tip at v=0)
+static func _add_bough_card(st: SurfaceTool, orig: Vector3, dir: Vector3, side: Vector3, length: float, width: float, lift: float, droop: float, col: Color) -> void:
+	var hw := width * 0.5
+	var p0 := orig
+	var p1 := orig + dir * (length * 0.52) + Vector3(0.0, lift, 0.0)
+	var p2 := orig + dir * length + Vector3(0.0, droop, 0.0)
+	var a0 := p0 - side * (hw * 0.45); var b0 := p0 + side * (hw * 0.45)
+	var a1 := p1 - side * hw;          var b1 := p1 + side * hw
+	var a2 := p2 - side * (hw * 0.72); var b2 := p2 + side * (hw * 0.72)
+	var n0 := ((p1 - p0).cross(side)).normalized()
+	if n0.y < 0.0: n0 = -n0
+	var n1 := ((p2 - p1).cross(side)).normalized()
+	if n1.y < 0.0: n1 = -n1
+	var c0 := col * 0.88; var c1 := col; var c2 := col * 1.06
+	# Segment 1 (stem -> mid)
+	st.set_color(c0); st.set_normal(n0); st.set_uv(Vector2(0.0, 1.0)); st.add_vertex(a0)
+	st.set_color(c0); st.set_normal(n0); st.set_uv(Vector2(1.0, 1.0)); st.add_vertex(b0)
+	st.set_color(c1); st.set_normal(n0); st.set_uv(Vector2(1.0, 0.48)); st.add_vertex(b1)
+	st.set_color(c0); st.set_normal(n0); st.set_uv(Vector2(0.0, 1.0)); st.add_vertex(a0)
+	st.set_color(c1); st.set_normal(n0); st.set_uv(Vector2(1.0, 0.48)); st.add_vertex(b1)
+	st.set_color(c1); st.set_normal(n0); st.set_uv(Vector2(0.0, 0.48)); st.add_vertex(a1)
+	# Segment 2 (mid -> drooping tip)
+	st.set_color(c1); st.set_normal(n1); st.set_uv(Vector2(0.0, 0.48)); st.add_vertex(a1)
+	st.set_color(c1); st.set_normal(n1); st.set_uv(Vector2(1.0, 0.48)); st.add_vertex(b1)
+	st.set_color(c2); st.set_normal(n1); st.set_uv(Vector2(1.0, 0.0)); st.add_vertex(b2)
+	st.set_color(c1); st.set_normal(n1); st.set_uv(Vector2(0.0, 0.48)); st.add_vertex(a1)
+	st.set_color(c2); st.set_normal(n1); st.set_uv(Vector2(1.0, 0.0)); st.add_vertex(b2)
+	st.set_color(c2); st.set_normal(n1); st.set_uv(Vector2(0.0, 0.0)); st.add_vertex(a2)
+
+## Volumetric 3-card crossed leaf cluster (reads lushly from top-down AND low horizon tilt angles!)
+static func _add_leaf_quad(st: SurfaceTool, center: Vector3, u_ax: Vector3, v_ax: Vector3, nrm: Vector3, col: Color) -> void:
+	var q0 := center - u_ax - v_ax
+	var q1 := center + u_ax - v_ax
+	var q2 := center + u_ax + v_ax
+	var q3 := center - u_ax + v_ax
+	st.set_color(col); st.set_normal(nrm); st.set_uv(Vector2(0.0, 1.0)); st.add_vertex(q0)
+	st.set_color(col); st.set_normal(nrm); st.set_uv(Vector2(1.0, 1.0)); st.add_vertex(q1)
+	st.set_color(col); st.set_normal(nrm); st.set_uv(Vector2(1.0, 0.0)); st.add_vertex(q2)
+	st.set_color(col); st.set_normal(nrm); st.set_uv(Vector2(0.0, 1.0)); st.add_vertex(q0)
+	st.set_color(col); st.set_normal(nrm); st.set_uv(Vector2(1.0, 0.0)); st.add_vertex(q2)
+	st.set_color(col); st.set_normal(nrm); st.set_uv(Vector2(0.0, 0.0)); st.add_vertex(q3)
+
+static func _add_leaf_bunch(st: SurfaceTool, c: Vector3, rx: float, ry: float, col: Color, yaw: float) -> void:
+	var ca := cos(yaw); var sa := sin(yaw)
+	var u1 := Vector3(ca, 0.0, sa) * rx
+	var u2 := Vector3(-sa, 0.0, ca) * rx
+	var up := Vector3(0.0, ry, 0.0)
+	# Two crossed tilted vertical-diagonal cards + one domed horizontal crown card
+	_add_leaf_quad(st, c, u1, up + u2 * 0.25, Vector3(-sa, 0.5, ca).normalized(), col)
+	_add_leaf_quad(st, c, u2, up - u1 * 0.25, Vector3(ca, 0.5, sa).normalized(), col * 0.94)
+	_add_leaf_quad(st, c + Vector3(0.0, ry * 0.24, 0.0), u1 * 0.96, u2 * 0.96, Vector3.UP, col * 1.06)
+
+## Real 2-surface alpha-cutout branching RTS trees (Surface 0: bark trunk, Surface 1: crisp alpha-scissored pine/oak/palm foliage!)
 static var _proc_tree_cache: Dictionary = {}
 static func _build_biome_tree(th: String, variant: int) -> ArrayMesh:
 	var key := "%s|%d" % [th, variant]
 	if _proc_tree_cache.has(key):
 		return _proc_tree_cache[key] as ArrayMesh
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var st_wood := SurfaceTool.new()
+	st_wood.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var st_leaf := SurfaceTool.new()
+	st_leaf.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var leaf_tex := "res://tex/foliage_oak.png"
 	if th == "desert":
 		if variant == 0:
-			# Middle Eastern Date Palm: gracefully curved ringed trunk + lush 14-frond arching palm crown
+			# Middle Eastern Date Palm: curved ringed trunk + 12 real feathered alpha-cutout palm frond cards
+			leaf_tex = "res://tex/foliage_palm.png"
 			var bark0 := Color(0.36, 0.28, 0.19); var bark1 := Color(0.46, 0.37, 0.26)
-			var pts := [Vector3(0, 0, 0), Vector3(1.6, 8.5, 0.5), Vector3(3.8, 17.5, 1.2), Vector3(5.2, 27.0, 1.8), Vector3(5.4, 36.5, 2.0)]
-			var rads := [2.4, 1.9, 1.6, 1.38, 1.2]
+			var pts := [Vector3(0, 0, 0), Vector3(1.5, 8.5, 0.4), Vector3(3.4, 17.5, 1.0), Vector3(4.8, 27.0, 1.6), Vector3(5.0, 36.0, 1.8)]
+			var rads := [2.3, 1.85, 1.55, 1.32, 1.15]
 			for i in pts.size() - 1:
-				_add_taper(st, pts[i], pts[i + 1], rads[i], rads[i + 1], 6, bark0 if i % 2 == 0 else bark1, bark1 if i % 2 == 0 else bark0)
+				_add_taper(st_wood, pts[i], pts[i + 1], rads[i], rads[i + 1], 6, bark0 if i % 2 == 0 else bark1, bark1 if i % 2 == 0 else bark0)
 			var crown: Vector3 = pts[pts.size() - 1]
-			_add_cluster(st, crown - Vector3(0, 1.0, 0), 3.0, 2.6, 3.0, Color(0.32, 0.24, 0.15), 31)
-			var frond_c0 := Color(0.28, 0.39, 0.17)
-			var frond_c1 := Color(0.40, 0.49, 0.22)
-			var frond_dry := Color(0.50, 0.45, 0.24)
-			for fi in 14:
+			for fi in 12:
 				var ring := fi % 2
-				var a := TAU * float(fi) / 14.0 + (0.22 if ring == 1 else 0.0)
+				var a := TAU * float(fi) / 12.0 + (0.26 if ring == 1 else 0.0)
 				var dir := Vector3(cos(a), 0.0, sin(a))
 				var side := Vector3(-sin(a), 0.0, cos(a))
-				var lift := 5.8 if ring == 0 else 2.0
-				var reach := 18.0 if ring == 0 else 15.5
-				var droop := -4.2 if ring == 0 else -8.2
-				var p0 := crown + Vector3(0, 0.8 if ring == 0 else -0.6, 0)
-				var p1 := p0 + dir * (reach * 0.48) + Vector3(0, lift, 0)
-				var p2 := p0 + dir * reach + Vector3(0, droop, 0)
-				var fc := frond_dry if fi % 5 == 4 else (frond_c1 if ring == 0 else frond_c0)
-				var w1 := 3.8 if ring == 0 else 3.3
-				_add_tri(st, p0, p1 + side * w1 - Vector3(0, 1.3, 0), p1, fc, true)
-				_add_tri(st, p0, p1, p1 - side * w1 - Vector3(0, 1.3, 0), fc * 0.90, true)
-				_add_tri(st, p1, p1 + side * w1 - Vector3(0, 1.3, 0), p2, fc * 1.06, true)
-				_add_tri(st, p1, p2, p1 - side * w1 - Vector3(0, 1.3, 0), fc * 0.86, true)
+				var orig := crown + Vector3(0, 0.8 if ring == 0 else -0.5, 0)
+				var tint := Color(0.96, 0.96, 0.88) if ring == 0 else Color(0.84, 0.86, 0.78)
+				_add_bough_card(st_leaf, orig, dir, side, 19.5 if ring == 0 else 16.5, 11.5 if ring == 0 else 10.0, 5.5 if ring == 0 else 1.8, -4.5 if ring == 0 else -8.5, tint)
 		elif variant == 1:
-			# Gnarled Desert Olive / Acacia: forked dry trunk + dense layered olive-sage canopy pads
+			# Gnarled Desert Olive / Acacia: forked dry trunk + volumetric olive-sage leaf cards
 			var bark := Color(0.38, 0.31, 0.23)
-			_add_taper(st, Vector3(0, 0, 0), Vector3(0.8, 12.0, 0.3), 2.5, 1.6, 6, bark * 0.82, bark)
-			_add_taper(st, Vector3(0.6, 10.0, 0.2), Vector3(-6.8, 20.5, 3.5), 1.4, 0.7, 5, bark, bark * 1.06)
-			_add_taper(st, Vector3(0.7, 10.5, 0.2), Vector3(7.4, 21.5, -2.8), 1.4, 0.7, 5, bark, bark * 1.06)
-			_add_taper(st, Vector3(0.7, 11.2, 0.2), Vector3(0.2, 23.5, -6.2), 1.2, 0.6, 5, bark, bark * 1.06)
-			_add_cluster(st, Vector3(-6.8, 22.5, 3.5), 9.4, 4.8, 8.6, Color(0.32, 0.39, 0.20), 101)
-			_add_cluster(st, Vector3(7.4, 23.5, -2.8), 9.8, 5.0, 8.8, Color(0.37, 0.43, 0.22), 102)
-			_add_cluster(st, Vector3(0.4, 26.0, -5.0), 8.6, 4.6, 8.0, Color(0.30, 0.36, 0.18), 103)
-			_add_cluster(st, Vector3(0.2, 27.6, 1.8), 8.2, 4.4, 7.8, Color(0.41, 0.46, 0.25), 104)
-			_add_cluster(st, Vector3(-2.5, 19.8, -1.5), 6.8, 3.8, 6.4, Color(0.26, 0.32, 0.16), 105)
+			_add_taper(st_wood, Vector3(0, 0, 0), Vector3(0.8, 12.0, 0.3), 2.4, 1.5, 6, bark * 0.82, bark)
+			_add_taper(st_wood, Vector3(0.6, 10.0, 0.2), Vector3(-6.4, 20.5, 3.4), 1.3, 0.65, 5, bark, bark * 1.06)
+			_add_taper(st_wood, Vector3(0.7, 10.5, 0.2), Vector3(7.0, 21.5, -2.8), 1.3, 0.65, 5, bark, bark * 1.06)
+			var ol := Color(0.92, 0.92, 0.72)
+			_add_leaf_bunch(st_leaf, Vector3(-6.6, 22.5, 3.4), 10.2, 6.2, ol * 0.94, 0.3)
+			_add_leaf_bunch(st_leaf, Vector3(7.0, 23.5, -2.8), 10.6, 6.4, ol, 1.4)
+			_add_leaf_bunch(st_leaf, Vector3(0.3, 27.0, 0.8), 9.4, 5.8, ol * 1.05, 2.5)
+			_add_leaf_bunch(st_leaf, Vector3(-0.6, 21.8, -5.2), 8.2, 5.2, ol * 0.88, 0.9)
 		else:
-			# Low Sun-Parched Desert Tamarisk / Scrub Thicket
+			# Low Sun-Parched Desert Scrub Thicket
 			var bark := Color(0.40, 0.33, 0.24)
-			_add_taper(st, Vector3(0, 0, 0), Vector3(-3.0, 7.8, 1.6), 1.4, 0.55, 5, bark * 0.85, bark)
-			_add_taper(st, Vector3(0, 0, 0), Vector3(3.2, 8.5, -1.8), 1.3, 0.55, 5, bark * 0.85, bark)
-			_add_cluster(st, Vector3(-3.2, 9.2, 1.8), 8.2, 5.6, 7.6, Color(0.35, 0.40, 0.20), 201)
-			_add_cluster(st, Vector3(3.5, 10.0, -1.8), 8.6, 5.8, 8.0, Color(0.40, 0.44, 0.22), 202)
-			_add_cluster(st, Vector3(0.0, 6.8, -3.8), 6.8, 4.5, 6.4, Color(0.30, 0.35, 0.18), 203)
-			_add_cluster(st, Vector3(0.4, 12.2, 0.2), 5.8, 4.0, 5.6, Color(0.44, 0.47, 0.25), 204)
+			_add_taper(st_wood, Vector3(0, 0, 0), Vector3(-2.6, 7.2, 1.4), 1.3, 0.5, 5, bark * 0.85, bark)
+			_add_taper(st_wood, Vector3(0, 0, 0), Vector3(2.8, 7.8, -1.6), 1.2, 0.5, 5, bark * 0.85, bark)
+			var sc := Color(0.95, 0.92, 0.68)
+			_add_leaf_bunch(st_leaf, Vector3(-2.8, 9.5, 1.5), 8.2, 5.8, sc * 0.94, 0.5)
+			_add_leaf_bunch(st_leaf, Vector3(3.0, 10.2, -1.6), 8.6, 6.0, sc, 1.9)
+			_add_leaf_bunch(st_leaf, Vector3(0.2, 12.0, 0.2), 6.6, 4.8, sc * 1.04, 3.1)
 	elif th == "snow":
-		# Lush Snow-Laden Alpine Spruce / Fir (wide irregular drooping bough tiers + sculpted snowdrifts — no thin toothpicks!)
-		var bark := Color(0.24, 0.20, 0.18)
-		var h_tot := 40.0 if variant == 0 else (33.0 if variant == 1 else 26.0)
-		_add_taper(st, Vector3(0, 0, 0), Vector3(0, h_tot * 0.90, 0), 2.4, 0.45, 6, bark * 0.8, bark)
-		var tiers := 4 if variant < 2 else 3
+		# Photorealistic Snow-Laden Alpine Spruce / Fir: tapered bark trunk + 4-5 whorls of jagged snow-frosted pine boughs!
+		leaf_tex = "res://tex/foliage_pine_snow.png"
+		var bark := Color(0.24, 0.19, 0.16)
+		var h_tot := 42.0 if variant == 0 else (34.0 if variant == 1 else 27.0)
+		_add_taper(st_wood, Vector3(0, 0, 0), Vector3(0, h_tot * 0.92, 0), 2.3, 0.42, 6, bark * 0.82, bark)
+		var tiers := 5 if variant == 0 else (4 if variant == 1 else 3)
 		for ti in tiers:
-			var f := float(ti) / float(tiers)
-			var y0 := 6.5 + f * (h_tot - 13.5)
-			var rad := (14.5 - f * 7.8) * (1.08 if variant == 0 else 0.94)
-			var pine_c := Color(0.13, 0.23, 0.20).lerp(Color(0.20, 0.31, 0.28), f)
-			# Dark evergreen lower bough cluster + snow-laden top bough cluster (organic faceted silhouette!)
-			_add_cluster(st, Vector3(0, y0 + 2.8, 0), rad, 5.0 - f * 1.1, rad * 0.96, pine_c, 400 + variant * 17 + ti * 3)
-			_add_cluster(st, Vector3(0.4, y0 + 4.9, -0.3), rad * 0.82, 3.2 - f * 0.6, rad * 0.80, Color(0.84, 0.89, 0.95), 450 + variant * 17 + ti * 3)
-		_add_cluster(st, Vector3(0, h_tot - 2.0, 0), 4.6, 5.2, 4.6, Color(0.86, 0.91, 0.97), 499 + variant)
+			var f := float(ti) / float(maxi(1, tiers - 1))
+			var y0 := 7.0 + f * (h_tot - 14.0)
+			var n_b := 5 if ti < 2 else 4
+			var b_len := (16.5 - f * 9.5) * (1.06 if variant == 0 else 0.95)
+			var b_wid := b_len * 0.96
+			var lift := 1.8 - f * 0.4
+			var droop := -4.8 + f * 2.8
+			var tint := Color(0.90, 0.94, 0.96).lerp(Color(1.0, 1.0, 1.0), f)
+			for bi in n_b:
+				var a := TAU * float(bi) / float(n_b) + float(ti) * 0.68 + float(variant) * 0.45
+				var dir := Vector3(cos(a), 0.0, sin(a))
+				var side := Vector3(-sin(a), 0.0, cos(a))
+				var orig := Vector3(0.0, y0 + float(bi % 2) * 1.2, 0.0)
+				_add_bough_card(st_leaf, orig, dir, side, b_len, b_wid, lift, droop, tint)
+		# Crisp upright crown pine spire cards
+		for ci in 3:
+			var a := TAU * float(ci) / 3.0 + float(variant) * 0.7
+			var dir := Vector3(cos(a), 0.55, sin(a)).normalized()
+			var side := Vector3(-sin(a), 0.0, cos(a))
+			_add_bough_card(st_leaf, Vector3(0.0, h_tot - 7.5, 0.0), dir, side, 9.5, 7.6, 2.2, 1.6, Color(1.0, 1.0, 1.0))
 	else:
-		# Mediterranean / Levant Green: Organic Multi-Cluster Cypress (0), Broad Lush Oak/Olive (1), Dense Woodland Copse (2)
+		# Mediterranean / European Green: Tall Cypress (0), Lush Broad Oak/Olive (1), Woodland Copse (2)
 		var bark := Color(0.28, 0.22, 0.16)
 		if variant == 0:
-			# Authentic organic columnar Mediterranean Cypress (5 stacked sculpted foliage clusters — NO upside-down ice-cream cone!)
-			_add_taper(st, Vector3(0, 0, 0), Vector3(0, 14.0, 0), 2.0, 1.1, 6, bark * 0.82, bark)
-			_add_cluster(st, Vector3(0.0, 12.0, 0.0), 6.2, 6.5, 6.0, Color(0.14, 0.26, 0.12), 251)
-			_add_cluster(st, Vector3(0.5, 19.0, -0.4), 5.6, 6.8, 5.4, Color(0.17, 0.30, 0.14), 252)
-			_add_cluster(st, Vector3(-0.4, 25.5, 0.3), 4.7, 6.2, 4.6, Color(0.20, 0.34, 0.15), 253)
-			_add_cluster(st, Vector3(0.2, 31.5, -0.2), 3.6, 5.5, 3.5, Color(0.23, 0.38, 0.17), 254)
-			_add_cluster(st, Vector3(0.0, 36.8, 0.0), 2.3, 4.4, 2.3, Color(0.27, 0.42, 0.19), 255)
+			_add_taper(st_wood, Vector3(0, 0, 0), Vector3(0, 16.0, 0), 1.9, 0.9, 6, bark * 0.82, bark)
+			var cy := Color(0.74, 0.86, 0.72)
+			_add_leaf_bunch(st_leaf, Vector3(0.0, 14.0, 0.0), 6.8, 7.5, cy * 0.90, 0.2)
+			_add_leaf_bunch(st_leaf, Vector3(0.4, 22.0, -0.3), 5.8, 7.2, cy, 1.2)
+			_add_leaf_bunch(st_leaf, Vector3(-0.3, 29.5, 0.2), 4.4, 6.2, cy * 1.06, 2.3)
+			_add_leaf_bunch(st_leaf, Vector3(0.0, 35.5, 0.0), 2.8, 4.6, cy * 1.10, 0.8)
 		elif variant == 1:
-			# Broad Mediterranean Oak / Olive with rich 6-cluster overlapping canopy
-			_add_taper(st, Vector3(0, 0, 0), Vector3(0.5, 13.5, 0.2), 2.7, 1.6, 6, bark * 0.82, bark)
-			_add_taper(st, Vector3(0.4, 11.0, 0.2), Vector3(-6.8, 21.5, 3.8), 1.3, 0.65, 5, bark, bark * 1.05)
-			_add_taper(st, Vector3(0.5, 11.5, 0.2), Vector3(7.2, 22.5, -3.2), 1.3, 0.65, 5, bark, bark * 1.05)
-			_add_taper(st, Vector3(0.3, 12.0, 0.1), Vector3(-1.5, 22.0, -6.2), 1.1, 0.55, 5, bark, bark * 1.05)
-			_add_cluster(st, Vector3(-6.8, 23.5, 3.8), 10.2, 6.8, 9.6, Color(0.18, 0.33, 0.13), 301)
-			_add_cluster(st, Vector3(7.2, 24.5, -3.2), 10.6, 7.0, 9.8, Color(0.22, 0.37, 0.15), 302)
-			_add_cluster(st, Vector3(0.0, 28.8, 0.6), 10.4, 6.8, 9.8, Color(0.27, 0.42, 0.17), 303)
-			_add_cluster(st, Vector3(-1.5, 21.5, -6.0), 8.6, 5.8, 8.2, Color(0.15, 0.29, 0.11), 304)
-			_add_cluster(st, Vector3(3.4, 20.8, 5.6), 7.8, 5.2, 7.6, Color(0.20, 0.35, 0.14), 305)
+			_add_taper(st_wood, Vector3(0, 0, 0), Vector3(0.5, 13.5, 0.2), 2.6, 1.5, 6, bark * 0.82, bark)
+			_add_taper(st_wood, Vector3(0.4, 11.0, 0.2), Vector3(-6.6, 21.5, 3.6), 1.3, 0.65, 5, bark, bark * 1.05)
+			_add_taper(st_wood, Vector3(0.5, 11.5, 0.2), Vector3(7.0, 22.5, -3.0), 1.3, 0.65, 5, bark, bark * 1.05)
+			var ok := Color(0.88, 0.96, 0.82)
+			_add_leaf_bunch(st_leaf, Vector3(-6.6, 23.5, 3.6), 11.2, 7.4, ok * 0.94, 0.4)
+			_add_leaf_bunch(st_leaf, Vector3(7.0, 24.5, -3.0), 11.6, 7.6, ok, 1.5)
+			_add_leaf_bunch(st_leaf, Vector3(0.0, 29.0, 0.6), 11.0, 7.2, ok * 1.06, 2.6)
+			_add_leaf_bunch(st_leaf, Vector3(-1.4, 21.5, -5.8), 9.4, 6.4, ok * 0.88, 0.9)
 		else:
-			# Dense Woodland Broadleaf / Hedge Copse
-			_add_taper(st, Vector3(0, 0, 0), Vector3(0, 10.0, 0), 2.0, 1.1, 5, bark * 0.85, bark)
-			_add_cluster(st, Vector3(-4.2, 13.8, 2.6), 8.6, 6.2, 8.2, Color(0.21, 0.36, 0.14), 311)
-			_add_cluster(st, Vector3(4.6, 15.0, -2.4), 9.0, 6.6, 8.6, Color(0.25, 0.40, 0.16), 312)
-			_add_cluster(st, Vector3(0.2, 18.8, 0.4), 7.8, 5.8, 7.6, Color(0.29, 0.44, 0.18), 313)
-			_add_cluster(st, Vector3(-1.2, 11.2, -4.6), 6.8, 4.8, 6.4, Color(0.16, 0.30, 0.11), 314)
-	var mesh := st.commit()
-	mesh.surface_set_material(0, _get_foliage_mat())
+			_add_taper(st_wood, Vector3(0, 0, 0), Vector3(0, 10.0, 0), 1.9, 1.0, 5, bark * 0.85, bark)
+			var cp := Color(0.84, 0.94, 0.78)
+			_add_leaf_bunch(st_leaf, Vector3(-4.0, 14.0, 2.4), 9.2, 6.8, cp * 0.94, 0.3)
+			_add_leaf_bunch(st_leaf, Vector3(4.4, 15.2, -2.2), 9.6, 7.0, cp, 1.6)
+			_add_leaf_bunch(st_leaf, Vector3(0.2, 19.0, 0.4), 8.2, 6.2, cp * 1.06, 2.8)
+	var mesh := st_wood.commit()
+	mesh.surface_set_material(0, _get_foliage_mat(""))
+	st_leaf.commit(mesh)
+	mesh.surface_set_material(1, _get_foliage_mat(leaf_tex))
 	_proc_tree_cache[key] = mesh
 	return mesh
 
@@ -680,7 +739,7 @@ static func _build_boulder(th: String, variant: int) -> ArrayMesh:
 		_add_cluster(st, Vector3(0, 1.2, 0), 4.6, 2.2, 3.9, c_rock * 0.92, 505)
 		_add_cluster(st, Vector3(2.8, 0.6, -1.6), 2.4, 1.3, 2.2, c_rock * 0.82, 506)
 	var mesh := st.commit()
-	mesh.surface_set_material(0, _prop_pbr_mat(0.90, 0.02, "res://tex/rock_nrm.png", 0.72, 6.0))
+	mesh.surface_set_material(0, _prop_pbr_mat(0.90, 0.02, "res://tex/rock_pbr_nrm.jpg", 0.72, 6.0))
 	_rock_cache[key] = mesh
 	return mesh
 
@@ -728,7 +787,7 @@ static func _build_barrier() -> ArrayMesh:
 	_add_box(st, Vector3(0, 5.0, 0), Vector3(12.2, 1.4, 1.7), c_top)
 	_add_box(st, Vector3(0, 5.8, 0), Vector3(4.2, 0.3, 1.8), c_stripe)
 	var m := st.commit()
-	m.surface_set_material(0, _prop_pbr_mat(0.84, 0.04, "res://tex/rock_nrm.png", 0.78, 6.0))
+	m.surface_set_material(0, _prop_pbr_mat(0.84, 0.04, "res://tex/rock_pbr_nrm.jpg", 0.78, 6.0))
 	_barrier_mesh = m
 	return m
 
@@ -744,7 +803,7 @@ static func _build_pole() -> ArrayMesh:
 	for ix in [-3.6, 0.0, 3.6]:
 		_add_box(st, Vector3(ix, 26.2, 0), Vector3(0.6, 0.9, 0.6), Color(0.75, 0.78, 0.80))
 	var m := st.commit()
-	m.surface_set_material(0, _prop_pbr_mat(0.76, 0.16, "res://tex/armor_nrm.png", 0.60, 28.0))
+	m.surface_set_material(0, _prop_pbr_mat(0.76, 0.16, "res://tex/armor_pbr_nrm.jpg", 0.60, 28.0))
 	_pole_mesh = m
 	return m
 

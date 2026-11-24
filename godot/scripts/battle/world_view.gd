@@ -1034,14 +1034,14 @@ static func _get_civ_mesh(theme: String, variant: int) -> ArrayMesh:
 
 
 static func _make_pbr_mat(rough: float, metal: float) -> Material:
-	if ResourceLoader.exists("res://shaders/military_pbr.gdshader") and ResourceLoader.exists("res://tex/armor_nrm.png"):
+	if ResourceLoader.exists("res://shaders/military_pbr.gdshader") and ResourceLoader.exists("res://tex/armor_pbr_nrm.jpg"):
 		var sm := ShaderMaterial.new()
 		sm.shader = load("res://shaders/military_pbr.gdshader")
 		sm.set_shader_parameter("albedo_col", Color.WHITE)
 		sm.set_shader_parameter("has_albedo_tex", false)
 		sm.set_shader_parameter("use_vertex_color", true)
 		sm.set_shader_parameter("has_src_nrm", false)
-		sm.set_shader_parameter("detail_nrm", load("res://tex/armor_nrm.png"))
+		sm.set_shader_parameter("detail_nrm", load("res://tex/armor_pbr_nrm.jpg"))
 		sm.set_shader_parameter("base_roughness", rough)
 		sm.set_shader_parameter("base_metallic", metal)
 		sm.set_shader_parameter("mat_mode", 1)

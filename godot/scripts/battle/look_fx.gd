@@ -15,6 +15,7 @@ const NT := 800           # tracers
 const NR := 24            # rings
 const N_SCORCH := 320
 const N_CRATER := 160
+const N_TRACKS := 480       # persistent armored tank / vehicle tread tracks on snow, sand & mud
 const N_RUBBLE := 48
 const N_MSL := 192          # 3D tactical missiles / ATGMs / SAMs / MLRS rockets / bombs in flight
 const N_BMIS := 32          # 3D strategic ballistic missiles / SCUDs / ICBMs in flight
@@ -89,11 +90,11 @@ var bm := PackedFloat32Array(); var ba := PackedFloat32Array(); var bt := Packed
 var hm := 0; var ha := 0; var ht := 0; var hr := 0
 var dm := false; var da := false; var dt_ := false; var dr := false
 var mm_m: MultiMesh; var mm_a: MultiMesh; var mm_t: MultiMesh; var mm_r: MultiMesh
-var mm_scorch: MultiMesh; var mm_crater: MultiMesh; var mm_rubble: MultiMesh
+var mm_scorch: MultiMesh; var mm_crater: MultiMesh; var mm_tracks: MultiMesh; var mm_rubble: MultiMesh
 var mm_msl: MultiMesh; var mm_bmis: MultiMesh
 var _msl_xf: Array[Transform3D] = []
 var _bmis_xf: Array[Transform3D] = []
-var n_scorch := 0; var n_crater := 0; var n_rubble := 0
+var n_scorch := 0; var n_crater := 0; var n_tracks := 0; var n_rubble := 0
 var mats: Array = []
 var lights: Array = []          # [OmniLight3D, energy now, life] explosion lights
 var mlights: Array = []         # muzzle lights
@@ -140,7 +141,8 @@ func setup(map_: Dictionary, tables: Dictionary, env_ = null) -> void:
 	var pl := PlaneMesh.new(); pl.size = Vector2(1, 1)
 	mm_scorch = _pool(pl, N_SCORCH, false, "res://shaders/fx_decal.gdshader", huge, 0, {tex = load("res://tex/fx_scorch.png"), opacity = 1.0})
 	mm_crater = _pool(pl, N_CRATER, false, "res://shaders/fx_decal.gdshader", huge, 1, {tex = load("res://tex/fx_crater.png"), opacity = 0.95})
-	mm_scorch.visible_instance_count = 0; mm_crater.visible_instance_count = 0
+	mm_tracks = _pool(pl, N_TRACKS, false, "res://shaders/fx_decal.gdshader", huge, 0, {tex = load("res://tex/fx_tracks.png"), opacity = 0.56})
+	mm_scorch.visible_instance_count = 0; mm_crater.visible_instance_count = 0; mm_tracks.visible_instance_count = 0
 	_rubble_pool()
 	_missile_pools(huge)
 	for i in 6: lights.append([_light(Color("#ffac58"), 480.0), 0.0, 1.0])
@@ -322,6 +324,19 @@ func scorch(x: float, z: float, size: float) -> void:
 func crater(x: float, z: float, size: float) -> void:
 	_decal(mm_crater, n_crater % N_CRATER, x, z, size); n_crater += 1
 	mm_crater.visible_instance_count = mini(n_crater, N_CRATER)
+
+func track(x: float, z: float, ang: float, width: float, length: float) -> void:
+	if mm_tracks == null: return
+	var n := gnorm(x, z)
+	var fwd := Vector3(cos(ang), 0.0, sin(ang))
+	fwd = (fwd - n * fwd.dot(n)).normalized()
+	var right := fwd.cross(n).normalized()
+	var idx := n_tracks % N_TRACKS
+	mm_tracks.set_instance_transform(idx, Transform3D(Basis(right * width, n, fwd * length), Vector3(x, gh(x, z) + 0.55, z)))
+	var tc := Color(0.56, 0.60, 0.66, 0.72) if theme == "snow" else (Color(0.55, 0.45, 0.34, 0.62) if theme == "desert" else Color(0.36, 0.30, 0.22, 0.68))
+	mm_tracks.set_instance_color(idx, tc)
+	n_tracks += 1
+	mm_tracks.visible_instance_count = mini(n_tracks, N_TRACKS)
 
 func _flash_light(pool: Array, p: Vector3, energy: float, rng: float, life: float) -> void:
 	var best = null; var be := 1e9
@@ -1237,15 +1252,21 @@ func _ents(ent: PackedFloat32Array) -> void:
 				var heavy_dmg := hp < 0.5
 				part(false, Vector3(x + R(-3, 3), y + R(6, 10), z + R(-3, 3)), Vector3(R(-3, 3), 5.5, R(-3, 3)), R(3.6, 5.8) if heavy_dmg else R(2.2, 3.6), R(4.8, 7.8) if heavy_dmg else R(2.6, 4.2), 9.0 if heavy_dmg else 6.5, 0.60 if heavy_dmg else 0.44, Color(.09, .09, .09) if heavy_dmg else C_SMOKE, Color(.28, .27, .26), R(28, 44) if heavy_dmg else R(20, 32), 0.42, KEEP)
 				if hp < 0.25 and randf() < 0.58: part(true, Vector3(x + R(-3, 3), y + R(5, 9), z + R(-3, 3)), Vector3(0, R(7, 16), 0), R(.32, .62), R(3.5, 6.0), -2.0, 1.0, Color(3.2, 1.45, .34), Color(.85, .18, .04), R(12, 22))
-		if cls == "veh" and not raining and dust < 28:
+		if cls == "veh" and dust < 28:
 			var spd := ent[o + 13]
-			if spd >= 0.3 and surf(x, z) != "water":
-				var k2 := clampf((spd - 0.3) / 0.45, 0.0, 1.0)
+			var sf_v := surf(x, z)
+			if spd >= 0.3 and sf_v != "water":
 				var ang := ent[o + 6]
-				var DC: Array = DUSTC.get(surf(x, z), DUSTC.desert)
-				for k in int(share / 30.0 * 16.0 * amp * k2 + randf()):
-					dust += 1
-					part(false, Vector3(x - cos(ang) * 10.0 + R(-5, 5), y + R(1, 4), z - sin(ang) * 10.0 + R(-5, 5)), Vector3(R(-6, 6), R(2, 7), R(-6, 6)), R(2.2, 3.4), R(7, 10), R(9, 14), 0.26 if theme == "snow" else 0.46, DC[k % 3], null, R(1, 4), 0.4, KEEP)
+				# Stamp persistent dual armored tread marks on snow, sand & mud (CoH3 lived-in battlefield!)
+				if sf_v != "hard" and randf() < 0.55:
+					var tw := clampf(ent[o + 15] * 1.15, 11.0, 22.0)
+					track(x - cos(ang) * 7.0, z - sin(ang) * 7.0, ang, tw, tw * 1.35)
+				if not raining:
+					var k2 := clampf((spd - 0.3) / 0.45, 0.0, 1.0)
+					var DC: Array = DUSTC.get(sf_v, DUSTC.desert)
+					for k in int(share / 30.0 * 16.0 * amp * k2 + randf()):
+						dust += 1
+						part(false, Vector3(x - cos(ang) * 10.0 + R(-5, 5), y + R(1, 4), z - sin(ang) * 10.0 + R(-5, 5)), Vector3(R(-6, 6), R(2, 7), R(-6, 6)), R(2.2, 3.4), R(7, 10), R(9, 14), 0.26 if theme == "snow" else 0.46, DC[k % 3], null, R(1, 4), 0.4, KEEP)
 
 # ------------------------------------------------------------------ per frame
 func tick(dt: float, cam: Camera3D) -> void:
@@ -1294,7 +1315,7 @@ func tick(dt: float, cam: Camera3D) -> void:
 	for m in mats:
 		(m as ShaderMaterial).set_shader_parameter("fx_time", t)
 	(mats[0] as ShaderMaterial).set_shader_parameter("amb", amb)
-	(mats[4] as ShaderMaterial).set_shader_parameter("light", amb); (mats[5] as ShaderMaterial).set_shader_parameter("light", amb)
+	(mats[4] as ShaderMaterial).set_shader_parameter("light", amb); (mats[5] as ShaderMaterial).set_shader_parameter("light", amb); (mats[6] as ShaderMaterial).set_shader_parameter("light", amb)
 
 # ------------------------------------------------------------------ fog of war
 func _fow_setup() -> void:

@@ -112,10 +112,10 @@ static var _armor_nrm: Texture2D = null
 static var _mil_shader: Shader = null
 static var _mil_shader_ds: Shader = null
 static func _load_armor_tex() -> void:
-	if _armor_alb == null and ResourceLoader.exists("res://tex/armor_camo.png"):
-		_armor_alb = load("res://tex/armor_camo.png")
-	if _armor_nrm == null and ResourceLoader.exists("res://tex/armor_nrm.png"):
-		_armor_nrm = load("res://tex/armor_nrm.png")
+	if _armor_alb == null and ResourceLoader.exists("res://tex/armor_pbr_alb.jpg"):
+		_armor_alb = load("res://tex/armor_pbr_alb.jpg")
+	if _armor_nrm == null and ResourceLoader.exists("res://tex/armor_pbr_nrm.jpg"):
+		_armor_nrm = load("res://tex/armor_pbr_nrm.jpg")
 	if _mil_shader == null and ResourceLoader.exists("res://shaders/military_pbr.gdshader"):
 		_mil_shader = load("res://shaders/military_pbr.gdshader")
 	if _mil_shader_ds == null and ResourceLoader.exists("res://shaders/military_pbr_ds.gdshader"):
