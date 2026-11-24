@@ -1,15 +1,10 @@
-// World War 3 — $75 AAA WebAudio + Streaming & Faction-Themed Epic Score Engine (godot/web/ww3audio.js)
-// Solves all browser audio issues AND delivers a rich, original, copyright-safe faction-aware orchestral score:
+// World War 3 — AAA Cinematic WebAudio + Orchestral Soundtrack Engine (godot/web/ww3audio.js)
+// Delivers pure blockbuster military audio with zero clashing synth overlays:
 //  - Synchronous DOM user-gesture unlock (pointerdown/touchstart/touchend/mousedown/click/keydown) + iOS silent-buffer prime
-//  - Pre-queues soundtrack before first gesture so the very first tap starts music immediately inside the gesture
+//  - Pre-queues real recorded orchestral MP3 soundtrack (mus/st/*.mp3) before first gesture so audio starts immediately
 //  - Automatic WebAudio fetch+decodeAudioData fallback if HTML5 <audio> ever fails or stalls
-//  - Real-time Faction-Themed Cinematic Score Engine routed through a lush 2.4s Concert Hall / Canyon Reverb:
-//      * Shia / Axis (IR, RS, DW, RV, OB): Solemn D-Hijaz (Phrygian Dominant) deep cello/viola strings,
-//        pounding daf/taiko war-drum cadence, and emotional minor-key brass/ney heroic phrases
-//      * West / NATO (US, GB, FR, DE, IL, UA): Driving C-minor tactical string ostinato, crisp snare/timpani, heroic horns
-//      * East (RU, CN, KP): Heavy E-minor armored-column low brass chords & industrial war percussion
-//      * Regional (TR, PK, IN, JP, KR, SA, AE, EG): Dramatic A-Phrygian strings, low brass & percussion
-//  - Auto-swells during combat heat & seamlessly leads at full volume if external MP3 streaming is unavailable
+//  - Clean, pure cinematic orchestral fallback (strings, Hans Zimmer low brass, concert timpani/snare) ONLY if offline MP3s cannot stream
+//  - Hollywood layered weapon, 120mm cannon, sub-bass explosion, orbital beam, nuke & SCUD SFX with canyon reverb
 (function () {
   'use strict';
   if (window.WW3Audio) return;
@@ -62,40 +57,36 @@
   let wantTrack = { rel: 'mus/st/menu-02.mp3', fade: 1.6 };
   let prewarmedSfx = false;
 
-  // Faction musical style mapping
-  const AXIS_FACS = new Set(['IR', 'RS', 'DW', 'RV', 'OB']);
+  // Cinematic offline fallback themes (modern epic orchestral minor — ONLY used when MP3 soundtrack cannot stream)
   const WEST_FACS = new Set(['US', 'GB', 'FR', 'DE', 'IL', 'UA']);
   const EAST_FACS = new Set(['RU', 'CN', 'KP']);
   function factionStyle(fac) {
-    if (AXIS_FACS.has(fac)) return 'axis';
-    if (WEST_FACS.has(fac)) return 'west';
-    if (EAST_FACS.has(fac)) return 'east';
-    return 'regional';
+    if (WEST_FACS.has(fac)) return 'tactical';
+    if (EAST_FACS.has(fac)) return 'armored';
+    return 'epic';
   }
 
-  // Original musical themes (frequencies in Hz, rich minor / Hijaz / Phrygian palettes)
+  // Pure Hollywood orchestral war themes (D minor / C minor / E minor — zero latmiya, zero daf, zero Hijaz)
   const THEMES = {
-    // D Hijaz (D, Eb, F#, G, A, Bb, C, D) — solemn, deeply emotional, noble Middle-Eastern gravitas
-    axis: {
-      stepSec: 0.24,
+    // D Minor — Modern blockbuster orchestral war score (Hans Zimmer / Generals style strings + low brass + timpani)
+    epic: {
+      stepSec: 0.23,
       chords: [
-        [73.42, 110.00, 146.83, 185.00], // D2, A2, D3, F#3 (D Hijaz tonic)
-        [77.78, 116.54, 155.56, 196.00], // Eb2, Bb2, Eb3, G3 (dramatic bII tension!)
-        [73.42, 110.00, 146.83, 185.00], // D Hijaz home
-        [65.41, 98.00, 130.81, 155.56],  // C2, G2, C3, Eb3 (solemn bVII minor)
+        [73.42, 110.00, 146.83, 174.61], // Dm (D2, A2, D3, F3)
+        [58.27, 87.31, 116.54, 146.83],  // Bb (Bb1, F2, Bb2, D3)
+        [65.41, 98.00, 130.81, 164.81],  // C  (C2, G2, C3, E3)
+        [73.42, 110.00, 146.83, 164.81], // Dsus2
       ],
       melody: [
-        293.66, 0, 311.13, 369.99, 392.00, 0, 369.99, 311.13,
-        293.66, 0, 0, 261.63, 293.66, 0, 0, 0,
-        440.00, 0, 466.16, 440.00, 392.00, 369.99, 311.13, 0,
-        369.99, 311.13, 293.66, 0, 293.66, 0, 0, 0
+        293.66, 0, 349.23, 440.00, 0, 392.00, 349.23, 329.63,
+        293.66, 0, 0, 220.00, 293.66, 0, 0, 0,
+        440.00, 0, 523.25, 440.00, 392.00, 0, 349.23, 329.63,
+        293.66, 0, 329.63, 293.66, 0, 0, 0, 0
       ],
-      // Driving solemn chest-beat / daf-taiko rhythm (1 = deep skin boom, 2 = rim/frame accent)
-      drums: [1.0, 0, 0, 0.55, 0.95, 0, 0.50, 0.25, 1.0, 0, 0.35, 0.55, 0.95, 0, 0.70, 0.30],
-      rims:  [0, 0, 0.5, 0, 0, 0.45, 0, 0.65, 0, 0, 0.55, 0, 0, 0.5, 0, 0.75]
+      drums: [1.0, 0, 0.35, 0, 0.90, 0, 0.45, 0.25, 1.0, 0, 0.40, 0.25, 0.95, 0.35, 0.65, 0]
     },
-    // C Minor / Dorian — NATO heroic brass & driving tactical strings
-    west: {
+    // C Minor / Dorian — Heroic tactical brass & driving strings
+    tactical: {
       stepSec: 0.22,
       chords: [
         [65.41, 98.00, 130.81, 155.56], // Cm
@@ -109,17 +100,16 @@
         392.00, 0, 466.16, 440.00, 392.00, 0, 349.23, 311.13,
         293.66, 311.13, 261.63, 0, 0, 0, 0, 0
       ],
-      drums: [1.0, 0, 0.4, 0, 0.85, 0, 0.45, 0.3, 1.0, 0, 0.4, 0.3, 0.9, 0.4, 0.6, 0],
-      rims:  [0, 0.3, 0, 0.5, 0, 0.3, 0.6, 0, 0, 0.3, 0, 0.5, 0, 0.4, 0.6, 0.4]
+      drums: [1.0, 0, 0.4, 0, 0.85, 0, 0.45, 0.3, 1.0, 0, 0.4, 0.3, 0.9, 0.4, 0.6, 0]
     },
     // E Minor — Heavy armored-column martial low brass & industrial percussion
-    east: {
-      stepSec: 0.25,
+    armored: {
+      stepSec: 0.24,
       chords: [
         [82.41, 123.47, 164.81, 196.00], // Em
         [65.41, 98.00, 130.81, 164.81],  // C
-        [73.42, 110.00, 146.83, 185.00], // D
-        [61.74, 92.50, 123.47, 155.56],  // B
+        [73.42, 110.00, 146.83, 174.61], // Dm
+        [61.74, 92.50, 123.47, 146.83],  // Bm
       ],
       melody: [
         329.63, 0, 329.63, 392.00, 493.88, 0, 440.00, 392.00,
@@ -127,26 +117,7 @@
         329.63, 392.00, 493.88, 0, 523.25, 493.88, 440.00, 0,
         392.00, 369.99, 329.63, 0, 0, 0, 0, 0
       ],
-      drums: [1.0, 0, 0, 0, 0.95, 0, 0.4, 0, 1.0, 0, 0.5, 0, 0.95, 0.5, 0.7, 0.4],
-      rims:  [0, 0, 0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.7, 0, 0, 0, 0.8, 0]
-    },
-    // A Phrygian — Dramatic theater score
-    regional: {
-      stepSec: 0.24,
-      chords: [
-        [55.00, 82.41, 110.00, 130.81], // Am
-        [58.27, 87.31, 116.54, 146.83], // Bb (Phrygian bII)
-        [65.41, 98.00, 130.81, 164.81], // C
-        [55.00, 82.41, 110.00, 130.81], // Am
-      ],
-      melody: [
-        220.00, 0, 233.08, 261.63, 329.63, 0, 293.66, 261.63,
-        233.08, 0, 220.00, 0, 196.00, 0, 0, 0,
-        329.63, 0, 349.23, 329.63, 293.66, 261.63, 233.08, 0,
-        261.63, 233.08, 220.00, 0, 0, 0, 0, 0
-      ],
-      drums: [1.0, 0, 0, 0.5, 0.9, 0, 0.5, 0, 1.0, 0, 0.4, 0.5, 0.9, 0, 0.65, 0],
-      rims:  [0, 0, 0.45, 0, 0, 0.4, 0, 0.6, 0, 0, 0.5, 0, 0, 0.45, 0, 0.65]
+      drums: [1.0, 0, 0, 0, 0.95, 0, 0.4, 0, 1.0, 0, 0.5, 0, 0.95, 0.5, 0.7, 0.4]
     }
   };
 
@@ -538,18 +509,18 @@
         d[i] = Math.max(-1, Math.min(1, acc * 0.48));
       }
     });
-    // Solemn Battle-Start Cinematic Brass & War-Drum Fanfare (2.9s: D-Hijaz / minor-key thunder + brass swell)
-    synths.fanfare = makeBuf(2.9, (d, n, sr) => {
-      const freqs = [73.42, 110.0, 146.83, 185.00, 220.0, 293.66];
-      const amps = [0.40, 0.32, 0.28, 0.22, 0.16, 0.12];
+    // Epic Battle-Start Cinematic Brass & Timpani Fanfare (2.8s: bold D-minor orchestral brass chord + double timpani boom)
+    synths.fanfare = makeBuf(2.8, (d, n, sr) => {
+      const freqs = [73.42, 110.0, 146.83, 174.61, 220.0, 293.66];
+      const amps = [0.42, 0.34, 0.28, 0.20, 0.18, 0.12];
       const phs = [0, 0, 0, 0, 0, 0];
       let dph1 = 0, dph2 = 0, lp = 0;
       for (let i = 0; i < n; i++) {
         const t = i / sr;
         let horn = 0;
-        const hEnv = Math.min(1, Math.max(0, (t - 0.05) / 0.60)) * Math.exp(-Math.max(0, t - 0.85) * 1.05) * Math.min(1, (2.9 - t) / 0.28);
+        const hEnv = Math.min(1, Math.max(0, (t - 0.05) / 0.55)) * Math.exp(-Math.max(0, t - 0.85) * 1.05) * Math.min(1, (2.8 - t) / 0.28);
         for (let j = 0; j < freqs.length; j++) {
-          const vib = 1 + 0.0035 * Math.sin(t * 5.0 + j);
+          const vib = 1 + 0.0025 * Math.sin(t * 4.5 + j);
           phs[j] += Math.PI * 2 * freqs[j] * vib / sr;
           const p = phs[j];
           horn += (Math.sin(p) * 0.54 + Math.sin(p * 2) * 0.27 + Math.sin(p * 3) * 0.13 + Math.sin(p * 4) * 0.06) * amps[j];
@@ -558,18 +529,18 @@
         const ns = Math.random() * 2 - 1;
         lp += 0.08 * (ns - lp);
         if (t < 0.70) {
-          dph1 += Math.PI * 2 * (42 + 48 * Math.exp(-t * 14)) / sr;
+          dph1 += Math.PI * 2 * (44 + 46 * Math.exp(-t * 14)) / sr;
           drum += (Math.sin(dph1) * 0.88 + lp * 0.58) * Math.exp(-t * 6.0) * Math.min(1, t / 0.004);
         }
-        if (t >= 0.44 && t < 1.35) {
-          const lt = t - 0.44;
-          dph2 += Math.PI * 2 * (38 + 52 * Math.exp(-lt * 13)) / sr;
+        if (t >= 0.42 && t < 1.35) {
+          const lt = t - 0.42;
+          dph2 += Math.PI * 2 * (38 + 50 * Math.exp(-lt * 13)) / sr;
           drum += (Math.sin(dph2) * 1.0 + lp * 0.68) * Math.exp(-lt * 4.8) * Math.min(1, lt / 0.004);
         }
         d[i] = Math.tanh((horn * hEnv * 0.88 + drum * 0.82) * 1.25) * 0.82;
       }
     });
-    // Deep resonant frame-drum / taiko war drum
+    // Deep concert timpani / taiko war drum
     synths.wardrum = makeBuf(0.46, (d, n, sr) => {
       let ph = 0, lp = 0;
       for (let i = 0; i < n; i++) {
@@ -579,19 +550,6 @@
         lp += 0.09 * (ns - lp);
         const env = Math.min(1, t / 0.004) * Math.exp(-t * 6.8) * Math.min(1, (0.46 - t) / 0.03);
         d[i] = Math.tanh((Math.sin(ph) * 0.92 + lp * 0.52) * 1.35) * 0.76 * env;
-      }
-    });
-    // Crisp organic daf / frame-drum rim slap
-    synths.rim = makeBuf(0.14, (d, n, sr) => {
-      let ph = 0, lo = 0, hi = 0;
-      for (let i = 0; i < n; i++) {
-        const t = i / sr;
-        ph += Math.PI * 2 * (280 + 180 * Math.exp(-t * 32)) / sr;
-        const ns = Math.random() * 2 - 1;
-        lo += 0.35 * (ns - lo); hi += 0.12 * (ns - hi);
-        const bp = lo - hi;
-        const env = Math.min(1, t / 0.002) * Math.exp(-t * 28);
-        d[i] = Math.tanh((Math.sin(ph) * 0.45 + bp * 0.85) * 1.2) * 0.44 * env;
       }
     });
     // Crisp tactical military snare drum (drives combat urgency)
@@ -696,15 +654,15 @@
     }
   }
 
-  function playLeadMotif(freq, durSec, gainVal, isAxis) {
+  function playLeadMotif(freq, durSec, gainVal) {
     if (!ctx || !scoreBus || !freq || gainVal < 0.005) return;
     const now = ctx.currentTime;
     const lpf = ctx.createBiquadFilter();
     lpf.type = 'lowpass';
-    lpf.frequency.setValueAtTime(isAxis ? 950 : 1200, now);
-    lpf.frequency.linearRampToValueAtTime(isAxis ? 2100 : 2400, now + durSec * 0.35);
-    lpf.frequency.linearRampToValueAtTime(1050, now + durSec);
-    lpf.Q.value = isAxis ? 2.2 : 1.3;
+    lpf.frequency.setValueAtTime(1150, now);
+    lpf.frequency.linearRampToValueAtTime(2200, now + durSec * 0.35);
+    lpf.frequency.linearRampToValueAtTime(980, now + durSec);
+    lpf.Q.value = 1.2;
 
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
@@ -712,24 +670,23 @@
     g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gainVal * 0.65), now + durSec * 0.75);
     g.gain.linearRampToValueAtTime(0.0001, now + durSec + 0.12);
 
-    // Expressive vibrato LFO
+    // Subtle orchestral French horn vibrato
     const lfo = ctx.createOscillator();
     const lfoG = ctx.createGain();
-    lfo.frequency.value = isAxis ? 5.4 : 4.8;
-    lfoG.gain.value = freq * 0.011;
+    lfo.frequency.value = 4.6;
+    lfoG.gain.value = freq * 0.007;
     lfo.connect(lfoG);
 
     const osc1 = ctx.createOscillator();
-    osc1.type = isAxis ? 'sawtooth' : 'triangle';
-    osc1.frequency.setValueAtTime(freq * (isAxis ? 0.985 : 1.0), now);
-    if (isAxis) osc1.frequency.exponentialRampToValueAtTime(freq, now + 0.08);
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(freq, now);
     lfoG.connect(osc1.frequency);
 
     const osc2 = ctx.createOscillator();
     osc2.type = 'triangle';
-    osc2.frequency.value = freq * 0.5; // warm lower horn/cello octave doubling
+    osc2.frequency.value = freq * 0.5;
     const og2 = ctx.createGain();
-    og2.gain.value = 0.45;
+    og2.gain.value = 0.48;
 
     osc1.connect(lpf);
     osc2.connect(og2);
@@ -757,7 +714,7 @@
     }
   }
 
-  // Smooth 50ms crossfade + Faction-Specific Epic Musical Score Sequencer
+  // Smooth 50ms crossfade + Offline-Only Cinematic Orchestral Fallback (never clashes over live recorded MP3 tracks!)
   let scoreAccum = 0, scoreStep = 0;
   setInterval(() => {
     const mVol = musicMasterVol();
@@ -773,79 +730,66 @@
     }
 
     if (!unlocked || !ctx || ctx.state !== 'running' || vol.music < 0.04 || vol.master < 0.04) return;
+    // When real recorded orchestral MP3 soundtrack is playing, let it shine pure and unpolluted!
+    if (isMp3MusicActivelyPlaying()) {
+      scoreAccum = 0;
+      return;
+    }
     const style = factionStyle(curFac);
-    const theme = THEMES[style] || THEMES.axis;
+    const theme = THEMES[style] || THEMES.epic;
     scoreAccum += 0.05;
     if (scoreAccum < theme.stepSec) return;
     scoreAccum -= theme.stepSec;
 
-    const mp3Alive = isMp3MusicActivelyPlaying();
-    // Adaptive Epic War Orchestra: full blockbuster strings, low brass BRAAAMs, driving ostinato & war drums!
-    const scorePresence = !mp3Alive ? 1.0 : (inBattle ? (0.44 + Math.min(0.56, battleHeat * 0.82)) : 0.32);
     const sIdx = scoreStep % 32;
     const dIdx = scoreStep % 16;
     const chIdx = Math.floor(sIdx / 8) % theme.chords.length;
     const curChord = theme.chords[chIdx];
 
-    // 1. Deep Lush String Ensemble Pad every 8 steps (1 bar)
+    // 1. Lush String Ensemble Pad every bar
     if (sIdx % 8 === 0) {
-      playStringChord(curChord, theme.stepSec * 8.2, 0.42 * scorePresence);
+      playStringChord(curChord, theme.stepSec * 8.2, 0.42);
     }
-    // 2. Monumental Cinema BRAAAM Low Brass Swells on bar 1 & bar 3 (epic Hans Zimmer weight!)
-    if (sIdx === 0 || (sIdx === 16 && (inBattle || !mp3Alive))) {
-      const brGain = (!mp3Alive ? 0.38 : (inBattle ? 0.22 + battleHeat * 0.24 : 0.16)) * scorePresence;
-      playBrassBraaam(curChord[0], theme.stepSec * 6.5, brGain);
+    // 2. Cinema Low Brass Swells on bar 1 & bar 3
+    if (sIdx === 0 || (sIdx === 16 && inBattle)) {
+      playBrassBraaam(curChord[0], theme.stepSec * 6.5, inBattle ? (0.28 + battleHeat * 0.16) : 0.22);
     }
-    // 3. Driving Staccato Cello/Viola Ostinato during battle (surges with combat intensity!)
-    if (inBattle && (battleHeat > 0.12 || !mp3Alive)) {
+    // 3. Driving Staccato Cello/Viola Ostinato during battle
+    if (inBattle) {
       const ostNote = (sIdx % 4 === 0) ? curChord[1] : ((sIdx % 4 === 2) ? curChord[2] : curChord[1]);
-      const ostGain = (0.10 + Math.min(0.18, battleHeat * 0.24)) * scorePresence;
-      playOstinato(ostNote, theme.stepSec * 0.82, ostGain);
+      playOstinato(ostNote, theme.stepSec * 0.82, 0.12 + Math.min(0.16, battleHeat * 0.20));
     }
-    // 4. Emotional Heroic Hijaz / Martial Brass-Ney Solo Melody
+    // 4. Heroic Orchestral Horn Lead Motif
     const melFreq = theme.melody[sIdx];
-    if (melFreq > 0 && (inBattle || !mp3Alive)) {
-      const leadGain = (!mp3Alive ? 0.38 : (0.18 + Math.min(0.26, battleHeat * 0.34))) * scorePresence;
-      playLeadMotif(melFreq, theme.stepSec * 1.95, leadGain, style === 'axis');
+    if (melFreq > 0 && inBattle) {
+      playLeadMotif(melFreq, theme.stepSec * 1.95, 0.26 + Math.min(0.14, battleHeat * 0.20));
     }
-    // 5. Pounding War-Drum / Snare / Industrial Anvil Section (full climax during heavy combat!)
-    if (inBattle || !mp3Alive) {
+    // 5. Concert Timpani / Military Snare / Industrial Anvil Section
+    if (inBattle) {
       const drumHit = theme.drums[dIdx];
-      const drumPow = !mp3Alive ? 0.68 : (0.34 + Math.min(0.66, battleHeat * 0.85));
+      const drumPow = 0.50 + Math.min(0.45, battleHeat * 0.65);
       if (drumHit > 0 && synths.wardrum) {
         const src = ctx.createBufferSource();
         src.buffer = synths.wardrum;
         src.playbackRate.value = drumHit > 0.8 ? 0.88 : 1.15;
         const g = ctx.createGain();
-        g.gain.value = drumHit * drumPow * 0.62;
+        g.gain.value = drumHit * drumPow * 0.58;
         src.connect(g); g.connect(scoreBus);
         try { src.start(ctx.currentTime); } catch (_) {}
       }
-      const rimHit = theme.rims[dIdx];
-      if (rimHit > 0 && synths.rim && (battleHeat > 0.12 || !mp3Alive)) {
-        const src = ctx.createBufferSource();
-        src.buffer = synths.rim;
-        src.playbackRate.value = 0.95 + (dIdx % 3) * 0.06;
-        const g = ctx.createGain();
-        g.gain.value = rimHit * drumPow * 0.44;
-        src.connect(g); g.connect(scoreBus);
-        try { src.start(ctx.currentTime); } catch (_) {}
-      }
-      // Crisp military snare on backbeats when fighting heats up
-      if ((dIdx === 4 || dIdx === 12) && synths.snare && (battleHeat > 0.25 || !mp3Alive)) {
+      if ((dIdx === 4 || dIdx === 12) && synths.snare) {
         const src = ctx.createBufferSource();
         src.buffer = synths.snare;
         const g = ctx.createGain();
-        g.gain.value = drumPow * 0.42;
+        g.gain.value = drumPow * 0.38;
         src.connect(g); g.connect(scoreBus);
         try { src.start(ctx.currentTime); } catch (_) {}
       }
-      // Heavy metallic industrial anvil accent at high combat intensity!
-      if ((dIdx === 0 || dIdx === 8) && synths.anvil && (battleHeat > 0.45 || (style === 'east' && battleHeat > 0.22))) {
+      if ((dIdx === 0 || dIdx === 8) && synths.anvil && battleHeat > 0.35) {
         const src = ctx.createBufferSource();
         src.buffer = synths.anvil;
         const g = ctx.createGain();
-        g.gain.value = drumPow * 0.34;
+        g.gain.value = drumPow * 0.30;
         src.connect(g); g.connect(scoreBus);
         try { src.start(ctx.currentTime); } catch (_) {}
       }
