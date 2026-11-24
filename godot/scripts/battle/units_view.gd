@@ -17,12 +17,12 @@ extends RefCounted
 const X1 = preload("res://models/auto/x1_models.gd")
 const Look = preload("res://scripts/battle/battle_look.gd")
 
-const MAX_ANIM_SOLDIERS := 64
-const MAX_SOLDIER_POOL := 160
+const MAX_ANIM_SOLDIERS := 112
+const MAX_SOLDIER_POOL := 200
 const MAX_DYING_SOLDIERS := 20
 const DYING_HOLD_TIME := 3.8
 const DYING_SINK_TIME := 1.0
-const ANIM_DIST_SQ := 850.0 * 850.0
+const ANIM_DIST_SQ := 1300.0 * 1300.0
 const DUST_DIST_SQ := 1100.0 * 1100.0
 const DMG_FX_DIST_SQ := 1800.0 * 1800.0
 const HUGE_AABB := AABB(Vector3(-1e5, -1e4, -1e5), Vector3(2e5, 4e4, 2e5))
@@ -262,8 +262,8 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 			sd["yaw"] = _ang_step(float(sd["yaw"]), face, 9.0 * _dt)
 			var i_yaw: float = -float(sd["yaw"]) + PI * 0.5
 			var i_clip := clip
-			if own_spd > 26.0: i_clip = "run"
-			elif own_spd > 3.0: i_clip = "walk"
+			if own_spd > 14.0: i_clip = "run"
+			elif own_spd > 1.8: i_clip = "walk"
 			elif clip == "run" or clip == "walk": i_clip = "idle"   # already at his spot while the squad still moves
 			var qy: float = float(B.sim.ground_h(q.x, q.y)) + ly
 			var slot_id: int = eid_i * 16 + i
@@ -276,25 +276,29 @@ func draw_unit(B, fr: Dictionary, e, fac: String, p: Vector2, ang: float, gy: fl
 					rec["last_frame"] = _frame_id
 					var node: Node3D = rec["node"]
 					node.visible = true
+					# Natural slight forward lean when sprinting + crisp footwork matched to real ground velocity
+					var lean := clampf((own_spd - 10.0) / 30.0, 0.0, 1.0) * 0.11 if i_clip == "run" else 0.0
 					node.position = Vector3(q.x, qy, q.y)
-					node.rotation = Vector3(0.0, i_yaw, 0.0)
+					node.rotation = Vector3(lean, i_yaw, 0.0)
 					node.scale = Vector3(sc, sc, sc)
 					var s_clip := i_clip
-					if combat_stance and own_spd <= 3.0:
+					if combat_stance and own_spd <= 1.8:
 						var phase: int = int(floor((now + float(eid_i * 7 + i * 3) * 0.37) / 1.4)) % 3
 						s_clip = "reload" if phase == 0 else "crouch"
 					_drive_anim(rec, s_clip, slot_id)
-					# stride matches ground speed (no ice-skating): scale walk / run playback by how fast he really moves
 					var apn = rec.get("ap", null)
 					if apn != null and is_instance_valid(apn):
-						var ref := 40.0 if s_clip == "run" else (16.0 if s_clip == "walk" else 0.0)
-						(apn as AnimationPlayer).speed_scale = clampf(own_spd / ref, 0.75, 1.3) if ref > 0.0 else 1.0
+						var ref := 27.0 if s_clip == "run" else (11.5 if s_clip == "walk" else 0.0)
+						(apn as AnimationPlayer).speed_scale = clampf(own_spd / ref, 0.78, 1.65) if ref > 0.0 else 1.0
 					continue
 
 			var smesh := _get_static_soldier_mesh(fac, kind_s, look)
 			if smesh != null:
-				var bob := absf(sin(now * 11.0 + float(eid_i * 3 + i * 2))) * 1.1 if own_spd > 3.0 else 0.0
-				var i_basis := Basis(Vector3.UP, i_yaw).scaled(Vector3(sc, sc, sc))
+				var stride_ph := now * 10.5 + float(eid_i * 3 + i * 2)
+				var bob := absf(sin(stride_ph)) * 1.15 if own_spd > 2.5 else 0.0
+				var sway := sin(stride_ph) * 0.08 if own_spd > 2.5 else 0.0
+				var lean_s := 0.10 if own_spd > 14.0 else 0.0
+				var i_basis := (Basis(Vector3.UP, i_yaw) * Basis.from_euler(Vector3(lean_s, 0.0, sway))).scaled(Vector3(sc, sc, sc))
 				_push_mm("s|" + fac + "|" + kind_s + "|" + look, smesh, Transform3D(i_basis, Vector3(q.x, qy + bob, q.y)), true)
 
 		# Squad extra rigid pieces (e.g. mortar tube, cleric banner)
@@ -793,16 +797,15 @@ func _create_soldier_rec(fac: String, kind_s: String, look: String, key: String)
 		return {}
 	_sol_root.add_child(node)
 	var ap := _find_anim_player(node)
-	# Some exported lo looks (e.g. v0.lo) have animFile=null while hi or sibling looks carry the matching library
+	# Guaranteed non-empty retargeted soldier AnimationLibrary for all 22 nations (fixes 0-track GLBs & FBX path mismatches)
 	if ap == null:
 		var af := _fallback_anim_file(fac, kind_s, look)
-		if af != "":
-			var lib: AnimationLibrary = X1.anim_library(af)
-			if lib != null:
-				ap = AnimationPlayer.new()
-				ap.name = "AnimationPlayer"
-				node.add_child(ap)
-				ap.add_animation_library("", lib)
+		var lib: AnimationLibrary = X1.anim_library_for(node, af)
+		if lib != null:
+			ap = AnimationPlayer.new()
+			ap.name = "AnimationPlayer"
+			node.add_child(ap)
+			ap.add_animation_library("", lib)
 	if ap != null:
 		for cname in LOOP_CLIPS:
 			if ap.has_animation(cname):
@@ -943,7 +946,7 @@ func _drive_anim(rec: Dictionary, clip: String, slot_id: int) -> void:
 	var use_clip := clip if player.has_animation(clip) else ("crouch" if clip == "reload" and player.has_animation("crouch") else ("idle" if player.has_animation("idle") else ""))
 	if use_clip == "":
 		return
-	player.play(use_clip)
+	player.play(use_clip, 0.14)
 	if use_clip in LOOP_CLIPS:
 		var anim := player.get_animation(use_clip)
 		if anim != null and anim.length > 0.02:

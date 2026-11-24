@@ -359,18 +359,30 @@ static func soldier(nation: String, kind: String, look: String = "", hi: bool = 
 		mi.mesh = mesh
 		for s in mesh.get_surface_count():
 			mi.set_surface_override_material(s, material(mesh.surface_get_material(s), {"c": [1, 1, 1], "r": 0.85}, true, nation, 2))
-	var af = d.get("animFile", null)
-	if af != null:
-		var lib := anim_library(String(af))
-		if lib != null:
-			var ap := AnimationPlayer.new()
-			ap.name = "AnimationPlayer"
-			inst.add_child(ap)
-			ap.add_animation_library("", lib)
+	var af := String(d.get("animFile", "")) if d.get("animFile", null) != null else ""
+	var lib := anim_library_for(inst, af)
+	if lib != null:
+		var ap := AnimationPlayer.new()
+		ap.name = "AnimationPlayer"
+		inst.add_child(ap)
+		ap.add_animation_library("", lib)
 	return inst
 
+const DEFAULT_SOLDIER_ANIM := "sol_anim_c4749669.glb"
 static var _libs: Dictionary = {}
+static var _retargeted_libs: Dictionary = {}
+
+static func _lib_has_tracks(lib: AnimationLibrary) -> bool:
+	if lib == null: return false
+	for cname in ["run", "walk", "idle"]:
+		if lib.has_animation(cname):
+			var a := lib.get_animation(cname)
+			if a != null and a.get_track_count() > 0:
+				return true
+	return false
+
 static func anim_library(file: String) -> AnimationLibrary:
+	if file == "": return null
 	if _libs.has(file): return _libs[file]
 	var lib: AnimationLibrary = null
 	var ps = load(DIR + file)
@@ -381,8 +393,41 @@ static func anim_library(file: String) -> AnimationLibrary:
 			var names := ap.get_animation_library_list()
 			if names.size() > 0: lib = ap.get_animation_library(names[0])
 		inst.free()
+	if not _lib_has_tracks(lib):
+		lib = null
 	_libs[file] = lib
 	return lib
+
+## Returns an AnimationLibrary guaranteed to have real bone tracks AND track paths retargeted to `inst`'s exact Skeleton3D!
+## Fixes empty 0-track anim GLBs (e.g. sol_anim_b10ff9b3.glb) and Sketchfab FBX hash path mismatches across all 22 nations.
+static func anim_library_for(inst: Node3D, file: String) -> AnimationLibrary:
+	var src_file := file
+	var src_lib := anim_library(src_file)
+	if src_lib == null:
+		src_file = DEFAULT_SOLDIER_ANIM
+		src_lib = anim_library(src_file)
+	if src_lib == null: return null
+	var sk := _first(inst, "Skeleton3D") as Skeleton3D
+	if sk == null: return src_lib
+	var sk_rel := String(inst.get_path_to(sk))
+	var cache_key := src_file + "|" + sk_rel
+	if _retargeted_libs.has(cache_key):
+		return _retargeted_libs[cache_key]
+	var out := AnimationLibrary.new()
+	for aname in src_lib.get_animation_list():
+		var a: Animation = src_lib.get_animation(aname)
+		if a == null or a.get_track_count() == 0: continue
+		var dup: Animation = a.duplicate(true) as Animation
+		for ti in dup.get_track_count():
+			var tp := dup.track_get_path(ti)
+			var sub := tp.get_concatenated_subnames()
+			if String(sub) != "":
+				dup.track_set_path(ti, NodePath(sk_rel + ":" + String(sub)))
+		if String(aname) in ["idle", "walk", "run"]:
+			dup.loop_mode = Animation.LOOP_LINEAR
+		out.add_animation(aname, dup)
+	_retargeted_libs[cache_key] = out
+	return out
 
 ## everything that does not move, folded into one ArrayMesh per animated part (key "" = fixed to the unit root), one surface
 ## per distinct material: what a MultiMesh needs. Squads return the unit's extra only (soldiers are skinned).
