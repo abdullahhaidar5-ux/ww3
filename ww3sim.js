@@ -2784,7 +2784,7 @@ function updDozer(u,dt){u.building=false;const o=u.order;
 /* ---------- movement ---------- */
 // Vehicle-style motion: each unit has a heading that turns at a limited rate, accelerates and brakes,
 // slows down to turn, and eases into its final stop. Infantry turn and accelerate quickly; tanks pivot; ships are slow to answer the helm.
-const MOVE={inf:[9,140],at:[9,140],hacker:[9,140],hero:[10,160],harv:[2.2,40],dozer:[2.2,40],tank:[1.7,34],aa:[2.1,42],arty:[1.8,32],boat:[1.6,40],ship:[.55,10],heli:[2.3,55],drone:[3,80]};
+const MOVE={inf:[9,140],at:[9,140],hacker:[9,140],hero:[10,160],harv:[3.6,56],dozer:[3.2,48],tank:[1.7,34],aa:[2.1,42],arty:[1.8,32],boat:[1.6,40],ship:[.55,10],heli:[2.3,55],drone:[3,80]};
 // Vehicle handling: tracked vehicles pivot on the spot, wheeled ones need speed to turn (a turning circle) and slow
 // into tight corners; everything ground-based labours uphill and runs a little faster downhill.
 const WHEELED=new Set(['bmt','harv','dozer','jeep','ew','krb','cbr','raidlead','idome','aa']);
@@ -2809,7 +2809,7 @@ function stepTo(u,x,y,dt,fin){if(u.s.dom==='air'&&isFW(u)){const t=u.target;let 
     flyFW(u,gx,gy,dt,!!(t&&!t.dead&&Math.hypot(t.x-u.x,t.y-u.y)<260));return;}
   const M=MOVE[u.s.cls]||[4,80],d=u.s.dom,dist2=Math.hypot(x-u.x,y-u.y),foot=M[0]>=8;
   let want=Math.atan2(y-u.y,x-u.x);
-  if((u.avT||0)>G.t&&dist2>36)want+=u.avO||0;
+  if((u.avT||0)>G.t&&dist2>65)want+=u.avO||0;
   // Helper: check if a ground probe hits terrain OR any standing building's real collision box (+padding)
   const bldClear=(qx,qy)=>{
     if(!passXY(d,qx,qy))return false;
@@ -2867,10 +2867,10 @@ function stepTo(u,x,y,dt,fin){if(u.s.dom==='air'&&isFW(u)){const t=u.target;let 
     if(latSteer)want+=Math.max(-1.05,Math.min(1.05,latSteer));
   }
   if(u.hd==null||(foot&&G.t-(u.vt??-9)>.3))u.hd=u.ang;if(u.v==null)u.v=0;const err0=angDiff(u.hd,want);const whl=d==='ground'&&!foot&&isWheeled(u);
-  let tr=M[0]*dt*(u.retreat?1.55:1);if(whl){tr*=Math.min(1.3,.32+u.v/Math.max(20,u.s.spd*.45));if(u.v<7&&Math.abs(err0)>.55)u.v=Math.max(u.v,8);}
+  let tr=M[0]*dt*(u.retreat?1.55:1);if(whl){const nimble=u.kind==='harv'||u.kind==='dozer';tr*=nimble?Math.min(1.4,.75+u.v/Math.max(20,u.s.spd*.45)):Math.min(1.3,.32+u.v/Math.max(20,u.s.spd*.45));if(u.v<5&&Math.abs(err0)>.55)u.v=Math.max(u.v,nimble?4:7);}
   const err=Math.abs(err0)<.015?err0:err0;u.hd+=Math.max(-tr,Math.min(tr,err));
   const ae=Math.abs(angDiff(u.hd,want));let f=foot?(ae<1.25?1:.45):(ae>1.8?.05:Math.max(.26,Math.cos(Math.min(ae,1.38))));
-  if(whl)f=Math.max(.38,Math.cos(Math.min(ae,1.22)));let sl=1;if(d==='ground'){const ca=Math.cos(u.hd),sa=Math.sin(u.hd),g0=groundH(u.x,u.y),g1=groundH(u.x+ca*14,u.y+sa*14),gr=(g1-g0)/14;sl=Math.max(.45,Math.min(1.15,1-gr*(foot?.9:1.6)));}
+  if(whl){const nimble=u.kind==='harv'||u.kind==='dozer';f=nimble?(ae>1.05?.08:Math.max(.24,Math.cos(Math.min(ae,1.32)))):(ae>1.4?.14:Math.max(.34,Math.cos(Math.min(ae,1.22))));}let sl=1;if(d==='ground'){const ca=Math.cos(u.hd),sa=Math.sin(u.hd),g0=groundH(u.x,u.y),g1=groundH(u.x+ca*14,u.y+sa*14),gr=(g1-g0)/14;sl=Math.max(.45,Math.min(1.15,1-gr*(foot?.9:1.6)));}
   const wx=wxNow();const UP=G.teams[u.team].upg;let top=u.s.spd*f*sl*obsSlow*(u.drg?.6:1)*(G.fln&&d==='ground'?floodSlow(u):1)*(G.bfFN&&d==='ground'?fireSlow(u):1)*(G.rubN&&d==='ground'?rubSlow(u):1)*(d==='ground'&&G.wood?woodSlow(u):1)*upgK(G.teams[u.team],u.kind,'spd')*(d==='ground'?wx.spd*roadK(u,whl,foot)*ssnK(u,whl,foot):d==='air'?(.75+.25*wx.air):1)*((u.supp||0)>.5?.6:1)*(u.crit?critSpd(u):1)*(u.dgS||1)*(isVeh(u.s)&&auraNear(u,'raid')?1.2:1)*((G.teams[u.team].raidT||0)>G.t&&u.s.armor==='heavy'?1.35:1)*(G.smokes&&G.smokes.some(S=>S.t>G.t&&S.team===u.team&&Math.hypot(u.x-S.x,u.y-S.y)<S.r)?1.25:1)*(d==='ground'&&u.s.armor!=='heavy'&&G.t-(u.lastFire||-9)<3&&(DOCT[G.teams[u.team].fac]||{}).hitrun?1.25:1);if(u.order&&u.order.cap)top=Math.min(top,u.order.cap*f);if(trafficCap<top)top=trafficCap;if(fin){const brake=M[1]*1.4;top=Math.min(top,Math.sqrt(2*brake*Math.max(0,dist2-2))+4);}
   if(u.retreat)top*=1.18;if(u.insT>G.t)top*=1.15;
   const acc=(u.v<top?M[1]:M[1]*2.2)*dt;u.v+=Math.max(-acc,Math.min(acc,top-u.v));u.vt=G.t;
@@ -3340,10 +3340,12 @@ function updHarv(u,dt){const T=G.teams[u.team];
   }
   if(u.order){if(Math.hypot(u.order.x-u.x,u.order.y-u.y)<12||stalled(u,u.order)){u.order=null;u.retreat=0;}else{navTo(u,u.order.x,u.order.y,dt,true);return;}}
   if(u.state==='ret'){let best=u.drop&&!u.drop.dead&&G.t<(u.dropT||0)?u.drop:null,bd=best?dist(best,u):1e9;if(!best){for(const e of G.ents)if(e.isB&&e.team===u.team&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead){const d=dist(e,u);if(d<bd){bd=d;best=e;}}u.drop=best;u.dropT=G.t+1.5;}
-    if(!best)return;if(Math.hypot(Math.max(0,Math.abs(best.x-u.x)-best.size/2),Math.max(0,Math.abs(best.y-u.y)-best.size/2))<26){/* unload by distance to the building's EDGE (it is square): a truck that reached a corner used to stay 'returning' forever (mapfix2) */{const g=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T)),s=stOf(T);s.sc=(s.sc|0)+g;}T.credits+=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T));u.cargo=0;u.state='go';u.retreat=0;}else navTo(u,best.x,best.y,dt);return;}
+    if(!best)return;const edgeD=Math.hypot(Math.max(0,Math.abs(best.x-u.x)-best.size/2),Math.max(0,Math.abs(best.y-u.y)-best.size/2));
+    if(edgeD<36){/* unload smoothly at the depot apron edge */{const g=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T)),s=stOf(T);s.sc=(s.sc|0)+g;}T.credits+=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T));u.cargo=0;u.state='go';u.retreat=0;u.path=null;u.avT=0;}
+    else{const da=Math.atan2(u.y-best.y,u.x-best.x),apR=best.size*.5+u.r+14;navTo(u,best.x+Math.cos(da)*apR,best.y+Math.sin(da)*apR,dt,true);}return;}
   if(!u.field||u.field.amt<=0){if(G.t<(u.fldT||0))return;u.fldT=G.t+1.5;const drops=G.ents.filter(e=>e.isB&&e.team===u.team&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead);let best=null,bd=1e9;const gr=regions('ground'),rg=gr[Math.floor(u.y/CELL)*GW+Math.floor(u.x/CELL)];let bdd=0;for(const f of G.fields)if(f.amt>0){{const fr=gr[Math.floor(f.y/CELL)*GW+Math.floor(f.x/CELL)];if(rg&&fr&&fr!==rg)continue;}/* never a field this truck can't drive to */let dd=1e9;for(const b of drops)dd=Math.min(dd,dist(b,f));let foe=0;if(T.ai)for(const b of nearby(f.x,f.y,700,HV_N))if(b.isB&&!b.dead&&b.team>=0&&!ally(b.team,u.team)){foe=1500;break;}/* AI trucks keep out of enemy bases while any other field is left */const d=dist(f,u)*.6+(drops.length?dd:0)+(los('ground',u.x,u.y,f.x,f.y)?0:900)+foe;if(d<bd){bd=d;best=f;bdd=dd;}}u.field=best;if(!best)return;if(T.ai&&bdd>900&&bdd<1e9)T.ai.depF=best;}
-  const f=u.field;if(u.state==='go'){if(dist(f,u)<f.r+6){u.state='gather';u.gt=0;}else navTo(u,f.x,f.y,dt);}
-  else if(u.state==='gather'){u.gt+=dt;if(u.gt>=3){const take=Math.min(Math.round(160*upgT(T,'harv')*(T.F.mods.harv||1)),f.amt);f.amt-=take;u.cargo=take;u.state='ret';}}}
+  const f=u.field;if(u.state==='go'){if(dist(f,u)<f.r+10){u.state='gather';u.gt=0;u.path=null;u.avT=0;}else navTo(u,f.x,f.y,dt,true);}
+  else if(u.state==='gather'){u.v=Math.max(0,(u.v||0)-95*dt);u.gt+=dt;if(u.gt>=3){const take=Math.min(Math.round(160*upgT(T,'harv')*(T.F.mods.harv||1)),f.amt);f.amt-=take;u.cargo=take;u.state='ret';}}}
 function updHacker(u,dt){const T=G.teams[u.team],o=u.order;u.hacking=false;
   if(G.t-u.lastHit<2.2&&!(o&&o.type==='move'&&!o.auto)&&G.t>(u.evT||0)&&evadeFire(u,280))return;
   if(o&&o.type==='hack'){const t=o.target;if(t.dead||!seenBy(u.team,t)){u.order=null;return;}const d=Math.hypot(t.x-u.x,t.y-u.y)-t.r;
@@ -3433,7 +3435,7 @@ function _fireSuperStyle(team,x,y,styleOverride){const T=G.teams[team],S=T.sup;
     for(let k=1;k<=5;k++){G.strikes.push({x:x+rnd(-sp*0.5,sp*0.5),y:y+rnd(-sp*0.5,sp*0.5),t:4.5+k*1.8,r:95,dmg:48,team,kind:'fallout',noIcpt:1,fallout:1});}
   }
   return up;}
-function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!working(team,'uplink'))return false;
+function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||(!working(team,'uplink')&&!(G.sandbox&&team===0)))return false;
   if(G.battle){G.sid=(G.sid|0)+1;}
   const up=_fireSuperStyle(team,x,y,null);
   if(G.battle&&up)for(const O of G.teams)if(!O.reb&&!ally(O.id,team))O.reveals.push({x:up.x,y:up.y,r:170,t:45});   // the launch site is exposed on the enemy's map for 45 s
@@ -6153,6 +6155,9 @@ const __API=(function BRIDGE(W) {
   const F = { BUILDING: 1, BUILT: 2, SELECTABLE: 4, DEAD: 8, GARRISON: 16, ROUT: 32, DUG: 64, FIRED: 128, NOPOWER: 256, SELLING: 512, REPAIRING: 1024, SUPPLIED: 2048, ABANDONED: 4096, LANDED: 8192, WORKING: 16384, CAPTURABLE: 32768 };
   const kinds = KINDS.slice(), kIdx = new Map(kinds.map((k, i) => [k, i]));
   const kindOf = k => { let i = kIdx.get(k); if (i === undefined) { i = kinds.length; kinds.push(k); kIdx.set(k, i); } return i; };
+  // Register every unit & building in BASE/BLD (including signature units added after KINDS: fpvt, krb, tb2) before tables() is ever exported!
+  for (const k of Object.keys(BASE)) kindOf(k);
+  if (typeof BLD !== 'undefined') for (const k of Object.keys(BLD)) kindOf(k);
   for (const k of ['derrick', 'pplant', 'garrison', 'civb']) kindOf(k);
   for (const k of Object.keys(TB)) kindOf('tb_' + k);
   const weapons = Object.keys(VS), wIdx = new Map(weapons.map((k, i) => [k, i]));
@@ -6327,16 +6332,35 @@ const __API=(function BRIDGE(W) {
       W.sim(() => {
         if (o.cmd === 'spawn') {
           const n = Math.max(1, Math.min(20, o.n | 0 || 1));
+          const kd = String(o.kind || 'inf');
+          const T0 = G.teams[tm];
+          const st = T0 ? stats(T0.fac, kd) : null;
+          const dom = (st && st.dom) ? st.dom : 'ground';
           for (let i = 0; i < n; i++) {
-            const p = nearestPassXY('ground', (+o.x || 0) + (i ? (Math.random() - .5) * 100 : 0), (+o.y || 0) + (i ? (Math.random() - .5) * 100 : 0));
-            if (p) addUnit(tm, String(o.kind || 'inf'), p[0], p[1]);
+            const ox = (+o.x || 0) + (i ? (Math.random() - .5) * 140 : 0);
+            const oy = (+o.y || 0) + (i ? (Math.random() - .5) * 140 : 0);
+            const p = dom === 'air' ? [Math.max(80, Math.min(MAPW - 80, ox)), Math.max(80, Math.min(MAPH - 80, oy))] : nearestPassXY(dom, ox, oy);
+            if (p) addUnit(tm, kd, p[0], p[1]);
           }
         } else if (o.cmd === 'spawn_bld') {
           const k = String(o.kind || 'barracks');
           let bx = +o.x || 0, by = +o.y || 0;
-          for (let r = 0; r < 24; r++) {
-            const qx = bx + Math.cos(r * 2.4) * r * 16, qy = by + Math.sin(r * 2.4) * r * 16;
+          for (let r = 0; r < 32; r++) {
+            const qx = bx + Math.cos(r * 2.4) * r * 18, qy = by + Math.sin(r * 2.4) * r * 18;
             if (validSpot(tm, k, qx, qy)) { addBld(tm, k, qx, qy, true); break; }
+          }
+        } else if (o.cmd === 'sandbox_init' || o.cmd === 'ready_powers') {
+          G.sandbox = true;
+          const T = G.teams[tm];
+          if (T) {
+            T.rank = Math.max(T.rank | 0, 5);
+            if (T.sup && T.sup.charge > 0) T.charge = T.sup.charge;
+            T.pw = T.pw || {};
+            for (const pk of Object.keys(POWERS)) {
+              if (typeof sigBan === 'function' && sigBan(T.fac, pk)) continue;
+              if (!T.pw[pk]) T.pw[pk] = { lv: 3, cd: 0 };
+              else { T.pw[pk].lv = Math.max(T.pw[pk].lv || 1, 3); T.pw[pk].cd = 0; }
+            }
           }
         } else if (o.cmd === 'clear') {
           for (const e of G.ents) if (!e.dead && e.team === tm && !(e.isB && e.kind === 'hq')) kill(e, 0, null);
