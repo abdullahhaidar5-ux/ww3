@@ -3207,6 +3207,7 @@ function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.s.dom==='air'&&G.wx&&(G
     if(u.st===3&&!o&&d>R*.6&&!(u.lastHit>G.t-1.5)){u.target=null;return;}/* Guerrilla never keeps a target beyond its close range (one set before the stance changed, or by an aid/AI path) unless it was just hit */
     if(d>R){if(o&&o.type==='move'){u.target=null;navTo(u,o.x,o.y,dt,true);return;}navTo(u,t.x,t.y,dt);return;}
     if(!['tank','arty','aa','ship','boat'].includes(s.cls))u.ang=Math.atan2(t.y-u.y,t.x-u.x);
+    else if(['tank','arty','aa'].includes(s.cls)){const ta=Math.atan2(t.y-u.y,t.x-u.x),da=angDiff(u.ang,ta),rt=1.45*dt;u.ang+=Math.max(-rt,Math.min(rt,da));}
     if(s.minr&&d<s.minr){if(s.dom!=='naval')stepTo(u,u.x*2-t.x,u.y*2-t.y,dt);return;}
     if(s.wpn==='boom'){explode(u.x,u.y,s.splash*upgK(T,u.kind,'splash'),s.dmg*dmgOut(u),u.team,'boom',null,u);u.dead=true;G.byId.delete(u.id);FXE('die',[u.id,u.x|0,u.y|0,KINDS.indexOf(u.kind),0,u.team]);return;}
     if(u.cd<=0&&Math.abs(angDiff(u.tang,Math.atan2(t.y-u.y,t.x-u.x)))<.35){fire(u,t,s.dmg*dmgOut(u),s.wpn,(s.splash||0)*upgK(T,u.kind,'splash'));u.cd=s.rof*rofMult(u);}return;}

@@ -19,7 +19,7 @@
   let lastErr = '';
 
   // Buses
-  let masterGain, limiter, battleGain, battleComp;
+  let masterGain, limiter, battleGain, battleComp, shockLPF;
   let sfxGain, sfxMidLPF, sfxFarLPF, sfxRevSend, sfxRevNode;
   let voiceGain, voiceEQ, voiceComp;
   let musicGain, musicLowShelf, musicMidPeak, musicHighShelf, musicComp, musicRevSend, scoreBus, scoreRev, scoreRevSend;
@@ -267,16 +267,21 @@
       musicRevSend.connect(scoreRev);
     } catch (_) {}
 
-    // Battle sub-bus
+    // Battle sub-bus + Blast Shockwave LPF (momentarily muffles highs during huge nearby blasts!)
     battleGain = ctx.createGain();
     battleGain.gain.value = 0.80;
+    shockLPF = ctx.createBiquadFilter();
+    shockLPF.type = 'lowpass';
+    shockLPF.frequency.value = 18000;
+    shockLPF.Q.value = 0.7;
     battleComp = ctx.createDynamicsCompressor();
     battleComp.threshold.value = -15.0;
     battleComp.knee.value = 8.0;
     battleComp.ratio.value = 4.2;
     battleComp.attack.value = 0.003;
     battleComp.release.value = 0.20;
-    battleGain.connect(battleComp);
+    battleGain.connect(shockLPF);
+    shockLPF.connect(battleComp);
     battleComp.connect(masterGain);
 
     // SFX Close / Mid / Far + canyon reverb
@@ -474,6 +479,52 @@
         ph1 += Math.PI * 2 * 520 * bend / sr;
         ph2 += Math.PI * 2 * 780 * bend / sr;
         d[i] = Math.tanh((Math.sin(ph1) * 0.55 + Math.sin(ph2) * 0.38 + Math.sin(ph1 * 2) * 0.14) * 1.5) * 0.58 * env;
+      }
+    });
+    // Descending 0.62s incoming artillery shell whistle (terrifying pre-impact cue!)
+    synths.whistle = makeBuf(0.62, (d, n, sr) => {
+      let ph = 0, lp = 0;
+      for (let i = 0; i < n; i++) {
+        const k = i / n;
+        const f = 1480 * Math.pow(0.42, k * k);
+        ph += Math.PI * 2 * f / sr;
+        const ns = Math.random() * 2 - 1;
+        lp += 0.16 * (ns - lp);
+        const env = Math.pow(Math.sin(Math.PI * Math.pow(k, 0.72)), 1.15);
+        d[i] = (Math.sin(ph) * 0.24 + lp * 0.32) * env * 0.72;
+      }
+    });
+    // Screaming metallic APFSDS armor glance ricochet
+    synths.ricochet = makeBuf(0.30, (d, n, sr) => {
+      let ph = 0;
+      for (let i = 0; i < n; i++) {
+        const k = i / n;
+        const f = 2650 * Math.pow(0.28, k) + Math.sin(k * 45) * 90;
+        ph += Math.PI * 2 * f / sr;
+        const env = Math.min(1, k / 0.04) * Math.pow(1 - k, 1.5);
+        d[i] = Math.tanh((Math.sin(ph) * 0.65 + Math.sin(ph * 1.52) * 0.35) * 1.6) * 0.55 * env;
+      }
+    });
+    // Sharp APS/ERA reactive armor counter-blast pop
+    synths.era = makeBuf(0.16, (d, n, sr) => {
+      let ph = 0, lp = 0;
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        ph += Math.PI * 2 * (180 + 420 * Math.exp(-t * 32)) / sr;
+        const ns = Math.random() * 2 - 1;
+        lp += 0.38 * (ns - lp);
+        d[i] = Math.tanh((Math.sin(ph) * Math.exp(-t * 28) + lp * Math.exp(-t * 36) * 1.4) * 1.8) * 0.78;
+      }
+    });
+    // Chilling 1.85s theater-wide air-raid klaxon siren for superweapon launches
+    synths.siren = makeBuf(1.85, (d, n, sr) => {
+      let ph = 0;
+      for (let i = 0; i < n; i++) {
+        const k = i / n;
+        const f = 310 + 390 * Math.sin(Math.PI * Math.pow(k, 0.85));
+        ph += Math.PI * 2 * f / sr;
+        const env = Math.min(1, k / 0.12) * Math.min(1, (1 - k) / 0.18);
+        d[i] = Math.tanh((Math.sin(ph) * 0.65 + Math.sin(ph * 2) * 0.25 + Math.sin(ph * 3) * 0.12) * 1.4) * 0.50 * env;
       }
     });
     synths.promo = makeBuf(0.50, (d, n, sr) => {
@@ -1225,14 +1276,30 @@
       if (fac) curFac = String(fac);
       scoreStep = 0;
     },
-    setBattleState: (active, heatVal) => {
+    setBattleState: (active, heatVal, siegeVal) => {
       const wasBattle = inBattle;
       inBattle = Boolean(active);
       battleHeat = Math.max(0, Math.min(1, Number(heatVal) || 0));
+      const siege = Math.max(0, Math.min(1, Number(siegeVal) || 0));
+      // Adaptive multi-stem mastering swell: as combat intensifies or HQ comes under siege, sub-bass & heroic brass punch swell!
+      if (ctx && musicLowShelf && musicMidPeak) {
+        const now = ctx.currentTime;
+        const intensity = Math.min(1, battleHeat * 0.8 + siege * 0.5);
+        musicLowShelf.gain.setTargetAtTime(5.4 + intensity * 2.8, now, 0.45);
+        musicMidPeak.gain.setTargetAtTime(2.0 + intensity * 2.4, now, 0.45);
+      }
       if (inBattle && !wasBattle && unlocked && ctx && ctx.currentTime - lastFanfareAt > 15) {
         lastFanfareAt = ctx.currentTime;
         playSynth('fanfare', 0.72, 1.0, 0, 'Music');
       }
+    },
+    shockwave: intensity => {
+      if (!unlocked || !ctx || !shockLPF) return;
+      const k = Math.max(0.2, Math.min(1.0, Number(intensity) || 0.7));
+      const now = ctx.currentTime;
+      shockLPF.frequency.cancelScheduledValues(now);
+      shockLPF.frequency.setValueAtTime(Math.max(480, 1400 - k * 850), now);
+      shockLPF.frequency.exponentialRampToValueAtTime(18000, now + 0.85 + k * 0.65);
     },
     setVol: (master, music, voices, effects, announcer, mk, sk) => {
       vol.master = master; vol.music = music; vol.voices = voices;
